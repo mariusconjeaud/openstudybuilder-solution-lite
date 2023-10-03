@@ -1,7 +1,7 @@
 """Service for study activity instructions."""
 
 import datetime
-from typing import Optional, Sequence
+from typing import Sequence
 
 from fastapi import status
 from neomodel import db
@@ -38,11 +38,11 @@ class StudyActivityInstructionService(StudySelectionMixin):
     @db.transaction
     def get_all_instructions_for_all_studies(
         self,
-        sort_by: Optional[dict] = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[models.StudyActivityInstruction]:
         query = StudyActivityInstructionNeoModel.nodes.fetch_relations(
@@ -79,8 +79,29 @@ class StudyActivityInstructionService(StudySelectionMixin):
                     "study_activity",
                     "activity_instruction_value__activity_instruction_root",
                     "has_after",
-                ).filter(study_value__study_root__uid=study_uid)
+                ).filter(
+                    study_value__study_root__uid=study_uid,
+                    study_activity__has_study_activity__study_root__uid=study_uid,
+                )
             )
+        ]
+
+    def get_all_study_instructions_for_specific_study_activity(
+        self, study_uid: str, study_activity_uid: str
+    ) -> Sequence[models.StudyActivityInstruction]:
+        return [
+            models.StudyActivityInstruction.from_orm(sas_node)
+            for sas_node in to_relation_trees(
+                StudyActivityInstructionNeoModel.nodes.fetch_relations(
+                    "study_activity",
+                    "activity_instruction_value__activity_instruction_root",
+                    "has_after",
+                ).filter(
+                    study_value__study_root__uid=study_uid,
+                    study_activity__uid=study_activity_uid,
+                    study_activity__has_study_activity__study_root__uid=study_uid,
+                )
+            ).distinct()
         ]
 
     def _create_activity_instruction(

@@ -4,7 +4,7 @@ from fastapi import Body, Depends, Response, status
 
 from clinical_mdr_api import models
 from clinical_mdr_api.models.error import ErrorResponse
-from clinical_mdr_api.oauth import get_current_user_id
+from clinical_mdr_api.oauth import get_current_user_id, rbac
 from clinical_mdr_api.routers import _generic_descriptions
 from clinical_mdr_api.routers import study_router as router
 from clinical_mdr_api.routers.studies import utils
@@ -15,6 +15,7 @@ from clinical_mdr_api.services.studies.study_activity_schedule import (
 
 @router.get(
     "/studies/{uid}/study-activity-schedules",
+    dependencies=[rbac.STUDY_READ],
     summary="List all study activity schedules currently defined for the study",
     response_model=Sequence[models.StudyActivitySchedule],
     response_model_exclude_unset=True,
@@ -36,6 +37,7 @@ def get_all_selected_activities(
 
 @router.post(
     "/studies/{uid}/study-activity-schedules",
+    dependencies=[rbac.STUDY_WRITE],
     summary="Add a study activity schedule to a study",
     response_model=models.StudyActivitySchedule,
     response_model_exclude_unset=True,
@@ -65,6 +67,7 @@ def post_new_activity_schedule_create(
 
 @router.delete(
     "/studies/{uid}/study-activity-schedules/{study_activity_schedule_uid}",
+    dependencies=[rbac.STUDY_WRITE],
     summary="Delete a study activity schedule",
     response_model=None,
     status_code=204,
@@ -89,6 +92,7 @@ def delete_activity_schedule(
 
 @router.get(
     "/studies/{uid}/study-activity-schedules/audit-trail/",
+    dependencies=[rbac.STUDY_READ],
     summary="List full audit trail related to definition of all study activity schedules.",
     description="""
 The following values should be returned for all study activities:
@@ -115,6 +119,7 @@ def get_all_schedules_audit_trail(
 
 @router.post(
     "/studies/{uid}/study-activity-schedules/batch",
+    dependencies=[rbac.STUDY_WRITE],
     summary="Batch operations (create, delete) for study activity schedules",
     response_model=Sequence[models.StudyActivityScheduleBatchOutput],
     status_code=207,

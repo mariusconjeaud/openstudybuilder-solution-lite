@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Self
 
 from pydantic import Field
 
@@ -14,7 +14,7 @@ class DictionaryCodelist(BaseModel):
     @classmethod
     def from_dictionary_codelist_ar(
         cls, dictionary_codelist_ar: DictionaryCodelistAR
-    ) -> "DictionaryCodelist":
+    ) -> Self:
         return cls(
             codelist_uid=dictionary_codelist_ar.uid,
             name=dictionary_codelist_ar.name,
@@ -49,7 +49,7 @@ class DictionaryCodelist(BaseModel):
         description="",
     )
 
-    possible_actions: List[str] = Field(
+    possible_actions: list[str] = Field(
         ...,
         description=(
             "Holds those actions that can be performed on the DictionaryCodelist. "
@@ -58,22 +58,22 @@ class DictionaryCodelist(BaseModel):
     )
 
     library_name: str
-    start_date: Optional[datetime] = Field(None, nullable=True)
-    end_date: Optional[datetime] = Field(None, nullable=True)
-    status: Optional[str] = Field(None, nullable=True)
-    version: Optional[str] = Field(None, nullable=True)
-    change_description: Optional[str] = Field(None, nullable=True)
-    user_initials: Optional[str] = Field(None, nullable=True)
+    start_date: datetime | None = Field(None, nullable=True)
+    end_date: datetime | None = Field(None, nullable=True)
+    status: str | None = Field(None, nullable=True)
+    version: str | None = Field(None, nullable=True)
+    change_description: str | None = Field(None, nullable=True)
+    user_initials: str | None = Field(None, nullable=True)
 
 
 class DictionaryCodelistInput(BaseModel):
-    name: Optional[str] = Field(
+    name: str | None = Field(
         None,
         title="name",
         description="",
     )
 
-    template_parameter: Optional[bool] = Field(
+    template_parameter: bool | None = Field(
         None,
         title="template_parameter",
         description="",
@@ -101,7 +101,7 @@ class DictionaryCodelistVersion(DictionaryCodelist):
     Class for storing DictionaryCodelist and calculation of differences
     """
 
-    changes: Optional[Dict[str, bool]] = Field(
+    changes: dict[str, bool] | None = Field(
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "

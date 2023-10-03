@@ -82,9 +82,9 @@ export default {
         return 'mdi-plus'
       }
       if (change.updated) {
-        return 'mdi-pencil'
+        return 'mdi-pencil-outline'
       }
-      return 'mdi-trash'
+      return 'mdi-delete-outline'
     },
     addChangeToList (item, changeList, type) {
       const date = item.change_date.split('T')[0]

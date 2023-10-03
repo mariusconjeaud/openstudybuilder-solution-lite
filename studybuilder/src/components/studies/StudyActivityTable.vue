@@ -6,7 +6,7 @@
     :headers="headers"
     :items="studyActivities"
     :server-items-length="total"
-    item-key="study_activity_uid"
+    item-key="item-key"
     export-object-label="StudyActivities"
     :export-data-url="exportDataUrl"
     :options.sync="options"
@@ -35,6 +35,7 @@
         color="primary"
         @click="openBatchEditForm(slot.selected)"
         :title="$t('StudyActivityTable.edit_activity_selection')"
+        :disabled="!checkPermission($roles.STUDY_WRITE)"
         >
         <v-icon>
           mdi-pencil-box-multiple-outline
@@ -48,6 +49,7 @@
         data-cy="add-study-activity"
         @click.stop="showActivityForm = true"
         :title="$t('StudyActivityForm.add_title')"
+        :disabled="!checkPermission($roles.STUDY_WRITE)"
         >
         <v-icon>
           mdi-plus
@@ -132,7 +134,18 @@
       class="fullscreen-dialog"
       />
   </v-dialog>
-
+  <v-dialog v-model="showHistory"
+            @keydown.esc="closeHistory"
+            persistent
+            :max-width="globalHistoryDialogMaxWidth"
+            :fullscreen="globalHistoryDialogFullscreen">
+    <history-table
+      :title="activityHistoryTitle"
+      @close="closeHistory"
+      :headers="headers"
+      :items="activityHistoryItems"
+      />
+  </v-dialog>
   <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
   <study-activity-batch-edit-form
     :open="showBatchEditForm"
@@ -152,13 +165,16 @@ import study from '@/api/study'
 import ActionsMenu from '@/components/tools/ActionsMenu'
 import ConfirmDialog from '@/components/tools/ConfirmDialog'
 import filteringParameters from '@/utils/filteringParameters'
+import HistoryTable from '@/components/tools/HistoryTable'
 import NNTable from '@/components/tools/NNTable'
 import StudyActivityBatchEditForm from './StudyActivityBatchEditForm'
 import StudyActivityEditForm from './StudyActivityEditForm'
 import StudyActivityForm from './StudyActivityForm'
 import libConstants from '@/constants/libraries'
+import { accessGuard } from '@/mixins/accessRoleVerifier'
 
 export default {
+  mixins: [accessGuard],
   components: {
     ActionsMenu,
     ConfirmDialog,
@@ -166,11 +182,11 @@ export default {
     NNTable,
     StudyActivityBatchEditForm,
     StudyActivityEditForm,
-    StudyActivityForm
+    StudyActivityForm,
+    HistoryTable
   },
   computed: {
     ...mapGetters({
-      studyActivities: 'studyActivities/studyActivities',
       selectedStudy: 'studiesGeneral/selectedStudy'
     }),
     exportDataUrl () {
@@ -191,15 +207,17 @@ export default {
       actions: [
         {
           label: this.$t('_global.edit'),
-          icon: 'mdi-pencil',
+          icon: 'mdi-pencil-outline',
           iconColor: 'primary',
-          click: this.editStudyActivity
+          click: this.editStudyActivity,
+          accessRole: this.$roles.STUDY_WRITE
         },
         {
           label: this.$t('_global.delete'),
-          icon: 'mdi-delete',
+          icon: 'mdi-delete-outline',
           iconColor: 'error',
-          click: this.deleteStudyActivity
+          click: this.deleteStudyActivity,
+          accessRole: this.$roles.STUDY_WRITE
         },
         {
           label: this.$t('_global.history'),
@@ -222,11 +240,11 @@ export default {
         { text: this.$t('StudyActivity.activity_group'), value: 'activity.activity_group.name' },
         { text: this.$t('StudyActivity.activity_sub_group'), value: 'activity.activity_subgroup.name' },
         { text: this.$t('StudyActivity.activity'), value: 'activity.name' },
-        { text: this.$t('StudyActivity.footnote'), value: 'note' },
         { text: this.$t('_global.modified'), value: 'start_date' },
         { text: this.$t('_global.modified_by'), value: 'user_initials' }
       ],
       sortMode: false,
+      studyActivities: [],
       options: {},
       total: 0
     }
@@ -237,7 +255,7 @@ export default {
       if (item.activity.replaced_by_activity) {
         result.unshift({
           label: this.$t('StudyActivityTable.update_activity_request'),
-          icon: 'mdi-bell',
+          icon: 'mdi-bell-outline',
           iconColor: 'red',
           click: this.updateActivityRequest
         })
@@ -298,6 +316,39 @@ export default {
         this.options, filters, sort, filtersUpdated)
       params.studyUid = this.selectedStudy.uid
       const resp = await this.$store.dispatch('studyActivities/fetchStudyActivities', params)
+      const activities = []
+      for (const item of resp.data.items) {
+        let grouping = null
+        if (item.activity.activity_groupings.length > 0) {
+          if (item.study_activity_group && item.study_activity_subgroup) {
+            grouping = item.activity.activity_groupings.find(
+              o => o.activity_group_uid === item.study_activity_group.activity_group_uid && o.activity_subgroup_uid === item.study_activity_subgroup.activity_subgroup_uid
+            )
+          }
+        }
+        if (grouping) {
+          activities.push({
+            ...item,
+            activity: {
+              activity_group: { name: grouping.activity_group_name, uid: grouping.activity_group_uid },
+              activity_subgroup: { name: grouping.activity_subgroup_name, uid: grouping.activity_subgroup_uid },
+              ...item.activity
+            },
+            item_key: item.activity.uid + grouping.activity_group_uid + grouping.activity_subgroup_uid
+          })
+        } else {
+          activities.push({
+            ...item,
+            activity: {
+              ...item.activity,
+              activity_group: { name: '', uid: '' },
+              activity_subgroup: { name: '', uid: '' }
+            },
+            item_key: item.activity.uid
+          })
+        }
+      }
+      this.studyActivities = activities
       this.total = resp.data.total
     },
     openBatchEditForm (selection) {

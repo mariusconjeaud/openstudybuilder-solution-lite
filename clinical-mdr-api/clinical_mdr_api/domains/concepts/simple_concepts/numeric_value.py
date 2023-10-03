@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional, Union
+from typing import Self
 
 from clinical_mdr_api.domains.concepts.simple_concepts.simple_concept import (
     SimpleConceptAR,
@@ -19,7 +19,7 @@ class NumericValueType(Enum):
 @dataclass(frozen=True)
 class NumericValueVO(SimpleConceptVO):
     name: str
-    value: Union[float, int]
+    value: float | int
 
     @classmethod
     def derive_value_property(cls, value):
@@ -29,12 +29,12 @@ class NumericValueVO(SimpleConceptVO):
     def from_repository_values(
         cls,
         name: str,
-        name_sentence_case: Optional[str],
+        name_sentence_case: str | None,
         value: float,
-        definition: Optional[str],
-        abbreviation: Optional[str],
+        definition: str | None,
+        abbreviation: str | None,
         is_template_parameter: bool,
-    ) -> "NumericValueVO":
+    ) -> Self:
         value = cls.derive_value_property(value=value)
         simple_concept_vo = cls(
             name=name,
@@ -51,10 +51,10 @@ class NumericValueVO(SimpleConceptVO):
     def from_input_values(
         cls,
         value: float,
-        definition: Optional[str],
-        abbreviation: Optional[str],
+        definition: str | None,
+        abbreviation: str | None,
         is_template_parameter: bool,
-    ) -> "NumericValueVO":
+    ) -> Self:
         value = cls.derive_value_property(value=value)
         simple_concept_vo = cls(
             name=str(value),

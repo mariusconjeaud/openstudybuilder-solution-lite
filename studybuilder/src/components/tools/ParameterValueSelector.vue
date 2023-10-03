@@ -1,7 +1,7 @@
 <template>
 <div>
   <div class="mt-2 mb-8">
-    <div class="mb-2 secondary--text text-subtitle-1 font-weight-bold">
+    <div class="mb-2 secondary--text text-h6">
       <template v-if="previewText">{{ previewText }}</template>
       <template v-else>{{ $t('ParameterValueSelector.preview') }}</template>
     </div>
@@ -203,10 +203,12 @@
     </v-row>
   </div>
 
-  <p class="secondary--text text-subtitle-1 font-weight-bold">{{ $t('_global.plain_text_version') }}</p>
-  <div class="pa-4 parameterBackground">
-    {{ namePlainPreview }}
-  </div>
+  <template v-if="withUnformattedVersion">
+    <p class="secondary--text text-h6">{{ unformattedTextLabel }}</p>
+    <div class="pa-4 parameterBackground">
+      {{ namePlainPreview }}
+    </div>
+  </template>
 </div>
 </template>
 
@@ -247,6 +249,14 @@ export default {
     disabled: {
       type: Boolean,
       default: false
+    },
+    withUnformattedVersion: {
+      type: Boolean,
+      default: true
+    },
+    unformattedLabel: {
+      type: String,
+      required: false
     }
   },
   computed: {
@@ -263,6 +273,9 @@ export default {
         }
       }
       return ''
+    },
+    unformattedTextLabel () {
+      return this.unformattedLabel ? this.unformattedLabel : this.$t('_global.plain_text_version')
     }
   },
   data () {

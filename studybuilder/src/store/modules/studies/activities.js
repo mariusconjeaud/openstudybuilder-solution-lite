@@ -14,10 +14,16 @@ const getters = {
       if (!result[fgroup]) {
         Vue.set(result, fgroup, {})
       }
-      const group = (studyActivity.activity.activity_group)
-        ? studyActivity.activity.activity_group.name : ''
-      const subgroup = (studyActivity.activity.activity_subgroup)
-        ? studyActivity.activity.activity_subgroup.name : ''
+      let grouping = null
+      if (studyActivity.activity.activity_groupings.length > 0) {
+        if (studyActivity.study_activity_group && studyActivity.study_activity_subgroup) {
+          grouping = studyActivity.activity.activity_groupings.find(
+            o => o.activity_group_uid === studyActivity.study_activity_group.activity_group_uid && o.activity_subgroup_uid === studyActivity.study_activity_subgroup.activity_subgroup_uid
+          )
+        }
+      }
+      const group = grouping ? grouping.activity_group_name : '(not selected)'
+      const subgroup = grouping ? grouping.activity_subgroup_name : '(not selected)'
       if (!result[fgroup][group]) {
         Vue.set(result[fgroup], group, {})
       }

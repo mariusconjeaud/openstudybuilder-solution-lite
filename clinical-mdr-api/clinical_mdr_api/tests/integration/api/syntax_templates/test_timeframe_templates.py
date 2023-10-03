@@ -12,7 +12,6 @@ Tests for timeframe-templates endpoints
 import json
 import logging
 from functools import reduce
-from typing import List
 
 import pytest
 from fastapi.testclient import TestClient
@@ -35,7 +34,7 @@ from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 log = logging.getLogger(__name__)
 
 # Global variables shared between fixtures and tests
-timeframe_templates: List[TimeframeTemplate]
+timeframe_templates: list[TimeframeTemplate]
 
 
 URL = "timeframe-templates"
@@ -172,7 +171,7 @@ def test_get_timeframe_template(api_client):
         assert res[key] is not None
 
     assert res["uid"] == timeframe_templates[1].uid
-    assert res["sequence_id"] == "TT2"
+    assert res["sequence_id"] == "T2"
     assert res["name"] == "Default-AAA name with [TextValue]"
     assert res["guidance_text"] == "Default-AAA guidance text"
     assert res["parameters"][0]["name"] == "TextValue"
@@ -288,11 +287,11 @@ def test_get_versions_of_timeframe_template(api_client):
 
     assert len(res) == 2
     assert res[0]["uid"] == timeframe_templates[1].uid
-    assert res[0]["sequence_id"] == "TT2"
+    assert res[0]["sequence_id"] == "T2"
     assert res[0]["version"] == "1.0"
     assert res[0]["status"] == "Final"
     assert res[1]["uid"] == timeframe_templates[1].uid
-    assert res[1]["sequence_id"] == "TT2"
+    assert res[1]["sequence_id"] == "T2"
     assert res[1]["version"] == "0.1"
     assert res[1]["status"] == "Draft"
 
@@ -466,7 +465,7 @@ def test_get_specific_version_of_timeframe_template(api_client):
     assert response.status_code == 200
 
     assert res["uid"] == timeframe_templates[4].uid
-    assert res["sequence_id"] == "TT5"
+    assert res["sequence_id"] == "T5"
     assert res["version"] == "1.1"
     assert res["status"] == "Draft"
 
@@ -512,7 +511,7 @@ def test_approve_timeframe_template(api_client):
 
     assert response.status_code == 201
     assert res["uid"] == timeframe_templates[3].uid
-    assert res["sequence_id"] == "TT4"
+    assert res["sequence_id"] == "T4"
     assert res["name"] == "Default-XXX name with [TextValue]"
     assert res["guidance_text"] == "Default-XXX guidance text"
     assert res["version"] == "1.0"
@@ -557,7 +556,7 @@ def test_cascade_approve_timeframe_template(api_client):
 
     assert response.status_code == 201
     assert res["uid"] == timeframe_templates[5].uid
-    assert res["sequence_id"] == "TT6"
+    assert res["sequence_id"] == "T6"
     assert res["name"] == "cascade check [TextValue]"
     assert res["guidance_text"] == "Default-AAA-0 guidance text"
     assert res["version"] == "2.0"
@@ -578,7 +577,7 @@ def test_inactivate_timeframe_template(api_client):
 
     assert response.status_code == 200
     assert res["uid"] == timeframe_templates[3].uid
-    assert res["sequence_id"] == "TT4"
+    assert res["sequence_id"] == "T4"
     assert res["version"] == "1.0"
     assert res["status"] == "Retired"
 
@@ -589,7 +588,7 @@ def test_reactivate_timeframe_template(api_client):
 
     assert response.status_code == 200
     assert res["uid"] == timeframe_templates[3].uid
-    assert res["sequence_id"] == "TT4"
+    assert res["sequence_id"] == "T4"
     assert res["version"] == "1.0"
     assert res["status"] == "Final"
 
@@ -688,7 +687,7 @@ def test_cannot_update_timeframe_template_to_an_existing_name(api_client):
     res = response.json()
     log.info("Didn't Update Timeframe Template: %s", res)
 
-    assert response.status_code == 500
+    assert response.status_code == 400
     assert (
         res["message"]
         == f"Duplicate templates not allowed - template exists: {data['name']}"

@@ -1,5 +1,3 @@
-from typing import List, Optional
-
 from pydantic import Field
 
 from clinical_mdr_api.models.utils import BaseModel
@@ -11,7 +9,7 @@ class SimpleDataModel(BaseModel):
         title="data_model_name",
         description="data_model_name",
     )
-    ordinal: Optional[str] = Field(
+    ordinal: str | None = Field(
         None,
         title="ordinal",
         description="ordinal",
@@ -47,7 +45,7 @@ class DatasetClass(BaseModel):
         title="title",
         description="The title of the dataset",
     )
-    description: Optional[str] = Field(
+    description: str | None = Field(
         None, title="description", description="description", nullable=True
     )
     catalogue_name: str = Field(
@@ -55,10 +53,10 @@ class DatasetClass(BaseModel):
         title="catalogue_name",
         description="catalogue_name",
     )
-    parent_class: Optional[str] = Field(
+    parent_class: str | None = Field(
         None, title="parent_class_name", description="parent_class_name", nullable=True
     )
-    data_models: List[SimpleDataModel] = Field(...)
+    data_models: list[SimpleDataModel] = Field(...)
 
     @classmethod
     def from_repository_output(cls, input_dict: dict):

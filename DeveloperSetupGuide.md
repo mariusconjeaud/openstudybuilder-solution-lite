@@ -386,7 +386,7 @@ pipenv run import_all
 
 **Note:** This will take some time to run (up to ~30 minutes).
 
-For further details and options for configuring the data import see the [README](data-import/README.md) file in the `data-import` subdirectory.
+For further details and options for configuring the data import see the [README](studybuilder-import/README.md) file in the `studybuilder-import` subdirectory.
 
 ---
 

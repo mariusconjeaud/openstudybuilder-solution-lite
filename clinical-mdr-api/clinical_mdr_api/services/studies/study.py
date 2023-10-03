@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Callable, Collection, Iterable, Optional, Sequence
+from typing import Callable, Collection, Iterable, Sequence
 
 from neomodel import db  # type: ignore
 
@@ -73,7 +73,7 @@ class StudyService:
         self._repos.close()
 
     @staticmethod
-    def filter_result_by_requested_fields(result, fields: Optional[str] = None):
+    def filter_result_by_requested_fields(result, fields: str | None = None):
         # here goes filtering according to value of fields query param
         default_fields = (
             "current_metadata.identification_metadata,"
@@ -102,14 +102,14 @@ class StudyService:
         find_project_by_project_number: Callable[[str], ProjectAR],
         find_clinical_programme_by_uid: Callable[[str], ClinicalProgrammeAR],
         find_all_study_time_units: Callable[[str], Iterable[UnitDefinitionAR]],
-        find_term_by_uid: Callable[[str], Optional[CTTermNameAR]] = lambda _: None,
+        find_term_by_uid: Callable[[str], CTTermNameAR | None] = lambda _: None,
         find_dictionary_term_by_uid: Callable[
-            [str], Optional[DictionaryTermAR]
+            [str], DictionaryTermAR | None
         ] = lambda _: None,
-        fields: Optional[str] = None,
-        at_specified_date_time: Optional[datetime] = None,
-        status: Optional[StudyStatus] = None,
-        version: Optional[str] = None,
+        fields: str | None = None,
+        at_specified_date_time: datetime | None = None,
+        status: StudyStatus | None = None,
+        version: str | None = None,
         history_endpoint: bool = False,
     ) -> Study:
         result = Study.from_study_definition_ar(
@@ -135,7 +135,7 @@ class StudyService:
         study_definition_ar: StudyDefinitionAR,
         find_project_by_project_number: Callable[[str], ProjectAR],
         find_clinical_programme_by_uid: Callable[[str], ClinicalProgrammeAR],
-        fields: Optional[str] = None,
+        fields: str | None = None,
     ) -> CompactStudy:
         result = CompactStudy.from_study_definition_ar(
             study_definition_ar=study_definition_ar,
@@ -165,7 +165,7 @@ class StudyService:
             section = section.strip()
             if section.startswith("+"):
                 if section[1:] in default_sections:
-                    raise ValueError(
+                    raise exceptions.ValidationException(
                         "The specified section "
                         + section[1:]
                         + " is a default section, and "
@@ -175,7 +175,7 @@ class StudyService:
                 filtered_sections.append(section[1:])
             elif section.startswith("-"):
                 if section[1:] not in default_sections:
-                    raise ValueError(
+                    raise exceptions.ValidationException(
                         "The specified section "
                         + section[1:]
                         + " is not a default section, and "
@@ -183,7 +183,7 @@ class StudyService:
                     )
                 filtered_sections.remove(section[1:])
             else:
-                raise ValueError(
+                raise exceptions.ValidationException(
                     "Specify a list of sections to filter the audit trail by. "
                     "Each section name must be preceded by a '+' or a '-', "
                     "valid values are: 'identification_metadata, registry_identifiers, version_metadata, "
@@ -196,10 +196,10 @@ class StudyService:
     def get_by_uid(
         self,
         uid: str,
-        at_specified_date_time: Optional[datetime] = None,
-        status: Optional[StudyStatus] = None,
-        version: Optional[str] = None,
-        fields: Optional[str] = None,
+        at_specified_date_time: datetime | None = None,
+        status: StudyStatus | None = None,
+        version: str | None = None,
+        fields: str | None = None,
     ) -> Study:
         try:
             # call relevant finder (we use helper property to get to the repository)
@@ -275,7 +275,7 @@ class StudyService:
             self._close_all_repos()
 
     @db.transaction
-    def release(self, uid: str, change_description: Optional[str]) -> Study:
+    def release(self, uid: str, change_description: str | None) -> Study:
         try:
             study_definition = self._repos.study_definition_repository.find_by_uid(
                 uid, for_update=True
@@ -315,8 +315,8 @@ class StudyService:
     @staticmethod
     def _models_study_field_audit_trail_from_audit_trail_vo(
         study_audit_trail_vo_sequence: Iterable[StudyFieldAuditTrailEntryAR],
-        find_term_by_uid: Callable[[str], Optional[CTTermNameAR]],
-        sections: Optional[str] = None,
+        find_term_by_uid: Callable[[str], CTTermNameAR | None],
+        sections: str | None = None,
     ) -> Sequence[StudyFieldAuditTrailEntry]:
         # Create entries from the audit trail value objects and filter by section.
         all_sections = [
@@ -354,8 +354,8 @@ class StudyService:
 
     @db.transaction
     def get_fields_audit_trail_by_uid(
-        self, uid: str, sections: Optional[str] = None
-    ) -> Optional[Sequence[StudyFieldAuditTrailEntry]]:
+        self, uid: str, sections: str | None = None
+    ) -> Sequence[StudyFieldAuditTrailEntry] | None:
         try:
             # call relevant finder (we use helper property to get to the repository)
             study_fields_audit_trail_vo_sequence = (
@@ -377,16 +377,16 @@ class StudyService:
 
     def get_all(
         self,
-        has_study_objective: Optional[bool] = None,
-        has_study_endpoint: Optional[bool] = None,
-        has_study_criteria: Optional[bool] = None,
-        has_study_activity: Optional[bool] = None,
-        has_study_activity_instruction: Optional[bool] = None,
-        sort_by: Optional[dict] = None,
+        has_study_objective: bool | None = None,
+        has_study_endpoint: bool | None = None,
+        has_study_criteria: bool | None = None,
+        has_study_activity: bool | None = None,
+        has_study_activity_instruction: bool | None = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
         deleted: bool = False,
     ) -> GenericFilteringReturn[CompactStudy]:
@@ -440,11 +440,11 @@ class StudyService:
     def get_study_snapshot_history(
         self,
         study_uid: str,
-        sort_by: Optional[dict] = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[CompactStudy]:
         try:
@@ -479,9 +479,9 @@ class StudyService:
     def get_distinct_values_for_header(
         self,
         field_name: str,
-        search_string: Optional[str] = "",
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        search_string: str | None = "",
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
     ):
         # Note that for this endpoint, we have to override the generic filtering
@@ -543,34 +543,31 @@ class StudyService:
     def create(self, study_create_input: StudyCreateInput) -> Study:
         try:
             # now we invoke our domain layer
-            try:
-                study_definition = StudyDefinitionAR.from_initial_values(
-                    generate_uid_callback=self._repos.study_definition_repository.generate_uid,
-                    project_exists_callback=self._repos.project_repository.project_number_exists,
-                    study_title_exists_callback=self._repos.study_title_repository.study_title_exists,
-                    study_short_title_exists_callback=self._repos.study_title_repository.study_short_title_exists,
-                    study_number_exists_callback=self._repos.study_definition_repository.study_number_exists,
-                    initial_id_metadata=StudyIdentificationMetadataVO.from_input_values(
-                        project_number=study_create_input.project_number,
-                        study_number=study_create_input.study_number,
-                        study_acronym=study_create_input.study_acronym,
-                        # Not added on study create
-                        registry_identifiers=RegistryIdentifiersVO(
-                            ct_gov_id=None,
-                            ct_gov_id_null_value_code=None,
-                            eudract_id=None,
-                            eudract_id_null_value_code=None,
-                            universal_trial_number_utn=None,
-                            universal_trial_number_utn_null_value_code=None,
-                            japanese_trial_registry_id_japic=None,
-                            japanese_trial_registry_id_japic_null_value_code=None,
-                            investigational_new_drug_application_number_ind=None,
-                            investigational_new_drug_application_number_ind_null_value_code=None,
-                        ),
+            study_definition = StudyDefinitionAR.from_initial_values(
+                generate_uid_callback=self._repos.study_definition_repository.generate_uid,
+                project_exists_callback=self._repos.project_repository.project_number_exists,
+                study_title_exists_callback=self._repos.study_title_repository.study_title_exists,
+                study_short_title_exists_callback=self._repos.study_title_repository.study_short_title_exists,
+                study_number_exists_callback=self._repos.study_definition_repository.study_number_exists,
+                initial_id_metadata=StudyIdentificationMetadataVO.from_input_values(
+                    project_number=study_create_input.project_number,
+                    study_number=study_create_input.study_number,
+                    study_acronym=study_create_input.study_acronym,
+                    # Not added on study create
+                    registry_identifiers=RegistryIdentifiersVO(
+                        ct_gov_id=None,
+                        ct_gov_id_null_value_code=None,
+                        eudract_id=None,
+                        eudract_id_null_value_code=None,
+                        universal_trial_number_utn=None,
+                        universal_trial_number_utn_null_value_code=None,
+                        japanese_trial_registry_id_japic=None,
+                        japanese_trial_registry_id_japic_null_value_code=None,
+                        investigational_new_drug_application_number_ind=None,
+                        investigational_new_drug_application_number_ind_null_value_code=None,
                     ),
-                )
-            except ValueError as value_error:
-                raise exceptions.ValidationException(value_error.args[0])
+                ),
+            )
 
             # save the aggregate instance we have just created
             self._repos.study_definition_repository.save(study_definition)
@@ -599,7 +596,7 @@ class StudyService:
         current_study_intervention: StudyInterventionVO,
         request_study_intervention: StudyInterventionJsonModel,
         find_all_study_time_units: Callable[[str], Iterable[UnitDefinitionAR]],
-        find_unit_definition_by_uid: Callable[[str], Optional[UnitDefinitionAR]],
+        find_unit_definition_by_uid: Callable[[str], UnitDefinitionAR | None],
     ) -> StudyInterventionVO:
         fill_missing_values_in_base_model_from_reference_base_model(
             base_model_with_missing_values=request_study_intervention,
@@ -612,71 +609,67 @@ class StudyService:
 
         # we start a try block to catch any ValueError and report as Forbidden (otherwise it would be
         # reported as Internal)
-        try:
-            new_study_intervention = StudyInterventionVO.from_input_values(
-                intervention_type_code=get_term_uid_or_none(
-                    request_study_intervention.intervention_type_code
-                ),
-                intervention_type_null_value_code=get_term_uid_or_none(
-                    request_study_intervention.intervention_type_null_value_code
-                ),
-                add_on_to_existing_treatments=request_study_intervention.add_on_to_existing_treatments,
-                add_on_to_existing_treatments_null_value_code=get_term_uid_or_none(
-                    request_study_intervention.add_on_to_existing_treatments_null_value_code
-                ),
-                control_type_code=get_term_uid_or_none(
-                    request_study_intervention.control_type_code
-                ),
-                control_type_null_value_code=get_term_uid_or_none(
-                    request_study_intervention.control_type_null_value_code
-                ),
-                intervention_model_code=get_term_uid_or_none(
-                    request_study_intervention.intervention_model_code
-                ),
-                intervention_model_null_value_code=get_term_uid_or_none(
-                    request_study_intervention.intervention_model_null_value_code
-                ),
-                is_trial_randomised=request_study_intervention.is_trial_randomised,
-                is_trial_randomised_null_value_code=get_term_uid_or_none(
-                    request_study_intervention.is_trial_randomised_null_value_code
-                ),
-                stratification_factor=request_study_intervention.stratification_factor,
-                stratification_factor_null_value_code=get_term_uid_or_none(
-                    request_study_intervention.stratification_factor_null_value_code
-                ),
-                trial_blinding_schema_code=get_term_uid_or_none(
-                    request_study_intervention.trial_blinding_schema_code
-                ),
-                trial_blinding_schema_null_value_code=get_term_uid_or_none(
-                    request_study_intervention.trial_blinding_schema_null_value_code
-                ),
-                trial_intent_types_codes=[
-                    get_term_uid_or_none(trial_intent_type_code)
-                    for trial_intent_type_code in request_study_intervention.trial_intent_types_codes
-                ]
-                if request_study_intervention.trial_intent_types_codes
-                else [],
-                trial_intent_type_null_value_code=get_term_uid_or_none(
-                    request_study_intervention.trial_intent_types_null_value_code
-                ),
-                planned_study_length=(
-                    create_duration_object_from_api_input(
-                        value=request_study_intervention.planned_study_length.duration_value,
-                        unit=get_unit_def_uid_or_none(
-                            request_study_intervention.planned_study_length.duration_unit_code
-                        ),
-                        find_duration_name_by_code=find_unit_definition_by_uid,
-                    )
-                    if request_study_intervention.planned_study_length is not None
-                    else None
-                ),
-                planned_study_length_null_value_code=get_term_uid_or_none(
-                    request_study_intervention.planned_study_length_null_value_code
-                ),
-            )
-        except ValueError as ve:
-            # if it happens here it means some business rules forbid this operation
-            raise exceptions.ValidationException(ve.args[0])
+        new_study_intervention = StudyInterventionVO.from_input_values(
+            intervention_type_code=get_term_uid_or_none(
+                request_study_intervention.intervention_type_code
+            ),
+            intervention_type_null_value_code=get_term_uid_or_none(
+                request_study_intervention.intervention_type_null_value_code
+            ),
+            add_on_to_existing_treatments=request_study_intervention.add_on_to_existing_treatments,
+            add_on_to_existing_treatments_null_value_code=get_term_uid_or_none(
+                request_study_intervention.add_on_to_existing_treatments_null_value_code
+            ),
+            control_type_code=get_term_uid_or_none(
+                request_study_intervention.control_type_code
+            ),
+            control_type_null_value_code=get_term_uid_or_none(
+                request_study_intervention.control_type_null_value_code
+            ),
+            intervention_model_code=get_term_uid_or_none(
+                request_study_intervention.intervention_model_code
+            ),
+            intervention_model_null_value_code=get_term_uid_or_none(
+                request_study_intervention.intervention_model_null_value_code
+            ),
+            is_trial_randomised=request_study_intervention.is_trial_randomised,
+            is_trial_randomised_null_value_code=get_term_uid_or_none(
+                request_study_intervention.is_trial_randomised_null_value_code
+            ),
+            stratification_factor=request_study_intervention.stratification_factor,
+            stratification_factor_null_value_code=get_term_uid_or_none(
+                request_study_intervention.stratification_factor_null_value_code
+            ),
+            trial_blinding_schema_code=get_term_uid_or_none(
+                request_study_intervention.trial_blinding_schema_code
+            ),
+            trial_blinding_schema_null_value_code=get_term_uid_or_none(
+                request_study_intervention.trial_blinding_schema_null_value_code
+            ),
+            trial_intent_types_codes=[
+                get_term_uid_or_none(trial_intent_type_code)
+                for trial_intent_type_code in request_study_intervention.trial_intent_types_codes
+            ]
+            if request_study_intervention.trial_intent_types_codes
+            else [],
+            trial_intent_type_null_value_code=get_term_uid_or_none(
+                request_study_intervention.trial_intent_types_null_value_code
+            ),
+            planned_study_length=(
+                create_duration_object_from_api_input(
+                    value=request_study_intervention.planned_study_length.duration_value,
+                    unit=get_unit_def_uid_or_none(
+                        request_study_intervention.planned_study_length.duration_unit_code
+                    ),
+                    find_duration_name_by_code=find_unit_definition_by_uid,
+                )
+                if request_study_intervention.planned_study_length is not None
+                else None
+            ),
+            planned_study_length_null_value_code=get_term_uid_or_none(
+                request_study_intervention.planned_study_length_null_value_code
+            ),
+        )
 
         return new_study_intervention
 
@@ -685,7 +678,7 @@ class StudyService:
         current_study_population: StudyPopulationVO,
         request_study_population: StudyPopulationJsonModel,
         find_all_study_time_units: Callable[[str], Iterable[UnitDefinitionAR]],
-        find_unit_definition_by_uid: Callable[[str], Optional[UnitDefinitionAR]],
+        find_unit_definition_by_uid: Callable[[str], UnitDefinitionAR | None],
     ) -> StudyPopulationVO:
         fill_missing_values_in_base_model_from_reference_base_model(
             base_model_with_missing_values=request_study_population,
@@ -697,123 +690,114 @@ class StudyService:
             ),
         )
 
-        # we start a try block to catch any ValueError and report as Forbidden (otherwise it would be
-        # reported as Internal)
-        try:
+        def _helper(array: Sequence | None) -> Sequence:
+            return array if array is not None else []
 
-            def _helper(array: Optional[Sequence]) -> Sequence:
-                return array if array is not None else []
-
-            new_study_population = StudyPopulationVO.from_input_values(
-                therapeutic_area_codes=[
-                    get_term_uid_or_none(therapeutic_area)
-                    for therapeutic_area in _helper(
-                        request_study_population.therapeutic_area_codes
-                    )
-                ],
-                therapeutic_area_null_value_code=get_term_uid_or_none(
-                    request_study_population.therapeutic_area_null_value_code
-                ),
-                disease_condition_or_indication_codes=[
-                    get_term_uid_or_none(disease_condition)
-                    for disease_condition in _helper(
-                        request_study_population.disease_condition_or_indication_codes
-                    )
-                ],
-                disease_condition_or_indication_null_value_code=get_term_uid_or_none(
-                    request_study_population.disease_condition_or_indication_null_value_code
-                ),
-                diagnosis_group_codes=[
-                    get_term_uid_or_none(diagnosis_group)
-                    for diagnosis_group in _helper(
-                        request_study_population.diagnosis_group_codes
-                    )
-                ],
-                diagnosis_group_null_value_code=get_term_uid_or_none(
-                    request_study_population.diagnosis_group_null_value_code
-                ),
-                sex_of_participants_code=get_term_uid_or_none(
-                    request_study_population.sex_of_participants_code
-                ),
-                sex_of_participants_null_value_code=get_term_uid_or_none(
-                    request_study_population.sex_of_participants_null_value_code
-                ),
-                rare_disease_indicator=request_study_population.rare_disease_indicator,
-                rare_disease_indicator_null_value_code=get_term_uid_or_none(
-                    request_study_population.rare_disease_indicator_null_value_code
-                ),
-                healthy_subject_indicator=request_study_population.healthy_subject_indicator,
-                healthy_subject_indicator_null_value_code=get_term_uid_or_none(
-                    request_study_population.healthy_subject_indicator_null_value_code
-                ),
-                planned_minimum_age_of_subjects_null_value_code=get_term_uid_or_none(
-                    request_study_population.planned_minimum_age_of_subjects_null_value_code
-                ),
-                planned_maximum_age_of_subjects_null_value_code=get_term_uid_or_none(
-                    request_study_population.planned_maximum_age_of_subjects_null_value_code
-                ),
-                stable_disease_minimum_duration_null_value_code=get_term_uid_or_none(
-                    request_study_population.stable_disease_minimum_duration_null_value_code
-                ),
-                planned_minimum_age_of_subjects=(
-                    create_duration_object_from_api_input(
-                        value=request_study_population.planned_minimum_age_of_subjects.duration_value,
-                        unit=get_unit_def_uid_or_none(
-                            request_study_population.planned_minimum_age_of_subjects.duration_unit_code
-                        ),
-                        find_duration_name_by_code=find_unit_definition_by_uid,
-                    )
-                    if request_study_population.planned_minimum_age_of_subjects
-                    else None
-                ),
-                planned_maximum_age_of_subjects=(
-                    create_duration_object_from_api_input(
-                        value=request_study_population.planned_maximum_age_of_subjects.duration_value,
-                        unit=get_unit_def_uid_or_none(
-                            request_study_population.planned_maximum_age_of_subjects.duration_unit_code
-                        ),
-                        find_duration_name_by_code=find_unit_definition_by_uid,
-                    )
-                    if request_study_population.planned_maximum_age_of_subjects
-                    is not None
-                    else None
-                ),
-                stable_disease_minimum_duration=(
-                    create_duration_object_from_api_input(
-                        value=request_study_population.stable_disease_minimum_duration.duration_value,
-                        unit=get_unit_def_uid_or_none(
-                            request_study_population.stable_disease_minimum_duration.duration_unit_code
-                        ),
-                        find_duration_name_by_code=find_unit_definition_by_uid,
-                    )
-                    if request_study_population.stable_disease_minimum_duration
-                    is not None
-                    else None
-                ),
-                pediatric_study_indicator=request_study_population.pediatric_study_indicator,
-                pediatric_study_indicator_null_value_code=get_term_uid_or_none(
-                    request_study_population.pediatric_study_indicator_null_value_code
-                ),
-                pediatric_postmarket_study_indicator=request_study_population.pediatric_postmarket_study_indicator,
-                pediatric_postmarket_study_indicator_null_value_code=get_term_uid_or_none(
-                    request_study_population.pediatric_postmarket_study_indicator_null_value_code
-                ),
-                pediatric_investigation_plan_indicator=request_study_population.pediatric_investigation_plan_indicator,
-                pediatric_investigation_plan_indicator_null_value_code=get_term_uid_or_none(
-                    request_study_population.pediatric_investigation_plan_indicator_null_value_code
-                ),
-                relapse_criteria=request_study_population.relapse_criteria,
-                relapse_criteria_null_value_code=get_term_uid_or_none(
-                    request_study_population.relapse_criteria_null_value_code
-                ),
-                number_of_expected_subjects=request_study_population.number_of_expected_subjects,
-                number_of_expected_subjects_null_value_code=get_term_uid_or_none(
-                    request_study_population.number_of_expected_subjects_null_value_code
-                ),
-            )
-        except ValueError as ve:
-            # if it happens here it means some business rules forbid this operation
-            raise exceptions.ValidationException(ve.args[0])
+        new_study_population = StudyPopulationVO.from_input_values(
+            therapeutic_area_codes=[
+                get_term_uid_or_none(therapeutic_area)
+                for therapeutic_area in _helper(
+                    request_study_population.therapeutic_area_codes
+                )
+            ],
+            therapeutic_area_null_value_code=get_term_uid_or_none(
+                request_study_population.therapeutic_area_null_value_code
+            ),
+            disease_condition_or_indication_codes=[
+                get_term_uid_or_none(disease_condition)
+                for disease_condition in _helper(
+                    request_study_population.disease_condition_or_indication_codes
+                )
+            ],
+            disease_condition_or_indication_null_value_code=get_term_uid_or_none(
+                request_study_population.disease_condition_or_indication_null_value_code
+            ),
+            diagnosis_group_codes=[
+                get_term_uid_or_none(diagnosis_group)
+                for diagnosis_group in _helper(
+                    request_study_population.diagnosis_group_codes
+                )
+            ],
+            diagnosis_group_null_value_code=get_term_uid_or_none(
+                request_study_population.diagnosis_group_null_value_code
+            ),
+            sex_of_participants_code=get_term_uid_or_none(
+                request_study_population.sex_of_participants_code
+            ),
+            sex_of_participants_null_value_code=get_term_uid_or_none(
+                request_study_population.sex_of_participants_null_value_code
+            ),
+            rare_disease_indicator=request_study_population.rare_disease_indicator,
+            rare_disease_indicator_null_value_code=get_term_uid_or_none(
+                request_study_population.rare_disease_indicator_null_value_code
+            ),
+            healthy_subject_indicator=request_study_population.healthy_subject_indicator,
+            healthy_subject_indicator_null_value_code=get_term_uid_or_none(
+                request_study_population.healthy_subject_indicator_null_value_code
+            ),
+            planned_minimum_age_of_subjects_null_value_code=get_term_uid_or_none(
+                request_study_population.planned_minimum_age_of_subjects_null_value_code
+            ),
+            planned_maximum_age_of_subjects_null_value_code=get_term_uid_or_none(
+                request_study_population.planned_maximum_age_of_subjects_null_value_code
+            ),
+            stable_disease_minimum_duration_null_value_code=get_term_uid_or_none(
+                request_study_population.stable_disease_minimum_duration_null_value_code
+            ),
+            planned_minimum_age_of_subjects=(
+                create_duration_object_from_api_input(
+                    value=request_study_population.planned_minimum_age_of_subjects.duration_value,
+                    unit=get_unit_def_uid_or_none(
+                        request_study_population.planned_minimum_age_of_subjects.duration_unit_code
+                    ),
+                    find_duration_name_by_code=find_unit_definition_by_uid,
+                )
+                if request_study_population.planned_minimum_age_of_subjects
+                else None
+            ),
+            planned_maximum_age_of_subjects=(
+                create_duration_object_from_api_input(
+                    value=request_study_population.planned_maximum_age_of_subjects.duration_value,
+                    unit=get_unit_def_uid_or_none(
+                        request_study_population.planned_maximum_age_of_subjects.duration_unit_code
+                    ),
+                    find_duration_name_by_code=find_unit_definition_by_uid,
+                )
+                if request_study_population.planned_maximum_age_of_subjects is not None
+                else None
+            ),
+            stable_disease_minimum_duration=(
+                create_duration_object_from_api_input(
+                    value=request_study_population.stable_disease_minimum_duration.duration_value,
+                    unit=get_unit_def_uid_or_none(
+                        request_study_population.stable_disease_minimum_duration.duration_unit_code
+                    ),
+                    find_duration_name_by_code=find_unit_definition_by_uid,
+                )
+                if request_study_population.stable_disease_minimum_duration is not None
+                else None
+            ),
+            pediatric_study_indicator=request_study_population.pediatric_study_indicator,
+            pediatric_study_indicator_null_value_code=get_term_uid_or_none(
+                request_study_population.pediatric_study_indicator_null_value_code
+            ),
+            pediatric_postmarket_study_indicator=request_study_population.pediatric_postmarket_study_indicator,
+            pediatric_postmarket_study_indicator_null_value_code=get_term_uid_or_none(
+                request_study_population.pediatric_postmarket_study_indicator_null_value_code
+            ),
+            pediatric_investigation_plan_indicator=request_study_population.pediatric_investigation_plan_indicator,
+            pediatric_investigation_plan_indicator_null_value_code=get_term_uid_or_none(
+                request_study_population.pediatric_investigation_plan_indicator_null_value_code
+            ),
+            relapse_criteria=request_study_population.relapse_criteria,
+            relapse_criteria_null_value_code=get_term_uid_or_none(
+                request_study_population.relapse_criteria_null_value_code
+            ),
+            number_of_expected_subjects=request_study_population.number_of_expected_subjects,
+            number_of_expected_subjects_null_value_code=get_term_uid_or_none(
+                request_study_population.number_of_expected_subjects_null_value_code
+            ),
+        )
 
         return new_study_population
 
@@ -822,7 +806,7 @@ class StudyService:
         current_high_level_study_design: HighLevelStudyDesignVO,
         request_high_level_study_design: HighLevelStudyDesignJsonModel,
         find_all_study_time_units: Callable[[str], Iterable[UnitDefinitionAR]],
-        find_unit_definition_by_uid: Callable[[str], Optional[UnitDefinitionAR]],
+        find_unit_definition_by_uid: Callable[[str], UnitDefinitionAR | None],
     ) -> HighLevelStudyDesignVO:
         # now we go through fields of request and for those which were not set in the request
         # we substitute values from current metadata
@@ -839,68 +823,63 @@ class StudyService:
 
         # we start a try block to catch any ValueError and report as Forbidden (otherwise it would be
         # reported as Internal)
-        try:
+        def _helper(array: Sequence | None) -> Sequence:
+            return array if array is not None else []
 
-            def _helper(array: Optional[Sequence]) -> Sequence:
-                return array if array is not None else []
-
-            new_high_level_study_design = HighLevelStudyDesignVO.from_input_values(
-                study_type_code=get_term_uid_or_none(
-                    request_high_level_study_design.study_type_code
-                ),
-                study_stop_rules=request_high_level_study_design.study_stop_rules,
-                study_stop_rules_null_value_code=get_term_uid_or_none(
-                    request_high_level_study_design.study_stop_rules_null_value_code
-                ),
-                study_type_null_value_code=get_term_uid_or_none(
-                    request_high_level_study_design.study_type_null_value_code
-                ),
-                trial_type_codes=[
-                    get_term_uid_or_none(trial_type_code)
-                    for trial_type_code in _helper(
-                        request_high_level_study_design.trial_type_codes
-                    )
-                ],
-                trial_type_null_value_code=get_term_uid_or_none(
-                    request_high_level_study_design.trial_type_null_value_code
-                ),
-                trial_phase_code=get_term_uid_or_none(
-                    request_high_level_study_design.trial_phase_code
-                ),
-                trial_phase_null_value_code=get_term_uid_or_none(
-                    request_high_level_study_design.trial_phase_null_value_code
-                ),
-                is_extension_trial=request_high_level_study_design.is_extension_trial,
-                is_extension_trial_null_value_code=get_term_uid_or_none(
-                    request_high_level_study_design.is_extension_trial_null_value_code
-                ),
-                is_adaptive_design=request_high_level_study_design.is_adaptive_design,
-                is_adaptive_design_null_value_code=get_term_uid_or_none(
-                    request_high_level_study_design.is_adaptive_design_null_value_code
-                ),
-                confirmed_response_minimum_duration=(
-                    create_duration_object_from_api_input(
-                        value=request_high_level_study_design.confirmed_response_minimum_duration.duration_value,
-                        unit=get_unit_def_uid_or_none(
-                            request_high_level_study_design.confirmed_response_minimum_duration.duration_unit_code
-                        ),
-                        find_duration_name_by_code=find_unit_definition_by_uid,
-                    )
-                    if request_high_level_study_design.confirmed_response_minimum_duration
-                    is not None
-                    else None
-                ),
-                confirmed_response_minimum_duration_null_value_code=get_term_uid_or_none(
-                    request_high_level_study_design.confirmed_response_minimum_duration_null_value_code
-                ),
-                post_auth_indicator=request_high_level_study_design.post_auth_indicator,
-                post_auth_indicator_null_value_code=get_term_uid_or_none(
-                    request_high_level_study_design.post_auth_indicator_null_value_code
-                ),
-            )
-        except ValueError as ve:
-            # if it happens here it means some business rules forbid this operation
-            raise exceptions.ValidationException(ve.args[0])
+        new_high_level_study_design = HighLevelStudyDesignVO.from_input_values(
+            study_type_code=get_term_uid_or_none(
+                request_high_level_study_design.study_type_code
+            ),
+            study_stop_rules=request_high_level_study_design.study_stop_rules,
+            study_stop_rules_null_value_code=get_term_uid_or_none(
+                request_high_level_study_design.study_stop_rules_null_value_code
+            ),
+            study_type_null_value_code=get_term_uid_or_none(
+                request_high_level_study_design.study_type_null_value_code
+            ),
+            trial_type_codes=[
+                get_term_uid_or_none(trial_type_code)
+                for trial_type_code in _helper(
+                    request_high_level_study_design.trial_type_codes
+                )
+            ],
+            trial_type_null_value_code=get_term_uid_or_none(
+                request_high_level_study_design.trial_type_null_value_code
+            ),
+            trial_phase_code=get_term_uid_or_none(
+                request_high_level_study_design.trial_phase_code
+            ),
+            trial_phase_null_value_code=get_term_uid_or_none(
+                request_high_level_study_design.trial_phase_null_value_code
+            ),
+            is_extension_trial=request_high_level_study_design.is_extension_trial,
+            is_extension_trial_null_value_code=get_term_uid_or_none(
+                request_high_level_study_design.is_extension_trial_null_value_code
+            ),
+            is_adaptive_design=request_high_level_study_design.is_adaptive_design,
+            is_adaptive_design_null_value_code=get_term_uid_or_none(
+                request_high_level_study_design.is_adaptive_design_null_value_code
+            ),
+            confirmed_response_minimum_duration=(
+                create_duration_object_from_api_input(
+                    value=request_high_level_study_design.confirmed_response_minimum_duration.duration_value,
+                    unit=get_unit_def_uid_or_none(
+                        request_high_level_study_design.confirmed_response_minimum_duration.duration_unit_code
+                    ),
+                    find_duration_name_by_code=find_unit_definition_by_uid,
+                )
+                if request_high_level_study_design.confirmed_response_minimum_duration
+                is not None
+                else None
+            ),
+            confirmed_response_minimum_duration_null_value_code=get_term_uid_or_none(
+                request_high_level_study_design.confirmed_response_minimum_duration_null_value_code
+            ),
+            post_auth_indicator=request_high_level_study_design.post_auth_indicator,
+            post_auth_indicator_null_value_code=get_term_uid_or_none(
+                request_high_level_study_design.post_auth_indicator_null_value_code
+            ),
+        )
 
         return new_high_level_study_design
 
@@ -920,42 +899,37 @@ class StudyService:
                 find_term_by_uid=lambda _: None,
             ),
         )
-        # we start a try block to catch any ValueError and report as Forbidden (otherwise it would be
-        # reported as Internal)
-        try:
-            assert request_id_metadata.registry_identifiers is not None
-            new_id_metadata = StudyIdentificationMetadataVO.from_input_values(
-                project_number=request_id_metadata.project_number,
-                study_number=request_id_metadata.study_number,
-                study_acronym=request_id_metadata.study_acronym,
-                registry_identifiers=RegistryIdentifiersVO.from_input_values(
-                    ct_gov_id=request_id_metadata.registry_identifiers.ct_gov_id,
-                    ct_gov_id_null_value_code=get_term_uid_or_none(
-                        request_id_metadata.registry_identifiers.ct_gov_id_null_value_code
-                    ),
-                    eudract_id=request_id_metadata.registry_identifiers.eudract_id,
-                    eudract_id_null_value_code=get_term_uid_or_none(
-                        request_id_metadata.registry_identifiers.eudract_id_null_value_code
-                    ),
-                    universal_trial_number_utn=request_id_metadata.registry_identifiers.universal_trial_number_utn,
-                    universal_trial_number_utn_null_value_code=get_term_uid_or_none(
-                        request_id_metadata.registry_identifiers.universal_trial_number_utn_null_value_code
-                    ),
-                    japanese_trial_registry_id_japic=request_id_metadata.registry_identifiers.japanese_trial_registry_id_japic,
-                    japanese_trial_registry_id_japic_null_value_code=get_term_uid_or_none(
-                        request_id_metadata.registry_identifiers.japanese_trial_registry_id_japic_null_value_code
-                    ),
-                    investigational_new_drug_application_number_ind=(
-                        request_id_metadata.registry_identifiers.investigational_new_drug_application_number_ind
-                    ),
-                    investigational_new_drug_application_number_ind_null_value_code=get_term_uid_or_none(
-                        request_id_metadata.registry_identifiers.investigational_new_drug_application_number_ind_null_value_code
-                    ),
+
+        assert request_id_metadata.registry_identifiers is not None
+        new_id_metadata = StudyIdentificationMetadataVO.from_input_values(
+            project_number=request_id_metadata.project_number,
+            study_number=request_id_metadata.study_number,
+            study_acronym=request_id_metadata.study_acronym,
+            registry_identifiers=RegistryIdentifiersVO.from_input_values(
+                ct_gov_id=request_id_metadata.registry_identifiers.ct_gov_id,
+                ct_gov_id_null_value_code=get_term_uid_or_none(
+                    request_id_metadata.registry_identifiers.ct_gov_id_null_value_code
                 ),
-            )
-        except ValueError as ve:
-            # if it happens here it means some business rules forbid this operation
-            raise exceptions.ValidationException(ve.args[0])
+                eudract_id=request_id_metadata.registry_identifiers.eudract_id,
+                eudract_id_null_value_code=get_term_uid_or_none(
+                    request_id_metadata.registry_identifiers.eudract_id_null_value_code
+                ),
+                universal_trial_number_utn=request_id_metadata.registry_identifiers.universal_trial_number_utn,
+                universal_trial_number_utn_null_value_code=get_term_uid_or_none(
+                    request_id_metadata.registry_identifiers.universal_trial_number_utn_null_value_code
+                ),
+                japanese_trial_registry_id_japic=request_id_metadata.registry_identifiers.japanese_trial_registry_id_japic,
+                japanese_trial_registry_id_japic_null_value_code=get_term_uid_or_none(
+                    request_id_metadata.registry_identifiers.japanese_trial_registry_id_japic_null_value_code
+                ),
+                investigational_new_drug_application_number_ind=(
+                    request_id_metadata.registry_identifiers.investigational_new_drug_application_number_ind
+                ),
+                investigational_new_drug_application_number_ind_null_value_code=get_term_uid_or_none(
+                    request_id_metadata.registry_identifiers.investigational_new_drug_application_number_ind_null_value_code
+                ),
+            ),
+        )
 
         return new_id_metadata
 
@@ -971,17 +945,10 @@ class StudyService:
             ),
         )
 
-        # we start a try block to catch any ValueError and report as Forbidden (otherwise it would be
-        # reported as Internal)
-        try:
-            # assert request_study_description_metadata.study_title is not None
-            new_id_metadata = StudyDescriptionVO.from_input_values(
-                study_title=request_study_description_metadata.study_title,
-                study_short_title=request_study_description_metadata.study_short_title,
-            )
-        except ValueError as ve:
-            # if it happens here it means some business rules forbid this operation
-            raise exceptions.ValidationException(ve.args[0])
+        new_id_metadata = StudyDescriptionVO.from_input_values(
+            study_title=request_study_description_metadata.study_title,
+            study_short_title=request_study_description_metadata.study_short_title,
+        )
 
         return new_id_metadata
 
@@ -991,7 +958,7 @@ class StudyService:
         uid: str,
         dry: bool,
         study_patch_request: StudyPatchRequestJsonModel,
-        fields: Optional[str] = None,
+        fields: str | None = None,
     ) -> Study:
         try:
             study_definition_ar = self._repos.study_definition_repository.find_by_uid(
@@ -1003,11 +970,11 @@ class StudyService:
                     f"The study with UID '{uid}' cannot be found."
                 )
 
-            new_id_metadata: Optional[StudyIdentificationMetadataVO] = None
-            new_high_level_study_design: Optional[HighLevelStudyDesignVO] = None
-            new_study_population: Optional[StudyPopulationVO] = None
-            new_study_intervention: Optional[StudyInterventionVO] = None
-            new_study_description: Optional[StudyDescriptionVO] = None
+            new_id_metadata: StudyIdentificationMetadataVO | None = None
+            new_high_level_study_design: HighLevelStudyDesignVO | None = None
+            new_study_population: StudyPopulationVO | None = None
+            new_study_intervention: StudyInterventionVO | None = None
+            new_study_description: StudyDescriptionVO | None = None
 
             if (
                 study_patch_request.current_metadata is not None
@@ -1064,35 +1031,30 @@ class StudyService:
                     request_study_description_metadata=study_patch_request.current_metadata.study_description,
                 )
 
-            try:
-                study_definition_ar.edit_metadata(
-                    new_id_metadata=new_id_metadata,
-                    project_exists_callback=self._repos.project_repository.project_number_exists,
-                    new_high_level_study_design=new_high_level_study_design,
-                    study_type_exists_callback=self._repos.ct_term_name_repository.term_exists,
-                    trial_type_exists_callback=self._repos.ct_term_name_repository.term_exists,
-                    trial_intent_type_exists_callback=self._repos.ct_term_name_repository.term_exists,
-                    trial_phase_exists_callback=self._repos.ct_term_name_repository.term_exists,
-                    null_value_exists_callback=self._repos.ct_term_name_repository.term_exists,
-                    new_study_population=new_study_population,
-                    therapeutic_area_exists_callback=self._repos.dictionary_term_generic_repository.term_exists,
-                    disease_condition_or_indication_exists_callback=self._repos.dictionary_term_generic_repository.term_exists,
-                    diagnosis_group_exists_callback=self._repos.dictionary_term_generic_repository.term_exists,
-                    sex_of_participants_exists_callback=self._repos.ct_term_name_repository.term_exists,
-                    new_study_intervention=new_study_intervention,
-                    new_study_description=new_study_description,
-                    study_title_exists_callback=self._repos.study_title_repository.study_title_exists,
-                    study_short_title_exists_callback=self._repos.study_title_repository.study_short_title_exists,
-                    # add here valid callbacks
-                    intervention_type_exists_callback=self._repos.ct_term_name_repository.term_exists,
-                    control_type_exists_callback=self._repos.ct_term_name_repository.term_exists,
-                    intervention_model_exists_callback=self._repos.ct_term_name_repository.term_exists,
-                    trial_blinding_schema_exists_callback=self._repos.ct_term_name_repository.term_exists,
-                )
-
-            except ValueError as ve:
-                # if it happens here it means some business rules forbid this operation
-                raise exceptions.ValidationException(ve.args[0])
+            study_definition_ar.edit_metadata(
+                new_id_metadata=new_id_metadata,
+                project_exists_callback=self._repos.project_repository.project_number_exists,
+                new_high_level_study_design=new_high_level_study_design,
+                study_type_exists_callback=self._repos.ct_term_name_repository.term_exists,
+                trial_type_exists_callback=self._repos.ct_term_name_repository.term_exists,
+                trial_intent_type_exists_callback=self._repos.ct_term_name_repository.term_exists,
+                trial_phase_exists_callback=self._repos.ct_term_name_repository.term_exists,
+                null_value_exists_callback=self._repos.ct_term_name_repository.term_exists,
+                new_study_population=new_study_population,
+                therapeutic_area_exists_callback=self._repos.dictionary_term_generic_repository.term_exists,
+                disease_condition_or_indication_exists_callback=self._repos.dictionary_term_generic_repository.term_exists,
+                diagnosis_group_exists_callback=self._repos.dictionary_term_generic_repository.term_exists,
+                sex_of_participants_exists_callback=self._repos.ct_term_name_repository.term_exists,
+                new_study_intervention=new_study_intervention,
+                new_study_description=new_study_description,
+                study_title_exists_callback=self._repos.study_title_repository.study_title_exists,
+                study_short_title_exists_callback=self._repos.study_title_repository.study_short_title_exists,
+                # add here valid callbacks
+                intervention_type_exists_callback=self._repos.ct_term_name_repository.term_exists,
+                control_type_exists_callback=self._repos.ct_term_name_repository.term_exists,
+                intervention_model_exists_callback=self._repos.ct_term_name_repository.term_exists,
+                trial_blinding_schema_exists_callback=self._repos.ct_term_name_repository.term_exists,
+            )
 
             # now if we are not running in dry mode we can save the instance
             if not dry:

@@ -1,5 +1,8 @@
 import Vue from 'vue'
 import i18n from '../../plugins/i18n'
+import generalUtils from '@/utils/generalUtils'
+
+const studyId = getStudyUid()
 
 const state = {
   drawer: true,
@@ -20,14 +23,14 @@ const state = {
         {
           id: 'process_overview_tile',
           title: i18n.t('Sidebar.library.process_overview'),
-          icon: 'mdi-arrow-right-bold',
+          icon: 'mdi-arrow-right-bold-outline',
           url: { name: 'ProcessOverview' },
           description: i18n.t('Library.process_overview_description')
         },
         {
           id: 'codelists_tile',
           title: i18n.t('Sidebar.library.code_lists'),
-          icon: 'mdi-folder-text',
+          icon: 'mdi-folder-text-outline',
           description: i18n.t('Library.codelist_description'),
           children: [
             {
@@ -56,7 +59,7 @@ const state = {
         {
           id: 'dictionaries_tile',
           title: i18n.t('Sidebar.library.dictionaries'),
-          icon: 'mdi-book-open-variant',
+          icon: 'mdi-book-open-outline',
           description: i18n.t('Library.dictionaries_description'),
           children: [
             {
@@ -112,7 +115,7 @@ const state = {
         {
           id: 'syntax_templates_tile',
           title: i18n.t('Sidebar.library.syntax_templates'),
-          icon: 'mdi-folder-star',
+          icon: 'mdi-folder-star-outline',
           description: i18n.t('Library.syntax_templates_description'),
           children: [
             {
@@ -134,13 +137,17 @@ const state = {
             {
               title: i18n.t('Sidebar.library.activity_templates'),
               url: { name: 'ActivityTemplates' }
+            },
+            {
+              title: i18n.t('Sidebar.library.footnote_templates'),
+              url: { name: 'FootnoteTemplates' }
             }
           ]
         },
         {
           id: 'template_instantiations_tile',
           title: i18n.t('Sidebar.library.template_instantiations'),
-          icon: 'mdi-folder-account',
+          icon: 'mdi-folder-account-outline',
           description: i18n.t('Library.template_instantiations_description'),
           children: [
             {
@@ -156,15 +163,23 @@ const state = {
               url: { name: 'Timeframes' }
             },
             {
+              title: i18n.t('Sidebar.library.activity_instruction_instances'),
+              url: { name: 'ActivityInstructions' }
+            },
+            {
               title: i18n.t('Sidebar.library.criteria_instances'),
               url: { name: 'CriteriaInstances' }
+            },
+            {
+              title: i18n.t('Sidebar.library.footnote_instances'),
+              url: { name: 'FootnoteInstances' }
             }
           ]
         },
         {
           id: 'template_collections_tile',
           title: i18n.t('Sidebar.library.template_collections'),
-          icon: 'mdi-folder-star-multiple',
+          icon: 'mdi-folder-star-multiple-outline',
           description: i18n.t('Library.template_collections_description'),
           children: [
             {
@@ -184,7 +199,7 @@ const state = {
         {
           id: 'data_exchange_std_tile',
           title: i18n.t('Sidebar.library.data_exchange_std'),
-          icon: 'mdi-arrow-decision',
+          icon: 'mdi-arrow-decision-outline',
           description: i18n.t('Library.data_exchange_standards_description'),
           children: [
             {
@@ -246,7 +261,7 @@ const state = {
         {
           id: 'process_overview_tile',
           title: i18n.t('Sidebar.study.process_overview'),
-          icon: 'mdi-arrow-right-bold',
+          icon: 'mdi-arrow-right-bold-outline',
           children: [
             {
               title: i18n.t('Sidebar.study.protocol_process'),
@@ -257,7 +272,7 @@ const state = {
         },
         {
           title: i18n.t('Sidebar.study.manage'),
-          icon: 'mdi-wrench',
+          icon: 'mdi-wrench-outline',
           description: i18n.t('Studies.manage_description'),
           children: [
             {
@@ -266,7 +281,7 @@ const state = {
             },
             {
               title: i18n.t('Sidebar.study.study_status'),
-              url: { name: 'StudyStatus' },
+              url: { name: 'StudyStatus', params: { study_id: studyId } },
               studyRequired: true
             },
             {
@@ -282,57 +297,59 @@ const state = {
           children: [
             {
               title: i18n.t('Sidebar.study.specification_overview'),
-              url: { name: 'SpecificationDashboard' },
-              studyRequired: true
+              url: { name: 'SpecificationDashboard', params: { study_id: studyId } },
+              studyRequired: true,
+              hidden: true
             },
             {
               title: i18n.t('Sidebar.study.study_title'),
-              url: { name: 'StudyTitle' },
+              url: { name: 'StudyTitle', params: { study_id: studyId } },
               studyRequired: true
             },
             {
               title: i18n.t('Sidebar.study.registry_ids'),
-              url: { name: 'StudyRegistryIdentifiers' },
+              url: { name: 'StudyRegistryIdentifiers', params: { study_id: studyId } },
               studyRequired: true
             },
             {
               title: i18n.t('Sidebar.study.study_properties'),
-              url: { name: 'StudyProperties' },
+              url: { name: 'StudyProperties', params: { study_id: studyId } },
               studyRequired: true
             },
             {
               title: i18n.t('Sidebar.study.study_structure'),
-              url: { name: 'StudyStructure' },
+              url: { name: 'StudyStructure', params: { study_id: studyId } },
               studyRequired: true
             },
             {
               title: i18n.t('Sidebar.study.population'),
-              url: { name: 'StudyPopulation' },
+              url: { name: 'StudyPopulation', params: { study_id: studyId } },
               studyRequired: true
             },
             {
               title: i18n.t('Sidebar.study.study_criteria'),
-              url: { name: 'StudySelectionCriteria' },
+              url: { name: 'StudySelectionCriteria', params: { study_id: studyId } },
               studyRequired: true
             },
             {
               title: i18n.t('Sidebar.study.study_interventions'),
-              url: { name: 'StudyInterventions' },
+              url: { name: 'StudyInterventions', params: { study_id: studyId } },
               studyRequired: true
             },
             {
               title: i18n.t('Sidebar.study.purpose'),
-              url: { name: 'StudyPurpose' },
+              url: { name: 'StudyPurpose', params: { study_id: studyId } },
               studyRequired: true
             },
             {
               title: i18n.t('Sidebar.study.activities'),
-              url: { name: 'StudyActivities' },
+              url: { name: 'StudyActivities', params: { study_id: studyId } },
               studyRequired: true
             },
             {
               title: i18n.t('Sidebar.study.terminology'),
-              url: { name: 'StudyTerminology' }
+              url: { name: 'StudyTerminology', params: { study_id: studyId } },
+              hidden: true
             }
           ]
         },
@@ -344,36 +361,43 @@ const state = {
           children: [
             {
               title: i18n.t('Sidebar.study.standarisation_plan'),
-              url: { name: 'StandardisationPlan' }
+              url: { name: 'StandardisationPlan' },
+              hidden: true
             },
             {
               title: i18n.t('Sidebar.study.protocol_elements'),
-              url: { name: 'ProtocolElements' },
+              url: { name: 'ProtocolElements', params: { study_id: studyId } },
               studyRequired: true
             },
             {
               title: i18n.t('Sidebar.study.crf_specifications'),
-              url: { name: 'CrfSpecifications' }
+              url: { name: 'CrfSpecifications' },
+              hidden: true
             },
             {
               title: i18n.t('Sidebar.study.study_disclosure'),
-              url: { name: 'StudyDisclosure' }
+              url: { name: 'StudyDisclosure' },
+              hidden: true
             },
             {
               title: i18n.t('Sidebar.study.trial_supplies_spec'),
-              url: { name: 'TrialSuppliesSpecifications' }
+              url: { name: 'TrialSuppliesSpecifications' },
+              hidden: true
             },
             {
               title: i18n.t('Sidebar.study.odm_specification'),
-              url: { name: 'OdmSpecification' }
+              url: { name: 'OdmSpecification' },
+              hidden: true
             },
             {
               title: i18n.t('Sidebar.study.ctr_odm_xml'),
-              url: { name: 'CtrOdmXml' }
+              url: { name: 'CtrOdmXml' },
+              hidden: true
             },
             {
               title: i18n.t('Sidebar.study.sdtm_specification'),
-              url: { name: 'SdtmSpecification' }
+              url: { name: 'SdtmSpecification' },
+              hidden: true
             },
             {
               title: i18n.t('Sidebar.study.sdtm_study'),
@@ -381,7 +405,8 @@ const state = {
             },
             {
               title: i18n.t('Sidebar.study.adam_spec'),
-              url: { name: 'AdamSpecification' }
+              url: { name: 'AdamSpecification' },
+              hidden: true
             }
           ]
         },
@@ -392,31 +417,38 @@ const state = {
           children: [
             {
               title: i18n.t('Sidebar.study.mma_trial_metadata'),
-              url: { name: 'MmaTrialMetadata' }
+              url: { name: 'MmaTrialMetadata' },
+              hidden: true
             },
             {
               title: i18n.t('Sidebar.study.sdtm_define_p21'),
-              url: { name: 'SdtmDefineP21' }
+              url: { name: 'SdtmDefineP21' },
+              hidden: true
             },
             {
               title: i18n.t('Sidebar.study.sdtm_define_cst'),
-              url: { name: 'SdtmDefineCst' }
+              url: { name: 'SdtmDefineCst' },
+              hidden: true
             },
             {
               title: i18n.t('Sidebar.study.dmw_additional_metadata'),
-              url: { name: 'DmwAdditionalMetadata' }
+              url: { name: 'DmwAdditionalMetadata' },
+              hidden: true
             },
             {
               title: i18n.t('Sidebar.study.sdtm_additional_metadata'),
-              url: { name: 'SdtmAdditionalMetadata' }
+              url: { name: 'SdtmAdditionalMetadata' },
+              hidden: true
             },
             {
               title: i18n.t('Sidebar.study.adam_define_p21'),
-              url: { name: 'AdamDefineP21' }
+              url: { name: 'AdamDefineP21' },
+              hidden: true
             },
             {
               title: i18n.t('Sidebar.study.adam_define_cst'),
-              url: { name: 'AdamDefineCst' }
+              url: { name: 'AdamDefineCst' },
+              hidden: true
             },
             {
               title: i18n.t('Sidebar.study.analysis_study_metadata_new'),
@@ -562,6 +594,18 @@ const actions = {
     }
     commit('ADD_BREADCRUMBS_LEVEL', { item, pos: index, replace })
   }
+}
+
+function getStudyUid () {
+  const studyUidFromUrl = generalUtils.extractStudyUidFromUrl(document.location.pathname)
+  if (studyUidFromUrl) {
+    return studyUidFromUrl
+  }
+  const selectedStudyFromLocalStorage = JSON.parse(localStorage.getItem('selectedStudy'))
+  if (selectedStudyFromLocalStorage) {
+    return selectedStudyFromLocalStorage.uid
+  }
+  return '*'
 }
 
 export default {

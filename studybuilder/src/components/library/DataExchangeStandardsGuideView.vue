@@ -1,7 +1,7 @@
 <template>
 <div>
   <v-row>
-    <v-col cols="2">
+    <v-col cols="1">
       <v-timeline dense>
         <v-timeline-item
           v-for="model of models"
@@ -14,17 +14,17 @@
             :color="activeGuide === model ? 'primary' : 'default'"
             @click="chooseGuideVersion(model)"
             >
-            {{ model.name }}
+            {{ model.version_number }}
           </v-btn>
         </v-timeline-item>
       </v-timeline>
     </v-col>
     <v-spacer/>
-    <v-col cols="10">
+    <v-col cols="11">
       <v-card
         class="mt-2 mb-2"
         elevation="6"
-        max-width="1440px">
+        max-width="99%">
         <v-card-text>
           <v-row>
             <v-col cols="1">
@@ -33,18 +33,18 @@
             </v-col>
             <v-col cols="3">
               <div class="font-weight-bold">{{ $t('DataModels.effective_date') }}</div>
-              <p class="font-weight-regular">{{ activeGuide.start_date|date }}</p>
+              <p class="font-weight-regular">{{ activeGuide.start_date ? activeGuide.start_date.substring(0, 10) : '' }}</p>
             </v-col>
             <v-col cols="3">
               <div class="font-weight-bold">{{ $t('DataModels.implements') }}</div>
-              <a href="#"  @click="redirectToModel(activeGuide.implemented_data_model)" class="font-weight-regular">{{ activeGuide.implemented_data_model ? activeGuide.implemented_data_model.name : '' }}</a>
+              <a href="#" @click="redirectToModel(activeGuide.implemented_data_model)" class="font-weight-regular">{{ activeGuide.implemented_data_model ? activeGuide.implemented_data_model.name : '' }}</a>
             </v-col>
           </v-row>
         </v-card-text>
       </v-card>
       <div class="title font-weight-bold mt-6">{{ $t('DataModels.classes') }}</div>
       <v-tabs v-model="tab" show-arrows>
-        <v-tab v-for="tab of datasets" :key="tab[0].uid" :href="tab[0].tab">{{ tab[0].implemented_dataset_class.dataset_class_name.replaceAll('_', ' ') }}</v-tab>
+        <v-tab v-for="tab of datasets" :key="tab[0].uid" :href="tab[0].tab">{{ tab[0].implemented_dataset_class.dataset_class_name ? tab[0].implemented_dataset_class.dataset_class_name.replaceAll('_', ' ') : '0' }}</v-tab>
       </v-tabs>
       <v-tabs-items v-model="tab">
         <v-tab-item
@@ -78,7 +78,10 @@
               :headers="headers"
               :items="variables">
                 <template v-slot:item.referenced_codelist.uid="{ item }">
-                  <a href="#" @click="openCodelistTerms(item.referenced_codelist.uid)">{{ item.referenced_codelist ? item.referenced_codelist.uid : '' }}</a>
+                  <a href="#" @click="showCodelistTerms(item.referenced_codelist.uid)">{{ item.referenced_codelist ? item.referenced_codelist.uid : '' }}</a>
+                </template>
+                <template v-slot:item.implements_variable.uid="{ item }">
+                  <a href="#" @click="openImplementedModel(item.implements_variable.uid)">{{ item.implements_variable ? item.implements_variable.uid : '' }}</a>
                 </template>
             </v-data-table>
           </div>
@@ -117,7 +120,10 @@
                   :headers="headers"
                   :items="variables">
                     <template v-slot:item.referenced_codelist.uid="{ item }">
-                      <a href="#" @click="openCodelistTerms(item.referenced_codelist.uid)">{{ item.referenced_codelist ? item.referenced_codelist.uid : '' }}</a>
+                      <a href="#" @click="showCodelistTerms(item.referenced_codelist.uid)">{{ item.referenced_codelist ? item.referenced_codelist.uid : '' }}</a>
+                    </template>
+                    <template v-slot:item.implements_variable.uid="{ item }">
+                      <a href="#" @click="openImplementedModel(item.implements_variable.uid)">{{ item.implements_variable ? item.implements_variable.uid : '' }}</a>
                     </template>
                 </v-data-table>
               </v-tab-item>
@@ -127,25 +133,25 @@
       </v-tabs-items>
     </v-col>
   </v-row>
+  <v-dialog v-model="showCodelist" persistent>
+    <standards-codelist-terms-dialog :codelistUid="codelistUid" @close="closeCodelistTerms"/>
+  </v-dialog>
 </div>
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
 import standards from '@/api/standards'
 import _isEmpty from 'lodash/isEmpty'
+import StandardsCodelistTermsDialog from '@/components/library/StandardsCodelistTermsDialog'
 
 export default {
   props: {
-    uid: Array,
+    uid: String,
     headers: Array,
     redirectGuide: Object
   },
   components: {
-  },
-  computed: {
-    ...mapGetters({
-    })
+    StandardsCodelistTermsDialog
   },
   data () {
     return {
@@ -156,12 +162,14 @@ export default {
       tab: null,
       variables: [],
       loading: false,
-      domainTab: null
+      domainTab: null,
+      showCodelist: false,
+      codelistUid: ''
     }
   },
   mounted () {
     const params = {
-      filters: { uid: { v: this.uid, op: 'co' } },
+      filters: { uid: { v: [this.uid], op: 'eq' } },
       page_size: 0
     }
     standards.getAllGuides(params).then(resp => {
@@ -170,34 +178,49 @@ export default {
     })
   },
   methods: {
-    openCodelistTerms (codelistUid) {
-      this.$router.push({
-        name: 'CodelistTerms',
-        params: { codelist_id: codelistUid, catalogue_name: 'All' }
+    openImplementedModel (variable) {
+      const params = {
+        data_model_name: this.activeGuide.implemented_data_model.uid,
+        data_model_version: this.activeGuide.implemented_data_model.name.substring(6),
+        dataset_class_name: this.datasets[this.tab][0].implemented_dataset_class.dataset_class_name,
+        filters: { uid: { v: [variable], op: 'eq' } }
+      }
+      standards.getClassVariables(params).then(resp => {
+        this.$emit('redirectToModelWithVariable', { data: resp.data.items, implementation: this.activeGuide.implemented_data_model })
       })
+    },
+    showCodelistTerms (codelistUid) {
+      this.codelistUid = codelistUid
+      this.showCodelist = true
+    },
+    closeCodelistTerms () {
+      this.codelistUid = ''
+      this.showCodelist = false
     },
     redirectToModel (item) {
       this.$emit('redirectToModel', item)
     },
     chooseGuideVersion (guide) {
-      this.datasets = []
-      this.activeGuide = guide
-      const params = {
-        data_model_ig_name: this.activeGuide.uid,
-        data_model_ig_version: this.activeGuide.version_number,
-        page_size: 0
+      if (guide) {
+        this.datasets = []
+        this.activeGuide = guide
+        const params = {
+          data_model_ig_name: this.activeGuide.uid,
+          data_model_ig_version: this.activeGuide.version_number,
+          page_size: 0
+        }
+        standards.getDatasets(params).then(resp => {
+          this.datasets = resp.data.items
+          const sortedDatasets = Object.values(this.datasets.reduce((acc, curr) => {
+            acc[curr.implemented_dataset_class.dataset_class_name] = acc[curr.implemented_dataset_class.dataset_class_name] || []
+            acc[curr.implemented_dataset_class.dataset_class_name].push(curr)
+            return acc
+          }, {})).sort((a, b) => a[0].implemented_dataset_class.dataset_class_name.localeCompare(b[0].implemented_dataset_class.dataset_class_name))
+          this.datasets = sortedDatasets
+          this.tab = 0
+          this.getVariables(this.datasets[0][0].label)
+        })
       }
-      standards.getDatasets(params).then(resp => {
-        this.datasets = resp.data.items
-        const sortedDatasets = Object.values(this.datasets.reduce((acc, curr) => {
-          acc[curr.implemented_dataset_class.dataset_class_name] = acc[curr.implemented_dataset_class.dataset_class_name] || []
-          acc[curr.implemented_dataset_class.dataset_class_name].push(curr)
-          return acc
-        }, {})).sort((a, b) => a[0].implemented_dataset_class.dataset_class_name.localeCompare(b[0].implemented_dataset_class.dataset_class_name))
-        this.datasets = sortedDatasets
-        this.tab = 0
-        this.getVariables(this.datasets[0][0].label)
-      })
     },
     getVariables (domain) {
       this.loading = true
@@ -221,7 +244,9 @@ export default {
   watch: {
     tab (value) {
       this.domainTab = 0
-      this.getVariables(this.datasets[value][0].label)
+      if (this.datasets[value]) {
+        this.getVariables(this.datasets[value][0].label)
+      }
     },
     redirectGuide (value) {
       this.chooseGuideVersion(this.models.find(model => model.name === value.name))

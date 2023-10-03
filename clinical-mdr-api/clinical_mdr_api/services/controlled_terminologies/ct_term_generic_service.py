@@ -1,6 +1,6 @@
 import abc
 from datetime import datetime
-from typing import Any, Generic, Optional, Sequence, TypeVar
+from typing import Any, Generic, Sequence, TypeVar
 
 from neomodel import db
 from pydantic import BaseModel
@@ -37,9 +37,9 @@ class CTTermGenericService(Generic[_AggregateRootType], abc.ABC):
     version_class: type
     repository_interface: type
     _repos: MetaRepository
-    user_initials: Optional[str]
+    user_initials: str | None
 
-    def __init__(self, user: Optional[str] = None):
+    def __init__(self, user: str | None = None):
         self.user_initials = user if user is not None else "TODO user initials"
         self._repos = MetaRepository(self.user_initials)
 
@@ -53,15 +53,15 @@ class CTTermGenericService(Generic[_AggregateRootType], abc.ABC):
 
     def non_transactional_get_all_ct_terms(
         self,
-        codelist_uid: Optional[str] = None,
-        codelist_name: Optional[str] = None,
-        library: Optional[str] = None,
-        package: Optional[str] = None,
-        sort_by: Optional[dict] = None,
+        codelist_uid: str | None = None,
+        codelist_name: str | None = None,
+        library: str | None = None,
+        package: str | None = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[BaseModel]:
         self.enforce_codelist_package_library(
@@ -91,15 +91,15 @@ class CTTermGenericService(Generic[_AggregateRootType], abc.ABC):
     @db.transaction
     def get_all_ct_terms(
         self,
-        codelist_uid: Optional[str] = None,
-        codelist_name: Optional[str] = None,
-        library: Optional[str] = None,
-        package: Optional[str] = None,
-        sort_by: Optional[dict] = None,
+        codelist_uid: str | None = None,
+        codelist_name: str | None = None,
+        library: str | None = None,
+        package: str | None = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[BaseModel]:
         return self.non_transactional_get_all_ct_terms(
@@ -117,14 +117,14 @@ class CTTermGenericService(Generic[_AggregateRootType], abc.ABC):
 
     def get_distinct_values_for_header(
         self,
-        codelist_uid: Optional[str],
-        codelist_name: Optional[str],
-        library: Optional[str],
-        package: Optional[str],
+        codelist_uid: str | None,
+        codelist_name: str | None,
+        library: str | None,
+        package: str | None,
         field_name: str,
-        search_string: Optional[str] = "",
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        search_string: str | None = "",
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
     ) -> Sequence:
         self.enforce_codelist_package_library(
@@ -160,9 +160,9 @@ class CTTermGenericService(Generic[_AggregateRootType], abc.ABC):
     def get_by_uid(
         self,
         term_uid: str,
-        version: Optional[str] = None,
-        at_specific_date: Optional[datetime] = None,
-        status: Optional[str] = None,
+        version: str | None = None,
+        at_specific_date: datetime | None = None,
+        status: str | None = None,
     ) -> BaseModel:
         item = self._find_by_uid_or_raise_not_found(
             term_uid=term_uid,
@@ -175,10 +175,10 @@ class CTTermGenericService(Generic[_AggregateRootType], abc.ABC):
     def _find_by_uid_or_raise_not_found(
         self,
         term_uid: str,
-        version: Optional[str] = None,
-        at_specific_date: Optional[datetime] = None,
-        status: Optional[LibraryItemStatus] = None,
-        for_update: Optional[bool] = False,
+        version: str | None = None,
+        at_specific_date: datetime | None = None,
+        status: LibraryItemStatus | None = None,
+        for_update: bool | None = False,
     ) -> _AggregateRootType:
         item = self.repository.find_by_uid(
             term_uid=term_uid,
@@ -272,10 +272,10 @@ class CTTermGenericService(Generic[_AggregateRootType], abc.ABC):
 
     def enforce_codelist_package_library(
         self,
-        codelist_uid: Optional[str],
-        codelist_name: Optional[str],
-        library: Optional[str],
-        package: Optional[str],
+        codelist_uid: str | None,
+        codelist_name: str | None,
+        library: str | None,
+        package: str | None,
     ) -> None:
         if (
             codelist_uid is not None

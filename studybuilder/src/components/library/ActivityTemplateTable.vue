@@ -7,6 +7,7 @@
   :headers="headers"
   fullscreen-form
   :history-formating-func="formatHistoryItem"
+  :history-excluded-headers="historyExcludedHeaders"
   :prepare-duplicate-payload-func="prepareDuplicatePayload"
   >
   <template v-slot:editform="{ closeForm, selectedObject, preInstanceMode }">
@@ -109,6 +110,12 @@ export default {
         { text: this.$t('_global.modified'), value: 'start_date' },
         { text: this.$t('_global.status'), value: 'status' },
         { text: this.$t('_global.version'), value: 'version' }
+      ],
+      historyExcludedHeaders: [
+        'indications.name',
+        'activities',
+        'activity_groups',
+        'activity_subgroups'
       ],
       test: true,
       urlPrefix: '/activity-instruction-templates'

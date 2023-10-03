@@ -22,7 +22,7 @@
         :disabled="readOnly"
         @click="removeExtension(item)">
         <v-icon dark>
-          mdi-trash-can
+          mdi-delete-outline
         </v-icon>
       </v-btn>
     </template>

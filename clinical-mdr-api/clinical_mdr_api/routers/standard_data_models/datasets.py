@@ -1,5 +1,5 @@
 """datasets router."""
-from typing import Any, List, Optional
+from typing import Any
 
 from fastapi import APIRouter, Depends, Path, Query
 from pydantic.types import Json
@@ -9,11 +9,12 @@ from clinical_mdr_api import config
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.standard_data_models.dataset import Dataset
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.oauth import get_current_user_id
+from clinical_mdr_api.oauth import get_current_user_id, rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.standard_data_models.dataset import DatasetService
 
+# Prefixed with "/standards"
 router = APIRouter()
 
 DatasetUID = Path(None, description="The unique id of the Dataset")
@@ -21,6 +22,7 @@ DatasetUID = Path(None, description="The unique id of the Dataset")
 
 @router.get(
     "/datasets",
+    dependencies=[rbac.LIBRARY_READ],
     summary="List all datasets",
     description=f"""
 State before:
@@ -63,24 +65,24 @@ def get_datasets(
         description="The version of the selected Data model implementation guide, for instance '2.2'",
     ),
     sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
-    page_number: Optional[int] = Query(
-        1, ge=1, description=_generic_descriptions.PAGE_NUMBER
-    ),
-    page_size: Optional[int] = Query(
+    page_number: int
+    | None = Query(1, ge=1, description=_generic_descriptions.PAGE_NUMBER),
+    page_size: int
+    | None = Query(
         config.DEFAULT_PAGE_SIZE,
         ge=0,
         le=config.MAX_PAGE_SIZE,
         description=_generic_descriptions.PAGE_SIZE,
     ),
-    filters: Optional[Json] = Query(
+    filters: Json
+    | None = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
-    operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    total_count: Optional[bool] = Query(
-        False, description=_generic_descriptions.TOTAL_COUNT
-    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    total_count: bool
+    | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
     current_user_id: str = Depends(get_current_user_id),
 ):
     dataset_service = DatasetService(user=current_user_id)
@@ -95,16 +97,17 @@ def get_datasets(
         filter_operator=FilterOperator.from_str(operator),
     )
     return CustomPage.create(
-        items=results.items, total=results.total_count, page=page_number, size=page_size
+        items=results.items, total=results.total, page=page_number, size=page_size
     )
 
 
 @router.get(
     "/datasets/headers",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns possible values from the database for a given header",
     description="Allowed parameters include : field name for which to get possible values, "
     "search string to provide filtering for the field name, additional filters to apply on other fields",
-    response_model=List[Any],
+    response_model=list[Any],
     status_code=200,
     responses={
         404: {
@@ -125,18 +128,17 @@ def get_distinct_values_for_header(
     ),
     current_user_id: str = Depends(get_current_user_id),
     field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
-    search_string: Optional[str] = Query(
-        "", description=_generic_descriptions.HEADER_SEARCH_STRING
-    ),
-    filters: Optional[Json] = Query(
+    search_string: str
+    | None = Query("", description=_generic_descriptions.HEADER_SEARCH_STRING),
+    filters: Json
+    | None = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
-    operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    result_count: Optional[int] = Query(
-        10, description=_generic_descriptions.HEADER_RESULT_COUNT
-    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    result_count: int
+    | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
 ):
     dataset_service = DatasetService(user=current_user_id)
     return dataset_service.get_distinct_values_for_header(
@@ -152,6 +154,7 @@ def get_distinct_values_for_header(
 
 @router.get(
     "/datasets/{uid}",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Get details on a specific dataset",
     description="""
 State before:

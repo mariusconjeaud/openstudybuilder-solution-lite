@@ -1,4 +1,13 @@
-from neomodel import One, RelationshipFrom, RelationshipTo, StringProperty, ZeroOrOne
+from neomodel import (
+    BooleanProperty,
+    One,
+    OneOrMore,
+    RelationshipFrom,
+    RelationshipTo,
+    StringProperty,
+    ZeroOrMore,
+    ZeroOrOne,
+)
 
 from clinical_mdr_api.domain_repositories.models.biomedical_concepts import (
     ActivityInstanceClassRoot,
@@ -9,9 +18,19 @@ from clinical_mdr_api.domain_repositories.models.concepts import (
     ConceptValue,
 )
 from clinical_mdr_api.domain_repositories.models.generic import (
+    ClinicalMdrNodeWithUID,
     ClinicalMdrRel,
     VersionRelationship,
 )
+
+
+class ActivityValidGroup(ClinicalMdrNodeWithUID):
+    in_group = RelationshipTo(
+        "ActivityGroupValue", "IN_GROUP", model=ClinicalMdrRel, cardinality=One
+    )
+    has_group = RelationshipFrom(
+        "ActivitySubGroupValue", "HAS_GROUP", model=ClinicalMdrRel, cardinality=One
+    )
 
 
 class ActivityGroupValue(ConceptValue):
@@ -20,6 +39,9 @@ class ActivityGroupValue(ConceptValue):
     )
     has_version = RelationshipFrom(
         "ActivityGroupRoot", "HAS_VERSION", model=VersionRelationship
+    )
+    in_group = RelationshipFrom(
+        ActivityValidGroup, "IN_GROUP", model=ClinicalMdrRel, cardinality=ZeroOrMore
     )
 
 
@@ -48,7 +70,9 @@ class ActivitySubGroupValue(ConceptValue):
     has_version = RelationshipFrom(
         "ActivitySubGroupRoot", "HAS_VERSION", model=VersionRelationship
     )
-    in_group = RelationshipTo(ActivityGroupValue, "IN_GROUP", model=ClinicalMdrRel)
+    has_group = RelationshipTo(
+        ActivityValidGroup, "HAS_GROUP", model=ClinicalMdrRel, cardinality=OneOrMore
+    )
 
 
 class ActivitySubGroupRoot(ConceptRoot):
@@ -69,7 +93,17 @@ class ActivitySubGroupRoot(ConceptRoot):
     )
 
 
+class ActivityGrouping(ClinicalMdrNodeWithUID):
+    in_subgroup = RelationshipTo(
+        ActivityValidGroup, "IN_SUBGROUP", model=ClinicalMdrRel, cardinality=OneOrMore
+    )
+    has_grouping = RelationshipFrom(
+        "ActivityValue", "HAS_GROUPING", model=ClinicalMdrRel, cardinality=One
+    )
+
+
 class ActivityValue(ConceptValue):
+    is_data_collected = BooleanProperty()
     has_latest_value = RelationshipFrom("ActivityRoot", "LATEST", model=ClinicalMdrRel)
     has_version = RelationshipFrom(
         "ActivityRoot", "HAS_VERSION", model=VersionRelationship
@@ -83,8 +117,8 @@ class ActivityValue(ConceptValue):
     latest_retired = RelationshipFrom(
         "ActivityRoot", "LATEST_RETIRED", model=ClinicalMdrRel
     )
-    in_subgroup = RelationshipTo(
-        ActivitySubGroupValue, "IN_SUB_GROUP", model=ClinicalMdrRel
+    has_grouping = RelationshipTo(
+        ActivityGrouping, "HAS_GROUPING", model=ClinicalMdrRel, cardinality=ZeroOrMore
     )
     request_rationale = StringProperty()
     replaced_by_activity = RelationshipTo(
@@ -112,7 +146,9 @@ class ActivityInstanceValue(ConceptValue):
     adam_param_code = StringProperty()
     legacy_description = StringProperty()
 
-    in_hierarchy = RelationshipTo(ActivityValue, "IN_HIERARCHY", model=ClinicalMdrRel)
+    has_activity = RelationshipTo(
+        ActivityGrouping, "HAS_ACTIVITY", model=ClinicalMdrRel, cardinality=OneOrMore
+    )
     activity_instance_class = RelationshipTo(
         ActivityInstanceClassRoot,
         "ACTIVITY_INSTANCE_CLASS",

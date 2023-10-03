@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Self
 
 from pydantic import Field
 
@@ -23,42 +23,43 @@ from clinical_mdr_api.models.utils import BaseModel
 
 class CriteriaPreInstance(BaseModel):
     uid: str
-    sequence_id: Optional[str] = Field(None, nullable=True)
+    sequence_id: str | None = Field(None, nullable=True)
     template_uid: str
     template_name: str
-    template_type_uid: Optional[str] = Field(None, nullable=True)
-    name: Optional[str] = Field(None, nullable=True)
-    name_plain: Optional[str] = Field(None, nullable=True)
-    start_date: Optional[datetime] = Field(None, nullable=True)
-    end_date: Optional[datetime] = Field(None, nullable=True)
-    status: Optional[str] = Field(None, nullable=True)
-    version: Optional[str] = Field(None, nullable=True)
-    change_description: Optional[str] = Field(None, nullable=True)
-    user_initials: Optional[str] = Field(None, nullable=True)
-    parameter_terms: List[MultiTemplateParameterTerm] = Field(
+    template_type_uid: str | None = Field(None, nullable=True)
+    guidance_text: str | None = Field(None, nullable=True)
+    name: str | None = Field(None, nullable=True)
+    name_plain: str | None = Field(None, nullable=True)
+    start_date: datetime | None = Field(None, nullable=True)
+    end_date: datetime | None = Field(None, nullable=True)
+    status: str | None = Field(None, nullable=True)
+    version: str | None = Field(None, nullable=True)
+    change_description: str | None = Field(None, nullable=True)
+    user_initials: str | None = Field(None, nullable=True)
+    parameter_terms: list[MultiTemplateParameterTerm] = Field(
         [],
         description="Holds the parameter terms that are used within the criteria. The terms are ordered as they occur in the criteria name.",
     )
-    indications: List[DictionaryTerm] = Field(
+    indications: list[DictionaryTerm] = Field(
         [],
         description="The study indications, conditions, diseases or disorders in scope for the pre-instance.",
     )
-    categories: List[CTTermNameAndAttributes] = Field(
+    categories: list[CTTermNameAndAttributes] = Field(
         [], description="A list of categories the pre-instance belongs to."
     )
-    sub_categories: List[CTTermNameAndAttributes] = Field(
+    sub_categories: list[CTTermNameAndAttributes] = Field(
         [], description="A list of sub-categories the pre-instance belongs to."
     )
-    library: Optional[Library] = Field(None, nullable=True)
-    possible_actions: List[str] = Field([])
+    library: Library | None = Field(None, nullable=True)
+    possible_actions: list[str] = Field([])
 
     @classmethod
     def from_criteria_pre_instance_ar(
         cls, criteria_pre_instance_ar: CriteriaPreInstanceAR
-    ) -> "CriteriaPreInstance":
-        parameter_terms: List[MultiTemplateParameterTerm] = []
+    ) -> Self:
+        parameter_terms: list[MultiTemplateParameterTerm] = []
         for position, parameter in enumerate(criteria_pre_instance_ar.get_parameters()):
-            terms: List[IndexedTemplateParameterTerm] = []
+            terms: list[IndexedTemplateParameterTerm] = []
             for index, parameter_term in enumerate(parameter.parameters):
                 pv = IndexedTemplateParameterTerm(
                     index=index + 1,
@@ -82,6 +83,9 @@ class CriteriaPreInstance(BaseModel):
             template_type_uid=None,
             name=criteria_pre_instance_ar.name,
             name_plain=criteria_pre_instance_ar.name_plain,
+            guidance_text=criteria_pre_instance_ar._template.guidance_text
+            if criteria_pre_instance_ar.guidance_text is None
+            else criteria_pre_instance_ar.guidance_text,
             start_date=criteria_pre_instance_ar.item_metadata.start_date,
             end_date=criteria_pre_instance_ar.item_metadata.end_date,
             status=criteria_pre_instance_ar.item_metadata.status.value,
@@ -124,27 +128,34 @@ class CriteriaPreInstance(BaseModel):
 
 
 class CriteriaPreInstanceIndexingsInput(BaseModel):
-    indication_uids: Optional[List[str]] = Field(
+    indication_uids: list[str] | None = Field(
         None,
         description="A list of UID of the study indications, conditions, diseases or disorders to attach the pre-instance to.",
     )
-    category_uids: Optional[List[str]] = Field(
+    category_uids: list[str] | None = Field(
         None,
         description="A list of UID of the categories to attach the pre-instance to.",
     )
-    sub_category_uids: Optional[List[str]] = Field(
+    sub_category_uids: list[str] | None = Field(
         None,
         description="A list of UID of the sub_categories to attach the pre-instance to.",
     )
 
 
 class CriteriaPreInstanceCreateInput(PreInstanceInput):
-    indication_uids: List[str]
-    category_uids: List[str]
-    sub_category_uids: List[str]
+    indication_uids: list[str]
+    category_uids: list[str]
+    sub_category_uids: list[str]
 
 
 class CriteriaPreInstanceEditInput(PreInstanceInput):
+    guidance_text: str | None = Field(
+        None,
+        description="This field accepts a string value or None. If None is provided, the value of this property will not be altered. "
+        "This means that if the value is inherited from the parent template, it will remain inherited. "
+        "Similarly, if the value is set to some specific string, then it will remain the same and not become None.",
+        nullable=True,
+    )
     change_description: str = Field(
         ...,
         description="A short description about what has changed compared to the previous version.",
@@ -156,7 +167,7 @@ class CriteriaPreInstanceVersion(CriteriaPreInstance):
     Class for storing Criteria Pre-Instances and calculation of differences
     """
 
-    changes: Optional[Dict[str, bool]] = Field(
+    changes: dict[str, bool] | None = Field(
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "

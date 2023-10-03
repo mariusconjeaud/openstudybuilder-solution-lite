@@ -1,12 +1,9 @@
-from typing import Optional
-
 from neomodel import db
 
 from clinical_mdr_api.domain_repositories.models.syntax import EndpointPreInstanceRoot
 from clinical_mdr_api.domain_repositories.syntax_pre_instances.endpoint_pre_instance_repository import (
     EndpointPreInstanceRepository,
 )
-from clinical_mdr_api.domains._utils import generate_seq_id
 from clinical_mdr_api.domains.syntax_pre_instances.endpoint_pre_instance import (
     EndpointPreInstanceAR,
 )
@@ -41,14 +38,14 @@ class EndpointPreInstanceService(EndpointService[EndpointPreInstanceAR]):
         self,
         template,
         generate_uid_callback=None,
-        study_uid: Optional[str] = None,
-        template_uid: Optional[str] = None,
-        include_study_endpoints: Optional[bool] = False,
+        study_uid: str | None = None,
+        template_uid: str | None = None,
+        include_study_endpoints: bool | None = False,
     ) -> EndpointPreInstanceAR:
         item_ar = super().create_ar_from_input_values(
             template=template,
             generate_uid_callback=generate_uid_callback,
-            generate_seq_id_callback=generate_seq_id,
+            next_available_sequence_id_callback=self.repository.next_available_sequence_id,
             study_uid=study_uid,
             template_uid=template_uid,
             include_study_endpoints=include_study_endpoints,
@@ -64,20 +61,22 @@ class EndpointPreInstanceService(EndpointService[EndpointPreInstanceAR]):
 
     def get_all(
         self,
-        status: Optional[str] = None,
+        status: str | None = None,
         return_study_count: bool = True,
-        sort_by: Optional[dict] = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[EndpointPreInstance]:
-        pre_instances = self._repos.endpoint_pre_instance_repository.find_all()
-        all_items = []
-        for pre_instance in pre_instances:
-            item = self._transform_aggregate_root_to_pydantic_model(pre_instance)
-            all_items.append(item)
+        pre_instances = self._repos.endpoint_pre_instance_repository.find_all(
+            status=status, return_study_count=return_study_count
+        )
+        all_items = [
+            self._transform_aggregate_root_to_pydantic_model(pre_instance)
+            for pre_instance in pre_instances
+        ]
 
         # The get_all method is only using neomodel, without Cypher query
         # Therefore, the filtering will be done in this service layer

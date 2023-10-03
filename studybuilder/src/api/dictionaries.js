@@ -4,13 +4,10 @@ const resource = 'dictionaries'
 
 export default {
   getSnomedCategories (options) {
-    const params = {
-      ...options
-    }
-    return repository.get(`${resource}/codelists/SNOMED`, { params })
+    return repository.get(`${resource}/codelists`, { params: { library: 'SOMED', ...options } })
   },
   getCodelists (library) {
-    return repository.get(`${resource}/codelists/${library}`, { params: { page_size: 0 } })
+    return repository.get(`${resource}/codelists`, { params: { library: library, page_size: 0 } })
   },
   getTerms (options) {
     const params = {

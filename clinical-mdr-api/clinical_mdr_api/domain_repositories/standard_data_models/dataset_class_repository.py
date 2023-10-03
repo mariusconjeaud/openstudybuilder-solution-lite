@@ -1,5 +1,3 @@
-from typing import Optional
-
 from clinical_mdr_api.domain_repositories.models.standard_data_model import (
     DatasetClass,
     DatasetClassInstance,
@@ -19,7 +17,7 @@ class DatasetClassRepository(StandardDataModelRepository):
 
     # pylint: disable=unused-argument
     def generic_match_clause(
-        self, versioning_relationship: str, uid: Optional[str] = None
+        self, versioning_relationship: str, uid: str | None = None
     ):
         standard_data_model_label = self.root_class.__label__
         standard_data_model_value_label = self.value_class.__label__

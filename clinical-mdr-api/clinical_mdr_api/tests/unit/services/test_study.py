@@ -2,7 +2,7 @@ import random
 import sys
 import unittest
 from dataclasses import dataclass
-from typing import Iterable, Optional
+from typing import Iterable
 from unittest.mock import PropertyMock, patch
 
 from clinical_mdr_api.config import DEFAULT_STUDY_FIELD_CONFIG_FILE
@@ -71,7 +71,7 @@ class UnitDefinitionRepositoryForTestImpl:
         }
     )
 
-    def find_by_uid_2(self, code: str) -> Optional[UnitDefinition]:
+    def find_by_uid_2(self, code: str) -> UnitDefinition | None:
         results = [_ for _ in self._repo_content if _.uid == code]
         return None if len(results) == 0 else results[0]
 

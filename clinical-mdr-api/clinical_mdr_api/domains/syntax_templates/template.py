@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import AbstractSet, Callable, Optional, Sequence
+from typing import AbstractSet, Callable, Self, Sequence
 
 from deprecated.classic import deprecated
 
@@ -28,12 +28,12 @@ class TemplateVO:
 
     # template name value
     name: str
-    name_plain: Optional[str] = None
+    name_plain: str | None = None
     # Optional, default parameter terms
-    default_parameter_terms: Optional[Sequence[ParameterTermEntryVO]] = None
+    default_parameter_terms: Sequence[ParameterTermEntryVO] | None = None
 
     # template guidance text
-    guidance_text: Optional[str] = None
+    guidance_text: str | None = None
 
     @staticmethod
     def _extract_parameter_names_from_template_string(
@@ -50,9 +50,9 @@ class TemplateVO:
         cls,
         template_name: str,
         parameter_name_exists_callback: Callable[[str], bool],
-        default_parameter_terms: Optional[Sequence[ParameterTermEntryVO]] = None,
-        template_guidance_text: Optional[str] = None,
-    ) -> "TemplateVO":
+        default_parameter_terms: Sequence[ParameterTermEntryVO] | None = None,
+        guidance_text: str | None = None,
+    ) -> Self:
         if not is_syntax_of_template_name_correct(template_name):
             raise ValidationException(
                 f"Template string syntax incorrect: {template_name}"
@@ -60,7 +60,7 @@ class TemplateVO:
         result = cls(
             name=template_name,
             name_plain=strip_html(template_name),
-            guidance_text=template_guidance_text,
+            guidance_text=guidance_text,
             default_parameter_terms=tuple(default_parameter_terms)
             if default_parameter_terms
             else None,
@@ -77,12 +77,12 @@ class TemplateVO:
         cls,
         template_name: str,
         template_name_plain: str,
-        template_guidance_text: Optional[str] = None,
-    ) -> "TemplateVO":
+        guidance_text: str | None = None,
+    ) -> Self:
         return cls(
             name=template_name,
             name_plain=template_name_plain,
-            guidance_text=template_guidance_text,
+            guidance_text=guidance_text,
         )
 
 
@@ -122,9 +122,9 @@ class TemplateAggregateRootBase(LibraryItemAggregateRootBase):
 
     _sequence_id: str
 
-    _template: Optional[TemplateVO] = None
+    _template: TemplateVO | None = None
 
-    _counts: Optional[InstantiationCountsVO] = None
+    _counts: InstantiationCountsVO | None = None
 
     _study_count: int = 0
 
@@ -159,7 +159,7 @@ class TemplateAggregateRootBase(LibraryItemAggregateRootBase):
         return self._template.name_plain
 
     @property
-    def guidance_text(self) -> Optional[str]:
+    def guidance_text(self) -> str | None:
         assert self._template is not None
         return self._template.guidance_text
 
@@ -176,7 +176,7 @@ class TemplateAggregateRootBase(LibraryItemAggregateRootBase):
         template: TemplateVO,
         library: LibraryVO,
         item_metadata: LibraryItemMetadataVO,
-    ) -> "TemplateAggregateRootBase":
+    ) -> Self:
         return cls.from_repository_values(
             uid=uid,
             sequence_id=sequence_id,
@@ -194,8 +194,8 @@ class TemplateAggregateRootBase(LibraryItemAggregateRootBase):
         library: LibraryVO,
         item_metadata: LibraryItemMetadataVO,
         study_count: int = 0,
-        counts: Optional[InstantiationCountsVO] = None,
-    ) -> "TemplateAggregateRootBase":
+        counts: InstantiationCountsVO | None = None,
+    ) -> Self:
         ar = cls(
             _uid=uid,
             _sequence_id=sequence_id,
@@ -214,27 +214,22 @@ class TemplateAggregateRootBase(LibraryItemAggregateRootBase):
         author: str,
         template: TemplateVO,
         library: LibraryVO,
-        template_value_exists_callback: Callable[
-            [TemplateVO], bool
-        ],  # = (lambda _: False),
-        generate_uid_callback: Callable[[], Optional[str]] = (lambda: None),
-        generate_seq_id_callback: Callable[[str], Optional[str]] = (lambda _: None),
-    ) -> "TemplateAggregateRootBase":
+        generate_uid_callback: Callable[[], str | None] = (lambda: None),
+        next_available_sequence_id_callback: Callable[[str], str | None] = (
+            lambda _: None
+        ),
+    ) -> Self:
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(author=author)
         if not library.is_editable:
             raise ValidationException(
                 f"The library with the name='{library.name}' does not allow to create objects."
-            )
-        if template_value_exists_callback(template):
-            raise ValidationException(
-                f"Duplicate templates not allowed - template exists: {template.name}"
             )
 
         generated_uid = generate_uid_callback()
 
         ar = cls(
             _uid=generated_uid,
-            _sequence_id=generate_seq_id_callback(generated_uid),
+            _sequence_id=next_available_sequence_id_callback(generated_uid),
             _item_metadata=item_metadata,
             _library=library,
             _template=template,

@@ -1,7 +1,8 @@
 import datetime
 from dataclasses import dataclass, field
-from typing import Any, Callable, Iterable, Optional, Sequence, Tuple
+from typing import Any, Callable, Iterable, Self, Sequence
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains._utils import normalize_string
 
 
@@ -12,45 +13,45 @@ class StudySelectionElementVO:
     """
 
     study_selection_uid: str
-    study_uid: Optional[str]
-    name: Optional[str]
-    short_name: Optional[str]
-    code: Optional[str]
-    description: Optional[str]
-    planned_duration: Optional[str]
-    start_rule: Optional[str]
-    end_rule: Optional[str]
-    element_colour: Optional[str]
-    element_subtype_uid: Optional[str]
-    study_compound_dosing_count: Optional[int]
+    study_uid: str | None
+    name: str | None
+    short_name: str | None
+    code: str | None
+    description: str | None
+    planned_duration: str | None
+    start_rule: str | None
+    end_rule: str | None
+    element_colour: str | None
+    element_subtype_uid: str | None
+    study_compound_dosing_count: int | None
     start_date: datetime.datetime
     user_initials: str
-    end_date: Optional[datetime.datetime]
-    status: Optional[str]
-    change_type: Optional[str]
+    end_date: datetime.datetime | None
+    status: str | None
+    change_type: str | None
     accepted_version: bool = False
 
     @classmethod
     def from_input_values(
         cls,
         user_initials: str,
-        study_selection_uid: Optional[str] = None,
-        study_uid: Optional[str] = None,
-        name: Optional[str] = None,
-        short_name: Optional[str] = None,
-        code: Optional[str] = None,
-        description: Optional[str] = None,
-        planned_duration: Optional[str] = None,
-        start_rule: Optional[str] = None,
-        end_rule: Optional[str] = None,
-        element_colour: Optional[str] = None,
-        element_subtype_uid: Optional[str] = None,
-        study_compound_dosing_count: Optional[int] = None,
-        start_date: Optional[datetime.datetime] = None,
-        end_date: Optional[datetime.datetime] = None,
-        status: Optional[str] = None,
-        change_type: Optional[str] = None,
-        accepted_version: Optional[bool] = False,
+        study_selection_uid: str | None = None,
+        study_uid: str | None = None,
+        name: str | None = None,
+        short_name: str | None = None,
+        code: str | None = None,
+        description: str | None = None,
+        planned_duration: str | None = None,
+        start_rule: str | None = None,
+        end_rule: str | None = None,
+        element_colour: str | None = None,
+        element_subtype_uid: str | None = None,
+        study_compound_dosing_count: int | None = None,
+        start_date: datetime.datetime | None = None,
+        end_date: datetime.datetime | None = None,
+        status: str | None = None,
+        change_type: str | None = None,
+        accepted_version: bool | None = False,
         generate_uid_callback: Callable[[], str] = None,
     ):
         """
@@ -115,7 +116,7 @@ class StudySelectionElementVO:
         if self.element_subtype_uid and not ct_term_exists_callback(
             self.element_subtype_uid
         ):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"There is no approved element level identified by provided term uid ({self.element_subtype_uid})"
             )
 
@@ -123,7 +124,7 @@ class StudySelectionElementVO:
 @dataclass
 class StudySelectionElementAR:
     _study_uid: str
-    _study_elements_selection: Tuple[StudySelectionElementVO]
+    _study_elements_selection: tuple[StudySelectionElementVO]
     repository_closure_data: Any = field(
         init=False, compare=False, repr=True, default=None
     )
@@ -139,17 +140,17 @@ class StudySelectionElementAR:
 
     def get_specific_object_selection(
         self, study_selection_uid: str
-    ) -> Tuple[StudySelectionElementVO, int]:
+    ) -> tuple[StudySelectionElementVO, int]:
         for order, selection in enumerate(self.study_elements_selection, start=1):
             if selection.study_selection_uid == study_selection_uid:
                 return selection, order
-        raise ValueError(
-            f"The study {self._study_uid} uid does not exist ({study_selection_uid})"
+        raise exceptions.NotFoundException(
+            f"The study selection {study_selection_uid} does not exist for study {self._study_uid}"
         )
 
     def get_specific_element_selection(
         self, study_selection_uid: str
-    ) -> Tuple[StudySelectionElementVO, int]:
+    ) -> tuple[StudySelectionElementVO, int]:
         """
         Used to receive a specific VO from the AR
         :param study_selection_uid:
@@ -158,8 +159,8 @@ class StudySelectionElementAR:
         for order, selection in enumerate(self.study_elements_selection, start=1):
             if selection.study_selection_uid == study_selection_uid:
                 return selection, order
-        raise ValueError(
-            f"There is no selection between the study element ({study_selection_uid} and the study)"
+        raise exceptions.NotFoundException(
+            f"There is no selection between the study element '{study_selection_uid}' and the study"
         )
 
     def _add_selection(self, study_element_selection) -> None:
@@ -183,7 +184,7 @@ class StudySelectionElementAR:
     @classmethod
     def from_repository_values(
         cls, study_uid: str, study_elements_selection: Iterable[StudySelectionElementVO]
-    ) -> "StudySelectionElementsAR":
+    ) -> Self:
         """
         Factory method to create a AR
         :param study_uid:

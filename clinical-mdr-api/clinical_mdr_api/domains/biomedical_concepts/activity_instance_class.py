@@ -1,6 +1,7 @@
 from dataclasses import dataclass
-from typing import AbstractSet, Callable, Optional
+from typing import AbstractSet, Callable, Self
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemAggregateRootBase,
     LibraryItemMetadataVO,
@@ -16,27 +17,30 @@ class ActivityInstanceClassVO:
     The ActivityInstanceClassVO acts as the value object for a single ActivityInstanceClass value object
     """
 
-    parent_uid: Optional[str]
+    parent_uid: str | None
     name: str
-    order: Optional[int]
-    definition: Optional[str]
-    is_domain_specific: Optional[bool]
+    order: int | None
+    definition: str | None
+    is_domain_specific: bool | None
+    dataset_class_uids: list[str] | None
 
     @classmethod
     def from_repository_values(
         cls,
         name: str,
-        order: Optional[int],
-        definition: Optional[str],
-        is_domain_specific: Optional[bool],
-        parent_uid: Optional[str],
-    ) -> "ActivityInstanceClassVO":
+        order: int | None,
+        definition: str | None,
+        is_domain_specific: bool | None,
+        parent_uid: str | None,
+        dataset_class_uids: list[str] | None = None,
+    ) -> Self:
         activity_instance_class_vo = cls(
             name=name,
             order=order,
             definition=definition,
             is_domain_specific=is_domain_specific,
             parent_uid=parent_uid,
+            dataset_class_uids=dataset_class_uids,
         )
 
         return activity_instance_class_vo
@@ -45,19 +49,19 @@ class ActivityInstanceClassVO:
         self,
         activity_instance_class_exists_by_name_callback: Callable[[str], bool],
         activity_instance_class_parent_exists: Callable[[str], bool],
-        previous_name: Optional[str] = None,
+        previous_name: str | None = None,
     ) -> None:
         if (
             activity_instance_class_exists_by_name_callback(self.name)
             and previous_name != self.name
         ):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"ActivityInstanceClass with name ({self.name}) already exists."
             )
         if self.parent_uid and not activity_instance_class_parent_exists(
             self.parent_uid
         ):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"ActivityInstanceClass tried to connect to non existing ActivityInstanceClass ({self.parent_uid})."
             )
 
@@ -89,9 +93,9 @@ class ActivityInstanceClassAR(LibraryItemAggregateRootBase):
         cls,
         uid: str,
         activity_instance_class_vo: ActivityInstanceClassVO,
-        library: Optional[LibraryVO],
+        library: LibraryVO | None,
         item_metadata: LibraryItemMetadataVO,
-    ) -> "ActivityInstanceClassAR":
+    ) -> Self:
         activity_instance_class_ar = cls(
             _uid=uid,
             _activity_instance_class_vo=activity_instance_class_vo,
@@ -109,11 +113,11 @@ class ActivityInstanceClassAR(LibraryItemAggregateRootBase):
         library: LibraryVO,
         activity_instance_class_parent_exists: Callable[[str], bool],
         activity_instance_class_exists_by_name_callback: Callable[[str], bool],
-        generate_uid_callback: Callable[[], Optional[str]] = (lambda: None),
-    ) -> "ActivityInstanceClassAR":
+        generate_uid_callback: Callable[[], str | None] = (lambda: None),
+    ) -> Self:
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(author=author)
         if not library.is_editable:
-            raise ValueError(
+            raise exceptions.BusinessLogicException(
                 f"The library with the name='{library.name}' does not allow to create objects."
             )
         activity_instance_class_vo.validate(
@@ -131,7 +135,7 @@ class ActivityInstanceClassAR(LibraryItemAggregateRootBase):
     def edit_draft(
         self,
         author: str,
-        change_description: Optional[str],
+        change_description: str | None,
         activity_instance_class_vo: ActivityInstanceClassVO,
         activity_instance_class_parent_exists: Callable[[str], bool],
         activity_instance_class_exists_by_name_callback: Callable[[str], bool],

@@ -101,6 +101,9 @@ export default {
   createStudyObjective (studyUid, data) {
     return repository.post(`studies/${studyUid}/study-objectives?create_objective=true`, data)
   },
+  batchCreateStudyObjectives (studyUid, data) {
+    return repository.post(`studies/${studyUid}/study-objectives/batch-select`, data)
+  },
   updateStudyObjective (studyUid, studyObjectiveUid, data) {
     return repository.patch(`studies/${studyUid}/study-objectives/${studyObjectiveUid}`, data)
   },
@@ -141,6 +144,9 @@ export default {
   },
   createStudyEndpoint (studyUid, data) {
     return repository.post(`studies/${studyUid}/study-endpoints?create_endpoint=true`, data)
+  },
+  batchCreateStudyEndpoints (studyUid, data) {
+    return repository.post(`studies/${studyUid}/study-endpoints/batch-select`, data)
   },
   selectStudyEndpoint (studyUid, data) {
     return repository.post(`studies/${studyUid}/study-endpoints`, data)
@@ -275,7 +281,7 @@ export default {
     return repository.post(`studies/${studyUid}/study-criteria/batch-select`, data)
   },
   patchStudyCriteria (studyUid, studyCriteriaUid, data) {
-    return repository.patch(`studies/${studyUid}/study-criteria/${studyCriteriaUid}/finalize`, data)
+    return repository.patch(`studies/${studyUid}/study-criteria/${studyCriteriaUid}`, data)
   },
   updateStudyCriteriaOrder (studyUid, studyCriteriaUid, order) {
     const data = { new_order: order }
@@ -391,5 +397,35 @@ export default {
   },
   downloadCtrOdmXml (studyUid) {
     return repository.get(`${resource}/${studyUid}/ctr/odm.xml`, { responseType: 'arraybuffer' })
+  },
+  getAllStudyFootnotes (params) {
+    return repository.get('study-soa-footnotes', { params })
+  },
+  getStudyFootnotes (studyUid, params) {
+    return repository.get(`studies/${studyUid}/study-soa-footnotes`, { params })
+  },
+  getStudyFootnotesAuditTrail (studyUid) {
+    return repository.get(`studies/${studyUid}/study-soa-footnote/audit-trail`)
+  },
+  getStudyFootnoteAuditTrail (studyUid, studyFootnoteUid) {
+    return repository.get(`studies/${studyUid}/study-soa-footnotes/${studyFootnoteUid}/audit-trail`)
+  },
+  getStudyFootnotePreview (studyUid, data) {
+    return repository.post(`studies/${studyUid}/study-soa-footnotes/preview`, data)
+  },
+  createStudyFootnote (studyUid, data, createFootnote) {
+    if (createFootnote === undefined) {
+      createFootnote = false
+    }
+    return repository.post(`${resource}/${studyUid}/study-soa-footnotes?create_footnote=${createFootnote}`, data)
+  },
+  batchCreateStudyFootnotes (studyUid, data) {
+    return repository.post(`studies/${studyUid}/study-soa-footnotes/batch-select`, data)
+  },
+  updateStudyFootnote (studyUid, studyFootnoteUid, data) {
+    return repository.patch(`${resource}/${studyUid}/study-soa-footnotes/${studyFootnoteUid}`, data)
+  },
+  deleteStudyFootnote (studyUid, studyFootnoteUid) {
+    return repository.delete(`${resource}/${studyUid}/study-soa-footnotes/${studyFootnoteUid}`)
   }
 }

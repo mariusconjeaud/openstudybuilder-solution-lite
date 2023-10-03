@@ -1,4 +1,4 @@
-from typing import Any, Callable, List, Optional
+from typing import Any, Callable, Self
 
 from pydantic import Field
 
@@ -18,7 +18,7 @@ class CTTerm(BaseModel):
     @classmethod
     def from_ct_term_ars(
         cls, ct_term_name_ar: CTTermNameAR, ct_term_attributes_ar: CTTermAttributesAR
-    ) -> "CTTerm":
+    ) -> Self:
         return cls(
             term_uid=ct_term_attributes_ar.uid,
             catalogue_name=ct_term_attributes_ar.ct_term_vo.catalogue_name,
@@ -54,15 +54,15 @@ class CTTerm(BaseModel):
         title="codelist_uid",
         description="",
     )
-    concept_id: Optional[str] = Field(
+    concept_id: str | None = Field(
         None, title="concept_id", description="", nullable=True
     )
 
-    code_submission_value: Optional[str] = Field(
+    code_submission_value: str | None = Field(
         None, title="code_submission_value", description="", nullable=True
     )
 
-    name_submission_value: Optional[str] = Field(
+    name_submission_value: str | None = Field(
         None,
         title="name_submission_value",
         description="",
@@ -91,10 +91,10 @@ class CTTerm(BaseModel):
         description="",
     )
 
-    order: Optional[int] = Field(999999, title="order", description="", nullable=True)
+    order: int | None = Field(999999, title="order", description="", nullable=True)
 
     library_name: str
-    possible_actions: List[str] = Field(
+    possible_actions: list[str] = Field(
         [],
         description=(
             "Holds those actions that can be performed on the CTTerm. "
@@ -122,7 +122,7 @@ class CTTermCreateInput(BaseModel):
         description="",
     )
 
-    name_submission_value: Optional[str] = Field(
+    name_submission_value: str | None = Field(
         None,
         title="name_submission_value",
         description="",
@@ -152,7 +152,7 @@ class CTTermCreateInput(BaseModel):
         title="sponsor_preferred_name_sentence_case",
         description="",
     )
-    order: Optional[int] = Field(999999, title="order", description="", nullable=True)
+    order: int | None = Field(999999, title="order", description="", nullable=True)
     library_name: str = Field(
         ...,
         title="library_name",
@@ -164,7 +164,7 @@ class CTTermNameAndAttributes(BaseModel):
     @classmethod
     def from_ct_term_ars(
         cls, ct_term_name_ar: CTTermNameAR, ct_term_attributes_ar: CTTermAttributesAR
-    ) -> "CTTermNameAndAttributes":
+    ) -> Self:
         if not ct_term_name_ar or not ct_term_attributes_ar:
             return None
         term_name_and_attributes = cls(
@@ -198,7 +198,7 @@ class CTTermNameAndAttributes(BaseModel):
         description="",
     )
 
-    library_name: Optional[str] = Field(None, nullable=True)
+    library_name: str | None = Field(None, nullable=True)
 
     name: CTTermName = Field(
         ...,
@@ -229,8 +229,8 @@ class CTTermNewOrder(BaseModel):
 class SimpleCTTermAttributes(BaseModel):
     @classmethod
     def from_term_uid(
-        cls, uid: str, find_term_by_uid: Callable[[str], Optional[Any]]
-    ) -> Optional["SimpleCTTermAttributes"]:
+        cls, uid: str, find_term_by_uid: Callable[[str], Any | None]
+    ) -> Self | None:
         term_model = None
         if uid is not None:
             term = find_term_by_uid(uid)
@@ -249,10 +249,10 @@ class SimpleCTTermAttributes(BaseModel):
         return term_model
 
     uid: str = Field(..., title="uid", description="")
-    code_submission_value: Optional[str] = Field(
+    code_submission_value: str | None = Field(
         None, title="code_submission_value", description="", nullable=True
     )
-    preferred_term: Optional[str] = Field(
+    preferred_term: str | None = Field(
         None, title="preferred_term", description="", nullable=True
     )
 
@@ -260,8 +260,8 @@ class SimpleCTTermAttributes(BaseModel):
 class SimpleTermModel(BaseModel):
     @classmethod
     def from_ct_code(
-        cls, c_code: str, find_term_by_uid: Callable[[str], Optional[Any]]
-    ) -> Optional["SimpleTermModel"]:
+        cls, c_code: str, find_term_by_uid: Callable[[str], Any | None]
+    ) -> Self | None:
         simple_term_model = None
         if c_code is not None:
             term = find_term_by_uid(c_code)
@@ -284,11 +284,11 @@ class SimpleTermModel(BaseModel):
         return simple_term_model
 
     term_uid: str = Field(..., title="term_uid", description="")
-    name: Optional[str] = Field(None, title="name", description="", nullable=True)
+    name: str | None = Field(None, title="name", description="", nullable=True)
 
 
 class SimpleDictionaryTermModel(SimpleTermModel):
-    dictionary_id: Optional[str] = Field(
+    dictionary_id: str | None = Field(
         None,
         title="dictionary_id",
         description="Id if item in the external dictionary",

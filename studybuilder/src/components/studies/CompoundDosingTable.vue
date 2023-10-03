@@ -18,6 +18,7 @@
         color="primary"
         @click.stop="showForm = true"
         :title="$t('StudyCompoundForm.add_title')"
+        :disabled="!checkPermission($roles.STUDY_WRITE)"
         >
         <v-icon>
           mdi-plus
@@ -40,6 +41,20 @@
       :study-compound-dosing="selectedStudyCompoundDosing"
       />
   </v-dialog>
+  <v-dialog
+    v-model="showHistory"
+    @keydown.esc="closeHistory"
+    persistent
+    :max-width="globalHistoryDialogMaxWidth"
+    :fullscreen="globalHistoryDialogFullscreen"
+    >
+    <history-table
+      @close="closeHistory"
+      :title="studyCompoundDosingHistoryTitle"
+      :headers="headers"
+      :items="compoundDosingHistoryItems"
+      />
+  </v-dialog>
 </div>
 </template>
 
@@ -49,15 +64,19 @@ import { bus } from '@/main'
 import ActionsMenu from '@/components/tools/ActionsMenu'
 import CompoundDosingForm from './CompoundDosingForm'
 import ConfirmDialog from '@/components/tools/ConfirmDialog'
+import HistoryTable from '@/components/tools/HistoryTable'
 import dataFormating from '@/utils/dataFormating'
 import NNTable from '@/components/tools/NNTable'
 import study from '@/api/study'
+import { accessGuard } from '@/mixins/accessRoleVerifier'
 
 export default {
+  mixins: [accessGuard],
   components: {
     ActionsMenu,
     CompoundDosingForm,
     ConfirmDialog,
+    HistoryTable,
     NNTable
   },
   computed: {
@@ -85,15 +104,17 @@ export default {
       actions: [
         {
           label: this.$t('_global.edit'),
-          icon: 'mdi-pencil',
+          icon: 'mdi-pencil-outline',
           iconColor: 'primary',
-          click: this.editStudyCompoundDosing
+          click: this.editStudyCompoundDosing,
+          accessRole: this.$roles.STUDY_WRITE
         },
         {
           label: this.$t('_global.delete'),
-          icon: 'mdi-delete',
+          icon: 'mdi-delete-outline',
           iconColor: 'error',
-          click: this.deleteStudyCompoundDosing
+          click: this.deleteStudyCompoundDosing,
+          accessRole: this.$roles.STUDY_WRITE
         },
         {
           label: this.$t('_global.history'),

@@ -1,21 +1,28 @@
-from typing import Optional
+from typing import Sequence
 
-import requests
+import httpx
+
+JSON_CONTENT_TYPE = "application/json"
+PLAIN_TEXT_CONTENT_TYPE = "text/plain"
+MARKDOWN_TEXT_CONTENT_TYPE = "text/markdown"
 
 
-def assert_response_status_code(response: requests.Response, status: int):
+def assert_response_status_code(response: httpx.Response, status: int | Sequence[int]):
     """Assert request.Response status code"""
     # pylint:disable=unused-variable
     __tracebackhide__ = True
 
-    assert response.status_code == status, (
-        f"Expected HTTP status code {status}, got {response.status_code}, "
-        f"response text: {response.text[:1024]}"
+    if isinstance(status, int):
+        status = (status,)
+
+    assert response.status_code in status, (
+        f"Expected HTTP status code in [{', '.join(map(str, status))}]. \n"
+        f"Actual response: {response.status_code} {response.reason_phrase}: {response.text[:1024]}"
     )
 
 
 def assert_response_content_type(
-    response: requests.Response, content_type: Optional[str] = "application/json"
+    response: httpx.Response, content_type: str | None = JSON_CONTENT_TYPE
 ):
     """Assert request.Response content type is (application/json by default)"""
     # pylint:disable=unused-variable

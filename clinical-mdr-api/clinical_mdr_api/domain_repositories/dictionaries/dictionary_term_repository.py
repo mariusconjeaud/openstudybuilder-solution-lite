@@ -1,9 +1,10 @@
 from abc import ABC
 from datetime import datetime, timezone
-from typing import Optional, Sequence, Tuple
+from typing import Sequence
 
 from neomodel import db
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domain_repositories._generic_repository_interface import (
     _AggregateRootType,
 )
@@ -107,7 +108,7 @@ class DictionaryTermGenericRepository(
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
         root: VersionRoot,
-        library: Optional[Library],
+        library: Library | None,
         relationship: VersionRelationship,
         value: VersionValue,
     ) -> DictionaryTermAR:
@@ -191,13 +192,13 @@ class DictionaryTermGenericRepository(
     def find_all(
         self,
         codelist_uid: str = None,
-        sort_by: Optional[dict] = None,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        sort_by: dict | None = None,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         page_number: int = 1,
         page_size: int = 0,
         total_count: bool = False,
-    ) -> Tuple[Sequence[DictionaryTermAR], int]:
+    ) -> tuple[Sequence[DictionaryTermAR], int]:
         """
         Method runs a cypher query to fetch all needed data to create objects of type AggregateRootType.
         In the case of the following repository it will be some Terms aggregates.
@@ -268,9 +269,9 @@ class DictionaryTermGenericRepository(
         self,
         codelist_uid: str,
         field_name: str,
-        search_string: Optional[str] = "",
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        search_string: str | None = "",
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
     ) -> Sequence[str]:
         # Match clause
@@ -310,7 +311,7 @@ class DictionaryTermGenericRepository(
 
     def get_syntax_indications(
         self, root_class: type, syntax_uid: str
-    ) -> Optional[Sequence[DictionaryTermAR]]:
+    ) -> Sequence[DictionaryTermAR] | None:
         """
         This method returns the indications for the syntax with provided uid
 
@@ -329,7 +330,7 @@ class DictionaryTermGenericRepository(
         return None
 
     def find_by_uid(
-        self, term_uid: str, for_update: Optional[bool] = False
+        self, term_uid: str, for_update: bool | None = False
     ) -> DictionaryTermAR:
         """
         This method returns the Dictionary Term with provided uid
@@ -365,7 +366,7 @@ class DictionaryTermGenericRepository(
         library = dictionary_codelist.has_library.get_or_none()
         library_name = library.name.lower()
         if library_name not in self.specific_root_class_mapping:
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"Unknown specific type ({library_name}) of dictionary term."
             )
 

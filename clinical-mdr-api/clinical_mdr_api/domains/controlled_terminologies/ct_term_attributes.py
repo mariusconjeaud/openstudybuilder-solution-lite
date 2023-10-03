@@ -1,6 +1,7 @@
 from dataclasses import dataclass
-from typing import AbstractSet, Callable, Optional
+from typing import AbstractSet, Callable, Self
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemAggregateRootBase,
     LibraryItemMetadataVO,
@@ -18,23 +19,23 @@ class CTTermAttributesVO:
 
     codelist_uid: str
     catalogue_name: str
-    concept_id: Optional[str]
-    code_submission_value: Optional[str]
-    name_submission_value: Optional[str]
-    preferred_term: Optional[str]
-    definition: Optional[str]
+    concept_id: str | None
+    code_submission_value: str | None
+    name_submission_value: str | None
+    preferred_term: str | None
+    definition: str | None
 
     @classmethod
     def from_repository_values(
         cls,
         codelist_uid: str,
         catalogue_name: str,
-        concept_id: Optional[str],
-        code_submission_value: Optional[str],
-        name_submission_value: Optional[str],
-        preferred_term: Optional[str],
-        definition: Optional[str],
-    ) -> "CTTermAttributesVO":
+        concept_id: str | None,
+        code_submission_value: str | None,
+        name_submission_value: str | None,
+        preferred_term: str | None,
+        definition: str | None,
+    ) -> Self:
         ct_term_attributes_vo = cls(
             codelist_uid=codelist_uid,
             catalogue_name=catalogue_name,
@@ -51,31 +52,31 @@ class CTTermAttributesVO:
         cls,
         codelist_uid: str,
         catalogue_name: str,
-        code_submission_value: Optional[str],
-        name_submission_value: Optional[str],
-        preferred_term: Optional[str],
-        definition: Optional[str],
+        code_submission_value: str | None,
+        name_submission_value: str | None,
+        preferred_term: str | None,
+        definition: str | None,
         codelist_exists_callback: Callable[[str], bool],
         catalogue_exists_callback: Callable[[str], bool],
         term_exists_by_name_callback: Callable[[str], bool] = lambda _: False,
         term_exists_by_code_submission_value_callback: Callable[
             [str], bool
         ] = lambda _: False,
-    ) -> "CTTermAttributesVO":
+    ) -> Self:
         if not codelist_exists_callback(codelist_uid):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"There is no codelist identified by provided codelist uid ({codelist_uid})"
             )
         if not catalogue_exists_callback(catalogue_name):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"There is no catalogue identified by provided catalogue name ({catalogue_name})"
             )
         if term_exists_by_name_callback(name_submission_value):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"CTTermAttributes with name ({name_submission_value}) already exists"
             )
         if term_exists_by_code_submission_value_callback(code_submission_value):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"CTTermAttributes with code_submission_value ({code_submission_value}) already exists"
             )
 
@@ -108,9 +109,9 @@ class CTTermAttributesAR(LibraryItemAggregateRootBase):
         cls,
         uid: str,
         ct_term_attributes_vo: CTTermAttributesVO,
-        library: Optional[LibraryVO],
+        library: LibraryVO | None,
         item_metadata: LibraryItemMetadataVO,
-    ) -> "CTTermAttributesAR":
+    ) -> Self:
         ct_term_ar = cls(
             _uid=uid,
             _ct_term_attributes_vo=ct_term_attributes_vo,
@@ -126,11 +127,11 @@ class CTTermAttributesAR(LibraryItemAggregateRootBase):
         author: str,
         ct_term_attributes_vo: CTTermAttributesVO,
         library: LibraryVO,
-        generate_uid_callback: Callable[[], Optional[str]] = (lambda: None),
-    ) -> "CTTermAttributesAR":
+        generate_uid_callback: Callable[[], str | None] = (lambda: None),
+    ) -> Self:
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(author=author)
         if not library.is_editable:
-            raise ValueError(
+            raise exceptions.BusinessLogicException(
                 f"The library with the name='{library.name}' does not allow to create objects."
             )
         ar = cls(
@@ -144,7 +145,7 @@ class CTTermAttributesAR(LibraryItemAggregateRootBase):
     def edit_draft(
         self,
         author: str,
-        change_description: Optional[str],
+        change_description: str | None,
         ct_term_vo: CTTermAttributesVO,
         term_exists_by_name_callback: Callable[[str], bool],
         term_exists_by_code_submission_value_callback: Callable[[str], bool],
@@ -157,7 +158,7 @@ class CTTermAttributesAR(LibraryItemAggregateRootBase):
             and self.ct_term_vo.name_submission_value
             != ct_term_vo.name_submission_value
         ):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"CTTermAttributes with name ({ct_term_vo.name_submission_value}) already exists."
             )
         if (
@@ -167,7 +168,7 @@ class CTTermAttributesAR(LibraryItemAggregateRootBase):
             and self.ct_term_vo.code_submission_value
             != ct_term_vo.code_submission_value
         ):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"CTTermAttributes with code_submission_value ({ct_term_vo.code_submission_value}) already exists."
             )
         if self._ct_term_attributes_vo != ct_term_vo:

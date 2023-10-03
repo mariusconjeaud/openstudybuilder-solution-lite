@@ -88,10 +88,10 @@ export default {
           description: this.$t('About.db_description')
         },
         {
-          name: this.$t('About.data-import'),
-          description: this.$t('About.data-import_description'),
+          name: this.$t('About.studybuilder-import'),
+          description: this.$t('About.studybuilder-import_description'),
           build_number: this.$config.DATA_IMPORT_BUILD_NUMBER,
-          component: 'data-import'
+          component: 'studybuilder-import'
         },
         {
           name: this.$t('About.mdr-standards-import'),
@@ -123,7 +123,7 @@ export default {
   methods: {
     async fetchFiles () {
       const components = [
-        'studybuilder', 'documentation-portal', 'clinical-mdr-api', 'data-import', 'mdr-standards-import',
+        'studybuilder', 'documentation-portal', 'clinical-mdr-api', 'studybuilder-import', 'mdr-standards-import',
         'neo4j-mdr-db', 'studybuilder-export'
       ]
       const url = (process.env.NODE_ENV === 'development') ? '' : `https://${location.host}`

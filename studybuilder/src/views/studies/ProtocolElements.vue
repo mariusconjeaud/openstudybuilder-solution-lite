@@ -66,7 +66,7 @@ export default {
       updateInterventions: 0,
       tabs: [
         { tab: '#tab-0', name: this.$t('Sidebar.study.protocol_title') },
-        { tab: '#tab-1', name: this.$t('Sidebar.study.flow_chart') },
+        { tab: '#tab-1', name: this.$t('StudyProtocolElementsView.protocol_soa') },
         { tab: '#tab-2', name: this.$t('Sidebar.study.objective_endpoints_estimands') },
         { tab: '#tab-3', name: this.$t('Sidebar.study.study_design') },
         { tab: '#tab-4', name: this.$t('Sidebar.study.study_population') },

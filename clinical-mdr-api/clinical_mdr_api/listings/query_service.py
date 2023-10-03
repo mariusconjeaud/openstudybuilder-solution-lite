@@ -1,7 +1,6 @@
 import json
 import os
 from datetime import datetime
-from typing import Optional, Tuple
 
 from neomodel import db
 
@@ -19,10 +18,10 @@ class QueryService:
 
     @staticmethod
     def _filter_for_cdisc_ct(
-        catalogue_name: Optional[str] = None,
-        package: Optional[str] = None,
-        after_date: Optional[str] = None,
-    ) -> Tuple[str, dict]:
+        catalogue_name: str | None = None,
+        package: str | None = None,
+        after_date: str | None = None,
+    ) -> tuple[str, dict]:
         """Create filter to use in cypher query"""
         filter_parameters = []
         filter_query_parameters = {}
@@ -68,12 +67,12 @@ class QueryService:
 
     def get_topic_codes(
         self,
-        at_specific_date: Optional[datetime] = None,
-        sort_by: Optional[dict] = None,
+        at_specific_date: datetime | None = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn:
         """Query to get the legacy dataset topic_cd_def."""
@@ -143,25 +142,25 @@ class QueryService:
         res = (result_array, attributes_names)
         result = helpers.db_result_to_list(res)
 
-        _total_count = 0
+        total = 0
         if total_count:
             count_result, _ = db.cypher_query(
                 query=query.count_query, params=query.parameters
             )
             if len(count_result) > 0:
-                _total_count = count_result[0][0]
+                total = count_result[0][0]
 
-        return GenericFilteringReturn.create(items=result, total_count=_total_count)
+        return GenericFilteringReturn.create(items=result, total=total)
 
     def get_cdisc_ct_ver(
         self,
-        catalogue_name: Optional[str] = None,
-        after_date: Optional[str] = None,
-        sort_by: Optional[dict] = None,
+        catalogue_name: str | None = None,
+        after_date: str | None = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn:
         """Query to get the legacy dataset cdisc_ct_ver."""
@@ -197,25 +196,25 @@ class QueryService:
         res = (result_array, attributes_names)
         result = helpers.db_result_to_list(res)
 
-        _total_count = 0
+        total = 0
         if total_count:
             count_result, _ = db.cypher_query(
                 query=query.count_query, params=query.parameters
             )
             if len(count_result) > 0:
-                _total_count = count_result[0][0]
+                total = count_result[0][0]
 
-        return GenericFilteringReturn.create(items=result, total_count=_total_count)
+        return GenericFilteringReturn.create(items=result, total=total)
 
     def get_cdisc_ct_pkg(
         self,
-        catalogue_name: Optional[str] = None,
-        after_date: Optional[str] = None,
-        sort_by: Optional[dict] = None,
+        catalogue_name: str | None = None,
+        after_date: str | None = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn:
         """Query to get the legacy dataset cdisc_ct_pkg."""
@@ -250,26 +249,26 @@ class QueryService:
         res = (result_array, attributes_names)
         result = helpers.db_result_to_list(res)
 
-        _total_count = 0
+        total = 0
         if total_count:
             count_result, _ = db.cypher_query(
                 query=query.count_query, params=query.parameters
             )
             if len(count_result) > 0:
-                _total_count = count_result[0][0]
+                total = count_result[0][0]
 
-        return GenericFilteringReturn.create(items=result, total_count=_total_count)
+        return GenericFilteringReturn.create(items=result, total=total)
 
     def get_cdisc_ct_list(
         self,
-        catalogue_name: Optional[str] = None,
-        package: Optional[str] = None,
-        after_date: Optional[str] = None,
-        sort_by: Optional[dict] = None,
+        catalogue_name: str | None = None,
+        package: str | None = None,
+        after_date: str | None = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn:
         """Query to get the legacy dataset cdisc_ct_list."""
@@ -321,26 +320,26 @@ class QueryService:
         res = (result_array, attributes_names)
         result = helpers.db_result_to_list(res)
 
-        _total_count = 0
+        total = 0
         if total_count:
             count_result, _ = db.cypher_query(
                 query=query.count_query, params=query.parameters
             )
             if len(count_result) > 0:
-                _total_count = count_result[0][0]
+                total = count_result[0][0]
 
-        return GenericFilteringReturn.create(items=result, total_count=_total_count)
+        return GenericFilteringReturn.create(items=result, total=total)
 
     def get_cdisc_ct_val(
         self,
-        catalogue_name: Optional[str] = None,
-        package: Optional[str] = None,
-        after_date: Optional[str] = None,
-        sort_by: Optional[dict] = None,
+        catalogue_name: str | None = None,
+        package: str | None = None,
+        after_date: str | None = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn:
         """Query to get the legacy dataset cdisc_ct_val."""
@@ -390,15 +389,15 @@ class QueryService:
         res = (result_array, attributes_names)
         result = helpers.db_result_to_list(res)
 
-        _total_count = 0
+        total = 0
         if total_count:
             count_result, _ = db.cypher_query(
                 query=query.count_query, params=query.parameters
             )
             if len(count_result) > 0:
-                _total_count = count_result[0][0]
+                total = count_result[0][0]
 
-        return GenericFilteringReturn.create(items=result, total_count=_total_count)
+        return GenericFilteringReturn.create(items=result, total=total)
 
     def get_tv(self, study_uid) -> list:
         query = """
@@ -537,9 +536,9 @@ class QueryService:
                 sd.transition_rule AS TATRANS,
                 sep_term.name AS EPOCH,
                 sar.name AS ARM,
-                CASE sba.branch_arm_code 
-                WHEN NULL THEN sar.arm_code  
-                ELSE sar.arm_code+'-'+ sba.branch_arm_code 
+                CASE  
+                    WHEN sba.branch_arm_code IS NULL THEN sar.arm_code  
+                    ELSE sar.arm_code+'-'+ sba.branch_arm_code 
                 END AS ARMCD,
                 sba.name AS TABRANCH
                 ORDER BY sar.order, sep.order
@@ -558,9 +557,9 @@ class QueryService:
                 sd.transition_rule AS TATRANS,
                 sep_term.name AS EPOCH,
                 sar.name AS ARM,
-                CASE sba.branch_arm_code 
-                WHEN NULL THEN sar.arm_code  
-                ELSE sar.arm_code+'-'+ sba.branch_arm_code 
+                CASE 
+                    WHEN sba.branch_arm_code IS NULL THEN sar.arm_code  
+                    ELSE sar.arm_code+'-'+ sba.branch_arm_code 
                 END AS ARMCD,
                 sba.name AS TABRANCH
         }

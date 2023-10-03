@@ -1,37 +1,38 @@
 from dataclasses import dataclass
-from typing import Callable, Optional
+from typing import Callable, Self
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains._utils import normalize_string
 
 
 @dataclass(frozen=True)
 class RegistryIdentifiersVO:
-    ct_gov_id: Optional[str]
-    ct_gov_id_null_value_code: Optional[str]
-    eudract_id: Optional[str]
-    eudract_id_null_value_code: Optional[str]
-    universal_trial_number_utn: Optional[str]
-    universal_trial_number_utn_null_value_code: Optional[str]
-    japanese_trial_registry_id_japic: Optional[str]
-    japanese_trial_registry_id_japic_null_value_code: Optional[str]
-    investigational_new_drug_application_number_ind: Optional[str]
-    investigational_new_drug_application_number_ind_null_value_code: Optional[str]
+    ct_gov_id: str | None
+    ct_gov_id_null_value_code: str | None
+    eudract_id: str | None
+    eudract_id_null_value_code: str | None
+    universal_trial_number_utn: str | None
+    universal_trial_number_utn_null_value_code: str | None
+    japanese_trial_registry_id_japic: str | None
+    japanese_trial_registry_id_japic_null_value_code: str | None
+    investigational_new_drug_application_number_ind: str | None
+    investigational_new_drug_application_number_ind_null_value_code: str | None
 
     @classmethod
     def from_input_values(
         cls,
-        ct_gov_id: Optional[str],
-        ct_gov_id_null_value_code: Optional[str],
-        eudract_id: Optional[str],
-        eudract_id_null_value_code: Optional[str],
-        universal_trial_number_utn: Optional[str],
-        universal_trial_number_utn_null_value_code: Optional[str],
-        japanese_trial_registry_id_japic: Optional[str],
-        japanese_trial_registry_id_japic_null_value_code: Optional[str],
-        investigational_new_drug_application_number_ind: Optional[str],
-        investigational_new_drug_application_number_ind_null_value_code: Optional[str],
-    ) -> "RegistryIdentifiersVO":
-        def norm_str(s: Optional[str]) -> Optional[str]:
+        ct_gov_id: str | None,
+        ct_gov_id_null_value_code: str | None,
+        eudract_id: str | None,
+        eudract_id_null_value_code: str | None,
+        universal_trial_number_utn: str | None,
+        universal_trial_number_utn_null_value_code: str | None,
+        japanese_trial_registry_id_japic: str | None,
+        japanese_trial_registry_id_japic_null_value_code: str | None,
+        investigational_new_drug_application_number_ind: str | None,
+        investigational_new_drug_application_number_ind_null_value_code: str | None,
+    ) -> Self:
+        def norm_str(s: str | None) -> str | None:
             return normalize_string(s)
 
         return cls(
@@ -63,7 +64,7 @@ class RegistryIdentifiersVO:
             self.ct_gov_id_null_value_code is not None
             and not null_value_exists_callback(self.ct_gov_id_null_value_code)
         ):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 "Unknown null value code provided for Reason For Missing in ClinicalTrials.gov ID"
             )
 
@@ -71,7 +72,7 @@ class RegistryIdentifiersVO:
             self.eudract_id_null_value_code is not None
             and not null_value_exists_callback(self.eudract_id_null_value_code)
         ):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 "Unknown null value code provided for Reason For Missing in EUDRACT ID"
             )
 
@@ -81,7 +82,7 @@ class RegistryIdentifiersVO:
                 self.universal_trial_number_utn_null_value_code
             )
         ):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 "Unknown null value code provided for Reason For Missing in Universal Trial Number (UTN)"
             )
 
@@ -91,7 +92,7 @@ class RegistryIdentifiersVO:
                 self.japanese_trial_registry_id_japic_null_value_code
             )
         ):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 "Unknown null value code provided for Reason For Missing in Japanese Trial Registry ID (JAPIC)"
             )
 
@@ -102,17 +103,17 @@ class RegistryIdentifiersVO:
                 self.investigational_new_drug_application_number_ind_null_value_code
             )
         ):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 "Unknown null value code provided for Reason For Missing in Investigational New Drug Application (IND) Number"
             )
 
         if self.ct_gov_id_null_value_code is not None and self.ct_gov_id is not None:
-            raise ValueError(
+            raise exceptions.ValidationException(
                 "If reason_for_missing_null_value_uid has a value, then field ct_gov_id must be None or empty string"
             )
 
         if self.eudract_id_null_value_code is not None and self.eudract_id is not None:
-            raise ValueError(
+            raise exceptions.ValidationException(
                 "If reason_for_missing_null_value_uid has a value, then field eudract_id must be None or empty string"
             )
 
@@ -120,7 +121,7 @@ class RegistryIdentifiersVO:
             self.universal_trial_number_utn_null_value_code is not None
             and self.universal_trial_number_utn is not None
         ):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 "If reason_for_missing_null_value_uid has a value, then field universal_trial_number_utn must be None or empty string"
             )
 
@@ -128,7 +129,7 @@ class RegistryIdentifiersVO:
             self.japanese_trial_registry_id_japic_null_value_code is not None
             and self.japanese_trial_registry_id_japic is not None
         ):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 "If reason_for_missing_null_value_uid has a value, then field japanese_trial_registry_id_japic must be None or empty string"
             )
 
@@ -137,7 +138,7 @@ class RegistryIdentifiersVO:
             is not None
             and self.investigational_new_drug_application_number_ind is not None
         ):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 (
                     "If reason_for_missing_null_value_uid has a value, "
                     "then field investigational_new_drug_application_number_ind must be None or empty string"

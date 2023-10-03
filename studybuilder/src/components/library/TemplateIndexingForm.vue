@@ -50,6 +50,7 @@ export default {
       /* FIXME: we need a direct way to retrieve the terms here */
       dictionaries.getTerms({ codelist_uid: resp.data.items[0].codelist_uid, page_size: 0 }).then(resp => {
         this.indications = resp.data.items
+        this.indications.sort((a, b) => a.name.localeCompare(b.name))
       })
     })
   },

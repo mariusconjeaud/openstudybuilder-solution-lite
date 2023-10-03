@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable, Optional, Sequence
+from typing import Callable, Self, Sequence
 
 from clinical_mdr_api.domains.concepts.activities.activity import ActivityAR
 from clinical_mdr_api.domains.concepts.activities.activity_group import ActivityGroupAR
@@ -25,13 +25,13 @@ class ActivityInstructionTemplateAR(TemplateAggregateRootBase):
     behavior. Inherits generic template versioning behaviors
     """
 
-    _indications: Optional[Sequence[DictionaryTermAR]] = None
+    _indications: Sequence[DictionaryTermAR] | None = None
 
-    _activities: Optional[Sequence[ActivityAR]] = None
+    _activities: Sequence[ActivityAR] | None = None
 
-    _activity_groups: Optional[Sequence[ActivityGroupAR]] = None
+    _activity_groups: Sequence[ActivityGroupAR] | None = None
 
-    _activity_subgroups: Optional[Sequence[ActivitySubGroupAR]] = None
+    _activity_subgroups: Sequence[ActivitySubGroupAR] | None = None
 
     @property
     def indications(self) -> Sequence[DictionaryTermAR]:
@@ -58,12 +58,12 @@ class ActivityInstructionTemplateAR(TemplateAggregateRootBase):
         library: LibraryVO,
         item_metadata: LibraryItemMetadataVO,
         study_count: int = 0,
-        counts: Optional[InstantiationCountsVO] = None,
-        indications: Optional[Sequence[DictionaryTermAR]] = None,
-        activities: Optional[Sequence[ActivityAR]] = None,
-        activity_groups: Optional[Sequence[ActivityGroupAR]] = None,
-        activity_subgroups: Optional[Sequence[ActivitySubGroupAR]] = None,
-    ) -> "TemplateAggregateRootBase":
+        counts: InstantiationCountsVO | None = None,
+        indications: Sequence[DictionaryTermAR] | None = None,
+        activities: Sequence[ActivityAR] | None = None,
+        activity_groups: Sequence[ActivityGroupAR] | None = None,
+        activity_subgroups: Sequence[ActivitySubGroupAR] | None = None,
+    ) -> Self:
         ar = cls(
             _uid=uid,
             _sequence_id=sequence_id,
@@ -86,23 +86,21 @@ class ActivityInstructionTemplateAR(TemplateAggregateRootBase):
         author: str,
         template: TemplateVO,
         library: LibraryVO,
-        template_value_exists_callback: Callable[
-            [TemplateVO], bool
-        ],  # = (lambda _: False),
-        generate_uid_callback: Callable[[], Optional[str]] = (lambda: None),
-        generate_seq_id_callback: Callable[[str], Optional[str]] = (lambda _: None),
-        indications: Optional[Sequence[DictionaryTermAR]] = None,
-        activities: Optional[Sequence[ActivityAR]] = None,
-        activity_groups: Optional[Sequence[ActivityGroupAR]] = None,
-        activity_subgroups: Optional[Sequence[ActivitySubGroupAR]] = None,
-    ) -> "ActivityInstructionTemplateAR":
-        ar: ActivityInstructionTemplateAR = super().from_input_values(
+        generate_uid_callback: Callable[[], str | None] = (lambda: None),
+        next_available_sequence_id_callback: Callable[[str], str | None] = (
+            lambda _: None
+        ),
+        indications: Sequence[DictionaryTermAR] | None = None,
+        activities: Sequence[ActivityAR] | None = None,
+        activity_groups: Sequence[ActivityGroupAR] | None = None,
+        activity_subgroups: Sequence[ActivitySubGroupAR] | None = None,
+    ) -> Self:
+        ar: Self = super().from_input_values(
             author=author,
             template=template,
             library=library,
-            template_value_exists_callback=template_value_exists_callback,
             generate_uid_callback=generate_uid_callback,
-            generate_seq_id_callback=generate_seq_id_callback,
+            next_available_sequence_id_callback=next_available_sequence_id_callback,
         )
         ar._indications = indications
         ar._activities = activities

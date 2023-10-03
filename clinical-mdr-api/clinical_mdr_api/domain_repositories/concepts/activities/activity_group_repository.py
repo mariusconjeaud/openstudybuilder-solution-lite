@@ -1,4 +1,4 @@
-from typing import Optional, Sequence, Tuple
+from typing import Sequence
 
 from clinical_mdr_api.domain_repositories.concepts.concept_generic_repository import (
     ConceptGenericRepository,
@@ -63,7 +63,7 @@ class ActivityGroupRepository(ConceptGenericRepository[ActivityGroupAR]):
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
         root: VersionRoot,
-        library: Optional[Library],
+        library: Library | None,
         relationship: VersionRelationship,
         value: VersionValue,
     ) -> ActivityGroupAR:
@@ -83,8 +83,8 @@ class ActivityGroupRepository(ConceptGenericRepository[ActivityGroupAR]):
         )
 
     def create_query_filter_statement(
-        self, library: Optional[str] = None, **kwargs
-    ) -> Tuple[str, dict]:
+        self, library: str | None = None, **kwargs
+    ) -> tuple[str, dict]:
         (
             filter_statements_from_concept,
             filter_query_parameters,
@@ -93,13 +93,15 @@ class ActivityGroupRepository(ConceptGenericRepository[ActivityGroupAR]):
         if kwargs.get("activity_subgroup_names") is not None:
             activity_subgroup_names = kwargs.get("activity_subgroup_names")
             filter_by_activity_subgroup_names = """
-            size([(concept_value)<-[:IN_GROUP]-(v:ActivitySubGroupValue) WHERE v.name IN $activity_subgroup_names | v.name]) > 0"""
+            size([(concept_value)<-[:IN_GROUP]-(:ActivityValidGroup)<-[:HAS_GROUP]-(v:ActivitySubGroupValue) 
+            WHERE v.name IN $activity_subgroup_names | v.name]) > 0"""
             filter_parameters.append(filter_by_activity_subgroup_names)
             filter_query_parameters["activity_subgroup_names"] = activity_subgroup_names
         if kwargs.get("activity_names") is not None:
             activity_names = kwargs.get("activity_names")
             filter_by_activity_names = """
-            size([(concept_value)<-[:IN_GROUP]-()<-[:IN_SUB_GROUP]-(v:ActivityValue) WHERE v.name IN $activity_names | v.name]) > 0"""
+            size([(concept_value)<-[:IN_GROUP]-(:ActivityValidGroup)<-[:IN_SUBGROUP]-(:ActivityGrouping)<-[:HAS_GROUPING]-(v:ActivityValue) 
+            WHERE v.name IN $activity_names | v.name]) > 0"""
             filter_parameters.append(filter_by_activity_names)
             filter_query_parameters["activity_names"] = activity_names
         extended_filter_statements = " AND ".join(filter_parameters)
@@ -123,14 +125,14 @@ class ActivityGroupRepository(ConceptGenericRepository[ActivityGroupAR]):
         # which is specified in the activity_generic_repository_impl
         return """
         WITH *,
-            head([(concept_value)<-[:IN_GROUP]-(activity_sub_group_value:ActivitySubGroupValue)<-[:HAS_VERSION]-
+            head([(concept_value)<-[:IN_GROUP]-(:ActivityValidGroup)<-[:HAS_GROUP]-(activity_sub_group_value:ActivitySubGroupValue)<-[:HAS_VERSION]-
             (activity_sub_group_root:ActivitySubGroupRoot) | {uid:activity_sub_group_root.uid, name:activity_sub_group_value.name}]) AS activity_subgroup,
-            head([(concept_value)<-[:IN_GROUP]-(activity_sub_group_value:ActivitySubGroupValue)<-[:IN_SUBGROUP]
-            -(activity_value:ActivityValue)<-[:HAS_VERSION]-(activity_root:ActivityRoot) | {uid:activity_root.uid, name:activity_value.name}]) AS activity
+            head([(concept_value)<-[:IN_GROUP]-(:ActivityValidGroup)<-[:IN_SUBGROUP]-(:ActivityGrouping)<-[:HAS_GROUPING]-(activity_value:ActivityValue)
+            <-[:HAS_VERSION]-(activity_root:ActivityRoot) | {uid:activity_root.uid, name:activity_value.name}]) AS activity
         """
 
-    def specific_header_match_clause(self) -> Optional[str]:
-        return " MATCH (concept_value)<-[:IN_GROUP]-()<-[:IN_SUB_GROUP]-() "
+    def specific_header_match_clause(self) -> str | None:
+        return " MATCH (concept_value)<-[:IN_GROUP]-()<-[:IN_SUBGROUP]-()<-[:HAS_GROUPING]-() "
 
     def _create_new_value_node(self, ar: ActivityGroupAR) -> ActivityGroupValue:
         value_node = super()._create_new_value_node(ar=ar)
@@ -139,7 +141,7 @@ class ActivityGroupRepository(ConceptGenericRepository[ActivityGroupAR]):
 
     def get_syntax_activity_groups(
         self, root_class: type, syntax_uid: str
-    ) -> Optional[Sequence[ActivityGroupAR]]:
+    ) -> Sequence[ActivityGroupAR] | None:
         """
         This method returns the activity groups for the syntax with provided uid
 

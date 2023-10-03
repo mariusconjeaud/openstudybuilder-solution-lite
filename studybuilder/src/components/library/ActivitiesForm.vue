@@ -28,7 +28,7 @@
             <v-autocomplete
               :label="$t('ActivityForms.activity_group')"
               :items="groups"
-              v-model="form.activity_group"
+              v-model="form.activity_groupings[0].activity_group_uid"
               item-text="name"
               item-value="uid"
               :error-messages="errors"
@@ -47,13 +47,13 @@
             <v-autocomplete
               :label="$t('ActivityForms.activity_subgroup')"
               :items="filteredSubGroups"
-              v-model="form.activity_subgroup"
+              v-model="form.activity_groupings[0].activity_subgroup_uid"
               item-text="name"
               item-value="uid"
               :error-messages="errors"
               dense
               clearable
-              :disabled="form.activity_group ? false : true"
+              :disabled="form.activity_groupings[0].activity_group_uid ? false : true"
               />
           </v-col>
         </v-row>
@@ -153,16 +153,17 @@ export default {
         : this.$t('ActivityForms.add_activity')
     },
     filteredSubGroups () {
-      if (!this.form.activity_group) {
+      if (!this.form.activity_groupings[0].activity_group_uid) {
         return []
       }
-      return this.subGroups.filter(el => el.activity_group.uid === this.form.activity_group)
+      return this.subGroups.filter(el => el.activity_groups.find(o => o.uid === this.form.activity_groupings[0].activity_group_uid) !== undefined)
     }
   },
   data () {
     return {
       form: {
-        library_name: constants.LIBRARY_SPONSOR
+        library_name: constants.LIBRARY_SPONSOR,
+        activity_groupings: [{}]
       },
       groups: [],
       subGroups: [],
@@ -184,16 +185,21 @@ export default {
         definition: value.definition,
         abbreviation: value.abbreviation,
         change_description: '',
-        library_name: value.library_name
+        library_name: value.library_name,
+        activity_groupings: [{}]
       }
       if (!_isEmpty(value)) {
         this.$set(this.form, 'name_sentence_case', value.name.charAt(0).toUpperCase() + value.name.slice(1))
+        const grouping = [{}]
         if (value.activity_group) {
-          this.$set(this.form, 'activity_group', value.activity_group.uid)
+          grouping[0].activity_group_name = value.activity_group.name
+          grouping[0].activity_group_uid = value.activity_group.uid
         }
         if (value.activity_subgroup) {
-          this.$set(this.form, 'activity_subgroup', value.activity_subgroup.uid)
+          grouping[0].activity_subgroup_name = value.activity_subgroup.name
+          grouping[0].activity_subgroup_uid = value.activity_subgroup.uid
         }
+        this.$set(this.form, 'activity_groupings', grouping)
       }
       this.$store.commit('form/SET_FORM', this.form)
     },

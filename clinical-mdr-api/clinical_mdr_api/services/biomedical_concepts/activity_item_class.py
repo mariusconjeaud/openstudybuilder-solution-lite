@@ -10,8 +10,10 @@ from clinical_mdr_api.models.biomedical_concepts.activity_item_class import (
     ActivityItemClass,
     ActivityItemClassCreateInput,
     ActivityItemClassEditInput,
+    ActivityItemClassMappingInput,
     ActivityItemClassVersion,
 )
+from clinical_mdr_api.services._utils import raise_404_if_none
 from clinical_mdr_api.services.neomodel_ext_generic import (
     NeomodelExtGenericService,
     _AggregateRootType,
@@ -74,3 +76,23 @@ class ActivityItemClassService(NeomodelExtGenericService):
             ct_term_exists=self._repos.ct_term_name_repository.term_exists,
         )
         return item
+
+    def patch_mappings(
+        self, uid: str, mapping_input: ActivityItemClassMappingInput
+    ) -> ActivityItemClass:
+        activity_item_class = self._repos.activity_item_class_repository.find_by_uid(
+            uid
+        )
+        raise_404_if_none(
+            activity_item_class,
+            f"Activity item class with uid '{uid}' does not exist.",
+        )
+
+        try:
+            self._repos.activity_item_class_repository.patch_mappings(
+                uid, mapping_input.variable_class_uids
+            )
+        finally:
+            self._repos.activity_item_class_repository.close()
+
+        return self.get_by_uid(uid)

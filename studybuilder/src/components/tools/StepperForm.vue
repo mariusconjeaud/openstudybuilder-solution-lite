@@ -24,7 +24,7 @@
           :key="`content-${index}`"
           :step="index + 1"
           >
-          <v-sheet v-if="!step.noStyle" elevation="4" class="ma-2 pa-4" :rounded="false">
+          <v-sheet v-if="!step.noStyle" class="ma-2 pa-4" :rounded="false">
             <slot :name="`step.${step.name}`" v-bind:step="index + 1" />
           </v-sheet>
           <template v-else>
@@ -32,17 +32,21 @@
           </template>
           <div class="mx-2 mt-6 mb-1">
             <v-btn
-              color="white"
               class="secondary-btn"
               @click="cancel"
+              outlined
+              elevation="2"
+              width="120px"
               >
               {{ $t('_global.cancel') }}
             </v-btn>
             <v-btn
               v-if="currentStep > 1"
-              color="white"
               class="secondary-btn ml-2"
               @click="currentStep = index"
+              outlined
+              elevation="2"
+              width="120px"
               >
               {{ $t('_global.previous') }}
             </v-btn>
@@ -52,6 +56,8 @@
               color="secondary"
               class="ml-2"
               @click="goToStep(index + 1, index + 2)"
+              elevation="2"
+              width="120px"
               >
               {{ $t('_global.continue') }}
             </v-btn>
@@ -62,6 +68,8 @@
               class="ml-2"
               @click="submit"
               :loading="loading"
+              elevation="2"
+              width="120px"
               >
               {{ $t('_global.save') }}
             </v-btn>

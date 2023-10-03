@@ -240,6 +240,8 @@ def edit_study_epoch(epoch_uid, study_uid="study_root"):
         start_rule="second_new_start_rule",
     )
     item = StudyEpochService().edit(
-        study_epoch_uid=epoch_uid, study_epoch_input=study_epoch_edit_input
+        study_uid=study_uid,
+        study_epoch_uid=epoch_uid,
+        study_epoch_input=study_epoch_edit_input,
     )
     return item

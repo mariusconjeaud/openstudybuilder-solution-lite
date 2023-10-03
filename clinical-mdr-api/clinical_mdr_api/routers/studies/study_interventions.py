@@ -6,6 +6,7 @@ from fastapi import Path
 from fastapi.responses import HTMLResponse, StreamingResponse
 
 from clinical_mdr_api.models.study_selections.table import Table
+from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.routers import _generic_descriptions
 from clinical_mdr_api.routers import studies_router as router
 from clinical_mdr_api.services.studies.study import StudyService
@@ -18,6 +19,7 @@ StudyUID = Path(None, description="The unique id of the study.")
 
 @router.get(
     "/{uid}/interventions",
+    dependencies=[rbac.STUDY_READ],
     summary="Returns Study Protocol Interventions table",
     status_code=200,
     responses={
@@ -35,6 +37,7 @@ def get_study_interventions(
 
 @router.get(
     "/{uid}/interventions.html",
+    dependencies=[rbac.STUDY_READ],
     summary="Builds and returns an HTML document of Study Protocol Interventions table",
     responses={
         200: {"content": {"text/html": {"schema": {"type": "string"}}}},
@@ -51,6 +54,7 @@ def get_study_interventions_html(
 
 @router.get(
     "/{uid}/interventions.docx",
+    dependencies=[rbac.STUDY_READ],
     summary="Builds and returns a DOCX document of Study Protocol Interventions table",
     responses={
         200: {

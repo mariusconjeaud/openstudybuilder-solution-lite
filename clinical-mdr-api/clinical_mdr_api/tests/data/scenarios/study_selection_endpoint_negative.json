@@ -128,7 +128,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "There is no selection between the study endpoint (study_endpoint_uid and the study)",
+                "message": "There is no selection between the study endpoint 'study_endpoint_uid' and the study",
                 "method": "GET",
                 "path": "http://testserver/studies/study_root/study-endpoints/study_endpoint_uid",
                 "time": "2020-11-03T23:42:41.518146",

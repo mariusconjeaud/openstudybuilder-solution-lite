@@ -1,5 +1,3 @@
-from typing import List
-
 from neomodel import db
 
 from clinical_mdr_api import exceptions
@@ -183,7 +181,7 @@ class OdmFormService(OdmGenericService[OdmFormAR]):
     def add_activity_groups(
         self,
         uid: str,
-        odm_form_activity_group_post_input: List[OdmFormActivityGroupPostInput],
+        odm_form_activity_group_post_input: list[OdmFormActivityGroupPostInput],
         override: bool = False,
     ) -> OdmForm:
         odm_form_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
@@ -199,15 +197,12 @@ class OdmFormService(OdmGenericService[OdmFormAR]):
                 disconnect_all=True,
             )
 
-        try:
-            for activity_group in odm_form_activity_group_post_input:
-                self._repos.odm_form_repository.add_relation(
-                    uid=uid,
-                    relation_uid=activity_group.uid,
-                    relationship_type=RelationType.ACTIVITY_GROUP,
-                )
-        except ValueError as exception:
-            raise exceptions.ValidationException(exception.args[0])
+        for activity_group in odm_form_activity_group_post_input:
+            self._repos.odm_form_repository.add_relation(
+                uid=uid,
+                relation_uid=activity_group.uid,
+                relationship_type=RelationType.ACTIVITY_GROUP,
+            )
 
         odm_form_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
 
@@ -217,7 +212,7 @@ class OdmFormService(OdmGenericService[OdmFormAR]):
     def add_item_groups(
         self,
         uid: str,
-        odm_form_item_group_post_input: List[OdmFormItemGroupPostInput],
+        odm_form_item_group_post_input: list[OdmFormItemGroupPostInput],
         override: bool = False,
     ) -> OdmForm:
         return self.non_transactional_add_item_groups(
@@ -227,7 +222,7 @@ class OdmFormService(OdmGenericService[OdmFormAR]):
     def non_transactional_add_item_groups(
         self,
         uid: str,
-        odm_form_item_group_post_input: List[OdmFormItemGroupPostInput],
+        odm_form_item_group_post_input: list[OdmFormItemGroupPostInput],
         override: bool = False,
     ) -> OdmForm:
         odm_form_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
@@ -243,45 +238,42 @@ class OdmFormService(OdmGenericService[OdmFormAR]):
                 disconnect_all=True,
             )
 
-        try:
-            vendor_attribute_patterns = self.get_regex_patterns_of_attributes(
-                [
-                    attribute.uid
-                    for input_attribute in odm_form_item_group_post_input
-                    if input_attribute.vendor
-                    for attribute in input_attribute.vendor.attributes
-                ]
-            )
-            self.is_vendor_compatible(
-                [
-                    vendor_attribute
-                    for item_group in odm_form_item_group_post_input
-                    for vendor_attribute in item_group.vendor.attributes
-                ],
-                VendorCompatibleType.ITEM_GROUP_REF,
-            )
+        vendor_attribute_patterns = self.get_regex_patterns_of_attributes(
+            [
+                attribute.uid
+                for input_attribute in odm_form_item_group_post_input
+                if input_attribute.vendor
+                for attribute in input_attribute.vendor.attributes
+            ]
+        )
+        self.is_vendor_compatible(
+            [
+                vendor_attribute
+                for item_group in odm_form_item_group_post_input
+                for vendor_attribute in item_group.vendor.attributes
+            ],
+            VendorCompatibleType.ITEM_GROUP_REF,
+        )
 
-            for item_group in odm_form_item_group_post_input:
-                if item_group.vendor:
-                    self.can_connect_vendor_attributes(item_group.vendor.attributes)
-                    self.attribute_values_matches_their_regex(
-                        item_group.vendor.attributes,
-                        vendor_attribute_patterns,
-                    )
-
-                self._repos.odm_form_repository.add_relation(
-                    uid=uid,
-                    relation_uid=item_group.uid,
-                    relationship_type=RelationType.ITEM_GROUP,
-                    parameters={
-                        "order_number": item_group.order_number,
-                        "mandatory": strtobool(item_group.mandatory),
-                        "collection_exception_condition_oid": item_group.collection_exception_condition_oid,
-                        "vendor": to_dict(item_group.vendor),
-                    },
+        for item_group in odm_form_item_group_post_input:
+            if item_group.vendor:
+                self.can_connect_vendor_attributes(item_group.vendor.attributes)
+                self.attribute_values_matches_their_regex(
+                    item_group.vendor.attributes,
+                    vendor_attribute_patterns,
                 )
-        except ValueError as exception:
-            raise exceptions.ValidationException(exception.args[0])
+
+            self._repos.odm_form_repository.add_relation(
+                uid=uid,
+                relation_uid=item_group.uid,
+                relationship_type=RelationType.ITEM_GROUP,
+                parameters={
+                    "order_number": item_group.order_number,
+                    "mandatory": strtobool(item_group.mandatory),
+                    "collection_exception_condition_oid": item_group.collection_exception_condition_oid,
+                    "vendor": to_dict(item_group.vendor),
+                },
+            )
 
         odm_form_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
 
@@ -291,7 +283,7 @@ class OdmFormService(OdmGenericService[OdmFormAR]):
     def add_vendor_elements(
         self,
         uid: str,
-        odm_vendor_relation_post_input: List[OdmVendorRelationPostInput],
+        odm_vendor_relation_post_input: list[OdmVendorRelationPostInput],
         override: bool = False,
     ) -> OdmForm:
         odm_form_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
@@ -312,18 +304,15 @@ class OdmFormService(OdmGenericService[OdmFormAR]):
                 disconnect_all=True,
             )
 
-        try:
-            for vendor_element in odm_vendor_relation_post_input:
-                self._repos.odm_form_repository.add_relation(
-                    uid=uid,
-                    relation_uid=vendor_element.uid,
-                    relationship_type=RelationType.VENDOR_ELEMENT,
-                    parameters={
-                        "value": vendor_element.value,
-                    },
-                )
-        except ValueError as exception:
-            raise exceptions.ValidationException(exception.args[0])
+        for vendor_element in odm_vendor_relation_post_input:
+            self._repos.odm_form_repository.add_relation(
+                uid=uid,
+                relation_uid=vendor_element.uid,
+                relationship_type=RelationType.VENDOR_ELEMENT,
+                parameters={
+                    "value": vendor_element.value,
+                },
+            )
 
         odm_form_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
 
@@ -333,7 +322,7 @@ class OdmFormService(OdmGenericService[OdmFormAR]):
     def add_vendor_attributes(
         self,
         uid: str,
-        odm_vendor_relation_post_input: List[OdmVendorRelationPostInput],
+        odm_vendor_relation_post_input: list[OdmVendorRelationPostInput],
         override: bool = False,
     ) -> OdmForm:
         odm_form_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
@@ -354,18 +343,15 @@ class OdmFormService(OdmGenericService[OdmFormAR]):
                 disconnect_all=True,
             )
 
-        try:
-            for vendor_attribute in odm_vendor_relation_post_input:
-                self._repos.odm_form_repository.add_relation(
-                    uid=uid,
-                    relation_uid=vendor_attribute.uid,
-                    relationship_type=RelationType.VENDOR_ATTRIBUTE,
-                    parameters={
-                        "value": vendor_attribute.value,
-                    },
-                )
-        except ValueError as exception:
-            raise exceptions.ValidationException(exception.args[0])
+        for vendor_attribute in odm_vendor_relation_post_input:
+            self._repos.odm_form_repository.add_relation(
+                uid=uid,
+                relation_uid=vendor_attribute.uid,
+                relationship_type=RelationType.VENDOR_ATTRIBUTE,
+                parameters={
+                    "value": vendor_attribute.value,
+                },
+            )
 
         odm_form_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
 
@@ -375,7 +361,7 @@ class OdmFormService(OdmGenericService[OdmFormAR]):
     def add_vendor_element_attributes(
         self,
         uid: str,
-        odm_vendor_relation_post_input: List[OdmVendorRelationPostInput],
+        odm_vendor_relation_post_input: list[OdmVendorRelationPostInput],
         override: bool = False,
     ) -> OdmForm:
         odm_form_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
@@ -396,18 +382,15 @@ class OdmFormService(OdmGenericService[OdmFormAR]):
                 disconnect_all=True,
             )
 
-        try:
-            for vendor_element_attribute in odm_vendor_relation_post_input:
-                self._repos.odm_form_repository.add_relation(
-                    uid=uid,
-                    relation_uid=vendor_element_attribute.uid,
-                    relationship_type=RelationType.VENDOR_ELEMENT_ATTRIBUTE,
-                    parameters={
-                        "value": vendor_element_attribute.value,
-                    },
-                )
-        except ValueError as exception:
-            raise exceptions.ValidationException(exception.args[0])
+        for vendor_element_attribute in odm_vendor_relation_post_input:
+            self._repos.odm_form_repository.add_relation(
+                uid=uid,
+                relation_uid=vendor_element_attribute.uid,
+                relationship_type=RelationType.VENDOR_ELEMENT_ATTRIBUTE,
+                parameters={
+                    "value": vendor_element_attribute.value,
+                },
+            )
 
         odm_form_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
 

@@ -15,6 +15,7 @@ from neomodel import (
 )
 from neomodel.properties import validator
 
+from clinical_mdr_api.config import NUMBER_OF_UID_DIGITS
 from clinical_mdr_api.domain_repositories.models._utils import (
     CustomNodeSet,
     classproperty,
@@ -101,11 +102,8 @@ class ClinicalMdrNodeWithUID(ClinicalMdrNode):
         Finds the next free available UID for a given object.
         If none of the objects have ever been created, sets up a new incremental counter for this object type.
         """
-        object_name = (
-            cls.__name__[: len(cls.__name__) - 4]
-            if cls.__name__.endswith("Root")
-            else cls.__name__
-        )
+        object_name = cls.__name__.removesuffix("Root")
+
         return str(
             db.cypher_query(
                 """
@@ -114,9 +112,9 @@ class ClinicalMdrNodeWithUID(ClinicalMdrNode):
         WITH m
         CALL apoc.atomic.add(m,'count',1,1) yield oldValue, newValue
         WITH newValue(newValue) as uid_number
-        RETURN "{LABEL}_"+apoc.text.lpad(""+(uid_number), 6, "0")
+        RETURN "{LABEL}_"+apoc.text.lpad(""+(uid_number), {number_of_digits}, "0")
         """.format(
-                    LABEL=object_name
+                    LABEL=object_name, number_of_digits=NUMBER_OF_UID_DIGITS
                 )
             )[0][0][0]
         )
@@ -128,11 +126,8 @@ class ClinicalMdrNodeWithUID(ClinicalMdrNode):
         Uses the template structure [NODELABEL]_999999 for the generated identifiers.
         """
         node_label = cls.__name__
-        object_name = (
-            node_label[: len(node_label) - 4]
-            if node_label.endswith("Root")
-            else node_label
-        )
+        object_name = node_label.removesuffix("Root")
+
         db.cypher_query(
             """
         // the new UIDs will start at the value from the memory node.
@@ -155,9 +150,11 @@ class ClinicalMdrNodeWithUID(ClinicalMdrNode):
         WITH new_nodes, range(0,size(new_nodes)-1) as indices, m.count - size(new_nodes) as start_uid_number
         UNWIND indices as index
         WITH new_nodes[index] as node, index + start_uid_number as uid_number
-        SET node.uid = "{LABEL}_"+apoc.text.lpad(""+(uid_number), 6, "0")
+        SET node.uid = "{LABEL}_"+apoc.text.lpad(""+(uid_number), {number_of_digits}, "0")
         """.format(
-                LABEL=object_name, NODE_LABEL=node_label
+                LABEL=object_name,
+                NODE_LABEL=node_label,
+                number_of_digits=NUMBER_OF_UID_DIGITS,
             )
         )
 
@@ -184,7 +181,7 @@ class ClinicalMdrNodeWithUID(ClinicalMdrNode):
                     LABEL=object_name
                 )
             )[0][0][0]
-            self.uid = str(object_name) + "_" + str(new_uid).zfill(6)
+            self.uid = str(object_name) + "_" + str(new_uid).zfill(NUMBER_OF_UID_DIGITS)
         return super().save()
 
 
@@ -281,11 +278,11 @@ class VersionValue(ClinicalMdrNode):
     def get_study_count(self) -> int:
         cypher_query = f"""
         MATCH (n)<-[:{self.STUDY_SELECTION_REL_LABEL}]-(:StudySelection)<-[:{self.STUDY_VALUE_REL_LABEL}]-(:StudyValue)<--(sr:StudyRoot)
-        WHERE id(n)={self.id}
+        WHERE elementId(n)=$element_id
         RETURN count(DISTINCT sr)
         """
 
-        count, _ = db.cypher_query(cypher_query)
+        count, _ = db.cypher_query(cypher_query, {"element_id": self.element_id})
         return count[0][0]
 
 

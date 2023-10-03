@@ -1,8 +1,8 @@
-from typing import Dict, List, Optional, Sequence, Set
+from typing import Sequence
 
 from neomodel import db
 
-from clinical_mdr_api import exceptions, models
+from clinical_mdr_api import models
 from clinical_mdr_api.domain_repositories.study_selections.study_compound_repository import (
     StudyCompoundSelectionHistory,
 )
@@ -131,17 +131,14 @@ class StudyCompoundSelectionService(
                 user_initials=self.author,
             )
             # add VO to aggregate
-            try:
-                selection_aggregate.add_compound_selection(
-                    study_compound_selection=new_selection,
-                    selection_uid_by_details_callback=repos.study_compound_repository.get_selection_uid_by_details,
-                    reason_for_missing_callback=repos.ct_term_name_repository.term_exists,
-                    compound_exist_callback=repos.compound_repository.final_concept_exists,
-                    compound_alias_exist_callback=repos.compound_alias_repository.final_concept_exists,
-                    compound_callback=repos.compound_repository.find_by_uid_2,
-                )
-            except ValueError as value_error:
-                raise exceptions.ValidationException(value_error.args[0])
+            selection_aggregate.add_compound_selection(
+                study_compound_selection=new_selection,
+                selection_uid_by_details_callback=repos.study_compound_repository.get_selection_uid_by_details,
+                reason_for_missing_callback=repos.ct_term_name_repository.term_exists,
+                compound_exist_callback=repos.compound_repository.final_concept_exists,
+                compound_alias_exist_callback=repos.compound_alias_repository.final_concept_exists,
+                compound_callback=repos.compound_repository.find_by_uid_2,
+            )
 
             # sync with DB and save the update
             repos.study_compound_repository.save(selection_aggregate, self.author)
@@ -165,13 +162,13 @@ class StudyCompoundSelectionService(
     @db.transaction
     def get_all_selections_for_all_studies(
         self,
-        project_name: Optional[str] = None,
-        project_number: Optional[str] = None,
-        sort_by: Optional[dict] = None,
+        project_name: str | None = None,
+        project_number: str | None = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[models.StudySelectionCompound]:
         repos = self._repos
@@ -205,12 +202,12 @@ class StudyCompoundSelectionService(
     def get_distinct_values_for_header(
         self,
         field_name: str,
-        study_uid: Optional[str] = None,
-        project_name: Optional[str] = None,
-        project_number: Optional[str] = None,
-        search_string: Optional[str] = "",
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        study_uid: str | None = None,
+        project_name: str | None = None,
+        project_number: str | None = None,
+        search_string: str | None = "",
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
     ):
         repos = self._repos
@@ -260,8 +257,8 @@ class StudyCompoundSelectionService(
     def get_all_selection(
         self,
         study_uid: str,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         page_number: int = 1,
         page_size: int = 0,
         total_count: bool = False,
@@ -292,13 +289,10 @@ class StudyCompoundSelectionService(
         selection_aggregate = self._repos.study_compound_repository.find_by_study(
             study_uid
         )
-        try:
-            (
-                new_selection,
-                order,
-            ) = selection_aggregate.get_specific_compound_selection(study_selection_uid)
-        except ValueError as value_error:
-            raise exceptions.NotFoundException(value_error.args[0])
+        (
+            new_selection,
+            order,
+        ) = selection_aggregate.get_specific_compound_selection(study_selection_uid)
         return self._transform_single_to_response_model(new_selection, order, study_uid)
 
     @db.transaction
@@ -412,12 +406,9 @@ class StudyCompoundSelectionService(
             )
 
             # Load the current VO for updates
-            try:
-                current_vo, order = selection_aggregate.get_specific_compound_selection(
-                    study_selection_uid=study_selection_uid
-                )
-            except ValueError as value_error:
-                raise exceptions.NotFoundException(value_error.args[0])
+            current_vo, order = selection_aggregate.get_specific_compound_selection(
+                study_selection_uid=study_selection_uid
+            )
 
             # merge current with updates
             updated_selection = self._patch_prepare_new_study_endpoint(
@@ -425,17 +416,14 @@ class StudyCompoundSelectionService(
                 current_study_compound=current_vo,
             )
 
-            try:
-                # let the aggregate update the value object
-                selection_aggregate.update_selection(
-                    updated_study_compound_selection=updated_selection,
-                    selection_uid_by_details_callback=repos.study_compound_repository.get_selection_uid_by_details,
-                    reason_for_missing_callback=repos.ct_term_name_repository.term_exists,
-                    compound_exist_callback=repos.compound_repository.final_concept_exists,
-                    compound_alias_exist_callback=repos.compound_alias_repository.final_concept_exists,
-                )
-            except ValueError as value_error:
-                raise exceptions.ValidationException(value_error.args[0])
+            # let the aggregate update the value object
+            selection_aggregate.update_selection(
+                updated_study_compound_selection=updated_selection,
+                selection_uid_by_details_callback=repos.study_compound_repository.get_selection_uid_by_details,
+                reason_for_missing_callback=repos.ct_term_name_repository.term_exists,
+                compound_exist_callback=repos.compound_repository.final_concept_exists,
+                compound_alias_exist_callback=repos.compound_alias_repository.final_concept_exists,
+            )
 
             # sync with DB and save the update
             repos.study_compound_repository.save(selection_aggregate, self.author)
@@ -454,7 +442,7 @@ class StudyCompoundSelectionService(
 
     def _transform_history_to_response_model(
         self,
-        study_selection_history: List[StudyCompoundSelectionHistory],
+        study_selection_history: list[StudyCompoundSelectionHistory],
         study_uid: str,
     ) -> Sequence[models.StudySelectionCompound]:
         result = []
@@ -505,7 +493,7 @@ class StudyCompoundSelectionService(
     @db.transaction
     def get_compound_uid_to_arm_uids_mapping(
         self, study_uid: str
-    ) -> Dict[str, Set[str]]:
+    ) -> dict[str, set[str]]:
         return (
             self._repos.study_compound_repository.get_compound_uid_to_arm_uids_mapping(
                 study_uid

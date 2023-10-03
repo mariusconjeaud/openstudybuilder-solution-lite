@@ -20,7 +20,7 @@
           @click="removeItem(item)"
           data-cy="remove-item-link">
           <v-icon dark>
-              mdi-trash-can
+              mdi-delete-outline
           </v-icon>
         </v-btn>
       </template>

@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
-from typing import Any, Callable, Iterable, Sequence, Tuple, Type, TypeVar
+from typing import Any, Callable, Iterable, Self, Sequence, Type, TypeVar
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains._utils import normalize_string
 
 
@@ -31,13 +32,14 @@ class StudySelectionBaseAR:
     """
 
     _study_uid: str
-    _study_objects_selection: Tuple
+    _study_objects_selection: tuple
     repository_closure_data: Any = field(
         init=False, compare=False, repr=True, default=None
     )
 
     _object_type = None
     _object_uid_field = None
+    _object_name_field = None
     _order_field_name = None
 
     @property
@@ -50,12 +52,12 @@ class StudySelectionBaseAR:
 
     def get_specific_object_selection(
         self, study_selection_uid: str
-    ) -> Tuple[Type[StudySelectionBaseVO], int]:
+    ) -> tuple[Type[StudySelectionBaseVO], int]:
         for order, selection in enumerate(self.study_objects_selection, start=1):
             if selection.study_selection_uid == study_selection_uid:
                 return selection, order
-        raise ValueError(
-            f"The study {self._object_type} uid does not exist ({study_selection_uid})"
+        raise exceptions.NotFoundException(
+            f"The study {self._object_type} with uid '{study_selection_uid}' does not exist"
         )
 
     def add_object_selection(
@@ -94,7 +96,7 @@ class StudySelectionBaseAR:
         cls,
         study_uid: str,
         study_objects_selection: Iterable[Type[StudySelectionBaseVO]],
-    ) -> "Type[StudySelectionBaseAR]":
+    ) -> Self:
         return cls(
             _study_uid=normalize_string(study_uid),
             _study_objects_selection=tuple(study_objects_selection),
@@ -179,9 +181,9 @@ class StudySelectionBaseAR:
     def validate(self):
         objects = []
         for selection in self.study_objects_selection:
-            object_uid = getattr(selection, self._object_uid_field)
-            if object_uid in objects:
-                raise ValueError(
-                    f"There is already a study selection to that {self._object_type} ({object_uid})"
+            object_name = getattr(selection, self._object_name_field)
+            if object_name and object_name in objects:
+                raise exceptions.ValidationException(
+                    f"There is already a study selection to that {self._object_type} ({object_name})"
                 )
-            objects.append(object_uid)
+            objects.append(object_name)

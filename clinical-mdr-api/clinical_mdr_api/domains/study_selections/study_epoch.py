@@ -1,7 +1,7 @@
 import datetime
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import List, Mapping, Optional, Sequence
+from typing import Mapping, Sequence
 
 from clinical_mdr_api.config import (
     BASIC_EPOCH_NAME,
@@ -56,10 +56,10 @@ class StudyEpochVO:
     start_date: datetime.datetime
     author: str
 
-    duration: Optional[int] = None
-    duration_unit: Optional[str] = None
+    duration: int | None = None
+    duration_unit: str | None = None
 
-    color_hash: Optional[str] = None
+    color_hash: str | None = None
 
     change_description: str = "Initial Version"
     name: str = "TBD"
@@ -67,13 +67,13 @@ class StudyEpochVO:
 
     accepted_version: bool = False
 
-    uid: Optional[str] = None
+    uid: str | None = None
     _is_deleted: bool = False
-    _visits: List[StudyVisitVO] = field(default_factory=list)
-    _previous_visit: Optional[StudyVisitVO] = None
-    _is_previous_visit_in_previous_epoch: Optional[bool] = None
-    _next_visit: Optional[StudyVisitVO] = None
-    _is_next_visit_in_next_epoch: Optional[bool] = None
+    _visits: list[StudyVisitVO] = field(default_factory=list)
+    _previous_visit: StudyVisitVO | None = None
+    _is_previous_visit_in_previous_epoch: bool | None = None
+    _next_visit: StudyVisitVO | None = None
+    _is_next_visit_in_next_epoch: bool | None = None
 
     def edit_core_properties(
         self,
@@ -85,7 +85,7 @@ class StudyEpochVO:
         epoch_type: StudyEpochType,
         order: int,
         change_description: str,
-        color_hash: Optional[str],
+        color_hash: str | None,
     ):
         self.start_rule = start_rule
         self.end_rule = end_rule
@@ -168,7 +168,7 @@ class StudyEpochVO:
             return end_day - start_day
         return 0
 
-    def set_ordered_visits(self, visits: List[StudyVisitVO]):
+    def set_ordered_visits(self, visits: list[StudyVisitVO]):
         self._visits = visits
 
     @property
@@ -211,7 +211,7 @@ class StudyEpochVO:
             return ["edit", "delete", "lock"]
         return None
 
-    def visits(self) -> List[StudyVisitVO]:
+    def visits(self) -> list[StudyVisitVO]:
         return self._visits
 
     def delete(self):
@@ -381,14 +381,14 @@ class TimelineAR:
 
     def collect_visits_to_epochs(
         self, epochs: Sequence[StudyEpochVO]
-    ) -> Mapping[str, List[StudyVisitVO]]:
+    ) -> Mapping[str, list[StudyVisitVO]]:
         """
         Creates dictionary mapping of study epoch uids to StudyVisitsVO list. Allows to match visits with
         epochs. Additionally adds information for epoch what is first following visit.
         """
         epochs = sorted(epochs, key=lambda epoch: epoch.order)
 
-        epoch_visits: Mapping[str, List[StudyVisitVO]] = {}
+        epoch_visits: Mapping[str, list[StudyVisitVO]] = {}
         for epoch in epochs:
             epoch_visits[epoch.uid] = []
 
@@ -482,5 +482,5 @@ class TimelineAR:
 
 @dataclass
 class StudyEpochHistoryVO(StudyEpochVO):
-    change_type: Optional[str] = None
-    end_date: Optional[datetime.datetime] = None
+    change_type: str | None = None
+    end_date: datetime.datetime | None = None

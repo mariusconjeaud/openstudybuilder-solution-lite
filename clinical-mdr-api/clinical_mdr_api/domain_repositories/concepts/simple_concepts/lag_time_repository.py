@@ -1,5 +1,3 @@
-from typing import Optional
-
 from neomodel import db
 
 from clinical_mdr_api.domain_repositories.concepts.simple_concepts.numeric_value_with_unit_repository import (
@@ -87,7 +85,7 @@ class LagTimeRepository(NumericValueWithUnitRepository):
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
         root: VersionRoot,
-        library: Optional[Library],
+        library: Library | None,
         relationship: VersionRelationship,
         value: VersionValue,
     ) -> LagTimeAR:
@@ -125,7 +123,7 @@ class LagTimeRepository(NumericValueWithUnitRepository):
         value: float,
         unit_definition_uid: str,
         sdtm_domain_uid: str,
-    ) -> Optional[str]:
+    ) -> str | None:
         cypher_query = f"""
             MATCH (or:{self.root_class.__label__})-[:LATEST_FINAL|LATEST_DRAFT|LATEST_RETIRED]->(ov:{self.value_class.__label__} {{value: $value}})-[:HAS_UNIT_DEFINITION]->(unit_root:UnitDefinitionRoot {{uid: $unit_definition_uid}})
             MATCH (ov)-[:HAS_SDTM_DOMAIN]->(term_root:CTTermRoot {{uid: $sdtm_domain_uid}})

@@ -12,7 +12,6 @@ Tests for /standards/dataset-variables endpoints
 import json
 import logging
 from functools import reduce
-from typing import List
 
 import pytest
 from fastapi.testclient import TestClient
@@ -22,6 +21,9 @@ from clinical_mdr_api.models.standard_data_models.data_model import DataModel
 from clinical_mdr_api.models.standard_data_models.data_model_ig import DataModelIG
 from clinical_mdr_api.models.standard_data_models.dataset import Dataset
 from clinical_mdr_api.models.standard_data_models.dataset_class import DatasetClass
+from clinical_mdr_api.models.standard_data_models.dataset_variable import (
+    DatasetVariable,
+)
 from clinical_mdr_api.models.standard_data_models.variable_class import VariableClass
 from clinical_mdr_api.tests.integration.utils.api import (
     drop_db,
@@ -34,11 +36,11 @@ log = logging.getLogger(__name__)
 
 # Global variables shared between fixtures and tests
 data_model_catalogue_name: str
-data_models: List[DataModel]
-dataset_classes: List[DatasetClass]
+data_models: list[DataModel]
+dataset_classes: list[DatasetClass]
 class_variable: VariableClass
 dataset: Dataset
-dataset_variables: List[VariableClass]
+dataset_variables: list[DatasetVariable]
 data_model_ig: DataModelIG
 
 
@@ -83,7 +85,7 @@ def test_data():
             ("DatasetClass C", data_models[2].uid),
         ]
     ]
-    class_variable = TestUtils.create_class_variable(
+    class_variable = TestUtils.create_variable_class(
         label="VariableClass A label",
         title="VariableClass A title",
         description="VariableClass A desc",
@@ -227,6 +229,8 @@ CLASS_VARIABLE_FIELDS_ALL = [
     "implements_variable",
     "has_mapping_target",
     "referenced_codelist",
+    "value_list",
+    "described_value_domain",
 ]
 
 CLASS_VARIABLE_FIELDS_NOT_NULL = [

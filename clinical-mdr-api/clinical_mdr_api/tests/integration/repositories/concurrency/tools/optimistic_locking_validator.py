@@ -1,5 +1,5 @@
 import threading
-from typing import Callable, Optional
+from typing import Callable
 
 from neomodel import db
 
@@ -32,7 +32,7 @@ class OptimisticLockingValidator:
     # Timeout used to validate that the secondary thread is blocked by database locks.
     thread_timeout: int = 2
 
-    def __init__(self, thread_timeout: Optional[int] = 2):
+    def __init__(self, thread_timeout: int | None = 2):
         self.thread_timeout = thread_timeout
 
     def assert_optimistic_locking_ensures_execution_order(

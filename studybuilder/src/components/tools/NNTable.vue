@@ -55,14 +55,14 @@
           :title="$t('NNTableTooltips.filters')"
           data-cy="filters-button"
           >
-          <v-icon>mdi-filter</v-icon>
+          <v-icon>mdi-filter-outline</v-icon>
         </v-btn>
         <v-btn
           v-if="modifiableTable && !onlyTextSearch"
           class="ml-2 white--text"
           fab
           small
-          @click="showColumnsDialog = true"
+          @click="openColumnsDialog()"
           color="grey darken-3"
           :title="$t('NNTableTooltips.columns_layout')"
           data-cy="columns-layout-button"
@@ -97,7 +97,7 @@
     <v-app-bar
       flat
       :class="additionalMargin ? 'pt-1 mt-3' : 'pt-1'"
-      color="#e5e5e5"
+      color="tableGray"
       style="height: 55px"
       v-if="!disableFiltering"
       >
@@ -147,7 +147,7 @@
           @click="clearFilters()"
           >
           <v-icon dark>
-              mdi-trash-can
+              mdi-delete-outline
           </v-icon>
         </v-btn>
       </v-slide-group>
@@ -223,6 +223,14 @@
               </v-menu>
             </v-row>
           </template>
+          <template v-for="(header, index) in shownColumns" v-slot:[`item.${header.value}`]="{ item }">
+            <v-tooltip top :key="index">
+              <template v-slot:activator="{ on }">
+                <span v-on="on">{{ (getValueByColumn(item, header.value) && getValueByColumn(item, header.value).length > 35) ? getValueByColumn(item, header.value).substring(0, 35) + '...' : getValueByColumn(item, header.value) }}</span>
+              </template>
+              <span>{{ getValueByColumn(item, header.value) }}</span>
+            </v-tooltip>
+          </template>
           <template v-for="(_, slot) of $scopedSlots" v-slot:[slot]="scope">
             <slot :name="slot" v-bind="scope" v-bind:showSelectBoxes="showSelectBoxes" />
           </template>
@@ -242,10 +250,11 @@
     <column-choosing-form
       key="columnsForm"
       data-cy="show-columns-form"
+      :opened="columnsOpened"
       :availableColumns="headers"
       :tableName="$route.fullPath"
       @save="saveSelectedColumns"
-      @close="showColumnsDialog = false"
+      @close="closeColumnsDialog"
       :title="$t('ColumnChoosingForm.columnsTitle')"
       :restoreLabel="$t('ColumnChoosingForm.show_all_label')"
       />
@@ -285,10 +294,15 @@
     <history-table
       :headers="historyHeaders"
       :items="historyItems"
+      :items-total="historyItemsTotal"
       @close="closeHistory"
       :title="historyTitle"
       :html-fields="historyHtmlFields"
       :simple-styling="historySimpleStyling"
+      :change-field="historyChangeField"
+      :change-field-label="historyChangeFieldLabel"
+      :excluded-headers="historyExcludedHeaders"
+      @refresh="options => getHistoryData(options)"
       />
   </v-dialog>
 </div>
@@ -362,6 +376,10 @@ export default {
       type: Boolean,
       default: false
     },
+    defaultFilters: {
+      type: Array,
+      required: false
+    },
     itemsPerPage: {
       type: Number,
       required: false
@@ -394,6 +412,18 @@ export default {
     historySimpleStyling: {
       type: Boolean,
       default: false
+    },
+    historyChangeField: {
+      type: String,
+      required: false
+    },
+    historyChangeFieldLabel: {
+      type: String,
+      required: false
+    },
+    historyExcludedHeaders: {
+      type: Array,
+      required: false
     },
     disableFiltering: {
       type: Boolean,
@@ -492,6 +522,8 @@ export default {
     }
     if (this.showFilterBarByDefault) {
       this.itemsToFilter = this.headers.filter(header => header.value !== 'actions' && !header.noFilter)
+    } else if (this.defaultFilters) {
+      this.itemsToFilter = this.defaultFilters
     }
     if (this.items && this.items.length) {
       this.loading = false
@@ -529,6 +561,7 @@ export default {
         name: []
       },
       historyItems: [],
+      historyItemsTotal: 0,
       menu: false,
       date: [],
       apiParams: new Map(),
@@ -562,10 +595,23 @@ export default {
         }
       ],
       timeout: null,
-      toggleSelectAll: false
+      toggleSelectAll: false,
+      columnsOpened: false
     }
   },
   methods: {
+    openColumnsDialog () {
+      this.columnsOpened = true
+      this.showColumnsDialog = true
+    },
+    closeColumnsDialog () {
+      this.columnsOpened = false
+      this.showColumnsDialog = false
+    },
+    getValueByColumn (item, columnName) {
+      const keys = columnName.split('.')
+      return keys.reduce((acc, key) => (acc ? acc[key] : undefined), item)
+    },
     getHeaderSlotName (header) {
       return `header.${header.value}`
     },
@@ -682,7 +728,8 @@ export default {
           index = this.filters.indexOf('Timestamp')
         }
         if (index > -1) {
-          this.filters = this.filters.substring(0, index + 46) + ', "op": "bw"' + this.filters.substring(index + 46)
+          const bracketIndex = this.filters.indexOf(']', index) + 1
+          this.filters = this.filters.substring(0, bracketIndex) + ', "op": "bw"' + this.filters.substring(bracketIndex)
         }
         this.$emit('filter', this.filters, sort, filtersUpdated)
         this.refreshFiltersTrigger += 1
@@ -697,9 +744,18 @@ export default {
       }
       resolve(true)
     },
+    async getHistoryData (options) {
+      const resp = await this.historyDataFetcher(options)
+      if (resp.items) {
+        this.historyItems = resp.items
+        this.historyItemsTotal = resp.total
+      } else {
+        this.historyItems = resp
+        this.historyItemsTotal = undefined
+      }
+    },
     async openHistory () {
-      const resp = await this.historyDataFetcher()
-      this.historyItems = resp
+      await this.getHistoryData()
       this.showHistory = true
     },
     closeHistory () {
@@ -777,7 +833,7 @@ export default {
   padding-top: 20px !important;
   padding-bottom: 16px !important;
   padding-left: 28px !important;
-  color: rgba(0, 0, 0, 0.6);
+  color: rgba(26, 26, 26, 0.6) !important;
   text-align: start;
   font-weight: 500;
   font-size: 14px;

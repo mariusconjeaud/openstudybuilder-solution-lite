@@ -33,7 +33,6 @@ export default {
         { text: this.$t('DictionaryTermTable.substance_name'), value: 'name' },
         { text: this.$t('DictionaryTermTable.substance_name_lower_case'), value: 'name_sentence_case' },
         { text: this.$t('DictionaryTermTable.abbreviation'), value: 'abbreviation' },
-        { text: this.$t('_global.definition'), value: 'definition' },
         { text: this.$t('_global.status'), value: 'status' },
         { text: this.$t('_global.version'), value: 'version' },
         { text: this.$t('_global.modified'), value: 'start_date' }

@@ -28,18 +28,18 @@
                 "name_sentence_case": "name_sentence_case99",
                 "definition": "definition99",
                 "library_name": "Sponsor",
-                "activity_group": "activity_group_root_non_existing"
+                "activity_groups": ["activity_group_root_non_existing"]
             },
             "url": "/concepts/activities/activity-sub-groups"
         },
         "response": {
             "code": 400,
             "result": {
-                "message": "ActivitySubGroup tried to connect to non existing ActivityGroup identified by uid (activity_group_root_non_existing).",
+                "message": "Activity Subgroup tried to connect to non existing concepts [('Concept Name: Activity Group', \"uids: {'activity_group_root_non_existing'}\")].",
                 "method": "POST",
                 "path": "http://testserver/concepts/activities/activity-sub-groups",
                 "time": "2020-11-10T01:51:17.884429",
-                "type": "ValidationException"
+                "type": "BusinessLogicException"
             }
         }
     },
@@ -53,18 +53,18 @@
                 "name_sentence_case": "name_sentence_case999",
                 "definition": "definition999",
                 "library_name": "Sponsor",
-                "activity_group": "activity_group_root1"
+                "activity_groups": ["activity_group_root1"]
             },
             "url": "/concepts/activities/activity-sub-groups"
         },
         "response": {
             "code": 400,
             "result": {
-                "message": "ActivitySubGroup with name (name1) already exists.",
+                "message": "Activity Subgroup with ['name: name1'] already exists.",
                 "method": "POST",
                 "path": "http://testserver/concepts/activities/activity-sub-groups",
                 "time": "2020-11-10T01:51:17.884429",
-                "type": "ValidationException"
+                "type": "BusinessLogicException"
             }
         }
     },
@@ -75,18 +75,18 @@
             "method": "PATCH",
             "request": {
                 "change_description": "Test change",
-                "activity_group": "activity_group_root_non_existing"
+                "activity_groups": ["activity_group_root_non_existing"]
             },
             "url": "/concepts/activities/activity-sub-groups/activity_subgroup_root1"
         },
         "response": {
             "code": 400,
             "result": {
-                "message": "ActivitySubGroup tried to connect to non existing ActivityGroup identified by uid (activity_group_root_non_existing).",
+                "message": "Activity Subgroup tried to connect to non existing concepts [('Concept Name: Activity Group', \"uids: {'activity_group_root_non_existing'}\")].",
                 "method": "PATCH",
                 "path": "http://testserver/concepts/activities/activity-sub-groups/activity_subgroup_root1",
                 "time": "2020-11-10T01:51:17.884429",
-                "type": "ValidationException"
+                "type": "BusinessLogicException"
             }
         }
     },
@@ -104,11 +104,11 @@
         "response": {
             "code": 400,
             "result": {
-                "message": "ActivitySubGroup with name (name1) already exists.",
+                "message": "Activity Subgroup with ['name: name1'] already exists.",
                 "method": "PATCH",
                 "path": "http://testserver/concepts/activities/activity-sub-groups/activity_subgroup_root2",
                 "time": "2020-11-10T01:51:17.884429",
-                "type": "ValidationException"
+                "type": "BusinessLogicException"
             }
         }
     },

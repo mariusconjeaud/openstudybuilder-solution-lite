@@ -1,7 +1,8 @@
 import datetime
 from dataclasses import dataclass, field
-from typing import Any, Callable, Iterable, Optional, Sequence, Tuple
+from typing import Any, Callable, Iterable, Self, Sequence
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains._utils import normalize_string
 from clinical_mdr_api.domains.concepts.compound import CompoundAR
 from clinical_mdr_api.exceptions import BusinessLogicException
@@ -18,48 +19,48 @@ class StudySelectionCompoundVO:
     """
 
     study_selection_uid: str
-    study_uid: Optional[str]
-    compound_uid: Optional[str]
-    compound_alias_uid: Optional[str]
-    type_of_treatment_uid: Optional[str]
-    reason_for_missing_value_uid: Optional[str]
-    dispensed_in_uid: Optional[str]
-    route_of_administration_uid: Optional[str]
-    strength_value_uid: Optional[str]
-    dosage_form_uid: Optional[str]
-    device_uid: Optional[str]
-    formulation_uid: Optional[str]
-    other_info: Optional[str]
-    study_compound_dosing_count: Optional[int]
+    study_uid: str | None
+    compound_uid: str | None
+    compound_alias_uid: str | None
+    type_of_treatment_uid: str | None
+    reason_for_missing_value_uid: str | None
+    dispensed_in_uid: str | None
+    route_of_administration_uid: str | None
+    strength_value_uid: str | None
+    dosage_form_uid: str | None
+    device_uid: str | None
+    formulation_uid: str | None
+    other_info: str | None
+    study_compound_dosing_count: int | None
     # Study selection Versioning
     start_date: datetime.datetime
-    user_initials: Optional[str]
+    user_initials: str | None
 
     @classmethod
     def from_input_values(
         cls,
-        compound_uid: Optional[str],
-        compound_alias_uid: Optional[str],
-        type_of_treatment_uid: Optional[str],
-        reason_for_missing_value_uid: Optional[str],
-        route_of_administration_uid: Optional[str],
-        strength_value_uid: Optional[str],
-        dosage_form_uid: Optional[str],
-        dispensed_in_uid: Optional[str],
-        device_uid: Optional[str],
-        formulation_uid: Optional[str],
-        other_info: Optional[str],
+        compound_uid: str | None,
+        compound_alias_uid: str | None,
+        type_of_treatment_uid: str | None,
+        reason_for_missing_value_uid: str | None,
+        route_of_administration_uid: str | None,
+        strength_value_uid: str | None,
+        dosage_form_uid: str | None,
+        dispensed_in_uid: str | None,
+        device_uid: str | None,
+        formulation_uid: str | None,
+        other_info: str | None,
         user_initials: str,
-        study_uid: Optional[str] = None,
-        study_selection_uid: Optional[str] = None,
-        study_compound_dosing_count: Optional[int] = None,
-        start_date: Optional[datetime.datetime] = None,
+        study_uid: str | None = None,
+        study_selection_uid: str | None = None,
+        study_compound_dosing_count: int | None = None,
+        start_date: datetime.datetime | None = None,
         generate_uid_callback: Callable[[], str] = (
             lambda: _raise(
                 ValueError("generate_uid_callback necessary when uid not provided")
             )
         ),
-    ) -> "StudySelectionCompoundVO":
+    ) -> Self:
         """
         Factory method
         :param dispensed_in_uid:
@@ -121,7 +122,7 @@ class StudySelectionCompoundVO:
             self.reason_for_missing_value_uid is not None
             and not reason_for_missing_callback(self.reason_for_missing_value_uid)
         ):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 "Unknown reason for missing value code provided for Reason For Missing"
             )
 
@@ -138,7 +139,7 @@ class StudySelectionCompoundVO:
                 self.other_info,
             ):
                 if value is not None:
-                    raise ValueError(
+                    raise exceptions.ValidationException(
                         "If reason_for_missing_null_value_uid has a value, "
                         + "all fields except type of treatment have to be empty"
                     )
@@ -146,14 +147,14 @@ class StudySelectionCompoundVO:
         if self.compound_uid is not None and not compound_exist_callback(
             normalize_string(self.compound_uid)
         ):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"There is no approved compound identified by provided uid ({self.compound_uid})"
             )
 
         if self.compound_alias_uid is not None and not compound_alias_exist_callback(
             normalize_string(self.compound_alias_uid)
         ):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"There is no approved compound alias identified by provided uid ({self.compound_alias_uid})"
             )
 
@@ -236,7 +237,7 @@ class StudySelectionCompoundsAR:
 
     def get_specific_compound_selection(
         self, study_selection_uid: str
-    ) -> Tuple[StudySelectionCompoundVO, int]:
+    ) -> tuple[StudySelectionCompoundVO, int]:
         """
         Used to receive a specific VO from the AR
         :param study_selection_uid:
@@ -245,8 +246,8 @@ class StudySelectionCompoundsAR:
         for order, selection in enumerate(self.study_compounds_selection, start=1):
             if selection.study_selection_uid == study_selection_uid:
                 return selection, order
-        raise ValueError(
-            f"There is no selection between the study compound ({study_selection_uid} and the study)"
+        raise exceptions.NotFoundException(
+            f"There is no selection between the study compound '{study_selection_uid}' and the study"
         )
 
     def add_compound_selection(
@@ -283,7 +284,7 @@ class StudySelectionCompoundsAR:
         cls,
         study_uid: str,
         study_compounds_selection: Iterable[StudySelectionCompoundVO],
-    ) -> "StudySelectionCompoundsAR":
+    ) -> Self:
         """
         Factory method to create a AR
         :param study_uid:

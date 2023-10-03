@@ -14,8 +14,8 @@
       <v-radio-group
         v-model="creationMode"
         >
-        <v-radio data-cy="criteria-from-study" :label="$t('EligibilityCriteriaForm.select_from_studies')" value="select" />
         <v-radio data-cy="criteria-from-template" :label="$t('EligibilityCriteriaForm.create_from_template')" value="template" />
+        <v-radio data-cy="criteria-from-study" :label="$t('EligibilityCriteriaForm.select_from_studies')" value="select" />
         <v-radio data-cy="criteria-from-scratch" :label="$t('EligibilityCriteriaForm.create_from_scratch')" value="scratch" />
       </v-radio-group>
     </template>
@@ -73,7 +73,7 @@
             color="red"
             @click="unselectStudyCriteria(item)"
             >
-            <v-icon>mdi-delete</v-icon>
+            <v-icon>mdi-delete-outline</v-icon>
           </v-btn>
         </template>
       </v-data-table>
@@ -134,7 +134,7 @@
             color="red"
             @click="unselectTemplate(item)"
             >
-            <v-icon>mdi-delete</v-icon>
+            <v-icon>mdi-delete-outline</v-icon>
           </v-btn>
         </template>
       </v-data-table>
@@ -163,6 +163,7 @@
           has-api
           column-data-resource="criteria-templates"
           @filter="getCriteriaTemplates"
+          :default-filters="defaultTplFilters"
           >
           <template v-slot:item.indications="{ item }">
             <template v-if="item.indications">
@@ -189,7 +190,8 @@
             </template>
           </template>
           <template v-slot:item.name="{ item }">
-            <n-n-parameter-highlighter :name="item.name" default-color="orange" />
+            <n-n-parameter-highlighter v-if="preInstanceMode" :name="item.name" default-color="green" :show-prefix-and-postfix="false"/>
+            <n-n-parameter-highlighter v-else :name="item.name" default-color="orange"/>
           </template>
           <template v-slot:item.guidance_text="{ item }">
             <span v-html="item.guidance_text" />
@@ -308,19 +310,22 @@ export default {
         'EligibilityCriteriaForm.create_from_scratch',
         'EligibilityCriteriaForm.select_criteria_templates'
       ],
-      creationMode: 'select',
+      creationMode: 'template',
       extraDataFetcherFilters: {
         'criteria.library.name': { v: [libraries.LIBRARY_SPONSOR] },
         'criteria_type.sponsor_preferred_name': { v: [this.criteriaType.sponsor_preferred_name] }
       },
       tplHeaders: [
         { text: '', value: 'actions', width: '5%' },
-        { text: this.$t('_global.sequence_number'), value: 'sequence_id' },
-        { text: this.$t('_global.indications'), value: 'indications', filteringName: 'indications.name' },
-        { text: this.$t('EligibilityCriteriaForm.criterion_cat'), value: 'categories', filteringName: 'categories.name.sponsor_preferred_name' },
-        { text: this.$t('EligibilityCriteriaForm.criterion_sub_cat'), value: 'subCategories', filteringName: 'subCategories.name.sponsor_preferred_name' },
+        { text: this.$t('_global.sequence_number_short'), value: 'sequence_id', width: '5%' },
         { text: this.$t('EligibilityCriteriaForm.criteria_template'), value: 'name' },
         { text: this.$t('EligibilityCriteriaForm.guidance_text'), value: 'guidance_text' }
+      ],
+      defaultTplFilters: [
+        { text: this.$t('_global.sequence_number_short'), value: 'sequence_id' },
+        { text: this.$t('_global.indications'), value: 'indications', filteringName: 'indications.name' },
+        { text: this.$t('EligibilityCriteriaForm.criterion_cat'), value: 'categories', filteringName: 'categories.name.sponsor_preferred_name' },
+        { text: this.$t('EligibilityCriteriaForm.criterion_sub_cat'), value: 'subCategories', filteringName: 'subCategories.name.sponsor_preferred_name' }
       ],
       criteriaTemplates: [],
       form: {},
@@ -332,14 +337,15 @@ export default {
       selectedStudies: [],
       steps: this.getInitialSteps(),
       studies: [],
-      createFromTemplateSteps: [
-        { name: 'creation_mode', title: this.$t('EligibilityCriteriaForm.creation_mode_label') },
-        { name: 'createFromTemplate', title: this.$t('EligibilityCriteriaForm.select_criteria_templates') }
-      ],
       createFromScratchSteps: [
         { name: 'creation_mode', title: this.$t('EligibilityCriteriaForm.creation_mode_label') },
         { name: 'createFromScratch', title: this.$t('EligibilityCriteriaForm.create_from_scratch'), noStyle: true },
         { name: 'createCriteria', title: this.$t('EligibilityCriteriaForm.create_criteria') }
+      ],
+      selectFromStudiesSteps: [
+        { name: 'creation_mode', title: this.$t('EligibilityCriteriaForm.creation_mode_label') },
+        { name: 'selectStudies', title: this.$t('EligibilityCriteriaForm.select_studies') },
+        { name: 'select', title: this.$t('EligibilityCriteriaForm.select_criteria') }
       ],
       selectionHeaders: [
         { text: '', value: 'actions', width: '5%' },
@@ -375,7 +381,7 @@ export default {
       this.$emit('close')
       this.$refs.stepper.reset()
       this.steps = this.getInitialSteps()
-      this.creationMode = 'select'
+      this.creationMode = 'template'
       this.form = {}
       this.selectedStudies = []
       this.selectedCriteria = []
@@ -385,8 +391,7 @@ export default {
     getInitialSteps () {
       return [
         { name: 'creation_mode', title: this.$t('EligibilityCriteriaForm.creation_mode_label') },
-        { name: 'selectStudies', title: this.$t('EligibilityCriteriaForm.select_studies') },
-        { name: 'select', title: this.$t('EligibilityCriteriaForm.select_criteria') }
+        { name: 'createFromTemplate', title: this.$t('EligibilityCriteriaForm.select_criteria_templates') }
       ]
     },
     getObserver (step) {
@@ -446,7 +451,7 @@ export default {
       }
       try {
         const resp = await criteriaTemplates.create(data)
-        await criteriaTemplates.approve(resp.data.uid)
+        if (resp.data.status === statuses.DRAFT) await criteriaTemplates.approve(resp.data.uid)
         this.$set(this.form, 'criteria_template', resp.data)
       } catch (error) {
         return false
@@ -515,9 +520,9 @@ export default {
   watch: {
     creationMode (value) {
       if (value === 'select') {
-        this.steps = this.getInitialSteps()
+        this.steps = this.selectFromStudiesSteps
       } else if (value === 'template') {
-        this.steps = this.createFromTemplateSteps
+        this.steps = this.getInitialSteps()
         this.getCriteriaTemplates()
       } else {
         this.steps = this.createFromScratchSteps
@@ -526,6 +531,7 @@ export default {
     preInstanceMode (value) {
       this.apiEndpoint = value ? this.preInstanceApi : criteriaTemplates
       this.getCriteriaTemplates()
+      this.selectedCriteria = []
     }
   }
 }

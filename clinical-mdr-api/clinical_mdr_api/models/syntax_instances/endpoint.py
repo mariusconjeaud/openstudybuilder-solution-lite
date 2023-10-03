@@ -1,12 +1,12 @@
 from datetime import datetime
-from typing import Dict, List, Optional, Sequence
+from typing import Self, Sequence
 
 from pydantic import Field
 
 from clinical_mdr_api.domains.syntax_instances.endpoint import EndpointAR
 from clinical_mdr_api.models.libraries.library import Library
 from clinical_mdr_api.models.syntax_templates.endpoint_template import (
-    EndpointTemplateNameUid,
+    EndpointTemplateNameUidLibrary,
 )
 from clinical_mdr_api.models.syntax_templates.template_parameter_multi_select_input import (
     IndexedTemplateParameterTerm,
@@ -20,17 +20,17 @@ from clinical_mdr_api.models.utils import BaseModel
 
 class Endpoint(BaseModel):
     uid: str
-    name: Optional[str] = Field(None, nullable=True)
-    name_plain: Optional[str] = Field(None, nullable=True)
+    name: str | None = Field(None, nullable=True)
+    name_plain: str | None = Field(None, nullable=True)
 
-    start_date: Optional[datetime] = Field(None, nullable=True)
-    end_date: Optional[datetime] = Field(None, nullable=True)
-    status: Optional[str] = Field(None, nullable=True)
-    version: Optional[str] = Field(None, nullable=True)
-    change_description: Optional[str] = Field(None, nullable=True)
-    user_initials: Optional[str] = Field(None, nullable=True)
+    start_date: datetime | None = Field(None, nullable=True)
+    end_date: datetime | None = Field(None, nullable=True)
+    status: str | None = Field(None, nullable=True)
+    version: str | None = Field(None, nullable=True)
+    change_description: str | None = Field(None, nullable=True)
+    user_initials: str | None = Field(None, nullable=True)
 
-    possible_actions: Optional[Sequence[str]] = Field(
+    possible_actions: Sequence[str] | None = Field(
         None,
         description=(
             "Holds those actions that can be performed on the endpoint. "
@@ -38,21 +38,21 @@ class Endpoint(BaseModel):
         ),
     )
 
-    endpoint_template: Optional[EndpointTemplateNameUid]
-    parameter_terms: Optional[Sequence[MultiTemplateParameterTerm]] = Field(
+    endpoint_template: EndpointTemplateNameUidLibrary | None
+    parameter_terms: Sequence[MultiTemplateParameterTerm] | None = Field(
         None,
         description="Holds the parameter terms that are used within the endpoint. The terms are ordered as they occur in the endpoint name.",
     )
-    # objective: Optional[Objective] = None
-    library: Optional[Library] = Field(None, nullable=True)
+    # objective: Objective | None= None
+    library: Library | None = Field(None, nullable=True)
 
     study_count: int = Field(0, description="Count of studies referencing endpoint")
 
     @classmethod
-    def from_endpoint_ar(cls, endpoint_ar: EndpointAR) -> "Endpoint":
-        parameter_terms: List[MultiTemplateParameterTerm] = []
+    def from_endpoint_ar(cls, endpoint_ar: EndpointAR) -> Self:
+        parameter_terms: list[MultiTemplateParameterTerm] = []
         for position, parameter in enumerate(endpoint_ar.get_parameters()):
-            terms: List[IndexedTemplateParameterTerm] = []
+            terms: list[IndexedTemplateParameterTerm] = []
             for index, parameter_term in enumerate(parameter.parameters):
                 pv = IndexedTemplateParameterTerm(
                     index=index + 1,
@@ -81,11 +81,12 @@ class Endpoint(BaseModel):
             possible_actions=sorted(
                 {_.value for _ in endpoint_ar.get_possible_actions()}
             ),
-            endpoint_template=EndpointTemplateNameUid(
+            endpoint_template=EndpointTemplateNameUidLibrary(
                 name=endpoint_ar.template_name,
                 name_plain=endpoint_ar.template_name_plain,
                 uid=endpoint_ar.template_uid,
                 sequence_id=endpoint_ar.template_sequence_id,
+                library_name=endpoint_ar.template_library_name,
             ),
             library=Library.from_library_vo(endpoint_ar.library),
             study_count=endpoint_ar.study_count,
@@ -94,7 +95,7 @@ class Endpoint(BaseModel):
 
 
 class EndpointVersion(Endpoint):
-    changes: Optional[Dict[str, bool]] = Field(
+    changes: dict[str, bool] | None = Field(
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "
@@ -105,7 +106,7 @@ class EndpointVersion(Endpoint):
 
 
 class EndpointParameterInput(BaseModel):
-    parameter_terms: List[TemplateParameterMultiSelectInput] = Field(
+    parameter_terms: list[TemplateParameterMultiSelectInput] = Field(
         ...,
         title="parameter_terms",
         description="An ordered list of selected parameter terms that are used to replace the parameters of the endpoint template.",

@@ -55,7 +55,8 @@
                     "name_plain": "Test_Name_Template",
                     "guidance_text": null,
                     "uid": "{otuid}",
-                    "sequence_id": "OT1"
+                    "sequence_id": "O1",
+                    "library_name": "Test library"
                 },
                 "parameter_terms": [],
                 "possible_actions": [
@@ -103,7 +104,8 @@
                     "name_plain": "Test_Name_Template",
                     "guidance_text": null,
                     "uid": "{otuid}",
-                    "sequence_id": "OT1"
+                    "sequence_id": "O1",
+                    "library_name": "Test library"
                 },
                 "parameter_terms": [],
                 "possible_actions": [
@@ -221,7 +223,8 @@
                         "name_plain": "Test_Name_Template",
                         "guidance_text": null,
                         "uid": "{otuid}",
-                        "sequence_id": "OT1"
+                        "sequence_id": "O1",
+                    "library_name": "Test library"
                     },
                     "parameter_terms": [],
                     "possible_actions": [
@@ -249,7 +252,8 @@
                         "name_plain": "Test_Name_Template",
                         "guidance_text": null,
                         "uid": "{otuid}",
-                        "sequence_id": "OT1"
+                        "sequence_id": "O1",
+                    "library_name": "Test library"
                     },
                     "parameter_terms": [],
                     "possible_actions": [

@@ -4,10 +4,11 @@ from fastapi import APIRouter, Body, Depends, Path, Response, status
 
 from clinical_mdr_api import models
 from clinical_mdr_api.models.error import ErrorResponse
-from clinical_mdr_api.oauth import get_current_user_id
+from clinical_mdr_api.oauth import get_current_user_id, rbac
 from clinical_mdr_api.routers import _generic_descriptions
 from clinical_mdr_api.services.brands.brand import BrandService
 
+# Prefixed with "/brands"
 router = APIRouter()
 
 BrandUID = Path(None, description="The unique id of brand")
@@ -16,6 +17,7 @@ Service = BrandService
 
 @router.get(
     "",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns all brands.",
     response_model=Sequence[models.Brand],
     status_code=200,
@@ -32,6 +34,7 @@ def get_brands(
 
 @router.get(
     "/{uid}",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns the brand identified by the specified 'uid'.",
     response_model=models.Brand,
     status_code=200,
@@ -49,6 +52,7 @@ def get_brand(
 
 @router.post(
     "",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Creates a new brand.",
     response_model=models.Brand,
     status_code=201,
@@ -73,6 +77,7 @@ def create(
 
 @router.delete(
     "/{uid}",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Deletes the brand identified by 'uid'.",
     response_model=None,
     status_code=204,

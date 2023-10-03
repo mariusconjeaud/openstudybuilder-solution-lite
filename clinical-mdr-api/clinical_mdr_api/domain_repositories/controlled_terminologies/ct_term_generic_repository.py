@@ -1,12 +1,12 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Iterable, Optional, Sequence, Tuple, cast
+from typing import Iterable, Sequence, cast
 
 from cachetools import cached
 from cachetools.keys import hashkey
 from neomodel import db
 
-from clinical_mdr_api import models
+from clinical_mdr_api import exceptions, models
 from clinical_mdr_api.domain_repositories._generic_repository_interface import (
     _AggregateRootType,
 )
@@ -98,7 +98,7 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
         result, _ = db.cypher_query(query, {"uid": uid})
         return len(result) > 0
 
-    def term_specific_order_by_uid(self, uid: str) -> Optional[int]:
+    def term_specific_order_by_uid(self, uid: str) -> int | None:
         """
         Returns the latest final version order number if a order number exists for a given term uid
         :return:
@@ -116,7 +116,7 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
         root: ControlledTerminology,
-        library: Optional[Library],
+        library: Library | None,
         relationship: VersionRelationship,
         value: ControlledTerminology,
     ) -> _AggregateRootType:
@@ -168,15 +168,15 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
 
     def find_all(
         self,
-        codelist_uid: Optional[str] = None,
-        codelist_name: Optional[str] = None,
-        library: Optional[str] = None,
-        package: Optional[str] = None,
-        sort_by: Optional[dict] = None,
+        codelist_uid: str | None = None,
+        codelist_name: str | None = None,
+        library: str | None = None,
+        package: str | None = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[_AggregateRootType]:
         """
@@ -199,9 +199,8 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
         :return GenericFilteringReturn[_AggregateRootType]:
         """
         if self.relationship_from_root not in vars(CTTermRoot):
-            raise ValueError(
-                f"The relationship of type {self.relationship_from_root} "
-                f"was not found in CTTermRoot object"
+            raise exceptions.BusinessLogicException(
+                f"The relationship of type {self.relationship_from_root} was not found in CTTermRoot object"
             )
 
         # Build match_clause
@@ -243,22 +242,20 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
         count_result, _ = db.cypher_query(
             query=query.count_query, params=query.parameters
         )
-        total_count = count_result[0][0] if len(count_result) > 0 and total_count else 0
+        total = count_result[0][0] if len(count_result) > 0 and total_count else 0
 
-        return GenericFilteringReturn.create(
-            items=extracted_items, total_count=total_count
-        )
+        return GenericFilteringReturn.create(items=extracted_items, total=total)
 
     def get_distinct_headers(
         self,
         field_name: str,
-        codelist_uid: Optional[str] = None,
-        codelist_name: Optional[str] = None,
-        library: Optional[str] = None,
-        package: Optional[str] = None,
-        search_string: Optional[str] = "",
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        codelist_uid: str | None = None,
+        codelist_name: str | None = None,
+        library: str | None = None,
+        package: str | None = None,
+        search_string: str | None = "",
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
     ) -> Sequence:
         """
@@ -338,24 +335,23 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
 
         return terms_ars
 
-    def get_syntax_criteria_type(
+    def get_syntax_template_type(
         self, root_class: type, syntax_uid: str
     ) -> _AggregateRootType:
         """
-        This method returns the criteria type for the syntax with provided uid.
+        This method returns the template type for the syntax with provided uid.
 
         :param root_class: The class of the root node for the syntax
         :param syntax_uid: UID of the syntax
         :return _AggregateRootType:
         """
         syntax = root_class.nodes.get(uid=syntax_uid)
-        criteria_type_node = syntax.has_type.single()
-        criteria_type = self.find_by_uid(term_uid=criteria_type_node.uid)
-        return criteria_type
+        type_node = syntax.has_type.single()
+        return self.find_by_uid(term_uid=type_node.uid)
 
     def get_syntax_categories(
         self, root_class: type, syntax_uid: str
-    ) -> Optional[Sequence[_AggregateRootType]]:
+    ) -> Sequence[_AggregateRootType] | None:
         """
         This method returns the categories for the syntax with provided uid.
 
@@ -375,7 +371,7 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
 
     def get_syntax_subcategories(
         self, root_class: type, syntax_uid: str
-    ) -> Optional[Sequence[_AggregateRootType]]:
+    ) -> Sequence[_AggregateRootType] | None:
         """
         This method returns the sub_categories for the syntax with provided uid.
 
@@ -396,9 +392,9 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
     def hashkey_ct_term(
         self,
         term_uid: str,
-        version: Optional[str] = None,
-        status: Optional[LibraryItemStatus] = None,
-        at_specific_date: Optional[datetime] = None,
+        version: str | None = None,
+        status: LibraryItemStatus | None = None,
+        at_specific_date: datetime | None = None,
         for_update: bool = False,
     ):
         """
@@ -424,11 +420,11 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
     def find_by_uid(
         self,
         term_uid: str,
-        version: Optional[str] = None,
-        status: Optional[LibraryItemStatus] = None,
-        at_specific_date: Optional[datetime] = None,
+        version: str | None = None,
+        status: LibraryItemStatus | None = None,
+        at_specific_date: datetime | None = None,
         for_update: bool = False,
-    ) -> Optional[_AggregateRootType]:
+    ) -> _AggregateRootType | None:
         ct_term_root: CTTermRoot = CTTermRoot.nodes.get_or_none(uid=term_uid)
         if ct_term_root is None:
             return None
@@ -437,7 +433,7 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
             self.relationship_from_root
         ).single()
         term_ar = self.find_by_uid_2(
-            str(ct_term_version_root_node.id),
+            str(ct_term_version_root_node.element_id),
             version=version,
             status=status,
             at_specific_date=at_specific_date,
@@ -446,14 +442,14 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
 
         return term_ar
 
-    def get_all_versions(self, term_uid: str) -> Optional[Iterable[_AggregateRootType]]:
+    def get_all_versions(self, term_uid: str) -> Iterable[_AggregateRootType] | None:
         ct_term_root: CTTermRoot = CTTermRoot.nodes.get_or_none(uid=term_uid)
         if ct_term_root is not None:
             # pylint:disable=unnecessary-dunder-call
             ct_term_ver_root_node = ct_term_root.__getattribute__(
                 self.relationship_from_root
             ).single()
-            versions = self.get_all_versions_2(str(ct_term_ver_root_node.id))
+            versions = self.get_all_versions_2(str(ct_term_ver_root_node.element_id))
             return versions
         return None
 
@@ -495,7 +491,7 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
             parent_node = ct_term_root_node.has_parent_subtype.get_or_none()
 
         if parent_node is not None:
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"The term identified by ({term_uid}) already has a "
                 f"parent type node identified by ({parent_node.uid}) "
                 f"with the relationship of type ({relationship_type.value})"
@@ -535,7 +531,7 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
             parent_node = ct_term_root_node.has_parent_subtype.get_or_none()
 
         if parent_node is None:
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"The term identified by ({term_uid}) has no defined parent type node"
                 f" identified by ({parent_uid}) with the relationship of type ({relationship_type.value})"
             )
@@ -555,7 +551,7 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
         """
         raise NotImplementedError
 
-    def find_uid_by_name(self, name: str) -> Optional[str]:
+    def find_uid_by_name(self, name: str) -> str | None:
         cypher_query = f"""
             MATCH (term_root:CTTermRoot)-[:{cast(str, self.relationship_from_root).upper()}]->(or:{self.root_class.__label__})-
             [:LATEST_FINAL|LATEST_DRAFT|LATEST_RETIRED]->(ov:{self.value_class.__label__} {{name: $name}})
@@ -568,11 +564,11 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
 
     def _generate_generic_match_clause(
         self,
-        codelist_uid: Optional[str] = None,
-        codelist_name: Optional[str] = None,
-        library: Optional[str] = None,
-        package: Optional[str] = None,
-    ) -> Tuple[str, dict]:
+        codelist_uid: str | None = None,
+        codelist_name: str | None = None,
+        library: str | None = None,
+        package: str | None = None,
+    ) -> tuple[str, dict]:
         if package:
             if self.is_repository_related_to_attributes():
                 match_clause = """

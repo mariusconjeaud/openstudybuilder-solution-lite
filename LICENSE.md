@@ -14,7 +14,7 @@ OpenStudyBuilder Documentation Portal (CC-BY-4.0 for content and MIT for source 
 Clinical MDR API Specification (MIT) | Clinical-mdr-api (swagger documentation)
 Clinical MDR API (GPLv3) | Clinical-mdr-api
 Clinical MDR (MIT) | Neo4j-mdr-db (does not include Neo4j database which is needed as third party software)
-Data Import (MIT) | data-import
+Sponsor Data Import (MIT) | studybuilder-import
 Data Export (MIT) | studybuilder-export
 Standards Import (GPLv3) | Mdr-standards-import
 

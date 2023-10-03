@@ -4,7 +4,6 @@ Tests for /activity-item-classes endpoints
 import json
 import logging
 from functools import reduce
-from typing import List
 
 import pytest
 from fastapi.testclient import TestClient
@@ -17,6 +16,7 @@ from clinical_mdr_api.models.biomedical_concepts.activity_instance_class import 
 from clinical_mdr_api.models.biomedical_concepts.activity_item_class import (
     ActivityItemClass,
 )
+from clinical_mdr_api.models.standard_data_models.variable_class import VariableClass
 from clinical_mdr_api.tests.integration.utils.api import (
     inject_and_clear_db,
     inject_base_data,
@@ -34,11 +34,12 @@ from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 log = logging.getLogger(__name__)
 
 # Global variables shared between fixtures and tests
-activity_item_classes_all: List[ActivityItemClass]
+activity_item_classes_all: list[ActivityItemClass]
 activity_instance_class: ActivityInstanceClass
 activity_instance_class2: ActivityInstanceClass
 role_term: CTTerm
 data_type_term: CTTerm
+variable_class: VariableClass
 
 
 @pytest.fixture(scope="module")
@@ -59,6 +60,7 @@ def test_data():
     global activity_instance_class2
     global data_type_term
     global role_term
+    global variable_class
 
     activity_instance_class = TestUtils.create_activity_instance_class(
         name="Activity Instance Class name1"
@@ -68,6 +70,19 @@ def test_data():
     )
     data_type_term = TestUtils.create_ct_term(sponsor_preferred_name="Data type")
     role_term = TestUtils.create_ct_term(sponsor_preferred_name="Role")
+    data_model = TestUtils.create_data_model()
+    data_model_catalogue = TestUtils.create_data_model_catalogue()
+    dataset_class = TestUtils.create_dataset_class(
+        data_model_uid=data_model.uid,
+        data_model_catalogue_name=data_model_catalogue,
+    )
+    variable_class = TestUtils.create_variable_class(
+        dataset_class_uid=dataset_class.uid,
+        data_model_catalogue_name=data_model_catalogue,
+        data_model_name=data_model.uid,
+        data_model_version=data_model.version_number,
+    )
+
     # Create some activity item classes
     activity_item_classes_all = [
         TestUtils.create_activity_item_class(
@@ -166,6 +181,7 @@ ACTIVITY_IC_FIELDS_ALL = [
     "activity_instance_classes",
     "data_type",
     "role",
+    "variable_classes",
     "library_name",
     "start_date",
     "end_date",
@@ -466,6 +482,16 @@ def test_edit_activity_item_class(api_client):
     assert res["status"] == "Draft"
     assert res["possible_actions"] == ["approve", "delete", "edit"]
     assert res["library_name"] == "Sponsor"
+
+    response = api_client.patch(
+        f"/activity-item-classes/{activity_item_class.uid}/model-mappings",
+        json={
+            "variable_class_uids": [variable_class.uid],
+        },
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["variable_classes"] == [{"uid": variable_class.uid}]
 
 
 def test_post_activity_item_class(api_client):

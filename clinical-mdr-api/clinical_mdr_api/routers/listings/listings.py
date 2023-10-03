@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Optional, Sequence
+from typing import Any, Sequence
 
 from fastapi import APIRouter, Query
 from pydantic.types import Json
@@ -8,17 +8,21 @@ from starlette.requests import Request
 from clinical_mdr_api import config, models
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import CustomPage
+from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.listings.listings import ListingsService
 
+# Prefixed with "/listings"
 router = APIRouter()
-### sdtm_router = APIRouter()
+
+# Prefixed with "/listings"
 metadata_router = APIRouter()
 
 
 @metadata_router.get(
     "/metadata",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Metadata for datasets",
     response_model=CustomPage[models.MetaData],
     response_model_exclude_unset=True,
@@ -29,30 +33,31 @@ metadata_router = APIRouter()
     },
 )
 def get_metadata(
-    dataset_name: Optional[str] = Query(
+    dataset_name: str
+    | None = Query(
         None,
         description="Optional parameter to specify which legacy dataset(s) to get metadata for."
         " Multiple datasets are separated by commas",
     ),
     sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
-    page_number: Optional[int] = Query(
-        1, ge=1, description=_generic_descriptions.PAGE_NUMBER
-    ),
-    page_size: Optional[int] = Query(
+    page_number: int
+    | None = Query(1, ge=1, description=_generic_descriptions.PAGE_NUMBER),
+    page_size: int
+    | None = Query(
         config.DEFAULT_PAGE_SIZE,
         ge=0,
         le=config.MAX_PAGE_SIZE,
         description=_generic_descriptions.PAGE_SIZE,
     ),
-    filters: Optional[Json] = Query(
+    filters: Json
+    | None = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
-    operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    total_count: Optional[bool] = Query(
-        False, description=_generic_descriptions.TOTAL_COUNT
-    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    total_count: bool
+    | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
 ):
     service = ListingsService()
     all_items = service.list_metadata(
@@ -67,7 +72,7 @@ def get_metadata(
 
     return CustomPage.create(
         items=all_items.items,
-        total=all_items.total_count,
+        total=all_items.total,
         page=page_number,
         size=page_size,
     )
@@ -75,6 +80,7 @@ def get_metadata(
 
 @router.get(
     "/metadata/headers",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
@@ -90,18 +96,17 @@ def get_metadata(
 )
 def get_distinct_values_for_header(
     field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
-    search_string: Optional[str] = Query(
-        "", description=_generic_descriptions.HEADER_SEARCH_STRING
-    ),
-    filters: Optional[Json] = Query(
+    search_string: str
+    | None = Query("", description=_generic_descriptions.HEADER_SEARCH_STRING),
+    filters: Json
+    | None = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
-    operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    result_count: Optional[int] = Query(
-        10, description=_generic_descriptions.HEADER_RESULT_COUNT
-    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    result_count: int
+    | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
 ):
     service = ListingsService()
     return service.get_distinct_values_for_header(
@@ -116,6 +121,7 @@ def get_distinct_values_for_header(
 
 @router.get(
     "/libraries/all/gcmd/topic-cd-def",  # might be different if we introduce a parameter
+    dependencies=[rbac.LIBRARY_READ],
     summary="List library metadata for Activities in the legacy format for CDW-MMA General Clinical Metadata",
     description=_generic_descriptions.DATA_EXPORTS_HEADER,
     response_model=CustomPage[models.TopicCdDef],
@@ -149,30 +155,31 @@ def get_distinct_values_for_header(
 # pylint: disable=unused-argument
 def get_all_activities_report(
     request: Request,  # request is actually required by the allow_exports decorator
-    at_specified_date_time: Optional[datetime] = Query(
+    at_specified_date_time: datetime
+    | None = Query(
         None,
         description="Optional parameter to specify the retrieve the status of the MDR at a specific timepoint, "
         "ISO Format with timezone, compatible with Neo4j e.g. 2021-01-01T09:00:00Z",
     ),
     sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
-    page_number: Optional[int] = Query(
-        1, ge=1, description=_generic_descriptions.PAGE_NUMBER
-    ),
-    page_size: Optional[int] = Query(
+    page_number: int
+    | None = Query(1, ge=1, description=_generic_descriptions.PAGE_NUMBER),
+    page_size: int
+    | None = Query(
         config.DEFAULT_PAGE_SIZE,
         ge=0,
         le=config.MAX_PAGE_SIZE,
         description=_generic_descriptions.PAGE_SIZE,
     ),
-    filters: Optional[Json] = Query(
+    filters: Json
+    | None = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
-    operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    total_count: Optional[bool] = Query(
-        False, description=_generic_descriptions.TOTAL_COUNT
-    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    total_count: bool
+    | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
 ):
     service = ListingsService()
     all_items = service.list_topic_cd(
@@ -187,7 +194,7 @@ def get_all_activities_report(
 
     return CustomPage.create(
         items=all_items.items,
-        total=all_items.total_count,
+        total=all_items.total,
         page=page_number,
         size=page_size,
     )
@@ -195,6 +202,7 @@ def get_all_activities_report(
 
 @router.get(
     "/libraries/all/gcmd/topic-cd-def/headers",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
@@ -210,18 +218,17 @@ def get_all_activities_report(
 )
 def get_distinct_topic_cd_def_values_for_header(
     field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
-    search_string: Optional[str] = Query(
-        "", description=_generic_descriptions.HEADER_SEARCH_STRING
-    ),
-    filters: Optional[Json] = Query(
+    search_string: str
+    | None = Query("", description=_generic_descriptions.HEADER_SEARCH_STRING),
+    filters: Json
+    | None = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
-    operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    result_count: Optional[int] = Query(
-        10, description=_generic_descriptions.HEADER_RESULT_COUNT
-    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    result_count: int
+    | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
 ):
     service = ListingsService()
     return service.get_distinct_values_for_header(
@@ -236,6 +243,7 @@ def get_distinct_topic_cd_def_values_for_header(
 
 @router.get(
     "/libraries/all/gcmd/cdisc-ct-ver",
+    dependencies=[rbac.LIBRARY_READ],
     summary="CDW-MMA legacy dataset cdisc_ct_ver",
     response_model=CustomPage[models.CDISCCTVer],
     response_model_exclude_unset=True,
@@ -246,35 +254,37 @@ def get_distinct_topic_cd_def_values_for_header(
     },
 )
 def get_cdisc_ct_ver_data(
-    catalogue_name: Optional[str] = Query(
+    catalogue_name: str
+    | None = Query(
         None,
         description="If specified, only codelists from given catalogue are returned."
         " Multiple catalogues are separated by commas e.g. ADAM CT, SDTM CT",
     ),
-    after_specified_date: Optional[str] = Query(
+    after_specified_date: str
+    | None = Query(
         None,
         description="If specified, only codelists from packages with effective date after this date are returned."
         "Date must be in ISO format e.g. 2021-01-01",
     ),
     sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
-    page_number: Optional[int] = Query(
-        1, ge=1, description=_generic_descriptions.PAGE_NUMBER
-    ),
-    page_size: Optional[int] = Query(
+    page_number: int
+    | None = Query(1, ge=1, description=_generic_descriptions.PAGE_NUMBER),
+    page_size: int
+    | None = Query(
         config.DEFAULT_PAGE_SIZE,
         ge=0,
         le=config.MAX_PAGE_SIZE,
         description=_generic_descriptions.PAGE_SIZE,
     ),
-    filters: Optional[Json] = Query(
+    filters: Json
+    | None = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
-    operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    total_count: Optional[bool] = Query(
-        False, description=_generic_descriptions.TOTAL_COUNT
-    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    total_count: bool
+    | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
 ):
     service = ListingsService()
     all_items = service.list_cdisc_ct_ver(
@@ -290,7 +300,7 @@ def get_cdisc_ct_ver_data(
 
     return CustomPage.create(
         items=all_items.items,
-        total=all_items.total_count,
+        total=all_items.total,
         page=page_number,
         size=page_size,
     )
@@ -298,6 +308,7 @@ def get_cdisc_ct_ver_data(
 
 @router.get(
     "/libraries/all/gcmd/cdisc-ct-ver/headers",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
@@ -313,18 +324,17 @@ def get_cdisc_ct_ver_data(
 )
 def get_distinct_cdisc_ct_ver_values_for_header(
     field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
-    search_string: Optional[str] = Query(
-        "", description=_generic_descriptions.HEADER_SEARCH_STRING
-    ),
-    filters: Optional[Json] = Query(
+    search_string: str
+    | None = Query("", description=_generic_descriptions.HEADER_SEARCH_STRING),
+    filters: Json
+    | None = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
-    operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    result_count: Optional[int] = Query(
-        10, description=_generic_descriptions.HEADER_RESULT_COUNT
-    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    result_count: int
+    | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
 ):
     service = ListingsService()
     return service.get_distinct_values_for_header(
@@ -339,6 +349,7 @@ def get_distinct_cdisc_ct_ver_values_for_header(
 
 @router.get(
     "/libraries/all/gcmd/cdisc-ct-pkg",
+    dependencies=[rbac.LIBRARY_READ],
     summary="CDW-MMA legacy dataset cdisc_ct_pkg",
     response_model=CustomPage[models.CDISCCTPkg],
     response_model_exclude_unset=True,
@@ -349,35 +360,37 @@ def get_distinct_cdisc_ct_ver_values_for_header(
     },
 )
 def get_cdisc_ct_pkg_data(
-    catalogue_name: Optional[str] = Query(
+    catalogue_name: str
+    | None = Query(
         None,
         description="If specified, only codelists from given catalogue are returned."
         " Multiple catalogues are separated by commas e.g. ADAM CT, SDTM CT",
     ),
-    after_specified_date: Optional[str] = Query(
+    after_specified_date: str
+    | None = Query(
         None,
         description="If specified, only codelists from packages with effective date after this date are returned."
         "Date must be in ISO format e.g. 2021-01-01",
     ),
     sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
-    page_number: Optional[int] = Query(
-        1, ge=1, description=_generic_descriptions.PAGE_NUMBER
-    ),
-    page_size: Optional[int] = Query(
+    page_number: int
+    | None = Query(1, ge=1, description=_generic_descriptions.PAGE_NUMBER),
+    page_size: int
+    | None = Query(
         config.DEFAULT_PAGE_SIZE,
         ge=0,
         le=config.MAX_PAGE_SIZE,
         description=_generic_descriptions.PAGE_SIZE,
     ),
-    filters: Optional[Json] = Query(
+    filters: Json
+    | None = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
-    operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    total_count: Optional[bool] = Query(
-        False, description=_generic_descriptions.TOTAL_COUNT
-    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    total_count: bool
+    | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
 ):
     service = ListingsService()
     all_items = service.list_cdisc_ct_pkg(
@@ -393,7 +406,7 @@ def get_cdisc_ct_pkg_data(
 
     return CustomPage.create(
         items=all_items.items,
-        total=all_items.total_count,
+        total=all_items.total,
         page=page_number,
         size=page_size,
     )
@@ -401,6 +414,7 @@ def get_cdisc_ct_pkg_data(
 
 @router.get(
     "/libraries/all/gcmd/cdisc-ct-pkg/headers",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
@@ -416,18 +430,17 @@ def get_cdisc_ct_pkg_data(
 )
 def get_distinct_cdisc_ct_pkg_values_for_header(
     field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
-    search_string: Optional[str] = Query(
-        "", description=_generic_descriptions.HEADER_SEARCH_STRING
-    ),
-    filters: Optional[Json] = Query(
+    search_string: str
+    | None = Query("", description=_generic_descriptions.HEADER_SEARCH_STRING),
+    filters: Json
+    | None = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
-    operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    result_count: Optional[int] = Query(
-        10, description=_generic_descriptions.HEADER_RESULT_COUNT
-    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    result_count: int
+    | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
 ):
     service = ListingsService()
     return service.get_distinct_values_for_header(
@@ -442,6 +455,7 @@ def get_distinct_cdisc_ct_pkg_values_for_header(
 
 @router.get(
     "/libraries/all/gcmd/cdisc-ct-list",
+    dependencies=[rbac.LIBRARY_READ],
     summary="CDW-MMA legacy dataset cdisc_ct_list",
     response_model=CustomPage[models.CDISCCTList],
     response_model_exclude_unset=True,
@@ -452,40 +466,43 @@ def get_distinct_cdisc_ct_pkg_values_for_header(
     },
 )
 def get_cdisc_ct_list_data(
-    catalogue_name: Optional[str] = Query(
+    catalogue_name: str
+    | None = Query(
         None,
         description="If specified, only codelists from given catalogue are returned."
         " Multiple catalogues are separated by commas e.g. ADAM CT, SDTM CT",
     ),
-    package: Optional[str] = Query(
+    package: str
+    | None = Query(
         None,
         description="If specified, only codelists from given package are returned."
         "Multiple packages are separated by commas e.g. SDTM CT 2021-06-25, SDTM CT 2021-09-24",
     ),
-    after_specified_date: Optional[str] = Query(
+    after_specified_date: str
+    | None = Query(
         None,
         description="If specified, only codelists from packages with effective date after this date are returned."
         "Date must be in ISO format e.g. 2021-01-01",
     ),
     sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
-    page_number: Optional[int] = Query(
-        1, ge=1, description=_generic_descriptions.PAGE_NUMBER
-    ),
-    page_size: Optional[int] = Query(
+    page_number: int
+    | None = Query(1, ge=1, description=_generic_descriptions.PAGE_NUMBER),
+    page_size: int
+    | None = Query(
         config.DEFAULT_PAGE_SIZE,
         ge=0,
         le=config.MAX_PAGE_SIZE,
         description=_generic_descriptions.PAGE_SIZE,
     ),
-    filters: Optional[Json] = Query(
+    filters: Json
+    | None = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
-    operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    total_count: Optional[bool] = Query(
-        False, description=_generic_descriptions.TOTAL_COUNT
-    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    total_count: bool
+    | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
 ):
     service = ListingsService()
     all_items = service.list_cdisc_ct_list(
@@ -502,7 +519,7 @@ def get_cdisc_ct_list_data(
 
     return CustomPage.create(
         items=all_items.items,
-        total=all_items.total_count,
+        total=all_items.total,
         page=page_number,
         size=page_size,
     )
@@ -510,6 +527,7 @@ def get_cdisc_ct_list_data(
 
 @router.get(
     "/libraries/all/gcmd/cdisc-ct-list/headers",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
@@ -525,18 +543,17 @@ def get_cdisc_ct_list_data(
 )
 def get_distinct_cdisc_ct_list_values_for_header(
     field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
-    search_string: Optional[str] = Query(
-        "", description=_generic_descriptions.HEADER_SEARCH_STRING
-    ),
-    filters: Optional[Json] = Query(
+    search_string: str
+    | None = Query("", description=_generic_descriptions.HEADER_SEARCH_STRING),
+    filters: Json
+    | None = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
-    operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    result_count: Optional[int] = Query(
-        10, description=_generic_descriptions.HEADER_RESULT_COUNT
-    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    result_count: int
+    | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
 ):
     service = ListingsService()
     return service.get_distinct_values_for_header(
@@ -551,6 +568,7 @@ def get_distinct_cdisc_ct_list_values_for_header(
 
 @router.get(
     "/libraries/all/gcmd/cdisc-ct-val",
+    dependencies=[rbac.LIBRARY_READ],
     summary="CDW-MMA legacy dataset cdisc_ct_val",
     response_model=CustomPage[models.CDISCCTVal],
     response_model_exclude_unset=True,
@@ -561,40 +579,43 @@ def get_distinct_cdisc_ct_list_values_for_header(
     },
 )
 def get_cdisc_ct_val_data(
-    catalogue_name: Optional[str] = Query(
+    catalogue_name: str
+    | None = Query(
         None,
         description="If specified, only codelist values from given catalogue are returned."
         " Multiple catalogues are separated by commas e.g. ADAM CT, SDTM CT",
     ),
-    package: Optional[str] = Query(
+    package: str
+    | None = Query(
         None,
         description="If specified, only codelist values from given package are returned."
         "Multiple packages are separated by commas e.g. SDTM CT 2021-06-25, SDTM CT 2021-09-24",
     ),
-    after_specified_date: Optional[str] = Query(
+    after_specified_date: str
+    | None = Query(
         None,
         description="If specified, only codelist values from packages with effective date after this date are returned."
         "Date must be in ISO format e.g. 2021-01-01",
     ),
     sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
-    page_number: Optional[int] = Query(
-        1, ge=1, description=_generic_descriptions.PAGE_NUMBER
-    ),
-    page_size: Optional[int] = Query(
+    page_number: int
+    | None = Query(1, ge=1, description=_generic_descriptions.PAGE_NUMBER),
+    page_size: int
+    | None = Query(
         config.DEFAULT_PAGE_SIZE,
         ge=0,
         le=config.MAX_PAGE_SIZE,
         description=_generic_descriptions.PAGE_SIZE,
     ),
-    filters: Optional[Json] = Query(
+    filters: Json
+    | None = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
-    operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    total_count: Optional[bool] = Query(
-        False, description=_generic_descriptions.TOTAL_COUNT
-    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    total_count: bool
+    | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
 ):
     service = ListingsService()
     all_items = service.list_cdisc_ct_val(
@@ -611,7 +632,7 @@ def get_cdisc_ct_val_data(
 
     return CustomPage.create(
         items=all_items.items,
-        total=all_items.total_count,
+        total=all_items.total,
         page=page_number,
         size=page_size,
     )
@@ -619,6 +640,7 @@ def get_cdisc_ct_val_data(
 
 @router.get(
     "/libraries/all/gcmd/cdisc-ct-val/headers",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
@@ -634,18 +656,17 @@ def get_cdisc_ct_val_data(
 )
 def get_distinct_cdisc_ct_val_values_for_header(
     field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
-    search_string: Optional[str] = Query(
-        "", description=_generic_descriptions.HEADER_SEARCH_STRING
-    ),
-    filters: Optional[Json] = Query(
+    search_string: str
+    | None = Query("", description=_generic_descriptions.HEADER_SEARCH_STRING),
+    filters: Json
+    | None = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
-    operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    result_count: Optional[int] = Query(
-        10, description=_generic_descriptions.HEADER_RESULT_COUNT
-    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    result_count: int
+    | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
 ):
     service = ListingsService()
     return service.get_distinct_values_for_header(

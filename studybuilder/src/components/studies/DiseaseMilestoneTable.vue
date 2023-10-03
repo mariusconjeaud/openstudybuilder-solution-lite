@@ -29,11 +29,11 @@
       <v-btn
         data-cy="create-disease-milestone"
         fab
-        dark
         small
         color="primary"
         @click="createDiseaseMilestone()"
         :title="$t('DiseaseMilestoneForm.add_title')"
+        :disabled="!checkPermission($roles.STUDY_WRITE)"
         >
         <v-icon dark>
           mdi-plus
@@ -87,6 +87,20 @@
     @close="closeForm"
     />
   <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
+  <v-dialog
+    v-model="showHistory"
+    @keydown.esc="closeHistory"
+    persistent
+    :max-width="globalHistoryDialogMaxWidth"
+    :fullscreen="globalHistoryDialogFullscreen"
+    >
+    <history-table
+      :title="diseaseMilestoneHistoryTitle"
+      @close="closeHistory"
+      :headers="headers"
+      :items="historyItems"
+      />
+  </v-dialog>
 </div>
 </template>
 
@@ -98,16 +112,20 @@ import dataFormating from '@/utils/dataFormating'
 import DiseaseMilestoneForm from './DiseaseMilestoneForm'
 import draggable from 'vuedraggable'
 import filteringParameters from '@/utils/filteringParameters'
+import HistoryTable from '@/components/tools/HistoryTable'
 import { mapGetters } from 'vuex'
 import NNTable from '@/components/tools/NNTable'
 import study from '@/api/study'
+import { accessGuard } from '@/mixins/accessRoleVerifier'
 
 export default {
+  mixins: [accessGuard],
   components: {
     ActionsMenu,
     ConfirmDialog,
     DiseaseMilestoneForm,
     draggable,
+    HistoryTable,
     NNTable
   },
   computed: {
@@ -131,15 +149,17 @@ export default {
       actions: [
         {
           label: this.$t('_global.edit'),
-          icon: 'mdi-pencil',
+          icon: 'mdi-pencil-outline',
           iconColor: 'primary',
-          click: this.editDiseaseMilestone
+          click: this.editDiseaseMilestone,
+          accessRole: this.$roles.STUDY_WRITE
         },
         {
           label: this.$t('_global.delete'),
-          icon: 'mdi-delete',
+          icon: 'mdi-delete-outline',
           iconColor: 'error',
-          click: this.deleteDiseaseMilestone
+          click: this.deleteDiseaseMilestone,
+          accessRole: this.$roles.STUDY_WRITE
         },
         {
           label: this.$t('_global.history'),

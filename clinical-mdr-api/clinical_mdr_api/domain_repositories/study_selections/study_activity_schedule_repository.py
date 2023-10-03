@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Optional
 
 from neomodel import db
 
@@ -23,7 +22,6 @@ class SelectionHistory(base.SelectionHistory):
 
     study_activity_uid: str
     study_visit_uid: str
-    note: Optional[str]
 
 
 class StudyActivityScheduleRepository(base.StudySelectionRepository):
@@ -55,7 +53,6 @@ class StudyActivityScheduleRepository(base.StudySelectionRepository):
             study_activity_name=study_activity_name,
             study_visit_uid=study_visit.uid,
             study_visit_name=study_visit_name,
-            note=selection.note,
             start_date=study_action.date,
             user_initials=study_action.user_initials,
         )
@@ -86,7 +83,7 @@ class StudyActivityScheduleRepository(base.StudySelectionRepository):
             self._remove_old_selection_if_exists(selection_vo.study_uid, selection_vo)
 
         # Create new node
-        schedule = StudyActivitySchedule(uid=selection_vo.uid, note=selection_vo.note)
+        schedule = StudyActivitySchedule(uid=selection_vo.uid)
         schedule.save()
 
         # Create relations
@@ -154,7 +151,6 @@ class StudyActivityScheduleRepository(base.StudySelectionRepository):
             ORDER BY all_sas.uid, asa.date DESC
             RETURN
                 all_sas.uid AS uid,
-                all_sas.note AS note,
                 svi.uid AS study_visit_uid,
                 sa.uid AS study_activity_uid,
                 labels(asa) AS change_type,
@@ -181,7 +177,6 @@ class StudyActivityScheduleRepository(base.StudySelectionRepository):
                     user_initials=res["user_initials"],
                     change_type=change_type,
                     start_date=convert_to_datetime(value=res["start_date"]),
-                    note=res["note"],
                     end_date=end_date,
                 )
             )

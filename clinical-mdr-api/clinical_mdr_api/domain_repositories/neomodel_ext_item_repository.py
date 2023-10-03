@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Optional, Sequence, Tuple, TypeVar
+from typing import Sequence, TypeVar
 
 from clinical_mdr_api.domain_repositories.models._utils import (
     CustomNodeSet,
@@ -37,13 +37,13 @@ class NeomodelExtBaseRepository:
 
     def find_all(
         self,
-        sort_by: Optional[dict] = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
-    ) -> Tuple[Sequence[_StandardsReturnType], int]:
+    ) -> tuple[Sequence[_StandardsReturnType], int]:
         q_filters = transform_filters_into_neomodel(
             filter_by=filter_by, model=self.return_model
         )
@@ -67,29 +67,31 @@ class NeomodelExtBaseRepository:
             all_nodes = len(len_query)
         return all_data_model, all_nodes if total_count else 0
 
-    def find_by_uid(self, uid: str) -> Optional[_StandardsReturnType]:
+    def find_by_uid(self, uid: str) -> _StandardsReturnType | None:
         return to_relation_trees(self.get_neomodel_extension_query().filter(uid=uid))
 
     def get_distinct_headers(
         self,
         field_name: str,
-        search_string: Optional[str] = "",
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        search_string: str | None = "",
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
     ) -> Sequence:
         """
-        Method runs a cypher query to fetch possible values for a given field_name, with a limit of result_count.
+        Fetches possible values for a given field_name, with a limit of result_count.
         It uses generic filtering capability, on top of filtering the field_name with provided search_string.
 
-        :param field_name: Field name for which to return possible values
-        :param search_string
-        :param filter_by:
-        :param filter_operator: Same as for generic filtering
-        :param result_count: Max number of values to return. Default 10
-        :return Sequence:
-        """
+        Args:
+            field_name (str): The name of the field for which to return possible values.
+            search_string (str | None, optional): A string to filter the field with. Defaults to "".
+            filter_by (dict | None, optional): A dictionary of filters. Defaults to None.
+            filter_operator (FilterOperator | None, optional): The operator to use for the filters. Defaults to FilterOperator.AND.
+            result_count (int, optional): The maximum number of values to return. Defaults to 10.
 
+        Returns:
+            Sequence: A sequence of possible values for the given field_name.
+        """
         # Add header field name to filter_by, to filter with a CONTAINS pattern
         if search_string != "":
             if filter_by is None:

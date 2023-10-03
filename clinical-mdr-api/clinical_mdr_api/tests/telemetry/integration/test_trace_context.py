@@ -2,7 +2,6 @@
 import logging
 import re
 from secrets import token_hex
-from typing import Optional
 
 TEST_PATH = "/system/information"
 TRACE_CONTEXT_ID_RE = re.compile(
@@ -13,9 +12,9 @@ log = logging.getLogger(__name__)
 
 
 def build_trace_context_id(
-    parent_id: Optional[str] = None,
-    version: Optional[int] = 0,
-    flags: Optional[int] = 1,
+    parent_id: str | None = None,
+    version: int | None = 0,
+    flags: int | None = 1,
 ):
     if not parent_id:
         parent_id = token_hex(16)

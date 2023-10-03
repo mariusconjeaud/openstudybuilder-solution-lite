@@ -1,5 +1,3 @@
-from typing import Optional, Union
-
 from clinical_mdr_api.domain_repositories.syntax_instances.timeframe_repository import (
     TimeframeRepository,
 )
@@ -20,9 +18,7 @@ from clinical_mdr_api.services.syntax_instances.generic_syntax_instance_service 
 )
 
 
-class TimeframeService(
-    GenericSyntaxInstanceService[Union[TimeframeAR, _AggregateRootType]]
-):
+class TimeframeService(GenericSyntaxInstanceService[TimeframeAR | _AggregateRootType]):
     def _transform_aggregate_root_to_pydantic_model(
         self, item_ar: TimeframeAR
     ) -> Timeframe:
@@ -37,13 +33,13 @@ class TimeframeService(
 
     def get_all(
         self,
-        status: Optional[str] = None,
+        status: str | None = None,
         return_study_count: bool = True,
-        sort_by: Optional[dict] = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[Timeframe]:
         all_items = super().get_all(status, return_study_count)

@@ -3,7 +3,6 @@
 # pylint:disable=unused-import,redefined-outer-name,unused-argument
 
 import logging
-from typing import List
 
 import pytest
 
@@ -39,7 +38,7 @@ def tst_study(request, tst_database) -> Study:
 
 
 @pytest.fixture(scope="module")
-def study_epochs(request, ct_catalogue, tst_study) -> List[StudyEpoch]:
+def study_epochs(request, ct_catalogue, tst_study) -> list[StudyEpoch]:
     """fixture creates 5 StudyEpoch"""
 
     log.info(
@@ -64,7 +63,7 @@ def study_epochs(request, ct_catalogue, tst_study) -> List[StudyEpoch]:
 
 
 @pytest.fixture(scope="module")
-def study_arms(request, ct_catalogue, tst_study) -> List[StudySelectionArm]:
+def study_arms(request, ct_catalogue, tst_study) -> list[StudySelectionArm]:
     """fixture creates 5 study arms"""
 
     log.info(
@@ -101,7 +100,7 @@ def study_arms(request, ct_catalogue, tst_study) -> List[StudySelectionArm]:
 
 
 @pytest.fixture(scope="module")
-def study_elements(request, ct_catalogue, tst_study) -> List[StudySelectionElement]:
+def study_elements(request, ct_catalogue, tst_study) -> list[StudySelectionElement]:
     """fixture creates 5 study elements"""
 
     log.info(
@@ -135,7 +134,7 @@ def study_elements(request, ct_catalogue, tst_study) -> List[StudySelectionEleme
 @pytest.fixture(scope="module")
 def study_design_cells(
     request, tst_study, study_elements, study_arms, study_epochs
-) -> List[StudyDesignCell]:
+) -> list[StudyDesignCell]:
     """fixture creates 5 study design cells"""
 
     log.info("%s fixture: creating study design cells", request.fixturename)

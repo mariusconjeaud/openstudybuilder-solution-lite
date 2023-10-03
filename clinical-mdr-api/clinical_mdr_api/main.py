@@ -17,6 +17,10 @@ from starlette_context.middleware import RawContextMiddleware
 from clinical_mdr_api import config, exceptions, routers
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.oauth.config import OAUTH_ENABLED, SWAGGER_UI_INIT_OAUTH
+from clinical_mdr_api.oauth.dependencies import (
+    get_authenticated_user_info,
+    validate_token,
+)
 from clinical_mdr_api.telemetry.traceback_middleware import ExceptionTracebackMiddleware
 from clinical_mdr_api.telemetry.tracing_middleware import TracingMiddleware
 from clinical_mdr_api.utils import get_api_version
@@ -28,13 +32,10 @@ log = logging.getLogger(__name__)
 # Global dependencies, in order of execution
 global_dependencies = []
 if OAUTH_ENABLED:
-    from clinical_mdr_api.oauth.dependencies import (
-        get_authenticated_user_info,
-        validate_token,
-    )
-
     global_dependencies.append(Security(validate_token))
     global_dependencies.append(Depends(get_authenticated_user_info))
+else:
+    log.warning("WARNING: Authentication is disabled.")
 
 # Middlewares - please don't use app.add_middleware() as that inserts them to the beginning of the list
 middlewares = [
@@ -218,9 +219,25 @@ app.include_router(
     tags=["Activity Instruction Templates"],
 )
 app.include_router(
+    routers.activity_instructions_router,
+    prefix="/activity-instructions",
+    tags=["Activity Instructions"],
+)
+app.include_router(
     routers.activity_instruction_pre_instances_router,
     prefix="/activity-instruction-pre-instances",
     tags=["Activity Instruction Pre-Instances"],
+)
+app.include_router(
+    routers.footnote_templates_router,
+    prefix="/footnote-templates",
+    tags=["Footnote Templates"],
+)
+app.include_router(routers.footnote_router, prefix="/footnotes", tags=["Footnotes"])
+app.include_router(
+    routers.footnote_pre_instances_router,
+    prefix="/footnote-pre-instances",
+    tags=["Footnote Pre-Instances"],
 )
 app.include_router(
     routers.criteria_templates_router,
@@ -373,6 +390,7 @@ app.include_router(
 )
 app.include_router(routers.admin_router, prefix="/admin", tags=["Admin"])
 app.include_router(routers.brands_router, prefix="/brands", tags=["Brands"])
+app.include_router(routers.comments_router, prefix="", tags=["Comments"])
 
 app.include_router(routers.studies_router, prefix="/studies", tags=["Studies"])
 
@@ -418,19 +436,29 @@ app.include_router(
     tags=["Data model implementation guides"],
 )
 app.include_router(
-    routers.master_models_router,
-    prefix="/standards/master-models/models",
-    tags=["Master models"],
+    routers.sponsor_models_router,
+    prefix="/standards/sponsor-models/models",
+    tags=["Sponsor models"],
 )
 app.include_router(
-    routers.master_model_datasets_router,
-    prefix="/standards/master-models/datasets",
-    tags=["Master model datasets"],
+    routers.sponsor_model_dataset_classes_router,
+    prefix="/standards/sponsor-models/dataset-classes",
+    tags=["Sponsor model dataset classes"],
 )
 app.include_router(
-    routers.master_model_variables_router,
-    prefix="/standards/master-models/variables",
-    tags=["Master model variables"],
+    routers.sponsor_model_variable_classes_router,
+    prefix="/standards/sponsor-models/variable-classes",
+    tags=["Sponsor model variable classes"],
+)
+app.include_router(
+    routers.sponsor_model_datasets_router,
+    prefix="/standards/sponsor-models/datasets",
+    tags=["Sponsor model datasets"],
+)
+app.include_router(
+    routers.sponsor_model_dataset_variables_router,
+    prefix="/standards/sponsor-models/dataset-variables",
+    tags=["Sponsor model variables"],
 )
 app.include_router(
     routers.dataset_classes_router,
@@ -443,6 +471,11 @@ app.include_router(
     tags=["Datasets"],
 )
 app.include_router(
+    routers.dataset_scenarios_router,
+    prefix="/standards",
+    tags=["Dataset scenarios"],
+)
+app.include_router(
     routers.class_variables_router,
     prefix="/standards",
     tags=["Class variables"],
@@ -452,6 +485,12 @@ app.include_router(
     prefix="/standards",
     tags=["Dataset variables"],
 )
+app.include_router(
+    routers.integrations.msgraph.router,
+    prefix="/integrations/ms-graph",
+    tags=["MS Graph API integrations"],
+)
+
 system_app = FastAPI(
     middleware=None,
     title="System info sub-application",

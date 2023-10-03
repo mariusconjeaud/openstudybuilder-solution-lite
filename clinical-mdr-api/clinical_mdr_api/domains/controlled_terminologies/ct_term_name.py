@@ -1,6 +1,7 @@
 from dataclasses import dataclass
-from typing import AbstractSet, Callable, Optional
+from typing import AbstractSet, Callable, Self
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemAggregateRootBase,
     LibraryItemMetadataVO,
@@ -17,20 +18,20 @@ class CTTermNameVO:
     """
 
     codelist_uid: str
-    name: Optional[str]
-    name_sentence_case: Optional[str]
+    name: str | None
+    name_sentence_case: str | None
     catalogue_name: str
-    order: Optional[int]
+    order: int | None
 
     @classmethod
     def from_repository_values(
         cls,
         codelist_uid: str,
-        name: Optional[str],
-        name_sentence_case: Optional[str],
-        order: Optional[int],
+        name: str | None,
+        name_sentence_case: str | None,
+        order: int | None,
         catalogue_name: str,
-    ) -> "CTTermNameVO":
+    ) -> Self:
         ct_term_name_vo = cls(
             codelist_uid=codelist_uid,
             catalogue_name=catalogue_name,
@@ -45,19 +46,19 @@ class CTTermNameVO:
     def from_input_values(
         cls,
         codelist_uid: str,
-        name: Optional[str],
-        name_sentence_case: Optional[str],
-        order: Optional[int],
+        name: str | None,
+        name_sentence_case: str | None,
+        order: int | None,
         catalogue_name: str,
         codelist_exists_callback: Callable[[str], bool],
         catalogue_exists_callback: Callable[[str], bool],
-    ) -> "CTTermNameVO":
+    ) -> Self:
         if not codelist_exists_callback(codelist_uid):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"There is no codelist identified by provided codelist uid ({codelist_uid})"
             )
         if not catalogue_exists_callback(catalogue_name):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"There is no catalogue identified by provided catalogue name ({catalogue_name})"
             )
 
@@ -92,9 +93,9 @@ class CTTermNameAR(LibraryItemAggregateRootBase):
         cls,
         uid: str,
         ct_term_name_vo: CTTermNameVO,
-        library: Optional[LibraryVO],
+        library: LibraryVO | None,
         item_metadata: LibraryItemMetadataVO,
-    ) -> "CTTermNameAR":
+    ) -> Self:
         ct_term_ar = cls(
             _uid=uid,
             _ct_term_name_vo=ct_term_name_vo,
@@ -110,11 +111,11 @@ class CTTermNameAR(LibraryItemAggregateRootBase):
         author: str,
         ct_term_name_vo: CTTermNameVO,
         library: LibraryVO,
-        generate_uid_callback: Callable[[], Optional[str]] = (lambda: None),
-    ) -> "CTTermNameAR":
+        generate_uid_callback: Callable[[], str | None] = (lambda: None),
+    ) -> Self:
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(author=author)
         if not library.is_editable:
-            raise ValueError(
+            raise exceptions.BusinessLogicException(
                 f"The library with the name='{library.name}' does not allow to create objects."
             )
         ar = cls(
@@ -126,7 +127,7 @@ class CTTermNameAR(LibraryItemAggregateRootBase):
         return ar
 
     def edit_draft(
-        self, author: str, change_description: Optional[str], ct_term_vo: CTTermNameVO
+        self, author: str, change_description: str | None, ct_term_vo: CTTermNameVO
     ) -> None:
         """
         Creates a new draft version for the object.

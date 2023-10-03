@@ -1,4 +1,4 @@
-from typing import Callable, Dict, List, Optional, Union
+from typing import Callable, Self
 
 from pydantic import BaseModel, Field
 
@@ -14,10 +14,10 @@ from clinical_mdr_api.models.error import BatchErrorResponse
 
 class OdmAlias(ConceptModel):
     context: str
-    possible_actions: List[str]
+    possible_actions: list[str]
 
     @classmethod
-    def from_odm_alias_ar(cls, odm_alias_ar: OdmAliasAR) -> "OdmAlias":
+    def from_odm_alias_ar(cls, odm_alias_ar: OdmAliasAR) -> Self:
         return cls(
             uid=odm_alias_ar._uid,
             name=odm_alias_ar.name,
@@ -38,8 +38,8 @@ class OdmAlias(ConceptModel):
 class OdmAliasSimpleModel(BaseModel):
     @classmethod
     def from_odm_alias_uid(
-        cls, uid: str, find_odm_alias_by_uid: Callable[[str], Optional[ConceptARBase]]
-    ) -> Optional["OdmAliasSimpleModel"]:
+        cls, uid: str, find_odm_alias_by_uid: Callable[[str], ConceptARBase | None]
+    ) -> Self | None:
         if uid is not None:
             odm_alias = find_odm_alias_by_uid(uid)
 
@@ -59,9 +59,9 @@ class OdmAliasSimpleModel(BaseModel):
         return simple_odm_alias_model
 
     uid: str = Field(..., title="uid", description="")
-    name: Optional[str] = Field(None, title="name", description="")
-    context: Optional[str] = Field(None, title="context", description="")
-    version: Optional[str] = Field(None, title="version", description="")
+    name: str | None = Field(None, title="name", description="")
+    context: str | None = Field(None, title="context", description="")
+    version: str | None = Field(None, title="version", description="")
 
 
 class OdmAliasPostInput(ConceptPostInput):
@@ -69,7 +69,7 @@ class OdmAliasPostInput(ConceptPostInput):
 
 
 class OdmAliasPatchInput(ConceptPatchInput):
-    context: Optional[str]
+    context: str | None
 
 
 class OdmAliasBatchPatchInput(OdmAliasPatchInput):
@@ -80,7 +80,7 @@ class OdmAliasBatchInput(BaseModel):
     method: str = Field(
         ..., title="method", description="HTTP method corresponding to operation type"
     )
-    content: Union[OdmAliasBatchPatchInput, OdmAliasPostInput]
+    content: OdmAliasBatchPatchInput | OdmAliasPostInput
 
 
 class OdmAliasBatchOutput(BaseModel):
@@ -89,7 +89,7 @@ class OdmAliasBatchOutput(BaseModel):
         title="response_code",
         description="The HTTP response code related to input operation",
     )
-    content: Union[OdmAlias, None, BatchErrorResponse]
+    content: OdmAlias | None | BatchErrorResponse
 
 
 class OdmAliasVersion(OdmAlias):
@@ -97,7 +97,7 @@ class OdmAliasVersion(OdmAlias):
     Class for storing OdmAlias and calculation of differences
     """
 
-    changes: Optional[Dict[str, bool]] = Field(
+    changes: dict[str, bool] | None = Field(
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "

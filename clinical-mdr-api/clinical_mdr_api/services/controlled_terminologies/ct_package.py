@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Optional, Sequence
+from typing import Sequence
 
 from clinical_mdr_api import exceptions, models
 from clinical_mdr_api.models import (
@@ -19,7 +19,7 @@ from clinical_mdr_api.services._utils import normalize_string
 class CTPackageService:
     _repos: MetaRepository
 
-    def __init__(self, user: Optional[str] = None):
+    def __init__(self, user: str | None = None):
         self.user_initials = user if user is not None else "TODO user initials"
         self._repos = MetaRepository(self.user_initials)
 
@@ -27,7 +27,7 @@ class CTPackageService:
         self._repos.close()
 
     def get_all_ct_packages(
-        self, catalogue_name: Optional[str]
+        self, catalogue_name: str | None
     ) -> Sequence[models.CTPackage]:
         try:
             if (
@@ -128,7 +128,7 @@ class CTPackageService:
         catalogue_name: str,
         old_package_date: date,
         new_package_date: date,
-        codelist_uid: Optional[str] = None,
+        codelist_uid: str | None = None,
     ):
         if new_package_date < old_package_date:
             raise exceptions.BusinessLogicException(

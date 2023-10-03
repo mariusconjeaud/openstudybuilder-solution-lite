@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
-from typing import AbstractSet, Any, Callable, Optional
+from typing import AbstractSet, Any, Callable, Self
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemAggregateRootBase,
     LibraryItemMetadataVO,
@@ -20,8 +21,8 @@ class DictionaryTermVO:
     dictionary_id: str
     name: str
     name_sentence_case: str
-    abbreviation: Optional[str]
-    definition: Optional[str]
+    abbreviation: str | None
+    definition: str | None
 
     @classmethod
     def from_repository_values(
@@ -30,9 +31,9 @@ class DictionaryTermVO:
         dictionary_id: str,
         name: str,
         name_sentence_case: str,
-        abbreviation: Optional[str],
-        definition: Optional[str],
-    ) -> "DictionaryTermVO":
+        abbreviation: str | None,
+        definition: str | None,
+    ) -> Self:
         dictionary_term_vo = cls(
             codelist_uid=codelist_uid,
             dictionary_id=dictionary_id,
@@ -51,9 +52,9 @@ class DictionaryTermVO:
         dictionary_id: str,
         name: str,
         name_sentence_case: str,
-        abbreviation: Optional[str],
-        definition: Optional[str],
-    ) -> "DictionaryTermVO":
+        abbreviation: str | None,
+        definition: str | None,
+    ) -> Self:
         dictionary_term_vo = cls(
             codelist_uid=codelist_uid,
             dictionary_id=dictionary_id,
@@ -68,17 +69,17 @@ class DictionaryTermVO:
     def validate(
         self,
         term_exists_by_name_callback: Callable[[str, str], bool],
-        previous_name: Optional[str] = None,
+        previous_name: str | None = None,
     ) -> None:
         if (
             term_exists_by_name_callback(self.name, self.codelist_uid)
             and self.name != previous_name
         ):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"DictionaryTerm with name ({self.name}) already exists in DictionaryCodelist identified by ({self.codelist_uid})"
             )
         if self.name_sentence_case.lower() != self.name.lower():
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"{self.name_sentence_case} is not an independent case version of {self.name}"
             )
 
@@ -107,9 +108,9 @@ class DictionaryTermAR(LibraryItemAggregateRootBase):
         cls,
         uid: str,
         dictionary_term_vo: DictionaryTermVO,
-        library: Optional[LibraryVO],
+        library: LibraryVO | None,
         item_metadata: LibraryItemMetadataVO,
-    ) -> "DictionaryTermAR":
+    ) -> Self:
         dictionary_codelist_ar = cls(
             _uid=uid,
             _dictionary_term_vo=dictionary_term_vo,
@@ -125,12 +126,12 @@ class DictionaryTermAR(LibraryItemAggregateRootBase):
         author: str,
         dictionary_term_vo: DictionaryTermVO,
         library: LibraryVO,
-        generate_uid_callback: Callable[[], Optional[str]] = (lambda: None),
+        generate_uid_callback: Callable[[], str | None] = (lambda: None),
         term_exists_by_name_callback: Callable[[str, str], bool],
-    ) -> "DictionaryTermAR":
+    ) -> Self:
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(author=author)
         if not library.is_editable:
-            raise ValueError(
+            raise exceptions.BusinessLogicException(
                 f"The library with the name='{library.name}' does not allow to create objects."
             )
 
@@ -149,7 +150,7 @@ class DictionaryTermAR(LibraryItemAggregateRootBase):
     def edit_draft(
         self,
         author: str,
-        change_description: Optional[str],
+        change_description: str | None,
         dictionary_term_vo: DictionaryTermVO,
         term_exists_by_name_callback: Callable[[str, str], bool],
     ) -> None:

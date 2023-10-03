@@ -1,5 +1,4 @@
 import datetime
-import math
 import re
 from collections import defaultdict
 from typing import Sequence
@@ -16,6 +15,8 @@ from neomodel import (
 from neomodel.core import db
 from opencensus.trace import execution_context
 
+from clinical_mdr_api import exceptions
+
 LATEST_VERSION_ORDER_BY = """
     toInteger(split({rel}.version, '.')[0]) ASC,
     toInteger(split({rel}.version, '.')[1]) ASC,
@@ -25,24 +26,41 @@ LATEST_VERSION_ORDER_BY = """
 
 
 def convert_to_tz_aware_datetime(value: datetime.datetime):
-    # Function created to properly adjust timezone part in Python datetime
+    """
+    Converts a datetime object to a timezone-aware datetime object with UTC timezone.
+
+    Args:
+        value (datetime.datetime): The datetime object to convert.
+
+    Returns:
+        datetime.datetime: The timezone-aware datetime object with UTC timezone.
+    """
     return value.astimezone(tz=datetime.timezone.utc)
 
 
-def convert_to_datetime(value: neo4j.time.DateTime):
-    # Function created to properly represent the DateTime from database as Python datetime
-    # Workaround for improper default rounding in to_native method
-    dt: datetime.datetime = value.to_native()
-    if hasattr(dt, "second"):
-        subseconds, _ = math.modf(value.second)
-        # Subseconds are between 0.0 and 0.999 999 999
-        # thats why to get microseconds it is needed to multiply by 1000000
-        microseconds: int = round(subseconds * 1000000)
-        return dt.replace(microsecond=microseconds).replace(tzinfo=dt.tzinfo)
-    return dt
+def convert_to_datetime(value: neo4j.time.DateTime) -> datetime.datetime | None:
+    """
+    Converts a DateTime object from the database to a Python datetime object.
+
+    Args:
+        value (neo4j.time.DateTime): The DateTime object to convert.
+
+    Returns:
+        datetime.datetime: The Python datetime object.
+    """
+    return value.to_native() if value is not None else None
 
 
 def format_generic_header_values(values: Sequence):
+    """
+    Formats a sequence of values to match the expected format for generic headers.
+
+    Args:
+        values (Sequence): The sequence of values to format.
+
+    Returns:
+        Sequence: The formatted sequence of values, with any DateTime objects converted to Python datetime objects.
+    """
     if len(values) > 0 and isinstance(values[0], neo4j.time.DateTime):
         return [convert_to_datetime(_val) for _val in values]
     return values
@@ -53,7 +71,6 @@ def process_filter_args(cls, kwargs):
     loop through properties in filter parameters check they match class definition
     deflate them and convert into something easy to generate cypher from
     """
-
     output = {}
 
     for key, value in kwargs.items():
@@ -81,7 +98,9 @@ def process_filter_args(cls, kwargs):
                 prop, _ = prop.rsplit("__", 1)
                 continue
             else:
-                raise ValueError(f"No such property {part} on {cls.__name__}")
+                raise exceptions.ValidationException(
+                    f"No such property {part} on {cls.__name__}"
+                )
             leaf_prop = part
         if is_rel_property and current_rel_model:
             property_obj = getattr(current_rel_model, leaf_prop)
@@ -95,13 +114,13 @@ def process_filter_args(cls, kwargs):
             # handle special operators
             if operator == match._SPECIAL_OPERATOR_IN:
                 if not isinstance(value, tuple) and not isinstance(value, list):
-                    raise ValueError(
+                    raise exceptions.ValidationException(
                         f"Value must be a tuple or list for IN operation {key}={value}"
                     )
                 deflated_value = [property_obj.deflate(v) for v in value]
             elif operator == match._SPECIAL_OPERATOR_ISNULL:
                 if not isinstance(value, bool):
-                    raise ValueError(
+                    raise exceptions.ValidationException(
                         f"Value must be a bool for isnull operation on {key}"
                     )
                 operator = "IS NULL" if value else "IS NOT NULL"
@@ -109,7 +128,9 @@ def process_filter_args(cls, kwargs):
             elif operator in match._REGEX_OPERATOR_TABLE.values():
                 deflated_value = property_obj.deflate(value)
                 if not isinstance(deflated_value, str):
-                    raise ValueError(f"Must be a string value for {key}")
+                    raise exceptions.ValidationException(
+                        f"Must be a string value for {key}"
+                    )
                 if operator in match._STRING_REGEX_OPERATOR_TABLE.values():
                     deflated_value = re.escape(deflated_value)
                 deflated_value = operator.format(deflated_value)
@@ -128,65 +149,72 @@ def process_filter_args(cls, kwargs):
 
 # pylint: disable=unused-argument
 def _rel_helper(
-    lhs,
-    rhs,
-    ident=None,
-    relation_type=None,
-    direction=None,
-    relation_properties=None,
-    **kwargs,
-):
+    left_hand_stmt: str,
+    right_hand_stmt: str,
+    relationship_variable: str | None = None,
+    relationship_type: str | None = None,
+    direction: int = 0,
+    relationship_properties: dict | None = None,
+) -> str:
     """
-    Generate a relationship matching string, with specified parameters.
-    Examples:
-    relation_direction = OUTGOING: (lhs)-[relation_ident:relation_type]->(rhs)
-    relation_direction = INCOMING: (lhs)<-[relation_ident:relation_type]-(rhs)
-    relation_direction = EITHER: (lhs)-[relation_ident:relation_type]-(rhs)
-    :param lhs: The left hand statement.
-    :type lhs: str
-    :param rhs: The right hand statement.
-    :type rhs: str
-    :param ident: A specific identity to name the relationship, or None.
-    :type ident: str
-    :param relation_type: None for all direct rels, * for all of any length, or a name of an explicit rel.
-    :type relation_type: str
-    :param direction: None or EITHER for all OUTGOING,INCOMING,EITHER. Otherwise OUTGOING or INCOMING.
-    :param relation_properties: dictionary of relationship properties to match
-    :returns: string
-    """
+    Helper function that generates a Cypher relationship statement.
 
+    Args:
+        left_hand_stmt (str): The left hand statement.
+        right_hand_stmt (str): The right statement.
+        relationship_variable (str | None, optional): The name of the relationship variable. Defaults to None
+        relationship_type (str | None, optional): The name of the relationship type. Defaults to None
+        direction (int, optional): The direction of the relationship. OUTGOING=1, INCOMING=-1 and EITHER=0. Defaults to 0.
+        relationship_properties (dict | None, optional): A dictionary of relationship properties to match. Defaults to None
+
+    Returns:
+        str: The Cypher statement with two nodes and their relationship.
+
+    Example:
+        >>> _rel_helper(
+        ...    left_hand_stmt="odm:OdmItemRoot",
+        ...    right_hand_stmt="term:CTTermRoot",
+        ...    relationship_variable="rel",
+        ...    relationship_type="HAS_CODELIST_TERM",
+        ...    direction=1,
+        ...    relationship_properties={"mandatory": True}
+        ... )
+        "(odm:OdmItemRoot)-[rel:`HAS_CODELIST_TERM` {mandatory: True}]->(term:CTTermRoot)"
+    """
     if direction == match.OUTGOING:
-        stmt = "-{0}->"
+        relationship_stmt = "-{0}->"
     elif direction == match.INCOMING:
-        stmt = "<-{0}-"
+        relationship_stmt = "<-{0}-"
     else:
-        stmt = "-{0}-"
+        relationship_stmt = "-{0}-"
 
     rel_props = ""
 
-    if relation_properties:
+    if relationship_properties:
         key_val_pairs = ", ".join(
-            [f"{key}: {value}" for key, value in relation_properties.items()]
+            [f"{key}: {value}" for key, value in relationship_properties.items()]
         )
         rel_props = f"{{{key_val_pairs}}}"
 
-    # direct, relation_type=None is unspecified, relation_type
-    if relation_type is None:
-        stmt = stmt.format("")
-    # all("*" wildcard) relation_type
-    elif relation_type == "*":
-        stmt = stmt.format("[*]")
+    if relationship_type is None:
+        relationship_stmt = relationship_stmt.format("")
+    # all("*" wildcard) relationship_type
+    elif relationship_type == "*":
+        relationship_stmt = relationship_stmt.format("[*]")
     else:
-        # explicit relation_type
-        stmt = stmt.format(f"[{ident if ident else ''}:`{relation_type}`{rel_props}]")
+        # explicit relationship_type
+        relationship_stmt = relationship_stmt.format(
+            f"[{relationship_variable if relationship_variable else ''}:`{relationship_type}` {rel_props}]"
+        )
 
     # Make sure not to add parenthesis when they are already present
     # (was not part of the original function)
-    if lhs[-1] != ")":
-        lhs = f"({lhs})"
-    if rhs[-1] != ")":
-        rhs = f"({rhs})"
-    return f"{lhs}{stmt}{rhs}"
+    if left_hand_stmt[-1] != ")":
+        left_hand_stmt = f"({left_hand_stmt})"
+    if right_hand_stmt[-1] != ")":
+        right_hand_stmt = f"({right_hand_stmt})"
+
+    return f"{left_hand_stmt}{relationship_stmt}{right_hand_stmt}"
 
 
 class CustomQueryBuilder(match.QueryBuilder):
@@ -325,6 +353,8 @@ class CustomQueryBuilder(match.QueryBuilder):
             direction,
         )
 
+    # The ignored pylint rule is because neomodel's relation argument is here overriden with path
+    # This is because we only partially merged this extension back into neomodel
     def build_traversal_from_path(
         self,
         path: str,
@@ -334,7 +364,7 @@ class CustomQueryBuilder(match.QueryBuilder):
         optional_traversal=False,
         is_rel_filtering=False,
         collect_variables=False,
-    ):
+    ):  # pylint:disable=arguments-renamed
         src_class = source_class
         stmt = ""
         relation_tree_map = self._ast["relation_tree_map"]
@@ -388,11 +418,11 @@ class CustomQueryBuilder(match.QueryBuilder):
             if include_rel_in_return:
                 self._add_to_return_set(rel_ident)
             stmt = _rel_helper(
-                lhs=lhs_ident,
-                rhs=rhs_ident,
-                ident=rel_ident,
+                left_hand_stmt=lhs_ident,
+                right_hand_stmt=rhs_ident,
+                relationship_variable=rel_ident,
                 direction=relationship.definition["direction"],
-                relation_type=relationship.definition["relation_type"],
+                relationship_type=relationship.definition["relation_type"],
             )
             src_class = relationship.definition["node_class"]
             relation_tree_map = relation_tree_map[part]["children"]
@@ -480,7 +510,9 @@ class CustomQueryBuilder(match.QueryBuilder):
         if "collect" in self._ast:
             if "return_set" in self._ast or "return" in self._ast:
                 query += ", "
-            query += ", ".join(f"collect({c}) as {c}" for c in self._ast["collect"])
+            query += ", ".join(
+                f"collect(DISTINCT {c}) as {c}" for c in self._ast["collect"]
+            )
 
         if "order_by" in self._ast and self._ast["order_by"]:
             query += " ORDER BY "
@@ -533,11 +565,10 @@ class CustomQueryBuilder(match.QueryBuilder):
             op, val = op_and_val
             for key, data in self.node_set._optional_relation_to_fetch_single.items():
                 new_name, _ = data
-                if path:
-                    if key in path:
-                        self._ast["relation_selectors"][new_name][
-                            "filter_clause"
-                        ].append(f"{prop}='{val}'")
+                if key == path:
+                    self._ast["relation_selectors"][new_name]["filter_clause"].append(
+                        f"{prop}='{val}'"
+                    )
             if op in match._UNARY_OPERATORS:
                 # unary operators do not have a parameter
                 statement = f"{ident}.{prop} {op}"
@@ -639,7 +670,7 @@ class CustomQueryBuilder(match.QueryBuilder):
         is_rel_property = "|" in prop
         traversals = re.split(r"__|\|", prop)
         if len(traversals) == 0:
-            raise ValueError("Can only lookup traversal variables")
+            raise exceptions.ValidationException("Can only lookup traversal variables")
         if traversals[0] not in relation_tree_map:
             return None
         relation_tree_map = relation_tree_map[traversals[0]]
@@ -780,9 +811,8 @@ def _to_relation_tree(nodeset, root_node, other_nodes, relation_tree_map):
                 if isinstance(node, StructuredRel):
                     name += "_relationship"
                 if isinstance(node, list):
-                    if len(node) > 0:
-                        if isinstance(node[0], StructuredRel):
-                            name += "_relationship"
+                    if len(node) > 0 and isinstance(node[0], StructuredRel):
+                        name += "_relationship"
                     root_node._relations[name] = []
                     for n in node:
                         root_node._relations[name].append(

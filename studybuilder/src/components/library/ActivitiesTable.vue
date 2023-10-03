@@ -5,7 +5,7 @@
     :items="activities"
     export-object-label="Activities"
     :export-data-url="`concepts/activities/${source}`"
-    item-key="uid"
+    item-key="item_key"
     :server-items-length="total"
     :options.sync="options"
     has-api
@@ -18,9 +18,10 @@
     :filters-modify-function="modifyFilters"
     :modifiable-table="!isExpand()"
     class="tableMinWidth"
+    :disable-filtering="source === 'activity-groups'"
     >
     <template v-slot:item="{ item, expand, isExpanded }" v-if="isExpand()">
-      <tr style="background-color: lightskyblue">
+      <tr style="background-color: var(--v-dfltBackgroundLight1-base)">
         <td width="1%">
           <v-btn @click="expand(!isExpanded)" v-if="isExpanded" icon>
             <v-icon dark>
@@ -73,7 +74,7 @@
     <template v-slot:item.activity_sub_groups="{ item }">
       {{ subGroupsDisplay(item) }}
     </template>
-    <template v-slot:item.activities="{ item }">
+    <template v-slot:item.activities.name="{ item }">
       {{ activitiesDisplay(item) }}
     </template>
     <template v-slot:expanded-item="{ headers }">
@@ -93,7 +94,7 @@
           single-expand
           >
           <template v-slot:item="{ item, expand, isExpanded }">
-            <tr>
+            <tr style="background-color: var(--v-dfltBackgroundLight2-base);">
               <td width="1%">
                 <v-btn @click="expand(!isExpanded)" v-if="isExpanded" icon>
                   <v-icon dark>
@@ -164,7 +165,8 @@
         small
         color="primary"
         @click.stop="showForm"
-        :title="$t('CodelistCreationForm.title')"
+        :title="itemCreationTitle"
+        :disabled="!checkPermission($roles.LIBRARY_WRITE)"
         >
         <v-icon dark>
           mdi-plus
@@ -175,11 +177,11 @@
   <activities-form
     :open="showActivityForm"
     @close="closeForm"
-    :edited-activity="activeActivity"/>
+    :edited-activity="activeItem"/>
   <requested-activities-form
     :open="showRequestedActivityForm"
     @close="closeForm"
-    :edited-activity="activeActivity"/>
+    :edited-activity="activeItem"/>
   <v-dialog
       v-model="showGroupsForm"
       persistent
@@ -187,8 +189,9 @@
       content-class="top-dialog"
     >
     <activities-groups-form
+      ref="groupform"
       @close="closeForm"
-      :edited-activity="activeActivity"/>
+      :edited-group-or-subgroup="activeItem"/>
   </v-dialog>
   <v-dialog
       v-model="showInstantiationsForm"
@@ -198,7 +201,7 @@
     >
     <activities-instantiations-form
       @close="closeForm"
-      :edited-activity="activeActivity"/>
+      :edited-activity="activeItem"/>
   </v-dialog>
   <v-dialog
       v-model="showSponsorFromRequestedForm"
@@ -208,7 +211,7 @@
     >
     <activities-create-sponsor-from-requested-form
       @close="closeForm"
-      :edited-activity="activeActivity"/>
+      :edited-activity="activeItem"/>
   </v-dialog>
 </div>
 </template>
@@ -225,9 +228,10 @@ import ActivitiesGroupsForm from '@/components/library/ActivitiesGroupsForm'
 import ActivitiesInstantiationsForm from '@/components/library/ActivitiesInstantiationsForm'
 import ActivitiesCreateSponsorFromRequestedForm from '@/components/library/ActivitiesCreateSponsorFromRequestedForm'
 import libConstants from '@/constants/libraries'
-import statuses from '@/constants/statuses'
+import { accessGuard } from '@/mixins/accessRoleVerifier'
 
 export default {
+  mixins: [accessGuard],
   components: {
     ActionsMenu,
     NNTable,
@@ -237,6 +241,18 @@ export default {
     ActivitiesGroupsForm,
     ActivitiesInstantiationsForm,
     ActivitiesCreateSponsorFromRequestedForm
+  },
+  computed: {
+    itemCreationTitle () {
+      if (this.source === 'activities') {
+        return this.$t('ActivityForms.add_activity')
+      } else if (this.source === 'activity-instances') {
+        return this.$t('ActivityForms.addInstance')
+      } else if (this.source === 'activity-groups') {
+        return this.$t('ActivityForms.add_group')
+      }
+      return ''
+    }
   },
   props: {
     source: String,
@@ -250,9 +266,10 @@ export default {
       actions: [
         {
           label: this.$t('ActivityTable.create_sponsor_from_request'),
-          icon: 'mdi-pencil',
+          icon: 'mdi-pencil-outline',
           iconColor: 'primary',
           condition: (item) => item.status === 'Final' && this.requested,
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.createSponsorFromRequested
         },
         {
@@ -260,42 +277,48 @@ export default {
           icon: 'mdi-check-decagram',
           iconColor: 'success',
           condition: (item) => item.possible_actions.find(action => action === 'approve'),
-          click: this.approveActivity
+          accessRole: this.$roles.LIBRARY_WRITE,
+          click: this.approveItem
         },
         {
           label: this.$t('_global.edit'),
-          icon: 'mdi-pencil',
+          icon: 'mdi-pencil-outline',
           iconColor: 'primary',
           condition: (item) => item.possible_actions.find(action => action === 'edit'),
-          click: this.editActivity
+          accessRole: this.$roles.LIBRARY_WRITE,
+          click: this.editItem
         },
         {
           label: this.$t('_global.new_version'),
           icon: 'mdi-plus-circle-outline',
           iconColor: 'primary',
           condition: (item) => item.possible_actions.find(action => action === 'new_version'),
-          click: this.newActivityVersion
+          accessRole: this.$roles.LIBRARY_WRITE,
+          click: this.newItemVersion
         },
         {
           label: this.$t('_global.inactivate'),
           icon: 'mdi-close-octagon-outline',
           iconColor: 'primary',
           condition: (item) => item.possible_actions.find(action => action === 'inactivate'),
-          click: this.inactivateActivity
+          accessRole: this.$roles.LIBRARY_WRITE,
+          click: this.inactivateItem
         },
         {
           label: this.$t('_global.reactivate'),
           icon: 'mdi-undo-variant',
           iconColor: 'primary',
           condition: (item) => item.possible_actions.find(action => action === 'reactivate'),
-          click: this.reactivateActivity
+          accessRole: this.$roles.LIBRARY_WRITE,
+          click: this.reactivateItem
         },
         {
           label: this.$t('_global.delete'),
-          icon: 'mdi-delete',
+          icon: 'mdi-delete-outline',
           iconColor: 'error',
           condition: (item) => item.possible_actions.find(action => action === 'delete'),
-          click: this.deleteActivity
+          accessRole: this.$roles.LIBRARY_WRITE,
+          click: this.deleteItem
         }
       ],
       activities: [],
@@ -315,7 +338,7 @@ export default {
         { text: '', value: 'possible_actions', width: '5%' },
         { text: this.$t('_global.library'), value: 'library_name' },
         { text: this.$t('ActivityTable.type'), value: 'activity_instance_class.name' },
-        { text: this.$t('ActivityTable.activity'), value: 'activities', externalFilterSource: 'concepts/activities/activities$name' },
+        { text: this.$t('ActivityTable.activity'), value: 'activities.name', externalFilterSource: 'concepts/activities/activities$name' },
         { text: this.$t('ActivityTable.instance'), value: 'name' },
         { text: this.$t('_global.definition'), value: 'definition' },
         { text: this.$t('ActivityTable.topic_code'), value: 'topic_code' },
@@ -356,7 +379,7 @@ export default {
       showGroupsForm: false,
       showInstantiationsForm: false,
       showSponsorFromRequestedForm: false,
-      activeActivity: null,
+      activeItem: null,
       loading: false,
       subLoading: false,
       subgroupActivities: []
@@ -382,19 +405,19 @@ export default {
       }
       if (this.filters && this.filters !== undefined && this.filters !== '{}' && this.source === 'activities') {
         const filtersObj = JSON.parse(this.filters)
-        if (filtersObj.activity_groups) {
+        if (filtersObj['activity_group.name']) {
           params.activity_group_names = []
-          filtersObj.activity_groups.v.forEach(value => {
+          filtersObj['activity_group.name'].v.forEach(value => {
             params.activity_group_names.push(value)
           })
-          delete filtersObj.activity_groups
+          delete filtersObj['activity_group.name']
         }
-        if (filtersObj.activity_sub_groups) {
-          params.activity_sub_group_names = []
-          filtersObj.activity_sub_groups.v.forEach(value => {
-            params.activity_sub_group_names.push(value)
+        if (filtersObj['activity_subgroup.name']) {
+          params.activity_subgroup_names = []
+          filtersObj['activity_subgroup.name'].v.forEach(value => {
+            params.activity_subgroup_names.push(value)
           })
-          delete filtersObj.activity_sub_groups
+          delete filtersObj['activity_subgroup.name']
         }
         if (filtersObj.name) {
           params.activity_names = []
@@ -408,12 +431,12 @@ export default {
         }
       } else if (this.filters && this.filters !== undefined && this.filters !== '{}' && this.source === 'activity-instances') {
         const filtersObj = JSON.parse(this.filters)
-        if (filtersObj.activities) {
+        if (filtersObj['activities.name']) {
           params.activity_names = []
-          filtersObj.activities.v.forEach(value => {
+          filtersObj['activities.name'].v.forEach(value => {
             params.activity_names.push(value)
           })
-          delete filtersObj.activities
+          delete filtersObj['activities.name']
         }
         if (filtersObj.specimen) {
           params.specimen_names = []
@@ -432,13 +455,57 @@ export default {
         if (!params.filters) {
           params.filters = {}
         }
-        params.filters.status = { v: [statuses.FINAL], op: 'eq' }
+        // params.filters.status = { v: [statuses.FINAL], op: 'eq' }
       }
       if (this.options.sortBy.length !== 0 && sort !== undefined) {
         params.sort_by = `{"${this.options.sortBy[0]}":${!sort}}`
       }
-      activities.get(params, this.source === 'requested-activities' ? 'activities' : this.source).then(resp => {
-        this.activities = resp.data.items
+      activities.get(params, this.source).then(resp => {
+        // TODO temporary solution for handling grouping, pagination might show more entries than expected, it will be fixed in the future
+        const activities = []
+        if (this.source === 'activities') {
+          for (const item of resp.data.items) {
+            if (item.activity_groupings.length > 0) {
+              for (const grouping of item.activity_groupings) {
+                activities.push({
+                  activity_group: { name: grouping.activity_group_name, uid: grouping.activity_group_uid },
+                  activity_subgroup: { name: grouping.activity_subgroup_name, uid: grouping.activity_subgroup_uid },
+                  item_key: item.uid + grouping.activity_group_uid + grouping.activity_subgroup_uid,
+                  ...item
+                })
+              }
+            } else {
+              activities.push({
+                activity_group: { name: '', uid: '' },
+                activity_subgroup: { name: '', uid: '' },
+                item_key: item.uid,
+                ...item
+              })
+            }
+          }
+        } else if (this.source === 'activity-instances') {
+          for (const item of resp.data.items) {
+            if (item.activity_groupings.length > 0) {
+              item.activities = [item.activity_groupings[0].activity]
+              item.activity_group = item.activity_groupings[0].activity_group
+              item.activity_subgroup = item.activity_groupings[0].activity_subgroup
+            } else {
+              item.activities = []
+            }
+            item.item_key = item.uid
+            activities.push(
+              item
+            )
+          }
+        } else {
+          for (const item of resp.data.items) {
+            item.item_key = item.uid
+            activities.push(
+              item
+            )
+          }
+        }
+        this.activities = activities
         this.total = resp.data.total
       })
       activities.getSubGroups(this.currentGroup).then(resp => {
@@ -447,21 +514,24 @@ export default {
       activities.getSubGroupActivities(this.currentSubGroup).then(resp => {
         this.subgroupActivities = resp.data.items
       })
+      if (this.$refs.groupform) {
+        this.$refs.groupform.getGroups()
+      }
     },
     modifyFilters (jsonFilter, params) {
-      if (jsonFilter.activity_groups) {
+      if (jsonFilter['activity_group.name']) {
         params.activity_group_names = []
-        jsonFilter.activity_groups.v.forEach(value => {
+        jsonFilter['activity_group.name'].v.forEach(value => {
           params.activity_group_names.push(value)
         })
-        delete jsonFilter.activity_groups
+        delete jsonFilter['activity_group.name']
       }
-      if (jsonFilter.activity_sub_groups) {
-        params.activity_sub_group_names = []
-        jsonFilter.activity_sub_groups.v.forEach(value => {
-          params.activity_sub_group_names.push(value)
+      if (jsonFilter['activity_subgroup.name']) {
+        params.activity_subgroup_names = []
+        jsonFilter['activity_subgroup.name'].v.forEach(value => {
+          params.activity_subgroup_names.push(value)
         })
-        delete jsonFilter.activity_sub_groups
+        delete jsonFilter['activity_subgroup.name']
       }
       if (jsonFilter.name) {
         params.activity_names = []
@@ -470,12 +540,12 @@ export default {
         })
         delete jsonFilter.name
       }
-      if (jsonFilter.activities) {
+      if (jsonFilter['activities.name']) {
         params.activity_names = []
-        jsonFilter.activities.v.forEach(value => {
+        jsonFilter['activities.name'].v.forEach(value => {
           params.activity_names.push(value)
         })
-        delete jsonFilter.activities
+        delete jsonFilter['activities.name']
       }
       if (jsonFilter.specimen) {
         params.specimen_names = []
@@ -523,35 +593,35 @@ export default {
           return this.instantiationsHeaders
       }
     },
-    inactivateActivity (item, source) {
+    inactivateItem (item, source) {
       source = (source === undefined) ? this.source : source
       activities.inactivate(item.uid, source).then(() => {
         bus.$emit('notification', { msg: this.$t(`ActivitiesTable.inactivate_${this.source}_success`), type: 'success' })
         this.fetchActivities()
       })
     },
-    reactivateActivity (item, source) {
+    reactivateItem (item, source) {
       source = (source === undefined) ? this.source : source
       activities.reactivate(item.uid, source).then(() => {
         bus.$emit('notification', { msg: this.$t(`ActivitiesTable.reactivate_${this.source}_success`), type: 'success' })
         this.fetchActivities()
       })
     },
-    deleteActivity (item, source) {
+    deleteItem (item, source) {
       source = (source === undefined) ? this.source : source
       activities.delete(item.uid, source).then(() => {
         bus.$emit('notification', { msg: this.$t(`ActivitiesTable.delete_${this.source}_success`), type: 'success' })
         this.fetchActivities()
       })
     },
-    approveActivity (item, source) {
+    approveItem (item, source) {
       source = (source === undefined) ? this.source : source
       activities.approve(item.uid, source).then(() => {
         bus.$emit('notification', { msg: this.$t(`ActivitiesTable.approve_${this.source}_success`), type: 'success' })
         this.fetchActivities()
       })
     },
-    newActivityVersion (item, source) {
+    newItemVersion (item, source) {
       source = (source === undefined) ? this.source : source
       activities.newVersion(item.uid, source).then(() => {
         bus.$emit('notification', { msg: this.$t('_global.new_version_success'), type: 'success' })
@@ -574,8 +644,8 @@ export default {
           this.showInstantiationsForm = true
       }
     },
-    editActivity (item) {
-      this.activeActivity = item
+    editItem (item) {
+      this.activeItem = item
       switch (this.source) {
         case 'activities':
           if (this.requested) {
@@ -592,7 +662,7 @@ export default {
       }
     },
     createSponsorFromRequested (item) {
-      this.activeActivity = item
+      this.activeItem = item
       this.showSponsorFromRequestedForm = true
     },
     getSubGroups ({ item }) {
@@ -619,7 +689,7 @@ export default {
       this.showGroupsForm = false
       this.showInstantiationsForm = false
       this.showSponsorFromRequestedForm = false
-      this.activeActivity = null
+      this.activeItem = null
       this.fetchActivities()
     }
   },
@@ -640,4 +710,5 @@ export default {
 .tableMinWidth {
   min-width: 1440px !important;
 }
+
 </style>

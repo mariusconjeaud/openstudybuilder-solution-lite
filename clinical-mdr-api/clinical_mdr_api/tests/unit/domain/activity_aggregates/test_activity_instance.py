@@ -3,6 +3,7 @@ from typing import Callable
 
 from clinical_mdr_api.domains.concepts.activities.activity_instance import (
     ActivityInstanceAR,
+    ActivityInstanceGroupingVO,
     ActivityInstanceVO,
     SimpleActivityItemVO,
 )
@@ -11,6 +12,15 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryVO,
 )
 from clinical_mdr_api.tests.unit.domain.utils import random_str
+
+
+def create_random_activity_instance_grouping_vo() -> ActivityInstanceGroupingVO:
+    random_activity_instance_grouping_vo = ActivityInstanceGroupingVO(
+        activity_group_uid=random_str(),
+        activity_subgroup_uid=random_str(),
+        activity_uid=random_str(),
+    )
+    return random_activity_instance_grouping_vo
 
 
 def create_random_activity_instance_vo() -> ActivityInstanceVO:
@@ -24,7 +34,10 @@ def create_random_activity_instance_vo() -> ActivityInstanceVO:
         topic_code=random_str(),
         adam_param_code=random_str(),
         legacy_description=random_str(),
-        activity_uids=[random_str(), random_str()],
+        activity_groupings=[
+            create_random_activity_instance_grouping_vo(),
+            create_random_activity_instance_grouping_vo(),
+        ],
         activity_items=[
             SimpleActivityItemVO.from_repository_values(
                 uid=random_str(),
@@ -56,8 +69,10 @@ def create_random_activity_instance_ar(
             library_name=library, is_editable=is_editable
         ),
         author="TODO Initials",
-        concept_exists_by_name_callback=lambda _: False,
+        concept_exists_by_callback=lambda x, y, z: False,
         activity_hierarchy_exists_by_uid_callback=lambda _: True,
+        activity_subgroup_exists=lambda _: True,
+        activity_group_exists=lambda _: True,
         activity_instance_class_exists_by_uid_callback=lambda _: True,
         activity_item_exists_by_uid_callback=lambda _: True,
     )

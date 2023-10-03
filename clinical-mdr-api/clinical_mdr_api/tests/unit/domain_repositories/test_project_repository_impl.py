@@ -1,5 +1,5 @@
 import unittest
-from typing import Collection, Optional, Sequence
+from typing import Collection, Sequence
 from unittest.mock import Mock, patch
 
 from clinical_mdr_api.domain_repositories.models.project import Project
@@ -68,7 +68,7 @@ class TestProjectRepositoryImpl(unittest.TestCase):
         project: Project = create_random_project_node()
         project_mock.nodes.get_or_none.return_value = project
         # when
-        projectAR: Optional[ProjectAR] = repo.find_by_uid(project.uid)
+        projectAR: ProjectAR | None = repo.find_by_uid(project.uid)
 
         # then
         self.assertEqual(project.uid, projectAR.uid)
@@ -86,7 +86,7 @@ class TestProjectRepositoryImpl(unittest.TestCase):
         project_mock.nodes.get_or_none.return_value = None
 
         # when
-        projectAR: Optional[ProjectAR] = repo.find_by_uid(random_str())
+        projectAR: ProjectAR | None = repo.find_by_uid(random_str())
 
         # then
         self.assertIsNone(projectAR)

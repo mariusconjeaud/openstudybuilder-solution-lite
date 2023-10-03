@@ -1,6 +1,6 @@
 import datetime
 from dataclasses import dataclass
-from typing import List, Optional, Sequence, Tuple
+from typing import Sequence
 
 from neomodel import db
 
@@ -33,24 +33,24 @@ class SelectionHistoryElement:
     """Class for selection history items"""
 
     study_selection_uid: str
-    study_uid: Optional[str]
-    element_name: Optional[str]
-    element_short_name: Optional[str]
-    element_code: Optional[str]
-    element_description: Optional[str]
-    element_planned_duration: Optional[str]
-    element_start_rule: Optional[str]
-    element_end_rule: Optional[str]
-    element_colour: Optional[str]
-    element_subtype: Optional[str]
+    study_uid: str | None
+    element_name: str | None
+    element_short_name: str | None
+    element_code: str | None
+    element_description: str | None
+    element_planned_duration: str | None
+    element_start_rule: str | None
+    element_end_rule: str | None
+    element_colour: str | None
+    element_subtype: str | None
     # Study selection Versioning
     start_date: datetime.datetime
-    user_initials: Optional[str]
+    user_initials: str | None
     change_type: str
-    end_date: Optional[datetime.datetime]
+    end_date: datetime.datetime | None
     order: int
-    status: Optional[str]
-    accepted_version: Optional[bool]
+    status: str | None
+    accepted_version: bool | None
 
 
 class StudySelectionElementRepository:
@@ -81,7 +81,7 @@ class StudySelectionElementRepository:
 
     def get_element_type_term_uid_by_element_subtype_term_uid(
         self, element_subtype_term_uid: str
-    ) -> str:
+    ) -> str | None:
         if element_subtype_term_uid is not None:
             mapping = [
                 x
@@ -93,9 +93,9 @@ class StudySelectionElementRepository:
 
     def _retrieves_all_data(
         self,
-        study_uid: Optional[str] = None,
-        project_name: Optional[str] = None,
-        project_number: Optional[str] = None,
+        study_uid: str | None = None,
+        project_name: str | None = None,
+        project_number: str | None = None,
     ) -> Sequence[StudySelectionElementVO]:
         query = ""
         query_parameters = {}
@@ -179,7 +179,7 @@ class StudySelectionElementRepository:
 
     def find_by_study(
         self, study_uid: str, for_update: bool = False
-    ) -> Optional[StudySelectionElementAR]:
+    ) -> StudySelectionElementAR | None:
         """
         Finds all the selected study endpoints for a given study, and creates the aggregate
         :param study_uid:
@@ -200,7 +200,7 @@ class StudySelectionElementRepository:
 
     def find_by_uid(
         self, study_uid: str, study_element_uid: str
-    ) -> Tuple[StudySelectionElementVO, int]:
+    ) -> tuple[StudySelectionElementVO, int]:
         """Find a study element by its UID."""
         query_parameters = {
             "study_uid": study_uid,
@@ -450,7 +450,7 @@ class StudySelectionElementRepository:
         audit_node.date = datetime.datetime.now(datetime.timezone.utc)
         audit_node.save()
 
-        study_selection_node.has_before.connect(audit_node)
+        audit_node.has_before.connect(study_selection_node)
         study_root_node.audit_trail.connect(audit_node)
         return audit_node
 
@@ -484,7 +484,7 @@ class StudySelectionElementRepository:
                 study_element_selection_node
             )
         # Connect new node with audit trail
-        study_element_selection_node.has_after.connect(audit_node)
+        audit_node.has_after.connect(study_element_selection_node)
 
         if before_node is not None:
             design_cells = before_node.has_design_cell.all()
@@ -592,7 +592,7 @@ class StudySelectionElementRepository:
 
     def find_selection_history(
         self, study_uid: str, study_selection_uid: str = None
-    ) -> List[SelectionHistoryElement]:
+    ) -> list[SelectionHistoryElement]:
         """
         Simple method to return all versions of a study objectives for a study.
         Optionally a specific selection uid is given to see only the response for a specific selection.

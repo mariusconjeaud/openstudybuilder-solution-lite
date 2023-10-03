@@ -1,5 +1,5 @@
 import datetime
-from typing import List, Optional, Sequence
+from typing import Sequence
 
 from neomodel import db
 
@@ -133,8 +133,8 @@ class StudyCompoundDosingSelectionService(StudySelectionMixin):
     def get_all_compound_dosings(
         self,
         study_uid: str,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         page_number: int = 1,
         page_size: int = 0,
         total_count: bool = False,
@@ -162,10 +162,10 @@ class StudyCompoundDosingSelectionService(StudySelectionMixin):
     def get_distinct_values_for_header(
         self,
         field_name: str,
-        study_uid: Optional[str] = None,
-        search_string: Optional[str] = "",
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        study_uid: str | None = None,
+        search_string: str | None = "",
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
     ):
         repos = self._repos
@@ -209,7 +209,7 @@ class StudyCompoundDosingSelectionService(StudySelectionMixin):
 
     def _transform_history_to_response_model(
         self,
-        study_selection_history: List[SelectionHistory],
+        study_selection_history: list[SelectionHistory],
         study_uid: str,
     ) -> Sequence[models.StudyCompoundDosing]:
         result = []
@@ -295,16 +295,13 @@ class StudyCompoundDosingSelectionService(StudySelectionMixin):
                 generate_uid_callback=repos.study_compound_dosing_repository.generate_uid,
             )
             # add VO to aggregate
-            try:
-                selection_aggregate.add_compound_dosing_selection(
-                    study_compound_dosing_selection=new_selection,
-                    selection_uid_by_compound_dose_and_frequency_callback=(
-                        repos.study_compound_dosing_repository.get_selection_uid_by_compound_dose_and_frequency
-                    ),
-                    compound_callback=repos.compound_repository.find_by_uid_2,
-                )
-            except ValueError as value_error:
-                raise exceptions.ValidationException(value_error.args[0])
+            selection_aggregate.add_compound_dosing_selection(
+                study_compound_dosing_selection=new_selection,
+                selection_uid_by_compound_dose_and_frequency_callback=(
+                    repos.study_compound_dosing_repository.get_selection_uid_by_compound_dose_and_frequency
+                ),
+                compound_callback=repos.compound_repository.find_by_uid_2,
+            )
 
             # sync with DB and save the update
             repos.study_compound_dosing_repository.save(
@@ -394,15 +391,12 @@ class StudyCompoundDosingSelectionService(StudySelectionMixin):
             )
 
             # Load the current VO for updates
-            try:
-                (
-                    current_vo,
-                    order,
-                ) = selection_aggregate.get_specific_compound_dosing_selection(
-                    study_selection_uid=study_selection_uid
-                )
-            except ValueError as value_error:
-                raise exceptions.NotFoundException(value_error.args[0])
+            (
+                current_vo,
+                order,
+            ) = selection_aggregate.get_specific_compound_dosing_selection(
+                study_selection_uid=study_selection_uid
+            )
 
             # merge current with updates
             updated_selection = self._patch_prepare_new_study_selection(
@@ -410,17 +404,14 @@ class StudyCompoundDosingSelectionService(StudySelectionMixin):
                 current_study_compound_dosing=current_vo,
             )
 
-            try:
-                # let the aggregate update the value object
-                selection_aggregate.update_selection(
-                    updated_study_compound_dosing_selection=updated_selection,
-                    selection_uid_by_compound_dose_and_frequency_callback=(
-                        repos.study_compound_dosing_repository.get_selection_uid_by_compound_dose_and_frequency
-                    ),
-                    compound_callback=repos.compound_repository.find_by_uid_2,
-                )
-            except ValueError as value_error:
-                raise exceptions.ValidationException(value_error.args[0])
+            # let the aggregate update the value object
+            selection_aggregate.update_selection(
+                updated_study_compound_dosing_selection=updated_selection,
+                selection_uid_by_compound_dose_and_frequency_callback=(
+                    repos.study_compound_dosing_repository.get_selection_uid_by_compound_dose_and_frequency
+                ),
+                compound_callback=repos.compound_repository.find_by_uid_2,
+            )
 
             # sync with DB and save the update
             repos.study_compound_dosing_repository.save(

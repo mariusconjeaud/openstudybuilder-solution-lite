@@ -1,4 +1,4 @@
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Self
 
 from pydantic import Field
 
@@ -12,15 +12,15 @@ from clinical_mdr_api.models.utils import BaseModel
 
 class OdmFormalExpression(NoLibraryConceptModelNoName):
     library_name: str
-    context: Optional[str]
-    expression: Optional[str]
-    possible_actions: List[str]
+    context: str | None
+    expression: str | None
+    possible_actions: list[str]
 
     @classmethod
     def from_odm_formal_expression_ar(
         cls,
         odm_formal_expression_ar: OdmFormalExpressionAR,
-    ) -> "OdmFormalExpression":
+    ) -> Self:
         return cls(
             uid=odm_formal_expression_ar._uid,
             context=odm_formal_expression_ar.concept_vo.context,
@@ -43,8 +43,8 @@ class OdmFormalExpressionSimpleModel(BaseModel):
     def from_odm_formal_expression_uid(
         cls,
         uid: str,
-        find_odm_formal_expression_by_uid: Callable[[str], Optional[ConceptARBase]],
-    ) -> Optional["OdmFormalExpressionSimpleModel"]:
+        find_odm_formal_expression_by_uid: Callable[[str], ConceptARBase | None],
+    ) -> Self | None:
         if uid is not None:
             odm_formal_expression = find_odm_formal_expression_by_uid(uid)
 
@@ -67,9 +67,9 @@ class OdmFormalExpressionSimpleModel(BaseModel):
         return simple_odm_formal_expression_model
 
     uid: str = Field(..., title="uid", description="")
-    context: Optional[str] = Field(None, title="context", description="")
-    expression: Optional[str] = Field(None, title="expression", description="")
-    version: Optional[str] = Field(None, title="version", description="")
+    context: str | None = Field(None, title="context", description="")
+    expression: str | None = Field(None, title="expression", description="")
+    version: str | None = Field(None, title="version", description="")
 
 
 class OdmFormalExpressionPostInput(BaseModel):
@@ -80,8 +80,8 @@ class OdmFormalExpressionPostInput(BaseModel):
 
 class OdmFormalExpressionPatchInput(BaseModel):
     change_description: str
-    context: Optional[str]
-    expression: Optional[str]
+    context: str | None
+    expression: str | None
 
 
 class OdmFormalExpressionBatchPatchInput(OdmFormalExpressionPatchInput):
@@ -93,7 +93,7 @@ class OdmFormalExpressionVersion(OdmFormalExpression):
     Class for storing OdmFormalExpression and calculation of differences
     """
 
-    changes: Optional[Dict[str, bool]] = Field(
+    changes: dict[str, bool] | None = Field(
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "

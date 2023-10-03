@@ -1,5 +1,3 @@
-from typing import Optional, Tuple
-
 from clinical_mdr_api.domain_repositories.models.standard_data_model import (
     Dataset,
     DatasetInstance,
@@ -20,7 +18,7 @@ class DatasetRepository(StandardDataModelRepository):
 
     # pylint: disable=unused-argument
     def generic_match_clause(
-        self, versioning_relationship: str, uid: Optional[str] = None
+        self, versioning_relationship: str, uid: str | None = None
     ):
         standard_data_model_label = self.root_class.__label__
         standard_data_model_value_label = self.value_class.__label__
@@ -33,7 +31,7 @@ class DatasetRepository(StandardDataModelRepository):
                 OPTIONAL MATCH (standard_value)-[implements:IMPLEMENTS_DATASET_CLASS]->(dataset_class_value)
                     <-[has_dataset_class:HAS_DATASET_CLASS]-(:DataModelValue)<-[:IMPLEMENTS]-(data_model_ig_value)"""
 
-    def create_query_filter_statement(self, **kwargs) -> Tuple[str, dict]:
+    def create_query_filter_statement(self, **kwargs) -> tuple[str, dict]:
         (
             filter_statements_from_standard,
             filter_query_parameters,
@@ -70,7 +68,7 @@ class DatasetRepository(StandardDataModelRepository):
             )
         return filter_statements_to_return, filter_query_parameters
 
-    def sort_by(self) -> Optional[dict]:
+    def sort_by(self) -> dict | None:
         return {"data_model_ig.ordinal": True}
 
     def specific_alias_clause(self) -> str:

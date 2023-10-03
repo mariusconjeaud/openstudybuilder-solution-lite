@@ -75,7 +75,6 @@ class StudyObjectivesTest(api.APITest):
         db.cypher_query(STARTUP_CT_TERM_NAME_CYPHER)
         db.cypher_query(STARTUP_STUDY_OBJECTIVE_CYPHER)
         ObjectiveTemplateRoot.generate_node_uids_if_not_present()
-        ObjectiveTemplateRoot.generate_sequence_ids_if_not_present()
         ObjectiveRoot.generate_node_uids_if_not_present()
         from clinical_mdr_api import main
 
@@ -144,13 +143,10 @@ class StudyEndpointsTest(api.APITest):
         db.cypher_query(STARTUP_CT_TERM_NAME_CYPHER)
         db.cypher_query(STARTUP_STUDY_ENDPOINT_CYPHER)
         ObjectiveTemplateRoot.generate_node_uids_if_not_present()
-        ObjectiveTemplateRoot.generate_sequence_ids_if_not_present()
         ObjectiveRoot.generate_node_uids_if_not_present()
         EndpointTemplateRoot.generate_node_uids_if_not_present()
-        EndpointTemplateRoot.generate_sequence_ids_if_not_present()
         EndpointRoot.generate_node_uids_if_not_present()
         TimeframeTemplateRoot.generate_node_uids_if_not_present()
-        TimeframeTemplateRoot.generate_sequence_ids_if_not_present()
         TimeframeRoot.generate_node_uids_if_not_present()
         from clinical_mdr_api import main
 
@@ -911,6 +907,7 @@ class StudyDesignJointTest(api.APITest):
             change_description="rules change",
         )
         self.study_epoch3 = epoch_service.edit(
+            study_uid=epoch.study_uid,
             study_epoch_uid=epoch.uid,
             study_epoch_input=edit_input,
         )

@@ -1,8 +1,9 @@
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import AbstractSet, Callable, Optional
+from typing import AbstractSet, Callable, Self
 
-from clinical_mdr_api.domains.concepts.concept_base import ConceptVO, _AggregateRootType
+from clinical_mdr_api import exceptions
+from clinical_mdr_api.domains.concepts.concept_base import ConceptVO
 from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemAggregateRootBase,
     LibraryItemMetadataVO,
@@ -22,11 +23,11 @@ class SimpleConceptVO(ConceptVO):
     def from_repository_values(
         cls,
         name: str,
-        name_sentence_case: Optional[str],
-        definition: Optional[str],
-        abbreviation: Optional[str],
+        name_sentence_case: str | None,
+        definition: str | None,
+        abbreviation: str | None,
         is_template_parameter: bool,
-    ) -> "SimpleConceptVO":
+    ) -> Self:
         simple_concept_vo = cls(
             name=name,
             name_sentence_case=name_sentence_case,
@@ -55,9 +56,9 @@ class SimpleConceptAR(LibraryItemAggregateRootBase):
         cls,
         uid: str,
         simple_concept_vo: SimpleConceptVO,
-        library: Optional[LibraryVO],
+        library: LibraryVO | None,
         item_metadata: LibraryItemMetadataVO,
-    ) -> _AggregateRootType:
+    ) -> Self:
         activity_ar = cls(
             _uid=uid,
             _concept_vo=simple_concept_vo,
@@ -73,9 +74,9 @@ class SimpleConceptAR(LibraryItemAggregateRootBase):
         author: str,
         simple_concept_vo: SimpleConceptVO,
         library: LibraryVO,
-        generate_uid_callback: Callable[[], Optional[str]] = (lambda: None),
-        find_uid_by_name_callback: Callable[[str], Optional[str]] = (lambda _: None),
-    ) -> _AggregateRootType:
+        generate_uid_callback: Callable[[], str | None] = (lambda: None),
+        find_uid_by_name_callback: Callable[[str], str | None] = (lambda _: None),
+    ) -> Self:
         item_metadata = LibraryItemMetadataVO(
             _change_description="Initial version",
             _status=LibraryItemStatus.FINAL,
@@ -87,7 +88,7 @@ class SimpleConceptAR(LibraryItemAggregateRootBase):
         )
 
         if not library.is_editable:
-            raise ValueError(
+            raise exceptions.BusinessLogicException(
                 f"The library with the name='{library.name}' does not allow to create objects."
             )
 

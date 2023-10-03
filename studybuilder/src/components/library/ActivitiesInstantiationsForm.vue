@@ -57,20 +57,59 @@
           <v-row>
             <v-col>
               <v-autocomplete
-                v-model="form.activities"
+                v-model="form.activity_groupings[0].activity_uid"
                 :items="activities"
-                :label="$t('ActivityForms.activities')"
+                :label="$t('ActivityForms.activity')"
                 item-text="name"
                 item-value="uid"
                 dense
                 clearable
-                multiple
                 :error-messages="errors"
                 class="pt-3"
               />
             </v-col>
           </v-row>
         </validation-provider>
+        <validation-provider
+        v-slot="{ errors }"
+        rules="required"
+        >
+        <v-row>
+          <v-col>
+            <v-autocomplete
+              :label="$t('ActivityForms.activity_group')"
+              :items="filteredGroups"
+              v-model="form.activity_groupings[0].activity_group_uid"
+              item-text="name"
+              item-value="uid"
+              :error-messages="errors"
+              dense
+              clearable
+              :disabled="form.activity_groupings[0].activity_uid ? false : true"
+              />
+          </v-col>
+        </v-row>
+      </validation-provider>
+        <validation-provider
+        v-slot="{ errors }"
+        rules="required"
+        >
+        <v-row>
+          <v-col>
+            <v-autocomplete
+              :label="$t('ActivityForms.activity_subgroup')"
+              :items="filteredSubGroups"
+              v-model="form.activity_groupings[0].activity_subgroup_uid"
+              item-text="name"
+              item-value="uid"
+              :error-messages="errors"
+              dense
+              clearable
+              :disabled="form.activity_groupings[0].activity_group_uid ? false : true"
+              />
+          </v-col>
+        </v-row>
+      </validation-provider>
         <validation-provider
           v-slot="{ errors }"
           rules="required"
@@ -145,6 +184,7 @@
 </template>
 
 <script>
+import _isEmpty from 'lodash/isEmpty'
 import _isEqual from 'lodash/isEqual'
 import activityInstanceClasses from '@/api/activityInstanceClasses'
 import activities from '@/api/activities'
@@ -168,11 +208,36 @@ export default {
       return (this.editedActivity)
         ? this.$t('ActivityForms.editInstance')
         : this.$t('ActivityForms.addInstance')
+    },
+    filteredGroups () {
+      if (!this.form.activity_groupings || !this.form.activity_groupings[0].activity_uid) {
+        return []
+      }
+      const uid = this.form.activity_groupings[0].activity_uid
+      const activity = this.activities.find(o => o.uid === uid)
+      if (!activity) {
+        return []
+      }
+      return activity.activity_groupings.map((o) => ({ name: o.activity_group_name, uid: o.activity_group_uid }))
+    },
+    filteredSubGroups () {
+      if (!this.form.activity_groupings || !this.form.activity_groupings[0].activity_group_uid) {
+        return []
+      }
+      const activityUid = this.form.activity_groupings[0].activity_uid
+      const groupUid = this.form.activity_groupings[0].activity_group_uid
+      const activity = this.activities.find(o => o.uid === activityUid)
+      if (!activity) {
+        return []
+      }
+      return activity.activity_groupings.filter(o => o.activity_group_uid === groupUid).map((o) => ({ name: o.activity_subgroup_name, uid: o.activity_subgroup_uid }))
     }
   },
   data () {
     return {
-      form: {},
+      form: {
+        activity_groupings: [{}]
+      },
       type: '',
       activities: [],
       activityInstanceClasses: [],
@@ -200,7 +265,26 @@ export default {
         topic_code: value.topic_code,
         adam_param_code: value.adam_param_code,
         legacy_description: value.legacy_description,
-        activities: value.activities.map(item => item.uid)
+        activity_groupings: [{}]
+      }
+      if (!_isEmpty(value)) {
+        const grouping = [{}]
+        if (value.activities) {
+          grouping[0].activity_name = value.activities[0].name
+          grouping[0].activity_uid = value.activities[0].uid
+        }
+        if (value.activity_group) {
+          grouping[0].activity_group_name = value.activity_group.name
+          grouping[0].activity_group_uid = value.activity_group.uid
+        }
+        if (value.activity_subgroup) {
+          grouping[0].activity_subgroup_name = value.activity_subgroup.name
+          grouping[0].activity_subgroup_uid = value.activity_subgroup.uid
+        }
+        this.$set(this.form, 'activity_groupings', grouping)
+      } else {
+        const grouping = [{}]
+        this.$set(this.form, 'activity_groupings', grouping)
       }
       this.$store.commit('form/SET_FORM', this.form)
     },
@@ -226,13 +310,15 @@ export default {
     },
     close () {
       this.$emit('close')
-      this.form = {}
+      this.form = { activity_groupings: [{}] }
       this.$store.commit('form/CLEAR_FORM')
+      this.$refs.stepper.reset()
       this.$refs.stepper.loading = false
     },
     async submit () {
       this.form.library_name = libraries.LIBRARY_SPONSOR
       this.form.name_sentence_case = this.form.name.charAt(0).toUpperCase() + this.form.name.slice(1)
+      this.form.activities = [this.form.activities]
       if (!this.editedActivity) {
         activities.create(this.form, source).then(() => {
           bus.$emit('notification', { msg: this.$t('ActivityForms.activity_created') })

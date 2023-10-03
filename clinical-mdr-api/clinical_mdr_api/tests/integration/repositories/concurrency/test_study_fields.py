@@ -1,5 +1,4 @@
 import unittest
-from typing import Optional
 
 from neomodel import db
 
@@ -62,7 +61,7 @@ class StudyFieldsConcurrencyTest(unittest.TestCase):
 
     ct_term_attributes_ar: CTTermAttributesAR
     ct_term_name_ar: CTTermNameAR
-    study_ar: Optional[StudyDefinitionAR]
+    study_ar: StudyDefinitionAR | None
 
     @classmethod
     def setUpClass(cls):
@@ -73,7 +72,7 @@ class StudyFieldsConcurrencyTest(unittest.TestCase):
         db.cypher_query("MATCH (n) DETACH DELETE n")
         db.cypher_query(STARTUP_STUDY_FIELD_CYPHER)
         db.cypher_query(STARTUP_CT_TERM_ATTRIBUTES_CYPHER)
-        db.cypher_query("CREATE CONSTRAINT ON (n:CTTermRoot) ASSERT n.uid IS UNIQUE;")
+        db.cypher_query("CREATE CONSTRAINT FOR (n:CTTermRoot) REQUIRE n.uid IS UNIQUE;")
 
         self.study_title_repository = self._repos.study_title_repository
         self.studies_repository = self._repos.study_definition_repository

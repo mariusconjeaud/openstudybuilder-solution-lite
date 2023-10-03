@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable, List, Optional, Tuple
+from typing import Callable, Self
 
 from clinical_mdr_api.domains.concepts.concept_base import ConceptVO
 from clinical_mdr_api.domains.concepts.odms.odm_ar_base import OdmARBase
@@ -13,15 +13,15 @@ from clinical_mdr_api.exceptions import BusinessLogicException
 @dataclass(frozen=True)
 class OdmVendorElementVO(ConceptVO):
     vendor_namespace_uid: str
-    vendor_attribute_uids: List[str]
+    vendor_attribute_uids: list[str]
 
     @classmethod
     def from_repository_values(
         cls,
         name: str,
         vendor_namespace_uid: str,
-        vendor_attribute_uids: List[str],
-    ) -> "OdmVendorElementVO":
+        vendor_attribute_uids: list[str],
+    ) -> Self:
         return cls(
             name=name,
             vendor_namespace_uid=vendor_namespace_uid,
@@ -36,17 +36,19 @@ class OdmVendorElementVO(ConceptVO):
         self,
         odm_vendor_namespace_exists_by_callback: Callable[[str, str, bool], bool],
         find_odm_vendor_element_callback: Callable[
-            [dict], Optional[Tuple[List["OdmVendorElementAR"], int]]
+            [dict], tuple[list["OdmVendorElementAR"], int] | None
         ],
     ) -> None:
-        if (
-            self.vendor_namespace_uid is not None
-            and not odm_vendor_namespace_exists_by_callback(
-                "uid", self.vendor_namespace_uid, True
-            )
-        ):
-            raise BusinessLogicException(
-                f"ODM Vendor Element tried to connect to non existing ODM Vendor Namespace identified by uid ({self.vendor_namespace_uid})."
+        if self.vendor_namespace_uid is not None:
+            self.check_concepts_exist(
+                [
+                    (
+                        [self.vendor_namespace_uid],
+                        "ODM Vendor Namespace",
+                        odm_vendor_namespace_exists_by_callback,
+                    )
+                ],
+                "ODM Vendor Element",
             )
 
         odm_vendor_element, _ = find_odm_vendor_element_callback(
@@ -57,7 +59,7 @@ class OdmVendorElementVO(ConceptVO):
         )
         if odm_vendor_element:
             raise BusinessLogicException(
-                f"ODM Vendor Element with name ({self.name}) already exists."
+                f"ODM Vendor Element with ['name: {self.name}'] already exists."
             )
 
 
@@ -78,9 +80,9 @@ class OdmVendorElementAR(OdmARBase):
         cls,
         uid: str,
         concept_vo: OdmVendorElementVO,
-        library: Optional[LibraryVO],
+        library: LibraryVO | None,
         item_metadata: LibraryItemMetadataVO,
-    ) -> "OdmVendorElementAR":
+    ) -> Self:
         return cls(
             _uid=uid,
             _concept_vo=concept_vo,
@@ -94,14 +96,14 @@ class OdmVendorElementAR(OdmARBase):
         author: str,
         concept_vo: OdmVendorElementVO,
         library: LibraryVO,
-        generate_uid_callback: Callable[[], Optional[str]] = (lambda: None),
+        generate_uid_callback: Callable[[], str | None] = (lambda: None),
         odm_vendor_namespace_exists_by_callback: Callable[
             [str, str, bool], bool
         ] = lambda x, y, z: True,
         find_odm_vendor_element_callback: Callable[
-            [dict], Optional[Tuple[List["OdmVendorElementAR"], int]]
+            [dict], tuple[list["OdmVendorElementAR"], int] | None
         ] = lambda _: None,
-    ) -> "OdmVendorElementAR":
+    ) -> Self:
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(author=author)
 
         concept_vo.validate(
@@ -119,9 +121,11 @@ class OdmVendorElementAR(OdmARBase):
     def edit_draft(
         self,
         author: str,
-        change_description: Optional[str],
+        change_description: str | None,
         concept_vo: OdmVendorElementVO,
-        concept_exists_by_name_callback: Callable[[str], bool] = lambda _: True,
+        concept_exists_by_callback: Callable[
+            [str, str, bool], bool
+        ] = lambda x, y, z: True,
     ) -> None:
         """
         Creates a new draft version for the object.
@@ -144,7 +148,7 @@ class OdmVendorElementRelationVO:
         uid: str,
         name: str,
         value: str,
-    ) -> "OdmVendorElementRelationVO":
+    ) -> Self:
         return cls(
             uid=uid,
             name=name,

@@ -1,8 +1,8 @@
-import re
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Self
 
 from pydantic import BaseModel, Field, root_validator, validator
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains.concepts.odms.vendor_attribute import (
     OdmVendorAttributeAR,
     OdmVendorAttributeRelationVO,
@@ -20,27 +20,27 @@ from clinical_mdr_api.models.concepts.odms.odm_common_models import (
     OdmVendorElementSimpleModel,
     OdmVendorNamespaceSimpleModel,
 )
+from clinical_mdr_api.models.validators import (
+    validate_name_only_contains_letters,
+    validate_regex,
+)
 
 
 class OdmVendorAttribute(ConceptModel):
-    compatible_types: List[str]
-    data_type: Optional[str] = Field(None, nullable=True)
-    value_regex: Optional[str] = Field(None, nullable=True)
-    vendor_namespace: Optional[OdmVendorNamespaceSimpleModel] = Field(
-        None, nullable=True
-    )
-    vendor_element: Optional[OdmVendorElementSimpleModel] = Field(None, nullable=True)
-    possible_actions: List[str]
+    compatible_types: list[str]
+    data_type: str | None = Field(None, nullable=True)
+    value_regex: str | None = Field(None, nullable=True)
+    vendor_namespace: OdmVendorNamespaceSimpleModel | None = Field(None, nullable=True)
+    vendor_element: OdmVendorElementSimpleModel | None = Field(None, nullable=True)
+    possible_actions: list[str]
 
     @classmethod
     def from_odm_vendor_attribute_ar(
         cls,
         odm_vendor_attribute_ar: OdmVendorAttributeAR,
-        find_odm_vendor_namespace_by_uid: Callable[
-            [str], Optional[OdmVendorNamespaceAR]
-        ],
-        find_odm_vendor_element_by_uid: Callable[[str], Optional[OdmVendorElementAR]],
-    ) -> "OdmVendorAttribute":
+        find_odm_vendor_namespace_by_uid: Callable[[str], OdmVendorNamespaceAR | None],
+        find_odm_vendor_element_by_uid: Callable[[str], OdmVendorElementAR | None],
+    ) -> Self:
         return cls(
             uid=odm_vendor_attribute_ar._uid,
             name=odm_vendor_attribute_ar.concept_vo.name,
@@ -76,10 +76,10 @@ class OdmVendorAttributeRelationModel(BaseModel):
         odm_element_uid: str,
         odm_element_type: RelationType,
         find_by_uid_with_odm_element_relation: Callable[
-            [str, str, RelationType, bool], Optional[OdmVendorAttributeRelationVO]
+            [str, str, RelationType, bool], OdmVendorAttributeRelationVO | None
         ],
         vendor_element_attribute: bool = True,
-    ) -> Optional["OdmVendorAttributeRelationModel"]:
+    ) -> Self | None:
         if uid is not None:
             odm_vendor_attribute_ref_vo = find_by_uid_with_odm_element_relation(
                 uid, odm_element_uid, odm_element_type, vendor_element_attribute
@@ -107,11 +107,11 @@ class OdmVendorAttributeRelationModel(BaseModel):
         return odm_vendor_element_ref_model
 
     uid: str = Field(..., title="uid", description="")
-    name: Optional[str] = Field(None, title="name", description="")
-    data_type: Optional[str] = Field(None, title="data_type", description="")
-    value_regex: Optional[str] = Field(None, title="value_regex", description="")
-    value: Optional[str] = Field(None, title="value", description="")
-    vendor_namespace_uid: Optional[str] = Field(
+    name: str | None = Field(None, title="name", description="")
+    data_type: str | None = Field(None, title="data_type", description="")
+    value_regex: str | None = Field(None, title="value_regex", description="")
+    value: str | None = Field(None, title="value", description="")
+    vendor_namespace_uid: str | None = Field(
         None, title="vendor_namespace_uid", description=""
     )
 
@@ -125,10 +125,10 @@ class OdmVendorElementAttributeRelationModel(BaseModel):
         odm_element_type: RelationType,
         find_by_uid_with_odm_element_relation: Callable[
             [str, str, RelationType, bool],
-            Optional[OdmVendorElementAttributeRelationVO],
+            OdmVendorElementAttributeRelationVO | None,
         ],
         vendor_element_attribute: bool = True,
-    ) -> Optional["OdmVendorElementAttributeRelationModel"]:
+    ) -> Self | None:
         if uid is not None:
             odm_vendor_element_attribute_ref_vo = find_by_uid_with_odm_element_relation(
                 uid, odm_element_uid, odm_element_type, vendor_element_attribute
@@ -156,33 +156,28 @@ class OdmVendorElementAttributeRelationModel(BaseModel):
         return odm_vendor_element_ref_model
 
     uid: str = Field(..., title="uid", description="")
-    name: Optional[str] = Field(None, title="name", description="")
-    data_type: Optional[str] = Field(None, title="data_type", description="")
-    value_regex: Optional[str] = Field(None, title="value_regex", description="")
-    value: Optional[str] = Field(None, title="value", description="")
-    vendor_element_uid: Optional[str] = Field(
+    name: str | None = Field(None, title="name", description="")
+    data_type: str | None = Field(None, title="data_type", description="")
+    value_regex: str | None = Field(None, title="value_regex", description="")
+    value: str | None = Field(None, title="value", description="")
+    vendor_element_uid: str | None = Field(
         None, title="vendor_element_uid", description=""
     )
 
 
 class OdmVendorAttributePostInput(ConceptPostInput):
-    compatible_types: List[VendorCompatibleType] = []
+    compatible_types: list[VendorCompatibleType] = []
     data_type: str = "string"
-    value_regex: Optional[str] = None
-    vendor_namespace_uid: Optional[str] = None
-    vendor_element_uid: Optional[str] = None
+    value_regex: str | None = None
+    vendor_namespace_uid: str | None = None
+    vendor_element_uid: str | None = None
 
-    @validator("value_regex")
-    @classmethod
-    def value_regex_must_be_valid_regex(cls, v):
-        return get_regex_if_valid(v)
-
-    @validator("name")
-    @classmethod
-    def name_may_only_contain_letters(cls, v):
-        if re.search("[^a-zA-Z]", v):
-            raise ValueError("may only contain letters")
-        return v
+    _validate_regex = validator("value_regex", pre=True, allow_reuse=True)(
+        validate_regex
+    )
+    _validate_name_only_contains_letters = validator(
+        "name", pre=True, allow_reuse=True
+    )(validate_name_only_contains_letters)
 
     @root_validator()
     @classmethod
@@ -190,7 +185,7 @@ class OdmVendorAttributePostInput(ConceptPostInput):
         if (
             not values["vendor_element_uid"] and not values["vendor_namespace_uid"]
         ) or (values["vendor_element_uid"] and values["vendor_namespace_uid"]):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 "Either vendor_namespace_uid or vendor_element_uid must be provided"
             )
 
@@ -198,14 +193,13 @@ class OdmVendorAttributePostInput(ConceptPostInput):
 
 
 class OdmVendorAttributePatchInput(ConceptPatchInput):
-    compatible_types: List[VendorCompatibleType]
-    data_type: Optional[str]
-    value_regex: Optional[str]
+    compatible_types: list[VendorCompatibleType]
+    data_type: str | None
+    value_regex: str | None
 
-    @validator("value_regex")
-    @classmethod
-    def value_regex_must_be_valid_regex(cls, v):
-        return get_regex_if_valid(v)
+    _validate_regex = validator("value_regex", pre=True, allow_reuse=True)(
+        validate_regex
+    )
 
 
 class OdmVendorAttributeVersion(OdmVendorAttribute):
@@ -213,7 +207,7 @@ class OdmVendorAttributeVersion(OdmVendorAttribute):
     Class for storing OdmVendorAttribute and calculation of differences
     """
 
-    changes: Optional[Dict[str, bool]] = Field(
+    changes: dict[str, bool] | None = Field(
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "
@@ -221,13 +215,3 @@ class OdmVendorAttributeVersion(OdmVendorAttribute):
         ),
         nullable=True,
     )
-
-
-def get_regex_if_valid(regex: Optional[str]):
-    if regex:
-        try:
-            re.compile(regex)
-            return regex
-        except re.error as exc:
-            raise ValueError("Provided regex is invalid.") from exc
-    return regex

@@ -48,6 +48,9 @@ export default {
   mounted () {
     terms.getByCodelist('criteriaTypes').then(resp => {
       this.criteriaTypes = resp.data.items
+      this.criteriaTypes.forEach(type => {
+        type.sponsor_preferred_name = type.sponsor_preferred_name.replace(' Criteria', '')
+      })
     })
     this.tab = this.$route.params.type
     setTimeout(() => {

@@ -7,6 +7,7 @@
     base-url="/objectives"
     export-object-label="Objectives"
     column-data-resource="objectives"
+    :server-items-length="total"
     />
 </div>
 </template>
@@ -21,7 +22,8 @@ export default {
   },
   computed: {
     ...mapGetters({
-      objectives: 'objectives/objectives'
+      objectives: 'objectives/objectives',
+      total: 'objectives/total'
     })
   }
 }

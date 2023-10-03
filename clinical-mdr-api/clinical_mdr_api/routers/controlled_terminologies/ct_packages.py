@@ -1,24 +1,26 @@
 """CTPackage router."""
 from datetime import date
-from typing import List, Optional
 
 from fastapi import APIRouter, Depends, Path, Query
 
 from clinical_mdr_api import models
-from clinical_mdr_api.oauth import get_current_user_id
+from clinical_mdr_api.oauth import get_current_user_id, rbac
 from clinical_mdr_api.routers import _generic_descriptions
 from clinical_mdr_api.services.controlled_terminologies.ct_package import (
     CTPackageService,
 )
 
+# Prefixed with "/ct"
 router = APIRouter()
+
 CTCodelistUid = Path(None, description="The unique id of the CTCodelist")
 
 
 @router.get(
     "/packages",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns all controlled terminology packages.",
-    response_model=List[models.CTPackage],
+    response_model=list[models.CTPackage],
     status_code=200,
     responses={
         404: _generic_descriptions.ERROR_404,
@@ -26,7 +28,8 @@ CTCodelistUid = Path(None, description="The unique id of the CTCodelist")
     },
 )
 def get_packages(
-    catalogue_name: Optional[str] = Query(
+    catalogue_name: str
+    | None = Query(
         None,
         description="If specified, only packages from given catalogue are returned.",
     ),
@@ -38,6 +41,7 @@ def get_packages(
 
 @router.get(
     "/packages/changes",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns changes between codelists and terms inside two different packages.",
     response_model=models.CTPackageChanges,
     status_code=200,
@@ -70,6 +74,7 @@ def get_packages_changes_between_codelists_and_terms(
 
 @router.get(
     "/packages/{codelist_uid}/changes",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns changes from given codelist and all associated terms inside two different packages.",
     response_model=models.CTPackageChangesSpecificCodelist,
     status_code=200,
@@ -104,6 +109,7 @@ def get_packages_changes_between_codelist_and_all_associated_terms(
 
 @router.get(
     "/packages/dates",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns all effective dates for packages in a given catalogue.",
     response_model=models.CTPackageDates,
     status_code=200,

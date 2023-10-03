@@ -18,13 +18,12 @@
             <v-autocomplete
               :label="$t('ActivityForms.activity_group')"
               :items="groups"
-              v-model="form.activity_group"
+              v-model="form.activity_groupings[0].activity_group_uid"
               item-text="name"
               item-value="uid"
               :error-messages="errors"
               dense
               clearable
-              return-object
               ></v-autocomplete>
           </v-col>
         </v-row>
@@ -38,13 +37,13 @@
             <v-autocomplete
               :label="$t('ActivityForms.activity_subgroup')"
               :items="filteredSubGroups"
-              v-model="form.activity_subgroup"
+              v-model="form.activity_groupings[0].activity_subgroup_uid"
               item-text="name"
               item-value="uid"
               :error-messages="errors"
               dense
               clearable
-              :disabled="form.activity_group ? false : true"
+              :disabled="form.activity_groupings[0].activity_group_uid ? false : true"
               ></v-autocomplete>
           </v-col>
         </v-row>
@@ -164,15 +163,17 @@ export default {
         : this.$t('ActivityForms.add_activity')
     },
     filteredSubGroups () {
-      if (!this.form.activity_group) {
+      if (!this.form.activity_groupings[0].activity_group_uid) {
         return []
       }
-      return this.subGroups.filter(el => el.activity_group.uid === this.form.activity_group.uid)
+      return this.subGroups.filter(el => el.activity_groups.find(o => o.uid === this.form.activity_groupings[0].activity_group_uid) !== undefined)
     }
   },
   data () {
     return {
-      form: {},
+      form: {
+        activity_groupings: [{}]
+      },
       groups: [],
       subGroups: [],
       libraries: [],
@@ -182,8 +183,18 @@ export default {
   methods: {
     initForm (value) {
       this.form = JSON.parse(JSON.stringify(value))
-      if (this.form.activity_subgroup) {
-        this.$set(this.form, 'activity_subgroup', this.form.activity_subgroup.uid)
+      this.form.activity_groupings = [{}]
+      if (!_isEmpty(value)) {
+        const grouping = [{}]
+        if (value.activity_group) {
+          grouping[0].activity_group_name = value.activity_group.name
+          grouping[0].activity_group_uid = value.activity_group.uid
+        }
+        if (value.activity_subgroup) {
+          grouping[0].activity_subgroup_name = value.activity_subgroup.name
+          grouping[0].activity_subgroup_uid = value.activity_subgroup.uid
+        }
+        this.$set(this.form, 'activity_groupings', grouping)
       }
       this.$store.commit('form/SET_FORM', this.form)
     },
@@ -203,7 +214,7 @@ export default {
     },
     close () {
       this.$emit('close')
-      this.form = {}
+      this.form = { activity_groupings: [{}] }
       this.$store.commit('form/CLEAR_FORM')
       this.$refs.observer.reset()
     },

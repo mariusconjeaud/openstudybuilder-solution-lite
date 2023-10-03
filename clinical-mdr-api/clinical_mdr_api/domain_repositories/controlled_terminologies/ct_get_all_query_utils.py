@@ -1,9 +1,7 @@
 """
 Utility module to store the common parts of terms get all and specific term get all requests.
 """
-from typing import Optional, Sequence, Tuple
-
-from pydantic.main import BaseModel
+from typing import Sequence
 
 from clinical_mdr_api.domain_repositories.models._utils import convert_to_datetime
 from clinical_mdr_api.domains.controlled_terminologies.ct_codelist_attributes import (
@@ -37,6 +35,7 @@ from clinical_mdr_api.models.controlled_terminologies.ct_term_attributes import 
     CTTermAttributes,
 )
 from clinical_mdr_api.models.controlled_terminologies.ct_term_name import CTTermName
+from clinical_mdr_api.models.utils import BaseModel
 
 # Properties always on root level, even in aggregated mode (names + attributes)
 term_root_level_properties = [
@@ -49,11 +48,11 @@ codelist_root_level_properties = ["catalogue_name", "codelist_uid", "library_nam
 
 
 def create_term_filter_statement(
-    codelist_uid: Optional[str] = None,
-    codelist_name: Optional[str] = None,
-    library: Optional[str] = None,
-    package: Optional[str] = None,
-) -> Tuple[str, dict]:
+    codelist_uid: str | None = None,
+    codelist_name: str | None = None,
+    library: str | None = None,
+    package: str | None = None,
+) -> tuple[str, dict]:
     """
     Method creates filter string from demanded filter option.
 
@@ -258,7 +257,7 @@ def format_term_filter_sort_keys(key: str, prefix: str = None) -> str:
 
 
 def list_term_wildcard_properties(
-    is_aggregated: bool = True, target_model: Optional[BaseModel] = None
+    is_aggregated: bool = True, target_model: BaseModel | None = None
 ) -> Sequence[str]:
     """
     Returns a list of properties on which to apply wildcard filtering, formatted as defined in the database and/or Cypher query
@@ -302,10 +301,10 @@ def list_term_wildcard_properties(
 
 
 def create_codelist_filter_statement(
-    catalogue_name: Optional[str] = None,
-    library: Optional[str] = None,
-    package: Optional[str] = None,
-) -> Tuple[str, dict]:
+    catalogue_name: str | None = None,
+    library: str | None = None,
+    package: str | None = None,
+) -> tuple[str, dict]:
     """
     Method creates filter string from demanded filter option.
 

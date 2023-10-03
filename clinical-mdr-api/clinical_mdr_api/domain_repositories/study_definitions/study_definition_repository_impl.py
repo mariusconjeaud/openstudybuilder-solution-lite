@@ -2,17 +2,7 @@ import copy
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from decimal import Decimal
-from typing import (
-    Any,
-    List,
-    Mapping,
-    MutableSequence,
-    Optional,
-    Sequence,
-    Tuple,
-    Union,
-    cast,
-)
+from typing import Any, Mapping, MutableSequence, Sequence, cast
 
 from neomodel import NodeMeta, db
 from neomodel.exceptions import DoesNotExist
@@ -112,8 +102,8 @@ class _AdditionalClosure:
     value: StudyValue
     latest_value: ClinicalMdrRel
     latest_draft: VersionRelationship
-    latest_released: Optional[VersionRelationship]
-    latest_locked: Optional[VersionRelationship]
+    latest_released: VersionRelationship | None
+    latest_locked: VersionRelationship | None
     previous_snapshot: StudyDefinitionSnapshot
 
 
@@ -160,8 +150,8 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
         cls,
         latest_draft_relationship: VersionRelationship,
         draft_snapshot: StudyDefinitionSnapshot.StudyMetadataSnapshot,
-        latest_locked_relationship: Optional[VersionRelationship],
-        locked_snapshot: Optional[StudyDefinitionSnapshot.StudyMetadataSnapshot],
+        latest_locked_relationship: VersionRelationship | None,
+        locked_snapshot: StudyDefinitionSnapshot.StudyMetadataSnapshot | None,
     ):
         # some parts of current metadata metadata (those regarding version info) are stored in different way
         # in the underlying DB depending whether current version is draft version or locked
@@ -178,9 +168,9 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
 
     @classmethod
     def _retrieve_released_study_metadata_snapshot(
-        cls, latest_released_value: Optional[StudyValue], latest_released_relationship
-    ) -> Optional[StudyDefinitionSnapshot.StudyMetadataSnapshot]:
-        released: Optional[StudyDefinitionSnapshot.StudyMetadataSnapshot] = None
+        cls, latest_released_value: StudyValue | None, latest_released_relationship
+    ) -> StudyDefinitionSnapshot.StudyMetadataSnapshot | None:
+        released: StudyDefinitionSnapshot.StudyMetadataSnapshot | None = None
         if latest_released_relationship is not None:
             assert latest_released_value is not None
             released = cls._study_metadata_snapshot_from_study_value(
@@ -201,7 +191,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
         # this is tricky since match gives us the list of values (not relationships)
         # although not very probable however it's possible that two consecutive locked version
         # are actually locked with the same value node
-        locked_metadata_snapshots: List[
+        locked_metadata_snapshots: list[
             StudyDefinitionSnapshot.StudyMetadataSnapshot
         ] = []
         locked_value_node: StudyValue
@@ -214,11 +204,11 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
             status=StudyStatus.LOCKED.value
         ):
             # then for every value we get has_version_relationship which are LOCKED
-            if locked_value_node.id in processed_nodes:
+            if locked_value_node.element_id in processed_nodes:
                 # we skip processing in case we already have it processed
                 continue
             # if we haven't processed it yet we process (and store it as processed)
-            processed_nodes.add(locked_value_node.id)
+            processed_nodes.add(locked_value_node.element_id)
 
             # here goes the real processing
             has_version_relationship_instance: VersionRelationship
@@ -255,7 +245,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
         :param result_set:
         :return Sequence[StudyDefinitionSnapshot]:
         """
-        snapshots: List[StudyDefinitionSnapshot] = []
+        snapshots: list[StudyDefinitionSnapshot] = []
         for study in result_set:
             current_metadata_snapshot = cls._study_metadata_snapshot_from_cypher_res(
                 study["current_metadata"]
@@ -293,7 +283,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
     def _retrieve_snapshot(
         cls,
         item: StudyRoot,
-    ) -> Tuple[StudyDefinitionSnapshot, _AdditionalClosure]:
+    ) -> tuple[StudyDefinitionSnapshot, _AdditionalClosure]:
         root: StudyRoot = item
 
         latest_value: StudyValue = root.latest_value.single()
@@ -307,15 +297,15 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
             latest_draft_value
         )
 
-        latest_released_value: Optional[StudyValue] = root.latest_released.single()
-        latest_released_relationship: Optional[VersionRelationship] = (
+        latest_released_value: StudyValue | None = root.latest_released.single()
+        latest_released_relationship: VersionRelationship | None = (
             None
             if latest_released_value is None
             else root.latest_released.relationship(latest_released_value)
         )
 
-        latest_locked_value: Optional[StudyValue] = root.latest_locked.single()
-        latest_locked_relationship: Optional[VersionRelationship] = (
+        latest_locked_value: StudyValue | None = root.latest_locked.single()
+        latest_locked_relationship: VersionRelationship | None = (
             None
             if latest_locked_value is None
             else root.latest_locked.relationship(latest_locked_value)
@@ -394,7 +384,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
         self,
         uid: str,
         for_update: bool,
-    ) -> Tuple[Optional[StudyDefinitionSnapshot], Any]:
+    ) -> tuple[StudyDefinitionSnapshot | None, Any]:
         if for_update:
             self._ensure_transaction()
             self._acquire_write_lock(uid)
@@ -431,10 +421,8 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
         )
         previous_value: StudyValue = additional_closure.value
         latest_draft: VersionRelationship = additional_closure.latest_draft
-        latest_released: Optional[
-            VersionRelationship
-        ] = additional_closure.latest_released
-        latest_locked: Optional[VersionRelationship] = additional_closure.latest_locked
+        latest_released: VersionRelationship | None = additional_closure.latest_released
+        latest_locked: VersionRelationship | None = additional_closure.latest_locked
         root: StudyRoot = additional_closure.root
         date = datetime.now(timezone.utc)
 
@@ -585,6 +573,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
             "has_study_compound",
             "has_study_compound_dosing",
             "has_study_disease_milestone",
+            "has_study_footnote",
         ]:
             self._maintain_study_relationship_on_save(
                 rel, expected_latest_value, previous_value
@@ -780,7 +769,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
     def _maintain_latest_locked_relationship_on_save(
         self,
         expected_latest_value: StudyValue,
-        latest_locked: Optional[VersionRelationship],
+        latest_locked: VersionRelationship | None,
         previous_snapshot: StudyDefinitionSnapshot,
         root: StudyRoot,
         current_snapshot: StudyDefinitionSnapshot,
@@ -906,7 +895,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
 
     def _get_associated_ct_term_root_node(
         self, term_uid: str, study_field_name: str, is_dictionary_term: bool = False
-    ) -> Union[CTTermRoot, DictionaryTermRoot]:
+    ) -> CTTermRoot | DictionaryTermRoot:
         if not is_dictionary_term:
             query = """
                 MATCH (term_root:CTTermRoot {uid: $uid})-[:HAS_NAME_ROOT]->()-[:LATEST_FINAL]->()
@@ -920,7 +909,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
         result, _ = db.cypher_query(query, {"uid": term_uid}, resolve_objects=True)
         if len(result) > 0 and len(result[0]) > 0:
             return result[0][0]
-        raise ValueError(
+        raise exceptions.ValidationException(
             f"The following {'DictionaryTerm' if is_dictionary_term else 'CTTerm'} uid ({term_uid}) wasn't found in the database."
             f"Please check if the CT data was properly loaded for the following StudyField "
             f"({study_field_name})"
@@ -982,8 +971,8 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
         study_root: StudyRoot,
         study_field_name: str,
         study_field_value: Any,
-        term_root_node: Optional[Union[CTTermRoot, DictionaryTermRoot]],
-        null_value_code: Optional[str] = None,
+        term_root_node: CTTermRoot | DictionaryTermRoot | None,
+        null_value_code: str | None = None,
     ):
         study_field_node = study_field.get_specific_field_currently_used_in_study(
             study_uid=study_root.uid,
@@ -1624,13 +1613,13 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
 
     @classmethod
     def _study_metadata_snapshot_from_cypher_res(
-        cls, metadata_section: Optional[dict]
-    ) -> Optional[StudyDefinitionSnapshot.StudyMetadataSnapshot]:
+        cls, metadata_section: dict | None
+    ) -> StudyDefinitionSnapshot.StudyMetadataSnapshot | None:
         """
         Function maps the part of the result of the cypher query that holds Study metadata information
         into StudyMetadataSnapshot that is a part of StudyDefinitionSnapshot.
         :param metadata_section:
-        :return Optional[StudyDefinitionSnapshot.StudyMetadataSnapshot]:
+        :return StudyDefinitionSnapshot.StudyMetadataSnapshot | None:
         """
         if metadata_section is None:
             return None
@@ -1738,9 +1727,9 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
     @staticmethod
     def _generate_study_value_audit_node(
         study_root_node: StudyRoot,
-        study_value_node_after: Optional[StudyField],
-        study_value_node_before: Optional[StudyField],
-        change_status: Optional[str],
+        study_value_node_after: StudyField | None,
+        study_value_node_before: StudyField | None,
+        change_status: str | None,
         user_initials: str,
         date: datetime,
     ) -> StudyAction:
@@ -1756,9 +1745,9 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
         audit_node.save()
 
         if study_value_node_before:
-            study_value_node_before.has_before.connect(audit_node)
+            audit_node.study_value_has_before.connect(study_value_node_before)
         if study_value_node_after:
-            study_value_node_after.has_after.connect(audit_node)
+            audit_node.study_value_node_has_after.connect(study_value_node_after)
 
         study_root_node.audit_trail.connect(audit_node)
         return audit_node
@@ -1787,7 +1776,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
 
     def _retrieve_fields_audit_trail(
         self, uid: str
-    ) -> Optional[Sequence[StudyFieldAuditTrailEntryAR]]:
+    ) -> Sequence[StudyFieldAuditTrailEntryAR] | None:
         query = """
         MATCH (root:StudyRoot {uid: $studyuid})-[:AUDIT_TRAIL]->(action)
  
@@ -1915,19 +1904,19 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
 
     def _retrieve_all_snapshots(
         self,
-        has_study_objective: Optional[bool] = None,
-        has_study_endpoint: Optional[bool] = None,
-        has_study_criteria: Optional[bool] = None,
-        has_study_activity: Optional[bool] = None,
-        has_study_activity_instruction: Optional[bool] = None,
-        sort_by: Optional[dict] = None,
+        has_study_objective: bool | None = None,
+        has_study_endpoint: bool | None = None,
+        has_study_criteria: bool | None = None,
+        has_study_activity: bool | None = None,
+        has_study_activity_instruction: bool | None = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
-        study_selection_object_node_id: Optional[int] = None,
-        study_selection_object_node_type: Optional[NodeMeta] = None,
+        study_selection_object_node_id: int | None = None,
+        study_selection_object_node_type: NodeMeta | None = None,
         deleted: bool = False,
     ) -> GenericFilteringReturn[StudyDefinitionSnapshot]:
         # To build StudyDefinitionSnapshot (domain object) we need 5 main members:
@@ -1986,7 +1975,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                     draft.ldr AS ldr,
                     draft.sdr AS sdr
                     ORDER BY has_version.end_date ASC
-                    WITH
+                    WITH *,
                         sr.uid as uid,
                         CASE WHEN ldr.end_date IS NULL THEN 'DRAFT' ELSE 'LOCKED' END as study_status,
                         {
@@ -2084,27 +2073,27 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                 query=query.count_query, params=query.parameters
             )
             if len(count_result) > 0:
-                total_count = count_result[0][0]
+                total = count_result[0][0]
             else:
-                total_count = 0
+                total = 0
         else:
-            total_count = 0
+            total = 0
 
         return GenericFilteringReturn.create(
             items=self._retrieve_all_snapshots_from_cypher_query_result(
                 studies, deleted=deleted
             ),
-            total_count=total_count,
+            total=total,
         )
 
     def _retrieve_study_snapshot_history(
         self,
         study_uid: str,
-        sort_by: Optional[dict] = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[StudyDefinitionSnapshot]:
         if self.check_if_study_is_deleted(study_uid=study_uid):
@@ -2216,15 +2205,15 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                 query=query.count_query, params=query.parameters
             )
             if len(count_result) > 0:
-                total_count = count_result[0][0]
+                total = count_result[0][0]
             else:
-                total_count = 0
+                total = 0
         else:
-            total_count = 0
+            total = 0
 
         return GenericFilteringReturn.create(
             items=self._retrieve_all_snapshots_from_cypher_query_result(studies),
-            total_count=total_count,
+            total=total,
         )
 
     def generate_uid(self) -> str:
@@ -2233,9 +2222,9 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
     @staticmethod
     def _generate_study_field_audit_node(
         study_root_node: StudyRoot,
-        study_field_node_after: Optional[StudyField],
-        study_field_node_before: Optional[StudyField],
-        change_status: Optional[str],
+        study_field_node_after: StudyField | None,
+        study_field_node_before: StudyField | None,
+        change_status: str | None,
         user_initials: str,
         date: datetime,
     ) -> StudyAction:
@@ -2254,9 +2243,9 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
         audit_node.save()
 
         if study_field_node_before:
-            study_field_node_before.has_before.connect(audit_node)
+            audit_node.study_field_has_before.connect(study_field_node_before)
         if study_field_node_after:
-            study_field_node_after.has_after.connect(audit_node)
+            audit_node.study_field_node_has_after.connect(study_field_node_after)
 
         study_root_node.audit_trail.connect(audit_node)
         return audit_node

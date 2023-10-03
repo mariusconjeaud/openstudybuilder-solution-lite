@@ -1,5 +1,3 @@
-from typing import Optional, Union
-
 from clinical_mdr_api.domain_repositories.syntax_instances.objective_repository import (
     ObjectiveRepository,
 )
@@ -20,9 +18,7 @@ from clinical_mdr_api.services.syntax_instances.generic_syntax_instance_service 
 )
 
 
-class ObjectiveService(
-    GenericSyntaxInstanceService[Union[ObjectiveAR, _AggregateRootType]]
-):
+class ObjectiveService(GenericSyntaxInstanceService[ObjectiveAR | _AggregateRootType]):
     def _transform_aggregate_root_to_pydantic_model(
         self, item_ar: ObjectiveAR
     ) -> Objective:
@@ -35,15 +31,16 @@ class ObjectiveService(
     template_uid_property = "objective_template_uid"
     template_name_property = "objective_template"
 
+    # pylint: disable=unused-argument
     def get_all(
         self,
-        status: Optional[str] = None,
+        status: str | None = None,
         return_study_count: bool = True,
-        sort_by: Optional[dict] = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[Objective]:
         all_items = super().get_releases_referenced_by_any_study()

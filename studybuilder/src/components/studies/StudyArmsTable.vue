@@ -75,12 +75,12 @@
     <template v-slot:actions="">
       <v-btn
         fab
-        dark
         small
         color="primary"
         @click.stop="showArmsForm = true"
         :title="$t('StudyArmsForm.add_arm')"
         data-cy="add-study-arm"
+        :disabled="!checkPermission($roles.STUDY_WRITE)"
         >
         <v-icon dark>
           mdi-plus
@@ -93,6 +93,20 @@
     @close="closeForm"
     :editedArm="armToEdit"
     />
+  <v-dialog
+    v-model="showArmHistory"
+    @keydown.esc="closeArmHistory"
+    persistent
+    :max-width="globalHistoryDialogMaxWidth"
+    :fullscreen="globalHistoryDialogFullscreen"
+    >
+    <history-table
+      :title="studyArmHistoryTitle"
+      @close="closeArmHistory"
+      :headers="headers"
+      :items="armHistoryItems"
+      />
+  </v-dialog>
   <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
 </div>
 </template>
@@ -109,13 +123,17 @@ import draggable from 'vuedraggable'
 import ConfirmDialog from '@/components/tools/ConfirmDialog'
 import filteringParameters from '@/utils/filteringParameters'
 import studyEpochs from '@/api/studyEpochs'
+import { accessGuard } from '@/mixins/accessRoleVerifier'
+import HistoryTable from '@/components/tools/HistoryTable'
 
 export default {
+  mixins: [accessGuard],
   components: {
     NNTable,
     StudyArmsForm,
     ActionsMenu,
     draggable,
+    HistoryTable,
     ConfirmDialog
   },
   computed: {
@@ -154,15 +172,17 @@ export default {
       actions: [
         {
           label: this.$t('_global.edit'),
-          icon: 'mdi-pencil',
+          icon: 'mdi-pencil-outline',
           iconColor: 'primary',
-          click: this.editArm
+          click: this.editArm,
+          accessRole: this.$roles.STUDY_WRITE
         },
         {
           label: this.$t('_global.delete'),
-          icon: 'mdi-delete',
+          icon: 'mdi-delete-outline',
           iconColor: 'error',
-          click: this.deleteArm
+          click: this.deleteArm,
+          accessRole: this.$roles.STUDY_WRITE
         },
         {
           label: this.$t('_global.history'),

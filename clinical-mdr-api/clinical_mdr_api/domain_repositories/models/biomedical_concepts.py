@@ -18,6 +18,10 @@ from clinical_mdr_api.domain_repositories.models.generic import (
     VersionRoot,
     VersionValue,
 )
+from clinical_mdr_api.domain_repositories.models.standard_data_model import (
+    DatasetClass,
+    VariableClass,
+)
 
 
 class ActivityInstanceClassValue(VersionValue):
@@ -49,6 +53,11 @@ class ActivityInstanceClassRoot(VersionRoot):
     )
     parent_class = RelationshipTo(
         "ActivityInstanceClassRoot", "PARENT_CLASS", model=ClinicalMdrRel
+    )
+    maps_dataset_class = RelationshipTo(
+        DatasetClass,
+        "MAPS_DATASET_CLASS",
+        model=ClinicalMdrRel,
     )
 
 
@@ -89,6 +98,11 @@ class ActivityItemClassRoot(VersionRoot):
         "HAS_ITEM_CLASS",
         model=ClinicalMdrRel,
         cardinality=OneOrMore,
+    )
+    maps_variable_class = RelationshipTo(
+        VariableClass,
+        "MAPS_VARIABLE_CLASS",
+        model=ClinicalMdrRel,
     )
 
 

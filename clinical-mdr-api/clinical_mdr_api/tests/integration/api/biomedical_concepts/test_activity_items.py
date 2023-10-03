@@ -4,7 +4,6 @@ Tests for /activity-items endpoints
 import json
 import logging
 from functools import reduce
-from typing import List
 
 import pytest
 from fastapi.testclient import TestClient
@@ -35,7 +34,7 @@ from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 log = logging.getLogger(__name__)
 
 # Global variables shared between fixtures and tests
-activity_items_all: List[ActivityItem]
+activity_items_all: list[ActivityItem]
 activity_instance_class: ActivityInstanceClass
 activity_item_class: ActivityItemClass
 activity_item_class2: ActivityItemClass

@@ -9,15 +9,17 @@ from typing import (
     Callable,
     Mapping,
     MutableMapping,
-    Optional,
+    Self,
     Sequence,
-    Set,
     TypeVar,
 )
 
 from pydantic import BaseModel
 
 from clinical_mdr_api import exceptions
+from clinical_mdr_api.domain_repositories.libraries.library_repository import (
+    LibraryRepository,
+)
 from clinical_mdr_api.domains._utils import extract_parameters
 from clinical_mdr_api.domains.concepts.unit_definitions.unit_definition import (
     UnitDefinitionAR,
@@ -27,6 +29,7 @@ from clinical_mdr_api.domains.concepts.unit_definitions.unit_definition import (
 from clinical_mdr_api.domains.simple_dictionaries._simple_dictionary_item_base import (
     SimpleDictionaryItemBase,
 )
+from clinical_mdr_api.domains.study_selections.study_visit import StudyVisitVO
 from clinical_mdr_api.models.simple_dictionaries.simple_dictionary_item import (
     SimpleDictionaryItem,
 )
@@ -43,6 +46,26 @@ from clinical_mdr_api.repositories._utils import (
 )
 
 
+def is_library_editable(name: str) -> bool:
+    """
+    Checks if a library with the given name is editable.
+
+    Args:
+        name (str): The name of the library to check.
+
+    Returns:
+        bool: True if the library is editable, False if it is not editable.
+
+    Raises:
+        NotFoundException: If the library does not exist.
+
+    Example:
+        >>> is_library_editable("Sponsor")
+        True
+    """
+    return LibraryRepository().find_by_name(name).is_editable
+
+
 def get_term_uid_or_none(field):
     return field.term_uid if field else None
 
@@ -52,11 +75,33 @@ def get_unit_def_uid_or_none(field):
 
 
 def get_input_or_new_value(
-    input_field: Optional[str], prefix: str, output_field: str, sep: str = "."
+    input_field: str | None, prefix: str, output_field: str, sep: str = "."
 ):
     """
-    Returns input_field if not empty, otherwise a new value based on prefix
-    and the first letters of each word of output_field and time in seconds from epoch
+    Returns the `input_field` if it has a value, otherwise generates a new value using the `prefix`,
+    initials of the `output_field` and a timestamp.
+
+    Args:
+        input_field (str | None): The value to return if it has a value.
+        prefix (str): The prefix to use when generating a new value.
+        output_field (str): The output field to use when generating a new value.
+        sep (str, optional): The separator to use when joining the initials with the timestamp. Defaults to ".".
+
+    Returns:
+        str: The `input_field` if it has a value, otherwise a new value generated using the `prefix`, initials of the `output_field` and a timestamp.
+
+    Raises:
+        ValueError: If `output_field` is not a string.
+
+    Example:
+        >>> get_input_or_new_value("1234", "ID", "Name")
+        "1234"
+
+        >>> get_input_or_new_value(None, "ID", "First Last")
+        "IDFL.1639527992"
+
+        >>> get_input_or_new_value(None, "ID", "First Last", "@")
+        "IDFL@1639527992"
     """
     if input_field:
         return input_field
@@ -75,12 +120,6 @@ def get_input_or_new_value(
 
 def to_dict(obj):
     return json.loads(json.dumps(obj, default=vars))
-
-
-def strip_suffix(string: str, suffix: str = "Root") -> str:
-    if string.endswith(suffix):
-        return string[: -len(suffix)]
-    return string
 
 
 def object_diff(objt1, objt2=None):
@@ -138,11 +177,15 @@ def fill_missing_values_in_base_model_from_reference_base_model(
     base_model_with_missing_values: BaseModel, reference_base_model: BaseModel
 ) -> None:
     """
-    Method fills missing values in the PATCH payload when only partial payload is sent by client.
+    Fills missing values in the PATCH payload when only a partial payload is sent by the client.
     It takes the values from the model object based on the domain object.
-    :param base_model_with_missing_values: BaseModel
-    :param reference_base_model: BaseModel
-    :return None:
+
+    Args:
+        base_model_with_missing_values (BaseModel): The base model with missing values.
+        reference_base_model (BaseModel): The reference base model.
+
+    Returns:
+        None
     """
     for field_name in base_model_with_missing_values.__fields_set__:
         if isinstance(
@@ -201,11 +244,11 @@ class FieldsDirective:
     @classmethod
     def _from_include_and_exclude_spec_sets(
         cls, include_spec_set: AbstractSet[str], exclude_spec_set: AbstractSet[str]
-    ) -> "FieldsDirective":
-        _included_fields: Set[str] = set()
-        _excluded_fields: Set[str] = set()
-        _nested_include_specs: MutableMapping[str, Set[str]] = {}
-        _nested_exclude_specs: MutableMapping[str, Set[str]] = {}
+    ) -> Self:
+        _included_fields: set[str] = set()
+        _excluded_fields: set[str] = set()
+        _nested_include_specs: MutableMapping[str, set[str]] = {}
+        _nested_exclude_specs: MutableMapping[str, set[str]] = {}
 
         for field_spec in include_spec_set - exclude_spec_set:
             dot_position_in_field_spec = field_spec.find(".")
@@ -252,17 +295,15 @@ class FieldsDirective:
         )
 
     @classmethod
-    def from_fields_query_parameter(
-        cls, fields_query_parameter: Optional[str]
-    ) -> "FieldsDirective":
+    def from_fields_query_parameter(cls, fields_query_parameter: str | None) -> Self:
         if fields_query_parameter is None:
             fields_query_parameter = ""
         fields_query_parameter = "".join(
             fields_query_parameter.split()
         )  # easy way to remove all white space
 
-        include_specs_set: Set[str] = set()
-        exclude_specs_set: Set[str] = set()
+        include_specs_set: set[str] = set()
+        exclude_specs_set: set[str] = set()
 
         for field_spec in fields_query_parameter.split(","):
             if len(field_spec) < 1:
@@ -304,15 +345,13 @@ class FieldsDirective:
             )
         return field_path in self._included_fields
 
-    def get_fields_directive_for_children_of_field(
-        self, field_path: str
-    ) -> "FieldsDirective":
+    def get_fields_directive_for_children_of_field(self, field_path: str) -> Self:
         dot_position_in_field_path = field_path.find(".")
         if dot_position_in_field_path > 0:
             path_before_dot = field_path[0:dot_position_in_field_path]
             path_after_dot = field_path[dot_position_in_field_path + 1 :]
             if not self.is_field_included(path_before_dot):
-                raise ValueError(
+                raise exceptions.ValidationException(
                     "Cannot get fields directive for children of the field which is not included"
                 )
             if path_before_dot not in self._nested_fields_directives:
@@ -324,7 +363,7 @@ class FieldsDirective:
             ].get_fields_directive_for_children_of_field(path_after_dot)
 
         if not self.is_field_included(field_path):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 "Cannot get fields directive for children of the field which is not included"
             )
         if field_path not in self._nested_fields_directives:
@@ -360,16 +399,23 @@ def filter_base_model_using_fields_directive(
 def create_duration_object_from_api_input(
     value: int,
     unit: str,
-    find_duration_name_by_code: Callable[[str], Optional[UnitDefinitionAR]],
-) -> Optional[str]:
+    find_duration_name_by_code: Callable[[str], UnitDefinitionAR | None],
+) -> str | None:
     """
-    The following function transforms the API duration input to the iso duration format.
-    For instance the following input: {value: 5, unit: Hour} will be transformed into 'P5H'.
-    However, the function has to be prepared if the name of the term will be changed from the 'Hour' to 'hour' or 'Hour(s)'
-    :param value:
-    :param unit:
-    :param find_duration_name_by_code:
-    :return:
+    Transforms the API duration input to the ISO duration format.
+
+    Args:
+        value (int): The duration value.
+        unit (str): The duration unit.
+        find_duration_name_by_code (Callable[[str], UnitDefinitionAR | None]): A function that finds the duration name
+            by its code.
+
+    Returns:
+        str | None: The ISO duration format, or None if the duration unit is not valid.
+
+    Example:
+        >>> create_duration_object_from_api_input(5, "Hour", find_duration_name_by_code)
+        "P5H"
     """
     unit_definition_ar = find_duration_name_by_code(unit) if unit is not None else None
     if unit_definition_ar is not None:
@@ -379,28 +425,68 @@ def create_duration_object_from_api_input(
     return None
 
 
-def normalize_string(s: Optional[str]) -> Optional[str]:
+def normalize_string(s: str | None) -> str | None:
     """
-    Removes leading and trailing whitespaces.
-    Returns None if the resulting string is empty. Else returns the resulting string.
+    Normalizes a string by stripping whitespace and returning None if the resulting string is empty.
 
-    :param s: The string that is intended to be normalized.
-    :return: None or normalized string
+    Args:
+        s (str | None): The string to normalize.
+
+    Returns:
+        str | None: The normalized string, or None if the resulting string is empty.
+
+    Example:
+        >>> normalize_string("   hello world   ")
+        "hello world"
     """
-    if s is not None:
+    if s:
         s = s.strip()
-    return None if s == "" else s
+    return s or None
 
 
 def service_level_generic_filtering(
     items: list,
-    filter_by: Optional[dict] = None,
+    filter_by: dict | None = None,
     filter_operator: FilterOperator = FilterOperator.AND,
-    sort_by: Optional[dict] = None,
+    sort_by: dict | None = None,
     total_count: bool = False,
     page_number: int = 1,
     page_size: int = 0,
 ) -> GenericFilteringReturn:
+    """
+    Filters and sorts a list of items based on the provided filter and sort criteria.
+
+    Args:
+        items (list): The list of items to filter and sort.
+        filter_by (dict | None, optional): A dictionary of filter criteria.
+        filter_operator (FilterOperator, optional): The operator to use when filtering elements.
+        sort_by (dict | None, optional): A dictionary of sort criteria.
+        total_count (bool, optional): If True, returns the total count of items.
+        page_number (int, optional): The page number to retrieve.
+        page_size (int, optional): The number of items to retrieve per page.
+
+    Returns:
+        GenericFilteringReturn: A named tuple containing the filtered and sorted items and the total count (if applicable).
+
+    Example:
+        >>> class Obj:
+            name: str
+            age: int
+            def __init__(self, name: str, age: int):
+                self.name = name
+                self.age = age
+        >>> service_level_generic_filtering(
+                items=[
+                    Obj(name="John", age=30),
+                    Obj(name="Jane", age=25),
+                    Obj(name="Doe", age=27),
+                ],
+                filter_by={"age": {"op": "gt", "v": ["27"]}},
+                sort_by={"name": True},
+                total_count=True,
+            )
+        GenericFilteringReturn(items=[<__main__.Obj object at 0x7f58cfc4b310>], total=1)
+    """
     if sort_by is None:
         sort_by = {}
     if filter_by is None:
@@ -418,12 +504,14 @@ def service_level_generic_filtering(
             _operator = filters.elements[key].op
             filtered_items = list(
                 filter(
-                    lambda x: filter_aggregated_items(x, key, _values, _operator),
+                    lambda x, k=key, v=_values, o=_operator: filter_aggregated_items(
+                        x, k, v, o
+                    ),
                     filtered_items,
                 )
             )
     elif filter_operator == FilterOperator.OR:
-        # Start from full list, then add items that match filter elements, one by one
+        # Start from empty list then add element one by one
         _filtered_items = []
         # The list will increase after each step
         for key in filters.elements:
@@ -431,23 +519,35 @@ def service_level_generic_filtering(
             _operator = filters.elements[key].op
             matching_items = list(
                 filter(
-                    lambda x: filter_aggregated_items(x, key, _values, _operator), items
+                    lambda x, k=key, v=_values, o=_operator: filter_aggregated_items(
+                        x, k, v, o
+                    ),
+                    items,
                 )
             )
             _filtered_items += matching_items
-        # Finally, deduplicate list
-        uids = set()
-        filtered_items = []
-        for item in _filtered_items:
-            if item.uid not in uids:
-                filtered_items.append(item)
-                uids.add(item.uid)
+        # if passed filter dict is empty we should return all elements without any filtering
+        if not filters.elements:
+            filtered_items = items
+        else:
+            # Finally, deduplicate list
+            uids = set()
+            filtered_items = []
+            for item in _filtered_items:
+                if item.uid not in uids:
+                    filtered_items.append(item)
+                    uids.add(item.uid)
     else:
-        raise ValueError(f"Invalid filter_operator: {filter_operator}")
+        raise exceptions.ValidationException(
+            f"Invalid filter_operator: {filter_operator}"
+        )
     # Do sorting
     for sort_key, sort_order in sort_by.items():
         filtered_items.sort(
-            key=lambda x: extract_nested_key_value(x, sort_key), reverse=not sort_order
+            key=lambda x, s=sort_key: elm
+            if (elm := extract_nested_key_value(x, s)) is not None
+            else "-1",
+            reverse=not sort_order,
         )
     # Do count
     count = len(filtered_items) if total_count else 0
@@ -456,8 +556,7 @@ def service_level_generic_filtering(
         filtered_items = filtered_items[
             (page_number - 1) * page_size : page_number * page_size
         ]
-
-    return GenericFilteringReturn.create(items=filtered_items, total_count=count)
+    return GenericFilteringReturn.create(items=filtered_items, total=count)
 
 
 def service_level_generic_header_filtering(
@@ -465,9 +564,44 @@ def service_level_generic_header_filtering(
     field_name: str,
     filter_operator: FilterOperator = FilterOperator.AND,
     search_string: str = "",
-    filter_by: Optional[dict] = None,
+    filter_by: dict | None = None,
     result_count: int = 10,
 ) -> list:
+    """
+    Filters and returns a list of values for a specific field in a list of dictionaries.
+
+    Args:
+        items (list): The list of dictionaries to filter.
+        field_name (str): The name of the field to extract values from.
+        filter_operator (FilterOperator, optional): The filter operator to use (AND or OR).
+        search_string (str, optional): A search string to filter by. Defaults to "".
+        filter_by (dict | None, optional): A dictionary of filter elements to apply. Defaults to None.
+        result_count (int, optional): The maximum number of results to return. Defaults to 10.
+
+    Returns:
+        list[Hashable]: A list of unique values extracted from the specified field.
+
+    Raises:
+        ValueError: If the filter_by parameter is not a dictionary.
+
+    Example:
+        >>> class Obj:
+        ... name: str
+        ... age: int
+        ... def __init__(self, name: str, age: int):
+        ...     self.name = name
+        ...     self.age = age
+        >>> service_level_generic_header_filtering(
+        ...     items=[
+        ...         Obj(name="John", age=30),
+        ...         Obj(name="Jane", age=25),
+        ...         Obj(name="Doe", age=27),
+        ...     ],
+        ...     field_name="name",
+        ...     filter_by={"age": {"op": "gt", "v": ["26"]}},
+        ... )
+        ["John", "Doe"]
+    """
     if filter_by is None:
         filter_by = {}
     validate_is_dict("filter_by", filter_by)
@@ -488,7 +622,9 @@ def service_level_generic_header_filtering(
             _operator = filters.elements[key].op
             filtered_items = list(
                 filter(
-                    lambda x: filter_aggregated_items(x, key, _values, _operator),
+                    lambda x, k=key, v=_values, o=_operator: filter_aggregated_items(
+                        x, k, v, o
+                    ),
                     filtered_items,
                 )
             )
@@ -501,7 +637,10 @@ def service_level_generic_header_filtering(
             _operator = filters.elements[key].op
             matching_items = list(
                 filter(
-                    lambda x: filter_aggregated_items(x, key, _values, _operator), items
+                    lambda x, k=key, v=_values, o=_operator: filter_aggregated_items(
+                        x, k, v, o
+                    ),
+                    items,
                 )
             )
             _filtered_items += matching_items
@@ -616,6 +755,21 @@ def filter_aggregated_items(item, filter_key, filter_values, filter_operator):
 def apply_filter_operator(
     value, operator: ComparisonOperator, filter_values: Sequence
 ) -> bool:
+    """
+    Applies the specified comparison operator to the given value and filter values.
+
+    Args:
+        value: The value to compare.
+        operator (ComparisonOperator): The comparison operator to apply.
+        filter_values (Sequence): The filter values to compare against.
+
+    Returns:
+        bool: True if the comparison is successful, False otherwise.
+
+    Raises:
+        ValidationException: If filtering on a null value is attempted with an operator other than `equal`.
+    """
+
     if len(filter_values) > 0:
         if ComparisonOperator(operator) == ComparisonOperator.EQUALS:
             return value in filter_values
@@ -646,6 +800,18 @@ def apply_filter_operator(
 
 # Recursive getattr to access properties in nested objects
 def rgetattr(obj, attr, *args):
+    """
+    Recursively gets an attribute of an object based on a string representation of the attribute.
+
+    Args:
+        obj: The object to get the attribute from.
+        attr: The attribute to get, represented as a string.
+        *args: Optional additional arguments to pass to the getattr function.
+
+    Returns:
+        list | Any | None: The value of the attribute, or None if the attribute does not exist.
+    """
+
     def _getattr(obj, attr):
         if isinstance(obj, list):
             return [_getattr(element, attr, *args) for element in obj]
@@ -701,6 +867,7 @@ def calculate_diffs_history(
     transform_all_to_history_model: Callable,
     study_uid: str,
     version_object_class,
+    study_visits: Mapping[str, list[StudyVisitVO]] | None = None,
 ):
     selection_history = get_all_object_versions(study_uid=study_uid)
     unique_list_uids = list({x.uid for x in selection_history})
@@ -719,9 +886,18 @@ def calculate_diffs_history(
             key=lambda ith_selection: ith_selection.start_date,
             reverse=True,
         )
-        versions = [
-            transform_all_to_history_model(_).dict() for _ in ith_selection_history
-        ]
+        if not study_visits:
+            versions = [
+                transform_all_to_history_model(_).dict() for _ in ith_selection_history
+            ]
+        else:
+            versions = [
+                transform_all_to_history_model(
+                    _, study_visit_count=len(study_visits[_.uid])
+                ).dict()
+                for _ in ith_selection_history
+            ]
+
         if not data:
             data = calculate_diffs(versions, version_object_class)
         else:
@@ -731,7 +907,7 @@ def calculate_diffs_history(
 
 def raise_404_if_none(val: any, message: str):
     """Raises NotFoundException if the supplied object is None"""
-    if val is None:
+    if not val:
         raise exceptions.NotFoundException(message)
 
 

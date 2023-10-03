@@ -1,4 +1,4 @@
-from typing import Optional, Sequence, Union
+from typing import Sequence
 
 from neomodel import db
 
@@ -45,16 +45,16 @@ class ADAMListingsService:
         self,
         adam_report: AdamReport,
         study_uid: str,
-        sort_by: Optional[dict] = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
-    ) -> Union[
-        GenericFilteringReturn[StudyVisitAdamListing],
-        GenericFilteringReturn[StudyEndpntAdamListing],
-    ]:
+    ) -> (
+        GenericFilteringReturn[StudyVisitAdamListing]
+        | GenericFilteringReturn[StudyEndpntAdamListing]
+    ):
         if adam_report == AdamReport.MDVISIT:
             result = self.list_mdvisit(study_uid)
         elif adam_report == AdamReport.MDENDPNT:
@@ -76,9 +76,9 @@ class ADAMListingsService:
         field_name: str,
         adam_report: AdamReport,
         study_uid: str,
-        search_string: Optional[str] = "",
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        search_string: str | None = "",
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
     ):
         if adam_report == AdamReport.MDVISIT:

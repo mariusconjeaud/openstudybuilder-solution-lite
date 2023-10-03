@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Self
 
 
 @dataclass
@@ -15,7 +16,5 @@ class LibraryAR:
         return self._is_editable
 
     @classmethod
-    def from_repository_values(
-        cls, *, library_name: str, is_editable: bool
-    ) -> "LibraryAR":
+    def from_repository_values(cls, *, library_name: str, is_editable: bool) -> Self:
         return cls(_is_editable=is_editable, _library_name=library_name)

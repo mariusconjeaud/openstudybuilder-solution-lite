@@ -1,5 +1,4 @@
 from datetime import datetime, timezone
-from typing import Optional
 
 from neomodel import db
 
@@ -71,7 +70,7 @@ class CTTermAttributesRepository(CTTermGenericRepository[CTTermAttributesAR]):
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
         root: CTTermAttributesRoot,
-        library: Optional[Library],
+        library: Library | None,
         relationship: VersionRelationship,
         value: CTTermAttributesValue,
     ) -> CTTermAttributesAR:

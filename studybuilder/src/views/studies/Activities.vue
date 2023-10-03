@@ -11,9 +11,16 @@
       <study-activity-table
         />
     </v-tab-item>
+    <v-tab-item id="instances">
+      <under-construction />
+    </v-tab-item>
     <v-tab-item id="detailed">
       <detailed-flowchart
-        :update="updateFlowchart"/>
+        :update="updateFlowchart"
+        :redirectFootnote="redirectFootnote"/>
+    </v-tab-item>
+    <v-tab-item id="footnotes">
+      <study-footnote-table />
     </v-tab-item>
     <v-tab-item id="protocol">
       <protocol-flowchart :study-uid="selectedStudy.uid" :update="updateProtocol" />
@@ -30,7 +37,9 @@ import DetailedFlowchart from '@/components/studies/DetailedFlowchart'
 import ProtocolFlowchart from '@/components/studies/ProtocolFlowchart'
 import StudyActivityInstructionTable from '@/components/studies/StudyActivityInstructionTable'
 import StudyActivityTable from '@/components/studies/StudyActivityTable'
+import StudyFootnoteTable from '@/components/studies/StudyFootnoteTable'
 import { studySelectedNavigationGuard } from '@/mixins/studies'
+import UnderConstruction from '@/components/layout/UnderConstruction'
 import { mapActions } from 'vuex'
 
 export default {
@@ -39,7 +48,9 @@ export default {
     DetailedFlowchart,
     ProtocolFlowchart,
     StudyActivityInstructionTable,
-    StudyActivityTable
+    StudyActivityTable,
+    StudyFootnoteTable,
+    UnderConstruction
   },
   data () {
     return {
@@ -49,10 +60,13 @@ export default {
       updateFlowchart: 0,
       tabs: [
         { tab: '#list', name: this.$t('ActivitiesView.tab1_title') },
-        { tab: '#detailed', name: this.$t('ActivitiesView.tab2_title') },
-        { tab: '#protocol', name: this.$t('ActivitiesView.tab3_title') },
-        { tab: '#instructions', name: this.$t('ActivitiesView.tab4_title') }
-      ]
+        { tab: '#instances', name: this.$t('ActivitiesView.tab2_title') },
+        { tab: '#detailed', name: this.$t('ActivitiesView.tab3_title') },
+        { tab: '#footnotes', name: this.$t('ActivitiesView.tab4_title') },
+        { tab: '#protocol', name: this.$t('ActivitiesView.tab5_title') },
+        { tab: '#instructions', name: this.$t('ActivitiesView.tab6_title') }
+      ],
+      redirectFootnote: {}
     }
   },
   mounted () {
@@ -89,7 +103,12 @@ export default {
         replace: true
       })
       if (newValue === 'protocol') this.updateProtocol++
-      if (newValue === 'detailed') this.updateFlowchart++
+      if (newValue === 'detailed') {
+        this.updateFlowchart++
+        if (this.$route.params.footnote) {
+          this.redirectFootnote = this.$route.params.footnote
+        }
+      }
       if (newValue === 'instructions') this.refreshInstructions()
     },
     /*

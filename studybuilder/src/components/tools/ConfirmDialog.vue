@@ -28,9 +28,8 @@
             color="white"
             @click.native="cancel"
             data-cy="cancel-popup"
-            outlined
-            class="mr-2"
-            elevation="2"
+            class="mr-4 warning"
+            elevation="4"
             >
             {{ options.cancelLabel }}
           </v-btn>
@@ -40,8 +39,8 @@
               color="white"
               @click.native="agree"
               data-cy="continue-popup"
-              outlined
-              elevation="2"
+              class="warning darken-1"
+              elevation="4"
               >
               {{ options.agreeLabel }}
             </v-btn>
@@ -50,8 +49,8 @@
               color="white"
               @click.native="agreeAndRedirect"
               data-cy="continue-popup"
-              outlined
-              elevation="2"
+              class="warning darken-2"
+              elevation="4"
               >
               {{ options.agreeLabel }}
             </v-btn>
@@ -77,15 +76,15 @@ export default {
     },
     icon () {
       if (this.options.type === 'info') {
-        return 'mdi-information'
+        return 'mdi-information-outline'
       }
       if (this.options.type === 'warning') {
-        return 'mdi-alert'
+        return 'mdi-alert-outline'
       }
       if (this.options.type === 'error') {
-        return 'mdi-alert-octagon'
+        return 'mdi-alert-octagon-outline'
       }
-      return 'mdi-check-circle'
+      return 'mdi-check-circle-outline'
     }
   },
   data () {

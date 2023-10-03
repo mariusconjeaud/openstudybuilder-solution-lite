@@ -32,6 +32,11 @@ Vue.filter('terms', dataFormating.terms)
 Vue.filter('names', dataFormating.names)
 
 /*
+** Display a list of objects names
+*/
+Vue.filter('itemNames', dataFormating.itemNames)
+
+/*
 ** Display a list of lag times
 */
 Vue.filter('lagTimes', dataFormating.lagTimes)
@@ -52,3 +57,8 @@ Vue.filter('pharmacologicalClasses', dataFormating.pharmacologicalClasses)
 Vue.filter('itemList', function (value) {
   return value.join(', ')
 })
+
+/*
+** Display order as a letter, eg. 1 -> a, 2 ->b. Numbers after 26 (letter z) are converted to z1, z2...
+*/
+Vue.filter('letteredOrder', dataFormating.letteredOrder)

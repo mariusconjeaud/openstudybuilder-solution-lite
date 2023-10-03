@@ -1,7 +1,8 @@
 import datetime
 from dataclasses import dataclass, field
-from typing import Any, Callable, Iterable, Optional, Sequence, Tuple
+from typing import Any, Callable, Iterable, Self, Sequence
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains._utils import normalize_string
 
 
@@ -12,41 +13,41 @@ class StudySelectionBranchArmVO:
     """
 
     study_selection_uid: str
-    study_uid: Optional[str]
-    name: Optional[str]
-    short_name: Optional[str]
-    code: Optional[str]
-    description: Optional[str]
-    colour_code: Optional[str]
-    randomization_group: Optional[str]
-    number_of_subjects: Optional[int]
-    arm_root_uid: Optional[str]
+    study_uid: str | None
+    name: str | None
+    short_name: str | None
+    code: str | None
+    description: str | None
+    colour_code: str | None
+    randomization_group: str | None
+    number_of_subjects: int | None
+    arm_root_uid: str | None
     start_date: datetime.datetime
     user_initials: str
-    end_date: Optional[datetime.datetime]
-    status: Optional[str]
-    change_type: Optional[str]
+    end_date: datetime.datetime | None
+    status: str | None
+    change_type: str | None
     accepted_version: bool = False
 
     @classmethod
     def from_input_values(
         cls,
         user_initials: str,
-        study_selection_uid: Optional[str] = None,
-        study_uid: Optional[str] = None,
-        name: Optional[str] = None,
-        short_name: Optional[str] = None,
-        code: Optional[str] = None,
-        description: Optional[str] = None,
-        colour_code: Optional[str] = None,
-        randomization_group: Optional[str] = None,
-        number_of_subjects: Optional[int] = 0,
-        arm_root_uid: Optional[str] = None,
-        start_date: Optional[datetime.datetime] = None,
-        end_date: Optional[datetime.datetime] = None,
-        status: Optional[str] = None,
-        change_type: Optional[str] = None,
-        accepted_version: Optional[bool] = False,
+        study_selection_uid: str | None = None,
+        study_uid: str | None = None,
+        name: str | None = None,
+        short_name: str | None = None,
+        code: str | None = None,
+        description: str | None = None,
+        colour_code: str | None = None,
+        randomization_group: str | None = None,
+        number_of_subjects: int | None = 0,
+        arm_root_uid: str | None = None,
+        start_date: datetime.datetime | None = None,
+        end_date: datetime.datetime | None = None,
+        status: str | None = None,
+        change_type: str | None = None,
+        accepted_version: bool | None = False,
         generate_uid_callback: Callable[[], str] = None,
     ):
         """
@@ -113,12 +114,12 @@ class StudySelectionBranchArmVO:
         if self.arm_root_uid and study_branch_arm_study_arm_update_conflict_callback(
             branch_arm_vo=self
         ):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"Cannot change StudyArm when the specific BranchArm ({self.study_selection_uid}) has connected StudyDesignCells"
             )
         # Check if there exist a StudyArm with the selected uid
         if not study_arm_exists_callback(self.arm_root_uid):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"There is no approved arm level identified by provided arm uid ({self.arm_root_uid})"
             )
 
@@ -126,7 +127,7 @@ class StudySelectionBranchArmVO:
         if self.name and branch_arm_exists_callback_by(
             "name", "name", branch_arm_vo=self
         ):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f'Value "{self.name}" in field Branch Arm Name is not unique for the study'
             )
 
@@ -134,7 +135,7 @@ class StudySelectionBranchArmVO:
         if self.short_name and branch_arm_exists_callback_by(
             "short_name", "short_name", branch_arm_vo=self
         ):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f'Value "{self.short_name}" in field Branch Arm Short Name is not unique for the study'
             )
 
@@ -142,7 +143,7 @@ class StudySelectionBranchArmVO:
         if self.code and branch_arm_exists_callback_by(
             "branch_arm_code", "code", branch_arm_vo=self
         ):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f'Value "{self.code}" in field Branch Arm Code is not unique for the study'
             )
 
@@ -150,7 +151,7 @@ class StudySelectionBranchArmVO:
         if self.randomization_group and branch_arm_exists_callback_by(
             "randomization_group", "randomization_group", branch_arm_vo=self
         ):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f'Value "{self.randomization_group}" in field Branch Arm Randomization code is not unique for the study'
             )
 
@@ -158,7 +159,7 @@ class StudySelectionBranchArmVO:
 @dataclass
 class StudySelectionBranchArmAR:
     _study_uid: str
-    _study_branch_arms_selection: Tuple[StudySelectionBranchArmVO]
+    _study_branch_arms_selection: tuple[StudySelectionBranchArmVO]
     # a dataclass feature that has Any value with a type field NOT included on the
     # generated init method, NOT included con copare generated methods, included on
     # the string returned by the generated method, and its default is None
@@ -168,12 +169,12 @@ class StudySelectionBranchArmAR:
 
     def get_specific_object_selection(
         self, study_selection_uid: str
-    ) -> Tuple[StudySelectionBranchArmVO, int]:
+    ) -> tuple[StudySelectionBranchArmVO, int]:
         for order, selection in enumerate(self.study_branch_arms_selection, start=1):
             if selection.study_selection_uid == study_selection_uid:
                 return selection, order
-        raise ValueError(
-            f"The study {self._study_uid} uid does not exist ({study_selection_uid})"
+        raise exceptions.NotFoundException(
+            f"The study selection {study_selection_uid} does not exist for study {self._study_uid}"
         )
 
     @property
@@ -185,13 +186,15 @@ class StudySelectionBranchArmAR:
         return self._study_branch_arms_selection
 
     def get_specific_branch_arm_selection(
-        self, study_branch_arm_uid: str, arm_root_uid: Optional[str] = None
-    ) -> Optional[Tuple[StudySelectionBranchArmVO, int]]:
+        self, study_branch_arm_uid: str, arm_root_uid: str | None = None
+    ) -> tuple[StudySelectionBranchArmVO, int] | None:
         # the study branch arm must be in any parent arm
         if study_branch_arm_uid not in [
             x.study_selection_uid for x in self.study_branch_arms_selection
         ]:
-            raise ValueError(f"There is no selection({study_branch_arm_uid})")
+            raise exceptions.NotFoundException(
+                f"There is no selection '{study_branch_arm_uid}'"
+            )
 
         # First, filter on branch_arm selection with the same parent arm
         # to get the order in the context of the parent arm
@@ -219,7 +222,7 @@ class StudySelectionBranchArmAR:
         ):
             if selection.study_selection_uid == study_branch_arm_uid:
                 return selection, order
-        raise ValueError(
+        raise exceptions.ValidationException(
             f"The study branch arm with provided uid does not exist ({study_branch_arm_uid})"
         )
 
@@ -257,7 +260,7 @@ class StudySelectionBranchArmAR:
         cls,
         study_uid: str,
         study_branch_arms_selection: Iterable[StudySelectionBranchArmVO],
-    ) -> "StudySelectionBranchArmAR":
+    ) -> Self:
         """
         Factory method to create a AR
         :param study_uid:

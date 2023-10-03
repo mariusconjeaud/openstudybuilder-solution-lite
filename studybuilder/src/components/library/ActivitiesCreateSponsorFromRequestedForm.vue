@@ -16,7 +16,7 @@
             <v-autocomplete
               :label="$t('ActivityForms.activity_group')"
               :items="groups"
-              v-model="editedActivity.activity_group"
+              v-model="activity.activity_groupings[0].activity_group_uid"
               item-text="name"
               item-value="uid"
               dense
@@ -29,7 +29,7 @@
             <v-autocomplete
               :label="$t('ActivityForms.activity_subgroup')"
               :items="filteredSubGroups"
-              v-model="editedActivity.activity_subgroup"
+              v-model="activity.activity_groupings[0].activity_subgroup_uid"
               item-text="name"
               item-value="uid"
               dense
@@ -41,7 +41,7 @@
           <v-col>
             <v-text-field
               :label="$t('ActivityForms.name')"
-              v-model="editedActivity.name"
+              v-model="activity.name"
               dense
               clearable
               readonly
@@ -52,7 +52,7 @@
           <v-col>
             <v-text-field
               :label="$t('ActivityFormsRequested.abbreviation')"
-              v-model="editedActivity.abbreviation"
+              v-model="activity.abbreviation"
               dense
               clearable
               readonly
@@ -63,7 +63,7 @@
           <v-col>
             <v-textarea
               :label="$t('ActivityFormsRequested.definition')"
-              v-model="editedActivity.definition"
+              v-model="activity.definition"
               dense
               clearable
               auto-grow
@@ -76,7 +76,7 @@
           <v-col>
             <v-textarea
               :label="$t('ActivityFormsRequested.rationale_for_request')"
-              v-model="editedActivity.request_rationale"
+              v-model="activity.request_rationale"
               dense
               clearable
               auto-grow
@@ -98,7 +98,7 @@
               <v-autocomplete
                 :label="$t('ActivityForms.activity_group')"
                 :items="groups"
-                v-model="form.activity_group"
+                v-model="form.activity_groupings[0].activity_group_uid"
                 item-text="name"
                 item-value="uid"
                 dense
@@ -119,7 +119,7 @@
                 item-value="uid"
                 dense
                 clearable
-                :disabled="form.activity_group ? false : true"
+                :disabled="form.activity_groupings[0].activity_group_uid ? false : true"
                 :error-messages="errors"
                 return-object
                 />
@@ -179,7 +179,8 @@
               :options.sync="options"
               :server-items-length="total"
               @pagination="getActivities"
-              :items-per-page="5">
+              :items-per-page="5"
+              item-key="item-key">
             </v-data-table>
           </v-col>
         </v-row>
@@ -192,21 +193,21 @@
             <div class="text-h5 mb-8">{{ $t('ActivityFormsRequested.requested_activity') }}</div>
             <v-text-field
               :label="$t('ActivityForms.activity_group')"
-              v-model="editedActivity.activity_group.name"
+              v-model="activity.activity_groupings[0].activity_group_name"
               dense
               readonly
-              v-if="editedActivity.activity_group"
+              v-if="activity.activity_group"
               />
             <v-text-field
               :label="$t('ActivityForms.activity_subgroup')"
-              v-model="editedActivity.activity_subgroup.name"
+              v-model="activity.activity_groupings[0].activity_subgroup_name"
               dense
               readonly
-              v-if="editedActivity.activity_subgroup"
+              v-if="activity.activity_groupings[0].activity_group_uid ? false : true"
               />
             <v-text-field
               :label="$t('ActivityForms.name')"
-              v-model="editedActivity.name"
+              v-model="activity.name"
               dense
               readonly
               />
@@ -215,10 +216,10 @@
             <div class="text-h5 mb-8">{{ $t('ActivityFormsRequested.new_sponsor_concept')  }}</div>
             <v-text-field
               :label="$t('ActivityForms.activity_group')"
-              v-model="form.activity_group.name"
+              v-model="form.activity_groupings[0].activity_group_name"
               dense
               readonly
-              v-if="form.activity_group"
+              v-if="activity.activity_groupings[0].activity_group_uid ? false : true"
               />
             <v-text-field
               :label="$t('ActivityForms.activity_subgroup')"
@@ -243,6 +244,7 @@
 
 <script>
 import { bus } from '@/main'
+import _isEmpty from 'lodash/isEmpty'
 import ConfirmDialog from '@/components/tools/ConfirmDialog'
 import StepperForm from '@/components/tools/StepperForm'
 import activities from '@/api/activities'
@@ -263,15 +265,15 @@ export default {
         : this.$t('ActivityForms.add_group')
     },
     filteredSubGroups () {
-      if (!this.form.activity_group) {
+      if (!this.form.activity_groupings[0].activity_group_uid) {
         return []
       }
-      return this.subGroups.filter(el => el.activity_group.uid === this.form.activity_group.uid)
+      return this.subGroups.filter(el => el.activity_groups.find(o => o.uid === this.form.activity_groupings[0].activity_group_uid) !== undefined)
     }
   },
   data () {
     return {
-      form: {},
+      form: { activity_groupings: [{}] },
       subgroup: {},
       steps: [
         { name: 'request', title: this.$t('ActivityFormsRequested.activity_request') },
@@ -295,8 +297,25 @@ export default {
   methods: {
     initForm () {
       if (this.editedActivity) {
-        this.form = JSON.parse(JSON.stringify(this.editedActivity))
+        this.activity = this.editedActivity
+        this.form = JSON.parse(JSON.stringify(this.activity))
+        this.form.activity_groupings = [{}]
+        if (!_isEmpty(this.activity)) {
+          const grouping = [{}]
+          if (this.activity.activity_group) {
+            grouping[0].activity_group_name = this.activity.activity_group.name
+            grouping[0].activity_group_uid = this.activity.activity_group.uid
+          }
+          if (this.activity.activity_subgroup) {
+            grouping[0].activity_subgroup_name = this.activity.activity_subgroup.name
+            grouping[0].activity_subgroup_uid = this.activity.activity_subgroup.uid
+          }
+          this.$set(this.form, 'activity_groupings', grouping)
+        }
+      } else {
+        this.activity = { activity_groupings: [{}] }
       }
+
       this.subgroup = this.form.activity_subgroup
     },
     getObserver (step) {
@@ -304,7 +323,7 @@ export default {
     },
     close () {
       this.$emit('close')
-      this.form = {}
+      this.form = { activity_groupings: [{}] }
       this.$refs.stepper.reset()
     },
     async submit () {
@@ -335,7 +354,27 @@ export default {
         filters: `{"*":{"v":["${this.form.name}"]}}`
       }
       activities.get(params, 'activities').then(resp => {
-        this.activities = resp.data.items
+        const activities = []
+        for (const item of resp.data.items) {
+          if (item.activity_groupings.length > 0) {
+            for (const grouping of item.activity_groupings) {
+              activities.push({
+                activity_group: { name: grouping.activity_group_name, uid: grouping.activity_group_uid },
+                activity_subgroup: { name: grouping.activity_subgroup_name, uid: grouping.activity_subgroup_uid },
+                item_key: item.uid + grouping.activity_group_uid + grouping.activity_subgroup_uid,
+                ...item
+              })
+            }
+          } else {
+            activities.push({
+              activity_group: { name: '', uid: '' },
+              activity_subgroup: { name: '', uid: '' },
+              item_key: item.uid,
+              ...item
+            })
+          }
+        }
+        this.activities = activities
         this.total = resp.data.total
       })
     }

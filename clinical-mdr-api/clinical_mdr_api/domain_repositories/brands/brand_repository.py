@@ -1,4 +1,4 @@
-from typing import Collection, Optional, Sequence
+from typing import Collection, Sequence
 
 from cachetools import TTLCache, cached
 from cachetools.keys import hashkey
@@ -34,7 +34,7 @@ class BrandRepository:
         )
 
     @cached(cache=cache_store_item_by_uid, key=get_hashkey)
-    def find_by_uid(self, uid: str) -> Optional[BrandAR]:
+    def find_by_uid(self, uid: str) -> BrandAR | None:
         brand = Brand.nodes.get_or_none(uid=uid, is_deleted=False)
         if brand is not None:
             brand = BrandAR.from_input_values(
@@ -44,7 +44,7 @@ class BrandRepository:
             return brand
         return None
 
-    def find_by_brand_name(self, name: str) -> Optional[BrandAR]:
+    def find_by_brand_name(self, name: str) -> BrandAR | None:
         brand = Brand.nodes.first_or_none(name=name, is_deleted=False)
         if brand is not None:
             brand = BrandAR.from_input_values(

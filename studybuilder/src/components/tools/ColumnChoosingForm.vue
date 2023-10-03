@@ -62,8 +62,6 @@ import _isEqual from 'lodash/isEqual'
 import { mapGetters } from 'vuex'
 
 export default {
-  components: {
-  },
   props: {
     availableColumns: Array,
     tableName: String,
@@ -73,7 +71,8 @@ export default {
       type: Boolean,
       default: false
     },
-    alreadyInFilter: Array
+    alreadyInFilter: Array,
+    opened: Boolean
   },
   data () {
     return {
@@ -126,6 +125,7 @@ export default {
     },
     close () {
       this.search = ''
+      this.initialData = []
       this.$emit('close')
     },
     cancel () {
@@ -137,6 +137,14 @@ export default {
     }
   },
   watch: {
+    opened (value) {
+      if (value) {
+        this.initialData = this.displayedColumns = this.columns[this.tableName]
+        if (!this.initialData) {
+          this.initialData = this.displayedColumns = this.availableColumns
+        }
+      }
+    },
     columns (value) {
       if (!_isEqual(value[this.tableName], this.initialData)) {
         this.initialData = this.displayedColumns = value[this.tableName]

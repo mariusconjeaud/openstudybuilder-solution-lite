@@ -1,5 +1,5 @@
 """DictionaryCodelist router."""
-from typing import Any, List, Optional
+from typing import Any
 
 from fastapi import APIRouter, Body, Depends, Path, Query
 from pydantic.types import Json
@@ -8,27 +8,29 @@ from starlette.requests import Request
 from clinical_mdr_api import config, models
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.oauth import get_current_user_id
+from clinical_mdr_api.oauth import get_current_user_id, rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.dictionaries.dictionary_codelist_generic_service import (
     DictionaryCodelistGenericService,
 )
 
+# Prefixed with "/dictionaries"
 router = APIRouter()
 
 DictionaryCodelistUID = Path(
     None, description="The unique id of the DictionaryCodelist"
 )
-DictionaryCodelistLibrary = Path(
-    None,
+DictionaryCodelistLibrary = Query(
+    ...,
     description="The Library from which the dictionaries codelists should be retrieved",
 )
 TermUID = Path(None, description="The unique id of the Codelist Term")
 
 
 @router.get(
-    "/codelists/{library}",
+    "/codelists",
+    dependencies=[rbac.LIBRARY_READ],
     summary="List all dictionary codelists.",
     description=f"""
 State before:
@@ -77,24 +79,24 @@ def get_codelists(
     request: Request,  # request is actually required by the allow_exports decorator
     library: str = DictionaryCodelistLibrary,
     sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
-    page_number: Optional[int] = Query(
-        1, ge=1, description=_generic_descriptions.PAGE_NUMBER
-    ),
-    page_size: Optional[int] = Query(
+    page_number: int
+    | None = Query(1, ge=1, description=_generic_descriptions.PAGE_NUMBER),
+    page_size: int
+    | None = Query(
         config.DEFAULT_PAGE_SIZE,
         ge=0,
         le=config.MAX_PAGE_SIZE,
         description=_generic_descriptions.PAGE_SIZE,
     ),
-    filters: Optional[Json] = Query(
+    filters: Json
+    | None = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
-    operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    total_count: Optional[bool] = Query(
-        False, description=_generic_descriptions.TOTAL_COUNT
-    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    total_count: bool
+    | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
     current_user_id: str = Depends(get_current_user_id),
 ):
     dictionary_codelist_service = DictionaryCodelistGenericService(user=current_user_id)
@@ -108,16 +110,17 @@ def get_codelists(
         filter_operator=FilterOperator.from_str(operator),
     )
     return CustomPage.create(
-        items=results.items, total=results.total_count, page=page_number, size=page_size
+        items=results.items, total=results.total, page=page_number, size=page_size
     )
 
 
 @router.get(
-    "/codelists/{library}/headers",
+    "/codelists/headers",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns possibles values from the database for a given header",
     description="Allowed parameters include : field name for which to get possible values, "
     "search string to provide filtering for the field name, additional filters to apply on other fields",
-    response_model=List[Any],
+    response_model=list[Any],
     status_code=200,
     responses={
         404: {
@@ -131,18 +134,17 @@ def get_distinct_values_for_header(
     current_user_id: str = Depends(get_current_user_id),
     library: str = DictionaryCodelistLibrary,
     field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
-    search_string: Optional[str] = Query(
-        "", description=_generic_descriptions.HEADER_SEARCH_STRING
-    ),
-    filters: Optional[Json] = Query(
+    search_string: str
+    | None = Query("", description=_generic_descriptions.HEADER_SEARCH_STRING),
+    filters: Json
+    | None = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
-    operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    result_count: Optional[int] = Query(
-        10, description=_generic_descriptions.HEADER_RESULT_COUNT
-    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    result_count: int
+    | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
 ):
     dictionary_codelist_service = DictionaryCodelistGenericService(user=current_user_id)
     return dictionary_codelist_service.get_distinct_values_for_header(
@@ -157,6 +159,7 @@ def get_distinct_values_for_header(
 
 @router.post(
     "/codelists",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Creates new dictionary codelist.",
     description="""The following nodes are created
   * DictionaryCodelistRoot
@@ -189,6 +192,7 @@ def create(
 
 @router.get(
     "/codelists/{uid}",
+    dependencies=[rbac.LIBRARY_READ],
     summary="List details on the dictionary codelist with {uid}",
     description="""
 State before:
@@ -208,7 +212,8 @@ State after:
 )
 def get_codelist(
     uid: str = DictionaryCodelistUID,
-    version: Optional[str] = Query(
+    version: str
+    | None = Query(
         None,
         description="If specified then the latest/newest representation of the dictionary codelist "
         "for DictionaryCodelistValue in that version is returned.\n"
@@ -223,6 +228,7 @@ def get_codelist(
 
 @router.get(
     "/codelists/{uid}/versions",
+    dependencies=[rbac.LIBRARY_READ],
     summary="List version history for a dictionary codelist",
     description="""
 State before:
@@ -238,7 +244,7 @@ State after:
 Possible errors:
  - Invalid codelist_uid.
     """,
-    response_model=List[models.DictionaryCodelistVersion],
+    response_model=list[models.DictionaryCodelistVersion],
     status_code=200,
     responses={
         404: {
@@ -258,6 +264,7 @@ def get_versions(
 
 @router.patch(
     "/codelists/{uid}",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary=" Update name or template parameter flag for dictionary codelist",
     description="""
 State before:
@@ -307,6 +314,7 @@ def edit(
 
 @router.post(
     "/codelists/{uid}/versions",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary=" Create a new version of the dictionary codelist",
     description="""
 State before:
@@ -356,6 +364,7 @@ def create_new_version(
 
 @router.post(
     "/codelists/{uid}/approvals",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Approve draft version of the dictionary codelist",
     description="""
 State before:
@@ -401,6 +410,7 @@ def approve(
 
 @router.post(
     "/codelists/{uid}/terms",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary=" Attaches a dictionary term to a dictionary codelist",
     description="""
 State before:
@@ -447,6 +457,7 @@ def add_term(
 
 @router.delete(
     "/codelists/{codelist_uid}/terms/{term_uid}",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Removes a dictionary term from a dictionary codelist",
     description="""
 State before:

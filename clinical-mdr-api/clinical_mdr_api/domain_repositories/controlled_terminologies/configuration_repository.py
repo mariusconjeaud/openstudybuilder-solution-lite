@@ -1,6 +1,4 @@
-from typing import List, cast
-
-from neomodel import db
+from typing import cast
 
 from clinical_mdr_api.domain_repositories.library_item_repository import (
     LibraryItemRepositoryImplBase,
@@ -30,7 +28,10 @@ from clinical_mdr_api.domains.controlled_terminologies.configurations import (
     CTConfigAR,
     CTConfigValueVO,
 )
-from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemMetadataVO
+from clinical_mdr_api.domains.versioned_object_aggregate import (
+    LibraryItemMetadataVO,
+    LibraryItemStatus,
+)
 from clinical_mdr_api.models.controlled_terminologies.configuration import CTConfigOGM
 
 
@@ -40,7 +41,13 @@ class CTConfigRepository(LibraryItemRepositoryImplBase[CTConfigAR]):
     user: str
     has_library = False
 
-    def find_all(self) -> List[CTConfigOGM]:
+    def find_all(
+        self,
+        *,
+        status: LibraryItemStatus | None = None,
+        library_name: str | None = None,
+        return_study_count: bool | None = False,
+    ) -> list[CTConfigOGM]:
         all_configurations = [
             CTConfigOGM.from_orm(sas_node)
             for sas_node in to_relation_trees(
@@ -61,14 +68,6 @@ class CTConfigRepository(LibraryItemRepositoryImplBase[CTConfigAR]):
 
     def generate_uid(self) -> str:
         return self.root_class.get_next_free_uid_and_increment_counter()
-
-    def check_exists_by_name(self, name: str) -> bool:
-        cypher_query = f"""
-            MATCH (or:{self.root_class.__label__})-[:LATEST_FINAL|LATEST_DRAFT|LATEST_RETIRED]->(ov:{self.value_class.__label__} {{study_field_name: $name }})
-            RETURN or.uid, ov.name
-        """
-        items, _ = db.cypher_query(cypher_query, {"name": name})
-        return len(items) > 0
 
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
@@ -133,10 +132,6 @@ class CTConfigRepository(LibraryItemRepositoryImplBase[CTConfigAR]):
                 value.has_configured_term.connect(term_root)
         return value
 
-    def _get_target_uid_or_none(self, relatiohship):
-        node = relatiohship.get_or_none()
-        return node.uid if node is not None else None
-
     def _is_new_version_necessary(self, ar: CTConfigAR, value: VersionValue) -> bool:
         codelist_config_value = cast(CTConfigValue, value)
         val = (
@@ -145,11 +140,13 @@ class CTConfigRepository(LibraryItemRepositoryImplBase[CTConfigAR]):
             != ar.value.study_field_data_type
             or codelist_config_value.study_field_null_value_code
             != ar.value.study_field_null_value_code
-            or self._get_target_uid_or_none(
-                codelist_config_value.has_configured_codelist
+            or self._get_uid_or_none(
+                codelist_config_value.has_configured_codelist.get_or_none()
             )
             != ar.value.configured_codelist_uid
-            or self._get_target_uid_or_none(codelist_config_value.has_configured_term)
+            or self._get_uid_or_none(
+                codelist_config_value.has_configured_term.get_or_none()
+            )
             != ar.value.configured_term_uid
             or codelist_config_value.study_field_grouping
             != ar.value.study_field_grouping

@@ -1,12 +1,11 @@
 """Study chart router."""
 import os
-from typing import Optional
 
 from fastapi import Depends, Path, Query
 from fastapi.responses import HTMLResponse, StreamingResponse
 
 from clinical_mdr_api.models.study_selections.table_with_headers import TableWithHeaders
-from clinical_mdr_api.oauth import get_current_user_id
+from clinical_mdr_api.oauth import get_current_user_id, rbac
 from clinical_mdr_api.routers import _generic_descriptions
 from clinical_mdr_api.routers import studies_router as router
 from clinical_mdr_api.services.studies.study import StudyService
@@ -23,6 +22,7 @@ time_unit_query = Query(
 
 @router.get(
     "/{uid}/flowchart",
+    dependencies=[rbac.STUDY_READ],
     summary="Returns Study Protocol Flowchart table",
     status_code=200,
     responses={
@@ -33,7 +33,7 @@ time_unit_query = Query(
 )
 def get_study_flowchart(
     uid: str = StudyUID,
-    time_unit: Optional[str] = time_unit_query,
+    time_unit: str | None = time_unit_query,
     current_user_id: str = Depends(get_current_user_id),
 ) -> TableWithHeaders:
     StudyService(user=current_user_id).check_if_study_exists(uid)
@@ -44,6 +44,7 @@ def get_study_flowchart(
 
 @router.get(
     "/{uid}/flowchart.html",
+    dependencies=[rbac.STUDY_READ],
     summary="Builds and returns an HTML document with Study Protocol Flowchart table",
     responses={
         200: {"content": {"text/html": {"schema": {"type": "string"}}}},
@@ -53,7 +54,7 @@ def get_study_flowchart(
 )
 def get_study_flowchart_html(
     uid: str = StudyUID,
-    time_unit: Optional[str] = time_unit_query,
+    time_unit: str | None = time_unit_query,
     current_user_id: str = Depends(get_current_user_id),
 ) -> HTMLResponse:
     StudyService(user=current_user_id).check_if_study_exists(uid)
@@ -66,6 +67,7 @@ def get_study_flowchart_html(
 
 @router.get(
     "/{uid}/flowchart.docx",
+    dependencies=[rbac.STUDY_READ],
     summary="Builds and returns a DOCX document with Study Protocol Flowchart table",
     responses={
         200: {
@@ -79,7 +81,7 @@ def get_study_flowchart_html(
 )
 def get_study_flowchart_docx(
     uid: str = StudyUID,
-    time_unit: Optional[str] = time_unit_query,
+    time_unit: str | None = time_unit_query,
     current_user_id: str = Depends(get_current_user_id),
 ) -> StreamingResponse:
     StudyService(user=current_user_id).check_if_study_exists(uid)

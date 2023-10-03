@@ -1,6 +1,6 @@
 import json
 from abc import ABC, abstractmethod
-from typing import Iterable, Optional, TypeVar
+from typing import Iterable, TypeVar
 
 from clinical_mdr_api.domain_repositories._utils.generic_light_dictionary_repo_base import (
     GenericLightDictionaryRepoBase,  # type: ignore
@@ -11,7 +11,7 @@ Entity = TypeVar("Entity")
 
 
 class JsonFileBasedStaticRepo(GenericLightDictionaryRepoBase[Key, Entity], ABC):
-    _json_filepath: Optional[str] = None
+    _json_filepath: str | None = None
 
     def _get_fresh_dictionary_content(self) -> Iterable[Entity]:
         """

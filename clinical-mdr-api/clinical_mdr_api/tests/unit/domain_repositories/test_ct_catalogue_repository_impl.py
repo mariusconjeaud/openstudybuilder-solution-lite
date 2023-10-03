@@ -1,5 +1,5 @@
 import unittest
-from typing import Collection, Optional, Sequence
+from typing import Collection, Sequence
 from unittest.mock import Mock, patch
 
 from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_catalogue_repository import (
@@ -21,7 +21,7 @@ class MockLibrary:
         return self._name
 
 
-def create_random_ct_catalogue_node(library_name: Optional[str]) -> CTCatalogue:
+def create_random_ct_catalogue_node(library_name: str | None) -> CTCatalogue:
     mock = Mock()
     mocked_library_node = MockLibrary(library_name)
     mock.single = lambda: mocked_library_node

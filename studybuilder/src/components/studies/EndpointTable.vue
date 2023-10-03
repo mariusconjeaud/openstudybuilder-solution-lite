@@ -30,11 +30,11 @@
       <slot name="extraActions"></slot>
       <v-btn
         fab
-        dark
         small
         color="primary"
         @click.stop="showForm = true"
         :title="$t('StudyEndpointsTable.add_endpoint')"
+        :disabled="!checkPermission($roles.STUDY_WRITE)"
         >
         <v-icon dark>
           mdi-plus
@@ -53,7 +53,11 @@
           :key="index"
           >
           <td width="3%">
-            <actions-menu :actions="actions" :item="item"/>
+            <actions-menu
+              :actions="actions"
+              :item="item"
+              :badge="actionsMenuBadge(item)"
+              />
           </td>
           <td width="5%">
             <v-icon
@@ -98,8 +102,26 @@
         </tr>
       </draggable>
     </template>
+    <template v-slot:item.name="{ item }">
+      <template v-if="item.endpoint_template">
+        <n-n-parameter-highlighter
+          :name="item.endpoint_template.name"
+          default-color="orange"
+          />
+      </template>
+      <template v-else-if="item.endpoint">
+        <n-n-parameter-highlighter
+          :name="item.endpoint.name"
+          :show-prefix-and-postfix="false"
+          />
+      </template>
+    </template>
     <template v-slot:item.actions="{ item }">
-      <actions-menu :actions="actions" :item="item"/>
+      <actions-menu
+        :actions="actions"
+        :item="item"
+        :badge="actionsMenuBadge(item)"
+        />
     </template>
     <template v-slot:item.start_date="{ item }">
       {{ item.start_date | date }}
@@ -119,7 +141,7 @@
             v-bind="attrs"
             v-on="on"
             color="red">
-            mdi-alert-circle
+            mdi-alert-circle-outline
           </v-icon>
         </template>
         <span>{{ $t('StudyEndpointForm.endpoint_title_warning') }}</span>
@@ -154,7 +176,26 @@
       :current-study-endpoints="studyEndpoints"
       @close="closeForm"
       class="fullscreen-dialog"
-      :clone-mode="cloneMode"
+      @added="fetchEndpoints"
+      />
+  </v-dialog>
+  <endpoint-edit-form
+    :open="showEditForm"
+    @close="closeEditForm"
+    :study-endpoint="selectedStudyEndpoint"
+    @updated="fetchEndpoints"
+    />
+  <v-dialog v-model="showHistory"
+            @keydown.esc="closeHistory"
+            persistent
+            :max-width="globalHistoryDialogMaxWidth"
+            :fullscreen="globalHistoryDialogFullscreen">
+    <history-table
+      :title="studyEndpointHistoryTitle"
+      @close="closeHistory"
+      :headers="headers"
+      :items="endpointHistoryItems"
+      :html-fields="historyHtmlFields"
       />
   </v-dialog>
   <confirm-dialog ref="confirm" width="600"/>
@@ -175,18 +216,24 @@ import { bus } from '@/main'
 import study from '@/api/study'
 import ActionsMenu from '@/components/tools/ActionsMenu'
 import NNParameterHighlighter from '@/components/tools/NNParameterHighlighter'
+import EndpointEditForm from '@/components/studies/EndpointEditForm'
 import EndpointForm from '@/components/studies/EndpointForm'
+import HistoryTable from '@/components/tools/HistoryTable'
 import ConfirmDialog from '@/components/tools/ConfirmDialog'
 import statuses from '@/constants/statuses'
 import NNTable from '@/components/tools/NNTable'
 import draggable from 'vuedraggable'
 import filteringParameters from '@/utils/filteringParameters'
+import { accessGuard } from '@/mixins/accessRoleVerifier'
 
 export default {
+  mixins: [accessGuard],
   components: {
     ActionsMenu,
     NNParameterHighlighter,
+    EndpointEditForm,
     EndpointForm,
+    HistoryTable,
     ConfirmDialog,
     NNTable,
     draggable
@@ -194,7 +241,8 @@ export default {
   computed: {
     ...mapGetters({
       selectedStudy: 'studiesGeneral/selectedStudy',
-      studyEndpoints: 'studyEndpoints/studyEndpoints'
+      studyEndpoints: 'studyEndpoints/studyEndpoints',
+      total: 'studyEndpoints/total'
     }),
     filteredHeaders () {
       return this.headers.filter(header => header.show === true || header.show === undefined)
@@ -220,47 +268,47 @@ export default {
       actions: [
         {
           label: this.$t('StudyEndpointsTable.update_timeframe_version_retired'),
-          icon: 'mdi-alert',
+          icon: 'mdi-alert-outline',
           iconColor: 'orange',
-          condition: this.isTimeframeRetired
+          condition: this.isTimeframeRetired,
+          accessRole: this.$roles.STUDY_WRITE
         },
         {
           label: this.$t('StudyEndpointsTable.update_timeframe_version'),
-          icon: 'mdi-bell-ring',
+          icon: 'mdi-bell-ring-outline',
           iconColorFunc: this.itemUpdateAborted,
           condition: this.timeframeNeedsUpdate,
-          click: this.updateTimeframeVersion
+          click: this.updateTimeframeVersion,
+          accessRole: this.$roles.STUDY_WRITE
         },
         {
           label: this.$t('StudyEndpointsTable.update_endpoint_version_retired'),
-          icon: 'mdi-alert',
+          icon: 'mdi-alert-outline',
           iconColor: 'orange',
-          condition: this.isEndpointRetired
+          condition: this.isEndpointRetired,
+          accessRole: this.$roles.STUDY_WRITE
         },
         {
           label: this.$t('StudyEndpointsTable.update_endpoint_version'),
-          icon: 'mdi-bell-ring',
+          icon: 'mdi-bell-ring-outline',
           iconColorFunc: this.itemUpdateAborted,
           condition: this.endpointNeedsUpdate,
-          click: this.updateEndpointVersion
+          click: this.updateEndpointVersion,
+          accessRole: this.$roles.STUDY_WRITE
         },
         {
           label: this.$t('_global.edit'),
-          icon: 'mdi-pencil',
+          icon: 'mdi-pencil-outline',
           iconColor: 'primary',
-          click: this.editStudyEndpoint
-        },
-        {
-          label: this.$t('StudyEndpointsTable.edit_template_text'),
-          icon: 'mdi-pencil',
-          iconColor: 'primary',
-          click: this.cloneStudyEndpoint
+          click: this.editStudyEndpoint,
+          accessRole: this.$roles.STUDY_WRITE
         },
         {
           label: this.$t('_global.delete'),
-          icon: 'mdi-delete',
+          icon: 'mdi-delete-outline',
           iconColor: 'error',
-          click: this.deleteStudyEndpoint
+          click: this.deleteStudyEndpoint,
+          accessRole: this.$roles.STUDY_WRITE
         },
         {
           label: this.$t('_global.history'),
@@ -269,14 +317,13 @@ export default {
         }
       ],
       actionsMenu: false,
-      cloneMode: false,
       endpointHistoryItems: [],
       headers: [
         { text: '', value: 'actions', width: '5%' },
         { text: this.$t('StudyEndpointsTable.order'), value: 'order', width: '5%' },
         { text: this.$t('StudyEndpointsTable.endpoint_level'), value: 'endpoint_level.sponsor_preferred_name' },
         { text: this.$t('StudyEndpointsTable.endpoint_sub_level'), value: 'endpoint_sublevel.sponsor_preferred_name' },
-        { text: this.$t('StudyEndpointsTable.endpoint_title'), value: 'endpoint.name', width: '25%' },
+        { text: this.$t('StudyEndpointsTable.endpoint_title'), value: 'name', width: '25%' },
         { text: this.$t('StudyEndpointsTable.units'), value: 'units', width: '10%' },
         { text: this.$t('StudyEndpointsTable.time_frame'), value: 'timeframe.name', width: '25%' },
         { text: this.$t('StudyEndpointsTable.objective'), value: 'study_objective.objective.name', filteringName: 'study_objective.objective.name', width: '25%' },
@@ -285,13 +332,13 @@ export default {
       ],
       historyHtmlFields: ['endpoint.name', 'timeframe.name', 'study_objective.objective.name'],
       selectedStudyEndpoint: null,
+      showEditForm: false,
       showForm: false,
       showHistory: false,
       snackbar: false,
       sortBy: 'start_date',
       sortMode: false,
       endpoints: [],
-      total: 0,
       options: {}
     }
   },
@@ -306,9 +353,7 @@ export default {
       const params = filteringParameters.prepareParameters(
         this.options, filters, sort, filtersUpdated)
       params.studyUid = this.selectedStudy.uid
-      this.$store.dispatch('studyEndpoints/fetchStudyEndpoints', params).then(resp => {
-        this.total = resp.data.total
-      })
+      this.$store.dispatch('studyEndpoints/fetchStudyEndpoints', params)
     },
     async fetchEndpointsHistory () {
       const resp = await study.getStudyEndpointsAuditTrail(this.selectedStudy.uid)
@@ -318,7 +363,13 @@ export default {
       if (this.endpointNeedsUpdate(item) || this.timeframeNeedsUpdate(item)) {
         return {
           color: 'error',
-          icon: 'mdi-bell'
+          icon: 'mdi-bell-outline'
+        }
+      }
+      if (!item.endpoint && item.endpoint_template && item.endpoint_template.parameters.length > 0) {
+        return {
+          color: 'error',
+          icon: 'mdi-exclamation'
         }
       }
       return null
@@ -414,20 +465,19 @@ export default {
     },
     closeForm () {
       this.showForm = false
-      this.cloneMode = false
       this.selectedStudyEndpoint = null
       this.fetchEndpoints()
+    },
+    closeEditForm () {
+      this.showEditForm = false
+      this.selectedStudyEndpoint = null
     },
     getHeaderLabel (value) {
       return this.headers.filter(item => item.value === value)[0].text
     },
     editStudyEndpoint (studyEndpoint) {
       this.selectedStudyEndpoint = studyEndpoint
-      this.showForm = true
-    },
-    cloneStudyEndpoint (studyEndpoint) {
-      this.cloneMode = true
-      this.editStudyEndpoint(studyEndpoint)
+      this.showEditForm = true
     },
     displayUnits (units) {
       const unitNames = units.units.map(unit => unit.name)
@@ -482,7 +532,7 @@ export default {
       const result = []
       for (const item of items) {
         const newItem = { ...item }
-        if (item.endpoint_units.units) {
+        if (item.endpoint_units && item.endpoint_units.units) {
           newItem.units = this.displayUnits(item.endpoint_units)
         }
         result.push(newItem)

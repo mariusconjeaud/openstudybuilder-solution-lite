@@ -18,12 +18,12 @@
       <v-btn
         class="ml-2"
         fab
-        dark
         small
         color="primary"
         @click.stop="openForm()"
         :title="$t('CrfTemplates.add_template')"
         data-cy="add-crf-template"
+        :disabled="!checkPermission($roles.LIBRARY_WRITE)"
         >
         <v-icon dark>
           mdi-plus
@@ -95,8 +95,10 @@ import OdmReferencesTree from '@/components/library/crfs/OdmReferencesTree'
 import crfTypes from '@/constants/crfTypes'
 import { mapGetters } from 'vuex'
 import statuses from '@/constants/statuses'
+import { accessGuard } from '@/mixins/accessRoleVerifier'
 
 export default {
+  mixins: [accessGuard],
   components: {
     NNTable,
     ActionsMenu,
@@ -130,20 +132,23 @@ export default {
           icon: 'mdi-check-decagram',
           iconColor: 'success',
           condition: (item) => item.possible_actions.find(action => action === 'approve'),
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.approveTemplate
         },
         {
           label: this.$t('_global.edit'),
-          icon: 'mdi-pencil',
+          icon: 'mdi-pencil-outline',
           iconColor: 'primary',
           condition: (item) => item.possible_actions.find(action => action === 'edit'),
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.edit
         },
         {
           label: this.$t('_global.delete'),
-          icon: 'mdi-delete',
+          icon: 'mdi-delete-outline',
           iconColor: 'error',
           condition: (item) => item.possible_actions.find(action => action === 'delete'),
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.deleteTemplate
         },
         {
@@ -151,6 +156,7 @@ export default {
           icon: 'mdi-plus-circle-outline',
           iconColor: 'primary',
           condition: (item) => item.possible_actions.find(action => action === 'new_version'),
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.newTemplateVersion
         },
         {
@@ -158,6 +164,7 @@ export default {
           icon: 'mdi-close-octagon-outline',
           iconColor: 'primary',
           condition: (item) => item.possible_actions.find(action => action === 'inactivate'),
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.inactivateTemplate
         },
         {
@@ -165,6 +172,7 @@ export default {
           icon: 'mdi-undo-variant',
           iconColor: 'primary',
           condition: (item) => item.possible_actions.find(action => action === 'reactivate'),
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.reactivateTemplate
         },
         {

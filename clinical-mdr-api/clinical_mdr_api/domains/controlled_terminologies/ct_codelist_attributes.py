@@ -1,6 +1,7 @@
 from dataclasses import dataclass
-from typing import AbstractSet, Callable, Optional, Sequence
+from typing import AbstractSet, Callable, Self, Sequence
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemAggregateRootBase,
     LibraryItemMetadataVO,
@@ -16,27 +17,27 @@ class CTCodelistAttributesVO:
     The CTCodelistAttributesVO acts as the value object for a single CTCodelist attribute
     """
 
-    name: Optional[str]
+    name: str | None
     catalogue_name: str
-    parent_codelist_uid: Optional[str]
-    child_codelist_uids: Optional[Sequence[str]]
-    submission_value: Optional[str]
-    preferred_term: Optional[str]
-    definition: Optional[str]
-    extensible: Optional[bool]
+    parent_codelist_uid: str | None
+    child_codelist_uids: Sequence[str] | None
+    submission_value: str | None
+    preferred_term: str | None
+    definition: str | None
+    extensible: bool | None
 
     @classmethod
     def from_repository_values(
         cls,
-        name: Optional[str],
+        name: str | None,
         catalogue_name: str,
-        parent_codelist_uid: Optional[str],
-        child_codelist_uids: Optional[Sequence[str]],
-        submission_value: Optional[str],
-        preferred_term: Optional[str],
-        definition: Optional[str],
-        extensible: Optional[bool],
-    ) -> "CTCodelistAttributesVO":
+        parent_codelist_uid: str | None,
+        child_codelist_uids: Sequence[str] | None,
+        submission_value: str | None,
+        preferred_term: str | None,
+        definition: str | None,
+        extensible: bool | None,
+    ) -> Self:
         ct_codelist_attribute_vo = cls(
             name=name,
             catalogue_name=catalogue_name,
@@ -53,37 +54,39 @@ class CTCodelistAttributesVO:
     @classmethod
     def from_input_values(
         cls,
-        name: Optional[str],
+        name: str | None,
         catalogue_name: str,
-        parent_codelist_uid: Optional[str],
-        submission_value: Optional[str],
-        preferred_term: Optional[str],
-        definition: Optional[str],
-        extensible: Optional[bool],
+        parent_codelist_uid: str | None,
+        submission_value: str | None,
+        preferred_term: str | None,
+        definition: str | None,
+        extensible: bool | None,
         catalogue_exists_callback: Callable[[str], bool],
         codelist_exists_by_uid_callback: Callable[[str], bool] = lambda _: False,
         codelist_exists_by_name_callback: Callable[[str], bool] = lambda _: False,
         codelist_exists_by_submission_value_callback: Callable[
             [str], bool
         ] = lambda _: False,
-        child_codelist_uids: Optional[str] = None,
-    ) -> "CTCodelistAttributesVO":
+        child_codelist_uids: str | None = None,
+    ) -> Self:
         if (
             not codelist_exists_by_uid_callback(parent_codelist_uid)
             and parent_codelist_uid
         ):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"There is no codelist identified by provided parent codelist uid ({parent_codelist_uid})"
             )
 
         if not catalogue_exists_callback(catalogue_name):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"There is no catalogue identified by provided catalogue name ({catalogue_name})"
             )
         if codelist_exists_by_name_callback(name):
-            raise ValueError(f"CTCodelistAttributes with name ({name}) already exists")
+            raise exceptions.ValidationException(
+                f"CTCodelistAttributes with name ({name}) already exists"
+            )
         if codelist_exists_by_submission_value_callback(submission_value):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"CTCodelistAttributes with submission_value ({submission_value}) already exists"
             )
 
@@ -118,9 +121,9 @@ class CTCodelistAttributesAR(LibraryItemAggregateRootBase):
         cls,
         uid: str,
         ct_codelist_attributes_vo: CTCodelistAttributesVO,
-        library: Optional[LibraryVO],
+        library: LibraryVO | None,
         item_metadata: LibraryItemMetadataVO,
-    ) -> "CTCodelistAttributesAR":
+    ) -> Self:
         ct_codelist_ar = cls(
             _uid=uid,
             _ct_codelist_attributes_vo=ct_codelist_attributes_vo,
@@ -136,11 +139,11 @@ class CTCodelistAttributesAR(LibraryItemAggregateRootBase):
         author: str,
         ct_codelist_attributes_vo: CTCodelistAttributesVO,
         library: LibraryVO,
-        generate_uid_callback: Callable[[], Optional[str]] = (lambda: None),
-    ) -> "CTCodelistAttributesAR":
+        generate_uid_callback: Callable[[], str | None] = (lambda: None),
+    ) -> Self:
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(author=author)
         if not library.is_editable:
-            raise ValueError(
+            raise exceptions.BusinessLogicException(
                 f"The library with the name='{library.name}' does not allow to create objects."
             )
         ar = cls(
@@ -154,7 +157,7 @@ class CTCodelistAttributesAR(LibraryItemAggregateRootBase):
     def edit_draft(
         self,
         author: str,
-        change_description: Optional[str],
+        change_description: str | None,
         ct_codelist_vo: CTCodelistAttributesVO,
         codelist_exists_by_name_callback: Callable[[str], bool],
         codelist_exists_by_submission_value_callback: Callable[[str], bool],
@@ -167,7 +170,7 @@ class CTCodelistAttributesAR(LibraryItemAggregateRootBase):
             codelist_exists_by_name_callback(ct_codelist_vo.name)
             and self.name != ct_codelist_vo.name
         ):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"CTCodelistAttributes with name ({ct_codelist_vo.name}) already exists."
             )
         if (
@@ -176,7 +179,7 @@ class CTCodelistAttributesAR(LibraryItemAggregateRootBase):
             )
             and self.ct_codelist_vo.submission_value != ct_codelist_vo.submission_value
         ):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"CTCodelistAttributes with submission_value ({ct_codelist_vo.submission_value}) already exists."
             )
         if self._ct_codelist_attributes_vo != ct_codelist_vo:

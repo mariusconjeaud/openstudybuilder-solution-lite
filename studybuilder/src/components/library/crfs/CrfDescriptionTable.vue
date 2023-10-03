@@ -10,13 +10,12 @@
     <v-btn
       class="ml-2"
       fab
-      dark
       small
       color="primary"
       @click.stop="addLanguage"
       :label="$t('CRFForms.new_translation')"
       data-cy="form-new-translation"
-      :disabled="readOnly">
+      :disabled="readOnly || !checkPermission($roles.LIBRARY_WRITE)">
       <v-icon dark>
         mdi-plus
       </v-icon>
@@ -128,7 +127,7 @@
       @click="removeLanguage(index)"
       :disabled="readOnly">
       <v-icon dark>
-        mdi-trash-can
+        mdi-delete-outline
       </v-icon>
     </v-btn>
   </template>
@@ -140,8 +139,10 @@ import crfs from '@/api/crfs'
 import NNTable from '@/components/tools/NNTable'
 import terms from '@/api/controlledTerminology/terms'
 import { VueEditor } from 'vue2-editor'
+import { accessGuard } from '@/mixins/accessRoleVerifier'
 
 export default {
+  mixins: [accessGuard],
   components: {
     NNTable,
     VueEditor

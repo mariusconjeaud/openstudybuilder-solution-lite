@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable, Optional, Sequence, Tuple
+from typing import Callable, Self, Sequence
 
 from clinical_mdr_api.domains.controlled_terminologies.ct_term_attributes import (
     CTTermAttributesAR,
@@ -24,22 +24,22 @@ class EndpointTemplateAR(TemplateAggregateRootBase):
     behavior. Inherits generic template versioning behaviors
     """
 
-    _indications: Optional[Sequence[DictionaryTermAR]] = None
+    _indications: Sequence[DictionaryTermAR] | None = None
 
-    _categories: Optional[Sequence[Tuple[CTTermNameAR, CTTermAttributesAR]]] = None
+    _categories: Sequence[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None
 
-    _subcategories: Optional[Sequence[Tuple[CTTermNameAR, CTTermAttributesAR]]] = None
+    _subcategories: Sequence[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None
 
     @property
     def indications(self) -> Sequence[DictionaryTermAR]:
         return self._indications
 
     @property
-    def categories(self) -> Sequence[Tuple[CTTermNameAR, CTTermAttributesAR]]:
+    def categories(self) -> Sequence[tuple[CTTermNameAR, CTTermAttributesAR]]:
         return self._categories
 
     @property
-    def sub_categories(self) -> Sequence[Tuple[CTTermNameAR, CTTermAttributesAR]]:
+    def sub_categories(self) -> Sequence[tuple[CTTermNameAR, CTTermAttributesAR]]:
         return self._subcategories
 
     @classmethod
@@ -51,13 +51,11 @@ class EndpointTemplateAR(TemplateAggregateRootBase):
         library: LibraryVO,
         item_metadata: LibraryItemMetadataVO,
         study_count: int = 0,
-        counts: Optional[InstantiationCountsVO] = None,
-        indications: Optional[Sequence[DictionaryTermAR]] = None,
-        categories: Optional[Sequence[Tuple[CTTermNameAR, CTTermAttributesAR]]] = None,
-        sub_categories: Optional[
-            Sequence[Tuple[CTTermNameAR, CTTermAttributesAR]]
-        ] = None,
-    ) -> "TemplateAggregateRootBase":
+        counts: InstantiationCountsVO | None = None,
+        indications: Sequence[DictionaryTermAR] | None = None,
+        categories: Sequence[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None,
+        sub_categories: Sequence[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None,
+    ) -> Self:
         ar = cls(
             _uid=uid,
             _sequence_id=sequence_id,
@@ -79,24 +77,20 @@ class EndpointTemplateAR(TemplateAggregateRootBase):
         author: str,
         template: TemplateVO,
         library: LibraryVO,
-        template_value_exists_callback: Callable[
-            [TemplateVO], bool
-        ],  # = (lambda _: False),
-        generate_uid_callback: Callable[[], Optional[str]] = (lambda: None),
-        generate_seq_id_callback: Callable[[str], Optional[str]] = (lambda _: None),
-        indications: Optional[Sequence[DictionaryTermAR]] = None,
-        categories: Optional[Sequence[Tuple[CTTermNameAR, CTTermAttributesAR]]] = None,
-        sub_categories: Optional[
-            Sequence[Tuple[CTTermNameAR, CTTermAttributesAR]]
-        ] = None,
-    ) -> "EndpointTemplateAR":
-        ar: EndpointTemplateAR = super().from_input_values(
+        generate_uid_callback: Callable[[], str | None] = (lambda: None),
+        next_available_sequence_id_callback: Callable[[str], str | None] = (
+            lambda _: None
+        ),
+        indications: Sequence[DictionaryTermAR] | None = None,
+        categories: Sequence[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None,
+        sub_categories: Sequence[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None,
+    ) -> Self:
+        ar: Self = super().from_input_values(
             author=author,
             template=template,
             library=library,
-            template_value_exists_callback=template_value_exists_callback,
             generate_uid_callback=generate_uid_callback,
-            generate_seq_id_callback=generate_seq_id_callback,
+            next_available_sequence_id_callback=next_available_sequence_id_callback,
         )
         ar._indications = indications
         ar._categories = categories

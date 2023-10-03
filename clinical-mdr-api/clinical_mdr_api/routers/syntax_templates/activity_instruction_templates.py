@@ -1,6 +1,7 @@
 """Activity instruction templates router."""
 
-from typing import Any, List, Optional, Sequence
+# Prefixed with "/activity-instruction-templates"
+from typing import Any, Sequence
 
 from fastapi import APIRouter, Body, Depends, Path, Query, Request, Response
 from fastapi import status as fast_api_status
@@ -19,7 +20,7 @@ from clinical_mdr_api.models.syntax_templates.template_parameter_term import (
     MultiTemplateParameterTerm,
 )
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.oauth import get_current_user_id
+from clinical_mdr_api.oauth import get_current_user_id, rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.syntax_pre_instances.activity_instruction_pre_instances import (
@@ -59,6 +60,7 @@ name='MORE TESTING of the superiority in the efficacy of [Intervention] with [Ac
 
 @router.get(
     "",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns all activity instruction templates in their latest/newest version.",
     description=f"""
 Allowed parameters include : filter on fields, sort by field name with sort direction, pagination.
@@ -130,7 +132,8 @@ Allowed parameters include : filter on fields, sort by field name with sort dire
 # pylint: disable=unused-argument
 def get_activity_instruction_templates(
     request: Request,  # request is actually required by the allow_exports decorator
-    status: Optional[LibraryItemStatus] = Query(
+    status: LibraryItemStatus
+    | None = Query(
         None,
         description="If specified, only those activity instruction templates will be returned that are currently in the specified status. "
         "This may be particularly useful if the activity instruction template has "
@@ -140,24 +143,24 @@ def get_activity_instruction_templates(
         "Valid values are: 'Final', 'Draft' or 'Retired'.",
     ),
     sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
-    page_number: Optional[int] = Query(
-        1, ge=1, description=_generic_descriptions.PAGE_NUMBER
-    ),
-    page_size: Optional[int] = Query(
+    page_number: int
+    | None = Query(1, ge=1, description=_generic_descriptions.PAGE_NUMBER),
+    page_size: int
+    | None = Query(
         config.DEFAULT_PAGE_SIZE,
         ge=0,
         le=config.MAX_PAGE_SIZE,
         description=_generic_descriptions.PAGE_SIZE,
     ),
-    filters: Optional[Json] = Query(
+    filters: Json
+    | None = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
-    operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    total_count: Optional[bool] = Query(
-        False, description=_generic_descriptions.TOTAL_COUNT
-    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    total_count: bool
+    | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
     current_user_id: str = Depends(get_current_user_id),
 ) -> CustomPage[models.ActivityInstructionTemplate]:
     results = Service(current_user_id).get_all(
@@ -172,16 +175,17 @@ def get_activity_instruction_templates(
     )
 
     return CustomPage.create(
-        items=results.items, total=results.total_count, page=page_number, size=page_size
+        items=results.items, total=results.total, page=page_number, size=page_size
     )
 
 
 @router.get(
     "/headers",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=List[Any],
+    response_model=list[Any],
     status_code=200,
     responses={
         404: {
@@ -193,7 +197,8 @@ def get_activity_instruction_templates(
 )
 def get_distinct_values_for_header(
     current_user_id: str = Depends(get_current_user_id),
-    status: Optional[LibraryItemStatus] = Query(
+    status: LibraryItemStatus
+    | None = Query(
         None,
         description="If specified, only those activity instruction templates will be returned that are currently in the specified status. "
         "This may be particularly useful if the activity instruction template has "
@@ -203,18 +208,17 @@ def get_distinct_values_for_header(
         "Valid values are: 'Final', 'Draft' or 'Retired'.",
     ),
     field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
-    search_string: Optional[str] = Query(
-        "", description=_generic_descriptions.HEADER_SEARCH_STRING
-    ),
-    filters: Optional[Json] = Query(
+    search_string: str
+    | None = Query("", description=_generic_descriptions.HEADER_SEARCH_STRING),
+    filters: Json
+    | None = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
-    operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    result_count: Optional[int] = Query(
-        10, description=_generic_descriptions.HEADER_RESULT_COUNT
-    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    result_count: int
+    | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
 ):
     return Service(current_user_id).get_distinct_values_for_header(
         status=status,
@@ -228,6 +232,7 @@ def get_distinct_values_for_header(
 
 @router.get(
     "/audit-trail",
+    dependencies=[rbac.LIBRARY_READ],
     summary="",
     description="",
     response_model=CustomPage[models.ActivityInstructionTemplate],
@@ -238,18 +243,17 @@ def get_distinct_values_for_header(
     },
 )
 def retrieve_audit_trail(
-    page_number: Optional[int] = Query(
-        1, ge=1, description=_generic_descriptions.PAGE_NUMBER
-    ),
-    page_size: Optional[int] = Query(
+    page_number: int
+    | None = Query(1, ge=1, description=_generic_descriptions.PAGE_NUMBER),
+    page_size: int
+    | None = Query(
         config.DEFAULT_PAGE_SIZE,
         ge=0,
         le=config.MAX_PAGE_SIZE,
         description=_generic_descriptions.PAGE_SIZE,
     ),
-    total_count: Optional[bool] = Query(
-        False, description=_generic_descriptions.TOTAL_COUNT
-    ),
+    total_count: bool
+    | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
     current_user_id: str = Depends(get_current_user_id),
 ):
     results = Service(current_user_id).retrieve_audit_trail(
@@ -257,16 +261,17 @@ def retrieve_audit_trail(
     )
 
     return CustomPage.create(
-        items=results.items, total=results.total_count, page=page_number, size=page_size
+        items=results.items, total=results.total, page=page_number, size=page_size
     )
 
 
 @router.get(
     "/{uid}",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns the latest/newest version of a specific activity instruction template identified by 'uid'.",
     description="""If multiple request query parameters are used, then they need to
     match all at the same time (they are combined with the AND operation).""",
-    response_model=Optional[ActivityInstructionTemplateWithCount],
+    response_model=ActivityInstructionTemplateWithCount | None,
     status_code=200,
     responses={
         404: {
@@ -291,13 +296,14 @@ def get_activity_instruction_template(
 
 @router.get(
     "/{uid}/versions",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns the version history of a specific activity instruction template identified by 'uid'.",
     description=f"""
 The returned versions are ordered by `start_date` descending (newest entries first).
 
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=List[models.ActivityInstructionTemplateVersion],
+    response_model=list[models.ActivityInstructionTemplateVersion],
     status_code=200,
     responses={
         200: {
@@ -376,6 +382,7 @@ def get_activity_instruction_template_versions(
 
 @router.get(
     "/{uid}/versions/{version}",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns a specific version of a specific activity instruction template identified by 'uid' and 'version'.",
     description="**Multiple versions**:\n\n"
     "Technically, there can be multiple versions of the activity instruction template with the same version number. "
@@ -407,9 +414,10 @@ def get_activity_instruction_template_version(
 
 @router.get(
     "/{uid}/releases",
+    dependencies=[rbac.LIBRARY_READ],
     summary="List all final versions of a template identified by 'uid', including number of studies using a specific version",
     description="",
-    response_model=List[models.ActivityInstructionTemplate],
+    response_model=list[models.ActivityInstructionTemplate],
     status_code=200,
     responses={
         404: {
@@ -428,7 +436,8 @@ def get_activity_instruction_template_releases(
 
 @router.post(
     "",
-    summary="Creates a new activity instruction template in 'Draft' status.",
+    dependencies=[rbac.LIBRARY_WRITE_OR_STUDY_WRITE],
+    summary="Creates a new activity instruction template in 'Draft' status or returns the activity instruction template if it already exists.",
     description="""This request is only valid if the activity instruction template
 * belongs to a library that allows creating (the 'is_editable' property of the library needs to be true).
 
@@ -470,6 +479,7 @@ def create_activity_instruction_template(
 
 @router.patch(
     "/{uid}",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Updates the activity instruction template identified by 'uid'.",
     description="""This request is only valid if the activity instruction template
 * is in 'Draft' status and
@@ -517,6 +527,7 @@ def edit(
 
 @router.patch(
     "/{uid}/indexings",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Updates the indexings of the activity instruction template identified by 'uid'.",
     description="""This request is only valid if the template
     * belongs to a library that allows editing (the 'is_editable' property of the library needs to be true).
@@ -548,6 +559,7 @@ def patch_indexings(
 
 @router.patch(
     "/{uid}/default-parameter-terms",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Edit the default parameter terms of the activity instruction template identified by 'uid'.",
     description="""This request is only valid if the activity instruction template
 * is in 'Draft' status and
@@ -582,7 +594,8 @@ This endpoint can be used to either :
 )
 def patch_default_parameter_terms(
     uid: str = ActivityInstructionTemplateUID,
-    set_number: Optional[int] = Body(
+    set_number: int
+    | None = Body(
         description="Optionally, the set number of the default parameter terms to be patched. If not set, a new set will be created.",
     ),
     default_parameter_terms: Sequence[MultiTemplateParameterTerm] = Body(
@@ -600,6 +613,7 @@ def patch_default_parameter_terms(
 
 @router.post(
     "/{uid}/versions",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Creates a new version of the activity instruction template identified by 'uid'.",
     description="""This request is only valid if the activity instruction template
 * is in 'Final' or 'Retired' status only (so no latest 'Draft' status exists) and
@@ -645,6 +659,7 @@ def create_new_version(
 
 @router.post(
     "/{uid}/approvals",
+    dependencies=[rbac.LIBRARY_WRITE_OR_STUDY_WRITE],
     summary="Approves the activity instruction template identified by 'uid'.",
     description="""This request is only valid if the activity instruction template
 * is in 'Draft' status and
@@ -692,6 +707,7 @@ def approve(
 
 @router.delete(
     "/{uid}/activations",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Inactivates/deactivates the activity instruction template identified by 'uid' and its Pre-Instances.",
     description="""This request is only valid if the activity instruction template
 * is in 'Final' status only (so no latest 'Draft' status exists).
@@ -726,6 +742,7 @@ def inactivate(
 
 @router.post(
     "/{uid}/activations",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Reactivates the activity instruction template identified by 'uid' and its Pre-Instances.",
     description="""This request is only valid if the activity instruction template
 * is in 'Retired' status only (so no latest 'Draft' status exists).
@@ -760,6 +777,7 @@ def reactivate(
 
 @router.delete(
     "/{uid}",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Deletes the activity instruction template identified by 'uid'.",
     description="""This request is only valid if \n
 * the activity instruction template is in 'Draft' status and
@@ -798,6 +816,7 @@ def delete_activity_instruction_template(
 #       however: check if that is ok with regards to the data volume we expect in the future. is paging needed?
 @router.get(
     "/{uid}/parameters",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns all parameters used in the activity instruction template identified by 'uid'. Includes the available terms per parameter.",
     description="""The returned parameters are ordered
 0. as they occur in the activity instruction template
@@ -808,7 +827,7 @@ Per parameter, the parameter.terms are ordered by
 Note that parameters may be used multiple times in templates.
 In that case, the same parameter (with the same terms) is included multiple times in the response.
     """,
-    response_model=List[models.TemplateParameter],
+    response_model=list[models.TemplateParameter],
     status_code=200,
     responses={
         404: _generic_descriptions.ERROR_404,
@@ -826,6 +845,7 @@ def get_parameters(
 
 @router.post(
     "/pre-validate",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Validates the content of an activity instruction template without actually processing it.",
     description="""Be aware that - even if this request is accepted - there is no guarantee that
 a following request to e.g. *[POST] /activity-instruction-templates* or *[PATCH] /activity-instruction-templates/{uid}*
@@ -861,6 +881,7 @@ def pre_validate(
 
 @router.post(
     "/{uid}/pre-instances",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Create a Pre-Instance",
     description="",
     response_model=models.ActivityInstructionPreInstance,

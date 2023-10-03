@@ -17,7 +17,7 @@ StudyBuilder consists of a few main components, that are all included as subdire
 - neo4j-mdr-db: Configuration files and initialization scripts for the Neo4j database.
 - mdr-standards-import: Scripts for populating the database with clinical standards.
 - clinical-mdr-api: The Python/FastAPI backend.
-- data-import: Python scripts for populating the database with sponsor standards and codelists.
+- studybuilder-import: Python scripts for populating the database with sponsor standards and codelists.
 - studybuilder: The Vue.js frontend.
 - documentation-portal: Project documentation.
 
@@ -56,9 +56,9 @@ If this is not working see this link for Ubuntu rootless configuration:
 For low-end systems, the database container may fail for low-on-memory 
 reasons. In that case, update the following values in `compose.yaml`
 ```
-        NEO4J_dbms_memory_heap_initial__size: "1G"
-        NEO4J_dbms_memory_heap_max__size: "1G"
-        NEO4J_dbms_memory_pagecache_size: "500M"
+        NEO4J_server_memory_heap_initial__size: "1G"
+        NEO4J_server_memory_heap_max__size: "1G"
+        NEO4J_server_memory_pagecache_size: "500M"
 ```
 
 Mind that this will choke the performance of the Neo4j database,
@@ -93,7 +93,7 @@ Your folder structure should look like this:
 ```
 ─ OpenStudyBuilder-Solution
   ├─ clinical-mdr-api
-  ├─ data-import
+  ├─ studybuilder-import
   ├─ documentationfiles
   ├─ documentation-portal
   ├─ frontendfiles

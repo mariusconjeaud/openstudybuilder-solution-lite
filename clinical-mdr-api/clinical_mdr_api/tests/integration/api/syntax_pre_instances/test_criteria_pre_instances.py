@@ -12,7 +12,6 @@ Tests for criteria-templates endpoints
 import json
 import logging
 from functools import reduce
-from typing import List
 
 import pytest
 from fastapi.testclient import TestClient
@@ -37,7 +36,7 @@ from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 log = logging.getLogger(__name__)
 
 # Global variables shared between fixtures and tests
-criteria_pre_instances: List[CriteriaPreInstance]
+criteria_pre_instances: list[CriteriaPreInstance]
 criteria_template: CriteriaTemplate
 ct_term_inclusion: models.CTTerm
 dictionary_term_indication: models.DictionaryTerm
@@ -249,6 +248,7 @@ CRITERIA_PRE_INSTANCE_FIELDS_ALL = [
     "sequence_id",
     "template_uid",
     "template_name",
+    "guidance_text",
     "template_type_uid",
     "status",
     "version",
@@ -287,8 +287,9 @@ def test_get_criteria(api_client):
         assert res[key] is not None
 
     assert res["uid"] == criteria_pre_instances[0].uid
-    assert res["sequence_id"] == "CIT1P1"
+    assert res["sequence_id"] == "CI1P1"
     assert res["name"] == f"Default name with [{text_value_1.name_sentence_case}]"
+    assert res["guidance_text"] == criteria_template.guidance_text
     assert (
         res["parameter_terms"][0]["terms"][0]["name"] == text_value_1.name_sentence_case
     )
@@ -408,9 +409,10 @@ def test_get_versions_of_criteria_pre_instance(api_client):
 
     assert len(res) == 2
     assert res[0]["uid"] == criteria_pre_instances[1].uid
-    assert res[0]["sequence_id"] == "CIT1P2"
+    assert res[0]["sequence_id"] == "CI1P2"
     assert res[0]["template_uid"] == criteria_template.uid
     assert res[0]["template_name"] == criteria_template.name
+    assert res[0]["guidance_text"] == criteria_template.guidance_text
     assert res[0]["template_type_uid"] == ct_term_inclusion.term_uid
     assert res[0]["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
     assert (
@@ -433,9 +435,10 @@ def test_get_versions_of_criteria_pre_instance(api_client):
     assert res[0]["status"] == "Final"
     assert res[0]["possible_actions"] == ["inactivate", "new_version"]
     assert res[1]["uid"] == criteria_pre_instances[1].uid
-    assert res[1]["sequence_id"] == "CIT1P2"
+    assert res[1]["sequence_id"] == "CI1P2"
     assert res[1]["template_uid"] == criteria_template.uid
     assert res[1]["template_name"] == criteria_template.name
+    assert res[1]["guidance_text"] == criteria_template.guidance_text
     assert res[1]["template_type_uid"] == ct_term_inclusion.term_uid
     assert res[1]["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
     assert (
@@ -519,6 +522,7 @@ def test_create_new_version_of_criteria_pre_instance(api_client):
     assert res["template_uid"] == criteria_template.uid
     assert res["template_name"] == criteria_template.name
     assert res["template_type_uid"] == ct_term_inclusion.term_uid
+    assert res["guidance_text"] == criteria_template.guidance_text
     assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
     assert (
         res["indications"][0]["dictionary_id"]
@@ -559,6 +563,7 @@ def test_update_criteria_pre_instance(api_client):
                 ],
             }
         ],
+        "guidance_text": "new guidance text",
         "change_description": "added term",
     }
     response = api_client.patch(f"{URL}/{criteria_pre_instances[3].uid}", json=data)
@@ -571,6 +576,7 @@ def test_update_criteria_pre_instance(api_client):
     assert res["template_uid"] == criteria_template.uid
     assert res["template_name"] == criteria_template.name
     assert res["template_type_uid"] == ct_term_inclusion.term_uid
+    assert res["guidance_text"] == data["guidance_text"]
     assert (
         res["name"]
         == f"Default name with [{text_value_1.name_sentence_case} and {text_value_2.name_sentence_case}]"
@@ -602,6 +608,195 @@ def test_update_criteria_pre_instance(api_client):
     assert set(list(res.keys())) == set(CRITERIA_PRE_INSTANCE_FIELDS_ALL)
     for key in CRITERIA_PRE_INSTANCE_FIELDS_NOT_NULL:
         assert res[key] is not None
+
+
+def test_get_criteriaas(api_client):
+    response = api_client.get(f"{URL}/{criteria_pre_instances[3].uid}")
+    res = response.json()
+
+    assert response.status_code == 200
+
+    # Check fields included in the response
+    fields_all_set = set(CRITERIA_PRE_INSTANCE_FIELDS_ALL)
+    assert set(list(res.keys())) == fields_all_set
+    for key in CRITERIA_PRE_INSTANCE_FIELDS_NOT_NULL:
+        assert res[key] is not None
+
+    assert res["uid"] == criteria_pre_instances[3].uid
+    assert res["sequence_id"] == "CI1P4"
+    assert res["guidance_text"] == "new guidance text"
+
+
+def test_update_criteria_pre_instanceas(api_client):
+    data = {
+        "parameter_terms": [
+            {
+                "position": 1,
+                "conjunction": "and",
+                "terms": [
+                    {
+                        "index": 1,
+                        "name": text_value_1.name,
+                        "uid": text_value_1.uid,
+                        "type": "TextValue",
+                    },
+                    {
+                        "index": 2,
+                        "name": text_value_2.name,
+                        "uid": text_value_2.uid,
+                        "type": "TextValue",
+                    },
+                ],
+            }
+        ],
+        "guidance_text": "haha guidance text",
+        "change_description": "added term",
+    }
+    response = api_client.patch(f"{URL}/{criteria_pre_instances[3].uid}", json=data)
+    res = response.json()
+    log.info("Updated Criteria Pre-Instance: %s", res)
+
+    assert response.status_code == 200
+    assert res["uid"]
+    assert res["sequence_id"]
+    assert res["template_uid"] == criteria_template.uid
+    assert res["template_name"] == criteria_template.name
+    assert res["template_type_uid"] == ct_term_inclusion.term_uid
+    assert res["guidance_text"] == data["guidance_text"]
+    assert (
+        res["name"]
+        == f"Default name with [{text_value_1.name_sentence_case} and {text_value_2.name_sentence_case}]"
+    )
+    assert (
+        res["parameter_terms"][0]["terms"][0]["name"] == text_value_1.name_sentence_case
+    )
+    assert res["parameter_terms"][0]["terms"][0]["uid"] == text_value_1.uid
+    assert (
+        res["parameter_terms"][0]["terms"][1]["name"] == text_value_2.name_sentence_case
+    )
+    assert res["parameter_terms"][0]["terms"][1]["uid"] == text_value_2.uid
+    assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
+    assert (
+        res["indications"][0]["dictionary_id"]
+        == dictionary_term_indication.dictionary_id
+    )
+    assert res["indications"][0]["name"] == dictionary_term_indication.name
+    assert res["sub_categories"][0]["term_uid"] == ct_term_subcategory.term_uid
+    assert (
+        res["sub_categories"][0]["catalogue_name"] == ct_term_subcategory.catalogue_name
+    )
+    assert res["sub_categories"][0]["codelist_uid"] == ct_term_subcategory.codelist_uid
+    assert res["categories"][0]["term_uid"] == ct_term_category.term_uid
+    assert res["categories"][0]["catalogue_name"] == ct_term_category.catalogue_name
+    assert res["categories"][0]["codelist_uid"] == ct_term_category.codelist_uid
+    assert res["version"] == "0.3"
+    assert res["status"] == "Draft"
+    assert set(list(res.keys())) == set(CRITERIA_PRE_INSTANCE_FIELDS_ALL)
+    for key in CRITERIA_PRE_INSTANCE_FIELDS_NOT_NULL:
+        assert res[key] is not None
+
+
+def test_get_criteriaaas(api_client):
+    response = api_client.get(f"{URL}/{criteria_pre_instances[3].uid}")
+    res = response.json()
+
+    assert response.status_code == 200
+
+    # Check fields included in the response
+    fields_all_set = set(CRITERIA_PRE_INSTANCE_FIELDS_ALL)
+    assert set(list(res.keys())) == fields_all_set
+    for key in CRITERIA_PRE_INSTANCE_FIELDS_NOT_NULL:
+        assert res[key] is not None
+
+    assert res["uid"] == criteria_pre_instances[3].uid
+    assert res["sequence_id"] == "CI1P4"
+    assert res["guidance_text"] == "haha guidance text"
+
+
+def test_update_criterisa_pre_isnstanceas(api_client):
+    data = {
+        "parameter_terms": [
+            {
+                "position": 1,
+                "conjunction": "and",
+                "terms": [
+                    {
+                        "index": 1,
+                        "name": text_value_1.name,
+                        "uid": text_value_1.uid,
+                        "type": "TextValue",
+                    },
+                    {
+                        "index": 2,
+                        "name": text_value_2.name,
+                        "uid": text_value_2.uid,
+                        "type": "TextValue",
+                    },
+                ],
+            }
+        ],
+        "guidance_text": None,
+        "change_description": "added term",
+    }
+    response = api_client.patch(f"{URL}/{criteria_pre_instances[3].uid}", json=data)
+    res = response.json()
+    log.info("Updated Criteria Pre-Instance: %s", res)
+
+    assert response.status_code == 200
+    assert res["uid"]
+    assert res["sequence_id"]
+    assert res["template_uid"] == criteria_template.uid
+    assert res["template_name"] == criteria_template.name
+    assert res["template_type_uid"] == ct_term_inclusion.term_uid
+    assert res["guidance_text"] == "haha guidance text"
+    assert (
+        res["name"]
+        == f"Default name with [{text_value_1.name_sentence_case} and {text_value_2.name_sentence_case}]"
+    )
+    assert (
+        res["parameter_terms"][0]["terms"][0]["name"] == text_value_1.name_sentence_case
+    )
+    assert res["parameter_terms"][0]["terms"][0]["uid"] == text_value_1.uid
+    assert (
+        res["parameter_terms"][0]["terms"][1]["name"] == text_value_2.name_sentence_case
+    )
+    assert res["parameter_terms"][0]["terms"][1]["uid"] == text_value_2.uid
+    assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
+    assert (
+        res["indications"][0]["dictionary_id"]
+        == dictionary_term_indication.dictionary_id
+    )
+    assert res["indications"][0]["name"] == dictionary_term_indication.name
+    assert res["sub_categories"][0]["term_uid"] == ct_term_subcategory.term_uid
+    assert (
+        res["sub_categories"][0]["catalogue_name"] == ct_term_subcategory.catalogue_name
+    )
+    assert res["sub_categories"][0]["codelist_uid"] == ct_term_subcategory.codelist_uid
+    assert res["categories"][0]["term_uid"] == ct_term_category.term_uid
+    assert res["categories"][0]["catalogue_name"] == ct_term_category.catalogue_name
+    assert res["categories"][0]["codelist_uid"] == ct_term_category.codelist_uid
+    assert res["version"] == "0.4"
+    assert res["status"] == "Draft"
+    assert set(list(res.keys())) == set(CRITERIA_PRE_INSTANCE_FIELDS_ALL)
+    for key in CRITERIA_PRE_INSTANCE_FIELDS_NOT_NULL:
+        assert res[key] is not None
+
+
+def test_get_cariteriaaas(api_client):
+    response = api_client.get(f"{URL}/{criteria_pre_instances[3].uid}")
+    res = response.json()
+
+    assert response.status_code == 200
+
+    # Check fields included in the response
+    fields_all_set = set(CRITERIA_PRE_INSTANCE_FIELDS_ALL)
+    assert set(list(res.keys())) == fields_all_set
+    for key in CRITERIA_PRE_INSTANCE_FIELDS_NOT_NULL:
+        assert res[key] is not None
+
+    assert res["uid"] == criteria_pre_instances[3].uid
+    assert res["sequence_id"] == "CI1P4"
+    assert res["guidance_text"] == "haha guidance text"
 
 
 def test_change_criteria_pre_instance_indexings(api_client):
@@ -637,6 +832,7 @@ def test_change_criteria_pre_instance_indexings(api_client):
     assert res["template_name"] == criteria_template.name
     assert res["template_type_uid"] == ct_term_inclusion.term_uid
     assert res["name"] == f"Default name with [{text_value_1.name_sentence_case}]"
+    assert res["guidance_text"] == criteria_template.guidance_text
     assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
     assert (
         res["indications"][0]["dictionary_id"]
@@ -680,10 +876,11 @@ def test_approve_criteria_pre_instance(api_client):
 
     assert response.status_code == 201
     assert res["uid"] == criteria_pre_instances[4].uid
-    assert res["sequence_id"] == "CIT1P5"
+    assert res["sequence_id"] == "CI1P5"
     assert res["template_uid"] == criteria_template.uid
     assert res["template_name"] == criteria_template.name
     assert res["template_type_uid"] == ct_term_inclusion.term_uid
+    assert res["guidance_text"] == criteria_template.guidance_text
     assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
     assert (
         res["indications"][0]["dictionary_id"]
@@ -708,7 +905,8 @@ def test_inactivate_criteria_pre_instance(api_client):
 
     assert response.status_code == 200
     assert res["uid"] == criteria_pre_instances[4].uid
-    assert res["sequence_id"] == "CIT1P5"
+    assert res["sequence_id"] == "CI1P5"
+    assert res["guidance_text"] == criteria_template.guidance_text
     assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
     assert (
         res["indications"][0]["dictionary_id"]
@@ -733,7 +931,8 @@ def test_reactivate_criteria_pre_instance(api_client):
 
     assert response.status_code == 200
     assert res["uid"] == criteria_pre_instances[4].uid
-    assert res["sequence_id"] == "CIT1P5"
+    assert res["sequence_id"] == "CI1P5"
+    assert res["guidance_text"] == criteria_template.guidance_text
     assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
     assert (
         res["indications"][0]["dictionary_id"]
@@ -814,3 +1013,145 @@ def test_criteria_pre_instance_audit_trail(api_client):
     ]
     actual_uids = [item["uid"] for item in res["items"]]
     assert actual_uids == expected_uids
+
+
+def test_create_pre_instance_criteria_template(api_client):
+    data = {
+        "library_name": "Sponsor",
+        "parameter_terms": [
+            {
+                "position": 1,
+                "conjunction": "",
+                "terms": [
+                    {
+                        "index": 1,
+                        "name": text_value_2.name_sentence_case,
+                        "uid": text_value_2.uid,
+                        "type": "TextValue",
+                    }
+                ],
+            }
+        ],
+        "indication_uids": [dictionary_term_indication.term_uid],
+        "category_uids": [ct_term_category.term_uid],
+        "sub_category_uids": [ct_term_subcategory.term_uid],
+    }
+    response = api_client.post(
+        f"criteria-templates/{criteria_template.uid}/pre-instances", json=data
+    )
+    res = response.json()
+    log.info("Created Criteria Pre-Instance: %s", res)
+
+    assert response.status_code == 201
+    assert "PreInstance" in res["uid"]
+    assert res["sequence_id"] == "CI1P26"
+    assert res["template_uid"] == criteria_template.uid
+    assert res["name"] == f"Default name with [{text_value_2.name_sentence_case}]"
+    assert (
+        res["parameter_terms"][0]["position"] == data["parameter_terms"][0]["position"]
+    )
+    assert (
+        res["parameter_terms"][0]["conjunction"]
+        == data["parameter_terms"][0]["conjunction"]
+    )
+    assert res["parameter_terms"][0]["terms"] == data["parameter_terms"][0]["terms"]
+    assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
+    assert (
+        res["indications"][0]["dictionary_id"]
+        == dictionary_term_indication.dictionary_id
+    )
+    assert res["indications"][0]["name"] == dictionary_term_indication.name
+    assert res["categories"][0]["term_uid"] == ct_term_category.term_uid
+    assert res["categories"][0]["catalogue_name"] == ct_term_category.catalogue_name
+    assert res["categories"][0]["codelist_uid"] == ct_term_category.codelist_uid
+    assert res["sub_categories"][0]["term_uid"] == ct_term_subcategory.term_uid
+    assert (
+        res["sub_categories"][0]["catalogue_name"] == ct_term_subcategory.catalogue_name
+    )
+    assert res["sub_categories"][0]["codelist_uid"] == ct_term_subcategory.codelist_uid
+    assert res["version"] == "0.1"
+    assert res["status"] == "Draft"
+
+
+def test_criteria_pre_instance_sequence_id_generation(api_client):
+    ct_term = TestUtils.create_ct_term(sponsor_preferred_name="EXCLUSION CRITERIA")
+    template = TestUtils.create_criteria_template(
+        name="Default [TextValue]",
+        guidance_text="Default guidance text",
+        study_uid=None,
+        type_uid=ct_term.term_uid,
+        library_name="Sponsor",
+        default_parameter_terms=[
+            MultiTemplateParameterTerm(
+                position=1,
+                conjunction="",
+                terms=[
+                    IndexedTemplateParameterTerm(
+                        index=1,
+                        name=text_value_1.name,
+                        uid=text_value_1.uid,
+                        type="TextValue",
+                    )
+                ],
+            )
+        ],
+        indication_uids=[dictionary_term_indication.term_uid],
+        category_uids=[ct_term_category.term_uid],
+        sub_category_uids=[ct_term_subcategory.term_uid],
+    )
+
+    data = {
+        "library_name": "Sponsor",
+        "parameter_terms": [
+            {
+                "position": 1,
+                "conjunction": "",
+                "terms": [
+                    {
+                        "index": 1,
+                        "name": text_value_1.name_sentence_case,
+                        "uid": text_value_1.uid,
+                        "type": "TextValue",
+                    }
+                ],
+            }
+        ],
+        "indication_uids": [dictionary_term_indication.term_uid],
+        "category_uids": [ct_term_category.term_uid],
+        "sub_category_uids": [ct_term_subcategory.term_uid],
+    }
+    response = api_client.post(
+        f"criteria-templates/{template.uid}/pre-instances", json=data
+    )
+    res = response.json()
+    log.info("Created Criteria Pre-Instance: %s", res)
+
+    assert response.status_code == 201
+    assert "PreInstance" in res["uid"]
+    assert res["sequence_id"] == "CE1P1"
+    assert res["template_uid"] == template.uid
+    assert res["name"] == f"Default [{text_value_1.name_sentence_case}]"
+    assert (
+        res["parameter_terms"][0]["position"] == data["parameter_terms"][0]["position"]
+    )
+    assert (
+        res["parameter_terms"][0]["conjunction"]
+        == data["parameter_terms"][0]["conjunction"]
+    )
+    assert res["parameter_terms"][0]["terms"] == data["parameter_terms"][0]["terms"]
+    assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
+    assert (
+        res["indications"][0]["dictionary_id"]
+        == dictionary_term_indication.dictionary_id
+    )
+    assert res["indications"][0]["name"] == dictionary_term_indication.name
+    assert res["categories"][0]["term_uid"] == ct_term_category.term_uid
+    assert res["categories"][0]["catalogue_name"] == ct_term_category.catalogue_name
+    assert res["categories"][0]["codelist_uid"] == ct_term_category.codelist_uid
+    assert res["sub_categories"][0]["term_uid"] == ct_term_subcategory.term_uid
+    assert (
+        res["sub_categories"][0]["catalogue_name"] == ct_term_subcategory.catalogue_name
+    )
+    assert res["sub_categories"][0]["codelist_uid"] == ct_term_subcategory.codelist_uid
+    assert res["version"] == "0.1"
+    assert res["status"] == "Draft"

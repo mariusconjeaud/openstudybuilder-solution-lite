@@ -30,6 +30,7 @@
         color="primary"
         @click.stop="addCriteria"
         :title="$t('EligibilityCriteriaTable.add_criteria')"
+        :disabled="!checkPermission($roles.STUDY_WRITE)"
         >
         <v-icon dark>
           mdi-plus
@@ -48,6 +49,14 @@
           :name="item.criteria.name"
           :show-prefix-and-postfix="false"
           />
+      </template>
+    </template>
+    <template v-slot:item.guidance_text="{ item }">
+      <template v-if="item.criteria_template">
+        <span v-html="item.criteria_template.guidance_text" />
+      </template>
+      <template v-else>
+        <span v-html="item.criteria.criteria_template.guidance_text" />
       </template>
     </template>
     <template v-slot:item.key_criteria="{ item }">
@@ -151,17 +160,25 @@
       @added="getStudyCriteria"
       />
   </v-dialog>
+  <eligibility-criteria-edit-form
+    :open="showEditForm"
+    :study-criteria="selectedStudyCriteria"
+    @close="closeEditForm"
+    @updated="getStudyCriteria"
+    />
   <v-dialog
-    v-model="showEditForm"
+    v-model="showHistory"
+    @keydown.esc="closeHistory"
     persistent
-    fullscreen
-    content-class="fullscreen-dialog"
+    :max-width="globalHistoryDialogMaxWidth"
+    :fullscreen="globalHistoryDialogFullscreen"
     >
-    <eligibility-criteria-edit-form
-      :study-criteria="selectedStudyCriteria"
-      @close="closeEditForm"
-      @updated="getStudyCriteria"
-      class="fullscreen-dialog"
+    <history-table
+      :title="studyCriteriaHistoryTitle"
+      @close="closeHistory"
+      :headers="headers"
+      :items="criteriaHistoryItems"
+      :html-fields="historyHtmlFields"
       />
   </v-dialog>
   <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
@@ -175,12 +192,15 @@ import ConfirmDialog from '@/components/tools/ConfirmDialog'
 import draggable from 'vuedraggable'
 import EligibilityCriteriaEditForm from './EligibilityCriteriaEditForm'
 import EligibilityCriteriaForm from './EligibilityCriteriaForm'
+import HistoryTable from '@/components/tools/HistoryTable'
 import { mapGetters } from 'vuex'
 import NNParameterHighlighter from '@/components/tools/NNParameterHighlighter'
 import NNTable from '@/components/tools/NNTable'
 import study from '@/api/study'
+import { accessGuard } from '@/mixins/accessRoleVerifier'
 
 export default {
+  mixins: [accessGuard],
   props: {
     criteriaType: Object
   },
@@ -190,6 +210,7 @@ export default {
     draggable,
     EligibilityCriteriaEditForm,
     EligibilityCriteriaForm,
+    HistoryTable,
     NNParameterHighlighter,
     NNTable
   },
@@ -219,15 +240,17 @@ export default {
       actions: [
         {
           label: this.$t('_global.edit'),
-          icon: 'mdi-pencil',
+          icon: 'mdi-pencil-outline',
           iconColor: 'primary',
-          click: this.editStudyCriteria
+          click: this.editStudyCriteria,
+          accessRole: this.$roles.STUDY_WRITE
         },
         {
           label: this.$t('_global.delete'),
-          icon: 'mdi-delete',
+          icon: 'mdi-delete-outline',
           iconColor: 'error',
-          click: this.deleteStudyCriteria
+          click: this.deleteStudyCriteria,
+          accessRole: this.$roles.STUDY_WRITE
         },
         {
           label: this.$t('_global.history'),
@@ -330,7 +353,7 @@ export default {
       })
     },
     updateKeyCriteria (value, studyCriteriaUid) {
-      study.updateStudyCriteriaKeyCriteria(this.selectedStudy.uid, studyCriteriaUid, value).then(resp => {
+      study.updateStudyCriteriaKeyCriteria(this.selectedStudy.uid, studyCriteriaUid, value).then(() => {
         this.getStudyCriteria()
       })
     },

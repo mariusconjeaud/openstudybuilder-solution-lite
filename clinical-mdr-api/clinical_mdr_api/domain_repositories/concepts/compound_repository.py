@@ -1,5 +1,3 @@
-from typing import Optional
-
 from clinical_mdr_api.domain_repositories.concepts.concept_generic_repository import (
     ConceptGenericRepository,
 )
@@ -38,9 +36,6 @@ class CompoundRepository(ConceptGenericRepository):
     root_class = CompoundRoot
     value_class = CompoundValue
     return_model = Compound
-
-    def _get_uid_or_none(self, node):
-        return node.uid if node is not None else None
 
     def _create_new_value_node(self, ar: _AggregateRootType) -> VersionValue:
         value_node = super()._create_new_value_node(ar=ar)
@@ -201,7 +196,7 @@ class CompoundRepository(ConceptGenericRepository):
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
         root: VersionRoot,
-        library: Optional[Library],
+        library: Library | None,
         relationship: VersionRelationship,
         value: VersionValue,
     ) -> CompoundAR:

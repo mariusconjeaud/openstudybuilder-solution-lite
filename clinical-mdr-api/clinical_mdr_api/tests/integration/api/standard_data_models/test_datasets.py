@@ -12,7 +12,6 @@ Tests for /standards/datasets endpoints
 import json
 import logging
 from functools import reduce
-from typing import List
 
 import pytest
 from fastapi.testclient import TestClient
@@ -31,10 +30,10 @@ from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 log = logging.getLogger(__name__)
 
 # Global variables shared between fixtures and tests
-datasets: List[Dataset]
-dataset_classes: List[DatasetClass]
+datasets: list[Dataset]
+dataset_classes: list[DatasetClass]
 data_model_catalogue_name: str
-data_model_igs: List[DataModelIG]
+data_model_igs: list[DataModelIG]
 
 
 @pytest.fixture(scope="module")

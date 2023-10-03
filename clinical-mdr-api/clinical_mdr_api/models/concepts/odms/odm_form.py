@@ -1,4 +1,4 @@
-from typing import Callable, Dict, List, Optional, Union
+from typing import Callable, Self
 
 from pydantic import BaseModel, Field
 
@@ -51,45 +51,39 @@ from clinical_mdr_api.models.utils import booltostr
 
 
 class OdmForm(ConceptModel):
-    oid: Optional[str] = Field(None, nullable=True)
-    repeating: Optional[str] = Field(None, nullable=True)
-    sdtm_version: Optional[str] = Field(None, nullable=True)
-    scope: Optional[SimpleCTTermAttributes] = Field(None, nullable=True)
-    descriptions: List[OdmDescriptionSimpleModel] = Field(None, nullable=True)
-    aliases: List[OdmAliasSimpleModel]
-    activity_groups: List[ActivityHierarchySimpleModel]
-    item_groups: List[OdmItemGroupRefModel]
-    vendor_elements: List[OdmVendorElementRelationModel]
-    vendor_attributes: List[OdmVendorAttributeRelationModel]
-    vendor_element_attributes: List[OdmVendorElementAttributeRelationModel]
-    possible_actions: List[str]
+    oid: str | None = Field(None, nullable=True)
+    repeating: str | None = Field(None, nullable=True)
+    sdtm_version: str | None = Field(None, nullable=True)
+    scope: SimpleCTTermAttributes | None = Field(None, nullable=True)
+    descriptions: list[OdmDescriptionSimpleModel] = Field(None, nullable=True)
+    aliases: list[OdmAliasSimpleModel]
+    activity_groups: list[ActivityHierarchySimpleModel]
+    item_groups: list[OdmItemGroupRefModel]
+    vendor_elements: list[OdmVendorElementRelationModel]
+    vendor_attributes: list[OdmVendorAttributeRelationModel]
+    vendor_element_attributes: list[OdmVendorElementAttributeRelationModel]
+    possible_actions: list[str]
 
     @classmethod
     def from_odm_form_ar(
         cls,
         odm_form_ar: OdmFormAR,
-        find_term_callback: Callable[[str], Optional[CTTermAttributesAR]],
-        find_odm_description_by_uid: Callable[[str], Optional[OdmDescriptionAR]],
-        find_odm_alias_by_uid: Callable[[str], Optional[OdmAliasAR]],
-        find_activity_group_by_uid: Callable[[str], Optional[ActivityGroupAR]],
+        find_term_callback: Callable[[str], CTTermAttributesAR | None],
+        find_odm_description_by_uid: Callable[[str], OdmDescriptionAR | None],
+        find_odm_alias_by_uid: Callable[[str], OdmAliasAR | None],
+        find_activity_group_by_uid: Callable[[str], ActivityGroupAR | None],
         find_odm_item_group_by_uid_with_form_relation: Callable[
-            [str, str], Optional[OdmItemGroupRefVO]
+            [str, str], OdmItemGroupRefVO | None
         ],
-        find_odm_vendor_attribute_by_uid: Callable[
-            [str], Optional[OdmVendorAttributeAR]
-        ],
+        find_odm_vendor_attribute_by_uid: Callable[[str], OdmVendorAttributeAR | None],
         find_odm_vendor_element_by_uid_with_odm_element_relation: Callable[
-            [str, str, RelationType], Optional[OdmVendorElementRelationVO]
+            [str, str, RelationType], OdmVendorElementRelationVO | None
         ],
         find_odm_vendor_attribute_by_uid_with_odm_element_relation: Callable[
             [str, str, RelationType, bool],
-            Union[
-                OdmVendorAttributeRelationVO,
-                OdmVendorElementAttributeRelationVO,
-                None,
-            ],
+            OdmVendorAttributeRelationVO | OdmVendorElementAttributeRelationVO | None,
         ],
-    ) -> "OdmForm":
+    ) -> Self:
         return cls(
             uid=odm_form_ar._uid,
             oid=odm_form_ar.concept_vo.oid,
@@ -199,9 +193,9 @@ class OdmFormRefModel(BaseModel):
         uid: str,
         study_event_uid: str,
         find_odm_form_by_uid_with_study_event_relation: Callable[
-            [str, str], Optional[OdmFormRefVO]
+            [str, str], OdmFormRefVO | None
         ],
-    ) -> Optional["OdmFormRefModel"]:
+    ) -> Self | None:
         if uid is not None:
             odm_form_ref_vo = find_odm_form_by_uid_with_study_event_relation(
                 uid, study_event_uid
@@ -229,40 +223,38 @@ class OdmFormRefModel(BaseModel):
         return odm_form_ref_model
 
     uid: str = Field(..., title="uid", description="")
-    name: Optional[str] = Field(None, title="name", description="")
-    order_number: Optional[int] = Field(None, title="order_number", description="")
-    mandatory: Optional[str] = Field(None, title="mandatory", description="")
-    locked: Optional[str] = Field(None, title="locked", description="")
-    collection_exception_condition_oid: Optional[str] = Field(
+    name: str | None = Field(None, title="name", description="")
+    order_number: int | None = Field(None, title="order_number", description="")
+    mandatory: str | None = Field(None, title="mandatory", description="")
+    locked: str | None = Field(None, title="locked", description="")
+    collection_exception_condition_oid: str | None = Field(
         None, title="collection_exception_condition_oid", description=""
     )
 
 
 class OdmFormPostInput(ConceptPostInput):
-    oid: Optional[str]
-    sdtm_version: Optional[str]
+    oid: str | None
+    sdtm_version: str | None
     repeating: str
-    scope_uid: Optional[str] = None
-    descriptions: List[Union[OdmDescriptionPostInput, str]]
-    alias_uids: List[str]
+    scope_uid: str | None = None
+    descriptions: list[OdmDescriptionPostInput | str]
+    alias_uids: list[str]
 
 
 class OdmFormPatchInput(ConceptPatchInput):
-    oid: Optional[str]
-    sdtm_version: Optional[str]
-    repeating: Optional[str]
-    scope_uid: Optional[str]
-    descriptions: List[
-        Union[OdmDescriptionBatchPatchInput, OdmDescriptionPostInput, str]
-    ]
-    alias_uids: List[str]
+    oid: str | None
+    sdtm_version: str | None
+    repeating: str | None
+    scope_uid: str | None
+    descriptions: list[OdmDescriptionBatchPatchInput | OdmDescriptionPostInput | str]
+    alias_uids: list[str]
 
 
 class OdmFormItemGroupPostInput(BaseModel):
     uid: str
     order_number: int
     mandatory: str
-    collection_exception_condition_oid: Optional[str]
+    collection_exception_condition_oid: str | None
     vendor: OdmRefVendorPostInput
 
 
@@ -275,7 +267,7 @@ class OdmFormVersion(OdmForm):
     Class for storing OdmForm and calculation of differences
     """
 
-    changes: Optional[Dict[str, bool]] = Field(
+    changes: dict[str, bool] | None = Field(
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "

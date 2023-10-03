@@ -1,5 +1,5 @@
 import logging
-from typing import Iterable, List, Optional, Union
+from typing import Iterable
 
 from opencensus.log import get_log_attrs
 from opencensus.trace import Span, execution_context
@@ -97,7 +97,7 @@ class TracingMiddleware:
 
     @staticmethod
     def add_attributes_form_request_scope(
-        span: BaseSpan, scope: Scope, headers: Optional[Headers] = None
+        span: BaseSpan, scope: Scope, headers: Headers | None = None
     ) -> None:
         """Adds attributes and properties from request scope to current tracing span.
 
@@ -140,7 +140,7 @@ class TracingMiddleware:
 
     @staticmethod
     def add_attributes_from_response(
-        response: Union[Response, Message], tracer: Optional[Tracer] = None
+        response: Response | Message, tracer: Tracer | None = None
     ) -> None:
         """Adds attributes and properties to the current tracing span from the response and request state"""
 
@@ -171,7 +171,7 @@ class TracingMiddleware:
             tracer.add_attribute_to_current_span("http.content_type", content_type)
 
     @staticmethod
-    def log_access(scope: Scope, response: Union[Response, Message]) -> None:
+    def log_access(scope: Scope, response: Response | Message) -> None:
         """Logs an access-log style line"""
 
         if isinstance(response, Response):
@@ -215,7 +215,7 @@ class TracingMiddleware:
         )
 
     @staticmethod
-    def get_path_qs(scope) -> List[str]:
+    def get_path_qs(scope) -> list[str]:
         path_qs = [TracingMiddleware.get_path(scope)]
 
         qs = scope.get("query_string")
@@ -231,10 +231,10 @@ class TracingMiddleware:
 
     @staticmethod
     def add_traceresponse_header(
-        response: Union[Response, Message],
+        response: Response | Message,
         expose_header: bool = False,
-        span: Optional[Span] = None,
-        flags: Optional[Union[int, float]] = None,
+        span: Span | None = None,
+        flags: int | float | None = None,
     ) -> None:
         """Add trace id either from trace context or `traceparent` request header to `traceresponse` response header.
 

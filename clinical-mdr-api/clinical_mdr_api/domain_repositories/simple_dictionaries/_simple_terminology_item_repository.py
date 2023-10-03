@@ -1,4 +1,4 @@
-from typing import Collection, Optional
+from typing import Collection
 
 # noinspection PyProtectedMember
 from clinical_mdr_api.domains.simple_dictionaries.simple_terminology_item import (
@@ -9,7 +9,7 @@ from clinical_mdr_api.domains.simple_dictionaries.simple_terminology_item import
 class SimpleTerminologyItemRepository:
     def find_by_code_and_codelist_code(
         self, code: str, codelist_code: str
-    ) -> Optional[SimpleTerminologyItem]:
+    ) -> SimpleTerminologyItem | None:
         raise NotImplementedError
 
     def find_by_codelist_code(

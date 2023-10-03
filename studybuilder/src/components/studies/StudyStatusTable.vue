@@ -16,11 +16,11 @@
         v-if="selectedStudy.current_metadata.version_metadata.study_status === 'DRAFT'"
         fab
         small
-        dark
         color="red"
         @click.stop="lockStudy"
         :title="$t('_global.lock')"
         data-cy="lock-study"
+        :disabled="!checkPermission($roles.STUDY_WRITE)"
         >
         <v-icon>mdi-lock-outline</v-icon>
       </v-btn>
@@ -28,12 +28,12 @@
         v-if="selectedStudy.current_metadata.version_metadata.study_status === 'DRAFT'"
         fab
         small
-        dark
         color="info"
         @click.stop="releaseStudy"
         :title="$t('_global.release')"
         data-cy="release-study"
         class="ml-2"
+        :disabled="!checkPermission($roles.STUDY_WRITE)"
         >
         <v-icon>mdi-share-variant</v-icon>
       </v-btn>
@@ -41,11 +41,11 @@
         v-if="selectedStudy.current_metadata.version_metadata.study_status === 'LOCKED'"
         fab
         small
-        dark
         color="green"
         @click.stop="unlockStudy"
         :title="$t('_global.unlock')"
         data-cy="unlock-study"
+        :disabled="!checkPermission($roles.STUDY_WRITE)"
         >
         <v-icon>mdi-lock-open-outline</v-icon>
       </v-btn>
@@ -89,8 +89,10 @@ import { mapGetters } from 'vuex'
 import NNTable from '@/components/tools/NNTable'
 import StatusChip from '@/components/tools/StatusChip'
 import StudyStatusForm from './StudyStatusForm'
+import { accessGuard } from '@/mixins/accessRoleVerifier'
 
 export default {
+  mixins: [accessGuard],
   components: {
     ConfirmDialog,
     NNTable,
@@ -151,7 +153,7 @@ export default {
     },
     async unlockStudy () {
       const resp = await api.unlockStudy(this.selectedStudy.uid)
-      this.$store.commit('studiesGeneral/SELECT_STUDY', resp.data)
+      this.$store.commit('studiesGeneral/SELECT_STUDY', { studyObj: resp.data })
       bus.$emit('notification', { msg: this.$t('StudyStatusTable.unlock_success'), type: 'success' })
       this.fetchItems()
     }

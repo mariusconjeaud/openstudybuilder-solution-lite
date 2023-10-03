@@ -11,7 +11,6 @@ Tests for /concepts/unit-definitions endpoints
 import json
 import logging
 from functools import reduce
-from typing import List
 
 import pytest
 from fastapi.testclient import TestClient
@@ -28,7 +27,7 @@ from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 log = logging.getLogger(__name__)
 
 # Global variables shared between fixtures and tests
-unit_definitions: List[models.UnitDefinitionModel]
+unit_definitions: list[models.UnitDefinitionModel]
 
 
 @pytest.fixture(scope="module")

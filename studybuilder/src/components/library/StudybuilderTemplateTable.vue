@@ -17,6 +17,7 @@
         @refresh="$emit('refresh')"
         :url-prefix="urlPrefix"
         :object-type="objectType"
+        :history-excluded-headers="historyExcludedHeaders"
         >
         <template v-for="(_, slot) of $scopedSlots" v-slot:[slot]="scope">
           <slot :name="slot" v-bind="scope" />
@@ -35,6 +36,7 @@
         :url-prefix="preInstanceUrlPrefix"
         :export-object-label="preInstanceExportLabel"
         :object-type="objectType"
+        :history-excluded-headers="historyExcludedHeaders"
         >
         <template v-for="(_, slot) of $scopedSlots" v-slot:[slot]="scope">
           <slot :name="slot" v-bind="scope" />
@@ -43,6 +45,7 @@
     </v-tab-item>
     <v-tab-item id="user">
       <generic-user-template-table
+        :url-prefix="urlPrefix"
         v-bind="$attrs"
         v-on="$listeners"
         />
@@ -93,6 +96,10 @@ export default Vue.extend({
     objectType: {
       type: String,
       default: ''
+    },
+    historyExcludedHeaders: {
+      type: Array,
+      required: false
     }
   },
   computed: {

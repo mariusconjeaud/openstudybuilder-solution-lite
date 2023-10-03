@@ -1,12 +1,23 @@
 import unittest
 from typing import Callable
 
-from clinical_mdr_api.domains.concepts.activities.activity import ActivityAR, ActivityVO
+from clinical_mdr_api.domains.concepts.activities.activity import (
+    ActivityAR,
+    ActivityGroupingVO,
+    ActivityVO,
+)
 from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemStatus,
     LibraryVO,
 )
 from clinical_mdr_api.tests.unit.domain.utils import random_str
+
+
+def create_random_activity_grouping_vo() -> ActivityGroupingVO:
+    random_activity_grouping_vo = ActivityGroupingVO(
+        activity_group_uid=random_str(), activity_subgroup_uid=random_str()
+    )
+    return random_activity_grouping_vo
 
 
 def create_random_activity_vo() -> ActivityVO:
@@ -15,7 +26,10 @@ def create_random_activity_vo() -> ActivityVO:
         name_sentence_case=random_str(),
         definition=random_str(),
         abbreviation=random_str(),
-        activity_subgroup=random_str(),
+        activity_groupings=[
+            create_random_activity_grouping_vo(),
+            create_random_activity_grouping_vo(),
+        ],
         request_rationale=random_str(),
     )
     return random_activity_vo
@@ -36,6 +50,7 @@ def create_random_activity_ar(
         author="TODO Initials",
         concept_exists_by_name_callback=lambda _: False,
         activity_subgroup_exists=lambda _: True,
+        activity_group_exists=lambda _: True,
     )
 
     return random_activity_ar
@@ -69,6 +84,7 @@ class TestActivity(unittest.TestCase):
             concept_vo=activity_vo,
             concept_exists_by_name_callback=lambda _: False,
             activity_subgroup_exists=lambda _: True,
+            activity_group_exists=lambda _: True,
         )
 
         # then
@@ -84,8 +100,8 @@ class TestActivity(unittest.TestCase):
             activity_vo.name_sentence_case,
         )
         self.assertEqual(activity_ar.concept_vo.definition, activity_vo.definition)
-        self.assertIn(
-            activity_vo.activity_subgroup, activity_ar.concept_vo.activity_subgroup
+        self.assertEqual(
+            activity_vo.activity_groupings, activity_ar.concept_vo.activity_groupings
         )
 
     def test__approve__version_created(self):

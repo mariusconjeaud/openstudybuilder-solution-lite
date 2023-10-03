@@ -1,6 +1,6 @@
 import dataclasses
 import datetime
-from typing import Optional, Sequence
+from typing import Sequence
 
 from aenum import extend_enum
 from neomodel import Q, db
@@ -193,7 +193,7 @@ class StudyVisitService:
         )
 
     def _transform_all_to_response_model(
-        self, visit: StudyVisitVO, study_activity_count: Optional[int] = None
+        self, visit: StudyVisitVO, study_activity_count: int | None = None
     ) -> StudyVisit:
         timepoint = visit.timepoint
         return StudyVisit(
@@ -251,7 +251,6 @@ class StudyVisitService:
             description=visit.description,
             start_rule=visit.start_rule,
             end_rule=visit.end_rule,
-            note=visit.note,
             visit_contact_mode_uid=visit.visit_contact_mode.name,
             visit_contact_mode_name=visit.visit_contact_mode.value,
             epoch_allocation_uid=visit.epoch_allocation.name
@@ -304,7 +303,7 @@ class StudyVisitService:
         )
         return len(visits_in_given_study_epoch)
 
-    def get_global_anchor_visit(self, study_uid: str) -> Optional[SimpleStudyVisit]:
+    def get_global_anchor_visit(self, study_uid: str) -> SimpleStudyVisit | None:
         global_anchor_visit = to_relation_trees(
             StudyVisitNeoModel.nodes.fetch_relations(
                 "has_visit_name__has_latest_value",
@@ -356,15 +355,14 @@ class StudyVisitService:
             for anchor_visit in anchor_visits_for_special_visit
         ]
 
-    @db.transaction
     def get_all_visits(
         self,
         study_uid: str,
-        sort_by: Optional[dict] = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[StudyVisit]:
         visits = self._get_all_visits(study_uid)
@@ -391,9 +389,9 @@ class StudyVisitService:
         self,
         study_uid: str,
         field_name: str,
-        search_string: Optional[str] = "",
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        search_string: str | None = "",
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
     ):
         all_items = self.get_all_visits(study_uid=study_uid)
@@ -441,8 +439,6 @@ class StudyVisitService:
             for v in timeline.ordered_study_visits:
                 if v.uid == study_visit.uid:
                     return self._transform_all_to_response_model(v)
-        except ValueError as e:
-            raise ValidationException(str(e)) from e
         finally:
             repos.close()
 
@@ -494,7 +490,7 @@ class StudyVisitService:
                 and visit_vo.timepoint.visit_timereference.value.lower()
                 != GLOBAL_ANCHOR_VISIT_NAME.lower()
             ):
-                raise ValueError(
+                raise exceptions.ValidationException(
                     "The first visit should have time span set to 0 or reference to GLOBAL ANCHOR VISIT"
                 )
             for visit in timeline._visits:
@@ -502,7 +498,7 @@ class StudyVisitService:
                     visit.visit_type == visit_vo.visit_type
                     and visit.uid != visit_vo.uid
                 ):
-                    raise ValueError(
+                    raise exceptions.ValidationException(
                         f"There can be only one visit with the following visit type {visit_vo.visit_type.value}"
                     )
 
@@ -525,7 +521,7 @@ class StudyVisitService:
                     and is_time_reference_visit
                     and visit.uid != visit_vo.uid
                 ):
-                    raise ValueError(
+                    raise exceptions.ValidationException(
                         f"There can be only one visit with the following visit type {visit_vo.visit_type.value} that works as time reference"
                     )
 
@@ -544,17 +540,21 @@ class StudyVisitService:
                 GLOBAL_ANCHOR_VISIT_NAME.lower(),
                 ANCHOR_VISIT_IN_VISIT_GROUP.lower(),
             ]:
-                raise ValueError(
+                raise exceptions.ValidationException(
                     f"Time reference of type: {visit_vo.timepoint.visit_timereference.value} wasn't used by previous visits as visit type"
                 )
 
         if visit_vo.is_global_anchor_visit:
             if visit_vo.timepoint.visit_value != 0:
-                raise ValueError("The global anchor visit must take place at day 0.")
+                raise exceptions.ValidationException(
+                    "The global anchor visit must take place at day 0."
+                )
             if create:
                 for visit in timeline._visits:
                     if visit.is_global_anchor_visit:
-                        raise ValueError("There can be only one global anchor visit")
+                        raise exceptions.ValidationException(
+                            "There can be only one global anchor visit"
+                        )
 
         if visit_vo.visit_class not in (
             VisitClass.NON_VISIT,
@@ -564,7 +564,7 @@ class StudyVisitService:
                 visit_vo.visit_class == VisitClass.SPECIAL_VISIT
                 and visit_vo.visit_sublabel_reference is None
             ):
-                raise ValueError(
+                raise exceptions.ValidationException(
                     "Special Visit has to time reference to some other visit."
                 )
             if create:
@@ -578,7 +578,7 @@ class StudyVisitService:
                             == visit_vo.get_absolute_duration()
                             and visit.uid != visit_vo.uid
                         ):
-                            raise ValueError(
+                            raise exceptions.ValidationException(
                                 f"There already exists a visit with timing set to {visit.timepoint.visit_value}"
                             )
                         if index + 2 < len(ordered_visits):
@@ -592,7 +592,7 @@ class StudyVisitService:
                                 VisitClass.NON_VISIT,
                                 VisitClass.UNSCHEDULED_VISIT,
                             ):
-                                raise ValueError(
+                                raise exceptions.ValidationException(
                                     f"Visit with study day {visit.study_day_number} from "
                                     f"epoch with order ({visit.epoch.order}) ({visit.epoch.epoch.value}) is out of order with "
                                     f"visit with study day {ordered_visits[index+2].study_day_number} from epoch with order "
@@ -604,7 +604,7 @@ class StudyVisitService:
                         and visit_vo.epoch_uid == visit.epoch_uid
                         and visit.uid != visit_vo.uid
                     ):
-                        raise ValueError(
+                        raise exceptions.ValidationException(
                             f"There already exists a Special visit {visit.uid} in the following epoch {visit.epoch_connector.epoch.value}"
                         )
             if not preview:
@@ -621,7 +621,7 @@ class StudyVisitService:
                             visit_vo.get_absolute_duration()
                             < epoch.previous_visit.get_absolute_duration()
                         ):
-                            raise ValueError(
+                            raise exceptions.ValidationException(
                                 "The following visit can't be created as previous epoch "
                                 f"({epoch.previous_visit.epoch.epoch.value}) "
                                 f"ends at the {epoch.previous_visit.study_day_number} study day"
@@ -630,7 +630,7 @@ class StudyVisitService:
                             visit_vo.get_absolute_duration()
                             > epoch.next_visit.get_absolute_duration()
                         ):
-                            raise ValueError(
+                            raise exceptions.ValidationException(
                                 "The following visit can't be created as the next epoch "
                                 f"({epoch.next_visit.epoch.epoch.value}) "
                                 f"starts at the {epoch.next_visit.study_day_number} study day"
@@ -641,9 +641,11 @@ class StudyVisitService:
         if visit_input.visit_sublabel_codelist_uid and (
             visit_input.visit_sublabel_codelist_uid not in self.study_visit_sublabels
         ):
-            raise ValueError("Visit Sub Label codelist is not used properly")
+            raise exceptions.ValidationException(
+                "Visit Sub Label codelist is not used properly"
+            )
         if visit_input.visit_contact_mode_uid not in self.study_visit_contact_mode:
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"The following CTTerm identified by uid {visit_input.visit_contact_mode_uid} is not a valid"
                 f"Visit Contact Mode term."
             )
@@ -666,8 +668,8 @@ class StudyVisitService:
                 is_template_parameter=True,
             ),
             library=self._get_sponsor_library_vo(),
-            generate_uid_callback=self._repos.numeric_value_repository.generate_uid,
-            find_uid_by_name_callback=self._repos.numeric_value_repository.find_uid_by_name,
+            generate_uid_callback=self._repos.visit_name_repository.generate_uid,
+            find_uid_by_name_callback=self._repos.visit_name_repository.find_uid_by_name,
         )
         self._repos.visit_name_repository.save(visit_name_ar)
         visit_name = TextValue(uid=visit_name_ar.uid, name=visit_name_ar.name)
@@ -697,7 +699,7 @@ class StudyVisitService:
             value_object_class = StudyDurationWeeksVO
             repository_class = self._repos.study_duration_weeks_repository
         else:
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"Unknown numeric value type to create {numeric_value_type.value}"
             )
 
@@ -840,7 +842,6 @@ class StudyVisitService:
             description=create_input.description,
             start_rule=create_input.start_rule,
             end_rule=create_input.end_rule,
-            note=create_input.note,
             visit_contact_mode=StudyVisitContactMode[
                 create_input.visit_contact_mode_uid
             ],
@@ -920,51 +921,45 @@ class StudyVisitService:
 
     @db.transaction
     def create(self, study_uid: str, study_visit_input: StudyVisitCreateInput):
-        try:
-            study_visits = self.repo.find_all_visits_by_study_uid(study_uid)
+        study_visits = self.repo.find_all_visits_by_study_uid(study_uid)
 
-            epoch = self._repos.study_epoch_repository.find_by_uid(
-                uid=study_visit_input.study_epoch_uid, study_uid=study_uid
+        epoch = self._repos.study_epoch_repository.find_by_uid(
+            uid=study_visit_input.study_epoch_uid, study_uid=study_uid
+        )
+        study_visit = self._from_input_values(study_visit_input, epoch)
+        timeline = TimelineAR(study_uid=study_uid, _visits=study_visits)
+        self._validate_visit(study_visit_input, study_visit, timeline, create=True)
+        self.assign_props_derived_from_visit_number(study_visit=study_visit)
+        added_item = self.repo.save(study_visit)
+
+        timeline.add_visit(added_item)
+
+        ordered_visits = timeline.ordered_study_visits
+        # if added item is not last in ordered_study_visits, then we have to synchronize Visit Numbers
+        if added_item.uid != ordered_visits[-1].uid:
+            self.synchronize_visit_numbers(
+                ordered_visits=ordered_visits,
+                start_index_to_synchronize=added_item.visit_number,
             )
-            study_visit = self._from_input_values(study_visit_input, epoch)
-            timeline = TimelineAR(study_uid=study_uid, _visits=study_visits)
-            self._validate_visit(study_visit_input, study_visit, timeline, create=True)
-            self.assign_props_derived_from_visit_number(study_visit=study_visit)
-            added_item = self.repo.save(study_visit)
-
-            timeline.add_visit(added_item)
-
-            ordered_visits = timeline.ordered_study_visits
-            # if added item is not last in ordered_study_visits, then we have to synchronize Visit Numbers
-            if added_item.uid != ordered_visits[-1].uid:
-                self.synchronize_visit_numbers(
-                    ordered_visits=ordered_visits,
-                    start_index_to_synchronize=added_item.visit_number,
-                )
-            return self._transform_all_to_response_model(added_item)
-        except ValueError as e:
-            raise ValidationException(e.args[0]) from e
+        return self._transform_all_to_response_model(added_item)
 
     @db.transaction
     def preview(self, study_uid: str, study_visit_input: StudyVisitCreateInput):
-        try:
-            study_visits = self.repo.find_all_visits_by_study_uid(study_uid)
+        study_visits = self.repo.find_all_visits_by_study_uid(study_uid)
 
-            epoch = self._repos.study_epoch_repository.find_by_uid(
-                uid=study_visit_input.study_epoch_uid, study_uid=study_uid
-            )
-            study_visit = self._from_input_values(study_visit_input, epoch)
-            timeline = TimelineAR(study_uid=study_uid, _visits=study_visits)
-            self._validate_visit(
-                study_visit_input, study_visit, timeline, create=True, preview=True
-            )
+        epoch = self._repos.study_epoch_repository.find_by_uid(
+            uid=study_visit_input.study_epoch_uid, study_uid=study_uid
+        )
+        study_visit = self._from_input_values(study_visit_input, epoch)
+        timeline = TimelineAR(study_uid=study_uid, _visits=study_visits)
+        self._validate_visit(
+            study_visit_input, study_visit, timeline, create=True, preview=True
+        )
 
-            study_visit.uid = "preview"
-            timeline.add_visit(study_visit)
+        study_visit.uid = "preview"
+        timeline.add_visit(study_visit)
 
-            return self._transform_all_to_response_model(study_visit)
-        except ValueError as e:
-            raise ValidationException(e.args[0]) from e
+        return self._transform_all_to_response_model(study_visit)
 
     @db.transaction
     def edit(
@@ -1026,10 +1021,29 @@ class StudyVisitService:
     def delete(self, study_uid: str, study_visit_uid: str):
         study = self._repos.study_definition_repository.find_by_uid(uid=study_uid)
         if study.current_metadata.ver_metadata.study_status != StudyStatus.DRAFT:
-            raise ValueError("Cannot delete visits in non DRAFT study")
+            raise exceptions.ValidationException(
+                "Cannot delete visits in non DRAFT study"
+            )
         study_visit = self.repo.find_by_uid(study_visit_uid)
         if study_visit.status != StudyStatus.DRAFT:
-            raise ValueError("Cannot delete visits non DRAFT status")
+            raise ValidationException("Cannot delete visits non DRAFT status")
+
+        # add check if visits that we want to group are the same
+        schedules_service = StudyActivityScheduleService(author=self.author)
+
+        # Load aggregate
+        study_activity_schedules = (
+            schedules_service.get_all_schedules_for_specific_visit(
+                study_uid=study_uid, study_visit_uid=study_visit.uid
+            )
+        )
+        for study_activity_schedule in study_activity_schedules:
+            self._repos.study_activity_schedule_repository.delete(
+                study_uid,
+                study_activity_schedule.study_activity_schedule_uid,
+                self.author,
+            )
+
         study_visit.delete()
 
         self.repo.save(study_visit)
@@ -1103,7 +1117,7 @@ class StudyVisitService:
         self,
         study_uid: str,
         visits_to_assign: Sequence[str],
-        overwrite_visit_from_template: Optional[str] = None,
+        overwrite_visit_from_template: str | None = None,
     ) -> Sequence[StudyVisit]:
         study_visits = self.repo.find_all_visits_by_study_uid(study_uid=study_uid)
         timeline = TimelineAR(study_uid=study_uid, _visits=study_visits)
@@ -1164,7 +1178,7 @@ class StudyVisitService:
         visit_to_assign_uids: Sequence[str],
         visits_to_be_assigned: Sequence[StudyVisitVO],
         consecutive_visit_group: str,
-        overwrite_visit_from_template: Optional[str] = None,
+        overwrite_visit_from_template: str | None = None,
     ):
         visit_to_overwrite_from = None
         for visit in visits_to_be_assigned:
@@ -1252,7 +1266,6 @@ class StudyVisitService:
                     schedule_input=StudyActivityScheduleCreateInput(
                         study_activity_uid=schedule.study_activity_uid,
                         study_visit_uid=visit.uid,
-                        note=schedule.note,
                     ),
                 ),
                 self.author,

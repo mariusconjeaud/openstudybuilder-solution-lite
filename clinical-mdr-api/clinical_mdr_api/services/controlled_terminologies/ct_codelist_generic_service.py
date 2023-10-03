@@ -1,6 +1,6 @@
 import abc
 from datetime import datetime
-from typing import Any, Generic, Optional, Sequence, TypeVar
+from typing import Any, Generic, Sequence, TypeVar
 
 from neomodel import db
 from pydantic import BaseModel
@@ -37,9 +37,9 @@ class CTCodelistGenericService(Generic[_AggregateRootType], abc.ABC):
     version_class: type
     repository_interface: type
     _repos: MetaRepository
-    user_initials: Optional[str]
+    user_initials: str | None
 
-    def __init__(self, user: Optional[str] = None):
+    def __init__(self, user: str | None = None):
         self.user_initials = user if user is not None else "TODO user initials"
         self._repos = MetaRepository(self.user_initials)
 
@@ -54,14 +54,14 @@ class CTCodelistGenericService(Generic[_AggregateRootType], abc.ABC):
     @db.transaction
     def get_all_ct_codelists(
         self,
-        catalogue_name: Optional[str],
-        library: Optional[str],
-        package: Optional[str],
-        sort_by: Optional[dict] = None,
+        catalogue_name: str | None,
+        library: str | None,
+        package: str | None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[BaseModel]:
         self.enforce_catalogue_library_package(catalogue_name, library, package)
@@ -86,13 +86,13 @@ class CTCodelistGenericService(Generic[_AggregateRootType], abc.ABC):
 
     def get_distinct_values_for_header(
         self,
-        catalogue_name: Optional[str],
-        library: Optional[str],
-        package: Optional[str],
+        catalogue_name: str | None,
+        library: str | None,
+        package: str | None,
         field_name: str,
-        search_string: Optional[str] = "",
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        search_string: str | None = "",
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
     ) -> Sequence:
         self.enforce_catalogue_library_package(catalogue_name, library, package)
@@ -114,9 +114,9 @@ class CTCodelistGenericService(Generic[_AggregateRootType], abc.ABC):
     def get_by_uid(
         self,
         codelist_uid: str,
-        version: Optional[str] = None,
-        at_specific_date: Optional[datetime] = None,
-        status: Optional[str] = None,
+        version: str | None = None,
+        at_specific_date: datetime | None = None,
+        status: str | None = None,
     ) -> BaseModel:
         item = self._find_by_uid_or_raise_not_found(
             codelist_uid=codelist_uid,
@@ -129,10 +129,10 @@ class CTCodelistGenericService(Generic[_AggregateRootType], abc.ABC):
     def _find_by_uid_or_raise_not_found(
         self,
         codelist_uid: str,
-        version: Optional[str] = None,
-        at_specific_date: Optional[datetime] = None,
-        status: Optional[LibraryItemStatus] = None,
-        for_update: Optional[bool] = False,
+        version: str | None = None,
+        at_specific_date: datetime | None = None,
+        status: LibraryItemStatus | None = None,
+        for_update: bool | None = False,
     ) -> _AggregateRootType:
         item = self.repository.find_by_uid(
             codelist_uid=codelist_uid,
@@ -194,9 +194,9 @@ class CTCodelistGenericService(Generic[_AggregateRootType], abc.ABC):
 
     def enforce_catalogue_library_package(
         self,
-        catalogue_name: Optional[str],
-        library: Optional[str],
-        package: Optional[str],
+        catalogue_name: str | None,
+        library: str | None,
+        package: str | None,
     ):
         if (
             catalogue_name is not None

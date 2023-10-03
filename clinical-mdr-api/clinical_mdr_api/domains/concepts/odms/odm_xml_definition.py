@@ -24,7 +24,6 @@ the following will be produced:
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import List, Optional, Union
 
 
 class Element:
@@ -40,7 +39,7 @@ class Element:
 @dataclass
 class Attribute:
     name: str
-    value: Optional[Union[str, int, datetime]]
+    value: str | int | datetime | None
 
 
 class TranslatedText:
@@ -78,7 +77,7 @@ class CodeList:
     name: Attribute
     datatype: Attribute
     sas_format_name: Attribute
-    codelist_items: List[CodeListItem]
+    codelist_items: list[CodeListItem]
 
     def __init__(self, oid, name, datatype, sas_format_name, codelist_items, **kwargs):
         self.oid = oid
@@ -105,12 +104,12 @@ class Alias:
 
 @dataclass
 class Description:
-    translated_text: List[TranslatedText]
+    translated_text: list[TranslatedText]
 
 
 @dataclass
 class Question:
-    translated_text: List[TranslatedText]
+    translated_text: list[TranslatedText]
 
 
 @dataclass
@@ -139,8 +138,8 @@ class ConditionDef:
     oid: Attribute
     name: Attribute
     description: Description
-    aliases: List[Alias]
-    formal_expressions: List[FormalExpression]
+    aliases: list[Alias]
+    formal_expressions: list[FormalExpression]
 
     def __init__(self, oid, name, description, aliases, formal_expressions, **kwargs):
         self.oid = oid
@@ -158,8 +157,8 @@ class MethodDef:
     name: Attribute
     type: Attribute
     description: Description
-    aliases: List[Alias]
-    formal_expressions: List[FormalExpression]
+    aliases: list[Alias]
+    formal_expressions: list[FormalExpression]
 
     def __init__(
         self, oid, name, method_type, description, aliases, formal_expressions, **kwargs
@@ -185,9 +184,9 @@ class ItemDef:
     sds_var_name: Attribute
     question: Question
     description: Description
-    aliases: List[Alias]
+    aliases: list[Alias]
     codelist_ref: CodeListRef
-    measurement_unit_refs: List[MeasurementUnitRef]
+    measurement_unit_refs: list[MeasurementUnitRef]
 
     def __init__(
         self,
@@ -271,10 +270,10 @@ class ItemGroupDef:
     purpose: Attribute
     sas_dataset_name: Attribute
     domain: Attribute
-    osb_domain_colors: List[OsbDomainColor]
+    osb_domain_colors: list[OsbDomainColor]
     description: Description
-    aliases: List[Alias]
-    item_refs: List[ItemRef]
+    aliases: list[Alias]
+    item_refs: list[ItemRef]
 
     def __init__(
         self,
@@ -336,8 +335,8 @@ class FormDef:
     name: Attribute
     repeating: Attribute
     description: Description
-    aliases: List[Alias]
-    item_group_refs: List[ItemGroupRef]
+    aliases: list[Alias]
+    item_group_refs: list[ItemGroupRef]
 
     def __init__(
         self, oid, name, repeating, description, aliases, item_group_refs, **kwargs
@@ -378,17 +377,17 @@ class MetaDataVersion:
     oid: Attribute
     name: Attribute
     description: Attribute
-    form_defs: List[FormDef]
-    item_group_defs: List[ItemGroupDef]
-    item_defs: List[ItemDef]
-    condition_defs: List[ConditionDef]
-    method_defs: List[MethodDef]
-    codelists: List[CodeList]
+    form_defs: list[FormDef]
+    item_group_defs: list[ItemGroupDef]
+    item_defs: list[ItemDef]
+    condition_defs: list[ConditionDef]
+    method_defs: list[MethodDef]
+    codelists: list[CodeList]
 
 
 @dataclass
 class BasicDefinitions:
-    measurement_units: List[MeasurementUnit]
+    measurement_units: list[MeasurementUnit]
 
 
 @dataclass

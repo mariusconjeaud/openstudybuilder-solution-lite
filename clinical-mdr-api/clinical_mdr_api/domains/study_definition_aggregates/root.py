@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from decimal import Decimal
-from typing import AbstractSet, Any, Callable, List, MutableSequence, Optional, Sequence
+from typing import AbstractSet, Any, Callable, MutableSequence, Self, Sequence
 
 from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains.study_definition_aggregates._utils import (
@@ -46,123 +46,123 @@ class StudyDefinitionSnapshot:
         Class for representing values of Study metadata in some particular version (DRAFT, RELEASED or LOCKED).
         """
 
-        study_number: Optional[str] = None
-        study_acronym: Optional[str] = None
-        study_id_prefix: Optional[str] = None
-        project_number: Optional[str] = None
-        ct_gov_id: Optional[str] = None
-        ct_gov_id_null_value_code: Optional[str] = None
-        eudract_id: Optional[str] = None
-        eudract_id_null_value_code: Optional[str] = None
-        universal_trial_number_utn: Optional[str] = None
-        universal_trial_number_utn_null_value_code: Optional[str] = None
-        japanese_trial_registry_id_japic: Optional[str] = None
-        japanese_trial_registry_id_japic_null_value_code: Optional[str] = None
-        investigational_new_drug_application_number_ind: Optional[str] = None
-        investigational_new_drug_application_number_ind_null_value_code: Optional[
-            str
-        ] = None
-        version_timestamp: Optional[datetime] = None
-        version_author: Optional[str] = None
-        version_description: Optional[str] = None
-        version_number: Optional[Decimal] = None
-        study_type_code: Optional[str] = None
-        study_type_null_value_code: Optional[str] = None
+        study_number: str | None = None
+        study_acronym: str | None = None
+        study_id_prefix: str | None = None
+        project_number: str | None = None
+        ct_gov_id: str | None = None
+        ct_gov_id_null_value_code: str | None = None
+        eudract_id: str | None = None
+        eudract_id_null_value_code: str | None = None
+        universal_trial_number_utn: str | None = None
+        universal_trial_number_utn_null_value_code: str | None = None
+        japanese_trial_registry_id_japic: str | None = None
+        japanese_trial_registry_id_japic_null_value_code: str | None = None
+        investigational_new_drug_application_number_ind: str | None = None
+        investigational_new_drug_application_number_ind_null_value_code: str | None = (
+            None
+        )
+        version_timestamp: datetime | None = None
+        version_author: str | None = None
+        version_description: str | None = None
+        version_number: Decimal | None = None
+        study_type_code: str | None = None
+        study_type_null_value_code: str | None = None
         trial_intent_types_codes: Sequence[str] = ()
-        trial_intent_type_null_value_code: Optional[str] = None
+        trial_intent_type_null_value_code: str | None = None
         trial_type_codes: Sequence[str] = ()
-        trial_type_null_value_code: Optional[str] = None
-        trial_phase_code: Optional[str] = None
-        trial_phase_null_value_code: Optional[str] = None
-        is_extension_trial: Optional[bool] = None
-        is_extension_trial_null_value_code: Optional[str] = None
-        is_adaptive_design: Optional[bool] = None
-        is_adaptive_design_null_value_code: Optional[str] = None
-        post_auth_indicator: Optional[bool] = None
-        post_auth_indicator_null_value_code: Optional[str] = None
-        study_stop_rules: Optional[str] = None
-        study_stop_rules_null_value_code: Optional[str] = None
+        trial_type_null_value_code: str | None = None
+        trial_phase_code: str | None = None
+        trial_phase_null_value_code: str | None = None
+        is_extension_trial: bool | None = None
+        is_extension_trial_null_value_code: str | None = None
+        is_adaptive_design: bool | None = None
+        is_adaptive_design_null_value_code: str | None = None
+        post_auth_indicator: bool | None = None
+        post_auth_indicator_null_value_code: str | None = None
+        study_stop_rules: str | None = None
+        study_stop_rules_null_value_code: str | None = None
 
         therapeutic_area_codes: Sequence[str] = ()
-        therapeutic_area_null_value_code: Optional[str] = None
+        therapeutic_area_null_value_code: str | None = None
 
         disease_condition_or_indication_codes: Sequence[str] = ()
-        disease_condition_or_indication_null_value_code: Optional[str] = None
+        disease_condition_or_indication_null_value_code: str | None = None
 
         diagnosis_group_codes: Sequence[str] = ()
-        diagnosis_group_null_value_code: Optional[str] = None
+        diagnosis_group_null_value_code: str | None = None
 
-        sex_of_participants_code: Optional[str] = None
-        sex_of_participants_null_value_code: Optional[str] = None
+        sex_of_participants_code: str | None = None
+        sex_of_participants_null_value_code: str | None = None
 
-        rare_disease_indicator: Optional[bool] = None
-        rare_disease_indicator_null_value_code: Optional[str] = None
+        rare_disease_indicator: bool | None = None
+        rare_disease_indicator_null_value_code: str | None = None
 
-        healthy_subject_indicator: Optional[bool] = None
-        healthy_subject_indicator_null_value_code: Optional[str] = None
+        healthy_subject_indicator: bool | None = None
+        healthy_subject_indicator_null_value_code: str | None = None
 
-        planned_minimum_age_of_subjects: Optional[str] = None
-        planned_minimum_age_of_subjects_null_value_code: Optional[str] = None
+        planned_minimum_age_of_subjects: str | None = None
+        planned_minimum_age_of_subjects_null_value_code: str | None = None
 
-        planned_maximum_age_of_subjects: Optional[str] = None
-        planned_maximum_age_of_subjects_null_value_code: Optional[str] = None
+        planned_maximum_age_of_subjects: str | None = None
+        planned_maximum_age_of_subjects_null_value_code: str | None = None
 
-        stable_disease_minimum_duration: Optional[str] = None
-        stable_disease_minimum_duration_null_value_code: Optional[str] = None
+        stable_disease_minimum_duration: str | None = None
+        stable_disease_minimum_duration_null_value_code: str | None = None
 
-        pediatric_study_indicator: Optional[bool] = None
-        pediatric_study_indicator_null_value_code: Optional[str] = None
+        pediatric_study_indicator: bool | None = None
+        pediatric_study_indicator_null_value_code: str | None = None
 
-        pediatric_postmarket_study_indicator: Optional[bool] = None
-        pediatric_postmarket_study_indicator_null_value_code: Optional[str] = None
+        pediatric_postmarket_study_indicator: bool | None = None
+        pediatric_postmarket_study_indicator_null_value_code: str | None = None
 
-        pediatric_investigation_plan_indicator: Optional[bool] = None
-        pediatric_investigation_plan_indicator_null_value_code: Optional[str] = None
+        pediatric_investigation_plan_indicator: bool | None = None
+        pediatric_investigation_plan_indicator_null_value_code: str | None = None
 
-        relapse_criteria: Optional[str] = None
-        relapse_criteria_null_value_code: Optional[str] = None
+        relapse_criteria: str | None = None
+        relapse_criteria_null_value_code: str | None = None
 
-        number_of_expected_subjects: Optional[int] = None
-        number_of_expected_subjects_null_value_code: Optional[str] = None
+        number_of_expected_subjects: int | None = None
+        number_of_expected_subjects_null_value_code: str | None = None
 
-        intervention_type_code: Optional[str] = None
-        intervention_type_null_value_code: Optional[str] = None
+        intervention_type_code: str | None = None
+        intervention_type_null_value_code: str | None = None
 
-        add_on_to_existing_treatments: Optional[bool] = None
-        add_on_to_existing_treatments_null_value_code: Optional[str] = None
+        add_on_to_existing_treatments: bool | None = None
+        add_on_to_existing_treatments_null_value_code: str | None = None
 
-        control_type_code: Optional[str] = None
-        control_type_null_value_code: Optional[str] = None
+        control_type_code: str | None = None
+        control_type_null_value_code: str | None = None
 
-        intervention_model_code: Optional[str] = None
-        intervention_model_null_value_code: Optional[str] = None
+        intervention_model_code: str | None = None
+        intervention_model_null_value_code: str | None = None
 
-        is_trial_randomised: Optional[bool] = None
-        is_trial_randomised_null_value_code: Optional[str] = None
+        is_trial_randomised: bool | None = None
+        is_trial_randomised_null_value_code: str | None = None
 
-        stratification_factor: Optional[str] = None
-        stratification_factor_null_value_code: Optional[str] = None
+        stratification_factor: str | None = None
+        stratification_factor_null_value_code: str | None = None
 
-        trial_blinding_schema_code: Optional[str] = None
-        trial_blinding_schema_null_value_code: Optional[str] = None
+        trial_blinding_schema_code: str | None = None
+        trial_blinding_schema_null_value_code: str | None = None
 
-        planned_study_length: Optional[str] = None
-        planned_study_length_null_value_code: Optional[str] = None
+        planned_study_length: str | None = None
+        planned_study_length_null_value_code: str | None = None
 
-        confirmed_response_minimum_duration: Optional[str] = None
-        confirmed_response_minimum_duration_null_value_code: Optional[str] = None
+        confirmed_response_minimum_duration: str | None = None
+        confirmed_response_minimum_duration_null_value_code: str | None = None
 
-        study_title: Optional[str] = None
-        study_short_title: Optional[str] = None
+        study_title: str | None = None
+        study_short_title: str | None = None
 
-    uid: Optional[str]  # = None
-    current_metadata: Optional[StudyMetadataSnapshot]  # = None
-    draft_metadata: Optional[StudyMetadataSnapshot]  # = None
-    released_metadata: Optional[StudyMetadataSnapshot]  # = None
+    uid: str | None  # = None
+    current_metadata: StudyMetadataSnapshot | None  # = None
+    draft_metadata: StudyMetadataSnapshot | None  # = None
+    released_metadata: StudyMetadataSnapshot | None  # = None
     locked_metadata_versions: MutableSequence[
         StudyMetadataSnapshot
     ]  # = field(default_factory=list)
-    study_status: Optional[str]
+    study_status: str | None
     deleted: bool  # = False
 
 
@@ -244,11 +244,11 @@ _DEF_INITIAL_STUDY_DESCRIPTION = StudyDescriptionVO(
 @dataclass
 class StudyDefinitionAR:
     _uid: str
-    _draft_metadata: Optional[StudyMetadataVO]
-    _released_metadata: Optional[StudyMetadataVO]
+    _draft_metadata: StudyMetadataVO | None
+    _released_metadata: StudyMetadataVO | None
 
     # index on list corresponds to locked version number (so earliest goes first)
-    _locked_metadata_versions: List[StudyMetadataVO]
+    _locked_metadata_versions: list[StudyMetadataVO]
     _deleted: bool
 
     @property
@@ -273,12 +273,12 @@ class StudyDefinitionAR:
     def current_metadata(self) -> StudyMetadataVO:
         latest_locked_metadata = self.latest_locked_metadata
         if latest_locked_metadata:
-            if self.draft_metadata:
-                if (
-                    self._draft_metadata.ver_metadata.version_timestamp
-                    > latest_locked_metadata.ver_metadata.version_timestamp
-                ):
-                    return self._draft_metadata
+            if (
+                self.draft_metadata
+                and self._draft_metadata.ver_metadata.version_timestamp
+                > latest_locked_metadata.ver_metadata.version_timestamp
+            ):
+                return self._draft_metadata
             return latest_locked_metadata
         if self.draft_metadata:
             return self._draft_metadata
@@ -308,11 +308,11 @@ class StudyDefinitionAR:
     def edit_metadata(
         self,
         *,
-        new_id_metadata: Optional[StudyIdentificationMetadataVO] = None,
-        new_high_level_study_design: Optional[HighLevelStudyDesignVO] = None,
-        new_study_population: Optional[StudyPopulationVO] = None,
-        new_study_intervention: Optional[StudyInterventionVO] = None,
-        new_study_description: Optional[StudyDescriptionVO] = None,
+        new_id_metadata: StudyIdentificationMetadataVO | None = None,
+        new_high_level_study_design: HighLevelStudyDesignVO | None = None,
+        new_study_population: StudyPopulationVO | None = None,
+        new_study_intervention: StudyInterventionVO | None = None,
+        new_study_description: StudyDescriptionVO | None = None,
         therapeutic_area_exists_callback: Callable[
             [str], bool
         ] = default_failure_callback_for_variable("therapeutic_area"),
@@ -361,7 +361,7 @@ class StudyDefinitionAR:
         study_short_title_exists_callback: Callable[
             [str], bool
         ] = default_failure_callback_for_variable("study_short_title"),
-        author: Optional[str] = None,
+        author: str | None = None,
     ) -> None:
         self._can_edit_metadata(raise_error=True)
 
@@ -543,7 +543,7 @@ class StudyDefinitionAR:
             )
 
     def release(
-        self, change_description: Optional[str], author: Optional[str] = None
+        self, change_description: str | None, author: str | None = None
     ) -> None:
         """
         Creates new RELEASED version of study metadata (replacing previous one if exists).
@@ -642,7 +642,7 @@ class StudyDefinitionAR:
         # append that version to teh list
         self._locked_metadata_versions.append(locked_metadata)
 
-    def unlock(self, author: Optional[str] = None) -> None:
+    def unlock(self, author: str | None = None) -> None:
         current_metadata = self.current_metadata
         if current_metadata.ver_metadata.study_status != StudyStatus.LOCKED:
             raise exceptions.ValidationException(
@@ -677,7 +677,7 @@ class StudyDefinitionAR:
         self._deleted = True
 
     @property
-    def latest_locked_metadata(self) -> Optional[StudyMetadataVO]:
+    def latest_locked_metadata(self) -> StudyMetadataVO | None:
         if len(self._locked_metadata_versions) > 0:
             return self._locked_metadata_versions[
                 len(self._locked_metadata_versions) - 1
@@ -685,7 +685,7 @@ class StudyDefinitionAR:
         return None
 
     @property
-    def latest_released_or_locked_metadata(self) -> Optional[StudyMetadataVO]:
+    def latest_released_or_locked_metadata(self) -> StudyMetadataVO | None:
         if self._released_metadata is not None:
             release_timestamp = self._released_metadata.ver_metadata.version_timestamp
         else:
@@ -878,8 +878,8 @@ class StudyDefinitionAR:
             )
             assert study_snapshot.uid is not None
 
-        draft_metadata: Optional[StudyMetadataVO] = None
-        released_metadata: Optional[StudyMetadataVO] = None
+        draft_metadata: StudyMetadataVO | None = None
+        released_metadata: StudyMetadataVO | None = None
         uid = study_snapshot.uid
 
         if study_snapshot.draft_metadata is not None:
@@ -971,8 +971,8 @@ class StudyDefinitionAR:
         study_short_title_exists_callback: Callable[
             [str], bool
         ] = default_failure_callback_for_variable("study_short_title"),
-        author: Optional[str] = None,
-    ) -> "StudyDefinitionAR":
+        author: str | None = None,
+    ) -> Self:
         """
         A factory supporting user story concerned with brand new study creation with some initial information
         provided by the user.

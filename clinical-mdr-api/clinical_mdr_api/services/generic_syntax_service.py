@@ -1,6 +1,6 @@
 import abc
 from datetime import datetime
-from typing import Generic, Optional, Sequence, Tuple, TypeVar
+from typing import Generic, Sequence, TypeVar
 
 from neomodel import db
 from pydantic import BaseModel
@@ -61,10 +61,10 @@ class GenericSyntaxService(Generic[_AggregateRootType], abc.ABC):
     version_class: type
     repository_interface: type
     _repos: MetaRepository
-    user_initials: Optional[str]
+    user_initials: str | None
     root_node_class: type
 
-    def __init__(self, user: Optional[str] = None):
+    def __init__(self, user: str | None = None):
         self.user_initials = user if user is not None else "TODO Initials"
         self._repos = MetaRepository()
 
@@ -84,7 +84,7 @@ class GenericSyntaxService(Generic[_AggregateRootType], abc.ABC):
         self,
         uid: str,
         return_instantiation_counts: bool = False,
-        return_study_count: Optional[bool] = True,
+        return_study_count: bool | None = True,
     ) -> BaseModel:
         item = self._find_by_uid_or_raise_not_found(
             uid,
@@ -95,7 +95,7 @@ class GenericSyntaxService(Generic[_AggregateRootType], abc.ABC):
 
     @db.transaction
     def get_specific_version(
-        self, uid: str, version: str, return_study_count: Optional[bool] = True
+        self, uid: str, version: str, return_study_count: bool | None = True
     ) -> BaseModel:
         item = self._find_by_uid_or_raise_not_found(
             uid, return_study_count=return_study_count, version=version
@@ -106,12 +106,12 @@ class GenericSyntaxService(Generic[_AggregateRootType], abc.ABC):
         self,
         uid: str,
         *,
-        version: Optional[str] = None,
-        at_specific_date: Optional[datetime] = None,
-        status: Optional[LibraryItemStatus] = None,
+        version: str | None = None,
+        at_specific_date: datetime | None = None,
+        status: LibraryItemStatus | None = None,
         for_update: bool = False,
         return_instantiation_counts: bool = False,
-        return_study_count: Optional[bool] = True,
+        return_study_count: bool | None = True,
     ) -> _AggregateRootType:
         item = self.repository.find_by_uid_2(
             uid,
@@ -135,7 +135,7 @@ class GenericSyntaxService(Generic[_AggregateRootType], abc.ABC):
         page_size: int = 0,
         total_count: bool = False,
     ) -> GenericFilteringReturn[BaseModel]:
-        ars, count = self.repository.retrieve_audit_trail(
+        ars, total = self.repository.retrieve_audit_trail(
             page_number=page_number,
             page_size=page_size,
             total_count=total_count,
@@ -143,11 +143,11 @@ class GenericSyntaxService(Generic[_AggregateRootType], abc.ABC):
 
         all_items = [self._transform_aggregate_root_to_pydantic_model(ar) for ar in ars]
 
-        return GenericFilteringReturn.create(items=all_items, total_count=count)
+        return GenericFilteringReturn.create(items=all_items, total=total)
 
     @db.transaction
     def get_all(
-        self, status: Optional[str] = None, return_study_count: Optional[bool] = True
+        self, status: str | None = None, return_study_count: bool | None = True
     ) -> Sequence[BaseModel]:
         if status is not None:
             all_items = self.repository.find_all(
@@ -164,10 +164,10 @@ class GenericSyntaxService(Generic[_AggregateRootType], abc.ABC):
     def get_distinct_values_for_header(
         self,
         field_name: str,
-        status: Optional[str] = None,
-        search_string: Optional[str] = "",
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        status: str | None = None,
+        search_string: str | None = "",
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
     ):
         all_items = self.get_all(status=status, return_study_count=False)
@@ -248,7 +248,7 @@ class GenericSyntaxService(Generic[_AggregateRootType], abc.ABC):
 
     @db.transaction
     def get_version_history(
-        self, uid: str, return_study_count: Optional[bool] = True
+        self, uid: str, return_study_count: bool | None = True
     ) -> Sequence[BaseModel]:
         if self.version_class is not None:
             all_versions = self.repository.get_all_versions_2(
@@ -265,7 +265,7 @@ class GenericSyntaxService(Generic[_AggregateRootType], abc.ABC):
 
     @db.transaction
     def get_releases(
-        self, uid: str, return_study_count: Optional[bool] = True
+        self, uid: str, return_study_count: bool | None = True
     ) -> Sequence[BaseModel]:
         releases = self.repository.find_releases(
             uid=uid, return_study_count=return_study_count
@@ -366,14 +366,14 @@ class GenericSyntaxService(Generic[_AggregateRootType], abc.ABC):
 
     def _get_indexings(
         self, template: BaseModel
-    ) -> Tuple[
+    ) -> tuple[
         Sequence[DictionaryTermAR],
-        Sequence[Tuple[CTTermNameAR, CTTermAttributesAR]],
-        Sequence[Tuple[CTTermNameAR, CTTermAttributesAR]],
+        Sequence[tuple[CTTermNameAR, CTTermAttributesAR]],
+        Sequence[tuple[CTTermNameAR, CTTermAttributesAR]],
     ]:
         indications: Sequence[DictionaryTermAR] = []
-        categories: Sequence[Tuple[CTTermNameAR, CTTermAttributesAR]] = []
-        sub_categories: Sequence[Tuple[CTTermNameAR, CTTermAttributesAR]] = []
+        categories: Sequence[tuple[CTTermNameAR, CTTermAttributesAR]] = []
+        sub_categories: Sequence[tuple[CTTermNameAR, CTTermAttributesAR]] = []
 
         if (
             getattr(template, "indication_uids", None)

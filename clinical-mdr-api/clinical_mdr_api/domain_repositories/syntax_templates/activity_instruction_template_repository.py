@@ -1,5 +1,3 @@
-from typing import Optional
-
 from clinical_mdr_api.domain_repositories.models.generic import (
     Library,
     VersionRelationship,
@@ -35,7 +33,7 @@ class ActivityInstructionTemplateRepository(
         relationship: VersionRelationship,
         value: ActivityInstructionTemplateValue,
         study_count: int = 0,
-        counts: Optional[InstantiationCountsVO] = None,
+        counts: InstantiationCountsVO | None = None,
     ) -> ActivityInstructionTemplateAR:
         return ActivityInstructionTemplateAR.from_repository_values(
             uid=root.uid,

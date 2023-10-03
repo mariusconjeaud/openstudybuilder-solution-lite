@@ -1,10 +1,13 @@
 import datetime
 from dataclasses import dataclass
-from typing import List, Optional, Sequence
+from typing import Sequence
 
 from neomodel import db
 
 from clinical_mdr_api.domain_repositories._utils import helpers
+from clinical_mdr_api.domain_repositories.generic_repository import (
+    manage_previous_connected_study_selection_relationships,
+)
 from clinical_mdr_api.domain_repositories.models._utils import convert_to_datetime
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
     CTTermRoot,
@@ -16,11 +19,11 @@ from clinical_mdr_api.domain_repositories.models.study_audit_trail import (
     Edit,
     StudyAction,
 )
-from clinical_mdr_api.domain_repositories.models.study_selections import (
-    StudyEndpoint,
-    StudyObjective,
+from clinical_mdr_api.domain_repositories.models.study_selections import StudyObjective
+from clinical_mdr_api.domain_repositories.models.syntax import (
+    ObjectiveRoot,
+    ObjectiveTemplateRoot,
 )
-from clinical_mdr_api.domain_repositories.models.syntax import ObjectiveRoot
 from clinical_mdr_api.domains.study_selections.study_selection_objective import (
     StudySelectionObjectivesAR,
     StudySelectionObjectiveVO,
@@ -33,15 +36,15 @@ class SelectionHistory:
     """Class for selection history items"""
 
     study_selection_uid: str
-    objective_uid: Optional[str]
-    objective_level_uid: Optional[str]
+    objective_uid: str | None
+    objective_level_uid: str | None
     start_date: datetime.datetime
-    status: Optional[str]
+    status: str | None
     user_initials: str
     change_type: str
-    end_date: Optional[datetime.datetime]
+    end_date: datetime.datetime | None
     order: int
-    objective_version: Optional[str]
+    objective_version: str | None
 
 
 class StudySelectionObjectiveRepository:
@@ -58,9 +61,9 @@ class StudySelectionObjectiveRepository:
 
     def _retrieves_all_data(
         self,
-        study_uid: Optional[str] = None,
-        project_name: Optional[str] = None,
-        project_number: Optional[str] = None,
+        study_uid: str | None = None,
+        project_name: str | None = None,
+        project_number: str | None = None,
     ) -> Sequence[StudySelectionObjectiveVO]:
         query = ""
         query_parameters = {}
@@ -86,30 +89,38 @@ class StudySelectionObjectiveRepository:
 
         query += """
             WITH sr, sv
-            MATCH (sv)-[:HAS_STUDY_OBJECTIVE]->(so:StudyObjective)-[:HAS_SELECTED_OBJECTIVE]->(ov:ObjectiveValue)
+            MATCH (sv)-[:HAS_STUDY_OBJECTIVE]->(so:StudyObjective)
             CALL {
-              WITH ov
-              MATCH (ov) <-[ver]-(or:ObjectiveRoot) 
-              WHERE ver.status = "Final"
-              RETURN ver as ver, or as or
-              ORDER BY ver.start_date DESC
-              LIMIT 1
+                WITH so
+                MATCH (so)-[:HAS_SELECTED_OBJECTIVE]->(:ObjectiveValue)<-[ver]-(or:ObjectiveRoot)
+                WHERE ver.status = "Final"
+                RETURN ver as ver, or as obj, true as is_instance
+                ORDER BY ver.start_date DESC
+                LIMIT 1
+            UNION
+                WITH so
+                MATCH (so)-[:HAS_SELECTED_OBJECTIVE_TEMPLATE]->(:ObjectiveTemplateValue)<-[ver]-(otr:ObjectiveTemplateRoot)
+                WHERE ver.status = "Final"
+                RETURN ver as ver, otr as obj, false as is_instance
+                ORDER BY ver.start_date DESC
+                LIMIT 1
             }
-            WITH DISTINCT sr, so, or, ver
+            WITH DISTINCT sr, so, obj, ver, is_instance
             OPTIONAL MATCH (so)-[:HAS_OBJECTIVE_LEVEL]->(olr:CTTermRoot)<-[has_term:HAS_TERM]-(:CTCodelistRoot)
             -[:HAS_NAME_ROOT]->(:CTCodelistNameRoot)-[:LATEST_FINAL]->(:CTCodelistNameValue {name: "Objective Level"})
-            WITH sr, so, or, ver, olr, has_term
+            WITH sr, so, obj, ver, olr, has_term, is_instance
             ORDER BY has_term.order, so.order ASC
             MATCH (so)<-[:AFTER]-(sa:StudyAction)
             RETURN
                 sr.uid AS study_uid,
                 so.uid AS study_selection_uid,
                 so.accepted_version AS accepted_version,
-                or.uid AS objective_uid,
+                obj.uid AS objective_uid,
                 olr.uid AS objective_level_uid,
                 has_term.order as objective_level_order,
                 sa.date AS start_date,
                 sa.user_initials AS user_initials,
+                is_instance AS is_instance,
                 ver.version AS objective_version
             """
 
@@ -126,6 +137,7 @@ class StudySelectionObjectiveRepository:
                 objective_version=selection["objective_version"],
                 objective_level_uid=selection["objective_level_uid"],
                 objective_level_order=selection["objective_level_order"],
+                is_instance=selection["is_instance"],
                 start_date=convert_to_datetime(value=selection["start_date"]),
                 user_initials=selection["user_initials"],
                 accepted_version=acv,
@@ -135,9 +147,9 @@ class StudySelectionObjectiveRepository:
 
     def find_all(
         self,
-        project_name: Optional[str] = None,
-        project_number: Optional[str] = None,
-    ) -> Optional[Sequence[StudySelectionObjectivesAR]]:
+        project_name: str | None = None,
+        project_number: str | None = None,
+    ) -> Sequence[StudySelectionObjectivesAR] | None:
         """
         Finds all the selected study objectives for all studies, and create the aggregate
         :return: List of StudySelectionObjectivesAR, potentially empty
@@ -165,7 +177,7 @@ class StudySelectionObjectiveRepository:
 
     def find_by_study(
         self, study_uid: str, for_update: bool = False
-    ) -> Optional[StudySelectionObjectivesAR]:
+    ) -> StudySelectionObjectivesAR | None:
         """
         Finds all the selected study objectives for a given study, and creates the aggregate
         :param study_uid:
@@ -246,19 +258,10 @@ class StudySelectionObjectiveRepository:
         # audit trail nodes dictionary, holds the new nodes created for the audit trail
         audit_trail_nodes = {}
 
-        # earlier connnected study endpoints
-        study_endpoints_nodes = {}
-
         # loop through and remove selections
         for order, study_objective in selections_to_remove:
             last_study_selection_node = latest_study_value_node.has_study_objective.get(
                 uid=study_objective.study_selection_uid
-            )
-            study_endpoints_nodes[
-                study_objective.study_selection_uid
-            ] = self._get_connected_study_endpoints(last_study_selection_node)
-            self._remove_old_selection_if_exists(
-                study_selection.study_uid, study_objective
             )
             audit_node = self._get_audit_node(
                 study_selection, study_objective.study_selection_uid
@@ -269,61 +272,41 @@ class StudySelectionObjectiveRepository:
                 study_root_node=study_root_node,
                 author=author,
             )
-            audit_trail_nodes[study_objective.study_selection_uid] = audit_node
+            audit_trail_nodes[study_objective.study_selection_uid] = (
+                audit_node,
+                last_study_selection_node,
+            )
             if isinstance(audit_node, Delete):
                 self._add_new_selection(
                     latest_study_value_node,
                     order,
                     study_objective,
                     audit_node,
-                    [],
+                    last_study_selection_node,
                     True,
                 )
 
         # loop through and add selections
         for order, selection in selections_to_add:
+            last_study_selection_node = None
             if selection.study_selection_uid in audit_trail_nodes:
-                audit_node = audit_trail_nodes[selection.study_selection_uid]
+                audit_node, last_study_selection_node = audit_trail_nodes[
+                    selection.study_selection_uid
+                ]
             else:
                 audit_node = Create()
                 audit_node.user_initials = selection.user_initials
                 audit_node.date = selection.start_date
                 audit_node.save()
                 study_root_node.audit_trail.connect(audit_node)
-            if selection.study_selection_uid in study_endpoints_nodes:
-                endpoints = study_endpoints_nodes[selection.study_selection_uid]
-            else:
-                endpoints = []
             self._add_new_selection(
-                latest_study_value_node, order, selection, audit_node, endpoints, False
+                latest_study_value_node,
+                order,
+                selection,
+                audit_node,
+                last_study_selection_node,
+                False,
             )
-
-    def _get_connected_study_endpoints(
-        self, last_study_selection_node: StudyObjective
-    ) -> List[StudyEndpoint]:
-        all_connected_endpoints = (
-            last_study_selection_node.study_endpoint_has_study_objective.all()
-        )
-        # Remove the relationship to the study endpoint, to move them to the new version
-        for endpoint in all_connected_endpoints:
-            endpoint.study_endpoint_has_study_objective.disconnect(
-                last_study_selection_node
-            )
-        return all_connected_endpoints
-
-    def _remove_old_selection_if_exists(
-        self, study_uid: str, study_selection: StudySelectionObjectiveVO
-    ) -> None:
-        db.cypher_query(
-            """
-            MATCH (:StudyRoot { uid: $study_uid})-[:LATEST]->(:StudyValue)-[rel:HAS_STUDY_OBJECTIVE]->(so:StudyObjective { uid: $study_selection_uid})
-            DELETE rel
-            """,
-            {
-                "study_uid": study_uid,
-                "study_selection_uid": study_selection.study_selection_uid,
-            },
-        )
 
     @staticmethod
     def _set_before_audit_info(
@@ -336,7 +319,7 @@ class StudySelectionObjectiveRepository:
         audit_node.date = datetime.datetime.now(datetime.timezone.utc)
         audit_node.save()
 
-        study_objective_selection_node.has_before.connect(audit_node)
+        audit_node.has_before.connect(study_objective_selection_node)
         study_root_node.audit_trail.connect(audit_node)
         return audit_node
 
@@ -346,16 +329,9 @@ class StudySelectionObjectiveRepository:
         order: int,
         selection: StudySelectionObjectiveVO,
         audit_node: StudyAction,
-        study_endpoint_nodes: List[StudyEndpoint],
+        last_study_selection_node: StudyObjective,
         for_deletion: bool = False,
     ):
-        # find the objective value
-        objective_root_node: ObjectiveRoot = ObjectiveRoot.nodes.get(
-            uid=selection.objective_uid
-        )
-        latest_objective_value_node = objective_root_node.get_value_for_version(
-            selection.objective_version
-        )
         # Create new objective selection
         study_objective_selection_node = StudyObjective(order=order)
         study_objective_selection_node.uid = selection.study_selection_uid
@@ -367,20 +343,47 @@ class StudySelectionObjectiveRepository:
                 study_objective_selection_node
             )
         # Connect new node with audit trail
-        study_objective_selection_node.has_after.connect(audit_node)
-        # reconnect the study endpoint which was connected to the prvius version
-        for study_endpoint in study_endpoint_nodes:
-            study_objective_selection_node.study_endpoint_has_study_objective.connect(
-                study_endpoint
-            )
-        # Connect new node with Objective value
-        study_objective_selection_node.has_selected_objective.connect(
-            latest_objective_value_node
-        )
+        audit_node.has_after.connect(study_objective_selection_node)
+
+        # check if objective is set
+        if selection.objective_uid:
+            if selection.is_instance:
+                # Get the objective value and connect new node with objective value
+                objective_root_node: ObjectiveRoot = ObjectiveRoot.nodes.get(
+                    uid=selection.objective_uid
+                )
+                latest_objective_value_node = objective_root_node.get_value_for_version(
+                    selection.objective_version
+                )
+                study_objective_selection_node.has_selected_objective.connect(
+                    latest_objective_value_node
+                )
+            else:
+                # Get the objective template value
+                objective_template_root_node: ObjectiveTemplateRoot = (
+                    ObjectiveTemplateRoot.nodes.get(uid=selection.objective_uid)
+                )
+                latest_objective_template_value_node = (
+                    objective_template_root_node.get_value_for_version(
+                        selection.objective_version
+                    )
+                )
+                study_objective_selection_node.has_selected_objective_template.connect(
+                    latest_objective_template_value_node
+                )
+
         # Set objective level if exists
         if selection.objective_level_uid:
             ct_term_root = CTTermRoot.nodes.get(uid=selection.objective_level_uid)
             study_objective_selection_node.has_objective_level.connect(ct_term_root)
+
+        if last_study_selection_node:
+            manage_previous_connected_study_selection_relationships(
+                previous_item=last_study_selection_node,
+                study_value_node=latest_study_value_node,
+                new_item=study_objective_selection_node,
+                exclude_study_selection_relationships=[],
+            )
 
     def study_objective_exists(self, study_objective_uid: str) -> bool:
         """
@@ -476,7 +479,7 @@ class StudySelectionObjectiveRepository:
 
     def find_selection_history(
         self, study_uid: str, study_selection_uid: str = None
-    ) -> List[Optional[dict]]:
+    ) -> list[dict | None]:
         """
         Simple method to return all versions of a study objectives for a study.
         Optionally a specific selection uid is given to see only the response for a specific selection.

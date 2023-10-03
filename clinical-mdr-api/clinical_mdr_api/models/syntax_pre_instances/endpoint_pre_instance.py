@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Self
 
 from pydantic import Field
 
@@ -23,41 +23,41 @@ from clinical_mdr_api.models.utils import BaseModel
 
 class EndpointPreInstance(BaseModel):
     uid: str
-    sequence_id: Optional[str] = Field(None, nullable=True)
+    sequence_id: str | None = Field(None, nullable=True)
     template_uid: str
     template_name: str
-    name: Optional[str] = Field(None, nullable=True)
-    name_plain: Optional[str] = Field(None, nullable=True)
-    start_date: Optional[datetime] = Field(None, nullable=True)
-    end_date: Optional[datetime] = Field(None, nullable=True)
-    status: Optional[str] = Field(None, nullable=True)
-    version: Optional[str] = Field(None, nullable=True)
-    change_description: Optional[str] = Field(None, nullable=True)
-    user_initials: Optional[str] = Field(None, nullable=True)
-    parameter_terms: List[MultiTemplateParameterTerm] = Field(
+    name: str | None = Field(None, nullable=True)
+    name_plain: str | None = Field(None, nullable=True)
+    start_date: datetime | None = Field(None, nullable=True)
+    end_date: datetime | None = Field(None, nullable=True)
+    status: str | None = Field(None, nullable=True)
+    version: str | None = Field(None, nullable=True)
+    change_description: str | None = Field(None, nullable=True)
+    user_initials: str | None = Field(None, nullable=True)
+    parameter_terms: list[MultiTemplateParameterTerm] = Field(
         [],
         description="Holds the parameter terms that are used within the endpoint. The terms are ordered as they occur in the endpoint name.",
     )
-    indications: List[DictionaryTerm] = Field(
+    indications: list[DictionaryTerm] = Field(
         [],
         description="The study indications, conditions, diseases or disorders in scope for the pre-instance.",
     )
-    categories: List[CTTermNameAndAttributes] = Field(
+    categories: list[CTTermNameAndAttributes] = Field(
         [], description="A list of categories the pre-instance belongs to."
     )
-    sub_categories: List[CTTermNameAndAttributes] = Field(
+    sub_categories: list[CTTermNameAndAttributes] = Field(
         [], description="A list of sub-categories the pre-instance belongs to."
     )
-    library: Optional[Library] = Field(None, nullable=True)
-    possible_actions: List[str] = []
+    library: Library | None = Field(None, nullable=True)
+    possible_actions: list[str] = []
 
     @classmethod
     def from_endpoint_pre_instance_ar(
         cls, endpoint_pre_instance_ar: EndpointPreInstanceAR
-    ) -> "EndpointPreInstance":
-        parameter_terms: List[MultiTemplateParameterTerm] = []
+    ) -> Self:
+        parameter_terms: list[MultiTemplateParameterTerm] = []
         for position, parameter in enumerate(endpoint_pre_instance_ar.get_parameters()):
-            terms: List[IndexedTemplateParameterTerm] = []
+            terms: list[IndexedTemplateParameterTerm] = []
             for index, parameter_term in enumerate(parameter.parameters):
                 pv = IndexedTemplateParameterTerm(
                     index=index + 1,
@@ -123,9 +123,9 @@ class EndpointPreInstance(BaseModel):
 
 
 class EndpointPreInstanceCreateInput(PreInstanceInput):
-    indication_uids: List[str]
-    category_uids: List[str]
-    sub_category_uids: List[str]
+    indication_uids: list[str]
+    category_uids: list[str]
+    sub_category_uids: list[str]
 
 
 class EndpointPreInstanceEditInput(PreInstanceInput):
@@ -136,15 +136,15 @@ class EndpointPreInstanceEditInput(PreInstanceInput):
 
 
 class EndpointPreInstanceIndexingsInput(BaseModel):
-    indication_uids: Optional[List[str]] = Field(
+    indication_uids: list[str] | None = Field(
         None,
         description="A list of UID of the study indications, conditions, diseases or disorders to attach the pre-instance to.",
     )
-    category_uids: Optional[List[str]] = Field(
+    category_uids: list[str] | None = Field(
         None,
         description="A list of UID of the categories to attach the pre-instance to.",
     )
-    sub_category_uids: Optional[List[str]] = Field(
+    sub_category_uids: list[str] | None = Field(
         None,
         description="A list of UID of the sub_categories to attach the pre-instance to.",
     )
@@ -155,7 +155,7 @@ class EndpointPreInstanceVersion(EndpointPreInstance):
     Class for storing Endpoint Pre-Instances and calculation of differences
     """
 
-    changes: Optional[Dict[str, bool]] = Field(
+    changes: dict[str, bool] | None = Field(
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "

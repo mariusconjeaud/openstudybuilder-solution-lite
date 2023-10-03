@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
-from typing import AbstractSet, Any, Callable, Optional
+from typing import AbstractSet, Any, Callable, Self
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains._utils import normalize_string
 from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemMetadataVO,
@@ -12,29 +13,29 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
 @dataclass(frozen=True)
 class CTConfigValueVO:
     study_field_name: str
-    study_field_data_type: Optional[str]
-    study_field_null_value_code: Optional[str]
+    study_field_data_type: str | None
+    study_field_null_value_code: str | None
 
-    configured_codelist_uid: Optional[str]
-    configured_term_uid: Optional[str]
+    configured_codelist_uid: str | None
+    configured_term_uid: str | None
 
-    study_field_grouping: Optional[str]
-    study_field_name_api: Optional[str]
-    is_dictionary_term: Optional[bool]
+    study_field_grouping: str | None
+    study_field_name_api: str | None
+    is_dictionary_term: bool | None
 
     @classmethod
     def from_input_values(
         cls,
         *,
         study_field_name: str,
-        study_field_data_type: Optional[str],
-        study_field_null_value_code: Optional[str],
-        configured_codelist_uid: Optional[str],
-        configured_term_uid: Optional[str],
-        study_field_grouping: Optional[str],
-        study_field_name_api: Optional[str],
-        is_dictionary_term: Optional[bool],
-    ) -> "CTConfigValueVO":
+        study_field_data_type: str | None,
+        study_field_null_value_code: str | None,
+        configured_codelist_uid: str | None,
+        configured_term_uid: str | None,
+        study_field_grouping: str | None,
+        study_field_name_api: str | None,
+        is_dictionary_term: bool | None,
+    ) -> Self:
         return cls.from_repository_values(
             study_field_name=normalize_string(study_field_name),
             study_field_data_type=study_field_data_type,
@@ -51,14 +52,14 @@ class CTConfigValueVO:
         cls,
         *,
         study_field_name: str,
-        study_field_data_type: Optional[str],
-        study_field_null_value_code: Optional[str],
-        configured_codelist_uid: Optional[str],
-        configured_term_uid: Optional[str],
-        study_field_grouping: Optional[str],
-        study_field_name_api: Optional[str],
-        is_dictionary_term: Optional[bool],
-    ) -> "CTConfigValueVO":
+        study_field_data_type: str | None,
+        study_field_null_value_code: str | None,
+        configured_codelist_uid: str | None,
+        configured_term_uid: str | None,
+        study_field_grouping: str | None,
+        study_field_name_api: str | None,
+        is_dictionary_term: bool | None,
+    ) -> Self:
         return cls(
             study_field_name=normalize_string(study_field_name),
             study_field_data_type=study_field_data_type,
@@ -79,7 +80,7 @@ class CTConfigValueVO:
             ct_configuration_exists_by_name_callback(self.study_field_name)
             and self.study_field_name != previous_name
         ):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"{type(self).__name__} for field identified by name ({self.study_field_name}) already exists"
             )
 
@@ -90,7 +91,7 @@ class CTConfigAR(VersioningActionMixin):
 
     # Properties from relationship
     _item_metadata: LibraryItemMetadataVO
-    _uid: Optional[str] = None
+    _uid: str | None = None
 
     # used for soft delete
     _is_deleted: bool = field(init=False, default=False)
@@ -99,8 +100,8 @@ class CTConfigAR(VersioningActionMixin):
         init=False, compare=False, repr=True, default=None
     )
 
-    study_field_name: Optional[str] = None
-    study_selection_rel_type: Optional[str] = None
+    study_field_name: str | None = None
+    study_selection_rel_type: str | None = None
 
     def get_possible_actions(self) -> AbstractSet[ObjectAction]:
         raise NotImplementedError("Possible actions retrieval not implemented.")
@@ -159,15 +160,15 @@ class CTConfigAR(VersioningActionMixin):
         cls,
         *,
         author: str,
-        generate_uid_callback: Callable[[], Optional[str]] = (lambda: None),
+        generate_uid_callback: Callable[[], str | None] = (lambda: None),
         ct_config_value: CTConfigValueVO,
         ct_configuration_exists_by_name_callback: Callable[[str], bool],
-    ) -> "CTConfigAR":
+    ) -> Self:
         ct_config_value.validate(
             ct_configuration_exists_by_name_callback=ct_configuration_exists_by_name_callback
         )
 
-        result: CTConfigAR = cls(
+        result: Self = cls(
             _uid=generate_uid_callback(),
             _value=ct_config_value,
             _item_metadata=LibraryItemMetadataVO.get_initial_item_metadata(
@@ -183,8 +184,8 @@ class CTConfigAR(VersioningActionMixin):
         uid: str,
         item_metadata: LibraryItemMetadataVO,
         ct_config_value: CTConfigValueVO,
-    ) -> "CTConfigAR":
-        result: CTConfigAR = cls(
+    ) -> Self:
+        result: Self = cls(
             _uid=uid, _item_metadata=item_metadata, _value=ct_config_value
         )
         return result

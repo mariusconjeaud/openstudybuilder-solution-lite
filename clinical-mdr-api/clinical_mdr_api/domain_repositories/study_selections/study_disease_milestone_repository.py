@@ -1,8 +1,9 @@
 import datetime
-from typing import Optional, Sequence, Tuple, TypeVar
+from typing import Sequence, TypeVar
 
 from neomodel import Q, db
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domain_repositories.models._utils import to_relation_trees
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
     CTTermRoot,
@@ -60,15 +61,15 @@ class StudyDiseaseMilestoneRepository:
 
     def find_all_disease_milestone(
         self,
-        study_uid: Optional[str] = None,
-        sort_by: Optional[dict] = None,
+        study_uid: str | None = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
         **kwargs,
-    ) -> Tuple[Sequence[StudyDiseaseMilestoneOGM], int]:
+    ) -> tuple[Sequence[StudyDiseaseMilestoneOGM], int]:
         q_filters = self.create_query_filter_statement_neomodel(
             study_uid=study_uid, filter_by=filter_by, **kwargs
         )
@@ -99,8 +100,8 @@ class StudyDiseaseMilestoneRepository:
         return all_activities, all_nodes if total_count else 0
 
     def create_query_filter_statement_neomodel(
-        self, study_uid: Optional[str] = None, filter_by: Optional[dict] = None
-    ) -> Tuple[dict, Sequence[Q]]:
+        self, study_uid: str | None = None, filter_by: dict | None = None
+    ) -> tuple[dict, Sequence[Q]]:
         q_filters = transform_filters_into_neomodel(
             filter_by=filter_by, model=StudyDiseaseMilestoneOGM
         )
@@ -110,7 +111,7 @@ class StudyDiseaseMilestoneRepository:
 
     def find_all_disease_milestones_by_study(
         self, study_uid: str
-    ) -> Optional[_StandardsReturnType]:
+    ) -> _StandardsReturnType | None:
         all_disease_milestones = [
             StudyDiseaseMilestoneOGM.from_orm(sas_node)
             for sas_node in to_relation_trees(
@@ -136,11 +137,11 @@ class StudyDiseaseMilestoneRepository:
         )
 
         if len(disease_milestone_node) > 1:
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"Found more than one StudyDiseaseMilestone node with uid='{uid}'."
             )
         if len(disease_milestone_node) == 0:
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"The StudyDiseaseMilestone with uid='{uid}' could not be found."
             )
         return StudyDiseaseMilestoneOGM.from_orm(disease_milestone_node[0])
@@ -196,7 +197,7 @@ class StudyDiseaseMilestoneRepository:
         study_root: StudyRoot = StudyRoot.nodes.get(uid=item.study_uid)
         study_value = study_root.latest_value.get_or_none()
         if study_value is None:
-            raise ValueError("Study does not have draft version")
+            raise exceptions.ValidationException("Study does not have draft version")
         new_study_disease_milestone = StudyDiseaseMilestone(
             uid=item.uid,
             accepted_version=item.accepted_version,
@@ -264,7 +265,7 @@ class StudyDiseaseMilestoneRepository:
             user_initials=item.author,
         )
         action.save()
-        new_item.has_after.connect(action)
+        action.has_after.connect(new_item)
         study_root.audit_trail.connect(action)
 
     def manage_versioning_update(
@@ -280,8 +281,8 @@ class StudyDiseaseMilestoneRepository:
             user_initials=item.author,
         )
         action.save()
-        previous_item.has_before.connect(action)
-        new_item.has_after.connect(action)
+        action.has_before.connect(previous_item)
+        action.has_after.connect(new_item)
         study_root.audit_trail.connect(action)
 
     def manage_versioning_delete(
@@ -297,16 +298,16 @@ class StudyDiseaseMilestoneRepository:
             user_initials=item.author,
         )
         action.save()
-        previous_item.has_before.connect(action)
-        new_item.has_after.connect(action)
+        action.has_before.connect(previous_item)
+        action.has_after.connect(new_item)
         study_root.audit_trail.connect(action)
 
     def get_distinct_headers(
         self,
         field_name: str,
-        search_string: Optional[str] = "",
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        search_string: str | None = "",
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
     ) -> Sequence:
         """

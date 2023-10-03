@@ -4,7 +4,6 @@ Tests for /activity-instance-classes endpoints
 import json
 import logging
 from functools import reduce
-from typing import List
 
 import pytest
 from fastapi.testclient import TestClient
@@ -13,6 +12,7 @@ from clinical_mdr_api.main import app
 from clinical_mdr_api.models.biomedical_concepts.activity_instance_class import (
     ActivityInstanceClass,
 )
+from clinical_mdr_api.models.standard_data_models.dataset_class import DatasetClass
 from clinical_mdr_api.tests.integration.utils.api import (
     drop_db,
     inject_and_clear_db,
@@ -31,7 +31,8 @@ from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 log = logging.getLogger(__name__)
 
 # Global variables shared between fixtures and tests
-activity_instance_classes_all: List[ActivityInstanceClass]
+activity_instance_classes_all: list[ActivityInstanceClass]
+dataset_class: DatasetClass
 
 parent_uid: str
 
@@ -52,6 +53,15 @@ def test_data():
 
     global activity_instance_classes_all
     global parent_uid
+    global dataset_class
+
+    data_model = TestUtils.create_data_model()
+    data_model_catalogue = TestUtils.create_data_model_catalogue()
+    dataset_class = TestUtils.create_dataset_class(
+        data_model_uid=data_model.uid,
+        data_model_catalogue_name=data_model_catalogue,
+    )
+
     # Create some activity instance classes
     activity_instance_classes_all = [
         TestUtils.create_activity_instance_class(name="name A"),
@@ -108,6 +118,7 @@ ACTIVITY_IC_FIELDS_ALL = [
     "order",
     "is_domain_specific",
     "parent_class",
+    "dataset_classes",
     "library_name",
     "start_date",
     "end_date",
@@ -375,6 +386,16 @@ def test_edit_activity_instance_class(api_client):
     assert res["status"] == "Draft"
     assert res["possible_actions"] == ["approve", "delete", "edit"]
     assert res["library_name"] == "Sponsor"
+
+    response = api_client.patch(
+        f"/activity-instance-classes/{activity_instance_class.uid}/model-mappings",
+        json={
+            "dataset_class_uids": [dataset_class.uid],
+        },
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["dataset_classes"] == [{"uid": dataset_class.uid}]
 
 
 def test_post_activity_instance_class(api_client):

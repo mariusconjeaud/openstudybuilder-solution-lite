@@ -1,4 +1,4 @@
-from typing import List, Optional, Sequence
+from typing import Sequence
 
 from neomodel import db
 
@@ -18,7 +18,10 @@ from clinical_mdr_api.models.study_selections.study_selection import (
     StudySelectionCriteriaInput,
     StudySelectionCriteriaTemplateSelectInput,
 )
-from clinical_mdr_api.models.syntax_instances.criteria import CriteriaCreateInput
+from clinical_mdr_api.models.syntax_instances.criteria import (
+    CriteriaCreateInput,
+    CriteriaUpdateWithCriteriaKeyInput,
+)
 from clinical_mdr_api.models.utils import GenericFilteringReturn
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._meta_repository import MetaRepository
@@ -102,7 +105,7 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
                     )
                     if criteria_template is None:
                         raise exceptions.NotFoundException(
-                            f"Criteria template with uid {template_input.criteria_template_uid} does not exist"
+                            f"Syntax Template with uid {template_input.criteria_template_uid} does not exist"
                         )
 
                     if (
@@ -114,7 +117,7 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
                         )
                     ):
                         criteria_type_uid = (
-                            criteria_template_repo.get_criteria_type_uid(
+                            criteria_template_repo.get_template_type_uid(
                                 template_uid=criteria_template.uid
                             )
                         )
@@ -137,15 +140,12 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
                         )
 
                         # Add template to selection
-                        try:
-                            assert selection_aggregate is not None
-                            selection_aggregate.add_criteria_selection(
-                                new_selection,
-                                criteria_template_repo.check_exists_final_version,
-                                self._repos.ct_term_name_repository.term_specific_exists_by_uid,
-                            )
-                        except ValueError as value_error:
-                            raise exceptions.ValidationException(value_error.args[0])
+                        assert selection_aggregate is not None
+                        selection_aggregate.add_criteria_selection(
+                            new_selection,
+                            criteria_template_repo.check_exists_final_version,
+                            self._repos.ct_term_name_repository.term_specific_exists_by_uid,
+                        )
 
                         # Sync with DB and save the update
                         repos.study_criteria_repository.save(
@@ -226,11 +226,11 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
 
         return criteria_ar
 
-    def finalize_criteria_selection(
+    def patch_selection(
         self,
         study_uid: str,
         study_criteria_uid: str,
-        criteria_data: CriteriaCreateInput,
+        criteria_data: CriteriaUpdateWithCriteriaKeyInput,
     ) -> models.StudySelectionCriteria:
         """Finalizes criteria selection by instantiation the criteria from the selected template.
         It then update the study criteria relationship by selecting the instance instead of the template.
@@ -238,7 +238,7 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
         Args:
             study_uid (str)
             study_criteria_uid (str)
-            criteria_data (CriteriaCreateInput): Data necessary to create the criteria instance from the template
+            criteria_data (CriteriaUpdateWithCriteriaKeyInput): Data necessary to create the criteria instance from the template
 
         Returns:
             StudySelectionCriteria : Newly created and selected criteria instance
@@ -247,7 +247,7 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
         try:
             with db.transaction:
                 criteria_type_uid = (
-                    repos.criteria_template_repository.get_criteria_type_uid(
+                    repos.criteria_template_repository.get_template_type_uid(
                         criteria_data.criteria_template_uid
                     )
                 )
@@ -262,6 +262,7 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
                     study_uid=study_uid,
                     study_criteria_uid=study_criteria_uid,
                     criteria_uid=criteria_ar.uid,
+                    key_criteria=criteria_data.key_criteria,
                     criteria_version=criteria_ar.item_metadata.version,
                 )
 
@@ -306,7 +307,7 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
                 )
 
             criteria_type_uid = (
-                self._repos.criteria_template_repository.get_criteria_type_uid(
+                self._repos.criteria_template_repository.get_template_type_uid(
                     template_uid=selected_criteria.template_uid
                 )
             )
@@ -337,16 +338,13 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
                         f"There is no approved criteria identified by provided uid ({new_selection.syntax_object_uid})"
                     )
 
-            try:
-                assert selection_aggregate is not None
-                selection_aggregate.add_criteria_selection(
-                    new_selection,
-                    self._repos.criteria_repository.check_exists_final_version,
-                    self._repos.ct_term_name_repository.term_specific_exists_by_uid,
-                )
-                selection_aggregate.validate()
-            except ValueError as value_error:
-                raise exceptions.ValidationException(value_error.args[0])
+            assert selection_aggregate is not None
+            selection_aggregate.add_criteria_selection(
+                new_selection,
+                self._repos.criteria_repository.check_exists_final_version,
+                self._repos.ct_term_name_repository.term_specific_exists_by_uid,
+            )
+            selection_aggregate.validate()
 
             self._repos.study_criteria_repository.save(selection_aggregate, self.author)
 
@@ -374,7 +372,7 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
         repos = self._repos
         try:
             # get criteria type uid from the criteria template
-            criteria_type_uid = repos.criteria_template_repository.get_criteria_type_uid(
+            criteria_type_uid = repos.criteria_template_repository.get_template_type_uid(
                 template_uid=selection_create_input.criteria_data.criteria_template_uid
             )
 
@@ -399,16 +397,13 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
             )
 
             # add VO to aggregate
-            try:
-                criteria_repo = repos.criteria_repository
-                assert selection_aggregate is not None
-                selection_aggregate.add_criteria_selection(
-                    new_selection,
-                    criteria_repo.check_exists_final_version,
-                    self._repos.ct_term_name_repository.term_specific_exists_by_uid,
-                )
-            except ValueError as value_error:
-                raise exceptions.ValidationException(value_error.args[0])
+            criteria_repo = repos.criteria_repository
+            assert selection_aggregate is not None
+            selection_aggregate.add_criteria_selection(
+                new_selection,
+                criteria_repo.check_exists_final_version,
+                self._repos.ct_term_name_repository.term_specific_exists_by_uid,
+            )
 
             # sync with DB and save the update
             repos.study_criteria_repository.save(selection_aggregate, self.author)
@@ -444,7 +439,7 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
                 criteria_service = CriteriaService()
 
                 # get criteria type uid from the criteria template
-                criteria_type_uid = repos.criteria_template_repository.get_criteria_type_uid(
+                criteria_type_uid = repos.criteria_template_repository.get_template_type_uid(
                     template_uid=selection_create_input.criteria_data.criteria_template_uid
                 )
 
@@ -452,7 +447,6 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
                 criteria_ar = criteria_service.create_ar_from_input_values(
                     selection_create_input.criteria_data,
                     generate_uid_callback=(lambda: "preview"),
-                    generate_seq_id_callback=(lambda x, y: None),
                 )
 
                 criteria_ar.approve(self.author)
@@ -511,13 +505,13 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
     def get_all_selections_for_all_studies(
         self,
         no_brackets: bool,
-        project_name: Optional[str] = None,
-        project_number: Optional[str] = None,
-        sort_by: Optional[dict] = None,
+        project_name: str | None = None,
+        project_number: str | None = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[models.StudySelectionCriteria]:
         repos = self._repos
@@ -553,12 +547,12 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
     def get_distinct_values_for_header(
         self,
         field_name: str,
-        study_uid: Optional[str] = None,
-        project_name: Optional[str] = None,
-        project_number: Optional[str] = None,
-        search_string: Optional[str] = "",
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        study_uid: str | None = None,
+        project_name: str | None = None,
+        project_number: str | None = None,
+        search_string: str | None = "",
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
     ):
         repos = self._repos
@@ -613,11 +607,11 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
         self,
         study_uid: str,
         no_brackets: bool,
-        sort_by: Optional[dict] = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[models.StudySelectionCriteria]:
         repos = self._repos
@@ -685,7 +679,7 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
         )
 
     def _transform_history_to_response_model(
-        self, study_selection_history: List[SelectionHistory], study_uid: str
+        self, study_selection_history: list[SelectionHistory], study_uid: str
     ) -> Sequence[models.StudySelectionCriteriaCore]:
         result = []
         for history in study_selection_history:
@@ -709,7 +703,7 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
 
     @db.transaction
     def get_all_selection_audit_trail(
-        self, study_uid: str, criteria_type_uid: Optional[str]
+        self, study_uid: str, criteria_type_uid: str | None
     ) -> Sequence[models.StudySelectionCriteriaCore]:
         repos = self._repos
         try:
@@ -734,15 +728,9 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
     ) -> Sequence[models.StudySelectionCriteriaCore]:
         repos = self._repos
         try:
-            try:
-                selection_history = (
-                    repos.study_criteria_repository.find_selection_history(
-                        study_uid=study_uid, study_selection_uid=study_selection_uid
-                    )
-                )
-            except ValueError as value_error:
-                raise exceptions.NotFoundException(value_error.args[0])
-
+            selection_history = repos.study_criteria_repository.find_selection_history(
+                study_uid=study_uid, study_selection_uid=study_selection_uid
+            )
             return self._transform_history_to_response_model(
                 selection_history, study_uid
             )
@@ -826,12 +814,9 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
                 study_uid=study_uid, for_update=True
             )
             # Load the current VO for updates
-            try:
-                current_vo, _ = selection_aggregate.get_specific_criteria_selection(
-                    study_criteria_uid=study_selection_uid
-                )
-            except ValueError as value_error:
-                raise exceptions.NotFoundException(value_error.args[0])
+            current_vo, _ = selection_aggregate.get_specific_criteria_selection(
+                study_criteria_uid=study_selection_uid
+            )
 
             # merge current with updates
             updated_selection = StudySelectionCriteriaVO.from_input_values(
@@ -848,13 +833,11 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
                 accepted_version=current_vo.accepted_version,
             )
 
-            try:
-                # let the aggregate update the value object
-                selection_aggregate.set_key_criteria_property(
-                    updated_study_criteria_selection=updated_selection,
-                )
-            except ValueError as value_error:
-                raise exceptions.ValidationException(value_error.args[0])
+            # let the aggregate update the value object
+            selection_aggregate.set_key_criteria_property(
+                updated_study_criteria_selection=updated_selection,
+            )
+
             # sync with DB and save the update
             repos.study_criteria_repository.save(selection_aggregate, self.author)
 

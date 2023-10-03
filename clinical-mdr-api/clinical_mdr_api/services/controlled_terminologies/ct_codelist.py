@@ -1,4 +1,4 @@
-from typing import Optional, Sequence, TypeVar
+from typing import Sequence, TypeVar
 
 from neomodel import db
 
@@ -20,16 +20,16 @@ from clinical_mdr_api.models import (
 from clinical_mdr_api.models.utils import GenericFilteringReturn
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._meta_repository import MetaRepository  # type: ignore
-from clinical_mdr_api.services._utils import normalize_string
+from clinical_mdr_api.services._utils import is_library_editable, normalize_string
 
 _AggregateRootType = TypeVar("_AggregateRootType")
 
 
 class CTCodelistService:
     _repos: MetaRepository
-    user_initials: Optional[str]
+    user_initials: str | None
 
-    def __init__(self, user: Optional[str] = None):
+    def __init__(self, user: str | None = None):
         self.user_initials = user if user is not None else "TODO user initials"
         self._repos = MetaRepository(self.user_initials)
 
@@ -62,111 +62,102 @@ class CTCodelistService:
 
         library_vo = LibraryVO.from_input_values_2(
             library_name=codelist_input.library_name,
-            is_library_editable_callback=(
-                lambda name: self._repos.library_repository.find_by_name(
-                    name
-                ).is_editable
-                if self._repos.library_repository.find_by_name(name) is not None
-                else None
-            ),
+            is_library_editable_callback=is_library_editable,
         )
-        try:
-            ct_codelist_attributes_ar = CTCodelistAttributesAR.from_input_values(
-                author=self.user_initials,
-                ct_codelist_attributes_vo=CTCodelistAttributesVO.from_input_values(
-                    name=codelist_input.name,
-                    parent_codelist_uid=codelist_input.parent_codelist_uid,
-                    catalogue_name=codelist_input.catalogue_name,
-                    submission_value=codelist_input.submission_value,
-                    preferred_term=codelist_input.nci_preferred_name,
-                    definition=codelist_input.definition,
-                    extensible=codelist_input.extensible,
-                    catalogue_exists_callback=self._repos.ct_catalogue_repository.catalogue_exists,
-                    codelist_exists_by_uid_callback=self._repos.ct_codelist_attribute_repository.codelist_specific_exists_by_uid,
-                    codelist_exists_by_name_callback=self._repos.ct_codelist_attribute_repository.codelist_specific_exists_by_name,
-                    codelist_exists_by_submission_value_callback=(
-                        self._repos.ct_codelist_attribute_repository.codelist_attributes_exists_by_submission_value
-                    ),
+
+        ct_codelist_attributes_ar = CTCodelistAttributesAR.from_input_values(
+            author=self.user_initials,
+            ct_codelist_attributes_vo=CTCodelistAttributesVO.from_input_values(
+                name=codelist_input.name,
+                parent_codelist_uid=codelist_input.parent_codelist_uid,
+                catalogue_name=codelist_input.catalogue_name,
+                submission_value=codelist_input.submission_value,
+                preferred_term=codelist_input.nci_preferred_name,
+                definition=codelist_input.definition,
+                extensible=codelist_input.extensible,
+                catalogue_exists_callback=self._repos.ct_catalogue_repository.catalogue_exists,
+                codelist_exists_by_uid_callback=self._repos.ct_codelist_attribute_repository.codelist_specific_exists_by_uid,
+                codelist_exists_by_name_callback=self._repos.ct_codelist_attribute_repository.codelist_specific_exists_by_name,
+                codelist_exists_by_submission_value_callback=(
+                    self._repos.ct_codelist_attribute_repository.codelist_attributes_exists_by_submission_value
                 ),
-                library=library_vo,
-                generate_uid_callback=self._repos.ct_codelist_attribute_repository.generate_uid,
+            ),
+            library=library_vo,
+            generate_uid_callback=self._repos.ct_codelist_attribute_repository.generate_uid,
+        )
+
+        if codelist_input.terms:
+            ct_codelist_attributes_ar.approve(author=self.user_initials)
+
+        self._repos.ct_codelist_attribute_repository.save(ct_codelist_attributes_ar)
+
+        ct_codelist_name_ar = CTCodelistNameAR.from_input_values(
+            author=self.user_initials,
+            ct_codelist_name_vo=CTCodelistNameVO.from_input_values(
+                name=codelist_input.sponsor_preferred_name,
+                catalogue_name=codelist_input.catalogue_name,
+                is_template_parameter=codelist_input.template_parameter,
+                catalogue_exists_callback=self._repos.ct_catalogue_repository.catalogue_exists,
+                codelist_exists_by_name_callback=self._repos.ct_codelist_name_repository.codelist_specific_exists_by_name,
+            ),
+            library=library_vo,
+            generate_uid_callback=lambda: ct_codelist_attributes_ar.uid,
+        )
+
+        self._repos.ct_codelist_name_repository.save(ct_codelist_name_ar)
+
+        if codelist_input.terms:
+            parent_codelist_uid = (
+                ct_codelist_attributes_ar.ct_codelist_vo.parent_codelist_uid
             )
 
-            if codelist_input.terms:
-                ct_codelist_attributes_ar.approve(author=self.user_initials)
+            term_uids = [term.term_uid for term in codelist_input.terms]
 
-            self._repos.ct_codelist_attribute_repository.save(ct_codelist_attributes_ar)
-
-            ct_codelist_name_ar = CTCodelistNameAR.from_input_values(
-                author=self.user_initials,
-                ct_codelist_name_vo=CTCodelistNameVO.from_input_values(
-                    name=codelist_input.sponsor_preferred_name,
-                    catalogue_name=codelist_input.catalogue_name,
-                    is_template_parameter=codelist_input.template_parameter,
-                    catalogue_exists_callback=self._repos.ct_catalogue_repository.catalogue_exists,
-                    codelist_exists_by_name_callback=self._repos.ct_codelist_name_repository.codelist_specific_exists_by_name,
-                ),
-                library=library_vo,
-                generate_uid_callback=lambda: ct_codelist_attributes_ar.uid,
-            )
-
-            self._repos.ct_codelist_name_repository.save(ct_codelist_name_ar)
-
-            if codelist_input.terms:
-                parent_codelist_uid = (
-                    ct_codelist_attributes_ar.ct_codelist_vo.parent_codelist_uid
+            if parent_codelist_uid:
+                sub_codelist_with_given_terms = (
+                    self.get_sub_codelists_that_have_given_terms(
+                        parent_codelist_uid, term_uids
+                    )
                 )
 
-                term_uids = [term.term_uid for term in codelist_input.terms]
-
-                if parent_codelist_uid:
-                    sub_codelist_with_given_terms = (
-                        self.get_sub_codelists_that_have_given_terms(
-                            parent_codelist_uid, term_uids
-                        )
+                if sub_codelist_with_given_terms.items:
+                    raise exceptions.BusinessLogicException(
+                        f"""Sub codelists with these terms already exist.
+                        Codelist UIDs ({[item.codelist_uid for item in sub_codelist_with_given_terms.items]})"""
                     )
 
-                    if sub_codelist_with_given_terms.items:
-                        raise exceptions.BusinessLogicException(
-                            f"""Sub codelists with these terms already exist.
-                            Codelist UIDs ({[item.codelist_uid for item in sub_codelist_with_given_terms.items]})"""
-                        )
-
-                for term in codelist_input.terms:
-                    if (
-                        parent_codelist_uid
-                        and len(
-                            self._repos.ct_term_aggregated_repository.find_all_aggregated_result(
-                                filter_by={
-                                    "codelist_uid": {
-                                        "v": [parent_codelist_uid],
-                                        "op": "eq",
-                                    },
-                                    "term_uid": {"v": [term.term_uid], "op": "eq"},
-                                }
-                            ).items
-                        )
-                        <= 0
-                    ):
-                        raise exceptions.BusinessLogicException(
-                            f"The term identified by ({term.term_uid}) is not in use by parent codelist identified by ({parent_codelist_uid})"
-                        )
-
-                    ct_codelist_name_ar = (
-                        self._repos.ct_codelist_name_repository.find_by_uid(
-                            codelist_uid=ct_codelist_attributes_ar.uid
-                        )
+            for term in codelist_input.terms:
+                if (
+                    parent_codelist_uid
+                    and len(
+                        self._repos.ct_term_aggregated_repository.find_all_aggregated_result(
+                            filter_by={
+                                "codelist_uid": {
+                                    "v": [parent_codelist_uid],
+                                    "op": "eq",
+                                },
+                                "term_uid": {"v": [term.term_uid], "op": "eq"},
+                            }
+                        ).items
+                    )
+                    <= 0
+                ):
+                    raise exceptions.BusinessLogicException(
+                        f"The term identified by ({term.term_uid}) is not in use by parent codelist identified by ({parent_codelist_uid})"
                     )
 
-                    self._repos.ct_codelist_attribute_repository.add_term(
-                        codelist_uid=ct_codelist_attributes_ar.uid,
-                        term_uid=term.term_uid,
-                        author=self.user_initials,
-                        order=term.order,
+                ct_codelist_name_ar = (
+                    self._repos.ct_codelist_name_repository.find_by_uid(
+                        codelist_uid=ct_codelist_attributes_ar.uid
                     )
+                )
 
-        except ValueError as value_error:
-            raise exceptions.ValidationException(value_error.args[0])
+                self._repos.ct_codelist_attribute_repository.add_term(
+                    codelist_uid=ct_codelist_attributes_ar.uid,
+                    term_uid=term.term_uid,
+                    author=self.user_initials,
+                    order=term.order,
+                )
 
         return CTCodelist.from_ct_codelist_ar(
             ct_codelist_name_ar, ct_codelist_attributes_ar
@@ -178,16 +169,16 @@ class CTCodelistService:
 
     def get_all_codelists(
         self,
-        catalogue_name: Optional[str] = None,
-        library: Optional[str] = None,
-        package: Optional[str] = None,
-        sort_by: Optional[dict] = None,
+        catalogue_name: str | None = None,
+        library: str | None = None,
+        package: str | None = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
-        term_filter: Optional[dict] = None,
+        term_filter: dict | None = None,
     ) -> GenericFilteringReturn[CTCodelistNameAndAttributes]:
         self.enforce_catalogue_library_package(catalogue_name, library, package)
 
@@ -219,14 +210,14 @@ class CTCodelistService:
         self,
         codelist_uid: str,
         term_uids: Sequence[str],
-        catalogue_name: Optional[str] = None,
-        library: Optional[str] = None,
-        package: Optional[str] = None,
-        sort_by: Optional[dict] = None,
+        catalogue_name: str | None = None,
+        library: str | None = None,
+        package: str | None = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[CTCodelistNameAndAttributes]:
         self.enforce_catalogue_library_package(catalogue_name, library, package)
@@ -276,13 +267,13 @@ class CTCodelistService:
 
     def get_distinct_values_for_header(
         self,
-        catalogue_name: Optional[str],
-        library: Optional[str],
-        package: Optional[str],
+        catalogue_name: str | None,
+        library: str | None,
+        package: str | None,
         field_name: str,
-        search_string: Optional[str] = "",
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        search_string: str | None = "",
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
     ):
         self.enforce_catalogue_library_package(catalogue_name, library, package)
@@ -345,15 +336,12 @@ class CTCodelistService:
         ct_codelist_name_ar = self._repos.ct_codelist_name_repository.find_by_uid(
             codelist_uid=codelist_uid
         )
-        try:
-            self._repos.ct_codelist_attribute_repository.add_term(
-                codelist_uid=codelist_uid,
-                term_uid=term_uid,
-                author=self.user_initials,
-                order=order,
-            )
-        except ValueError as exception:
-            raise exceptions.ValidationException(exception.args[0])
+        self._repos.ct_codelist_attribute_repository.add_term(
+            codelist_uid=codelist_uid,
+            term_uid=term_uid,
+            author=self.user_initials,
+            order=order,
+        )
 
         return CTCodelist.from_ct_codelist_ar(
             ct_codelist_name_ar, ct_codelist_attributes_ar
@@ -401,12 +389,9 @@ class CTCodelistService:
             codelist_uid=codelist_uid
         )
 
-        try:
-            self._repos.ct_codelist_attribute_repository.remove_term(
-                codelist_uid=codelist_uid, term_uid=term_uid, author=self.user_initials
-            )
-        except ValueError as exception:
-            raise exceptions.ValidationException(exception.args[0])
+        self._repos.ct_codelist_attribute_repository.remove_term(
+            codelist_uid=codelist_uid, term_uid=term_uid, author=self.user_initials
+        )
 
         return CTCodelist.from_ct_codelist_ar(
             ct_codelist_name_ar, ct_codelist_attributes_ar
@@ -414,9 +399,9 @@ class CTCodelistService:
 
     def enforce_catalogue_library_package(
         self,
-        catalogue_name: Optional[str],
-        library: Optional[str],
-        package: Optional[str],
+        catalogue_name: str | None,
+        library: str | None,
+        package: str | None,
     ):
         if (
             catalogue_name is not None

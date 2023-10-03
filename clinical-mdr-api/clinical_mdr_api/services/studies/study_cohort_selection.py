@@ -1,4 +1,4 @@
-from typing import Optional, Sequence
+from typing import Sequence
 
 from neomodel import db
 
@@ -61,15 +61,15 @@ class StudyCohortSelectionService(StudySelectionMixin):
     def get_all_selection(
         self,
         study_uid: str,
-        project_name: Optional[str] = None,
-        project_number: Optional[str] = None,
-        sort_by: Optional[dict] = None,
+        project_name: str | None = None,
+        project_number: str | None = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
-        arm_uid: Optional[str] = None,
+        arm_uid: str | None = None,
     ) -> GenericFilteringReturn[models.StudySelectionCohort]:
         repos = self._repos
         try:
@@ -278,15 +278,13 @@ class StudyCohortSelectionService(StudySelectionMixin):
                     )
                 )
                 assert selection_aggregate is not None
-                try:
-                    selection_aggregate.add_cohort_selection(
-                        study_cohort_selection=new_selection,
-                        study_arm_exists_callback=self._repos.study_arm_repository.arm_specific_exists_by_uid,
-                        study_branch_arm_exists_callback=self._repos.study_branch_arm_repository.branch_arm_specific_exists_by_uid,
-                        cohort_exists_callback_by=repos.study_cohort_repository.cohort_exists_by,
-                    )
-                except ValueError as value_error:
-                    raise exceptions.ValidationException(value_error.args[0])
+
+                selection_aggregate.add_cohort_selection(
+                    study_cohort_selection=new_selection,
+                    study_arm_exists_callback=self._repos.study_arm_repository.arm_specific_exists_by_uid,
+                    study_branch_arm_exists_callback=self._repos.study_branch_arm_repository.branch_arm_specific_exists_by_uid,
+                    cohort_exists_callback_by=repos.study_cohort_repository.cohort_exists_by,
+                )
 
                 # sync with DB and save the update
                 repos.study_cohort_repository.save(selection_aggregate, self.author)
@@ -367,12 +365,9 @@ class StudyCohortSelectionService(StudySelectionMixin):
             assert selection_aggregate is not None
 
             # Load the current VO for updates
-            try:
-                current_vo, order = selection_aggregate.get_specific_object_selection(
-                    study_selection_uid=study_selection_uid
-                )
-            except ValueError as value_error:
-                raise exceptions.NotFoundException(value_error.args[0])
+            current_vo, order = selection_aggregate.get_specific_object_selection(
+                study_selection_uid=study_selection_uid
+            )
 
             # merge current with updates
             updated_selection = self._patch_prepare_new_study_cohort(
@@ -380,16 +375,13 @@ class StudyCohortSelectionService(StudySelectionMixin):
                 current_study_cohort=current_vo,
             )
 
-            try:
-                # let the aggregate update the value object
-                selection_aggregate.update_selection(
-                    updated_study_cohort_selection=updated_selection,
-                    study_arm_exists_callback=self._repos.study_arm_repository.arm_specific_exists_by_uid,
-                    study_branch_arm_exists_callback=self._repos.study_branch_arm_repository.branch_arm_specific_exists_by_uid,
-                    cohort_exists_callback_by=repos.study_cohort_repository.cohort_exists_by,
-                )
-            except ValueError as value_error:
-                raise exceptions.ValidationException(value_error.args[0])
+            # let the aggregate update the value object
+            selection_aggregate.update_selection(
+                updated_study_cohort_selection=updated_selection,
+                study_arm_exists_callback=self._repos.study_arm_repository.arm_specific_exists_by_uid,
+                study_branch_arm_exists_callback=self._repos.study_branch_arm_repository.branch_arm_specific_exists_by_uid,
+                cohort_exists_callback_by=repos.study_cohort_repository.cohort_exists_by,
+            )
             # sync with DB and save the update
             repos.study_cohort_repository.save(selection_aggregate, self.author)
 

@@ -1,5 +1,3 @@
-from typing import Optional
-
 from pydantic import BaseModel
 
 from clinical_mdr_api.domain_repositories.models.syntax import TimeframeTemplateRoot
@@ -41,13 +39,13 @@ class TimeframeTemplateService(GenericSyntaxTemplateService[TimeframeTemplateAR]
 
     def get_all(
         self,
-        status: Optional[str] = None,
+        status: str | None = None,
         return_study_count: bool = True,
-        sort_by: Optional[dict] = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[TimeframeTemplate]:
         all_items = super().get_all(status, return_study_count)

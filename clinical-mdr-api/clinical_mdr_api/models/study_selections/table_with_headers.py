@@ -1,21 +1,19 @@
-from typing import List, Optional
-
 from pydantic import Field
 
 from clinical_mdr_api.models.utils import BaseModel
 
 
 class TableHeader(BaseModel):
-    data: List[str] = Field(
+    data: list[str] = Field(
         title="Cell values as text",
     )
 
-    spans: List[int] = Field(
+    spans: list[int] = Field(
         title="Cell spanning",
         description="1: for normal cells, N: can be merged with following N-1 cells, 0: for cells to hide (merged)",
     )
 
-    def append(self, txt: str, span: Optional[int] = 1):
+    def append(self, txt: str, span: int | None = 1):
         """Appends a cell to the header, maintaining .data and .spans, span=0 means to merge with last visible cell"""
         self.data.append(txt)
         self.spans.append(span)
@@ -35,5 +33,5 @@ class TableHeader(BaseModel):
 
 
 class TableWithHeaders(BaseModel):
-    headers: List[TableHeader]
-    data: List[List[str]]
+    headers: list[TableHeader]
+    data: list[list[str]]

@@ -18,7 +18,7 @@
     <v-tab-item id="guide">
       <data-exchange-standards-guide-view
         :headers="igHeaders"
-        :uid="['CDASHIG']"
+        uid="CDASHIG"
         @redirectToModel="redirectToModel"
         :redirectGuide="redirectGuide"/>
     </v-tab-item>

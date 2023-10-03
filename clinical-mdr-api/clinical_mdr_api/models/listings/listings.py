@@ -1,3 +1,5 @@
+from typing import Self
+
 from pydantic import Field
 
 from clinical_mdr_api.models.utils import BaseModel
@@ -35,7 +37,7 @@ class TopicCdDef(BaseModel):
     )
 
     @classmethod
-    def from_query(cls, query_result: dict) -> "TopicCdDef":
+    def from_query(cls, query_result: dict) -> Self:
         return cls(
             lb=query_result["lb"],
             topic_cd=query_result["topic_cd"],
@@ -64,7 +66,7 @@ class MetaData(BaseModel):
     )
 
     @classmethod
-    def from_query(cls, query_result: dict) -> "MetaData":
+    def from_query(cls, query_result: dict) -> Self:
         return cls(
             dataset_name=query_result["dataset_name"],
             dataset_label=query_result["dataset_label"],
@@ -77,13 +79,18 @@ class MetaData(BaseModel):
         )
 
 
+CT_SCOPE = "CT scope"
+CT_VERSION = "CT version"
+PACKAGE_NAME = "Package name"
+
+
 class CDISCCTVer(BaseModel):
-    ct_scope: str = Field(None, title="CT scope", description="Scope")
-    ct_ver: str = Field(None, title="ct_ver", description="CT version")
-    pkg_nm: str = Field(None, title="Package name", description="Package name")
+    ct_scope: str = Field(None, title=CT_SCOPE, description=CT_SCOPE)
+    ct_ver: str = Field(None, title="CT version", description=CT_VERSION)
+    pkg_nm: str = Field(None, title=PACKAGE_NAME, description=PACKAGE_NAME)
 
     @classmethod
-    def from_query(cls, query_result: dict) -> "CDISCCTVer":
+    def from_query(cls, query_result: dict) -> Self:
         return cls(
             ct_scope=query_result["ct_scope"],
             ct_ver=query_result["ct_ver"],
@@ -92,11 +99,11 @@ class CDISCCTVer(BaseModel):
 
 
 class CDISCCTPkg(BaseModel):
-    pkg_scope: str = Field(None, title="Package scope", description="Scope")
-    pkg_nm: str = Field(None, title="Package name", description="Package name")
+    pkg_scope: str = Field(None, title="Package scope", description=CT_SCOPE)
+    pkg_nm: str = Field(None, title=PACKAGE_NAME, description=PACKAGE_NAME)
 
     @classmethod
-    def from_query(cls, query_result: dict) -> "CDISCCTPkg":
+    def from_query(cls, query_result: dict) -> Self:
         return cls(pkg_scope=query_result["pkg_scope"], pkg_nm=query_result["pkg_nm"])
 
 
@@ -114,17 +121,17 @@ class CDISCCTList(BaseModel):
         title="CT codelist submission value",
         description="CT codelist submission value",
     )
-    ct_scope: str = Field(None, title="CT scope", description="CT scope")
-    ct_ver: str = Field(None, title="CT version", description="CT version")
+    ct_scope: str = Field(None, title=CT_SCOPE, description=CT_SCOPE)
+    ct_ver: str = Field(None, title=CT_VERSION, description=CT_VERSION)
     definition: str = Field(None, title="definition", description="definition")
     nci_pref_term: str = Field(
         None, title="NCI preferred term", description="NCI preferred term"
     )
-    pkg_nm: str = Field(None, title="Package name", description="Package name")
+    pkg_nm: str = Field(None, title=PACKAGE_NAME, description=PACKAGE_NAME)
     synonyms: str = Field(None, title="Synonyms", description="Synonyms")
 
     @classmethod
-    def from_query(cls, query_result: dict) -> "CDISCCTList":
+    def from_query(cls, query_result: dict) -> Self:
         return cls(
             ct_cd_list_cd=query_result["ct_cd_list_cd"],
             ct_cd_list_extensible=query_result["ct_cd_list_extensible"],
@@ -146,20 +153,20 @@ class CDISCCTVal(BaseModel):
         title="CT codelist submission value",
         description="CT codelist submission value",
     )
-    ct_scope: str = Field(None, title="CT scope", description="CT scope")
+    ct_scope: str = Field(None, title=CT_SCOPE, description=CT_SCOPE)
     ct_submval: str = Field(
         None, title="CT code submission value", description="CT code submission value"
     )
-    ct_ver: str = Field(None, title="CT version", description="CT version")
+    ct_ver: str = Field(None, title=CT_VERSION, description=CT_VERSION)
     definition: str = Field(None, title="definition", description="definition")
     nci_pref_term: str = Field(
         None, title="NCI preferred term", description="NCI preferred term"
     )
-    pkg_nm: str = Field(None, title="Package name", description="Package name")
+    pkg_nm: str = Field(None, title=PACKAGE_NAME, description=PACKAGE_NAME)
     synonyms: str = Field(None, title="Synonyms", description="Synonyms")
 
     @classmethod
-    def from_query(cls, query_result: dict) -> "CDISCCTVal":
+    def from_query(cls, query_result: dict) -> Self:
         return cls(
             ct_cd=query_result["ct_cd"],
             ct_cd_list_submval=query_result["ct_cd_list_submval"],

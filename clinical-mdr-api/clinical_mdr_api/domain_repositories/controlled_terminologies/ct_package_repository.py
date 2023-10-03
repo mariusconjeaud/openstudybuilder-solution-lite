@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Collection, Optional, Sequence
+from typing import Collection, Sequence
 
 from neomodel import db
 
@@ -12,7 +12,7 @@ class CTPackageRepository:
         package_node = CTPackage.nodes.get_or_none(name=package_name)
         return bool(package_node)
 
-    def find_all(self, catalogue_name: Optional[str]) -> Collection[CTPackageAR]:
+    def find_all(self, catalogue_name: str | None) -> Collection[CTPackageAR]:
         if catalogue_name is not None:
             where_clause = "WHERE catalogue.name=$catalogue_name"
         else:
@@ -59,7 +59,7 @@ class CTPackageRepository:
 
     def find_by_catalogue_and_date(
         self, catalogue_name: str, package_date: date
-    ) -> Optional[CTPackageAR]:
+    ) -> CTPackageAR | None:
         query = """
             MATCH (:CTCatalogue {name: $catalogue_name})-[:CONTAINS_PACKAGE]->
             (package:CTPackage {effective_date:date($date)})

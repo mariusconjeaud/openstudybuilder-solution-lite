@@ -1,4 +1,4 @@
-from typing import Any, List, Optional
+from typing import Any
 
 from fastapi import APIRouter, Body, Path, Query
 from pydantic.types import Json
@@ -11,10 +11,12 @@ from clinical_mdr_api.models import (
 )
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import CustomPage
+from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions
 from clinical_mdr_api.services.concepts.odms.odm_conditions import OdmConditionService
 
+# Prefixed with "/concepts/odms/conditions"
 router = APIRouter()
 
 # Argument definitions
@@ -23,6 +25,7 @@ OdmConditionUID = Path(None, description="The unique id of the ODM Condition.")
 
 @router.get(
     "",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Return every variable related to the selected status and version of the ODM Conditions",
     description="",
     response_model=CustomPage[OdmCondition],
@@ -33,26 +36,26 @@ OdmConditionUID = Path(None, description="The unique id of the ODM Condition.")
     },
 )
 def get_all_odm_conditions(
-    library: Optional[str] = Query(None),
+    library: str | None = Query(None),
     sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
-    page_number: Optional[int] = Query(
-        1, ge=1, description=_generic_descriptions.PAGE_NUMBER
-    ),
-    page_size: Optional[int] = Query(
+    page_number: int
+    | None = Query(1, ge=1, description=_generic_descriptions.PAGE_NUMBER),
+    page_size: int
+    | None = Query(
         config.DEFAULT_PAGE_SIZE,
         ge=0,
         le=config.MAX_PAGE_SIZE,
         description=_generic_descriptions.PAGE_SIZE,
     ),
-    filters: Optional[Json] = Query(
+    filters: Json
+    | None = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
-    operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    total_count: Optional[bool] = Query(
-        False, description=_generic_descriptions.TOTAL_COUNT
-    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    total_count: bool
+    | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
 ):
     odm_condition_service = OdmConditionService()
     results = odm_condition_service.get_all_concepts(
@@ -65,16 +68,17 @@ def get_all_odm_conditions(
         filter_operator=FilterOperator.from_str(operator),
     )
     return CustomPage.create(
-        items=results.items, total=results.total_count, page=page_number, size=page_size
+        items=results.items, total=results.total, page=page_number, size=page_size
     )
 
 
 @router.get(
     "/headers",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=List[Any],
+    response_model=list[Any],
     status_code=200,
     responses={
         404: {
@@ -85,20 +89,19 @@ def get_all_odm_conditions(
     },
 )
 def get_distinct_values_for_header(
-    library_name: Optional[str] = Query(None),
+    library_name: str | None = Query(None),
     field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
-    search_string: Optional[str] = Query(
-        "", description=_generic_descriptions.HEADER_SEARCH_STRING
-    ),
-    filters: Optional[Json] = Query(
+    search_string: str
+    | None = Query("", description=_generic_descriptions.HEADER_SEARCH_STRING),
+    filters: Json
+    | None = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
-    operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    result_count: Optional[int] = Query(
-        10, description=_generic_descriptions.HEADER_RESULT_COUNT
-    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    result_count: int
+    | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
 ):
     odm_condition_service = OdmConditionService()
     return odm_condition_service.get_distinct_values_for_header(
@@ -113,6 +116,7 @@ def get_distinct_values_for_header(
 
 @router.get(
     "/{uid}",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Get details on a specific ODM Condition (in a specific version)",
     description="",
     response_model=OdmCondition,
@@ -129,6 +133,7 @@ def get_odm_condition(uid: str = OdmConditionUID):
 
 @router.get(
     "/{uid}/relationships",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Get UIDs of a specific ODM Condition's relationships",
     description="",
     response_model=dict,
@@ -145,6 +150,7 @@ def get_active_relationships(uid: str = OdmConditionUID):
 
 @router.get(
     "/{uid}/versions",
+    dependencies=[rbac.LIBRARY_READ],
     summary="List version history for ODM Condition",
     description="""
 State before:
@@ -160,7 +166,7 @@ State after:
 Possible errors:
  - Invalid uid.
     """,
-    response_model=List[OdmCondition],
+    response_model=list[OdmCondition],
     status_code=200,
     responses={
         404: {
@@ -177,6 +183,7 @@ def get_odm_condition_versions(uid: str = OdmConditionUID):
 
 @router.post(
     "",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Creates a new Condition in 'Draft' status with version 0.1",
     description="",
     response_model=OdmCondition,
@@ -203,6 +210,7 @@ def create_odm_condition(
 
 @router.patch(
     "/{uid}",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Update ODM Condition",
     description="",
     response_model=OdmCondition,
@@ -235,6 +243,7 @@ def edit_odm_condition(
 
 @router.post(
     "/{uid}/versions",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary=" Create a new version of ODM Condition",
     description="""
 State before:
@@ -275,6 +284,7 @@ def create_odm_condition_version(uid: str = OdmConditionUID):
 
 @router.post(
     "/{uid}/approvals",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Approve draft version of ODM Condition",
     description="",
     response_model=OdmCondition,
@@ -301,6 +311,7 @@ def approve_odm_condition(uid: str = OdmConditionUID):
 
 @router.delete(
     "/{uid}/activations",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary=" Inactivate final version of ODM Condition",
     description="",
     response_model=OdmCondition,
@@ -326,6 +337,7 @@ def inactivate_odm_condition(uid: str = OdmConditionUID):
 
 @router.post(
     "/{uid}/activations",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Reactivate retired version of a ODM Condition",
     description="",
     response_model=OdmCondition,
@@ -351,6 +363,7 @@ def reactivate_odm_condition(uid: str = OdmConditionUID):
 
 @router.delete(
     "/{uid}",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Delete draft version of ODM Condition",
     description="",
     response_model=None,

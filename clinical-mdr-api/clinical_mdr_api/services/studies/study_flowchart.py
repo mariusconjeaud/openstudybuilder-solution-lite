@@ -2,7 +2,7 @@ import logging
 import sys
 from collections import defaultdict
 from itertools import count
-from typing import Iterable, List, Mapping, Sequence
+from typing import Iterable, Mapping, Sequence
 
 import yattag
 from docx.enum.style import WD_STYLE_TYPE
@@ -60,9 +60,10 @@ DOCX_STYLES = {
 
 
 class ActivityRow:
-    def __init__(self, level, uid, name, show=True):
+    def __init__(self, level, uid, name, selection_uid=None, show=True):
         self.level = level
         self.uid = uid
+        self.selection_uid = selection_uid
         self.name = name
         self.shown = int(show)
         self.cells = defaultdict(int)
@@ -233,28 +234,45 @@ class StudyFlowchartService:
 
             return yattag.indent(doc.getvalue())
 
-    def get_table(self, study_uid: str, time_unit: str) -> TableWithHeaders:
+    def get_table(
+        self, study_uid: str, time_unit: str, use_uid_instead_of_name: bool = False
+    ) -> TableWithHeaders:
         tracer = execution_context.get_opencensus_tracer()
         with tracer.span("StudyFlowchartService.get_table"):
             study_visits_grouped = tuple(
                 self.iter_visits_grouped(self.get_study_visits(study_uid))
             )
 
-            headers = self.get_table_headers(study_visits_grouped, time_unit)
-
+            headers = self.get_table_headers(
+                study_visits_grouped, time_unit, use_uid_instead_of_name
+            )
             study_activities = self.get_study_activities(study_uid)
 
             activity_schedules = defaultdict(list)
             for schedule in self.get_study_activity_schedules(study_uid):
                 activity_schedules[schedule.study_activity_uid].append(
-                    schedule.study_visit_uid
+                    (schedule.study_visit_uid, schedule.study_activity_schedule_uid)
                 )
 
-            activity_rows = self.get_activity_rows(study_activities, activity_schedules)
+            activity_rows = self.get_activity_rows(
+                study_activities, activity_schedules, use_uid_instead_of_name
+            )
 
             data_rows = []
             for act_row in activity_rows:
-                if act_row.shown:
+                if use_uid_instead_of_name:
+                    data_rows.append(
+                        [
+                            act_row.selection_uid
+                            if act_row.selection_uid
+                            else act_row.uid
+                        ]
+                        + [
+                            act_row.cells.get(visit[0].uid) or ""
+                            for visit in study_visits_grouped
+                        ]
+                    )
+                elif act_row.shown:
                     data_rows.append(
                         [act_row.level, act_row.name]
                         + [
@@ -266,8 +284,11 @@ class StudyFlowchartService:
             return TableWithHeaders(headers=headers, data=data_rows)
 
     def get_table_headers(
-        self, study_visits_grouped: Iterable[List[StudyVisit]], time_unit: str
-    ) -> List[TableHeader]:
+        self,
+        study_visits_grouped: Iterable[list[StudyVisit]],
+        time_unit: str,
+        use_uid_instead_of_name: bool = False,
+    ) -> list[TableHeader]:
         """Returns a list of TableHeaders for Study Flowchart table"""
         headers = [TableHeader(data=[f"header{i + 1}"], spans=[1]) for i in range(4)]
 
@@ -315,9 +336,12 @@ class StudyFlowchartService:
             else:
                 # Use Epoch term names
                 try:
-                    headers[0].append(
-                        self.epoch_terms[visit.epoch_uid].sponsor_preferred_name
-                    )
+                    if not use_uid_instead_of_name:
+                        headers[0].append(
+                            self.epoch_terms[visit.epoch_uid].sponsor_preferred_name
+                        )
+                    else:
+                        headers[0].append(visit.study_epoch_uid)
                 except KeyError:
                     log.warning(
                         "Epoch UID '%s' was not found in epoch terms", visit.epoch_uid
@@ -325,8 +349,10 @@ class StudyFlowchartService:
                     headers[0].append(visit.visit_type_name)
 
             last_epoch_uid = visit.epoch_uid
-
-            headers[1].append(visit_name)
+            if not use_uid_instead_of_name:
+                headers[1].append(visit_name)
+            else:
+                headers[1].append(visit.uid)
 
             headers[2].append(visit_timing)
 
@@ -361,34 +387,38 @@ class StudyFlowchartService:
             uniq_flowchart_groups[flowchart_group].setdefault("subgroups_order", dict())
 
             # create list of unique activity_groups in the order they should be sorted
-            if study_activity.activity.activity_group:
-                activity_group = study_activity.activity.activity_group.uid
-                uniq_flowchart_groups[flowchart_group]["groups_order"].setdefault(
-                    activity_group,
-                    len(uniq_flowchart_groups[flowchart_group]["groups_order"]),
-                )
+            if study_activity.activity.activity_groupings:
+                for grouping in study_activity.activity.activity_groupings:
+                    activity_group = grouping.activity_group_uid
+                    uniq_flowchart_groups[flowchart_group]["groups_order"].setdefault(
+                        activity_group,
+                        len(uniq_flowchart_groups[flowchart_group]["groups_order"]),
+                    )
 
             # create list of unique activity_subgroups in the order they should be sorted
-            if study_activity.activity.activity_subgroup:
-                activity_subgroup = study_activity.activity.activity_subgroup.uid
-                uniq_flowchart_groups[flowchart_group]["subgroups_order"].setdefault(
-                    activity_subgroup,
-                    len(uniq_flowchart_groups[flowchart_group]["subgroups_order"]),
-                )
+            if study_activity.activity.activity_groupings:
+                for grouping in study_activity.activity.activity_groupings:
+                    activity_subgroup = grouping.activity_subgroup_uid
+                    uniq_flowchart_groups[flowchart_group][
+                        "subgroups_order"
+                    ].setdefault(
+                        activity_subgroup,
+                        len(uniq_flowchart_groups[flowchart_group]["subgroups_order"]),
+                    )
 
         return sorted(
             study_activities,
             key=lambda sa: (
                 uniq_flowchart_groups[sa.flowchart_group.term_uid]["order"],
                 uniq_flowchart_groups[sa.flowchart_group.term_uid]["groups_order"][
-                    sa.activity.activity_group.uid
+                    sa.activity.activity_groupings[0].activity_group_uid
                 ]
-                if sa.activity.activity_group is not None
+                if sa.activity.activity_groupings
                 else sys.maxsize,
                 uniq_flowchart_groups[sa.flowchart_group.term_uid]["subgroups_order"][
-                    sa.activity.activity_subgroup.uid
+                    sa.activity.activity_groupings[0].activity_subgroup_uid
                 ]
-                if sa.activity.activity_subgroup is not None
+                if sa.activity.activity_groupings
                 else sys.maxsize,
             ),
         )
@@ -397,7 +427,8 @@ class StudyFlowchartService:
     def get_activity_rows(
         study_activities: Sequence[StudySelectionActivity],
         activity_schedules: Mapping[str, Sequence[str]],
-    ) -> List[ActivityRow]:
+        use_uid_instead_of_name: bool,
+    ) -> list[ActivityRow]:
         """
         Returns a list of ActivityRows
 
@@ -426,54 +457,65 @@ class StudyFlowchartService:
                 rows.append(fch_group)
 
             # Create a row for Activity group if not yet created
-            activity = study_activity.activity
-            if activity.activity_group:
-                grp = activity.activity_group
-
-                if grp and (not ass_group or grp.uid != ass_group.uid):
+            study_activity_group = study_activity.study_activity_group
+            if study_activity_group.study_activity_group_uid:
+                if (
+                    not ass_group
+                    or study_activity_group.activity_group_uid != ass_group.uid
+                ):
                     ass_subgroup = None
 
                     show = study_activity.show_activity_group_in_protocol_flowchart
                     ass_group = ActivityRow(
-                        level="group", uid=grp.uid, name=grp.name, show=show
+                        level="group",
+                        uid=study_activity_group.activity_group_uid,
+                        name=study_activity_group.activity_group_name,
+                        show=show,
+                        selection_uid=study_activity_group.study_activity_group_uid
+                        if study_activity_group.study_activity_group_uid
+                        else None,
                     )
                     rows.append(ass_group)
 
             # Create a row for Activity subgroup if not yet created
-            if activity.activity_subgroup:
-                grp = activity.activity_subgroup
-
-                if grp and (not ass_subgroup or grp.uid != ass_subgroup.uid):
+            study_activity_subgroup = study_activity.study_activity_subgroup
+            if study_activity_subgroup.study_activity_subgroup_uid:
+                if (
+                    not ass_subgroup
+                    or study_activity_subgroup.activity_subgroup_uid != ass_subgroup.uid
+                ):
                     show = study_activity.show_activity_subgroup_in_protocol_flowchart
                     ass_subgroup = ActivityRow(
-                        level="subGroup", uid=grp.uid, name=grp.name, show=show
+                        level="subGroup",
+                        uid=study_activity_subgroup.activity_subgroup_uid,
+                        name=study_activity_subgroup.activity_subgroup_name,
+                        show=show,
+                        selection_uid=study_activity_subgroup.study_activity_subgroup_uid
+                        if study_activity_subgroup.study_activity_subgroup_uid
+                        else None,
                     )
                     rows.append(ass_subgroup)
 
-                    # If shown, show all parent groups as well
-                    if show:
-                        if ass_group:
-                            ass_group.shown += 1
-
             # Create a row for the Activity
+            activity = study_activity.activity
             show = study_activity.show_activity_in_protocol_flowchart
             ass = ActivityRow(
-                level="activity", uid=activity.uid, name=activity.name, show=show
+                level="activity",
+                uid=activity.uid,
+                name=activity.name,
+                show=show,
+                selection_uid=study_activity.study_activity_uid,
             )
             rows.append(ass)
 
-            # If Activity is shown, show all parent groups as well (increase counter of shown)
-            if show:
-                if ass_subgroup:
-                    ass_subgroup.shown += 1
-                if ass_group:
-                    ass_group.shown += 1
-
             # Tick cells for scheduled visits, and also tick for parent groups if activity is hidden
-            for study_visit_uid in activity_schedules.get(
+            for study_visit_uid, study_activity_schedule_uid in activity_schedules.get(
                 study_activity.study_activity_uid, []
             ):
-                ass.cells[study_visit_uid] += 1
+                if use_uid_instead_of_name:
+                    ass.cells[study_visit_uid] = study_activity_schedule_uid
+                else:
+                    ass.cells[study_visit_uid] += 1
                 if not show:
                     if ass_subgroup and ass_subgroup.shown:
                         ass_subgroup.cells[study_visit_uid] += 1

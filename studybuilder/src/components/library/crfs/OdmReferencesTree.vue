@@ -99,13 +99,13 @@ export default {
     iconTypeAndColor (item) {
       if (item) {
         if (item.template) {
-          return { type: 'mdi-alpha-t-circle', color: 'primary' }
+          return { type: 'mdi-alpha-t-circle-outline', color: 'primary' }
         } else if (item.form) {
-          return { type: 'mdi-alpha-f-circle', color: 'success' }
+          return { type: 'mdi-alpha-f-circle-outline', color: 'success' }
         } else if (item.group) {
-          return { type: 'mdi-alpha-g-circle', color: 'secondary' }
+          return { type: 'mdi-alpha-g-circle-outline', color: 'secondary' }
         } else {
-          return { type: 'mdi-alpha-i-circle', color: 'error' }
+          return { type: 'mdi-alpha-i-circle-outline', color: 'error' }
         }
       } else {
         return {}

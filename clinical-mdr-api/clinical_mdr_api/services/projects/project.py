@@ -1,17 +1,17 @@
-from typing import Optional, Sequence
+from typing import Sequence
 
 from neomodel import db  # type: ignore
 
-from clinical_mdr_api import exceptions, models
+from clinical_mdr_api import models
 from clinical_mdr_api.domains.projects.project import ProjectAR
 from clinical_mdr_api.models import ProjectCreateInput
 from clinical_mdr_api.services._meta_repository import MetaRepository  # type: ignore
 
 
 class ProjectService:
-    user_initials: Optional[str]
+    user_initials: str | None
 
-    def __init__(self, user: Optional[str] = None):
+    def __init__(self, user: str | None = None):
         self.user_initials = user if user is not None else "TODO user initials"
 
     def get_all_projects(self) -> Sequence[models.Project]:
@@ -39,17 +39,14 @@ class ProjectService:
     def create(self, project_create_input: ProjectCreateInput) -> models.Project:
         repos = MetaRepository()
         try:
-            try:
-                project_ar = ProjectAR.from_input_values(
-                    project_number=project_create_input.project_number,
-                    name=project_create_input.name,
-                    clinical_programme_uid=project_create_input.clinical_programme_uid,
-                    description=project_create_input.description,
-                    generate_uid_callback=repos.project_repository.generate_uid,
-                    clinical_programme_exists_callback=repos.clinical_programme_repository.clinical_programme_exists,
-                )
-            except ValueError as value_error:
-                raise exceptions.ValidationException(value_error.args[0])
+            project_ar = ProjectAR.from_input_values(
+                project_number=project_create_input.project_number,
+                name=project_create_input.name,
+                clinical_programme_uid=project_create_input.clinical_programme_uid,
+                description=project_create_input.description,
+                generate_uid_callback=repos.project_repository.generate_uid,
+                clinical_programme_exists_callback=repos.clinical_programme_repository.clinical_programme_exists,
+            )
 
             repos.project_repository.save(project_ar)
             return models.Project.from_uid(

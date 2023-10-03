@@ -19,6 +19,16 @@ export default (basePath) => {
     getVersions (uid) {
       return repository.get(`${basePath}/${uid}/versions`)
     },
+    getAuditTrail (options) {
+      const params = {
+        page_number: options ? options.page : 1,
+        total_count: true
+      }
+      if (options) {
+        params.page_size = options.itemsPerPage
+      }
+      return repository.get(`${basePath}/audit-trail`, { params })
+    },
     create (data) {
       return repository.post(`${basePath}`, data)
     },

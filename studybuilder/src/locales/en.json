@@ -14,6 +14,8 @@
         "objective": "Objective",
         "objectives": "Objectives",
         "criteria": "Criteria",
+        "footnote": "Footnote",
+        "activity_instruction": "Activity instruction",
         "update": "Update",
         "search": "Search",
         "status": "Status",
@@ -60,6 +62,7 @@
         "unit": "Unit",
         "label": "Label",
         "order": "Order",
+        "order_short": "#",
         "history": "History",
         "add_study": "Add study",
         "select_study": "Select study",
@@ -125,9 +128,13 @@
         "new_version_success": "New version created",
         "draft": "Draft",
         "or": "OR",
-        "add_pre_instance": "Create pre-instantiated template",
+        "add_pre_instance": "Create pre-instantiation",
         "sequence_number": "Sequence number",
-        "operator": "Operator"
+        "sequence_number_short": "#",
+        "access_groups": "Access Groups:",
+        "operator": "Operator",
+        "download_docx": "Download DOCX",
+        "audit_trail": "Audit trail"
     },
     "_errors": {
         "exclusive_select": "Field and Null Flavor can't be selected at the same time.",
@@ -208,6 +215,9 @@
             "sub_group": "Select one (or more) default sub-group(s) the activity belongs to (gub-grouping is used e.g. in protocol flowchart display) . It can ben changed on study level if needed.",
             "activity": "Select NA (not applicable), if template not targeting specific activities."
         },
+        "ActivityInstructionTable": {
+            "general": "FIXME"
+        },
         "ActivityForms": {
             "activity_subgroup": "Specify the sub-groups for which the activity should belong, e.g. select Body Measures.",
             "name": "Specify the name of the activity. e.g. Body Frame Size",
@@ -219,10 +229,10 @@
             "definition": "Provide a description/definition of the group."
         },
         "ActivityFormsInstantiations": {
-            "select_type": "Select type if instantiation being defined.",
-            "name": "Specify the name of the instantiation. ",
-            "definition": "Provide a description/definition of the instantiation.",
-            "activities": "Select one or more activities applicable for the definition of the instantiation.",
+            "select_type": "Select type if instance being defined.",
+            "name": "Specify the name of the instance. ",
+            "definition": "Provide a description/definition of the instance.",
+            "activities": "Select one activity applicable for the definition of the instance.",
             "topicCode": "Specify the Topic Code name.",
             "adamCode": "Specify the ADaM Parameter Code (convention is Parameter (unit))",
             "legacyDesc": "Description from legacy system (MMA)."
@@ -234,10 +244,28 @@
             "instances": ""
         },
         "ActivityOverview": {
-            "general": "TBD"
+            "general": "An activity is a definition of an activity performed on a subject. The activity is the overall name of the activity used in the protocol flowchart.",
+            "cosmos_yaml": "The tab displays the activity instance in a YAML file structure. The naming complies with the CDISC COSMoS Biomedical Concept structure.",
+            "activity_groups": "The overall group(s) that the activity belongs to. The grouping is also used for protocol flowchart display and for searching in the list of activities.",
+            "activity_subgroups": "This is a sub-grouping within a group. The sub-grouping is also used for protocol flowchart display and for searching in the list of activities.",
+            "adam_code": "The code used as the PARAM code in the ADaM data.",
+            "topic_code": "The CDW Topic Code",
+            "class": "The class in which the a given instance of the activity belong.",
+            "instances": "The list of instances for the activity. An instance is a detailed definition of the activity specifying e.g. unit, specimen, location etc. To view the detailed definition of instances then navigate to the Activity Instance tab."
         },
         "ActivityInstanceOverview": {
-            "general": "TBD"
+            "general": "An instance is detailed definition of an activity, showing the relevant qualifiers/items, e.g. unit, location, specimen, dose regimen.",
+            "cosmos_yaml": "The tab displays the activity instance in a YAML file structure. The naming complies with the CDISC COSMoS Biomedical Concept structure.",
+            "class": "The class in which the a given instance of the activity belong.",
+            "adam_code": "The code used as the PARAM code in the ADaM data.",
+            "topic_code": "The CDW Topic Code",
+            "activity_groups": "The overall group(s) that the activity instance belongs to. The activity instance can only belong to groups that the corresponding activity belongs to.",
+            "activity_subgroups": "This is a sub-grouping within a group. The activity instance can only belong to sub-group that the corresponding activity belongs to.",
+            "activity": "Reference to the activity to which the instance belong.",
+            "items": "The list of qualifiers/items that defines the instance. The items can vary for a given instance.",
+            "ct_term_name": "The term being referred to for the item, if applicable. It will list the possible/allowable terms.",
+            "unit_def_name": "The list of allowable/possible units.",
+            "item_class": "The class that the item belongs to. The class determines where the information will mapped to in SDTM/CDASH."
         },
         "CompoundsView": {
             "general": "Definitions of compounds are created from the Compounds tab. If an alias name for a compound is needed, then this can be defined in the compound aliases tab."
@@ -623,7 +651,7 @@
             "description": "Add an description of the UCUM code."
         },
         "ActivitiesTable": {
-            "general": "Activities are definitions of measurements or activities performed as part of a clinical study on a study subject. First tab (List of Activities) is list of all activities. The Activities by Grouping displays the activities ordered by their group, and the Activities Instantiations displays the activity's relation to SDTM domain(s) and ADaM parameter(s)."
+            "general": "Activities are definitions of measurements or activities performed as part of a clinical study on a study subject. First tab (List of Activities) is list of all activities. The Activities by Grouping displays the activities ordered by their group, and the Activities Instance displays the activity's relation to SDTM domain(s) and ADaM parameter(s)."
         },
         "ObjectiveTemplatesTable": {
             "general": "Generic templates for objectives are defined here. Click on the + button to add a new template. In the User Defined Templates you can view templates being defined on different studies. To make a template accessible for use it must be approved. Use the Approve in the left context-menu (3 vertical dots to the left of the template). To set default values for parameters use the 'Default' values in the context menu."
@@ -751,14 +779,23 @@
             "content_line_12": "This will bring the study back into the ‘Draft’ status where the study again can be edited.",
             "study_sub_parts_body": "Specification for the study definition as a parent definition for several sub-study definitions, or as a sub-study definition under a parent. This is the approach for making a study specification for protocols holding multiple sub-study parts.",
             "protocol_version_body": "Specification of the relationship between versions of study definition instances and the corresponding protocol document versions."
+        },
+        "FootnotesTemplatesTable": {
+            "general": "FIXME"
+        },
+        "FootnotesTable": {
+            "general": "FIXME"
+        },
+        "StudyFootnoteForm": {
+            "general": "FIXME"
         }
     },
     "Topbar": {
         "app_selector_title": "Choose a section",
         "admin": "Admin",
         "help": "Help",
-        "documentation_portal": "User guides",
-        "user_guide": "Technical documentation",
+        "documentation_portal": "Technical documentation",
+        "user_guide": "User guides",
         "about": "About",
         "enable_dark_theme": "Enable dark theme",
         "enable_light_theme": "Enable light theme",
@@ -819,8 +856,8 @@
         "title": "About StudyBuilder",
         "license": "Component License",
         "sbom": "Software Bill of Materials",
-        "data-import": "Data Import",
-        "data-import_description": "Dictionary and sponsor data import",
+        "studybuilder-import": "StudyBuilder Import",
+        "studybuilder-import_description": "Dictionary and sponsor data import",
         "mdr-standards-import": "Standards Import",
         "mdr-standards-import_description": "CDISC Library Standards Import",
         "neo4j-mdr-db": "Clinical MDR",
@@ -860,6 +897,9 @@
             "criteria_instances": "Criteria Instances",
             "criteria_templates": "Criteria Templates",
             "activity_templates": "Activity Templates",
+            "activity_instruction_instances": "Activity Instruction Instances",
+            "footnote_templates": "Footnote Templates",
+            "footnote_instances": "Footnote Instances",
             "code_lists": "Code Lists",
             "objectives": "Objectives",
             "endpoints": "Endpoints",
@@ -996,9 +1036,9 @@
         "integrate_text2": "via open API"
     },
     "GenericTemplateTable": {
-        "sponsor_tab": "Parent Templates",
-        "pre_instances_tab": "Pre-instance Templates",
-        "user_tab": "User Defined Templates",
+        "sponsor_tab": "Parent",
+        "pre_instances_tab": "Pre-instance",
+        "user_tab": "User Defined",
         "confirm_parameter_values_delete": "You are about to delete default parameter values",
         "template_history_title": "History for template [{templateUid}]"
     },
@@ -1143,6 +1183,12 @@
         "edit_title": "Edit activity template pre-instantiation",
         "add_success": "Activity template pre-instantiation added",
         "update_success": "Activity template pre-instantiation updated"
+    },
+    "FootnoteTemplatesPreInstanceForm": {
+        "add_title": "Add footnote template pre-instantiation",
+        "edit_title": "Edit footnote template pre-instantiation",
+        "add_success": "Footnote template pre-instantiation added",
+        "update_success": "Footnote template pre-instantiation updated"
     },
     "CtCataloguesForm": {
         "add_title": "Add a new CT Catalogue",
@@ -1452,14 +1498,14 @@
         "add_title": "Add study objective",
         "step2_title": "Define objective details",
         "step3_title": "Select objective level",
-        "select_tpl_title": "Select objective template",
+        "select_tpl_title": "Select objective templates",
         "create_template_title": "Create template",
         "edit_template_title": "Edit template",
         "step_edit_title": "Edit objective",
         "create_from_tpl_title": "Create study objective from template",
         "creation_mode_label": "Select method",
         "select_mode": "Select from studies",
-        "template_mode": "Select from template",
+        "template_mode": "Select from standards",
         "scratch_mode": "Create from scratch",
         "select_objective_tpl": "Select template",
         "select_objective": "Select objective",
@@ -1486,15 +1532,19 @@
         "template_not_selected": "You must select a template first",
         "show_pre_instances": "Select from pre-instances"
     },
-    "StudyObjectiveEditForm": {
-        "title": "Edit study objective",
+    "StudySelectionEditForm": {
         "edit_syntax": "Edit syntax",
         "edit_values": "Edit values",
-        "select_level": "Select level",
-        "objective_updated": "Study objective updated",
-        "edit_warning": "Editing the syntax text will create a new user defined template. Please consider using an existing standard template.",
+        "edit_parent_tpl_warning": "Editing the syntax text will create a new user defined template. Please consider using an existing standard template.",
+        "edit_user_tpl_warning": "You are editing a user defined template",
         "save_syntax": "Save syntax",
-        "cancel_modifications": "Cancel modifications"
+        "cancel_modifications": "Cancel modifications",
+        "unformatted_text": "Unformatted text preview (SDTM)"
+    },
+    "StudyObjectiveEditForm": {
+        "title": "Edit study objective",
+        "select_level": "Select level",
+        "objective_updated": "Study objective updated"
     },
     "ParameterValueSelector": {
         "separator": "Separator",
@@ -1552,7 +1602,7 @@
         "add_title": "Add new study endpoint",
         "edit_title": "Edit study endpoint",
         "select_mode": "Select from studies",
-        "template_mode": "Select from template",
+        "template_mode": "Select from standards",
         "scratch_mode": "Create from scratch",
         "creation_mode_title": "Select method",
         "select_studies": "Select studies",
@@ -1579,7 +1629,6 @@
         "endpoint_sub_level": "Endpoint sub-level",
         "separator": "Separator",
         "endpoint_added": "Endpoint added",
-        "endpoint_updated": "Endpoint updated",
         "brand_name": "Brand name",
         "project_name": "Project name",
         "project_number": "Project number",
@@ -1597,6 +1646,17 @@
         "copy_objective": "Select study objective",
         "selected_endpoints": "Selected study endpoints",
         "study_endpoint": "Study endpoint"
+    },
+    "StudyEndpointEditForm": {
+        "title": "Edit study endpoint",
+        "units_section": "Unit(s)",
+        "unit": "Unit",
+        "timeframe_section": "Timeframe assigned",
+        "timeframe": "Time frame",
+        "unformatted_preview_section": "Unformatted text preview of study endpoint",
+        "level_section": "Endpoint level",
+        "objective_section": "Objective addressed",
+        "endpoint_updated": "Study endpoint updated"
     },
     "StudyInterventionTypeView": {
         "title": "Study Intervention Type"
@@ -1780,7 +1840,7 @@
         "sdtm_category": "SDTM category",
         "sdtm_sub_category": "SDTM sub category",
         "group_or_subgroup": "Group/subgroup/activity",
-        "instances": "Activities Instantiations",
+        "instances": "Activities Instances",
         "instance": "Activity Instance",
         "activities_overview": "Activities by Grouping",
         "type": "Instance type",
@@ -1825,6 +1885,8 @@
         "group": "Group",
         "groups": "Groups",
         "subgroup": "Subgroup",
+        "group_name": "Group Name",
+        "subgroup_name": "Subgroup Name",
         "change_description": "Change Description",
         "edit_group": "Edit Activity group or subgroup",
         "add_group": "Add activity group or subgroup",
@@ -1841,8 +1903,8 @@
         "topicCode": "Topic Code",
         "adamCode": "ADaM Parameter Code",
         "legacyDesc": "Legacy Description",
-        "editInstance": "Edit Activity Instantiation",
-        "addInstance": "Add Activity Instantiation",
+        "editInstance": "Edit Activity Instance",
+        "addInstance": "Add Activity Instance",
         "addBasicData": "Add basic data",
         "addAdditionalData": "Add additional data",
         "abbreviation": "Abbreviation"
@@ -1918,7 +1980,8 @@
         "study_design": "Study Design",
         "download": "Download",
         "loading": "Loading...",
-        "downloading": "Downloading..."
+        "downloading": "Downloading...",
+        "protocol_soa": "Protocol SoA"
     },
     "CtrOdmXmlVue": {
         "title": "CTR ODM XML",
@@ -1930,7 +1993,6 @@
     "ProtocolElementsObjectiveTable": {
         "title": "Objectives and Endpoints",
         "downloading": "Download in progress...",
-        "download_docx": "Download DOCX",
         "loading": "Reloading Objectives and Endpoints..."
     },
     "ActivityTemplatesView": {
@@ -1994,7 +2056,9 @@
         "approve_attributes_version": "Change status to Final",
         "attributes_approve_success": "Attributes are now in Final state",
         "names_history_title": "Sponsor values history for code list [{codelist}]",
-        "attributes_history_title": "Attributes values history for code list [{codelist}]"
+        "attributes_history_title": "Attributes values history for code list [{codelist}]",
+        "terms_listing": "Terms listing",
+        "open_ct": "Open CT"
     },
     "CodelistSponsorValuesForm": {
         "title": "Edit Sponsor Code list",
@@ -2415,7 +2479,7 @@
         "add_runin_criteria": "Add run-in criteria",
         "creation_mode_label": "Select method",
         "select_from_studies": "Select from studies",
-        "create_from_template": "Select from template",
+        "create_from_template": "Select from standards",
         "create_from_scratch": "Create from scratch",
         "create_criteria": "Define criteria details",
         "select_from": "Select from",
@@ -2439,7 +2503,7 @@
     },
     "EligibilityCriteriaEditForm": {
         "title": "Edit Study Criteria",
-        "step_title": "Edit criteria",
+        "key_criteria": "Key criteria",
         "update_success": "Study criteria updated"
     },
     "SelectFromListField": {
@@ -2852,22 +2916,22 @@
     "ActivitiesView": {
         "title": "Study Activities",
         "study_flowchart": "Study flowchart",
-        "tab1_title": "List of Study Activities",
-        "tab2_title": "Detailed Flowchart",
-        "tab3_title": "Protocol Flowchart",
-        "tab4_title": "Activity Instructions"
+        "tab1_title": "Study Activities",
+        "tab2_title": "Study Activity Instances",
+        "tab3_title": "Detailed SoA",
+        "tab4_title": "SoA footnotes",
+        "tab5_title": "Protocol SoA",
+        "tab6_title": "Activity Instructions"
     },
     "ProtocolFlowchart": {
-        "title": "Protocol Flowchart",
+        "title": "Protocol SoA",
         "update_flowchart": "Update flowchart",
-        "download_docx": "Download DOCX",
         "downloading": "Download in progress...",
-        "loading": "Protocol Flowchart is reloading..."
+        "loading": "Protocol SoA is reloading..."
     },
     "ProtocolInterventionsTable": {
         "title": "Protocol Interventions",
         "update_flowchart": "Update table",
-        "download_docx": "Download DOCX",
         "downloading": "Download in progress...",
         "loading": "Table is reloading..."
     },
@@ -2886,7 +2950,7 @@
         "activity_group": "Activity group",
         "activity_sub_group": "Activity subgroup",
         "activity": "Activity",
-        "flowchart_group": "Flowchart group",
+        "flowchart_group": "SoA group",
         "footnote": "Footnote",
         "detailed_flowchart": "Detailed flowchart",
         "protocol_flowchart": "Protocol flowchart"
@@ -2896,11 +2960,11 @@
         "creation_mode_title": "Select method",
         "select_from_studies_title": "Select activities",
         "select_from_library_title": "Select activities",
-        "flowchart_group_title": "Select flowchart group",
+        "flowchart_group_title": "Select SoA group",
         "select_from_studies": "Select from studies",
         "select_from_library": "Select from library",
         "create_placeholder_for_activity": "Create placeholder for new Activity Request",
-        "flowchart_group": "Flowchart group",
+        "flowchart_group": "SoA group",
         "selected_activities": "Selected activities",
         "copy_activity_instructions": "Find and copy activities from the table. Use free-text search or filters.",
         "add_success": "Study activity added",
@@ -2908,7 +2972,8 @@
         "select_studies": "Select studies",
         "copy_activity": "Copy activity",
         "copy_all_activities": "Copy all displayed activities",
-        "create_placeholder": "Create Placeholder"
+        "create_placeholder": "Create Placeholder",
+        "select_activities_info": "You need to select Activities"
     },
     "StudyActivityEditForm": {
         "title": "Edit study activity",
@@ -2941,7 +3006,9 @@
         "hide_flowchart_groups": "Hide flowchart groups",
         "edit_dialog_title": "Do you want to edit",
         "table_caption": "Flowchart table",
-        "confirm_group_deletion": "Collapsible visit group {group} will be deleted"
+        "confirm_group_deletion": "Collapsible visit group {group} will be deleted",
+        "soa_footnotes": "SoA footnotes",
+        "activity_instructions": "Activity Instructions"
     },
     "StudyActivityInstructionTable": {
         "activities": "Activities",
@@ -3548,12 +3615,28 @@
         "quali_variables": "Qualifies Variables",
         "desc_value": "Described Value Domain",
         "implements": "Implements",
-        "core": "Core"
+        "core": "Core",
+        "qualifies_variable": "Qualifiers variables",
+        "described_value_domain": "Describe value domain",
+        "notes": "Notes",
+        "usage_restrictions": "Usage restrictions",
+        "examples": "Examples",
+        "c_code": "Variable C-Code",
+        "codelist": "Codelist",
+        "value_list": "Value List",
+        "sdtmig_ap": "SDTMIG AP",
+        "sdtmig_md": "SDTMIG MD",
+        "sendig": "SENDIG",
+        "sendig_ar": "SENDIG AR",
+        "sendig_dart": "SENDIG DART",
+        "sendig_genetox": "SENDIG GENETOX"
     },
     "ActivityInstanceOverview": {
         "cosmos_yaml": "COSMoS YAML",
         "activity_groups": "Activity groups",
         "activity_subgroups": "Activity subgroups",
+        "activity_group": "Activity group",
+        "activity_subgroup": "Activity subgroup",
         "activity": "Activity",
         "adam_code": "ADaM parameter code",
         "topic_code": "Topic code",
@@ -3561,18 +3644,138 @@
         "items": "Activity items",
         "ct_term_name": "CT term name",
         "unit_def_name": "Unit name",
-        "item_class": "Activity item class"
+        "item_class": "Activity item class",
+        "activity_groupings": "Activity groupings"
     },
     "ActivityOverview": {
         "cosmos_yaml": "COSMoS YAML",
         "activity_groups": "Activity groups",
         "activity_subgroups": "Activity subgroups",
+        "activity_group": "Activity group",
+        "activity_subgroup": "Activity subgroup",
         "adam_code": "ADaM parameter code",
         "topic_code": "Topic code",
         "class": "Activity instance class",
-        "instances": "Activity instances"
+        "instances": "Activity instances",
+        "activity_groupings": "Activity groupings"
     },
     "YamlViewer": {
         "search_content": "Search for content"
+    },
+    "ActivityInstructionsView": {
+        "title": "Activity Instructions"
+    },
+    "FootnoteTemplatesView": {
+        "title": "Footnote Templates"
+    },
+    "FootnoteTemplateTable": {
+        "indications": "Indication or disorder",
+        "criterion_cat": "Footnote category",
+        "criterion_sub_cat": "Footnote sub-category",
+        "criterion_tpl": "Template",
+        "add": "Add",
+        "edit": "Edit",
+        "approve": "Approve",
+        "delete": "Delete",
+        "approve_success": "Template is now in Final state",
+        "approve_pre_instance_success": "Pre-instance is now in Final state",
+        "new_version_success": "New version created",
+        "inactivate_success": "Template inactivated",
+        "reactivate_success": "Template reactivated",
+        "delete_success": "Template deleted",
+        "delete_pre_instance_success": "Pre-instance deleted",
+        "duplicate_success": "Pre-instance duplicated",
+        "inactivate_pre_instance_success": "Pre-Instance inactivated",
+        "reactivate_pre_instance_success": "Pre-Instance reactivated"
+    },
+    "FootnoteTemplateForm": {
+        "add_title": "Add {type} footnote template",
+        "edit_title": "Edit footnote template",
+        "indication": "Indication or disorder",
+        "group": "Activity group",
+        "sub_group": "Activity subgroup",
+        "activity": "Activity",
+        "name": "Template text",
+        "add_success": "Footnote template added",
+        "update_success": "Footnote template updated",
+        "delete_success": "Footnote template deleted"
+    },
+    "FootnotesView": {
+        "title": "Footnote instantiations"
+    },
+    "StudyFootnoteTable": {
+        "footnote": "Footnote",
+        "covered_items": "SoA items covered",
+        "confirm_delete": "The SoA footnote '{footnote}' will be deleted",
+        "delete_footnote_success": "SoA footnote deleted",
+        "global_history_title": "SoA footnotes history"
+    },
+    "StudyFootnoteForm": {
+        "add_title": "Add SoA footnotes",
+        "step2_title": "Define footnote details",
+        "step3_title": "Select footnote level",
+        "select_tpl_title": "Select footnote templates",
+        "create_template_title": "Create template",
+        "edit_template_title": "Edit template",
+        "step_edit_title": "Edit footnote",
+        "create_from_tpl_title": "Create study footnote from template",
+        "creation_mode_label": "Select method",
+        "select_mode": "Select from studies",
+        "template_mode": "Select from standards",
+        "scratch_mode": "Create from scratch",
+        "select_footnote_tpl": "Select template",
+        "select_footnote": "Select footnote",
+        "footnote_level": "Footnote level",
+        "select_template_label": "Choose a template",
+        "select_level_title": "Select footnote level",
+        "footnote_added": "Study footnote added",
+        "footnote_tpl_label": "Footnote template",
+        "select_tpl_parameters_label": "Select template parameters",
+        "copy_instructions": "Copy from table",
+        "copy_footnote_instructions": "Copy from table",
+        "copy_template": "Select template",
+        "copy_footnote": "Select footnote",
+        "brand_name": "Brand name",
+        "project_name": "Project name",
+        "project_number": "Project number",
+        "study_id": "Study ID",
+        "template": "Template",
+        "select_footnote_title": "Selected footnote",
+        "select_template_title": "Selected footnote template",
+        "select_studies": "Select studies",
+        "study_footnote": "Study Footnote",
+        "selected_footnotes": "Selected study footnotes",
+        "template_not_selected": "You must select a template first",
+        "show_pre_instances": "Select from pre-instances"
+    },
+    "StudyFootnoteEditForm": {
+        "title": "Edit SoA footnote",
+        "update_success": "SoA footnote updated",
+        "select_footnote_items": "Select SoA items linked to footnote",
+        "link_items": "Link SoA items",
+        "linked_items": "Linked SoA items",
+        "ref_activities": "Study Activities, Groups and Subgroups",
+        "ref_epochs_visits": "Study Visits and Epochs"
+    },
+    "Comments": {
+        "filter_by_ALL": "All comments",
+        "filter_by_ACTIVE": "Active comments",
+        "filter_by_RESOLVED": "Resolved comments",
+        "comments_headline": "Comments",
+        "comment_edit": "Edit comment",
+        "comment_delete": "Delete comment",
+        "comment_add_button": "Add comment",
+        "comment_add_placeholder": "Add a comment...",
+        "comment_delete_approve": "Are you sure you want to delete this comment?",
+        "comment_status_ACTIVE": "Active",
+        "comment_status_RESOLVED": "Resolved",
+        "reply_edit": "Edit reply",
+        "reply_delete": "Delete reply",
+        "reply_add": "Add reply",
+        "reply_add_button": "Reply",
+        "reply_and_resolve_button": "Reply & resolve",
+        "reply_and_reactivate_button": "Reply & reactivate",
+        "reply_add_placeholder": "Write a reply...",
+        "reply_delete_approve": "Are you sure you want to delete this reply?"
     }
 }

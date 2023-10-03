@@ -144,7 +144,7 @@
               x-small
               @click="removeSubstance(index)"
               >
-              <v-icon>mdi-delete</v-icon>
+              <v-icon>mdi-delete-outline</v-icon>
             </v-btn>
           </v-card>
         </v-card-text>
@@ -189,7 +189,7 @@
                   x-small
                   @click="removeDoseValue(index)"
                   >
-                  <v-icon>mdi-delete</v-icon>
+                  <v-icon>mdi-delete-outline</v-icon>
                 </v-btn>
               </v-card>
             </v-card-text>
@@ -230,7 +230,7 @@
                   x-small
                   @click="removeStrengthValue(index)"
                   >
-                  <v-icon>mdi-delete</v-icon>
+                  <v-icon>mdi-delete-outline</v-icon>
                 </v-btn>
               </v-card>
             </v-card-text>
@@ -355,7 +355,7 @@
               x-small
               @click="removeLagTime(index)"
               >
-              <v-icon>mdi-delete</v-icon>
+              <v-icon>mdi-delete-outline</v-icon>
             </v-btn>
           </v-card>
         </v-card-text>

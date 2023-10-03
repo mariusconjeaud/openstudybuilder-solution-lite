@@ -1,7 +1,8 @@
 import datetime
 from dataclasses import dataclass, field
-from typing import Any, Callable, Iterable, Optional, Sequence, Tuple
+from typing import Any, Callable, Iterable, Self, Sequence
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains._utils import normalize_string
 
 
@@ -12,41 +13,41 @@ class StudySelectionCohortVO:
     """
 
     study_selection_uid: str
-    study_uid: Optional[str]
+    study_uid: str | None
     name: str
     short_name: str
-    code: Optional[str]
-    description: Optional[str]
-    colour_code: Optional[str]
-    number_of_subjects: Optional[int]
-    branch_arm_root_uids: Optional[Sequence[str]]
-    arm_root_uids: Optional[Sequence[str]]
+    code: str | None
+    description: str | None
+    colour_code: str | None
+    number_of_subjects: int | None
+    branch_arm_root_uids: Sequence[str] | None
+    arm_root_uids: Sequence[str] | None
     start_date: datetime.datetime
     user_initials: str
-    end_date: Optional[datetime.datetime]
-    status: Optional[str]
-    change_type: Optional[str]
+    end_date: datetime.datetime | None
+    status: str | None
+    change_type: str | None
     accepted_version: bool = False
 
     @classmethod
     def from_input_values(
         cls,
         user_initials: str,
-        study_selection_uid: Optional[str] = None,
-        study_uid: Optional[str] = None,
-        name: Optional[str] = None,
-        short_name: Optional[str] = None,
-        code: Optional[str] = None,
-        description: Optional[str] = None,
-        colour_code: Optional[str] = None,
-        number_of_subjects: Optional[int] = 0,
-        branch_arm_root_uids: Optional[Sequence[str]] = None,
-        arm_root_uids: Optional[Sequence[str]] = None,
-        start_date: Optional[datetime.datetime] = None,
-        end_date: Optional[datetime.datetime] = None,
-        status: Optional[str] = None,
-        change_type: Optional[str] = None,
-        accepted_version: Optional[bool] = False,
+        study_selection_uid: str | None = None,
+        study_uid: str | None = None,
+        name: str | None = None,
+        short_name: str | None = None,
+        code: str | None = None,
+        description: str | None = None,
+        colour_code: str | None = None,
+        number_of_subjects: int | None = 0,
+        branch_arm_root_uids: Sequence[str] | None = None,
+        arm_root_uids: Sequence[str] | None = None,
+        start_date: datetime.datetime | None = None,
+        end_date: datetime.datetime | None = None,
+        status: str | None = None,
+        change_type: str | None = None,
+        accepted_version: bool | None = False,
         generate_uid_callback: Callable[[], str] = None,
     ):
         """
@@ -113,20 +114,20 @@ class StudySelectionCohortVO:
                 if not study_branch_arm_exists_callback(
                     study_uid=self.study_uid, branch_arm_uid=branch_arm_root_uid
                 ):
-                    raise ValueError(
+                    raise exceptions.ValidationException(
                         f"There is no approved branch arm level identified by provided arm uid ({branch_arm_root_uid})"
                     )
         if self.arm_root_uids:
             for arm_root_uid in self.arm_root_uids:
                 # Check if there exist a StudyArm with the selected uid
                 if not study_arm_exists_callback(arm_root_uid):
-                    raise ValueError(
+                    raise exceptions.ValidationException(
                         f"There is no approved arm level identified by provided arm uid ({arm_root_uid})"
                     )
 
         # check if the specified Name is already used
         if self.name and cohort_exists_callback_by("name", "name", cohort_vo=self):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f'Value "{self.name}" in field Cohort Name is not unique for the study'
             )
 
@@ -134,7 +135,7 @@ class StudySelectionCohortVO:
         if self.short_name and cohort_exists_callback_by(
             "short_name", "short_name", cohort_vo=self
         ):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f'Value "{self.short_name}" in field Cohort Short Name is not unique for the study'
             )
 
@@ -142,7 +143,7 @@ class StudySelectionCohortVO:
         if self.code and cohort_exists_callback_by(
             "cohort_code", "code", cohort_vo=self
         ):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f'Value "{self.code}" in field Cohort code is not unique for the study'
             )
 
@@ -150,7 +151,7 @@ class StudySelectionCohortVO:
 @dataclass
 class StudySelectionCohortAR:
     _study_uid: str
-    _study_cohorts_selection: Tuple[StudySelectionCohortVO]
+    _study_cohorts_selection: tuple[StudySelectionCohortVO]
     # a dataclass feature that has Any value with a type field NOT included on the
     # generated init method, NOT included con copare generated methods, included on
     # the string returned by the generated method, and its default is None
@@ -160,12 +161,12 @@ class StudySelectionCohortAR:
 
     def get_specific_object_selection(
         self, study_selection_uid: str
-    ) -> Tuple[StudySelectionCohortVO, int]:
+    ) -> tuple[StudySelectionCohortVO, int]:
         for order, selection in enumerate(self.study_cohorts_selection, start=1):
             if selection.study_selection_uid == study_selection_uid:
                 return selection, order
-        raise ValueError(
-            f"The study {self._study_uid} uid does not exist ({study_selection_uid})"
+        raise exceptions.NotFoundException(
+            f"The study selection {study_selection_uid} does not exist for study {self._study_uid}"
         )
 
     @property
@@ -178,17 +179,19 @@ class StudySelectionCohortAR:
 
     def get_specific_cohort_selection(
         self, study_cohort_uid: str
-    ) -> Optional[Tuple[StudySelectionCohortVO, int]]:
+    ) -> tuple[StudySelectionCohortVO, int] | None:
         if study_cohort_uid not in [
             x.study_selection_uid for x in self.study_cohorts_selection
         ]:
-            raise ValueError(f"There is no selection({study_cohort_uid})")
+            raise exceptions.NotFoundException(
+                f"There is no selection '{study_cohort_uid}'"
+            )
 
         for order, selection in enumerate(self.study_cohorts_selection, start=1):
             if selection.study_selection_uid == study_cohort_uid:
                 return selection, order
-        raise ValueError(
-            f"There is no selection between the study element ({study_cohort_uid} and the study)"
+        raise exceptions.NotFoundException(
+            f"There is no selection between the study cohort '{study_cohort_uid}' and the study"
         )
 
     def _add_selection(self, study_cohort_selection) -> None:
@@ -220,7 +223,7 @@ class StudySelectionCohortAR:
     @classmethod
     def from_repository_values(
         cls, study_uid: str, study_cohorts_selection: Iterable[StudySelectionCohortVO]
-    ) -> "StudySelectionCohortsAR":
+    ) -> Self:
         """
         Factory method to create a AR
         :param study_uid:
@@ -240,7 +243,7 @@ class StudySelectionCohortAR:
         """
         updated_selection = []
         for selection in self.study_cohorts_selection:
-            if not selection.study_selection_uid == study_selection_uid:
+            if selection.study_selection_uid != study_selection_uid:
                 updated_selection.append(selection)
         self._study_cohorts_selection = tuple(updated_selection)
 
@@ -271,21 +274,19 @@ class StudySelectionCohortAR:
                 if old_order >= new_order:
                     updated_selections.append(selected_value)
                     if (
-                        not selection.study_selection_uid
-                        == selected_value.study_selection_uid
+                        selection.study_selection_uid
+                        != selected_value.study_selection_uid
                     ):
                         updated_selections.append(selection)
                 else:
                     if (
-                        not selection.study_selection_uid
-                        == selected_value.study_selection_uid
+                        selection.study_selection_uid
+                        != selected_value.study_selection_uid
                     ):
                         updated_selections.append(selection)
                     updated_selections.append(selected_value)
             # We add all other vo to in the same order as before, except for the vo we are moving
-            elif (
-                not selection.study_selection_uid == selected_value.study_selection_uid
-            ):
+            elif selection.study_selection_uid != selected_value.study_selection_uid:
                 updated_selections.append(selection)
         self._study_cohorts_selection = tuple(updated_selections)
 
@@ -313,8 +314,8 @@ class StudySelectionCohortAR:
         updated_selection = []
         for selection in self.study_cohorts_selection:
             if (
-                not selection.study_selection_uid
-                == updated_study_cohort_selection.study_selection_uid
+                selection.study_selection_uid
+                != updated_study_cohort_selection.study_selection_uid
             ):
                 updated_selection.append(selection)
             else:

@@ -29,14 +29,14 @@ def create_indexes_if_not_existent(tx):
         "CREATE INDEX index_codelist_concept_id IF NOT EXISTS FOR (n:Codelist) ON (n.concept_id)",
         "CREATE INDEX index_term_concept_id IF NOT EXISTS FOR (n:Term) ON (n.concept_id)",
         "CREATE INDEX index_variable IF NOT EXISTS FOR (n:DataModelVariable) ON (n.href)",
-        "CREATE CONSTRAINT constraint_import_effective_date IF NOT EXISTS ON (n:Import) ASSERT (n.effective_date) IS NODE KEY",
-        "CREATE CONSTRAINT data_model_import_node_key IF NOT EXISTS ON (n:DataModelImport) ASSERT (n.catalogue, n.version_number) IS NODE KEY",
-        "CREATE CONSTRAINT data_model_class_node_key IF NOT EXISTS ON (n:DataModelClass) ASSERT (n.catalogue, n.version_number, n.name) IS NODE KEY",
-        "CREATE CONSTRAINT data_model_scenario_node_key IF NOT EXISTS ON (n:DataModelScenario) ASSERT (n.href) IS NODE KEY",
-        "CREATE CONSTRAINT constraint_package_uid IF NOT EXISTS ON (n:Package) ASSERT (n.name) IS NODE KEY",
-        "CREATE CONSTRAINT contraint_version_name IF NOT EXISTS ON (n:Version) ASSERT (n.name) IS NODE KEY",
-        "CREATE CONSTRAINT constraint_codelist_uid IF NOT EXISTS ON (n:Codelist) ASSERT (n.effective_date, n.concept_id) IS NODE KEY",
-        "CREATE CONSTRAINT constraint_term_uid IF NOT EXISTS ON (n:Term) ASSERT (n.effective_date, n.concept_id, n.code_submission_value) IS NODE KEY",
+        "CREATE CONSTRAINT constraint_import_effective_date IF NOT EXISTS FOR (n:Import) REQUIRE (n.effective_date) IS NODE KEY",
+        "CREATE CONSTRAINT data_model_import_node_key IF NOT EXISTS FOR (n:DataModelImport) REQUIRE (n.catalogue, n.version_number) IS NODE KEY",
+        "CREATE CONSTRAINT data_model_class_node_key IF NOT EXISTS FOR (n:DataModelClass) REQUIRE (n.catalogue, n.version_number, n.name) IS NODE KEY",
+        "CREATE CONSTRAINT data_model_scenario_node_key IF NOT EXISTS FOR (n:DataModelScenario) REQUIRE (n.href) IS NODE KEY",
+        "CREATE CONSTRAINT constraint_package_uid IF NOT EXISTS FOR (n:Package) REQUIRE (n.name) IS NODE KEY",
+        "CREATE CONSTRAINT contraint_version_name IF NOT EXISTS FOR (n:Version) REQUIRE (n.name) IS NODE KEY",
+        "CREATE CONSTRAINT constraint_codelist_uid IF NOT EXISTS FOR (n:Codelist) REQUIRE (n.effective_date, n.concept_id) IS NODE KEY",
+        "CREATE CONSTRAINT constraint_term_uid IF NOT EXISTS FOR (n:Term) REQUIRE (n.effective_date, n.concept_id, n.code_submission_value) IS NODE KEY",
     ]:
         tx.run(querystring)
 

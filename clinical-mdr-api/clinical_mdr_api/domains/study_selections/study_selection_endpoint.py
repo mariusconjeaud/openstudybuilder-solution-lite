@@ -1,10 +1,11 @@
 import datetime
 import sys
 from dataclasses import dataclass, field, replace
-from typing import Any, Callable, Dict, Iterable, Optional, Sequence, Tuple
+from typing import Any, Callable, Iterable, Self, Sequence
 
 from pydantic import Field
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains._utils import normalize_string
 from clinical_mdr_api.models.utils import BaseModel
 
@@ -16,7 +17,7 @@ class EndpointUnitItem(BaseModel):
         description="uid of the endpoint unit",
     )
 
-    name: Optional[str] = Field(
+    name: str | None = Field(
         None,
         title="name",
         description="name of the endpoint unit",
@@ -24,13 +25,13 @@ class EndpointUnitItem(BaseModel):
 
 
 class EndpointUnits(BaseModel):
-    units: Optional[Tuple[EndpointUnitItem, ...]] = Field(
+    units: tuple[EndpointUnitItem, ...] | None = Field(
         ...,
         title="units",
         description="list of endpoint units selected for the study endpoint",
     )
 
-    separator: Optional[str] = Field(
+    separator: str | None = Field(
         None,
         title="separator",
         description="separator, if more than one endpoint units were selected for the study endpoint",
@@ -42,22 +43,22 @@ class StudyEndpointSelectionHistory:
     """Class for selection history items"""
 
     study_selection_uid: str
-    endpoint_uid: Optional[str]
-    endpoint_version: Optional[str]
-    endpoint_level: Optional[str]
-    endpoint_sublevel: Optional[str]
-    study_objective_uid: Optional[str]
-    timeframe_uid: Optional[str]
-    timeframe_version: Optional[str]
-    endpoint_units: Optional[EndpointUnits]
-    unit_separator: Optional[str]
+    endpoint_uid: str | None
+    endpoint_version: str | None
+    endpoint_level: str | None
+    endpoint_sublevel: str | None
+    study_objective_uid: str | None
+    timeframe_uid: str | None
+    timeframe_version: str | None
+    endpoint_units: EndpointUnits | None
+    unit_separator: str | None
     # Study selection Versioning
     start_date: datetime.datetime
-    user_initials: Optional[str]
+    user_initials: str | None
     change_type: str
-    end_date: Optional[datetime.datetime]
+    end_date: datetime.datetime | None
     order: int
-    status: Optional[str]
+    status: str | None
 
 
 @dataclass(frozen=True)
@@ -67,17 +68,18 @@ class StudySelectionEndpointVO:
     """
 
     study_selection_uid: str
-    study_uid: Optional[str]
-    endpoint_uid: Optional[str]
-    endpoint_version: Optional[str]
-    endpoint_level_uid: Optional[str]
-    endpoint_sublevel_uid: Optional[str]
-    study_objective_uid: Optional[str]
-    timeframe_uid: Optional[str]
-    timeframe_version: Optional[str]
-    endpoint_units: Tuple[Dict[str, Any]]
-    unit_separator: Optional[str]
-    endpoint_level_order: Optional[int]
+    study_uid: str | None
+    endpoint_uid: str | None
+    endpoint_version: str | None
+    endpoint_level_uid: str | None
+    endpoint_sublevel_uid: str | None
+    study_objective_uid: str | None
+    timeframe_uid: str | None
+    timeframe_version: str | None
+    endpoint_units: tuple[dict[str, Any]]
+    unit_separator: str | None
+    endpoint_level_order: int | None
+    is_instance: bool
     # Study selection Versioning
     start_date: datetime.datetime
     user_initials: str
@@ -86,21 +88,22 @@ class StudySelectionEndpointVO:
     @classmethod
     def from_input_values(
         cls,
-        endpoint_uid: Optional[str],
-        endpoint_version: Optional[str],
-        endpoint_level_uid: Optional[str],
-        endpoint_sublevel_uid: Optional[str],
-        unit_separator: Optional[str],
-        study_objective_uid: Optional[str],
-        timeframe_uid: Optional[str],
-        timeframe_version: Optional[str],
-        endpoint_units: Optional[Sequence],
-        endpoint_level_order: Optional[int],
+        endpoint_uid: str | None,
+        endpoint_version: str | None,
+        endpoint_level_uid: str | None,
+        endpoint_sublevel_uid: str | None,
+        unit_separator: str | None,
+        study_objective_uid: str | None,
+        timeframe_uid: str | None,
+        timeframe_version: str | None,
+        endpoint_units: Sequence | None,
+        endpoint_level_order: int | None,
         user_initials: str,
-        study_uid: Optional[str] = None,
+        study_uid: str | None = None,
         study_selection_uid: str = None,
-        start_date: Optional[datetime.datetime] = None,
-        accepted_version: Optional[bool] = False,
+        is_instance: bool = True,
+        start_date: datetime.datetime | None = None,
+        accepted_version: bool | None = False,
         generate_uid_callback: Callable[[], str] = None,
     ):
         """
@@ -113,6 +116,7 @@ class StudySelectionEndpointVO:
         :param study_objective_uid:
         :param timeframe_uid:
         :param endpoint_units:
+        :param in_instance:
         :param start_date:
         :param study_selection_uid:
         :param generate_uid_callback:
@@ -153,6 +157,7 @@ class StudySelectionEndpointVO:
             timeframe_version=normalize_string(timeframe_version),
             endpoint_level_order=endpoint_level_order,
             endpoint_units=units,
+            is_instance=is_instance,
             user_initials=user_initials,
             start_date=start_date,
             accepted_version=accepted_version,
@@ -179,30 +184,30 @@ class StudySelectionEndpointVO:
         if self.endpoint_uid is not None and not endpoint_exist_callback(
             normalize_string(self.endpoint_uid)
         ):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"There is no approved endpoint identified by provided uid ({self.endpoint_uid})"
             )
         # Checks if there exists a timeframe with the
         if self.timeframe_uid is not None and not timeframe_exist_callback(
             normalize_string(self.timeframe_uid)
         ):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"There is no approved timeframe identified by provided uid ({self.timeframe_uid})"
             )
         # Check if the study objective exists
         if self.study_objective_uid is not None and not study_objective_exist_callback(
             normalize_string(self.study_objective_uid)
         ):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"There is no selected study objective identified by provided uid ({self.study_objective_uid})"
             )
         # check that if there are more than one unit then there need to be a separator
         if len(self.endpoint_units) > 1 and self.unit_separator is None:
-            raise ValueError(
+            raise exceptions.ValidationException(
                 "In case of more than one endpoint units, a unit separator is required."
             )
         if self.unit_separator is not None and len(self.endpoint_units) < 2:
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"Separator should only be set if more than 1 unit is selected ({self.endpoint_units})"
             )
         # Check if there exist a Term with the selected uid
@@ -210,21 +215,23 @@ class StudySelectionEndpointVO:
             not ct_term_exists_callback(self.endpoint_level_uid)
             and self.endpoint_level_uid
         ):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"There is no approved endpoint level identified by provided term uid ({self.endpoint_level_uid})"
             )
         if self.endpoint_sublevel_uid and not ct_term_exists_callback(
             self.endpoint_sublevel_uid
         ):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"There is no approved endpoint sub level identified by provided term uid ({self.endpoint_sublevel_uid})"
             )
         for unit in self.endpoint_units:
             uid = unit.get("uid")
             if not uid:
-                raise ValueError(f"There is no uid for unit definition {unit}")
+                raise exceptions.ValidationException(
+                    f"There is no uid for unit definition {unit}"
+                )
             if not unit_definition_exists_callback(uid):
-                raise ValueError(
+                raise exceptions.ValidationException(
                     f"There is no approved unit definition identified by provided uid ({uid})"
                 )
 
@@ -241,7 +248,7 @@ class StudySelectionEndpointVO:
 @dataclass
 class StudySelectionEndpointsAR:
     _study_uid: str
-    _study_endpoints_selection: Tuple
+    _study_endpoints_selection: tuple
     repository_closure_data: Any = field(
         init=False, compare=False, repr=True, default=None
     )
@@ -256,7 +263,7 @@ class StudySelectionEndpointsAR:
 
     def get_specific_endpoint_selection(
         self, study_selection_uid: str
-    ) -> Tuple[StudySelectionEndpointVO, int]:
+    ) -> tuple[StudySelectionEndpointVO, int]:
         """
         Used to receive a specific VO from the AR
         :param study_selection_uid:
@@ -265,8 +272,8 @@ class StudySelectionEndpointsAR:
         for order, selection in enumerate(self.study_endpoints_selection, start=1):
             if selection.study_selection_uid == study_selection_uid:
                 return selection, order
-        raise ValueError(
-            f"There is no selection between the study endpoint ({study_selection_uid} and the study)"
+        raise exceptions.NotFoundException(
+            f"There is no selection between the study endpoint '{study_selection_uid}' and the study"
         )
 
     def _add_selection(self, study_endpoint_selection) -> None:
@@ -323,7 +330,7 @@ class StudySelectionEndpointsAR:
         cls,
         study_uid: str,
         study_endpoints_selection: Iterable[StudySelectionEndpointVO],
-    ) -> "StudySelectionEndpointsAR":
+    ) -> Self:
         """
         Factory method to create a AR
         :param study_uid:
@@ -390,7 +397,7 @@ class StudySelectionEndpointsAR:
                         ):
                             updated_selections.append(selection)
                     else:
-                        raise ValueError(
+                        raise exceptions.ValidationException(
                             f"Not allowed to move the selection to order ({str(new_order)})"
                         )
                 else:
@@ -411,7 +418,7 @@ class StudySelectionEndpointsAR:
                             updated_selections.append(selection)
                         updated_selections.append(selected_value)
                     else:
-                        raise ValueError(
+                        raise exceptions.ValidationException(
                             f"Not allowed to move the selection to order ({str(new_order)})"
                         )
             # We add all other vo to in the same order as before, except for the vo we are moving
@@ -513,7 +520,7 @@ class StudySelectionEndpointsAR:
                 selection.timeframe_uid,
                 *selection.endpoint_units,
             ) in endpoints_timeframes:
-                raise ValueError(
+                raise exceptions.ValidationException(
                     "There is already a study endpoint created for the selected endpoint, timeframe and unit combination"
                 )
             endpoints_timeframes.append(

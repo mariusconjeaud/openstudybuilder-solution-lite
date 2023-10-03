@@ -190,17 +190,6 @@
                 clearable
                 :readonly="readOnly"/>
             </v-col>
-            <v-col cols="6">
-              <v-select
-                v-model="form.role"
-                :label="$t('CRFItemGroups.role')"
-                data-cy="item-group-role"
-                :items="roles"
-                item-text="name"
-                dense
-                clearable
-                :readonly="readOnly"/>
-            </v-col>
           </v-row>
           <v-row>
             <v-col cols="6">
@@ -439,7 +428,6 @@ export default {
       ],
       origins: [],
       domains: [],
-      roles: [],
       engDescription: { library_name: 'Sponsor', language: parameters.ENG },
       customToolbar: [
         ['bold', 'italic', 'underline'],
@@ -465,7 +453,7 @@ export default {
         },
         {
           label: this.$t('_global.delete'),
-          icon: 'mdi-delete',
+          icon: 'mdi-delete-outline',
           iconColor: 'error',
           condition: (item) => item.possible_actions ? item.possible_actions.find(action => action === actions.DELETE) : false,
           click: this.delete

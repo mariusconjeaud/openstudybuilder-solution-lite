@@ -1,14 +1,6 @@
 import os
 from dataclasses import dataclass
-from typing import (
-    AbstractSet,
-    Collection,
-    Iterable,
-    Mapping,
-    MutableMapping,
-    Optional,
-    Set,
-)
+from typing import AbstractSet, Collection, Iterable, Mapping, MutableMapping
 
 from clinical_mdr_api.domain_repositories._utils.json_file_based_static_repo import (
     JsonFileBasedStaticRepo,  # type: ignore
@@ -54,7 +46,7 @@ class SimpleTerminologyItemRepositoryFileBasedImpl(
     @classmethod
     def _store_by_code_list_dictionary(cls, all_items: Iterable[SimpleTerminologyItem]):
         # the method stores a class wide dictionary mapping from codelist_uid to Collection of Terminology items
-        new_by_code_list: MutableMapping[str, Set[SimpleTerminologyItem]] = {}
+        new_by_code_list: MutableMapping[str, set[SimpleTerminologyItem]] = {}
         for item in all_items:
             # we check whether we have that codelist in dict
             if new_by_code_list.get(item.codelist_code) is None:
@@ -91,7 +83,7 @@ class SimpleTerminologyItemRepositoryFileBasedImpl(
 
     def find_by_code_and_codelist_code(
         self, code: str, codelist_code: str
-    ) -> Optional[SimpleTerminologyItem]:
+    ) -> SimpleTerminologyItem | None:
         return self._find_by_key(
             key=_TerminologyItemKey(codelist_code=codelist_code, code=code)
         )

@@ -3,6 +3,7 @@ import random
 import unittest
 from copy import copy
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains.study_selections.study_selection_endpoint import (
     StudySelectionEndpointsAR,
     StudySelectionEndpointVO,
@@ -211,7 +212,7 @@ class TestStudySelectionEndpointVO(unittest.TestCase):
                     timeframe_version="2.0",
                     user_initials="Initials",
                 )
-                with self.assertRaises(ValueError):
+                with self.assertRaises(exceptions.ValidationException):
                     study_selection_endpoint.validate(
                         _check_uid_exists_callback,
                         _check_uid_exists_callback,
@@ -370,7 +371,7 @@ class TestStudySelectionEndpointVO(unittest.TestCase):
                     timeframe_version="2.0",
                     user_initials="Initials",
                 )
-                with self.assertRaises(ValueError):
+                with self.assertRaises(exceptions.ValidationException):
                     study_selection_endpoint.validate(
                         _check_uid_exists_callback,
                         _check_uid_exists_callback,
@@ -462,7 +463,7 @@ class TestStudySelectionEndpointsAR(unittest.TestCase):
                 )
                 self.assertEqual(new_vo, selection)
                 self.assertEqual(len(test_tuple[1]) + 1, order)
-                with self.assertRaises(ValueError):
+                with self.assertRaises(exceptions.NotFoundException):
                     study_selection_endpoint_ar.get_specific_endpoint_selection(
                         "wrong uid"
                     )
@@ -507,7 +508,7 @@ class TestStudySelectionEndpointsAR(unittest.TestCase):
                 )
 
                 # assert that it is no longer in the AR
-                with self.assertRaises(ValueError):
+                with self.assertRaises(exceptions.NotFoundException):
                     study_selection_endpoint_ar.get_specific_endpoint_selection(
                         new_vo.study_selection_uid
                     )
@@ -860,6 +861,6 @@ class TestStudySelectionEndpointsAR(unittest.TestCase):
                 study_selection_endpoint_ar.add_endpoint_selection(new_vo)
 
                 # validate we cannot add the same v0 again
-                with self.assertRaises(ValueError):
+                with self.assertRaises(exceptions.ValidationException):
                     study_selection_endpoint_ar.add_endpoint_selection(new_vo)
                     study_selection_endpoint_ar.validate()

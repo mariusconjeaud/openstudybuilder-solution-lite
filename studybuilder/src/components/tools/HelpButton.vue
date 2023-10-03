@@ -1,7 +1,7 @@
 <template>
 <div>
   <v-btn data-cy="help-button" icon color="primary" @click="showHelp = true">
-    <v-icon>mdi-help-circle</v-icon>
+    <v-icon>mdi-help-circle-outline</v-icon>
   </v-btn>
   <v-dialog
     v-model="showHelp"

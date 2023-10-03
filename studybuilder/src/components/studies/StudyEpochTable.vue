@@ -59,8 +59,8 @@
             {{ item.order }}
           </td>
           <td>{{ item.epoch_name }}</td>
-          <td>{{ getDisplay(item, 'epoch_type') }}</td>
-          <td>{{ getDisplay(item, 'epoch_subtype') }}</td>
+          <td>{{ item.epoch_type_name }}</td>
+          <td>{{ item.epoch_subtype_name }}</td>
           <td>{{ item.start_rule }}</td>
           <td>{{ item.end_rule }}</td>
           <td>{{ item.description }}</td>
@@ -69,8 +69,6 @@
         </tr>
       </draggable>
     </template>
-    <template v-slot:item.epoch_type="{ item }">{{ getDisplay(item, 'epoch_type') }}</template>
-    <template v-slot:item.epoch_subtype="{ item }">{{ getDisplay(item, 'epoch_subtype') }}</template>
     <template v-slot:item.actions="{ item }">
       <actions-menu :actions="actions" :item="item" />
     </template>
@@ -78,11 +76,11 @@
       <v-btn
         data-cy="create-epoch"
         fab
-        dark
         small
         color="primary"
         @click="createEpoch()"
         :title="$t('StudyEpochForm.add_title')"
+        :disabled="!checkPermission($roles.STUDY_WRITE)"
         >
         <v-icon dark>
           mdi-plus
@@ -95,6 +93,20 @@
     :studyEpoch="selectedStudyEpoch"
     @close="closeForm"
     />
+  <v-dialog
+    v-model="showEpochHistory"
+    @keydown.esc="closeEpochHistory"
+    persistent
+    :max-width="globalHistoryDialogMaxWidth"
+    :fullscreen="globalHistoryDialogFullscreen"
+    >
+    <history-table
+      :title="studyEpochHistoryTitle"
+      @close="closeEpochHistory"
+      :headers="headers"
+      :items="epochHistoryItems"
+      />
+  </v-dialog>
 </div>
 </template>
 
@@ -103,17 +115,20 @@ import { mapGetters } from 'vuex'
 import ActionsMenu from '@/components/tools/ActionsMenu'
 import NNTable from '@/components/tools/NNTable'
 import StudyEpochForm from './StudyEpochForm'
-import terms from '@/api/controlledTerminology/terms'
 import { bus } from '@/main'
 import epochs from '@/api/studyEpochs'
 import draggable from 'vuedraggable'
 import filteringParameters from '@/utils/filteringParameters'
+import { accessGuard } from '@/mixins/accessRoleVerifier'
+import HistoryTable from '@/components/tools/HistoryTable'
 
 export default {
+  mixins: [accessGuard],
   components: {
     ActionsMenu,
     NNTable,
     StudyEpochForm,
+    HistoryTable,
     draggable
   },
   computed: {
@@ -138,17 +153,19 @@ export default {
       actions: [
         {
           label: this.$t('_global.edit'),
-          icon: 'mdi-pencil',
+          icon: 'mdi-pencil-outline',
           iconColor: 'primary',
           condition: (item) => item.possible_actions.find(action => action === 'edit'),
-          click: this.editEpoch
+          click: this.editEpoch,
+          accessRole: this.$roles.STUDY_WRITE
         },
         {
           label: this.$t('_global.delete'),
-          icon: 'mdi-delete',
+          icon: 'mdi-delete-outline',
           iconColor: 'error',
           condition: (item) => item.possible_actions.find(action => action === 'delete'),
-          click: this.deleteEpoch
+          click: this.deleteEpoch,
+          accessRole: this.$roles.STUDY_WRITE
         },
         {
           label: this.$t('_global.history'),
@@ -160,8 +177,8 @@ export default {
         { text: '', value: 'actions', width: '5%' },
         { text: this.$t('StudyEpochTable.number'), value: 'order', width: '5%' },
         { text: this.$t('StudyEpochTable.name'), value: 'epoch_name' },
-        { text: this.$t('StudyEpochTable.type'), value: 'epoch_type' },
-        { text: this.$t('StudyEpochTable.sub_type'), value: 'epoch_subtype' },
+        { text: this.$t('StudyEpochTable.type'), value: 'epoch_type_name' },
+        { text: this.$t('StudyEpochTable.sub_type'), value: 'epoch_subtype_name' },
         { text: this.$t('StudyEpochTable.start_rule'), value: 'start_rule' },
         { text: this.$t('StudyEpochTable.end_rule'), value: 'end_rule' },
         { text: this.$t('StudyEpochTable.description'), value: 'description', width: '20%' },
@@ -172,8 +189,8 @@ export default {
         { text: '', value: 'actions', width: '5%' },
         { text: this.$t('StudyEpochTable.number'), value: 'order', width: '3%' },
         { text: this.$t('StudyEpochTable.name'), value: 'epoch_name' },
-        { text: this.$t('StudyEpochTable.sub_type'), value: 'epoch_subtype' },
-        { text: this.$t('StudyEpochTable.type'), value: 'epoch_type' },
+        { text: this.$t('StudyEpochTable.sub_type'), value: 'epoch_subtype_name' },
+        { text: this.$t('StudyEpochTable.type'), value: 'epoch_type_name' },
         { text: this.$t('StudyEpochTable.start_rule'), value: 'start_rule' },
         { text: this.$t('StudyEpochTable.end_rule'), value: 'end_rule' },
         { text: this.$t('StudyEpochTable.description'), value: 'description' }
@@ -183,7 +200,6 @@ export default {
       showEpochHistory: false,
       epochHistoryItems: [],
       componentKey: 0,
-      calculatedItems: {},
       showStudyEpochsHistory: false,
       sortMode: false,
       selectMode: false,
@@ -194,21 +210,7 @@ export default {
   methods: {
     async fetchEpochsHistory () {
       const resp = await epochs.getStudyEpochsVersions(this.selectedStudy.uid)
-      return this.transformItems(resp.data)
-    },
-    transformItems (items) {
-      const result = []
-      for (const item of items) {
-        const newItem = { ...item }
-        if (newItem.epoch_type) {
-          newItem.epoch_type = this.getDisplay(newItem, 'epoch_type')
-        }
-        if (newItem.epoch_subtype) {
-          newItem.epoch_subtype = this.getDisplay(newItem, 'epoch_subtype')
-        }
-        result.push(newItem)
-      }
-      return result
+      return resp.data
     },
     fetchEpochs (filters, sort, filtersUpdated) {
       const params = filteringParameters.prepareParameters(
@@ -230,13 +232,6 @@ export default {
         this.sortMode = false
       }
     },
-    getDisplay (item, name) {
-      if (name in this.calculatedItems) {
-        return this.calculatedItems[name][item[name]]
-      } else {
-        return item[name]
-      }
-    },
     createMapping (codelist) {
       const returnValue = {}
       codelist.forEach(item => {
@@ -249,7 +244,7 @@ export default {
       this.showForm = true
     },
     onOrderChange (event) {
-      epochs.reorderStudyEpoch(this.selectedStudy.uid, this.studyEpochs[event.moved.oldIndex].uid, event.moved.newIndex).then(item => {
+      epochs.reorderStudyEpoch(this.selectedStudy.uid, this.studyEpochs[event.moved.oldIndex].uid, event.moved.newIndex).then(() => {
         this.$store.dispatch('studyEpochs/fetchStudyEpochs', this.selectedStudy.uid)
       })
     },
@@ -274,7 +269,7 @@ export default {
     async openEpochHistory (epoch) {
       this.selectedStudyEpoch = epoch
       const resp = await epochs.getStudyEpochVersions(this.selectedStudy.uid, epoch.uid)
-      this.epochHistoryItems = this.transformItems(resp.data)
+      this.epochHistoryItems = resp.data
       this.showEpochHistory = true
     },
     closeEpochHistory () {
@@ -283,15 +278,6 @@ export default {
     }
   },
   mounted () {
-    terms.getByCodelist('epochs').then(resp => {
-      this.$set(this.calculatedItems, 'epoch', this.createMapping(resp.data.items))
-    })
-    terms.getByCodelist('epochTypes').then(resp => {
-      this.$set(this.calculatedItems, 'epoch_type', this.createMapping(resp.data.items))
-    })
-    terms.getByCodelist('epochSubTypes').then(resp => {
-      this.$set(this.calculatedItems, 'epoch_subtype', this.createMapping(resp.data.items))
-    })
     this.$store.dispatch('studyEpochs/fetchStudyEpochs', this.selectedStudy.uid)
     this.$store.dispatch('studiesGeneral/fetchUnits')
     this.fetchEpochs()

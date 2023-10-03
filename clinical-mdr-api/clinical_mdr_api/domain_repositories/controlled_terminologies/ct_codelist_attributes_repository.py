@@ -1,5 +1,3 @@
-from typing import Optional
-
 from neomodel import db
 
 from clinical_mdr_api.domain_repositories._generic_repository_interface import (
@@ -108,7 +106,7 @@ class CTCodelistAttributesRepository(
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
         root: CTCodelistAttributesRoot,
-        library: Optional[Library],
+        library: Library | None,
         relationship: VersionRelationship,
         value: CTCodelistAttributesValue,
     ) -> CTCodelistAttributesAR:

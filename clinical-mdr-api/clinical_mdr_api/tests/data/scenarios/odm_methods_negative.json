@@ -156,46 +156,13 @@
         }
     },
     {
-        "name": "Test cannot create a new ODM Method with existing name",
+        "name": "Test cannot create a new ODM Method with existing name and oid",
         "request": {
             "headers": {},
             "method": "POST",
             "request": {
                 "library_name": "Sponsor",
                 "name": "name1",
-                "oid": "oid2",
-                "method_type": "type1",
-                "formal_expressions": [],
-                "descriptions": [
-                    "odm_description3"
-                ],
-                "alias_uids": []
-            },
-            "url": "concepts/odms/methods"
-        },
-        "response": {
-            "code": 400,
-            "headers": {
-                "content-length": "459",
-                "content-type": "application/json"
-            },
-            "result": {
-                "message": "ODM Method with name (name1) already exists.",
-                "time": "2022-03-07T12: 14: 18.116363",
-                "path": "http://testserver/concepts/odms/methods",
-                "method": "POST",
-                "type": "BusinessLogicException"
-            }
-        }
-    },
-    {
-        "name": "Test cannot create a new ODM Method with existing oid",
-        "request": {
-            "headers": {},
-            "method": "POST",
-            "request": {
-                "library_name": "Sponsor",
-                "name": "name2",
                 "oid": "oid1",
                 "method_type": "type1",
                 "formal_expressions": [],
@@ -213,7 +180,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "ODM Method with OID (oid1) already exists.",
+                "message": "ODM Method with ['name: name1', 'OID: oid1'] already exists.",
                 "time": "2022-03-07T12: 14: 18.116363",
                 "path": "http://testserver/concepts/odms/methods",
                 "method": "POST",
@@ -246,7 +213,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "ODM Method tried to connect to non existing ODM Formal Expression identified by uid (wrong_uid).",
+                "message": "ODM Method tried to connect to non existing concepts [('Concept Name: ODM Formal Expression', \"uids: {'wrong_uid'}\")].",
                 "time": "2022-03-07T12: 14: 18.116363",
                 "path": "http://testserver/concepts/odms/methods",
                 "method": "POST",
@@ -279,7 +246,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "ODM Method tried to connect to non existing ODM Description identified by uid (wrong_uid).",
+                "message": "ODM Method tried to connect to non existing concepts [('Concept Name: ODM Description', \"uids: {'wrong_uid'}\")].",
                 "time": "2022-03-07T12: 14: 18.116363",
                 "path": "http://testserver/concepts/odms/methods",
                 "method": "POST",
@@ -314,7 +281,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "ODM Method tried to connect to non existing ODM Alias identified by uid (wrong_uid).",
+                "message": "ODM Method tried to connect to non existing concepts [('Concept Name: ODM Alias', \"uids: {'wrong_uid'}\")].",
                 "time": "2022-03-07T12: 14: 18.116363",
                 "path": "http://testserver/concepts/odms/methods",
                 "method": "POST",

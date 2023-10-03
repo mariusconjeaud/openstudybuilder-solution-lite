@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Optional, Sequence
+from typing import Sequence
 
 import pytest
 from hypothesis import HealthCheck, assume, given, settings
@@ -19,6 +19,8 @@ from hypothesis.strategies import (
     tuples,
 )
 
+from clinical_mdr_api import exceptions
+
 # noinspection PyProtectedMember
 from clinical_mdr_api.domains._utils import normalize_string
 from clinical_mdr_api.domains.concepts.unit_definitions.unit_definition import (
@@ -33,6 +35,7 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryVO,
     VersioningException,
 )
+from clinical_mdr_api.exceptions import BusinessLogicException
 from clinical_mdr_api.tests.unit.domain.utils import random_str
 from clinical_mdr_api.tests.utils.common_strategies import (
     strings_with_at_least_one_non_space_char,
@@ -133,7 +136,7 @@ def get_mock_dictionary_item(name):
 
 
 @composite
-def unit_definition_values(draw, valid_unit_ct_uid_set: Optional[Sequence[str]] = None):
+def unit_definition_values(draw, valid_unit_ct_uid_set: Sequence[str] | None = None):
     master_unit = draw(booleans())
     conversion_factor_to_master = (
         draw(one_of(none(), floats(allow_nan=False))) if not master_unit else 1.0
@@ -182,8 +185,8 @@ def unit_definition_values(draw, valid_unit_ct_uid_set: Optional[Sequence[str]] 
 def libraries(
     draw,
     *,
-    valid_library_names_set: Optional[Sequence[str]] = None,
-    editable: Optional[bool] = None,
+    valid_library_names_set: Sequence[str] | None = None,
+    editable: bool | None = None,
 ):
     return LibraryVO.from_input_values_2(
         library_name=(
@@ -201,8 +204,8 @@ def libraries(
 def draft_unit_definitions(
     draw,
     *,
-    valid_unit_ct_uid_set: Optional[Sequence[str]] = None,
-    valid_library_names_set: Optional[Sequence[str]] = None,
+    valid_unit_ct_uid_set: Sequence[str] | None = None,
+    valid_library_names_set: Sequence[str] | None = None,
 ):
     result = UnitDefinitionAR.from_input_values(
         unit_definition_value=draw(
@@ -213,7 +216,7 @@ def draft_unit_definitions(
         ),
         author=draw(strings_with_at_least_one_non_space_char()),
         uid_supplier=lambda: draw(stripped_non_empty_strings()),
-        unit_definition_exists_by_name_predicate=lambda _: False,
+        concept_exists_by_callback=lambda x, y, z: False,
         master_unit_exists_for_dimension_predicate=lambda _: False,
         unit_definition_exists_by_legacy_code=lambda _: False,
     )
@@ -224,8 +227,8 @@ def draft_unit_definitions(
 def final_unit_definitions(
     draw,
     *,
-    valid_unit_ct_uid_set: Optional[Sequence[str]] = None,
-    valid_library_names_set: Optional[Sequence[str]] = None,
+    valid_unit_ct_uid_set: Sequence[str] | None = None,
+    valid_library_names_set: Sequence[str] | None = None,
 ):
     result: UnitDefinitionAR = draw(
         draft_unit_definitions(
@@ -244,8 +247,8 @@ def final_unit_definitions(
 def retired_unit_definitions(
     draw,
     *,
-    valid_unit_ct_uid_set: Optional[Sequence[str]] = None,
-    valid_library_names_set: Optional[Sequence[str]] = None,
+    valid_unit_ct_uid_set: Sequence[str] | None = None,
+    valid_library_names_set: Sequence[str] | None = None,
 ):
     result: UnitDefinitionAR = draw(
         final_unit_definitions(
@@ -264,8 +267,8 @@ def retired_unit_definitions(
 def unit_definitions(
     draw,
     *,
-    valid_unit_ct_uid_set: Optional[Sequence[str]] = None,
-    valid_library_names_set: Optional[Sequence[str]] = None,
+    valid_unit_ct_uid_set: Sequence[str] | None = None,
+    valid_library_names_set: Sequence[str] | None = None,
 ):
     return draw(
         one_of(
@@ -312,14 +315,14 @@ def test__unit_definition_value_vo__from_repository__existing_unit_ct_id__succes
     master_unit: bool,
     si_unit: bool,
     us_conventional_unit: bool,
-    unit_dimension: Optional[str],
-    legacy_code: Optional[str],
-    molecular_weight_conv_exponential: Optional[int],
-    conversion_factor_to_master: Optional[float],
-    ucum_uid: Optional[str],
-    definition: Optional[str],
+    unit_dimension: str | None,
+    legacy_code: str | None,
+    molecular_weight_conv_exponential: int | None,
+    conversion_factor_to_master: float | None,
+    ucum_uid: str | None,
+    definition: str | None,
     order: int,
-    comment: Optional[str],
+    comment: str | None,
 ):
     # when
     unit_definition_value = UnitDefinitionValueVO.from_repository_values(
@@ -395,14 +398,14 @@ def test__unit_definition_value_vo__from_input__existing_unit_ct_id__success(
     master_unit: bool,
     si_unit: bool,
     us_conventional_unit: bool,
-    unit_dimension: Optional[str],
-    legacy_code: Optional[str],
-    molecular_weight_conv_exponential: Optional[int],
-    conversion_factor_to_master: Optional[float],
-    ucum_uid: Optional[str],
-    definition: Optional[str],
+    unit_dimension: str | None,
+    legacy_code: str | None,
+    molecular_weight_conv_exponential: int | None,
+    conversion_factor_to_master: float | None,
+    ucum_uid: str | None,
+    definition: str | None,
     order: int,
-    comment: Optional[str],
+    comment: str | None,
 ):
     # assumptions
     conversion_factor_to_master = (
@@ -486,17 +489,17 @@ def test__unit_definition_value_vo__from_input__non_existing_unit_ct_id__failure
     master_unit: bool,
     si_unit: bool,
     us_conventional_unit: bool,
-    unit_dimension: Optional[str],
-    legacy_code: Optional[str],
-    molecular_weight_conv_exponential: Optional[int],
-    conversion_factor_to_master: Optional[float],
-    ucum_uid: Optional[str],
-    definition: Optional[str],
+    unit_dimension: str | None,
+    legacy_code: str | None,
+    molecular_weight_conv_exponential: int | None,
+    conversion_factor_to_master: float | None,
+    ucum_uid: str | None,
+    definition: str | None,
     order: int,
-    comment: Optional[str],
+    comment: str | None,
 ):
     # then
-    with pytest.raises(ValueError):
+    with pytest.raises(exceptions.ValidationException):
         # when
         UnitDefinitionValueVO.from_input_values(
             name=name,
@@ -537,7 +540,7 @@ def test__unit_definition_ar__from_input_values__success(
     library: LibraryVO,
     author: str,
     uid: str,
-    master_unit_uid: Optional[str],
+    master_unit_uid: str | None,
 ):
     # given
     if unit_definition_value.master_unit:
@@ -551,8 +554,7 @@ def test__unit_definition_ar__from_input_values__success(
         author=author,
         uid_supplier=(lambda: uid),
         unit_definition_value=unit_definition_value,
-        unit_definition_exists_by_name_predicate=lambda _: _
-        != unit_definition_value.name,
+        concept_exists_by_callback=lambda x, y, z: y != unit_definition_value.name,
         master_unit_exists_for_dimension_predicate=lambda _: _
         != unit_definition_value.unit_dimension_uid,
         unit_definition_exists_by_legacy_code=lambda _: _
@@ -585,14 +587,14 @@ def test__unit_definition_ar__from_input_values_another_master_unit__failure(
     uid: str,
 ):
     # then
-    with pytest.raises(ValueError):
+    with pytest.raises(BusinessLogicException):
         # when
         UnitDefinitionAR.from_input_values(
             library=library,
             author=author,
             uid_supplier=lambda: uid,
             unit_definition_value=unit_definition_value,
-            unit_definition_exists_by_name_predicate=lambda _: False,
+            concept_exists_by_callback=lambda x, y, z: False,
             master_unit_exists_for_dimension_predicate=lambda _: _
             == unit_definition_value.unit_dimension_uid,
             unit_definition_exists_by_legacy_code=lambda _: False,
@@ -613,15 +615,14 @@ def test__unit_definition_ar__from_input_values__non_unique_name__failure(
     uid: str,
 ):
     # then
-    with pytest.raises(ValueError):
+    with pytest.raises(BusinessLogicException):
         # when
         UnitDefinitionAR.from_input_values(
             library=library,
             author=author,
             uid_supplier=(lambda: uid),
             unit_definition_value=unit_definition_value,
-            unit_definition_exists_by_name_predicate=lambda _: _
-            == unit_definition_value.name,
+            concept_exists_by_callback=lambda x, y, z: y == unit_definition_value.name,
             master_unit_exists_for_dimension_predicate=lambda _: False,
             unit_definition_exists_by_legacy_code=lambda _: False,
         )
@@ -642,14 +643,14 @@ def test__unit_definition_ar__from_input_values__non_unique_legacy_code__failure
 ):
     assume(unit_definition_value.legacy_code is not None)
     # then
-    with pytest.raises(ValueError):
+    with pytest.raises(BusinessLogicException):
         # when
         UnitDefinitionAR.from_input_values(
             library=library,
             author=author,
             uid_supplier=(lambda: uid),
             unit_definition_value=unit_definition_value,
-            unit_definition_exists_by_name_predicate=lambda _: False,
+            concept_exists_by_callback=lambda x, y, z: False,
             master_unit_exists_for_dimension_predicate=lambda _: False,
             unit_definition_exists_by_legacy_code=lambda _: _
             == unit_definition_value.legacy_code,
@@ -681,14 +682,14 @@ def test__unit_definition_ar__from_input_values__non_editable_library__failure(
     uid: str,
 ):
     # then
-    with pytest.raises(ValueError):
+    with pytest.raises(exceptions.BusinessLogicException):
         # when
         UnitDefinitionAR.from_input_values(
             library=library,
             author=author,
             uid_supplier=(lambda: uid),
             unit_definition_value=unit_definition_value,
-            unit_definition_exists_by_name_predicate=lambda _: False,
+            concept_exists_by_callback=lambda x, y, z: False,
             master_unit_exists_for_dimension_predicate=lambda _: False,
             unit_definition_exists_by_legacy_code=lambda _: False,
         )
@@ -769,9 +770,8 @@ def test__unit_definition_ar__edit_draft__result(
         new_unit_definition_value=new_unit_definition_value,
         change_description=change_description,
         author=author,
-        unit_definition_by_name_exists_predicate=lambda _: _
-        != new_unit_definition_value.name
-        or _ == unit_definition_ar.name,
+        concept_exists_by_callback=lambda x, y, z: y != new_unit_definition_value.name
+        or y == unit_definition_ar.name,
         master_unit_exists_for_dimension_predicate=(
             lambda _: (
                 True
@@ -854,8 +854,8 @@ def test__unit_definition_ar__edit_draft_without_legacy_code_change__result(
         new_unit_definition_value=new_unit_definition_value,
         change_description=change_description,
         author=author,
-        unit_definition_by_name_exists_predicate=lambda _: _ == unit_definition_ar.name
-        or _ != new_unit_definition_value.name,
+        concept_exists_by_callback=lambda x, y, z: y == unit_definition_ar.name
+        or y != new_unit_definition_value.name,
         master_unit_exists_for_dimension_predicate=(
             lambda _: (
                 True
@@ -925,8 +925,8 @@ def test__unit_definition_ar__edit_draft_without_unit_ct_uid_change__result(
         new_unit_definition_value=new_unit_definition_value,
         change_description=change_description,
         author=author,
-        unit_definition_by_name_exists_predicate=lambda _: _ == unit_definition_ar.name
-        or _ != new_unit_definition_value.name,
+        concept_exists_by_callback=lambda x, y, z: y == unit_definition_ar.name
+        or y != new_unit_definition_value.name,
         master_unit_exists_for_dimension_predicate=(
             lambda _: (
                 True
@@ -1002,7 +1002,7 @@ def test__unit_definition_ar__edit_draft_without_name_change__result(
         new_unit_definition_value=new_unit_definition_value,
         change_description=change_description,
         author=author,
-        unit_definition_by_name_exists_predicate=lambda _: True,
+        concept_exists_by_callback=lambda x, y, z: True,
         master_unit_exists_for_dimension_predicate=(
             lambda _: (
                 True
@@ -1047,13 +1047,13 @@ def test__unit_definition_ar__edit_draft_with_non_unique_name__failure(
 ):
     assume(new_unit_definition_value.name != unit_definition_ar.name)
     # then
-    with pytest.raises(ValueError):
+    with pytest.raises(BusinessLogicException):
         # when
         unit_definition_ar.edit_draft(
             author=author,
             change_description=change_description,
             new_unit_definition_value=new_unit_definition_value,
-            unit_definition_by_name_exists_predicate=lambda _: _
+            concept_exists_by_callback=lambda x, y, z: y
             == new_unit_definition_value.name,
             master_unit_exists_for_dimension_predicate=lambda _: False,
             unit_definition_exists_by_legacy_code=lambda _: False,
@@ -1084,13 +1084,13 @@ def test__unit_definition_ar__edit_draft_with_non_unique_legacy_code__failure(
         != unit_definition_ar.concept_vo.legacy_code
     )
     # then
-    with pytest.raises(ValueError):
+    with pytest.raises(BusinessLogicException):
         # when
         unit_definition_ar.edit_draft(
             author=author,
             change_description=change_description,
             new_unit_definition_value=new_unit_definition_value,
-            unit_definition_by_name_exists_predicate=lambda _: False,
+            concept_exists_by_callback=lambda x, y, z: False,
             master_unit_exists_for_dimension_predicate=lambda _: False,
             unit_definition_exists_by_legacy_code=lambda _: _
             == new_unit_definition_value.legacy_code,
@@ -1124,13 +1124,13 @@ def test__unit_definition_ar__edit_draft_making_another_master_unit__failure(
     )
 
     # then
-    with pytest.raises(ValueError):
+    with pytest.raises(BusinessLogicException):
         # when
         unit_definition_ar.edit_draft(
             author=author,
             change_description=change_description,
             new_unit_definition_value=new_unit_definition_value,
-            unit_definition_by_name_exists_predicate=lambda _: False,
+            concept_exists_by_callback=lambda x, y, z: False,
             master_unit_exists_for_dimension_predicate=lambda _: _
             == new_unit_definition_value.unit_dimension_uid,
             unit_definition_exists_by_legacy_code=lambda _: False,
@@ -1157,7 +1157,7 @@ def test__unit_definition_ar__edit_draft__incorrect_status__failure(
             author=author,
             change_description=change_description,
             new_unit_definition_value=new_unit_definition_value,
-            unit_definition_by_name_exists_predicate=lambda _: False,
+            concept_exists_by_callback=lambda x, y, z: False,
             master_unit_exists_for_dimension_predicate=lambda _: False,
             unit_definition_exists_by_legacy_code=lambda _: False,
         )
@@ -1172,7 +1172,7 @@ def test__unit_definition_value_vo__from_input_values__non_1_conversion_factor_f
     unit_definition_value: UnitDefinitionValueVO, non_1_conversion_factor: float
 ):
     # then
-    with pytest.raises(ValueError):
+    with pytest.raises(exceptions.ValidationException):
         # when
         UnitDefinitionValueVO.from_input_values(
             name=unit_definition_value.name,
@@ -1209,7 +1209,7 @@ def test__unit_definition_value_vo__from_input_values__wrong_molecular_weight_co
     unit_definition_value: UnitDefinitionValueVO, wrong_molecular_weight_conv_expon: int
 ):
     # then
-    with pytest.raises(ValueError):
+    with pytest.raises(exceptions.ValidationException):
         # when
         UnitDefinitionValueVO.from_input_values(
             name=unit_definition_value.name,
@@ -1243,7 +1243,7 @@ def test__unit_definition_value_vo__from_input_values__molecular_weight_conv_exp
     unit_definition_value: UnitDefinitionValueVO,
 ):
     # then
-    with pytest.raises(ValueError):
+    with pytest.raises(exceptions.ValidationException):
         # when
         UnitDefinitionValueVO.from_input_values(
             name=unit_definition_value.name,

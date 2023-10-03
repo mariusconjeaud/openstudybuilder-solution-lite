@@ -1,4 +1,4 @@
-from typing import Callable, Optional
+from typing import Callable, Self
 
 from pydantic import Field
 
@@ -23,8 +23,8 @@ class Brand(BaseModel):
     def from_uid(
         cls,
         uid: str,
-        find_by_uid: Callable[[str], Optional[BrandAR]],
-    ) -> Optional["Brand"]:
+        find_by_uid: Callable[[str], BrandAR | None],
+    ) -> Self | None:
         brand = None
         brand_ar: BrandAR = find_by_uid(uid)
         if brand_ar is not None:
@@ -35,7 +35,7 @@ class Brand(BaseModel):
     def from_brand_ar(
         cls,
         brand_ar: BrandAR,
-    ) -> "Brand":
+    ) -> Self:
         return Brand(
             uid=brand_ar.uid,
             name=brand_ar.name,

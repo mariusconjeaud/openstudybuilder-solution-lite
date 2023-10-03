@@ -1,4 +1,4 @@
-from typing import Collection, Optional, Sequence
+from typing import Collection, Sequence
 
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
     CTCatalogue,
@@ -11,7 +11,7 @@ class CTCatalogueRepository:
         catalogue_node = CTCatalogue.nodes.get_or_none(name=catalogue_name)
         return bool(catalogue_node)
 
-    def find_all(self, library_name: Optional[str]) -> Collection[CTCatalogueAR]:
+    def find_all(self, library_name: str | None) -> Collection[CTCatalogueAR]:
         ct_catalogues: Sequence[CTCatalogue] = CTCatalogue.nodes.order_by("name").all()
 
         if library_name is not None:

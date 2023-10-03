@@ -143,7 +143,8 @@
                     "name_plain": "Test [Indication]",
                     "guidance_text": null,
                     "uid": "{ttuid}",
-                    "sequence_id": "TT1"
+                    "sequence_id": "T1",
+                    "library_name": "Test library"
                 },
                 "uid": "8220b276-0bd3-4308-8e27-91231f1e4c9d",
                 "user_initials": "TEST_USER",
@@ -232,7 +233,8 @@
                     "name_plain": "Test [Indication]",
                     "guidance_text": null,
                     "uid": "{ttuid}",
-                    "sequence_id": "TT1"
+                    "sequence_id": "T1",
+                    "library_name": "Test library"
                 },
                 "uid": "8220b276-0bd3-4308-8e27-91231f1e4c9d",
                 "user_initials": "TEST_USER",
@@ -355,7 +357,8 @@
                     "name_plain": "Test [Indication] and [Intervention]",
                     "guidance_text": null,
                     "uid": "{ttuid}",
-                    "sequence_id": "TT2"
+                    "sequence_id": "T2",
+                    "library_name": "Test library"
                 },
                 "uid": "8220b276-0bd3-4308-8e27-91231f1e4c9d",
                 "user_initials": "TEST_USER",
@@ -439,7 +442,8 @@
                             "name_plain": "Test [Indication] and [Intervention]",
                             "guidance_text": null,
                             "uid": "{ttuid}",
-                            "sequence_id": "TT2"
+                            "sequence_id": "T2",
+                    "library_name": "Test library"
                         },
                         "uid": "8220b276-0bd3-4308-8e27-91231f1e4c9d",
                         "user_initials": "TEST_USER",
@@ -487,7 +491,8 @@
                             "name_plain": "Test [Indication]",
                             "guidance_text": null,
                             "uid": "{ttuid}",
-                            "sequence_id": "TT1"
+                            "sequence_id": "T1",
+                    "library_name": "Test library"
                         },
                         "uid": "8220b276-0bd3-4308-8e27-91231f1e4c9d",
                         "user_initials": "TEST_USER",
@@ -622,7 +627,8 @@
                             "name_plain": "Test [Indication] and [Intervention]",
                             "guidance_text": null,
                             "uid": "{ttuid}",
-                            "sequence_id": "TT2"
+                            "sequence_id": "T2",
+                    "library_name": "Test library"
                         },
                         "uid": "8220b276-0bd3-4308-8e27-91231f1e4c9d",
                         "user_initials": "TEST_USER",
@@ -670,7 +676,8 @@
                             "name_plain": "Test [Indication]",
                             "guidance_text": null,
                             "uid": "{ttuid}",
-                            "sequence_id": "TT1"
+                            "sequence_id": "T1",
+                    "library_name": "Test library"
                         },
                         "uid": "8220b276-0bd3-4308-8e27-91231f1e4c9d",
                         "user_initials": "TEST_USER",

@@ -11,10 +11,6 @@ from neomodel import (
     ZeroOrOne,
 )
 
-from clinical_mdr_api.domain_repositories.models.biomedical_concepts import (
-    ActivityInstanceClassRoot,
-    ActivityItemClassRoot,
-)
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
     CTCodelistRoot,
 )
@@ -43,12 +39,12 @@ class DataModelIGValue(VersionValue):
     )
 
 
-class MasterModelValue(VersionValue):
+class SponsorModelValue(VersionValue):
     name = StringProperty()
     extends_version = RelationshipTo(
         DataModelIGValue, "EXTENDS_VERSION", model=ClinicalMdrRel, cardinality=One
     )
-    has_master_model_version = RelationshipFrom(
+    has_sponsor_model_version = RelationshipFrom(
         "DataModelIGRoot", "HAS_VERSION", model=VersionRelationship
     )
 
@@ -71,20 +67,20 @@ class DataModelIGRoot(VersionRoot):
         DataModelIGValue, "LATEST_RETIRED", model=ClinicalMdrRel
     )
 
-    has_master_model_version = RelationshipTo(
-        MasterModelValue, "HAS_VERSION", model=VersionRelationship
+    has_sponsor_model_version = RelationshipTo(
+        SponsorModelValue, "HAS_VERSION", model=VersionRelationship
     )
-    has_latest_master_model_value = RelationshipTo(
-        MasterModelValue, "LATEST", model=ClinicalMdrRel
+    has_latest_sponsor_model_value = RelationshipTo(
+        SponsorModelValue, "LATEST", model=ClinicalMdrRel
     )
-    latest_master_model_draft = RelationshipTo(
-        MasterModelValue, "LATEST_DRAFT", model=VersionRelationship
+    latest_sponsor_model_draft = RelationshipTo(
+        SponsorModelValue, "LATEST_DRAFT", model=VersionRelationship
     )
-    latest_master_model_final = RelationshipTo(
-        MasterModelValue, "LATEST_FINAL", model=VersionRelationship
+    latest_sponsor_model_final = RelationshipTo(
+        SponsorModelValue, "LATEST_FINAL", model=VersionRelationship
     )
-    latest_master_model_retired = RelationshipTo(
-        MasterModelValue, "LATEST_RETIRED", model=VersionRelationship
+    latest_sponsor_model_retired = RelationshipTo(
+        SponsorModelValue, "LATEST_RETIRED", model=VersionRelationship
     )
 
 
@@ -122,6 +118,30 @@ class HasDatasetClassRel(ClinicalMdrRel):
     ordinal = StringProperty()
 
 
+class HasDatasetRel(HasDatasetClassRel):
+    pass
+
+
+class SponsorModelDatasetClassInstance(VersionValue):
+    is_basic_std = BooleanProperty()
+    xml_path = StringProperty()
+    xml_title = StringProperty()
+    structure = StringProperty()
+    purpose = StringProperty()
+    comment = StringProperty()
+    label = StringProperty()
+
+    is_instance_of = RelationshipFrom(
+        "DatasetClass", "HAS_INSTANCE", model=ClinicalMdrRel
+    )
+    has_dataset_class = RelationshipFrom(
+        SponsorModelValue,
+        "HAS_DATASET_CLASS",
+        model=HasDatasetClassRel,
+        cardinality=One,
+    )
+
+
 class DatasetClassInstance(VersionValue):
     description = StringProperty()
     label = StringProperty()
@@ -141,6 +161,10 @@ class DatasetClass(VersionRoot):
     has_instance = RelationshipTo(
         DatasetClassInstance, "HAS_INSTANCE", model=ClinicalMdrRel
     )
+
+    has_sponsor_model_instance = RelationshipTo(
+        SponsorModelDatasetClassInstance, "HAS_INSTANCE", model=ClinicalMdrRel
+    )
     has_dataset_class = RelationshipFrom(
         DataModelCatalogue, "HAS_DATASET_CLASS", model=ClinicalMdrRel, cardinality=One
     )
@@ -151,7 +175,7 @@ class DatasetInstance(VersionValue):
     label = StringProperty()
     title = StringProperty()
     has_dataset = RelationshipFrom(
-        DataModelIGValue, "HAS_DATASET", model=ClinicalMdrRel, cardinality=One
+        DataModelIGValue, "HAS_DATASET", model=HasDatasetRel, cardinality=One
     )
     implements_dataset_class = RelationshipTo(
         DatasetClassInstance,
@@ -165,23 +189,26 @@ class HasKeyRel(StructuredRel):
     order = IntegerProperty()
 
 
-class MasterModelDatasetValue(VersionValue):
-    description = StringProperty()
+class SponsorModelDatasetInstance(VersionValue):
     is_basic_std = BooleanProperty()
     xml_path = StringProperty()
     xml_title = StringProperty()
     structure = StringProperty()
     purpose = StringProperty()
+    source_ig = StringProperty()
     comment = StringProperty()
     ig_comment = StringProperty()
     map_domain_flag = BooleanProperty()
     suppl_qual_flag = BooleanProperty()
     include_in_raw = BooleanProperty()
     gen_raw_seqno_flag = BooleanProperty()
-    enrich_build_order = IntegerProperty()
+    label = StringProperty()
+    state = StringProperty()
+    extended_domain = StringProperty()
 
+    is_instance_of = RelationshipFrom("Dataset", "HAS_INSTANCE", model=ClinicalMdrRel)
     has_dataset = RelationshipFrom(
-        MasterModelValue, "HAS_DATASET", model=ClinicalMdrRel, cardinality=One
+        SponsorModelValue, "HAS_DATASET", model=HasDatasetRel, cardinality=One
     )
     has_key = RelationshipTo(
         "DatasetVariable",
@@ -195,15 +222,6 @@ class MasterModelDatasetValue(VersionValue):
         model=HasKeyRel,
         cardinality=OneOrMore,
     )
-    has_activity_instance_class = RelationshipFrom(
-        ActivityInstanceClassRoot,
-        "IN_DATASET",
-        model=ClinicalMdrRel,
-    )
-
-    has_master_model_version = RelationshipFrom(
-        "Dataset", "HAS_VERSION", model=VersionRelationship
-    )
 
 
 class Dataset(VersionRoot):
@@ -212,25 +230,29 @@ class Dataset(VersionRoot):
         DataModelCatalogue, "HAS_DATASET", model=ClinicalMdrRel, cardinality=One
     )
 
-    has_master_model_version = RelationshipTo(
-        MasterModelDatasetValue, "HAS_VERSION", model=VersionRelationship
+    has_sponsor_model_instance = RelationshipTo(
+        SponsorModelDatasetInstance, "HAS_INSTANCE", model=ClinicalMdrRel
     )
-    has_latest_master_model_value = RelationshipTo(
-        MasterModelDatasetValue, "LATEST", model=ClinicalMdrRel
+
+
+class DatasetScenarioInstance(VersionValue):
+    label = StringProperty()
+
+
+class DatasetScenario(VersionRoot):
+    has_version = RelationshipTo(
+        DatasetScenarioInstance, "HAS_INSTANCE", model=ClinicalMdrRel
     )
-    latest_master_model_draft = RelationshipTo(
-        MasterModelDatasetValue, "LATEST_DRAFT", model=VersionRelationship
-    )
-    latest_master_model_final = RelationshipTo(
-        MasterModelDatasetValue, "LATEST_FINAL", model=VersionRelationship
-    )
-    latest_master_model_retired = RelationshipTo(
-        MasterModelDatasetValue, "LATEST_RETIRED", model=VersionRelationship
+    has_dataset_scenario = RelationshipFrom(
+        DataModelCatalogue,
+        "HAS_DATASET_SCENARIO",
+        model=ClinicalMdrRel,
+        cardinality=One,
     )
 
 
 # pylint: disable=abstract-method
-class HasClassVariableRel(ClinicalMdrRel):
+class HasVariableClassRel(ClinicalMdrRel):
     ordinal = StringProperty()
     version_number = StringProperty()
 
@@ -238,6 +260,36 @@ class HasClassVariableRel(ClinicalMdrRel):
 # pylint: disable=abstract-method
 class HasMappingTargetRel(ClinicalMdrRel):
     version_number = StringProperty()
+
+
+class SponsorModelVariableClassInstance(VersionValue):
+    is_basic_std = BooleanProperty()
+    label = StringProperty()
+    variable_type = StringProperty()
+    length = IntegerProperty()
+    display_format = StringProperty()
+    xml_datatype = StringProperty()
+    xml_codelist = StringProperty()
+    core = StringProperty()
+    origin = StringProperty()
+    role = StringProperty()
+    term = StringProperty()
+    algorithm = StringProperty()
+    qualifiers = ArrayProperty()
+    comment = StringProperty()
+    ig_comment = StringProperty()
+    map_var_flag = BooleanProperty()
+    fixed_mapping = StringProperty()
+    include_in_raw = BooleanProperty()
+    nn_internal = BooleanProperty()
+    incl_cre_domain = BooleanProperty()
+    xml_codelist_values = BooleanProperty()
+
+    has_variable_class = RelationshipFrom(
+        SponsorModelDatasetClassInstance,
+        "HAS_VARIABLE_CLASS",
+        model=HasVariableClassRel,
+    )
 
 
 class VariableClassInstance(VersionValue):
@@ -252,10 +304,14 @@ class VariableClassInstance(VersionValue):
     question_text = StringProperty()
     simple_datatype = StringProperty()
     role = StringProperty()
+    described_value_domain = StringProperty()
+    notes = StringProperty()
+    usage_restrictions = StringProperty()
+    examples = StringProperty()
     has_class_variable = RelationshipFrom(
         DatasetClassInstance,
         "HAS_VARIABLE_CLASS",
-        model=HasClassVariableRel,
+        model=HasVariableClassRel,
         cardinality=One,
     )
     implements_variable = RelationshipFrom(
@@ -270,6 +326,9 @@ class VariableClassInstance(VersionValue):
     references_codelist = RelationshipTo(
         CTCodelistRoot, "REFERENCES_CODELIST", model=ClinicalMdrRel
     )
+    qualifies_variable = RelationshipTo(
+        "VariableClassInstance", "QUALIFIES_VARIABLE", model=ClinicalMdrRel
+    )
     has_mapping_target = RelationshipTo(
         "VariableClassInstance",
         "HAS_MAPPING_TARGET",
@@ -282,16 +341,21 @@ class VariableClass(VersionRoot):
     has_instance = RelationshipTo(
         VariableClassInstance, "HAS_INSTANCE", model=ClinicalMdrRel
     )
-    has_class_variable = RelationshipFrom(
+
+    has_sponsor_model_instance = RelationshipTo(
+        SponsorModelVariableClassInstance, "HAS_INSTANCE", model=ClinicalMdrRel
+    )
+
+    has_variable_class = RelationshipFrom(
         DataModelCatalogue,
         "HAS_VARIABLE_CLASS",
-        model=HasClassVariableRel,
+        model=HasVariableClassRel,
         cardinality=One,
     )
 
 
 # pylint: disable=abstract-method
-class HasDatasetVariableRel(HasClassVariableRel):
+class HasDatasetVariableRel(HasVariableClassRel):
     pass
 
 
@@ -307,6 +371,8 @@ class DatasetVariableInstance(VersionValue):
     completion_instructions = StringProperty()
     implementation_notes = StringProperty()
     mapping_instructions = StringProperty()
+    described_value_domain = StringProperty()
+    value_list = ArrayProperty()
     has_dataset_variable = RelationshipFrom(
         DatasetInstance,
         "HAS_DATASET_VARIABLE",
@@ -333,46 +399,39 @@ class DatasetVariableInstance(VersionValue):
     )
 
 
-class MasterModelVariableValue(VersionValue):
-    description = StringProperty()
+class SponsorModelDatasetVariableInstance(VersionValue):
     is_basic_std = BooleanProperty()
-    # TODO : Move order into relationship from MMDataset to MMVariable ?
-    order = IntegerProperty()
+    label = StringProperty()
     variable_type = StringProperty()
     length = IntegerProperty()
     display_format = StringProperty()
     xml_datatype = StringProperty()
     xml_codelist = StringProperty()
-    xml_codelist_multi = StringProperty()
+    xml_codelist_multi = ArrayProperty()
     core = StringProperty()
+    origin = StringProperty()
     role = StringProperty()
     term = StringProperty()
     algorithm = StringProperty()
     qualifiers = ArrayProperty()
     comment = StringProperty()
     ig_comment = StringProperty()
+    class_table = StringProperty()
+    class_column = StringProperty()
     map_var_flag = BooleanProperty()
     fixed_mapping = StringProperty()
-    include_in_raw = StringProperty()
-    nn_internal = StringProperty()
+    include_in_raw = BooleanProperty()
+    nn_internal = BooleanProperty()
     value_lvl_where_cols = StringProperty()
     value_lvl_label_col = StringProperty()
     value_lvl_collect_ct_val = StringProperty()
     value_lvl_ct_codelist_id_col = StringProperty()
     enrich_build_order = IntegerProperty()
     enrich_rule = StringProperty()
-    xml_codelist_values = ArrayProperty()
+    xml_codelist_values = BooleanProperty()
 
     has_variable = RelationshipFrom(
-        MasterModelDatasetValue,
-        "HAS_DATASET_VARIABLE",
-        model=ClinicalMdrRel,
-        cardinality=One,
-    )
-    has_activity_item_class = RelationshipFrom(
-        ActivityItemClassRoot,
-        "AS_VARIABLE",
-        model=ClinicalMdrRel,
+        SponsorModelDatasetInstance, "HAS_DATASET_VARIABLE", model=HasDatasetVariableRel
     )
 
 
@@ -387,18 +446,6 @@ class DatasetVariable(VersionRoot):
         cardinality=One,
     )
 
-    has_master_model_version = RelationshipTo(
-        MasterModelVariableValue, "HAS_VERSION", model=VersionRelationship
-    )
-    has_latest_master_model_value = RelationshipTo(
-        MasterModelVariableValue, "LATEST", model=ClinicalMdrRel
-    )
-    latest_master_model_draft = RelationshipTo(
-        MasterModelVariableValue, "LATEST_DRAFT", model=VersionRelationship
-    )
-    latest_master_model_final = RelationshipTo(
-        MasterModelVariableValue, "LATEST_FINAL", model=VersionRelationship
-    )
-    latest_master_model_retired = RelationshipTo(
-        MasterModelVariableValue, "LATEST_RETIRED", model=VersionRelationship
+    has_sponsor_model_instance = RelationshipTo(
+        SponsorModelDatasetVariableInstance, "HAS_INSTANCE", model=ClinicalMdrRel
     )

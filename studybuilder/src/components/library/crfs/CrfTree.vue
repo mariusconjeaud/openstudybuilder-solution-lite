@@ -46,7 +46,7 @@
         <td width="30%">
           <v-row>
             <div class="mt-3"><actions-menu :actions="actions" :item="item"/></div>
-            <v-icon color="crfTemplate">mdi-alpha-t-circle</v-icon>
+            <v-icon color="crfTemplate">mdi-alpha-t-circle-outline</v-icon>
             <v-tooltip bottom>
               <template v-slot:activator="{ on, attrs }">
                 <div class="mt-3 ml-1 mr-1" v-bind="attrs" v-on="on">{{ item.name.length > 40 ? item.name.substring(0, 40) + '...' : item.name }}</div>
@@ -95,7 +95,7 @@
               </v-list-item>
               <v-list-item @click="openFormsForm(item)">
                 <v-list-item-icon>
-                  <v-icon>mdi-pencil</v-icon>
+                  <v-icon>mdi-pencil-outline</v-icon>
                 </v-list-item-icon>
                 <v-list-item-content>
                   {{ $t('CrfTree.create_and_link')}}
@@ -168,7 +168,7 @@
                     </v-icon>
                   </v-btn>
                   <div class="ml-2 mt-3"><actions-menu :actions="actions" :item="item"/></div>
-                  <v-icon color="crfForm">mdi-alpha-f-circle</v-icon>
+                  <v-icon color="crfForm">mdi-alpha-f-circle-outline</v-icon>
                   <v-tooltip bottom>
                     <template v-slot:activator="{ on, attrs }">
                       <div class="mt-3 ml-1 mr-1" v-bind="attrs" v-on="on">{{ item.name.length > 40 ? item.name.substring(0, 40) + '...' : item.name }}</div>
@@ -185,7 +185,7 @@
                       v-bind="attrs"
                       v-on="on"
                       v-if="item.locked === 'Yes'">
-                        mdi-lock
+                        mdi-lock-outline
                     </v-icon>
                   </template>
                   <span>{{ $t('CrfTree.locked') }}</span>
@@ -255,7 +255,7 @@
                     </v-list-item>
                     <v-list-item @click="openItemGroupForm(item)">
                       <v-list-item-icon>
-                        <v-icon>mdi-pencil</v-icon>
+                        <v-icon>mdi-pencil-outline</v-icon>
                       </v-list-item-icon>
                       <v-list-item-content>
                         {{ $t('CrfTree.create_and_link')}}
@@ -328,7 +328,7 @@
                           </v-icon>
                         </v-btn>
                         <div class="mt-3 ml-8"><actions-menu :actions="actions" :item="item"/></div>
-                        <v-icon color="crfGroup">mdi-alpha-g-circle</v-icon>
+                        <v-icon color="crfGroup">mdi-alpha-g-circle-outline</v-icon>
                         <v-tooltip bottom>
                           <template v-slot:activator="{ on, attrs }">
                             <div class="mt-3 ml-1 mr-1" v-bind="attrs" v-on="on">{{ item.name.length > 40 ? item.name.substring(0, 40) + '...' : item.name }}</div>
@@ -356,7 +356,7 @@
                             v-bind="attrs"
                             v-on="on"
                             v-if="item.locked === 'Yes'">
-                              mdi-lock
+                              mdi-lock-outline
                           </v-icon>
                         </template>
                         <span>{{ $t('CrfTree.locked') }}</span>
@@ -380,7 +380,7 @@
                             v-bind="attrs"
                             v-on="on"
                             v-if="item.vendor.attributes.length > 0">
-                              mdi-toy-brick-plus
+                              mdi-toy-brick-plus-outline
                           </v-icon>
                         </template>
                         <span>{{ $t('CrfTree.vendor_extension_applied') }}</span>
@@ -418,7 +418,7 @@
                             color="darkGrey"
                             v-bind="attrs"
                             v-on="on">
-                              mdi-toy-brick-plus
+                              mdi-toy-brick-plus-outline
                           </v-icon>
                         </template>
                         <span>{{ $t('CrfTree.vendor_extension_applied') }}</span>
@@ -462,7 +462,7 @@
                           </v-list-item>
                           <v-list-item @click="openItemForm(item)">
                             <v-list-item-icon>
-                              <v-icon>mdi-pencil</v-icon>
+                              <v-icon>mdi-pencil-outline</v-icon>
                             </v-list-item-icon>
                             <v-list-item-content>
                               {{ $t('CrfTree.create_and_link')}}
@@ -524,7 +524,7 @@
                                 </v-icon>
                               </v-btn>
                               <div class="mt-3 ml-10"><actions-menu :actions="actions" :item="item"/></div>
-                              <v-icon color="crfItem">mdi-alpha-i-circle</v-icon>
+                              <v-icon color="crfItem">mdi-alpha-i-circle-outline</v-icon>
                               <v-tooltip bottom>
                                 <template v-slot:activator="{ on, attrs }">
                                   <div class="mt-3 ml-1 mr-1" v-bind="attrs" v-on="on">{{ item.name.length > 40 ? item.name.substring(0, 40) + '...' : item.name }}</div>
@@ -552,7 +552,7 @@
                                   v-bind="attrs"
                                   v-on="on"
                                   v-if="item.locked === 'Yes'">
-                                    mdi-lock
+                                    mdi-lock-outline
                                 </v-icon>
                               </template>
                               <span>{{ $t('CrfTree.locked') }}</span>
@@ -576,7 +576,7 @@
                                   v-bind="attrs"
                                   v-on="on"
                                   v-if="item.vendor.attributes.length > 0">
-                                    mdi-toy-brick-plus
+                                    mdi-toy-brick-plus-outline
                                 </v-icon>
                               </template>
                               <span>{{ $t('CrfTree.vendor_extension_applied') }}</span>
@@ -625,7 +625,7 @@
                                   color="darkGrey"
                                   v-bind="attrs"
                                   v-on="on">
-                                    mdi-toy-brick-plus
+                                    mdi-toy-brick-plus-outline
                                 </v-icon>
                               </template>
                               <span>{{ $t('CrfTree.vendor_extension_applied') }}</span>
@@ -823,22 +823,25 @@ export default {
       actions: [
         {
           label: this.$t('CrfTree.edit_condition'),
-          icon: 'mdi-pencil',
+          icon: 'mdi-pencil-outline',
           click: this.openConditionForm,
-          condition: (item) => (this.checkIfConditionExist(item) && !item.forms && !item.item_groups)
+          condition: (item) => (this.checkIfConditionExist(item) && !item.forms && !item.item_groups),
+          accessRole: this.$roles.LIBRARY_WRITE
         },
         {
           label: this.$t('CrfTree.set_condition'),
-          icon: 'mdi-pencil',
+          icon: 'mdi-pencil-outline',
           click: this.openConditionForm,
-          condition: (item) => (!this.checkIfConditionExist(item) && !item.forms && !item.item_groups)
+          condition: (item) => (!this.checkIfConditionExist(item) && !item.forms && !item.item_groups),
+          accessRole: this.$roles.LIBRARY_WRITE
         },
         {
           label: this.$t('CrfTree.delete_condition'),
-          icon: 'mdi-delete',
+          icon: 'mdi-delete-outline',
           iconColor: 'error',
           click: this.deleteCondition,
-          condition: (item) => (this.checkIfConditionExist(item) && !item.forms && !item.item_groups)
+          condition: (item) => (this.checkIfConditionExist(item) && !item.forms && !item.item_groups),
+          accessRole: this.$roles.LIBRARY_WRITE
         },
         {
           label: this.$t('CrfTree.open_def'),
@@ -847,9 +850,10 @@ export default {
         },
         {
           label: this.$t('CrfTree.edit_reference'),
-          icon: 'mdi-pencil',
+          icon: 'mdi-pencil-outline',
           click: this.editAttributes,
-          condition: (item) => (item.status === statuses.DRAFT && !item.forms)
+          condition: (item) => (item.status === statuses.DRAFT && !item.forms),
+          accessRole: this.$roles.LIBRARY_WRITE
         },
         {
           label: this.$t('CrfTree.view_reference'),
@@ -861,13 +865,15 @@ export default {
           label: this.$t('CrfTree.approve_all'),
           icon: 'mdi-check-decagram',
           click: this.approveAll,
-          condition: (item) => (item.status === statuses.DRAFT)
+          condition: (item) => (item.status === statuses.DRAFT),
+          accessRole: this.$roles.LIBRARY_WRITE
         },
         {
           label: this.$t('_global.duplicate'),
           icon: 'mdi-content-copy',
           iconColor: 'primary',
-          click: this.openDuplicateForm
+          click: this.openDuplicateForm,
+          accessRole: this.$roles.LIBRARY_WRITE
         },
         {
           label: this.$t('CrfTree.preview_odm'),
@@ -888,7 +894,7 @@ export default {
         },
         {
           label: this.$t('_global.export'),
-          icon: 'mdi-download',
+          icon: 'mdi-download-outline',
           click: this.openExportForm
         }
       ],

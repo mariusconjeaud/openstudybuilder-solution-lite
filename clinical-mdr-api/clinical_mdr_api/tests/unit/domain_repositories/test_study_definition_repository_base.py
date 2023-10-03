@@ -2,19 +2,7 @@ import copy
 import random
 import unittest
 from dataclasses import dataclass, field
-from typing import (
-    AbstractSet,
-    Any,
-    Callable,
-    Dict,
-    Generic,
-    List,
-    Optional,
-    Sequence,
-    Tuple,
-    TypeVar,
-    cast,
-)
+from typing import AbstractSet, Any, Callable, Generic, Sequence, TypeVar, cast
 from unittest.mock import patch
 
 from clinical_mdr_api.config import DEFAULT_STUDY_FIELD_CONFIG_FILE
@@ -46,9 +34,9 @@ T = TypeVar("T")
 
 @dataclass
 class GenericInMemoryDB(Generic[T]):
-    _db: Dict[str, Any] = field(init=False, default_factory=dict)
+    _db: dict[str, Any] = field(init=False, default_factory=dict)
 
-    def find_by_id(self, aggregate_id: str) -> Optional[T]:
+    def find_by_id(self, aggregate_id: str) -> T | None:
         serialized_form_of_aggregate = self._db.get(aggregate_id)
         if serialized_form_of_aggregate is None:
             return None
@@ -156,7 +144,7 @@ class StudyDefinitionRepositoryFake(StudyDefinitionRepository):
         return NotImplementedError()
 
     def study_exists_by_uid(self, study_uid: str) -> bool:
-        snapshot: Optional[StudyDefinitionSnapshot] = self._simulated_db.find_by_id(
+        snapshot: StudyDefinitionSnapshot | None = self._simulated_db.find_by_id(
             study_uid
         )
         return bool(snapshot)
@@ -169,8 +157,8 @@ class StudyDefinitionRepositoryFake(StudyDefinitionRepository):
 
     def _retrieve_snapshot_by_uid(
         self, uid: str, for_update: bool
-    ) -> Tuple[Optional[StudyDefinitionSnapshot], Any]:
-        snapshot: Optional[StudyDefinitionSnapshot] = self._simulated_db.find_by_id(uid)
+    ) -> tuple[StudyDefinitionSnapshot | None, Any]:
+        snapshot: StudyDefinitionSnapshot | None = self._simulated_db.find_by_id(uid)
         additional_closure: Any = None
         if snapshot is not None:
             if for_update:
@@ -193,20 +181,20 @@ class StudyDefinitionRepositoryFake(StudyDefinitionRepository):
 
     def _retrieve_all_snapshots(
         self,
-        has_study_objective: Optional[bool] = None,
-        has_study_endpoint: Optional[bool] = None,
-        has_study_criteria: Optional[bool] = None,
-        has_study_activity: Optional[bool] = None,
-        has_study_activity_instruction: Optional[bool] = None,
-        sort_by: Optional[dict] = None,
+        has_study_objective: bool | None = None,
+        has_study_endpoint: bool | None = None,
+        has_study_criteria: bool | None = None,
+        has_study_activity: bool | None = None,
+        has_study_activity_instruction: bool | None = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
         deleted: bool = False,
     ) -> GenericFilteringReturn[StudyDefinitionSnapshot]:
-        everything: List[StudyDefinitionSnapshot] = list(
+        everything: list[StudyDefinitionSnapshot] = list(
             self._simulated_db.get_all_instances()
         )
         filtered_items = service_level_generic_filtering(

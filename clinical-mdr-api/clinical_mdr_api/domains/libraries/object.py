@@ -2,8 +2,9 @@ import datetime
 from dataclasses import dataclass
 from functools import reduce
 from operator import add
-from typing import AbstractSet, Callable, Optional, Sequence
+from typing import AbstractSet, Callable, Self, Sequence
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains._utils import (
     convert_to_plain,
     extract_parameters,
@@ -29,8 +30,10 @@ class ParametrizedTemplateVO:
 
     template_name: str
     template_uid: str
-    template_sequence_id: Optional[str]
+    template_sequence_id: str | None
+    guidance_text: str | None
     parameter_terms: Sequence[ParameterTermEntryVO]
+    library_name: str | None = None
 
     @classmethod
     def from_repository_values(
@@ -40,7 +43,9 @@ class ParametrizedTemplateVO:
         template_uid: str,
         template_sequence_id: str,
         parameter_terms: Sequence[ParameterTermEntryVO],
-    ) -> "ParametrizedTemplateVO":
+        library_name: str,
+        guidance_text: str | None = None,
+    ) -> Self:
         """
         Creates object based on repository values
         """
@@ -49,6 +54,8 @@ class ParametrizedTemplateVO:
             template_sequence_id=template_sequence_id,
             template_name=template_name,
             parameter_terms=tuple(parameter_terms),
+            library_name=library_name,
+            guidance_text=guidance_text,
         )
 
     @classmethod
@@ -58,17 +65,19 @@ class ParametrizedTemplateVO:
         template_uid: str,
         template_sequence_id: str,
         parameter_terms: Sequence[ParameterTermEntryVO],
+        library_name: str,
         get_final_template_vo_by_template_uid_callback: Callable[
-            [str], Optional[TemplateVO]
+            [str], TemplateVO | None
         ],
-    ) -> "ParametrizedTemplateVO":
+        guidance_text: str | None = None,
+    ) -> Self:
         """
         Creates object based on external input
         """
         template = get_final_template_vo_by_template_uid_callback(template_uid)
 
         if template is None:
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"The template with uid '{template_uid}' was not found. Make sure that there is a latest 'Final' version."
             )
 
@@ -77,6 +86,8 @@ class ParametrizedTemplateVO:
             template_uid=template_uid,
             template_sequence_id=template_sequence_id,
             parameter_terms=tuple(parameter_terms),
+            guidance_text=guidance_text,
+            library_name=library_name,
         )
 
     @classmethod
@@ -85,13 +96,17 @@ class ParametrizedTemplateVO:
         name: str,
         template_uid: str,
         parameter_terms: Sequence[ParameterTermEntryVO],
-        template_sequence_id: Optional[str] = None,
-    ) -> "ParametrizedTemplateVO":
+        library_name: str,
+        template_sequence_id: str | None = None,
+        guidance_text: str | None = None,
+    ) -> Self:
         return cls(
             template_name=name,
             template_uid=template_uid,
             template_sequence_id=template_sequence_id,
             parameter_terms=parameter_terms,
+            guidance_text=guidance_text,
+            library_name=library_name,
         )
 
     @staticmethod
@@ -228,7 +243,7 @@ class ParametrizedTemplateARBase(LibraryItemAggregateRootBase):
 
     _template: ParametrizedTemplateVO
 
-    _sequence_id: Optional[str] = None
+    _sequence_id: str | None = None
 
     _study_count: int = 0
 
@@ -237,11 +252,11 @@ class ParametrizedTemplateARBase(LibraryItemAggregateRootBase):
         return self._sequence_id
 
     @sequence_id.setter
-    def sequence_id(self, sequence_id: Optional[str]) -> None:
+    def sequence_id(self, sequence_id: str | None) -> None:
         self.__set_sequence_id(sequence_id)
 
     # Setter for supporting sequence_id creation
-    def __set_sequence_id(self, sequence_id: Optional[str]) -> None:
+    def __set_sequence_id(self, sequence_id: str | None) -> None:
         self.__raise_error_if_deleted()
         if self._sequence_id is None:
             self._sequence_id = sequence_id
@@ -259,10 +274,10 @@ class ParametrizedTemplateARBase(LibraryItemAggregateRootBase):
         library: LibraryVO,
         uid: str,
         item_metadata: LibraryItemMetadataVO,
-        sequence_id: Optional[str] = None,
+        sequence_id: str | None = None,
         study_count: int = 0,
         **kwargs,
-    ) -> "ParametrizedTemplateARBase":
+    ) -> Self:
         # noinspection PyArgumentList
         # pylint:disable=no-value-for-parameter
         return cls(
@@ -281,9 +296,9 @@ class ParametrizedTemplateARBase(LibraryItemAggregateRootBase):
         template: ParametrizedTemplateVO,
         library: LibraryVO,
         item_metadata: LibraryItemMetadataVO,
-        sequence_id: Optional[str] = None,
+        sequence_id: str | None = None,
         study_count: int = 0,
-    ) -> "ParametrizedTemplateARBase":
+    ) -> Self:
         ar = cls(
             _uid=uid,
             _sequence_id=sequence_id,
@@ -301,20 +316,18 @@ class ParametrizedTemplateARBase(LibraryItemAggregateRootBase):
         author: str,
         library: LibraryVO,
         template: ParametrizedTemplateVO,
-        generate_uid_callback: Callable[[], Optional[str]] = (lambda: None),
-        generate_seq_id_callback: Callable[[str, str], Optional[str]] = (
-            lambda x, y: None
+        generate_uid_callback: Callable[[], str | None] = (lambda: None),
+        next_available_sequence_id_callback: Callable[[str], str | None] = (
+            lambda _: None
         ),
-    ) -> "ParametrizedTemplateARBase":
+    ) -> Self:
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(author=author)
 
         generated_uid = generate_uid_callback()
 
         ar = cls(
             _uid=generated_uid,
-            _sequence_id=generate_seq_id_callback(
-                generated_uid, template.template_sequence_id
-            ),
+            _sequence_id=next_available_sequence_id_callback(template.template_uid),
             _library=library,
             _template=template,
             _item_metadata=item_metadata,
@@ -343,6 +356,7 @@ class ParametrizedTemplateARBase(LibraryItemAggregateRootBase):
             name=new_template_name,
             template_uid=self.template_uid,
             parameter_terms=self._template.parameter_terms,
+            library_name=self._template.library_name,
         )
         self._item_metadata = self._item_metadata.new_version_start_date(
             author=author, change_description=change_description, date=date
@@ -363,6 +377,10 @@ class ParametrizedTemplateARBase(LibraryItemAggregateRootBase):
     @property
     def template_name_plain(self) -> str:
         return self._template.template_name_plain
+
+    @property
+    def template_library_name(self) -> str:
+        return self._template.library_name
 
     @property
     def name(self) -> str:

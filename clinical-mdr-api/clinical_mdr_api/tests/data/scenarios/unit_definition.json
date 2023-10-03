@@ -119,11 +119,11 @@
       "code": 400,
       "headers": {},
       "result": {
-        "message": "",
-        "time": "",
-        "path": "",
+        "message": "Unit Definition with ['name: unit1'] already exists.",
+        "time": "2023-05-29T05:30:30.753128",
+        "path": "http://testserver/concepts/unit-definitions",
         "method": "POST",
-        "type": "ValidationException"
+        "type": "BusinessLogicException"
       }
     }
   },
@@ -2231,11 +2231,11 @@
       "code": 400,
       "headers": {},
       "result": {
-        "message": "",
-        "time": "",
-        "path": "",
+        "message": "Attempt to create another master unit in dimension 'unit1-dimension-patched-2'.",
+        "time": "2023-05-29T13:51:51.524400",
+        "path": "http://testserver/concepts/unit-definitions",
         "method": "POST",
-        "type": "ValidationException"
+        "type": "BusinessLogicException"
       }
     }
   },
@@ -2325,11 +2325,11 @@
       "code": 400,
       "headers": {},
       "result": {
-        "message": "",
-        "time": "",
-        "path": "",
+        "message": "Attempt to make 'UnitDefinition_000003' another master unit in dimension 'unit1-dimension-patched-2'.",
+        "time": "2023-05-30T05:35:56.145340",
+        "path": "http://testserver/concepts/unit-definitions/UnitDefinition_000003",
         "method": "PATCH",
-        "type": "ValidationException"
+        "type": "BusinessLogicException"
       }
     }
   },

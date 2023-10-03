@@ -10,7 +10,6 @@ Tests for /studies endpoints
 # which pylint interprets as unused arguments
 
 import logging
-from typing import List
 
 import pytest
 from fastapi.testclient import TestClient
@@ -28,7 +27,7 @@ from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 log = logging.getLogger(__name__)
 
 # Global variables shared between fixtures and tests
-studies_all: List[Study]
+studies_all: list[Study]
 study: Study
 
 day_unit_definition: UnitDefinitionModel
@@ -84,6 +83,41 @@ def test_study_delete_successful(api_client):
     assert response.status_code == 400
     res = response.json()
     assert res["message"] == f"Study {study_to_delete.uid} is deleted."
+
+
+def test_study_listing(api_client):
+    # Create three new studies
+    studies = [
+        TestUtils.create_study(),
+        TestUtils.create_study(),
+        TestUtils.create_study(),
+    ]
+
+    response = api_client.get("/studies")
+    assert response.status_code == 200
+    res = response.json()
+    assert len(res["items"]) >= 3
+    uids = [s["uid"] for s in res["items"]]
+    for study in res["items"]:
+        assert "current_metadata" in study
+        metadata = study["current_metadata"]
+        # Check that the expected fields exist
+        assert "identification_metadata" in metadata
+        assert "version_metadata" in metadata
+        # Check that no unwanted field is present
+        assert "study_description" not in metadata
+        assert "high_level_study_design" not in metadata
+        assert "study_population" not in metadata
+        assert "study_intervention" not in metadata
+
+    for study in studies:
+        # Check that each study occurs only once in the list
+        assert uids.count(study.uid) == 1
+
+    # Clean up
+    for study in studies:
+        response = api_client.delete(f"/studies/{study.uid}")
+        assert response.status_code == 204
 
 
 def test_get_snapshot_history(api_client):

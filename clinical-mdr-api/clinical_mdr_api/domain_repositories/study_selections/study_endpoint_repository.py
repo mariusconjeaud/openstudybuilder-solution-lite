@@ -1,5 +1,5 @@
 import datetime
-from typing import List, Optional, Sequence
+from typing import Sequence
 
 from neomodel import db
 
@@ -21,6 +21,7 @@ from clinical_mdr_api.domain_repositories.models.study_audit_trail import (
 from clinical_mdr_api.domain_repositories.models.study_selections import StudyEndpoint
 from clinical_mdr_api.domain_repositories.models.syntax import (
     EndpointRoot,
+    EndpointTemplateRoot,
     TimeframeRoot,
 )
 from clinical_mdr_api.domain_repositories.models.template_parameter import (
@@ -48,9 +49,9 @@ class StudySelectionEndpointRepository:
 
     def _retrieves_all_data(
         self,
-        study_uid: Optional[str] = None,
-        project_name: Optional[str] = None,
-        project_number: Optional[str] = None,
+        study_uid: str | None = None,
+        project_name: str | None = None,
+        project_number: str | None = None,
     ) -> Sequence[StudySelectionEndpointVO]:
         query = ""
         query_parameters = {}
@@ -79,12 +80,19 @@ class StudySelectionEndpointRepository:
             MATCH (sv)-[:HAS_STUDY_ENDPOINT]->(se:StudyEndpoint)
             OPTIONAL MATCH (se)-[:HAS_SELECTED_ENDPOINT]->(ev:EndpointValue)
             CALL {
-              WITH ev
-              OPTIONAL MATCH (ev) <-[ver]-(er:EndpointRoot) 
-              WHERE ver.status = "Final"
-              RETURN ver as endpoint_ver, er as er
-              ORDER BY ver.start_date DESC
-              LIMIT 1
+                WITH ev
+                OPTIONAL MATCH (ev) <-[ver]-(er:EndpointRoot) 
+                WHERE ver.status = "Final"
+                RETURN ver as ver, er as obj, true as is_instance
+                ORDER BY ver.start_date DESC
+                LIMIT 1
+            UNION
+                WITH se
+                MATCH (se)-[:HAS_SELECTED_ENDPOINT_TEMPLATE]->(:EndpointTemplateValue)<-[ver]-(etr:EndpointTemplateRoot)
+                WHERE ver.status = "Final"
+                RETURN ver as ver, etr as obj, false as is_instance
+                ORDER BY ver.start_date DESC
+                LIMIT 1
             }
             OPTIONAL MATCH (se)-[:HAS_SELECTED_TIMEFRAME]->(tv:TimeframeValue)
             CALL {
@@ -95,15 +103,15 @@ class StudySelectionEndpointRepository:
               ORDER BY ver.start_date DESC
               LIMIT 1
             }
-            WITH DISTINCT sr, se, er, tr, timeframe_ver, endpoint_ver
+            WITH DISTINCT sr, se, obj, tr, timeframe_ver, ver, is_instance
 
             OPTIONAL MATCH (se)-[:HAS_ENDPOINT_LEVEL]->(elr:CTTermRoot)<-[has_term:HAS_TERM]-(:CTCodelistRoot)
             -[:HAS_NAME_ROOT]->(:CTCodelistNameRoot)-[:LATEST_FINAL]->(:CTCodelistNameValue {name: "Endpoint Level"})
             OPTIONAL MATCH (se)-[:HAS_ENDPOINT_SUB_LEVEL]->(endpoint_sublevel_root:CTTermRoot)
     
-            OPTIONAL MATCH (se)-[:STUDY_ENDPOINT_HAS_STUDY_OBJECTIVE]->(so:StudyObjective)
+            OPTIONAL MATCH (se)-[:STUDY_ENDPOINT_HAS_STUDY_OBJECTIVE]->(so:StudyObjective)--(:StudyValue)
 
-            WITH sr, se, er, tr, elr, so, timeframe_ver, endpoint_ver, has_term, endpoint_sublevel_root
+            WITH sr, se, obj, tr, elr, so, timeframe_ver, ver, has_term, endpoint_sublevel_root, is_instance
             CALL {
                 WITH se
                 OPTIONAL MATCH (se)-[rel:HAS_UNIT]->(un:UnitDefinitionRoot)-[:LATEST_FINAL]->(unv:UnitDefinitionValue)
@@ -121,16 +129,17 @@ class StudySelectionEndpointRepository:
                 se.uid AS study_endpoint_uid,
                 se.order AS order,
                 se.accepted_version AS accepted_version,
-                er.uid AS endpoint_uid,
+                obj.uid AS endpoint_uid,
                 has_term.order AS endpoint_order,
                 tr.uid AS timeframe_uid,
-                endpoint_ver.version AS endpoint_version,
+                ver.version AS endpoint_version,
                 timeframe_ver.version AS timeframe_version,
                 elr.uid AS endpoint_level_uid,
                 endpoint_sublevel_root.uid AS endpoint_sublevel_uid,
                 so.uid AS study_objective_uid,
                 se.text AS text,
                 sa.date AS start_date,
+                is_instance AS is_instance,
                 sa.user_initials AS user_initials,
                 values
                 ORDER BY order
@@ -140,6 +149,9 @@ class StudySelectionEndpointRepository:
         all_selections = []
 
         for selection in helpers.db_result_to_list(all_endpoint_selections):
+            if not selection["endpoint_uid"]:
+                continue
+
             if selection["values"] is not None:
                 if "units" in selection["values"]:
                     units = selection["values"]["units"]
@@ -168,6 +180,7 @@ class StudySelectionEndpointRepository:
                 unit_separator=separator,
                 study_objective_uid=selection["study_objective_uid"],
                 study_selection_uid=selection["study_endpoint_uid"],
+                is_instance=selection["is_instance"],
                 start_date=convert_to_datetime(value=selection["start_date"]),
                 user_initials=selection["user_initials"],
                 accepted_version=acv,
@@ -177,9 +190,9 @@ class StudySelectionEndpointRepository:
 
     def find_all(
         self,
-        project_name: Optional[str] = None,
-        project_number: Optional[str] = None,
-    ) -> Optional[Sequence[StudySelectionEndpointsAR]]:
+        project_name: str | None = None,
+        project_number: str | None = None,
+    ) -> Sequence[StudySelectionEndpointsAR] | None:
         """
         Finds all the selected study endpoints for all studies, and create the aggregate
         :return: List of StudySelectionEndpointsAR, potentially empty
@@ -207,7 +220,7 @@ class StudySelectionEndpointRepository:
 
     def find_by_study(
         self, study_uid: str, for_update: bool = False
-    ) -> Optional[StudySelectionEndpointsAR]:
+    ) -> StudySelectionEndpointsAR | None:
         """
         Finds all the selected study endpoints for a given study, and creates the aggregate
         :param study_uid:
@@ -382,7 +395,7 @@ class StudySelectionEndpointRepository:
         audit_node.date = datetime.datetime.now(datetime.timezone.utc)
         audit_node.save()
 
-        study_selection_node.has_before.connect(audit_node)
+        audit_node.has_before.connect(study_selection_node)
         study_root_node.audit_trail.connect(audit_node)
         return audit_node
 
@@ -404,12 +417,15 @@ class StudySelectionEndpointRepository:
         _ = TemplateParameter.nodes.get(name=STUDY_ENDPOINT_TP_NAME)
         db.cypher_query(
             """
-            MATCH (se:StudyEndpoint) WHERE id(se)=$id SET se:TemplateParameterTermRoot
+            MATCH (se:StudyEndpoint) WHERE elementId(se)=$element_id SET se:TemplateParameterTermRoot
             WITH se
             MATCH (tp:TemplateParameter {name: $tp_name})
             MERGE (tp)-[:HAS_PARAMETER_TERM]->(se)
         """,
-            {"id": study_endpoint_selection_node.id, "tp_name": STUDY_ENDPOINT_TP_NAME},
+            {
+                "element_id": study_endpoint_selection_node.element_id,
+                "tp_name": STUDY_ENDPOINT_TP_NAME,
+            },
         )
 
         # Connect new node with study value
@@ -419,19 +435,35 @@ class StudySelectionEndpointRepository:
                 study_endpoint_selection_node
             )
         # Connect new node with audit trail
-        study_endpoint_selection_node.has_after.connect(audit_node)
+        audit_node.has_after.connect(study_endpoint_selection_node)
 
         # check if endpoint is set
         if selection.endpoint_uid:
-            # find the endpoint value
-            endpoint_root_node = EndpointRoot.nodes.get(uid=selection.endpoint_uid)
-            latest_endpoint_value_node = endpoint_root_node.get_value_for_version(
-                version=selection.endpoint_version
-            )
-            # Connect new node with endpoint value
-            study_endpoint_selection_node.has_selected_endpoint.connect(
-                latest_endpoint_value_node
-            )
+            if selection.is_instance:
+                # Get the endpoint value and connect new node with endpoint value
+                endpoint_root_node: EndpointRoot = EndpointRoot.nodes.get(
+                    uid=selection.endpoint_uid
+                )
+                latest_endpoint_value_node = endpoint_root_node.get_value_for_version(
+                    selection.endpoint_version
+                )
+                study_endpoint_selection_node.has_selected_endpoint.connect(
+                    latest_endpoint_value_node
+                )
+            else:
+                # Get the endpoint template value
+                endpoint_template_root_node: EndpointTemplateRoot = (
+                    EndpointTemplateRoot.nodes.get(uid=selection.endpoint_uid)
+                )
+                latest_endpoint_template_value_node = (
+                    endpoint_template_root_node.get_value_for_version(
+                        selection.endpoint_version
+                    )
+                )
+                study_endpoint_selection_node.has_selected_endpoint_template.connect(
+                    latest_endpoint_template_value_node
+                )
+
         # check if timeframe is set
         if selection.timeframe_uid:
             # find the timeframe value
@@ -563,7 +595,7 @@ class StudySelectionEndpointRepository:
 
             WITH all_se, er, elr, sa, bsa , endpoint_ver, timeframe_ver, tr, so, values, endpoint_sublevel
             ORDER BY all_se.uid, sa.date DESC
-            RETURN
+            RETURN DISTINCT
                 all_se.uid AS study_endpoint_uid,
                 all_se.order AS order,
                 er.uid AS endpoint_uid,
@@ -627,7 +659,7 @@ class StudySelectionEndpointRepository:
 
     def find_selection_history(
         self, study_uid: str, study_selection_uid: str = None
-    ) -> List[StudyEndpointSelectionHistory]:
+    ) -> list[StudyEndpointSelectionHistory]:
         """
         Simple method to return all versions of a study objectives for a study.
         Optionally a specific selection uid is given to see only the response for a specific selection.

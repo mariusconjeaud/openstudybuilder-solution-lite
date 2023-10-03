@@ -1,6 +1,6 @@
 """Timeframe templates router."""
 
-from typing import Any, List, Optional, Sequence
+from typing import Any, Sequence
 
 from fastapi import APIRouter, Body, Depends, Path, Query, Request, Response
 from fastapi import status as fast_api_status
@@ -21,13 +21,14 @@ from clinical_mdr_api.models.syntax_templates.timeframe_template import (
     TimeframeTemplateWithCount,
 )
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.oauth import get_current_user_id
+from clinical_mdr_api.oauth import get_current_user_id, rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.syntax_templates.timeframe_templates import (
     TimeframeTemplateService,
 )
 
+# Prefixed with "/timeframe-templates"
 router = APIRouter()
 
 Service = TimeframeTemplateService
@@ -58,6 +59,7 @@ name='MORE TESTING of the superiority in the efficacy of [Intervention] with [Ac
 
 @router.get(
     "",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns all timeframe templates in their latest/newest version.",
     description=_generic_descriptions.DATA_EXPORTS_HEADER,
     response_model=CustomPage[TimeframeTemplate],
@@ -107,7 +109,8 @@ name='MORE TESTING of the superiority in the efficacy of [Intervention] with [Ac
 # pylint: disable=unused-argument
 def get_timeframe_templates(
     request: Request,  # request is actually required by the allow_exports decorator
-    status: Optional[LibraryItemStatus] = Query(
+    status: LibraryItemStatus
+    | None = Query(
         None,
         description="If specified, only those timeframe templates will be returned that are currently in the specified status. "
         "This may be particularly useful if the timeframe template has "
@@ -117,24 +120,24 @@ def get_timeframe_templates(
         "Valid values are: 'Final', 'Draft' or 'Retired'.",
     ),
     sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
-    page_number: Optional[int] = Query(
-        1, ge=1, description=_generic_descriptions.PAGE_NUMBER
-    ),
-    page_size: Optional[int] = Query(
+    page_number: int
+    | None = Query(1, ge=1, description=_generic_descriptions.PAGE_NUMBER),
+    page_size: int
+    | None = Query(
         config.DEFAULT_PAGE_SIZE,
         ge=0,
         le=config.MAX_PAGE_SIZE,
         description=_generic_descriptions.PAGE_SIZE,
     ),
-    filters: Optional[Json] = Query(
+    filters: Json
+    | None = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
-    operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    total_count: Optional[bool] = Query(
-        False, description=_generic_descriptions.TOTAL_COUNT
-    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    total_count: bool
+    | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
     current_user_id: str = Depends(get_current_user_id),
 ) -> CustomPage[TimeframeTemplate]:
     data = Service(current_user_id).get_all(
@@ -148,16 +151,17 @@ def get_timeframe_templates(
         sort_by=sort_by,
     )
     return CustomPage.create(
-        items=data.items, total=data.total_count, page=page_number, size=page_size
+        items=data.items, total=data.total, page=page_number, size=page_size
     )
 
 
 @router.get(
     "/headers",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=List[Any],
+    response_model=list[Any],
     status_code=200,
     responses={
         404: {
@@ -169,7 +173,8 @@ def get_timeframe_templates(
 )
 def get_distinct_values_for_header(
     current_user_id: str = Depends(get_current_user_id),
-    status: Optional[LibraryItemStatus] = Query(
+    status: LibraryItemStatus
+    | None = Query(
         None,
         description="If specified, only those timeframe templates will be returned that are currently in the specified status. "
         "This may be particularly useful if the timeframe template has "
@@ -179,18 +184,17 @@ def get_distinct_values_for_header(
         "Valid values are: 'Final', 'Draft' or 'Retired'.",
     ),
     field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
-    search_string: Optional[str] = Query(
-        "", description=_generic_descriptions.HEADER_SEARCH_STRING
-    ),
-    filters: Optional[Json] = Query(
+    search_string: str
+    | None = Query("", description=_generic_descriptions.HEADER_SEARCH_STRING),
+    filters: Json
+    | None = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
-    operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    result_count: Optional[int] = Query(
-        10, description=_generic_descriptions.HEADER_RESULT_COUNT
-    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    result_count: int
+    | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
 ):
     return Service(current_user_id).get_distinct_values_for_header(
         status=status,
@@ -204,6 +208,7 @@ def get_distinct_values_for_header(
 
 @router.get(
     "/audit-trail",
+    dependencies=[rbac.LIBRARY_READ],
     summary="",
     description="",
     response_model=CustomPage[TimeframeTemplate],
@@ -214,18 +219,17 @@ def get_distinct_values_for_header(
     },
 )
 def retrieve_audit_trail(
-    page_number: Optional[int] = Query(
-        1, ge=1, description=_generic_descriptions.PAGE_NUMBER
-    ),
-    page_size: Optional[int] = Query(
+    page_number: int
+    | None = Query(1, ge=1, description=_generic_descriptions.PAGE_NUMBER),
+    page_size: int
+    | None = Query(
         config.DEFAULT_PAGE_SIZE,
         ge=0,
         le=config.MAX_PAGE_SIZE,
         description=_generic_descriptions.PAGE_SIZE,
     ),
-    total_count: Optional[bool] = Query(
-        False, description=_generic_descriptions.TOTAL_COUNT
-    ),
+    total_count: bool
+    | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
     current_user_id: str = Depends(get_current_user_id),
 ):
     results = Service(current_user_id).retrieve_audit_trail(
@@ -233,12 +237,13 @@ def retrieve_audit_trail(
     )
 
     return CustomPage.create(
-        items=results.items, total=results.total_count, page=page_number, size=page_size
+        items=results.items, total=results.total, page=page_number, size=page_size
     )
 
 
 @router.get(
     "/{uid}",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns the latest/newest version of a specific timeframe template identified by 'uid'.",
     description="""If multiple request query parameters are used, then they need to
     match all at the same time (they are combined with the AND operation).""",
@@ -254,7 +259,8 @@ def retrieve_audit_trail(
 )
 def get_timeframe_template(
     uid: str = TimeframeTemplateUID,
-    return_instantiation_counts: Optional[bool] = Query(
+    return_instantiation_counts: bool
+    | None = Query(
         None, description="if specified counts data will be returned along object"
     ),
     current_user_id: str = Depends(get_current_user_id),
@@ -266,6 +272,7 @@ def get_timeframe_template(
 
 @router.get(
     "/{uid}/versions",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns the version history of a specific timeframe template identified by 'uid'.",
     description=f"""
 The returned versions are ordered by `start_date` descending (newest entries first).
@@ -329,6 +336,7 @@ def get_timeframe_template_versions(
 
 @router.get(
     "/{uid}/versions/{version}",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns a specific version of a specific timeframe template identified by 'uid' and 'version'.",
     description="**Multiple versions**:\n\n"
     "Technically, there can be multiple versions of the timeframe template with the same version number. "
@@ -360,7 +368,8 @@ def get_timeframe_template_version(
 
 @router.post(
     "",
-    summary="Creates a new timeframe template in 'Draft' status.",
+    dependencies=[rbac.LIBRARY_WRITE],
+    summary="Creates a new timeframe template in 'Draft' status or returns the timeframe template if it already exists.",
     description="""This request is only valid if the timeframe template
 * belongs to a library that allows creating (the 'is_editable' property of the library needs to be true).
 
@@ -402,6 +411,7 @@ def create_timeframe_template(
 
 @router.patch(
     "/{uid}",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Updates the timeframe template identified by 'uid'.",
     description="""This request is only valid if the timeframe template
 * is in 'Draft' status and
@@ -447,6 +457,7 @@ def edit(
 
 @router.post(
     "/{uid}/versions",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Creates a new version of the timeframe template identified by 'uid'.",
     description="""This request is only valid if the timeframe template
 * is in 'Final' or 'Retired' status only (so no latest 'Draft' status exists) and
@@ -490,6 +501,7 @@ def create_new_version(
 
 @router.post(
     "/{uid}/approvals",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Approves the timeframe template identified by 'uid'.",
     description="""This request is only valid if the timeframe template
 * is in 'Draft' status and
@@ -538,6 +550,7 @@ def approve(
 
 @router.delete(
     "/{uid}/activations",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Inactivates/deactivates the timeframe template identified by 'uid'.",
     description="""This request is only valid if the timeframe template
 * is in 'Final' status only (so no latest 'Draft' status exists).
@@ -572,6 +585,7 @@ def inactivate(
 
 @router.post(
     "/{uid}/activations",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Reactivates the timeframe template identified by 'uid'.",
     description="""This request is only valid if the timeframe template
 * is in 'Retired' status only (so no latest 'Draft' status exists).
@@ -606,6 +620,7 @@ def reactivate(
 
 @router.delete(
     "/{uid}",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Deletes the timeframe template identified by 'uid'.",
     description="""This request is only valid if \n
 * the timeframe template is in 'Draft' status and
@@ -643,6 +658,7 @@ def delete_timeframe_template(
 #       however: check if that is ok with regard to the data volume we expect in the future. is paging needed?
 @router.get(
     "/{uid}/parameters",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns all parameters used in the timeframe template identified by 'uid'. Includes the available values per parameter.",
     description="""The returned parameters are ordered
 0. as they occur in the timeframe template
@@ -662,7 +678,8 @@ In that case, the same parameter (with the same values) is included multiple tim
 )
 def get_parameters(
     uid: str = Path(None, description="The unique id of the timeframe template."),
-    study_uid: Optional[str] = Query(
+    study_uid: str
+    | None = Query(
         None,
         description="if specified only valida parameters for a given study will be returned.",
     ),
@@ -673,6 +690,7 @@ def get_parameters(
 
 @router.post(
     "/pre-validate",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Validates the content of an timeframe template without actually processing it.",
     description="""Be aware that - even if this request is accepted - there is no guarantee that
 a following request to e.g. *[POST] /timeframe-templates* or *[PATCH] /timeframe-templates/{uid}*

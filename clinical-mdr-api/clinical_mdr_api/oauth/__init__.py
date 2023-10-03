@@ -1,7 +1,15 @@
+import logging
+
 from fastapi import Header
 from starlette_context import context
 
 from clinical_mdr_api.oauth.config import OAUTH_ENABLED
+from clinical_mdr_api.oauth.models import UserInfo
+
+__all__ = ["get_current_user_id"]
+
+log = logging.getLogger(__name__)
+
 
 # We leave this function located in clinical_mdr_api.oauth module until tons of services import by this name
 if OAUTH_ENABLED:
@@ -36,6 +44,7 @@ if OAUTH_ENABLED:
         )
 
 else:
+    log.warning("WARNING: Authentication is disabled.")
 
     def get_current_user_id(
         x_test_user_id: str = Header(
@@ -44,3 +53,38 @@ else:
         )
     ) -> str:
         return x_test_user_id
+
+
+def get_current_user_info(
+    x_test_user_id: str = Header(
+        None,
+        description="A value to be injected into UserInfo object as user id.",
+    )
+) -> UserInfo:
+    """
+    Returns the UserInfo object representing the currently logged in user.
+     - If authenthication in ON:
+        - UserInfo object is read from the Bearer token and stored in the request context.
+     - If authenthication is OFF:
+        - UserInfo object is created from the default values.
+        - If `x_test_user_id` request header is set, this value is used as the user id.
+    """
+
+    if OAUTH_ENABLED:
+        get_current_user_id()
+        return context.get("user_info")
+    user_info = get_default_user_info()
+    if x_test_user_id:
+        user_info.initials = x_test_user_id
+    return user_info
+
+
+def get_default_user_info() -> UserInfo:
+    return UserInfo(
+        sub="xyz",
+        name="John Smith",
+        username="unknown@example.com",
+        email="unknown@example.com",
+        initials="unknown-user",
+        roles={"Study.Read", "Study.Write", "Library.Write", "Library.Read"},
+    )

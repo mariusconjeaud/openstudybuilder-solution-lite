@@ -76,7 +76,6 @@ class ObjectiveRepositoryConcurrencyTest(unittest.TestCase):
             author=self.user_initials,
             template=template_vo,
             library=library_vo,
-            template_value_exists_callback=(lambda _: False),
             generate_uid_callback=(lambda: self.template_uid),
         )
         # Create template
@@ -94,6 +93,7 @@ class ObjectiveRepositoryConcurrencyTest(unittest.TestCase):
                 name=self.template_name,
                 template_uid=self.template_uid,
                 parameter_terms=self.parameter_terms,
+                library_name=objective_template_ar.library.name,
             )
         )
         self.parameterized_template_vo_to_edit = (
@@ -101,6 +101,7 @@ class ObjectiveRepositoryConcurrencyTest(unittest.TestCase):
                 name=f"{self.template_name} to edit",
                 template_uid=self.template_uid,
                 parameter_terms=self.parameter_terms,
+                library_name=objective_template_ar.library.name,
             )
         )
         library_vo = LibraryVO.from_input_values_2(

@@ -1,12 +1,12 @@
 import abc
-from typing import Generic, Iterable, Optional, TypeVar
+from typing import Generic, Iterable, TypeVar
 
 SimpleDictionaryEntity = TypeVar("SimpleDictionaryEntity")
 
 
 class SimpleDictionaryRepositoryInterfaceBase(Generic[SimpleDictionaryEntity], abc.ABC):
     @abc.abstractmethod
-    def find_by_code(self, code: str) -> Optional[SimpleDictionaryEntity]:
+    def find_by_code(self, code: str) -> SimpleDictionaryEntity | None:
         """
         Return dictionary item by code.
         :param code:

@@ -1,4 +1,4 @@
-from typing import Optional, Sequence, Tuple
+from typing import Sequence
 
 from neomodel import db
 
@@ -90,7 +90,7 @@ class CTCodelistAggregatedRepository:
 
     def _create_codelist_aggregate_instances_from_cypher_result(
         self, codelist_dict: dict
-    ) -> Tuple[CTCodelistNameAR, CTCodelistAttributesAR]:
+    ) -> tuple[CTCodelistNameAR, CTCodelistAttributesAR]:
         """
         Method creates a tuple of CTCodelistNameAR and CTCodelistAttributesAR objects for one CTCodelistRoot node.
         The term_dict is a find_all_aggregated_result method result for one CTCodelistRoot node.
@@ -110,17 +110,17 @@ class CTCodelistAggregatedRepository:
 
     def find_all_aggregated_result(
         self,
-        catalogue_name: Optional[str] = None,
-        library: Optional[str] = None,
-        package: Optional[str] = None,
-        sort_by: Optional[dict] = None,
+        catalogue_name: str | None = None,
+        library: str | None = None,
+        package: str | None = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
-        term_filter: Optional[dict] = None,
-    ) -> GenericFilteringReturn[Tuple[CTCodelistNameAR, CTCodelistAttributesAR]]:
+        term_filter: dict | None = None,
+    ) -> GenericFilteringReturn[tuple[CTCodelistNameAR, CTCodelistAttributesAR]]:
         """
         Method runs a cypher query to fetch all data related to the CTCodelistName* and CTCodelistttributes*.
         It allows to filter the query output by catalogue_name, library and package.
@@ -138,7 +138,7 @@ class CTCodelistAggregatedRepository:
         :param filter_by:
         :param filter_operator:
         :param total_count:
-        :return GenericFilteringReturn[Tuple[CTCodelistNameAR, CTCodelistAttributesAR]]:
+        :return GenericFilteringReturn[tuple[CTCodelistNameAR, CTCodelistAttributesAR]]:
         """
         # Build match_clause
         # Build specific filtering for catalogue, package and library
@@ -182,27 +182,25 @@ class CTCodelistAggregatedRepository:
                 )
             )
 
-        _total_count = 0
+        total = 0
         if total_count:
             count_result, _ = db.cypher_query(
                 query=query.count_query, params=query.parameters
             )
             if len(count_result) > 0:
-                _total_count = count_result[0][0]
+                total = count_result[0][0]
 
-        return GenericFilteringReturn.create(
-            items=codelists_ars, total_count=_total_count
-        )
+        return GenericFilteringReturn.create(items=codelists_ars, total=total)
 
     def get_distinct_headers(
         self,
         field_name: str,
-        catalogue_name: Optional[str] = None,
-        library: Optional[str] = None,
-        package: Optional[str] = None,
-        search_string: Optional[str] = "",
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        catalogue_name: str | None = None,
+        library: str | None = None,
+        package: str | None = None,
+        search_string: str | None = "",
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
     ) -> Sequence:
         """
@@ -267,8 +265,8 @@ class CTCodelistAggregatedRepository:
 
     def _generate_generic_match_clause(
         self,
-        package: Optional[str] = None,
-        term_filter: Optional[dict] = None,
+        package: str | None = None,
+        term_filter: dict | None = None,
     ):
         match_clause = "MATCH(codelist_root:CTCodelistRoot)"
 

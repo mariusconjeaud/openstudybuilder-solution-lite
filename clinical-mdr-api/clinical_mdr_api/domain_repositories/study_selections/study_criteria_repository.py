@@ -1,6 +1,6 @@
 import datetime
 from dataclasses import dataclass
-from typing import List, Optional, Sequence, Tuple
+from typing import Sequence
 
 from neomodel import db
 
@@ -34,11 +34,11 @@ class SelectionHistory:
     user_initials: str
     change_type: str
     start_date: datetime.datetime
-    criteria_type_uid: Optional[str]
-    criteria_type_order: Optional[int]
-    status: Optional[str]
-    end_date: Optional[datetime.datetime]
-    syntax_object_version: Optional[str]
+    criteria_type_uid: str | None
+    criteria_type_order: int | None
+    status: str | None
+    end_date: datetime.datetime | None
+    syntax_object_version: str | None
     is_instance: bool = True
     key_criteria: bool = False
 
@@ -57,9 +57,9 @@ class StudySelectionCriteriaRepository:
 
     def _retrieves_all_data(
         self,
-        study_uid: Optional[str] = None,
-        project_name: Optional[str] = None,
-        project_number: Optional[str] = None,
+        study_uid: str | None = None,
+        project_name: str | None = None,
+        project_number: str | None = None,
     ) -> Sequence[StudySelectionCriteriaVO]:
         query = ""
         query_parameters = {}
@@ -142,9 +142,9 @@ class StudySelectionCriteriaRepository:
 
     def find_all(
         self,
-        project_name: Optional[str] = None,
-        project_number: Optional[str] = None,
-    ) -> Optional[Sequence[StudySelectionCriteriaAR]]:
+        project_name: str | None = None,
+        project_number: str | None = None,
+    ) -> Sequence[StudySelectionCriteriaAR] | None:
         """
         Finds all the selected study criteria for all studies, and create the aggregate
         :return: List of StudySelectionCriteriaAR, potentially empty
@@ -173,7 +173,7 @@ class StudySelectionCriteriaRepository:
 
     def find_by_study(
         self, study_uid: str, for_update: bool = False
-    ) -> Optional[StudySelectionCriteriaAR]:
+    ) -> StudySelectionCriteriaAR | None:
         """
         Finds all the selected study criteria for a given study, and creates the aggregate
         :param study_uid:
@@ -213,6 +213,7 @@ class StudySelectionCriteriaRepository:
         study_uid: str,
         study_criteria_uid: str,
         criteria_uid: str,
+        key_criteria: bool,
         criteria_version: str,
     ) -> None:
         """Update the selection to instance
@@ -248,17 +249,20 @@ class StudySelectionCriteriaRepository:
         # Detach criteria selection node from criteria template node
         study_criteria_selection_node.has_selected_criteria_template.disconnect_all()
 
-    def _get_latest_study_value(self, study_uid: str) -> Tuple[StudyRoot, StudyValue]:
+        study_criteria_selection_node.key_criteria = key_criteria
+        study_criteria_selection_node.save()
+
+    def _get_latest_study_value(self, study_uid: str) -> tuple[StudyRoot, StudyValue]:
         """Returns the study root and latest study value nodes for the given study, if re-ordering is allowed
 
         Args:
             study_uid (str): UID of the study
 
+        Returns:
+            tuple[StudyRoot, StudyValue]: Returned node objects
+
         Raises:
             VersioningException: Returns an error if the study cannot be reordered or get new items
-
-        Returns:
-            Tuple[StudyRoot, StudyValue]: Returned node objects
         """
         study_root_node = StudyRoot.nodes.get(uid=study_uid)
         latest_study_value_node = study_root_node.latest_value.single()
@@ -272,7 +276,7 @@ class StudySelectionCriteriaRepository:
 
     def _list_selections_to_add_or_remove(
         self, closure: dict, criteria: dict
-    ) -> Tuple[dict, dict]:
+    ) -> tuple[dict, dict]:
         """Compares the current and target state of the selection and returns the lists of objects to add/remove to/from the selection
 
         Args:
@@ -280,7 +284,7 @@ class StudySelectionCriteriaRepository:
             criteria (dict): The object containing the new target state of the selection
 
         Returns:
-            Tuple[dict, dict]: Returns two lists of selections to add and to remove
+            tuple[dict, dict]: Returns two lists of selections to add and to remove
         """
         selections_to_remove = {}
         selections_to_add = {}
@@ -432,7 +436,7 @@ class StudySelectionCriteriaRepository:
         audit_node.date = datetime.datetime.now(datetime.timezone.utc)
         audit_node.save()
 
-        study_criteria_selection_node.has_before.connect(audit_node)
+        audit_node.has_before.connect(study_criteria_selection_node)
         study_root_node.audit_trail.connect(audit_node)
         return audit_node
 
@@ -476,7 +480,7 @@ class StudySelectionCriteriaRepository:
                 study_criteria_selection_node
             )
         # Connect new node with audit trail
-        study_criteria_selection_node.has_after.connect(audit_node)
+        audit_node.has_after.connect(study_criteria_selection_node)
 
         # Connect new node with object value node
         if selection.is_instance:
@@ -504,7 +508,7 @@ class StudySelectionCriteriaRepository:
     def _get_selection_with_history(
         self,
         study_uid: str,
-        criteria_type_uid: Optional[str] = None,
+        criteria_type_uid: str | None = None,
         study_selection_uid: str = None,
     ):
         """
@@ -604,9 +608,9 @@ class StudySelectionCriteriaRepository:
     def find_selection_history(
         self,
         study_uid: str,
-        criteria_type_uid: Optional[str] = None,
+        criteria_type_uid: str | None = None,
         study_selection_uid: str = None,
-    ) -> List[Optional[dict]]:
+    ) -> list[dict | None]:
         """
         Simple method to return all versions of a study criteria for a study.
         Optionally a specific selection uid is given to see only the response for a specific selection.

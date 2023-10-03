@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains._utils import normalize_string
 
 
@@ -15,7 +16,7 @@ class ProjectAR:
     _project_number: str
     name: str
     _clinical_programme_uid: str
-    description: Optional[str] = None
+    description: str | None = None
 
     @property
     def uid(self) -> str:
@@ -34,14 +35,14 @@ class ProjectAR:
         project_number: str,
         name: str,
         clinical_programme_uid: str,
-        description: Optional[str],
+        description: str | None,
         generate_uid_callback: Callable[[], str],
         clinical_programme_exists_callback: Callable[[str], bool],
     ):
         if not clinical_programme_exists_callback(
             normalize_string(clinical_programme_uid)
         ):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"There is no clinical programme identified by provided clinical programme uid ({clinical_programme_uid})"
             )
 

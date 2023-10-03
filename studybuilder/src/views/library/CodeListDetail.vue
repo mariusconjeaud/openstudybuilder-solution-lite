@@ -45,7 +45,7 @@
                 :title="$t('CodeListDetail.edit_sponsor_values')"
                 @click="editSponsorValues"
                 >
-                <v-icon>mdi-pencil</v-icon>
+                <v-icon>mdi-pencil-outline</v-icon>
               </v-btn>
               <v-btn
                 data-cy='approve-sponsor-values'
@@ -115,7 +115,7 @@
                 :title="$t('CodeListDetail.edit_sponsor_values')"
                 @click="editAttributes"
                 >
-                <v-icon>mdi-pencil</v-icon>
+                <v-icon>mdi-pencil-outline</v-icon>
               </v-btn>
               <v-btn
                 data-cy="approve-attributes-values"

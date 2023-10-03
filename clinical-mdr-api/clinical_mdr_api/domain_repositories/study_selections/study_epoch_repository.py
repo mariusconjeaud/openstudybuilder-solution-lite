@@ -1,9 +1,10 @@
 import datetime
-from typing import Optional, Sequence
+from typing import Sequence
 
 from neomodel import db
 
 from clinical_mdr_api import config as settings
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domain_repositories.models._utils import to_relation_trees
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
     CTTermRoot,
@@ -68,7 +69,7 @@ class StudyEpochRepository:
         )
         return items
 
-    def get_basic_epoch(self, study_uid: str) -> Optional[str]:
+    def get_basic_epoch(self, study_uid: str) -> str | None:
         cypher_query = """
         MATCH (study_root:StudyRoot {uid:$study_uid})-[:LATEST]->(:StudyValue)-[:HAS_STUDY_EPOCH]->(study_epoch:StudyEpoch)-[:HAS_EPOCH_SUB_TYPE]->(:CTTermRoot)-
         [:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST_FINAL]->(:CTTermNameValue {name:$basic_epoch_name})
@@ -125,9 +126,13 @@ class StudyEpochRepository:
         )
 
         if len(epoch_node) > 1:
-            raise ValueError(f"Found more than one StudyEpoch node with uid='{uid}'.")
+            raise exceptions.ValidationException(
+                f"Found more than one StudyEpoch node with uid='{uid}'."
+            )
         if len(epoch_node) == 0:
-            raise ValueError(f"The StudyEpoch with uid='{uid}' could not be found.")
+            raise exceptions.ValidationException(
+                f"The StudyEpoch with uid='{uid}' could not be found."
+            )
         return self._from_neomodel_to_vo(
             study_epoch_ogm_input=StudyEpochOGM.from_orm(epoch_node[0])
         )
@@ -216,7 +221,7 @@ class StudyEpochRepository:
         study_root = StudyRoot.nodes.get(uid=item.study_uid)
         study_value = study_root.latest_value.get_or_none()
         if study_value is None:
-            raise ValueError("Study does not have draft version")
+            raise exceptions.ValidationException("Study does not have draft version")
         new_study_epoch = StudyEpoch(
             uid=item.uid,
             accepted_version=item.accepted_version,
@@ -327,7 +332,7 @@ class StudyEpochRepository:
             user_initials=item.author,
         )
         action.save()
-        new_item.has_after.connect(action)
+        action.has_after.connect(new_item)
         study_root.audit_trail.connect(action)
 
     def manage_versioning_update(
@@ -343,8 +348,8 @@ class StudyEpochRepository:
             user_initials=item.author,
         )
         action.save()
-        previous_item.has_before.connect(action)
-        new_item.has_after.connect(action)
+        action.has_before.connect(previous_item)
+        action.has_after.connect(new_item)
         study_root.audit_trail.connect(action)
 
     def manage_versioning_delete(
@@ -360,6 +365,6 @@ class StudyEpochRepository:
             user_initials=item.author,
         )
         action.save()
-        previous_item.has_before.connect(action)
-        new_item.has_after.connect(action)
+        action.has_before.connect(previous_item)
+        action.has_after.connect(new_item)
         study_root.audit_trail.connect(action)

@@ -9,8 +9,10 @@ from clinical_mdr_api.domains.versioned_object_aggregate import LibraryVO
 from clinical_mdr_api.models.biomedical_concepts.activity_instance_class import (
     ActivityInstanceClass,
     ActivityInstanceClassInput,
+    ActivityInstanceClassMappingInput,
     ActivityInstanceClassVersion,
 )
+from clinical_mdr_api.services._utils import raise_404_if_none
 from clinical_mdr_api.services.neomodel_ext_generic import (
     NeomodelExtGenericService,
     _AggregateRootType,
@@ -65,3 +67,23 @@ class ActivityInstanceClassService(NeomodelExtGenericService):
             activity_instance_class_exists_by_name_callback=self._repos.activity_instance_class_repository.check_exists_by_name,
         )
         return item
+
+    def patch_mappings(
+        self, uid: str, mapping_input: ActivityInstanceClassMappingInput
+    ) -> ActivityInstanceClass:
+        activity_instance_class = (
+            self._repos.activity_instance_class_repository.find_by_uid(uid)
+        )
+        raise_404_if_none(
+            activity_instance_class,
+            f"Activity instance class with uid '{uid}' does not exist.",
+        )
+
+        try:
+            self._repos.activity_instance_class_repository.patch_mappings(
+                uid, mapping_input.dataset_class_uids
+            )
+        finally:
+            self._repos.activity_instance_class_repository.close()
+
+        return self.get_by_uid(uid)

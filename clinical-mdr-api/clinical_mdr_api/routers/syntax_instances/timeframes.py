@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, List, Optional
+from typing import Any
 
 from fastapi import APIRouter, Body, Depends, Path, Query, Request, Response
 from fastapi import status as fast_api_status
@@ -12,11 +12,12 @@ from clinical_mdr_api.models.syntax_templates.template_parameter import (
     ComplexTemplateParameter,
 )
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.oauth import get_current_user_id
+from clinical_mdr_api.oauth import get_current_user_id, rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.syntax_instances.timeframes import TimeframeService
 
+# Prefixed with "/timeframes"
 router = APIRouter()
 
 Service = TimeframeService
@@ -27,6 +28,7 @@ TimeframeUID = Path(None, description="The unique id of the timeframe.")
 
 @router.get(
     "",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns all timeframes in their latest/newest version.",
     description=_generic_descriptions.DATA_EXPORTS_HEADER,
     response_model=CustomPage[models.Timeframe],
@@ -71,7 +73,8 @@ TimeframeUID = Path(None, description="The unique id of the timeframe.")
 # pylint: disable=unused-argument
 def get_all(
     request: Request,  # request is actually required by the allow_exports decorator
-    status: Optional[LibraryItemStatus] = Query(
+    status: LibraryItemStatus
+    | None = Query(
         None,
         description="If specified, only those timeframes will be returned that are currently in the specified status. "
         "This may be particularly useful if the timeframe has "
@@ -81,24 +84,24 @@ def get_all(
         "Valid values are: 'Final', 'Draft' or 'Retired'.",
     ),
     sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
-    page_number: Optional[int] = Query(
-        1, ge=1, description=_generic_descriptions.PAGE_NUMBER
-    ),
-    page_size: Optional[int] = Query(
+    page_number: int
+    | None = Query(1, ge=1, description=_generic_descriptions.PAGE_NUMBER),
+    page_size: int
+    | None = Query(
         config.DEFAULT_PAGE_SIZE,
         ge=0,
         le=config.MAX_PAGE_SIZE,
         description=_generic_descriptions.PAGE_SIZE,
     ),
-    filters: Optional[Json] = Query(
+    filters: Json
+    | None = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
-    operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    total_count: Optional[bool] = Query(
-        False, description=_generic_descriptions.TOTAL_COUNT
-    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    total_count: bool
+    | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
     current_user_id: str = Depends(get_current_user_id),
 ):
     data = Service(current_user_id).get_all(
@@ -112,16 +115,17 @@ def get_all(
         sort_by=sort_by,
     )
     return CustomPage.create(
-        items=data.items, total=data.total_count, page=page_number, size=page_size
+        items=data.items, total=data.total, page=page_number, size=page_size
     )
 
 
 @router.get(
     "/headers",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=List[Any],
+    response_model=list[Any],
     status_code=200,
     responses={
         404: {
@@ -133,7 +137,8 @@ def get_all(
 )
 def get_distinct_values_for_header(
     current_user_id: str = Depends(get_current_user_id),
-    status: Optional[LibraryItemStatus] = Query(
+    status: LibraryItemStatus
+    | None = Query(
         None,
         description="If specified, only those objective templates will be returned that are currently in the specified status. "
         "This may be particularly useful if the objective template has "
@@ -143,18 +148,17 @@ def get_distinct_values_for_header(
         "Valid values are: 'Final', 'Draft' or 'Retired'.",
     ),
     field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
-    search_string: Optional[str] = Query(
-        "", description=_generic_descriptions.HEADER_SEARCH_STRING
-    ),
-    filters: Optional[Json] = Query(
+    search_string: str
+    | None = Query("", description=_generic_descriptions.HEADER_SEARCH_STRING),
+    filters: Json
+    | None = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
-    operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    result_count: Optional[int] = Query(
-        10, description=_generic_descriptions.HEADER_RESULT_COUNT
-    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    result_count: int
+    | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
 ):
     return Service(current_user_id).get_distinct_values_for_header(
         status=status,
@@ -168,6 +172,7 @@ def get_distinct_values_for_header(
 
 @router.get(
     "/audit-trail",
+    dependencies=[rbac.LIBRARY_READ],
     summary="",
     description="",
     response_model=CustomPage[models.Timeframe],
@@ -178,18 +183,17 @@ def get_distinct_values_for_header(
     },
 )
 def retrieve_audit_trail(
-    page_number: Optional[int] = Query(
-        1, ge=1, description=_generic_descriptions.PAGE_NUMBER
-    ),
-    page_size: Optional[int] = Query(
+    page_number: int
+    | None = Query(1, ge=1, description=_generic_descriptions.PAGE_NUMBER),
+    page_size: int
+    | None = Query(
         config.DEFAULT_PAGE_SIZE,
         ge=0,
         le=config.MAX_PAGE_SIZE,
         description=_generic_descriptions.PAGE_SIZE,
     ),
-    total_count: Optional[bool] = Query(
-        False, description=_generic_descriptions.TOTAL_COUNT
-    ),
+    total_count: bool
+    | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
     current_user_id: str = Depends(get_current_user_id),
 ):
     results = Service(current_user_id).retrieve_audit_trail(
@@ -197,16 +201,17 @@ def retrieve_audit_trail(
     )
 
     return CustomPage.create(
-        items=results.items, total=results.total_count, page=page_number, size=page_size
+        items=results.items, total=results.total, page=page_number, size=page_size
     )
 
 
 @router.get(
     "/{uid}",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns the latest/newest version of a specific timeframe identified by 'uid'.",
     description="""If multiple request query parameters are used, then they need to
     match all at the same time (they are combined with the AND operation).""",
-    response_model=Optional[models.Timeframe],
+    response_model=models.Timeframe | None,
     status_code=200,
     responses={
         404: {
@@ -219,14 +224,16 @@ def retrieve_audit_trail(
 # pylint: disable=unused-argument
 def get(
     uid: str = TimeframeUID,
-    at_specified_date_time: Optional[datetime] = Query(
+    at_specified_date_time: datetime
+    | None = Query(
         None,
         description="If specified, the latest/newest representation of the timeframe at this point in time is returned.\n"
         "The point in time needs to be specified in ISO 8601 format including the timezone, e.g.: "
         "'2020-10-31T16:00:00+02:00' for October 31, 2020 at 4pm in UTC+2 timezone. "
         "If the timezone is ommitted, UTC±0 is assumed.",
     ),
-    status: Optional[LibraryItemStatus] = Query(
+    status: LibraryItemStatus
+    | None = Query(
         None,
         description="If specified, the representation of the timeframe in that status is returned (if existent). "
         "This may be particularly useful if the timeframe has "
@@ -235,7 +242,8 @@ def get(
         "and you are interested in the 'Final' or 'Retired' status.\n"
         "Valid values are: 'Final', 'Draft' or 'Retired'.",
     ),
-    version: Optional[str] = Query(
+    version: str
+    | None = Query(
         None,
         description=r"If specified, the latest/newest representation of the timeframe in that version is returned. "
         r"Only exact matches are considered. "
@@ -251,10 +259,11 @@ def get(
 
 @router.get(
     "/{uid}/versions",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns the version history of a specific timeframe identified by 'uid'.",
     description="The returned versions are ordered by\n"
     "0. start_date descending (newest entries first)",
-    response_model=List[models.TimeframeVersion],
+    response_model=list[models.TimeframeVersion],
     status_code=200,
     responses={
         404: {
@@ -272,6 +281,7 @@ def get_versions(
 
 @router.post(
     "",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Creates a new timeframe in 'Draft' status.",
     description="""This request is only valid if
 * the specified timeframe template is in 'Final' status and
@@ -314,6 +324,7 @@ def create(
 
 @router.post(
     "/preview",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Previews the creation of a new timeframe.",
     description="""This request is only valid if
 * the specified timeframe template is in 'Final' status and
@@ -354,6 +365,7 @@ def preview(
 
 @router.patch(
     "/{uid}",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Updates the timeframe identified by 'uid'.",
     description="""This request is only valid if the timeframe
 * is in 'Draft' status and
@@ -395,6 +407,7 @@ def edit(
 
 @router.post(
     "/{uid}/approvals",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Approves the timeframe identified by 'uid'.",
     description="""This request is only valid if the timeframe
 * is in 'Draft' status and
@@ -430,6 +443,7 @@ def approve(
 
 @router.delete(
     "/{uid}/activations",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Inactivates/deactivates the timeframe identified by 'uid'.",
     description="""This request is only valid if the timeframe
 * is in 'Final' status only (so no latest 'Draft' status exists).
@@ -464,6 +478,7 @@ def inactivate(
 # TODO check if * there is no other timeframe with the same name (it may be that one had been created after inactivating this one here)
 @router.post(
     "/{uid}/activations",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Reactivates the timeframe identified by 'uid'.",
     description="""This request is only valid if the timeframe
 * is in 'Retired' status only (so no latest 'Draft' status exists).
@@ -497,6 +512,7 @@ def reactivate(
 
 @router.delete(
     "/{uid}",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Deletes the timeframe identified by 'uid'.",
     description="""This request is only valid if \n
 * the timeframe is in 'Draft' status and
@@ -528,11 +544,12 @@ def delete(
 
 @router.get(
     "/{uid}/parameters",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns all template parameters available for the timeframe identified by 'uid'. Includes the available values per parameter.",
     description="Returns all template parameters used in the timeframe template "
     "that is the basis for the timeframe identified by 'uid'. "
     "Includes the available values per parameter.",
-    response_model=List[ComplexTemplateParameter],
+    response_model=list[ComplexTemplateParameter],
     status_code=200,
     responses={
         404: _generic_descriptions.ERROR_404,
@@ -541,7 +558,8 @@ def delete(
 )
 def get_parameters(
     uid: str = Path(None, description="The unique id of the timeframe."),
-    study_uid: Optional[str] = Query(
+    study_uid: str
+    | None = Query(
         None,
         description="if specified only valid parameters for a given study will be returned.",
     ),

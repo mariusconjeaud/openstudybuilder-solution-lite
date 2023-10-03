@@ -1,6 +1,5 @@
 from datetime import datetime
 from enum import Enum
-from typing import Optional
 
 from neomodel import db
 
@@ -16,8 +15,8 @@ class CatalogueComparisonType(Enum):
 
 @db.transaction
 def get_ct_catalogues_changes(
-    library_name: Optional[str],
-    catalogue_name: Optional[str],
+    library_name: str | None,
+    catalogue_name: str | None,
     comparison_type: CatalogueComparisonType,
     start_datetime: datetime,
     end_datetime=datetime,
@@ -174,7 +173,7 @@ def get_ct_catalogues_changes(
       CASE WHEN added_items=[] THEN [NULL]
       ELSE added_items
       END AS added_item
-    WITH old_items_map, new_items_map,
+    WITH *, old_items_map, new_items_map,
       CASE WHEN added_items <> [] THEN
       collect(apoc.map.merge(apoc.map.fromValues(['uid',added_item]), new_items_map[added_item])) 
       ELSE collect(added_item) 
@@ -186,7 +185,7 @@ def get_ct_catalogues_changes(
       CASE WHEN removed_items=[] THEN [NULL]
       ELSE removed_items
       END as removed_item
-    WITH old_items_map, new_items_map, added_items, 
+    WITH *, old_items_map, new_items_map, added_items, 
       CASE WHEN removed_items <> [] THEN 
       collect(apoc.map.merge(apoc.map.fromValues(['uid', removed_item]), old_items_map[removed_item]))
       ELSE collect(removed_item) END 

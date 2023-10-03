@@ -1,5 +1,6 @@
 import abc
-from typing import Dict, List, Optional, Sequence, TypeVar
+import re
+from typing import Sequence, TypeVar
 
 from neomodel import db
 
@@ -28,7 +29,10 @@ from clinical_mdr_api.domains.libraries.parameter_term import (
     ComplexParameterTerm,
     ParameterTermEntryVO,
 )
-from clinical_mdr_api.domains.syntax_templates.template import TemplateVO
+from clinical_mdr_api.domains.syntax_templates.template import (
+    TemplateAggregateRootBase,
+    TemplateVO,
+)
 
 _AggregateRootType = TypeVar("_AggregateRootType")
 
@@ -36,6 +40,30 @@ _AggregateRootType = TypeVar("_AggregateRootType")
 class GenericSyntaxTemplateRepository(
     GenericSyntaxRepository[_AggregateRootType], abc.ABC
 ):
+    def next_available_sequence_id(
+        self, uid: str, prefix: str | None = None, type_uid: str | None = None
+    ) -> str | None:
+        query = f"MATCH (r:{self.root_class.__name__})"
+
+        if type_uid:
+            query += f"""-[:HAS_TYPE]->(:CTTermRoot {{uid: "{type_uid}"}})"""
+
+        query += "RETURN r.sequence_id"
+
+        rs = db.cypher_query(query)
+
+        name = uid.replace("Template", "")
+        prefix = (
+            prefix if prefix else "".join([char for char in name if char.isupper()])
+        )
+        if rs[0]:
+            rs[0].sort(key=lambda x, p=prefix: int(x[0].split(p)[1]), reverse=True)
+
+            number = re.search("(\\d*)$", rs[0][0][0]).group()
+            return prefix + str(int(number) + 1)
+
+        return prefix + "1"
+
     def _get_template(self, value: SyntaxTemplateValue) -> TemplateVO:
         return TemplateVO(
             name=value.name,
@@ -79,7 +107,7 @@ class GenericSyntaxTemplateRepository(
         self,
         versioned_object: _AggregateRootType,
         parameters: Sequence[ParameterTermEntryVO],
-        set_number: Optional[int] = None,
+        set_number: int | None = None,
     ):
         (
             _,
@@ -91,10 +119,12 @@ class GenericSyntaxTemplateRepository(
         # If set_number isn't provided, auto determine the set number
         if set_number is None:
             cypher_query = f"""MATCH (t)-[rel:{template_value.PARAMETERS_LABEL}]->()
-            WHERE id(t)=$id
+            WHERE elementId(t)=$element_id
             RETURN coalesce(max(rel.set_number), 0) AS max_set_number
             """
-            result, _ = db.cypher_query(cypher_query, {"id": template_value.id})
+            result, _ = db.cypher_query(
+                cypher_query, {"element_id": template_value.element_id}
+            )
             set_number = result[0][0] + 1
         else:
             # If the template already has a default term set with this number, first disconnect the parameters
@@ -120,7 +150,7 @@ class GenericSyntaxTemplateRepository(
             if parameter is not None:
                 # root.has_parameters.connect(parameter, {"position": index + 1})
                 cypher_query = f"""
-                    MATCH (tr:{self.root_class.__label__}) WHERE ID(tr)=$id
+                    MATCH (tr:{self.root_class.__label__}) WHERE elementId(tr)=$element_id
                     WITH tr
                     MATCH (tp:TemplateParameter {{name: $parameter_name}})
                     WITH tr, tp
@@ -130,7 +160,7 @@ class GenericSyntaxTemplateRepository(
                 db.cypher_query(
                     cypher_query,
                     {
-                        "id": root.id,
+                        "element_id": root.element_id,
                         "parameter_name": parameter_name,
                         "position": index + 1,
                     },
@@ -157,14 +187,14 @@ class GenericSyntaxTemplateRepository(
         self,
         value: SyntaxTemplateValue,
         parameters: Sequence[ParameterTermEntryVO],
-        set_number: Optional[int] = 0,
+        set_number: int | None = 0,
     ) -> None:
         for position, parameter_config in enumerate(parameters):
             if isinstance(parameter_config, ComplexParameterTerm):
                 root_id = self._maintain_complex_parameter(parameter_config)
                 cypher_query = f"""
                     MATCH (tv:SyntaxTemplateValue), (pt:TemplateParameterTermRoot)
-                    WHERE ID(tv) = $value_id AND ID(pt) = $root_id
+                    WHERE elementId(tv) = $value_id AND elementId(pt) = $root_id
                     CREATE (tv)-[r:{value.PARAMETERS_LABEL} {{set_number: $set_number, position: $position, index: $index}}]->(pt)
                     """
                 db.cypher_query(
@@ -174,7 +204,7 @@ class GenericSyntaxTemplateRepository(
                         "set_number": set_number,
                         "position": position,
                         "index": 1,
-                        "value_id": value.id,
+                        "value_id": value.element_id,
                     },
                 )
             else:
@@ -205,14 +235,14 @@ class GenericSyntaxTemplateRepository(
         parameter_uid: str,
         position: int,
         index: int,
-        set_number: Optional[int],
+        set_number: int | None,
     ):
         set_number_subclause = (
             "set_number: $set_number, " if set_number is not None else ""
         )
         cypher_query = f"""
             MATCH (tv:SyntaxTemplateValue), (pt:TemplateParameterTermRoot {{uid: $parameter_uid}})
-            WHERE ID(tv) = $value_id
+            WHERE elementId(tv) = $value_id
             CREATE (tv)-[r:{value.PARAMETERS_LABEL} {{{set_number_subclause}position: $position, index: $index}}]->(pt)
             """
         db.cypher_query(
@@ -222,15 +252,15 @@ class GenericSyntaxTemplateRepository(
                 "set_number": set_number,
                 "position": position,
                 "index": index,
-                "value_id": value.id,
+                "value_id": value.element_id,
             },
         )
 
     def get_parameters_including_terms(
         self,
         template_uid: str,
-        study_uid: Optional[str] = None,
-        include_study_endpoints: Optional[bool] = False,
+        study_uid: str | None = None,
+        include_study_endpoints: bool | None = False,
     ):
         cypher_query = f"""
             MATCH (otr:{self.root_class.__label__} {{uid: $uid}})-[uses_parameter:{self.root_class.PARAMETERS_LABEL}]->(pt)
@@ -325,7 +355,7 @@ class GenericSyntaxTemplateRepository(
 
     def get_default_parameter_terms(
         self, template_uid: str
-    ) -> Dict[int, Sequence[ParameterTermEntryVO]]:
+    ) -> dict[int, Sequence[ParameterTermEntryVO]]:
         cypher_query = f"""
         MATCH  (param:TemplateParameter)<-[u:USES_PARAMETER]-
           (tr:{self.root_class.__label__})-[:LATEST]->(tv)
@@ -384,7 +414,7 @@ class GenericSyntaxTemplateRepository(
             """
         return query_to_subset
 
-    def subset_parameters_to_specific_study(self, data: List, study_uid: str):
+    def subset_parameters_to_specific_study(self, data: list, study_uid: str):
         for parameter in data:
             query_to_subset = None
             param_name = parameter["name"]
@@ -426,7 +456,7 @@ class GenericSyntaxTemplateRepository(
                 )
         return data
 
-    def flatten_neomodel_output(self, output: List):
+    def flatten_neomodel_output(self, output: list):
         flatted_output = []
         if len(output) > 0:
             for value in output:
@@ -434,7 +464,7 @@ class GenericSyntaxTemplateRepository(
         return flatted_output
 
     def subset_value_list_for_given_tp(
-        self, data: List, param_name: str, subset_list: List
+        self, data: list, param_name: str, subset_list: list
     ):
         for template_param_value in data:
             if template_param_value["name"] == param_name:
@@ -444,6 +474,7 @@ class GenericSyntaxTemplateRepository(
                     if item["name"].lower() in subset_list
                 ]
 
+    # TODO: find out if this can be removed - also from child classes.
     @abc.abstractmethod
     def check_exists_by_name_in_study(self, name: str, study_uid: str) -> bool:
         raise NotImplementedError()
@@ -452,10 +483,33 @@ class GenericSyntaxTemplateRepository(
         itm: VersionRoot = self.root_class.nodes.get(uid=uid)
         return len(itm.has_template.all())
 
-    def check_exists_by_name_in_library(self, name: str, library: str) -> bool:
-        query = f"""
-            MATCH (:Library {{name: $library}})-[:{self.root_class.LIBRARY_REL_LABEL}]->(tr:{self.root_class.__label__})-[:LATEST_FINAL|LATEST_DRAFT|LATEST_RETIRED|LATEST]->(:{self.value_class.__label__} {{name: $name}})
-            RETURN tr
-            """
-        result, _ = db.cypher_query(query, {"name": name, "library": library})
+    def check_exists_by_name_in_library(
+        self, name: str, library: str, type_uid: str | None = None
+    ) -> bool:
+        result = self._query_by_name_in_library(name, library, type_uid)
+
         return len(result) > 0 and len(result[0]) > 0
+
+    def get_by_name_in_library(
+        self, name: str, library: str, type_uid: str | None = None
+    ) -> TemplateAggregateRootBase | None:
+        result = self._query_by_name_in_library(name, library, type_uid)
+
+        if result and result[0]:
+            return self.find_by_uid_2(result[0][0])
+        return None
+
+    def _query_by_name_in_library(self, name, library, type_uid):
+        query = f"""
+            MATCH (:Library {{name: $library}})-[:{self.root_class.LIBRARY_REL_LABEL}]->(root:{self.root_class.__label__})-[:LATEST_FINAL|LATEST_DRAFT|LATEST_RETIRED|LATEST]->(:{self.value_class.__label__} {{name: $name}})
+            WITH DISTINCT root
+            """
+        if type_uid:
+            query += "MATCH (type:CTTermRoot {uid: $typeUid})<-[:HAS_TYPE]-(root)"
+        query += "RETURN root.uid"
+
+        result, _ = db.cypher_query(
+            query, {"name": name, "library": library, "typeUid": type_uid}
+        )
+
+        return result

@@ -1,7 +1,7 @@
 """Study model."""
 from datetime import datetime
 from decimal import Decimal
-from typing import Callable, Collection, Iterable, List, Optional, Sequence
+from typing import Callable, Collection, Iterable, Self, Sequence
 
 from pydantic import Field
 
@@ -68,31 +68,31 @@ class RegistryIdentifiersJsonModel(BaseModel):
         title = "RegistryIdentifiersMetadata"
         description = "RegistryIdentifiersMetadata metadata for study definition."
 
-    ct_gov_id: Optional[str] = Field(None, nullable=True)
-    ct_gov_id_null_value_code: Optional[SimpleTermModel] = Field(None, nullable=True)
-    eudract_id: Optional[str] = Field(None, nullable=True)
-    eudract_id_null_value_code: Optional[SimpleTermModel] = Field(None, nullable=True)
-    universal_trial_number_utn: Optional[str] = Field(None, nullable=True)
-    universal_trial_number_utn_null_value_code: Optional[SimpleTermModel] = Field(
+    ct_gov_id: str | None = Field(None, nullable=True)
+    ct_gov_id_null_value_code: SimpleTermModel | None = Field(None, nullable=True)
+    eudract_id: str | None = Field(None, nullable=True)
+    eudract_id_null_value_code: SimpleTermModel | None = Field(None, nullable=True)
+    universal_trial_number_utn: str | None = Field(None, nullable=True)
+    universal_trial_number_utn_null_value_code: SimpleTermModel | None = Field(
         None, nullable=True
     )
-    japanese_trial_registry_id_japic: Optional[str] = Field(None, nullable=True)
-    japanese_trial_registry_id_japic_null_value_code: Optional[SimpleTermModel] = Field(
+    japanese_trial_registry_id_japic: str | None = Field(None, nullable=True)
+    japanese_trial_registry_id_japic_null_value_code: SimpleTermModel | None = Field(
         None, nullable=True
     )
-    investigational_new_drug_application_number_ind: Optional[str] = Field(
+    investigational_new_drug_application_number_ind: str | None = Field(
         None, nullable=True
     )
-    investigational_new_drug_application_number_ind_null_value_code: Optional[
-        SimpleTermModel
-    ] = Field(None, nullable=True)
+    investigational_new_drug_application_number_ind_null_value_code: SimpleTermModel | None = Field(
+        None, nullable=True
+    )
 
     @classmethod
     def from_study_registry_identifiers_vo(
         cls,
         registry_identifiers_vo: RegistryIdentifiersVO,
-        find_term_by_uid: Callable[[str], Optional[CTTermNameAR]],
-    ) -> "RegistryIdentifiersJsonModel":
+        find_term_by_uid: Callable[[str], CTTermNameAR | None],
+    ) -> Self:
         return cls(
             ct_gov_id=registry_identifiers_vo.ct_gov_id,
             ct_gov_id_null_value_code=SimpleTermModel.from_ct_code(
@@ -127,24 +127,24 @@ class StudyIdentificationMetadataJsonModel(BaseModel):
         title = "StudyIdentificationMetadata"
         description = "Identification metadata for study definition."
 
-    study_number: Optional[str] = Field(None, nullable=True)
-    study_acronym: Optional[str] = Field(None, nullable=True)
-    project_number: Optional[str] = Field(None, nullable=True)
-    project_name: Optional[str] = Field(None, nullable=True)
-    clinical_programme_name: Optional[str] = Field(None, nullable=True)
-    study_id: Optional[str] = Field(None, nullable=True)
-    registry_identifiers: Optional[RegistryIdentifiersJsonModel] = Field(
+    study_number: str | None = Field(None, nullable=True)
+    study_acronym: str | None = Field(None, nullable=True)
+    project_number: str | None = Field(None, nullable=True)
+    project_name: str | None = Field(None, nullable=True)
+    clinical_programme_name: str | None = Field(None, nullable=True)
+    study_id: str | None = Field(None, nullable=True)
+    registry_identifiers: RegistryIdentifiersJsonModel | None = Field(
         None, nullable=True
     )
 
     @classmethod
     def from_study_identification_vo(
         cls,
-        study_identification_o: Optional[StudyIdentificationMetadataVO],
+        study_identification_o: StudyIdentificationMetadataVO | None,
         find_project_by_project_number: Callable[[str], ProjectAR],
         find_clinical_programme_by_uid: Callable[[str], ClinicalProgrammeAR],
-        find_term_by_uid: Callable[[str], Optional[CTTermNameAR]],
-    ) -> Optional["StudyIdentificationMetadataJsonModel"]:
+        find_term_by_uid: Callable[[str], CTTermNameAR | None],
+    ) -> Self | None:
         if study_identification_o is None:
             return None
         project_ar = find_project_by_project_number(
@@ -170,20 +170,20 @@ class CompactStudyIdentificationMetadataJsonModel(BaseModel):
         title = "CompactStudyIdentificationMetadata"
         description = "Identification metadata for study definition."
 
-    study_number: Optional[str] = Field(None, nullable=True)
-    study_acronym: Optional[str] = Field(None, nullable=True)
-    project_number: Optional[str] = Field(None, nullable=True)
-    project_name: Optional[str] = Field(None, nullable=True)
-    clinical_programme_name: Optional[str] = Field(None, nullable=True)
-    study_id: Optional[str] = Field(None, nullable=True)
+    study_number: str | None = Field(None, nullable=True)
+    study_acronym: str | None = Field(None, nullable=True)
+    project_number: str | None = Field(None, nullable=True)
+    project_name: str | None = Field(None, nullable=True)
+    clinical_programme_name: str | None = Field(None, nullable=True)
+    study_id: str | None = Field(None, nullable=True)
 
     @classmethod
     def from_study_identification_vo(
         cls,
-        study_identification_o: Optional[StudyIdentificationMetadataVO],
+        study_identification_o: StudyIdentificationMetadataVO | None,
         find_project_by_project_number: Callable[[str], ProjectAR],
         find_clinical_programme_by_uid: Callable[[str], ClinicalProgrammeAR],
-    ) -> Optional["CompactStudyIdentificationMetadataJsonModel"]:
+    ) -> Self | None:
         if study_identification_o is None:
             return None
         project_ar = find_project_by_project_number(
@@ -206,16 +206,16 @@ class StudyVersionMetadataJsonModel(BaseModel):
         title = "StudyVersionMetadata"
         description = "Version metadata for study definition."
 
-    study_status: Optional[str] = Field(None, nullable=True)
-    version_number: Optional[Decimal] = Field(None, nullable=True)
-    version_timestamp: Optional[datetime] = Field(None, remove_from_wildcard=True)
-    version_author: Optional[str] = Field(None, nullable=True)
-    version_description: Optional[str] = Field(None, nullable=True)
+    study_status: str | None = Field(None, nullable=True)
+    version_number: Decimal | None = Field(None, nullable=True)
+    version_timestamp: datetime | None = Field(None, remove_from_wildcard=True)
+    version_author: str | None = Field(None, nullable=True)
+    version_description: str | None = Field(None, nullable=True)
 
     @classmethod
     def from_study_version_metadata_vo(
-        cls, study_version_metadata_vo: Optional[StudyVersionMetadataVO]
-    ) -> Optional["StudyVersionMetadataJsonModel"]:
+        cls, study_version_metadata_vo: StudyVersionMetadataVO | None
+    ) -> Self | None:
         if study_version_metadata_vo is None:
             return None
         return cls(
@@ -232,49 +232,49 @@ class HighLevelStudyDesignJsonModel(BaseModel):
         title = "high_level_study_design"
         description = "High level study design parameters for study definition."
 
-    study_type_code: Optional[SimpleTermModel] = Field(None, nullable=True)
-    study_type_null_value_code: Optional[SimpleTermModel] = Field(None, nullable=True)
+    study_type_code: SimpleTermModel | None = Field(None, nullable=True)
+    study_type_null_value_code: SimpleTermModel | None = Field(None, nullable=True)
 
-    trial_type_codes: Optional[Sequence[SimpleTermModel]] = Field(None, nullable=True)
-    trial_type_null_value_code: Optional[SimpleTermModel] = Field(None, nullable=True)
+    trial_type_codes: Sequence[SimpleTermModel] | None = Field(None, nullable=True)
+    trial_type_null_value_code: SimpleTermModel | None = Field(None, nullable=True)
 
-    trial_phase_code: Optional[SimpleTermModel] = Field(None, nullable=True)
-    trial_phase_null_value_code: Optional[SimpleTermModel] = Field(None, nullable=True)
+    trial_phase_code: SimpleTermModel | None = Field(None, nullable=True)
+    trial_phase_null_value_code: SimpleTermModel | None = Field(None, nullable=True)
 
-    is_extension_trial: Optional[bool] = Field(None, nullable=True)
-    is_extension_trial_null_value_code: Optional[SimpleTermModel] = Field(
+    is_extension_trial: bool | None = Field(None, nullable=True)
+    is_extension_trial_null_value_code: SimpleTermModel | None = Field(
         None, nullable=True
     )
 
-    is_adaptive_design: Optional[bool] = Field(None, nullable=True)
-    is_adaptive_design_null_value_code: Optional[SimpleTermModel] = Field(
+    is_adaptive_design: bool | None = Field(None, nullable=True)
+    is_adaptive_design_null_value_code: SimpleTermModel | None = Field(
         None, nullable=True
     )
 
-    study_stop_rules: Optional[str] = Field(None, nullable=True)
-    study_stop_rules_null_value_code: Optional[SimpleTermModel] = Field(
+    study_stop_rules: str | None = Field(None, nullable=True)
+    study_stop_rules_null_value_code: SimpleTermModel | None = Field(
         None, nullable=True
     )
 
-    confirmed_response_minimum_duration: Optional[DurationJsonModel] = Field(
+    confirmed_response_minimum_duration: DurationJsonModel | None = Field(
         None, nullable=True
     )
-    confirmed_response_minimum_duration_null_value_code: Optional[
-        SimpleTermModel
-    ] = Field(None, nullable=True)
+    confirmed_response_minimum_duration_null_value_code: SimpleTermModel | None = Field(
+        None, nullable=True
+    )
 
-    post_auth_indicator: Optional[bool] = Field(None, nullable=True)
-    post_auth_indicator_null_value_code: Optional[SimpleTermModel] = Field(
+    post_auth_indicator: bool | None = Field(None, nullable=True)
+    post_auth_indicator_null_value_code: SimpleTermModel | None = Field(
         None, nullable=True
     )
 
     @classmethod
     def from_high_level_study_design_vo(
         cls,
-        high_level_study_design_vo: Optional[HighLevelStudyDesignVO],
-        find_term_by_uid: Callable[[str], Optional[CTTermNameAR]],
+        high_level_study_design_vo: HighLevelStudyDesignVO | None,
+        find_term_by_uid: Callable[[str], CTTermNameAR | None],
         find_all_study_time_units: Callable[[str], Iterable[UnitDefinitionAR]],
-    ) -> Optional["HighLevelStudyDesignJsonModel"]:
+    ) -> Self | None:
         if high_level_study_design_vo is None:
             return None
         return cls(
@@ -345,96 +345,92 @@ class StudyPopulationJsonModel(BaseModel):
         title = "study_population"
         description = "Study population parameters for study definition."
 
-    therapeutic_area_codes: Optional[Sequence[SimpleTermModel]] = Field(
+    therapeutic_area_codes: Sequence[SimpleTermModel] | None = Field(
         None, nullable=True
     )
-    therapeutic_area_null_value_code: Optional[SimpleTermModel] = Field(
-        None, nullable=True
-    )
-
-    disease_condition_or_indication_codes: Optional[Sequence[SimpleTermModel]] = Field(
-        None, nullable=True
-    )
-    disease_condition_or_indication_null_value_code: Optional[SimpleTermModel] = Field(
+    therapeutic_area_null_value_code: SimpleTermModel | None = Field(
         None, nullable=True
     )
 
-    diagnosis_group_codes: Optional[Sequence[SimpleTermModel]] = Field(
+    disease_condition_or_indication_codes: Sequence[SimpleTermModel] | None = Field(
         None, nullable=True
     )
-    diagnosis_group_null_value_code: Optional[SimpleTermModel] = Field(
-        None, nullable=True
-    )
-
-    sex_of_participants_code: Optional[SimpleTermModel] = Field(None, nullable=True)
-    sex_of_participants_null_value_code: Optional[SimpleTermModel] = Field(
+    disease_condition_or_indication_null_value_code: SimpleTermModel | None = Field(
         None, nullable=True
     )
 
-    rare_disease_indicator: Optional[bool] = Field(None, nullable=True)
-    rare_disease_indicator_null_value_code: Optional[SimpleTermModel] = Field(
+    diagnosis_group_codes: Sequence[SimpleTermModel] | None = Field(None, nullable=True)
+    diagnosis_group_null_value_code: SimpleTermModel | None = Field(None, nullable=True)
+
+    sex_of_participants_code: SimpleTermModel | None = Field(None, nullable=True)
+    sex_of_participants_null_value_code: SimpleTermModel | None = Field(
         None, nullable=True
     )
 
-    healthy_subject_indicator: Optional[bool] = Field(None, nullable=True)
-    healthy_subject_indicator_null_value_code: Optional[SimpleTermModel] = Field(
+    rare_disease_indicator: bool | None = Field(None, nullable=True)
+    rare_disease_indicator_null_value_code: SimpleTermModel | None = Field(
         None, nullable=True
     )
 
-    planned_minimum_age_of_subjects: Optional[DurationJsonModel] = Field(
-        None, nullable=True
-    )
-    planned_minimum_age_of_subjects_null_value_code: Optional[SimpleTermModel] = Field(
-        None, nullable=True
-    )
-
-    planned_maximum_age_of_subjects: Optional[DurationJsonModel] = Field(
-        None, nullable=True
-    )
-    planned_maximum_age_of_subjects_null_value_code: Optional[SimpleTermModel] = Field(
+    healthy_subject_indicator: bool | None = Field(None, nullable=True)
+    healthy_subject_indicator_null_value_code: SimpleTermModel | None = Field(
         None, nullable=True
     )
 
-    stable_disease_minimum_duration: Optional[DurationJsonModel] = Field(
+    planned_minimum_age_of_subjects: DurationJsonModel | None = Field(
         None, nullable=True
     )
-    stable_disease_minimum_duration_null_value_code: Optional[SimpleTermModel] = Field(
-        None, nullable=True
-    )
-
-    pediatric_study_indicator: Optional[bool] = Field(None, nullable=True)
-    pediatric_study_indicator_null_value_code: Optional[SimpleTermModel] = Field(
+    planned_minimum_age_of_subjects_null_value_code: SimpleTermModel | None = Field(
         None, nullable=True
     )
 
-    pediatric_postmarket_study_indicator: Optional[bool] = Field(None, nullable=True)
-    pediatric_postmarket_study_indicator_null_value_code: Optional[
-        SimpleTermModel
-    ] = Field(None, nullable=True)
-
-    pediatric_investigation_plan_indicator: Optional[bool] = Field(None, nullable=True)
-    pediatric_investigation_plan_indicator_null_value_code: Optional[
-        SimpleTermModel
-    ] = Field(None, nullable=True)
-
-    relapse_criteria: Optional[str] = Field(None, nullable=True)
-    relapse_criteria_null_value_code: Optional[SimpleTermModel] = Field(
+    planned_maximum_age_of_subjects: DurationJsonModel | None = Field(
+        None, nullable=True
+    )
+    planned_maximum_age_of_subjects_null_value_code: SimpleTermModel | None = Field(
         None, nullable=True
     )
 
-    number_of_expected_subjects: Optional[int] = Field(None, nullable=True)
-    number_of_expected_subjects_null_value_code: Optional[SimpleTermModel] = Field(
+    stable_disease_minimum_duration: DurationJsonModel | None = Field(
+        None, nullable=True
+    )
+    stable_disease_minimum_duration_null_value_code: SimpleTermModel | None = Field(
+        None, nullable=True
+    )
+
+    pediatric_study_indicator: bool | None = Field(None, nullable=True)
+    pediatric_study_indicator_null_value_code: SimpleTermModel | None = Field(
+        None, nullable=True
+    )
+
+    pediatric_postmarket_study_indicator: bool | None = Field(None, nullable=True)
+    pediatric_postmarket_study_indicator_null_value_code: SimpleTermModel | None = (
+        Field(None, nullable=True)
+    )
+
+    pediatric_investigation_plan_indicator: bool | None = Field(None, nullable=True)
+    pediatric_investigation_plan_indicator_null_value_code: SimpleTermModel | None = (
+        Field(None, nullable=True)
+    )
+
+    relapse_criteria: str | None = Field(None, nullable=True)
+    relapse_criteria_null_value_code: SimpleTermModel | None = Field(
+        None, nullable=True
+    )
+
+    number_of_expected_subjects: int | None = Field(None, nullable=True)
+    number_of_expected_subjects_null_value_code: SimpleTermModel | None = Field(
         None, nullable=True
     )
 
     @classmethod
     def from_study_population_vo(
         cls,
-        study_population_vo: Optional[StudyPopulationVO],
+        study_population_vo: StudyPopulationVO | None,
         find_all_study_time_units: Callable[[str], Iterable[UnitDefinitionAR]],
-        find_term_by_uid: Callable[[str], Optional[CTTermNameAR]],
-        find_dictionary_term_by_uid: Callable[[str], Optional[DictionaryTermAR]],
-    ) -> Optional["StudyPopulationJsonModel"]:
+        find_term_by_uid: Callable[[str], CTTermNameAR | None],
+        find_dictionary_term_by_uid: Callable[[str], DictionaryTermAR | None],
+    ) -> Self | None:
         if study_population_vo is None:
             return None
         return cls(
@@ -560,58 +556,58 @@ class StudyInterventionJsonModel(BaseModel):
         title = "study_intervention"
         description = "Study interventions parameters for study definition."
 
-    intervention_type_code: Optional[SimpleTermModel] = Field(None, nullable=True)
-    intervention_type_null_value_code: Optional[SimpleTermModel] = Field(
+    intervention_type_code: SimpleTermModel | None = Field(None, nullable=True)
+    intervention_type_null_value_code: SimpleTermModel | None = Field(
         None, nullable=True
     )
 
-    add_on_to_existing_treatments: Optional[bool] = Field(None, nullable=True)
-    add_on_to_existing_treatments_null_value_code: Optional[SimpleTermModel] = Field(
+    add_on_to_existing_treatments: bool | None = Field(None, nullable=True)
+    add_on_to_existing_treatments_null_value_code: SimpleTermModel | None = Field(
         None, nullable=True
     )
 
-    control_type_code: Optional[SimpleTermModel] = Field(None, nullable=True)
-    control_type_null_value_code: Optional[SimpleTermModel] = Field(None, nullable=True)
+    control_type_code: SimpleTermModel | None = Field(None, nullable=True)
+    control_type_null_value_code: SimpleTermModel | None = Field(None, nullable=True)
 
-    intervention_model_code: Optional[SimpleTermModel] = Field(None, nullable=True)
-    intervention_model_null_value_code: Optional[SimpleTermModel] = Field(
+    intervention_model_code: SimpleTermModel | None = Field(None, nullable=True)
+    intervention_model_null_value_code: SimpleTermModel | None = Field(
         None, nullable=True
     )
 
-    is_trial_randomised: Optional[bool] = Field(None, nullable=True)
-    is_trial_randomised_null_value_code: Optional[SimpleTermModel] = Field(
+    is_trial_randomised: bool | None = Field(None, nullable=True)
+    is_trial_randomised_null_value_code: SimpleTermModel | None = Field(
         None, nullable=True
     )
 
-    stratification_factor: Optional[str] = Field(None, nullable=True)
-    stratification_factor_null_value_code: Optional[SimpleTermModel] = Field(
+    stratification_factor: str | None = Field(None, nullable=True)
+    stratification_factor_null_value_code: SimpleTermModel | None = Field(
         None, nullable=True
     )
 
-    trial_blinding_schema_code: Optional[SimpleTermModel] = Field(None, nullable=True)
-    trial_blinding_schema_null_value_code: Optional[SimpleTermModel] = Field(
+    trial_blinding_schema_code: SimpleTermModel | None = Field(None, nullable=True)
+    trial_blinding_schema_null_value_code: SimpleTermModel | None = Field(
         None, nullable=True
     )
 
-    planned_study_length: Optional[DurationJsonModel] = Field(None, nullable=True)
-    planned_study_length_null_value_code: Optional[SimpleTermModel] = Field(
+    planned_study_length: DurationJsonModel | None = Field(None, nullable=True)
+    planned_study_length_null_value_code: SimpleTermModel | None = Field(
         None, nullable=True
     )
 
-    trial_intent_types_codes: Optional[Sequence[SimpleTermModel]] = Field(
+    trial_intent_types_codes: Sequence[SimpleTermModel] | None = Field(
         None, nullable=True
     )
-    trial_intent_types_null_value_code: Optional[SimpleTermModel] = Field(
+    trial_intent_types_null_value_code: SimpleTermModel | None = Field(
         None, nullable=True
     )
 
     @classmethod
     def from_study_intervention_vo(
         cls,
-        study_intervention_vo: Optional[StudyInterventionVO],
+        study_intervention_vo: StudyInterventionVO | None,
         find_all_study_time_units: Callable[[str], Iterable[UnitDefinitionAR]],
-        find_term_by_uid: Callable[[str], Optional[CTTermNameAR]],
-    ) -> Optional["StudyInterventionJsonModel"]:
+        find_term_by_uid: Callable[[str], CTTermNameAR | None],
+    ) -> Self | None:
         if study_intervention_vo is None:
             return None
         return cls(
@@ -692,13 +688,13 @@ class StudyDescriptionJsonModel(BaseModel):
         title = "study_description"
         description = "Study description for the study definition."
 
-    study_title: Optional[str] = Field(None, nullable=True)
-    study_short_title: Optional[str] = Field(None, nullable=True)
+    study_title: str | None = Field(None, nullable=True)
+    study_short_title: str | None = Field(None, nullable=True)
 
     @classmethod
     def from_study_description_vo(
-        cls, study_description_vo: Optional[StudyDescriptionVO]
-    ) -> Optional["StudyDescriptionJsonModel"]:
+        cls, study_description_vo: StudyDescriptionVO | None
+    ) -> Self | None:
         if study_description_vo is None:
             return None
         return cls(
@@ -712,12 +708,10 @@ class CompactStudyMetadataJsonModel(BaseModel):
         title = "StudyMetadata"
         description = "Study metadata"
 
-    identification_metadata: Optional[
-        CompactStudyIdentificationMetadataJsonModel
-    ] = Field(None, nullable=True)
-    version_metadata: Optional[StudyVersionMetadataJsonModel] = Field(
+    identification_metadata: CompactStudyIdentificationMetadataJsonModel | None = Field(
         None, nullable=True
     )
+    version_metadata: StudyVersionMetadataJsonModel | None = Field(None, nullable=True)
 
     @classmethod
     def from_study_metadata_vo(
@@ -725,7 +719,7 @@ class CompactStudyMetadataJsonModel(BaseModel):
         study_metadata_vo: StudyMetadataVO,
         find_project_by_project_number: Callable[[str], ProjectAR],
         find_clinical_programme_by_uid: Callable[[str], ClinicalProgrammeAR],
-    ) -> "CompactStudyMetadataJsonModel":
+    ) -> Self:
         return cls(
             identification_metadata=CompactStudyIdentificationMetadataJsonModel.from_study_identification_vo(
                 study_identification_o=study_metadata_vo.id_metadata,
@@ -743,20 +737,16 @@ class StudyMetadataJsonModel(BaseModel):
         title = "StudyMetadata"
         description = "Study metadata"
 
-    identification_metadata: Optional[StudyIdentificationMetadataJsonModel] = Field(
+    identification_metadata: StudyIdentificationMetadataJsonModel | None = Field(
         None, nullable=True
     )
-    version_metadata: Optional[StudyVersionMetadataJsonModel] = Field(
+    version_metadata: StudyVersionMetadataJsonModel | None = Field(None, nullable=True)
+    high_level_study_design: HighLevelStudyDesignJsonModel | None = Field(
         None, nullable=True
     )
-    high_level_study_design: Optional[HighLevelStudyDesignJsonModel] = Field(
-        None, nullable=True
-    )
-    study_population: Optional[StudyPopulationJsonModel] = Field(None, nullable=True)
-    study_intervention: Optional[StudyInterventionJsonModel] = Field(
-        None, nullable=True
-    )
-    study_description: Optional[StudyDescriptionJsonModel] = Field(None, nullable=True)
+    study_population: StudyPopulationJsonModel | None = Field(None, nullable=True)
+    study_intervention: StudyInterventionJsonModel | None = Field(None, nullable=True)
+    study_description: StudyDescriptionJsonModel | None = Field(None, nullable=True)
 
     @classmethod
     def from_study_metadata_vo(
@@ -765,9 +755,9 @@ class StudyMetadataJsonModel(BaseModel):
         find_project_by_project_number: Callable[[str], ProjectAR],
         find_clinical_programme_by_uid: Callable[[str], ClinicalProgrammeAR],
         find_all_study_time_units: Callable[[str], Iterable[UnitDefinitionAR]],
-        find_term_by_uid: Callable[[str], Optional[CTTermNameAR]],
-        find_dictionary_term_by_uid: Callable[[str], Optional[DictionaryTermAR]],
-    ) -> "StudyMetadataJsonModel":
+        find_term_by_uid: Callable[[str], CTTermNameAR | None],
+        find_dictionary_term_by_uid: Callable[[str], DictionaryTermAR | None],
+    ) -> Self:
         return cls(
             identification_metadata=StudyIdentificationMetadataJsonModel.from_study_identification_vo(
                 study_identification_o=study_metadata_vo.id_metadata,
@@ -805,7 +795,7 @@ class StudyPatchRequestJsonModel(BaseModel):
         title = "StudyPatchRequest"
         description = "Identification metadata for study definition."
 
-    current_metadata: Optional[StudyMetadataJsonModel] = Field(None, nullable=True)
+    current_metadata: StudyMetadataJsonModel | None = Field(None, nullable=True)
 
 
 class CompactStudy(BaseModel):
@@ -814,16 +804,14 @@ class CompactStudy(BaseModel):
         description="The unique id of the study.",
         remove_from_wildcard=True,
     )
-    possible_actions: List[str] = Field(
+    possible_actions: list[str] = Field(
         ...,
         description=(
             "Holds those actions that can be performed on the ActivityInstances. "
             "Actions are: 'lock', 'release', 'unlock', 'delete'."
         ),
     )
-    current_metadata: Optional[CompactStudyMetadataJsonModel] = Field(
-        None, nullable=True
-    )
+    current_metadata: CompactStudyMetadataJsonModel | None = Field(None, nullable=True)
 
     @classmethod
     def from_study_definition_ar(
@@ -831,7 +819,7 @@ class CompactStudy(BaseModel):
         study_definition_ar: StudyDefinitionAR,
         find_project_by_project_number: Callable[[str], ProjectAR],
         find_clinical_programme_by_uid: Callable[[str], ClinicalProgrammeAR],
-    ) -> "CompactStudy":
+    ) -> Self:
         return cls(
             uid=study_definition_ar.uid,
             possible_actions=sorted(
@@ -850,14 +838,14 @@ class Study(BaseModel):
         title="uid",
         description="The unique id of the study.",
     )
-    possible_actions: List[str] = Field(
+    possible_actions: list[str] = Field(
         ...,
         description=(
             "Holds those actions that can be performed on the ActivityInstances. "
             "Actions are: 'lock', 'release', 'unlock', 'delete'."
         ),
     )
-    current_metadata: Optional[StudyMetadataJsonModel] = Field(None, nullable=True)
+    current_metadata: StudyMetadataJsonModel | None = Field(None, nullable=True)
 
     @classmethod
     def from_study_definition_ar(
@@ -866,14 +854,14 @@ class Study(BaseModel):
         find_project_by_project_number: Callable[[str], ProjectAR],
         find_clinical_programme_by_uid: Callable[[str], ClinicalProgrammeAR],
         find_all_study_time_units: Callable[[str], Iterable[UnitDefinitionAR]],
-        find_term_by_uid: Callable[[str], Optional[CTTermNameAR]],
-        find_dictionary_term_by_uid: Callable[[str], Optional[DictionaryTermAR]],
+        find_term_by_uid: Callable[[str], CTTermNameAR | None],
+        find_dictionary_term_by_uid: Callable[[str], DictionaryTermAR | None],
         # pylint: disable=unused-argument
-        at_specified_date_time: Optional[datetime] = None,
-        status: Optional[StudyStatus] = None,
-        version: Optional[str] = None,
+        at_specified_date_time: datetime | None = None,
+        status: StudyStatus | None = None,
+        version: str | None = None,
         history_endpoint: bool = False,
-    ) -> Optional["Study"]:
+    ) -> Self | None:
         current_metadata = None
         if status is not None:
             if status == StudyStatus.DRAFT:
@@ -916,19 +904,19 @@ class Study(BaseModel):
 
 
 class StudyCreateInput(BaseModel):
-    study_number: Optional[str] = Field(
+    study_number: str | None = Field(
         # ...,
         title="study_number",
         description="",
     )
 
-    study_acronym: Optional[str] = Field(
+    study_acronym: str | None = Field(
         # ...,
         title="study_acronym",
         description="",
     )
 
-    project_number: Optional[str] = Field(
+    project_number: str | None = Field(
         # ...,
         title="project_number",
         description="",
@@ -994,7 +982,7 @@ class StudyFieldAuditTrailEntry(BaseModel):
         description="The date that the edit was made.",
     )
 
-    actions: List[StudyFieldAuditTrailAction] = Field(
+    actions: list[StudyFieldAuditTrailAction] = Field(
         None,
         title="actions",
         description="The actions that took place as part of this audit trial entry.",
@@ -1005,9 +993,9 @@ class StudyFieldAuditTrailEntry(BaseModel):
         cls,
         study_field_audit_trail_vo: StudyFieldAuditTrailEntryAR,
         sections_selected: Collection[str],
-        find_term_by_uid: Callable[[str], Optional[CTTermNameAR]],
-    ) -> "StudyFieldAuditTrailEntry":
-        actions: List[StudyFieldAuditTrailAction] = [
+        find_term_by_uid: Callable[[str], CTTermNameAR | None],
+    ) -> Self:
+        actions: list[StudyFieldAuditTrailAction] = [
             StudyFieldAuditTrailAction(
                 section=action.section,
                 field=action.field_name,
@@ -1036,20 +1024,20 @@ class StudyProtocolTitle(BaseModel):
         title="study_uid",
         description="The unique id of the study.",
     )
-    study_title: Optional[str] = Field(None, nullable=True)
-    study_short_title: Optional[str] = Field(None, nullable=True)
-    eudract_id: Optional[str] = Field(None, nullable=True)
-    universal_trial_number_utn: Optional[str] = Field(None, nullable=True)
-    trial_phase_code: Optional[SimpleTermModel] = Field(None, nullable=True)
-    ind_number: Optional[str] = Field(None, nullable=True)
-    substance_name: Optional[str] = Field(None, nullable=True)
+    study_title: str | None = Field(None, nullable=True)
+    study_short_title: str | None = Field(None, nullable=True)
+    eudract_id: str | None = Field(None, nullable=True)
+    universal_trial_number_utn: str | None = Field(None, nullable=True)
+    trial_phase_code: SimpleTermModel | None = Field(None, nullable=True)
+    ind_number: str | None = Field(None, nullable=True)
+    substance_name: str | None = Field(None, nullable=True)
 
     @classmethod
     def from_study_definition_ar(
         cls,
         study_definition_ar: StudyDefinitionAR,
-        find_term_by_uid: Callable[[str], Optional[CTTermNameAR]],
-    ) -> "StudyProtocolTitle":
+        find_term_by_uid: Callable[[str], CTTermNameAR | None],
+    ) -> Self:
         return cls(
             study_uid=study_definition_ar.uid,
             study_title=study_definition_ar.current_metadata.study_description.study_title,

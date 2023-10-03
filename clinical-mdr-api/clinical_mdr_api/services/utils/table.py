@@ -1,5 +1,3 @@
-from typing import Optional
-
 import yattag
 
 from clinical_mdr_api.models.study_selections.table import Table
@@ -7,7 +5,7 @@ from clinical_mdr_api.services.utils.docx_builder import DocxBuilder
 
 
 def table_to_html(
-    table: Table, id_: Optional[str] = None, title: Optional[str] = None
+    table: Table, id_: str | None = None, title: str | None = None
 ) -> yattag.simpledoc.SimpleDoc:
     doc, tag, _, line = yattag.Doc().ttl()
     doc.asis("<!DOCTYPE html>")

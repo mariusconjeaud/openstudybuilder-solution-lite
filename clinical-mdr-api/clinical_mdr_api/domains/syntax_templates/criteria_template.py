@@ -1,6 +1,6 @@
 import re
 from dataclasses import dataclass
-from typing import Callable, Optional, Sequence, Tuple
+from typing import Callable, Self, Sequence
 
 from clinical_mdr_api.domains.controlled_terminologies.ct_term_attributes import (
     CTTermAttributesAR,
@@ -25,16 +25,16 @@ class CriteriaTemplateAR(TemplateAggregateRootBase):
     behavior. Inherits generic template versioning behaviors
     """
 
-    _type: Tuple[CTTermNameAR, CTTermAttributesAR] = ()
+    _type: tuple[CTTermNameAR, CTTermAttributesAR] = ()
 
-    _indications: Optional[Sequence[DictionaryTermAR]] = None
+    _indications: Sequence[DictionaryTermAR] | None = None
 
-    _categories: Optional[Sequence[Tuple[CTTermNameAR, CTTermAttributesAR]]] = None
+    _categories: Sequence[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None
 
-    _subcategories: Optional[Sequence[Tuple[CTTermNameAR, CTTermAttributesAR]]] = None
+    _subcategories: Sequence[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None
 
     @property
-    def type(self) -> Tuple[CTTermNameAR, CTTermAttributesAR]:
+    def type(self) -> tuple[CTTermNameAR, CTTermAttributesAR]:
         return self._type
 
     @property
@@ -42,11 +42,11 @@ class CriteriaTemplateAR(TemplateAggregateRootBase):
         return self._indications
 
     @property
-    def categories(self) -> Sequence[Tuple[CTTermNameAR, CTTermAttributesAR]]:
+    def categories(self) -> Sequence[tuple[CTTermNameAR, CTTermAttributesAR]]:
         return self._categories
 
     @property
-    def sub_categories(self) -> Sequence[Tuple[CTTermNameAR, CTTermAttributesAR]]:
+    def sub_categories(self) -> Sequence[tuple[CTTermNameAR, CTTermAttributesAR]]:
         return self._subcategories
 
     @classmethod
@@ -58,14 +58,12 @@ class CriteriaTemplateAR(TemplateAggregateRootBase):
         library: LibraryVO,
         item_metadata: LibraryItemMetadataVO,
         study_count: int = 0,
-        counts: Optional[InstantiationCountsVO] = None,
-        criteria_type: Tuple[CTTermNameAR, CTTermAttributesAR] = None,
-        indications: Optional[Sequence[DictionaryTermAR]] = None,
-        categories: Optional[Sequence[Tuple[CTTermNameAR, CTTermAttributesAR]]] = None,
-        sub_categories: Optional[
-            Sequence[Tuple[CTTermNameAR, CTTermAttributesAR]]
-        ] = None,
-    ) -> "TemplateAggregateRootBase":
+        counts: InstantiationCountsVO | None = None,
+        criteria_type: tuple[CTTermNameAR, CTTermAttributesAR] = None,
+        indications: Sequence[DictionaryTermAR] | None = None,
+        categories: Sequence[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None,
+        sub_categories: Sequence[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None,
+    ) -> Self:
         ar = cls(
             _uid=uid,
             _sequence_id=sequence_id,
@@ -88,30 +86,29 @@ class CriteriaTemplateAR(TemplateAggregateRootBase):
         author: str,
         template: TemplateVO,
         library: LibraryVO,
-        template_value_exists_callback: Callable[
-            [TemplateVO], bool
-        ],  # = (lambda _: False),
-        generate_uid_callback: Callable[[], Optional[str]] = (lambda: None),
-        generate_seq_id_callback: Callable[[str, str], Optional[str]] = (
-            lambda x, y: None
+        generate_uid_callback: Callable[[], str | None] = (lambda: None),
+        next_available_sequence_id_callback: Callable[[str, str, str], str | None] = (
+            lambda x, y, z: None
         ),
-        criteria_type: Tuple[CTTermNameAR, CTTermAttributesAR] = None,
-        indications: Optional[Sequence[DictionaryTermAR]] = None,
-        categories: Optional[Sequence[Tuple[CTTermNameAR, CTTermAttributesAR]]] = None,
-        sub_categories: Optional[
-            Sequence[Tuple[CTTermNameAR, CTTermAttributesAR]]
-        ] = None,
-    ) -> "CriteriaTemplateAR":
-        ar: CriteriaTemplateAR = super().from_input_values(
+        criteria_type: tuple[CTTermNameAR, CTTermAttributesAR] = None,
+        indications: Sequence[DictionaryTermAR] | None = None,
+        categories: Sequence[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None,
+        sub_categories: Sequence[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None,
+    ) -> Self:
+        criteria_type_name = re.sub(
+            "criteria", "", criteria_type[0].name, flags=re.IGNORECASE
+        ).title()
+
+        ar: Self = super().from_input_values(
             author=author,
             template=template,
             library=library,
-            template_value_exists_callback=template_value_exists_callback,
             generate_uid_callback=generate_uid_callback,
         )
-        ar._sequence_id = generate_seq_id_callback(
-            ar.uid,
-            custom_abbr=f"""Criteria{re.sub("criteria","", f"{criteria_type[0].name}", flags=re.IGNORECASE).title()}Template""",
+        ar._sequence_id = next_available_sequence_id_callback(
+            ar._uid,
+            "C" + "".join([char for char in criteria_type_name if char.isupper()]),
+            criteria_type[0].uid,
         )
         ar._type = criteria_type
         ar._indications = indications

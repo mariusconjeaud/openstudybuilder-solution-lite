@@ -1,4 +1,4 @@
-from typing import Callable, Dict, List, Optional, Union
+from typing import Callable, Self
 
 from pydantic import BaseModel, Field, validator
 
@@ -59,22 +59,22 @@ from clinical_mdr_api.models.validators import validate_string_represents_boolea
 
 
 class OdmItemGroup(ConceptModel):
-    oid: Optional[str]
-    repeating: Optional[str] = Field(None, nullable=True)
-    is_reference_data: Optional[str] = Field(None, nullable=True)
-    sas_dataset_name: Optional[str] = Field(None, nullable=True)
-    origin: Optional[str] = Field(None, nullable=True)
-    purpose: Optional[str] = Field(None, nullable=True)
-    comment: Optional[str] = Field(None, nullable=True)
-    descriptions: List[OdmDescriptionSimpleModel]
-    aliases: List[OdmAliasSimpleModel]
-    sdtm_domains: List[SimpleCTTermAttributes]
-    activity_subgroups: List[ActivityHierarchySimpleModel]
-    items: List[OdmItemRefModel]
-    vendor_elements: List[OdmVendorElementRelationModel]
-    vendor_attributes: List[OdmVendorAttributeRelationModel]
-    vendor_element_attributes: List[OdmVendorElementAttributeRelationModel]
-    possible_actions: List[str]
+    oid: str | None
+    repeating: str | None = Field(None, nullable=True)
+    is_reference_data: str | None = Field(None, nullable=True)
+    sas_dataset_name: str | None = Field(None, nullable=True)
+    origin: str | None = Field(None, nullable=True)
+    purpose: str | None = Field(None, nullable=True)
+    comment: str | None = Field(None, nullable=True)
+    descriptions: list[OdmDescriptionSimpleModel]
+    aliases: list[OdmAliasSimpleModel]
+    sdtm_domains: list[SimpleCTTermAttributes]
+    activity_subgroups: list[ActivityHierarchySimpleModel]
+    items: list[OdmItemRefModel]
+    vendor_elements: list[OdmVendorElementRelationModel]
+    vendor_attributes: list[OdmVendorAttributeRelationModel]
+    vendor_element_attributes: list[OdmVendorElementAttributeRelationModel]
+    possible_actions: list[str]
 
     _validate_string_represents_boolean = validator(
         "repeating", "is_reference_data", pre=True, allow_reuse=True
@@ -84,28 +84,22 @@ class OdmItemGroup(ConceptModel):
     def from_odm_item_group_ar(
         cls,
         odm_item_group_ar: OdmItemGroupAR,
-        find_odm_description_by_uid: Callable[[str], Optional[OdmDescriptionAR]],
-        find_odm_alias_by_uid: Callable[[str], Optional[OdmAliasAR]],
-        find_term_by_uid: Callable[[str], Optional[CTTermAttributesAR]],
-        find_activity_subgroup_by_uid: Callable[[str], Optional[ActivitySubGroupAR]],
-        find_odm_vendor_attribute_by_uid: Callable[
-            [str], Optional[OdmVendorAttributeAR]
-        ],
+        find_odm_description_by_uid: Callable[[str], OdmDescriptionAR | None],
+        find_odm_alias_by_uid: Callable[[str], OdmAliasAR | None],
+        find_term_by_uid: Callable[[str], CTTermAttributesAR | None],
+        find_activity_subgroup_by_uid: Callable[[str], ActivitySubGroupAR | None],
+        find_odm_vendor_attribute_by_uid: Callable[[str], OdmVendorAttributeAR | None],
         find_odm_item_by_uid_with_item_group_relation: Callable[
-            [str, str], Optional[OdmItemRefVO]
+            [str, str], OdmItemRefVO | None
         ],
         find_odm_vendor_element_by_uid_with_odm_element_relation: Callable[
-            [str, str, RelationType], Optional[OdmVendorElementRelationVO]
+            [str, str, RelationType], OdmVendorElementRelationVO | None
         ],
         find_odm_vendor_attribute_by_uid_with_odm_element_relation: Callable[
             [str, str, RelationType, bool],
-            Union[
-                OdmVendorAttributeRelationVO,
-                OdmVendorElementAttributeRelationVO,
-                None,
-            ],
+            OdmVendorAttributeRelationVO | OdmVendorElementAttributeRelationVO | None,
         ],
-    ) -> "OdmItemGroup":
+    ) -> Self:
         return cls(
             uid=odm_item_group_ar._uid,
             oid=odm_item_group_ar.concept_vo.oid,
@@ -225,12 +219,10 @@ class OdmItemGroupRefModel(BaseModel):
         uid: str,
         form_uid: str,
         find_odm_item_group_by_uid_with_form_relation: Callable[
-            [str, str], Optional[OdmItemGroupRefVO]
+            [str, str], OdmItemGroupRefVO | None
         ],
-        find_odm_vendor_attribute_by_uid: Callable[
-            [str], Optional[OdmVendorAttributeAR]
-        ],
-    ) -> Optional["OdmItemGroupRefModel"]:
+        find_odm_vendor_attribute_by_uid: Callable[[str], OdmVendorAttributeAR | None],
+    ) -> Self | None:
         if uid is not None:
             odm_item_group_ref_vo = find_odm_item_group_by_uid_with_form_relation(
                 uid, form_uid
@@ -271,27 +263,27 @@ class OdmItemGroupRefModel(BaseModel):
         return odm_item_group_ref_model
 
     uid: str = Field(..., title="uid", description="")
-    oid: Optional[str] = Field(None, title="oid", description="")
-    name: Optional[str] = Field(None, title="name", description="")
-    order_number: Optional[int] = Field(None, title="order_number", description="")
-    mandatory: Optional[str] = Field(None, title="mandatory", description="")
-    collection_exception_condition_oid: Optional[str] = Field(
+    oid: str | None = Field(None, title="oid", description="")
+    name: str | None = Field(None, title="name", description="")
+    order_number: int | None = Field(None, title="order_number", description="")
+    mandatory: str | None = Field(None, title="mandatory", description="")
+    collection_exception_condition_oid: str | None = Field(
         None, title="collection_exception_condition_oid", description=""
     )
     vendor: OdmRefVendor = Field(title="vendor", description="")
 
 
 class OdmItemGroupPostInput(ConceptPostInput):
-    oid: Optional[str]
+    oid: str | None
     repeating: str
-    is_reference_data: Optional[str]
-    sas_dataset_name: Optional[str]
-    origin: Optional[str]
-    purpose: Optional[str]
-    comment: Optional[str] = None
-    descriptions: List[Union[OdmDescriptionPostInput, str]]
-    alias_uids: List[str]
-    sdtm_domain_uids: List[str]
+    is_reference_data: str | None
+    sas_dataset_name: str | None
+    origin: str | None
+    purpose: str | None
+    comment: str | None = None
+    descriptions: list[OdmDescriptionPostInput | str]
+    alias_uids: list[str]
+    sdtm_domain_uids: list[str]
 
     _validate_string_represents_boolean = validator(
         "repeating", "is_reference_data", pre=True, allow_reuse=True
@@ -299,18 +291,16 @@ class OdmItemGroupPostInput(ConceptPostInput):
 
 
 class OdmItemGroupPatchInput(ConceptPatchInput):
-    oid: Optional[str]
-    repeating: Optional[str]
-    is_reference_data: Optional[str]
-    sas_dataset_name: Optional[str]
-    origin: Optional[str]
-    purpose: Optional[str]
-    comment: Optional[str]
-    descriptions: List[
-        Union[OdmDescriptionBatchPatchInput, OdmDescriptionPostInput, str]
-    ]
-    alias_uids: List[str]
-    sdtm_domain_uids: List[str]
+    oid: str | None
+    repeating: str | None
+    is_reference_data: str | None
+    sas_dataset_name: str | None
+    origin: str | None
+    purpose: str | None
+    comment: str | None
+    descriptions: list[OdmDescriptionBatchPatchInput | OdmDescriptionPostInput | str]
+    alias_uids: list[str]
+    sdtm_domain_uids: list[str]
 
     _validate_string_represents_boolean = validator(
         "repeating", "is_reference_data", pre=True, allow_reuse=True
@@ -326,11 +316,11 @@ class OdmItemGroupItemPostInput(BaseModel):
     order_number: int
     mandatory: str
     key_sequence: str
-    method_oid: Optional[str]
+    method_oid: str | None
     imputation_method_oid: str
     role: str
     role_codelist_oid: str
-    collection_exception_condition_oid: Optional[str]
+    collection_exception_condition_oid: str | None
     vendor: OdmRefVendorPostInput
 
 
@@ -339,7 +329,7 @@ class OdmItemGroupVersion(OdmItemGroup):
     Class for storing OdmItemGroup and calculation of differences
     """
 
-    changes: Optional[Dict[str, bool]] = Field(
+    changes: dict[str, bool] | None = Field(
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "

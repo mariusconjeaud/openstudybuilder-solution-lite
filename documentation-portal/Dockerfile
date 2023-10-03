@@ -28,6 +28,8 @@ FROM $NGINX_IMAGE as production-stage
 
 COPY --from=build-stage /app/docs/.vuepress/dist /usr/share/nginx/html
 COPY --from=build-stage /app/build.json /usr/share/nginx/html
+COPY --from=build-stage /app/sbom.md /usr/share/nginx/html
+COPY --from=build-stage /app/LICENSE.md /usr/share/nginx/html/license.md
 COPY ./nginx/default.conf /etc/nginx/conf.d/
 
 ARG PORT=5006

@@ -1,5 +1,3 @@
-from typing import Optional
-
 from pydantic import Field
 
 from clinical_mdr_api.models.standard_data_models.variable_class import (
@@ -9,7 +7,7 @@ from clinical_mdr_api.models.utils import BaseModel
 
 
 class SimpleDataModelIG(BaseModel):
-    ordinal: Optional[str] = Field(
+    ordinal: str | None = Field(
         None,
         title="ordinal",
         description="ordinal",
@@ -40,7 +38,7 @@ class Dataset(BaseModel):
         title="title",
         description="The title of the dataset",
     )
-    description: Optional[str] = Field(
+    description: str | None = Field(
         None, title="description", description="description", nullable=True
     )
     catalogue_name: str = Field(
@@ -48,7 +46,7 @@ class Dataset(BaseModel):
         title="catalogue",
         description="catalogue",
     )
-    implemented_dataset_class: Optional[SimpleDatasetClass] = Field(
+    implemented_dataset_class: SimpleDatasetClass | None = Field(
         None,
         title="implements_dataset_class",
         description="implements_dataset_class",

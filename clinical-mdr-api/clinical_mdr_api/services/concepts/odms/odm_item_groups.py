@@ -1,5 +1,3 @@
-from typing import List
-
 from neomodel import db
 
 from clinical_mdr_api import exceptions
@@ -74,9 +72,7 @@ class OdmItemGroupService(OdmGenericService[OdmItemGroupAR]):
                 oid=concept_input.oid,
                 name=concept_input.name,
                 repeating=strtobool(concept_input.repeating),
-                is_reference_data=strtobool(concept_input.is_reference_data)
-                if concept_input.is_reference_data
-                else None,
+                is_reference_data=strtobool(concept_input.is_reference_data),
                 sas_dataset_name=concept_input.sas_dataset_name,
                 origin=concept_input.origin,
                 purpose=concept_input.purpose,
@@ -148,9 +144,7 @@ class OdmItemGroupService(OdmGenericService[OdmItemGroupAR]):
                 oid=get_input_or_new_value(concept_input.oid, "G.", concept_input.name),
                 name=concept_input.name,
                 repeating=strtobool(concept_input.repeating),
-                is_reference_data=strtobool(concept_input.is_reference_data)
-                if concept_input.is_reference_data
-                else None,
+                is_reference_data=strtobool(concept_input.is_reference_data),
                 sas_dataset_name=concept_input.sas_dataset_name,
                 origin=concept_input.origin,
                 purpose=concept_input.purpose,
@@ -208,7 +202,7 @@ class OdmItemGroupService(OdmGenericService[OdmItemGroupAR]):
     def add_activity_subgroups(
         self,
         uid: str,
-        odm_item_group_activity_subgroup_post_input: List[
+        odm_item_group_activity_subgroup_post_input: list[
             OdmItemGroupActivitySubGroupPostInput
         ],
         override: bool = False,
@@ -226,15 +220,12 @@ class OdmItemGroupService(OdmGenericService[OdmItemGroupAR]):
                 disconnect_all=True,
             )
 
-        try:
-            for activity_subgroup in odm_item_group_activity_subgroup_post_input:
-                self._repos.odm_item_group_repository.add_relation(
-                    uid=uid,
-                    relation_uid=activity_subgroup.uid,
-                    relationship_type=RelationType.ACTIVITY_SUB_GROUP,
-                )
-        except ValueError as exception:
-            raise exceptions.ValidationException(exception.args[0])
+        for activity_subgroup in odm_item_group_activity_subgroup_post_input:
+            self._repos.odm_item_group_repository.add_relation(
+                uid=uid,
+                relation_uid=activity_subgroup.uid,
+                relationship_type=RelationType.ACTIVITY_SUB_GROUP,
+            )
 
         odm_item_group_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
 
@@ -244,7 +235,7 @@ class OdmItemGroupService(OdmGenericService[OdmItemGroupAR]):
     def add_items(
         self,
         uid: str,
-        odm_item_group_item_post_input: List[OdmItemGroupItemPostInput],
+        odm_item_group_item_post_input: list[OdmItemGroupItemPostInput],
         override: bool = False,
     ) -> OdmItemGroup:
         return self.non_transactional_add_items(
@@ -254,7 +245,7 @@ class OdmItemGroupService(OdmGenericService[OdmItemGroupAR]):
     def non_transactional_add_items(
         self,
         uid: str,
-        odm_item_group_item_post_input: List[OdmItemGroupItemPostInput],
+        odm_item_group_item_post_input: list[OdmItemGroupItemPostInput],
         override: bool = False,
     ) -> OdmItemGroup:
         odm_item_group_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
@@ -270,50 +261,47 @@ class OdmItemGroupService(OdmGenericService[OdmItemGroupAR]):
                 disconnect_all=True,
             )
 
-        try:
-            vendor_attribute_patterns = self.get_regex_patterns_of_attributes(
-                [
-                    attribute.uid
-                    for input_attribute in odm_item_group_item_post_input
-                    if input_attribute.vendor
-                    for attribute in input_attribute.vendor.attributes
-                ]
-            )
-            self.is_vendor_compatible(
-                [
-                    vendor_attribute
-                    for item in odm_item_group_item_post_input
-                    for vendor_attribute in item.vendor.attributes
-                ],
-                VendorCompatibleType.ITEM_REF,
-            )
+        vendor_attribute_patterns = self.get_regex_patterns_of_attributes(
+            [
+                attribute.uid
+                for input_attribute in odm_item_group_item_post_input
+                if input_attribute.vendor
+                for attribute in input_attribute.vendor.attributes
+            ]
+        )
+        self.is_vendor_compatible(
+            [
+                vendor_attribute
+                for item in odm_item_group_item_post_input
+                for vendor_attribute in item.vendor.attributes
+            ],
+            VendorCompatibleType.ITEM_REF,
+        )
 
-            for item in odm_item_group_item_post_input:
-                if item.vendor:
-                    self.can_connect_vendor_attributes(item.vendor.attributes)
-                    self.attribute_values_matches_their_regex(
-                        item.vendor.attributes,
-                        vendor_attribute_patterns,
-                    )
-
-                self._repos.odm_item_group_repository.add_relation(
-                    uid=uid,
-                    relation_uid=item.uid,
-                    relationship_type=RelationType.ITEM,
-                    parameters={
-                        "order_number": item.order_number,
-                        "mandatory": strtobool(item.mandatory),
-                        "key_sequence": item.key_sequence,
-                        "method_oid": item.method_oid,
-                        "imputation_method_oid": item.imputation_method_oid,
-                        "role": item.role,
-                        "role_codelist_oid": item.role_codelist_oid,
-                        "collection_exception_condition_oid": item.collection_exception_condition_oid,
-                        "vendor": to_dict(item.vendor),
-                    },
+        for item in odm_item_group_item_post_input:
+            if item.vendor:
+                self.can_connect_vendor_attributes(item.vendor.attributes)
+                self.attribute_values_matches_their_regex(
+                    item.vendor.attributes,
+                    vendor_attribute_patterns,
                 )
-        except ValueError as exception:
-            raise exceptions.ValidationException(exception.args[0])
+
+            self._repos.odm_item_group_repository.add_relation(
+                uid=uid,
+                relation_uid=item.uid,
+                relationship_type=RelationType.ITEM,
+                parameters={
+                    "order_number": item.order_number,
+                    "mandatory": strtobool(item.mandatory),
+                    "key_sequence": item.key_sequence,
+                    "method_oid": item.method_oid,
+                    "imputation_method_oid": item.imputation_method_oid,
+                    "role": item.role,
+                    "role_codelist_oid": item.role_codelist_oid,
+                    "collection_exception_condition_oid": item.collection_exception_condition_oid,
+                    "vendor": to_dict(item.vendor),
+                },
+            )
 
         odm_item_group_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
 
@@ -323,7 +311,7 @@ class OdmItemGroupService(OdmGenericService[OdmItemGroupAR]):
     def add_vendor_elements(
         self,
         uid: str,
-        odm_vendor_relation_post_input: List[OdmVendorRelationPostInput],
+        odm_vendor_relation_post_input: list[OdmVendorRelationPostInput],
         override: bool = False,
     ) -> OdmItemGroup:
         odm_item_group_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
@@ -344,18 +332,15 @@ class OdmItemGroupService(OdmGenericService[OdmItemGroupAR]):
                 disconnect_all=True,
             )
 
-        try:
-            for vendor_element in odm_vendor_relation_post_input:
-                self._repos.odm_item_group_repository.add_relation(
-                    uid=uid,
-                    relation_uid=vendor_element.uid,
-                    relationship_type=RelationType.VENDOR_ELEMENT,
-                    parameters={
-                        "value": vendor_element.value,
-                    },
-                )
-        except ValueError as exception:
-            raise exceptions.ValidationException(exception.args[0])
+        for vendor_element in odm_vendor_relation_post_input:
+            self._repos.odm_item_group_repository.add_relation(
+                uid=uid,
+                relation_uid=vendor_element.uid,
+                relationship_type=RelationType.VENDOR_ELEMENT,
+                parameters={
+                    "value": vendor_element.value,
+                },
+            )
 
         odm_item_group_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
 
@@ -365,7 +350,7 @@ class OdmItemGroupService(OdmGenericService[OdmItemGroupAR]):
     def add_vendor_attributes(
         self,
         uid: str,
-        odm_vendor_relation_post_input: List[OdmVendorRelationPostInput],
+        odm_vendor_relation_post_input: list[OdmVendorRelationPostInput],
         override: bool = False,
     ) -> OdmItemGroup:
         odm_item_group_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
@@ -386,18 +371,15 @@ class OdmItemGroupService(OdmGenericService[OdmItemGroupAR]):
                 disconnect_all=True,
             )
 
-        try:
-            for vendor_attribute in odm_vendor_relation_post_input:
-                self._repos.odm_item_group_repository.add_relation(
-                    uid=uid,
-                    relation_uid=vendor_attribute.uid,
-                    relationship_type=RelationType.VENDOR_ATTRIBUTE,
-                    parameters={
-                        "value": vendor_attribute.value,
-                    },
-                )
-        except ValueError as exception:
-            raise exceptions.ValidationException(exception.args[0])
+        for vendor_attribute in odm_vendor_relation_post_input:
+            self._repos.odm_item_group_repository.add_relation(
+                uid=uid,
+                relation_uid=vendor_attribute.uid,
+                relationship_type=RelationType.VENDOR_ATTRIBUTE,
+                parameters={
+                    "value": vendor_attribute.value,
+                },
+            )
 
         odm_item_group_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
 
@@ -407,7 +389,7 @@ class OdmItemGroupService(OdmGenericService[OdmItemGroupAR]):
     def add_vendor_element_attributes(
         self,
         uid: str,
-        odm_vendor_relation_post_input: List[OdmVendorRelationPostInput],
+        odm_vendor_relation_post_input: list[OdmVendorRelationPostInput],
         override: bool = False,
     ) -> OdmItemGroup:
         odm_item_group_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
@@ -428,18 +410,15 @@ class OdmItemGroupService(OdmGenericService[OdmItemGroupAR]):
                 disconnect_all=True,
             )
 
-        try:
-            for vendor_element_attribute in odm_vendor_relation_post_input:
-                self._repos.odm_item_group_repository.add_relation(
-                    uid=uid,
-                    relation_uid=vendor_element_attribute.uid,
-                    relationship_type=RelationType.VENDOR_ELEMENT_ATTRIBUTE,
-                    parameters={
-                        "value": vendor_element_attribute.value,
-                    },
-                )
-        except ValueError as exception:
-            raise exceptions.ValidationException(exception.args[0])
+        for vendor_element_attribute in odm_vendor_relation_post_input:
+            self._repos.odm_item_group_repository.add_relation(
+                uid=uid,
+                relation_uid=vendor_element_attribute.uid,
+                relationship_type=RelationType.VENDOR_ELEMENT_ATTRIBUTE,
+                parameters={
+                    "value": vendor_element_attribute.value,
+                },
+            )
 
         odm_item_group_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
 

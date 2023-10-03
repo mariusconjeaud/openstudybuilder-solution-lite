@@ -4,7 +4,6 @@ Tests for /concepts/activities/activities endpoints
 import json
 import logging
 from functools import reduce
-from typing import List
 
 import pytest
 from fastapi.testclient import TestClient
@@ -36,7 +35,7 @@ from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 log = logging.getLogger(__name__)
 
 # Global variables shared between fixtures and tests
-activity_requests_all: List[Activity]
+activity_requests_all: list[Activity]
 activity_subgroup: ActivitySubGroup
 activity_group: ActivityGroup
 study_uid: str
@@ -63,7 +62,7 @@ def test_data():
 
     global activity_subgroup
     activity_subgroup = TestUtils.create_activity_subgroup(
-        name="activity_subgroup", activity_group=activity_group.uid
+        name="activity_subgroup", activity_groups=[activity_group.uid]
     )
 
     global activity_requests_all
@@ -77,10 +76,14 @@ def test_data():
             library_name=requested_library_name,
         ),
         TestUtils.create_activity(
-            name="name-AAA", approve=False, library_name=requested_library_name
+            name="name-AAA",
+            approve=False,
+            library_name=requested_library_name,
         ),
         TestUtils.create_activity(
-            name="name-BBB", approve=False, library_name=requested_library_name
+            name="name-BBB",
+            approve=False,
+            library_name=requested_library_name,
         ),
         TestUtils.create_activity(
             name="name XXX",
@@ -139,8 +142,7 @@ ACTIVITY_REQUEST_FIELDS_ALL = [
     "name_sentence_case",
     "definition",
     "abbreviation",
-    "activity_subgroup",
-    "activity_group",
+    "activity_groupings",
     "request_rationale",
     "replaced_by_activity",
     "library_name",
@@ -178,8 +180,7 @@ def test_get_activity_request(api_client):
     assert res["definition"] is None
     assert res["version"] == "0.1"
     assert res["status"] == "Draft"
-    assert res["activity_subgroup"] is None
-    assert res["activity_group"] is None
+    assert res["activity_groupings"] == []
     assert res["possible_actions"] == ["approve", "delete", "edit"]
     assert res["request_rationale"] == "New activity request rationale"
 
@@ -370,8 +371,7 @@ def test_edit_activity_request(api_client):
     assert res["definition"] is None
     assert res["version"] == "0.2"
     assert res["status"] == "Draft"
-    assert res["activity_subgroup"] is None
-    assert res["activity_group"] is None
+    assert res["activity_groupings"] == []
     assert res["possible_actions"] == ["approve", "delete", "edit"]
 
 
@@ -393,8 +393,7 @@ def test_post_activity_request(api_client):
     assert res["definition"] is None
     assert res["version"] == "0.1"
     assert res["status"] == "Draft"
-    assert res["activity_subgroup"] is None
-    assert res["activity_group"] is None
+    assert res["activity_groupings"] == []
     assert res["possible_actions"] == ["approve", "delete", "edit"]
     assert res["request_rationale"] == "Activity request rationale"
 
@@ -409,7 +408,12 @@ def test_post_sponsor_activity_from_activity_request(api_client):
             "name_sentence_case": "new sponsor activity from activity request",
             "definition": "definition",
             "abbreviation": "abbreviation",
-            "activity_subgroup": activity_subgroup.uid,
+            "activity_groupings": [
+                {
+                    "activity_subgroup_uid": activity_subgroup.uid,
+                    "activity_group_uid": activity_group.uid,
+                }
+            ],
             "library_name": "Sponsor",
         },
     )
@@ -435,7 +439,12 @@ def test_post_sponsor_activity_from_activity_request(api_client):
             "name_sentence_case": "new sponsor activity from activity request",
             "definition": "definition",
             "abbreviation": "abbreviation",
-            "activity_subgroup": activity_subgroup.uid,
+            "activity_groupings": [
+                {
+                    "activity_subgroup_uid": activity_subgroup.uid,
+                    "activity_group_uid": activity_group.uid,
+                }
+            ],
             "library_name": "Sponsor",
         },
     )
@@ -448,14 +457,14 @@ def test_post_sponsor_activity_from_activity_request(api_client):
     assert res["abbreviation"] == "abbreviation"
     assert res["version"] == "1.0"
     assert res["status"] == "Final"
-    assert res["activity_subgroup"] == {
-        "uid": "ActivitySubGroup_000001",
-        "name": "activity_subgroup",
-    }
-    assert res["activity_group"] == {
-        "uid": "ActivityGroup_000001",
-        "name": "activity_group",
-    }
+    assert len(res["activity_groupings"]) == 1
+    assert (
+        res["activity_groupings"][0]["activity_subgroup_uid"]
+        == "ActivitySubGroup_000001"
+    )
+    assert res["activity_groupings"][0]["activity_subgroup_name"] == "activity_subgroup"
+    assert res["activity_groupings"][0]["activity_group_uid"] == "ActivityGroup_000001"
+    assert res["activity_groupings"][0]["activity_group_name"] == "activity_group"
     assert res["possible_actions"] == ["inactivate", "new_version"]
     assert res["request_rationale"] is None
     replaced_activity_uid = res["uid"]
@@ -472,8 +481,7 @@ def test_post_sponsor_activity_from_activity_request(api_client):
     assert res["status"] == "Retired"
     assert res["possible_actions"] == ["reactivate"]
     assert res["request_rationale"] == "New activity request rationale"
-    assert res["activity_subgroup"] is None
-    assert res["activity_group"] is None
+    assert res["activity_groupings"] == []
     assert res["replaced_by_activity"] == replaced_activity_uid
 
 
@@ -496,6 +504,8 @@ def test_update_activity_request_to_sponsor_in_study_activity(api_client):
     study_activity = create_study_activity(
         study_uid=study_uid,
         activity_uid=activity_request.uid,
+        activity_subgroup_uid=None,
+        activity_group_uid=None,
         flowchart_group_uid=biomarkers_flowchart.term_uid,
     )
     # Create sponsor activity from activity request
@@ -507,7 +517,12 @@ def test_update_activity_request_to_sponsor_in_study_activity(api_client):
             "name_sentence_case": "new sponsor activity from activity request used in study activity",
             "definition": "definition",
             "abbreviation": "abbreviation",
-            "activity_subgroup": activity_subgroup.uid,
+            "activity_groupings": [
+                {
+                    "activity_subgroup_uid": activity_subgroup.uid,
+                    "activity_group_uid": activity_group.uid,
+                }
+            ],
             "library_name": "Sponsor",
         },
     )
@@ -526,14 +541,6 @@ def test_update_activity_request_to_sponsor_in_study_activity(api_client):
     # Replace activity request to the replacing sponsor activity in the Study Activity
     response = api_client.patch(
         f"/studies/{study_uid}/study-activities/{study_activity.study_activity_uid}/activity-requests-approvals",
-        json={
-            "name": "New Sponsor Activity from Activity Request used in Study Activity",
-            "name_sentence_case": "new sponsor activity from activity request used in study activity",
-            "definition": "definition",
-            "abbreviation": "abbreviation",
-            "activity_subgroup": activity_subgroup.uid,
-            "library_name": "Sponsor",
-        },
     )
     assert response.status_code == 200
 

@@ -1,16 +1,14 @@
-from typing import List, Optional
-
 from pydantic import Field
 
 from clinical_mdr_api.models.utils import BaseModel
 
 
 class SimpleMappingTarget(BaseModel):
-    uid: Optional[str] = Field(
+    uid: str | None = Field(
         None,
         title="uid of mapping target",
     )
-    name: Optional[str] = Field(
+    name: str | None = Field(
         None,
         title="name of mapping target",
     )
@@ -28,7 +26,7 @@ class SimpleImplementsVariable(BaseModel):
 
 
 class SimpleDataset(BaseModel):
-    ordinal: Optional[str] = Field(
+    ordinal: str | None = Field(
         None,
         title="ordinal of variable in dataset",
     )
@@ -42,12 +40,12 @@ class SimpleReferencedCodelist(BaseModel):
     class Config:
         orm_mode = True
 
-    uid: Optional[str] = Field(
+    uid: str | None = Field(
         None,
         title="uid",
         description="The uid of the referenced codelist",
     )
-    name: Optional[str] = Field(
+    name: str | None = Field(
         None,
         title="uid",
         description="The name of the referenced codelist",
@@ -63,66 +61,73 @@ class DatasetVariable(BaseModel):
         title="uid",
         description="The uid of the dataset",
     )
-    label: Optional[str] = Field(
+    label: str | None = Field(
         None,
         title="label",
         description="The label of the dataset",
     )
-    title: Optional[str] = Field(
+    title: str | None = Field(
         None,
         title="title",
         description="The title of the dataset",
     )
-    description: Optional[str] = Field(
+    description: str | None = Field(
         None, title="description", description="description", nullable=True
     )
-    simple_datatype: Optional[str] = Field(
+    simple_datatype: str | None = Field(
         None, title="simple_datatype", description="simple_datatype", nullable=True
     )
-    question_text: Optional[str] = Field(
+    question_text: str | None = Field(
         None, title="question_text", description="question_text", nullable=True
     )
-    prompt: Optional[str] = Field(
+    prompt: str | None = Field(
         None, title="prompt", description="prompt", nullable=True
     )
-    completion_instructions: Optional[str] = Field(
+    completion_instructions: str | None = Field(
         None,
         title="completion_instructions",
         description="completion_instructions",
         nullable=True,
     )
-    implementation_notes: Optional[str] = Field(
+    implementation_notes: str | None = Field(
         None,
         title="implementation_notes",
         description="implementation_notes",
         nullable=True,
     )
-    mapping_instructions: Optional[str] = Field(
+    mapping_instructions: str | None = Field(
         None,
         title="mapping_instructions",
         description="mapping_instructions",
         nullable=True,
     )
-    role: Optional[str] = Field(None, title="role", description="role", nullable=True)
-    core: Optional[str] = Field(None, title="core", description="core", nullable=True)
+    role: str | None = Field(None, title="role", description="role", nullable=True)
+    core: str | None = Field(None, title="core", description="core", nullable=True)
+    described_value_domain: str | None = Field(
+        None,
+        title="described_value_domain",
+        description="described_value_domain",
+        nullable=True,
+    )
+    value_list: list[str] = Field([], title="value_list", description="value_list")
     dataset: SimpleDataset = Field(
         ...,
         title="dataset",
         description="dataset",
     )
-    data_model_ig_names: List[str] = Field(
+    data_model_ig_names: list[str] = Field(
         ...,
         title="Versions of associated data model implementation guides",
         description="Versions of associated data model implementation guides",
     )
-    implements_variable: Optional[SimpleImplementsVariable] = Field(None)
-    has_mapping_target: Optional[SimpleMappingTarget] = Field(None)
+    implements_variable: SimpleImplementsVariable | None = Field(None)
+    has_mapping_target: SimpleMappingTarget | None = Field(None)
     catalogue_name: str = Field(
         ...,
         title="catalogue",
         description="catalogue",
     )
-    referenced_codelist: Optional[SimpleReferencedCodelist] = Field(None)
+    referenced_codelist: SimpleReferencedCodelist | None = Field(None)
 
     @classmethod
     def from_repository_output(cls, input_dict: dict):
@@ -139,6 +144,10 @@ class DatasetVariable(BaseModel):
             completion_instructions=input_dict.get("completion_instructions"),
             implementation_notes=input_dict.get("implementation_notes"),
             mapping_instructions=input_dict.get("mapping_instructions"),
+            described_value_domain=input_dict.get("described_value_domain"),
+            value_list=input_dict.get("value_list")
+            if input_dict.get("value_list")
+            else [],
             catalogue_name=input_dict.get("catalogue_name"),
             data_model_ig_names=input_dict.get("data_model_ig_names"),
             dataset=SimpleDataset(

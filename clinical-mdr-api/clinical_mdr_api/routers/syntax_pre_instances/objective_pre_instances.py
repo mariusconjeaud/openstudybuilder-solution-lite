@@ -1,4 +1,4 @@
-from typing import Any, List, Optional
+from typing import Any
 
 from fastapi import APIRouter, Body, Depends, Path, Query, Request, Response
 from fastapi import status as fast_api_status
@@ -8,7 +8,7 @@ from clinical_mdr_api import config, models
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.oauth import get_current_user_id
+from clinical_mdr_api.oauth import get_current_user_id, rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.syntax_pre_instances.objective_pre_instances import (
@@ -19,6 +19,7 @@ ObjectivePreInstanceUID = Path(
     None, description="The unique id of the Objective Pre-Instance."
 )
 
+# Prefixed with "/objective-pre-instances"
 router = APIRouter()
 
 Service = ObjectivePreInstanceService
@@ -26,6 +27,7 @@ Service = ObjectivePreInstanceService
 
 @router.get(
     "",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns all Syntax Pre-Instances in their latest/newest version.",
     description="Allowed parameters include : filter on fields, sort by field name with sort direction, pagination",
     response_model=CustomPage[models.ObjectivePreInstance],
@@ -34,8 +36,33 @@ Service = ObjectivePreInstanceService
         500: {"model": ErrorResponse, "description": "Internal Server Error"},
     },
 )
+@decorators.allow_exports(
+    {
+        "defaults": [
+            "library=library.name",
+            "uid",
+            "objective_template=template_name",
+            "name=name",
+            "start_date",
+            "end_date",
+            "status",
+            "version",
+            "change_description",
+            "user_initials",
+        ],
+        "formats": [
+            "text/csv",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "text/xml",
+            "application/json",
+        ],
+    }
+)
+# pylint: disable=unused-argument
 def objective_pre_instances(
-    status: Optional[LibraryItemStatus] = Query(
+    request: Request,  # request is actually required by the allow_exports decorator
+    status: LibraryItemStatus
+    | None = Query(
         None,
         description="If specified, only those Syntax Pre-Instances will be returned that are currently in the specified status. "
         "This may be particularly useful if the Objective Pre-Instance has "
@@ -43,24 +70,24 @@ def objective_pre_instances(
         "Valid values are: 'Final' or 'Draft'.",
     ),
     sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
-    page_number: Optional[int] = Query(
-        1, ge=1, description=_generic_descriptions.PAGE_NUMBER
-    ),
-    page_size: Optional[int] = Query(
+    page_number: int
+    | None = Query(1, ge=1, description=_generic_descriptions.PAGE_NUMBER),
+    page_size: int
+    | None = Query(
         config.DEFAULT_PAGE_SIZE,
         ge=0,
         le=config.MAX_PAGE_SIZE,
         description=_generic_descriptions.PAGE_SIZE,
     ),
-    filters: Optional[Json] = Query(
+    filters: Json
+    | None = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
-    operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    total_count: Optional[bool] = Query(
-        False, description=_generic_descriptions.TOTAL_COUNT
-    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    total_count: bool
+    | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
 ):
     results = ObjectivePreInstanceService().get_all(
         status=status,
@@ -74,16 +101,17 @@ def objective_pre_instances(
     )
 
     return CustomPage.create(
-        items=results.items, total=results.total_count, page=page_number, size=page_size
+        items=results.items, total=results.total, page=page_number, size=page_size
     )
 
 
 @router.get(
     "/headers",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=List[Any],
+    response_model=list[Any],
     status_code=200,
     responses={
         404: {
@@ -95,7 +123,8 @@ def objective_pre_instances(
 )
 def get_distinct_values_for_header(
     current_user_id: str = Depends(get_current_user_id),
-    status: Optional[LibraryItemStatus] = Query(
+    status: LibraryItemStatus
+    | None = Query(
         None,
         description="If specified, only those Syntax Pre-Instances will be returned that are currently in the specified status. "
         "This may be particularly useful if the Objective Pre-Instance has "
@@ -103,18 +132,17 @@ def get_distinct_values_for_header(
         "Valid values are: 'Final' or 'Draft'.",
     ),
     field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
-    search_string: Optional[str] = Query(
-        "", description=_generic_descriptions.HEADER_SEARCH_STRING
-    ),
-    filters: Optional[Json] = Query(
+    search_string: str
+    | None = Query("", description=_generic_descriptions.HEADER_SEARCH_STRING),
+    filters: Json
+    | None = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
-    operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    result_count: Optional[int] = Query(
-        10, description=_generic_descriptions.HEADER_RESULT_COUNT
-    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    result_count: int
+    | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
 ):
     return Service(current_user_id).get_distinct_values_for_header(
         status=status,
@@ -128,6 +156,7 @@ def get_distinct_values_for_header(
 
 @router.get(
     "/audit-trail",
+    dependencies=[rbac.LIBRARY_READ],
     summary="",
     description="",
     response_model=CustomPage[models.ObjectivePreInstance],
@@ -138,18 +167,17 @@ def get_distinct_values_for_header(
     },
 )
 def retrieve_audit_trail(
-    page_number: Optional[int] = Query(
-        1, ge=1, description=_generic_descriptions.PAGE_NUMBER
-    ),
-    page_size: Optional[int] = Query(
+    page_number: int
+    | None = Query(1, ge=1, description=_generic_descriptions.PAGE_NUMBER),
+    page_size: int
+    | None = Query(
         config.DEFAULT_PAGE_SIZE,
         ge=0,
         le=config.MAX_PAGE_SIZE,
         description=_generic_descriptions.PAGE_SIZE,
     ),
-    total_count: Optional[bool] = Query(
-        False, description=_generic_descriptions.TOTAL_COUNT
-    ),
+    total_count: bool
+    | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
     current_user_id: str = Depends(get_current_user_id),
 ):
     results = Service(current_user_id).retrieve_audit_trail(
@@ -157,16 +185,17 @@ def retrieve_audit_trail(
     )
 
     return CustomPage.create(
-        items=results.items, total=results.total_count, page=page_number, size=page_size
+        items=results.items, total=results.total, page=page_number, size=page_size
     )
 
 
 @router.get(
     "/{uid}",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns the latest/newest version of a specific objective pre-instance identified by 'uid'.",
     description="""If multiple request query parameters are used, then they need to
     match all at the same time (they are combined with the AND operation).""",
-    response_model=Optional[models.ObjectivePreInstance],
+    response_model=models.ObjectivePreInstance | None,
     status_code=200,
     responses={
         404: {
@@ -187,6 +216,7 @@ def get(
 
 @router.patch(
     "/{uid}",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Updates the Objective Pre-Instance identified by 'uid'.",
     description="""This request is only valid if the Objective Pre-Instance
 * is in 'Draft' status and
@@ -230,6 +260,7 @@ def edit(
 
 @router.patch(
     "/{uid}/indexings",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Updates the indexings of the Objective Pre-Instance identified by 'uid'.",
     description="""This request is only valid if the Pre-Instance
     * belongs to a library that allows editing (the 'is_editable' property of the library needs to be true).
@@ -262,13 +293,14 @@ def patch_indexings(
 
 @router.get(
     "/{uid}/versions",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns the version history of a specific Objective Pre-Instance identified by 'uid'.",
     description=f"""
 The returned versions are ordered by `start_date` descending (newest entries first).
 
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=List[models.ObjectivePreInstanceVersion],
+    response_model=list[models.ObjectivePreInstanceVersion],
     status_code=200,
     responses={
         200: {
@@ -366,6 +398,7 @@ def get_versions(
 
 @router.post(
     "/{uid}/versions",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Creates a new version of the Objective Pre-Instance identified by 'uid'.",
     description="""This request is only valid if the Objective Pre-Instance
 * is in 'Final' or 'Retired' status only (so no latest 'Draft' status exists) and
@@ -406,6 +439,7 @@ def create_new_version(
 
 @router.delete(
     "/{uid}/activations",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Inactivates/deactivates the objective pre-instance identified by 'uid'.",
     description="""This request is only valid if the objective pre-instance
 * is in 'Final' status only (so no latest 'Draft' status exists).
@@ -440,6 +474,7 @@ def inactivate(
 
 @router.post(
     "/{uid}/activations",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Reactivates the objective pre-instance identified by 'uid'.",
     description="""This request is only valid if the objective pre-instance
 * is in 'Retired' status only (so no latest 'Draft' status exists).
@@ -474,6 +509,7 @@ def reactivate(
 
 @router.delete(
     "/{uid}",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Deletes the Objective Pre-Instance identified by 'uid'.",
     description="""This request is only valid if \n
 * the Objective Pre-Instance is in 'Draft' status and
@@ -508,6 +544,7 @@ def delete(
 
 @router.post(
     "/{uid}/approvals",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Approves the Objective Pre-Instance identified by 'uid'.",
     description="""This request is only valid if the Objective Pre-Instance
 * is in 'Draft' status and

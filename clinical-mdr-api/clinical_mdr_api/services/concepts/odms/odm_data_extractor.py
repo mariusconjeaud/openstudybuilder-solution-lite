@@ -1,5 +1,3 @@
-from typing import Dict, List
-
 from clinical_mdr_api.domains.concepts.utils import TargetType
 from clinical_mdr_api.exceptions import BusinessLogicException
 from clinical_mdr_api.models.concepts.odms.odm_condition import OdmCondition
@@ -44,18 +42,18 @@ from clinical_mdr_api.services.controlled_terminologies.ct_term_attributes impor
 class OdmDataExtractor:
     target_uid: str
     target_name: str
-    status: List[str]
+    status: list[str]
 
-    odm_vendor_namespaces: Dict[str, dict]
-    odm_vendor_elements: Dict[str, dict]
-    odm_forms: List[OdmForm]
-    odm_item_groups: List[OdmItemGroup]
-    odm_items: List[OdmItem]
-    odm_conditions: List[OdmCondition]
-    odm_methods: List[OdmMethod]
-    codelists: List[CTCodelistAttributes]
-    ct_terms: List[Dict[str, str]]
-    unit_definitions: List[UnitDefinitionModel]
+    odm_vendor_namespaces: dict[str, dict]
+    odm_vendor_elements: dict[str, dict]
+    odm_forms: list[OdmForm]
+    odm_item_groups: list[OdmItemGroup]
+    odm_items: list[OdmItem]
+    odm_conditions: list[OdmCondition]
+    odm_methods: list[OdmMethod]
+    codelists: list[CTCodelistAttributes]
+    ct_terms: list[dict[str, str]]
+    unit_definitions: list[UnitDefinitionModel]
 
     vendor_namespace_service: OdmVendorNamespaceService
     vendor_element_service: OdmVendorElementService
@@ -74,7 +72,7 @@ class OdmDataExtractor:
         self,
         target_uid: str,
         target_type: TargetType,
-        status: List[str],
+        status: list[str],
         unit_definition_service,
     ):
         self.unit_definition_service = unit_definition_service
@@ -227,7 +225,7 @@ class OdmDataExtractor:
 
         self.set_item_groups_of_forms(self.odm_forms)
 
-    def set_item_groups_of_forms(self, forms: List[OdmForm]):
+    def set_item_groups_of_forms(self, forms: list[OdmForm]):
         self.odm_item_groups = sorted(
             self.item_group_service.get_all_concepts(
                 filter_by={
@@ -247,7 +245,7 @@ class OdmDataExtractor:
 
         self.set_items_of_item_groups(self.odm_item_groups)
 
-    def set_items_of_item_groups(self, item_groups: List[OdmItemGroup]):
+    def set_items_of_item_groups(self, item_groups: list[OdmItemGroup]):
         self.odm_items = sorted(
             self.item_service.get_all_concepts(
                 filter_by={
@@ -303,7 +301,7 @@ class OdmDataExtractor:
                 key=lambda elm: elm.name,
             )
 
-    def set_unit_definitions_of_items(self, items: List[OdmItem]):
+    def set_unit_definitions_of_items(self, items: list[OdmItem]):
         self.unit_definitions = sorted(
             self.unit_definition_service.get_all(
                 library_name=None,
@@ -321,7 +319,7 @@ class OdmDataExtractor:
             key=lambda elm: elm.name,
         )
 
-    def set_codelists_of_items(self, items: List[OdmItem]):
+    def set_codelists_of_items(self, items: list[OdmItem]):
         self.codelists = sorted(
             self.ct_codelist_attributes_service.get_all_ct_codelists(
                 catalogue_name=None,
@@ -339,7 +337,7 @@ class OdmDataExtractor:
 
         self.set_terms_of_codelists(self.codelists)
 
-    def set_terms_of_codelists(self, codelists: List[CTCodelistAttributes]):
+    def set_terms_of_codelists(self, codelists: list[CTCodelistAttributes]):
         self.ct_terms = sorted(
             self.ct_term_attributes_service.get_term_name_and_attributes_by_codelist_uids(
                 [codelist.codelist_uid for codelist in codelists]

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Self
 
 from clinical_mdr_api.domains.dictionaries.dictionary_term import (
     DictionaryTermAR,
@@ -13,7 +13,7 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
 
 @dataclass(frozen=True)
 class DictionaryTermSubstanceVO(DictionaryTermVO):
-    pclass_uid: Optional[str]
+    pclass_uid: str | None
 
     @classmethod
     def from_repository_values(
@@ -22,10 +22,10 @@ class DictionaryTermSubstanceVO(DictionaryTermVO):
         dictionary_id: str,
         name: str,
         name_sentence_case: str,
-        abbreviation: Optional[str],
-        definition: Optional[str],
-        pclass_uid: Optional[str],
-    ) -> "DictionaryTermSubstanceVO":
+        abbreviation: str | None,
+        definition: str | None,
+        pclass_uid: str | None,
+    ) -> Self:
         dictionary_term_vo = cls(
             codelist_uid=codelist_uid,
             dictionary_id=dictionary_id,
@@ -45,10 +45,10 @@ class DictionaryTermSubstanceVO(DictionaryTermVO):
         dictionary_id: str,
         name: str,
         name_sentence_case: str,
-        abbreviation: Optional[str],
-        definition: Optional[str],
-        pclass_uid: Optional[str],
-    ) -> "DictionaryTermSubstanceVO":
+        abbreviation: str | None,
+        definition: str | None,
+        pclass_uid: str | None,
+    ) -> Self:
         dictionary_term_vo = cls(
             codelist_uid=codelist_uid,
             dictionary_id=dictionary_id,
@@ -78,9 +78,9 @@ class DictionaryTermSubstanceAR(DictionaryTermAR):
         cls,
         uid: str,
         dictionary_term_vo: DictionaryTermSubstanceVO,
-        library: Optional[LibraryVO],
+        library: LibraryVO | None,
         item_metadata: LibraryItemMetadataVO,
-    ) -> "DictionaryTermSubstanceAR":
+    ) -> Self:
         dictionary_codelist_ar = cls(
             _uid=uid,
             _dictionary_term_vo=dictionary_term_vo,

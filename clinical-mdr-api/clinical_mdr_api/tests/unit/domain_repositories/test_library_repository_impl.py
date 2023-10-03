@@ -1,8 +1,10 @@
 from unittest.mock import Mock, patch
 
+import pytest
 from hypothesis import given
 from hypothesis.strategies import booleans, composite, text
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domain_repositories.libraries.library_repository import (
     LibraryRepository,
 )
@@ -46,7 +48,5 @@ def test__library_repository_impl__find_by_name__non_existing_library__result(
     library_mock.nodes.get_or_none.return_value = None
 
     # when
-    find_by_name_result = repo.find_by_name(library_name)
-
-    # then
-    assert find_by_name_result is None
+    with pytest.raises(exceptions.NotFoundException):
+        repo.find_by_name(library_name)

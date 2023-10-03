@@ -1,24 +1,26 @@
 """Objective templates router."""
 
-from typing import List, Optional
 
 from fastapi import APIRouter, Body, Depends, Query
 
 from clinical_mdr_api import models
-from clinical_mdr_api.oauth import get_current_user_id
+from clinical_mdr_api.oauth import get_current_user_id, rbac
 from clinical_mdr_api.services.libraries import libraries as service
 
+# Prefixed with "/libraries"
 router = APIRouter()
 
 
 @router.get(
     "",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns all libraries",
-    response_model=List[models.Library],
+    response_model=list[models.Library],
 )
 # pylint: disable=unused-argument
 def get_libraries(
-    is_editable: Optional[bool] = Query(
+    is_editable: bool
+    | None = Query(
         None,
         description="If specified, only those libraries are returned that are editable. \n"
         "Valid values are: 'true' or 'false'.",
@@ -30,6 +32,7 @@ def get_libraries(
 
 @router.post(
     "",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Creates a new library.",
     response_model=models.Library,
     status_code=201,

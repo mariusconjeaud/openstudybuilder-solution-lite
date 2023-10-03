@@ -1,4 +1,4 @@
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Self
 
 from pydantic import Field, validator
 
@@ -45,7 +45,7 @@ class SimpleDataTypeTerm(BaseModel):
         description="",
         source="has_latest_value.has_data_type.uid",
     )
-    name: Optional[str] = Field(
+    name: str | None = Field(
         None,
         title="parent_class",
         description="",
@@ -63,11 +63,23 @@ class SimpleRoleTerm(BaseModel):
         description="",
         source="has_latest_value.has_role.uid",
     )
-    name: Optional[str] = Field(
+    name: str | None = Field(
         None,
         title="parent_class",
         description="",
         source="has_latest_value.has_role.has_name_root.has_latest_value.name",
+    )
+
+
+class SimpleVariableClass(BaseModel):
+    class Config:
+        orm_mode = True
+
+    uid: str = Field(
+        ...,
+        title="mapped_variable_class",
+        description="",
+        source="maps_variable_class.uid",
     )
 
 
@@ -95,14 +107,15 @@ class ActivityItemClass(VersionProperties):
     )
     data_type: SimpleDataTypeTerm = Field(...)
     role: SimpleRoleTerm = Field(...)
-    activity_instance_classes: List[CompactActivityInstanceClass] = Field(...)
+    activity_instance_classes: list[CompactActivityInstanceClass] = Field(...)
+    variable_classes: list[SimpleVariableClass] | None = Field(None)
     library_name: str = Field(
         ...,
-        title="libraryName",
+        title="library_name",
         description="",
         source="has_library.name",
     )
-    possible_actions: List[str] = Field(
+    possible_actions: list[str] = Field(
         ...,
         description=(
             "Holds those actions that can be performed on the ActivityItemClasses. "
@@ -137,9 +150,9 @@ class ActivityItemClass(VersionProperties):
         cls,
         activity_item_class_ar: ActivityItemClassAR,
         find_activity_instance_class_by_uid: Callable[
-            [str], Optional[ActivityInstanceClassAR]
+            [str], ActivityInstanceClassAR | None
         ],
-    ) -> "ActivityItemClass":
+    ) -> Self:
         activity_instance_classes = [
             find_activity_instance_class_by_uid(activity_instance_class_uid)
             for activity_instance_class_uid in activity_item_class_ar.activity_item_class_vo.activity_instance_class_uids
@@ -163,6 +176,12 @@ class ActivityItemClass(VersionProperties):
                 uid=activity_item_class_ar.activity_item_class_vo.role_uid,
                 name=activity_item_class_ar.activity_item_class_vo.role_name,
             ),
+            variable_classes=[
+                SimpleVariableClass(uid=variable_class.uid)
+                for variable_class in activity_item_class_ar.activity_item_class_vo.variable_class_uids
+            ]
+            if activity_item_class_ar.activity_item_class_vo.variable_class_uids
+            else [],
             library_name=Library.from_library_vo(activity_item_class_ar.library).name,
             start_date=activity_item_class_ar.item_metadata.start_date,
             end_date=activity_item_class_ar.item_metadata.end_date,
@@ -180,21 +199,25 @@ class ActivityItemClassCreateInput(BaseModel):
     name: str
     order: int
     mandatory: bool
-    activity_instance_class_uids: List[str]
+    activity_instance_class_uids: list[str]
     role_uid: str
     data_type_uid: str
     library_name: str
 
 
 class ActivityItemClassEditInput(ActivityItemClassCreateInput):
-    name: Optional[str] = None
-    order: Optional[int] = None
-    mandatory: Optional[bool] = None
-    activity_instance_class_uids: List[str] = []
-    library_name: Optional[str] = None
-    change_description: Optional[str] = None
-    role_uid: Optional[str] = None
-    data_type_uid: Optional[str] = None
+    name: str | None = None
+    order: int | None = None
+    mandatory: bool | None = None
+    activity_instance_class_uids: list[str] = []
+    library_name: str | None = None
+    change_description: str | None = None
+    role_uid: str | None = None
+    data_type_uid: str | None = None
+
+
+class ActivityItemClassMappingInput(BaseModel):
+    variable_class_uids: list[str] = []
 
 
 class ActivityItemClassVersion(ActivityItemClass):
@@ -202,7 +225,7 @@ class ActivityItemClassVersion(ActivityItemClass):
     Class for storing ActivityItemClass and calculation of differences
     """
 
-    changes: Optional[Dict[str, bool]] = Field(
+    changes: dict[str, bool] | None = Field(
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "

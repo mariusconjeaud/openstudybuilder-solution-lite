@@ -7,7 +7,13 @@ OAUTH_ENABLED = environ.get("OAUTH_ENABLED", "").upper().strip() not in (
     "0",
     "OFF",
 )
+OAUTH_RBAC_ENABLED = environ.get("OAUTH_RBAC_ENABLED", "").upper().strip() not in (
+    "FALSE",
+    "0",
+    "OFF",
+)
 OAUTH_APP_ID = environ.get("OAUTH_APP_ID")
+OAUTH_APP_SECRET = environ.get("OAUTH_APP_SECRET")
 OAUTH_APP_ID_URI = environ.get("OAUTH_APP_ID_URI", f"api://{OAUTH_APP_ID}")
 OAUTH_CLIENT_ID = environ.get("OAUTH_CLIENT_ID")
 OUR_SCOPES = {

@@ -183,7 +183,7 @@ This is the default usage of the HTTP Methods:
 | **POST** | **Create new** - Creates a new entity or multiple new entities. This is non-idempotent. Responses can be cached. |  201 - Created |
 | **PUT** | **Overwrite entirely** - Overwrites an existing or multiple existing entities entirely. Does not create a new entity (use POST in this case). This is idempotent. Responses cannot be cached. |  200 - OK |
 | **PATCH** | **Update partially** - Updates some part of an existing entity or multiple existing entities. |  200 - OK |
-| **DELETE** | **Delete existing** - Deletes an existing or multiple existing entities. |  204 - No Content |
+| **DELETE** | **Delete existing** - Soft deletes an existing or multiple existing entities. The previues state is still available in the database for Audit trail usage. |  204 - No Content |
 
 E.g.:
 
@@ -433,9 +433,11 @@ https://www.atlassian.com/de/git/tutorials/comparing-workflows/gitflow-workflow
 
 # Authentication setup
 
-(see [OAuth README file](OAUTH-README.md))
+See `clinical-mdr-api/doc/Auth.md` on how to set up authentication and 
+role-based access control for clinical-mdr-api and StudyBuilder UI.
 
 ---
+
 # Data Objects Structure
 
 Usual Data Objects Properties

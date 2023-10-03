@@ -65,9 +65,9 @@ class TestApi(TestCase):
                     elif path == "/dictionaries/terms":
                         # This test fails because of mandatory query parameter
                         self.assertIn(response.status_code, [422])
-                    elif path == "/dictionaries/codelists/{library}":
-                        # This test fails because of Library that has to exist
-                        self.assertIn(response.status_code, [400])
+                    elif path == "/dictionaries/codelists":
+                        # This test fails because of missing required query parameter `library`
+                        self.assertIn(response.status_code, [422])
                     elif path == "/study-flowchart/flowchart":
                         # This test fails because of mandatory query parameter
                         self.assertIn(response.status_code, [422, 404])
@@ -87,6 +87,9 @@ class TestApi(TestCase):
                         # This test fails because of mandatory query parameter
                         self.assertIn(response.status_code, [422])
                     elif path == "/standards/class-variables":
+                        # This test fails because of mandatory query parameter
+                        self.assertIn(response.status_code, [422])
+                    elif path == "/standards/dataset-scenarios":
                         # This test fails because of mandatory query parameter
                         self.assertIn(response.status_code, [422])
                     elif path == "/system/check/secured":

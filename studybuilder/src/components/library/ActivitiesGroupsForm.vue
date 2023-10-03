@@ -34,13 +34,14 @@
           <v-row>
             <v-col>
               <v-autocomplete
-                v-model="form.activity_group"
+                v-model="form.activity_groups"
                 :items="groups"
                 :label="$t('ActivityForms.groups')"
                 item-text="name"
                 item-value="uid"
                 dense
                 clearable
+                multiple
                 :error-messages="errors"
               />
             </v-col>
@@ -54,7 +55,7 @@
             <v-col>
               <v-text-field
                 v-model="form.name"
-                :label="$t('ActivityForms.name')"
+                :label="subgroup ? $t('ActivityForms.subgroup_name') : $t('ActivityForms.group_name')"
                 hide-details
                 :error-messages="errors"
               />
@@ -117,11 +118,11 @@ export default {
     StepperForm
   },
   props: {
-    editedActivity: Object
+    editedGroupOrSubgroup: Object
   },
   computed: {
     title () {
-      return (!_isEmpty(this.editedActivity))
+      return (!_isEmpty(this.editedGroupOrSubgroup))
         ? this.$t('ActivityForms.edit_group')
         : this.$t('ActivityForms.add_group')
     }
@@ -161,8 +162,15 @@ export default {
       }
       if (!_isEmpty(value)) {
         this.form.name_sentence_case = value.name.charAt(0).toUpperCase() + value.name.slice(1)
-        if (value.activity_group) {
-          this.$set(this.form, 'activity_group', value.activity_group.uid)
+        if (value.activity_groups) {
+          const uids = []
+          for (const item of value.activity_groups) {
+            uids.push(item.uid)
+          }
+          this.$set(this.form, 'activity_groups', uids)
+        }
+        if (this.$refs.stepper) {
+          this.$refs.stepper.setCurrentStep(2)
         }
       }
       this.$store.commit('form/SET_FORM', this.form)
@@ -195,7 +203,7 @@ export default {
     async submit () {
       this.form.library_name = 'Sponsor' // Hardcoded for now at the Sinna and Mikkel request
       this.form.name_sentence_case = this.form.name.charAt(0).toUpperCase() + this.form.name.slice(1)
-      if (!this.editedActivity) {
+      if (!this.editedGroupOrSubgroup) {
         if (!this.subgroup) {
           activities.create(this.form, 'activity-groups').then(resp => {
             bus.$emit('notification', { msg: this.$t('ActivityForms.group_created') })
@@ -209,12 +217,12 @@ export default {
         }
       } else {
         if (!this.subgroup) {
-          activities.update(this.editedActivity.uid, this.form, 'activity-groups').then(resp => {
+          activities.update(this.editedGroupOrSubgroup.uid, this.form, 'activity-groups').then(resp => {
             bus.$emit('notification', { msg: this.$t('ActivityForms.group_updated') })
             this.close()
           })
         } else {
-          activities.update(this.editedActivity.uid, this.form, 'activity-sub-groups').then(resp => {
+          activities.update(this.editedGroupOrSubgroup.uid, this.form, 'activity-sub-groups').then(resp => {
             bus.$emit('notification', { msg: this.$t('ActivityForms.subgroup_updated') })
             this.close()
           })
@@ -223,28 +231,28 @@ export default {
       this.$refs.stepper.loading = false
     },
     checkIfEqual () {
-      if (_isEqual(this.form.change_description, this.editedActivity.change_description) &&
-          _isEqual(this.form.definition, this.editedActivity.definition) &&
-          _isEqual(this.form.name, this.editedActivity.name)) {
+      if (_isEqual(this.form.change_description, this.editedGroupOrSubgroup.change_description) &&
+          _isEqual(this.form.definition, this.editedGroupOrSubgroup.definition) &&
+          _isEqual(this.form.name, this.editedGroupOrSubgroup.name)) {
         return true
       } else {
         return false
       }
     },
     getGroups () {
-      activities.get({}, 'activity-groups').then(resp => {
+      activities.get({ page_size: 0, filters: { status: { v: ['Final'] } } }, 'activity-groups').then(resp => {
         this.groups = resp.data.items
       })
     }
   },
   mounted () {
-    if (!_isEmpty(this.editedActivity)) {
-      this.initForm(this.editedActivity)
+    if (!_isEmpty(this.editedGroupOrSubgroup)) {
+      this.initForm(this.editedGroupOrSubgroup)
     }
     this.getGroups()
   },
   watch: {
-    editedActivity: {
+    editedGroupOrSubgroup: {
       handler (value) {
         if (!_isEmpty(value)) {
           this.initForm(value)

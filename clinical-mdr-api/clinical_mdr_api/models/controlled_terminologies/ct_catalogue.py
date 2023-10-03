@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, Sequence
+from typing import Self, Sequence
 
 from pydantic import Field
 
@@ -17,7 +17,7 @@ class CTCatalogue(BaseModel):
         description="",
     )
 
-    library_name: Optional[str] = Field(
+    library_name: str | None = Field(
         None, title="library_name", description="", nullable=True
     )
 
@@ -35,7 +35,7 @@ class CTCatalogueChanges(BaseModel):
     @classmethod
     def from_repository_output(
         cls, start_datetime: datetime, end_datetime: datetime, query_output
-    ) -> "CTCatalogueChanges":
+    ) -> Self:
         return cls(
             start_datetime=start_datetime,
             end_datetime=end_datetime,

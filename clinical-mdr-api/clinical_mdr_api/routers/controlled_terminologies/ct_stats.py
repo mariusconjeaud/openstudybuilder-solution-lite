@@ -1,22 +1,23 @@
 """CT stats router."""
 
-from typing import Optional
 
 from fastapi import APIRouter, Depends, Query
 
 from clinical_mdr_api import models
-from clinical_mdr_api.oauth import get_current_user_id
+from clinical_mdr_api.oauth import get_current_user_id, rbac
 from clinical_mdr_api.routers import _generic_descriptions
 from clinical_mdr_api.services.controlled_terminologies.ct_codelist import (
     CTCodelistService,
 )
 from clinical_mdr_api.services.controlled_terminologies.ct_stats import CTStatsService
 
+# Prefixed with "/ct"
 router = APIRouter()
 
 
 @router.get(
     "/stats",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns stats about Catalogues, Packages and Terms",
     response_model=models.CTStats,
     status_code=200,
@@ -26,9 +27,8 @@ router = APIRouter()
     },
 )
 def get_stats(
-    latest_count: Optional[int] = Query(
-        3, description="Optional, number of latest codelists to return"
-    ),
+    latest_count: int
+    | None = Query(3, description="Optional, number of latest codelists to return"),
     current_user_id: str = Depends(get_current_user_id),
 ):
     ct_stats_service = CTStatsService()

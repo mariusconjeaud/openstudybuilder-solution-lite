@@ -307,46 +307,13 @@
         }
     },
     {
-        "name": "Test cannot create a new ODM Form with existing name",
+        "name": "Test cannot create a new ODM Form with existing name and oid",
         "request": {
             "headers": {},
             "method": "POST",
             "request": {
                 "library_name": "Sponsor",
                 "name": "name1",
-                "oid": "oid2",
-                "sdtm_version": "0.1",
-                "repeating": "No",
-                "descriptions": [
-                    "odm_description3"
-                ],
-                "alias_uids": []
-            },
-            "url": "concepts/odms/forms"
-        },
-        "response": {
-            "code": 400,
-            "headers": {
-                "content-length": "459",
-                "content-type": "application/json"
-            },
-            "result": {
-                "message": "ODM Form with name (name1) already exists.",
-                "time": "2022-03-07T12: 14: 18.116363",
-                "path": "http://testserver/concepts/odms/forms",
-                "method": "POST",
-                "type": "BusinessLogicException"
-            }
-        }
-    },
-    {
-        "name": "Test cannot create a new ODM Form with existing oid",
-        "request": {
-            "headers": {},
-            "method": "POST",
-            "request": {
-                "library_name": "Sponsor",
-                "name": "name2",
                 "oid": "oid1",
                 "sdtm_version": "0.1",
                 "repeating": "No",
@@ -364,7 +331,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "ODM Form with OID (oid1) already exists.",
+                "message": "ODM Form with ['name: name1', 'OID: oid1'] already exists.",
                 "time": "2022-03-07T12: 14: 18.116363",
                 "path": "http://testserver/concepts/odms/forms",
                 "method": "POST",
@@ -405,7 +372,7 @@
         }
     },
     {
-        "name": "Test cannot create an ODM Form connected to non-existing ODM Description",
+        "name": "Test cannot create an ODM Form connected to non-existing concepts",
         "request": {
             "headers": {},
             "method": "POST",
@@ -418,37 +385,6 @@
                 "descriptions": [
                     "wrong_uid"
                 ],
-                "alias_uids": []
-            },
-            "url": "concepts/odms/forms"
-        },
-        "response": {
-            "code": 400,
-            "headers": {
-                "content-length": "459",
-                "content-type": "application/json"
-            },
-            "result": {
-                "message": "ODM Form tried to connect to non existing ODM Description identified by uid (wrong_uid).",
-                "time": "2022-03-07T12: 14: 18.116363",
-                "path": "http://testserver/concepts/odms/forms",
-                "method": "POST",
-                "type": "BusinessLogicException"
-            }
-        }
-    },
-    {
-        "name": "Test cannot create an ODM Form connected to non-existing ODM Alias",
-        "request": {
-            "headers": {},
-            "method": "POST",
-            "request": {
-                "library_name": "Sponsor",
-                "name": "new name",
-                "oid": "new oid",
-                "sdtm_version": "0.1",
-                "repeating": "No",
-                "descriptions": [],
                 "alias_uids": [
                     "wrong_uid"
                 ]
@@ -462,7 +398,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "ODM Form tried to connect to non existing ODM Alias identified by uid (wrong_uid).",
+                "message": "ODM Form tried to connect to non existing concepts [('Concept Name: ODM Description', \"uids: {'wrong_uid'}\"), ('Concept Name: ODM Alias', \"uids: {'wrong_uid'}\")].",
                 "time": "2022-03-07T12: 14: 18.116363",
                 "path": "http://testserver/concepts/odms/forms",
                 "method": "POST",

@@ -21,7 +21,7 @@
               {{ $t('_global.sentence_case_name') }}
             </v-col>
             <v-col cols="6">
-              {{ activity.activity.name_sentence_name }}
+              {{ activity.activity.name_sentence_case }}
             </v-col>
           </v-row>
           <v-row>
@@ -48,44 +48,21 @@
           </v-row>
           <v-row>
             <v-col cols="2" class="font-weight-bold">
-              {{ $t('ActivityOverview.activity_groups') }}
+              {{ $t('ActivityOverview.activity_groupings') }}
             </v-col>
             <v-col cols="6">
               <v-simple-table>
                 <template v-slot:default>
                   <thead>
                     <tr class="text-left">
-                      <th scope="col">{{ $t('_global.name') }}</th>
-                      <th scope="col">{{ $t('_global.definition') }}</th>
+                      <th scope="col">{{ $t('ActivityOverview.activity_group') }}</th>
+                      <th scope="col">{{ $t('ActivityOverview.activity_subgroup') }}</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="group in activity.activity_groups" :key="group.name">
-                      <td>{{ group.name }}</td>
-                      <td>{{ group.definition }}</td>
-                    </tr>
-                  </tbody>
-                </template>
-              </v-simple-table>
-            </v-col>
-          </v-row>
-          <v-row>
-            <v-col cols="2" class="font-weight-bold">
-              {{ $t('ActivityOverview.activity_subgroups') }}
-            </v-col>
-            <v-col cols="6">
-              <v-simple-table>
-                <template v-slot:default>
-                  <thead>
-                    <tr class="text-left">
-                      <th scope="col">{{ $t('_global.name') }}</th>
-                      <th scope="col">{{ $t('_global.definition') }}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="subgroup in activity.activity_subgroups" :key="subgroup.name">
-                      <td>{{ subgroup.name }}</td>
-                      <td>{{ subgroup.definition }}</td>
+                    <tr v-for="grouping in activity.activity_groupings" :key="grouping.activity_subgroup_name">
+                      <td>{{ grouping.activity_group.name }}</td>
+                      <td>{{ grouping.activity_subgroup.name }}</td>
                     </tr>
                   </tbody>
                 </template>

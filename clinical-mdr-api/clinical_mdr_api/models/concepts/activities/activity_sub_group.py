@@ -1,4 +1,4 @@
-from typing import Callable, Dict, Optional
+from typing import Callable, List, Self
 
 from pydantic import Field
 
@@ -19,18 +19,21 @@ class ActivitySubGroup(ActivityBase):
     def from_activity_ar(
         cls,
         activity_subgroup_ar: ActivitySubGroupAR,
-        find_activity_by_uid: Callable[[str], Optional[CTTermNameAR]],
-    ) -> "ActivitySubGroup":
+        find_activity_by_uid: Callable[[str], CTTermNameAR | None],
+    ) -> Self:
         return cls(
             uid=activity_subgroup_ar.uid,
             name=activity_subgroup_ar.name,
             name_sentence_case=activity_subgroup_ar.concept_vo.name_sentence_case,
             definition=activity_subgroup_ar.concept_vo.definition,
             abbreviation=activity_subgroup_ar.concept_vo.abbreviation,
-            activity_group=ActivityHierarchySimpleModel.from_activity_uid(
-                uid=activity_subgroup_ar.concept_vo.activity_group,
-                find_activity_by_uid=find_activity_by_uid,
-            ),
+            activity_groups=[
+                ActivityHierarchySimpleModel.from_activity_uid(
+                    uid=activity_group_uid,
+                    find_activity_by_uid=find_activity_by_uid,
+                )
+                for activity_group_uid in activity_subgroup_ar.concept_vo.activity_groups
+            ],
             library_name=Library.from_library_vo(activity_subgroup_ar.library).name,
             start_date=activity_subgroup_ar.item_metadata.start_date,
             end_date=activity_subgroup_ar.item_metadata.end_date,
@@ -43,11 +46,11 @@ class ActivitySubGroup(ActivityBase):
             ),
         )
 
-    activity_group: ActivityHierarchySimpleModel
+    activity_groups: List[ActivityHierarchySimpleModel]
 
 
 class ActivitySubGroupInput(ActivityCommonInput):
-    activity_group: Optional[str] = None
+    activity_groups: list[str] | None = None
 
 
 class ActivitySubGroupEditInput(ActivitySubGroupInput):
@@ -63,7 +66,7 @@ class ActivitySubGroupVersion(ActivitySubGroup):
     Class for storing ActivitySubGroup and calculation of differences
     """
 
-    changes: Optional[Dict[str, bool]] = Field(
+    changes: dict[str, bool] | None = Field(
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "

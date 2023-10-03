@@ -50,7 +50,10 @@ const knownCodelists = {
   deliveryDevice: { attribute: 'codelist_name', value: 'Delivery Device' },
   dispensedIn: { attribute: 'codelist_name', value: 'Compound Dispensed In' },
   adverseEvents: { attribute: 'codelist_uid', value: 'C66734' },
-  diseaseMilestoneTypes: { attribute: 'codelist_name', value: 'Disease Milestone Type' }
+  diseaseMilestoneTypes: { attribute: 'codelist_name', value: 'Disease Milestone Type' },
+  footnoteTypes: { attribute: 'codelist_name', value: 'Footnote Type' },
+  footnoteCategories: { attribute: 'codelist_name', value: 'Footnote Category' },
+  footnoteSubCategories: { attribute: 'codelist_name', value: 'Footnoe Sub Category' }
 }
 
 export default {
@@ -78,10 +81,7 @@ export default {
   getTermByUid (termUid) {
     return repository.get(`${resource}/${termUid}/names`)
   },
-  getTermsByCodelistUid (codelistUid) {
-    const params = {
-      codelist_uid: codelistUid
-    }
+  getTermsByCodelistUid (params) {
     return repository.get(`${resource}`, { params })
   }
 }

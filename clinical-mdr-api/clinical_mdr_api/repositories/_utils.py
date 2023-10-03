@@ -3,7 +3,7 @@ import logging
 import re
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Sequence
 
 from dateutil.parser import isoparse
 from neo4j.exceptions import CypherSyntaxError
@@ -14,7 +14,7 @@ from pydantic.types import T, conlist
 from clinical_mdr_api import config, exceptions
 from clinical_mdr_api.models.concepts.concept import VersionProperties
 from clinical_mdr_api.models.controlled_terminologies.ct_term import SimpleTermModel
-from clinical_mdr_api.models.standard_data_models.master_model import MasterModelBase
+from clinical_mdr_api.models.standard_data_models.sponsor_model import SponsorModelBase
 
 # Re-used regex
 nested_regex = re.compile(r"\.")
@@ -90,37 +90,51 @@ data_type_filters = {
 def get_wildcard_filter(filter_elem, model: BaseModel):
     """
     Creates the wildcard filter for all string properties also nested one.
-    The wildcard filter is a 'contains' case insensitive filter that is combined by OR operator with other properties.
-    :param filter_elem:
-    :param model:
-    :return:
+    The wildcard filter is a `contains` case insensitive filter that is combined by OR operator with other properties.
+
+    Args:
+        filter_elem: The filter element containing the search term.
+        model (BaseModel): The model to create the wildcard filter for.
+
+    Returns:
+        The created wildcard filter.
     """
+
     wildcard_filter = []
     for name, field in model.__fields__.items():
         field_source = get_field_path(prop=name, field=field)
         model_sources = get_version_properties_sources()
-        if (
+        if not (
             field_source in model_sources
             and field.type_ is str
-            and not issubclass(model, MasterModelBase)
+            and not issubclass(model, SponsorModelBase)
         ):
-            continue
-        if issubclass(field.type_, BaseModel):
-            q_obj = get_wildcard_filter(filter_elem=filter_elem, model=field.type_)
-            wildcard_filter.append(q_obj)
-        elif field.type_ is str and name not in ["possible_actions"]:
-            q_obj = Q(**{f"{field_source}__icontains": filter_elem.v[0]})
-            wildcard_filter.append(q_obj)
+            if not field.field_info.extra.get("remove_from_wildcard", False):
+                if issubclass(field.type_, BaseModel):
+                    q_obj = get_wildcard_filter(
+                        filter_elem=filter_elem, model=field.type_
+                    )
+                    wildcard_filter.append(q_obj)
+                elif field.type_ is str and name not in ["possible_actions"]:
+                    q_obj = Q(**{f"{field_source}__icontains": filter_elem.v[0]})
+                    wildcard_filter.append(q_obj)
     return functools.reduce(lambda filter1, filter2: filter1 | filter2, wildcard_filter)
 
 
 def get_embedded_field(fields: list, model: BaseModel):
     """
-    Return the embedded field to filter by. For instance we can obtain 'flowchart_group.name' filter clause
+    Returns the embedded field to filter by. For instance we can obtain 'flowchart_group.name' filter clause
     from the client which means that we want to filter by the name property in the flowchart_group nested model.
-    :param fields:
-    :param model:
-    :return:
+
+    Args:
+        fields (list): A list of fields representing the nesting of the desired field.
+        model (BaseModel): The model to search for the nested field.
+
+    Returns:
+        ModelField | Any | None: The nested field to filter by.
+
+    Raises:
+        ValidationException: If the supplied value for 'field_name' is not valid.
     """
     if len(fields) == 1:
         return model.__fields__.get(fields[0])
@@ -136,7 +150,7 @@ def get_embedded_field(fields: list, model: BaseModel):
     except AttributeError as _ex:
         raise exceptions.ValidationException(
             f"{fields[0]}.{fields[1]} is not a valid field"
-        )
+        ) from _ex
 
 
 def get_field(prop, model):
@@ -163,7 +177,7 @@ def get_field_path(prop, field):
     return field_name
 
 
-def get_order_by_clause(sort_by: Optional[dict], model: BaseModel):
+def get_order_by_clause(sort_by: dict | None, model: BaseModel):
     sort_paths = []
     if sort_by:
         for key, value in sort_by.items():
@@ -219,7 +233,7 @@ def get_version_properties_sources() -> list:
     ]
 
 
-def transform_filters_into_neomodel(filter_by: Union[dict, None], model: BaseModel):
+def transform_filters_into_neomodel(filter_by: dict | None, model: BaseModel):
     q_filters = []
     filters = FilterDict(elements=filter_by)
     for prop, filter_elem in filters.elements.items():
@@ -311,9 +325,9 @@ def is_date(string):
 
 
 class GenericFilteringReturn:
-    def __init__(self, items: Sequence[Any], total_count: int):
+    def __init__(self, items: Sequence[Any], total: int):
         self.items = items
-        self.total_count = total_count
+        self.total = total
 
 
 class FilterOperator(Enum):
@@ -337,7 +351,7 @@ class FilterDictElement(BaseModel):
         title="search values",
         description="list of values to use as search values. Can be of any type.",
     )
-    op: Optional[ComparisonOperator] = Field(
+    op: ComparisonOperator | None = Field(
         ComparisonOperator.EQUALS,
         title="comparison operator to apply",
         description="comparison operator from enum, for operations like =, >=, or <",
@@ -355,7 +369,7 @@ class FilterDictElement(BaseModel):
 
 
 class FilterDict(BaseModel):
-    elements: Dict[str, FilterDictElement] = Field(
+    elements: dict[str, FilterDictElement] = Field(
         ...,
         title="filters description",
         description="""filters description, with key being the alias to filter
@@ -429,20 +443,22 @@ class CypherQueryBuilder:
         alias_clause: str,
         page_number: int = 1,
         page_size: int = 0,
-        sort_by: Optional[dict] = None,
-        implicit_sort_by: Optional[str] = None,
-        filter_by: Optional[FilterDict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        sort_by: dict | None = None,
+        implicit_sort_by: str | None = None,
+        filter_by: FilterDict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
-        return_model: Optional[type] = None,
-        wildcard_properties_list: Optional[Sequence[str]] = None,
-        format_filter_sort_keys: Optional[Callable] = None,
+        return_model: type | None = None,
+        wildcard_properties_list: Sequence[str] | None = None,
+        format_filter_sort_keys: Callable | None = None,
+        union_match_clause: str | None = None,
     ):
         if wildcard_properties_list is None:
             wildcard_properties_list = []
 
         self.match_clause = match_clause
         self.alias_clause = alias_clause
+        self.union_match_clause = union_match_clause
         self.sort_by = sort_by if sort_by is not None else {}
         self.implicit_sort_by = implicit_sort_by
         self.page_number = page_number
@@ -485,8 +501,7 @@ class CypherQueryBuilder:
             for traversal in nested_path:
                 attr_desc = attr_desc.type_.__fields__.get(traversal)
                 path = traversal
-                # for prop in nested_path:
-                #     attr_desc = row[prop]
+
             if attr_desc.sub_fields is None:
                 # if field is just SimpleTermModel compare wildcard filter
                 # with name property of SimpleTermModel
@@ -618,7 +633,7 @@ class CypherQueryBuilder:
                                         # Wildcard filtering only searches in properties of type string
                                         if (
                                             attr_desc.type_ is str
-                                            # and field is not a List[str]
+                                            # and field is not a list [str]
                                             and attr_desc.sub_fields is None
                                         ):
                                             # name=$name_0 with name_0 defined in parameter objects
@@ -631,7 +646,7 @@ class CypherQueryBuilder:
                                             _predicates.append(
                                                 f"toLower({attribute}){_parsed_operator}$wildcard_{index}"
                                             )
-                                        # if field is List[str]
+                                        # if field is list [str]
                                         elif (
                                             attr_desc.sub_fields is not None
                                             and attr_desc.type_ is str
@@ -797,6 +812,18 @@ class CypherQueryBuilder:
                 self.pagination_clause,
             ]
         )
+        if self.union_match_clause:
+            self.full_query += " UNION "
+            self.full_query += " ".join(
+                [
+                    self.union_match_clause,
+                    _with_alias_clause,
+                    self.filter_clause,
+                    _return_clause,
+                    self.sort_clause,
+                    self.pagination_clause,
+                ]
+            )
 
     def build_count_query(self) -> None:
         """
@@ -810,14 +837,29 @@ class CypherQueryBuilder:
         _return_count_clause = "RETURN count(*) AS total_count"
 
         # Set clause
-        self.count_query = " ".join(
-            [
-                self.match_clause,
-                _with_alias_clause,
-                self.filter_clause,
-                _return_count_clause,
-            ]
-        )
+        if not self.union_match_clause:
+            self.count_query = " ".join(
+                [
+                    self.match_clause,
+                    _with_alias_clause,
+                    self.filter_clause,
+                    _return_count_clause,
+                ]
+            )
+        else:
+            self.count_query = " ".join(
+                [
+                    self.match_clause,
+                    _with_alias_clause,
+                    self.filter_clause,
+                    _return_count_clause,
+                    "UNION",
+                    self.union_match_clause,
+                    _with_alias_clause,
+                    self.filter_clause,
+                    _return_count_clause,
+                ]
+            )
 
     def build_header_query(self, header_alias: str, result_count: int) -> str:
         """
@@ -873,7 +915,7 @@ class CypherQueryBuilder:
         """
         return re.sub(nested_regex, "_", alias)
 
-    def execute(self) -> Tuple[Any, Any]:
+    def execute(self) -> tuple[Any, Any]:
         try:
             result_array, attributes_names = db.cypher_query(
                 query=self.full_query, params=self.parameters
@@ -885,7 +927,7 @@ class CypherQueryBuilder:
         return result_array, attributes_names
 
 
-def sb_clear_cache(caches: Optional[List[str]] = None):
+def sb_clear_cache(caches: list[str] | None = None):
     """
     Decorator that will clear the specified caches after the wrapped function execution.
     """

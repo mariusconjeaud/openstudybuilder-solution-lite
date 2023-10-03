@@ -38,7 +38,7 @@ Before submitting this PR, please make sure to address the following checklist:
 ## Other
 - [ ] Are there any breaking changes to existing API endpoints that affect other systems?
 - [ ] If yes, we need to inform client applications to synchronize with the changes (e.g. Word add-in)
-- [ ] In case of breaking API and/or DB model changes, create work items (or related PR's) covering the needed changes in other repositories, e.g. [frontend](https://novonordiskit.visualstudio.com/Clinical-MDR/_git/studybuilder), [data-import](https://novonordiskit.visualstudio.com/Clinical-MDR/_git/data-import), [db-schema-migration](https://novonordiskit.visualstudio.com/Clinical-MDR/_git/db-schema-migration), [verifications](https://novonordiskit.visualstudio.com/Clinical-MDR/_git/verifications?path=/tests). 
+- [ ] In case of breaking API and/or DB model changes, create work items (or related PR's) covering the needed changes in other repositories, e.g. [frontend](https://novonordiskit.visualstudio.com/Clinical-MDR/_git/studybuilder), [studybuilder-import](https://novonordiskit.visualstudio.com/Clinical-MDR/_git/studybuilder-import), [db-schema-migration](https://novonordiskit.visualstudio.com/Clinical-MDR/_git/db-schema-migration), [verifications](https://novonordiskit.visualstudio.com/Clinical-MDR/_git/verifications?path=/tests). 
 
 ---
 

@@ -1,8 +1,8 @@
 import csv
 from dataclasses import asdict, dataclass
 from enum import Enum
-from typing import Optional
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domain_repositories.controlled_terminologies.configuration_repository import (
     CTConfigRepository,
 )
@@ -37,9 +37,9 @@ class StudyFieldType(Enum):
 class StudyFieldConfigurationEntry:
     study_field_data_type: StudyFieldType  # maps to name property from config_value
     study_field_name: str
-    study_field_null_value_code: Optional[str]
-    configured_codelist_uid: Optional[str]
-    configured_term_uid: Optional[str]
+    study_field_null_value_code: str | None
+    configured_codelist_uid: str | None
+    configured_term_uid: str | None
     study_field_grouping: str  # stores name of value object in study AR
     study_value_object_class: type
     study_field_name_api: str
@@ -112,7 +112,7 @@ def from_file(filename):
                         elif v == "id_metadata.registry_identifiers":
                             data["study_value_object_class"] = RegistryIdentifiersVO
                         else:
-                            raise ValueError(f"Unknow field {v}")
+                            raise exceptions.ValidationException(f"Unknow field {v}")
             item = StudyFieldConfigurationEntry(**data)
             dataset.append(item)
     return dataset
@@ -148,7 +148,7 @@ def from_database():
                     elif v == "id_metadata.registry_identifiers":
                         data["study_value_object_class"] = RegistryIdentifiersVO
                     else:
-                        raise ValueError(f"Unknown field {v}")
+                        raise exceptions.ValidationException(f"Unknown field {v}")
         item = StudyFieldConfigurationEntry(**data)
         dataset.append(item)
     return dataset

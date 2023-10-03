@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable, List, Optional
+from typing import Callable, Self
 
 from clinical_mdr_api.domains.concepts.concept_base import ConceptVO
 from clinical_mdr_api.domains.concepts.odms.odm_ar_base import OdmARBase
@@ -16,34 +16,34 @@ from clinical_mdr_api.models.utils import booltostr
 
 @dataclass(frozen=True)
 class OdmFormVO(ConceptVO):
-    oid: Optional[str]
-    repeating: Optional[str]
-    sdtm_version: Optional[str]
-    scope_uid: Optional[str]
-    description_uids: List[str]
-    alias_uids: List[str]
-    activity_group_uids: List[str]
-    item_group_uids: List[str]
-    vendor_attribute_uids: List[str]
-    vendor_element_uids: List[str]
-    vendor_element_attribute_uids: List[str]
+    oid: str | None
+    repeating: str | None
+    sdtm_version: str | None
+    scope_uid: str | None
+    description_uids: list[str]
+    alias_uids: list[str]
+    activity_group_uids: list[str]
+    item_group_uids: list[str]
+    vendor_attribute_uids: list[str]
+    vendor_element_uids: list[str]
+    vendor_element_attribute_uids: list[str]
 
     @classmethod
     def from_repository_values(
         cls,
-        oid: Optional[str],
+        oid: str | None,
         name: str,
-        sdtm_version: Optional[str],
-        repeating: Optional[str],
-        scope_uid: Optional[str],
-        description_uids: List[str],
-        alias_uids: List[str],
-        activity_group_uids: List[str],
-        item_group_uids: List[str],
-        vendor_element_uids: List[str],
-        vendor_attribute_uids: List[str],
-        vendor_element_attribute_uids: List[str],
-    ) -> "OdmFormVO":
+        sdtm_version: str | None,
+        repeating: str | None,
+        scope_uid: str | None,
+        description_uids: list[str],
+        alias_uids: list[str],
+        activity_group_uids: list[str],
+        item_group_uids: list[str],
+        vendor_element_uids: list[str],
+        vendor_attribute_uids: list[str],
+        vendor_element_attribute_uids: list[str],
+    ) -> Self:
         return cls(
             oid=oid,
             name=name,
@@ -65,43 +65,38 @@ class OdmFormVO(ConceptVO):
 
     def validate(
         self,
-        concept_exists_by_callback: Callable[[str, str], bool],
-        find_term_callback: Callable[[str], Optional[CTTermAttributesAR]],
+        concept_exists_by_callback: Callable[[str, str, bool], bool],
+        find_term_callback: Callable[[str], CTTermAttributesAR | None],
         odm_description_exists_by_callback: Callable[[str, str, bool], bool],
         odm_alias_exists_by_callback: Callable[[str, str, bool], bool],
-        previous_name: Optional[str] = None,
-        previous_oid: Optional[str] = None,
+        previous_name: str | None = None,
+        previous_oid: str | None = None,
     ) -> None:
-        if concept_exists_by_callback("name", self.name) and previous_name != self.name:
-            raise BusinessLogicException(
-                f"ODM Form with name ({self.name}) already exists."
-            )
-
-        if (
-            self.oid
-            and concept_exists_by_callback("oid", self.oid)
-            and previous_oid != self.oid
-        ):
-            raise BusinessLogicException(
-                f"ODM Form with OID ({self.oid}) already exists."
-            )
+        self.duplication_check(
+            [("name", self.name, previous_name), ("OID", self.oid, previous_oid)],
+            concept_exists_by_callback,
+            "ODM Form",
+        )
+        self.check_concepts_exist(
+            [
+                (
+                    self.description_uids,
+                    "ODM Description",
+                    odm_description_exists_by_callback,
+                ),
+                (
+                    self.alias_uids,
+                    "ODM Alias",
+                    odm_alias_exists_by_callback,
+                ),
+            ],
+            "ODM Form",
+        )
 
         if self.scope_uid is not None and not find_term_callback(self.scope_uid):
             raise BusinessLogicException(
                 f"ODM Form tried to connect to non existing Scope identified by uid ({self.scope_uid})."
             )
-
-        for description_uid in self.description_uids:
-            if not odm_description_exists_by_callback("uid", description_uid, True):
-                raise BusinessLogicException(
-                    f"ODM Form tried to connect to non existing ODM Description identified by uid ({description_uid})."
-                )
-
-        for alias_uid in self.alias_uids:
-            if not odm_alias_exists_by_callback("uid", alias_uid, True):
-                raise BusinessLogicException(
-                    f"ODM Form tried to connect to non existing ODM Alias identified by uid ({alias_uid})."
-                )
 
 
 @dataclass
@@ -121,9 +116,9 @@ class OdmFormAR(OdmARBase):
         cls,
         uid: str,
         concept_vo: OdmFormVO,
-        library: Optional[LibraryVO],
+        library: LibraryVO | None,
         item_metadata: LibraryItemMetadataVO,
-    ) -> "OdmFormAR":
+    ) -> Self:
         return cls(
             _uid=uid,
             _concept_vo=concept_vo,
@@ -137,18 +132,18 @@ class OdmFormAR(OdmARBase):
         author: str,
         concept_vo: OdmFormVO,
         library: LibraryVO,
-        generate_uid_callback: Callable[[], Optional[str]] = (lambda: None),
-        concept_exists_by_callback: Callable[[str, str], bool] = lambda x, y: True,
-        find_term_callback: Callable[
-            [str], Optional[CTTermAttributesAR]
-        ] = lambda _: None,
+        generate_uid_callback: Callable[[], str | None] = (lambda: None),
+        concept_exists_by_callback: Callable[
+            [str, str, bool], bool
+        ] = lambda x, y, z: True,
+        find_term_callback: Callable[[str], CTTermAttributesAR | None] = lambda _: None,
         odm_description_exists_by_callback: Callable[
             [str, str, bool], bool
         ] = lambda x, y, z: True,
         odm_alias_exists_by_callback: Callable[
             [str, str, bool], bool
         ] = lambda x, y, z: True,
-    ) -> "OdmFormAR":
+    ) -> Self:
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(author=author)
 
         concept_vo.validate(
@@ -168,13 +163,12 @@ class OdmFormAR(OdmARBase):
     def edit_draft(
         self,
         author: str,
-        change_description: Optional[str],
+        change_description: str | None,
         concept_vo: OdmFormVO,
-        concept_exists_by_name_callback: Callable[[str], bool] = lambda _: True,
-        concept_exists_by_callback: Callable[[str, str], bool] = lambda x, y: True,
-        find_term_callback: Callable[
-            [str], Optional[CTTermAttributesAR]
-        ] = lambda _: None,
+        concept_exists_by_callback: Callable[
+            [str, str, bool], bool
+        ] = lambda x, y, z: True,
+        find_term_callback: Callable[[str], CTTermAttributesAR | None] = lambda _: None,
         odm_description_exists_by_callback: Callable[
             [str, str, bool], bool
         ] = lambda x, y, z: True,
@@ -219,7 +213,7 @@ class OdmFormRefVO:
         mandatory: bool,
         locked: bool,
         collection_exception_condition_oid: str,
-    ) -> "OdmFormRefVO":
+    ) -> Self:
         return cls(
             uid=uid,
             name=name,

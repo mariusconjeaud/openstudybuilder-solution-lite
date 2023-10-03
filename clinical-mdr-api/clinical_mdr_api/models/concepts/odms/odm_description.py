@@ -1,4 +1,4 @@
-from typing import Callable, Dict, List, Optional, Union
+from typing import Callable, Self
 
 from pydantic import BaseModel, Field
 
@@ -14,15 +14,13 @@ from clinical_mdr_api.models.error import BatchErrorResponse
 
 class OdmDescription(ConceptModel):
     language: str
-    description: Optional[str] = Field(None, nullable=True)
-    instruction: Optional[str] = Field(None, nullable=True)
-    sponsor_instruction: Optional[str] = Field(None, nullable=True)
-    possible_actions: List[str]
+    description: str | None = Field(None, nullable=True)
+    instruction: str | None = Field(None, nullable=True)
+    sponsor_instruction: str | None = Field(None, nullable=True)
+    possible_actions: list[str]
 
     @classmethod
-    def from_odm_description_ar(
-        cls, odm_description_ar: OdmDescriptionAR
-    ) -> "OdmDescription":
+    def from_odm_description_ar(cls, odm_description_ar: OdmDescriptionAR) -> Self:
         return cls(
             uid=odm_description_ar._uid,
             name=odm_description_ar.name,
@@ -48,8 +46,8 @@ class OdmDescriptionSimpleModel(BaseModel):
     def from_odm_description_uid(
         cls,
         uid: str,
-        find_odm_description_by_uid: Callable[[str], Optional[ConceptARBase]],
-    ) -> Optional["OdmDescriptionSimpleModel"]:
+        find_odm_description_by_uid: Callable[[str], ConceptARBase | None],
+    ) -> Self | None:
         if uid is not None:
             odm_description = find_odm_description_by_uid(uid)
 
@@ -78,34 +76,32 @@ class OdmDescriptionSimpleModel(BaseModel):
         return simple_odm_description_model
 
     uid: str = Field(..., title="uid", description="")
-    name: Optional[str] = Field(None, title="name", description="", nullable=True)
-    language: Optional[str] = Field(
-        None, title="language", description="", nullable=True
-    )
-    description: Optional[str] = Field(
+    name: str | None = Field(None, title="name", description="", nullable=True)
+    language: str | None = Field(None, title="language", description="", nullable=True)
+    description: str | None = Field(
         None, title="description", description="", nullable=True
     )
-    instruction: Optional[str] = Field(
+    instruction: str | None = Field(
         None, title="instruction", description="", nullable=True
     )
-    sponsor_instruction: Optional[str] = Field(
+    sponsor_instruction: str | None = Field(
         None, title="sponsor_instruction", description="", nullable=True
     )
-    version: Optional[str] = Field(None, title="version", description="", nullable=True)
+    version: str | None = Field(None, title="version", description="", nullable=True)
 
 
 class OdmDescriptionPostInput(ConceptPostInput):
     language: str
-    description: Optional[str]
-    instruction: Optional[str]
-    sponsor_instruction: Optional[str]
+    description: str | None
+    instruction: str | None
+    sponsor_instruction: str | None
 
 
 class OdmDescriptionPatchInput(ConceptPatchInput):
-    language: Optional[str]
-    description: Optional[str]
-    instruction: Optional[str]
-    sponsor_instruction: Optional[str]
+    language: str | None
+    description: str | None
+    instruction: str | None
+    sponsor_instruction: str | None
 
 
 class OdmDescriptionBatchPatchInput(OdmDescriptionPatchInput):
@@ -116,7 +112,7 @@ class OdmDescriptionBatchInput(BaseModel):
     method: str = Field(
         ..., title="method", description="HTTP method corresponding to operation type"
     )
-    content: Union[OdmDescriptionBatchPatchInput, OdmDescriptionPostInput]
+    content: OdmDescriptionBatchPatchInput | OdmDescriptionPostInput
 
 
 class OdmDescriptionBatchOutput(BaseModel):
@@ -125,7 +121,7 @@ class OdmDescriptionBatchOutput(BaseModel):
         title="response_code",
         description="The HTTP response code related to input operation",
     )
-    content: Union[OdmDescription, None, BatchErrorResponse]
+    content: OdmDescription | None | BatchErrorResponse
 
 
 class OdmDescriptionVersion(OdmDescription):
@@ -133,7 +129,7 @@ class OdmDescriptionVersion(OdmDescription):
     Class for storing OdmDescription and calculation of differences
     """
 
-    changes: Optional[Dict[str, bool]] = Field(
+    changes: dict[str, bool] | None = Field(
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "

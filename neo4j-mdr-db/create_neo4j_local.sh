@@ -27,9 +27,8 @@ PLUGINS="$WD/plugins"
 IMPORT="$WD/import_files"
 # Load scripts directory
 SCRIPTS="$WD/load_scripts"
-# Directories for database import and export
-DB_IMPORT_DIR="$WD/db_import"
-DB_EXPORT_DIR="$WD/db_export"
+# Directory for database import and export
+DB_BACKUP_DIR="$WD/db_backups"
 
 # User and Group
 USER_AND_GROUP="$(id -u):$(id -g)"
@@ -40,8 +39,7 @@ echo "- Creating directories to mount"
 [ -d "$PLUGINS" ] || mkdir -p "$PLUGINS"
 [ -d "$IMPORT" ] || mkdir -p "$IMPORT"
 [ -d "$SCRIPTS" ] || mkdir -p "$SCRIPTS"
-[ -d "$DB_IMPORT_DIR" ] || mkdir -p "$DB_IMPORT_DIR"
-[ -d "$DB_EXPORT_DIR" ] || mkdir -p "$DB_EXPORT_DIR"
+[ -d "$DB_BACKUP_DIR" ] || mkdir -p "$DB_BACKUP_DIR"
 
 echo "- Creating and starting container neo4j_local"
 docker run -d \
@@ -53,24 +51,26 @@ docker run -d \
     -v "$PLUGINS":/plugins \
     -v "$IMPORT":/var/lib/neo4j/import \
     -v "$SCRIPTS":/var/lib/neo4j/load_scripts \
-    -v "$DB_IMPORT_DIR":/db_import \
-    -v "$DB_EXPORT_DIR":/db_export \
+    -v "$DB_BACKUP_DIR":/db_backup \
     -v /etc/ssl/certs:/etc/ssl/certs \
     -e NEO4J_AUTH="$NEO4J_MDR_AUTH_USER"/"$NEO4J_MDR_AUTH_PASSWORD" \
     -e NEO4J_ACCEPT_LICENSE_AGREEMENT=yes \
     -e NEO4J_apoc_import_file_enabled=true \
     -e NEO4J_apoc_export_file_enabled=true \
     -e NEO4J_apoc_trigger_enabled=true \
-    -e NEO4J_dbms_memory_heap_max__size=2g \
-    -e NEO4J_dbms_memory_pagecache_size=4g \
-    -e NEO4J_dbms_allow__upgrade=true\
+    -e NEO4J_server_memory_heap_max__size=4g \
+    -e NEO4J_server_memory_heap_initial__size=4g \
+    -e NEO4J_server_memory_pagecache_size=4g \
+    -e NEO4J_dbms_memory_transaction_total_max=6g \
     -e NEO4J_dbms_max__databases=1000 \
-    -e NEO4J_dbms_connector_bolt_advertised__address="$NEO4J_MDR_HOST":"$NEO4J_MDR_BOLT_PORT" \
-    -e NEO4J_dbms_connector_http_advertised__address="$NEO4J_MDR_HOST":"$NEO4J_MDR_HTTP_PORT" \
-    -e NEO4J_dbms_connector_https_advertised__address="$NEO4J_MDR_HOST":"$NEO4J_MDR_HTTPS_PORT" \
-    -e NEO4J_dbms_connector_bolt_listen__address=:"$NEO4J_MDR_BOLT_PORT" \
-    -e NEO4J_dbms_connector_http_listen__address=:"$NEO4J_MDR_HTTP_PORT" \
-    -e NEO4J_dbms_connector_https_listen__address=:"$NEO4J_MDR_HTTPS_PORT" \
-    -e NEO4J_metrics_enabled=false \
-    --env=NEO4JLABS_PLUGINS='["apoc"]' \
-    neo4j:4.4.12-enterprise
+    -e NEO4J_server_logs_gc_enabled=false \
+    -e NEO4J_db_logs_query_enabled=OFF \
+    -e NEO4J_server_bolt_advertised__address="$NEO4J_MDR_HOST":"$NEO4J_MDR_BOLT_PORT" \
+    -e NEO4J_server_http_advertised__address="$NEO4J_MDR_HOST":"$NEO4J_MDR_HTTP_PORT" \
+    -e NEO4J_server_https_advertised__address="$NEO4J_MDR_HOST":"$NEO4J_MDR_HTTPS_PORT" \
+    -e NEO4J_server_bolt_listen__address=:"$NEO4J_MDR_BOLT_PORT" \
+    -e NEO4J_server_http_listen__address=:"$NEO4J_MDR_HTTP_PORT" \
+    -e NEO4J_server_https_listen__address=:"$NEO4J_MDR_HTTPS_PORT" \
+    -e NEO4J_server_metrics_enabled=false \
+    --env=NEO4J_PLUGINS='["apoc"]' \
+    neo4j:5.9.0-enterprise

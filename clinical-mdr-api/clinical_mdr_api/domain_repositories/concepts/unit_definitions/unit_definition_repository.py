@@ -1,4 +1,4 @@
-from typing import Optional, Tuple, cast
+from typing import cast
 
 from neomodel import db
 
@@ -68,8 +68,8 @@ class UnitDefinitionRepository(ConceptGenericRepository[UnitDefinitionAR]):
         """
 
     def create_query_filter_statement(
-        self, library: Optional[str] = None, **kwargs
-    ) -> Tuple[str, dict]:
+        self, library: str | None = None, **kwargs
+    ) -> tuple[str, dict]:
         (
             filter_statements_from_concept,
             filter_query_parameters,
@@ -266,9 +266,6 @@ class UnitDefinitionRepository(ConceptGenericRepository[UnitDefinitionAR]):
             )
 
         return value_node
-
-    def _get_uid_or_none(self, node):
-        return node.uid if node is not None else None
 
     def _has_data_changed(
         self, ar: UnitDefinitionAR, value: UnitDefinitionValue

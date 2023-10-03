@@ -1,4 +1,4 @@
-from typing import Any, Callable, Iterable, Optional
+from typing import Any, Callable, Iterable, Self
 
 from clinical_mdr_api.domains.concepts.unit_definitions.unit_definition import (
     UnitDefinitionAR,
@@ -17,15 +17,15 @@ class DurationJsonModel(BaseModel):
         title = "Duration"
         description = "Duration model to store ISO8601 duration."
 
-    duration_value: Optional[int]
-    duration_unit_code: Optional[UnitDefinitionSimpleModel]
+    duration_value: int | None
+    duration_unit_code: UnitDefinitionSimpleModel | None
 
     @classmethod
     def from_duration_object(
         cls,
         duration: Any,
         find_all_study_time_units: Callable[[str], Iterable[UnitDefinitionAR]],
-    ) -> "DurationJsonModel":
+    ) -> Self:
         duration_value, duration_unit = from_duration_object_to_value_and_unit(
             duration, find_all_study_time_units
         )

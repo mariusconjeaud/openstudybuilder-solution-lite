@@ -56,9 +56,12 @@ const getters = {
 }
 
 const mutations = {
-  SELECT_STUDY (state, study) {
-    state.selectedStudy = study
-    localStorage.setItem('selectedStudy', JSON.stringify(study))
+  SELECT_STUDY (state, { studyObj, forceReload }) {
+    state.selectedStudy = studyObj
+    localStorage.setItem('selectedStudy', JSON.stringify(studyObj))
+    if (forceReload) {
+      document.location.reload()
+    }
   },
   UNSELECT_STUDY (state) {
     state.selectedStudy = null
@@ -122,7 +125,7 @@ const actions = {
     const selectedStudy = localStorage.getItem('selectedStudy')
     if (selectedStudy) {
       const parsedStudy = JSON.parse(selectedStudy)
-      dispatch('selectStudy', parsedStudy)
+      dispatch('selectStudy', { studyObj: parsedStudy })
       try {
         await study.getStudy(parsedStudy.uid, true)
       } catch (error) {
@@ -130,8 +133,8 @@ const actions = {
       }
     }
   },
-  selectStudy ({ commit }, studyObj) {
-    commit('SELECT_STUDY', studyObj)
+  selectStudy ({ commit }, { studyObj, forceReload }) {
+    commit('SELECT_STUDY', { studyObj, forceReload })
     study.getStudyPreferredTimeUnit(studyObj.uid).then(resp => {
       commit('SET_STUDY_PREFERRED_TIME_UNIT', resp.data)
     })

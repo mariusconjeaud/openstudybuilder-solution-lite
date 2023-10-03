@@ -3,6 +3,7 @@ from typing import Sequence
 
 from neomodel import db
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.config import (
     GLOBAL_ANCHOR_VISIT_NAME,
     PREVIOUS_VISIT_NAME,
@@ -10,6 +11,9 @@ from clinical_mdr_api.config import (
 )
 from clinical_mdr_api.domain_repositories.concepts.unit_definitions.unit_definition_repository import (
     UnitDefinitionRepository,
+)
+from clinical_mdr_api.domain_repositories.generic_repository import (
+    manage_previous_connected_study_selection_relationships,
 )
 from clinical_mdr_api.domain_repositories.models._utils import to_relation_trees
 from clinical_mdr_api.domain_repositories.models.concepts import (
@@ -24,7 +28,7 @@ from clinical_mdr_api.domain_repositories.models.concepts import (
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
     CTTermRoot,
 )
-from clinical_mdr_api.domain_repositories.models.study import StudyRoot, StudyValue
+from clinical_mdr_api.domain_repositories.models.study import StudyRoot
 from clinical_mdr_api.domain_repositories.models.study_audit_trail import (
     Create,
     Delete,
@@ -245,7 +249,6 @@ class StudyVisitRepository:
             description=study_visit_ogm_input.description,
             start_rule=study_visit_ogm_input.start_rule,
             end_rule=study_visit_ogm_input.end_rule,
-            note=study_visit_ogm_input.note,
             visit_contact_mode=study_visit_ogm_input.visit_contact_mode,
             epoch_allocation=study_visit_ogm_input.epoch_allocation,
             visit_type=study_visit_ogm_input.visit_type,
@@ -287,7 +290,6 @@ class StudyVisitRepository:
             description=study_visit_vo.description,
             start_rule=study_visit_vo.start_rule,
             end_rule=study_visit_vo.end_rule,
-            note=study_visit_vo.note,
             visit_contact_mode=study_visit_vo.visit_contact_mode,
             epoch_allocation=study_visit_vo.epoch_allocation,
             visit_type=study_visit_vo.visit_type,
@@ -365,9 +367,13 @@ class StudyVisitRepository:
             if ith_visit_node not in unique_visits:
                 unique_visits.extend([ith_visit_node])
         if len(unique_visits) > 1:
-            raise ValueError(f"Found more than one StudyVisit node with uid='{uid}'.")
+            raise exceptions.ValidationException(
+                f"Found more than one StudyVisit node with uid='{uid}'."
+            )
         if len(unique_visits) == 0:
-            raise ValueError(f"The study visit with uid='{uid}' could not be found.")
+            raise exceptions.ValidationException(
+                f"The study visit with uid='{uid}' could not be found."
+            )
         return self.from_neomodel_to_vo(
             study_visit_ogm_input=StudyVisitOGM.from_orm(unique_visits[0])
         )
@@ -443,7 +449,7 @@ class StudyVisitRepository:
             user_initials=study_visit.author,
         )
         action.save()
-        new_item.has_after.connect(action)
+        action.has_after.connect(new_item)
         study_root.audit_trail.connect(action)
 
     def manage_versioning_update(
@@ -459,8 +465,8 @@ class StudyVisitRepository:
             user_initials=study_visit.author,
         )
         action.save()
-        previous_item.has_before.connect(action)
-        new_item.has_after.connect(action)
+        action.has_before.connect(previous_item)
+        action.has_after.connect(new_item)
         study_root.audit_trail.connect(action)
 
     def manage_versioning_delete(
@@ -476,15 +482,15 @@ class StudyVisitRepository:
             user_initials=study_visit.author,
         )
         action.save()
-        previous_item.has_before.connect(action)
-        new_item.has_after.connect(action)
+        action.has_before.connect(previous_item)
+        action.has_after.connect(new_item)
         study_root.audit_trail.connect(action)
 
     def _update(self, study_visit: StudyVisitVO, create: bool = False):
         study_root = StudyRoot.nodes.get(uid=study_visit.study_uid)
         study_value = study_root.latest_value.get_or_none()
         if study_value is None:
-            raise ValueError("Study does not have draft version")
+            raise exceptions.ValidationException("Study does not have draft version")
 
         new_visit = StudyVisit(
             uid=study_visit.uid,
@@ -506,7 +512,6 @@ class StudyVisitRepository:
             description=study_visit.description,
             start_rule=study_visit.start_rule,
             end_rule=study_visit.end_rule,
-            note=study_visit.note,
             status=study_visit.status.name,
             visit_class=study_visit.visit_class.name,
             visit_subclass=study_visit.visit_subclass.name
@@ -586,10 +591,6 @@ class StudyVisitRepository:
                     previous_item=previous_item,
                     new_item=new_visit,
                 )
-                self._manage_previous_outbound_relationships(
-                    previous_item=previous_item,
-                    latest_study_value_node=study_value,
-                )
             else:
                 new_visit.has_study_visit.connect(study_value)
                 self.manage_versioning_update(
@@ -598,10 +599,15 @@ class StudyVisitRepository:
                     previous_item=previous_item,
                     new_item=new_visit,
                 )
-                self._manage_previous_outbound_relationships(
-                    previous_item=previous_item,
-                    latest_study_value_node=study_value,
-                )
+            exclude_study_selection_relationships = [
+                StudyEpoch,
+            ]
+            manage_previous_connected_study_selection_relationships(
+                previous_item=previous_item,
+                study_value_node=study_value,
+                new_item=new_visit,
+                exclude_study_selection_relationships=exclude_study_selection_relationships,
+            )
         else:
             new_visit.has_study_visit.connect(study_value)
             self.manage_versioning_create(
@@ -609,9 +615,3 @@ class StudyVisitRepository:
             )
 
         return study_visit
-
-    def _manage_previous_outbound_relationships(
-        self, previous_item: StudyVisit, latest_study_value_node: StudyValue
-    ):
-        # DROP StudyValue relationship
-        previous_item.has_study_visit.disconnect(latest_study_value_node)

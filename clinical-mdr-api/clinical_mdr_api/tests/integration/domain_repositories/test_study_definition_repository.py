@@ -1,6 +1,5 @@
 import sys
 import unittest
-from typing import Dict
 
 from neomodel import db  # type: ignore
 
@@ -734,7 +733,7 @@ class TestStudyDefinitionRepository(unittest.TestCase):
         # then
         # we check if all test_studies are in all_studies_in_db
         # to achieve this we build a dictionary first
-        db_studies: Dict[str, StudyDefinitionAR] = {}
+        db_studies: dict[str, StudyDefinitionAR] = {}
         for _study in all_studies_in_db:
             db_studies[_study.uid] = _study
 
@@ -773,7 +772,7 @@ class TestStudyDefinitionRepository(unittest.TestCase):
         # we check if all test_studies are in all_studies_in_db
         # to achieve this we build a dictionary first
         # TODO: would be nice to do the sort order check as well (not doing that currently)
-        db_studies: Dict[str, StudyDefinitionAR] = {}
+        db_studies: dict[str, StudyDefinitionAR] = {}
         for _study in all_studies_in_db:
             db_studies[_study.uid] = _study
 

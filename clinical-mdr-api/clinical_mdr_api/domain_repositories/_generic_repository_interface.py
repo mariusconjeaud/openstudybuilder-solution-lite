@@ -1,6 +1,6 @@
 import abc
 from datetime import datetime
-from typing import Generic, Iterable, Optional, TypeVar
+from typing import Generic, Iterable, TypeVar
 
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
 
@@ -18,8 +18,8 @@ class GenericRepository(Generic[_AggregateRootType], abc.ABC):
     def find_all(
         self,
         *,
-        status: Optional[LibraryItemStatus] = None,
-        library_name: Optional[str] = None,
+        status: LibraryItemStatus | None = None,
+        library_name: str | None = None,
     ) -> Iterable[_AggregateRootType]:
         raise NotImplementedError()
 
@@ -28,11 +28,11 @@ class GenericRepository(Generic[_AggregateRootType], abc.ABC):
         self,
         uid: str,
         *,
-        version: Optional[str] = None,
-        status: Optional[LibraryItemStatus] = None,
-        at_specific_date: Optional[datetime] = None,
+        version: str | None = None,
+        status: LibraryItemStatus | None = None,
+        at_specific_date: datetime | None = None,
         for_update: bool = False,
-    ) -> Optional[_AggregateRootType]:
+    ) -> _AggregateRootType | None:
         raise NotImplementedError()
 
     @abc.abstractmethod
@@ -41,7 +41,7 @@ class GenericRepository(Generic[_AggregateRootType], abc.ABC):
 
     @property
     @abc.abstractmethod
-    def user_initials(self) -> Optional[str]:
+    def user_initials(self) -> str | None:
         raise NotImplementedError()
 
     @user_initials.setter

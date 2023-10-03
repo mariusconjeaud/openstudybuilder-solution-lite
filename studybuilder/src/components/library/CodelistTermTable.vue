@@ -18,8 +18,15 @@
       :codelist-uid="codelistUid"
     >
       <template v-slot:actions="">
-        <v-btn v-if="codelistAttributes.extensible" fab dark small color="primary" data-cy="add-term-button"
-          @click.stop="showCreationForm = true" :title="$t('CodelistTermCreationForm.title')">
+        <v-btn
+          v-if="codelistAttributes.extensible"
+          fab
+          small
+          color="primary"
+          data-cy="add-term-button"
+          @click.stop="showCreationForm = true"
+          :title="$t('CodelistTermCreationForm.title')"
+          :disabled="!checkPermission($roles.LIBRARY_WRITE)">
           <v-icon dark>
             mdi-plus
           </v-icon>
@@ -63,8 +70,10 @@ import HistoryTable from '@/components/tools/HistoryTable'
 import NNTable from '@/components/tools/NNTable'
 import StatusChip from '@/components/tools/StatusChip'
 import filteringParameters from '@/utils/filteringParameters'
+import { accessGuard } from '@/mixins/accessRoleVerifier'
 
 export default {
+  mixins: [accessGuard],
   props: ['codelistUid', 'packageName', 'catalogueName'],
   components: {
     ActionsMenu,
@@ -92,15 +101,17 @@ export default {
       actions: [
         {
           label: this.$t('_global.edit'),
-          icon: 'mdi-pencil',
+          icon: 'mdi-pencil-outline',
           iconColor: 'primary',
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.editTerm
         },
         {
           label: this.$t('CtCatalogueTable.remove_term'),
-          icon: 'mdi-delete',
+          icon: 'mdi-delete-outline',
           iconColor: 'primary',
           click: this.removeTerm,
+          accessRole: this.$roles.LIBRARY_WRITE,
           condition: () => this.codelistAttributes.extensible
         },
         {

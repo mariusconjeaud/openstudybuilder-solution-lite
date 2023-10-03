@@ -56,7 +56,8 @@
                     "name_plain": "Test_Name_Template",
                     "guidance_text": null,
                     "uid": "{ttuid}",
-                    "sequence_id": "TT1"
+                    "sequence_id": "T1",
+                    "library_name": "Test library"
                 },
                 "parameter_terms": [],
                 "possible_actions": [
@@ -108,7 +109,8 @@
                     "name_plain": "Test_Name_Template",
                     "guidance_text": null,
                     "uid": "{ttuid}",
-                    "sequence_id": "TT1"
+                    "sequence_id": "T1",
+                    "library_name": "Test library"
                 },
                 "start_date": "2020-11-03T22:19:07+00:00",
                 "status": "Final",
@@ -210,7 +212,8 @@
                         "name_plain": "Test_Name_Template",
                         "guidance_text": null,
                         "uid": "{ttuid}",
-                        "sequence_id": "TT1"
+                        "sequence_id": "T1",
+                    "library_name": "Test library"
                     },
                     "parameter_terms": [],
                     "library": {
@@ -255,7 +258,8 @@
                         "name_plain": "Test_Name_Template",
                         "guidance_text": null,
                         "uid": "{ttuid}",
-                        "sequence_id": "TT1"
+                        "sequence_id": "T1",
+                    "library_name": "Test library"
                     },
                     "parameter_terms": [],
                     "library": {

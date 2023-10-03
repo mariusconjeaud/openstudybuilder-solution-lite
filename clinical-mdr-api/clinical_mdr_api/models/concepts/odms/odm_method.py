@@ -1,4 +1,4 @@
-from typing import Callable, Dict, List, Optional, Union
+from typing import Callable, Self
 
 from pydantic import Field
 
@@ -27,23 +27,23 @@ from clinical_mdr_api.models.concepts.odms.odm_formal_expression import (
 
 
 class OdmMethod(ConceptModel):
-    oid: Optional[str]
-    method_type: Optional[str]
-    formal_expressions: List[OdmFormalExpressionSimpleModel]
-    descriptions: List[OdmDescriptionSimpleModel]
-    aliases: List[OdmAliasSimpleModel]
-    possible_actions: List[str]
+    oid: str | None
+    method_type: str | None
+    formal_expressions: list[OdmFormalExpressionSimpleModel]
+    descriptions: list[OdmDescriptionSimpleModel]
+    aliases: list[OdmAliasSimpleModel]
+    possible_actions: list[str]
 
     @classmethod
     def from_odm_method_ar(
         cls,
         odm_method_ar: OdmMethodAR,
         find_odm_formal_expression_by_uid: Callable[
-            [str], Optional[OdmFormalExpressionAR]
+            [str], OdmFormalExpressionAR | None
         ],
-        find_odm_description_by_uid: Callable[[str], Optional[OdmDescriptionAR]],
-        find_odm_alias_by_uid: Callable[[str], Optional[OdmAliasAR]],
-    ) -> "OdmMethod":
+        find_odm_description_by_uid: Callable[[str], OdmDescriptionAR | None],
+        find_odm_alias_by_uid: Callable[[str], OdmAliasAR | None],
+    ) -> Self:
         return cls(
             uid=odm_method_ar._uid,
             oid=odm_method_ar.concept_vo.oid,
@@ -93,23 +93,21 @@ class OdmMethod(ConceptModel):
 
 
 class OdmMethodPostInput(ConceptPostInput):
-    oid: Optional[str]
-    method_type: Optional[str]
-    formal_expressions: List[Union[OdmFormalExpressionPostInput, str]]
-    descriptions: List[Union[OdmDescriptionPostInput, str]]
-    alias_uids: List[str]
+    oid: str | None
+    method_type: str | None
+    formal_expressions: list[OdmFormalExpressionPostInput | str]
+    descriptions: list[OdmDescriptionPostInput | str]
+    alias_uids: list[str]
 
 
 class OdmMethodPatchInput(ConceptPatchInput):
-    oid: Optional[str]
-    method_type: Optional[str]
-    formal_expressions: List[
-        Union[OdmFormalExpressionBatchPatchInput, OdmFormalExpressionPostInput, str]
+    oid: str | None
+    method_type: str | None
+    formal_expressions: list[
+        OdmFormalExpressionBatchPatchInput | OdmFormalExpressionPostInput | str
     ]
-    descriptions: List[
-        Union[OdmDescriptionBatchPatchInput, OdmDescriptionPostInput, str]
-    ]
-    alias_uids: List[str]
+    descriptions: list[OdmDescriptionBatchPatchInput | OdmDescriptionPostInput | str]
+    alias_uids: list[str]
 
 
 class OdmMethodVersion(OdmMethod):
@@ -117,7 +115,7 @@ class OdmMethodVersion(OdmMethod):
     Class for storing OdmMethod and calculation of differences
     """
 
-    changes: Optional[Dict[str, bool]] = Field(
+    changes: dict[str, bool] | None = Field(
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "

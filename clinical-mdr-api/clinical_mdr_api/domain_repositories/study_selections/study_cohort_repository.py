@@ -1,6 +1,6 @@
 import datetime
 from dataclasses import dataclass
-from typing import List, Optional, Sequence
+from typing import Sequence
 
 from neomodel import db
 
@@ -30,23 +30,23 @@ class SelectionHistoryCohort:
     """Class for selection history items"""
 
     study_selection_uid: str
-    study_uid: Optional[str]
-    cohort_name: Optional[str]
-    cohort_short_name: Optional[str]
-    cohort_code: Optional[str]
-    cohort_description: Optional[str]
-    cohort_colour_code: Optional[str]
-    cohort_number_of_subjects: Optional[int]
-    branch_arm_roots: Optional[Sequence[str]]
-    arm_roots: Optional[Sequence[str]]
+    study_uid: str | None
+    cohort_name: str | None
+    cohort_short_name: str | None
+    cohort_code: str | None
+    cohort_description: str | None
+    cohort_colour_code: str | None
+    cohort_number_of_subjects: int | None
+    branch_arm_roots: Sequence[str] | None
+    arm_roots: Sequence[str] | None
     # Study selection Versioning
     start_date: datetime.datetime
-    user_initials: Optional[str]
+    user_initials: str | None
     change_type: str
-    end_date: Optional[datetime.datetime]
+    end_date: datetime.datetime | None
     order: int
-    status: Optional[str]
-    accepted_version: Optional[bool]
+    status: str | None
+    accepted_version: bool | None
 
 
 class StudySelectionCohortRepository:
@@ -63,10 +63,10 @@ class StudySelectionCohortRepository:
 
     def _retrieves_all_data(
         self,
-        study_uid: Optional[str] = None,
-        project_name: Optional[str] = None,
-        project_number: Optional[str] = None,
-        arm_uid: Optional[str] = None,
+        study_uid: str | None = None,
+        project_name: str | None = None,
+        project_number: str | None = None,
+        arm_uid: str | None = None,
     ) -> Sequence[StudySelectionCohortVO]:
         query = ""
         query_parameters = {}
@@ -153,10 +153,10 @@ class StudySelectionCohortRepository:
         self,
         study_uid: str,
         for_update: bool = False,
-        arm_uid: Optional[str] = None,
-        project_name: Optional[str] = None,
-        project_number: Optional[str] = None,
-    ) -> Optional[StudySelectionCohortAR]:
+        arm_uid: str | None = None,
+        project_name: str | None = None,
+        project_number: str | None = None,
+    ) -> StudySelectionCohortAR | None:
         """
         Finds all the selected study cohorts for a given study
         :param project_name:
@@ -352,7 +352,7 @@ class StudySelectionCohortRepository:
         audit_node.date = datetime.datetime.now(datetime.timezone.utc)
         audit_node.save()
 
-        study_selection_node.has_before.connect(audit_node)
+        audit_node.has_before.connect(study_selection_node)
         study_root_node.audit_trail.connect(audit_node)
         return audit_node
 
@@ -384,7 +384,7 @@ class StudySelectionCohortRepository:
                 study_cohort_selection_node
             )
         # Connect new node with audit trail
-        study_cohort_selection_node.has_after.connect(audit_node)
+        audit_node.has_after.connect(study_cohort_selection_node)
 
         # check if arm root is set
         if selection.arm_root_uids:
@@ -498,7 +498,7 @@ class StudySelectionCohortRepository:
 
     def find_selection_history(
         self, study_uid: str, study_selection_uid: str = None
-    ) -> List[SelectionHistoryCohort]:
+    ) -> list[SelectionHistoryCohort]:
         """
         Simple method to return all versions of a study objectives for a study.
         Optionally a specific selection uid is given to see only the response for a specific selection.

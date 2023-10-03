@@ -1,6 +1,5 @@
 from codecs import iterdecode
 from csv import DictReader
-from typing import Optional
 from xml.dom.minidom import Document
 
 from fastapi import UploadFile
@@ -18,11 +17,21 @@ MANDATORY_MAPPER_FIELDS = {
 }
 
 
-def map_xml(xml_document: Document, mapper: Optional[UploadFile]):
+def map_xml(xml_document: Document, mapper: UploadFile | None):
     """
-    Transform XML Elements and Attributes according to provided CSV mapper configuration.
+    Transform XML Elements and Attributes according to provided CSV mapping rules.
     - Rename XML Elements and XML Attributes.
     - Create XML Alias Element based on XML Attributes.
+
+    Args:
+        xml_document (Document): The XML document to modify.
+        mapper (UploadFile | None): The CSV file containing the mapping rules.
+
+    Returns:
+        None
+
+    Raises:
+        BusinessLogicException: If the mapper is not in CSV format, or if the mandatory mapping fields are not present.
     """
     if not mapper:
         return
@@ -38,7 +47,7 @@ def map_xml(xml_document: Document, mapper: Optional[UploadFile]):
         )
 
     for mapping in dict_reader:
-        parent = mapping["parent"] if mapping["parent"] else "*"
+        parent = mapping["parent"] or "*"
 
         if mapping["type"] == "attribute":
             _map_attributes(
@@ -60,6 +69,17 @@ def map_xml(xml_document: Document, mapper: Optional[UploadFile]):
 
 
 def _get_elements(xml_document: Document, name: str, parent: str):
+    """
+    Gets all elements with the given name that are children of the specified parent element in the XML document.
+
+    Args:
+        xml_document (Document): The XML document to search.
+        name (str): The name of the elements to search for.
+        parent (str): The name of the parent element to search under.
+
+    Returns:
+        NodeList[Element]: A list of matching elements.
+    """
     if parent == "*":
         return xml_document.getElementsByTagName(name)
 
@@ -76,8 +96,22 @@ def _map_elements(
     to_name: str,
     parent: str,
     from_alias: bool = False,
-    alias_context: Optional[str] = None,
+    alias_context: str | None = None,
 ):
+    """
+    Maps elements in the XML document from one name to another based on the given rules.
+
+    Args:
+        xml_document (Document): The XML document to modify.
+        from_name (str): The name of the elements to map.
+        to_name (str): The name to map the elements to.
+        parent (str): The name of the parent element to search under.
+        from_alias (bool, optional): Whether to treat the source name as an alias. Defaults to False.
+        alias_context (str | None, optional): The context for the alias. Defaults to None.
+
+    Returns:
+        None
+    """
     elements = _get_elements(xml_document, from_name, parent)
 
     for element in elements:
@@ -101,6 +135,19 @@ def _map_attributes(
     parent: str,
     to_alias: bool = False,
 ):
+    """
+    Maps attributes in the XML document from one name to another based on the given rules.
+
+    Args:
+        xml_document (Document): The XML document to modify.
+        from_name (str): The name of the attribute to map.
+        to_name (str): The name to map the attribute to.
+        parent (str): The name of the parent element to search under.
+        to_alias (bool, optional): Whether to map the attribute to an Alias element. Defaults to False.
+
+    Returns:
+        None
+    """
     elements = xml_document.getElementsByTagName(parent)
 
     for element in elements:

@@ -69,12 +69,12 @@ export default {
   },
   methods: {
     loadForm (form) {
-      form.guidanceText = this.template.guidanceText
+      form.guidance_text = this.template.guidance_text
       if (this.template.categories && this.template.categories.length) {
         this.$set(form, 'categories', this.template.categories)
       }
-      if (this.template.subCategories && this.template.subCategories.length) {
-        this.$set(form, 'subCategories', this.template.subCategories)
+      if (this.template.sub_categories && this.template.sub_categories.length) {
+        this.$set(form, 'sub_categories', this.template.sub_categories)
       }
       this.$store.commit('form/SET_FORM', form)
     },

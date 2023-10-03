@@ -3,10 +3,11 @@ set -e
 if [ $# -lt 3 ]; then
 	cat 1>&2 <<- EOF
 		Error: not enough arguments
-		Example usage, connects to the container 'database' and imports the backup data in cdiscdata.tar.gz into the database 'mdrdb'.
-		$ ./import_db_backup.sh database mdrdb cdiscdata.tar.gz
-		This script assumes that it is located in the same directory as the directory 'db_import',
-		and that the 'db_import' directory is mounted at '/db_import' in the neo4j container.
+		Example usage, connects to the container 'database' and imports the backup data in 'filename.backup' into the database 'mdrdb'.
+		$ ./import_db_backup.sh database mdrdb filename.backup
+		This script assumes that the file 'filename.backup' exists in the directory
+		'/db_backup' in the neo4j container.
+		A local directory should be mounted at that path. 
 	EOF
 	exit 2
 fi
@@ -15,10 +16,6 @@ if [ -z "$NEO4J_MDR_AUTH_USER" ] || [ -z "$NEO4J_MDR_AUTH_PASSWORD" ] || [ -z "$
 	echo "Missing one or several environment variables for db connection, needed: NEO4J_MDR_AUTH_USER, NEO4J_MDR_AUTH_PASSWORD, NEO4J_MDR_BOLT_PORT"
 	exit 2
 fi
-
-# Look up working directory
-WD="$(dirname "$(realpath "$0")")"
-echo "- Workdir: $WD"
 
 echo "- Checking for database alias"
 DBNAME=$(docker exec "$1" /var/lib/neo4j/bin/cypher-shell -d system -u "$NEO4J_MDR_AUTH_USER" -p "$NEO4J_MDR_AUTH_PASSWORD" -a "neo4j://localhost:$NEO4J_MDR_BOLT_PORT" "SHOW ALIASES FOR DATABASE YIELD * WHERE name=\"$2\" RETURN database" | tail -n 1 | tr -d '"')
@@ -37,22 +34,10 @@ then
 	exit 1
 fi
 
-echo "- Prepare import directory, deleting any conflicting files"
-if [ -d "$WD/db_import/$DBNAME" ]; then
-	echo "  Deleting existing export directory $WD/db_import/$DBNAME"
-	rm -rf "$WD/db_import/$DBNAME" || sudo rm -rf "$WD/db_import/$DBNAME"
-fi
-mkdir "$WD/db_import/$DBNAME"
-tar -xf "$3" -C "$WD/db_import/$DBNAME/"
-
 echo "- Stop database"
 docker exec "$1" /var/lib/neo4j/bin/cypher-shell -d system -u "$NEO4J_MDR_AUTH_USER" -p "$NEO4J_MDR_AUTH_PASSWORD" -a "neo4j://localhost:$NEO4J_MDR_BOLT_PORT" "STOP DATABASE \`$DBNAME\`;"
 echo "- Restore backup"
-docker exec "$1" /var/lib/neo4j/bin/neo4j-admin restore --from=/db_import/$DBNAME --database="$DBNAME" --force
-echo "- Ensure service user owns add database files"
-DB_USER_AND_GROUP=$(docker exec "$1" stat -c "%u:%g" /data/databases)
-echo "  Database service runs as user:group $DB_USER_AND_GROUP"
-docker exec --user root "$1" chown -R "$DB_USER_AND_GROUP" /data
+docker exec "$1" /var/lib/neo4j/bin/neo4j-admin database restore --from-path="/db_backup/$3" --overwrite-destination=true "$DBNAME"
 echo "- Create database if not already existing"
 docker exec "$1" /var/lib/neo4j/bin/cypher-shell -d system -u "$NEO4J_MDR_AUTH_USER" -p "$NEO4J_MDR_AUTH_PASSWORD" -a "neo4j://localhost:$NEO4J_MDR_BOLT_PORT" "CREATE DATABASE \`$DBNAME\` IF NOT EXISTS;"
 echo "- Start database"

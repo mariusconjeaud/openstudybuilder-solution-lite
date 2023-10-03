@@ -3,6 +3,7 @@ import random
 import unittest
 from copy import copy
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains.concepts.compound import CompoundAR, CompoundVO
 from clinical_mdr_api.domains.study_selections.study_selection_compound import (
     StudySelectionCompoundsAR,
@@ -297,7 +298,7 @@ class TestStudySelectionCompoundVO(unittest.TestCase):
                     user_initials="TODO USER",
                     study_selection_uid="dummy",
                 )
-                with self.assertRaises(ValueError):
+                with self.assertRaises(exceptions.ValidationException):
                     study_selection_compound.validate(
                         selection_uid_by_details_callback=_return_false_callback,
                         reason_for_missing_callback=_check_uid_exists_callback,
@@ -389,7 +390,7 @@ class TestStudySelectionCompoundAR(unittest.TestCase):
                 )
                 self.assertEqual(new_vo, selection)
                 self.assertEqual(len(test_tuple[1]) + 1, order)
-                with self.assertRaises(ValueError):
+                with self.assertRaises(exceptions.NotFoundException):
                     study_selection_compound_ar.get_specific_compound_selection(
                         "wrong uid"
                     )
@@ -437,7 +438,7 @@ class TestStudySelectionCompoundAR(unittest.TestCase):
                 )
 
                 # assert that it is no longer in the AR
-                with self.assertRaises(ValueError):
+                with self.assertRaises(exceptions.NotFoundException):
                     study_selection_compound_ar.get_specific_compound_selection(
                         new_vo.study_selection_uid
                     )

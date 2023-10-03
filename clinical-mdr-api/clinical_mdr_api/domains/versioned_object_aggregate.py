@@ -2,7 +2,9 @@ import abc
 import datetime
 from dataclasses import dataclass, field, replace
 from enum import Enum
-from typing import AbstractSet, Any, Callable, Optional, Tuple
+from typing import AbstractSet, Any, Callable, Self
+
+from clinical_mdr_api import exceptions
 
 
 class VersioningException(Exception):
@@ -23,14 +25,14 @@ class LibraryVO:
     def from_input_values_2(
         cls,
         library_name: str,
-        is_library_editable_callback: Callable[[str], Optional[bool]],
-    ) -> "LibraryVO":
-        is_library_editable_callback_result: Optional[
-            bool
-        ] = is_library_editable_callback(library_name)
+        is_library_editable_callback: Callable[[str], bool | None],
+    ) -> Self:
+        is_library_editable_callback_result: bool | None = is_library_editable_callback(
+            library_name
+        )
 
         if is_library_editable_callback_result is None:
-            raise ValueError(
+            raise exceptions.BusinessLogicException(
                 f"Can't infer if library: {library_name} is editable, "
                 f"because the is_editable callback wasn't passed."
             )
@@ -38,9 +40,7 @@ class LibraryVO:
         return cls(name=library_name, is_editable=is_library_editable_callback_result)
 
     @classmethod
-    def from_repository_values(
-        cls, library_name: str, is_editable: bool
-    ) -> "LibraryVO":
+    def from_repository_values(cls, library_name: str, is_editable: bool) -> Self:
         return cls(name=library_name, is_editable=is_editable)
 
     name: str
@@ -82,13 +82,13 @@ class LibraryItemMetadataVO:
     _status: LibraryItemStatus
     _author: str
     _start_date: datetime.datetime
-    _end_date: Optional[datetime.datetime]
+    _end_date: datetime.datetime | None
 
     _major_version: int
     _minor_version: int
 
     @classmethod
-    def get_initial_item_metadata(cls, author: str) -> "LibraryItemMetadataVO":
+    def get_initial_item_metadata(cls, author: str) -> Self:
         return cls(
             _change_description="Initial version",
             _status=LibraryItemStatus.DRAFT,
@@ -107,10 +107,10 @@ class LibraryItemMetadataVO:
         status: LibraryItemStatus,
         author: str,
         start_date: datetime.datetime,
-        end_date: Optional[datetime.datetime],
+        end_date: datetime.datetime | None,
         major_version: int,
         minor_version: int,
-    ) -> "LibraryItemMetadataVO":
+    ) -> Self:
         assert major_version >= 0
         assert minor_version >= 0
         assert minor_version > 0 or major_version > 0
@@ -141,7 +141,7 @@ class LibraryItemMetadataVO:
         return self._start_date
 
     @property
-    def end_date(self) -> Optional[datetime.datetime]:
+    def end_date(self) -> datetime.datetime | None:
         return self._end_date
 
     @property
@@ -156,7 +156,7 @@ class LibraryItemMetadataVO:
     def minor_version(self) -> int:
         return self._minor_version
 
-    def _get_new_version(self, new_status: LibraryItemStatus) -> Tuple[int, int]:
+    def _get_new_version(self, new_status: LibraryItemStatus) -> tuple[int, int]:
         """
         Helper method for creating new version label
         changing major and minor versions depending on new status.
@@ -191,9 +191,7 @@ class LibraryItemMetadataVO:
             v_major += 1
         return v_major, v_minor
 
-    def new_draft_version(
-        self, author: str, change_description: str
-    ) -> "LibraryItemMetadataVO":
+    def new_draft_version(self, author: str, change_description: str) -> Self:
         """
         Creates new object in draft version updating properly all values
         """
@@ -211,9 +209,7 @@ class LibraryItemMetadataVO:
             )
         raise VersioningException("Cannot create new Draft version")
 
-    def new_final_version(
-        self, author: str, change_description: str
-    ) -> "LibraryItemMetadataVO":
+    def new_final_version(self, author: str, change_description: str) -> Self:
         """
         Creates new object in final version updating properly all values
         """
@@ -231,9 +227,7 @@ class LibraryItemMetadataVO:
             )
         raise VersioningException("The object is not in draft status.")
 
-    def new_retired_version(
-        self, author: str, change_description: str
-    ) -> "LibraryItemMetadataVO":
+    def new_retired_version(self, author: str, change_description: str) -> Self:
         """
         Creates new object in retired version updating properly all values
         """
@@ -365,7 +359,7 @@ class VersioningActionMixin:
 
     def __raise_error_if_deleted(self) -> None:
         if self.is_deleted:
-            raise ValueError("Cannot use deleted object.")
+            raise exceptions.BusinessLogicException("Cannot use deleted object.")
 
     # Validator functions
     def __raise_error_if_edit_is_not_allowed_in_the_library(self) -> None:
@@ -391,7 +385,7 @@ class LibraryItemAggregateRootBase(VersioningActionMixin, abc.ABC):
         raise NotImplementedError
 
     # Properties from VersionRoot
-    _uid: Optional[str]
+    _uid: str | None
 
     _library: LibraryVO
 
@@ -445,11 +439,13 @@ class LibraryItemAggregateRootBase(VersioningActionMixin, abc.ABC):
         *,
         author: str,
         library: LibraryVO,
-        uid_supplier: Callable[[], Optional[str]] = lambda: None,
+        uid_supplier: Callable[[], str | None] = lambda: None,
         **kwargs,
-    ) -> "LibraryItemAggregateRootBase":
+    ) -> Self:
         if not library.is_editable:
-            raise ValueError("Creating objects in non-editable library is forbidden.")
+            raise exceptions.BusinessLogicException(
+                "Creating objects in non-editable library is forbidden."
+            )
 
         return cls(
             _uid=uid_supplier(),
@@ -468,7 +464,7 @@ class LibraryItemAggregateRootBase(VersioningActionMixin, abc.ABC):
         uid: str,
         item_metadata: LibraryItemMetadataVO,
         **kwargs,
-    ) -> "LibraryItemAggregateRootBase":
+    ) -> Self:
         # noinspection PyArgumentList
         return cls(
             _uid=uid,
@@ -479,4 +475,4 @@ class LibraryItemAggregateRootBase(VersioningActionMixin, abc.ABC):
 
     def __raise_error_if_deleted(self) -> None:
         if self.is_deleted:
-            raise ValueError("Cannot use deleted object.")
+            raise exceptions.BusinessLogicException("Cannot use deleted object.")

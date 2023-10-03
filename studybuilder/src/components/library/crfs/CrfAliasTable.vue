@@ -18,11 +18,11 @@
       <v-btn
         class="ml-2"
         fab
-        dark
         small
         color="primary"
         @click.stop="openForm"
         :title="$t('CrfAliases.add_alias')"
+        :disabled="!checkPermission($roles.LIBRARY_WRITE)"
         >
         <v-icon dark>
           mdi-plus
@@ -30,7 +30,7 @@
       </v-btn>
     </template>
     <template v-slot:item.actions="{ item }">
-      <actions-menu :actions="actions" :item="item" />
+      <actions-menu :actions="actions" :item="item"/>
     </template>
   </n-n-table>
   <crf-alias-form
@@ -50,8 +50,10 @@ import CrfAliasForm from '@/components/library/crfs/CrfAliasForm'
 import ConfirmDialog from '@/components/tools/ConfirmDialog'
 import { bus } from '@/main'
 import filteringParameters from '@/utils/filteringParameters'
+import { accessGuard } from '@/mixins/accessRoleVerifier'
 
 export default {
+  mixins: [accessGuard],
   components: {
     NNTable,
     CrfAliasForm,
@@ -63,16 +65,18 @@ export default {
       actions: [
         {
           label: this.$t('_global.edit'),
-          icon: 'mdi-pencil',
+          icon: 'mdi-pencil-outline',
           iconColor: 'primary',
           condition: (item) => item.possible_actions.find(action => action === 'edit'),
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.edit
         },
         {
           label: this.$t('_global.delete'),
-          icon: 'mdi-delete',
+          icon: 'mdi-delete-outline',
           iconColor: 'error',
           condition: (item) => item.possible_actions.find(action => action === 'delete'),
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.delete
         }
       ],

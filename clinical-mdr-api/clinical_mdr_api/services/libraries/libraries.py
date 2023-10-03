@@ -1,10 +1,8 @@
-from typing import Optional
-
 from clinical_mdr_api import exceptions
 from clinical_mdr_api.repositories import libraries as libraries_repository
 
 
-def get_libraries(is_editable: Optional[bool]):
+def get_libraries(is_editable: bool | None):
     return libraries_repository.find_all(is_editable)
 
 

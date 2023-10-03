@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import Self
 
 from pydantic import Field, validator
 
@@ -22,7 +22,7 @@ class CompactActivityItemClass(BaseModel):
         description="",
         source="has_activity_item_class.uid",
     )
-    name: Optional[str] = Field(
+    name: str | None = Field(
         None,
         title="activity item class name",
         description="",
@@ -34,13 +34,13 @@ class CompactCTTerm(BaseModel):
     class Config:
         orm_mode = True
 
-    uid: Optional[str] = Field(
+    uid: str | None = Field(
         None,
         title="ct term uid",
         description="",
         source="has_latest_value.has_ct_term.uid",
     )
-    name: Optional[str] = Field(
+    name: str | None = Field(
         None,
         title="ct term name",
         description="",
@@ -52,13 +52,13 @@ class CompactUnitDefinition(BaseModel):
     class Config:
         orm_mode = True
 
-    uid: Optional[str] = Field(
+    uid: str | None = Field(
         None,
         title="unit definition uid",
         description="",
         source="has_latest_value.has_unit_definition.uid",
     )
-    name: Optional[str] = Field(
+    name: str | None = Field(
         None,
         title="unit definition name",
         description="",
@@ -80,15 +80,15 @@ class ActivityItem(VersionProperties):
         None, title="name", description="", source="has_latest_value.name"
     )
     activity_item_class: CompactActivityItemClass = Field(...)
-    ct_term: Optional[CompactCTTerm] = Field(None)
-    unit_definition: Optional[CompactUnitDefinition] = Field(None)
+    ct_term: CompactCTTerm | None = Field(None)
+    unit_definition: CompactUnitDefinition | None = Field(None)
     library_name: str = Field(
         ...,
-        title="libraryName",
+        title="library_name",
         description="",
         source="has_library.name",
     )
-    possible_actions: List[str] = Field(
+    possible_actions: list[str] = Field(
         ...,
         description=(
             "Holds those actions that can be performed on the ActivityItemClasses. "
@@ -122,7 +122,7 @@ class ActivityItem(VersionProperties):
     def from_activity_item_ar(
         cls,
         activity_item_ar: ActivityItemAR,
-    ) -> "ActivityItem":
+    ) -> Self:
         return cls(
             uid=activity_item_ar.uid,
             name=activity_item_ar.name,
@@ -155,17 +155,17 @@ class ActivityItemCreateInput(BaseModel):
     name: str
     activity_item_class_uid: str
     library_name: str
-    ct_term_uid: Optional[str]
-    unit_definition_uid: Optional[str]
+    ct_term_uid: str | None
+    unit_definition_uid: str | None
 
 
 class ActivityItemEditInput(ActivityItemCreateInput):
-    name: Optional[str] = None
-    activity_item_class_uid: Optional[str] = None
-    ct_term_uid: Optional[str] = None
-    unit_definition_uid: Optional[str] = None
-    library_name: Optional[str] = None
-    change_description: Optional[str] = None
+    name: str | None = None
+    activity_item_class_uid: str | None = None
+    ct_term_uid: str | None = None
+    unit_definition_uid: str | None = None
+    library_name: str | None = None
+    change_description: str | None = None
 
 
 class ActivityItemVersion(ActivityItem):
@@ -173,7 +173,7 @@ class ActivityItemVersion(ActivityItem):
     Class for storing ActivityItem and calculation of differences
     """
 
-    changes: Optional[Dict[str, bool]] = Field(
+    changes: dict[str, bool] | None = Field(
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "

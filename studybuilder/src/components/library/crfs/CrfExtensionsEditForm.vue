@@ -40,7 +40,7 @@
             </td>
             <td width="10%">
               <v-row class="mt-1">
-                <actions-menu :actions="actions" :item="item" />
+                <actions-menu :actions="actions" :item="item"/>
                 {{item.type ? $t('CrfExtensions.attribute') : $t('CrfExtensions.element')}}
               </v-row>
             </td>
@@ -195,8 +195,9 @@ export default {
       actions: [
         {
           label: this.$t('_global.edit'),
-          icon: 'mdi-pencil',
+          icon: 'mdi-pencil-outline',
           iconColor: 'primary',
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.editElement
         },
         {
@@ -204,6 +205,7 @@ export default {
           icon: 'mdi-plus',
           iconColor: 'primary',
           condition: (item) => !item.type,
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.addAttribute
         },
         {
@@ -211,6 +213,7 @@ export default {
           icon: 'mdi-check-decagram',
           iconColor: 'success',
           condition: (item) => item.possible_actions.find(action => action === 'approve'),
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.approve
         },
         {
@@ -218,6 +221,7 @@ export default {
           icon: 'mdi-plus-circle-outline',
           iconColor: 'primary',
           condition: (item) => item.possible_actions.find(action => action === 'new_version'),
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.newVersion
         },
         {
@@ -225,6 +229,7 @@ export default {
           icon: 'mdi-close-octagon-outline',
           iconColor: 'primary',
           condition: (item) => item.possible_actions.find(action => action === 'inactivate'),
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.inactivate
         },
         {
@@ -232,13 +237,15 @@ export default {
           icon: 'mdi-undo-variant',
           iconColor: 'primary',
           condition: (item) => item.possible_actions.find(action => action === 'reactivate'),
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.reactivate
         },
         {
           label: this.$t('_global.delete'),
-          icon: 'mdi-delete',
+          icon: 'mdi-delete-outline',
           iconColor: 'error',
           condition: (item) => item.possible_actions.find(action => action === 'delete'),
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.delete
         }
       ],

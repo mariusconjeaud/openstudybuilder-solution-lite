@@ -1,4 +1,4 @@
-from typing import Optional, Sequence, Tuple
+from typing import Sequence
 
 from clinical_mdr_api.domain_repositories.concepts.concept_generic_repository import (
     ConceptGenericRepository,
@@ -8,6 +8,7 @@ from clinical_mdr_api.domain_repositories.models.activities import (
     ActivityGroupRoot,
     ActivitySubGroupRoot,
     ActivitySubGroupValue,
+    ActivityValidGroup,
 )
 from clinical_mdr_api.domain_repositories.models.generic import (
     Library,
@@ -45,7 +46,7 @@ class ActivitySubGroupRepository(ConceptGenericRepository[ActivitySubGroupAR]):
                 name_sentence_case=input_dict.get("name_sentence_case"),
                 definition=input_dict.get("definition"),
                 abbreviation=input_dict.get("abbreviation"),
-                activity_group=input_dict.get("activity_group").get("uid"),
+                activity_groups=input_dict.get("activity_groups"),
             ),
             library=LibraryVO.from_input_values_2(
                 library_name=input_dict.get("library_name"),
@@ -67,10 +68,18 @@ class ActivitySubGroupRepository(ConceptGenericRepository[ActivitySubGroupAR]):
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
         root: VersionRoot,
-        library: Optional[Library],
+        library: Library | None,
         relationship: VersionRelationship,
         value: VersionValue,
     ) -> ActivitySubGroupAR:
+        activity_valid_groups = value.has_group.all()
+        activity_groups_uid = []
+        for activity_valid_group in activity_valid_groups:
+            activity_group_uid = (
+                activity_valid_group.in_group.get().has_version.single().uid
+            )
+            activity_groups_uid.append(activity_group_uid)
+
         return ActivitySubGroupAR.from_repository_values(
             uid=root.uid,
             concept_vo=ActivitySubGroupVO.from_repository_values(
@@ -78,7 +87,7 @@ class ActivitySubGroupRepository(ConceptGenericRepository[ActivitySubGroupAR]):
                 name_sentence_case=value.name_sentence_case,
                 definition=value.definition,
                 abbreviation=value.abbreviation,
-                activity_group=value.in_group.get_or_none().has_version.single().uid,
+                activity_groups=activity_groups_uid,
             ),
             library=LibraryVO.from_input_values_2(
                 library_name=library.name,
@@ -87,21 +96,21 @@ class ActivitySubGroupRepository(ConceptGenericRepository[ActivitySubGroupAR]):
             item_metadata=self._library_item_metadata_vo_from_relation(relationship),
         )
 
-    def specific_header_match_clause(self) -> Optional[str]:
-        return "MATCH (concept_value)<-[:IN_SUB_GROUP]-()"
+    def specific_header_match_clause(self) -> str | None:
+        return "MATCH (concept_value)-[:HAS_GROUP]->()<-[:IN_SUBGROUP]-()<-[:HAS_GROUPING]-()"
 
     def specific_alias_clause(self) -> str:
         # concept_value property comes from the main part of the query
         # which is specified in the activity_generic_repository_impl
         return """
         WITH *,
-            head([(concept_value)-[:IN_GROUP]->(activity_group_value:ActivityGroupValue)<-[:HAS_VERSION]-(activity_group_root:ActivityGroupRoot) | 
-                {uid:activity_group_root.uid, name:activity_group_value.name}]) AS activity_group
+            apoc.coll.toSet([(concept_value)-[:HAS_GROUP]->(:ActivityValidGroup)-[:IN_GROUP]-(:ActivityGroupValue)
+            <-[:HAS_VERSION]-(activity_group_root:ActivityGroupRoot) | activity_group_root.uid]) AS activity_groups
         """
 
     def create_query_filter_statement(
-        self, library: Optional[str] = None, **kwargs
-    ) -> Tuple[str, dict]:
+        self, library: str | None = None, **kwargs
+    ) -> tuple[str, dict]:
         (
             filter_statements_from_concept,
             filter_query_parameters,
@@ -111,20 +120,22 @@ class ActivitySubGroupRepository(ConceptGenericRepository[ActivitySubGroupAR]):
             activity_group_uid = kwargs.get("activity_group_uid")
             filter_by_activity_group_uid = """
             $activity_group_uid IN 
-            [(concept_value)-[:IN_GROUP]->(activity_group_value:ActivityGroupValue)<-[:LATEST]-(activity_group_root:ActivityGroupRoot) 
+            [(concept_value)-[:HAS_GROUP]->(:ActivityValidGroup)-[:IN_GROUP]->(:ActivityGroupValue)<-[:HAS_VERSION]-(activity_group_root) 
                 | activity_group_root.uid]"""
             filter_parameters.append(filter_by_activity_group_uid)
             filter_query_parameters["activity_group_uid"] = activity_group_uid
         if kwargs.get("activity_group_names") is not None:
             activity_group_names = kwargs.get("activity_group_names")
             filter_by_activity_group_names = """
-            size([(concept_value)-[:IN_GROUP]->(v:ActivityGroupValue) WHERE v.name IN $activity_group_names | v.name]) > 0"""
+            size([(concept_value)-[:HAS_GROUP]->(:ActivityValidGroup)-[:IN_GROUP]->(v:ActivityGroupValue) 
+            WHERE v.name IN $activity_group_names | v.name]) > 0"""
             filter_parameters.append(filter_by_activity_group_names)
             filter_query_parameters["activity_group_names"] = activity_group_names
         if kwargs.get("activity_names") is not None:
             activity_names = kwargs.get("activity_names")
             filter_by_activity_names = """
-            size([(concept_value)<-[:IN_SUB_GROUP]-(v:ActivityValue) WHERE v.name IN $activity_names | v.name]) > 0"""
+            size([(concept_value)-[:HAS_GROUP]-(:ActivityValidGroup)<-[:IN_SUBGROUP]-(:ActivityGrouping)<-[:HAS_GROUPING]-(v:ActivityValue) 
+            WHERE v.name IN $activity_names | v.name]) > 0"""
             filter_parameters.append(filter_by_activity_names)
             filter_query_parameters["activity_names"] = activity_names
         extended_filter_statements = " AND ".join(filter_parameters)
@@ -144,30 +155,48 @@ class ActivitySubGroupRepository(ConceptGenericRepository[ActivitySubGroupAR]):
         return filter_statements_to_return, filter_query_parameters
 
     def _create_new_value_node(self, ar: ActivitySubGroupAR) -> VersionValue:
-        value_node = super()._create_new_value_node(ar=ar)
+        value_node: ActivitySubGroupValue = super()._create_new_value_node(ar=ar)
         value_node.save()
-        group_root = ActivityGroupRoot.nodes.get_or_none(
-            uid=ar.concept_vo.activity_group
-        )
-        group_value = group_root.has_latest_value.get_or_none()
-        value_node.in_group.connect(group_value)
+        for activity_group in ar.concept_vo.activity_groups:
+            # find related ActivityGroup nodes
+            group_root = ActivityGroupRoot.nodes.get_or_none(uid=activity_group)
+            group_value = group_root.has_latest_value.get_or_none()
+
+            # Create ActivityValidGroup node
+            activity_valid_group = ActivityValidGroup(
+                uid=ActivityValidGroup.get_next_free_uid_and_increment_counter()
+            )
+            activity_valid_group.save()
+
+            # connect ActivityValidGroup and ActivityGroupValue nodes
+            activity_valid_group.in_group.connect(group_value)
+
+            # connect ActivitySubGroupValue and ActivityValidGroup nodes
+            value_node.has_group.connect(activity_valid_group)
+
         return value_node
 
     def _has_data_changed(
         self, ar: ActivitySubGroupAR, value: ActivitySubGroupValue
     ) -> bool:
         are_concept_properties_changed = super()._has_data_changed(ar=ar, value=value)
-        are_rels_changed = False
-        group = value.in_group.get_or_none()
-        if group is not None:
-            group_uid = group.has_latest_value.get_or_none().uid
-            are_rels_changed = ar.concept_vo.activity_group != group_uid
+
+        activity_valid_groups = value.has_group.all()
+        activity_groups_uid = []
+        for activity_valid_group in activity_valid_groups:
+            activity_group_uid = (
+                activity_valid_group.in_group.get().has_version.single().uid
+            )
+            activity_groups_uid.append(activity_group_uid)
+        are_rels_changed = sorted(ar.concept_vo.activity_groups) != sorted(
+            activity_groups_uid
+        )
 
         return are_concept_properties_changed or are_rels_changed
 
     def get_syntax_activity_subgroups(
         self, root_class: type, syntax_uid: str
-    ) -> Optional[Sequence[ActivitySubGroupAR]]:
+    ) -> Sequence[ActivitySubGroupAR] | None:
         """
         This method returns the activity sub groups for the syntax with provided uid
 

@@ -41,7 +41,7 @@
           :key="`content-${index}`"
           :step="index + 1"
           >
-          <v-sheet elevation="4" class="ma-2 pa-4">
+          <v-sheet elevation="0" class="ma-2 pa-4">
             <v-row>
               <v-col v-if="step.belowDisplay" cols="12" class="d-flex align-start justify-end py-4">
                 <div v-if="currentStep === 1">
@@ -49,27 +49,13 @@
                 </div>
                 <div class="mx-2">
                   <v-btn
-                    color="white"
-                    class="secondary-btn"
-                    @click="cancel"
-                    >
-                    {{ $t('_global.cancel') }}
-                  </v-btn>
-                  <v-btn
-                    v-if="currentStep > 1"
-                    color="white"
-                    class="secondary-btn ml-2"
-                    @click="currentStep = index"
-                    >
-                    {{ $t('_global.previous') }}
-                  </v-btn>
-                  <slot :name="`step.${step.name}.actions.middle`" v-bind:step="index + 1" />
-                  <v-btn
                    :data-cy="step.name + '-continue-button'"
                     v-if="currentStep < steps.length"
                     color="secondary"
                     class="ml-2"
                     @click="goToStep(index + 1, index + 2)"
+                    elevation="2"
+                    width="120px"
                     >
                     {{ $t('_global.continue') }}
                   </v-btn>
@@ -80,8 +66,30 @@
                     class="ml-2"
                     @click="submit"
                     :loading="loading"
+                    elevation="2"
+                    width="120px"
                     >
                     {{ $t('_global.save') }}
+                  </v-btn>
+                  <slot :name="`step.${step.name}.actions.middle`" v-bind:step="index + 1" />
+                  <v-btn
+                    class="secondary-btn"
+                    @click="cancel"
+                    outlined
+                    elevation="2"
+                    width="120px"
+                    >
+                    {{ $t('_global.cancel') }}
+                  </v-btn>
+                  <v-btn
+                    v-if="currentStep > 1"
+                    class="secondary-btn ml-2"
+                    @click="currentStep = index"
+                    outlined
+                    elevation="2"
+                    width="120px"
+                    >
+                    {{ $t('_global.previous') }}
                   </v-btn>
                   <slot :name="`step.${step.name}.afterActions`" v-bind:step="index + 1" />
                 </div>
@@ -94,29 +102,13 @@
                   <slot name="actions"></slot>
                 </div>
                 <div class="mx-2">
-                  <v-col cols="12">
-                    <v-btn
-                      color="white"
-                      class="secondary-btn"
-                      @click="cancel"
-                      >
-                      {{ $t('_global.cancel') }}
-                    </v-btn>
-                  </v-col>
-                  <v-col cols="12" v-if="currentStep > 1">
-                    <v-btn
-                      color="white"
-                      class="secondary-btn"
-                      @click="currentStep = index"
-                      >
-                      {{ $t('_global.previous') }}
-                    </v-btn>
-                  </v-col>
                   <v-col cols="12" v-if="currentStep < steps.length">
                     <v-btn
                       :data-cy="step.name + '-continue-button'"
                       color="secondary"
                       @click="goToStep(index + 1, index + 2)"
+                      elevation="2"
+                      width="120px"
                       >
                       {{ $t('_global.continue') }}
                     </v-btn>
@@ -127,8 +119,32 @@
                       color="secondary"
                       @click="submit"
                       :loading="loading"
+                      elevation="2"
+                      width="120px"
                       >
                       {{ $t('_global.save') }}
+                    </v-btn>
+                  </v-col>
+                  <v-col cols="12">
+                    <v-btn
+                      class="secondary-btn"
+                      @click="cancel"
+                      outlined
+                      elevation="2"
+                      width="120px"
+                      >
+                      {{ $t('_global.cancel') }}
+                    </v-btn>
+                  </v-col>
+                  <v-col cols="12" v-if="currentStep > 1">
+                    <v-btn
+                      class="secondary-btn"
+                      @click="currentStep = index"
+                      outlined
+                      elevation="2"
+                      width="120px"
+                      >
+                      {{ $t('_global.previous') }}
                     </v-btn>
                   </v-col>
                   <v-col cols="12">
@@ -188,7 +204,8 @@ export default {
     saveFromAnyStep: {
       type: Boolean,
       default: false
-    }
+    },
+    resetLoading: Number
   },
   data () {
     return {
@@ -277,6 +294,9 @@ export default {
     },
     currentStep (value) {
       this.$emit('change', value)
+    },
+    resetLoading () {
+      this.loading = false
     }
   }
 }

@@ -4,7 +4,7 @@ from dataclasses import Field, dataclass, field
 from datetime import datetime, timezone
 from decimal import Decimal
 from enum import Enum
-from typing import Any, Callable, Iterable, List, Optional, Sequence
+from typing import Any, Callable, Iterable, Self, Sequence
 
 from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains._utils import normalize_string
@@ -47,23 +47,23 @@ _STUDY_NUMBER_PATTERN = re.compile("[0-9]{1,4}")
 
 @dataclass_with_default_init(frozen=True)
 class StudyIdentificationMetadataVO:
-    project_number: Optional[str]
-    study_number: Optional[str]
-    study_acronym: Optional[str]
-    study_id_prefix: Optional[str]
+    project_number: str | None
+    study_number: str | None
+    study_acronym: str | None
+    study_id_prefix: str | None
     registry_identifiers: RegistryIdentifiersVO
 
     def __init__(
         self,
-        project_number: Optional[str],
-        study_number: Optional[str],
-        study_acronym: Optional[str],
+        project_number: str | None,
+        study_number: str | None,
+        study_acronym: str | None,
         registry_identifiers: RegistryIdentifiersVO,
-        _study_id_prefix: Optional[str] = None
+        _study_id_prefix: str | None = None
         # we denote this param with underscore, for "internal" use
         # (i.e.) use with caution and where You know what You are doing (setting an arbitrary value here)
     ):
-        def norm_str(s: Optional[str]) -> Optional[str]:
+        def norm_str(s: str | None) -> str | None:
             return normalize_string(s)
 
         call_default_init(
@@ -78,11 +78,11 @@ class StudyIdentificationMetadataVO:
     @classmethod
     def from_input_values(
         cls,
-        project_number: Optional[str],
-        study_number: Optional[str],
-        study_acronym: Optional[str],
+        project_number: str | None,
+        study_number: str | None,
+        study_acronym: str | None,
         registry_identifiers: RegistryIdentifiersVO,
-    ) -> "StudyIdentificationMetadataVO":
+    ) -> Self:
         return cls(
             study_number=study_number,
             study_acronym=study_acronym,
@@ -91,7 +91,7 @@ class StudyIdentificationMetadataVO:
         )
 
     @property
-    def study_id(self) -> Optional[str]:
+    def study_id(self) -> str | None:
         if self.study_number is None or self.study_id_prefix is None:
             return None
         return f"{self.study_id_prefix}-{self.study_number}"
@@ -163,12 +163,12 @@ class StudyIdentificationMetadataVO:
     def fix_some_values(
         self,
         *,
-        project_number: Optional[str] = field(),
-        study_number: Optional[str] = field(),
-        study_acronym: Optional[str] = field(),
-        study_id_prefix: Optional[str] = field(),
-        registry_identifiers: Optional[RegistryIdentifiersVO] = field(),
-    ) -> "StudyIdentificationMetadataVO":
+        project_number: str | None = field(),
+        study_number: str | None = field(),
+        study_acronym: str | None = field(),
+        study_id_prefix: str | None = field(),
+        registry_identifiers: RegistryIdentifiersVO | None = field(),
+    ) -> Self:
         """
         Helper function to produce a new object with some of values different from self.
         All parameters are optional. Those provided will have provided value in the new object (the rest if the object
@@ -193,24 +193,24 @@ class StudyIdentificationMetadataVO:
 @dataclass_with_default_init(frozen=True)
 class StudyVersionMetadataVO:
     study_status: StudyStatus = StudyStatus.DRAFT
-    version_timestamp: Optional[datetime] = field(default_factory=datetime.today)
-    version_author: Optional[str] = None
-    version_description: Optional[str] = None
-    version_number: Optional[Decimal] = None
+    version_timestamp: datetime | None = field(default_factory=datetime.today)
+    version_author: str | None = None
+    version_description: str | None = None
+    version_number: Decimal | None = None
 
     def __init__(
         self,
         study_status: StudyStatus = StudyStatus.DRAFT,
-        version_timestamp: Optional[datetime] = field(default_factory=datetime.today),
-        version_author: Optional[str] = None,
-        version_description: Optional[str] = None,
-        version_number: Optional[Decimal] = None,
+        version_timestamp: datetime | None = field(default_factory=datetime.today),
+        version_author: str | None = None,
+        version_description: str | None = None,
+        version_number: Decimal | None = None,
     ):
         if isinstance(version_timestamp, Field):
             version_timestamp = datetime.now(timezone.utc)
         assert version_timestamp is None or isinstance(version_timestamp, datetime)
 
-        def norm_str(s: Optional[str]) -> Optional[str]:
+        def norm_str(s: str | None) -> str | None:
             return normalize_string(s)
 
         call_default_init(
@@ -269,29 +269,29 @@ class StudyVersionMetadataVO:
 
 @dataclass(frozen=True)
 class HighLevelStudyDesignVO:
-    study_type_code: Optional[str] = None
-    study_type_null_value_code: Optional[str] = None
+    study_type_code: str | None = None
+    study_type_null_value_code: str | None = None
 
     trial_type_codes: Sequence[str] = field(default_factory=list)
-    trial_type_null_value_code: Optional[str] = None
+    trial_type_null_value_code: str | None = None
 
-    trial_phase_code: Optional[str] = None
-    trial_phase_null_value_code: Optional[str] = None
+    trial_phase_code: str | None = None
+    trial_phase_null_value_code: str | None = None
 
-    is_extension_trial: Optional[bool] = None
-    is_extension_trial_null_value_code: Optional[str] = None
+    is_extension_trial: bool | None = None
+    is_extension_trial_null_value_code: str | None = None
 
-    is_adaptive_design: Optional[bool] = None
-    is_adaptive_design_null_value_code: Optional[str] = None
+    is_adaptive_design: bool | None = None
+    is_adaptive_design_null_value_code: str | None = None
 
-    study_stop_rules: Optional[str] = None
-    study_stop_rules_null_value_code: Optional[str] = None
+    study_stop_rules: str | None = None
+    study_stop_rules_null_value_code: str | None = None
 
-    confirmed_response_minimum_duration: Optional[str] = None
-    confirmed_response_minimum_duration_null_value_code: Optional[str] = None
+    confirmed_response_minimum_duration: str | None = None
+    confirmed_response_minimum_duration_null_value_code: str | None = None
 
-    post_auth_indicator: Optional[bool] = None
-    post_auth_indicator_null_value_code: Optional[str] = None
+    post_auth_indicator: bool | None = None
+    post_auth_indicator_null_value_code: str | None = None
 
     def normalize_code_set(self, codes: Iterable[str]) -> Sequence[str]:
         return list(
@@ -324,7 +324,7 @@ class HighLevelStudyDesignVO:
 
         def validate_value_and_associated_null_value_valid(
             value: Any,
-            associated_null_value_code: Optional[str],
+            associated_null_value_code: str | None,
             name_of_verified_value: str,
         ) -> None:
             if associated_null_value_code is not None and not (
@@ -428,23 +428,23 @@ class HighLevelStudyDesignVO:
 
     def fix_some_values(
         self,
-        study_type_code: Optional[str] = field(),
-        study_type_null_value_code: Optional[str] = field(),
+        study_type_code: str | None = field(),
+        study_type_null_value_code: str | None = field(),
         trial_type_codes: Iterable[str] = field(),
-        trial_type_null_value_code: Optional[str] = field(),
-        trial_phase_code: Optional[str] = field(),
-        trial_phase_null_value_code: Optional[str] = field(),
-        is_extension_trial: Optional[bool] = field(),
-        is_extension_trial_null_value_code: Optional[str] = field(),
-        is_adaptive_design: Optional[bool] = field(),
-        is_adaptive_design_null_value_code: Optional[str] = field(),
-        study_stop_rules: Optional[str] = field(),
-        study_stop_rules_null_value_code: Optional[str] = field(),
-        confirmed_response_minimum_duration: Optional[str] = field(),
-        confirmed_response_minimum_duration_null_value_code: Optional[str] = field(),
-        post_auth_indicator: Optional[bool] = field(),
-        post_auth_indicator_null_value_code: Optional[str] = field(),
-    ) -> "HighLevelStudyDesignVO":
+        trial_type_null_value_code: str | None = field(),
+        trial_phase_code: str | None = field(),
+        trial_phase_null_value_code: str | None = field(),
+        is_extension_trial: bool | None = field(),
+        is_extension_trial_null_value_code: str | None = field(),
+        is_adaptive_design: bool | None = field(),
+        is_adaptive_design_null_value_code: str | None = field(),
+        study_stop_rules: str | None = field(),
+        study_stop_rules_null_value_code: str | None = field(),
+        confirmed_response_minimum_duration: str | None = field(),
+        confirmed_response_minimum_duration_null_value_code: str | None = field(),
+        post_auth_indicator: bool | None = field(),
+        post_auth_indicator_null_value_code: str | None = field(),
+    ) -> Self:
         """
         Helper function to produce a new HighLevelStudyDesignVO object with some of values different from self.
         All parameters are optional. Those provided will have provided value in the new object (the rest if the object
@@ -516,23 +516,23 @@ class HighLevelStudyDesignVO:
     @staticmethod
     def from_input_values(
         *,
-        study_type_code: Optional[str],
-        study_type_null_value_code: Optional[str],
-        trial_type_codes: Optional[Iterable[str]],
-        trial_type_null_value_code: Optional[str],
-        trial_phase_code: Optional[str],
-        trial_phase_null_value_code: Optional[str],
-        is_extension_trial: Optional[bool],
-        is_extension_trial_null_value_code: Optional[str],
-        is_adaptive_design: Optional[bool],
-        is_adaptive_design_null_value_code: Optional[str],
-        study_stop_rules: Optional[str],
-        study_stop_rules_null_value_code: Optional[str],
-        confirmed_response_minimum_duration: Optional[str],
-        confirmed_response_minimum_duration_null_value_code: Optional[str],
-        post_auth_indicator: Optional[bool],
-        post_auth_indicator_null_value_code: Optional[str],
-    ) -> "HighLevelStudyDesignVO":
+        study_type_code: str | None,
+        study_type_null_value_code: str | None,
+        trial_type_codes: Iterable[str] | None,
+        trial_type_null_value_code: str | None,
+        trial_phase_code: str | None,
+        trial_phase_null_value_code: str | None,
+        is_extension_trial: bool | None,
+        is_extension_trial_null_value_code: str | None,
+        is_adaptive_design: bool | None,
+        is_adaptive_design_null_value_code: str | None,
+        study_stop_rules: str | None,
+        study_stop_rules_null_value_code: str | None,
+        confirmed_response_minimum_duration: str | None,
+        confirmed_response_minimum_duration_null_value_code: str | None,
+        post_auth_indicator: bool | None,
+        post_auth_indicator_null_value_code: str | None,
+    ) -> Self:
         return HighLevelStudyDesignVO(
             study_type_code=study_type_code,
             study_type_null_value_code=study_type_null_value_code,
@@ -556,80 +556,80 @@ class HighLevelStudyDesignVO:
 @dataclass(frozen=True)
 class StudyPopulationVO:
     therapeutic_area_codes: Sequence[str] = field(default_factory=list)
-    therapeutic_area_null_value_code: Optional[str] = None
+    therapeutic_area_null_value_code: str | None = None
 
     disease_condition_or_indication_codes: Sequence[str] = field(default_factory=list)
-    disease_condition_or_indication_null_value_code: Optional[str] = None
+    disease_condition_or_indication_null_value_code: str | None = None
 
     diagnosis_group_codes: Sequence[str] = field(default_factory=list)
-    diagnosis_group_null_value_code: Optional[str] = None
+    diagnosis_group_null_value_code: str | None = None
 
-    sex_of_participants_code: Optional[str] = None
-    sex_of_participants_null_value_code: Optional[str] = None
+    sex_of_participants_code: str | None = None
+    sex_of_participants_null_value_code: str | None = None
 
-    rare_disease_indicator: Optional[bool] = None
-    rare_disease_indicator_null_value_code: Optional[str] = None
+    rare_disease_indicator: bool | None = None
+    rare_disease_indicator_null_value_code: str | None = None
 
-    healthy_subject_indicator: Optional[bool] = None
-    healthy_subject_indicator_null_value_code: Optional[str] = None
+    healthy_subject_indicator: bool | None = None
+    healthy_subject_indicator_null_value_code: str | None = None
 
-    planned_minimum_age_of_subjects: Optional[str] = None
-    planned_minimum_age_of_subjects_null_value_code: Optional[str] = None
+    planned_minimum_age_of_subjects: str | None = None
+    planned_minimum_age_of_subjects_null_value_code: str | None = None
 
-    planned_maximum_age_of_subjects: Optional[str] = None
-    planned_maximum_age_of_subjects_null_value_code: Optional[str] = None
+    planned_maximum_age_of_subjects: str | None = None
+    planned_maximum_age_of_subjects_null_value_code: str | None = None
 
-    stable_disease_minimum_duration: Optional[str] = None
-    stable_disease_minimum_duration_null_value_code: Optional[str] = None
+    stable_disease_minimum_duration: str | None = None
+    stable_disease_minimum_duration_null_value_code: str | None = None
 
-    pediatric_study_indicator: Optional[bool] = None
-    pediatric_study_indicator_null_value_code: Optional[str] = None
+    pediatric_study_indicator: bool | None = None
+    pediatric_study_indicator_null_value_code: str | None = None
 
-    pediatric_postmarket_study_indicator: Optional[bool] = None
-    pediatric_postmarket_study_indicator_null_value_code: Optional[str] = None
+    pediatric_postmarket_study_indicator: bool | None = None
+    pediatric_postmarket_study_indicator_null_value_code: str | None = None
 
-    pediatric_investigation_plan_indicator: Optional[bool] = None
-    pediatric_investigation_plan_indicator_null_value_code: Optional[str] = None
+    pediatric_investigation_plan_indicator: bool | None = None
+    pediatric_investigation_plan_indicator_null_value_code: str | None = None
 
-    relapse_criteria: Optional[str] = None
-    relapse_criteria_null_value_code: Optional[str] = None
+    relapse_criteria: str | None = None
+    relapse_criteria_null_value_code: str | None = None
 
-    number_of_expected_subjects: Optional[int] = None
-    number_of_expected_subjects_null_value_code: Optional[str] = None
+    number_of_expected_subjects: int | None = None
+    number_of_expected_subjects_null_value_code: str | None = None
 
     @staticmethod
     def from_input_values(
         *,
         therapeutic_area_codes: Iterable[str],
-        therapeutic_area_null_value_code: Optional[str],
+        therapeutic_area_null_value_code: str | None,
         disease_condition_or_indication_codes: Iterable[str],
-        disease_condition_or_indication_null_value_code: Optional[str],
+        disease_condition_or_indication_null_value_code: str | None,
         diagnosis_group_codes: Iterable[str],
-        diagnosis_group_null_value_code: Optional[str],
-        sex_of_participants_code: Optional[str],
-        sex_of_participants_null_value_code: Optional[str],
-        rare_disease_indicator: Optional[bool],
-        rare_disease_indicator_null_value_code: Optional[str],
-        healthy_subject_indicator: Optional[bool],
-        healthy_subject_indicator_null_value_code: Optional[str],
-        planned_minimum_age_of_subjects: Optional[str],
-        planned_minimum_age_of_subjects_null_value_code: Optional[str],
-        planned_maximum_age_of_subjects: Optional[str],
-        planned_maximum_age_of_subjects_null_value_code: Optional[str],
-        stable_disease_minimum_duration: Optional[str],
-        stable_disease_minimum_duration_null_value_code: Optional[str],
-        pediatric_study_indicator: Optional[bool],
-        pediatric_study_indicator_null_value_code: Optional[str],
-        pediatric_postmarket_study_indicator: Optional[bool],
-        pediatric_postmarket_study_indicator_null_value_code: Optional[str],
-        pediatric_investigation_plan_indicator: Optional[bool],
-        pediatric_investigation_plan_indicator_null_value_code: Optional[str],
-        relapse_criteria: Optional[str],
-        relapse_criteria_null_value_code: Optional[str],
-        number_of_expected_subjects: Optional[int],
-        number_of_expected_subjects_null_value_code: Optional[str],
-    ) -> "StudyPopulationVO":
-        def normalize_code_set(codes: Optional[Iterable[str]]) -> Sequence[str]:
+        diagnosis_group_null_value_code: str | None,
+        sex_of_participants_code: str | None,
+        sex_of_participants_null_value_code: str | None,
+        rare_disease_indicator: bool | None,
+        rare_disease_indicator_null_value_code: str | None,
+        healthy_subject_indicator: bool | None,
+        healthy_subject_indicator_null_value_code: str | None,
+        planned_minimum_age_of_subjects: str | None,
+        planned_minimum_age_of_subjects_null_value_code: str | None,
+        planned_maximum_age_of_subjects: str | None,
+        planned_maximum_age_of_subjects_null_value_code: str | None,
+        stable_disease_minimum_duration: str | None,
+        stable_disease_minimum_duration_null_value_code: str | None,
+        pediatric_study_indicator: bool | None,
+        pediatric_study_indicator_null_value_code: str | None,
+        pediatric_postmarket_study_indicator: bool | None,
+        pediatric_postmarket_study_indicator_null_value_code: str | None,
+        pediatric_investigation_plan_indicator: bool | None,
+        pediatric_investigation_plan_indicator_null_value_code: str | None,
+        relapse_criteria: str | None,
+        relapse_criteria_null_value_code: str | None,
+        number_of_expected_subjects: int | None,
+        number_of_expected_subjects_null_value_code: str | None,
+    ) -> Self:
+        def normalize_code_set(codes: Iterable[str] | None) -> Sequence[str]:
             if codes is None:
                 codes = []
             return list(
@@ -712,7 +712,7 @@ class StudyPopulationVO:
     ) -> None:
         def validate_value_and_associated_null_value_valid(
             value: Any,
-            associated_null_value_code: Optional[str],
+            associated_null_value_code: str | None,
             name_of_verified_value: str,
         ) -> None:
             if associated_null_value_code is not None and not (
@@ -866,34 +866,34 @@ class StudyPopulationVO:
         self,
         *,
         therapeutic_area_codes: Iterable[str] = field(),
-        therapeutic_area_null_value_code: Optional[str] = field(),
+        therapeutic_area_null_value_code: str | None = field(),
         disease_condition_or_indication_codes: Iterable[str] = field(),
-        disease_condition_or_indication_null_value_code: Optional[str] = field(),
+        disease_condition_or_indication_null_value_code: str | None = field(),
         diagnosis_group_codes: Iterable[str] = field(),
-        diagnosis_group_null_value_code: Optional[str] = field(),
-        sex_of_participants_code: Optional[str] = field(),
-        sex_of_participants_null_value_code: Optional[str] = field(),
-        rare_disease_indicator: Optional[bool] = field(),
-        rare_disease_indicator_null_value_code: Optional[str] = field(),
-        healthy_subject_indicator: Optional[bool] = field(),
-        healthy_subject_indicator_null_value_code: Optional[str] = field(),
-        planned_minimum_age_of_subjects: Optional[str] = field(),
-        planned_minimum_age_of_subjects_null_value_code: Optional[str] = field(),
-        planned_maximum_age_of_subjects: Optional[str] = field(),
-        planned_maximum_age_of_subjects_null_value_code: Optional[str] = field(),
-        stable_disease_minimum_duration: Optional[str] = field(),
-        stable_disease_minimum_duration_null_value_code: Optional[str] = field(),
-        pediatric_study_indicator: Optional[bool] = field(),
-        pediatric_study_indicator_null_value_code: Optional[str] = field(),
-        pediatric_postmarket_study_indicator: Optional[bool] = field(),
-        pediatric_postmarket_study_indicator_null_value_code: Optional[str] = field(),
-        pediatric_investigation_plan_indicator: Optional[bool] = field(),
-        pediatric_investigation_plan_indicator_null_value_code: Optional[str] = field(),
-        relapse_criteria: Optional[str] = field(),
-        relapse_criteria_null_value_code: Optional[str] = field(),
-        number_of_expected_subjects: Optional[int] = field(),
-        number_of_expected_subjects_null_value_code: Optional[str] = field(),
-    ) -> "StudyPopulationVO":
+        diagnosis_group_null_value_code: str | None = field(),
+        sex_of_participants_code: str | None = field(),
+        sex_of_participants_null_value_code: str | None = field(),
+        rare_disease_indicator: bool | None = field(),
+        rare_disease_indicator_null_value_code: str | None = field(),
+        healthy_subject_indicator: bool | None = field(),
+        healthy_subject_indicator_null_value_code: str | None = field(),
+        planned_minimum_age_of_subjects: str | None = field(),
+        planned_minimum_age_of_subjects_null_value_code: str | None = field(),
+        planned_maximum_age_of_subjects: str | None = field(),
+        planned_maximum_age_of_subjects_null_value_code: str | None = field(),
+        stable_disease_minimum_duration: str | None = field(),
+        stable_disease_minimum_duration_null_value_code: str | None = field(),
+        pediatric_study_indicator: bool | None = field(),
+        pediatric_study_indicator_null_value_code: str | None = field(),
+        pediatric_postmarket_study_indicator: bool | None = field(),
+        pediatric_postmarket_study_indicator_null_value_code: str | None = field(),
+        pediatric_investigation_plan_indicator: bool | None = field(),
+        pediatric_investigation_plan_indicator_null_value_code: str | None = field(),
+        relapse_criteria: str | None = field(),
+        relapse_criteria_null_value_code: str | None = field(),
+        number_of_expected_subjects: int | None = field(),
+        number_of_expected_subjects_null_value_code: str | None = field(),
+    ) -> Self:
         def helper(parameter: Any, def_value: Any):
             if isinstance(parameter, Field):
                 if isinstance(def_value, tuple):
@@ -1003,55 +1003,55 @@ class StudyPopulationVO:
 
 @dataclass(frozen=True)
 class StudyInterventionVO:
-    intervention_type_code: Optional[str] = None
-    intervention_type_null_value_code: Optional[str] = None
+    intervention_type_code: str | None = None
+    intervention_type_null_value_code: str | None = None
 
-    add_on_to_existing_treatments: Optional[bool] = None
-    add_on_to_existing_treatments_null_value_code: Optional[str] = None
+    add_on_to_existing_treatments: bool | None = None
+    add_on_to_existing_treatments_null_value_code: str | None = None
 
-    control_type_code: Optional[str] = None
-    control_type_null_value_code: Optional[str] = None
+    control_type_code: str | None = None
+    control_type_null_value_code: str | None = None
 
-    intervention_model_code: Optional[str] = None
-    intervention_model_null_value_code: Optional[str] = None
+    intervention_model_code: str | None = None
+    intervention_model_null_value_code: str | None = None
 
     trial_intent_types_codes: Sequence[str] = field(default_factory=list)
-    trial_intent_type_null_value_code: Optional[str] = None
+    trial_intent_type_null_value_code: str | None = None
 
-    is_trial_randomised: Optional[bool] = None
-    is_trial_randomised_null_value_code: Optional[str] = None
+    is_trial_randomised: bool | None = None
+    is_trial_randomised_null_value_code: str | None = None
 
-    stratification_factor: Optional[str] = None
-    stratification_factor_null_value_code: Optional[str] = None
+    stratification_factor: str | None = None
+    stratification_factor_null_value_code: str | None = None
 
-    trial_blinding_schema_code: Optional[str] = None
-    trial_blinding_schema_null_value_code: Optional[str] = None
+    trial_blinding_schema_code: str | None = None
+    trial_blinding_schema_null_value_code: str | None = None
 
-    planned_study_length: Optional[str] = None
-    planned_study_length_null_value_code: Optional[str] = None
+    planned_study_length: str | None = None
+    planned_study_length_null_value_code: str | None = None
 
     @staticmethod
     def from_input_values(
         *,
-        intervention_type_code: Optional[str],
-        intervention_type_null_value_code: Optional[str],
-        add_on_to_existing_treatments: Optional[bool],
-        add_on_to_existing_treatments_null_value_code: Optional[str],
-        control_type_code: Optional[str],
-        control_type_null_value_code: Optional[str],
-        intervention_model_code: Optional[str],
-        intervention_model_null_value_code: Optional[str],
-        is_trial_randomised: Optional[bool],
-        is_trial_randomised_null_value_code: Optional[str],
-        stratification_factor: Optional[str],
-        stratification_factor_null_value_code: Optional[str],
-        trial_blinding_schema_code: Optional[str],
-        trial_blinding_schema_null_value_code: Optional[str],
-        planned_study_length: Optional[str],
-        planned_study_length_null_value_code: Optional[str],
+        intervention_type_code: str | None,
+        intervention_type_null_value_code: str | None,
+        add_on_to_existing_treatments: bool | None,
+        add_on_to_existing_treatments_null_value_code: str | None,
+        control_type_code: str | None,
+        control_type_null_value_code: str | None,
+        intervention_model_code: str | None,
+        intervention_model_null_value_code: str | None,
+        is_trial_randomised: bool | None,
+        is_trial_randomised_null_value_code: str | None,
+        stratification_factor: str | None,
+        stratification_factor_null_value_code: str | None,
+        trial_blinding_schema_code: str | None,
+        trial_blinding_schema_null_value_code: str | None,
+        planned_study_length: str | None,
+        planned_study_length_null_value_code: str | None,
         trial_intent_types_codes: Sequence[str],
-        trial_intent_type_null_value_code: Optional[str],
-    ) -> "StudyInterventionVO":
+        trial_intent_type_null_value_code: str | None,
+    ) -> Self:
         return StudyInterventionVO(
             intervention_type_code=normalize_string(intervention_type_code),
             intervention_type_null_value_code=normalize_string(
@@ -1100,7 +1100,7 @@ class StudyInterventionVO:
     ) -> None:
         def validate_value_and_associated_null_value_valid(
             value: Any,
-            associated_null_value_code: Optional[str],
+            associated_null_value_code: str | None,
             name_of_verified_value: str,
         ) -> None:
             if associated_null_value_code is not None and not (
@@ -1229,25 +1229,25 @@ class StudyInterventionVO:
     def fix_some_values(
         self,
         *,
-        intervention_type_code: Optional[str] = field(),
-        intervention_type_null_value_code: Optional[str] = field(),
-        add_on_to_existing_treatments: Optional[bool] = field(),
-        add_on_to_existing_treatments_null_value_code: Optional[str] = field(),
-        control_type_code: Optional[str] = field(),
-        control_type_null_value_code: Optional[str] = field(),
-        intervention_model_code: Optional[bool] = field(),
-        intervention_model_null_value_code: Optional[str] = field(),
-        is_trial_randomised: Optional[bool] = field(),
-        is_trial_randomised_null_value_code: Optional[str] = field(),
-        stratification_factor: Optional[str] = field(),
-        stratification_factor_null_value_code: Optional[str] = field(),
-        trial_blinding_schema_code: Optional[str] = field(),
-        trial_blinding_schema_null_value_code: Optional[str] = field(),
-        planned_study_length: Optional[str] = field(),
-        planned_study_length_null_value_code: Optional[str] = field(),
+        intervention_type_code: str | None = field(),
+        intervention_type_null_value_code: str | None = field(),
+        add_on_to_existing_treatments: bool | None = field(),
+        add_on_to_existing_treatments_null_value_code: str | None = field(),
+        control_type_code: str | None = field(),
+        control_type_null_value_code: str | None = field(),
+        intervention_model_code: bool | None = field(),
+        intervention_model_null_value_code: str | None = field(),
+        is_trial_randomised: bool | None = field(),
+        is_trial_randomised_null_value_code: str | None = field(),
+        stratification_factor: str | None = field(),
+        stratification_factor_null_value_code: str | None = field(),
+        trial_blinding_schema_code: str | None = field(),
+        trial_blinding_schema_null_value_code: str | None = field(),
+        planned_study_length: str | None = field(),
+        planned_study_length_null_value_code: str | None = field(),
         trial_intent_types_codes: Sequence[str] = field(),
-        trial_itent_type_null_value_code: Optional[str] = field(),
-    ) -> "StudyInterventionVO":
+        trial_itent_type_null_value_code: str | None = field(),
+    ) -> Self:
         def helper(parameter: Any, def_value: Any):
             return def_value if isinstance(parameter, Field) else parameter
 
@@ -1314,13 +1314,13 @@ class StudyInterventionVO:
 
 @dataclass(frozen=True)
 class StudyDescriptionVO:
-    study_title: Optional[str] = None
-    study_short_title: Optional[str] = None
+    study_title: str | None = None
+    study_short_title: str | None = None
 
     @staticmethod
     def from_input_values(
-        study_title: Optional[str], study_short_title: Optional[str]
-    ) -> "StudyDescriptionVO":
+        study_title: str | None, study_short_title: str | None
+    ) -> Self:
         return StudyDescriptionVO(
             study_title=normalize_string(study_title),
             study_short_title=normalize_string(study_short_title),
@@ -1368,9 +1368,9 @@ class StudyDescriptionVO:
     def fix_some_values(
         self,
         *,
-        study_title: Optional[str] = field(),
-        study_short_title: Optional[str] = field(),
-    ) -> "StudyDescriptionVO":
+        study_title: str | None = field(),
+        study_short_title: str | None = field(),
+    ) -> Self:
         def helper(parameter: Any, def_value: Any):
             return def_value if isinstance(parameter, Field) else parameter
 
@@ -1389,18 +1389,18 @@ class StudyFieldAuditTrailActionVO:
 
     section: str
     field_name: str
-    before_value: Optional[str]
-    after_value: Optional[str]
+    before_value: str | None
+    after_value: str | None
     action: str
 
     @staticmethod
     def from_input_values(
-        field_name: Optional[str],
-        section: Optional[str],
-        before_value: Optional[str],
-        after_value: Optional[str],
-        action: Optional[str],
-    ) -> "StudyFieldAuditTrailActionVO":
+        field_name: str | None,
+        section: str | None,
+        before_value: str | None,
+        after_value: str | None,
+        action: str | None,
+    ) -> Self:
         return StudyFieldAuditTrailActionVO(
             field_name=normalize_string(field_name),
             section=normalize_string(section),
@@ -1420,15 +1420,15 @@ class StudyFieldAuditTrailEntryAR:
     study_uid: str
     user_initials: str
     date: str
-    actions: List[StudyFieldAuditTrailActionVO]
+    actions: list[StudyFieldAuditTrailActionVO]
 
     @staticmethod
     def from_input_values(
-        study_uid: Optional[str],
-        user_initials: Optional[str],
-        date: Optional[str],
-        actions: List[StudyFieldAuditTrailActionVO],
-    ) -> "StudyFieldAuditTrailEntryAR":
+        study_uid: str | None,
+        user_initials: str | None,
+        date: str | None,
+        actions: list[StudyFieldAuditTrailActionVO],
+    ) -> Self:
         return StudyFieldAuditTrailEntryAR(
             study_uid=normalize_string(study_uid),
             user_initials=normalize_string(user_initials),
@@ -1439,12 +1439,12 @@ class StudyFieldAuditTrailEntryAR:
 
 @dataclass(frozen=True)
 class StudyMetadataVO:
-    id_metadata: Optional[StudyIdentificationMetadataVO] = None
-    ver_metadata: Optional[StudyVersionMetadataVO] = None
-    high_level_study_design: Optional[HighLevelStudyDesignVO] = None
-    study_population: Optional[StudyPopulationVO] = None
-    study_intervention: Optional[StudyInterventionVO] = None
-    study_description: Optional[StudyDescriptionVO] = None
+    id_metadata: StudyIdentificationMetadataVO | None = None
+    ver_metadata: StudyVersionMetadataVO | None = None
+    high_level_study_design: HighLevelStudyDesignVO | None = None
+    study_population: StudyPopulationVO | None = None
+    study_intervention: StudyInterventionVO | None = None
+    study_description: StudyDescriptionVO | None = None
 
     def validate(
         self,

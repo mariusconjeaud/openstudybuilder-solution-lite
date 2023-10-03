@@ -4,10 +4,11 @@ from fastapi import APIRouter, Body, Depends
 
 from clinical_mdr_api import models
 from clinical_mdr_api.models.error import ErrorResponse
-from clinical_mdr_api.oauth import get_current_user_id
+from clinical_mdr_api.oauth import get_current_user_id, rbac
 from clinical_mdr_api.routers import _generic_descriptions
 from clinical_mdr_api.services.projects.project import ProjectService
 
+# Prefixed with "/projects"
 router = APIRouter()
 
 
@@ -18,6 +19,7 @@ router = APIRouter()
 
 @router.get(
     "",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns all projects.",
     response_model=Sequence[models.Project],
     status_code=200,
@@ -33,6 +35,7 @@ def get_projects() -> Sequence[models.Project]:
 
 @router.post(
     "",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Creates a new project.",
     response_model=models.Project,
     status_code=201,

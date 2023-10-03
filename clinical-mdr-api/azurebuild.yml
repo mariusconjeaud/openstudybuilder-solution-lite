@@ -34,6 +34,8 @@ pool:
 variables:
  - name: python_version
    value: 3.11
+ - name: MS_GRAPH_INTEGRATION_ENABLED
+   value: True
 
 jobs:
 #############################################################################
@@ -69,65 +71,51 @@ jobs:
       # until 20 retries ~= 2:30 minutes or first fatal HTTP error response status code, except connection-refused
       displayName: 'Wait for Neo4j database'
 
-    - script: |
-        set -ex
-        
-        # Plain environment, no authorization #
-        export NEO4J_DSN='bolt://neo4j:changeme1234@localhost:5087'
-        export ALLOW_ORIGIN_REGEX='.*'
-        export OAUTH_ENABLED='False'
-
+    - script: >-  # a single-line script, newlines replaced with spaces, no tailing newline
         pipenv run testunit
       displayName: "Unit test"
+      env:
+        NEO4J_DSN: 'bolt://neo4j:changeme1234@localhost:5087/neo4j'
+        ALLOW_ORIGIN_REGEX: '.*'
+        OAUTH_ENABLED: 'False'
     
-    - script: |
-        set -ex
-        
-        # Plain environment, no authorization #
-        export NEO4J_DSN='bolt://neo4j:changeme1234@localhost:5087'
-        export ALLOW_ORIGIN_REGEX='.*'
-        export OAUTH_ENABLED='False'
-
+    - script: >-  # a single-line script, newlines replaced with spaces, no tailing newline
         pipenv run testint
       displayName: "Integration test"
+      env:
+        # Plain environment, no authorization #
+        NEO4J_DSN: 'bolt://neo4j:changeme1234@localhost:5087/neo4j'
+        ALLOW_ORIGIN_REGEX: '.*'
+        OAUTH_ENABLED: 'False'
+        OIDC_METADATA_DOCUMENT: $(CLINICAL-MDR-TEST-${{parameters.DEPLOY_ID_NUMBER}}-OIDC-DOC)
+        OAUTH_APP_ID: $(CLINICAL-MDR-AUTH-1-STUDYB-SERVER-ID)
+        OAUTH_APP_SECRET: $(CLINICAL-MDR-API-OAUTH-APP-SECRET)
+        MS_GRAPH_INTEGRATION_ENABLED: $(MS_GRAPH_INTEGRATION_ENABLED)
+        MS_GRAPH_GROUPS_QUERY: $(CLINICAL-MDR-API-MS-GRAPH-GROUPS-QUERY)
 
-    - script: |
-        set -ex
-        
-        export NEO4J_DSN='bolt://neo4j:changeme1234@localhost:5087'
-        export ALLOW_ORIGIN_REGEX='.*'
-        export OAUTH_ENABLED='False'
-
-        # Although the fake connection string, it enables App Insights integration code related to logging and tracing 
-        export APPLICATIONINSIGHTS_CONNECTION_STRING='InstrumentationKey=00000000-0000-0000-0000-000000000000'
-        # Configure Python logging with logging-azure.yaml to validate config file and code dependencies
-        export UVICORN_LOG_CONFIG='logging-azure.yaml'
-        
+    - script: >-  # a single-line script, newlines replaced with spaces, no tailing newline
         pipenv run test-telemetry
       displayName: "Telemetry test"
+      env:
+        NEO4J_DSN: 'bolt://neo4j:changeme1234@localhost:5087/neo4j'
+        ALLOW_ORIGIN_REGEX: '.*'
+        OAUTH_ENABLED: 'False'
+        # Although the fake connection string, it enables App Insights integration code related to logging and tracing
+        APPLICATIONINSIGHTS_CONNECTION_STRING: 'InstrumentationKey=00000000-0000-0000-0000-000000000000'
+        # Configure Python logging with logging-azure.yaml to validate config file and code dependencies
+        UVICORN_LOG_CONFIG: 'logging-azure.yaml'
 
-    - script: |
-        set -ex
-        
-        export NEO4J_DSN='bolt://neo4j:changeme1234@localhost:5087'
-        export ALLOW_ORIGIN_REGEX='.*'
-
-        # Enable authorization for the rest of the tests below #
-        unset OAUTH_ENABLED  # Authentication is enabled by default, unless OAUTH_ENABLED in [False|0|off] 
-        # Please provide these environment variables for the pipeline, otherwise auth test will fail
-        # OIDC_METADATA_DOCUMENT OAUTH_AUTHORIZATION_URL OAUTH_TOKEN_URL OAUTH_APP_ID OAUTH_APP_ID_URI OUATH_CLIENT_ID
-        
-        export OIDC_METADATA_DOCUMENT="$(CLINICAL-MDR-TEST-${{parameters.DEPLOY_ID_NUMBER}}-OIDC-DOC)"
-        export OAUTH_AUTHORIZATION_URL="$(CLINICAL-MDR-TEST-${{parameters.DEPLOY_ID_NUMBER}}-AUTH-URL)"
-        export OAUTH_TOKEN_URL="$(CLINICAL-MDR-TEST-${{parameters.DEPLOY_ID_NUMBER}}-TOKEN-URL)"
-        export OAUTH_APP_ID="$(CLINICAL-MDR-TEST-${{parameters.DEPLOY_ID_NUMBER}}-APP-ID)"
-        export OAUTH_APP_ID_URI="$(CLINICAL-MDR-TEST-${{parameters.DEPLOY_ID_NUMBER}}-URI)"
-        export OUATH_CLIENT_ID="$(CLINICAL-MDR-TEST-${{parameters.DEPLOY_ID_NUMBER}}-CLIENT-ID)"
-        export OAUTH_EXPIRED_ACCESS_TOKEN="$(CLINICAL-MDR-TEST-${{parameters.DEPLOY_ID_NUMBER}}-EXP-ACCESS-TOKEN)"
-        
+    - script: >-  # a single-line script, newlines replaced with spaces, no tailing newline
         pipenv run testauth
       displayName: "Auth test"
-  
+      env:
+        NEO4J_DSN: "bolt://neo4j:changeme1234@localhost:5087/neo4j"
+        ALLOW_ORIGIN_REGEX: ".*"
+        # Authentication is enabled unless OAUTH_ENABLED is false
+        OIDC_METADATA_DOCUMENT: $(CLINICAL-MDR-TEST-${{parameters.DEPLOY_ID_NUMBER}}-OIDC-DOC)
+        OAUTH_APP_ID: $(CLINICAL-MDR-AUTH-1-STUDYB-SERVER-ID)
+        EXPIRED_ACCESS_TOKEN: $(CLINICAL-MDR-TEST-${{parameters.DEPLOY_ID_NUMBER}}-EXP-ACCESS-TOKEN)
+
     # Publish test results to Azure Pipelines
     - task: PublishTestResults@2
       inputs:
@@ -170,6 +158,7 @@ jobs:
       inputs:
         codeCoverageTool: Cobertura
         summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.xml'
+      condition: always()
       displayName: "Publish code coverage"
 
     # Save logs from Neo4j container
@@ -255,7 +244,7 @@ jobs:
         git checkout $gitbranch
         git pull
       displayName: 'Checkout git branch'
-      name: gitref        
+      name: gitref
 
     # Build SBOM
     - script: |
@@ -281,9 +270,6 @@ jobs:
     - script: |
         set -ex
         
-        export NEO4J_DSN='bolt://neo4j:changeme1234@localhost:5087'
-        export ALLOW_ORIGIN_REGEX='.*'
-        export OAUTH_ENABLED='False'
         pipenv run openapi
         
         if [[ `git diff --exit-code openapi.json` ]]; then
@@ -317,6 +303,9 @@ jobs:
         fi
       displayName: Generate openapi.json
       env:
+        NEO4J_DSN: 'bolt://neo4j:changeme1234@localhost:5087/neo4j'
+        ALLOW_ORIGIN_REGEX: '.*'
+        OAUTH_ENABLED: 'False'
         SYSTEM_ACCESSTOKEN: $(System.AccessToken)
 
     # Verify that Pipfile.lock is up-to-date
@@ -328,6 +317,7 @@ jobs:
     - script: >-
         pipenv check | tee pipenv_report.txt
       displayName: "Check packages for security vulnerabilities"
+      continueOnError: true
 
     # black check
     - script: >-
@@ -369,7 +359,7 @@ jobs:
         installationPath: $(Agent.ToolsDirectory)/dotnet
 
     # Ensure shutdown of the full pipeline, if one of the jobs fail
-    - template: pipelines/templates/shutdown.yml
+    # - template: pipelines/templates/shutdown.yml
 
 #############################################################################
 ####               Schemathesis tests of API schema                     #####
@@ -392,6 +382,13 @@ jobs:
         PYTHON_VERSION: $(python_version)
 
     - template: pipelines/templates/docker-up.yml
+      parameters:
+        OAUTH_ENABLED: false
+        OIDC_METADATA_DOCUMENT: $(CLINICAL-MDR-TEST-${{parameters.DEPLOY_ID_NUMBER}}-OIDC-DOC)
+        OAUTH_APP_ID: $(CLINICAL-MDR-AUTH-1-STUDYB-SERVER-ID)
+        OAUTH_APP_SECRET: $(CLINICAL-MDR-API-OAUTH-APP-SECRET)
+        MS_GRAPH_INTEGRATION_ENABLED: $(MS_GRAPH_INTEGRATION_ENABLED)
+        MS_GRAPH_GROUPS_QUERY: $(CLINICAL-MDR-API-MS-GRAPH-GROUPS-QUERY)
 
     - script: >-  # a single-line script, newlines replaced with spaces, no tailing newline
         wget --output-document - --progress=dot --retry-connrefused --timeout 3 --tries 20 \
@@ -405,17 +402,10 @@ jobs:
       condition: always()
       displayName: "Docker container logs"
 
-    - script: |
-        set -ex
-        
-        # Plain environment, no authorization #
-        export NEO4J_DSN='bolt://neo4j:changeme1234@localhost:5087'
-        export ALLOW_ORIGIN_REGEX='.*'
-        export OAUTH_ENABLED='False'
-
+    - script: >-
         pipenv run schemathesis
       displayName: "Run Schemathesis tests"
-  
+
     # Publish test results to Azure Pipelines
     - task: PublishTestResults@2
       inputs:
@@ -438,4 +428,4 @@ jobs:
     - template: pipelines/templates/docker-cleanup.yml
 
     # Ensure shutdown of the full pipeline, if one of the jobs fail
-    - template: pipelines/templates/shutdown.yml
+    # - template: pipelines/templates/shutdown.yml

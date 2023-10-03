@@ -1,5 +1,3 @@
-from typing import Optional
-
 from neomodel import (
     ArrayProperty,
     BooleanProperty,
@@ -19,13 +17,12 @@ from clinical_mdr_api.domain_repositories.models.dictionary import DictionaryTer
 from clinical_mdr_api.domain_repositories.models.generic import (
     ClinicalMdrNode,
     ClinicalMdrRel,
-    ConjunctionRelation,
 )
 from clinical_mdr_api.domain_repositories.models.project import Project
-from clinical_mdr_api.domain_repositories.models.study_audit_trail import StudyAction
+from clinical_mdr_api.domain_repositories.models.study_selections import AuditTrailMixin
 
 
-class StudyField(ClinicalMdrNode):
+class StudyField(ClinicalMdrNode, AuditTrailMixin):
     has_type = RelationshipTo(CTTermRoot, "HAS_TYPE", model=ClinicalMdrRel)
     has_dictionary_type = RelationshipTo(
         DictionaryTermRoot,
@@ -37,16 +34,13 @@ class StudyField(ClinicalMdrNode):
         CTTermRoot, "HAS_REASON_FOR_NULL_VALUE", model=ClinicalMdrRel
     )
 
-    has_before = RelationshipFrom(StudyAction, "BEFORE", model=ConjunctionRelation)
-    has_after = RelationshipFrom(StudyAction, "AFTER", model=ConjunctionRelation)
-
     @classmethod
     def get_specific_field_currently_used_in_study(
         cls,
         field_name: str,
-        value: Optional[str],
+        value: str | None,
         study_uid: str,
-        null_value_code: Optional[str] = None,
+        null_value_code: str | None = None,
     ):
         """
         Checks whether the StudyField with a given value has historically already been used in this study.

@@ -1,6 +1,5 @@
 import re
 from abc import ABC
-from typing import Dict, List, Optional, Union
 
 from clinical_mdr_api.domain_repositories.concepts.odms.form_repository import (
     FormRepository,
@@ -32,9 +31,22 @@ class OdmGenericService(ConceptGenericService[_AggregateRootType], ABC):
 
     def fail_if_non_present_vendor_elements_are_used_by_current_odm_element_attributes(
         self,
-        attribute_uids: List[str],
-        input_elements: List[OdmVendorRelationPostInput],
+        attribute_uids: list[str],
+        input_elements: list[OdmVendorRelationPostInput],
     ):
+        """
+        Raises an error if any ODM vendor element that is not present in the input is used by any of the given ODM element attributes.
+
+        Args:
+            attribute_uids (list[str]): The uids of the ODM element attributes.
+            input_elements (list[OdmVendorRelationPostInput]): The input ODM vendor elements.
+
+        Returns:
+            None
+
+        Raises:
+            BusinessLogicException: If an ODM vendor element is used by any of the given ODM element attributes and is not present in the input.
+        """
         (
             odm_vendor_attribute_ars,
             _,
@@ -56,10 +68,24 @@ class OdmGenericService(ConceptGenericService[_AggregateRootType], ABC):
 
     def fail_if_these_attributes_cannot_be_added(
         self,
-        input_attributes: List[OdmVendorRelationPostInput],
-        element_uids: Optional[List[str]] = None,
-        compatible_type: Optional[VendorCompatibleType] = None,
+        input_attributes: list[OdmVendorRelationPostInput],
+        element_uids: list[str] | None = None,
+        compatible_type: VendorCompatibleType | None = None,
     ):
+        """
+        Raises an error if any of the given ODM vendor attributes cannot be added as vendor attributes or vendor element attributes.
+
+        Args:
+            input_attributes (list[OdmVendorRelationPostInput]): The input ODM vendor attributes.
+            element_uids (list[str] | None, optional): The uids of the vendor elements to which the attributes can be added.
+            compatible_type (VendorCompatibleType | None, optional): The vendor compatible type of the attributes.
+
+        Returns:
+            None
+
+        Raises:
+            BusinessLogicException: If any of the given ODM vendor attributes cannot be added as vendor attributes or vendor element attributes.
+        """
         odm_vendor_attribute_ars = self._get_odm_vendor_attributes(input_attributes)
         vendor_attribute_patterns = {
             odm_vendor_attribute_ar.uid: odm_vendor_attribute_ar.concept_vo.value_regex
@@ -92,7 +118,7 @@ class OdmGenericService(ConceptGenericService[_AggregateRootType], ABC):
         self.is_vendor_compatible(odm_vendor_attribute_ars, compatible_type)
 
     def can_connect_vendor_attributes(
-        self, attributes: List[OdmVendorRelationPostInput]
+        self, attributes: list[OdmVendorRelationPostInput]
     ):
         errors = []
         for attribute in attributes:
@@ -112,9 +138,22 @@ class OdmGenericService(ConceptGenericService[_AggregateRootType], ABC):
 
     def attribute_values_matches_their_regex(
         self,
-        input_attributes: List[OdmVendorRelationPostInput],
+        input_attributes: list[OdmVendorRelationPostInput],
         attribute_patterns: dict,
     ):
+        """
+        Determines whether the values of the given ODM vendor attributes match their regex patterns.
+
+        Args:
+            input_attributes (list[OdmVendorRelationPostInput]): The input ODM vendor attributes.
+            attribute_patterns (dict): The regex patterns for the ODM vendor attributes.
+
+        Returns:
+            bool: True if the values of the ODM vendor attributes match their regex patterns, False otherwise.
+
+        Raises:
+            BusinessLogicException: If the values of any of the ODM vendor attributes don't match their regex patterns.
+        """
         errors = {}
         for input_attribute in input_attributes:
             if (
@@ -135,8 +174,17 @@ class OdmGenericService(ConceptGenericService[_AggregateRootType], ABC):
         return True
 
     def get_regex_patterns_of_attributes(
-        self, attribute_uids: List[str]
-    ) -> Dict[str, Optional[str]]:
+        self, attribute_uids: list[str]
+    ) -> dict[str, str | None]:
+        """
+        Returns a dictionary where the key is the attribute uid and the value is the regex pattern of the specified ODM vendor attributes.
+
+        Args:
+            attribute_uids (list[str]): The uids of the ODM vendor attributes.
+
+        Returns:
+            dict[str, str | None]: A dictionary of regex patterns for the specified ODM vendor attributes.
+        """
         attributes, _ = self._repos.odm_vendor_attribute_repository.find_all(
             filter_by={"uid": {"v": attribute_uids, "op": "eq"}}
         )
@@ -149,11 +197,23 @@ class OdmGenericService(ConceptGenericService[_AggregateRootType], ABC):
 
     def is_vendor_compatible(
         self,
-        odm_vendor_attributes: Union[
-            List[OdmVendorRelationPostInput], List[OdmVendorAttributeAR]
-        ],
-        compatible_type: Optional[VendorCompatibleType] = None,
+        odm_vendor_attributes: list[OdmVendorRelationPostInput]
+        | list[OdmVendorAttributeAR],
+        compatible_type: VendorCompatibleType | None = None,
     ):
+        """
+        Determines whether the given ODM vendor attributes are compatible with the specified vendor compatible type.
+
+        Args:
+            odm_vendor_attributes (list[OdmVendorRelationPostInput] | list[OdmVendorAttributeAR]): The ODM vendor attributes.
+            compatible_type (VendorCompatibleType | None, optional): The vendor compatible type to check for compatibility.
+
+        Returns:
+            bool: True if the given ODM vendor attributes are compatible with the specified vendor compatible type.
+
+        Raises:
+            BusinessLogicException: If any of the given ODM vendor attributes are not compatible with the specified vendor compatible type.
+        """
         errors = {}
 
         if all(
@@ -181,7 +241,7 @@ class OdmGenericService(ConceptGenericService[_AggregateRootType], ABC):
         return True
 
     def _get_odm_vendor_attributes(
-        self, input_attributes: List[OdmVendorRelationPostInput]
+        self, input_attributes: list[OdmVendorRelationPostInput]
     ):
         return self._repos.odm_vendor_attribute_repository.find_all(
             filter_by={
@@ -194,11 +254,23 @@ class OdmGenericService(ConceptGenericService[_AggregateRootType], ABC):
 
     def pre_management(
         self,
-        uid,
+        uid: str,
         odm_vendors_post_input: OdmVendorsPostInput,
-        odm_ar: Union[OdmFormAR, OdmItemGroupAR, OdmItemAR],
-        repo: Union[FormRepository, ItemGroupRepository, ItemRepository],
+        odm_ar: OdmFormAR | OdmItemGroupAR | OdmItemAR,
+        repo: FormRepository | ItemGroupRepository | ItemRepository,
     ):
+        """
+        Prepares the given ODM Vendors by adding and removing vendor element and vendor element attribute relations.
+
+        Args:
+            uid (str): The uid of the ODM form, item group, or item.
+            odm_vendors_post_input (OdmVendorsPostInput): The ODM vendors.
+            odm_ar (OdmFormAR | OdmItemGroupAR | OdmItemAR): The ODM form, item group, or item.
+            repo (FormRepository | ItemGroupRepository | ItemRepository): The repository for the ODM form, item group, or item.
+
+        Returns:
+            None
+        """
         removed_vendor_attribute_uids = set(
             odm_ar.concept_vo.vendor_element_attribute_uids
         ) - {

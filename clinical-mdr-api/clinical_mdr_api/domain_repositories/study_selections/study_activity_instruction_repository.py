@@ -55,7 +55,7 @@ class StudyActivityInstructionRepository(base.StudySelectionRepository):
 
         # Detach previous node from study
         if selection_vo.uid is not None:
-            self._remove_old_selection_if_exists(study_value_node.uid, selection_vo)
+            self._remove_old_selection_if_exists(selection_vo.study_uid, selection_vo)
 
         # Create new node
         node = StudyActivityInstruction(uid=selection_vo.uid)
@@ -79,7 +79,7 @@ class StudyActivityInstructionRepository(base.StudySelectionRepository):
             """,
             {
                 "study_uid": study_uid,
-                "schedule_uid": instruction.uid,
+                "instruction_uid": instruction.uid,
             },
         )
 

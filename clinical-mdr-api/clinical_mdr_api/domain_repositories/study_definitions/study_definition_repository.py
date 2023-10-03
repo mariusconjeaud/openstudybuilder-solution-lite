@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Dict, Optional, Sequence, Tuple
+from typing import Any, Sequence
 
 from neomodel import NodeMeta
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domain_repositories.generic_repository import (
     RepositoryClosureData,  # type: ignore
 )
@@ -47,9 +48,9 @@ class StudyDefinitionRepository(ABC):
         modifications and creation of study instances.
         """
 
-        user: Optional[str] = None
+        user: str | None = None
 
-    __retrieved_for_update: Dict[str, StudyDefinitionAR]
+    __retrieved_for_update: dict[str, StudyDefinitionAR]
     __audit_info: _RepositoryAuditInfo
     __closed: bool = False
 
@@ -63,7 +64,9 @@ class StudyDefinitionRepository(ABC):
         attempt repository after it's been closed.
         """
         if self.__closed:
-            raise ValueError("Cannot use repository after it's closed.")
+            raise exceptions.BusinessLogicException(
+                "Cannot use repository after it's closed."
+            )
 
     @property
     def audit_info(self) -> _RepositoryAuditInfo:
@@ -79,7 +82,7 @@ class StudyDefinitionRepository(ABC):
         self,
         uid: str,
         for_update: bool = False,
-    ) -> Optional[StudyDefinitionAR]:
+    ) -> StudyDefinitionAR | None:
         """
         Public repository method for bringing an instance of study aggregate (StudyDefinitionAR class) restored from its
         state persisted in the underlying DB.
@@ -103,12 +106,12 @@ class StudyDefinitionRepository(ABC):
         # in different way and then saved. This may lead to some unpredictable result, so to avoid that we try to
         # guarantee that once some particular instance was retrieved for update (at least once) every subsequent
         # repository request to retrieve instance with the same uid returns exactly the same in-memory instance.
-        result: Optional[StudyDefinitionAR] = self.__retrieved_for_update.get(uid)
+        result: StudyDefinitionAR | None = self.__retrieved_for_update.get(uid)
         if result is not None:
             return result
 
         # now get the data from db
-        snapshot: Optional[StudyDefinitionSnapshot]
+        snapshot: StudyDefinitionSnapshot | None
         additional_closure: Any
         (snapshot, additional_closure) = self._retrieve_snapshot_by_uid(
             uid=uid,
@@ -173,11 +176,11 @@ class StudyDefinitionRepository(ABC):
             # this is the case of new instance (not persisted yet)
             self._create(snapshot)
         elif repository_closure_data.repository is not self:
-            raise ValueError(
+            raise exceptions.BusinessLogicException(
                 "Aggregate instances can be save only by repository which has retrieved the instance."
             )
         elif repository_closure_data.not_for_update:
-            raise ValueError(
+            raise exceptions.BusinessLogicException(
                 "Only aggregate instances retrieved for update can be saved."
             )
         else:
@@ -198,16 +201,16 @@ class StudyDefinitionRepository(ABC):
 
     def find_all(
         self,
-        has_study_objective: Optional[bool] = None,
-        has_study_endpoint: Optional[bool] = None,
-        has_study_criteria: Optional[bool] = None,
-        has_study_activity: Optional[bool] = None,
-        has_study_activity_instruction: Optional[bool] = None,
-        sort_by: Optional[dict] = None,
+        has_study_objective: bool | None = None,
+        has_study_endpoint: bool | None = None,
+        has_study_criteria: bool | None = None,
+        has_study_activity: bool | None = None,
+        has_study_activity_instruction: bool | None = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
         deleted: bool = False,
     ) -> GenericFilteringReturn[StudyDefinitionAR]:
@@ -274,18 +277,16 @@ class StudyDefinitionRepository(ABC):
             study.repository_closure_data = repository_closure_data
 
         # and we are done
-        return GenericFilteringReturn.create(
-            items=studies, total_count=snapshots.total_count
-        )
+        return GenericFilteringReturn.create(items=studies, total=snapshots.total)
 
     def find_study_snapshot_history(
         self,
         study_uid: str,
-        sort_by: Optional[dict] = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[StudyDefinitionAR]:
         study_snapshots = self._retrieve_study_snapshot_history(
@@ -308,11 +309,11 @@ class StudyDefinitionRepository(ABC):
     def _retrieve_study_snapshot_history(
         self,
         study_uid: str,
-        sort_by: Optional[dict] = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[StudyDefinitionSnapshot]:
         raise NotImplementedError
@@ -321,11 +322,11 @@ class StudyDefinitionRepository(ABC):
         self,
         uid: str,
         library_item_type: NodeMeta,
-        sort_by: Optional[dict] = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 50,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
     ) -> GenericFilteringReturn[StudyDefinitionAR]:
         """
         Public method which is to retrieve the list of studies having selected the library item with provided uid
@@ -363,7 +364,7 @@ class StudyDefinitionRepository(ABC):
             study.repository_closure_data = repository_closure_data
 
         # Return output
-        return GenericFilteringReturn.create(items=studies, total_count=0)
+        return GenericFilteringReturn.create(items=studies, total=0)
 
     def close(self) -> None:
         """
@@ -382,7 +383,7 @@ class StudyDefinitionRepository(ABC):
         self,
         uid: str,
         for_update: bool,
-    ) -> Tuple[Optional[StudyDefinitionSnapshot], Any]:
+    ) -> tuple[StudyDefinitionSnapshot | None, Any]:
         """
         Abstract method of the study repository, which is supposed to:
 
@@ -445,19 +446,19 @@ class StudyDefinitionRepository(ABC):
     @abstractmethod
     def _retrieve_all_snapshots(
         self,
-        has_study_objective: Optional[bool] = None,
-        has_study_endpoint: Optional[bool] = None,
-        has_study_criteria: Optional[bool] = None,
-        has_study_activity: Optional[bool] = None,
-        has_study_activity_instruction: Optional[bool] = None,
-        sort_by: Optional[dict] = None,
+        has_study_objective: bool | None = None,
+        has_study_endpoint: bool | None = None,
+        has_study_criteria: bool | None = None,
+        has_study_activity: bool | None = None,
+        has_study_activity_instruction: bool | None = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
-        study_selection_object_node_id: Optional[int] = None,
-        study_selection_object_node_type: Optional[NodeMeta] = None,
+        study_selection_object_node_id: int | None = None,
+        study_selection_object_node_type: NodeMeta | None = None,
         deleted: bool = False,
     ) -> GenericFilteringReturn[StudyDefinitionSnapshot]:
         """
@@ -490,7 +491,7 @@ class StudyDefinitionRepository(ABC):
     @abstractmethod
     def _retrieve_fields_audit_trail(
         self, uid: str
-    ) -> Optional[Sequence[StudyFieldAuditTrailEntryAR]]:
+    ) -> Sequence[StudyFieldAuditTrailEntryAR] | None:
         """
         Private method to retrieve an audit trail for a study by UID.
         :return: A sequence of Study field audit trail objects.
@@ -498,7 +499,7 @@ class StudyDefinitionRepository(ABC):
 
     def get_audit_trail_by_uid(
         self, uid: str
-    ) -> Optional[Sequence[StudyFieldAuditTrailEntryAR]]:
+    ) -> Sequence[StudyFieldAuditTrailEntryAR] | None:
         """
         Public method which is to retrieve the audit trail for a given study identified by UID.
         :return: A sequence of retrieved data in a form StudyAuditTrailAR instances.

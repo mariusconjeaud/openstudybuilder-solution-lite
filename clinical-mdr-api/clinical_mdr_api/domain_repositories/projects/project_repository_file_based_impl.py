@@ -1,5 +1,5 @@
 import os
-from typing import Collection, Optional
+from typing import Collection
 
 from clinical_mdr_api.domain_repositories._utils.json_file_based_static_repo import (
     JsonFileBasedStaticRepo,
@@ -33,5 +33,5 @@ class ProjectRepositoryFileBasedImpl(
     def __init__(self, project_json_file_path: str = _DEFAULT_PROJECTS_JSON_FILE_PATH):
         super().__init__(json_file_path=project_json_file_path)
 
-    def find_by_project_number(self, project_number: str) -> Optional[ProjectAR]:
+    def find_by_project_number(self, project_number: str) -> ProjectAR | None:
         return self._find_by_key(project_number)

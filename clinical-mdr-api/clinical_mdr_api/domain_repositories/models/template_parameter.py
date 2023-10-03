@@ -77,12 +77,12 @@ class ParameterTemplateValue(TemplateParameterTermValue):
     def get_all(self):
         cypher_query = """
             MATCH (otv:ParameterTemplateValue)<-[:LATEST_FINAL]-(ot:ParameterTemplateRoot)<-[rel:TPCV_USES_TPV]-(pt)
-            where ID(pt) = $id
+            WHERE elementId(pt) = $element_id
             RETURN
                 pt.name AS name, ot.uid AS uid, rel.position as position, otv.value as value, otv.name as param_value
 
             """
-        dataset, _ = db.cypher_query(cypher_query, {"id": self.id})
+        dataset, _ = db.cypher_query(cypher_query, {"element_id": self.element_id})
         return dataset
 
 
@@ -119,12 +119,12 @@ class TemplateParameterComplexValue(TemplateParameterTermValue):
     def get_all(self):
         cypher_query = """
             MATCH (otv:TemplateParameterTermValue)<-[:LATEST_FINAL]-(ot:TemplateParameterTermRoot)<-[rel:TPCV_USES_TPV]-(pt)
-            where ID(pt) = $id
+            WHERE elementId(pt) = $element_id
             RETURN
                 pt.name AS name, ot.uid AS uid, rel.position as position, otv.value as value, otv.name as param_value
                          
             """
-        dataset, _ = db.cypher_query(cypher_query, {"id": self.id})
+        dataset, _ = db.cypher_query(cypher_query, {"element_id": self.element_id})
         return dataset
 
 

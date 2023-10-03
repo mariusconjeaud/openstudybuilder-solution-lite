@@ -1,5 +1,4 @@
 import json
-from typing import List, Optional
 
 from clinical_mdr_api.domain_repositories._generic_repository_interface import (
     _AggregateRootType,
@@ -48,7 +47,7 @@ class VendorAttributeRepository(OdmGenericRepository[OdmVendorAttributeAR]):
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
         root: VersionRoot,
-        library: Optional[Library],
+        library: Library | None,
         relationship: VersionRelationship,
         value: VersionValue,
     ) -> OdmVendorAttributeAR:
@@ -59,11 +58,11 @@ class VendorAttributeRepository(OdmGenericRepository[OdmVendorAttributeAR]):
                 compatible_types=value.compatible_types,
                 data_type=value.data_type,
                 value_regex=value.value_regex,
-                vendor_namespace_uid=root.belongs_to_vendor_namespace.get_or_none().uid
-                if root.belongs_to_vendor_namespace.get_or_none()
+                vendor_namespace_uid=vendor_namespace.uid
+                if (vendor_namespace := root.belongs_to_vendor_namespace.get_or_none())
                 else None,
-                vendor_element_uid=root.belongs_to_vendor_element.get_or_none().uid
-                if root.belongs_to_vendor_element.get_or_none()
+                vendor_element_uid=vendor_element.uid
+                if (vendor_element := root.belongs_to_vendor_element.get_or_none())
                 else None,
             ),
             library=LibraryVO.from_input_values_2(
@@ -107,7 +106,7 @@ class VendorAttributeRepository(OdmGenericRepository[OdmVendorAttributeAR]):
         return odm_form_ar
 
     def specific_alias_clause(
-        self, only_specific_status: Optional[List[str]] = None
+        self, only_specific_status: list[str] | None = None
     ) -> str:
         if not only_specific_status:
             only_specific_status = ["LATEST"]
@@ -170,13 +169,13 @@ class VendorAttributeRepository(OdmGenericRepository[OdmVendorAttributeAR]):
         root = OdmVendorAttributeRoot.nodes.get_or_none(uid=ar.uid)
 
         vendor_namespace_uid = (
-            root.belongs_to_vendor_namespace.get_or_none().uid
-            if root.belongs_to_vendor_namespace.get_or_none()
+            vendor_namespace.uid
+            if (vendor_namespace := root.belongs_to_vendor_namespace.get_or_none())
             else None
         )
         vendor_element_uid = (
-            root.belongs_to_vendor_element.get_or_none().uid
-            if root.belongs_to_vendor_element.get_or_none()
+            vendor_element.uid
+            if (vendor_element := root.belongs_to_vendor_element.get_or_none())
             else None
         )
 

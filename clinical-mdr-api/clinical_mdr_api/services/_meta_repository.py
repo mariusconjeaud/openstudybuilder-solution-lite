@@ -13,6 +13,9 @@ from clinical_mdr_api.domain_repositories.brands.brand_repository import BrandRe
 from clinical_mdr_api.domain_repositories.clinical_programmes.clinical_programme_repository import (
     ClinicalProgrammeRepository,
 )
+from clinical_mdr_api.domain_repositories.comments.comments_repository import (
+    CommentsRepository,
+)
 from clinical_mdr_api.domain_repositories.concepts.activities.activity_group_repository import (
     ActivityGroupRepository,
 )
@@ -167,6 +170,9 @@ from clinical_mdr_api.domain_repositories.study_definitions.study_definition_rep
 from clinical_mdr_api.domain_repositories.study_definitions.study_title.study_title_repository import (
     StudyTitleRepository,
 )
+from clinical_mdr_api.domain_repositories.study_selections.study_activity_group_repository import (
+    StudySelectionActivityGroupRepository,
+)
 from clinical_mdr_api.domain_repositories.study_selections.study_activity_instruction_repository import (
     StudyActivityInstructionRepository,
 )
@@ -175,6 +181,9 @@ from clinical_mdr_api.domain_repositories.study_selections.study_activity_reposi
 )
 from clinical_mdr_api.domain_repositories.study_selections.study_activity_schedule_repository import (
     StudyActivityScheduleRepository,
+)
+from clinical_mdr_api.domain_repositories.study_selections.study_activity_subgroup_repository import (
+    StudySelectionActivitySubGroupRepository,
 )
 from clinical_mdr_api.domain_repositories.study_selections.study_arm_repository import (
     StudySelectionArmRepository,
@@ -212,6 +221,9 @@ from clinical_mdr_api.domain_repositories.study_selections.study_epoch_repositor
 from clinical_mdr_api.domain_repositories.study_selections.study_objective_repository import (
     StudySelectionObjectiveRepository,
 )
+from clinical_mdr_api.domain_repositories.study_selections.study_soa_footnote_repository import (
+    StudySoAFootnoteRepository,
+)
 from clinical_mdr_api.domain_repositories.study_selections.study_visit_repository import (
     StudyVisitRepository,
 )
@@ -220,6 +232,9 @@ from clinical_mdr_api.domain_repositories.syntax_instances.criteria_repository i
 )
 from clinical_mdr_api.domain_repositories.syntax_instances.endpoint_repository import (
     EndpointRepository,
+)
+from clinical_mdr_api.domain_repositories.syntax_instances.footnote_repository import (
+    FootnoteRepository,
 )
 from clinical_mdr_api.domain_repositories.syntax_instances.objective_repository import (
     ObjectiveRepository,
@@ -239,6 +254,9 @@ from clinical_mdr_api.domain_repositories.syntax_pre_instances.criteria_pre_inst
 from clinical_mdr_api.domain_repositories.syntax_pre_instances.endpoint_pre_instance_repository import (
     EndpointPreInstanceRepository,
 )
+from clinical_mdr_api.domain_repositories.syntax_pre_instances.footnote_pre_instance_repository import (
+    FootnotePreInstanceRepository,
+)
 from clinical_mdr_api.domain_repositories.syntax_pre_instances.objective_pre_instance_repository import (
     ObjectivePreInstanceRepository,
 )
@@ -250,6 +268,9 @@ from clinical_mdr_api.domain_repositories.syntax_templates.criteria_template_rep
 )
 from clinical_mdr_api.domain_repositories.syntax_templates.endpoint_template_repository import (
     EndpointTemplateRepository,
+)
+from clinical_mdr_api.domain_repositories.syntax_templates.footnote_template_repository import (
+    FootnoteTemplateRepository,
 )
 from clinical_mdr_api.domain_repositories.syntax_templates.objective_template_repository import (
     ObjectiveTemplateRepository,
@@ -472,8 +493,18 @@ class MetaRepository:
         return TimeframeRepository()
 
     @property
+    def footnote_repository(self) -> FootnoteRepository:
+        return FootnoteRepository()
+
+    @property
     def parameter_repository(self) -> TemplateParameterRepository:
         return TemplateParameterRepository()
+
+    @property
+    def footnote_template_repository(
+        self,
+    ) -> FootnoteTemplateRepository:
+        return FootnoteTemplateRepository(self._user)
 
     @property
     def activity_instruction_template_repository(
@@ -502,6 +533,10 @@ class MetaRepository:
         self,
     ) -> ActivityInstructionPreInstanceRepository:
         return ActivityInstructionPreInstanceRepository(self._user)
+
+    @property
+    def footnote_pre_instance_repository(self) -> FootnotePreInstanceRepository:
+        return FootnotePreInstanceRepository(self._user)
 
     @property
     def criteria_pre_instance_repository(self) -> CriteriaPreInstanceRepository:
@@ -578,6 +613,10 @@ class MetaRepository:
         return BrandRepository()
 
     @property
+    def comments_repository(self) -> CommentsRepository:
+        return CommentsRepository()
+
+    @property
     def clinical_programme_repository(self) -> ClinicalProgrammeRepository:
         return ClinicalProgrammeRepository()
 
@@ -612,8 +651,24 @@ class MetaRepository:
         return StudySelectionActivityRepository()
 
     @property
+    def study_activity_subgroup_repository(
+        self,
+    ) -> StudySelectionActivitySubGroupRepository:
+        return StudySelectionActivitySubGroupRepository()
+
+    @property
+    def study_activity_group_repository(
+        self,
+    ) -> StudySelectionActivityGroupRepository:
+        return StudySelectionActivityGroupRepository()
+
+    @property
     def study_activity_schedule_repository(self) -> StudyActivityScheduleRepository:
         return StudyActivityScheduleRepository()
+
+    @property
+    def study_soa_footnote_repository(self) -> StudySoAFootnoteRepository:
+        return StudySoAFootnoteRepository()
 
     @property
     def study_design_cell_repository(self) -> StudyDesignCellRepository:

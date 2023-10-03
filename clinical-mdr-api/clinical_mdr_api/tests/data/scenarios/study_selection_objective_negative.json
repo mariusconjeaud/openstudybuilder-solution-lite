@@ -67,7 +67,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "The study objective uid does not exist (study_objective_uid)",
+                "message": "The study objective with uid (study_objective_uid) does not exist",
                 "method": "GET",
                 "path": "http://testserver/studies/study_root/study-objectives/study_objective_uid",
                 "time": "2020-11-03T23:42:41.518146",

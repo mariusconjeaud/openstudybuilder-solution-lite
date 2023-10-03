@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Self
 
 from pydantic import Field
 
@@ -58,7 +58,7 @@ class StudyVisitListing(BaseModel):
     )
 
     @classmethod
-    def from_query(cls, query_result: dict) -> "StudyVisitListing":
+    def from_query(cls, query_result: dict) -> Self:
         return cls(
             STUDYID=query_result["STUDYID"],
             DOMAIN=query_result["DOMAIN"],
@@ -143,7 +143,7 @@ class StudyArmListing(BaseModel):
     )
 
     @classmethod
-    def from_query(cls, query_result: dict) -> "StudyVisitListing":
+    def from_query(cls, query_result: dict) -> Self:
         return cls(
             STUDYID=query_result["STUDYID"],
             DOMAIN=query_result["DOMAIN"],
@@ -212,7 +212,7 @@ class StudyCriterionListing(BaseModel):
     )
 
     @classmethod
-    def from_query(cls, query_result: dict) -> "StudyCriterionListing":
+    def from_query(cls, query_result: dict) -> Self:
         return cls(
             STUDYID=query_result["STUDYID"],
             DOMAIN=query_result["DOMAIN"],
@@ -250,7 +250,7 @@ class StudySummaryListing(BaseModel):
         Examples Planned Minimum Age of Subjects, Planned Maximum Age of Subjects
         """,
     )
-    TSVAL: Union[str, list] = Field(
+    TSVAL: str | list = Field(
         None,
         title="Parameter Value",
         description="""
@@ -286,7 +286,7 @@ class StudySummaryListing(BaseModel):
     )
 
     @classmethod
-    def from_query(cls, query_result: dict) -> "StudySummaryListing":
+    def from_query(cls, query_result: dict) -> Self:
         return cls(
             STUDYID=query_result["STUDYID"],
             DOMAIN=query_result["DOMAIN"],
@@ -342,7 +342,7 @@ class StudyElementListing(BaseModel):
     )
 
     @classmethod
-    def from_query(cls, query_result: dict) -> "StudyElementListing":
+    def from_query(cls, query_result: dict) -> Self:
         return cls(
             STUDYID=query_result["STUDYID"],
             DOMAIN=query_result["DOMAIN"],
@@ -384,7 +384,7 @@ class StudyDiseaseMilestoneListing(BaseModel):
     )
 
     @classmethod
-    def from_query(cls, query_result: dict) -> "StudyDiseaseMilestoneListing":
+    def from_query(cls, query_result: dict) -> Self:
         return cls(
             STUDYID=query_result["STUDYID"],
             DOMAIN=query_result["DOMAIN"],

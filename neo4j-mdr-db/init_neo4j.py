@@ -1,7 +1,7 @@
 from neo4j import GraphDatabase
 from os import environ
 from neo4j.work.transaction import Transaction
-from db_schema import SCHEMA_CLEAR_QUERY, build_schema_queries
+from db_schema import build_schema_queries, SCHEMA_CLEAR_QUERY
 
 from datetime import datetime
 
@@ -19,15 +19,6 @@ driver = GraphDatabase.driver(
     uri,
     auth=(environ.get("NEO4J_MDR_AUTH_USER"), environ.get("NEO4J_MDR_AUTH_PASSWORD")),
 )
-
-
-def run_querystring(tx: Transaction, query: str) -> None:
-    tx.run(query).consume()
-
-
-def run_querystring_read(tx: Transaction, query: str):
-    result = tx.run(query)
-    return result.data()
 
 
 def run_querystring(tx: Transaction, query: str) -> None:
@@ -242,7 +233,6 @@ with driver.session(database="system") as session:
 # Create indexes and constraints
 print("\n-- Setting up indexes and constraints on specific nodes --")
 with driver.session(database=DATABASE) as session:
-
     print(SCHEMA_CLEAR_QUERY)
     session.write_transaction(run_querystring, SCHEMA_CLEAR_QUERY)
 
@@ -263,5 +253,3 @@ with driver.session(database=DATABASE) as session:
     session.close()
 
 driver.close()
-
-# %%

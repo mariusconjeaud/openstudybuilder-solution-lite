@@ -1215,9 +1215,14 @@ def create_initial_variable_instance(
 
 def create_new_variable_instance(tx, version_data, variable, parent_href, parent_type):
     prefixed_version_number = _prettify_version_number(version_data["version_number"])
+    variable_root_label = ""
+    if version_data["data_model_type"] == DataModelType.FOUNDATIONAL.value:
+        variable_root_label = VARIABLE_CLASS_ROOT_LABEL
+    elif version_data["data_model_type"] == DataModelType.IMPLEMENTATION.value:
+        variable_root_label = DATASET_VARIABLE_ROOT_LABEL
 
-    initial_part = """
-        MATCH (root{uid: $uid})
+    initial_part = f"""
+        MATCH (root:{variable_root_label}{{uid: $uid}})
         WITH root
     """
 

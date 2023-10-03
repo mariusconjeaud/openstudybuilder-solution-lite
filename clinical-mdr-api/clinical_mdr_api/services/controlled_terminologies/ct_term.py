@@ -1,4 +1,4 @@
-from typing import Optional, Sequence, TypeVar
+from typing import Sequence, TypeVar
 
 from neomodel import db
 
@@ -20,16 +20,16 @@ from clinical_mdr_api.models import CTTerm, CTTermCreateInput, CTTermNameAndAttr
 from clinical_mdr_api.models.utils import GenericFilteringReturn
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._meta_repository import MetaRepository  # type: ignore
-from clinical_mdr_api.services._utils import normalize_string
+from clinical_mdr_api.services._utils import is_library_editable, normalize_string
 
 _AggregateRootType = TypeVar("_AggregateRootType")
 
 
 class CTTermService:
     _repos: MetaRepository
-    user_initials: Optional[str]
+    user_initials: str | None
 
-    def __init__(self, user: Optional[str] = None):
+    def __init__(self, user: str | None = None):
         self.user_initials = user if user is not None else "TODO user initials"
         self._repos = MetaRepository(self.user_initials)
 
@@ -83,56 +83,46 @@ class CTTermService:
 
         library_vo = LibraryVO.from_input_values_2(
             library_name=term_input.library_name,
-            is_library_editable_callback=(
-                lambda name: self._repos.library_repository.find_by_name(
-                    name
-                ).is_editable
-                if self._repos.library_repository.find_by_name(name) is not None
-                else None
-            ),
+            is_library_editable_callback=is_library_editable,
         )
-        try:
-            ct_term_attributes_ar = CTTermAttributesAR.from_input_values(
-                author=self.user_initials,
-                ct_term_attributes_vo=CTTermAttributesVO.from_input_values(
-                    codelist_uid=term_input.codelist_uid,
-                    catalogue_name=term_input.catalogue_name,
-                    code_submission_value=term_input.code_submission_value,
-                    name_submission_value=term_input.name_submission_value,
-                    preferred_term=term_input.nci_preferred_name,
-                    definition=term_input.definition,
-                    codelist_exists_callback=self._repos.ct_codelist_attribute_repository.codelist_exists,
-                    catalogue_exists_callback=self._repos.ct_catalogue_repository.catalogue_exists,
-                    term_exists_by_name_callback=self._repos.ct_term_attributes_repository.term_specific_exists_by_name,
-                    term_exists_by_code_submission_value_callback=(
-                        self._repos.ct_term_attributes_repository.term_attributes_exists_by_code_submission_value
-                    ),
+        ct_term_attributes_ar = CTTermAttributesAR.from_input_values(
+            author=self.user_initials,
+            ct_term_attributes_vo=CTTermAttributesVO.from_input_values(
+                codelist_uid=term_input.codelist_uid,
+                catalogue_name=term_input.catalogue_name,
+                code_submission_value=term_input.code_submission_value,
+                name_submission_value=term_input.name_submission_value,
+                preferred_term=term_input.nci_preferred_name,
+                definition=term_input.definition,
+                codelist_exists_callback=self._repos.ct_codelist_attribute_repository.codelist_exists,
+                catalogue_exists_callback=self._repos.ct_catalogue_repository.catalogue_exists,
+                term_exists_by_name_callback=self._repos.ct_term_attributes_repository.term_specific_exists_by_name,
+                term_exists_by_code_submission_value_callback=(
+                    self._repos.ct_term_attributes_repository.term_attributes_exists_by_code_submission_value
                 ),
-                library=library_vo,
-                generate_uid_callback=self._repos.ct_term_attributes_repository.generate_uid,
-            )
+            ),
+            library=library_vo,
+            generate_uid_callback=self._repos.ct_term_attributes_repository.generate_uid,
+        )
 
-            self._repos.ct_term_attributes_repository.save(ct_term_attributes_ar)
+        self._repos.ct_term_attributes_repository.save(ct_term_attributes_ar)
 
-            ct_term_name_ar = CTTermNameAR.from_input_values(
-                author=self.user_initials,
-                ct_term_name_vo=CTTermNameVO.from_input_values(
-                    codelist_uid=term_input.codelist_uid,
-                    catalogue_name=term_input.catalogue_name,
-                    name=term_input.sponsor_preferred_name,
-                    name_sentence_case=term_input.sponsor_preferred_name_sentence_case,
-                    order=term_input.order,
-                    codelist_exists_callback=self._repos.ct_codelist_attribute_repository.codelist_exists,
-                    catalogue_exists_callback=self._repos.ct_catalogue_repository.catalogue_exists,
-                ),
-                library=library_vo,
-                generate_uid_callback=lambda: ct_term_attributes_ar.uid,
-            )
+        ct_term_name_ar = CTTermNameAR.from_input_values(
+            author=self.user_initials,
+            ct_term_name_vo=CTTermNameVO.from_input_values(
+                codelist_uid=term_input.codelist_uid,
+                catalogue_name=term_input.catalogue_name,
+                name=term_input.sponsor_preferred_name,
+                name_sentence_case=term_input.sponsor_preferred_name_sentence_case,
+                order=term_input.order,
+                codelist_exists_callback=self._repos.ct_codelist_attribute_repository.codelist_exists,
+                catalogue_exists_callback=self._repos.ct_catalogue_repository.catalogue_exists,
+            ),
+            library=library_vo,
+            generate_uid_callback=lambda: ct_term_attributes_ar.uid,
+        )
 
-            self._repos.ct_term_name_repository.save(ct_term_name_ar)
-
-        except ValueError as value_error:
-            raise exceptions.ValidationException(value_error.args[0])
+        self._repos.ct_term_name_repository.save(ct_term_name_ar)
 
         return CTTerm.from_ct_term_ars(ct_term_name_ar, ct_term_attributes_ar)
 
@@ -142,15 +132,15 @@ class CTTermService:
 
     def get_all_terms(
         self,
-        codelist_uid: Optional[str],
-        codelist_name: Optional[str],
-        library: Optional[str],
-        package: Optional[str],
-        sort_by: Optional[dict] = None,
+        codelist_uid: str | None,
+        codelist_name: str | None,
+        library: str | None,
+        package: str | None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[CTTermNameAndAttributes]:
         self.enforce_codelist_package_library(
@@ -183,14 +173,14 @@ class CTTermService:
 
     def get_distinct_values_for_header(
         self,
-        codelist_uid: Optional[str],
-        codelist_name: Optional[str],
-        library: Optional[str],
-        package: Optional[str],
+        codelist_uid: str | None,
+        codelist_name: str | None,
+        library: str | None,
+        package: str | None,
         field_name: str,
-        search_string: Optional[str] = "",
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        search_string: str | None = "",
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
     ) -> Sequence:
         self.enforce_codelist_package_library(
@@ -239,12 +229,9 @@ class CTTermService:
                 f"The following type ({relationship_type}) is not valid relationship type."
             )
 
-        try:
-            self._repos.ct_term_attributes_repository.add_parent(
-                term_uid=term_uid, parent_uid=parent_uid, relationship_type=rel_type
-            )
-        except ValueError as exception:
-            raise exceptions.ValidationException(exception.args[0])
+        self._repos.ct_term_attributes_repository.add_parent(
+            term_uid=term_uid, parent_uid=parent_uid, relationship_type=rel_type
+        )
 
         ct_term_attributes_ar = self._repos.ct_term_attributes_repository.find_by_uid(
             term_uid=term_uid
@@ -281,12 +268,9 @@ class CTTermService:
                 f"The following type ({relationship_type}) is not valid relationship type."
             )
 
-        try:
-            self._repos.ct_term_attributes_repository.remove_parent(
-                term_uid=term_uid, parent_uid=parent_uid, relationship_type=rel_type
-            )
-        except ValueError as exception:
-            raise exceptions.ValidationException(exception.args[0])
+        self._repos.ct_term_attributes_repository.remove_parent(
+            term_uid=term_uid, parent_uid=parent_uid, relationship_type=rel_type
+        )
 
         ct_term_attributes_ar = self._repos.ct_term_attributes_repository.find_by_uid(
             term_uid=term_uid
@@ -300,10 +284,10 @@ class CTTermService:
 
     def enforce_codelist_package_library(
         self,
-        codelist_uid: Optional[str],
-        codelist_name: Optional[str],
-        library: Optional[str],
-        package: Optional[str],
+        codelist_uid: str | None,
+        codelist_name: str | None,
+        library: str | None,
+        package: str | None,
     ) -> None:
         if (
             codelist_uid is not None

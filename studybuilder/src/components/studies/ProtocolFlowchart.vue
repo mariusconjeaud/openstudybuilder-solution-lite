@@ -12,7 +12,7 @@
         class="ml-3"
         :disabled="Boolean(loadingMessage)"
       >
-        {{ $t('ProtocolFlowchart.download_docx') }}
+        {{ $t('_global.download_docx') }}
       </v-btn>
     </div>
   </div>
@@ -78,7 +78,7 @@ export default {
   }
 
   & THEAD {
-    background-color: #ebe8e5;
+    background-color: var(--v-tableGray-base);
 
     & TH {
       border-color: white;

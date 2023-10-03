@@ -19,6 +19,8 @@
         @openCodelistTerms="openCodelistTerms"
         column-data-resource="ct/codelists"
         library="Sponsor"
+        :terms="terms"
+        :loading="loading"
         />
     </v-tab-item>
   </v-tabs-items>
@@ -28,6 +30,7 @@
 <script>
 import { mapGetters, mapActions } from 'vuex'
 import CodelistTable from './CodelistTable'
+import controlledTerminology from '@/api/controlledTerminology'
 
 export default {
   components: {
@@ -45,11 +48,14 @@ export default {
   },
   data () {
     return {
-      tab: null
+      tab: null,
+      terms: [],
+      loading: false
     }
   },
   mounted () {
     this.$store.dispatch('ctCatalogues/fetchCatalogues')
+    this.fetchTerms()
     setTimeout(() => {
       this.addBreadcrumbsLevel({
         text: this.tab,
@@ -66,6 +72,17 @@ export default {
       this.$router.push({
         name: 'CodelistTerms',
         params: { codelist_id: codelist.codelist_uid, catalogue_name: catalogueName }
+      })
+    },
+    fetchTerms  () {
+      this.loading = true
+      const params = {
+        page_size: 0,
+        compact_response: true
+      }
+      controlledTerminology.getCodelistTermsNames(params).then(resp => {
+        this.terms = resp.data.items
+        this.loading = false
       })
     }
   },

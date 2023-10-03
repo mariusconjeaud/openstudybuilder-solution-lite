@@ -1,6 +1,7 @@
 from dataclasses import dataclass
-from typing import AbstractSet, Callable, Optional
+from typing import AbstractSet, Callable, Self
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemAggregateRootBase,
     LibraryItemMetadataVO,
@@ -16,17 +17,17 @@ class CTCodelistNameVO:
     The CTCodelistNameVO acts as the value object for a single CTCodelist name
     """
 
-    name: Optional[str]
+    name: str | None
     catalogue_name: str
-    is_template_parameter: Optional[bool]
+    is_template_parameter: bool | None
 
     @classmethod
     def from_repository_values(
         cls,
-        name: Optional[str],
+        name: str | None,
         catalogue_name: str,
-        is_template_parameter: Optional[bool],
-    ) -> "CTCodelistNameVO":
+        is_template_parameter: bool | None,
+    ) -> Self:
         ct_codelist_name_vo = cls(
             name=name,
             catalogue_name=catalogue_name,
@@ -38,18 +39,20 @@ class CTCodelistNameVO:
     @classmethod
     def from_input_values(
         cls,
-        name: Optional[str],
+        name: str | None,
         catalogue_name: str,
-        is_template_parameter: Optional[bool],
+        is_template_parameter: bool | None,
         catalogue_exists_callback: Callable[[str], bool],
         codelist_exists_by_name_callback: Callable[[str], bool] = lambda _: False,
-    ) -> "CTCodelistNameVO":
+    ) -> Self:
         if not catalogue_exists_callback(catalogue_name):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"There is no catalogue identified by provided catalogue name ({catalogue_name})"
             )
         if codelist_exists_by_name_callback(name):
-            raise ValueError(f"CTCodelistName with name ({name}) already exists")
+            raise exceptions.ValidationException(
+                f"CTCodelistName with name ({name}) already exists"
+            )
 
         ct_codelist_name_vo = cls(
             name=name,
@@ -80,9 +83,9 @@ class CTCodelistNameAR(LibraryItemAggregateRootBase):
         cls,
         uid: str,
         ct_codelist_name_vo: CTCodelistNameVO,
-        library: Optional[LibraryVO],
+        library: LibraryVO | None,
         item_metadata: LibraryItemMetadataVO,
-    ) -> "CTCodelistNameAR":
+    ) -> Self:
         ct_codelist_ar = cls(
             _uid=uid,
             _ct_codelist_name_vo=ct_codelist_name_vo,
@@ -98,11 +101,11 @@ class CTCodelistNameAR(LibraryItemAggregateRootBase):
         author: str,
         ct_codelist_name_vo: CTCodelistNameVO,
         library: LibraryVO,
-        generate_uid_callback: Callable[[], Optional[str]] = (lambda: None),
-    ) -> "CTCodelistNameAR":
+        generate_uid_callback: Callable[[], str | None] = (lambda: None),
+    ) -> Self:
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(author=author)
         if not library.is_editable:
-            raise ValueError(
+            raise exceptions.BusinessLogicException(
                 f"The library with the name='{library.name}' does not allow to create objects."
             )
         ar = cls(
@@ -116,7 +119,7 @@ class CTCodelistNameAR(LibraryItemAggregateRootBase):
     def edit_draft(
         self,
         author: str,
-        change_description: Optional[str],
+        change_description: str | None,
         ct_codelist_vo: CTCodelistNameVO,
         codelist_exists_by_name_callback: Callable[[str], bool],
     ) -> None:
@@ -127,7 +130,7 @@ class CTCodelistNameAR(LibraryItemAggregateRootBase):
             codelist_exists_by_name_callback(ct_codelist_vo.name)
             and self.name != ct_codelist_vo.name
         ):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"CTCodelistName with name ({ct_codelist_vo.name}) already exists."
             )
         if self._ct_codelist_name_vo != ct_codelist_vo:

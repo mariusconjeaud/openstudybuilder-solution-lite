@@ -287,6 +287,7 @@ class TestTAListing(unittest.TestCase):
             change_description="rules change",
         )
         self.study_epoch3 = epoch_service.edit(
+            study_uid=epoch.study_uid,
             study_epoch_uid=epoch.uid,
             study_epoch_input=edit_input,
         )
@@ -635,6 +636,7 @@ class TestTSListing(unittest.TestCase):
             change_description="rules change",
         )
         self.study_epoch3 = epoch_service.edit(
+            study_uid=epoch.study_uid,
             study_epoch_uid=epoch.uid,
             study_epoch_input=edit_input,
         )

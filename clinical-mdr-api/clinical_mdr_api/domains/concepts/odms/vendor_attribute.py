@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable, List, Optional, Tuple
+from typing import Callable, Self
 
 from clinical_mdr_api.domains.concepts.concept_base import ConceptVO
 from clinical_mdr_api.domains.concepts.odms.odm_ar_base import OdmARBase
@@ -14,22 +14,22 @@ from clinical_mdr_api.exceptions import BusinessLogicException
 
 @dataclass(frozen=True)
 class OdmVendorAttributeVO(ConceptVO):
-    compatible_types: List[str]
-    data_type: Optional[str]
-    value_regex: Optional[str]
-    vendor_namespace_uid: Optional[str]
-    vendor_element_uid: Optional[str]
+    compatible_types: list[str]
+    data_type: str | None
+    value_regex: str | None
+    vendor_namespace_uid: str | None
+    vendor_element_uid: str | None
 
     @classmethod
     def from_repository_values(
         cls,
         name: str,
-        compatible_types: List[str],
-        data_type: Optional[str],
-        value_regex: Optional[str],
-        vendor_namespace_uid: Optional[str],
-        vendor_element_uid: Optional[str],
-    ) -> "OdmVendorAttributeVO":
+        compatible_types: list[str],
+        data_type: str | None,
+        value_regex: str | None,
+        vendor_namespace_uid: str | None,
+        vendor_element_uid: str | None,
+    ) -> Self:
         return cls(
             name=name,
             compatible_types=compatible_types,
@@ -46,11 +46,11 @@ class OdmVendorAttributeVO(ConceptVO):
     def validate(
         self,
         find_odm_vendor_namespace_callback: Callable[
-            [str], Optional[OdmVendorNamespaceAR]
+            [str], OdmVendorNamespaceAR | None
         ],
-        find_odm_vendor_element_callback: Callable[[str], Optional[OdmVendorElementAR]],
+        find_odm_vendor_element_callback: Callable[[str], OdmVendorElementAR | None],
         find_odm_vendor_attribute_callback: Callable[
-            [dict], Optional[Tuple[List["OdmVendorAttributeAR"], int]]
+            [dict], tuple[list["OdmVendorAttributeAR"], int] | None
         ],
     ) -> None:
         if self.vendor_namespace_uid is not None:
@@ -61,7 +61,8 @@ class OdmVendorAttributeVO(ConceptVO):
 
             if not find_odm_vendor_namespace_callback(self.vendor_namespace_uid):
                 raise BusinessLogicException(
-                    f"ODM Vendor Attribute tried to connect to non existing ODM Vendor Namespace identified by uid ({self.vendor_namespace_uid})."
+                    "ODM Vendor Attribute tried to connect to non existing concepts "
+                    f"[('Concept Name: ODM Vendor Namespace', 'uids: ({self.vendor_namespace_uid})')]."
                 )
 
         if self.vendor_element_uid is not None:
@@ -72,7 +73,8 @@ class OdmVendorAttributeVO(ConceptVO):
 
             if not find_odm_vendor_element_callback(self.vendor_element_uid):
                 raise BusinessLogicException(
-                    f"ODM Vendor Attribute tried to connect to non existing ODM Vendor Element identified by uid ({self.vendor_element_uid})."
+                    "ODM Vendor Attribute tried to connect to non existing concepts "
+                    f"[('Concept Name: ODM Vendor Element', 'uids: ({self.vendor_element_uid})')]."
                 )
 
         odm_vendor_attributes, _ = find_odm_vendor_attribute_callback(
@@ -89,7 +91,7 @@ class OdmVendorAttributeVO(ConceptVO):
                 == self.vendor_element_uid
             ):
                 raise BusinessLogicException(
-                    f"ODM Vendor Attribute with name ({self.name}) already exists."
+                    f"ODM Vendor Attribute with ['name: {self.name}'] already exists."
                 )
 
 
@@ -110,9 +112,9 @@ class OdmVendorAttributeAR(OdmARBase):
         cls,
         uid: str,
         concept_vo: OdmVendorAttributeVO,
-        library: Optional[LibraryVO],
+        library: LibraryVO | None,
         item_metadata: LibraryItemMetadataVO,
-    ) -> "OdmVendorAttributeAR":
+    ) -> Self:
         return cls(
             _uid=uid,
             _concept_vo=concept_vo,
@@ -126,17 +128,17 @@ class OdmVendorAttributeAR(OdmARBase):
         author: str,
         concept_vo: OdmVendorAttributeVO,
         library: LibraryVO,
-        generate_uid_callback: Callable[[], Optional[str]] = (lambda: None),
+        generate_uid_callback: Callable[[], str | None] = (lambda: None),
         find_odm_vendor_namespace_callback: Callable[
-            [str], Optional[OdmVendorNamespaceAR]
+            [str], OdmVendorNamespaceAR | None
         ] = lambda _: None,
         find_odm_vendor_element_callback: Callable[
-            [str], Optional[OdmVendorElementAR]
+            [str], OdmVendorElementAR | None
         ] = lambda _: None,
         find_odm_vendor_attribute_callback: Callable[
-            [dict], Optional[Tuple[List["OdmVendorAttributeAR"], int]]
+            [dict], tuple[list["OdmVendorAttributeAR"], int] | None
         ] = lambda _: None,
-    ) -> "OdmVendorAttributeAR":
+    ) -> Self:
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(author=author)
 
         concept_vo.validate(
@@ -155,9 +157,11 @@ class OdmVendorAttributeAR(OdmARBase):
     def edit_draft(
         self,
         author: str,
-        change_description: Optional[str],
+        change_description: str | None,
         concept_vo: OdmVendorAttributeVO,
-        concept_exists_by_name_callback: Callable[[str], bool] = lambda _: True,
+        concept_exists_by_callback: Callable[
+            [str, str, bool], bool
+        ] = lambda x, y, z: True,
     ) -> None:
         """
         Creates a new draft version for the object.
@@ -172,9 +176,9 @@ class OdmVendorAttributeAR(OdmARBase):
 class OdmVendorAttributeRelationVO:
     uid: str
     name: str
-    compatible_types: List[str]
-    data_type: Optional[str]
-    value_regex: Optional[str]
+    compatible_types: list[str]
+    data_type: str | None
+    value_regex: str | None
     value: str
     vendor_namespace_uid: str
 
@@ -183,12 +187,12 @@ class OdmVendorAttributeRelationVO:
         cls,
         uid: str,
         name: str,
-        compatible_types: List[str],
-        data_type: Optional[str],
-        value_regex: Optional[str],
+        compatible_types: list[str],
+        data_type: str | None,
+        value_regex: str | None,
         value: str,
         vendor_namespace_uid: str,
-    ) -> "OdmVendorAttributeRelationVO":
+    ) -> Self:
         return cls(
             uid=uid,
             name=name,
@@ -204,8 +208,8 @@ class OdmVendorAttributeRelationVO:
 class OdmVendorElementAttributeRelationVO:
     uid: str
     name: str
-    data_type: Optional[str]
-    value_regex: Optional[str]
+    data_type: str | None
+    value_regex: str | None
     value: str
     vendor_element_uid: str
 
@@ -214,11 +218,11 @@ class OdmVendorElementAttributeRelationVO:
         cls,
         uid: str,
         name: str,
-        data_type: Optional[str],
-        value_regex: Optional[str],
+        data_type: str | None,
+        value_regex: str | None,
         value: str,
         vendor_element_uid: str,
-    ) -> "OdmVendorElementAttributeRelationVO":
+    ) -> Self:
         return cls(
             uid=uid,
             name=name,

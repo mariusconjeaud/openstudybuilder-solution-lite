@@ -1,5 +1,3 @@
-from typing import List, Optional
-
 from clinical_mdr_api.domain_repositories._generic_repository_interface import (
     _AggregateRootType,
 )
@@ -50,7 +48,7 @@ class ItemRepository(OdmGenericRepository[OdmItemAR]):
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
         root: VersionRoot,
-        library: Optional[Library],
+        library: Library | None,
         relationship: VersionRelationship,
         value: VersionValue,
     ) -> OdmItemAR:
@@ -75,12 +73,12 @@ class ItemRepository(OdmGenericRepository[OdmItemAR]):
                     unit_definition.uid
                     for unit_definition in root.has_unit_definition.all()
                 ],
-                codelist_uid=root.has_codelist.get_or_none().uid
-                if root.has_codelist.get_or_none()
+                codelist_uid=codelist.uid
+                if (codelist := root.has_codelist.get_or_none())
                 else None,
                 term_uids=[term.uid for term in root.has_codelist_term.all()],
-                activity_uid=root.has_activity.get_or_none().uid
-                if root.has_activity.get_or_none()
+                activity_uid=activity.uid
+                if (activity := root.has_activity.get_or_none())
                 else None,
                 vendor_element_uids=[
                     vendor_element.uid
@@ -151,7 +149,7 @@ class ItemRepository(OdmGenericRepository[OdmItemAR]):
         return odm_item_ar
 
     def specific_alias_clause(
-        self, only_specific_status: Optional[List[str]] = None
+        self, only_specific_status: list[str] | None = None
     ) -> str:
         if not only_specific_status:
             only_specific_status = ["LATEST"]
@@ -243,9 +241,7 @@ class ItemRepository(OdmGenericRepository[OdmItemAR]):
             unit_definition.uid for unit_definition in root.has_unit_definition.all()
         }
         codelist_uid = (
-            root.has_codelist.get_or_none().uid
-            if root.has_codelist.get_or_none()
-            else None
+            codelist.uid if (codelist := root.has_codelist.get_or_none()) else None
         )
         term_uids = {term.uid for term in root.has_codelist_term.all()}
 

@@ -1,5 +1,3 @@
-from typing import List
-
 from pydantic import Field
 
 from clinical_mdr_api.models.syntax_templates.template_parameter_multi_select_input import (
@@ -9,7 +7,7 @@ from clinical_mdr_api.models.utils import BaseModel
 
 
 class PreInstanceInput(BaseModel):
-    parameter_terms: List[TemplateParameterMultiSelectInput] = Field(
+    parameter_terms: list[TemplateParameterMultiSelectInput] = Field(
         None,
         title="parameter_terms",
         description="An ordered list of selected parameter terms that are used to replace the parameters of the objective template.",

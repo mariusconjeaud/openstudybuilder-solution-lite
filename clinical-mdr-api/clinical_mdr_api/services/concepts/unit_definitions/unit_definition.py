@@ -1,9 +1,8 @@
 from datetime import datetime
-from typing import Callable, Optional, Sequence, cast
+from typing import Callable, Sequence, cast
 
 from fastapi import Depends
 from neomodel import db
-from pydantic.main import BaseModel
 
 from clinical_mdr_api.domain_repositories.models.concepts import UnitDefinitionRoot
 from clinical_mdr_api.domains.concepts.unit_definitions.unit_definition import (
@@ -15,20 +14,17 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryVO,
     VersioningException,
 )
-from clinical_mdr_api.exceptions import (
-    BusinessLogicException,
-    NotFoundException,
-    ValidationException,
-)
+from clinical_mdr_api.exceptions import BusinessLogicException, NotFoundException
 from clinical_mdr_api.models.concepts.unit_definitions.unit_definition import (
     UnitDefinitionModel,
     UnitDefinitionPatchInput,
     UnitDefinitionPostInput,
 )
-from clinical_mdr_api.models.utils import GenericFilteringReturn
+from clinical_mdr_api.models.utils import BaseModel, GenericFilteringReturn
 from clinical_mdr_api.oauth import get_current_user_id
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._meta_repository import MetaRepository
+from clinical_mdr_api.services._utils import is_library_editable, validate_is_dict
 from clinical_mdr_api.services.concepts.concept_generic_service import (
     ConceptGenericService,
 )
@@ -60,20 +56,21 @@ class UnitDefinitionService:
     @db.transaction
     def get_all(
         self,
-        library_name: Optional[str],
-        dimension: Optional[str] = None,
-        subset: Optional[str] = None,
-        sort_by: Optional[dict] = None,
+        library_name: str | None,
+        dimension: str | None = None,
+        subset: str | None = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[UnitDefinitionModel]:
         # for unit-definitions we want to return the shortest unit-definitions first
         if sort_by is None:
             sort_by = {"size(name)": "true"}
         else:
+            validate_is_dict("sort_by", sort_by)
             sort_by["size(name)"] = "true"
         items, total_items = self._repos.unit_definition_repository.find_all(
             library=library_name,
@@ -101,12 +98,12 @@ class UnitDefinitionService:
     def get_distinct_values_for_header(
         self,
         field_name: str,
-        library_name: Optional[str],
-        dimension: Optional[str] = None,
-        subset: Optional[str] = None,
-        search_string: Optional[str] = "",
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        library_name: str | None,
+        dimension: str | None = None,
+        subset: str | None = None,
+        search_string: str | None = "",
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
     ):
         header_values = self._repos.unit_definition_repository.get_distinct_headers(
@@ -127,9 +124,9 @@ class UnitDefinitionService:
         self,
         uid: str,
         *,
-        at_specified_datetime: Optional[datetime],
-        status: Optional[str],
-        version: Optional[str],
+        at_specified_datetime: datetime | None,
+        status: str | None,
+        version: str | None,
     ) -> UnitDefinitionModel:
         status_as_enum = LibraryItemStatus(status) if status is not None else None
 
@@ -164,23 +161,20 @@ class UnitDefinitionService:
 
     @db.transaction
     def post(self, post_input: UnitDefinitionPostInput) -> UnitDefinitionModel:
-        try:
-            unit_definition_ar = UnitDefinitionAR.from_input_values(
-                author=self._user_id,
-                unit_definition_value=self._post_input_to_unit_definition_value_vo(
-                    post_input
-                ),
-                library=LibraryVO.from_input_values_2(
-                    library_name=post_input.library_name,
-                    is_library_editable_callback=self._is_library_editable,
-                ),
-                uid_supplier=self._generate_unit_definition_uid,
-                unit_definition_exists_by_name_predicate=self._repos.unit_definition_repository.check_exists_by_name,
-                master_unit_exists_for_dimension_predicate=self._repos.unit_definition_repository.master_unit_exists_by_unit_dimension,
-                unit_definition_exists_by_legacy_code=self._repos.unit_definition_repository.exists_by_legacy_code,
-            )
-        except ValueError as value_error:
-            raise ValidationException(value_error.args[0]) from value_error
+        unit_definition_ar = UnitDefinitionAR.from_input_values(
+            author=self._user_id,
+            unit_definition_value=self._post_input_to_unit_definition_value_vo(
+                post_input
+            ),
+            library=LibraryVO.from_input_values_2(
+                library_name=post_input.library_name,
+                is_library_editable_callback=self._is_library_editable,
+            ),
+            uid_supplier=self._generate_unit_definition_uid,
+            concept_exists_by_callback=self._repos.unit_definition_repository.exists_by,
+            master_unit_exists_for_dimension_predicate=self._repos.unit_definition_repository.master_unit_exists_by_unit_dimension,
+            unit_definition_exists_by_legacy_code=self._repos.unit_definition_repository.exists_by_legacy_code,
+        )
         self._repos.unit_definition_repository.save(unit_definition_ar)
         return UnitDefinitionModel.from_unit_definition_ar(
             unit_definition_ar,
@@ -207,8 +201,8 @@ class UnitDefinitionService:
                 author=self._user_id,
                 change_description=patch_input.change_description,
                 new_unit_definition_value=new_unit_dimension_value,
-                unit_definition_by_name_exists_predicate=(
-                    self._repos.unit_definition_repository.check_exists_by_name
+                concept_exists_by_callback=(
+                    self._repos.unit_definition_repository.exists_by
                 ),
                 master_unit_exists_for_dimension_predicate=(
                     self._repos.unit_definition_repository.master_unit_exists_by_unit_dimension
@@ -217,11 +211,10 @@ class UnitDefinitionService:
                     self._repos.unit_definition_repository.exists_by_legacy_code
                 ),
             )
-        except ValueError as err:
-            raise ValidationException(err.args[0]) from err
         except VersioningException as err:
             raise BusinessLogicException(err.msg) from err
         self._repos.unit_definition_repository.save(unit_definition_ar)
+
         return UnitDefinitionModel.from_unit_definition_ar(
             unit_definition_ar,
             find_term_by_uid=self._repos.ct_term_name_repository.find_by_uid,
@@ -237,8 +230,6 @@ class UnitDefinitionService:
             raise NotFoundException("Resource not found.")
         try:
             unit_definition_ar.soft_delete()
-        except ValueError as err:
-            raise ValidationException(err.args[0]) from err
         except VersioningException as err:
             raise BusinessLogicException(err.msg) from err
         self._repos.unit_definition_repository.save(unit_definition_ar)
@@ -277,8 +268,6 @@ class UnitDefinitionService:
             raise NotFoundException("Resource not found.")
         try:
             workflow_ar_method(unit_definition_ar)
-        except ValueError as err:
-            raise ValidationException(err.args[0]) from err
         except VersioningException as err:
             raise BusinessLogicException(err.msg) from err
         self._repos.unit_definition_repository.save(unit_definition_ar)
@@ -287,10 +276,6 @@ class UnitDefinitionService:
             find_term_by_uid=self._repos.ct_term_name_repository.find_by_uid,
             find_dictionary_term_by_uid=self._repos.dictionary_term_generic_repository.find_by_uid,
         )
-
-    def _is_library_editable(self, library_name: str) -> Optional[bool]:
-        library_ar = self._repos.library_repository.find_by_name(library_name)
-        return library_ar.is_editable if library_ar is not None else None
 
     def _post_input_to_unit_definition_value_vo(
         self, post_input: UnitDefinitionPostInput
@@ -381,3 +366,6 @@ class UnitDefinitionService:
     # noinspection PyMethodMayBeStatic
     def _generate_unit_definition_uid(self) -> str:
         return UnitDefinitionRoot.get_next_free_uid_and_increment_counter()
+
+    def _is_library_editable(self, library_name: str) -> bool:
+        return is_library_editable(library_name)

@@ -5,12 +5,11 @@
 # which pylint interprets as unused arguments
 import copy
 import logging
-from typing import List
 
 import pytest
 from _pytest.fixtures import FixtureRequest
 
-from clinical_mdr_api import models
+from clinical_mdr_api import exceptions, models
 from clinical_mdr_api.config import STUDY_ENDPOINT_TP_NAME
 from clinical_mdr_api.models import study_selections
 from clinical_mdr_api.models.syntax_templates.template_parameter_multi_select_input import (
@@ -38,7 +37,7 @@ log = logging.getLogger(__name__)
 
 # Global variables shared between fixtures and tests
 study_uid: str
-unit_definitions: List[models.UnitDefinitionModel]
+unit_definitions: list[models.UnitDefinitionModel]
 unit_separator: str
 timeframe: models.Timeframe
 study_endpoint: models.StudySelectionEndpoint
@@ -104,8 +103,8 @@ def test_data(request: FixtureRequest):
     log.debug("%s() fixture: setup complete", request.fixturename)
     yield db
 
-    log.debug("%s() fixture: teardown: deleting database", request.fixturename)
-    db.cypher_query("CREATE OR REPLACE DATABASE $db", {"db": db_name})
+    # log.debug("%s() fixture: teardown: deleting database", request.fixturename)
+    # db.cypher_query("CREATE OR REPLACE DATABASE $db", {"db": db_name})
 
 
 def test_crud(test_data, study_objective_service, objective_template_service):
@@ -172,7 +171,7 @@ def test_crud(test_data, study_objective_service, objective_template_service):
 
     # Try selecting a StudyEndpoint from another study as parameter
     parameter_term_dict["uid"] = study_endpoint_2.study_endpoint_uid
-    with pytest.raises(ValueError) as e_info:
+    with pytest.raises(exceptions.ValidationException) as e_info:
         _ = TestUtils.create_study_objective(
             study_uid=study_uid,
             objective_template_uid=objective_template.uid,

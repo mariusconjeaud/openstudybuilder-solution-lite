@@ -1,5 +1,4 @@
-import re
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Self
 
 from pydantic import BaseModel, Field, validator
 
@@ -19,24 +18,21 @@ from clinical_mdr_api.models.concepts.odms.odm_common_models import (
     OdmVendorAttributeSimpleModel,
     OdmVendorNamespaceSimpleModel,
 )
+from clinical_mdr_api.models.validators import validate_name_only_contains_letters
 
 
 class OdmVendorElement(ConceptModel):
     vendor_namespace: OdmVendorNamespaceSimpleModel
-    vendor_attributes: List[OdmVendorAttributeSimpleModel]
-    possible_actions: List[str]
+    vendor_attributes: list[OdmVendorAttributeSimpleModel]
+    possible_actions: list[str]
 
     @classmethod
     def from_odm_vendor_element_ar(
         cls,
         odm_vendor_element_ar: OdmVendorElementAR,
-        find_odm_vendor_namespace_by_uid: Callable[
-            [str], Optional[OdmVendorNamespaceAR]
-        ],
-        find_odm_vendor_attribute_by_uid: Callable[
-            [str], Optional[OdmVendorAttributeAR]
-        ],
-    ) -> "OdmVendorElement":
+        find_odm_vendor_namespace_by_uid: Callable[[str], OdmVendorNamespaceAR | None],
+        find_odm_vendor_attribute_by_uid: Callable[[str], OdmVendorAttributeAR | None],
+    ) -> Self:
         return cls(
             uid=odm_vendor_element_ar._uid,
             name=odm_vendor_element_ar.concept_vo.name,
@@ -75,9 +71,9 @@ class OdmVendorElementRelationModel(BaseModel):
         odm_element_uid: str,
         odm_element_type: RelationType,
         find_by_uid_with_odm_element_relation: Callable[
-            [str, str, RelationType], Optional[OdmVendorElementRelationVO]
+            [str, str, RelationType], OdmVendorElementRelationVO | None
         ],
-    ) -> Optional["OdmVendorElementRelationModel"]:
+    ) -> Self | None:
         if uid is not None:
             odm_vendor_element_ref_vo = find_by_uid_with_odm_element_relation(
                 uid, odm_element_uid, odm_element_type
@@ -99,19 +95,16 @@ class OdmVendorElementRelationModel(BaseModel):
         return odm_vendor_element_ref_model
 
     uid: str = Field(..., title="uid", description="")
-    name: Optional[str] = Field(None, title="name", description="")
-    value: Optional[str] = Field(None, title="value", description="")
+    name: str | None = Field(None, title="name", description="")
+    value: str | None = Field(None, title="value", description="")
 
 
 class OdmVendorElementPostInput(ConceptPostInput):
     vendor_namespace_uid: str
 
-    @validator("name")
-    @classmethod
-    def name_may_only_contain_letters(cls, v):
-        if re.search("[^a-zA-Z]", v):
-            raise ValueError("may only contain letters")
-        return v
+    _validate_name_only_contains_letters = validator(
+        "name", pre=True, allow_reuse=True
+    )(validate_name_only_contains_letters)
 
 
 class OdmVendorElementPatchInput(ConceptPatchInput):
@@ -123,7 +116,7 @@ class OdmVendorElementVersion(OdmVendorElement):
     Class for storing OdmVendorElement and calculation of differences
     """
 
-    changes: Optional[Dict[str, bool]] = Field(
+    changes: dict[str, bool] | None = Field(
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "

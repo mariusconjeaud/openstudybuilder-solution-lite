@@ -15,8 +15,8 @@
         {{ $t('StudyActivityBatchEditForm.show_items') }}
         <v-checkbox
           v-model="showItems"
-          on-icon="mdi-close-circle"
-          off-icon="mdi-dots-horizontal-circle"
+          on-icon="mdi-close-circle-outline"
+          off-icon="mdi-dots-horizontal-circle-outline"
           hide-details
           class="ml-2"
           />

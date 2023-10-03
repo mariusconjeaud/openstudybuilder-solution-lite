@@ -1,12 +1,12 @@
 from datetime import datetime
 from io import BytesIO
-from typing import List, Optional
 
 from fastapi import APIRouter, Depends, File, Path, Query, Response, UploadFile
 from fastapi.responses import StreamingResponse
 
 from clinical_mdr_api.domains._utils import ObjectStatus
 from clinical_mdr_api.domains.concepts.utils import ExporterType, TargetType
+from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.routers import _generic_descriptions
 from clinical_mdr_api.services.concepts.odms.odm_clinspark_import import (
     OdmClinicalXmlImporterService,
@@ -27,6 +27,7 @@ from clinical_mdr_api.services.concepts.unit_definitions.unit_definition import 
     UnitDefinitionService,
 )
 
+# Prefixed with "/concepts/odms/metadata"
 router = APIRouter()
 
 
@@ -44,6 +45,7 @@ If `parent` is empty or `*` is given then the mapping will apply to all occurren
 
 @router.post(
     "/xmls/export",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Export ODM XML",
     description="",
     status_code=200,
@@ -55,16 +57,17 @@ If `parent` is empty or `*` is given then the mapping will apply to all occurren
 def get_odm_document(
     target_uid: str,
     target_type: TargetType,
-    status: List[ObjectStatus] = Query(
+    status: list[ObjectStatus] = Query(
         [ObjectStatus.LATEST_FINAL, ObjectStatus.LATEST_RETIRED]
     ),
-    allowed_namespaces: List[str] = Query(
+    allowed_namespaces: list[str] = Query(
         [],
         description="Names of the Vendor Namespaces to export. If not specified, all Vendor Namespaces available will be exported.",
     ),
     pdf: bool = Query(False, description="Whether or not to export the ODM as a PDF."),
-    stylesheet: Optional[str] = None,
-    mapper_file: Optional[UploadFile] = File(
+    stylesheet: str | None = None,
+    mapper_file: UploadFile
+    | None = File(
         default=None,
         description=MAPPER_DESCRIPTION,
     ),
@@ -100,6 +103,7 @@ def get_odm_document(
 
 @router.post(
     "/csvs/export",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Export ODM CSV",
     description="",
     status_code=200,
@@ -122,6 +126,7 @@ def get_odm_csv(target_uid: str, target_type: TargetType):
 
 @router.post(
     "/xmls/import",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Import ODM XML",
     description="",
     status_code=201,
@@ -138,7 +143,8 @@ def store_odm_xml(
         ExporterType.OSB,
         description="The system that exported this ODM XML file.",
     ),
-    mapper_file: Optional[UploadFile] = File(
+    mapper_file: UploadFile
+    | None = File(
         default=None,
         description=MAPPER_DESCRIPTION,
     ),
@@ -153,9 +159,10 @@ def store_odm_xml(
 
 @router.get(
     "/xmls/stylesheets",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Listing of all available ODM XML Stylesheet names",
     description="",
-    response_model=List[str],
+    response_model=list[str],
     status_code=200,
     responses={
         404: _generic_descriptions.ERROR_404,
@@ -168,6 +175,7 @@ def get_available_stylesheet_names():
 
 @router.get(
     "/xmls/stylesheets/{stylesheet}",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Get a specific ODM XML Stylesheet",
     description="",
     status_code=200,

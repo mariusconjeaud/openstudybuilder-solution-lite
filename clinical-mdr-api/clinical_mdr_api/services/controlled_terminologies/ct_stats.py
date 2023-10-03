@@ -1,4 +1,4 @@
-from typing import Optional, Sequence
+from typing import Sequence
 
 from clinical_mdr_api.models.controlled_terminologies.ct_codelist import (
     CTCodelistNameAndAttributes,
@@ -15,9 +15,9 @@ from clinical_mdr_api.services._meta_repository import MetaRepository
 
 class CTStatsService:
     _repos: MetaRepository
-    user_initials: Optional[str]
+    user_initials: str | None
 
-    def __init__(self, user: Optional[str] = None):
+    def __init__(self, user: str | None = None):
         self.user_initials = user if user is not None else "TODO user initials"
         self._repos = MetaRepository(self.user_initials)
 

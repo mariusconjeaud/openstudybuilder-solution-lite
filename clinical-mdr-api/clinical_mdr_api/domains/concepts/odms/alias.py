@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable, Optional
+from typing import Callable, Self
 
 from clinical_mdr_api.domains.concepts.concept_base import ConceptVO
 from clinical_mdr_api.domains.concepts.odms.odm_ar_base import OdmARBase
@@ -7,7 +7,6 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemMetadataVO,
     LibraryVO,
 )
-from clinical_mdr_api.exceptions import BusinessLogicException
 
 
 @dataclass(frozen=True)
@@ -15,7 +14,7 @@ class OdmAliasVO(ConceptVO):
     context: str
 
     @classmethod
-    def from_repository_values(cls, name: str, context: str) -> "OdmAliasVO":
+    def from_repository_values(cls, name: str, context: str) -> Self:
         return cls(
             name=name,
             context=context,
@@ -27,13 +26,14 @@ class OdmAliasVO(ConceptVO):
 
     def validate(
         self,
-        odm_alias_exists_by_name_callback: Callable[[str], bool],
-        previous_name: Optional[str] = None,
+        concept_exists_by_callback: Callable[[str, str, bool], bool],
+        previous_name: str | None = None,
     ) -> None:
-        if odm_alias_exists_by_name_callback(self.name) and previous_name != self.name:
-            raise BusinessLogicException(
-                f"ODM Alias with name ({self.name}) already exists."
-            )
+        self.duplication_check(
+            [("name", self.name, previous_name)],
+            concept_exists_by_callback,
+            "ODM Alias",
+        )
 
 
 @dataclass
@@ -53,9 +53,9 @@ class OdmAliasAR(OdmARBase):
         cls,
         uid: str,
         concept_vo: OdmAliasVO,
-        library: Optional[LibraryVO],
+        library: LibraryVO | None,
         item_metadata: LibraryItemMetadataVO,
-    ) -> "OdmAliasAR":
+    ) -> Self:
         return cls(
             _uid=uid,
             _concept_vo=concept_vo,
@@ -69,14 +69,14 @@ class OdmAliasAR(OdmARBase):
         author: str,
         concept_vo: OdmAliasVO,
         library: LibraryVO,
-        generate_uid_callback: Callable[[], Optional[str]] = (lambda: None),
-        concept_exists_by_name_callback: Callable[[str], bool] = lambda _: True,
-    ) -> "OdmAliasAR":
+        generate_uid_callback: Callable[[], str | None] = (lambda: None),
+        concept_exists_by_callback: Callable[
+            [str, str, bool], bool
+        ] = lambda x, y, z: True,
+    ) -> Self:
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(author=author)
 
-        concept_vo.validate(
-            odm_alias_exists_by_name_callback=concept_exists_by_name_callback
-        )
+        concept_vo.validate(concept_exists_by_callback=concept_exists_by_callback)
 
         return cls(
             _uid=generate_uid_callback(),
@@ -88,15 +88,17 @@ class OdmAliasAR(OdmARBase):
     def edit_draft(
         self,
         author: str,
-        change_description: Optional[str],
+        change_description: str | None,
         concept_vo: OdmAliasVO,
-        concept_exists_by_name_callback: Callable[[str], bool],
+        concept_exists_by_callback: Callable[
+            [str, str, bool], bool
+        ] = lambda x, y, z: True,
     ) -> None:
         """
         Creates a new draft version for the object.
         """
         concept_vo.validate(
-            odm_alias_exists_by_name_callback=concept_exists_by_name_callback,
+            concept_exists_by_callback=concept_exists_by_callback,
             previous_name=self.name,
         )
         if self._concept_vo != concept_vo:
