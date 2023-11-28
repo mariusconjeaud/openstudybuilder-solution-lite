@@ -1116,10 +1116,11 @@ def test_footnote_template_audit_trail(api_client):
 
 
 def test_footnote_template_sequence_id_generation(api_client):
+    lib = TestUtils.create_library("User Defined")
     ct_term = TestUtils.create_ct_term(sponsor_preferred_name="Other Activities")
     data = {
-        "name": "default_name [TextValue]",
-        "library_name": "Sponsor",
+        "name": "user defined [TextValue]",
+        "library_name": lib["name"],
         "default_parameter_terms": [],
         "type_uid": ct_term.term_uid,
         "indication_uids": [dictionary_term_indication.term_uid],
@@ -1133,8 +1134,8 @@ def test_footnote_template_sequence_id_generation(api_client):
 
     assert response.status_code == 201
     assert res["uid"]
-    assert res["sequence_id"] == "FOA1"
-    assert res["name"] == "default_name [TextValue]"
+    assert res["sequence_id"] == "U-FOA1"
+    assert res["name"] == "user defined [TextValue]"
     assert res["parameters"][0]["name"] == "TextValue"
     assert res["parameters"][0]["terms"] == []
     assert res["type"]["term_uid"] == ct_term.term_uid

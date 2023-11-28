@@ -89,7 +89,7 @@
       "sex_of_participants_null_value_code": null,
       "stable_disease_minimum_duration": null,
       "stable_disease_minimum_duration_null_value_code": null,
-      "therapeutic_areas_codes": [],
+      "therapeutic_area_codes": [],
       "therapeutic_areas_null_value_code": null
     }
   },

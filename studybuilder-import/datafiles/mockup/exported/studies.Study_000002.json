@@ -154,7 +154,7 @@
         "name": "Not Applicable",
         "term_uid": "C48660_Not Applicable"
       },
-      "therapeutic_areas_codes": [
+      "therapeutic_area_codes": [
         {
           "name": "Diabetes mellitus",
           "term_uid": "DictionaryTerm_000013"

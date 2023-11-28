@@ -1,4 +1,5 @@
 import unittest
+from typing import Any
 
 from neomodel import db
 
@@ -44,12 +45,13 @@ from clinical_mdr_api.tests.integration.utils.data_library import (
     STARTUP_PARAMETERS_CYPHER,
     STARTUP_STUDY_OBJECTIVE_CYPHER,
 )
+from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 
 
 class TestStudyObjectiveUpversion(unittest.TestCase):
     TPR_LABEL = "ParameterName"
-    term_roots: list = []
-    term_values: list = []
+    term_roots: list[Any] = []
+    term_values: list[Any] = []
 
     def setUp(self):
         inject_and_clear_db("studyobjectiveselectionupversion")
@@ -68,7 +70,7 @@ class TestStudyObjectiveUpversion(unittest.TestCase):
         self.objective_template_service = ObjectiveTemplateService()
 
         self.library = LibraryVO(name="Library", is_editable=True)
-        self.tv = TemplateVO(
+        self.template_vo = TemplateVO(
             name=f"Test [{self.TPR_LABEL}]",
             name_plain=f"Test {self.TPR_LABEL}",
         )
@@ -76,13 +78,15 @@ class TestStudyObjectiveUpversion(unittest.TestCase):
             name=f"Changed Test [{self.TPR_LABEL}]",
             name_plain=f"Changed Test {self.TPR_LABEL}",
         )
-        self.im = LibraryItemMetadataVO.get_initial_item_metadata(author="Test")
+        self.item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(
+            author="Test"
+        )
         self.ar = ObjectiveTemplateAR(
             _uid=self.tfr.root_class.get_next_free_uid_and_increment_counter(),
             _sequence_id="some sequence id",
-            _template=self.tv,
+            _template=self.template_vo,
             _library=self.library,
-            _item_metadata=self.im,
+            _item_metadata=self.item_metadata,
         )
         self.tfr.save(self.ar)
 
@@ -96,7 +100,7 @@ class TestStudyObjectiveUpversion(unittest.TestCase):
             self.ar.uid, for_update=True
         )
         self.ar.create_new_version(
-            author="TEST", change_description="Change", template=self.tv
+            author="TEST", change_description="Change", template=self.template_vo
         )
         self.ar.approve(author="TEST")
         self.tfr.save(self.ar)
@@ -112,20 +116,28 @@ class TestStudyObjectiveUpversion(unittest.TestCase):
 
     def create_template_parameters(self, label=TPR_LABEL, count=1000):
         for i in range(count):
-            vr = TemplateParameterTermRoot(uid=label + "uid__" + str(i))
-            vr.save()
-            vv = TemplateParameterTermValue(name=label + "__" + str(i))
-            vv.save()
-            vr.has_parameter_term.connect(self.tpr)
-            vr.latest_final.connect(vv)
-        for vr in self.tpr.has_parameter_term.all():
-            self.term_roots.append(vr)
-            vv = vr.latest_final.single()
-            self.term_values.append(vv)
+            template_parameter_term_root = TemplateParameterTermRoot(
+                uid=label + "uid__" + str(i)
+            )
+            template_parameter_term_root.save()
+            template_parameter_term_value = TemplateParameterTermValue(
+                name=label + "__" + str(i)
+            )
+            template_parameter_term_value.save()
+            template_parameter_term_root.has_parameter_term.connect(self.tpr)
+            template_parameter_term_root.latest_final.connect(
+                template_parameter_term_value
+            )
+        for template_parameter_term_root in self.tpr.has_parameter_term.all():
+            self.term_roots.append(template_parameter_term_root)
+            template_parameter_term_value = (
+                template_parameter_term_root.latest_final.single()
+            )
+            self.term_values.append(template_parameter_term_value)
 
     def create_objectives(self, count=100, approved=False, retired=False):
         for i in range(count):
-            pv = TemplateParameterMultiSelectInput(
+            template_parameter = TemplateParameterMultiSelectInput(
                 template_parameter=self.TPR_LABEL,
                 conjunction="",
                 terms=[
@@ -141,7 +153,7 @@ class TestStudyObjectiveUpversion(unittest.TestCase):
             template = ObjectiveCreateInput(
                 objective_template_uid=self.ar.uid,
                 library_name="Library",
-                parameter_terms=[pv],
+                parameter_terms=[template_parameter],
             )
 
             item = self.objective_service.create(template)
@@ -170,6 +182,10 @@ class TestStudyObjectiveUpversion(unittest.TestCase):
         selection: StudySelectionObjective = study_service.get_specific_selection(
             study_uid="study_root", study_selection_uid=selection.study_objective_uid
         )
+
+        # locking and unlocking to create multiple study value relationships on the existent StudySelections
+        TestUtils.create_study_fields_configuration()
+        TestUtils.lock_and_unlock_study(study_uid="study_root")
 
         self.assertNotEqual(
             selection.objective.version, selection.latest_objective.version
@@ -204,6 +220,10 @@ class TestStudyObjectiveUpversion(unittest.TestCase):
         self.modify_objective_template()
         self.objective_template_service.approve_cascade(self.ar.uid)
         self.objective_service.inactivate_final("Objective_000010")
+
+        # locking and unlocking to create multiple study value relationships on the existent StudySelections
+        TestUtils.create_study_fields_configuration()
+        TestUtils.lock_and_unlock_study(study_uid="study_root")
 
         # when
         selection: StudySelectionObjective = study_service.get_specific_selection(

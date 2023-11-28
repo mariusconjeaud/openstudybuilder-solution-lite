@@ -1,4 +1,4 @@
-from typing import Any, Sequence
+from typing import Any
 
 from fastapi import APIRouter, Body, Depends, Path, Query, Response
 from fastapi import status as response_status
@@ -8,6 +8,7 @@ from starlette.requests import Request
 from clinical_mdr_api import config, exceptions
 from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import (
     StudyComponentEnum,
+    StudyCopyComponentEnum,
     StudyStatus,
 )
 from clinical_mdr_api.models.error import ErrorResponse
@@ -26,6 +27,10 @@ from clinical_mdr_api.models.utils import CustomPage
 from clinical_mdr_api.oauth import get_current_user_id, rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
+from clinical_mdr_api.routers._generic_descriptions import (
+    study_fields_audit_trail_section_description,
+    study_section_description,
+)
 from clinical_mdr_api.services.studies.study import StudyService
 
 # Prefixed with "/studies"
@@ -190,7 +195,7 @@ def get_distinct_values_for_header(
 
 
 @router.post(
-    "/{uid}/lock",
+    "/{uid}/locks",
     dependencies=[rbac.STUDY_WRITE],
     summary="Locks a Study with specified uid",
     description="The Study is locked, which means that the LATEST_LOCKED relationship in the database is created."
@@ -224,14 +229,14 @@ def lock(
     )
 
 
-@router.post(
-    "/{uid}/unlock",
+@router.delete(
+    "/{uid}/locks",
     dependencies=[rbac.STUDY_WRITE],
     summary="Unlocks a Study with specified uid",
     description="The Study is unlocked, which means that the new DRAFT version of a Study is created"
     " and the Study exists in the DRAFT state.",
     response_model=Study,
-    status_code=201,
+    status_code=200,
     responses={
         400: {
             "model": ErrorResponse,
@@ -327,6 +332,57 @@ def delete_activity(
     return Response(status_code=response_status.HTTP_204_NO_CONTENT)
 
 
+@router.get(
+    "/{uid}",
+    dependencies=[rbac.STUDY_READ],
+    summary="Returns the current state of a specific study definition identified by 'uid'.",
+    description="If multiple request query parameters are used, then they need to match all at the same time"
+    " (they are combined with the AND operation).",
+    response_model=Study,
+    response_model_exclude_unset=True,
+    status_code=200,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - The study with the specified 'uid'"
+            " (and the specified date/time and/or status) wasn't found.",
+        },
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+def get(
+    uid: str = StudyUID,
+    include_sections: list[StudyComponentEnum]
+    | None = Query(None, description=study_section_description("include")),
+    exclude_sections: list[StudyComponentEnum]
+    | None = Query(None, description=study_section_description("exclude")),
+    current_user_id: str = Depends(get_current_user_id),
+    status: StudyStatus
+    | None = Query(
+        None,
+        description="If specified, the last representation of the study in that status is returned (if existent)."
+        "Valid values are: 'Released', 'Draft' or 'Locked'.",
+    ),
+    study_value_version: str
+    | None = Query(
+        None,
+        description=r"If specified, study data with specified version is returned. "
+        r"Only exact matches are considered. "
+        r"E.g. 1, 2, 2.1, ...",
+    ),
+):
+    study_service = StudyService(user=current_user_id)
+    study_definition = study_service.get_by_uid(
+        uid=uid,
+        include_sections=include_sections,
+        exclude_sections=exclude_sections,
+        at_specified_date_time=None,
+        status=status,
+        study_value_version=study_value_version,
+    )
+    return study_definition
+
+
 @router.patch(
     "/{uid}",
     dependencies=[rbac.STUDY_WRITE],
@@ -376,77 +432,6 @@ def patch(
         raise exceptions.ValidationException("No data to patch was provided.")
     response = study_service.patch(uid, dry, study_patch_request)
     return response
-
-
-@router.get(
-    "/{uid}",
-    dependencies=[rbac.STUDY_READ],
-    summary="Returns the current state of a specific study definition identified by 'uid'.",
-    description="If multiple request query parameters are used, then they need to match all at the same time"
-    " (they are combined with the AND operation).",
-    response_model=Study,
-    response_model_exclude_unset=True,
-    status_code=200,
-    responses={
-        404: {
-            "model": ErrorResponse,
-            "description": "Not Found - The study with the specified 'uid'"
-            " (and the specified date/time and/or status) wasn't found.",
-        },
-        500: _generic_descriptions.ERROR_500,
-    },
-)
-def get(
-    uid: str = StudyUID,  # ,
-    fields: str
-    | None = Query(
-        default=None,
-        description="Parameter specifies which parts of the whole Study Definition representation to retrieve. In"
-        " the form of comma separated name of the fields prefixed by (optional) `+` "
-        " if the client wishes"
-        " to retrieve the field or `-` if the client wants to skip the field."
-        " If not specified identification metadata and version metadata are retrieved."
-        " If value starts with `+` or `-` above default is extended or reduced by the specified fields"
-        " otherwise (if not started with `+` or `-`) provided fields specification"
-        " replaces the default. The `uid` and `study_status` fields will be always returned"
-        " as they are mandatory fields for the Study API model. Currently supported fields are"
-        " `current_metadata.identification_metadata`, `current_metadata.high_level_study_design`"
-        " ,`current_metadata.study_population` and `current_metadata.study_intervention`"
-        " , `current_metadata.study_description`.",
-    ),
-    current_user_id: str = Depends(get_current_user_id),
-    # at_specified_date_time: datetime | None = Query(
-    #     None,
-    #     description="If specified, the latest/newest representation of the study at"
-    #     " this point in time is returned.\n"
-    #     "The point in time needs to be specified in ISO 8601 format including the timezone, e.g.: "
-    #     "'2020-10-31T16:00:00+02:00' for October 31, 2020 at 4pm in UTC+2 timezone. "
-    #     "If the timezone is omitted, UTC±0 is assumed.",
-    # ),
-    status: StudyStatus
-    | None = Query(
-        None,
-        description="If specified, the last representation of the study in that status is returned (if existent)."
-        "Valid values are: 'Released', 'Draft' or 'Locked'.",
-    ),
-    version: str
-    | None = Query(
-        None,
-        description=r"If specified, the latest/newest representation of the study in that version is returned. "
-        r"Only exact matches are considered. "
-        r"The version is specified as an integer number: "
-        r"E.g. 0, 1, 2, ...",
-    ),
-):
-    study_service = StudyService(user=current_user_id)
-    study_definition = study_service.get_by_uid(
-        uid=uid,
-        fields=fields,
-        at_specified_date_time=None,
-        status=status,
-        version=version,
-    )
-    return study_definition
 
 
 @router.get(
@@ -514,7 +499,7 @@ def get_snapshot_history(
     summary="Returns the audit trail for the fields of a specific study definition identified by 'uid'.",
     description="Actions on the study are grouped by date of edit."
     "Optionally select which subset of fields should be reflected in the audit trail.",
-    response_model=Sequence[StudyFieldAuditTrailEntry],
+    response_model=list[StudyFieldAuditTrailEntry],
     status_code=200,
     responses={
         404: {
@@ -527,33 +512,19 @@ def get_snapshot_history(
 )
 def get_fields_audit_trail(
     uid: str = StudyUID,  # ,
-    sections: str
+    include_sections: list[StudyComponentEnum]
     | None = Query(
-        default=None,
-        description="""
-Optionally specify a list of sections to filter the audit trail by. 
-Each section name must be preceded by a `+` or a `-`.
-
-Valid values are:
-
-- identification_metadata
-- registry_identifiers
-- version_metadata
-- high_level_study_design
-- study_population
-- study_intervention
-- study_description
-
-Example valid input: `-identification_metadata,+study_population`.
-
-If no filters are specified, the entire audit trail is returned.
-""",
+        None, description=study_fields_audit_trail_section_description("include")
+    ),
+    exclude_sections: list[StudyComponentEnum]
+    | None = Query(
+        None, description=study_fields_audit_trail_section_description("exclude")
     ),
     current_user_id: str = Depends(get_current_user_id),
 ):
     study_service = StudyService(user=current_user_id)
     study_fields_audit_trail = study_service.get_fields_audit_trail_by_uid(
-        uid=uid, sections=sections
+        uid=uid, include_sections=include_sections, exclude_sections=exclude_sections
     )
     return study_fields_audit_trail
 
@@ -616,10 +587,14 @@ State after:
     },
 )
 def get_protocol_title(
-    uid: str = StudyUID, current_user_id: str = Depends(get_current_user_id)
+    uid: str = StudyUID,
+    current_user_id: str = Depends(get_current_user_id),
+    study_value_version: str | None = None,
 ):
     study_service = StudyService(user=current_user_id)
-    return study_service.get_protocol_title(uid)
+    return study_service.get_protocol_title(
+        uid=uid, study_value_version=study_value_version
+    )
 
 
 @router.patch(
@@ -655,7 +630,7 @@ def copy_simple_form_from_another_study(
     reference_study_uid: str = Query(
         ..., description="The uid of the study to copy component from"
     ),
-    component_to_copy: StudyComponentEnum = Query(
+    component_to_copy: StudyCopyComponentEnum = Query(
         ..., description="The uid of the study to copy component from"
     ),
     overwrite: bool = Query(

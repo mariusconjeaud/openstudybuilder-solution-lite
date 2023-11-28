@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Callable, Sequence, cast
+from typing import Callable, cast
 
 from neomodel import db
 
@@ -66,7 +66,7 @@ class CTConfigService:
         return CTConfigModel.from_ct_config_ar(ct_config_ar)
 
     @db.transaction
-    def get_versions(self, uid: str) -> Sequence[CTConfigModel]:
+    def get_versions(self, uid: str) -> list[CTConfigModel]:
         versions = self._repos.ct_config_repository.get_all_versions_2(uid)
         if not versions:
             raise NotFoundException("Resource not found.")
@@ -163,7 +163,7 @@ class CTConfigService:
         self, post_input: CTConfigPostInput
     ) -> CTConfigValueVO:
         if post_input.configured_codelist_name is not None:
-            all_codelists: Sequence[
+            all_codelists: list[
                 CTCodelistNameAR
             ] = self._repos.ct_codelist_name_repository.find_all(
                 library="Sponsor"

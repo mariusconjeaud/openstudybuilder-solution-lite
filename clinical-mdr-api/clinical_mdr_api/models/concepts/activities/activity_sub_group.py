@@ -1,4 +1,4 @@
-from typing import Callable, List, Self
+from typing import Callable, Self
 
 from pydantic import Field
 
@@ -46,7 +46,7 @@ class ActivitySubGroup(ActivityBase):
             ),
         )
 
-    activity_groups: List[ActivityHierarchySimpleModel]
+    activity_groups: list[ActivityHierarchySimpleModel]
 
 
 class ActivitySubGroupInput(ActivityCommonInput):

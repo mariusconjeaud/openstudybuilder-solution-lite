@@ -1,4 +1,4 @@
-from typing import Sequence, TypeVar
+from typing import TypeVar
 
 from neomodel import db
 
@@ -209,7 +209,7 @@ class CTCodelistService:
     def get_sub_codelists_that_have_given_terms(
         self,
         codelist_uid: str,
-        term_uids: Sequence[str],
+        term_uids: list[str],
         catalogue_name: str | None = None,
         library: str | None = None,
         package: str | None = None,

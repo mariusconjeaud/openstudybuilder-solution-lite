@@ -11,6 +11,7 @@
     :history-title="$t('StudyCohorts.global_history_title')"
     :export-data-url="exportDataUrl"
     export-object-label="StudyCohors"
+    disable-filtering
     >
     <template v-slot:afterSwitches>
       <div :title="$t('NNTableTooltips.reorder_content')">
@@ -30,7 +31,7 @@
         @click.stop="showForm()"
         :title="$t('StudyCohorts.add_study_cohort')"
         data-cy="add-study-cohort"
-        :disabled="!checkPermission($roles.STUDY_WRITE)"
+        :disabled="!checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
         >
         <v-icon dark>
           mdi-plus
@@ -71,11 +72,22 @@
         </tr>
       </draggable>
     </template>
+    <template v-slot:item.name="{ item }">
+      <router-link :to="{ name: 'StudyCohortOverview', params: { study_id: selectedStudy.uid, id: item.cohort_uid } }">
+        {{ item.name }}
+      </router-link>
+    </template>
     <template v-slot:item.arm_roots="{ item }">
-      {{ item.arm_roots|names }}
+      <router-link v-for="arm of item.arm_roots" v-bind:key="arm.arm_uid" :to="{ name: 'StudyArmOverview', params: { study_id: selectedStudy.uid, id: arm.arm_uid } }">
+        {{ arm.name }}
+      </router-link>
     </template>
     <template v-slot:item.branch_arm_roots="{ item }">
-      {{ (item.branch_arm_roots !== null)?item.branch_arm_roots:[]|names }}
+      <div v-if="item.branch_arm_roots">
+        <router-link v-for="branch of item.branch_arm_roots" v-bind:key="branch.branch_arm_uid" :to="{ name: 'StudyBranchArmOverview', params: { study_id: selectedStudy.uid, id: branch.branch_arm_uid } }">
+          {{ branch.name }}
+        </router-link>
+      </div>
     </template>
     <template v-slot:item.colour_code="{ item }">
       <v-chip :data-cy="'color='+item.colour_code" :color="item.colour_code" small />
@@ -136,7 +148,8 @@ export default {
   },
   computed: {
     ...mapGetters({
-      selectedStudy: 'studiesGeneral/selectedStudy'
+      selectedStudy: 'studiesGeneral/selectedStudy',
+      selectedStudyVersion: 'studiesGeneral/selectedStudyVersion'
     }),
     studyCohortHistoryTitle () {
       if (this.selectedCohort) {
@@ -171,6 +184,7 @@ export default {
           label: this.$t('_global.edit'),
           icon: 'mdi-pencil-outline',
           iconColor: 'primary',
+          condition: () => !this.selectedStudyVersion,
           click: this.editCohort,
           accessRole: this.$roles.STUDY_WRITE
         },
@@ -178,6 +192,7 @@ export default {
           label: this.$t('_global.delete'),
           icon: 'mdi-delete-outline',
           iconColor: 'error',
+          condition: () => !this.selectedStudyVersion,
           click: this.deleteCohort,
           accessRole: this.$roles.STUDY_WRITE
         },
@@ -213,9 +228,10 @@ export default {
     fetchStudyArmsAndBranches () {
       const params = {
         total_count: true,
-        page_size: 0
+        page_size: 0,
+        study_value_version: this.selectedStudyVersion
       }
-      arms.getAllForStudy(this.selectedStudy.uid, params).then(resp => {
+      arms.getAllForStudy(this.selectedStudy.uid, { params }).then(resp => {
         this.arms = resp.data.items
       })
       arms.getAllBranchArms(this.selectedStudy.uid, params).then(resp => {
@@ -226,7 +242,8 @@ export default {
       const params = {
         page_number: (this.options.page),
         page_size: this.options.itemsPerPage,
-        total_count: true
+        total_count: true,
+        study_value_version: this.selectedStudyVersion
       }
       arms.getAllCohorts(this.selectedStudy.uid, params).then(resp => {
         this.cohorts = resp.data.items

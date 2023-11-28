@@ -1,7 +1,5 @@
 """Base classes/mixins related to study selection."""
 
-from typing import Sequence
-
 from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
 from clinical_mdr_api.models.concepts.activities.activity import Activity
@@ -222,27 +220,55 @@ class StudySelectionMixin:
     def _find_by_uid_or_raise_not_found(
         self,
         term_uid: str,
+        codelist_name: str | None = None,
         status: LibraryItemStatus | None = LibraryItemStatus.FINAL,
     ) -> CTTermName:
-        item = self._repos.ct_term_name_repository.find_by_uid(
-            term_uid=term_uid,
-            at_specific_date=None,
-            version=None,
-            status=status,
-            for_update=False,
-        )
-        if item is None:
-            raise exceptions.NotFoundException(
-                f"Term with uid {term_uid} does not exist, in final status."
+        if not codelist_name:
+            item = self._repos.ct_term_name_repository.find_by_uid(
+                term_uid=term_uid,
+                at_specific_date=None,
+                version=None,
+                status=status,
+                for_update=False,
             )
-        return CTTermName.from_ct_term_ar(item)
+            if item is None:
+                raise exceptions.NotFoundException(
+                    f"Term with uid {term_uid} does not exist, in final status."
+                )
+            return CTTermName.from_ct_term_ar(item)
+
+        # Specifying the codelist ensures that we get the properties
+        # such as "order" from the correct codelist.
+        filter_by = {"term_uid": {"v": [term_uid], "op": "eq"}}
+        if status:
+            filter_by["status"] = {"v": [status.value], "op": "eq"}
+        items = self._repos.ct_term_name_repository.find_all(
+            codelist_name=codelist_name,
+            total_count=False,
+            filter_by=filter_by,
+            page_number=1,
+            page_size=10,
+        )
+
+        if len(items.items) == 0:
+            raise exceptions.NotFoundException(
+                f"Term with uid {term_uid} does not exist in codelist {codelist_name}, in final status."
+            )
+        return CTTermName.from_ct_term_ar(items.items[0])
 
     def _find_branch_arms_connected_to_arm_uid(
-        self, study_uid: str, study_arm_uid: str, user_initials: str
-    ) -> Sequence[StudySelectionBranchArmWithoutStudyArm]:
+        self,
+        study_uid: str,
+        study_arm_uid: str,
+        user_initials: str,
+        study_value_version: str | None = None,
+    ) -> list[StudySelectionBranchArmWithoutStudyArm]:
         branch_arms_vo = (
             self._repos.study_branch_arm_repository.find_by_arm_nested_info(
-                study_uid, study_arm_uid, user_initials
+                study_uid,
+                study_arm_uid,
+                user_initials,
+                study_value_version=study_value_version,
             )
         )
         branch_arms_transformed = (
@@ -259,12 +285,18 @@ class StudySelectionMixin:
         return branch_arms_transformed
 
     def _get_specific_objective_selection_by_uids(
-        self, study_uid: str, study_selection_uid: str, for_update: bool = False
+        self,
+        study_uid: str,
+        study_selection_uid: str,
+        study_value_version: str | None = None,
+        for_update: bool = False,
     ):
         repos = self._repos
         try:
             selection_aggregate = repos.study_objective_repository.find_by_study(
-                study_uid, for_update=for_update
+                study_uid,
+                for_update=for_update,
+                study_value_version=study_value_version,
             )
             assert selection_aggregate is not None
             selection, order = selection_aggregate.get_specific_objective_selection(
@@ -275,12 +307,18 @@ class StudySelectionMixin:
             repos.close()
 
     def _get_specific_endpoint_selection_by_uids(
-        self, study_uid: str, study_selection_uid: str, for_update: bool = False
+        self,
+        study_uid: str,
+        study_selection_uid: str,
+        study_value_version: str | None = None,
+        for_update: bool = False,
     ):
         repos = self._repos
         try:
             selection_aggregate = repos.study_endpoint_repository.find_by_study(
-                study_uid, for_update=for_update
+                study_uid,
+                for_update=for_update,
+                study_value_version=study_value_version,
             )
             assert selection_aggregate is not None
             selection, order = selection_aggregate.get_specific_endpoint_selection(
@@ -291,12 +329,18 @@ class StudySelectionMixin:
             repos.close()
 
     def _get_specific_criteria_selection_by_uids(
-        self, study_uid: str, study_selection_uid: str, for_update: bool = False
+        self,
+        study_uid: str,
+        study_selection_uid: str,
+        study_value_version: str | None = None,
+        for_update: bool = False,
     ):
         repos = self._repos
         try:
             selection_aggregate = repos.study_criteria_repository.find_by_study(
-                study_uid, for_update=for_update
+                study_uid,
+                for_update=for_update,
+                study_value_version=study_value_version,
             )
             assert selection_aggregate is not None
             selection, _ = selection_aggregate.get_specific_criteria_selection(
@@ -311,12 +355,18 @@ class StudySelectionMixin:
             repos.close()
 
     def _get_specific_activity_selection_by_uids(
-        self, study_uid: str, study_selection_uid: str, for_update: bool = False
+        self,
+        study_uid: str,
+        study_selection_uid: str,
+        study_value_version: str | None = None,
+        for_update: bool = False,
     ):
         repos = self._repos
         try:
             selection_aggregate = repos.study_activity_repository.find_by_study(
-                study_uid, for_update=for_update
+                study_uid,
+                for_update=for_update,
+                study_value_version=study_value_version,
             )
             assert selection_aggregate is not None
             selection, order = selection_aggregate.get_specific_object_selection(
@@ -379,12 +429,18 @@ class StudySelectionMixin:
             repos.close()
 
     def _get_specific_arm_selection_by_uids(
-        self, study_uid: str, study_selection_uid: str, for_update: bool = False
+        self,
+        study_uid: str,
+        study_selection_uid: str,
+        for_update: bool = False,
+        study_value_version: str | None = None,
     ):
         repos = self._repos
         try:
             selection_aggregate = repos.study_arm_repository.find_by_study(
-                study_uid, for_update=for_update
+                study_uid,
+                for_update=for_update,
+                study_value_version=study_value_version,
             )
             assert selection_aggregate is not None
             selection, order = selection_aggregate.get_specific_arm_selection(
@@ -395,12 +451,18 @@ class StudySelectionMixin:
             repos.close()
 
     def _get_specific_element_selection_by_uids(
-        self, study_uid: str, study_selection_uid: str, for_update: bool = False
+        self,
+        study_uid: str,
+        study_selection_uid: str,
+        for_update: bool = False,
+        study_value_version: str | None = None,
     ):
         repos = self._repos
         try:
             selection_aggregate = repos.study_element_repository.find_by_study(
-                study_uid, for_update=for_update
+                study_uid,
+                for_update=for_update,
+                study_value_version=study_value_version,
             )
             assert selection_aggregate is not None
             selection, order = selection_aggregate.get_specific_element_selection(
@@ -411,12 +473,18 @@ class StudySelectionMixin:
             repos.close()
 
     def _get_specific_branch_arm_selection_by_uids(
-        self, study_uid: str, study_selection_uid: str, for_update: bool = False
+        self,
+        study_uid: str,
+        study_selection_uid: str,
+        for_update: bool = False,
+        study_value_version: str | None = None,
     ):
         repos = self._repos
         try:
             selection_aggregate = repos.study_branch_arm_repository.find_by_study(
-                study_uid, for_update=for_update
+                study_uid,
+                for_update=for_update,
+                study_value_version=study_value_version,
             )
             assert selection_aggregate is not None
             (
@@ -430,17 +498,46 @@ class StudySelectionMixin:
             repos.close()
 
     def _get_specific_cohort_selection_by_uids(
-        self, study_uid: str, study_selection_uid: str, for_update: bool = False
+        self,
+        study_uid: str,
+        study_selection_uid: str,
+        for_update: bool = False,
+        study_value_version: str | None = None,
     ):
         repos = self._repos
         try:
             selection_aggregate = repos.study_cohort_repository.find_by_study(
-                study_uid, for_update=for_update
+                study_uid,
+                for_update=for_update,
+                study_value_version=study_value_version,
             )
             assert selection_aggregate is not None
             selection, order = selection_aggregate.get_specific_cohort_selection(
                 study_selection_uid
             )
             return selection_aggregate, selection, order
+        finally:
+            repos.close()
+
+    def _get_specific_soa_group_selection_by_uids(
+        self, study_uid: str, study_selection_uid: str, for_update: bool = False
+    ):
+        repos = self._repos
+        try:
+            selection_aggregate = repos.study_soa_group_repository.find_by_study(
+                study_uid, for_update=for_update
+            )
+            try:
+                assert selection_aggregate is not None
+                selection, order = selection_aggregate.get_specific_object_selection(
+                    study_selection_uid
+                )
+                if selection is None:
+                    raise exceptions.NotFoundException(
+                        f"Could not find study soa group with uid {study_selection_uid}"
+                    )
+                return selection_aggregate, selection, order
+            except ValueError as value_error:
+                raise exceptions.NotFoundException(value_error.args[0])
         finally:
             repos.close()

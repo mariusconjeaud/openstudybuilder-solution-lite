@@ -271,22 +271,19 @@ const state = {
           description: i18n.t('Studies.process_overview_description')
         },
         {
+          title: i18n.t('Sidebar.study.select'),
+          url: { name: 'SelectOrAddStudy' },
+          icon: 'mdi-view-list'
+        },
+        {
           title: i18n.t('Sidebar.study.manage'),
           icon: 'mdi-wrench-outline',
           description: i18n.t('Studies.manage_description'),
           children: [
             {
-              title: i18n.t('Sidebar.study.select'),
-              url: { name: 'SelectOrAddStudy' }
-            },
-            {
               title: i18n.t('Sidebar.study.study_status'),
               url: { name: 'StudyStatus', params: { study_id: studyId } },
               studyRequired: true
-            },
-            {
-              title: i18n.t('Sidebar.study.project_std'),
-              url: { name: 'ProjectStandards' }
             }
           ]
         },
@@ -535,8 +532,8 @@ const mutations = {
       item.disabled = true
       state.breadcrumbs.push(item)
     }
-
-    if (state.breadcrumbs.length && state.breadcrumbs[state.breadcrumbs.length - 1].text === item.text) {
+    const lastIndex = state.breadcrumbs.length - 1
+    if (state.breadcrumbs.length && pos === lastIndex && state.breadcrumbs[lastIndex].text === item.text) {
       return
     }
     if (pos !== undefined) {
@@ -546,6 +543,7 @@ const mutations = {
       } else {
         item.disabled = pos === state.breadcrumbs.length - 1
         Vue.set(state.breadcrumbs, pos, item)
+        state.breadcrumbs = state.breadcrumbs.slice(0, pos + 1)
       }
     } else {
       appendToBreadcrumbs()

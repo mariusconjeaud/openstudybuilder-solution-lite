@@ -11,7 +11,7 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryVO,
 )
 from clinical_mdr_api.exceptions import BusinessLogicException
-from clinical_mdr_api.models.utils import booltostr
+from clinical_mdr_api.utils import booltostr
 
 
 @dataclass(frozen=True)

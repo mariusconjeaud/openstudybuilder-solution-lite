@@ -36,6 +36,7 @@ public class OpenStudyBuilderFileAdaptor implements StudyBuilderAdaptor {
     private static final String DMCELL_FILE = "./data/study_000002_SNAKE_CASE/studies.Study_000002.study-design-cells.json";
     // TODO - Verify. No dedicated file but we've serialized CriteriaType from Criteria
     private static final String CRIT_TYPE_FILE = "./data/study_000002_SNAKE_CASE/studies.Study_000002.study-criteria-type.json";
+    private static final String STUDY_CRITERIAS_FILE = "./data/study_000002_SNAKE_CASE/studies.Study_000002.study-criteria.json";
     private static final String STUDY_OBJ_SEC_FILE = "./data/study_000002_SNAKE_CASE/studies.Study_000002.study-objectives.json";
     private static final String STUDY_EP_SEC_FILE = "./data/study_000002_SNAKE_CASE/studies.Study_000002.study-endpoints.json";
     private static final String STUDY_SEC_FILE = "./data/study_000002_SNAKE_CASE/studies.Study_000002.json";
@@ -133,7 +134,7 @@ public class OpenStudyBuilderFileAdaptor implements StudyBuilderAdaptor {
         return readFile(EXCLUSIONS_FILE);
     }
 
-    public String getEndpoint(String studyUid) throws  IOException {
+    public String getEndpoint(String endpointUid) throws  IOException {
 
         return readFile(ENDPOINTS_FILE);
     }
@@ -180,7 +181,7 @@ public class OpenStudyBuilderFileAdaptor implements StudyBuilderAdaptor {
 
     public String getCriterias(String studyUid) throws  IOException {
 
-        return readFile(CRITERIAS_FILE);
+        return readFile(STUDY_CRITERIAS_FILE);
     }
 
     public String getDesignMatrixCells(String studyUid) throws  IOException {

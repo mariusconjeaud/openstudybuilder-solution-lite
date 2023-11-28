@@ -1,4 +1,4 @@
-from typing import Optional, Self
+from typing import Self
 
 from pydantic import Field
 
@@ -26,43 +26,43 @@ class SponsorModelDatasetClass(SponsorModelBase):
         description="",
         source="has_library.name",
     )
-    is_basic_std: Optional[bool] = Field(
+    is_basic_std: bool | None = Field(
         None,
         title="is_basic_std",
         source="has_sponsor_model_instance.is_basic_std",
         nullable=True,
     )
-    xml_path: Optional[str] = Field(
+    xml_path: str | None = Field(
         None,
         title="xml_path",
         source="has_sponsor_model_instance.xml_path",
         nullable=True,
     )
-    xml_title: Optional[str] = Field(
+    xml_title: str | None = Field(
         None,
         title="xml_title",
         source="has_sponsor_model_instance.xml_title",
         nullable=True,
     )
-    structure: Optional[str] = Field(
+    structure: str | None = Field(
         None,
         title="structure",
         source="has_sponsor_model_instance.structure",
         nullable=True,
     )
-    purpose: Optional[str] = Field(
+    purpose: str | None = Field(
         None,
         title="purpose",
         source="has_sponsor_model_instance.purpose",
         nullable=True,
     )
-    comment: Optional[str] = Field(
+    comment: str | None = Field(
         None,
         title="comment",
         source="has_sponsor_model_instance.comment",
         nullable=True,
     )
-    label: Optional[str] = Field(
+    label: str | None = Field(
         None,
         title="label",
         source="has_sponsor_model_instance.label",

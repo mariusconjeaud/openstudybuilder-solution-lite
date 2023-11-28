@@ -17,7 +17,10 @@ from clinical_mdr_api.models.syntax_templates.template_parameter_term import (
 from clinical_mdr_api.models.syntax_templates.timeframe_template import (
     TimeframeTemplateNameUidLibrary,
 )
-from clinical_mdr_api.models.utils import BaseModel
+from clinical_mdr_api.models.utils import (
+    BaseModel,
+    capitalize_first_letter_if_template_parameter,
+)
 
 
 class Timeframe(BaseModel):
@@ -64,30 +67,30 @@ class Timeframe(BaseModel):
                 param_list = []
                 for i, param_name in enumerate(param_names):
                     param_term = parameter.parameters[i]
-                    pp = IndexedTemplateParameterTerm(
+                    indexed_template_parameter_term = IndexedTemplateParameterTerm(
                         name=param_term.value,
                         uid=param_term.uid,
                         index=1,
                         type=param_name,
                     )
-                    param_list.append(pp)
-                pv = TemplateParameterComplexValue(
+                    param_list.append(indexed_template_parameter_term)
+                template_parameter_complex_value = TemplateParameterComplexValue(
                     position=position + 1,
                     conjunction="",
                     terms=param_list,
                     format_string=parameter.parameter_template,
                 )
-                parameter_terms.append(pv)
+                parameter_terms.append(template_parameter_complex_value)
             else:
                 # Regular way of handling simple parameters for object
                 for index, parameter_term in enumerate(parameter.parameters):
-                    pv = IndexedTemplateParameterTerm(
+                    indexed_template_parameter_term = IndexedTemplateParameterTerm(
                         index=index + 1,
                         uid=parameter_term.uid,
                         name=parameter_term.value,
                         type=parameter.parameter_name,
                     )
-                    terms.append(pv)
+                    terms.append(indexed_template_parameter_term)
                 conjunction = parameter.conjunction
 
                 parameter_terms.append(
@@ -97,8 +100,14 @@ class Timeframe(BaseModel):
                 )
         return cls(
             uid=timeframe_ar.uid,
-            name=timeframe_ar.name,
-            name_plain=timeframe_ar.name_plain,
+            name=capitalize_first_letter_if_template_parameter(
+                timeframe_ar.name,
+                timeframe_ar.template_name_plain,
+            ),
+            name_plain=capitalize_first_letter_if_template_parameter(
+                timeframe_ar.name_plain,
+                timeframe_ar.template_name_plain,
+            ),
             start_date=timeframe_ar.item_metadata.start_date,
             end_date=timeframe_ar.item_metadata.end_date,
             status=timeframe_ar.item_metadata.status.value,

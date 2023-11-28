@@ -171,7 +171,7 @@
         }
       ]
     }
-  }, 
+  },
   {
     "name": "Test get all list non empty",
     "request": {
@@ -244,7 +244,7 @@
         }
       ]
     }
-  }, 
+  },
   {
     "name": "Test get specific",
     "request": {
@@ -315,7 +315,100 @@
         "user_initials": "TODO initials"
       }
     }
-  }, 
+  },
+  {
+    "name": " ADD STUDY TITLE Test to have multiple study value relationships attached",
+    "request": {
+      "headers": {},
+      "method": "PATCH",
+      "request": {
+        "current_metadata": {
+          "study_description": {
+            "study_title": "new title"
+          }
+        }
+      },
+      "url": "/studies/study_root"
+    },
+    "response": {
+      "code": 200,
+      "headers": {
+        "content-length": "389",
+        "content-type": "application/json"
+      },
+      "result": {
+        "uid": "study_root",
+        "possible_actions": [
+          "delete",
+          "lock",
+          "release"
+        ],
+        "current_metadata": {
+          "identification_metadata": {
+            "study_number": "0",
+            "study_acronym": null,
+            "project_number": "123",
+            "project_name": "Project ABC",
+            "clinical_programme_name": "CP",
+            "study_id": "some_id-0",
+            "registry_identifiers": {
+              "ct_gov_id": null,
+              "ct_gov_id_null_value_code": null,
+              "eudract_id": null,
+              "eudract_id_null_value_code": null,
+              "universal_trial_number_utn": null,
+              "universal_trial_number_utn_null_value_code": null,
+              "japanese_trial_registry_id_japic": null,
+              "japanese_trial_registry_id_japic_null_value_code": null,
+              "investigational_new_drug_application_number_ind": null,
+              "investigational_new_drug_application_number_ind_null_value_code": null
+            }
+          },
+          "version_metadata": {
+            "study_status": "DRAFT",
+            "version_number": null,
+            "version_timestamp": "2023-09-11T09:47:39.179987+00:00",
+            "version_author": null,
+            "version_description": null
+          }
+        }
+      }
+    }
+  },
+  {
+    "name": " LOCK STUDY Test to have multiple study value relationships attached",
+    "request": {
+      "headers": {},
+      "method": "POST",
+      "request": {
+        "change_description": "Lock 1"
+      },
+      "url": "/studies/study_root/locks"
+    },
+    "response": {
+      "code": 201,
+      "headers": {
+        "content-length": "389",
+        "content-type": "application/json"
+      }
+    }
+  },
+  {
+    "name": " UNLOCK STUDY Test to have multiple study value relationships attached",
+    "request": {
+      "headers": {},
+      "method": "DELETE",
+      "request": {},
+      "url": "/studies/study_root/locks"
+    },
+    "response": {
+      "code": 200,
+      "headers": {
+        "content-length": "389",
+        "content-type": "application/json"
+      }
+    }
+  },
   {
     "name": "Test patch specific - set name",
     "request": {
@@ -388,7 +481,7 @@
         "user_initials": "TODO initials"
       }
     }
-  }, 
+  },
   {
     "name": "Test all history of specific selection",
     "request": {
@@ -403,8 +496,7 @@
         "content-length": "389",
         "content-type": "application/json"
       },
-      "result": 
-      [
+      "result": [
         {
           "study_uid": "study_root",
           "order": 1,
@@ -469,7 +561,7 @@
           "arm_root_uid": "StudyArm_000001",
           "changes": {}
         }
-      ]        
+      ]
     }
   },
   {
@@ -556,19 +648,52 @@
     }
   },
   {
+    "name": " LOCK STUDY Test to have multiple study value relationships attached",
+    "request": {
+      "headers": {},
+      "method": "POST",
+      "request": {
+        "change_description": "Lock 1"
+      },
+      "url": "/studies/study_root/locks"
+    },
+    "response": {
+      "code": 201,
+      "headers": {
+        "content-length": "389",
+        "content-type": "application/json"
+      }
+    }
+  },
+  {
+    "name": " UNLOCK STUDY Test to have multiple study value relationships attached",
+    "request": {
+      "headers": {},
+      "method": "DELETE",
+      "request": {},
+      "url": "/studies/study_root/locks"
+    },
+    "response": {
+      "code": 200,
+      "headers": {
+        "content-length": "389",
+        "content-type": "application/json"
+      }
+    }
+  },
+  {
     "name": "Test DELETE -- delete the 1st to test the reordering for the 2nd to be eq. to 1 ",
     "request": {
-        "headers": {},
-        "method": "DELETE",
-        "url": "/studies/study_root/study-branch-arms/StudyBranchArm_000001"
+      "headers": {},
+      "method": "DELETE",
+      "url": "/studies/study_root/study-branch-arms/StudyBranchArm_000001"
     },
-    "response":{
-        "code":204,
-        "headers":{
-        },
-        "result":null
+    "response": {
+      "code": 204,
+      "headers": {},
+      "result": null
     }
-  }, 
+  },
   {
     "name": "Test 3rd adding selection",
     "request": {
@@ -1160,15 +1285,14 @@
   {
     "name": "Test DELETE -- delete so the designcells can turn back to the study arm ",
     "request": {
-        "headers": {},
-        "method": "DELETE",
-        "url": "/studies/study_root/study-branch-arms/StudyBranchArm_000016"
+      "headers": {},
+      "method": "DELETE",
+      "url": "/studies/study_root/study-branch-arms/StudyBranchArm_000016"
     },
-    "response":{
-        "code":204,
-        "headers":{
-        },
-        "result":null
+    "response": {
+      "code": 204,
+      "headers": {},
+      "result": null
     }
   },
   {
@@ -1340,15 +1464,14 @@
   {
     "name": "Test DELETE -- to be sure that the cascade delete won't take effect ",
     "request": {
-        "headers": {},
-        "method": "DELETE",
-        "url": "/studies/study_root/study-branch-arms/StudyBranchArm_000019"
+      "headers": {},
+      "method": "DELETE",
+      "url": "/studies/study_root/study-branch-arms/StudyBranchArm_000019"
     },
-    "response":{
-        "code":204,
-        "headers":{
-        },
-        "result":null
+    "response": {
+      "code": 204,
+      "headers": {},
+      "result": null
     }
   },
   {
@@ -1365,8 +1488,7 @@
         "content-length": "389",
         "content-type": "application/json"
       },
-      "result": 
-      [
+      "result": [
         {
           "study_uid": "study_root",
           "order": 1,
@@ -1882,5 +2004,4 @@
       ]
     }
   }
-
 ]

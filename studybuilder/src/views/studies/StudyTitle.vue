@@ -17,6 +17,7 @@
       @click.stop="showForm = true"
       :title="$t('StudyTitleView.edit_title')"
       :data-cy="$t('StudyTitleView.edit_title')"
+      :disabled="selectedStudyVersion !== null"
       >
       <v-icon>
         mdi-pencil-outline
@@ -74,7 +75,7 @@ export default {
   },
   methods: {
     fetchStudyDescription () {
-      study.getStudyDescriptionMetadata(this.selectedStudy.uid).then(resp => {
+      study.getStudyDescriptionMetadata(this.selectedStudy.uid, this.selectedStudyVersion).then(resp => {
         this.description = resp.data.current_metadata.study_description
       })
     }

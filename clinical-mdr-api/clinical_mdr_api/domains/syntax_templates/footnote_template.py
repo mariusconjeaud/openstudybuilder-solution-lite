@@ -1,6 +1,6 @@
 import re
 from dataclasses import dataclass
-from typing import Callable, Self, Sequence
+from typing import Callable, Self
 
 from clinical_mdr_api.domains.concepts.activities.activity import ActivityAR
 from clinical_mdr_api.domains.concepts.activities.activity_group import ActivityGroupAR
@@ -32,32 +32,32 @@ class FootnoteTemplateAR(TemplateAggregateRootBase):
 
     _type: tuple[CTTermNameAR, CTTermAttributesAR] = ()
 
-    _indications: Sequence[DictionaryTermAR] | None = None
+    _indications: list[DictionaryTermAR] | None = None
 
-    _activities: Sequence[ActivityAR] | None = None
+    _activities: list[ActivityAR] | None = None
 
-    _activity_groups: Sequence[ActivityGroupAR] | None = None
+    _activity_groups: list[ActivityGroupAR] | None = None
 
-    _activity_subgroups: Sequence[ActivitySubGroupAR] | None = None
+    _activity_subgroups: list[ActivitySubGroupAR] | None = None
 
     @property
     def type(self) -> tuple[CTTermNameAR, CTTermAttributesAR] | None:
         return self._type
 
     @property
-    def indications(self) -> Sequence[DictionaryTermAR]:
+    def indications(self) -> list[DictionaryTermAR]:
         return self._indications
 
     @property
-    def activities(self) -> Sequence[ActivityAR]:
+    def activities(self) -> list[ActivityAR]:
         return self._activities
 
     @property
-    def activity_groups(self) -> Sequence[ActivityGroupAR]:
+    def activity_groups(self) -> list[ActivityGroupAR]:
         return self._activity_groups
 
     @property
-    def activity_subgroups(self) -> Sequence[ActivitySubGroupAR]:
+    def activity_subgroups(self) -> list[ActivitySubGroupAR]:
         return self._activity_subgroups
 
     @classmethod
@@ -70,13 +70,13 @@ class FootnoteTemplateAR(TemplateAggregateRootBase):
         item_metadata: LibraryItemMetadataVO,
         study_count: int = 0,
         counts: InstantiationCountsVO | None = None,
-        footnote_type: tuple[CTTermNameAR, CTTermAttributesAR] = None,
-        indications: Sequence[DictionaryTermAR] | None = None,
-        activities: Sequence[ActivityAR] | None = None,
-        activity_groups: Sequence[ActivityGroupAR] | None = None,
-        activity_subgroups: Sequence[ActivitySubGroupAR] | None = None,
+        footnote_type: tuple[CTTermNameAR, CTTermAttributesAR] | None = None,
+        indications: list[DictionaryTermAR] | None = None,
+        activities: list[ActivityAR] | None = None,
+        activity_groups: list[ActivityGroupAR] | None = None,
+        activity_subgroups: list[ActivitySubGroupAR] | None = None,
     ) -> Self:
-        ar = cls(
+        return cls(
             _uid=uid,
             _sequence_id=sequence_id,
             _item_metadata=item_metadata,
@@ -90,7 +90,6 @@ class FootnoteTemplateAR(TemplateAggregateRootBase):
             _study_count=study_count,
             _counts=counts,
         )
-        return ar
 
     @classmethod
     def from_input_values(
@@ -100,14 +99,14 @@ class FootnoteTemplateAR(TemplateAggregateRootBase):
         template: TemplateVO,
         library: LibraryVO,
         generate_uid_callback: Callable[[], str | None] = (lambda: None),
-        next_available_sequence_id_callback: Callable[[str, str, str], str | None] = (
-            lambda x, y, z: None
-        ),
-        footnote_type: tuple[CTTermNameAR, CTTermAttributesAR] = None,
-        indications: Sequence[DictionaryTermAR] | None = None,
-        activities: Sequence[ActivityAR] | None = None,
-        activity_groups: Sequence[ActivityGroupAR] | None = None,
-        activity_subgroups: Sequence[ActivitySubGroupAR] | None = None,
+        next_available_sequence_id_callback: Callable[
+            [str, str | None, str | None, LibraryVO | None], str | None
+        ] = (lambda uid, prefix, type_uid, library: None),
+        footnote_type: tuple[CTTermNameAR, CTTermAttributesAR] | None = None,
+        indications: list[DictionaryTermAR] | None = None,
+        activities: list[ActivityAR] | None = None,
+        activity_groups: list[ActivityGroupAR] | None = None,
+        activity_subgroups: list[ActivitySubGroupAR] | None = None,
     ) -> Self:
         footnote_type_name = re.sub(
             "footnote",
@@ -123,9 +122,11 @@ class FootnoteTemplateAR(TemplateAggregateRootBase):
             generate_uid_callback=generate_uid_callback,
         )
         ar._sequence_id = next_available_sequence_id_callback(
-            ar._uid,
-            "F" + "".join([char for char in footnote_type_name if char.isupper()]),
-            footnote_type[0].uid,
+            uid=ar._uid,
+            prefix="F"
+            + "".join([char for char in footnote_type_name if char.isupper()]),
+            type_uid=footnote_type[0].uid,
+            library=library,
         )
         ar._type = footnote_type
         ar._indications = indications

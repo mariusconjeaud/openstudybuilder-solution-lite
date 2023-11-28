@@ -21,22 +21,24 @@ def table_to_html(
             with tag("table", *attrs):
                 if table.num_header_rows:
                     with tag("thead"):
-                        td = "th"
+                        table_data_cell = "th"
 
-                        for r in range(table.num_header_rows):
+                        for row in range(table.num_header_rows):
                             with tag("tr"):
-                                for c, txt in enumerate(table.data[r]):
-                                    meta = table.meta[r][c]
-                                    _html_cell(doc, meta, td, txt)
+                                for idx, txt in enumerate(table.data[row]):
+                                    meta = table.meta[row][idx]
+                                    _html_cell(doc, meta, table_data_cell, txt)
 
                 with tag("tbody"):
-                    for r in range(table.num_header_rows, table.data.size):
+                    for row in range(table.num_header_rows, table.data.size):
                         with tag("tr"):
-                            for c, txt in enumerate(table.data[r]):
-                                td = "th" if c < table.num_header_columns else "td"
+                            for idx, txt in enumerate(table.data[row]):
+                                table_data_cell = (
+                                    "th" if idx < table.num_header_columns else "td"
+                                )
 
-                                meta = table.meta[r][c]
-                                _html_cell(doc, meta, td, txt)
+                                meta = table.meta[row][idx]
+                                _html_cell(doc, meta, table_data_cell, txt)
 
     return doc
 
@@ -47,10 +49,10 @@ def _html_cell(doc, meta, tag, txt):
 
         if "\n" in txt:
             with doc.tag(tag, *attrs):
-                for i, t in enumerate(txt.split("\n")):
+                for i, line in enumerate(txt.split("\n")):
                     if i:
                         doc.stag("br")
-                    doc.text(t)
+                    doc.text(line)
 
         else:
             doc.line(tag, txt, *attrs)
@@ -70,13 +72,13 @@ def table_to_docx(table, styles):
     )
 
     # Update header rows
-    for r in range(table.num_header_rows):
-        row = tablex.rows[r]
+    for header_row in range(table.num_header_rows):
+        row = tablex.rows[header_row]
 
         prev_cell = None
-        for c, txt in enumerate(table.data[r].values()):
-            cellx = row.cells[c]
-            meta = table.meta[r][c]
+        for idx, txt in enumerate(table.data[header_row].values()):
+            cellx = row.cells[idx]
+            meta = table.meta[header_row][idx]
 
             if meta.get("merged") and prev_cell:
                 # Merge cell with previous cell, will preserve the paragraph (text) from the previous one
@@ -91,8 +93,8 @@ def table_to_docx(table, styles):
         docx.format_row(
             row,
             [
-                docx.styles[table.meta[r][c].get("class")][0]
-                for c in range(table.data[r].size)
+                docx.styles[table.meta[header_row][idx].get("class")][0]
+                for idx in range(table.data[header_row].size)
             ],
         )
 
@@ -100,16 +102,16 @@ def table_to_docx(table, styles):
         docx.repeat_table_header(row)
 
     # Append data rows
-    for r in range(table.num_header_rows, table.data.size):
-        row = docx.add_row(tablex, table.data[r])
+    for header_row in range(table.num_header_rows, table.data.size):
+        row = docx.add_row(tablex, table.data[header_row])
 
         # Apply paragraph styles on all cells, looking up style names
         # Discovering meta by getitem rather than iteration, because lazily populated
         docx.format_row(
             row,
             [
-                docx.styles[table.meta[r][c].get("class")][0]
-                for c in range(table.data[r].size)
+                docx.styles[table.meta[header_row][idx].get("class")][0]
+                for idx in range(table.data[header_row].size)
             ],
         )
 

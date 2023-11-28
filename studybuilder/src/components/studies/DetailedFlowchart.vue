@@ -61,6 +61,8 @@
       :label="$t('DetailedFlowchart.hide_flowchart_groups')"
       hide-details
       class="ml-2"
+      :loading="soaGroupsUpdate"
+      :disabled="soaGroupsUpdate || selectedStudyVersion !== null"
       />
     <v-spacer />
     <template v-if="!readOnly">
@@ -71,12 +73,11 @@
         :title="$t('GroupStudyVisits.title')"
         v-show="selectedVisits.length > 1"
         @click="groupSelectedVisits()"
-        :disabled="footnoteMode"
+        :disabled="footnoteMode || !checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
         >
         <v-icon>mdi-arrow-expand-horizontal</v-icon>
       </v-btn>
       <v-menu
-        :close-on-click="false"
         :close-on-content-click="false"
         max-height="800px"
         max-width="500px"
@@ -92,7 +93,7 @@
               class="mr-2"
               v-bind="attrs"
               v-on="on"
-              :disabled="footnoteMode"
+              :disabled="footnoteMode || !checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
               >
               <v-icon>mdi-pencil-outline</v-icon>
             </v-btn>
@@ -128,7 +129,7 @@
         small
         @click="toggleActivitySelectionDisplay(false)"
         :title="$t('DetailedFlowchart.hide_activity_selection')"
-        :disabled="footnoteMode"
+        :disabled="footnoteMode || !checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
         >
         <v-icon>
           mdi-eye-off-outline
@@ -141,7 +142,7 @@
         @click="toggleActivitySelectionDisplay(true)"
         :title="$t('DetailedFlowchart.show_activity_selection')"
         class="ml-2"
-        :disabled="footnoteMode"
+        :disabled="footnoteMode || !checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
         >
         <v-icon>
           mdi-eye-outline
@@ -154,7 +155,7 @@
         @click="openBatchEditForm"
         :title="$t('DetailedFlowchart.edit_activity_selection')"
         class="ml-2"
-        :disabled="footnoteMode"
+        :disabled="footnoteMode || !checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
         >
         <v-icon>
           mdi-pencil-box-multiple-outline
@@ -172,6 +173,13 @@
         <th width="10%" scope="col">{{ $t('DetailedFlowchart.study_epoch') }}</th>
         <template v-if="groupedVisits.length">
           <th v-for="(sv, index) in groupedVisits" :key="`epoch-${index}`" class="text-vertical" scope="col">
+            <v-badge
+              color="secondary--text"
+              :content="getEpochName(sv, index) !== '' ? getElementFootnotes(sv.study_epoch_uid) : ''"
+              class="mt-3"
+            >
+              {{ getEpochName(sv, index) }}
+            </v-badge>
             <v-btn
               v-if="footnoteMode && getEpochName(sv, index) !== '' && !checkIfElementHasFootnote(sv.study_epoch_uid)"
               x-small
@@ -194,13 +202,6 @@
                 mdi-close
               </v-icon>
             </v-btn>
-            <v-badge
-              color="secondary--text"
-              :content="getEpochName(sv, index) !== '' ? getElementFootnotes(sv.study_epoch_uid) : ''"
-              class="mt-3"
-            >
-              {{ getEpochName(sv, index) }}
-            </v-badge>
           </th>
         </template>
         <template v-else>
@@ -212,6 +213,13 @@
         <template v-if="groupedVisits.length">
           <th v-for="(sv, index) in groupedVisits" :key="`shortName-${index}`" :style="`top: ${firstHeaderHeight}px`" scope="col">
             <div class="d-flex align-center">
+              <v-badge
+                color="secondary--text"
+                :content="getElementFootnotes(sv.visitsUids ? sv.visitsUids : sv.uid)"
+                class="visitFootnote"
+              >
+                {{ sv.visit_short_name }}
+              </v-badge>
               <v-btn
                 v-if="footnoteMode && !checkIfElementHasFootnote(sv.visitsUids ? sv.visitsUids : sv.uid)"
                 x-small
@@ -233,13 +241,6 @@
                   mdi-close
                 </v-icon>
               </v-btn>
-              <v-badge
-                color="secondary--text"
-                :content="getElementFootnotes(sv.visitsUids ? sv.visitsUids : sv.uid)"
-                class="visitFootnote"
-              >
-                {{ sv.visit_short_name }}
-              </v-badge>
               <v-checkbox
                 v-if="!sv.isGroup && !footnoteMode"
                 v-model="selectedVisits"
@@ -248,6 +249,7 @@
                 hide-details
                 small
                 multiple
+                :disabled="footnoteMode || !checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
                 />
               <v-btn
                 v-else-if="!footnoteMode"
@@ -256,6 +258,7 @@
                 x-small
                 :title="$t('GroupStudyVisits.delete_title')"
                 @click="deleteVisitGroup(sv.uid)"
+                :disabled="footnoteMode || !checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
                 >
                 <v-icon>mdi-delete-outline</v-icon>
               </v-btn>
@@ -307,9 +310,46 @@
             </v-btn>
           </td>
           <td class="text-strong">
-            {{ flowchartGroup }}
+            <v-badge
+              color="secondary--text"
+              :content="getElementFootnotes(Object.values(Object.values(sortedStudyActivities[flowchartGroup])[0])[0][0].study_soa_group.study_soa_group_uid)"
+            >
+              {{ flowchartGroup }}
+            </v-badge>
+            <v-btn
+              v-if="footnoteMode && !checkIfElementHasFootnote(Object.values(Object.values(sortedStudyActivities[flowchartGroup])[0])[0][0].study_soa_group.study_soa_group_uid)"
+              x-small
+              icon
+              class="mx-0 px-0"
+              @click="addSoAGroupForFootnote(flowchartGroup)">
+              <v-icon x-small>
+                mdi-plus
+              </v-icon>
+            </v-btn>
+            <v-btn
+              v-else-if="footnoteMode && checkIfElementHasFootnote(Object.values(Object.values(sortedStudyActivities[flowchartGroup])[0])[0][0].study_soa_group.study_soa_group_uid)"
+              x-small
+              icon
+              class="mx-0 px-0"
+              @click="removeSoAGroupForFootnote(flowchartGroup)"
+              color="red">
+              <v-icon x-small>
+                mdi-close
+              </v-icon>
+            </v-btn>
           </td>
-          <td></td>
+          <td>
+            <v-btn
+              v-if="!readOnly"
+              icon
+              @click="() => toggleSoaGroupDisplay(flowchartGroup)"
+              :title="$t('DetailedFlowchart.toggle_soa_group_display')"
+              :disabled="footnoteMode"
+              >
+              <v-icon v-if="getFlGroupDisplayState(flowchartGroup)" color="success">mdi-eye-outline</v-icon>
+              <v-icon v-else>mdi-eye-off-outline</v-icon>
+            </v-btn>
+          </td>
           <td :colspan="groupedVisits.length + 1"></td>
         </tr>
         <template v-for="(subgroups, group, groupIndex) in groups">
@@ -359,7 +399,7 @@
                   icon
                   @click="value => toggleActivityGroupFlowchartDisplay(flowchartGroup, group)"
                   :title="$t('DetailedFlowchart.toggle_group_display')"
-                  :disabled="footnoteMode"
+                  :disabled="footnoteMode || !checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
                   >
                   <v-icon v-if="getGroupDisplayState(flowchartGroup, group)" color="success">mdi-eye-outline</v-icon>
                   <v-icon v-else>mdi-eye-off-outline</v-icon>
@@ -388,6 +428,7 @@
                         on-icon="mdi-checkbox-multiple-marked-outline"
                         off-icon="mdi-checkbox-multiple-blank-outline"
                         hide-details
+                        :disabled="!checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
                         />
                       <v-badge
                         color="secondary--text"
@@ -424,7 +465,7 @@
                       icon
                       @click="value => toggleActivitySubgroupFlowchartDisplay(flowchartGroup, group, subgroup)"
                       :title="$t('DetailedFlowchart.toggle_subgroup_display')"
-                      :disabled="footnoteMode"
+                      :disabled="footnoteMode || !checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
                       >
                       <v-icon v-if="getSubgroupDisplayState(flowchartGroup, group, subgroup)" color="success">mdi-eye-outline</v-icon>
                       <v-icon v-else>mdi-eye-off-outline</v-icon>
@@ -442,6 +483,7 @@
                           hide-details
                           @change="value => toggleActivitySelection(studyActivity, value)"
                           :value="studyActivitySelection.findIndex(item => item.study_activity_uid === studyActivity.study_activity_uid) !== -1"
+                          :disabled="!checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
                           />
                         <v-badge
                           color="secondary--text"
@@ -478,7 +520,7 @@
                         icon
                         @click="toggleActivityFlowchartDisplay(studyActivity, !studyActivity.show_activity_in_protocol_flowchart)"
                         :title="$t('DetailedFlowchart.toggle_activity_display')"
-                        :disabled="footnoteMode"
+                        :disabled="footnoteMode || !checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
                         >
                         <v-icon v-if="studyActivity.show_activity_in_protocol_flowchart" color="success">mdi-eye-outline</v-icon>
                         <v-icon v-else>mdi-eye-off-outline</v-icon>
@@ -496,7 +538,7 @@
                             v-model="currentSelectionMatrix[studyActivity.study_activity_uid][visit.uid].value"
                             color="success"
                             @change="value => updateSchedule(value, studyActivity.study_activity_uid, visit)"
-                            :disabled="isCheckboxDisabled(studyActivity.study_activity_uid, visit.uid) || footnoteMode"
+                            :disabled="isCheckboxDisabled(studyActivity.study_activity_uid, visit.uid) || footnoteMode || !checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
                             hide-details
                             on-icon="mdi-checkbox-marked-circle-outline"
                             off-icon="mdi-checkbox-blank-circle-outline"
@@ -556,7 +598,7 @@
                   icon
                   color="primary"
                   @click="editStudyFootnote(footnote)"
-                  :disabled="footnoteMode"
+                  :disabled="footnoteMode || !checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
                   >
                   <v-icon>mdi-pencil-outline</v-icon>
                 </v-btn>
@@ -564,7 +606,7 @@
                   icon
                   color="primary"
                   @click="enableFootnoteMode(footnote)"
-                  :disabled="footnoteMode"
+                  :disabled="footnoteMode || !checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
                   >
                   <v-icon>mdi-table-plus</v-icon>
                 </v-btn>
@@ -600,6 +642,7 @@
     :study-footnote="selectedFootnote"
     @close="closeEditForm"
     @updated="fetchFootnotes"
+    @enableFootnoteMode="enableFootnoteMode"
     />
 </div>
 </template>
@@ -619,8 +662,10 @@ import NNParameterHighlighter from '@/components/tools/NNParameterHighlighter'
 import StudyFootnoteEditForm from '@/components/studies/StudyFootnoteEditForm'
 import dataFormating from '@/utils/dataFormating'
 import _isEmpty from 'lodash/isEmpty'
+import { accessGuard } from '@/mixins/accessRoleVerifier'
 
 export default {
+  mixins: [accessGuard],
   components: {
     CollapsibleVisitGroupForm,
     ConfirmDialog,
@@ -640,6 +685,7 @@ export default {
     ...mapGetters({
       sortedStudyActivities: 'studyActivities/sortedStudyActivities',
       selectedStudy: 'studiesGeneral/selectedStudy',
+      selectedStudyVersion: 'studiesGeneral/selectedStudyVersion',
       studyPreferredTimeUnit: 'studiesGeneral/studyPreferredTimeUnit',
       studyFootnotes: 'studyFootnotes/studyFootnotes'
     }),
@@ -730,7 +776,8 @@ export default {
       },
       selectedFootnote: null,
       showFootnoteEditForm: false,
-      footnoteUpdateLoading: false
+      footnoteUpdateLoading: false,
+      soaGroupsUpdate: false
     }
   },
   methods: {
@@ -779,6 +826,15 @@ export default {
         })
       }
     },
+    addSoAGroupForFootnote (flgroup) {
+      for (const group in this.sortedStudyActivities[flgroup]) {
+        for (const key in this.sortedStudyActivities[flgroup][group]) {
+          this.sortedStudyActivities[flgroup][group][key].forEach(activity => {
+            this.elementsForFootnote.referenced_items.push({ item_uid: activity.study_soa_group.study_soa_group_uid, item_type: 'StudySoAGroup' })
+          })
+        }
+      }
+    },
     removeFootnote (uid) {
       const indexToRemove = this.elementsForFootnote.referenced_items.findIndex(item => item.item_uid === uid)
       if (indexToRemove !== -1) {
@@ -804,6 +860,15 @@ export default {
         this.sortedStudyActivities[flgroup][group][key].forEach(activity => {
           this.removeFootnote(activity.study_activity_group.study_activity_group_uid)
         })
+      }
+    },
+    removeSoAGroupForFootnote (flgroup) {
+      for (const group in this.sortedStudyActivities[flgroup]) {
+        for (const key in this.sortedStudyActivities[flgroup][group]) {
+          this.sortedStudyActivities[flgroup][group][key].forEach(activity => {
+            this.removeFootnote(activity.study_soa_group.study_soa_group_uid)
+          })
+        }
       }
     },
     addScheduleForFootnote (studyActivityUid, studyVisit) {
@@ -844,7 +909,8 @@ export default {
         page_number: 1,
         page_size: 0,
         total_count: true,
-        studyUid: this.selectedStudy.uid
+        studyUid: this.selectedStudy.uid,
+        study_value_version: this.selectedStudyVersion
       }
       this.$store.dispatch('studyFootnotes/fetchStudyFootnotes', params)
     },
@@ -870,6 +936,18 @@ export default {
     },
     getDisplayButtonIcon (rowKey) {
       return (this.getCurrentDisplayValue(rowKey)) ? 'mdi-chevron-down' : 'mdi-chevron-right'
+    },
+    getFlGroupDisplayState (flgroup) {
+      for (const group of Object.keys(this.sortedStudyActivities[flgroup])) {
+        for (const items of Object.values(this.sortedStudyActivities[flgroup][group])) {
+          for (const item of items) {
+            if (item.show_soa_group_in_protocol_flowchart) {
+              return true
+            }
+          }
+        }
+      }
+      return false
     },
     getGroupDisplayState (flgroup, group) {
       for (const items of Object.values(this.sortedStudyActivities[flgroup][group])) {
@@ -924,12 +1002,11 @@ export default {
     },
     updateStudyActivity (studyActivity, data) {
       study.updateStudyActivity(this.selectedStudy.uid, studyActivity.study_activity_uid, data).then(resp => {
-        const transformed = this.transformItem(studyActivity)
-        const fgroup = transformed.flowchart_group.sponsor_preferred_name
-        const group = (transformed.activity.activity_group)
-          ? transformed.activity.activity_group.name : '(not selected)'
-        const subgroup = (transformed.activity.activity_subgroup)
-          ? transformed.activity.activity_subgroup.name : '(not selected)'
+        const fgroup = studyActivity.study_soa_group.soa_group_name
+        const group = (studyActivity.study_activity_group)
+          ? studyActivity.study_activity_group.activity_group_name : '(not selected)'
+        const subgroup = (studyActivity.study_activity_subgroup)
+          ? studyActivity.study_activity_subgroup.activity_subgroup_name : '(not selected)'
         this.sortedStudyActivities[fgroup][group][subgroup].filter((item, index) => {
           this.$store.commit('studyActivities/UPDATE_STUDY_ACTIVITY', resp.data)
         })
@@ -1022,9 +1099,14 @@ export default {
         })
       }
     },
-    openBatchEditForm () {
+    async openBatchEditForm () {
       if (!this.studyActivitySelection.length) {
         bus.$emit('notification', { type: 'warning', msg: this.$t('DetailedFlowchart.batch_edit_no_selection') })
+        return
+      }
+      const message = this.$t('DetailedFlowchart.batch_edit_warning')
+      const options = { type: 'warning' }
+      if (!await this.$refs.confirm.open(message, options)) {
         return
       }
       this.showBatchEditForm = true
@@ -1067,7 +1149,10 @@ export default {
       }
     },
     getStudyActivitySchedules () {
-      study.getStudyActivitySchedules(this.selectedStudy.uid).then(resp => {
+      const params = {
+        study_value_version: this.selectedStudyVersion
+      }
+      study.getStudyActivitySchedules(this.selectedStudy.uid, params).then(resp => {
         this.groupedVisits.forEach(visit => {
           Object.keys(this.currentSelectionMatrix).forEach(studyActivity => {
             this.$set(this.currentSelectionMatrix[studyActivity], visit.uid, { value: false, uid: null })
@@ -1087,7 +1172,6 @@ export default {
               )
             } else {
               console.log(`ERROR: found missing activity in current matrix -> ${schedule.study_activity_uid}`)
-              console.log(schedule)
             }
           } else {
             const visitUid = visit.consecutive_visit_group
@@ -1114,51 +1198,14 @@ export default {
         this.$router.push({ name: 'StudyStructure', params: { tab: value } })
       }
     },
-    transformItem (item) {
-      let grouping = null
-      if (item.activity.activity_groupings.length > 0) {
-        if (item.study_activity_group && item.study_activity_subgroup) {
-          grouping = item.activity.activity_groupings.find(
-            o => o.activity_group_uid === item.study_activity_group.activity_group_uid && o.activity_subgroup_uid === item.study_activity_subgroup.activity_subgroup_uid
-          )
-        }
-      }
-      if (grouping) {
-        return {
-          ...item,
-          activity: {
-            activity_group: { name: grouping.activity_group_name, uid: grouping.activity_group_uid },
-            activity_subgroup: { name: grouping.activity_subgroup_name, uid: grouping.activity_subgroup_uid },
-            ...item.activity
-          },
-          item_key: item.activity.uid + grouping.activity_group_uid + grouping.activity_subgroup_uid
-        }
-      } else {
-        console.log('Invalid group or subgroup for study activity', item.study_activity_uid)
-        return {
-          ...item,
-          activity: {
-            ...item.activity,
-            activity_group: { name: '', uid: '(not selected)' },
-            activity_subgroup: { name: '', uid: '(not selected)' }
-          },
-          item_key: item.activity.uid
-        }
-      }
-    },
     async loadActivities () {
       this.studyActivitySelection = []
-      const resp = await this.$store.dispatch('studyActivities/fetchStudyActivities', { studyUid: this.selectedStudy.uid })
-      const activities = []
-      for (const item of resp.data.items) {
-        activities.push(this.transformItem(item))
-      }
-
-      this.studyActivities = activities
+      const resp = await this.$store.dispatch('studyActivities/fetchStudyActivities', { studyUid: this.selectedStudy.uid, study_value_version: this.selectedStudyVersion })
+      this.studyActivities = resp.data.items
       for (const studyActivity of this.studyActivities) {
         this.$set(this.currentSelectionMatrix, studyActivity.study_activity_uid, {})
       }
-      studyEpochs.getStudyVisits(this.selectedStudy.uid, { page_size: 0 }).then(resp => {
+      studyEpochs.getStudyVisits(this.selectedStudy.uid, { page_size: 0, study_value_version: this.selectedStudyVersion }).then(resp => {
         this.studyVisits = resp.data.items
         this.getStudyActivitySchedules()
       })
@@ -1201,6 +1248,27 @@ export default {
         return studyVisit.study_week_number
       }
       return studyVisit.study_day_number
+    },
+    toggleSoaGroupDisplay (soaGroupName) {
+      const payload = []
+      for (const group in this.sortedStudyActivities[soaGroupName]) {
+        for (const subGroup in this.sortedStudyActivities[soaGroupName][group]) {
+          for (const studyActivity of this.sortedStudyActivities[soaGroupName][group][subGroup]) {
+            payload.push({
+              method: 'PATCH',
+              content: {
+                study_activity_uid: studyActivity.study_activity_uid,
+                content: {
+                  show_soa_group_in_protocol_flowchart: !studyActivity.show_soa_group_in_protocol_flowchart
+                }
+              }
+            })
+          }
+        }
+      }
+      study.studyActivityBatchOperations(this.selectedStudy.uid, payload).then(() => {
+        this.loadActivities()
+      })
     }
   },
   mounted () {
@@ -1286,7 +1354,7 @@ th, td {
   padding-left: 20px;
 }
 .text-vertical {
-  writing-mode: vertical-rl;
+  writing-mode: sideways-lr;
   text-orientation: mixed;
 }
 .text-strong {

@@ -32,7 +32,7 @@
           v-slot="{ errors }"
           rules="required">
           <v-textarea
-            :data-cy="$t('StudyTitleForm.title_label')"
+            :data-cy="study-title"
             v-model="form.study_title"
             :maxlength="maxTitleLength"
             :hint="$t('StudyTitleForm.title_hint')"
@@ -52,6 +52,7 @@
           v-slot="{ errors }"
           rules="required">
           <v-textarea
+            :data-cy="short-study-title"
             v-model="form.study_short_title"
             :maxlength="maxTitleLength/2"
             :hint="$t('StudyTitleForm.short_title_hint')"

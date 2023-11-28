@@ -1,5 +1,4 @@
 from datetime import datetime, timezone
-from typing import Sequence
 
 from fastapi import status
 from neomodel import db
@@ -33,52 +32,88 @@ class StudyDesignCellService(StudySelectionMixin):
         self.author = author
 
     @db.transaction
-    def get_all_design_cells(self, study_uid: str) -> Sequence[models.StudyDesignCell]:
-        return [
-            models.StudyDesignCell.from_orm(sdc_node)
-            for sdc_node in to_relation_trees(
-                StudyDesignCellNeoModel.nodes.fetch_relations(
-                    "study_epoch__has_epoch__has_name_root__has_latest_value",
-                    "study_element",
-                    "has_after",
-                )
-                .fetch_optional_relations("study_arm", "study_branch_arm")
-                .filter(study_value__study_root__uid=study_uid)
-                .order_by("order")
+    def get_all_design_cells(
+        self,
+        study_uid: str,
+        study_value_version: str | None = None,
+    ) -> list[models.StudyDesignCell]:
+        design_cell_ar = (
+            self._repos.study_design_cell_repository.find_all_design_cells_by_study(
+                study_uid=study_uid, study_value_version=study_value_version
             )
+        )
+        design_cells = [
+            models.StudyDesignCell.from_vo(i_design_cell)
+            for i_design_cell in design_cell_ar
         ]
+        return design_cells
 
     @db.transaction
     def get_all_selection_within_arm(
-        self, study_uid: str, study_arm_uid: str
-    ) -> Sequence[models.StudyDesignCell]:
+        self,
+        study_uid: str,
+        study_arm_uid: str,
+        study_value_version: str | None = None,
+    ) -> list[models.StudyDesignCell]:
         sdc_nodes = (
             self._repos.study_design_cell_repository.get_design_cells_connected_to_arm(
-                study_uid, study_arm_uid
+                study_uid, study_arm_uid, study_value_version=study_value_version
             )
         )
-
-        return [models.StudyDesignCell.from_orm(sdc_node) for sdc_node in sdc_nodes]
+        return [
+            models.StudyDesignCell.from_vo(
+                self._repos.study_design_cell_repository._from_repository_values(
+                    study_uid=study_uid,
+                    design_cell=sdc_node,
+                    study_value_version=study_value_version,
+                )
+            )
+            for sdc_node in sdc_nodes
+        ]
 
     @db.transaction
     def get_all_selection_within_branch_arm(
-        self, study_uid: str, study_branch_arm_uid: str
-    ) -> Sequence[models.StudyDesignCell]:
+        self,
+        study_uid: str,
+        study_branch_arm_uid: str,
+        study_value_version: str | None = None,
+    ) -> list[models.StudyDesignCell]:
         sdc_nodes = self._repos.study_design_cell_repository.get_design_cells_connected_to_branch_arm(
-            study_uid, study_branch_arm_uid
+            study_uid,
+            study_branch_arm_uid,
+            study_value_version=study_value_version,
         )
-
-        return [models.StudyDesignCell.from_orm(sdc_node) for sdc_node in sdc_nodes]
+        return [
+            models.StudyDesignCell.from_vo(
+                self._repos.study_design_cell_repository._from_repository_values(
+                    study_uid=study_uid,
+                    design_cell=sdc_node,
+                    study_value_version=study_value_version,
+                )
+            )
+            for sdc_node in sdc_nodes
+        ]
 
     @db.transaction
     def get_all_selection_within_epoch(
-        self, study_uid: str, study_epoch_uid: str
-    ) -> Sequence[models.StudyDesignCell]:
+        self,
+        study_uid: str,
+        study_epoch_uid: str,
+        study_value_version: str | None = None,
+    ) -> list[models.StudyDesignCell]:
         sdc_nodes = self._repos.study_design_cell_repository.get_design_cells_connected_to_epoch(
-            study_uid, study_epoch_uid
+            study_uid, study_epoch_uid, study_value_version=study_value_version
         )
-
-        return [models.StudyDesignCell.from_orm(sdc_node) for sdc_node in sdc_nodes]
+        return [
+            models.StudyDesignCell.from_vo(
+                self._repos.study_design_cell_repository._from_repository_values(
+                    study_uid=study_uid,
+                    design_cell=sdc_node,
+                    study_value_version=study_value_version,
+                )
+            )
+            for sdc_node in sdc_nodes
+        ]
 
     def get_specific_design_cell(
         self, study_uid: str, design_cell_uid: str
@@ -87,10 +122,10 @@ class StudyDesignCellService(StudySelectionMixin):
             StudyDesignCellNeoModel.nodes.fetch_relations(
                 "study_epoch__has_epoch__has_name_root__has_latest_value",
                 "study_element",
-                "has_after",
+                "has_after__audit_trail",
             )
             .fetch_optional_relations("study_arm", "study_branch_arm")
-            .filter(study_value__study_root__uid=study_uid, uid=design_cell_uid)
+            .filter(study_value__latest_value__uid=study_uid, uid=design_cell_uid)
         )
         if sdc_node is None or len(sdc_node) == 0:
             raise exceptions.NotFoundException(
@@ -121,7 +156,7 @@ class StudyDesignCellService(StudySelectionMixin):
     def create(
         self, study_uid: str, design_cell_input: models.StudyDesignCellCreateInput
     ) -> models.StudyDesignCell:
-        # all_design_cells: Sequence[StudyDesignCellVO]
+        # all_design_cells: list[StudyDesignCellVO]
         all_design_cells = (
             self._repos.study_design_cell_repository.find_all_design_cells_by_study(
                 study_uid
@@ -219,7 +254,7 @@ class StudyDesignCellService(StudySelectionMixin):
 
     def _transform_each_history_to_response_model(
         self, study_selection_history: StudyDesignCellHistory, study_uid: str
-    ) -> Sequence[models.StudyDesignCellHistory]:
+    ) -> models.StudyDesignCellHistory:
         return models.StudyDesignCellHistory(
             study_uid=study_uid,
             study_design_cell_uid=study_selection_history.study_selection_uid,
@@ -236,7 +271,7 @@ class StudyDesignCellService(StudySelectionMixin):
     @db.transaction
     def get_all_design_cells_audit_trail(
         self, study_uid: str
-    ) -> Sequence[models.StudyDesignCellVersion]:
+    ) -> list[models.StudyDesignCellVersion]:
         repos = self._repos
         try:
             try:
@@ -252,9 +287,9 @@ class StudyDesignCellService(StudySelectionMixin):
             for i_unique in unique_list_uids:
                 ith_selection_history = []
                 # gather the selection history of the i_unique Uid
-                for x in selection_history:
-                    if x.study_selection_uid == i_unique:
-                        ith_selection_history.append(x)
+                for selection in selection_history:
+                    if selection.study_selection_uid == i_unique:
+                        ith_selection_history.append(selection)
                 # get the versions and compare
                 versions = [
                     self._transform_each_history_to_response_model(_, study_uid).dict()
@@ -273,7 +308,7 @@ class StudyDesignCellService(StudySelectionMixin):
     @db.transaction
     def get_specific_selection_audit_trail(
         self, study_uid: str, design_cell_uid: str
-    ) -> Sequence[models.StudyDesignCellVersion]:
+    ) -> list[models.StudyDesignCellVersion]:
         repos = self._repos
         try:
             try:
@@ -295,8 +330,8 @@ class StudyDesignCellService(StudySelectionMixin):
             repos.close()
 
     def handle_batch_operations(
-        self, study_uid: str, operations: Sequence[models.StudyDesignCellBatchInput]
-    ) -> Sequence[models.StudyDesignCellBatchOutput]:
+        self, study_uid: str, operations: list[models.StudyDesignCellBatchInput]
+    ) -> list[models.StudyDesignCellBatchOutput]:
         results = []
         for operation in operations:
             result = {}

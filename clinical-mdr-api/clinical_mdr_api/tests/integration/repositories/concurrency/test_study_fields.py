@@ -68,7 +68,7 @@ class StudyFieldsConcurrencyTest(unittest.TestCase):
         inject_and_clear_db("concurrency.studyfields")
         inject_base_data()
 
-    def setUp_base_graph_for_studies(self):
+    def set_up_base_graph_for_studies(self):
         db.cypher_query("MATCH (n) DETACH DELETE n")
         db.cypher_query(STARTUP_STUDY_FIELD_CYPHER)
         db.cypher_query(STARTUP_CT_TERM_ATTRIBUTES_CYPHER)
@@ -163,7 +163,7 @@ class StudyFieldsConcurrencyTest(unittest.TestCase):
         The intended functionality is that adding study fields does not need concurrency checks,
         we confirm no shared locks are grabbed.
         """
-        self.setUp_base_graph_for_studies()
+        self.set_up_base_graph_for_studies()
         with self.assertRaises(AssertionError) as message:
             OptimisticLockingValidator().assert_optimistic_locking_ensures_execution_order(
                 main_operation_before=self.add_study_field_without_save,

@@ -1,6 +1,6 @@
 """Application main file."""
 import logging
-from os import environ
+from typing import Any
 
 from fastapi import Depends, FastAPI, Request, Security, status
 from fastapi.encoders import jsonable_encoder
@@ -15,17 +15,22 @@ from starlette.middleware import Middleware
 from starlette_context.middleware import RawContextMiddleware
 
 from clinical_mdr_api import config, exceptions, routers
+from clinical_mdr_api.config import (
+    ALLOW_CREDENTIALS,
+    ALLOW_HEADERS,
+    ALLOW_METHODS,
+    ALLOW_ORIGIN_REGEX,
+)
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.oauth.config import OAUTH_ENABLED, SWAGGER_UI_INIT_OAUTH
 from clinical_mdr_api.oauth.dependencies import (
     get_authenticated_user_info,
     validate_token,
 )
+from clinical_mdr_api.oauth.discovery import reconfigure_with_openid_discovery
 from clinical_mdr_api.telemetry.traceback_middleware import ExceptionTracebackMiddleware
 from clinical_mdr_api.telemetry.tracing_middleware import TracingMiddleware
-from clinical_mdr_api.utils import get_api_version
-
-ALLOW_ORIGIN_REGEX = environ.get("ALLOW_ORIGIN_REGEX")
+from clinical_mdr_api.utils.api_version import get_api_version
 
 log = logging.getLogger(__name__)
 
@@ -61,16 +66,13 @@ if not config.TRACING_DISABLED:
     )
 
 
-# CORS setup
-# FIXME: this is only valid for local development, adjust
-# this for production env.
 middlewares.append(
     Middleware(
         CORSMiddleware,
         allow_origin_regex=ALLOW_ORIGIN_REGEX,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_credentials=ALLOW_CREDENTIALS,
+        allow_methods=ALLOW_METHODS,
+        allow_headers=ALLOW_HEADERS,
         expose_headers=["traceresponse"],
     )
 )
@@ -89,6 +91,7 @@ app = FastAPI(
     swagger_ui_init_oauth=SWAGGER_UI_INIT_OAUTH,
     title=config.settings.app_name,
     version=get_api_version(),
+    swagger_ui_parameters={"docExpansion": "none"},
     description="""
 ## NOTICE
 
@@ -111,7 +114,7 @@ This component contains software licensed under different licenses when compiled
 ## Authentication
 
 Supports OAuth2 [Authorization Code Flow](https://datatracker.ietf.org/doc/html/rfc6749#section-4.1),
-at paths described in the OpenID Connect Discovery metadata document (whose URL is defined by the `OIDC_METADATA_URL` environment variable).
+at paths described in the OpenID Connect Discovery metadata document (whose URL is defined by the `OAUTH_METADATA_URL` environment variable).
 
 Microsoft Identity Platform documentation can be read 
 ([here](https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-oauth2-auth-code-flow)).
@@ -128,6 +131,12 @@ allows any request to specify any user id value. If the `X-Test-User-Id` header 
 System information is provided by a separate [System Information](../system/docs) sub-app which does not require authentication.
 """,
 )
+
+
+@app.on_event("startup")
+async def openid_discovery_on_startup():
+    if OAUTH_ENABLED:
+        await reconfigure_with_openid_discovery()
 
 
 @app.exception_handler(exceptions.MDRApiBaseException)
@@ -319,11 +328,6 @@ app.include_router(
     routers.activity_item_classes_router,
     prefix="/activity-item-classes",
     tags=["Activity Item Classes"],
-)
-app.include_router(
-    routers.activity_items_router,
-    prefix="/activity-items",
-    tags=["Activity Items"],
 )
 app.include_router(routers.compounds_router, prefix="/concepts", tags=["Compounds"])
 app.include_router(
@@ -540,9 +544,9 @@ def custom_openapi():
             methods = [method.lower() for method in getattr(route, "methods")]
 
             for method in methods:
-                endpoint_security: list = openapi_schema["paths"][path][method].get(
-                    "security", []
-                )
+                endpoint_security: list[Any] = openapi_schema["paths"][path][
+                    method
+                ].get("security", [])
                 endpoint_security.append({"BearerJwtAuth": []})
                 openapi_schema["paths"][path][method]["security"] = endpoint_security
 

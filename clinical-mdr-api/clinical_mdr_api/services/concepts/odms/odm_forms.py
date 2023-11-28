@@ -22,7 +22,6 @@ from clinical_mdr_api.models.concepts.odms.odm_form import (
     OdmFormPostInput,
     OdmFormVersion,
 )
-from clinical_mdr_api.models.utils import strtobool
 from clinical_mdr_api.services._utils import (
     get_input_or_new_value,
     normalize_string,
@@ -34,6 +33,7 @@ from clinical_mdr_api.services.concepts.odms.odm_descriptions import (
 from clinical_mdr_api.services.concepts.odms.odm_generic_service import (
     OdmGenericService,
 )
+from clinical_mdr_api.utils import strtobool
 
 
 class OdmFormService(OdmGenericService[OdmFormAR]):

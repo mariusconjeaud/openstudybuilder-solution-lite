@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable, Self, Sequence
+from typing import Callable, Self
 
 from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains.libraries.object import (
@@ -20,7 +20,7 @@ class CriteriaTemplateVO(ParametrizedTemplateVO):
         template_uid: str,
         template_sequence_id: str,
         guidance_text: str,
-        parameter_terms: Sequence[ParameterTermEntryVO],
+        parameter_terms: list[ParameterTermEntryVO],
         library_name: str,
     ) -> Self:
         """
@@ -43,7 +43,7 @@ class CriteriaTemplateVO(ParametrizedTemplateVO):
         *,
         template_uid: str,
         template_sequence_id: str,
-        parameter_terms: Sequence[ParameterTermEntryVO],
+        parameter_terms: list[ParameterTermEntryVO],
         library_name: str,
         get_final_template_vo_by_template_uid_callback: Callable[
             [str], TemplateVO | None
@@ -58,7 +58,7 @@ class CriteriaTemplateVO(ParametrizedTemplateVO):
 
         if template is None:
             raise exceptions.ValidationException(
-                "The template with uid '{template_uid}' was not found. Make sure that there is a latest 'Final' version."
+                f"The template with uid '{template_uid}' was not found. Make sure that there is a latest 'Final' version."
             )
 
         return cls(

@@ -22,12 +22,17 @@ from clinical_mdr_api.tests.integration.utils.api import (
     inject_and_clear_db,
     inject_base_data,
 )
+from clinical_mdr_api.tests.integration.utils.method_library import (
+    create_codelist,
+    create_ct_term,
+    get_catalogue_name_library_name,
+    input_metadata_in_study,
+)
 from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 
 log = logging.getLogger(__name__)
 
 # Global variables shared between fixtures and tests
-studies_all: list[Study]
 study: Study
 
 day_unit_definition: UnitDefinitionModel
@@ -62,6 +67,94 @@ def test_data():
     yield
 
     drop_db(db_name)
+
+
+def test_get_study_by_uid(api_client):
+    response = api_client.get(
+        f"/studies/{study.uid}",
+    )
+    assert response.status_code == 200
+    res = response.json()
+    assert res["uid"] == study.uid
+    assert res["current_metadata"]["identification_metadata"] is not None
+    assert res["current_metadata"]["version_metadata"] is not None
+    assert res["current_metadata"].get("high_level_study_design") is None
+    assert res["current_metadata"].get("study_population") is None
+    assert res["current_metadata"].get("study_intervention") is None
+    assert res["current_metadata"].get("study_description") is None
+
+    response = api_client.get(
+        f"/studies/{study.uid}",
+        params={
+            "include_sections": ["high_level_study_design", "study_intervention"],
+            "exclude_sections": ["identification_metadata"],
+        },
+    )
+    assert response.status_code == 200
+    res = response.json()
+    assert res["uid"] == study.uid
+    assert res["current_metadata"].get("identification_metadata") is None
+    assert res["current_metadata"]["version_metadata"] is not None
+    assert res["current_metadata"].get("high_level_study_design") is not None
+    assert res["current_metadata"].get("study_population") is None
+    assert res["current_metadata"].get("study_intervention") is not None
+    assert res["current_metadata"].get("study_description") is None
+
+    response = api_client.get(
+        f"/studies/{study.uid}",
+        params={
+            "include_sections": ["not existing section"],
+            "exclude_sections": ["not existing section"],
+        },
+    )
+    assert response.status_code == 422
+
+
+def test_get_study_fields_audit_trail(api_client):
+    created_study = TestUtils.create_study()
+
+    response = api_client.patch(
+        f"/studies/{created_study.uid}",
+        json={"current_metadata": {"study_description": {"study_title": "new title"}}},
+    )
+    assert response.status_code == 200
+
+    # Study-fields audit trail for all sections
+    response = api_client.get(
+        f"/studies/{created_study.uid}/fields-audit-trail",
+    )
+    assert response.status_code == 200
+    res = response.json()
+    for audit_trail_item in res:
+        actions = audit_trail_item["actions"]
+        for action in actions:
+            assert action["section"] in [
+                "study_description",
+                "Unknown",
+                "identification_metadata",
+            ]
+
+    # Study-fields audit trail for all sections without identification_metadata
+    response = api_client.get(
+        f"/studies/{created_study.uid}/fields-audit-trail",
+        params={"exclude_sections": ["identification_metadata"]},
+    )
+    assert response.status_code == 200
+    res = response.json()
+    for audit_trail_item in res:
+        actions = audit_trail_item["actions"]
+        for action in actions:
+            # we have filtered out the identification_metadata entries, so we should only have
+            # study_description entry for study_title patch and Unknown section for preferred_time_unit that is not
+            # included in any Study sections
+            assert action["section"] in ["study_description", "Unknown"]
+
+    # Study-fields audit trail with not existing section sent
+    response = api_client.get(
+        f"/studies/{created_study.uid}/fields-audit-trail",
+        params={"exclude_sections": ["not existing section"]},
+    )
+    assert response.status_code == 422
 
 
 def test_study_delete_successful(api_client):
@@ -141,7 +234,8 @@ def test_get_snapshot_history(api_client):
 
     # Lock
     response = api_client.post(
-        f"/studies/{study_with_history.uid}/lock", json={"change_description": "Lock 1"}
+        f"/studies/{study_with_history.uid}/locks",
+        json={"change_description": "Lock 1"},
     )
     assert response.status_code == 201
 
@@ -165,8 +259,8 @@ def test_get_snapshot_history(api_client):
     )
 
     # Unlock
-    response = api_client.post(f"/studies/{study_with_history.uid}/unlock")
-    assert response.status_code == 201
+    response = api_client.delete(f"/studies/{study_with_history.uid}/locks")
+    assert response.status_code == 200
 
     # snapshot history after unlock
     response = api_client.get(f"/studies/{study_with_history.uid}/snapshot-history")
@@ -232,7 +326,8 @@ def test_get_snapshot_history(api_client):
 
     # Lock
     response = api_client.post(
-        f"/studies/{study_with_history.uid}/lock", json={"change_description": "Lock 2"}
+        f"/studies/{study_with_history.uid}/locks",
+        json={"change_description": "Lock 2"},
     )
     assert response.status_code == 201
 
@@ -315,3 +410,220 @@ def test_edit_time_units(api_client):
 )
 def test_get_studies_csv_xml_excel(api_client, export_format):
     TestUtils.verify_exported_data_format(api_client, export_format, "/studies")
+
+
+def test_get_specific_version(api_client):
+    study = TestUtils.create_study()
+
+    title_1 = "new title"
+    title_11 = "title after 1st lock."
+    title_12 = "title after 1st release."
+    title_2 = "title after 2nd release."
+    title_draft = "title after 2nd lock."
+
+    # update study title to be able to lock it
+    response = api_client.patch(
+        f"/studies/{study.uid}",
+        json={"current_metadata": {"study_description": {"study_title": title_1}}},
+    )
+    assert response.status_code == 200
+
+    # Lock
+    response = api_client.post(
+        f"/studies/{study.uid}/locks", json={"change_description": "Lock 1"}
+    )
+    assert response.status_code == 201
+
+    # Unlock
+    response = api_client.delete(f"/studies/{study.uid}/locks")
+    assert response.status_code == 200
+
+    # update study title
+    response = api_client.patch(
+        f"/studies/{study.uid}",
+        json={"current_metadata": {"study_description": {"study_title": title_11}}},
+    )
+    assert response.status_code == 200
+
+    # Release
+    response = api_client.post(
+        f"/studies/{study.uid}/release",
+        json={"change_description": "Explicit release"},
+    )
+    assert response.status_code == 201
+
+    # update study title
+    response = api_client.patch(
+        f"/studies/{study.uid}",
+        json={"current_metadata": {"study_description": {"study_title": title_12}}},
+    )
+    assert response.status_code == 200
+
+    # 2nd Release
+    response = api_client.post(
+        f"/studies/{study.uid}/release",
+        json={"change_description": "Explicit second release"},
+    )
+    assert response.status_code == 201
+
+    # update study title
+    response = api_client.patch(
+        f"/studies/{study.uid}",
+        json={"current_metadata": {"study_description": {"study_title": title_2}}},
+    )
+    assert response.status_code == 200
+
+    # Lock
+    response = api_client.post(
+        f"/studies/{study.uid}/locks", json={"change_description": "Lock 2"}
+    )
+    assert response.status_code == 201
+
+    # Unlock
+    response = api_client.delete(f"/studies/{study.uid}/locks")
+    assert response.status_code == 200
+
+    # update study title
+    response = api_client.patch(
+        f"/studies/{study.uid}",
+        json={"current_metadata": {"study_description": {"study_title": title_draft}}},
+    )
+    assert response.status_code == 200
+
+    # check study title in different versions
+    response = api_client.get(
+        f"/studies/{study.uid}",
+        params={"include_sections": ["study_description"], "study_value_version": "1"},
+    )
+    res_title = response.json()["current_metadata"]["study_description"]["study_title"]
+    assert res_title == title_1
+    response = api_client.get(
+        f"/studies/{study.uid}",
+        params={
+            "include_sections": ["study_description"],
+            "study_value_version": "1.1",
+        },
+    )
+    res_title = response.json()["current_metadata"]["study_description"]["study_title"]
+    assert res_title == title_11
+    response = api_client.get(
+        f"/studies/{study.uid}",
+        params={
+            "include_sections": ["study_description"],
+            "study_value_version": "1.2",
+        },
+    )
+    res_title = response.json()["current_metadata"]["study_description"]["study_title"]
+    assert res_title == title_12
+    response = api_client.get(
+        f"/studies/{study.uid}",
+        params={"include_sections": ["study_description"], "study_value_version": "2"},
+    )
+    res_title = response.json()["current_metadata"]["study_description"]["study_title"]
+    assert res_title == title_2
+    response = api_client.get(
+        f"/studies/{study.uid}",
+        params={"include_sections": ["study_description"]},
+    )
+    res_title = response.json()["current_metadata"]["study_description"]["study_title"]
+    assert res_title == title_draft
+
+
+def test_get_protocol_title_for_specific_version(api_client):
+    study = TestUtils.create_study()
+    TestUtils.create_library(name="UCUM", is_editable=True)
+    codelist = TestUtils.create_ct_codelist()
+    TestUtils.create_study_ct_data_map(codelist_uid=codelist.codelist_uid)
+    compound = TestUtils.create_compound(name="name-AAA", approve=True)
+    compound_alias = TestUtils.create_compound_alias(
+        name="compAlias-AAA", compound_uid=compound.uid, approve=True
+    )
+    compound2 = TestUtils.create_compound(name="name-BBB", approve=True)
+    compound_alias2 = TestUtils.create_compound_alias(
+        name="compAlias-BBB", compound_uid=compound2.uid, approve=True
+    )
+    catalogue_name, library_name = get_catalogue_name_library_name(use_test_utils=True)
+    type_of_trt_codelist = create_codelist(
+        name="Type of Treatment",
+        uid="CTCodelist_00009",
+        catalogue=catalogue_name,
+        library=library_name,
+    )
+    type_of_treatment = create_ct_term(
+        codelist=type_of_trt_codelist.codelist_uid,
+        name="Investigational Product",
+        uid="type_of_treatment_00001",
+        order=1,
+        catalogue_name=catalogue_name,
+        library_name=library_name,
+    )
+
+    # add some metadata to study
+    input_metadata_in_study(study.uid)
+
+    # add a study compound
+    response = api_client.post(
+        f"/studies/{study.uid}/study-compounds",
+        json={
+            "compound_alias_uid": compound_alias.uid,
+            "type_of_treatment_uid": type_of_treatment.uid,
+        },
+    )
+    res = response.json()
+    study_compound_uid = res["study_compound_uid"]
+    assert response.status_code == 201
+
+    # response before locking
+    response = api_client.get(
+        f"/studies/{study.uid}/protocol-title",
+    )
+    assert response.status_code == 200
+    res_old = response.json()
+
+    # Lock
+    response = api_client.post(
+        f"/studies/{study.uid}/locks", json={"change_description": "Lock 1"}
+    )
+    assert response.status_code == 201
+
+    # Unlock
+    response = api_client.delete(f"/studies/{study.uid}/locks")
+    assert response.status_code == 200
+
+    # Update
+    response = api_client.patch(
+        f"/studies/{study.uid}",
+        json={
+            "current_metadata": {
+                "study_description": {
+                    "study_title": "some title, updated",
+                }
+            }
+        },
+    )
+    assert response.status_code == 200
+    response = api_client.patch(
+        f"/studies/{study.uid}",
+        json={
+            "current_metadata": {
+                "identification_metadata": {
+                    "registry_identifiers": {"eudract_id": "eudract_id, updated"}
+                },
+            }
+        },
+    )
+    assert response.status_code == 200
+    response = api_client.patch(
+        f"/studies/{study.uid}/study-compounds/{study_compound_uid}",
+        json={"compound_alias_uid": compound_alias2.uid},
+    )
+    assert response.status_code == 200
+    # check the study compound dosings for version 1 is same as first locked
+    res_new = api_client.get(
+        f"/studies/{study.uid}/protocol-title",
+    ).json()
+    res_v1 = api_client.get(
+        f"/studies/{study.uid}/protocol-title?study_value_version=1",
+    ).json()
+    assert res_v1 == res_old
+    assert res_v1 != res_new

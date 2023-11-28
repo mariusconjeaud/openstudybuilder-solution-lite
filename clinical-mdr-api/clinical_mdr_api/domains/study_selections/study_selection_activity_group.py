@@ -14,12 +14,9 @@ class StudySelectionActivityGroupVO(study_selection_base.StudySelectionBaseVO):
     """
 
     study_selection_uid: str
-    study_activity_subgroup_selection_uid: str
     study_uid: str
     activity_group_uid: str
     activity_group_version: str | None
-    activity_group_order: int | None
-    show_activity_group_in_protocol_flowchart: bool
     # Study selection Versioning
     start_date: datetime.datetime
     user_initials: str | None
@@ -32,13 +29,10 @@ class StudySelectionActivityGroupVO(study_selection_base.StudySelectionBaseVO):
         activity_group_uid: str,
         activity_group_version: str,
         user_initials: str,
-        study_activity_subgroup_selection_uid: str,
-        show_activity_group_in_protocol_flowchart: bool | None = True,
-        activity_group_order: int | None = 0,
         study_selection_uid: str | None = None,
         start_date: datetime.datetime | None = None,
         accepted_version: bool = False,
-        generate_uid_callback: Callable[[], str] = None,
+        generate_uid_callback: Callable[[], str] | None = None,
     ):
         if study_selection_uid is None:
             study_selection_uid = generate_uid_callback()
@@ -50,13 +44,8 @@ class StudySelectionActivityGroupVO(study_selection_base.StudySelectionBaseVO):
             study_uid=normalize_string(study_uid),
             activity_group_uid=normalize_string(activity_group_uid),
             activity_group_version=activity_group_version,
-            activity_group_order=activity_group_order,
-            show_activity_group_in_protocol_flowchart=show_activity_group_in_protocol_flowchart,
             start_date=start_date,
             study_selection_uid=normalize_string(study_selection_uid),
-            study_activity_subgroup_selection_uid=normalize_string(
-                study_activity_subgroup_selection_uid
-            ),
             user_initials=normalize_string(user_initials),
             accepted_version=accepted_version,
         )

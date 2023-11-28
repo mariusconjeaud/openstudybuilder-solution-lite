@@ -1,7 +1,7 @@
 import logging
 import time
 import uuid
-from typing import Any, Mapping, Sequence
+from typing import Any, Mapping
 
 from authlib.integrations.base_client import OAuth2Mixin
 from authlib.jose import JsonWebKey, JWTClaims, Key, KeySet, jwt
@@ -87,7 +87,7 @@ class JWKService(KeySet):
         return keys_dict
 
     def update_keys(
-        self, keys: Sequence[Mapping[str, str | Sequence[str]]]
+        self, keys: list[Mapping[str, str | list[str]]]
     ) -> Mapping[str, Key]:
         keys_dict = {}
 

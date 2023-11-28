@@ -1,6 +1,5 @@
 import datetime
 from dataclasses import dataclass
-from typing import Sequence
 
 from neomodel import db
 
@@ -278,7 +277,9 @@ class StudyCompoundDosingRepository:
             )
         return compound_dosing
 
-    def _get_selection_with_history(self, study_uid: str, selection_uid: str = None):
+    def _get_selection_with_history(
+        self, study_uid: str, selection_uid: str | None = None
+    ):
         """
         returns the audit trail for study compound dosing either for a
         specific selection or for all study compound dosings of the study.
@@ -352,7 +353,7 @@ class StudyCompoundDosingRepository:
         return result
 
     def find_selection_history(
-        self, study_uid: str, selection_uid: str = None
+        self, study_uid: str, selection_uid: str | None = None
     ) -> list[dict | None]:
         kwargs = {}
         if selection_uid:
@@ -360,44 +361,50 @@ class StudyCompoundDosingRepository:
         return self._get_selection_with_history(study_uid=study_uid, **kwargs)
 
     def _retrieves_all_data(
-        self, study_uid: str | None = None
-    ) -> Sequence[StudyCompoundDosingVO]:
+        self,
+        study_uid: str | None = None,
+        study_value_version: str | None = None,
+    ) -> tuple[StudyCompoundDosingVO]:
         query = ""
         query_parameters = {}
         if study_uid:
-            query = "MATCH (sr:StudyRoot {uid: $uid})-[l:LATEST]->(sv:StudyValue)-[:HAS_STUDY_COMPOUND_DOSING]->(scd:StudyCompoundDosing)"
-            query_parameters["uid"] = study_uid
+            if study_value_version:
+                query = "MATCH (sr:StudyRoot {uid: $uid})-[l:HAS_VERSION {status:'RELEASED', version: $version}]->(sv:StudyValue)"
+                query_parameters["uid"] = study_uid
+                query_parameters["version"] = study_value_version
+            else:
+                query = "MATCH (sr:StudyRoot {uid: $uid})-[l:LATEST]->(sv:StudyValue)"
+                query_parameters["uid"] = study_uid
         else:
-            query = "MATCH (sr:StudyRoot)-[l:LATEST]->(sv:StudyValue)-[:HAS_STUDY_COMPOUND_DOSING]->(scd:StudyCompoundDosing)"
+            query = "MATCH (sr:StudyRoot)-[l:LATEST]->(sv:StudyValue)"
 
         query += """
+        -[:HAS_STUDY_COMPOUND_DOSING]->(scd:StudyCompoundDosing)
         OPTIONAL MATCH (scd)<-[:STUDY_COMPOUND_HAS_COMPOUND_DOSING]-(sc)-[:HAS_SELECTED_COMPOUND]->(:CompoundAliasValue)<-[:LATEST]-(car:CompoundAliasRoot)
         OPTIONAL MATCH (scd)<-[:STUDY_COMPOUND_HAS_COMPOUND_DOSING]-(sc)-[:HAS_SELECTED_COMPOUND]->(:CompoundAliasValue)-[:IS_COMPOUND]->(cr:CompoundRoot)
-        OPTIONAL MATCH (scd)<-[:STUDY_ELEMENT_HAS_COMPOUND_DOSING]-(se)
+        OPTIONAL MATCH (scd)<-[:STUDY_ELEMENT_HAS_COMPOUND_DOSING]-(se)--(sv)
+        OPTIONAL MATCH (scd)<-[:STUDY_COMPOUND_HAS_COMPOUND_DOSING]-(sc)--(sv)
         WITH DISTINCT sr, sv, scd, sc, se, car, cr
+        OPTIONAL MATCH (scd)-[:HAS_DOSE_VALUE]->(dvr:NumericValueWithUnitRoot)
+        OPTIONAL MATCH (scd)-[:HAS_DOSE_FREQUENCY]->(df:CTTermRoot)
+
+        MATCH (sc)<-[:AFTER]-(sa:StudyAction)
+
+        WITH sr, scd, sc, se, car, cr, dvr, df, sa
+        RETURN
+            sr.uid AS study_uid,
+            scd.uid AS study_compound_dosing_uid,
+            sc.uid AS study_compound_uid,
+            se.uid AS study_element_uid,
+            scd.order AS order,
+            cr.uid AS compound_uid,
+            car.uid AS compound_alias_uid,
+            dvr.uid AS dose_value_uid,
+            df.uid AS dose_frequency_uid,
+            sa.date AS start_date,
+            sa.user_initials AS user_initials
+            ORDER BY order
         """
-
-        query += """
-            OPTIONAL MATCH (scd)-[:HAS_DOSE_VALUE]->(dvr:NumericValueWithUnitRoot)
-            OPTIONAL MATCH (scd)-[:HAS_DOSE_FREQUENCY]->(df:CTTermRoot)
-
-            MATCH (sc)<-[:AFTER]-(sa:StudyAction)
-
-            WITH sr, scd, sc, se, car, cr, dvr, df, sa
-            RETURN
-                sr.uid AS study_uid,
-                scd.uid AS study_compound_dosing_uid,
-                sc.uid AS study_compound_uid,
-                se.uid AS study_element_uid,
-                scd.order AS order,
-                cr.uid AS compound_uid,
-                car.uid AS compound_alias_uid,
-                dvr.uid AS dose_value_uid,
-                df.uid AS dose_frequency_uid,
-                sa.date AS start_date,
-                sa.user_initials AS user_initials
-                ORDER BY order
-            """
 
         all_selections = db.cypher_query(query, query_parameters)
         result = []
@@ -418,17 +425,24 @@ class StudyCompoundDosingRepository:
         return tuple(result)
 
     def find_by_study(
-        self, study_uid: str, for_update: bool = False, **filters
+        self,
+        study_uid: str,
+        study_value_version: str | None = None,
+        for_update: bool = False,
+        **filters,
     ) -> StudySelectionCompoundDosingsAR | None:
         """
         Finds all the selected study compounds for a given study
         :param study_uid:
+        :parm study_value_version:
         :param for_update:
         :return:
         """
         if for_update:
             helpers.acquire_write_lock_study_value(study_uid)
-        all_selections = self._retrieves_all_data(study_uid, **filters)
+        all_selections = self._retrieves_all_data(
+            study_uid, study_value_version, **filters
+        )
         selection_aggregate = StudySelectionCompoundDosingsAR.from_repository_values(
             study_uid=study_uid, selection=all_selections
         )
@@ -436,7 +450,7 @@ class StudyCompoundDosingRepository:
             selection_aggregate.repository_closure_data = all_selections
         return selection_aggregate
 
-    def find_all(self) -> Sequence[StudySelectionCompoundDosingsAR]:
+    def find_all(self) -> list[StudySelectionCompoundDosingsAR]:
         """Find all the selected study compound dosings for all studies."""
         all_selections = self._retrieves_all_data()
         # Create a dictionary, with study_uid as key, and list of selections as value

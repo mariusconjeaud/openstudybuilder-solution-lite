@@ -33,11 +33,11 @@ class JWTTokenClaims(BaseModel):
 
     @validator("aud", "scp", pre=True)
     # pylint:disable=no-self-argument
-    def split_str(cls, v):
+    def split_str(cls, elm):
         """Splits claim space-separated-string into a list of str elements"""
-        if isinstance(v, str):
-            return v.split()
-        return v
+        if isinstance(elm, str):
+            return elm.split()
+        return elm
 
 
 class AccessTokenClaims(JWTTokenClaims):

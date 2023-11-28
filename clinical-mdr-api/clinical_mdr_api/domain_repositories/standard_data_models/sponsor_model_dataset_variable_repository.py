@@ -18,6 +18,9 @@ from clinical_mdr_api.domain_repositories.models.standard_data_model import (
 from clinical_mdr_api.domain_repositories.neomodel_ext_item_repository import (
     NeomodelExtBaseRepository,
 )
+from clinical_mdr_api.domain_repositories.standard_data_models.utils import (
+    get_sponsor_model_info_from_dataset,
+)
 from clinical_mdr_api.domains.standard_data_models.sponsor_model_dataset_variable import (
     SponsorModelDatasetVariableAR,
     SponsorModelDatasetVariableVO,
@@ -38,22 +41,9 @@ class SponsorModelDatasetVariableRepository(
     return_model = SponsorModelDatasetVariable
 
     def get_neomodel_extension_query(self) -> CustomNodeSet:
-        return (
-            DatasetVariable.nodes.fetch_relations(
-                "has_sponsor_model_instance__has_variable",
-                "has_dataset_variable__has_library",
-            )
-            # .fetch_optional_relations(
-            #     "has_latest_sponsor_model_value__has_activity_item_class"
-            # )
-            # .fetch_optional_single_relation_of_type(
-            #     {
-            #         "has_sponsor_model_version": (
-            #             "latest_version",
-            #             LATEST_VERSION_ORDER_BY,
-            #         ),
-            #     }
-            # )
+        return DatasetVariable.nodes.fetch_relations(
+            "has_sponsor_model_instance__has_variable",
+            "has_dataset_variable__has_library",
         )
 
     def _has_data_changed(
@@ -192,22 +182,39 @@ class SponsorModelDatasetVariableRepository(
         relationship: VersionRelationship,
         value: SponsorModelDatasetVariableInstance,
     ) -> SponsorModelDatasetVariableAR:
+        # Get parent dataset-related info
         dataset_value: SponsorModelDatasetInstance = value.has_variable.get_or_none()
         dataset_uid = None
+        sponsor_model_name = None
+        sponsor_model_version = None
+        ordinal = None
         if dataset_value is not None:
+            # Get parent dataset uid
             dataset: Dataset = dataset_value.has_sponsor_model_instance.single()
             if dataset is not None:
                 dataset_uid = dataset.uid
+
+            # Get order in parent class
+            dataset_rel = value.has_variable.relationship(dataset_value)
+            if dataset_rel is not None:
+                ordinal = dataset_rel.ordinal
+
+            # Get sponsor model-related info
+            (
+                sponsor_model_name,
+                sponsor_model_version,
+                _,
+            ) = get_sponsor_model_info_from_dataset(dataset_value, return_ordinal=False)
         return SponsorModelDatasetVariableAR.from_repository_values(
             variable_uid=root.uid,
             sponsor_model_dataset_variable_vo=SponsorModelDatasetVariableVO.from_repository_values(
                 dataset_uid=dataset_uid,
                 variable_uid=root.uid,
-                sponsor_model_name=None,
-                sponsor_model_version_number=None,
+                sponsor_model_name=sponsor_model_name,
+                sponsor_model_version_number=sponsor_model_version,
                 is_basic_std=value.is_basic_std,
                 label=value.label,
-                order=value.order,
+                order=ordinal,
                 variable_type=value.variable_type,
                 length=value.length,
                 display_format=value.display_format,

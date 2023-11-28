@@ -1,5 +1,3 @@
-from typing import Sequence
-
 from neomodel import db
 
 from clinical_mdr_api.domains.listings.utils import AdamReport
@@ -27,8 +25,11 @@ class ADAMListingsService:
     def list_mdvisit(
         self,
         study_uid: str,
-    ) -> Sequence[StudyVisitAdamListing]:
-        data = self._query_service.get_mdvisit(study_uid=study_uid)
+        study_value_version: str | None = None,
+    ) -> list[StudyVisitAdamListing]:
+        data = self._query_service.get_mdvisit(
+            study_uid=study_uid, study_value_version=study_value_version
+        )
         result = list(map(StudyVisitAdamListing.from_query, data))
         return result
 
@@ -36,8 +37,11 @@ class ADAMListingsService:
     def list_mdendpnt(
         self,
         study_uid: str,
-    ) -> Sequence[StudyEndpntAdamListing]:
-        data = self._query_service.get_mdendpnt(study_uid=study_uid)
+        study_value_version: str | None = None,
+    ) -> list[StudyEndpntAdamListing]:
+        data = self._query_service.get_mdendpnt(
+            study_uid=study_uid, study_value_version=study_value_version
+        )
         result = list(map(StudyEndpntAdamListing.from_query, data))
         return result
 
@@ -51,14 +55,19 @@ class ADAMListingsService:
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
+        study_value_version: str | None = None,
     ) -> (
         GenericFilteringReturn[StudyVisitAdamListing]
         | GenericFilteringReturn[StudyEndpntAdamListing]
     ):
         if adam_report == AdamReport.MDVISIT:
-            result = self.list_mdvisit(study_uid)
+            result = self.list_mdvisit(
+                study_uid, study_value_version=study_value_version
+            )
         elif adam_report == AdamReport.MDENDPNT:
-            result = self.list_mdendpnt(study_uid)
+            result = self.list_mdendpnt(
+                study_uid, study_value_version=study_value_version
+            )
 
         filtered_items = service_level_generic_filtering(
             items=result,
@@ -80,11 +89,16 @@ class ADAMListingsService:
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
+        study_value_version: str | None = None,
     ):
         if adam_report == AdamReport.MDVISIT:
-            result = self.list_mdvisit(study_uid)
+            result = self.list_mdvisit(
+                study_uid, study_value_version=study_value_version
+            )
         elif adam_report == AdamReport.MDENDPNT:
-            result = self.list_mdendpnt(study_uid)
+            result = self.list_mdendpnt(
+                study_uid, study_value_version=study_value_version
+            )
 
         filtered_items = service_level_generic_header_filtering(
             items=result,

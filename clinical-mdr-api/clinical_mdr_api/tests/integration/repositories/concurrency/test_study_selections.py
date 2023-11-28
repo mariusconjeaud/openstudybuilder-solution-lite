@@ -1,5 +1,4 @@
 import unittest
-from typing import Sequence
 
 from neomodel import db
 
@@ -80,7 +79,7 @@ class StudySelectionsConcurrencyTests(unittest.TestCase):
     library_name = "Sponsor"
     user_initials = "TEST"
     template_name = "Example Template"
-    parameter_terms: Sequence[ParameterTermEntryVO] = []
+    parameter_terms: list[ParameterTermEntryVO] = []
     study_title_repository: StudyTitleRepository
     studies_repository: StudyDefinitionRepository
     ct_term_attributes_repository: CTTermAttributesRepository
@@ -105,7 +104,7 @@ class StudySelectionsConcurrencyTests(unittest.TestCase):
         inject_and_clear_db("concurrency.studyselections")
         inject_base_data()
 
-    def setUp_base_graph_for_studies(self):
+    def set_up_base_graph_for_studies(self):
         db.cypher_query("MATCH (n) DETACH DELETE n")
         db.cypher_query(STARTUP_STUDY_FIELD_CYPHER)
         db.cypher_query(STARTUP_CT_TERM_ATTRIBUTES_CYPHER)
@@ -240,7 +239,7 @@ class StudySelectionsConcurrencyTests(unittest.TestCase):
             ct_term_name_ar.approve(author="TODO Initials")
             self.ct_term_names_repository.save(ct_term_name_ar)
 
-    def setUp_base_graph_for_objectives_without_clearing_graph(self):
+    def set_up_base_graph_for_objectives_without_clearing_graph(self):
         self.template_uid = "ObjectiveTemplate_000002"
         self.object_uid = "Objective_000001"
         self.template_repository = self._repos.objective_template_repository
@@ -288,8 +287,8 @@ class StudySelectionsConcurrencyTests(unittest.TestCase):
         self.object_repository.save(self.object_ar)
 
     def test_study_selection_create_cancelled_on_concurrent_study_lock(self):
-        self.setUp_base_graph_for_studies()
-        self.setUp_base_graph_for_objectives_without_clearing_graph()
+        self.set_up_base_graph_for_studies()
+        self.set_up_base_graph_for_objectives_without_clearing_graph()
 
         with self.assertRaises(VersioningException) as message:
             OptimisticLockingValidator().assert_optimistic_locking_ensures_execution_order(
@@ -303,8 +302,8 @@ class StudySelectionsConcurrencyTests(unittest.TestCase):
         )
 
     def test_study_selection_reorder_cancelled_on_concurrent_study_lock(self):
-        self.setUp_base_graph_for_studies()
-        self.setUp_base_graph_for_objectives_without_clearing_graph()
+        self.set_up_base_graph_for_studies()
+        self.set_up_base_graph_for_objectives_without_clearing_graph()
 
         with db.transaction:
             self.create_study_objective_with_save()

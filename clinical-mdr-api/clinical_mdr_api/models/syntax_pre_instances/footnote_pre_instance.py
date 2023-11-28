@@ -24,7 +24,10 @@ from clinical_mdr_api.models.syntax_templates.template_parameter_term import (
     IndexedTemplateParameterTerm,
     MultiTemplateParameterTerm,
 )
-from clinical_mdr_api.models.utils import BaseModel
+from clinical_mdr_api.models.utils import (
+    BaseModel,
+    capitalize_first_letter_if_template_parameter,
+)
 
 
 class FootnotePreInstance(BaseModel):
@@ -72,13 +75,13 @@ class FootnotePreInstance(BaseModel):
         for position, parameter in enumerate(footnote_pre_instance_ar.get_parameters()):
             terms: list[IndexedTemplateParameterTerm] = []
             for index, parameter_term in enumerate(parameter.parameters):
-                pv = IndexedTemplateParameterTerm(
+                indexed_template_parameter_term = IndexedTemplateParameterTerm(
                     index=index + 1,
                     uid=parameter_term.uid,
                     name=parameter_term.value,
                     type=parameter.parameter_name,
                 )
-                terms.append(pv)
+                terms.append(indexed_template_parameter_term)
             conjunction = parameter.conjunction
 
             parameter_terms.append(
@@ -92,8 +95,14 @@ class FootnotePreInstance(BaseModel):
             template_uid=footnote_pre_instance_ar.template_uid,
             template_name=footnote_pre_instance_ar.template_name,
             template_type_uid=None,
-            name=footnote_pre_instance_ar.name,
-            name_plain=footnote_pre_instance_ar.name_plain,
+            name=capitalize_first_letter_if_template_parameter(
+                footnote_pre_instance_ar.name,
+                footnote_pre_instance_ar.template_name_plain,
+            ),
+            name_plain=capitalize_first_letter_if_template_parameter(
+                footnote_pre_instance_ar.name_plain,
+                footnote_pre_instance_ar.template_name_plain,
+            ),
             start_date=footnote_pre_instance_ar.item_metadata.start_date,
             end_date=footnote_pre_instance_ar.item_metadata.end_date,
             status=footnote_pre_instance_ar.item_metadata.status.value,

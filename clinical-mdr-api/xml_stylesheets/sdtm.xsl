@@ -541,6 +541,7 @@
     <div class="row border">
       <div class="col">
         <h3><i aria-hidden="true" class="v-icon notranslate mr-1 mdi mdi-alpha-f-circle theme--light crfForm--text"></i><xsl:value-of select="@Name" /></h3>
+        <span class="oidinfo">[OID=<xsl:value-of select="@OID" />, Version=<xsl:value-of select="@osb:version" />]</span>
         <xsl:choose>
           <xsl:when test="./@osb:instruction != 'None'">
             <div class="alert alert-secondary d-flex" role="alert">

@@ -2,10 +2,10 @@
 //
 //import com.fasterxml.jackson.annotation.JsonRootName;
 //import lombok.Getter;
-//import org.CSDISC.DDF.model.*;
-//import org.CSDISC.DDF.model.Code;
-//import org.CSDISC.DDF.model.Endpoint;
-//import org.CSDISC.DDF.model.Objective;
+//import org.CDISC.DDF.model.*;
+//import org.CDISC.DDF.model.Code;
+//import org.CDISC.DDF.model.Endpoint;
+//import org.CDISC.DDF.model.Objective;
 //import org.openstudybuilder.engine.OpenStudyObjectFactory;
 //import org.openstudybuilder.engine.StudyObjectMapper;
 //import org.openstudybuilder.model.*;
@@ -36,11 +36,11 @@
 //        private UUID uuid;
 //        private String studyTitle;
 //        private String studyVersion;
-//        private org.CSDISC.DDF.model.Code studyType;
-//        private org.CSDISC.DDF.model.Code studyPhase;
-//        private List<org.CSDISC.DDF.model.StudyIdentifier> studyIdentifiers;
+//        private org.CDISC.DDF.model.Code studyType;
+//        private org.CDISC.DDF.model.Code studyPhase;
+//        private List<org.CDISC.DDF.model.StudyIdentifier> studyIdentifiers;
 //        private List<AcctStudyProtocolVersion> studyProtocolVersions;
-//        private List<org.CSDISC.DDF.model.StudyDesign> studyDesigns;
+//        private List<org.CDISC.DDF.model.StudyDesign> studyDesigns;
 //    }
 //
 //
@@ -60,12 +60,12 @@
 //        String openStudyUid = openStudy.getUid();
 //        studyDef.studyVersion = "1";
 //
-//        org.CSDISC.DDF.model.StudyIdentifier studyIdentifier = new StudyIdentifier(UUID.randomUUID());
+//        org.CDISC.DDF.model.StudyIdentifier studyIdentifier = new StudyIdentifier(UUID.randomUUID());
 //        CurrentMetadata studyMd = openStudy.getCurrentMetadata();
 //
-//        studyDef.studyType = new org.CSDISC.DDF.model.Code(UUID.randomUUID());
+//        studyDef.studyType = new org.CDISC.DDF.model.Code(UUID.randomUUID());
 //        // Study Phase
-//        studyDef.studyPhase = new org.CSDISC.DDF.model.Code(UUID.randomUUID());
+//        studyDef.studyPhase = new org.CDISC.DDF.model.Code(UUID.randomUUID());
 //
 //        if (studyMd.getHighLevelStudyDesign() != null) {
 //            studyDef.studyType.setCode(studyMd.getHighLevelStudyDesign().getStudyTypeCode().getName());
@@ -99,7 +99,7 @@
 //        List<StudyCell> currentStudyCells = new ArrayList<>();
 //        List<StudyDesignCell> openStudyDesignCells = openStudyObjectFactory.getDesignMatrixCells(openStudyUid);
 //        for (StudyDesignCell openStudyDesignCell: openStudyDesignCells) {
-//            org.CSDISC.DDF.model.StudyCell studyCell = new StudyCell(null);
+//            org.CDISC.DDF.model.StudyCell studyCell = new StudyCell(null);
 //            // Cell Arm Info
 //            // TODO - This armID is being stubbed due to api always returning null. To be fixed
 //            String currentArmId = openStudyDesignCell.getStudyArmUid() == null ? "StudyArm_000001" :
@@ -142,7 +142,7 @@
 //
 //        // Study Design Population - 1 item list
 //        Population openStudyPopulation = openStudy.getCurrentMetadata().getStudyPopulation();
-//        org.CSDISC.DDF.model.Population population = studyObjectMapper.map(openStudyPopulation);
+//        org.CDISC.DDF.model.Population population = studyObjectMapper.map(openStudyPopulation);
 //        currentStudyDesign.setStudyPopulations(List.of(population));
 //
 //        // Objectives & Endpoints

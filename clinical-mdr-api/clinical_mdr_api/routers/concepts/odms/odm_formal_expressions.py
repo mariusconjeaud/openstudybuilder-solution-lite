@@ -1,3 +1,5 @@
+from typing import Any
+
 from fastapi import APIRouter, Body, Path, Query
 from pydantic.types import Json
 
@@ -80,7 +82,7 @@ def get_all_odm_formal_expressions(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list,
+    response_model=list[Any],
     status_code=200,
     responses={
         404: {

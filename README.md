@@ -76,6 +76,16 @@ memory=6GB
 See [Advanced settings configuration in WSL](https://docs.microsoft.com/en-us/windows/wsl/wsl-config)
 for all available options.
 
+Also on Windows installations where GIT for Windows is used to clone the repository, errors with correct line endings in the WSL engine can occure.  
+
+to avoid this use either of these commands before the cloning of repository.
+
+`git config --global core.autocrlf input`
+
+`git config --global core.autocrlf false`
+
+See [Configuring Git to handle line endings](https://docs.github.com/en/get-started/getting-started-with-git/configuring-git-to-handle-line-endings?platform=windows) and [Resolving Git line ending issues in Docker containers](https://gist.github.com/jonlabelle/70a87e6871a1138ac3031f5e8e39f294)
+for more information.
 
 ## Platform architecture notes
 

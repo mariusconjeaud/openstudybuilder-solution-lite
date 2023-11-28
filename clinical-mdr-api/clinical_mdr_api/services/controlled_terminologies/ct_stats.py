@@ -1,5 +1,3 @@
-from typing import Sequence
-
 from clinical_mdr_api.models.controlled_terminologies.ct_codelist import (
     CTCodelistNameAndAttributes,
 )
@@ -24,14 +22,12 @@ class CTStatsService:
     def _close_all_repos(self) -> None:
         self._repos.close()
 
-    def get_stats(
-        self, latest_codelists=Sequence[CTCodelistNameAndAttributes]
-    ) -> CTStats:
+    def get_stats(self, latest_codelists=list[CTCodelistNameAndAttributes]) -> CTStats:
         # Get change details
         yearly_aggregates = get_package_changes_by_year()
 
-        codelist_change_details: Sequence[CountByTypeByYear] = []
-        term_change_details: Sequence[CountByTypeByYear] = []
+        codelist_change_details: list[CountByTypeByYear] = []
+        term_change_details: list[CountByTypeByYear] = []
         for aggregate in yearly_aggregates:
             codelist_counts_by_type = [
                 CountByType(

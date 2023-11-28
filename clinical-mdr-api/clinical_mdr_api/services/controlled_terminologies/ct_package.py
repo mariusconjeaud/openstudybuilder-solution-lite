@@ -1,5 +1,4 @@
 from datetime import date
-from typing import Sequence
 
 from clinical_mdr_api import exceptions, models
 from clinical_mdr_api.models import (
@@ -26,9 +25,7 @@ class CTPackageService:
     def _close_all_repos(self) -> None:
         self._repos.close()
 
-    def get_all_ct_packages(
-        self, catalogue_name: str | None
-    ) -> Sequence[models.CTPackage]:
+    def get_all_ct_packages(self, catalogue_name: str | None) -> list[models.CTPackage]:
         try:
             if (
                 catalogue_name is not None

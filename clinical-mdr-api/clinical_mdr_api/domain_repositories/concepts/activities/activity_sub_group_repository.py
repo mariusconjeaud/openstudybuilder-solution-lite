@@ -1,5 +1,3 @@
-from typing import Sequence
-
 from clinical_mdr_api.domain_repositories.concepts.concept_generic_repository import (
     ConceptGenericRepository,
 )
@@ -59,7 +57,7 @@ class ActivitySubGroupRepository(ConceptGenericRepository[ActivitySubGroupAR]):
                 status=LibraryItemStatus(input_dict.get("status")),
                 author=input_dict.get("user_initials"),
                 start_date=convert_to_datetime(value=input_dict.get("start_date")),
-                end_date=None,
+                end_date=convert_to_datetime(value=input_dict.get("end_date")),
                 major_version=int(major),
                 minor_version=int(minor),
             ),
@@ -196,13 +194,13 @@ class ActivitySubGroupRepository(ConceptGenericRepository[ActivitySubGroupAR]):
 
     def get_syntax_activity_subgroups(
         self, root_class: type, syntax_uid: str
-    ) -> Sequence[ActivitySubGroupAR] | None:
+    ) -> list[ActivitySubGroupAR] | None:
         """
         This method returns the activity sub groups for the syntax with provided uid
 
         :param root_class: The class of the root node for the syntax
         :param syntax_uid: UID of the syntax
-        :return Sequence[ActivitySubGroupAR]:
+        :return list[ActivitySubGroupAR] | None:
         """
         syntax = root_class.nodes.get(uid=syntax_uid)
         activity_subgroup_nodes = syntax.has_activity_subgroup.all()
@@ -213,3 +211,9 @@ class ActivitySubGroupRepository(ConceptGenericRepository[ActivitySubGroupAR]):
                 groups.append(group)
             return groups
         return None
+
+    def generic_match_clause_all_versions(self):
+        return """
+            MATCH (concept_root:ActivitySubGroupRoot)-[version:HAS_VERSION]->(concept_value:ActivitySubGroupValue)
+                    -[:HAS_GROUP]->(avg:ActivityValidGroup)-[:IN_GROUP]->(agv:ActivityGroupValue)<-[:HAS_VERSION]-(agr:ActivityGroupRoot)
+            """

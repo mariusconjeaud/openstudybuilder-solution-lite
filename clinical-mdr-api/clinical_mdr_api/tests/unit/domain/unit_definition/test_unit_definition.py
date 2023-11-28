@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Sequence
 
 import pytest
 from hypothesis import HealthCheck, assume, given, settings
@@ -136,7 +135,7 @@ def get_mock_dictionary_item(name):
 
 
 @composite
-def unit_definition_values(draw, valid_unit_ct_uid_set: Sequence[str] | None = None):
+def unit_definition_values(draw, valid_unit_ct_uid_set: list[str] | None = None):
     master_unit = draw(booleans())
     conversion_factor_to_master = (
         draw(one_of(none(), floats(allow_nan=False))) if not master_unit else 1.0
@@ -185,7 +184,7 @@ def unit_definition_values(draw, valid_unit_ct_uid_set: Sequence[str] | None = N
 def libraries(
     draw,
     *,
-    valid_library_names_set: Sequence[str] | None = None,
+    valid_library_names_set: list[str] | None = None,
     editable: bool | None = None,
 ):
     return LibraryVO.from_input_values_2(
@@ -204,8 +203,8 @@ def libraries(
 def draft_unit_definitions(
     draw,
     *,
-    valid_unit_ct_uid_set: Sequence[str] | None = None,
-    valid_library_names_set: Sequence[str] | None = None,
+    valid_unit_ct_uid_set: list[str] | None = None,
+    valid_library_names_set: list[str] | None = None,
 ):
     result = UnitDefinitionAR.from_input_values(
         unit_definition_value=draw(
@@ -227,8 +226,8 @@ def draft_unit_definitions(
 def final_unit_definitions(
     draw,
     *,
-    valid_unit_ct_uid_set: Sequence[str] | None = None,
-    valid_library_names_set: Sequence[str] | None = None,
+    valid_unit_ct_uid_set: list[str] | None = None,
+    valid_library_names_set: list[str] | None = None,
 ):
     result: UnitDefinitionAR = draw(
         draft_unit_definitions(
@@ -247,8 +246,8 @@ def final_unit_definitions(
 def retired_unit_definitions(
     draw,
     *,
-    valid_unit_ct_uid_set: Sequence[str] | None = None,
-    valid_library_names_set: Sequence[str] | None = None,
+    valid_unit_ct_uid_set: list[str] | None = None,
+    valid_library_names_set: list[str] | None = None,
 ):
     result: UnitDefinitionAR = draw(
         final_unit_definitions(
@@ -267,8 +266,8 @@ def retired_unit_definitions(
 def unit_definitions(
     draw,
     *,
-    valid_unit_ct_uid_set: Sequence[str] | None = None,
-    valid_library_names_set: Sequence[str] | None = None,
+    valid_unit_ct_uid_set: list[str] | None = None,
+    valid_library_names_set: list[str] | None = None,
 ):
     return draw(
         one_of(
@@ -308,8 +307,8 @@ def unit_definitions(
 )
 def test__unit_definition_value_vo__from_repository__existing_unit_ct_id__success(
     name: str,
-    ct_units: Sequence,
-    unit_subsets: Sequence,
+    ct_units: list,
+    unit_subsets: list,
     convertible_unit: bool,
     display_unit: bool,
     master_unit: bool,
@@ -391,8 +390,8 @@ def test__unit_definition_value_vo__from_repository__existing_unit_ct_id__succes
 )
 def test__unit_definition_value_vo__from_input__existing_unit_ct_id__success(
     name: str,
-    ct_units: Sequence,
-    unit_subsets: Sequence,
+    ct_units: list,
+    unit_subsets: list,
     convertible_unit: bool,
     display_unit: bool,
     master_unit: bool,
@@ -482,8 +481,8 @@ def test__unit_definition_value_vo__from_input__existing_unit_ct_id__success(
 )
 def test__unit_definition_value_vo__from_input__non_existing_unit_ct_id__failure(
     name: str,
-    ct_units: Sequence,
-    unit_subsets: Sequence,
+    ct_units: list,
+    unit_subsets: list,
     convertible_unit: bool,
     display_unit: bool,
     master_unit: bool,

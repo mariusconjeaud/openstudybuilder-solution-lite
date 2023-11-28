@@ -2,7 +2,7 @@ import copy
 import random
 import unittest
 from dataclasses import dataclass, field
-from typing import AbstractSet, Any, Callable, Generic, Sequence, TypeVar, cast
+from typing import AbstractSet, Any, Callable, Generic, TypeVar, cast
 from unittest.mock import patch
 
 from clinical_mdr_api.config import DEFAULT_STUDY_FIELD_CONFIG_FILE
@@ -23,6 +23,7 @@ from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import 
     StudyIdentificationMetadataVO,
     StudyStatus,
 )
+from clinical_mdr_api.exceptions import MDRApiBaseException
 from clinical_mdr_api.models.study_selections.study import StudyPreferredTimeUnit
 from clinical_mdr_api.models.utils import GenericFilteringReturn
 from clinical_mdr_api.repositories._utils import FilterOperator
@@ -42,13 +43,13 @@ class GenericInMemoryDB(Generic[T]):
             return None
         return self._deserialize_aggregate_from_storage(serialized_form_of_aggregate)
 
-    def find_by_filter(self, filter_callback: Callable[[T], bool]) -> Sequence[T]:
+    def find_by_filter(self, filter_callback: Callable[[T], bool]) -> list[T]:
         return [x for x in self.get_all_instances() if filter_callback(x)]
 
     def get_all_ids(self) -> AbstractSet[str]:
         return self._db.keys()
 
-    def get_all_instances(self) -> Sequence[T]:
+    def get_all_instances(self) -> list[T]:
         return [cast(T, self.find_by_id(uid)) for uid in self.get_all_ids()]
 
     def _get_id_for_aggregate(self, aggregate: T) -> str:
@@ -78,7 +79,7 @@ class GenericInMemoryDB(Generic[T]):
 
 
 class TestGenericInMemoryDB(unittest.TestCase):
-    def test__GenericInMemoryDB(self):
+    def test__generic_in_memory_db(self):
         # given
         class StringRepo(GenericInMemoryDB[str]):
             def _get_id_for_aggregate(self, aggregate: str) -> str:
@@ -130,6 +131,12 @@ class StudyDefinitionRepositoryFake(StudyDefinitionRepository):
     def check_if_study_is_locked(self, study_uid: str) -> bool:
         return False
 
+    @staticmethod
+    def check_if_study_uid_and_version_exists(
+        study_uid: str, study_value_version: str | None = None
+    ) -> bool:
+        return True
+
     def get_preferred_time_unit(self, study_uid: str) -> StudyPreferredTimeUnit:
         return NotImplementedError()
 
@@ -156,7 +163,10 @@ class StudyDefinitionRepositoryFake(StudyDefinitionRepository):
         self._simulated_db = _simulated_db
 
     def _retrieve_snapshot_by_uid(
-        self, uid: str, for_update: bool
+        self,
+        uid: str,
+        for_update: bool,
+        study_value_version: str | None = None,
     ) -> tuple[StudyDefinitionSnapshot | None, Any]:
         snapshot: StudyDefinitionSnapshot | None = self._simulated_db.find_by_id(uid)
         additional_closure: Any = None
@@ -169,14 +179,14 @@ class StudyDefinitionRepositoryFake(StudyDefinitionRepository):
         # we do primitive form of optimistic locking (which works only if we assume single threaded processing)
         assert snapshot.uid is not None
         if additional_closure != self._simulated_db.find_by_id(snapshot.uid):
-            raise Exception("Optimistic lock failure")
+            raise MDRApiBaseException("Optimistic lock failure")
         self._simulated_db.save(snapshot)
 
     def _create(self, snapshot: StudyDefinitionSnapshot) -> None:
         # we do primitive uniqueness check on key (works only in single threaded environment)
         assert snapshot.uid is not None
         if self._simulated_db.find_by_id(snapshot.uid):
-            raise Exception("Attempt to create a study with non-unique uid.")
+            raise MDRApiBaseException("Attempt to create a study with non-unique uid.")
         self._simulated_db.save(snapshot)
 
     def _retrieve_all_snapshots(
@@ -212,8 +222,8 @@ class StudyDefinitionRepositoryFake(StudyDefinitionRepository):
 
     def _retrieve_fields_audit_trail(
         self, uid: str
-    ) -> Sequence[StudyFieldAuditTrailEntryAR]:
-        return NotImplementedError("Study fields audit trail is not yet mocked.")
+    ) -> list[StudyFieldAuditTrailEntryAR] | None:
+        raise NotImplementedError("Study fields audit trail is not yet mocked.")
 
 
 def _random_study_number() -> str:
@@ -358,8 +368,8 @@ class TestStudyDefinitionsRepositoryBase(unittest.TestCase):
             for _ in range(0, 100)
         ]
         test_db = StudyDefinitionsDBFake()
-        for s in test_data:
-            test_db.save(s.get_snapshot())
+        for item in test_data:
+            test_db.save(item.get_snapshot())
 
         for uid in test_db.get_all_ids():
             with self.subTest():
@@ -394,8 +404,8 @@ class TestStudyDefinitionsRepositoryBase(unittest.TestCase):
             for _ in range(0, 100)
         ]
         test_db = StudyDefinitionsDBFake()
-        for s in test_data:
-            test_db.save(s.get_snapshot())
+        for item in test_data:
+            test_db.save(item.get_snapshot())
         test_tuples = [(1, 5), (10, 5), (3, 7), (3, 2), (100000, 67)]
         for test_tuple in test_tuples:
             with self.subTest():

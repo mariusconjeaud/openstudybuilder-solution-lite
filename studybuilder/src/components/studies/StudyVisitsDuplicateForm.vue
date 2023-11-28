@@ -75,10 +75,6 @@ export default {
   },
   methods: {
     async submit () {
-      const valid = await this.$refs.observer.validate()
-      if (!valid) {
-        return
-      }
       try {
         this.$refs.form.working = true
         const newVisit = structuredClone(this.studyVisit)
@@ -90,9 +86,13 @@ export default {
           }
           this.$store.dispatch('studyEpochs/addStudyVisit', { studyUid: this.selectedStudy.uid, input: newVisit }).then(resp => {
             this.$store.dispatch('studyEpochs/fetchStudyVisits', this.selectedStudy.uid)
+          }, _err => {
+            this.$refs.form.working = false
           })
           bus.$emit('notification', { msg: this.$t('StudyVisitForm.visit_duplicated') })
           this.close()
+        }, _err => {
+          this.$refs.form.working = false
         })
       } finally {
         this.$refs.form.working = false

@@ -1,5 +1,3 @@
-from typing import Sequence
-
 from neomodel import db
 
 from clinical_mdr_api import exceptions
@@ -48,6 +46,7 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
         return ActivityAR.from_repository_values(
             uid=input_dict.get("uid"),
             concept_vo=ActivityVO.from_repository_values(
+                nci_concept_id=input_dict.get("nci_concept_id"),
                 name=input_dict.get("name"),
                 name_sentence_case=input_dict.get("name_sentence_case"),
                 definition=input_dict.get("definition"),
@@ -63,6 +62,7 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
                 ],
                 request_rationale=input_dict.get("request_rationale"),
                 replaced_by_activity=input_dict.get("replaced_by_activity"),
+                is_data_collected=input_dict.get("is_data_collected"),
             ),
             library=LibraryVO.from_input_values_2(
                 library_name=input_dict.get("library_name"),
@@ -75,7 +75,7 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
                 status=LibraryItemStatus(input_dict.get("status")),
                 author=input_dict.get("user_initials"),
                 start_date=convert_to_datetime(value=input_dict.get("start_date")),
-                end_date=None,
+                end_date=convert_to_datetime(value=input_dict.get("end_date")),
                 major_version=int(major),
                 minor_version=int(minor),
             ),
@@ -107,6 +107,7 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
         return ActivityAR.from_repository_values(
             uid=root.uid,
             concept_vo=ActivityVO.from_repository_values(
+                nci_concept_id=value.nci_concept_id,
                 name=value.name,
                 name_sentence_case=value.name_sentence_case,
                 definition=value.definition,
@@ -124,6 +125,9 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
                 replaced_by_activity=replaced_activity.uid
                 if replaced_activity
                 else None,
+                is_data_collected=value.is_data_collected
+                if value.is_data_collected
+                else False,
             ),
             library=LibraryVO.from_input_values_2(
                 library_name=library.name,
@@ -185,6 +189,7 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
     def _create_new_value_node(self, ar: ActivityAR) -> ActivityValue:
         value_node: ActivityValue = super()._create_new_value_node(ar=ar)
         value_node.request_rationale = ar.concept_vo.request_rationale
+        value_node.is_data_collected = ar.concept_vo.is_data_collected
         value_node.save()
         for activity_grouping in ar.concept_vo.activity_groupings:
             # create ActivityGrouping node
@@ -217,7 +222,10 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
 
     def _has_data_changed(self, ar: ActivityAR, value: ActivityValue) -> bool:
         are_concept_properties_changed = super()._has_data_changed(ar=ar, value=value)
-        are_props_changed = ar.concept_vo.request_rationale != value.request_rationale
+        are_props_changed = (
+            ar.concept_vo.request_rationale != value.request_rationale
+            or ar.concept_vo.is_data_collected != value.is_data_collected
+        )
 
         activity_subgroup_uids = []
         activity_group_uids = []
@@ -249,13 +257,13 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
 
     def get_syntax_activities(
         self, root_class: type, syntax_uid: str
-    ) -> Sequence[ActivityAR] | None:
+    ) -> list[ActivityAR] | None:
         """
         This method returns the activities for the syntax with provided uid
 
         :param root_class: The class of the root node for the syntax
         :param syntax_uid: UID of the syntax
-        :return Sequence[ActivityAR]:
+        :return list[ActivityAR] | None:
         """
         syntax = root_class.nodes.get(uid=syntax_uid)
         activity_nodes = syntax.has_activity.all()
@@ -273,6 +281,7 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
         return """
         WITH *,
             concept_value.request_rationale AS request_rationale,
+            coalesce(concept_value.is_data_collected, False) AS is_data_collected,
             apoc.coll.toSet([(concept_value)-[:HAS_GROUPING]->(:ActivityGrouping)-[:IN_SUBGROUP]->(activity_valid_group:ActivityValidGroup)
             <-[:HAS_GROUP]-(activity_subgroup_value)<-[:HAS_VERSION]-(activity_subgroup_root:ActivitySubGroupRoot)
              | {
@@ -328,11 +337,16 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
             | {
                 activity_instance_library_name: head([(library)-[:CONTAINS_CONCEPT]->
                 (activity_instance_root:ActivityInstanceRoot)-[:HAS_VERSION]->(activity_instance_value) | library.name]),
+                uid: head([(activity_instance_value)<-[:HAS_VERSION]-(activity_instance_root:ActivityInstanceRoot) | activity_instance_root.uid]),
                 name:activity_instance_value.name,
                 name_sentence_case:activity_instance_value.name_sentence_case,
                 abbreviation:activity_instance_value.abbreviation,
                 definition:activity_instance_value.definition,
                 adam_param_code:activity_instance_value.adam_param_code,
+                is_required_for_activity:coalesce(activity_instance_value.is_required_for_activity, false),
+                is_default_selected_for_activity:coalesce(activity_instance_value.is_default_selected_for_activity, false),
+                is_data_sharing:coalesce(activity_instance_value.is_data_sharing, false),
+                is_legacy_usage:coalesce(activity_instance_value.is_legacy_usage, false),
                 topic_code:activity_instance_value.topic_code,
                 activity_instance_class: activity_instance_class_value
             }]) AS activity_instances,
@@ -347,6 +361,7 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
             apoc.coll.sortMaps(activity_instances, '^name') as activity_instances
         RETURN
             hierarchy,
+            activity_root,
             activity_value,
             activity_library_name,
             activity_instances
@@ -363,3 +378,12 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
         for overview_prop, attribute_name in zip(overview, attribute_names):
             overview_dict[attribute_name] = overview_prop
         return overview_dict
+
+    def generic_match_clause_all_versions(self):
+        return """
+            MATCH (concept_root:ActivityRoot)-[version:HAS_VERSION]->(concept_value:ActivityValue)
+                    -[:HAS_GROUPING]->(ag:ActivityGrouping)
+                    -[:IN_SUBGROUP]->(avg:ActivityValidGroup)<-[:HAS_GROUP]-(subgroup_val:ActivitySubGroupValue)<-[:HAS_VERSION]-(subgroup_root:ActivitySubGroupRoot)
+            WITH *
+            MATCH (avg)-[:IN_GROUP]->(group_value:ActivityGroupValue)<-[:HAS_VERSION]-(group_root:ActivityGroupRoot)
+        """

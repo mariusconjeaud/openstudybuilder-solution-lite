@@ -1,5 +1,5 @@
 import abc
-from typing import Sequence, TypeVar
+from typing import TypeVar
 
 from neomodel import core, db
 from pydantic import BaseModel
@@ -108,7 +108,7 @@ class GenericSyntaxTemplateService(GenericSyntaxService[_AggregateRootType], abc
     def _create_template_vo(
         self,
         template: BaseModel,
-        default_parameter_terms: Sequence[ParameterTermEntryVO] | None = None,
+        default_parameter_terms: list[ParameterTermEntryVO] | None = None,
     ) -> tuple[TemplateVO, LibraryVO]:
         # Create TemplateVO
         template_vo = TemplateVO.from_input_values_2(
@@ -130,7 +130,7 @@ class GenericSyntaxTemplateService(GenericSyntaxService[_AggregateRootType], abc
         self,
         uid: str,
         set_number: int,
-        default_parameter_terms: Sequence[MultiTemplateParameterTerm],
+        default_parameter_terms: list[MultiTemplateParameterTerm],
     ) -> BaseModel:
         # Get template AR and use it to parse the default parameter terms
         template = self._find_by_uid_or_raise_not_found(uid, for_update=True)
@@ -152,10 +152,10 @@ class GenericSyntaxTemplateService(GenericSyntaxService[_AggregateRootType], abc
     def _create_default_parameter_entries(
         self,
         template_name: str,
-        default_parameter_terms: Sequence[MultiTemplateParameterTerm] | None,
-    ) -> Sequence[ParameterTermEntryVO]:
+        default_parameter_terms: list[MultiTemplateParameterTerm] | None,
+    ) -> list[ParameterTermEntryVO]:
         """
-        Creates sequence of Parameter Term Entries that is used in aggregate. These contain:
+        Creates list of Parameter Term Entries that is used in aggregate. These contain:
         parameter name, conjunctions, uids, and terms of parameters
         """
         parameter_terms = []
@@ -184,10 +184,10 @@ class GenericSyntaxTemplateService(GenericSyntaxService[_AggregateRootType], abc
             else:
                 # Else, iterate over the provided terms, store them and their type dynamically.
                 for item in parameter.terms:
-                    pv = SimpleParameterTermVO.from_input_values(
+                    simple_parameter_term_vo = SimpleParameterTermVO.from_input_values(
                         value=item.name, uid=item.uid
                     )
-                    uids.append(pv)
+                    uids.append(simple_parameter_term_vo)
                 parameter_name = parameter.terms[0].type
                 conjunction = parameter.conjunction
 

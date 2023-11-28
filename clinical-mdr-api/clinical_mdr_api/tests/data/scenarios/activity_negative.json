@@ -54,7 +54,7 @@
          "method":"POST",
          "request":{
             "name":"name99",
-            "name_sentence_case":"name_sentence_case99",
+            "name_sentence_case":"name99",
             "definition":"definition99",
             "library_name":"Sponsor",
             "activity_groupings":[
@@ -86,7 +86,7 @@
          "method":"POST",
          "request":{
             "name":"name1",
-            "name_sentence_case":"name_sentence_case999",
+            "name_sentence_case":"name1",
             "definition":"definition999",
             "library_name":"Sponsor",
             "activity_groupings":[
@@ -147,6 +147,7 @@
          "method":"PATCH",
          "request":{
             "name":"name1",
+            "name_sentence_case":"name1",
             "change_description":"Test change"
          },
          "url":"/concepts/activities/activities/activity_root2"

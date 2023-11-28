@@ -11,6 +11,7 @@
     :help-items="helpItems"
     :editData="form"
     @change="onTabChange"
+    :extra-step-validation="extraValidation"
     >
     <template v-slot:step.visitType="{ step }">
       <validation-observer :ref="`observer_${step}`">
@@ -470,6 +471,7 @@ export default {
     },
     ...mapGetters({
       selectedStudy: 'studiesGeneral/selectedStudy',
+      selectedStudyVersion: 'studiesGeneral/selectedStudyVersion',
       groups: 'studyEpochs/allowedConfigs'
     }),
     filteredPeriods () {
@@ -561,6 +563,12 @@ export default {
     }
   },
   methods: {
+    extraValidation (step) {
+      if (step === 2 && (!this.studyEpoch || this.studyEpoch === '')) {
+        return false
+      }
+      return true
+    },
     getObserver (step) {
       return this.$refs[`observer_${step}`]
     },
@@ -674,7 +682,10 @@ export default {
       codelists.getByCodelist('epochs').then(resp => {
         this.loading = true
         this.epochsData = resp.data.items
-        epochs.getStudyEpochs(this.selectedStudy.uid).then(resp => {
+        const params = {
+          study_value_version: this.selectedStudyVersion
+        }
+        epochs.getStudyEpochs(this.selectedStudy.uid, params).then(resp => {
           this.periods = resp.data.items
           this.periods.forEach(item => {
             this.epochsData.forEach(epochDef => {
@@ -703,7 +714,11 @@ export default {
       codelists.getByCodelist('epochAllocations').then(resp => {
         this.epochAllocations = resp.data.items
       })
-      epochs.getStudyVisits(this.selectedStudy.uid, { page_size: 0 }).then(resp => {
+      const params = {
+        study_value_version: this.selectedStudyVersion,
+        page_size: 0
+      }
+      epochs.getStudyVisits(this.selectedStudy.uid, { params }).then(resp => {
         this.studyVisits = resp.data.items
       })
     },
@@ -745,7 +760,10 @@ export default {
             color_hash: '#FFFFFF'
           }
           epochs.addStudyEpoch(this.selectedStudy.uid, data).then(resp => {
-            epochs.getStudyEpochs(this.selectedStudy.uid).then(resp => {
+            const params = {
+              study_value_version: this.selectedStudyVersion
+            }
+            epochs.getStudyEpochs(this.selectedStudy.uid, params).then(resp => {
               this.periods = resp.data.items
               this.studyEpoch = this.periods.find(item => item.epoch_name === visitConstants.EPOCH_BASIC).uid
             })
@@ -819,6 +837,7 @@ export default {
       }
     },
     'form.visit_class' (value) {
+      this.studyEpoch = ''
       if (value !== visitConstants.CLASS_SINGLE_VISIT && value !== visitConstants.CLASS_SPECIAL_VISIT) {
         this.setStudyEpochToBasic()
         const contactMode = this.contactModes.find(item => item.sponsor_preferred_name === visitConstants.CONTACT_MODE_VIRTUAL_VISIT)
@@ -834,7 +853,7 @@ export default {
       }
     },
     periods (value) {
-      if (value && value.length && this.form.visit_class !== visitConstants.CLASS_SINGLE_VISIT) {
+      if (value && value.length && this.form.visit_class !== visitConstants.CLASS_SINGLE_VISIT && this.form.visit_class !== visitConstants.CLASS_SPECIAL_VISIT) {
         this.setStudyEpochToBasic()
       }
     }

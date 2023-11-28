@@ -3,14 +3,14 @@
 //import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 //import lombok.Getter;
 //import lombok.Setter;
-//import org.CSDISC.DDF.model.Code;
-//import org.CSDISC.DDF.model.Organization;
+//import org.CDISC.DDF.model.Code;
+//import org.CDISC.DDF.model.Organization;
 //
 //import java.util.UUID;
 //
 //@Getter @Setter
 //@JsonIgnoreProperties({"organizationIdentifierScheme", "organizationIdentifier", "organizationName", "organizationType"})
-//public class AcctStudyIdentOrganisation extends org.CSDISC.DDF.model.Organization {
+//public class AcctStudyIdentOrganisation extends org.CDISC.DDF.model.Organization {
 //    private String organisationName;
 //    private Code organisationType;
 //    private String organisationIdentifier;

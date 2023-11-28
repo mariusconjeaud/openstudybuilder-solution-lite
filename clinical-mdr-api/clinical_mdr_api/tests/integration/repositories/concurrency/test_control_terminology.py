@@ -67,7 +67,7 @@ class ControlTerminologyConcurrencyTest(unittest.TestCase):
     def setUpClass(cls):
         inject_and_clear_db("concurrency.ct")
 
-    def setUp_base_graph_for_control_terminology(self):
+    def set_up_base_graph_for_control_terminology(self):
         db.cypher_query("MATCH (n) DETACH DELETE n")
         db.cypher_query(STARTUP_CT_TERM_NAME_CYPHER)
 
@@ -138,7 +138,7 @@ class ControlTerminologyConcurrencyTest(unittest.TestCase):
             self.ct_codelist_names_repository.save(ct_codelist_name_ar)
 
     def test_add_term_aborted_on_codelist_unfinalized(self):
-        self.setUp_base_graph_for_control_terminology()
+        self.set_up_base_graph_for_control_terminology()
 
         with self.assertRaises(VersioningException) as message:
             OptimisticLockingValidator().assert_optimistic_locking_ensures_execution_order(
@@ -152,7 +152,7 @@ class ControlTerminologyConcurrencyTest(unittest.TestCase):
         )
 
     def test_remove_term_aborted_on_codelist_unfinalized(self):
-        self.setUp_base_graph_for_control_terminology()
+        self.set_up_base_graph_for_control_terminology()
 
         with db.transaction:
             self.add_term_with_save()

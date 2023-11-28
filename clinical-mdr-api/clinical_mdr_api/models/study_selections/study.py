@@ -1,7 +1,7 @@
 """Study model."""
 from datetime import datetime
 from decimal import Decimal
-from typing import Callable, Collection, Iterable, Self, Sequence
+from typing import Callable, Collection, Iterable, Self
 
 from pydantic import Field
 
@@ -235,7 +235,7 @@ class HighLevelStudyDesignJsonModel(BaseModel):
     study_type_code: SimpleTermModel | None = Field(None, nullable=True)
     study_type_null_value_code: SimpleTermModel | None = Field(None, nullable=True)
 
-    trial_type_codes: Sequence[SimpleTermModel] | None = Field(None, nullable=True)
+    trial_type_codes: list[SimpleTermModel] | None = Field(None, nullable=True)
     trial_type_null_value_code: SimpleTermModel | None = Field(None, nullable=True)
 
     trial_phase_code: SimpleTermModel | None = Field(None, nullable=True)
@@ -345,21 +345,19 @@ class StudyPopulationJsonModel(BaseModel):
         title = "study_population"
         description = "Study population parameters for study definition."
 
-    therapeutic_area_codes: Sequence[SimpleTermModel] | None = Field(
-        None, nullable=True
-    )
+    therapeutic_area_codes: list[SimpleTermModel] | None = Field(None, nullable=True)
     therapeutic_area_null_value_code: SimpleTermModel | None = Field(
         None, nullable=True
     )
 
-    disease_condition_or_indication_codes: Sequence[SimpleTermModel] | None = Field(
+    disease_condition_or_indication_codes: list[SimpleTermModel] | None = Field(
         None, nullable=True
     )
     disease_condition_or_indication_null_value_code: SimpleTermModel | None = Field(
         None, nullable=True
     )
 
-    diagnosis_group_codes: Sequence[SimpleTermModel] | None = Field(None, nullable=True)
+    diagnosis_group_codes: list[SimpleTermModel] | None = Field(None, nullable=True)
     diagnosis_group_null_value_code: SimpleTermModel | None = Field(None, nullable=True)
 
     sex_of_participants_code: SimpleTermModel | None = Field(None, nullable=True)
@@ -594,9 +592,7 @@ class StudyInterventionJsonModel(BaseModel):
         None, nullable=True
     )
 
-    trial_intent_types_codes: Sequence[SimpleTermModel] | None = Field(
-        None, nullable=True
-    )
+    trial_intent_types_codes: list[SimpleTermModel] | None = Field(None, nullable=True)
     trial_intent_types_null_value_code: SimpleTermModel | None = Field(
         None, nullable=True
     )
@@ -858,8 +854,8 @@ class Study(BaseModel):
         find_dictionary_term_by_uid: Callable[[str], DictionaryTermAR | None],
         # pylint: disable=unused-argument
         at_specified_date_time: datetime | None = None,
+        study_value_version: str | None = None,
         status: StudyStatus | None = None,
-        version: str | None = None,
         history_endpoint: bool = False,
     ) -> Self | None:
         current_metadata = None
@@ -870,16 +866,14 @@ class Study(BaseModel):
                 current_metadata = study_definition_ar.released_metadata
             elif status == StudyStatus.LOCKED:
                 current_metadata = study_definition_ar.latest_locked_metadata
+        elif study_value_version is not None:
+            current_metadata = study_definition_ar.version_specific_metadata
         else:
             current_metadata = study_definition_ar.current_metadata
-        if version is not None:
-            current_metadata = study_definition_ar.get_specific_locked_metadata_version(
-                version_number=int(version)
-            )
         if current_metadata is None:
             if not history_endpoint:
                 raise exceptions.ValidationException(
-                    f"Study {study_definition_ar.uid} doesn't have a version for status={status} version={version}"
+                    f"Study {study_definition_ar.uid} doesn't have a version for status={status} version={study_value_version}"
                 )
             return None
         is_metadata_the_last_one = bool(
@@ -1037,16 +1031,21 @@ class StudyProtocolTitle(BaseModel):
         cls,
         study_definition_ar: StudyDefinitionAR,
         find_term_by_uid: Callable[[str], CTTermNameAR | None],
+        study_value_version: str | None = None,
     ) -> Self:
+        if study_value_version is not None:
+            current_metadata = study_definition_ar.version_specific_metadata
+        else:
+            current_metadata = study_definition_ar.current_metadata
         return cls(
             study_uid=study_definition_ar.uid,
-            study_title=study_definition_ar.current_metadata.study_description.study_title,
-            study_short_title=study_definition_ar.current_metadata.study_description.study_short_title,
-            eudract_id=study_definition_ar.current_metadata.id_metadata.registry_identifiers.eudract_id,
-            universal_trial_number_utn=study_definition_ar.current_metadata.id_metadata.registry_identifiers.universal_trial_number_utn,
+            study_title=current_metadata.study_description.study_title,
+            study_short_title=current_metadata.study_description.study_short_title,
+            eudract_id=current_metadata.id_metadata.registry_identifiers.eudract_id,
+            universal_trial_number_utn=current_metadata.id_metadata.registry_identifiers.universal_trial_number_utn,
             trial_phase_code=SimpleTermModel.from_ct_code(
-                c_code=study_definition_ar.current_metadata.high_level_study_design.trial_phase_code,
+                c_code=current_metadata.high_level_study_design.trial_phase_code,
                 find_term_by_uid=find_term_by_uid,
             ),
-            ind_number=study_definition_ar.current_metadata.id_metadata.registry_identifiers.investigational_new_drug_application_number_ind,
+            ind_number=current_metadata.id_metadata.registry_identifiers.investigational_new_drug_application_number_ind,
         )

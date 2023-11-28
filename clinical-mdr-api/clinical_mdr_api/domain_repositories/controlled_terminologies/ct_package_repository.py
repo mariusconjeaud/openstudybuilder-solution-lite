@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Collection, Sequence
+from typing import Collection
 
 from neomodel import db
 
@@ -31,7 +31,7 @@ class CTPackageRepository:
         if len(result) == 0:
             return []
         # projecting results to CTPackageAR instances
-        ct_packages: Sequence[CTPackageAR] = [
+        ct_packages: list[CTPackageAR] = [
             CTPackageAR.from_repository_values(
                 uid=ct_package[0].uid,
                 catalogue_name=ct_package[0].contains_package.single().name,

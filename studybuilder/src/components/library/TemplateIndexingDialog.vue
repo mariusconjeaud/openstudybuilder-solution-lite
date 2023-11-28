@@ -51,7 +51,6 @@ export default {
       this.$emit('close')
     },
     getBaseObjectType () {
-      console.log(this.urlPrefix)
       let result = this.urlPrefix.replace('-templates', '')
       if (result === '/activity') {
         result = '/activity-instruction'
@@ -59,10 +58,6 @@ export default {
       return result.slice(1)
     },
     async submit () {
-      const isValid = await this.$refs.observer.validate()
-      if (!isValid) {
-        return
-      }
       const data = {
         indication_uids: (this.form.indications) ? this.form.indications.map(item => item.term_uid) : [],
         ...this.preparePayloadFunc(this.form)
@@ -73,6 +68,8 @@ export default {
         this.$emit('close')
         const msg = this.$t('TemplateIndexingDialog.update_success')
         bus.$emit('notification', { msg, type: 'success' })
+      }, _err => {
+        this.$refs.form.working = false
       })
     }
   },

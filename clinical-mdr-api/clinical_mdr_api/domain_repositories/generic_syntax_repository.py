@@ -1,5 +1,5 @@
 import abc
-from typing import Sequence, TypeVar
+from typing import TypeVar
 
 from clinical_mdr_api.domain_repositories.library_item_repository import (
     LibraryItemRepositoryImplBase,
@@ -56,33 +56,35 @@ class GenericSyntaxRepository(
             parameter_root = ParameterTemplateRoot.get(uid=parameter_config.uid)
             root.has_complex_value.connect(parameter_root)
             template_root = ParameterTemplateRoot.nodes.get(uid=parameter_config.uid)
-            tp = template_root.has_definition.get()
-            root.has_parameter_term.connect(tp)
+            template_parameter = template_root.has_definition.get()
+            root.has_parameter_term.connect(template_parameter)
         else:
             root_uid = complex_value.get_root_uid_by_latest()
             root = TemplateParameterComplexRoot.nodes.get(uid=root_uid)
         for i, param in enumerate(parameter_config.parameters):
             param_uid = param.uid
             if isinstance(param, NumericParameterTermVO):
-                v = NumericValue.nodes.get_or_none(name=param.value)
-                if not v:
-                    r = NumericValueRoot(uid="NumericValue_" + str(param.value))
-                    r.save()
-                    v = NumericValue(name=param.value)
-                    v.save()
-                    r.latest_final.connect(v, {})
-                    r.has_latest_value.connect(v)
-                    r = r.uid
+                numeric_value = NumericValue.nodes.get_or_none(name=param.value)
+                if not numeric_value:
+                    numeric_value_root = NumericValueRoot(
+                        uid="NumericValue_" + str(param.value)
+                    )
+                    numeric_value_root.save()
+                    numeric_value = NumericValue(name=param.value)
+                    numeric_value.save()
+                    numeric_value_root.latest_final.connect(numeric_value, {})
+                    numeric_value_root.has_latest_value.connect(numeric_value)
+                    numeric_value_root = numeric_value_root.uid
                 else:
-                    r = v.get_root_uid_by_latest()
-                param_uid = r
+                    numeric_value_root = numeric_value.get_root_uid_by_latest()
+                param_uid = numeric_value_root
             tptr = TemplateParameterTermRoot.nodes.get(uid=param_uid)
             complex_value.uses_parameter.connect(tptr, {"position": i + 1})
         return root.element_id
 
     def _parse_parameter_terms(
         self, instance_parameters
-    ) -> dict[int, Sequence[ParameterTermEntryVO]]:
+    ) -> dict[int, list[ParameterTermEntryVO]]:
         # Note that this method is used both by templates for default values and instances for values
         # Hence the checks we have to make on the existence of the set_number property
         parameter_strings = []
@@ -187,17 +189,17 @@ class GenericSyntaxRepository(
                                 "item": itemp[1],
                             }
                         )
-                    param_terms = sorted(param_terms, key=lambda x: x["position"])
+                    param_terms.sort(key=lambda x: x["position"])
                     for param in param_terms:
                         if param["value"] is not None:
-                            tp = NumericParameterTermVO(
+                            simple_template_parameter_term_vo = NumericParameterTermVO(
                                 uid=param["item"], value=param["value"]
                             )
                         else:
-                            tp = SimpleParameterTermVO(
+                            simple_template_parameter_term_vo = SimpleParameterTermVO(
                                 uid=param["item"], value=param["vv"]
                             )
-                        cpx_params.append(tp)
+                        cpx_params.append(simple_template_parameter_term_vo)
                     parameter_list.append(
                         ComplexParameterTerm(
                             uid=defr.uid,
@@ -211,8 +213,10 @@ class GenericSyntaxRepository(
                         key=lambda x: x["index"] or 0,
                     ):
                         if value["parameter_uid"]:
-                            pv = self._parameter_from_repository_values(value)
-                            term_list.append(pv)
+                            simple_parameter_term_vo = (
+                                self._parameter_from_repository_values(value)
+                            )
+                            term_list.append(simple_parameter_term_vo)
                     pve = ParameterTermEntryVO.from_repository_values(
                         parameters=term_list,
                         parameter_name=item["parameter_name"],
@@ -223,10 +227,10 @@ class GenericSyntaxRepository(
         return return_dict
 
     def _parameter_from_repository_values(self, value):
-        pv = SimpleParameterTermVO.from_repository_values(
+        simple_parameter_term_vo = SimpleParameterTermVO.from_repository_values(
             uid=value["parameter_uid"], value=value["parameter_term"]
         )
-        return pv
+        return simple_parameter_term_vo
 
     def get_template_type_uid(self, template_uid: str) -> str:
         """
@@ -275,37 +279,35 @@ class GenericSyntaxRepository(
         # Finds template type in database based on root node uid
         return CTTermRoot.nodes.get(uid=uid)
 
-    def patch_indications(self, uid: str, indication_uids: Sequence[str]) -> None:
+    def patch_indications(self, uid: str, indication_uids: list[str]) -> None:
         root = self.root_class.nodes.get(uid=uid)
         root.has_indication.disconnect_all()
         for indication in indication_uids:
             indication = self._get_indication(indication)
             root.has_indication.connect(indication)
 
-    def patch_categories(self, uid: str, category_uids: Sequence[str]) -> None:
+    def patch_categories(self, uid: str, category_uids: list[str]) -> None:
         root = self.root_class.nodes.get(uid=uid)
         root.has_category.disconnect_all()
         for category in category_uids:
             category = self._get_category(category)
             root.has_category.connect(category)
 
-    def patch_subcategories(self, uid: str, sub_category_uids: Sequence[str]) -> None:
+    def patch_subcategories(self, uid: str, sub_category_uids: list[str]) -> None:
         root = self.root_class.nodes.get(uid=uid)
         root.has_subcategory.disconnect_all()
         for sub_category in sub_category_uids:
             sub_category = self._get_category(sub_category)
             root.has_subcategory.connect(sub_category)
 
-    def patch_activities(self, uid: str, activity_uids: Sequence[str]) -> None:
+    def patch_activities(self, uid: str, activity_uids: list[str]) -> None:
         root = self.root_class.nodes.get(uid=uid)
         root.has_activity.disconnect_all()
         for activity in activity_uids:
             activity = self._get_activity(activity)
             root.has_activity.connect(activity)
 
-    def patch_activity_groups(
-        self, uid: str, activity_group_uids: Sequence[str]
-    ) -> None:
+    def patch_activity_groups(self, uid: str, activity_group_uids: list[str]) -> None:
         root = self.root_class.nodes.get(uid=uid)
         root.has_activity_group.disconnect_all()
         for group in activity_group_uids:
@@ -313,7 +315,7 @@ class GenericSyntaxRepository(
             root.has_activity_group.connect(group)
 
     def patch_activity_subgroups(
-        self, uid: str, activity_subgroup_uids: Sequence[str]
+        self, uid: str, activity_subgroup_uids: list[str]
     ) -> None:
         root = self.root_class.nodes.get(uid=uid)
         root.has_activity_subgroup.disconnect_all()

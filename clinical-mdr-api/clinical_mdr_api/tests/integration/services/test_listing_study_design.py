@@ -303,7 +303,7 @@ class TestStudyListing(unittest.TestCase):
         )
 
     def test_study_metadata_listing(self):
-        self.maxDiff = None
+        self.maxDiff = None  # pylint: disable=invalid-name
         study_listing_service = StudyMetadataListingService()
         output = study_listing_service.get_study_metadata(self.study_number)
         expected_output = StudyMetadataListingModel(

@@ -134,13 +134,12 @@ class CTTermAttributesAR(LibraryItemAggregateRootBase):
             raise exceptions.BusinessLogicException(
                 f"The library with the name='{library.name}' does not allow to create objects."
             )
-        ar = cls(
+        return cls(
             _uid=generate_uid_callback(),
             _item_metadata=item_metadata,
             _library=library,
             _ct_term_attributes_vo=ct_term_attributes_vo,
         )
-        return ar
 
     def edit_draft(
         self,

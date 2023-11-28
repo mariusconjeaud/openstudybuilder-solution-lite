@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import AbstractSet, Callable, Self, Sequence
+from typing import AbstractSet, Callable, Self
 
 from deprecated.classic import deprecated
 
@@ -30,7 +30,7 @@ class TemplateVO:
     name: str
     name_plain: str | None = None
     # Optional, default parameter terms
-    default_parameter_terms: Sequence[ParameterTermEntryVO] | None = None
+    default_parameter_terms: list[ParameterTermEntryVO] | None = None
 
     # template guidance text
     guidance_text: str | None = None
@@ -38,11 +38,11 @@ class TemplateVO:
     @staticmethod
     def _extract_parameter_names_from_template_string(
         template_string: str,
-    ) -> Sequence[str]:
+    ) -> list[str]:
         return extract_parameters(template_string)
 
     @property
-    def parameter_names(self) -> Sequence[str]:
+    def parameter_names(self) -> list[str]:
         return self._extract_parameter_names_from_template_string(self.name)
 
     @classmethod
@@ -50,7 +50,7 @@ class TemplateVO:
         cls,
         template_name: str,
         parameter_name_exists_callback: Callable[[str], bool],
-        default_parameter_terms: Sequence[ParameterTermEntryVO] | None = None,
+        default_parameter_terms: list[ParameterTermEntryVO] | None = None,
         guidance_text: str | None = None,
     ) -> Self:
         if not is_syntax_of_template_name_correct(template_name):
@@ -196,7 +196,7 @@ class TemplateAggregateRootBase(LibraryItemAggregateRootBase):
         study_count: int = 0,
         counts: InstantiationCountsVO | None = None,
     ) -> Self:
-        ar = cls(
+        return cls(
             _uid=uid,
             _sequence_id=sequence_id,
             _item_metadata=item_metadata,
@@ -205,7 +205,6 @@ class TemplateAggregateRootBase(LibraryItemAggregateRootBase):
             _study_count=study_count,
             _counts=counts,
         )
-        return ar
 
     @classmethod
     def from_input_values(
@@ -215,9 +214,9 @@ class TemplateAggregateRootBase(LibraryItemAggregateRootBase):
         template: TemplateVO,
         library: LibraryVO,
         generate_uid_callback: Callable[[], str | None] = (lambda: None),
-        next_available_sequence_id_callback: Callable[[str], str | None] = (
-            lambda _: None
-        ),
+        next_available_sequence_id_callback: Callable[
+            [str, LibraryVO | None], str | None
+        ] = lambda uid, library: None,
     ) -> Self:
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(author=author)
         if not library.is_editable:
@@ -227,15 +226,15 @@ class TemplateAggregateRootBase(LibraryItemAggregateRootBase):
 
         generated_uid = generate_uid_callback()
 
-        ar = cls(
+        return cls(
             _uid=generated_uid,
-            _sequence_id=next_available_sequence_id_callback(generated_uid),
+            _sequence_id=next_available_sequence_id_callback(
+                uid=generated_uid, library=library
+            ),
             _item_metadata=item_metadata,
             _library=library,
             _template=template,
         )
-
-        return ar
 
     @property
     def template_value(self) -> TemplateVO:

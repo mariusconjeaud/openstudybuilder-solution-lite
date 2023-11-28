@@ -1,4 +1,4 @@
-from typing import Collection, Sequence
+from typing import Collection
 
 from cachetools import TTLCache, cached
 from cachetools.keys import hashkey
@@ -80,9 +80,9 @@ class ClinicalProgrammeRepository:
         pass
 
     def find_all(self) -> Collection[ClinicalProgrammeAR]:
-        clinical_programmes: Sequence[ClinicalProgramme] = ClinicalProgramme.nodes.all()
+        clinical_programmes: list[ClinicalProgramme] = ClinicalProgramme.nodes.all()
         # projecting results to ClinicalProgrammeAR instances
-        clinical_programmes: Sequence[ClinicalProgrammeAR] = [
+        clinical_programmes: list[ClinicalProgrammeAR] = [
             ClinicalProgrammeAR.from_input_values(
                 name=p.name, generate_uid_callback=lambda p=p: p.uid
             )

@@ -1,6 +1,7 @@
 import unittest
 from typing import Callable
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains.concepts.activities.activity_group import (
     ActivityGroupAR,
     ActivityGroupVO,
@@ -13,9 +14,10 @@ from clinical_mdr_api.tests.unit.domain.utils import random_str
 
 
 def create_random_activity_group_vo() -> ActivityGroupVO:
+    name = random_str()
     random_activity_group_vo = ActivityGroupVO.from_repository_values(
-        name=random_str(),
-        name_sentence_case=random_str(),
+        name=name,
+        name_sentence_case=name,
         definition=random_str(),
         abbreviation=random_str(),
     )
@@ -163,3 +165,53 @@ class TestActivityGroup(unittest.TestCase):
 
         # then
         self.assertTrue(activity_group_ar.is_deleted)
+
+
+class TestActivityGroupNegative(unittest.TestCase):
+    def test__init__ar_validation_failure(self):
+        name = random_str()
+        with self.assertRaises(exceptions.ValidationException) as context:
+            ActivityGroupAR.from_input_values(
+                generate_uid_callback=random_str,
+                concept_vo=ActivityGroupVO.from_repository_values(
+                    name=name,
+                    name_sentence_case="Different from name",
+                    definition=random_str(),
+                    abbreviation=random_str(),
+                ),
+                library=LibraryVO.from_repository_values(
+                    library_name="library", is_editable=True
+                ),
+                author="TODO Initials",
+                concept_exists_by_callback=lambda x, y, z: False,
+            )
+
+        assert (
+            context.exception.msg
+            == f"Lowercase versions of '{name}' and 'Different from name' must be equal"
+        )
+
+    def test__edit_draft_version__validation_failure(self):
+        activity_group_ar = create_random_activity_group_ar()
+
+        activity_group_ar.approve(author="Test")
+        activity_group_ar.create_new_version(author="TODO")
+
+        name = random_str()
+        with self.assertRaises(exceptions.ValidationException) as context:
+            activity_group_ar.edit_draft(
+                author="TODO",
+                change_description="Test",
+                concept_vo=ActivityGroupVO.from_repository_values(
+                    name=name,
+                    name_sentence_case="Different from name",
+                    definition=random_str(),
+                    abbreviation=random_str(),
+                ),
+                concept_exists_by_callback=lambda x, y, z: False,
+            )
+
+        assert (
+            context.exception.msg
+            == f"Lowercase versions of '{name}' and 'Different from name' must be equal"
+        )

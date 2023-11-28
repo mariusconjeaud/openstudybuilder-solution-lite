@@ -19,7 +19,8 @@ import study from '@/api/study'
 export default {
   computed: {
     ...mapGetters({
-      selectedStudy: 'studiesGeneral/selectedStudy'
+      selectedStudy: 'studiesGeneral/selectedStudy',
+      selectedStudyVersion: 'studiesGeneral/selectedStudyVersion'
     })
   },
   data () {
@@ -32,7 +33,7 @@ export default {
     }
   },
   mounted () {
-    study.getStudyProtocolTitle(this.selectedStudy.uid).then(resp => {
+    study.getStudyProtocolTitle(this.selectedStudy.uid, this.selectedStudyVersion).then(resp => {
       this.items = [
         { label: this.$t('ProtocolTitlePage.protocol_title'), value: resp.data.study_title },
         { label: this.$t('ProtocolTitlePage.protocol_short_title'), value: resp.data.study_short_title },

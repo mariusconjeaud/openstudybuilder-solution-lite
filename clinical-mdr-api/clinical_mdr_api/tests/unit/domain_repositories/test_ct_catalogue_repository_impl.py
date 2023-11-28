@@ -1,5 +1,5 @@
 import unittest
-from typing import Collection, Sequence
+from typing import Collection
 from unittest.mock import Mock, patch
 
 from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_catalogue_repository import (
@@ -34,7 +34,7 @@ class TestCTCatalogueRepositoryImpl(unittest.TestCase):
     def test__find_all_mocked_ct_catalogue_exist(self, ct_catalogue_mock):
         # given
         repo = CTCatalogueRepository()
-        ct_catalogues: Sequence[CTCatalogue] = [
+        ct_catalogues: list[CTCatalogue] = [
             create_random_ct_catalogue_node(random_str()) for _ in range(10)
         ]
         ct_catalogue_mock.nodes.order_by("name").all.return_value = ct_catalogues
@@ -56,7 +56,7 @@ class TestCTCatalogueRepositoryImpl(unittest.TestCase):
     def test__find_all_mocked_ct_catalogue_not_exist(self, ct_catalogue_mock):
         # given
         repo = CTCatalogueRepository()
-        ct_catalogues: Sequence[CTCatalogue] = []
+        ct_catalogues: list[CTCatalogue] = []
         ct_catalogue_mock.nodes.order_by("name").all.return_value = ct_catalogues
 
         # when
@@ -79,7 +79,7 @@ class TestCTCatalogueRepositoryImpl(unittest.TestCase):
         ct_catalogues_invalid_library = [
             create_random_ct_catalogue_node(invalid_library_name) for _ in range(4)
         ]
-        ct_catalogues: Sequence[CTCatalogue] = (
+        ct_catalogues: list[CTCatalogue] = (
             ct_catalogues_valid_library + ct_catalogues_invalid_library
         )
         ct_catalogue_mock.nodes.order_by("name").all.return_value = ct_catalogues

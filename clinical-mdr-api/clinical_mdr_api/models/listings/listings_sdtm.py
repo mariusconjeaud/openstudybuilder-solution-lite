@@ -1,4 +1,4 @@
-from typing import Self
+from typing import Any, Self
 
 from pydantic import Field
 
@@ -250,7 +250,7 @@ class StudySummaryListing(BaseModel):
         Examples Planned Minimum Age of Subjects, Planned Maximum Age of Subjects
         """,
     )
-    TSVAL: str | list = Field(
+    TSVAL: str | list[Any] = Field(
         None,
         title="Parameter Value",
         description="""

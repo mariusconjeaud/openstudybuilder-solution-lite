@@ -1126,6 +1126,49 @@ def test_endpoint_template_audit_trail(api_client):
     assert actual_uids == expected_uids
 
 
+def test_endpoint_template_sequence_id_generation(api_client):
+    lib = TestUtils.create_library("User Defined")
+    data = {
+        "name": "user defined [TextValue]",
+        "guidance_text": "user_defined_guidance_text",
+        "library_name": lib["name"],
+        "default_parameter_terms": [],
+        "indication_uids": [dictionary_term_indication.term_uid],
+        "category_uids": [ct_term_category.term_uid],
+        "sub_category_uids": [ct_term_subcategory.term_uid],
+    }
+    response = api_client.post(URL, json=data)
+    res = response.json()
+    log.info("Created Endpoint Template: %s", res)
+
+    assert response.status_code == 201
+    assert res["uid"]
+    assert res["sequence_id"] == "U-E1"
+    assert res["name"] == "user defined [TextValue]"
+    assert res["guidance_text"] == "user_defined_guidance_text"
+    assert res["parameters"][0]["name"] == "TextValue"
+    assert res["parameters"][0]["terms"] == []
+    assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
+    assert (
+        res["indications"][0]["dictionary_id"]
+        == dictionary_term_indication.dictionary_id
+    )
+    assert res["indications"][0]["name"] == dictionary_term_indication.name
+    assert res["categories"][0]["term_uid"] == ct_term_category.term_uid
+    assert res["categories"][0]["catalogue_name"] == ct_term_category.catalogue_name
+    assert res["categories"][0]["codelist_uid"] == ct_term_category.codelist_uid
+    assert res["sub_categories"][0]["term_uid"] == ct_term_subcategory.term_uid
+    assert (
+        res["sub_categories"][0]["catalogue_name"] == ct_term_subcategory.catalogue_name
+    )
+    assert res["sub_categories"][0]["codelist_uid"] == ct_term_subcategory.codelist_uid
+    assert res["version"] == "0.1"
+    assert res["status"] == "Draft"
+    assert set(list(res.keys())) == set(ENDPOINT_TEMPLATE_FIELDS_ALL)
+    for key in ENDPOINT_TEMPLATE_FIELDS_NOT_NULL:
+        assert res[key] is not None
+
+
 def test_cannot_create_endpoint_template_with_existing_name(api_client):
     data = {
         "name": "Default name with [TextValue]",

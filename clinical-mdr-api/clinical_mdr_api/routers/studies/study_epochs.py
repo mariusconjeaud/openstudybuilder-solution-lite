@@ -1,4 +1,4 @@
-from typing import Any, Sequence
+from typing import Any
 
 from fastapi import Body, Depends, Path, Query, Request, Response, status
 from pydantic.types import Json
@@ -7,6 +7,7 @@ from clinical_mdr_api import config
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.study_selections import study_epoch
 from clinical_mdr_api.models.utils import CustomPage
+from clinical_mdr_api.models.validators import FLOAT_REGEX
 from clinical_mdr_api.oauth import get_current_user_id, rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
@@ -106,6 +107,12 @@ def get_all(
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
     uid: str = studyUID,
+    study_value_version: str
+    | None = Query(
+        None,
+        description="StudyValueVersion to extract the StudySelections",
+        regex=FLOAT_REGEX,
+    ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> CustomPage[study_epoch.StudyEpoch]:
     service = StudyEpochService(current_user_id)
@@ -118,6 +125,7 @@ def get_all(
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
         sort_by=sort_by,
+        study_value_version=study_value_version,
     )
 
     return CustomPage.create(
@@ -134,7 +142,7 @@ def get_all(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=Sequence[Any],
+    response_model=list[Any],
     status_code=200,
     responses={
         404: {
@@ -158,6 +166,12 @@ def get_distinct_values_for_header(
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
     uid: str = studyUID,
+    study_value_version: str
+    | None = Query(
+        None,
+        description="StudyValueVersion to extract the StudySelections",
+        regex=FLOAT_REGEX,
+    ),
     current_user_id: str = Depends(get_current_user_id),
 ):
     service = StudyEpochService(author=current_user_id)
@@ -168,6 +182,7 @@ def get_distinct_values_for_header(
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
         result_count=result_count,
+        study_value_version=study_value_version,
     )
 
 
@@ -209,10 +224,18 @@ Possible errors:
 def get_study_epoch(
     uid: str = studyUID,
     study_epoch_uid: str = study_epoch_uid_description,
+    study_value_version: str
+    | None = Query(
+        None,
+        description="StudyValueVersion to extract the StudySelections",
+        regex=FLOAT_REGEX,
+    ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> study_epoch.StudyEpoch:
     service = StudyEpochService(current_user_id)
-    return service.find_by_uid(uid=study_epoch_uid, study_uid=uid)
+    return service.find_by_uid(
+        uid=study_epoch_uid, study_uid=uid, study_value_version=study_value_version
+    )
 
 
 @router.get(
@@ -233,7 +256,7 @@ State after:
 Possible errors:
  - Invalid study-uid.
      """,
-    response_model=Sequence[study_epoch.StudyEpochVersion],
+    response_model=list[study_epoch.StudyEpochVersion],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -248,7 +271,7 @@ def get_study_epoch_audit_trail(
     uid: str = studyUID,
     study_epoch_uid: str = study_epoch_uid_description,
     current_user_id: str = Depends(get_current_user_id),
-) -> Sequence[study_epoch.StudyEpochVersion]:
+) -> list[study_epoch.StudyEpochVersion]:
     service = StudyEpochService(current_user_id)
     return service.audit_trail(study_uid=uid, epoch_uid=study_epoch_uid)
 
@@ -271,7 +294,7 @@ State after:
 Possible errors:
  - Invalid study-uid.
      """,
-    response_model=Sequence[study_epoch.StudyEpochVersion],
+    response_model=list[study_epoch.StudyEpochVersion],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -285,7 +308,7 @@ Possible errors:
 def get_study_epochs_all_audit_trail(
     uid: str = studyUID,
     current_user_id: str = Depends(get_current_user_id),
-) -> Sequence[study_epoch.StudyEpochVersion]:
+) -> list[study_epoch.StudyEpochVersion]:
     service = StudyEpochService(current_user_id)
     return service.audit_trail_all_epochs(uid)
 
@@ -514,7 +537,7 @@ def patch_update_epoch(
     "/epochs/allowed-configs",
     dependencies=[rbac.STUDY_READ],
     summary="Returns all allowed config sets",
-    response_model=Sequence[study_epoch.StudyEpochTypes],
+    response_model=list[study_epoch.StudyEpochTypes],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -524,21 +547,19 @@ def patch_update_epoch(
 )
 def get_all_configs(
     current_user_id: str = Depends(get_current_user_id),
-) -> Sequence[study_epoch.StudyEpoch]:
+) -> list[study_epoch.StudyEpoch]:
     service = StudyEpochService(current_user_id)
     return service.get_allowed_configs()
 
 
-"""
-    API endpoints to study visits
-"""
+# API endpoints to study visits
 
 
 @router.get(
     "/studies/{uid}/allowed-consecutive-groups",
     dependencies=[rbac.STUDY_READ],
     summary="Returns all consecutive groups",
-    response_model=Sequence[str],
+    response_model=set[str],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -548,6 +569,6 @@ def get_all_configs(
 )
 def get_all_consecutive_groups(
     uid: str = studyUID, current_user_id: str = Depends(get_current_user_id)
-) -> Sequence[study_epoch.StudyEpoch]:
+) -> set[str]:
     service = StudyVisitService(current_user_id)
     return service.get_consecutive_groups(uid)

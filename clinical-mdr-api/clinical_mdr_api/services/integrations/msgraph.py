@@ -3,7 +3,7 @@ import logging
 import re
 from asyncio import Lock
 from functools import wraps
-from typing import Mapping
+from typing import Any, Mapping
 
 from asyncache import cached
 from authlib.integrations.starlette_client import StarletteOAuth2App
@@ -32,14 +32,14 @@ RETURN_MAX_USERS = 0  # Maximum number of users to return
 log = logging.getLogger(__name__)
 
 
-def serialize(fn):
+def serialize(fnc):
     """Decorator to serialize function calls to avoid parallel execution"""
-    fn.lock = Lock()
+    fnc.lock = Lock()
 
-    @wraps(fn)
+    @wraps(fnc)
     async def serialized(*args, **kwargs):
-        async with fn.lock:
-            return await fn(*args, **kwargs)
+        async with fnc.lock:
+            return await fnc(*args, **kwargs)
 
     return serialized
 
@@ -63,7 +63,7 @@ class MsGraphClientService:
 
     # pylint: disable=unused-argument
     async def set_token(
-        self, token: Mapping, refresh_token: any = None, access_token: any = None
+        self, token: Mapping, refresh_token: Any = None, access_token: Any = None
     ):
         """
         set token callback for OAuth client
@@ -126,8 +126,8 @@ class MsGraphClientService:
         while next_page_url:
             payload = await self.request("GET", next_page_url)
 
-            for v in payload["value"]:
-                results.append(GraphUser(**v))
+            for item in payload["value"]:
+                results.append(GraphUser(**item))
 
             next_page_url = payload.get("@odata.nextLink")
             if not next_page_url:
@@ -189,13 +189,13 @@ class MsGraphClientService:
         users = []
         for user in await self.fetch_all_group_direct_member_users():
             if search_re:
-                for s in (
+                for search_query in (
                     user.display_name,
                     user.given_name,
                     user.surname,
                     user.email,
                 ):
-                    if s and search_re.search(s):
+                    if search_query and search_re.search(search_query):
                         users.append(user)
                         break
 
@@ -209,24 +209,24 @@ class MsGraphClientService:
 
 
 # Singleton service for reusing the OIDC metadata and recycling access/refresh tokens for further requests
-service = None
+service = None  # pylint: disable=invalid-name
 if not config.MS_GRAPH_INTEGRATION_ENABLED:
     log.info(
         "MS Graph API integration is disabled. MS_GRAPH_INTEGRATION_ENABLED=%r",
         config.MS_GRAPH_INTEGRATION_ENABLED,
     )
 elif not (
-    oauth_config.OIDC_METADATA_URL
-    and oauth_config.OAUTH_APP_ID
-    and oauth_config.OAUTH_APP_SECRET
+    oauth_config.OAUTH_METADATA_URL
+    and oauth_config.OAUTH_API_APP_ID
+    and oauth_config.OAUTH_API_APP_SECRET
 ):
     log.warning(
         "MS Graph API integration is not properly configured"
-        " (check env. vars OAUTH_APP_ID, OAUTH_APP_SECRET, OIDC_METADATA_DOCUMENT and opt. MS_GRAPH_GROUPS_QUERY)"
+        " (check env. vars OAUTH_API_APP_ID, OAUTH_API_APP_SECRET, OAUTH_METADATA_URL and opt. MS_GRAPH_GROUPS_QUERY)"
     )
 else:
     service = MsGraphClientService(
-        server_metadata_url=oauth_config.OIDC_METADATA_URL,
-        client_id=oauth_config.OAUTH_APP_ID,
-        client_secret=oauth_config.OAUTH_APP_SECRET,
+        server_metadata_url=oauth_config.OAUTH_METADATA_URL,
+        client_id=oauth_config.OAUTH_API_APP_ID,
+        client_secret=oauth_config.OAUTH_API_APP_SECRET,
     )

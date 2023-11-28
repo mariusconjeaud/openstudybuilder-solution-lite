@@ -19,7 +19,7 @@ class StudyComponentTranslatorTest {
 
         StudyObjectMapper studyObjectMapper = new StudyObjectMapper();
         List<Visit> visits = objectFactory.getVisits("001");
-        org.CSDISC.DDF.model.Encounter encounter = studyObjectMapper.map(visits.get(0));
+        org.CDISC.DDF.model.Encounter encounter = studyObjectMapper.map(visits.get(0));
         String eventJSON = StudyComponentTranslator.translateStudyObjectToJSON(encounter);
         Assertions.assertNotNull(eventJSON);
         System.out.println(eventJSON);
@@ -27,11 +27,11 @@ class StudyComponentTranslatorTest {
     }
 
     @Test
-    void translatePopulation() throws Exception, ParserConfigurationException, TransformerException {
+    void translatePopulation() throws Exception {
 
         StudyObjectMapper studyObjectMapper = new StudyObjectMapper();
         Population population = objectFactory.getPopulation("001");
-        org.CSDISC.DDF.model.StudyDesignPopulation CDISCPopulation = studyObjectMapper.map(population);
+        org.CDISC.DDF.model.StudyDesignPopulation CDISCPopulation = studyObjectMapper.map(population);
         System.out.println(CDISCPopulation.getPopulationDescription());
         String eventJSON = StudyComponentTranslator.translateStudyObjectToJSON(CDISCPopulation);
         Assertions.assertNotNull(eventJSON);
@@ -40,12 +40,10 @@ class StudyComponentTranslatorTest {
     }
 
     @Test
-    @Disabled
-        // Disabling due to structural differences between Json file and rest api
     void translateObjective() throws Exception {
         StudyObjectMapper studyObjectMapper = new StudyObjectMapper();
         List<StudySelectionEndpoint> studySelectionEndpoints = objectFactory.getStudyEndpointSections("001");
-        org.CSDISC.DDF.model.Objective CDISCObjective = studyObjectMapper.map(studySelectionEndpoints.get(0));
+        org.CDISC.DDF.model.Objective CDISCObjective = studyObjectMapper.map(studySelectionEndpoints.get(0));
         String eventJSON = StudyComponentTranslator.translateStudyObjectToJSON(CDISCObjective);
         Assertions.assertNotNull(eventJSON);
         System.out.println(eventJSON);
@@ -57,7 +55,7 @@ class StudyComponentTranslatorTest {
 
         StudyObjectMapper studyObjectMapper = new StudyObjectMapper();
         Intervention intervention = objectFactory.getIntervention("001");
-        org.CSDISC.DDF.model.InvestigationalIntervention investigationalIntervention = studyObjectMapper.map(intervention);
+        org.CDISC.DDF.model.InvestigationalIntervention investigationalIntervention = studyObjectMapper.map(intervention);
         String eventJSON = StudyComponentTranslator.translateStudyObjectToJSON(investigationalIntervention);
         Assertions.assertNotNull(eventJSON);
         System.out.println(eventJSON);
@@ -69,7 +67,7 @@ class StudyComponentTranslatorTest {
 
         StudyObjectMapper studyObjectMapper = new StudyObjectMapper();
         List<Arm> arms = objectFactory.getArms("001");
-        org.CSDISC.DDF.model.StudyArm studyArm = studyObjectMapper.map(arms.get(0));
+        org.CDISC.DDF.model.StudyArm studyArm = studyObjectMapper.map(arms.get(0));
         String eventJSON = StudyComponentTranslator.translateStudyObjectToJSON(studyArm);
         Assertions.assertNotNull(eventJSON);
         System.out.println(eventJSON);
@@ -81,7 +79,7 @@ class StudyComponentTranslatorTest {
 
         StudyObjectMapper studyObjectMapper = new StudyObjectMapper();
         List<Epoch> epochs = objectFactory.getEpochs("001");
-        org.CSDISC.DDF.model.StudyEpoch studyEpoch = studyObjectMapper.map(epochs.get(0));
+        org.CDISC.DDF.model.StudyEpoch studyEpoch = studyObjectMapper.map(epochs.get(0));
         String eventJSON = StudyComponentTranslator.translateStudyObjectToJSON(studyEpoch);
         Assertions.assertNotNull(eventJSON);
         System.out.println(eventJSON);
@@ -93,7 +91,7 @@ class StudyComponentTranslatorTest {
 
         StudyObjectMapper studyObjectMapper = new StudyObjectMapper();
         List<Element> elements = objectFactory.getElements("001");
-        org.CSDISC.DDF.model.StudyElement studyElement = studyObjectMapper.map(elements.get(0));
+        org.CDISC.DDF.model.StudyElement studyElement = studyObjectMapper.map(elements.get(0));
         String eventJSON = StudyComponentTranslator.translateStudyObjectToJSON(studyElement);
         Assertions.assertNotNull(eventJSON);
         System.out.println(eventJSON);

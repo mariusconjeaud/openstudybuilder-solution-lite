@@ -8,6 +8,7 @@ import lombok.Setter;
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 @Getter @Setter
 public class BranchArm {
+
     private String studyUid;
     private int order;
     private String projectNumber;

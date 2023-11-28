@@ -1,5 +1,3 @@
-from typing import Sequence
-
 from neomodel import db
 from pydantic import BaseModel
 
@@ -169,10 +167,10 @@ class FootnotePreInstanceService(FootnoteService[FootnotePreInstanceAR]):
         list[ActivityGroupAR],
         list[ActivitySubGroupAR],
     ]:
-        indications: Sequence[DictionaryTermAR] = []
-        activities: Sequence[ActivityAR] = []
-        activity_groups: Sequence[ActivityGroupAR] = []
-        activity_subgroups: Sequence[ActivitySubGroupAR] = []
+        indications: list[DictionaryTermAR] = []
+        activities: list[ActivityAR] = []
+        activity_groups: list[ActivityGroupAR] = []
+        activity_subgroups: list[ActivitySubGroupAR] = []
 
         for uid in template.indication_uids or []:
             indication = self._repos.dictionary_term_generic_repository.find_by_uid(

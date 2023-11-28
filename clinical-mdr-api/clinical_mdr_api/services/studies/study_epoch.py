@@ -1,5 +1,4 @@
 import datetime
-from typing import Sequence
 
 from aenum import extend_enum
 from neomodel import db
@@ -20,6 +19,9 @@ from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import 
     StudyStatus,
 )
 from clinical_mdr_api.domains.study_selections.study_epoch import (
+    EpochNamedTuple,
+    EpochSubtypeNamedTuple,
+    EpochTypeNamedTuple,
     StudyEpochEpoch,
     StudyEpochHistoryVO,
     StudyEpochSubType,
@@ -81,17 +83,20 @@ class StudyEpochService:
             settings.STUDY_VISIT_EPOCH_ALLOCATION_NAME
         )
 
+        StudyEpochType.clear()
         for uid, name in self.study_epoch_types.items():
-            if uid not in StudyEpochType._member_map_:
-                extend_enum(StudyEpochType, uid, name)
+            if uid not in StudyEpochType:
+                StudyEpochType[uid] = EpochTypeNamedTuple(uid, name)
 
+        StudyEpochSubType.clear()
         for uid, name in self.study_epoch_subtypes.items():
-            if uid not in StudyEpochSubType._member_map_:
-                extend_enum(StudyEpochSubType, uid, name)
+            if uid not in StudyEpochSubType:
+                StudyEpochSubType[uid] = EpochSubtypeNamedTuple(uid, name)
 
+        StudyEpochEpoch.clear()
         for uid, name in self.study_epoch_epochs.items():
-            if uid not in StudyEpochEpoch._member_map_:
-                extend_enum(StudyEpochEpoch, uid, name)
+            if uid not in StudyEpochEpoch:
+                StudyEpochEpoch[uid] = EpochNamedTuple(uid, name)
 
         for uid, name in self.study_visit_types.items():
             if uid not in StudyVisitType._member_map_:
@@ -214,12 +219,17 @@ class StudyEpochService:
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
+        study_value_version: str | None = None,
     ) -> GenericFilteringReturn[StudyEpoch]:
         repos = self._repos
         try:
-            study_epochs = self.repo.find_all_epochs_by_study(study_uid=study_uid)
+            study_epochs = self.repo.find_all_epochs_by_study(
+                study_uid=study_uid, study_value_version=study_value_version
+            )
 
-            study_visits = self.visit_repo.find_all_visits_by_study_uid(study_uid)
+            study_visits = self.visit_repo.find_all_visits_by_study_uid(
+                study_uid, study_value_version=study_value_version
+            )
             timeline = TimelineAR(study_uid, _visits=study_visits)
             visits = timeline.collect_visits_to_epochs(study_epochs)
 
@@ -245,14 +255,20 @@ class StudyEpochService:
             repos.close()
 
     @db.transaction
-    def find_by_uid(self, uid: str, study_uid: str) -> StudyEpoch:
+    def find_by_uid(
+        self, uid: str, study_uid: str, study_value_version: str | None = None
+    ) -> StudyEpoch:
         repos = self._repos
         try:
-            study_epoch = self.repo.find_by_uid(uid=uid, study_uid=study_uid)
+            study_epoch = self.repo.find_by_uid(
+                uid=uid, study_uid=study_uid, study_value_version=study_value_version
+            )
             study_visits = self.visit_repo.find_all_visits_by_study_uid(study_uid)
             timeline = TimelineAR(study_uid, _visits=study_visits)
             visits = timeline.collect_visits_to_epochs(
-                self.repo.find_all_epochs_by_study(study_uid)
+                self.repo.find_all_epochs_by_study(
+                    study_uid, study_value_version=study_value_version
+                )
             )
 
             return self._transform_all_to_response_model(
@@ -262,7 +278,9 @@ class StudyEpochService:
             repos.close()
 
     def _validate_creation(self, epoch_input: StudyEpochCreateInput):
-        if epoch_input.epoch_subtype not in [i.name for i in StudyEpochSubType]:
+        if epoch_input.epoch_subtype not in [
+            i.name for i in StudyEpochSubType.values()
+        ]:
             raise exceptions.ValidationException(
                 "Invalid value for study epoch sub type"
             )
@@ -275,7 +293,7 @@ class StudyEpochService:
 
     def _validate_update(self, epoch_input: StudyEpochCreateInput):
         if epoch_input.epoch_subtype is not None and epoch_input.epoch_subtype not in [
-            i.name for i in StudyEpochSubType
+            i.name for i in StudyEpochSubType.values()
         ]:
             raise exceptions.ValidationException(
                 "Invalid value for study epoch sub type"
@@ -325,8 +343,10 @@ class StudyEpochService:
                     parent_uid=epoch.name,
                     relationship_type=TermParentType.PARENT_SUB_TYPE,
                 )
-                if epoch.name not in StudyEpochEpoch._member_map_:
-                    extend_enum(StudyEpochEpoch, epoch.name, epoch.value)
+                if epoch.name not in StudyEpochEpoch:
+                    StudyEpochEpoch[epoch.name] = EpochNamedTuple(
+                        epoch.name, epoch.value
+                    )
 
             except exceptions.ValidationException:
                 pass
@@ -399,16 +419,16 @@ class StudyEpochService:
                     relationship_type=TermParentType.PARENT_SUB_TYPE,
                 )
                 # adding newly created sponsor defined epoch term
-                if ct_term_name_ar.uid not in StudyEpochEpoch._member_map_:
-                    extend_enum(
-                        StudyEpochEpoch, ct_term_name_ar.uid, ct_term_name_ar.name
+                if ct_term_name_ar.uid not in StudyEpochEpoch:
+                    StudyEpochEpoch[ct_term_name_ar.uid] = EpochNamedTuple(
+                        ct_term_name_ar.uid, ct_term_name_ar.name
                     )
                 epoch = StudyEpochEpoch[ct_term_attributes_ar.uid]
         return epoch
 
     def _get_epoch_object(
         self,
-        epochs_in_subtype: Sequence[StudyEpochVO],
+        epochs_in_subtype: list[StudyEpochVO],
         subtype: StudyEpochSubType,
         after_create: bool = False,
     ):
@@ -524,25 +544,29 @@ class StudyEpochService:
 
     def _synchronize_epoch_orders(
         self,
-        epochs_to_synchronize: Sequence[StudyEpochVO],
-        all_epochs: Sequence[StudyEpochVO],
+        epochs_to_synchronize: list[StudyEpochVO],
+        all_epochs: list[StudyEpochVO],
         after_create: bool = False,
     ):
         """
         The following method synchronize the epochs order when some reorder/add/remove action was executed.
-        For instance we had the following sequence of study epochs that linked to the following epochs:
+        For instance, we had the following sequence of study epochs that linked to the following epochs:
         'Treatment 1', 'Treatment 2', 'Treatment 3' and the study epoch that corresponds to 'Treatment 2' was removed.
         In such case we should leave the study epoch connected to the epoch called 'Treatment 1' untouched but we should
         reconnect the Study Epoch that previously was referencing the 'Treatment 3' to 'Treatment 2'
         :param epochs_to_synchronize:
         :return:
         """
-        for epoch in epochs_to_synchronize:
+        for epoch in all_epochs:
             new_order_in_subtype = self._get_order_of_epoch_in_subtype(
                 study_epoch_uid=epoch.uid, all_epochs=epochs_to_synchronize
             )
-            if new_order_in_subtype != self._get_epoch_number_from_epoch_name(
-                epoch.epoch.value
+            # We want to update the epoch name only for these study epochs that are placed in the same subtype
+            # as given study epoch was modified
+            if (
+                epoch in epochs_to_synchronize
+                and new_order_in_subtype
+                != self._get_epoch_number_from_epoch_name(epoch.epoch.value)
             ):
                 # if we are creating a new epoch we need to add 1 to the total amount of epochs withing subtype
                 # as newly created epoch doesn't exist yet in epoch subtype
@@ -557,16 +581,16 @@ class StudyEpochService:
                     amount_of_epochs_in_subtype=amount_of_epochs_in_subtype,
                 )
                 epoch.epoch = new_epoch
-                new_order_in_all_apochs = self._get_order_of_epoch_in_subtype(
-                    study_epoch_uid=epoch.uid, all_epochs=all_epochs
-                )
-                if new_order_in_all_apochs != epoch.order:
-                    epoch.order = new_order_in_all_apochs
-                self.repo.save(epoch)
+            new_order_in_all_epochs = self._get_order_of_epoch_in_subtype(
+                study_epoch_uid=epoch.uid, all_epochs=all_epochs
+            )
+            if new_order_in_all_epochs != epoch.order:
+                epoch.order = new_order_in_all_epochs
+            self.repo.save(epoch)
 
     def _get_list_of_epochs_in_subtype(
-        self, all_epochs: Sequence[StudyEpochVO], epoch_subtype: str
-    ) -> Sequence[StudyEpochVO]:
+        self, all_epochs: list[StudyEpochVO], epoch_subtype: str
+    ) -> list[StudyEpochVO]:
         """
         Returns the list of all epochs within specific epoch sub type.
         :param all_epochs:
@@ -576,7 +600,7 @@ class StudyEpochService:
         return [epoch for epoch in all_epochs if epoch_subtype == epoch.subtype.name]
 
     def _get_order_of_epoch_in_subtype(
-        self, study_epoch_uid: str, all_epochs: Sequence[StudyEpochVO]
+        self, study_epoch_uid: str, all_epochs: list[StudyEpochVO]
     ) -> int:
         """
         Gets the order of the epoch in specific epoch subtype.
@@ -819,7 +843,7 @@ class StudyEpochService:
         self,
         epoch_uid: str,
         study_uid: str,
-    ) -> Sequence[StudyEpochVersion]:
+    ) -> list[StudyEpochVersion]:
         all_versions = self.repo.get_all_versions(uid=epoch_uid, study_uid=study_uid)
         study_visits = self.visit_repo.find_all_visits_by_study_uid(study_uid)
         timeline = TimelineAR(study_uid, _visits=study_visits)
@@ -838,7 +862,7 @@ class StudyEpochService:
     def audit_trail_all_epochs(
         self,
         study_uid: str,
-    ) -> Sequence[StudyEpochVersion]:
+    ) -> list[StudyEpochVersion]:
         study_epochs = self.repo.find_all_epochs_by_study(study_uid=study_uid)
 
         study_visits = self.visit_repo.find_all_visits_by_study_uid(study_uid)
@@ -862,8 +886,11 @@ class StudyEpochService:
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
+        study_value_version: str | None = None,
     ):
-        all_items = self.get_all_epochs(study_uid=study_uid)
+        all_items = self.get_all_epochs(
+            study_uid=study_uid, study_value_version=study_value_version
+        )
 
         header_values = service_level_generic_header_filtering(
             items=all_items.items,

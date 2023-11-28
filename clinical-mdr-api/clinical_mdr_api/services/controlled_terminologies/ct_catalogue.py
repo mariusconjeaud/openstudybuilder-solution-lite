@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Sequence
 
 from clinical_mdr_api import exceptions, models
 from clinical_mdr_api.domains._utils import normalize_string
@@ -32,7 +31,7 @@ class CTCatalogueService:
 
     def get_all_ct_catalogues(
         self, library_name: str | None
-    ) -> Sequence[models.CTCatalogue]:
+    ) -> list[models.CTCatalogue]:
         if (
             library_name is not None
             and not self._repos.library_repository.library_exists(

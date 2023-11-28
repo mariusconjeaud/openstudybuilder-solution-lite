@@ -1,5 +1,5 @@
 <template>
-<div class="px-4">
+<div class="px-4" v-if="selectedStudyVersion === null">
   <div class="page-title d-flex align-center">
     {{ $t('Sidebar.study.sdtm_study') }}
     <help-button :help-text="$t('_help.SdtmSpecificationTable.general')" />
@@ -28,17 +28,27 @@
     </v-tab-item>
   </v-tabs-items>
 </div>
+<div v-else>
+  <under-construction :message="$t('UnderConstruction.not_supported')"/>
+</div>
 </template>
 
 <script>
 import SdtmDesignTable from '@/components/studies/SdtmDesignTable'
 import HelpButton from '@/components/tools/HelpButton'
-import { mapActions } from 'vuex'
+import { mapActions, mapGetters } from 'vuex'
+import UnderConstruction from '@/components/layout/UnderConstruction'
 
 export default {
   components: {
     SdtmDesignTable,
-    HelpButton
+    HelpButton,
+    UnderConstruction
+  },
+  computed: {
+    ...mapGetters({
+      selectedStudyVersion: 'studiesGeneral/selectedStudyVersion'
+    })
   },
   data () {
     return {

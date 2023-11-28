@@ -4,6 +4,7 @@ from clinical_mdr_api.domain_repositories.simple_dictionaries._simple_terminolog
     SimpleTerminologyItemRepository,  # type: ignore
 )
 
+# pylint: disable=invalid-name
 DictionaryItemType = TypeVar("DictionaryItemType")
 
 

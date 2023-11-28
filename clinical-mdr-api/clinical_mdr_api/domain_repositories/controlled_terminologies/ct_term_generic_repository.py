@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Iterable, Sequence, cast
+from typing import Any, Iterable, cast
 
 from cachetools import cached
 from cachetools.keys import hashkey
@@ -143,7 +143,7 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
             return True
         return False
 
-    def get_term_name_and_attributes_by_codelist_uids(self, codelist_uids: list):
+    def get_term_name_and_attributes_by_codelist_uids(self, codelist_uids: list[Any]):
         query = """
             MATCH (codelist:CTCodelistRoot)-[:HAS_TERM]->(term_root:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]->(term_attr_root:CTTermAttributesRoot)-[:LATEST]->(term_attr_value:CTTermAttributesValue)
             MATCH (term_root)-[:HAS_NAME_ROOT]->(term_name_root:CTTermNameRoot)-[:LATEST]->(term_name_value:CTTermNameValue)
@@ -155,7 +155,7 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
 
         return items, prop_names
 
-    def get_term_attributes_by_term_uids(self, term_uids: list):
+    def get_term_attributes_by_term_uids(self, term_uids: list[Any]):
         query = """
             MATCH (term_root:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]->(term_attr_root:CTTermAttributesRoot)-[:LATEST]->(term_attr_value:CTTermAttributesValue)
             WHERE term_root.uid in $term_uids
@@ -257,7 +257,7 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
-    ) -> Sequence:
+    ) -> list[Any]:
         """
         Method runs a cypher query to fetch possible values for a given field_name, with a limit of result_count.
         It uses generic filtering capability, on top of filtering the field_name with provided search_string.
@@ -270,7 +270,7 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
         :param filter_by:
         :param filter_operator: Same as for generic filtering
         :param result_count: Max number of values to return. Default 10
-        :return Sequence:
+        :return list[Any]:
         """
         # Build match_clause
         match_clause, filter_query_parameters = self._generate_generic_match_clause(
@@ -351,13 +351,13 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
 
     def get_syntax_categories(
         self, root_class: type, syntax_uid: str
-    ) -> Sequence[_AggregateRootType] | None:
+    ) -> list[_AggregateRootType] | None:
         """
         This method returns the categories for the syntax with provided uid.
 
         :param root_class: The class of the root node for the syntax
         :param syntax_uid: UID of the syntax
-        :return Sequence[_AggregateRootType]:
+        :return list[_AggregateRootType] | None:
         """
         syntax = root_class.nodes.get(uid=syntax_uid)
         category_nodes = syntax.has_category.all()
@@ -366,18 +366,19 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
             for node in category_nodes:
                 category = self.find_by_uid(term_uid=node.uid)
                 categories.append(category)
-            return sorted(categories, key=lambda c: c.uid)
+            categories.sort(key=lambda c: c.uid)
+            return categories
         return None
 
     def get_syntax_subcategories(
         self, root_class: type, syntax_uid: str
-    ) -> Sequence[_AggregateRootType] | None:
+    ) -> list[_AggregateRootType] | None:
         """
         This method returns the sub_categories for the syntax with provided uid.
 
         :param root_class: The class of the root node for the syntax
         :param syntax_uid: UID of the syntax
-        :return Sequence[_AggregateRootType]:
+        :return list[_AggregateRootType] | None:
         """
         syntax = root_class.nodes.get(uid=syntax_uid)
         sub_category_nodes = syntax.has_subcategory.all()
@@ -386,7 +387,8 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
             for node in sub_category_nodes:
                 category = self.find_by_uid(term_uid=node.uid)
                 sub_categories.append(category)
-            return sorted(sub_categories, key=lambda c: c.uid)
+            sub_categories.sort(key=lambda c: c.uid)
+            return sub_categories
         return None
 
     def hashkey_ct_term(

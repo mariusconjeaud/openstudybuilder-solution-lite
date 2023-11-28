@@ -39,7 +39,7 @@ class EndpointTemplateRepository(GenericSyntaxTemplateRepository[EndpointTemplat
         relationship: VersionRelationship,
         value: EndpointTemplateValue,
         study_count: int = 0,
-        counts: InstantiationCountsVO = None,
+        counts: InstantiationCountsVO | None = None,
     ) -> EndpointTemplateAR:
         return EndpointTemplateAR.from_repository_values(
             uid=root.uid,

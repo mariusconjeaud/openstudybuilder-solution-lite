@@ -2,7 +2,7 @@
 <div class="px-4">
   <div class="page-title d-flex align-center">
     {{ $t('Sidebar.library.activities') }}
-    <help-button :help-text="$t('_help.ActivitiesTable.general')" />
+    <help-button-with-panels :help-text="$t('_help.ActivitiesTable.general')" :items="helpItems"/>
   </div>
   <v-tabs v-model="tab">
     <v-tab v-for="tab of tabs" :key="tab.tab" :href="tab.tab">{{ tab.name }}</v-tab>
@@ -14,7 +14,18 @@
     </v-tab-item>
     <v-tab-item id="activity-groups">
       <activities-table
-        source="activity-groups"/>
+        source="activity-groups"
+        />
+    </v-tab-item>
+    <v-tab-item id="activity-subgroups">
+      <activities-table
+        source="activity-sub-groups"
+        />
+    </v-tab-item>
+    <v-tab-item id="activities-by-grouping">
+      <activities-table
+        source="activities-by-grouping"
+        />
     </v-tab-item>
     <v-tab-item id="activity-instances">
       <activities-table
@@ -30,45 +41,54 @@
 
 <script>
 import ActivitiesTable from '@/components/library/ActivitiesTable'
-import HelpButton from '@/components/tools/HelpButton'
+import HelpButtonWithPanels from '@/components/tools/HelpButtonWithPanels'
 import { mapActions } from 'vuex'
 
 export default {
   components: {
     ActivitiesTable,
-    HelpButton
+    HelpButtonWithPanels
   },
   data () {
     return {
-      tab: 0,
+      tab: null,
       tabs: [
         { tab: '#activities', name: this.$t('ActivityTable.activities') },
-        { tab: '#activity-groups', name: this.$t('ActivityTable.activities_overview') },
+        { tab: '#activity-groups', name: this.$t('ActivityTable.activity_groups') },
+        { tab: '#activity-subgroups', name: this.$t('ActivityTable.activity_subgroups') },
+        { tab: '#activities-by-grouping', name: this.$t('ActivityTable.activities_overview') },
         { tab: '#activity-instances', name: this.$t('ActivityTable.instances') },
         { tab: '#requested-activities', name: this.$t('ActivityTable.requested') }
+      ],
+      helpItems: [
+        'ActivityTable.activities',
+        'ActivityTable.activity_groups',
+        'ActivityTable.activity_subgroups',
+        'ActivityTable.activities_overview',
+        'ActivityTable.instances',
+        'ActivityTable.requested',
+        'ActivityTable.activity_name',
+        'ActivityTable.sentence_case_name',
+        'ActivityTable.abbreviation',
+        'ActivityTable.definition',
+        'ActivityTable.nci_concept_id',
+        'ActivityTable.topic_code',
+        'ActivityTable.adam_code',
+        'ActivityTable.activity_group',
+        'ActivityTable.activity_subgroup',
+        'ActivityTable.is_data_collected',
+        'ActivityTable.activity',
+        'ActivityTable.instance',
+        'ActivityTable.is_required_for_activity',
+        'ActivityTable.is_default_selected_for_activity',
+        'ActivityTable.is_data_sharing',
+        'ActivityTable.is_legacy_usage',
+        'ActivityTable.rationale_for_request'
       ]
     }
   },
-  mounted () {
+  created () {
     this.tab = this.$route.params.tab
-    let tabName = this.tab ? this.tabs.find(el => el.tab.substring(1) === this.tab) : this.tabs[0].name
-    if (!tabName) {
-      tabName = this.tab ? this.tabs.find(el => el.name === this.tab).name : this.tabs[0].name
-    } else {
-      tabName = typeof tabName !== 'string' ? tabName.name : tabName
-    }
-    setTimeout(() => {
-      this.addBreadcrumbsLevel({
-        text: tabName,
-        to: { name: 'Activities', params: { tab: tabName } },
-        index: 3,
-        replace: true
-      })
-      this.addBreadcrumbsLevel({
-        index: 4,
-        replace: true
-      })
-    }, 100)
   },
   methods: {
     ...mapActions({
@@ -77,19 +97,15 @@ export default {
   },
   watch: {
     tab (newValue) {
+      const tab = newValue || this.tabs[0].tab
       this.$router.push({
         name: 'Activities',
-        params: { tab: newValue }
+        params: { tab }
       })
-      let tabName = newValue ? this.tabs.find(el => el.tab.substring(1) === newValue) : this.tabs[0].name
-      if (!tabName) {
-        tabName = newValue ? this.tabs.find(el => el.name === newValue).name : this.tabs[0].name
-      } else {
-        tabName = tabName.name
-      }
+      const tabName = this.tabs.find(el => el.tab.substring(1) === tab).name
       this.addBreadcrumbsLevel({
         text: tabName,
-        to: { name: 'Activities', params: { tab: tabName } },
+        to: { name: 'Activities', params: { tab } },
         index: 3,
         replace: true
       })

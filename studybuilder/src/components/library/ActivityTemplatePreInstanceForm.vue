@@ -5,11 +5,18 @@
   v-bind="$attrs"
   v-on="$listeners"
   >
-  <template v-slot:indexingTab="{ form, template }">
+  <template v-slot:indexingTab="{ form, template, preInstance }">
     <activity-template-indexing-form
+      v-if="template"
       ref="indexingForm"
       :form="form"
       :template="template"
+      />
+    <activity-template-indexing-form
+      v-else
+      ref="indexingForm"
+      :form="form"
+      :template="preInstance"
       />
   </template>
 </pre-instance-form>

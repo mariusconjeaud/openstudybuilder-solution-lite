@@ -25,10 +25,12 @@
             "method": "POST",
             "request": {
                 "name": "name99",
-                "name_sentence_case": "name_sentence_case99",
+                "name_sentence_case": "name99",
                 "definition": "definition99",
                 "library_name": "Sponsor",
-                "activity_groups": ["activity_group_root_non_existing"]
+                "activity_groups": [
+                    "activity_group_root_non_existing"
+                ]
             },
             "url": "/concepts/activities/activity-sub-groups"
         },
@@ -50,10 +52,12 @@
             "method": "POST",
             "request": {
                 "name": "name1",
-                "name_sentence_case": "name_sentence_case999",
+                "name_sentence_case": "name1",
                 "definition": "definition999",
                 "library_name": "Sponsor",
-                "activity_groups": ["activity_group_root1"]
+                "activity_groups": [
+                    "activity_group_root1"
+                ]
             },
             "url": "/concepts/activities/activity-sub-groups"
         },
@@ -75,7 +79,9 @@
             "method": "PATCH",
             "request": {
                 "change_description": "Test change",
-                "activity_groups": ["activity_group_root_non_existing"]
+                "activity_groups": [
+                    "activity_group_root_non_existing"
+                ]
             },
             "url": "/concepts/activities/activity-sub-groups/activity_subgroup_root1"
         },
@@ -97,6 +103,7 @@
             "method": "PATCH",
             "request": {
                 "name": "name1",
+                "name_sentence_case": "name1",
                 "change_description": "Test change"
             },
             "url": "/concepts/activities/activity-sub-groups/activity_subgroup_root2"

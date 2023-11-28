@@ -79,6 +79,14 @@ extend('duration', {
   message: i18n.t('_errors.duration_incomplete')
 })
 
+extend('sameAs', {
+  validate: (value, target) => {
+    // `target` gets automatically expanded into array of values using comma as separator, so we need to join it back
+    return value.toLowerCase() === [target].join(',').toLowerCase()
+  },
+  message: i18n.t('_errors.identical_name')
+})
+
 // Register components globally
 Vue.component('ValidationObserver', ValidationObserver)
 Vue.component('ValidationProvider', ValidationProvider)

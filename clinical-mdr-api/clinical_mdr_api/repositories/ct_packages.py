@@ -1,5 +1,3 @@
-from typing import Sequence
-
 from neomodel import db
 
 CODELIST_DATA_RETRIEVAL_SPECIFIC_QUERY = """
@@ -412,7 +410,7 @@ def get_package_changes_by_year():
     return output
 
 
-def update_modified_codelists(output: dict, all_codelists_in_package: Sequence[dict]):
+def update_modified_codelists(output: dict, all_codelists_in_package: list[dict]):
     """
     The following function adds codelists that contains some terms from the
     * new_terms

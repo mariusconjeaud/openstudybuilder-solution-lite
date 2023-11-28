@@ -1,6 +1,6 @@
 <template>
 <v-card>
-  <stepper-form
+  <horizontal-stepper-form
     ref="stepper"
     :title="title"
     :steps="steps"
@@ -8,7 +8,49 @@
     @save="submit"
     :form-observer-getter="getObserver"
     :help-items="helpItems"
+    :extra-step-validation="extraValidation"
     >
+    <template v-slot:step.activities="{ step }">
+      <validation-observer :ref="`observer_${step}`">
+        <validation-provider
+          v-slot="{ errors }"
+          rules="required"
+          >
+          <v-row>
+            <v-col cols="4">
+              <v-autocomplete
+                v-model="selectedActivity"
+                :items="activities"
+                :label="$t('ActivityForms.activity')"
+                item-text="name"
+                dense
+                clearable
+                :error-messages="errors"
+                class="mt-4"
+                return-object
+                @change="selectedGroupings = []"
+              />
+            </v-col>
+          </v-row>
+        </validation-provider>
+        <validation-provider>
+          <v-row>
+            <v-col>
+              <v-data-table
+                v-if="selectedActivity"
+                class="mb-3 pb-3"
+                hide-default-footer
+                show-select
+                v-model="selectedGroupings"
+                :headers="headers"
+                item-key="activity_subgroup_uid"
+                :items="selectedActivity.activity_groupings"/>
+            </v-col>
+          </v-row>
+        </validation-provider>
+      </validation-observer>
+    <v-spacer/>
+    </template>
     <template v-slot:step.type="{ step }">
       <validation-observer :ref="`observer_${step}`">
         <validation-provider
@@ -16,15 +58,16 @@
           rules="required"
           >
           <v-row>
-            <v-col>
+            <v-col cols="4">
               <v-select
                 v-model="form.activity_instance_class_uid"
                 :items="activityInstanceClasses"
-                :label="$t('ActivityForms.type')"
+                :label="$t('ActivityForms.instance_class')"
                 item-text="name"
                 item-value="uid"
                 dense
                 clearable
+                class="mt-4"
                 :error-messages="errors"
               />
             </v-col>
@@ -39,10 +82,10 @@
           rules="required"
           >
           <v-row>
-            <v-col>
+            <v-col cols="8">
               <v-text-field
                 v-model="form.name"
-                :label="$t('ActivityForms.name')"
+                :label="$t('ActivityForms.activity_ins_name')"
                 hide-details
                 class="mb-4"
                 :error-messages="errors"
@@ -50,72 +93,20 @@
             </v-col>
           </v-row>
         </validation-provider>
+        <v-row>
+          <v-col cols="8">
+            <sentence-case-name-field
+              :name="form.name"
+              :initial-name="form.name_sentence_case"
+              v-model="form.name_sentence_case"/>
+          </v-col>
+        </v-row>
         <validation-provider
           v-slot="{ errors }"
           rules="required"
           >
           <v-row>
-            <v-col>
-              <v-autocomplete
-                v-model="form.activity_groupings[0].activity_uid"
-                :items="activities"
-                :label="$t('ActivityForms.activity')"
-                item-text="name"
-                item-value="uid"
-                dense
-                clearable
-                :error-messages="errors"
-                class="pt-3"
-              />
-            </v-col>
-          </v-row>
-        </validation-provider>
-        <validation-provider
-        v-slot="{ errors }"
-        rules="required"
-        >
-        <v-row>
-          <v-col>
-            <v-autocomplete
-              :label="$t('ActivityForms.activity_group')"
-              :items="filteredGroups"
-              v-model="form.activity_groupings[0].activity_group_uid"
-              item-text="name"
-              item-value="uid"
-              :error-messages="errors"
-              dense
-              clearable
-              :disabled="form.activity_groupings[0].activity_uid ? false : true"
-              />
-          </v-col>
-        </v-row>
-      </validation-provider>
-        <validation-provider
-        v-slot="{ errors }"
-        rules="required"
-        >
-        <v-row>
-          <v-col>
-            <v-autocomplete
-              :label="$t('ActivityForms.activity_subgroup')"
-              :items="filteredSubGroups"
-              v-model="form.activity_groupings[0].activity_subgroup_uid"
-              item-text="name"
-              item-value="uid"
-              :error-messages="errors"
-              dense
-              clearable
-              :disabled="form.activity_groupings[0].activity_group_uid ? false : true"
-              />
-          </v-col>
-        </v-row>
-      </validation-provider>
-        <validation-provider
-          v-slot="{ errors }"
-          rules="required"
-          >
-          <v-row>
-            <v-col>
+            <v-col cols="8">
               <v-textarea
                 v-model="form.definition"
                 :label="$t('ActivityForms.definition')"
@@ -123,17 +114,27 @@
                 class="mb-4"
                 :error-messages="errors"
                 auto-grow
-                rows="1"
+                rows="2"
               />
             </v-col>
           </v-row>
         </validation-provider>
+        <v-row>
+          <v-col cols="8">
+            <v-text-field
+              :label="$t('ActivityTable.nci_concept_id')"
+              v-model="form.nci_concept_id"
+              dense
+              clearable
+              />
+          </v-col>
+        </v-row>
         <validation-provider
           v-slot="{ errors }"
           rules="required"
           >
           <v-row>
-            <v-col>
+            <v-col cols="8">
               <v-text-field
                 v-model="form.topic_code"
                 :label="$t('ActivityForms.topicCode')"
@@ -149,7 +150,7 @@
           rules="required"
           >
           <v-row>
-            <v-col>
+            <v-col cols="8">
               <v-text-field
                 v-model="form.adam_param_code"
                 :label="$t('ActivityForms.adamCode')"
@@ -160,45 +161,52 @@
             </v-col>
           </v-row>
         </validation-provider>
-        <validation-provider
-          v-slot="{ errors }"
-          rules="required"
-          >
-          <v-row>
-            <v-col>
-              <v-text-field
-                v-model="form.legacy_description"
-                :label="$t('ActivityForms.legacyDesc')"
-                hide-details
-                class="mb-4"
-                :error-messages="errors"
-              />
-            </v-col>
-          </v-row>
-        </validation-provider>
+        <v-row>
+          <v-col>
+            <v-checkbox
+              :label="$t('ActivityForms.is_required_for_activity')"
+              v-model="form.is_required_for_activity">
+            </v-checkbox>
+            <v-checkbox
+              :label="$t('ActivityForms.is_default_selected_for_activity')"
+              v-model="form.is_default_selected_for_activity">
+            </v-checkbox>
+          </v-col>
+          <v-col>
+            <v-checkbox
+              :label="$t('ActivityForms.is_data_sharing')"
+              v-model="form.is_data_sharing">
+            </v-checkbox>
+            <v-checkbox
+              :label="$t('ActivityForms.is_legacy_usage')"
+              v-model="form.is_legacy_usage">
+            </v-checkbox>
+          </v-col>
+        </v-row>
       </validation-observer>
     </template>
-  </stepper-form>
+  </horizontal-stepper-form>
   <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
 </v-card>
 </template>
 
 <script>
-import _isEmpty from 'lodash/isEmpty'
 import _isEqual from 'lodash/isEqual'
 import activityInstanceClasses from '@/api/activityInstanceClasses'
 import activities from '@/api/activities'
 import { bus } from '@/main'
 import ConfirmDialog from '@/components/tools/ConfirmDialog'
 import libraries from '@/constants/libraries'
-import StepperForm from '@/components/tools/StepperForm'
+import HorizontalStepperForm from '@/components/tools/HorizontalStepperForm'
+import SentenceCaseNameField from '@/components/tools/SentenceCaseNameField'
 
 const source = 'activity-instances'
 
 export default {
   components: {
     ConfirmDialog,
-    StepperForm
+    HorizontalStepperForm,
+    SentenceCaseNameField
   },
   props: {
     editedActivity: Object
@@ -235,22 +243,31 @@ export default {
   },
   data () {
     return {
-      form: {
-        activity_groupings: [{}]
-      },
+      form: { activity_groupings: [] },
       type: '',
       activities: [],
       activityInstanceClasses: [],
       steps: this.getInitialSteps(),
       helpItems: [
+        'ActivityFormsInstantiations.activities',
+        'ActivityFormsInstantiations.activity_group',
         'ActivityFormsInstantiations.select_type',
         'ActivityFormsInstantiations.name',
         'ActivityFormsInstantiations.definition',
-        'ActivityFormsInstantiations.activities',
+        'ActivityFormsInstantiations.nci_concept_id',
         'ActivityFormsInstantiations.topicCode',
         'ActivityFormsInstantiations.adamCode',
-        'ActivityFormsInstantiations.legacyDesc'
-      ]
+        'ActivityFormsInstantiations.is_required_for_activity',
+        'ActivityFormsInstantiations.is_default_selected_for_activity',
+        'ActivityFormsInstantiations.is_data_sharing',
+        'ActivityFormsInstantiations.is_legacy_usage'
+      ],
+      headers: [
+        { text: this.$t('ActivityFormsInstantiations.activity_group'), value: 'activity_group_name' },
+        { text: this.$t('ActivityFormsInstantiations.activity_subgroup'), value: 'activity_subgroup_name' }
+      ],
+      selectedActivity: null,
+      selectedGroupings: []
     }
   },
   methods: {
@@ -259,40 +276,36 @@ export default {
         name: value.name,
         activity_instance_class_uid: value.activity_instance_class.uid,
         name_sentence_case: value.name_sentence_case,
+        nci_concept_id: value.nci_concept_id,
         definition: value.definition,
         change_description: value.change_description,
         activity_sub_groups: value.activity_sub_groups,
         topic_code: value.topic_code,
         adam_param_code: value.adam_param_code,
-        legacy_description: value.legacy_description,
-        activity_groupings: [{}]
-      }
-      if (!_isEmpty(value)) {
-        const grouping = [{}]
-        if (value.activities) {
-          grouping[0].activity_name = value.activities[0].name
-          grouping[0].activity_uid = value.activities[0].uid
-        }
-        if (value.activity_group) {
-          grouping[0].activity_group_name = value.activity_group.name
-          grouping[0].activity_group_uid = value.activity_group.uid
-        }
-        if (value.activity_subgroup) {
-          grouping[0].activity_subgroup_name = value.activity_subgroup.name
-          grouping[0].activity_subgroup_uid = value.activity_subgroup.uid
-        }
-        this.$set(this.form, 'activity_groupings', grouping)
-      } else {
-        const grouping = [{}]
-        this.$set(this.form, 'activity_groupings', grouping)
+        is_required_for_activity: value.is_required_for_activity,
+        is_default_selected_for_activity: value.is_default_selected_for_activity,
+        is_data_sharing: value.is_data_sharing,
+        is_legacy_usage: value.is_legacy_usage,
+        activity_groupings: []
       }
       this.$store.commit('form/SET_FORM', this.form)
     },
     getInitialSteps () {
       return [
-        { name: 'type', title: this.$t('ActivityForms.select_type') },
+        { name: 'activities', title: this.$t('ActivityForms.select_activities') },
+        { name: 'type', title: this.$t('ActivityForms.select_class') },
         { name: 'basicData', title: this.$t('ActivityForms.addBasicData') }
       ]
+    },
+    async extraValidation (step) {
+      if (step !== 1) {
+        return true
+      }
+      if (this.selectedGroupings.length === 0) {
+        bus.$emit('notification', { msg: this.$t('ActivityForms.grouping_selection_info'), type: 'info' })
+        return false
+      }
+      return true
     },
     async cancel () {
       if (this.$store.getters['form/form'] === '' || _isEqual(this.$store.getters['form/form'], JSON.stringify(this.form))) {
@@ -310,24 +323,32 @@ export default {
     },
     close () {
       this.$emit('close')
-      this.form = { activity_groupings: [{}] }
+      this.form = { activity_groupings: [] }
+      this.selectedActivity = null
+      this.selectedGroupings = []
       this.$store.commit('form/CLEAR_FORM')
       this.$refs.stepper.reset()
       this.$refs.stepper.loading = false
     },
     async submit () {
       this.form.library_name = libraries.LIBRARY_SPONSOR
-      this.form.name_sentence_case = this.form.name.charAt(0).toUpperCase() + this.form.name.slice(1)
       this.form.activities = [this.form.activities]
+      this.selectedGroupings.forEach(grouping => {
+        this.form.activity_groupings.push({ activity_uid: this.selectedActivity.uid, activity_group_uid: grouping.activity_group_uid, activity_subgroup_uid: grouping.activity_subgroup_uid })
+      })
       if (!this.editedActivity) {
         activities.create(this.form, source).then(() => {
           bus.$emit('notification', { msg: this.$t('ActivityForms.activity_created') })
           this.close()
+        }, () => {
+          this.$refs.stepper.loading = false
         })
       } else {
         activities.update(this.editedActivity.uid, this.form, source).then(() => {
           bus.$emit('notification', { msg: this.$t('ActivityForms.activity_updated') })
           this.close()
+        }, () => {
+          this.$refs.stepper.loading = false
         })
       }
     },
@@ -338,6 +359,15 @@ export default {
       activities.get({ page_size: 0 }, 'activities').then(resp => {
         this.activities = resp.data.items
       })
+    },
+    setActivityGroupings () {
+      this.selectedActivity = this.activities.find(act => act.uid === this.editedActivity.activities[0].uid)
+      if (this.editedActivity.activity_groupings.length > 0) {
+        this.selectedGroupings = []
+        this.editedActivity.activity_groupings.forEach(grouping => {
+          this.selectedGroupings.push(this.selectedActivity.activity_groupings.find(group => (group.activity_group_uid === grouping.activity_group.uid && group.activity_subgroup_uid === grouping.activity_subgroup.uid)))
+        })
+      }
     }
   },
   mounted () {
@@ -350,10 +380,18 @@ export default {
     })
   },
   watch: {
+    activities (value) {
+      if (this.editedActivity) {
+        this.setActivityGroupings()
+      }
+    },
     editedActivity: {
       handler (value) {
         if (value) {
           this.initForm(value)
+        }
+        if (this.editedActivity && this.activities.length > 0) {
+          this.setActivityGroupings()
         }
       },
       immediate: true

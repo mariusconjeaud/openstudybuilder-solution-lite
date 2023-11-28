@@ -4,141 +4,139 @@
 - asyncache==0.3.1
 └── cachetools [required: >=5.2.0,<6.0.0, installed: 5.3.1]
 - Authlib==1.1.0
-└── cryptography [required: >=3.2, installed: 41.0.3]
-    └── cffi [required: >=1.12, installed: 1.15.1]
+└── cryptography [required: >=3.2, installed: 41.0.4]
+    └── cffi [required: >=1.12, installed: 1.16.0]
         └── pycparser [required: Any, installed: 2.21]
 - autopep8==1.7.0
 ├── pycodestyle [required: >=2.9.1, installed: 2.9.1]
 └── toml [required: Any, installed: 0.10.2]
 - beautifulsoup4==4.11.2
-└── soupsieve [required: >1.2, installed: 2.4.1]
+└── soupsieve [required: >1.2, installed: 2.5]
 - black==23.3.0
-├── click [required: >=8.0.0, installed: 8.1.6]
+├── click [required: >=8.0.0, installed: 8.1.7]
 ├── mypy-extensions [required: >=0.4.3, installed: 1.0.0]
-├── packaging [required: >=22.0, installed: 23.1]
+├── packaging [required: >=22.0, installed: 23.2]
 ├── pathspec [required: >=0.9.0, installed: 0.11.2]
-└── platformdirs [required: >=2, installed: 3.10.0]
-- Brotli==1.0.9
+└── platformdirs [required: >=2, installed: 3.11.0]
+- Brotli==1.1.0
 - colour==0.1.5
 - deepdiff==6.2.3
 ├── ordered-set [required: >=4.0.2,<4.2.0, installed: 4.1.0]
-└── orjson [required: Any, installed: 3.9.4]
+└── orjson [required: Any, installed: 3.9.9]
 - Deprecated==1.2.14
 └── wrapt [required: >=1.10,<2, installed: 1.15.0]
 - dict2xml==1.7.3
 - fastapi==0.92.0
-├── pydantic [required: >=1.6.2,<2.0.0,!=1.8.1,!=1.8,!=1.7.3,!=1.7.2,!=1.7.1,!=1.7, installed: 1.10.12]
-│   └── typing-extensions [required: >=4.2.0, installed: 4.7.1]
+├── pydantic [required: >=1.6.2,<2.0.0,!=1.8.1,!=1.8,!=1.7.3,!=1.7.2,!=1.7.1,!=1.7, installed: 1.10.13]
+│   └── typing-extensions [required: >=4.2.0, installed: 4.8.0]
 └── starlette [required: >=0.25.0,<0.26.0, installed: 0.25.0]
-    └── anyio [required: >=3.4.0,<5, installed: 3.7.1]
+    └── anyio [required: >=3.4.0,<5, installed: 4.0.0]
         ├── idna [required: >=2.8, installed: 3.4]
         └── sniffio [required: >=1.1, installed: 1.3.0]
 - flake8==5.0.4
 ├── mccabe [required: >=0.7.0,<0.8.0, installed: 0.7.0]
 ├── pycodestyle [required: >=2.9.0,<2.10.0, installed: 2.9.1]
 └── pyflakes [required: >=2.5.0,<2.6.0, installed: 2.5.0]
-- GitPython==3.1.32
+- GitPython==3.1.38
 └── gitdb [required: >=4.0.1,<5, installed: 4.0.10]
-    └── smmap [required: >=3.0.1,<6, installed: 5.0.0]
+    └── smmap [required: >=3.0.1,<6, installed: 5.0.1]
 - Jinja2==3.1.2
 └── MarkupSafe [required: >=2.0, installed: 2.1.3]
 - mypy==0.991
 ├── mypy-extensions [required: >=0.4.3, installed: 1.0.0]
-└── typing-extensions [required: >=3.10, installed: 4.7.1]
-- neomodel==5.1.0
-├── neo4j [required: ==5.10.0, installed: 5.10.0]
-│   └── pytz [required: Any, installed: 2023.3]
+└── typing-extensions [required: >=3.10, installed: 4.8.0]
+- neomodel==5.1.2
+├── neo4j [required: ==5.12.0, installed: 5.12.0]
+│   └── pytz [required: Any, installed: 2023.3.post1]
 ├── neobolt [required: ==1.7.17, installed: 1.7.17]
-├── pytz [required: >=2021.1, installed: 2023.3]
+├── pytz [required: >=2021.1, installed: 2023.3.post1]
 └── six [required: ==1.16.0, installed: 1.16.0]
-- opencensus-ext-azure==1.1.9
-├── azure-core [required: >=1.12.0,<2.0.0, installed: 1.29.1]
+- opencensus-ext-azure==1.1.11
+├── azure-core [required: >=1.12.0,<2.0.0, installed: 1.29.4]
 │   ├── requests [required: >=2.18.4, installed: 2.28.2]
 │   │   ├── certifi [required: >=2017.4.17, installed: 2023.7.22]
-│   │   ├── charset-normalizer [required: >=2,<4, installed: 3.2.0]
+│   │   ├── charset-normalizer [required: >=2,<4, installed: 3.3.0]
 │   │   ├── idna [required: >=2.5,<4, installed: 3.4]
-│   │   └── urllib3 [required: >=1.21.1,<1.27, installed: 1.26.16]
+│   │   └── urllib3 [required: >=1.21.1,<1.27, installed: 1.26.17]
 │   ├── six [required: >=1.11.0, installed: 1.16.0]
-│   └── typing-extensions [required: >=4.3.0, installed: 4.7.1]
-├── azure-identity [required: >=1.5.0,<2.0.0, installed: 1.14.0]
-│   ├── azure-core [required: >=1.11.0,<2.0.0, installed: 1.29.1]
+│   └── typing-extensions [required: >=4.6.0, installed: 4.8.0]
+├── azure-identity [required: >=1.5.0,<2.0.0, installed: 1.14.1]
+│   ├── azure-core [required: >=1.11.0,<2.0.0, installed: 1.29.4]
 │   │   ├── requests [required: >=2.18.4, installed: 2.28.2]
 │   │   │   ├── certifi [required: >=2017.4.17, installed: 2023.7.22]
-│   │   │   ├── charset-normalizer [required: >=2,<4, installed: 3.2.0]
+│   │   │   ├── charset-normalizer [required: >=2,<4, installed: 3.3.0]
 │   │   │   ├── idna [required: >=2.5,<4, installed: 3.4]
-│   │   │   └── urllib3 [required: >=1.21.1,<1.27, installed: 1.26.16]
+│   │   │   └── urllib3 [required: >=1.21.1,<1.27, installed: 1.26.17]
 │   │   ├── six [required: >=1.11.0, installed: 1.16.0]
-│   │   └── typing-extensions [required: >=4.3.0, installed: 4.7.1]
-│   ├── cryptography [required: >=2.5, installed: 41.0.3]
-│   │   └── cffi [required: >=1.12, installed: 1.15.1]
+│   │   └── typing-extensions [required: >=4.6.0, installed: 4.8.0]
+│   ├── cryptography [required: >=2.5, installed: 41.0.4]
+│   │   └── cffi [required: >=1.12, installed: 1.16.0]
 │   │       └── pycparser [required: Any, installed: 2.21]
-│   ├── msal [required: >=1.20.0,<2.0.0, installed: 1.23.0]
-│   │   ├── cryptography [required: >=0.6,<44, installed: 41.0.3]
-│   │   │   └── cffi [required: >=1.12, installed: 1.15.1]
+│   ├── msal [required: >=1.20.0,<2.0.0, installed: 1.24.1]
+│   │   ├── cryptography [required: >=0.6,<44, installed: 41.0.4]
+│   │   │   └── cffi [required: >=1.12, installed: 1.16.0]
 │   │   │       └── pycparser [required: Any, installed: 2.21]
 │   │   ├── PyJWT [required: >=1.0.0,<3, installed: 2.8.0]
 │   │   └── requests [required: >=2.0.0,<3, installed: 2.28.2]
 │   │       ├── certifi [required: >=2017.4.17, installed: 2023.7.22]
-│   │       ├── charset-normalizer [required: >=2,<4, installed: 3.2.0]
+│   │       ├── charset-normalizer [required: >=2,<4, installed: 3.3.0]
 │   │       ├── idna [required: >=2.5,<4, installed: 3.4]
-│   │       └── urllib3 [required: >=1.21.1,<1.27, installed: 1.26.16]
+│   │       └── urllib3 [required: >=1.21.1,<1.27, installed: 1.26.17]
 │   └── msal-extensions [required: >=0.3.0,<2.0.0, installed: 1.0.0]
-│       ├── msal [required: >=0.4.1,<2.0.0, installed: 1.23.0]
-│       │   ├── cryptography [required: >=0.6,<44, installed: 41.0.3]
-│       │   │   └── cffi [required: >=1.12, installed: 1.15.1]
+│       ├── msal [required: >=0.4.1,<2.0.0, installed: 1.24.1]
+│       │   ├── cryptography [required: >=0.6,<44, installed: 41.0.4]
+│       │   │   └── cffi [required: >=1.12, installed: 1.16.0]
 │       │   │       └── pycparser [required: Any, installed: 2.21]
 │       │   ├── PyJWT [required: >=1.0.0,<3, installed: 2.8.0]
 │       │   └── requests [required: >=2.0.0,<3, installed: 2.28.2]
 │       │       ├── certifi [required: >=2017.4.17, installed: 2023.7.22]
-│       │       ├── charset-normalizer [required: >=2,<4, installed: 3.2.0]
+│       │       ├── charset-normalizer [required: >=2,<4, installed: 3.3.0]
 │       │       ├── idna [required: >=2.5,<4, installed: 3.4]
-│       │       └── urllib3 [required: >=1.21.1,<1.27, installed: 1.26.16]
-│       └── portalocker [required: >=1.0,<3, installed: 2.7.0]
-├── opencensus [required: >=0.11.2,<1.0.0, installed: 0.11.2]
-│   ├── google-api-core [required: >=1.0.0,<3.0.0, installed: 2.11.1]
-│   │   ├── google-auth [required: >=2.14.1,<3.0.dev0, installed: 2.22.0]
+│       │       └── urllib3 [required: >=1.21.1,<1.27, installed: 1.26.17]
+│       └── portalocker [required: >=1.0,<3, installed: 2.8.2]
+├── opencensus [required: >=0.11.3,<1.0.0, installed: 0.11.3]
+│   ├── google-api-core [required: >=1.0.0,<3.0.0, installed: 2.12.0]
+│   │   ├── google-auth [required: >=2.14.1,<3.0.dev0, installed: 2.23.3]
 │   │   │   ├── cachetools [required: >=2.0.0,<6.0, installed: 5.3.1]
 │   │   │   ├── pyasn1-modules [required: >=0.2.1, installed: 0.3.0]
 │   │   │   │   └── pyasn1 [required: >=0.4.6,<0.6.0, installed: 0.5.0]
-│   │   │   ├── rsa [required: >=3.1.4,<5, installed: 4.9]
-│   │   │   │   └── pyasn1 [required: >=0.1.3, installed: 0.5.0]
-│   │   │   ├── six [required: >=1.9.0, installed: 1.16.0]
-│   │   │   └── urllib3 [required: <2.0, installed: 1.26.16]
-│   │   ├── googleapis-common-protos [required: >=1.56.2,<2.0.dev0, installed: 1.60.0]
-│   │   │   └── protobuf [required: >=3.19.5,<5.0.0.dev0,!=4.21.5,!=4.21.4,!=4.21.3,!=4.21.2,!=4.21.1,!=3.20.1,!=3.20.0, installed: 4.24.0]
-│   │   ├── protobuf [required: >=3.19.5,<5.0.0.dev0,!=4.21.5,!=4.21.4,!=4.21.3,!=4.21.2,!=4.21.1,!=4.21.0,!=3.20.1,!=3.20.0, installed: 4.24.0]
+│   │   │   └── rsa [required: >=3.1.4,<5, installed: 4.9]
+│   │   │       └── pyasn1 [required: >=0.1.3, installed: 0.5.0]
+│   │   ├── googleapis-common-protos [required: >=1.56.2,<2.0.dev0, installed: 1.61.0]
+│   │   │   └── protobuf [required: >=3.19.5,<5.0.0.dev0,!=4.21.5,!=4.21.4,!=4.21.3,!=4.21.2,!=4.21.1,!=3.20.1,!=3.20.0, installed: 4.24.4]
+│   │   ├── protobuf [required: >=3.19.5,<5.0.0.dev0,!=4.21.5,!=4.21.4,!=4.21.3,!=4.21.2,!=4.21.1,!=4.21.0,!=3.20.1,!=3.20.0, installed: 4.24.4]
 │   │   └── requests [required: >=2.18.0,<3.0.0.dev0, installed: 2.28.2]
 │   │       ├── certifi [required: >=2017.4.17, installed: 2023.7.22]
-│   │       ├── charset-normalizer [required: >=2,<4, installed: 3.2.0]
+│   │       ├── charset-normalizer [required: >=2,<4, installed: 3.3.0]
 │   │       ├── idna [required: >=2.5,<4, installed: 3.4]
-│   │       └── urllib3 [required: >=1.21.1,<1.27, installed: 1.26.16]
+│   │       └── urllib3 [required: >=1.21.1,<1.27, installed: 1.26.17]
 │   └── opencensus-context [required: >=0.1.3, installed: 0.1.3]
-├── psutil [required: >=5.6.3, installed: 5.9.5]
+├── psutil [required: >=5.6.3, installed: 5.9.6]
 └── requests [required: >=2.19.0, installed: 2.28.2]
     ├── certifi [required: >=2017.4.17, installed: 2023.7.22]
-    ├── charset-normalizer [required: >=2,<4, installed: 3.2.0]
+    ├── charset-normalizer [required: >=2,<4, installed: 3.3.0]
     ├── idna [required: >=2.5,<4, installed: 3.4]
-    └── urllib3 [required: >=1.21.1,<1.27, installed: 1.26.16]
+    └── urllib3 [required: >=1.21.1,<1.27, installed: 1.26.17]
 - openpyxl==3.0.10
 └── et-xmlfile [required: Any, installed: 1.1.0]
 - parameterized==0.8.1
 - pbr==5.10.0
 - pep8==1.7.1
-- pylint==2.17.5
-├── astroid [required: >=2.15.6,<=2.17.0-dev0, installed: 2.15.6]
+- pylint==2.17.7
+├── astroid [required: >=2.15.8,<=2.17.0-dev0, installed: 2.15.8]
 │   ├── lazy-object-proxy [required: >=1.4.0, installed: 1.9.0]
 │   └── wrapt [required: >=1.14,<2, installed: 1.15.0]
 ├── dill [required: >=0.3.6, installed: 0.3.7]
 ├── isort [required: >=4.2.5,<6, installed: 5.11.5]
 ├── mccabe [required: >=0.6,<0.8, installed: 0.7.0]
-├── platformdirs [required: >=2.2.0, installed: 3.10.0]
+├── platformdirs [required: >=2.2.0, installed: 3.11.0]
 └── tomlkit [required: >=0.10.1, installed: 0.12.1]
 - pytest-asyncio==0.19.0
 └── pytest [required: >=6.1.0, installed: 7.1.3]
     ├── attrs [required: >=19.2.0, installed: 23.1.0]
     ├── iniconfig [required: Any, installed: 2.0.0]
-    ├── packaging [required: Any, installed: 23.1]
-    ├── pluggy [required: >=0.12,<2.0, installed: 1.2.0]
+    ├── packaging [required: Any, installed: 23.2]
+    ├── pluggy [required: >=0.12,<2.0, installed: 1.3.0]
     ├── py [required: >=1.8.2, installed: 1.11.0]
     └── tomli [required: >=1.0.0, installed: 2.0.1]
 - pytest-bdd==6.0.1
@@ -153,17 +151,17 @@
 └── pytest [required: >=5.0, installed: 7.1.3]
     ├── attrs [required: >=19.2.0, installed: 23.1.0]
     ├── iniconfig [required: Any, installed: 2.0.0]
-    ├── packaging [required: Any, installed: 23.1]
-    ├── pluggy [required: >=0.12,<2.0, installed: 1.2.0]
+    ├── packaging [required: Any, installed: 23.2]
+    ├── pluggy [required: >=0.12,<2.0, installed: 1.3.0]
     ├── py [required: >=1.8.2, installed: 1.11.0]
     └── tomli [required: >=1.0.0, installed: 2.0.1]
 - pytest-cov==3.0.0
-├── coverage [required: >=5.2.1, installed: 7.2.7]
+├── coverage [required: >=5.2.1, installed: 7.3.2]
 └── pytest [required: >=4.6, installed: 7.1.3]
     ├── attrs [required: >=19.2.0, installed: 23.1.0]
     ├── iniconfig [required: Any, installed: 2.0.0]
-    ├── packaging [required: Any, installed: 23.1]
-    ├── pluggy [required: >=0.12,<2.0, installed: 1.2.0]
+    ├── packaging [required: Any, installed: 23.2]
+    ├── pluggy [required: >=0.12,<2.0, installed: 1.3.0]
     ├── py [required: >=1.8.2, installed: 1.11.0]
     └── tomli [required: >=1.0.0, installed: 2.0.1]
 - pytest-xdist==2.5.0
@@ -171,8 +169,8 @@
 ├── pytest [required: >=6.2.0, installed: 7.1.3]
 │   ├── attrs [required: >=19.2.0, installed: 23.1.0]
 │   ├── iniconfig [required: Any, installed: 2.0.0]
-│   ├── packaging [required: Any, installed: 23.1]
-│   ├── pluggy [required: >=0.12,<2.0, installed: 1.2.0]
+│   ├── packaging [required: Any, installed: 23.2]
+│   ├── pluggy [required: >=0.12,<2.0, installed: 1.3.0]
 │   ├── py [required: >=1.8.2, installed: 1.11.0]
 │   └── tomli [required: >=1.0.0, installed: 2.0.1]
 └── pytest-forked [required: Any, installed: 1.4.0]
@@ -180,8 +178,8 @@
     └── pytest [required: >=3.10, installed: 7.1.3]
         ├── attrs [required: >=19.2.0, installed: 23.1.0]
         ├── iniconfig [required: Any, installed: 2.0.0]
-        ├── packaging [required: Any, installed: 23.1]
-        ├── pluggy [required: >=0.12,<2.0, installed: 1.2.0]
+        ├── packaging [required: Any, installed: 23.2]
+        ├── pluggy [required: >=0.12,<2.0, installed: 1.3.0]
         ├── py [required: >=1.8.2, installed: 1.11.0]
         └── tomli [required: >=1.0.0, installed: 2.0.1]
 - python-dateutil==2.8.2
@@ -196,23 +194,23 @@
     └── pyasn1 [required: >=0.1.3, installed: 0.5.0]
 - python-multipart==0.0.6
 - rope==1.3.0
-└── pytoolconfig [required: >=1.1.2, installed: 1.2.5]
-    └── packaging [required: >=22.0, installed: 23.1]
+└── pytoolconfig [required: >=1.1.2, installed: 1.2.6]
+    └── packaging [required: >=22.0, installed: 23.2]
 - schemathesis==3.17.5
 ├── attrs [required: >=22.1.0,<23.0.0, installed: 23.1.0]
 ├── backoff [required: >=2.1.2,<3.0.0, installed: 2.2.1]
-├── click [required: >=7.0,<9.0, installed: 8.1.6]
+├── click [required: >=7.0,<9.0, installed: 8.1.7]
 ├── colorama [required: >=0.4,<0.5, installed: 0.4.6]
 ├── curlify [required: >=2.2.1,<3.0.0, installed: 2.2.1]
 │   └── requests [required: Any, installed: 2.28.2]
 │       ├── certifi [required: >=2017.4.17, installed: 2023.7.22]
-│       ├── charset-normalizer [required: >=2,<4, installed: 3.2.0]
+│       ├── charset-normalizer [required: >=2,<4, installed: 3.3.0]
 │       ├── idna [required: >=2.5,<4, installed: 3.4]
-│       └── urllib3 [required: >=1.21.1,<1.27, installed: 1.26.16]
+│       └── urllib3 [required: >=1.21.1,<1.27, installed: 1.26.17]
 ├── httpx [required: >=0.22.0, installed: 0.23.3]
 │   ├── certifi [required: Any, installed: 2023.7.22]
 │   ├── httpcore [required: >=0.15.0,<0.17.0, installed: 0.16.3]
-│   │   ├── anyio [required: >=3.0,<5.0, installed: 3.7.1]
+│   │   ├── anyio [required: >=3.0,<5.0, installed: 4.0.0]
 │   │   │   ├── idna [required: >=2.8, installed: 3.4]
 │   │   │   └── sniffio [required: >=1.1, installed: 1.3.0]
 │   │   ├── certifi [required: Any, installed: 2023.7.22]
@@ -244,31 +242,31 @@
 ├── pytest [required: >4.6.4,<8, installed: 7.1.3]
 │   ├── attrs [required: >=19.2.0, installed: 23.1.0]
 │   ├── iniconfig [required: Any, installed: 2.0.0]
-│   ├── packaging [required: Any, installed: 23.1]
-│   ├── pluggy [required: >=0.12,<2.0, installed: 1.2.0]
+│   ├── packaging [required: Any, installed: 23.2]
+│   ├── pluggy [required: >=0.12,<2.0, installed: 1.3.0]
 │   ├── py [required: >=1.8.2, installed: 1.11.0]
 │   └── tomli [required: >=1.0.0, installed: 2.0.1]
 ├── pytest-subtests [required: >=0.2.1,<0.8.0, installed: 0.7.0]
 │   └── pytest [required: >=7.0, installed: 7.1.3]
 │       ├── attrs [required: >=19.2.0, installed: 23.1.0]
 │       ├── iniconfig [required: Any, installed: 2.0.0]
-│       ├── packaging [required: Any, installed: 23.1]
-│       ├── pluggy [required: >=0.12,<2.0, installed: 1.2.0]
+│       ├── packaging [required: Any, installed: 23.2]
+│       ├── pluggy [required: >=0.12,<2.0, installed: 1.3.0]
 │       ├── py [required: >=1.8.2, installed: 1.11.0]
 │       └── tomli [required: >=1.0.0, installed: 2.0.1]
 ├── PyYAML [required: >=5.1,<7.0, installed: 6.0.1]
 ├── requests [required: >=2.22,<=2.28.1, installed: 2.28.2]
 │   ├── certifi [required: >=2017.4.17, installed: 2023.7.22]
-│   ├── charset-normalizer [required: >=2,<4, installed: 3.2.0]
+│   ├── charset-normalizer [required: >=2,<4, installed: 3.3.0]
 │   ├── idna [required: >=2.5,<4, installed: 3.4]
-│   └── urllib3 [required: >=1.21.1,<1.27, installed: 1.26.16]
+│   └── urllib3 [required: >=1.21.1,<1.27, installed: 1.26.17]
 ├── starlette [required: >=0.13,<1, installed: 0.25.0]
-│   └── anyio [required: >=3.4.0,<5, installed: 3.7.1]
+│   └── anyio [required: >=3.4.0,<5, installed: 4.0.0]
 │       ├── idna [required: >=2.8, installed: 3.4]
 │       └── sniffio [required: >=1.1, installed: 1.3.0]
 ├── tomli [required: >=2.0.1,<3.0.0, installed: 2.0.1]
 ├── tomli-w [required: >=1.0.0,<2.0.0, installed: 1.0.0]
-├── typing-extensions [required: >=3.7,<5, installed: 4.7.1]
+├── typing-extensions [required: >=3.7,<5, installed: 4.8.0]
 ├── werkzeug [required: >=0.16.0,<=2.2.2, installed: 2.2.2]
 │   └── MarkupSafe [required: >=2.1.1, installed: 2.1.3]
 └── yarl [required: >=1.5,<2.0, installed: 1.9.2]
@@ -276,32 +274,32 @@
     └── multidict [required: >=4.0, installed: 6.0.4]
 - starlette-context==0.3.4
 └── starlette [required: Any, installed: 0.25.0]
-    └── anyio [required: >=3.4.0,<5, installed: 3.7.1]
+    └── anyio [required: >=3.4.0,<5, installed: 4.0.0]
         ├── idna [required: >=2.8, installed: 3.4]
         └── sniffio [required: >=1.1, installed: 1.3.0]
 - uvicorn==0.17.6
 ├── asgiref [required: >=3.4.0, installed: 3.7.2]
-├── click [required: >=7.0, installed: 8.1.6]
+├── click [required: >=7.0, installed: 8.1.7]
 └── h11 [required: >=0.8, installed: 0.14.0]
 - weasyprint==57.2
-├── cffi [required: >=0.6, installed: 1.15.1]
+├── cffi [required: >=0.6, installed: 1.16.0]
 │   └── pycparser [required: Any, installed: 2.21]
 ├── cssselect2 [required: >=0.1, installed: 0.7.0]
 │   ├── tinycss2 [required: Any, installed: 1.2.1]
 │   │   └── webencodings [required: >=0.4, installed: 0.5.1]
 │   └── webencodings [required: Any, installed: 0.5.1]
-├── fonttools [required: >=4.0.0, installed: 4.42.0]
+├── fonttools [required: >=4.0.0, installed: 4.43.1]
 ├── html5lib [required: >=1.1, installed: 1.1]
 │   ├── six [required: >=1.9, installed: 1.16.0]
 │   └── webencodings [required: Any, installed: 0.5.1]
 ├── Pillow [required: >=9.1.0, installed: 9.3.0]
-├── pydyf [required: >=0.5.0, installed: 0.7.0]
+├── pydyf [required: >=0.5.0, installed: 0.8.0]
 ├── Pyphen [required: >=0.9.1, installed: 0.14.0]
 └── tinycss2 [required: >=1.0.0, installed: 1.2.1]
     └── webencodings [required: >=0.4, installed: 0.5.1]
 - xsdata==22.9
 - yattag==1.14.0
-- zopfli==0.2.2
+- zopfli==0.2.3
 
 
 ## Third-party package licenses
@@ -2444,33 +2442,32 @@ in the distribution package.
 Copyright (C) 2008, 2009 Michael Trier and contributors
 All rights reserved.
 
-Redistribution and use in source and binary forms, with or without 
-modification, are permitted provided that the following conditions 
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
 are met:
 
-* Redistributions of source code must retain the above copyright 
+* Redistributions of source code must retain the above copyright
 notice, this list of conditions and the following disclaimer.
 
-* Redistributions in binary form must reproduce the above copyright 
-notice, this list of conditions and the following disclaimer in the 
+* Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
 documentation and/or other materials provided with the distribution.
 
-* Neither the name of the GitPython project nor the names of 
-its contributors may be used to endorse or promote products derived 
+* Neither the name of the GitPython project nor the names of
+its contributors may be used to endorse or promote products derived
 from this software without specific prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
-"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR 
-A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT 
-OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
-SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED 
-TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR 
-PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
-LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING 
-NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 
 
 ---

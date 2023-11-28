@@ -170,14 +170,6 @@ const routes = [
     }
   },
   {
-    path: '/library/activities/:tab?',
-    name: 'Activities',
-    component: () => import('../views/library/Activities.vue'),
-    meta: {
-      authRequired: true
-    }
-  },
-  {
     path: '/library/activities/activities/:id/overview',
     name: 'ActivityOverview',
     component: () => import('../views/library/ActivityOverview.vue'),
@@ -189,6 +181,14 @@ const routes = [
     path: '/library/activities/activity-instances/:id/overview',
     name: 'ActivityInstanceOverview',
     component: () => import('../views/library/ActivityInstanceOverview.vue'),
+    meta: {
+      authRequired: true
+    }
+  },
+  {
+    path: '/library/activities/:tab?',
+    name: 'Activities',
+    component: () => import('../views/library/Activities.vue'),
     meta: {
       authRequired: true
     }
@@ -751,6 +751,54 @@ const routes = [
     component: () => import('../views/studies/ProtocolProcess.vue')
   },
   {
+    path: '/studies/:study_id/study_structure/arms/:id/overview',
+    name: 'StudyArmOverview',
+    component: () => import('../components/studies/overviews/StudyArmOverview.vue'),
+    meta: {
+      authRequired: true
+    }
+  },
+  {
+    path: '/studies/:study_id/study_structure/branches/:id/overview',
+    name: 'StudyBranchArmOverview',
+    component: () => import('../components/studies/overviews/StudyBranchArmOverview.vue'),
+    meta: {
+      authRequired: true
+    }
+  },
+  {
+    path: '/studies/:study_id/study_structure/cohorts/:id/overview',
+    name: 'StudyCohortOverview',
+    component: () => import('../components/studies/overviews/StudyCohortOverview.vue'),
+    meta: {
+      authRequired: true
+    }
+  },
+  {
+    path: '/studies/:study_id/study_structure/epochs/:id/overview',
+    name: 'StudyEpochOverview',
+    component: () => import('../components/studies/overviews/StudyEpochOverview.vue'),
+    meta: {
+      authRequired: true
+    }
+  },
+  {
+    path: '/studies/:study_id/study_structure/elements/:id/overview',
+    name: 'StudyElementOverview',
+    component: () => import('../components/studies/overviews/StudyElementOverview.vue'),
+    meta: {
+      authRequired: true
+    }
+  },
+  {
+    path: '/studies/:study_id/study_structure/visits/:id/overview',
+    name: 'StudyVisitOverview',
+    component: () => import('../components/studies/overviews/StudyVisitOverview.vue'),
+    meta: {
+      authRequired: true
+    }
+  },
+  {
     path: '/',
     name: 'Home',
     component: Home,
@@ -822,14 +870,24 @@ router.beforeEach(async (to, from, next) => {
     await saveStudyUid(to.params.study_id)
   }
 
-  if (Vue.prototype.$config.AUTH_ENABLED === '1' && to.matched.some(record => record.meta.authRequired)) {
+  if (Vue.prototype.$config.OAUTH_ENABLED && to.matched.some(record => record.meta.authRequired)) {
     Vue.prototype.$auth.validateAccess(to, from, next)
-  } else {
-    next()
+  }
+
+  next()
+})
+
+router.onError(error => {
+  // In case of 'Loading chunk x failed' error, reload the page once
+  if (/loading chunk \d* failed./i.test(error.message)) {
+    if (window.location.hash !== 'reloaded') {
+      window.location.hash = 'reloaded'
+      window.location.reload()
+    }
   }
 })
 
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   if (to.matched.some(record => record.meta.documentation)) {
     let urlPath = `${to.meta.documentation.page}`
     if (to.meta.documentation.anchor) {

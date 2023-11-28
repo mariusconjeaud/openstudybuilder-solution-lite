@@ -23,6 +23,7 @@
       color="primary"
       @click="openBatchForm()"
       :title="$t('StudyActivityInstructionTable.open_batch_form')"
+      :disabled="!checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
       >
       <v-icon>
         mdi-plus-box-multiple-outline
@@ -83,6 +84,7 @@
                         on-icon="mdi-checkbox-multiple-marked-outline"
                         off-icon="mdi-checkbox-multiple-blank-outline"
                         hide-details
+                        :disabled="!checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
                         />
                       {{ subgroup }}
                     </div>
@@ -97,6 +99,7 @@
                           hide-details
                           @change="value => toggleActivitySelection(studyActivity, value)"
                           :value="currentSelection.findIndex(item => item.study_activity_uid === studyActivity.study_activity_uid) !== -1"
+                          :disabled="!checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
                           />
                         {{ studyActivity.activity.name }}
                       </div>
@@ -167,8 +170,10 @@ import study from '@/api/study'
 import StudyActivityInstructionBatchForm from './StudyActivityInstructionBatchForm'
 import StudyActivityInstructionBatchEditForm from './StudyActivityInstructionBatchEditForm'
 import studyEpochs from '@/api/studyEpochs'
+import { accessGuard } from '@/mixins/accessRoleVerifier'
 
 export default {
+  mixins: [accessGuard],
   components: {
     ActionsMenu,
     ConfirmDialog,
@@ -179,6 +184,7 @@ export default {
   computed: {
     ...mapGetters({
       selectedStudy: 'studiesGeneral/selectedStudy',
+      selectedStudyVersion: 'studiesGeneral/selectedStudyVersion',
       sortedStudyActivities: 'studyActivities/sortedStudyActivities'
     })
   },
@@ -223,7 +229,10 @@ export default {
     },
     async getInstructionsPerActivity () {
       this.instructionsPerStudyActivity = {}
-      const resp = await study.getStudyActivityInstructions(this.selectedStudy.uid)
+      const params = {
+        study_value_version: this.selectedStudyVersion
+      }
+      const resp = await study.getStudyActivityInstructions(this.selectedStudy.uid, params)
       for (const instruction of resp.data) {
         this.$set(this.instructionsPerStudyActivity, instruction.study_activity_uid, instruction)
       }
@@ -236,8 +245,11 @@ export default {
       return ''
     },
     async getVisitsPerActivity () {
-      const resp = await studyEpochs.getStudyVisits(this.selectedStudy.uid, { page_size: 0 })
-      const schedules = await study.getStudyActivitySchedules(this.selectedStudy.uid)
+      const resp = await studyEpochs.getStudyVisits(this.selectedStudy.uid, { page_size: 0, study_value_version: this.selectedStudyVersion })
+      const activityScheduleParams = {
+        study_value_version: this.selectedStudyVersion
+      }
+      const schedules = await study.getStudyActivitySchedules(this.selectedStudy.uid, activityScheduleParams)
       const visitNamePerUid = {}
 
       for (const visit of resp.data.items) {
@@ -352,7 +364,7 @@ export default {
     }
   },
   async mounted () {
-    await this.$store.dispatch('studyActivities/fetchStudyActivities', { studyUid: this.selectedStudy.uid })
+    await this.$store.dispatch('studyActivities/fetchStudyActivities', { studyUid: this.selectedStudy.uid, study_value_version: this.selectedStudyVersion })
     this.getVisitsPerActivity()
     this.getInstructionsPerActivity()
   }
@@ -404,7 +416,7 @@ th, td {
   padding-left: 20px;
 }
 .text-vertical {
-  writing-mode: vertical-rl;
+  writing-mode: sideways-lr;
   text-orientation: mixed;
 }
 .text-strong {

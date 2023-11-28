@@ -157,11 +157,27 @@ class ApiBinding:
         if len(missing) > 0:
             self.log.warning(f"Missing optional CT packages: {','.join(missing)}.")
 
-    def simple_post_to_api(self, path, body, simple_path=None):
+    def simple_delete(self, path, simple_path=None):
+        if simple_path is None:
+            simple_path = path
+        response = requests.delete(
+            path_join(self.api_base_url, path), headers=self.api_headers
+        )
+        if response.ok:
+            self.metrics.icrement(simple_path + "--DELETE")
+            self.log.debug("DELETE %s %s", path, "success")
+            return True
+        else:
+            self.log.debug("DELETE %s", path)
+            self.log.warning(response.text)
+            self.metrics.icrement(simple_path + "--ERROR")
+            return False
+
+    def simple_post_to_api(self, path, body, simple_path=None, params=None):
         if simple_path is None:
             simple_path = path
         response = requests.post(
-            path_join(self.api_base_url, path), headers=self.api_headers, json=body
+            path_join(self.api_base_url, path), headers=self.api_headers, json=body, params=params
         )
         if response.ok:
             self.metrics.icrement(simple_path + "--POST")

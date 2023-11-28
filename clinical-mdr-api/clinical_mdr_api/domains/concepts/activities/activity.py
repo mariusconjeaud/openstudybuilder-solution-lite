@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable, List, Self
+from typing import Callable, Self
 
 from clinical_mdr_api.domains.concepts.concept_base import (
     ConceptARBase,
@@ -25,22 +25,27 @@ class ActivityVO(ConceptVO):
     The ActivityVO acts as the value object for a single Activity aggregate
     """
 
-    activity_groupings: List[ActivityGroupingVO]
+    nci_concept_id: str | None
+    activity_groupings: list[ActivityGroupingVO]
     request_rationale: str | None
     replaced_by_activity: str | None
+    is_data_collected: bool = False
 
     @classmethod
     def from_repository_values(
         cls,
+        nci_concept_id: str | None,
         name: str,
         name_sentence_case: str | None,
         definition: str | None,
         abbreviation: str | None,
-        activity_groupings: List[ActivityGroupingVO],
+        activity_groupings: list[ActivityGroupingVO],
         request_rationale: str | None,
         replaced_by_activity: str | None = None,
+        is_data_collected: bool = False,
     ) -> Self:
         activity_vo = cls(
+            nci_concept_id=nci_concept_id,
             name=name,
             name_sentence_case=name_sentence_case,
             definition=definition,
@@ -49,18 +54,21 @@ class ActivityVO(ConceptVO):
             activity_groupings=activity_groupings,
             request_rationale=request_rationale,
             replaced_by_activity=replaced_by_activity,
+            is_data_collected=is_data_collected,
         )
 
         return activity_vo
 
     def validate(
         self,
-        activity_exists_by_name_callback: Callable[[str], bool],
+        activity_exists_by_name_callback: Callable[[str, str], bool],
         activity_subgroup_exists: Callable[[str], bool],
         activity_group_exists: Callable[[str], bool],
         previous_name: str | None = None,
+        library_name: str | None = None,
     ) -> None:
-        ex = activity_exists_by_name_callback(self.name)
+        self.validate_name_sentence_case()
+        ex = activity_exists_by_name_callback(library_name, self.name)
         if ex and previous_name != self.name:
             raise BusinessLogicException(
                 f"Activity with ['name: {self.name}'] already exists."
@@ -100,7 +108,9 @@ class ActivityAR(ConceptARBase):
         concept_exists_by_callback: Callable[
             [str, str, bool], bool
         ] = lambda x, y, z: True,
-        concept_exists_by_name_callback: Callable[[str], bool] = lambda _: True,
+        concept_exists_by_library_and_name_callback: Callable[
+            [str, str], bool
+        ] = lambda _: True,
         activity_subgroup_exists: Callable[[str], bool] = lambda _: False,
         activity_group_exists: Callable[[str], bool] = lambda _: False,
     ) -> Self:
@@ -111,9 +121,10 @@ class ActivityAR(ConceptARBase):
                 f"The library with the name='{library.name}' does not allow to create objects."
             )
         concept_vo.validate(
-            activity_exists_by_name_callback=concept_exists_by_name_callback,
+            activity_exists_by_name_callback=concept_exists_by_library_and_name_callback,
             activity_subgroup_exists=activity_subgroup_exists,
             activity_group_exists=activity_group_exists,
+            library_name=library.name,
         )
 
         activity_ar = cls(
@@ -132,18 +143,21 @@ class ActivityAR(ConceptARBase):
         concept_exists_by_callback: Callable[
             [str, str, bool], bool
         ] = lambda x, y, z: True,
-        concept_exists_by_name_callback: Callable[[str], bool] = lambda x, y, z: True,
-        activity_subgroup_exists: Callable[[str], bool] = None,
+        concept_exists_by_library_and_name_callback: Callable[
+            [str, str], bool
+        ] = lambda x, y, z: True,
+        activity_subgroup_exists: Callable[[str], bool] | None = None,
         activity_group_exists: Callable[[str], bool] = lambda _: False,
     ) -> None:
         """
         Creates a new draft version for the object.
         """
         concept_vo.validate(
-            activity_exists_by_name_callback=concept_exists_by_name_callback,
+            activity_exists_by_name_callback=concept_exists_by_library_and_name_callback,
             activity_subgroup_exists=activity_subgroup_exists,
             activity_group_exists=activity_group_exists,
             previous_name=self.name,
+            library_name=self.library.name,
         )
         if self._concept_vo != concept_vo:
             super()._edit_draft(change_description=change_description, author=author)

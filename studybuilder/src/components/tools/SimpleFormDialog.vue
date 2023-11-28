@@ -104,6 +104,7 @@ export default {
       navigator.clipboard.writeText(this.formUrl)
     },
     cancel () {
+      this.working = false
       this.$emit('close')
     },
     disableActions () {
@@ -115,8 +116,20 @@ export default {
     async confirm (message, options) {
       return await this.$refs.confirm.open(message, options)
     },
-    submit () {
+    async submit () {
+      if (this.$parent.$refs?.observer) {
+        const valid = await this.$parent.$refs.observer.validate()
+        if (!valid) {
+          return
+        }
+      }
+      this.working = true
       this.$emit('submit')
+    }
+  },
+  watch: {
+    open (val) {
+      this.working = false
     }
   }
 }

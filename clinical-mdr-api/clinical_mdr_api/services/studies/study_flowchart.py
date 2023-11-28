@@ -1,40 +1,41 @@
 import logging
-import sys
-from collections import defaultdict
-from itertools import count
-from typing import Iterable, Mapping, Sequence
+from typing import Iterable, Mapping
 
-import yattag
 from docx.enum.style import WD_STYLE_TYPE
-from docx.shared import Inches
 from opencensus.trace import execution_context
 
 from clinical_mdr_api import config
+from clinical_mdr_api.exceptions import ValidationException
 from clinical_mdr_api.models import (
-    CTTermName,
+    Footnote,
     StudyActivitySchedule,
     StudySelectionActivity,
     StudyVisit,
 )
-from clinical_mdr_api.models.study_selections.table_with_headers import (
-    TableHeader,
-    TableWithHeaders,
-)
-from clinical_mdr_api.services.controlled_terminologies.ct_term_name import (
-    CTTermNameService,
-)
+from clinical_mdr_api.models.study_selections.study_soa_footnote import StudySoAFootnote
+from clinical_mdr_api.services.studies.study import StudyService
 from clinical_mdr_api.services.studies.study_activity_schedule import (
     StudyActivityScheduleService,
 )
 from clinical_mdr_api.services.studies.study_activity_selection import (
     StudyActivitySelectionService,
 )
+from clinical_mdr_api.services.studies.study_soa_footnote import StudySoAFootnoteService
 from clinical_mdr_api.services.studies.study_visit import StudyVisitService
-from clinical_mdr_api.services.utils.docx_builder import DocxBuilder
+from clinical_mdr_api.services.utils.table_f import (
+    Ref,
+    SimpleFootnote,
+    TableCell,
+    TableRow,
+    TableWithFootnotes,
+)
+from clinical_mdr_api.utils.iter import enumerate_letters
 
-# TODO LOCALIZATION
+SOA_CHECK_MARK = "X"
+
+# Strings prepared for localization
 _ = {
-    "study_epoch": "Study epoch",
+    "study_epoch": "Procedure",
     "visit_short_name": "Visit short name",
     "study_week": "Study week",
     "study_day": "Study day",
@@ -51,7 +52,7 @@ DOCX_STYLES = {
     "header2": ("Table Header lvl2", WD_STYLE_TYPE.PARAGRAPH),
     "header3": ("Table Header lvl2", WD_STYLE_TYPE.PARAGRAPH),
     "header4": ("Table Header lvl2", WD_STYLE_TYPE.PARAGRAPH),
-    "fchGroup": ("Table lvl 1", WD_STYLE_TYPE.PARAGRAPH),
+    "soaGroup": ("Table lvl 1", WD_STYLE_TYPE.PARAGRAPH),
     "group": ("Table lvl 2", WD_STYLE_TYPE.PARAGRAPH),
     "subGroup": ("Table lvl 3", WD_STYLE_TYPE.PARAGRAPH),
     "activity": ("Table lvl 4", WD_STYLE_TYPE.PARAGRAPH),
@@ -59,467 +60,681 @@ DOCX_STYLES = {
 }
 
 
-class ActivityRow:
-    def __init__(self, level, uid, name, selection_uid=None, show=True):
-        self.level = level
-        self.uid = uid
-        self.selection_uid = selection_uid
-        self.name = name
-        self.shown = int(show)
-        self.cells = defaultdict(int)
-
-
 class StudyFlowchartService:
-    """Assemble and visualize Study Protocol Flowchart data"""
+    """Assemble Study Protocol SoA Flowchart"""
 
-    def __init__(self, current_user_id: str) -> None:
-        self._current_user_id = current_user_id
-        self._epoch_terms = None
+    def __init__(self, user: str) -> None:
+        self.user = user
 
-    def get_epoch_ct_term_names(self) -> Sequence[CTTermName]:
+    def _validate_parameters(
+        self,
+        study_uid: str,
+        study_value_version: str | None = None,
+        time_unit: str | None = None,
+    ):
+        """
+        Validates request parameters
+
+        Raises NotFoundException if no Study with study_uid exists, or if Study does not have a version corresponding
+        to optional study_value_version. Raises ValidationException if time_unit is not "days" or "weeks".
+
+        Args:
+            study_uid (str): The unique identifier of the study.
+            study_value_version (str | None): The version of the study to check. Defaults to None.
+            time_unit (str): The preferred time unit, either "days" or "weeks".
+        """
+        StudyService(user=self.user).check_if_study_uid_and_version_exists(
+            study_uid, study_value_version=study_value_version
+        )
+
+        if time_unit not in (None, "days", "weeks"):
+            raise ValidationException("time_unit has to be 'days' or 'weeks'")
+
+    def _get_study_activity_schedules(
+        self, study_uid: str, study_value_version: str | None = None
+    ) -> list[StudyActivitySchedule]:
         tracer = execution_context.get_opencensus_tracer()
-        with tracer.span("StudyFlowchartService.get_epoch_ct_term_names"):
+        with tracer.span("StudyFlowchartService._get_study_activity_schedules"):
+            return StudyActivityScheduleService(author=self.user).get_all_schedules(
+                study_uid, study_value_version=study_value_version
+            )
+
+    def _get_study_visits(
+        self, study_uid: str, study_value_version: str | None = None
+    ) -> list[StudyVisit]:
+        tracer = execution_context.get_opencensus_tracer()
+        with tracer.span("StudyFlowchartService._get_study_visits"):
             return (
-                CTTermNameService(user=self._current_user_id)
-                .get_all_ct_terms(codelist_name="Epoch")
+                StudyVisitService(self.user)
+                .get_all_visits(study_uid, study_value_version=study_value_version)
                 .items
             )
 
-    def get_study_activity_schedules(
-        self, study_uid: str
-    ) -> Sequence[StudyActivitySchedule]:
+    def _get_study_footnotes(
+        self, study_uid: str, study_value_version: str | None = None
+    ) -> list[StudySoAFootnote]:
         tracer = execution_context.get_opencensus_tracer()
-        with tracer.span("StudyFlowchartService.get_study_activity_schedules"):
-            return StudyActivityScheduleService(
-                author=self._current_user_id
-            ).get_all_schedules(study_uid)
-
-    def get_study_visits(self, study_uid: str) -> Sequence[StudyVisit]:
-        tracer = execution_context.get_opencensus_tracer()
-        with tracer.span("StudyFlowchartService.get_study_visits"):
-            result = (
-                StudyVisitService(self._current_user_id).get_all_visits(study_uid).items
+        with tracer.span("StudyFlowchartService._get_study_footnotes"):
+            return (
+                StudySoAFootnoteService(self.user)
+                .get_all_by_study_uid(
+                    study_uid,
+                    sort_by={"order": True},
+                    study_value_version=study_value_version,
+                )
+                .items
             )
-            return [
-                study_visit
-                for study_visit in result
-                if study_visit.study_epoch_name != config.BASIC_EPOCH_NAME
+
+    def _get_study_activities(
+        self, study_uid: str, study_value_version: str | None = None
+    ) -> list[StudySelectionActivity]:
+        tracer = execution_context.get_opencensus_tracer()
+        with tracer.span("StudyFlowchartService._get_study_activities"):
+            return (
+                StudyActivitySelectionService(author=self.user)
+                .get_all_selection(study_uid, study_value_version=study_value_version)
+                .items
+            )
+
+    @staticmethod
+    def _group_study_activity_schedules(
+        activities: Mapping[str, StudySelectionActivity],
+        activity_schedules: Iterable[StudyActivitySchedule],
+    ) -> dict[str, dict[str, dict[str, dict[str, list[StudySelectionActivity]]]]]:
+        """
+        Builds a graph of StudyActivitySchedules from nested dicts indexed by
+        soa_group_term_uid -> activity_group_uid -> activity_subgroup_uid -> study_activity_uid -> study_visit_uid -> StudyActivitySchedule
+        """
+
+        grouped = {}
+
+        # sort by activity order
+        ordered_activity_schedules = sorted(
+            activity_schedules, key=lambda sas: activities[sas.study_activity_uid].order
+        )
+
+        for study_activity_schedule in ordered_activity_schedules:
+            study_selection_activity: StudySelectionActivity = activities[
+                study_activity_schedule.study_activity_uid
             ]
 
+            grouped.setdefault(
+                study_selection_activity.study_soa_group.soa_group_term_uid, {}
+            ).setdefault(
+                study_selection_activity.study_activity_group.activity_group_uid, {}
+            ).setdefault(
+                study_selection_activity.study_activity_subgroup.activity_subgroup_uid,
+                {},
+            ).setdefault(
+                study_selection_activity.study_activity_uid, {}
+            )[
+                study_activity_schedule.study_visit_uid
+            ] = study_activity_schedule
+
+        return grouped
+
     @staticmethod
-    def iter_visits_grouped(study_visits: Sequence[StudyVisit]):
-        visit_group = []
+    def _group_visits(
+        visits: Iterable[StudyVisit],
+    ) -> dict[str, dict[str, list[StudyVisit]]]:
+        """
+        Builds a graph of visits from nested dict of
+        study_epoch_uid -> [ consecutive_visit_group | visit_uid ] -> [Visits]
+        """
 
-        for visit in study_visits:
-            if not visit_group:
-                visit_group = [visit]
+        grouped = {}
+        visits: list[StudyVisit] = sorted(visits, key=lambda v: v.order)
 
-            elif (
-                visit_group[0].consecutive_visit_group
-                and visit_group[0].consecutive_visit_group
-                == visit.consecutive_visit_group
-            ):
-                visit_group.append(visit)
+        for visit in visits:
+            grouped.setdefault(visit.study_epoch_uid, {}).setdefault(
+                visit.consecutive_visit_group or visit.uid, []
+            ).append(visit)
 
-            else:
-                yield visit_group
-                visit_group = [visit]
+        return grouped
 
-        if visit_group:
-            yield visit_group
+    def get_flowchart_item_uid_coordinates(
+        self, study_uid: str, study_value_version: str | None = None
+    ) -> dict[str, tuple[int, int]]:
+        """
+        Returns mapping of item uid to [row, column] coordinates of item's position in the protocol SoA flowchart.
 
-    def get_study_activities(self, study_uid: str) -> Sequence[StudySelectionActivity]:
-        tracer = execution_context.get_opencensus_tracer()
-        with tracer.span("StudyFlowchartService.get_study_activities"):
-            return (
-                StudyActivitySelectionService(author=self._current_user_id)
-                .get_all_selection(study_uid)
-                .items
+        Args:
+            study_uid (str): The unique identifier of the study.
+            study_value_version (str | None): The version of the study to check. Defaults to None.
+
+        Returns:
+            dict[str, tuple[int, int]: Mapping item uid to [row, column] coordinates
+                                       of item's position in the protocol SoA flowchart.
+        """
+
+        self._validate_parameters(study_uid, study_value_version=study_value_version)
+
+        activity_schedules = self._get_study_activity_schedules(
+            study_uid, study_value_version=study_value_version
+        )
+
+        activities = {
+            a.study_activity_uid: a
+            for a in self._get_study_activities(
+                study_uid, study_value_version=study_value_version
             )
+        }
+        grouped_activities = self._group_study_activity_schedules(
+            activities, activity_schedules
+        )
 
-    @property
-    def epoch_terms(self) -> Mapping[str, CTTermName]:
-        """Returns a dict of Objects of Epoch term names indexed by term_uid"""
-        if self._epoch_terms is None:
-            self._epoch_terms = {t.term_uid: t for t in self.get_epoch_ct_term_names()}
-        return self._epoch_terms
-
-    def get_docx_document(self, study_uid: str, time_unit: str) -> DocxBuilder:
-        table = self.get_table(study_uid, time_unit)
-        assert len(table.headers)
-
-        tracer = execution_context.get_opencensus_tracer()
-        with tracer.span("StudyFlowchartService._build_docx_document"):
-            docx = DocxBuilder(
-                styles=DOCX_STYLES, landscape=True, margins=[0.5, 0.5, 0.5, 0.5]
+        visits = {
+            v.uid: v
+            for v in self._get_study_visits(
+                study_uid, study_value_version=study_value_version
             )
-            # Create table with actual number of columns and rows for all headers
-            tablex = docx.create_table(
-                num_rows=len(table.headers), num_columns=len(table.headers[0].data) - 1
-            )
+        }
+        grouped_visits = self._group_visits(visits.values())
 
-            # Set width of first column
-            tablex.columns[0].width = Inches(4)
+        coordinates = {}
 
-            # Update header rows
-            for r, header in enumerate(table.headers):
-                rowx = tablex.rows[r]
-                style, span = header.data.pop(0), header.spans.pop(0)
+        col = 1
+        for study_epoch_uid, visit_groups in grouped_visits.items():
+            coordinates[study_epoch_uid] = (0, col)
+            for group in visit_groups.values():
+                visit: StudyVisit = group[0]
+                coordinates[visit.uid] = (1, col)
+                col += 1
 
-                prev_cell = None
-                for txt, span, c in zip(header.data, header.spans, count()):
-                    cellx = rowx.cells[c]
+        row = 2
+        prev_soa_group_term_uid = None
+        prev_activity_group_uid = None
+        prev_activity_subgroup_uid = None
 
-                    if span == 0 and prev_cell:
-                        # Merge cell with previous cell, will preserve the paragraph (text) from the previous one
-                        cellx = prev_cell.merge(cellx)
-
-                    else:
-                        cellx.text = txt
-                        if r == 0 and c > 0:
-                            # Text flow in first header row is vertical except first column
-                            docx.set_vertical_cell_direction(cellx, "btLr")
-
-                    prev_cell = cellx
-
-                # Apply paragraph style on all cells of the row
-                docx.format_row(rowx, [DOCX_STYLES[style][0]] * len(rowx.cells))
-
-                # Set row to repeat after a page break
-                docx.repeat_table_header(rowx)
-
-            # Append data rows
-            for data in table.data:
-                rowx = docx.add_row(tablex, data[1:])
-                # Look up actual style name, style of first column is the first member of data, "cell" otherwise
-                docx.format_row(
-                    rowx,
-                    [DOCX_STYLES[data[0]][0]]
-                    + [DOCX_STYLES["cell"][0]] * (len(data) - 2),
-                )
-
-            return docx
-
-    def get_html_document(self, study_uid: str, time_unit: str) -> str:
-        table = self.get_table(study_uid, time_unit)
-
-        tracer = execution_context.get_opencensus_tracer()
-        with tracer.span("StudyFlowchartService._build_html_document"):
-            doc, tag, _text, line = yattag.Doc().ttl()
-            doc.asis("<!DOCTYPE html>")
-
-            with tag("html", lang="en"):
-                with tag("head"):
-                    line("title", _("protocol_flowchart"))
-
-                with tag("body"):
-                    with tag("table", id="ProtocolFlowchartTable"):
-                        with tag("thead"):
-                            for header in table.headers:
-                                klass, span = header.data.pop(0), header.spans.pop(0)
-                                with tag("tr", klass=klass):
-                                    for cell, span in zip(header.data, header.spans):
-                                        if span == 0:
-                                            continue
-                                        if span > 1:
-                                            line("th", cell, colspan=span)
-                                        else:
-                                            line("th", cell)
-
-                        with tag("tbody"):
-                            for row in table.data:
-                                with tag("tr", klass=row.pop(0)):
-                                    for i, cell in enumerate(row):
-                                        line(("td" if i else "th"), str(cell))
-
-            return yattag.indent(doc.getvalue())
-
-    def get_table(
-        self, study_uid: str, time_unit: str, use_uid_instead_of_name: bool = False
-    ) -> TableWithHeaders:
-        tracer = execution_context.get_opencensus_tracer()
-        with tracer.span("StudyFlowchartService.get_table"):
-            study_visits_grouped = tuple(
-                self.iter_visits_grouped(self.get_study_visits(study_uid))
-            )
-
-            headers = self.get_table_headers(
-                study_visits_grouped, time_unit, use_uid_instead_of_name
-            )
-            study_activities = self.get_study_activities(study_uid)
-
-            activity_schedules = defaultdict(list)
-            for schedule in self.get_study_activity_schedules(study_uid):
-                activity_schedules[schedule.study_activity_uid].append(
-                    (schedule.study_visit_uid, schedule.study_activity_schedule_uid)
-                )
-
-            activity_rows = self.get_activity_rows(
-                study_activities, activity_schedules, use_uid_instead_of_name
-            )
-
-            data_rows = []
-            for act_row in activity_rows:
-                if use_uid_instead_of_name:
-                    data_rows.append(
-                        [
-                            act_row.selection_uid
-                            if act_row.selection_uid
-                            else act_row.uid
+        for soa_group_term_uid, soa_grouping in grouped_activities.items():
+            for activity_group_uid, grouping in soa_grouping.items():
+                for activity_subgroup_uid, subgrouping in grouping.items():
+                    for study_activity_uid, activity_schedules in subgrouping.items():
+                        study_selection_activity: StudySelectionActivity = activities[
+                            study_activity_uid
                         ]
-                        + [
-                            act_row.cells.get(visit[0].uid) or ""
-                            for visit in study_visits_grouped
-                        ]
-                    )
-                elif act_row.shown:
-                    data_rows.append(
-                        [act_row.level, act_row.name]
-                        + [
-                            act_row.cells.get(visit[0].uid) and "X" or ""
-                            for visit in study_visits_grouped
-                        ]
-                    )
 
-            return TableWithHeaders(headers=headers, data=data_rows)
+                        if soa_group_term_uid != prev_soa_group_term_uid:
+                            prev_soa_group_term_uid = soa_group_term_uid
 
-    def get_table_headers(
-        self,
-        study_visits_grouped: Iterable[list[StudyVisit]],
+                            coordinates[
+                                study_selection_activity.study_soa_group.study_soa_group_uid
+                            ] = (row, 0)
+                            row += 1
+
+                        if prev_activity_group_uid != activity_group_uid:
+                            prev_activity_group_uid = activity_group_uid
+
+                            coordinates[
+                                study_selection_activity.study_activity_group.study_activity_group_uid
+                            ] = (row, 0)
+                            row += 1
+
+                        if prev_activity_subgroup_uid != activity_subgroup_uid:
+                            prev_activity_subgroup_uid = activity_subgroup_uid
+
+                            coordinates[
+                                study_selection_activity.study_activity_subgroup.study_activity_subgroup_uid
+                            ] = (row, 0)
+                            row += 1
+
+                        coordinates[study_selection_activity.study_activity_uid] = (
+                            row,
+                            0,
+                        )
+
+                        for study_activity_schedule in activity_schedules.values():
+                            coordinates[
+                                study_activity_schedule.study_activity_schedule_uid
+                            ] = (
+                                row,
+                                visits[study_activity_schedule.study_visit_uid].order,
+                            )
+
+                        row += 1
+
+        return coordinates
+
+    def get_flowchart_table(
+        self, study_uid: str, time_unit: str, study_value_version: str | None = None
+    ) -> TableWithFootnotes:
+        """
+        Builds protocol SoA flowchart table
+
+        Args:
+            study_uid (str): The unique identifier of the study.
+            time_unit (str): The preferred time unit, either "days" or "weeks".
+            study_value_version (str | None): The version of the study to check. Defaults to None.
+
+        Returns:
+            TableWithFootnotes: Protocol SoA flowchart table with footnotes.
+        """
+
+        self._validate_parameters(
+            study_uid, study_value_version=study_value_version, time_unit=time_unit
+        )
+
+        # uid mapping of activities for lookup from schedules
+        activities = {
+            a.study_activity_uid: a
+            for a in self._get_study_activities(
+                study_uid, study_value_version=study_value_version
+            )
+        }
+
+        study_activity_schedules = self._get_study_activity_schedules(
+            study_uid, study_value_version=study_value_version
+        )
+        # graph of StudyActivitySchedules nested dicts:  soa_group_term_uid -> activity_group_uid ->
+        # -> activity_subgroup_uid -> study_activity_uid -> study_visit_uid -> StudyActivitySchedule
+        grouped_activities = self._group_study_activity_schedules(
+            activities, study_activity_schedules
+        )
+
+        # mapping of referenced item uid to list of footnote symbols (to display in table cell)
+        footnote_symbols_by_ref_uid: dict[str, list[str]] = {}
+        # mapping of footnote symbols to SimpleFootnote model to print footnotes at end of document
+        simple_footnotes_by_symbol: dict[str, Footnote] = {}
+        for symbol, soa_footnote in enumerate_letters(
+            self._get_study_footnotes(
+                study_uid, study_value_version=study_value_version
+            )
+        ):
+            simple_footnotes_by_symbol[symbol] = SimpleFootnote(
+                uid=soa_footnote.footnote.uid
+                if soa_footnote.footnote
+                else soa_footnote.footnote_template.uid,
+                text_html=soa_footnote.footnote.name
+                if soa_footnote.footnote
+                else soa_footnote.footnote_template.name,
+                text_plain=soa_footnote.footnote.name_plain
+                if soa_footnote.footnote
+                else soa_footnote.footnote_template.name_plain,
+            )
+
+            for ref in soa_footnote.referenced_items:
+                footnote_symbols_by_ref_uid.setdefault(ref.item_uid, []).append(symbol)
+
+        # visible visits
+        visits = {
+            visit.uid: visit
+            for visit in self._get_study_visits(
+                study_uid, study_value_version=study_value_version
+            )
+            if visit.show_visit and visit.study_epoch_name != config.BASIC_EPOCH_NAME
+        }
+        # group visits in nested dict: study_epoch_uid -> [ consecutive_visit_group |  visit_uid ] -> [Visits]
+        grouped_visits = self._group_visits(visits.values())
+
+        # first 4 rows of protocol SoA flowchart contains epochs & visits
+        header_rows = self._get_header_rows(
+            grouped_visits, time_unit, footnote_symbols_by_ref_uid
+        )
+
+        # activity rows with grouping headers and check-marks
+        activity_rows = self._get_activity_rows(
+            grouped_activities, grouped_visits, activities, footnote_symbols_by_ref_uid
+        )
+
+        table = TableWithFootnotes(
+            rows=header_rows + activity_rows,
+            num_header_rows=4,
+            num_header_cols=1,
+            footnotes=simple_footnotes_by_symbol,
+            title=_("protocol_flowchart"),
+        )
+
+        return table
+
+    @staticmethod
+    def _get_header_rows(
+        grouped_visits: dict[str, dict[str, list[StudyVisit]]],
         time_unit: str,
-        use_uid_instead_of_name: bool = False,
-    ) -> list[TableHeader]:
-        """Returns a list of TableHeaders for Study Flowchart table"""
-        headers = [TableHeader(data=[f"header{i + 1}"], spans=[1]) for i in range(4)]
+        footnote_symbols_by_ref_uid: Mapping[str, list[str]],
+    ) -> list[TableRow]:
+        """Builds the 4 header rows of protocol SoA flowchart"""
 
-        # First column of headers
-        headers[0].append(_("study_epoch"))
-        headers[1].append(_("visit_short_name"))
+        rows = [TableRow() for _ in range(4)]
+
+        # Header line-1: Epoch names
+        rows[0].cells.append(TableCell(text=_("study_epoch"), style="header1"))
+
+        # Header line-2: Visit names
+        rows[1].cells.append(TableCell(text=_("visit_short_name"), style="header2"))
+
+        # Header line-3: Visit timing day/week sequence
         if time_unit == "days":
-            headers[2].append(_("study_day"))
+            rows[2].cells.append(TableCell(text=_("study_day"), style="header3"))
         else:
-            headers[2].append(_("study_week"))
-        headers[3].append(_("visit_window"))
+            rows[2].cells.append(TableCell(text=_("study_week"), style="header3"))
 
-        # For each visit as a column, append a cell to each of the header rows
-        last_epoch_uid = None
-        for group in study_visits_grouped:
-            visit = group[0]
-            visit_timing = ""
+        # Header line-4: Visit window
+        rows[3].cells.append(TableCell(text=_("visit_window"), style="header4"))
 
-            if len(group) > 1:
-                visit_name = f"{visit.visit_short_name} - {group[-1].visit_short_name}"
+        perv_study_epoch_uid = None
+        for study_epoch_uid, visit_groups in grouped_visits.items():
+            for group in visit_groups.values():
+                visit: StudyVisit = group[0]
 
-                if time_unit == "days":
-                    if visit.study_day_number is not None:
-                        visit_timing = (
-                            f"{visit.study_day_number:d}-{group[-1].study_day_number:d}"
+                # Open new Epoch column
+                if perv_study_epoch_uid != study_epoch_uid:
+                    perv_study_epoch_uid = study_epoch_uid
+
+                    rows[0].cells.append(
+                        TableCell(
+                            text=visit.study_epoch_name,
+                            span=len(visit_groups),
+                            style="header1",
+                            vertical=True,
+                            ref=Ref(type_="StudyEpoch", uid=visit.study_epoch_uid),
+                            footnotes=footnote_symbols_by_ref_uid.get(
+                                visit.study_epoch_uid
+                            ),
                         )
-                elif visit.study_week_number is not None:
-                    visit_timing = (
-                        f"{visit.study_week_number:d}-{group[-1].study_week_number:d}"
                     )
 
-            else:
-                visit_name = visit.visit_short_name
-
-                if time_unit == "days":
-                    if visit.study_day_number is not None:
-                        visit_timing = f"{visit.study_day_number:d}"
-                elif visit.study_week_number is not None:
-                    visit_timing = f"{visit.study_week_number:d}"
-
-            if visit.epoch_uid == last_epoch_uid:
-                # Same epoch as in the previous column
-                headers[0].append("", span=0)
-
-            else:
-                # Use Epoch term names
-                try:
-                    if not use_uid_instead_of_name:
-                        headers[0].append(
-                            self.epoch_terms[visit.epoch_uid].sponsor_preferred_name
-                        )
-                    else:
-                        headers[0].append(visit.study_epoch_uid)
-                except KeyError:
-                    log.warning(
-                        "Epoch UID '%s' was not found in epoch terms", visit.epoch_uid
-                    )
-                    headers[0].append(visit.visit_type_name)
-
-            last_epoch_uid = visit.epoch_uid
-            if not use_uid_instead_of_name:
-                headers[1].append(visit_name)
-            else:
-                headers[1].append(visit.uid)
-
-            headers[2].append(visit_timing)
-
-            visit_window = ""
-            if None not in (visit.min_visit_window_value, visit.max_visit_window_value):
-                if visit.min_visit_window_value * -1 == visit.max_visit_window_value:
-                    visit_window = f"±{visit.max_visit_window_value:d}"
                 else:
-                    visit_window = f"{visit.min_visit_window_value:+d}/{visit.max_visit_window_value:+d}"
-            headers[3].append(visit_window)
+                    # Add empty cells after Epoch cell with span > 1
+                    rows[0].cells.append(TableCell(span=0))
 
-        return headers
+                visit_timing = ""
 
-    @staticmethod
-    def sort_study_activities(study_activities: Sequence[StudySelectionActivity]):
-        """
-        Returns a list of sorted StudyActivities
+                # Visit group
+                if len(group) > 1:
+                    visit_name = visit.consecutive_visit_group
 
-        Study activities are sorted by flowchart_group -> activity_group -> activity_subgroup
-        """
-        # sort list of study activities to group them by flowchart_group->activity_group->activity_subgroup
-        uniq_flowchart_groups = defaultdict(dict)
+                    if time_unit == "days":
+                        if visit.study_day_number is not None:
+                            visit_timing = f"{visit.study_day_number:d}-{group[-1].study_day_number:d}"
+                    elif visit.study_week_number is not None:
+                        visit_timing = f"{visit.study_week_number:d}-{group[-1].study_week_number:d}"
 
-        for study_activity in study_activities:
-            flowchart_group = study_activity.flowchart_group.term_uid
-            uniq_flowchart_groups[flowchart_group].setdefault(
-                "order", len(uniq_flowchart_groups)
-            )
-            # the sort order of activity_groups and activity_subgroups is kept for each flowchart_group
-            # because we may have the same activity_subgroups, activity_groups for different flowchart_group
-            uniq_flowchart_groups[flowchart_group].setdefault("groups_order", dict())
-            uniq_flowchart_groups[flowchart_group].setdefault("subgroups_order", dict())
+                # Single Visit
+                else:
+                    visit_name = visit.visit_short_name
 
-            # create list of unique activity_groups in the order they should be sorted
-            if study_activity.activity.activity_groupings:
-                for grouping in study_activity.activity.activity_groupings:
-                    activity_group = grouping.activity_group_uid
-                    uniq_flowchart_groups[flowchart_group]["groups_order"].setdefault(
-                        activity_group,
-                        len(uniq_flowchart_groups[flowchart_group]["groups_order"]),
+                    if time_unit == "days":
+                        if visit.study_day_number is not None:
+                            visit_timing = f"{visit.study_day_number:d}"
+                    elif visit.study_week_number is not None:
+                        visit_timing = f"{visit.study_week_number:d}"
+
+                # Visit name cell
+                rows[1].cells.append(
+                    TableCell(
+                        visit_name,
+                        style="header2",
+                        ref=Ref(type_="StudyVisit", uid=visit.uid),
+                        footnotes=footnote_symbols_by_ref_uid.get(visit.uid),
                     )
-
-            # create list of unique activity_subgroups in the order they should be sorted
-            if study_activity.activity.activity_groupings:
-                for grouping in study_activity.activity.activity_groupings:
-                    activity_subgroup = grouping.activity_subgroup_uid
-                    uniq_flowchart_groups[flowchart_group][
-                        "subgroups_order"
-                    ].setdefault(
-                        activity_subgroup,
-                        len(uniq_flowchart_groups[flowchart_group]["subgroups_order"]),
-                    )
-
-        return sorted(
-            study_activities,
-            key=lambda sa: (
-                uniq_flowchart_groups[sa.flowchart_group.term_uid]["order"],
-                uniq_flowchart_groups[sa.flowchart_group.term_uid]["groups_order"][
-                    sa.activity.activity_groupings[0].activity_group_uid
-                ]
-                if sa.activity.activity_groupings
-                else sys.maxsize,
-                uniq_flowchart_groups[sa.flowchart_group.term_uid]["subgroups_order"][
-                    sa.activity.activity_groupings[0].activity_subgroup_uid
-                ]
-                if sa.activity.activity_groupings
-                else sys.maxsize,
-            ),
-        )
-
-    @staticmethod
-    def get_activity_rows(
-        study_activities: Sequence[StudySelectionActivity],
-        activity_schedules: Mapping[str, Sequence[str]],
-        use_uid_instead_of_name: bool,
-    ) -> list[ActivityRow]:
-        """
-        Returns a list of ActivityRows
-
-        Includes all study_activity activities, but also adding parent groups before, when they change or new
-        """
-        rows = []
-        fch_group, ass_group, ass_subgroup = None, None, None
-
-        study_activities = StudyFlowchartService.sort_study_activities(
-            study_activities=study_activities
-        )
-
-        for study_activity in study_activities:
-            # Create a row for Flowchart group if not yet created
-            grp = study_activity.flowchart_group
-            if grp and (not fch_group or grp.term_uid != fch_group.uid):
-                ass_group = None
-                ass_subgroup = None
-
-                fch_group = ActivityRow(
-                    level="fchGroup",
-                    uid=grp.term_uid,
-                    name=grp.sponsor_preferred_name,
-                    show=True,
                 )
-                rows.append(fch_group)
 
-            # Create a row for Activity group if not yet created
-            study_activity_group = study_activity.study_activity_group
-            if study_activity_group.study_activity_group_uid:
-                if (
-                    not ass_group
-                    or study_activity_group.activity_group_uid != ass_group.uid
+                # Visit timing cell
+                rows[2].cells.append(TableCell(visit_timing, style="header3"))
+
+                # Visit window
+                visit_window = ""
+                if None not in (
+                    visit.min_visit_window_value,
+                    visit.max_visit_window_value,
                 ):
-                    ass_subgroup = None
+                    if (
+                        visit.min_visit_window_value * -1
+                        == visit.max_visit_window_value
+                    ):
+                        # plus-minus sign can be used
+                        visit_window = f"±{visit.max_visit_window_value:d}"
+                    else:
+                        # plus and minus windows are different
+                        visit_window = f"{visit.min_visit_window_value:+d}/{visit.max_visit_window_value:+d}"
 
-                    show = study_activity.show_activity_group_in_protocol_flowchart
-                    ass_group = ActivityRow(
-                        level="group",
-                        uid=study_activity_group.activity_group_uid,
-                        name=study_activity_group.activity_group_name,
-                        show=show,
-                        selection_uid=study_activity_group.study_activity_group_uid
-                        if study_activity_group.study_activity_group_uid
-                        else None,
-                    )
-                    rows.append(ass_group)
-
-            # Create a row for Activity subgroup if not yet created
-            study_activity_subgroup = study_activity.study_activity_subgroup
-            if study_activity_subgroup.study_activity_subgroup_uid:
-                if (
-                    not ass_subgroup
-                    or study_activity_subgroup.activity_subgroup_uid != ass_subgroup.uid
-                ):
-                    show = study_activity.show_activity_subgroup_in_protocol_flowchart
-                    ass_subgroup = ActivityRow(
-                        level="subGroup",
-                        uid=study_activity_subgroup.activity_subgroup_uid,
-                        name=study_activity_subgroup.activity_subgroup_name,
-                        show=show,
-                        selection_uid=study_activity_subgroup.study_activity_subgroup_uid
-                        if study_activity_subgroup.study_activity_subgroup_uid
-                        else None,
-                    )
-                    rows.append(ass_subgroup)
-
-            # Create a row for the Activity
-            activity = study_activity.activity
-            show = study_activity.show_activity_in_protocol_flowchart
-            ass = ActivityRow(
-                level="activity",
-                uid=activity.uid,
-                name=activity.name,
-                show=show,
-                selection_uid=study_activity.study_activity_uid,
-            )
-            rows.append(ass)
-
-            # Tick cells for scheduled visits, and also tick for parent groups if activity is hidden
-            for study_visit_uid, study_activity_schedule_uid in activity_schedules.get(
-                study_activity.study_activity_uid, []
-            ):
-                if use_uid_instead_of_name:
-                    ass.cells[study_visit_uid] = study_activity_schedule_uid
-                else:
-                    ass.cells[study_visit_uid] += 1
-                if not show:
-                    if ass_subgroup and ass_subgroup.shown:
-                        ass_subgroup.cells[study_visit_uid] += 1
-                    elif ass_group and ass_group.shown:
-                        ass_group.cells[study_visit_uid] += 1
+                # Visit window cell
+                rows[3].cells.append(TableCell(visit_window, style="header4"))
 
         return rows
+
+    @classmethod
+    def _get_activity_rows(
+        cls,
+        grouped_activities: dict[
+            str, dict[str, dict[str, dict[str, list[StudySelectionActivity]]]]
+        ],
+        grouped_visits: dict[str, dict[str, list[StudyVisit]]],
+        activities: Mapping[str, StudySelectionActivity],
+        footnote_symbols_by_ref_uid: Mapping[str, list[str]],
+    ) -> list[TableRow]:
+        """Builds activity rows also adding various group header rows when required"""
+
+        # Ordered StudyVisit.uids of visits to show (showing only the first visit of a consecutive_visit_group)
+        visible_visit_uids_ordered = tuple(
+            visit_group[0].uid
+            for epochs_group in grouped_visits.values()
+            for visit_group in epochs_group.values()
+        )
+        num_visits = len(visible_visit_uids_ordered)
+
+        rows = []
+
+        prev_soa_group_term_uid = None
+        prev_activity_group_uid = None
+        prev_activity_subgroup_uid = None
+
+        for soa_group_term_uid, soa_grouping in grouped_activities.items():
+            for activity_group_uid, grouping in soa_grouping.items():
+                for activity_subgroup_uid, subgrouping in grouping.items():
+                    for study_activity_uid, activity_schedules in subgrouping.items():
+                        study_selection_activity: StudySelectionActivity = activities[
+                            study_activity_uid
+                        ]
+
+                        # Add SoA Group header
+                        if soa_group_term_uid != prev_soa_group_term_uid:
+                            prev_soa_group_term_uid = soa_group_term_uid
+
+                            soa_row = cls._get_soa_group_row(
+                                study_selection_activity,
+                                footnote_symbols_by_ref_uid,
+                                num_visits,
+                            )
+
+                            rows.append(soa_row)
+
+                        # Add Activity Group header
+                        if prev_activity_group_uid != activity_group_uid:
+                            prev_activity_group_uid = activity_group_uid
+
+                            grp_row = cls._get_activity_group_row(
+                                study_selection_activity,
+                                footnote_symbols_by_ref_uid,
+                                num_visits,
+                            )
+
+                            rows.append(grp_row)
+
+                        # Add Activity Sub-Group header
+                        if prev_activity_subgroup_uid != activity_subgroup_uid:
+                            prev_activity_subgroup_uid = activity_subgroup_uid
+
+                            subgrp_row = cls._get_activity_subgroup_row(
+                                study_selection_activity,
+                                footnote_symbols_by_ref_uid,
+                                num_visits,
+                            )
+
+                            rows.append(subgrp_row)
+
+                        # Start Activity row, will append cells visit-by-visit
+                        rows.append(
+                            row := TableRow(
+                                hide=not study_selection_activity.show_activity_in_protocol_flowchart
+                            )
+                        )
+
+                        # Activity name cell (Activity row first column)
+                        row.cells.append(
+                            TableCell(
+                                study_selection_activity.activity.name,
+                                style="activity",
+                                ref=Ref(
+                                    type_="StudyActivity",
+                                    uid=study_selection_activity.study_activity_uid,
+                                ),
+                                footnotes=footnote_symbols_by_ref_uid.get(
+                                    study_selection_activity.study_activity_uid
+                                ),
+                            )
+                        )
+
+                        # Iterate over the ordered list of visible Visit uids to see if the Activity was scheduled
+                        for i, study_visit_uid in enumerate(visible_visit_uids_ordered):
+                            study_activity_schedule: StudyActivitySchedule = (
+                                activity_schedules.get(study_visit_uid)
+                            )
+
+                            # Append a cell with tick-mark if Activity was scheduled
+                            if study_activity_schedule:
+                                row.cells.append(
+                                    TableCell(
+                                        SOA_CHECK_MARK,
+                                        style="activitySchedule",
+                                        ref=Ref(
+                                            type_="StudyActivitySchedule",
+                                            uid=study_activity_schedule.study_activity_schedule_uid,
+                                        ),
+                                        footnotes=footnote_symbols_by_ref_uid.get(
+                                            study_activity_schedule.study_activity_schedule_uid
+                                        ),
+                                    )
+                                )
+
+                                # If Activity row is hidden, add check-mark to the upper next visible activity group
+                                # (practically overwrites the cell text at the given index in the act-group row)
+                                if (
+                                    not study_selection_activity.show_activity_in_protocol_flowchart
+                                ):
+                                    if (
+                                        study_selection_activity.show_activity_subgroup_in_protocol_flowchart
+                                    ):
+                                        subgrp_row.cells[i + 1].text = SOA_CHECK_MARK
+                                    elif (
+                                        study_selection_activity.show_activity_group_in_protocol_flowchart
+                                    ):
+                                        grp_row.cells[i + 1].text = SOA_CHECK_MARK
+
+                            # Append an empty cell if activity was not scheduled
+                            else:
+                                row.cells.append(TableCell())
+        return rows
+
+    @staticmethod
+    def _get_soa_group_row(
+        study_selection_activity: StudySelectionActivity,
+        footnote_symbols_by_ref_uid: Mapping[str, list[str]],
+        num_visits: int,
+    ) -> TableRow:
+        """returns TableRow for SoA Group row"""
+
+        row = TableRow(
+            hide=not study_selection_activity.show_soa_group_in_protocol_flowchart
+        )
+
+        row.cells.append(
+            TableCell(
+                study_selection_activity.study_soa_group.soa_group_name,
+                style="soaGroup",
+                ref=Ref(
+                    type_="CTTermName",
+                    uid=study_selection_activity.study_soa_group.study_soa_group_uid,
+                ),
+                footnotes=footnote_symbols_by_ref_uid.get(
+                    study_selection_activity.study_soa_group.study_soa_group_uid
+                ),
+            )
+        )
+
+        # fill the row with empty cells for visits #
+        row.cells += [TableCell() for _ in range(num_visits)]
+
+        return row
+
+    @staticmethod
+    def _get_activity_group_row(
+        study_selection_activity: StudySelectionActivity,
+        footnote_symbols_by_ref_uid: Mapping[str, list[str]],
+        num_visits: int,
+    ) -> TableRow:
+        """returns TableRow for Activity Group row"""
+
+        group_name = study_selection_activity.study_activity_group.activity_group_uid
+        for a_g in study_selection_activity.activity.activity_groupings:
+            if (
+                a_g.activity_group_uid
+                == study_selection_activity.study_activity_group.activity_group_uid
+            ):
+                group_name = a_g.activity_group_name
+                break
+
+        row = TableRow(
+            hide=not study_selection_activity.show_activity_group_in_protocol_flowchart
+        )
+
+        row.cells.append(
+            TableCell(
+                group_name,
+                style="group",
+                ref=Ref(
+                    type_="StudyActivityGroup",
+                    uid=study_selection_activity.study_activity_group.study_activity_group_uid,
+                ),
+                footnotes=footnote_symbols_by_ref_uid.get(
+                    study_selection_activity.study_activity_group.study_activity_group_uid
+                ),
+            )
+        )
+
+        # fill the row with empty cells for visits #
+        row.cells += [TableCell() for _ in range(num_visits)]
+
+        return row
+
+    @staticmethod
+    def _get_activity_subgroup_row(
+        study_selection_activity: StudySelectionActivity,
+        footnote_symbols_by_ref_uid: Mapping[str, list[str]],
+        num_visits: int,
+    ) -> TableRow:
+        """returns TableRow for Activity SubGroup row"""
+
+        group_name = (
+            study_selection_activity.study_activity_subgroup.study_activity_subgroup_uid
+        )
+        for a_g in study_selection_activity.activity.activity_groupings:
+            if (
+                a_g.activity_subgroup_uid
+                == study_selection_activity.study_activity_subgroup.activity_subgroup_uid
+            ):
+                group_name = a_g.activity_subgroup_name
+                break
+
+        row = TableRow(
+            hide=not study_selection_activity.show_activity_subgroup_in_protocol_flowchart
+        )
+
+        row.cells.append(
+            TableCell(
+                group_name,
+                style="subGroup",
+                ref=Ref(
+                    type_="StudyActivitySubGroup",
+                    uid=study_selection_activity.study_activity_subgroup.study_activity_subgroup_uid,
+                ),
+                footnotes=footnote_symbols_by_ref_uid.get(
+                    study_selection_activity.study_activity_subgroup.study_activity_subgroup_uid
+                ),
+            )
+        )
+
+        # fill the row with empty cells for visits #
+        row.cells += [TableCell() for _ in range(num_visits)]
+
+        return row

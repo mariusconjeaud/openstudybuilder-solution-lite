@@ -118,10 +118,10 @@
                 "endpoint_sublevel": {
                     "term_uid": "term_root_final_non_edit",
                     "catalogue_name": "SDTM CT",
-                    "codelist_uid": "non_editable_cr",
+                    "codelist_uid": "ct_codelist_root_endpoint_sub",
                     "sponsor_preferred_name": "term_value_name3",
                     "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
-                    "order": 3,
+                    "order": 1,
                     "library_name": "CDISC",
                     "start_date": "2021-06-07T11:41:14.430000",
                     "end_date": null,
@@ -296,10 +296,10 @@
                         "endpoint_sublevel": {
                             "term_uid": "term_root_final_non_edit",
                             "catalogue_name": "SDTM CT",
-                            "codelist_uid": "non_editable_cr",
+                            "codelist_uid": "ct_codelist_root_endpoint_sub",
                             "sponsor_preferred_name": "term_value_name3",
                             "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
-                            "order": 3,
+                            "order": 1,
                             "library_name": "CDISC",
                             "start_date": "2021-06-07T11:41:14.430000",
                             "end_date": null,
@@ -493,10 +493,10 @@
                         "endpoint_sublevel": {
                             "term_uid": "term_root_final_non_edit",
                             "catalogue_name": "SDTM CT",
-                            "codelist_uid": "non_editable_cr",
+                            "codelist_uid": "ct_codelist_root_endpoint_sub",
                             "sponsor_preferred_name": "term_value_name3",
                             "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
-                            "order": 3,
+                            "order": 1,
                             "library_name": "CDISC",
                             "start_date": "2021-06-07T11:41:14.430000",
                             "end_date": null,
@@ -651,10 +651,10 @@
                     "endpoint_sublevel": {
                         "term_uid": "term_root_final_non_edit",
                         "catalogue_name": "SDTM CT",
-                        "codelist_uid": "non_editable_cr",
+                        "codelist_uid": "ct_codelist_root_endpoint_sub",
                         "sponsor_preferred_name": "term_value_name3",
                         "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
-                        "order": 3,
+                        "order": 1,
                         "library_name": "CDISC",
                         "start_date": "2021-06-07T11:41:14.430000",
                         "end_date": null,
@@ -933,10 +933,10 @@
                         "endpoint_sublevel": {
                             "term_uid": "term_root_final_non_edit",
                             "catalogue_name": "SDTM CT",
-                            "codelist_uid": "non_editable_cr",
+                            "codelist_uid": "ct_codelist_root_endpoint_sub",
                             "sponsor_preferred_name": "term_value_name3",
                             "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
-                            "order": 3,
+                            "order": 1,
                             "library_name": "CDISC",
                             "start_date": "2021-06-07T11:41:14.430000",
                             "end_date": null,
@@ -1652,10 +1652,12 @@
                     "separator": "string",
                     "units": [
                         {
-                            "uid": "unit 1"
+                            "uid": "unit 1",
+                            "name":"name 1"
                         },
                         {
-                            "uid": "unit 2"
+                            "uid": "unit 2",
+                            "name":"name 2"
                         }
                     ]
                 },

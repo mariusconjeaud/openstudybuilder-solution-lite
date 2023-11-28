@@ -1,6 +1,6 @@
 import re
 from enum import Enum
-from typing import Sequence
+from typing import Any
 
 from bs4 import BeautifulSoup
 
@@ -25,69 +25,23 @@ class ObjectStatus(Enum):
     LATEST = "latest"
 
 
-def generate_seq_id(
-    uid: str,
-    parent_sequence_id: str | None = None,
-    custom_abbr: str | None = None,
-    next_available_sequence_id: str | None = None,
-):
-    """
-    Generates a sequence ID based on the provided parameters.
-
-    Args:
-        uid (str): UID of the Node.
-        parent_sequence_id (str | None, optional): Parent sequence ID to prepend to generated the sequence ID. Defaults to None.
-        custom_abbr (str | None, optional): Custom abbreviation to use instead of the first uppercase letters of the UID. Defaults to None.
-
-    Returns:
-        str: Generated sequence ID.
-
-    Example:
-        >>> generate_seq_id("SEQ_003", parent_sequence_id="B1", custom_abbr="ABC")
-        "B1ABC3"
-    """
-
-    def extract_seq_number_from_uid(uid: str):
-        if "_" in uid:
-            return uid.split("_", 1)[1].lstrip("0")
-        return uid
-
-    def get_seq_name_abbr(uid: str):
-        if custom_abbr:
-            return custom_abbr
-
-        name = uid.replace("Template", "")
-
-        return "".join([char for char in name if char.isupper()])
-
-    if next_available_sequence_id:
-        return next_available_sequence_id
-
-    seq_id = get_seq_name_abbr(uid) + extract_seq_number_from_uid(uid)
-
-    if parent_sequence_id:
-        seq_id = parent_sequence_id + seq_id
-
-    return seq_id
-
-
 def get_iso_lang_data(
-    q: str,
+    query: str,
     key: str = "639-3",
     return_key: str | None = None,
     ignore_case: bool = True,
-) -> str | dict | list:
+) -> str | dict[Any] | list[Any]:
     """
     Returns ISO language data based on the provided query string and key.
 
     Args:
-        q (str): Query string to search for in the language index.
+        query (str): Query string to search for in the language index.
         key (str, optional): Key to use for indexing the language data. Defaults to "639-3".
         return_key (str | None, optional): Key to return from the found language data. Defaults to None.
         ignore_case (bool, optional): Whether to ignore case when searching for the query string. Defaults to True.
 
     Returns:
-        str | dict | list: The value of the found language data, or the entire language data if return_key is None.
+        str | dict[Any] | list[Any]: The value of the found language data, or the entire language data if return_key is None.
 
     Raises:
         TypeError: If the query string is not a string.
@@ -98,8 +52,8 @@ def get_iso_lang_data(
         >>> get_iso_lang_data("spa", "639-2/T", "names")
         ["Spanish", "Castilian"]
     """
-    if not isinstance(q, str):
-        raise TypeError(f"Expected type str but found {type(q)}")
+    if not isinstance(query, str):
+        raise TypeError(f"Expected type str but found {type(query)}")
 
     try:
         index = LANGUAGES_INDEXED_BY[key]
@@ -108,25 +62,25 @@ def get_iso_lang_data(
             f"Languages not indexed by key: {key}"
         ) from exc
 
-    q_ = q.casefold()
+    casefolded_query = query.casefold()
 
     try:
-        lang = index[q_]
+        lang = index[casefolded_query]
     except KeyError as exc:
-        raise KeyError(q) from exc
+        raise KeyError(query) from exc
 
-    if not ignore_case and lang[key] != q:
-        raise KeyError(q)
+    if not ignore_case and lang[key] != query:
+        raise KeyError(query)
 
     return lang[return_key] if return_key else lang
 
 
-def normalize_string(s: str | None) -> str | None:
+def normalize_string(string: str | None) -> str | None:
     """
     Normalizes a string by stripping whitespace and returning None if the resulting string is empty.
 
     Args:
-        s (str | None): The string to normalize.
+        string (str | None): The string to normalize.
 
     Returns:
         str | None: The normalized string, or None if the resulting string is empty.
@@ -135,9 +89,9 @@ def normalize_string(s: str | None) -> str | None:
         >>> normalize_string("   hello world   ")
         "hello world"
     """
-    if s:
-        s = s.strip()
-    return s or None
+    if string:
+        string = string.strip()
+    return string or None
 
 
 def strip_html(html: str) -> str:
@@ -174,7 +128,7 @@ def convert_to_plain(text: str) -> str:
     return strip_html(text).replace("[", "").replace("]", "")
 
 
-def extract_parameters(name: str) -> Sequence[str]:
+def extract_parameters(name: str) -> list[str]:
     """
     Extracts parameters from a string. A parameter is a string that is between two square brackets.
 
@@ -182,7 +136,7 @@ def extract_parameters(name: str) -> Sequence[str]:
         name (str): The string to extract parameters from.
 
     Returns:
-        Sequence[str]: A sequence of parameter names.
+        list[str]: A sequence of parameter names.
 
     Example:
         >>> extract_parameters("Some [parameter1] and [parameter2]")

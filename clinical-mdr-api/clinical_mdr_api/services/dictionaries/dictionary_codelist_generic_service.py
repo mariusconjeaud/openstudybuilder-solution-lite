@@ -1,4 +1,4 @@
-from typing import Any, Sequence, TypeVar
+from typing import Any, TypeVar
 
 from neomodel import db
 from pydantic import BaseModel
@@ -117,7 +117,7 @@ class DictionaryCodelistGenericService:
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
-    ) -> Sequence[str]:
+    ) -> list[str]:
         self.enforce_library(library)
 
         # First, check that attributes provided for filtering exist in the return class
@@ -165,7 +165,7 @@ class DictionaryCodelistGenericService:
         return item
 
     @db.transaction
-    def get_version_history(self, codelist_uid) -> Sequence[BaseModel]:
+    def get_version_history(self, codelist_uid) -> list[BaseModel]:
         if self.version_class is not None:
             all_versions = self.repository.get_all_versions_2(codelist_uid)
             if all_versions is None:

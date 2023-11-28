@@ -1,6 +1,6 @@
 import datetime
 from dataclasses import dataclass, field
-from typing import Any, Callable, Iterable, Self, Sequence
+from typing import Any, Callable, Iterable, Self
 
 from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains._utils import normalize_string
@@ -52,7 +52,7 @@ class StudySelectionElementVO:
         status: str | None = None,
         change_type: str | None = None,
         accepted_version: bool | None = False,
-        generate_uid_callback: Callable[[], str] = None,
+        generate_uid_callback: Callable[[], str] | None = None,
     ):
         """
         Factory method
@@ -135,7 +135,7 @@ class StudySelectionElementAR:
 
     # return a list of all study elemnt selection object
     @property
-    def study_elements_selection(self) -> Sequence[StudySelectionElementVO]:
+    def study_elements_selection(self) -> tuple[StudySelectionElementVO]:
         return self._study_elements_selection
 
     def get_specific_object_selection(

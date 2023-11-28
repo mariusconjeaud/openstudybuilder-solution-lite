@@ -199,15 +199,15 @@ class EndpointTemplateWithCount(EndpointTemplate):
     def from_endpoint_template_ar(
         cls, endpoint_template_ar: EndpointTemplateAR
     ) -> Self:
-        ot = super().from_endpoint_template_ar(endpoint_template_ar)
+        endpoint_template = super().from_endpoint_template_ar(endpoint_template_ar)
         if endpoint_template_ar.counts is not None:
-            ot.counts = ItemCounts(
+            endpoint_template.counts = ItemCounts(
                 draft=endpoint_template_ar.counts.count_draft,
                 final=endpoint_template_ar.counts.count_final,
                 retired=endpoint_template_ar.counts.count_retired,
                 total=endpoint_template_ar.counts.count_total,
             )
-        return ot
+        return endpoint_template
 
 
 class EndpointTemplateVersion(EndpointTemplate):

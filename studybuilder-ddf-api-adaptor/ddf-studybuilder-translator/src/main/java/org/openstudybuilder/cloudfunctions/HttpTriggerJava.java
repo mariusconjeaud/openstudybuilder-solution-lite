@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.microsoft.azure.functions.annotation.*;
 import com.microsoft.azure.functions.*;
-import org.CSDISC.DDF.model.Study;
+import org.CDISC.DDF.model.Study;
 import org.openstudybuilder.cloudfunctions.utils.FunctionUtils;
 import org.openstudybuilder.engine.OpenStudyObjectFactory;
 import org.openstudybuilder.engine.StudyObjectMapper;
@@ -23,7 +23,7 @@ public class HttpTriggerJava {
      * through a GET request that provides the study ID and the authorization token for accessing the study
      * definition from source APIs
      */
-    @FunctionName("func1")
+    @FunctionName("studyDefinitions")
     public HttpResponseMessage run(
             @HttpTrigger(
                     name = "req",

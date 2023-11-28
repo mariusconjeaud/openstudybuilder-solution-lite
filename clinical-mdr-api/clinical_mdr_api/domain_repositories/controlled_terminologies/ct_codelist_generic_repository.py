@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
-from typing import Iterable, Sequence, cast
+from typing import Any, Iterable, cast
 
 from neomodel import db
 
@@ -215,13 +215,13 @@ class CTCodelistGenericRepository(
         self,
         field_name: str,
         search_string: str | None = "",
-        catalogue_name: str = None,
+        catalogue_name: str | None = None,
         library: str | None = None,
         package: str | None = None,
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
-    ) -> Sequence:
+    ) -> list[Any]:
         """
         Method runs a cypher query to fetch possible values for a given field_name, with a limit of result_count.
         It uses generic filtering capability, on top of filtering the field_name with provided search_string.
@@ -233,7 +233,7 @@ class CTCodelistGenericRepository(
         :param filter_by:
         :param filter_operator: Same as for generic filtering
         :param result_count: Max number of values to return. Default 10
-        :return Sequence:
+        :return list[Any]:
         """
         # Build match_clause
         # Build specific filtering for catalogue, package and library

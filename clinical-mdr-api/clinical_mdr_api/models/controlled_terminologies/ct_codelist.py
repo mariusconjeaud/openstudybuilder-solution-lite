@@ -1,4 +1,4 @@
-from typing import Self, Sequence
+from typing import Any, Self
 
 from pydantic import Field
 
@@ -63,7 +63,7 @@ class CTCodelist(BaseModel):
         None, title="parent_codelist_uid", description="", nullable=True
     )
 
-    child_codelist_uids: Sequence[str] = Field(
+    child_codelist_uids: list[str] = Field(
         [],
         title="child_codelist_uids",
         description="",
@@ -189,7 +189,7 @@ class CTCodelistCreateInput(BaseModel):
         description="",
     )
 
-    terms: Sequence[CTCodelistTermInput]
+    terms: list[CTCodelistTermInput]
 
     library_name: str
 
@@ -235,7 +235,7 @@ class CTCodelistNameAndAttributes(BaseModel):
         None, title="parent_codelist_uid", description="", nullable=True
     )
 
-    child_codelist_uids: Sequence = Field(
+    child_codelist_uids: list[Any] = Field(
         [],
         title="child_codelist_uids",
         description="",

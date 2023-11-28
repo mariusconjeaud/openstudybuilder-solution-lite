@@ -189,11 +189,9 @@ class OdmGenericService(ConceptGenericService[_AggregateRootType], ABC):
             filter_by={"uid": {"v": attribute_uids, "op": "eq"}}
         )
 
-        attribute_patterns = {
+        return {
             attribute.uid: attribute.concept_vo.value_regex for attribute in attributes
         }
-
-        return attribute_patterns
 
     def is_vendor_compatible(
         self,

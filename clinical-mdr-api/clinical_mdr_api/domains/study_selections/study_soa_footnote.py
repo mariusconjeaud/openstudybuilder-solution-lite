@@ -14,6 +14,7 @@ class SoAItemType(Enum):
     STUDY_ACTIVITY = "StudyActivity"
     STUDY_ACTIVITY_SUBGROUP = "StudyActivitySubGroup"
     STUDY_ACTIVITY_GROUP = "StudyActivityGroup"
+    STUDY_SOA_GROUP = "StudySoAGroup"
     STUDY_EPOCH = "StudyEpoch"
     STUDY_VISIT = "StudyVisit"
 

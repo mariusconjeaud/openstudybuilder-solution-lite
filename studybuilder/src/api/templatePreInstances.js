@@ -9,6 +9,16 @@ export default (baseType) => {
     getVersions (uid) {
       return repository.get(`${baseUrl}/${uid}/versions`)
     },
+    getAuditTrail (options) {
+      const params = {
+        page_number: options ? options.page : 1,
+        total_count: true
+      }
+      if (options) {
+        params.page_size = options.itemsPerPage
+      }
+      return repository.get(`${baseUrl}/audit-trail`, { params })
+    },
     getParameters (uid, params) {
       return repository.get(`${baseType}-templates/${uid}/parameters`, { params })
     },

@@ -1,5 +1,4 @@
 import datetime
-from typing import Sequence
 
 from neomodel import db
 
@@ -52,14 +51,25 @@ class StudySelectionEndpointRepository:
         study_uid: str | None = None,
         project_name: str | None = None,
         project_number: str | None = None,
-    ) -> Sequence[StudySelectionEndpointVO]:
+        study_value_version: str | None = None,
+    ) -> tuple[StudySelectionEndpointVO]:
         query = ""
         query_parameters = {}
+
         if study_uid:
-            query = "MATCH (sr:StudyRoot { uid: $uid})-[l:LATEST]->(sv:StudyValue)"
-            query_parameters["uid"] = study_uid
+            if study_value_version:
+                query = "MATCH (sr:StudyRoot { uid: $uid})-[l:HAS_VERSION{status:'RELEASED', version:$study_value_version}]->(sv:StudyValue)"
+                query_parameters["study_value_version"] = study_value_version
+                query_parameters["uid"] = study_uid
+            else:
+                query = "MATCH (sr:StudyRoot { uid: $uid})-[l:LATEST]->(sv:StudyValue)"
+                query_parameters["uid"] = study_uid
         else:
-            query = "MATCH (sr:StudyRoot)-[l:LATEST]->(sv:StudyValue)"
+            if study_value_version:
+                query = "MATCH (sr:StudyRoot)-[l:HAS_VERSION{status:'RELEASED', version:$study_value_version}]->(sv:StudyValue)"
+                query_parameters["study_value_version"] = study_value_version
+            else:
+                query = "MATCH (sr:StudyRoot)-[l:LATEST]->(sv:StudyValue)"
 
         if project_name is not None or project_number is not None:
             query += (
@@ -108,9 +118,18 @@ class StudySelectionEndpointRepository:
             OPTIONAL MATCH (se)-[:HAS_ENDPOINT_LEVEL]->(elr:CTTermRoot)<-[has_term:HAS_TERM]-(:CTCodelistRoot)
             -[:HAS_NAME_ROOT]->(:CTCodelistNameRoot)-[:LATEST_FINAL]->(:CTCodelistNameValue {name: "Endpoint Level"})
             OPTIONAL MATCH (se)-[:HAS_ENDPOINT_SUB_LEVEL]->(endpoint_sublevel_root:CTTermRoot)
-    
-            OPTIONAL MATCH (se)-[:STUDY_ENDPOINT_HAS_STUDY_OBJECTIVE]->(so:StudyObjective)--(:StudyValue)
+        """
+        if study_value_version:
+            query += """
+                OPTIONAL MATCH (se)-[:STUDY_ENDPOINT_HAS_STUDY_OBJECTIVE]->(so:StudyObjective)--(:StudyValue)-[l:HAS_VERSION{status:'RELEASED', version:$study_value_version}]-(:StudyRoot)
+            """
+        else:
+            query += """
+                OPTIONAL MATCH (se)-[:STUDY_ENDPOINT_HAS_STUDY_OBJECTIVE]->(so:StudyObjective)--(:StudyValue)-[:LATEST]-(:StudyRoot)
+            """
 
+        query += """
+            //OPTIONAL MATCH (se)-[:STUDY_ENDPOINT_HAS_STUDY_OBJECTIVE]->(so:StudyObjective)--(sv)
             WITH sr, se, obj, tr, elr, so, timeframe_ver, ver, has_term, endpoint_sublevel_root, is_instance
             CALL {
                 WITH se
@@ -124,7 +143,7 @@ class StudySelectionEndpointRepository:
 
             MATCH (se)<-[:AFTER]-(sa:StudyAction)
 
-            RETURN
+            RETURN DISTINCT
                 sr.uid AS study_uid,
                 se.uid AS study_endpoint_uid,
                 se.order AS order,
@@ -192,7 +211,7 @@ class StudySelectionEndpointRepository:
         self,
         project_name: str | None = None,
         project_number: str | None = None,
-    ) -> Sequence[StudySelectionEndpointsAR] | None:
+    ) -> list[StudySelectionEndpointsAR]:
         """
         Finds all the selected study endpoints for all studies, and create the aggregate
         :return: List of StudySelectionEndpointsAR, potentially empty
@@ -219,7 +238,10 @@ class StudySelectionEndpointRepository:
         return selection_aggregates
 
     def find_by_study(
-        self, study_uid: str, for_update: bool = False
+        self,
+        study_uid: str,
+        for_update: bool = False,
+        study_value_version: str | None = None,
     ) -> StudySelectionEndpointsAR | None:
         """
         Finds all the selected study endpoints for a given study, and creates the aggregate
@@ -229,7 +251,9 @@ class StudySelectionEndpointRepository:
         """
         if for_update:
             self._acquire_write_lock_study_value(study_uid)
-        all_selections = self._retrieves_all_data(study_uid)
+        all_selections = self._retrieves_all_data(
+            study_uid, study_value_version=study_value_version
+        )
         selection_aggregate = StudySelectionEndpointsAR.from_repository_values(
             study_uid=study_uid, study_endpoints_selection=all_selections
         )
@@ -534,7 +558,7 @@ class StudySelectionEndpointRepository:
         return StudyEndpoint.get_next_free_uid_and_increment_counter()
 
     def _get_selection_with_history(
-        self, study_uid: str, study_selection_uid: str = None
+        self, study_uid: str, study_selection_uid: str | None = None
     ):
         """
         returns the audit trail for study endpoints either for a specific selection or for all study endpoints for the study
@@ -658,7 +682,7 @@ class StudySelectionEndpointRepository:
         return result
 
     def find_selection_history(
-        self, study_uid: str, study_selection_uid: str = None
+        self, study_uid: str, study_selection_uid: str | None = None
     ) -> list[StudyEndpointSelectionHistory]:
         """
         Simple method to return all versions of a study objectives for a study.

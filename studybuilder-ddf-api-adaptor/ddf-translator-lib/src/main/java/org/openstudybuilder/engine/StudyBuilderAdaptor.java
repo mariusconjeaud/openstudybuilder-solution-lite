@@ -10,7 +10,7 @@ public interface StudyBuilderAdaptor {
     String getInclusions(String studyUid) throws Exception;
     String getHlDesign(String studyUid) throws Exception;
     String getExclusions(String studyUid) throws Exception;
-    String getEndpoint(String studyUid) throws Exception;
+    String getEndpoint(String endpointUid) throws Exception;
     String getStudyEndpointSections(String studyUid) throws Exception;
     String getElements(String studyUid) throws Exception;
     String getDesignMatrix(String studyUid) throws Exception;

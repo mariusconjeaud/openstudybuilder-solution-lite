@@ -34,6 +34,6 @@ class JsonFileBasedStaticRepo(GenericLightDictionaryRepoBase[Key, Entity], ABC):
         """
         raise NotImplementedError
 
-    def __init__(self, json_file_path: str = None):
+    def __init__(self, json_file_path: str | None = None):
         if json_file_path is not None:
             self._json_filepath = json_file_path

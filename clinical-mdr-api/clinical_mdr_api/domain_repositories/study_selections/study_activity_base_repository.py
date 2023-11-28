@@ -1,6 +1,6 @@
 import abc
 import datetime
-from typing import Generic, Sequence, TypeVar
+from typing import Generic, TypeVar
 
 from neomodel import db
 
@@ -13,7 +13,10 @@ from clinical_mdr_api.domain_repositories.models.study_audit_trail import (
     Edit,
     StudyAction,
 )
-from clinical_mdr_api.domain_repositories.models.study_selections import StudySelection
+from clinical_mdr_api.domain_repositories.models.study_selections import (
+    StudySelection,
+    StudySelectionMetadata,
+)
 from clinical_mdr_api.domains.study_selections.study_selection_base import (
     StudySelectionBaseAR,
     StudySelectionBaseVO,
@@ -88,21 +91,56 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
     ):
         raise NotImplementedError
 
+    def _versioning_query(self):
+        return """
+        WITH DISTINCT *
+            CALL {
+                WITH ar, av
+                MATCH (ar)-[hv:HAS_VERSION]-(av)
+                WHERE hv.status in ['Final', 'Retired']
+                WITH hv
+                ORDER BY
+                    toInteger(split(hv.version, '.')[0]) ASC,
+                    toInteger(split(hv.version, '.')[1]) ASC,
+                    hv.end_date ASC,
+                    hv.start_date ASC
+                WITH collect(hv) as hvs
+                RETURN last(hvs) as hv_ver
+            }
+        """
+
+    def _order_by_query(self):
+        return """
+            WITH DISTINCT *
+            ORDER BY sa.order ASC
+            MATCH (sa)<-[:AFTER]-(sac:StudyAction)
+        """
+
     def _retrieves_all_data(
         self,
         study_uid: str | None = None,
         project_name: str | None = None,
         project_number: str | None = None,
+        study_value_version: str | None = None,
         **kwargs,
-    ) -> Sequence[_AggregateRootType]:
+    ) -> tuple[_AggregateRootType]:
         query = ""
         query_parameters = {}
-        # First, we want to match the StudyRoot and its latest version
         if study_uid:
-            query = "MATCH (sr:StudyRoot {uid: $uid})-[l:LATEST]->(sv:StudyValue)"
-            query_parameters["uid"] = study_uid
+            if study_value_version:
+                query = "MATCH (sr:StudyRoot { uid: $uid})-[l:HAS_VERSION{status:'RELEASED', version:$study_value_version}]->(sv:StudyValue)"
+                query_parameters["study_value_version"] = study_value_version
+                query_parameters["uid"] = study_uid
+            else:
+                query = "MATCH (sr:StudyRoot { uid: $uid})-[l:LATEST]->(sv:StudyValue)"
+                query_parameters["uid"] = study_uid
         else:
-            query = "MATCH (sr:StudyRoot)-[l:LATEST]->(sv:StudyValue)"
+            if study_value_version:
+                query = "MATCH (sr:StudyRoot)-[l:HAS_VERSION{status:'RELEASED', version:$study_value_version}]->(sv:StudyValue)"
+                query_parameters["study_value_version"] = study_value_version
+            else:
+                query = "MATCH (sr:StudyRoot)-[l:LATEST]->(sv:StudyValue)"
+
         # Add project related filters if applicable
         if project_name is not None or project_number is not None:
             query += (
@@ -123,28 +161,8 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
 
         # Filter on extra parameters, for instance ActivityGroupNames
         query += self._filter_clause(query_parameters=query_parameters, **kwargs)
-
-        # Finally, match the FlowchartGroup and StudyAction
-        query += """
-            WITH DISTINCT *
-            CALL {
-                WITH ar, av
-                MATCH (ar)-[hv:HAS_VERSION]-(av)
-                WHERE hv.status in ['Final', 'Retired']
-                WITH hv
-                ORDER BY
-                    toInteger(split(hv.version, '.')[0]) ASC,
-                    toInteger(split(hv.version, '.')[1]) ASC,
-                    hv.end_date ASC,
-                    hv.start_date ASC
-                WITH collect(hv) as hvs
-                RETURN last(hvs) as hv_ver
-            }
-
-            WITH DISTINCT *
-            ORDER BY sa.order ASC
-            MATCH (sa)<-[:AFTER]-(sac:StudyAction)
-        """
+        query += self._versioning_query()
+        query += self._order_by_query()
         query += self._return_clause()
         all_activity_selections = db.cypher_query(query, query_parameters)
         all_selections = []
@@ -163,7 +181,7 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
         project_name: str | None = None,
         project_number: str | None = None,
         **kwargs,
-    ) -> Sequence[StudySelectionBaseAR] | None:
+    ) -> list[StudySelectionBaseAR]:
         """
         Finds all the selected study activities for all studies, and create the aggregate
         :return: List of StudySelectionActivityAR, potentially empty
@@ -189,11 +207,19 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
         return selection_aggregates
 
     def find_by_study(
-        self, study_uid: str, for_update: bool = False
+        self,
+        study_uid: str,
+        for_update: bool = False,
+        study_value_version: str | None = None,
+        **kwargs,
     ) -> StudySelectionBaseAR | None:
         if for_update:
             self._acquire_write_lock_study_value(study_uid)
-        all_selections = self._retrieves_all_data(study_uid)
+        all_selections = self._retrieves_all_data(
+            study_uid,
+            study_value_version=study_value_version,
+            **kwargs,
+        )
         selection_aggregate = self._aggregate_root_type.from_repository_values(
             study_uid=study_uid, study_objects_selection=all_selections
         )
@@ -218,6 +244,9 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
             return Create()
         return Delete()
 
+    def is_repository_based_on_ordered_selection(self):
+        return True
+
     def save(self, study_selection: StudySelectionBaseAR, author: str) -> None:
         assert study_selection.repository_closure_data is not None
         # get the closure_data
@@ -225,17 +254,18 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
         closure_data_length = len(closure_data)
 
         # getting the latest study value node
-        study_root_node = StudyRoot.nodes.get(uid=study_selection.study_uid)
-        latest_study_value_node = study_root_node.latest_value.single()
+        study_root_node: StudyRoot = StudyRoot.nodes.get(uid=study_selection.study_uid)
+        latest_study_value_node: StudyValue = study_root_node.latest_value.get_or_none()
 
         # process new/changed/deleted elements for each activity
         selections_to_remove = []
         selections_to_add = []
 
         # check if object is removed from the selection list - delete has been called
-        if len(closure_data) > len(study_selection.study_objects_selection):
+        if closure_data_length > len(study_selection.study_objects_selection):
             # remove the last item from old list, as there will no longer be any study activity with that high order
-            selections_to_remove.append((len(closure_data), closure_data[-1]))
+            if self.is_repository_based_on_ordered_selection():
+                selections_to_remove.append((len(closure_data), closure_data[-1]))
 
         # loop through new data - start=1 as order starts at 1 not at 0 and find what needs to be removed and added
         for order, selection in enumerate(
@@ -245,9 +275,16 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
             if closure_data_length > order - 1:
                 # check if anything has changed
                 if selection is not closure_data[order - 1]:
-                    # update the selection by removing the old if the old exists, and adding new selection
-                    selections_to_remove.append((order, closure_data[order - 1]))
-                    selections_to_add.append((order, selection))
+                    # don't modify the item if the change is the order change,
+                    # if the item is actually changed (the uid is the same) we should modify it
+                    if (
+                        self.is_repository_based_on_ordered_selection()
+                        or selection.study_selection_uid
+                        == closure_data[order - 1].study_selection_uid
+                    ):
+                        # update the selection by removing the old if the old exists, and adding new selection
+                        selections_to_remove.append((order, closure_data[order - 1]))
+                        selections_to_add.append((order, selection))
             else:
                 # else something new have been added
                 selections_to_add.append((order, selection))
@@ -316,7 +353,12 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
         audit_node.date = datetime.datetime.now(datetime.timezone.utc)
         audit_node.save()
 
-        audit_node.has_before.connect(study_activity_selection_node)
+        if isinstance(study_activity_selection_node, StudySelectionMetadata):
+            audit_node.study_selection_metadata_has_before.connect(
+                study_activity_selection_node
+            )
+        else:
+            audit_node.has_before.connect(study_activity_selection_node)
         study_root_node.audit_trail.connect(audit_node)
         return audit_node
 
@@ -350,7 +392,7 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
         return result
 
     def find_selection_history(
-        self, study_uid: str, study_selection_uid: str = None
+        self, study_uid: str, study_selection_uid: str | None = None
     ) -> list[dict | None]:
         if study_selection_uid:
             return self._get_selection_with_history(

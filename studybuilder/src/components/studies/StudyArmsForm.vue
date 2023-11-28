@@ -225,10 +225,6 @@ export default {
       return Object.keys(this.editedArm).length !== 0
     },
     async submit () {
-      const valid = await this.$refs.observer.validate()
-      if (!valid) {
-        return
-      }
       if (Object.keys(this.editedArm).length !== 0) {
         this.edit()
       } else {
@@ -242,6 +238,8 @@ export default {
       arms.create(this.selectedStudy.uid, this.form).then(resp => {
         bus.$emit('notification', { msg: this.$t('StudyArmsForm.arm_created') })
         this.close()
+      }, _err => {
+        this.$refs.form.working = false
       })
     },
     edit () {
@@ -251,6 +249,8 @@ export default {
       arms.edit(this.selectedStudy.uid, this.form, this.editedArm.arm_uid).then(resp => {
         bus.$emit('notification', { msg: this.$t('StudyArmsForm.arm_updated') })
         this.close()
+      }, _err => {
+        this.$refs.form.working = false
       })
     },
     close () {

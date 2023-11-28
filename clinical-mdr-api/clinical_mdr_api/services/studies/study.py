@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Callable, Collection, Iterable, Sequence
+from typing import Any, Callable, Collection, Iterable
 
 from neomodel import db  # type: ignore
 
@@ -22,6 +22,7 @@ from clinical_mdr_api.domains.study_definition_aggregates.root import StudyDefin
 from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import (
     HighLevelStudyDesignVO,
     StudyComponentEnum,
+    StudyCopyComponentEnum,
     StudyDescriptionVO,
     StudyFieldAuditTrailEntryAR,
     StudyIdentificationMetadataVO,
@@ -73,26 +74,37 @@ class StudyService:
         self._repos.close()
 
     @staticmethod
-    def filter_result_by_requested_fields(result, fields: str | None = None):
-        # here goes filtering according to value of fields query param
-        default_fields = (
-            "current_metadata.identification_metadata,"
-            "current_metadata.version_metadata,"
-            "uid,possible_actions,project_number,study_number,study_acronym,"
-            "eudract_id,ct_gov_id,study_id,study_status"
+    def filter_result_by_requested_fields(
+        result,
+        include_sections: list[StudyComponentEnum] | None = None,
+        exclude_sections: list[StudyComponentEnum] | None = None,
+    ):
+        default_fields = set(
+            [
+                "current_metadata.identification_metadata",
+                "current_metadata.version_metadata",
+                "uid",
+                "possible_actions",
+            ]
         )
-        mandatory_fields = "uid,study_status"
-        # provide some default
-        if fields is None or len(fields) == 0:
-            fields = default_fields
-        fields = "".join(fields.split())  # easy way to remove all white space
-        # if starts with + or - we assume client specifies a difference so we prepend our default
-        if fields[0] == "+" or fields[0] == "-":
-            fields = default_fields + "," + fields
+        if include_sections:
+            include_spec_set = {
+                f"current_metadata.{section.value}" for section in include_sections
+            }
+            include_spec_set = include_spec_set | default_fields
         else:
-            fields = mandatory_fields + "," + fields
+            include_spec_set = default_fields
+        if exclude_sections:
+            exclude_spec_set = {
+                f"current_metadata.{section.value}" for section in exclude_sections
+            }
+        else:
+            exclude_spec_set = set()
         result = filter_base_model_using_fields_directive(
-            result, FieldsDirective.from_fields_query_parameter(fields)
+            result,
+            FieldsDirective._from_include_and_exclude_spec_sets(
+                include_spec_set=include_spec_set, exclude_spec_set=exclude_spec_set
+            ),
         )
         return result
 
@@ -106,10 +118,11 @@ class StudyService:
         find_dictionary_term_by_uid: Callable[
             [str], DictionaryTermAR | None
         ] = lambda _: None,
-        fields: str | None = None,
+        include_sections: list[StudyComponentEnum] | None = None,
+        exclude_sections: list[StudyComponentEnum] | None = None,
         at_specified_date_time: datetime | None = None,
+        study_value_version: str | None = None,
         status: StudyStatus | None = None,
-        version: str | None = None,
         history_endpoint: bool = False,
     ) -> Study:
         result = Study.from_study_definition_ar(
@@ -120,12 +133,16 @@ class StudyService:
             find_term_by_uid=find_term_by_uid,
             find_dictionary_term_by_uid=find_dictionary_term_by_uid,
             at_specified_date_time=at_specified_date_time,
+            study_value_version=study_value_version,
             status=status,
-            version=version,
             history_endpoint=history_endpoint,
         )
         return (
-            StudyService.filter_result_by_requested_fields(result, fields)
+            StudyService.filter_result_by_requested_fields(
+                result,
+                include_sections=include_sections,
+                exclude_sections=exclude_sections,
+            )
             if result is not None
             else None
         )
@@ -135,7 +152,8 @@ class StudyService:
         study_definition_ar: StudyDefinitionAR,
         find_project_by_project_number: Callable[[str], ProjectAR],
         find_clinical_programme_by_uid: Callable[[str], ClinicalProgrammeAR],
-        fields: str | None = None,
+        include_sections: list[StudyComponentEnum] | None = None,
+        exclude_sections: list[StudyComponentEnum] | None = None,
     ) -> CompactStudy:
         result = CompactStudy.from_study_definition_ar(
             study_definition_ar=study_definition_ar,
@@ -143,53 +161,47 @@ class StudyService:
             find_clinical_programme_by_uid=find_clinical_programme_by_uid,
         )
         return (
-            StudyService.filter_result_by_requested_fields(result, fields)
+            StudyService.filter_result_by_requested_fields(
+                result,
+                include_sections=include_sections,
+                exclude_sections=exclude_sections,
+            )
             if result is not None
             else None
         )
 
     def _models_study_protocol_title_from_study_definition_ar(
-        self, study_definition_ar: StudyDefinitionAR
+        self,
+        study_definition_ar: StudyDefinitionAR,
+        study_value_version: str | None = None,
     ) -> StudyProtocolTitle:
         return StudyProtocolTitle.from_study_definition_ar(
-            study_definition_ar,
+            study_definition_ar=study_definition_ar,
+            study_value_version=study_value_version,
             find_term_by_uid=self._repos.ct_term_name_repository.find_by_uid,
         )
 
     @staticmethod
     def determine_filtering_sections_set(
-        default_sections, sections_selected
+        default_sections,
+        include_sections: list[StudyComponentEnum] | None,
+        exclude_sections: list[StudyComponentEnum] | None,
     ) -> Collection[str]:
         filtered_sections = default_sections
-        for section in sections_selected:
-            section = section.strip()
-            if section.startswith("+"):
-                if section[1:] in default_sections:
+        if include_sections:
+            for section in include_sections:
+                if section.value in default_sections:
                     raise exceptions.ValidationException(
-                        "The specified section "
-                        + section[1:]
-                        + " is a default section, and "
-                        "is included by default. "
-                        "Please remove this argument."
+                        f"""The specified section {section.value} is a default section, and is included by default. Please remove this argument."""
                     )
-                filtered_sections.append(section[1:])
-            elif section.startswith("-"):
-                if section[1:] not in default_sections:
+                filtered_sections.append(section.value)
+        if exclude_sections:
+            for section in exclude_sections:
+                if section.value not in default_sections:
                     raise exceptions.ValidationException(
-                        "The specified section "
-                        + section[1:]
-                        + " is not a default section, and "
-                        "cannot be filtered out."
+                        f"""The specified section {section.value} is not a default section, and cannot be filtered out."""
                     )
-                filtered_sections.remove(section[1:])
-            else:
-                raise exceptions.ValidationException(
-                    "Specify a list of sections to filter the audit trail by. "
-                    "Each section name must be preceded by a '+' or a '-', "
-                    "valid values are: 'identification_metadata, registry_identifiers, version_metadata, "
-                    "high_level_study_design, study_population, study_intervention, study_description'. "
-                    "Example valid input: '-identification_metadata,+study_population'."
-                )
+                filtered_sections.remove(section.value)
         return filtered_sections
 
     @db.transaction
@@ -198,13 +210,15 @@ class StudyService:
         uid: str,
         at_specified_date_time: datetime | None = None,
         status: StudyStatus | None = None,
-        version: str | None = None,
-        fields: str | None = None,
+        include_sections: list[StudyComponentEnum] | None = None,
+        exclude_sections: list[StudyComponentEnum] | None = None,
+        study_value_version: str | None = None,
     ) -> Study:
         try:
             # call relevant finder (we use helper property to get to the repository)
             study_definition = self._repos.study_definition_repository.find_by_uid(
                 uid=uid,
+                study_value_version=study_value_version,
             )
             if study_definition is None:
                 raise exceptions.NotFoundException(
@@ -217,10 +231,11 @@ class StudyService:
                 find_all_study_time_units=self._repos.unit_definition_repository.find_all,
                 find_term_by_uid=self._repos.ct_term_name_repository.find_by_uid,
                 find_dictionary_term_by_uid=self._repos.dictionary_term_generic_repository.find_by_uid,
-                fields=fields,
+                include_sections=include_sections,
+                exclude_sections=exclude_sections,
                 at_specified_date_time=at_specified_date_time,
+                study_value_version=study_value_version,
                 status=status,
-                version=version,
             )
         finally:
             self._close_all_repos()
@@ -316,8 +331,9 @@ class StudyService:
     def _models_study_field_audit_trail_from_audit_trail_vo(
         study_audit_trail_vo_sequence: Iterable[StudyFieldAuditTrailEntryAR],
         find_term_by_uid: Callable[[str], CTTermNameAR | None],
-        sections: str | None = None,
-    ) -> Sequence[StudyFieldAuditTrailEntry]:
+        include_sections: list[StudyComponentEnum] | None = None,
+        exclude_sections: list[StudyComponentEnum] | None = None,
+    ) -> list[StudyFieldAuditTrailEntry]:
         # Create entries from the audit trail value objects and filter by section.
         all_sections = [
             "identification_metadata",
@@ -334,12 +350,13 @@ class StudyService:
         # Else, use filtering.
         sections_selected = (
             StudyService.determine_filtering_sections_set(
-                default_sections, sections.strip().split(",")
+                default_sections=default_sections,
+                include_sections=include_sections,
+                exclude_sections=exclude_sections,
             )
-            if sections is not None and sections.strip() != ""
+            if include_sections or exclude_sections
             else all_sections
         )
-
         result = [
             StudyFieldAuditTrailEntry.from_study_field_audit_trail_vo(
                 study_audit_trail_vo, sections_selected, find_term_by_uid
@@ -354,8 +371,11 @@ class StudyService:
 
     @db.transaction
     def get_fields_audit_trail_by_uid(
-        self, uid: str, sections: str | None = None
-    ) -> Sequence[StudyFieldAuditTrailEntry] | None:
+        self,
+        uid: str,
+        include_sections: list[StudyComponentEnum] | None = None,
+        exclude_sections: list[StudyComponentEnum] | None = None,
+    ) -> list[StudyFieldAuditTrailEntry] | None:
         try:
             # call relevant finder (we use helper property to get to the repository)
             study_fields_audit_trail_vo_sequence = (
@@ -368,7 +388,8 @@ class StudyService:
             # Filter to see only the relevant sections.
             result = self._models_study_field_audit_trail_from_audit_trail_vo(
                 study_audit_trail_vo_sequence=study_fields_audit_trail_vo_sequence,
-                sections=sections,
+                include_sections=include_sections,
+                exclude_sections=exclude_sections,
                 find_term_by_uid=self._repos.ct_term_name_repository.find_by_uid,
             )
             return result
@@ -416,7 +437,6 @@ class StudyService:
                     study_definition_ar=item,
                     find_project_by_project_number=self._repos.project_repository.find_by_project_number,
                     find_clinical_programme_by_uid=self._repos.clinical_programme_repository.find_by_uid,
-                    fields=None,
                 )
                 for item in all_items.items
             ]
@@ -514,18 +534,25 @@ class StudyService:
         # Return values for field_name
         return header_values
 
-    def get_protocol_title(self, uid: str) -> StudyProtocolTitle:
+    def get_protocol_title(
+        self, uid: str, study_value_version: str | None = None
+    ) -> StudyProtocolTitle:
         try:
-            study_definition = self._repos.study_definition_repository.find_by_uid(uid)
+            study_definition = self._repos.study_definition_repository.find_by_uid(
+                uid=uid, study_value_version=study_value_version
+            )
             if study_definition is None:
                 raise exceptions.NotFoundException(
                     f"StudyDefinition '{uid}' not found."
                 )
             result = self._models_study_protocol_title_from_study_definition_ar(
-                study_definition
+                study_definition_ar=study_definition,
+                study_value_version=study_value_version,
             )
             compound_selection_ar = self._repos.study_compound_repository.find_by_study(
-                uid, type_of_treatment="Investigational Product"
+                study_uid=uid,
+                study_value_version=study_value_version,
+                type_of_treatment="Investigational Product",
             )
             names = []
             for study_compound in compound_selection_ar.study_compounds_selection:
@@ -690,7 +717,7 @@ class StudyService:
             ),
         )
 
-        def _helper(array: Sequence | None) -> Sequence:
+        def _helper(array: list[Any] | None) -> list[Any]:
             return array if array is not None else []
 
         new_study_population = StudyPopulationVO.from_input_values(
@@ -823,7 +850,7 @@ class StudyService:
 
         # we start a try block to catch any ValueError and report as Forbidden (otherwise it would be
         # reported as Internal)
-        def _helper(array: Sequence | None) -> Sequence:
+        def _helper(array: list[Any] | None) -> list[Any]:
             return array if array is not None else []
 
         new_high_level_study_design = HighLevelStudyDesignVO.from_input_values(
@@ -958,7 +985,6 @@ class StudyService:
         uid: str,
         dry: bool,
         study_patch_request: StudyPatchRequestJsonModel,
-        fields: str | None = None,
     ) -> Study:
         try:
             study_definition_ar = self._repos.study_definition_repository.find_by_uid(
@@ -1065,7 +1091,6 @@ class StudyService:
                 find_project_by_project_number=self._repos.project_repository.find_by_project_number,
                 find_clinical_programme_by_uid=self._repos.clinical_programme_repository.find_by_uid,
                 find_all_study_time_units=self._repos.unit_definition_repository.find_all,
-                fields=fields,
             )
         finally:
             self._close_all_repos()
@@ -1074,12 +1099,20 @@ class StudyService:
         self,
         uid: str,
         reference_study_uid: str,
-        component_to_copy: StudyComponentEnum,
+        component_to_copy: StudyCopyComponentEnum,
         overwrite: bool,
     ):
-        fields = f"+current_metadata.{component_to_copy.value}"
-        study = self.get_by_uid(uid=uid, fields=fields)
-        reference_study = self.get_by_uid(uid=reference_study_uid, fields=fields)
+        include_sections: list[StudyComponentEnum] = []
+        if component_to_copy == StudyCopyComponentEnum.STUDY_DESIGN:
+            include_sections.append(StudyComponentEnum.STUDY_DESIGN)
+        elif component_to_copy == StudyCopyComponentEnum.STUDY_POPULATION:
+            include_sections.append(StudyComponentEnum.STUDY_POPULATION)
+        elif component_to_copy == StudyCopyComponentEnum.STUDY_INTERVENTION:
+            include_sections.append(StudyComponentEnum.STUDY_INTERVENTION)
+        study = self.get_by_uid(uid=uid, include_sections=include_sections)
+        reference_study = self.get_by_uid(
+            uid=reference_study_uid, include_sections=include_sections
+        )
 
         base_study_component = getattr(study.current_metadata, component_to_copy.value)
         reference_study_component = getattr(
@@ -1110,6 +1143,31 @@ class StudyService:
         if not self._repos.study_definition_repository.study_exists_by_uid(
             study_uid=study_uid
         ):
+            raise exceptions.NotFoundException(
+                f"Study with specified uid '{study_uid}' was not found."
+            )
+
+    def check_if_study_uid_and_version_exists(
+        self, study_uid: str, study_value_version: str | None = None
+    ):
+        """
+        Check if the study with the given study_uid and optionally with the study_value_version exists.
+
+        Args:
+            study_uid (str): The unique identifier of the study.
+            study_value_version (str | None): The version of the study to check. Defaults to None.
+
+        Returns:
+            bool: True if the study exists, False otherwise.
+        """
+
+        if not self._repos.study_definition_repository.check_if_study_uid_and_version_exists(
+            study_uid=study_uid, study_value_version=study_value_version
+        ):
+            if study_value_version:
+                raise exceptions.NotFoundException(
+                    f"Study with specified uid '{study_uid}' and version '{study_value_version}' was not found."
+                )
             raise exceptions.NotFoundException(
                 f"Study with specified uid '{study_uid}' was not found."
             )

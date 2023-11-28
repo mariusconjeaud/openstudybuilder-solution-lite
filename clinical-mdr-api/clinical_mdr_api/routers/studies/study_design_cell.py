@@ -1,9 +1,8 @@
-from typing import Sequence
-
-from fastapi import Body, Depends, Response, status
+from fastapi import Body, Depends, Query, Response, status
 
 from clinical_mdr_api import models
 from clinical_mdr_api.models.error import ErrorResponse
+from clinical_mdr_api.models.validators import FLOAT_REGEX
 from clinical_mdr_api.oauth import get_current_user_id, rbac
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.routers import study_router as router
@@ -15,7 +14,7 @@ from clinical_mdr_api.services.studies.study_design_cell import StudyDesignCellS
     "/studies/{uid}/study-design-cells",
     dependencies=[rbac.STUDY_READ],
     summary="List all study design cells currently defined for the study",
-    response_model=Sequence[models.StudyDesignCell],
+    response_model=list[models.StudyDesignCell],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -27,10 +26,19 @@ from clinical_mdr_api.services.studies.study_design_cell import StudyDesignCellS
     },
 )
 def get_all_design_cells(
-    uid: str = utils.studyUID, current_user_id: str = Depends(get_current_user_id)
-) -> Sequence[models.StudyDesignCell]:
+    uid: str = utils.studyUID,
+    current_user_id: str = Depends(get_current_user_id),
+    study_value_version: str
+    | None = Query(
+        None,
+        description="StudyValueVersion to extract the StudySelections",
+        regex=FLOAT_REGEX,
+    ),
+) -> list[models.StudyDesignCell]:
     service = StudyDesignCellService(author=current_user_id)
-    cells = service.get_all_design_cells(study_uid=uid)
+    cells = service.get_all_design_cells(
+        study_uid=uid, study_value_version=study_value_version
+    )
     return cells
 
 
@@ -160,7 +168,7 @@ The following values should be returned for all study design cells:
 - activity
 - order
     """,
-    response_model=Sequence[models.StudyDesignCellVersion],
+    response_model=list[models.StudyDesignCellVersion],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -170,7 +178,7 @@ The following values should be returned for all study design cells:
 )
 def get_all_design_cells_audit_trail(
     uid: str = utils.studyUID, current_user_id: str = Depends(get_current_user_id)
-) -> Sequence[models.StudyDesignCellVersion]:
+) -> list[models.StudyDesignCellVersion]:
     service = StudyDesignCellService(author=current_user_id)
     return service.get_all_design_cells_audit_trail(study_uid=uid)
 
@@ -179,7 +187,7 @@ def get_all_design_cells_audit_trail(
     "/studies/{uid}/study-design-cells/{study_design_cell_uid}/audit-trail/",
     dependencies=[rbac.STUDY_READ],
     summary="List audit trail related to definition of a specific study design cell.",
-    response_model=Sequence[models.StudyDesignCellVersion],
+    response_model=list[models.StudyDesignCellVersion],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -205,7 +213,7 @@ def get_specific_schedule_audit_trail(
     "/studies/{uid}/study-design-cells/batch",
     dependencies=[rbac.STUDY_WRITE],
     summary="Batch operations (create, delete) for study design cells",
-    response_model=Sequence[models.StudyDesignCellBatchOutput],
+    response_model=list[models.StudyDesignCellBatchOutput],
     status_code=207,
     responses={
         404: _generic_descriptions.ERROR_404,
@@ -215,11 +223,11 @@ def get_specific_schedule_audit_trail(
 @decorators.validate_if_study_is_not_locked("uid")
 def design_cell_batch_operations(
     uid: str = utils.studyUID,
-    operations: Sequence[models.StudyDesignCellBatchInput] = Body(
+    operations: list[models.StudyDesignCellBatchInput] = Body(
         description="List of operations to perform"
     ),
     current_user_id: str = Depends(get_current_user_id),
-) -> Sequence[models.StudyDesignCellBatchOutput]:
+) -> list[models.StudyDesignCellBatchOutput]:
     service = StudyDesignCellService(author=current_user_id)
     return service.handle_batch_operations(uid, operations)
 
@@ -246,7 +254,7 @@ def design_cell_batch_operations(
     Possible errors:
     - Invalid study-uid.
 """,
-    response_model=Sequence[models.StudyDesignCell],
+    response_model=list[models.StudyDesignCell],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -255,10 +263,20 @@ def design_cell_batch_operations(
     },
 )
 def get_all_selected_desing_cells_connected_arm(
-    uid: str, arm_uid: str, current_user_id: str = Depends(get_current_user_id)
-) -> Sequence[models.StudyDesignCell]:
+    uid: str,
+    arm_uid: str,
+    current_user_id: str = Depends(get_current_user_id),
+    study_value_version: str
+    | None = Query(
+        None,
+        description="StudyValueVersion to extract the StudySelections",
+        regex=FLOAT_REGEX,
+    ),
+) -> list[models.StudyDesignCell]:
     service = StudyDesignCellService(author=current_user_id)
-    return service.get_all_selection_within_arm(study_uid=uid, study_arm_uid=arm_uid)
+    return service.get_all_selection_within_arm(
+        study_uid=uid, study_arm_uid=arm_uid, study_value_version=study_value_version
+    )
 
 
 @router.get(
@@ -287,7 +305,7 @@ def get_all_selected_desing_cells_connected_arm(
     Possible errors:
     - Invalid study-uid.
 """,
-    response_model=Sequence[models.StudyDesignCell],
+    response_model=list[models.StudyDesignCell],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -296,11 +314,21 @@ def get_all_selected_desing_cells_connected_arm(
     },
 )
 def get_all_selected_desing_cells_connected_branch_arm(
-    uid: str, branch_arm_uid: str, current_user_id: str = Depends(get_current_user_id)
-) -> Sequence[models.StudyDesignCell]:
+    uid: str,
+    branch_arm_uid: str,
+    current_user_id: str = Depends(get_current_user_id),
+    study_value_version: str
+    | None = Query(
+        None,
+        description="StudyValueVersion to extract the StudySelections",
+        regex=FLOAT_REGEX,
+    ),
+) -> list[models.StudyDesignCell]:
     service = StudyDesignCellService(author=current_user_id)
     return service.get_all_selection_within_branch_arm(
-        study_uid=uid, study_branch_arm_uid=branch_arm_uid
+        study_uid=uid,
+        study_branch_arm_uid=branch_arm_uid,
+        study_value_version=study_value_version,
     )
 
 
@@ -326,7 +354,7 @@ def get_all_selected_desing_cells_connected_branch_arm(
     Possible errors:
     - Invalid study-uid.
 """,
-    response_model=Sequence[models.StudyDesignCell],
+    response_model=list[models.StudyDesignCell],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -335,9 +363,19 @@ def get_all_selected_desing_cells_connected_branch_arm(
     },
 )
 def get_all_selected_desing_cells_connected_epoch(
-    uid: str, epoch_uid: str, current_user_id: str = Depends(get_current_user_id)
-) -> Sequence[models.StudyDesignCell]:
+    uid: str,
+    epoch_uid: str,
+    current_user_id: str = Depends(get_current_user_id),
+    study_value_version: str
+    | None = Query(
+        None,
+        description="StudyValueVersion to extract the StudySelections",
+        regex=FLOAT_REGEX,
+    ),
+) -> list[models.StudyDesignCell]:
     service = StudyDesignCellService(author=current_user_id)
     return service.get_all_selection_within_epoch(
-        study_uid=uid, study_epoch_uid=epoch_uid
+        study_uid=uid,
+        study_epoch_uid=epoch_uid,
+        study_value_version=study_value_version,
     )

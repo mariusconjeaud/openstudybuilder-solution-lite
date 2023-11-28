@@ -69,6 +69,11 @@
         </tr>
       </draggable>
     </template>
+    <template v-slot:item.epoch_name="{ item }">
+      <router-link :to="{ name: 'StudyEpochOverview', params: { study_id: selectedStudy.uid, id: item.uid } }">
+        {{ item.epoch_name }}
+      </router-link>
+    </template>
     <template v-slot:item.actions="{ item }">
       <actions-menu :actions="actions" :item="item" />
     </template>
@@ -80,7 +85,7 @@
         color="primary"
         @click="createEpoch()"
         :title="$t('StudyEpochForm.add_title')"
-        :disabled="!checkPermission($roles.STUDY_WRITE)"
+        :disabled="!checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
         >
         <v-icon dark>
           mdi-plus
@@ -134,6 +139,7 @@ export default {
   computed: {
     ...mapGetters({
       selectedStudy: 'studiesGeneral/selectedStudy',
+      selectedStudyVersion: 'studiesGeneral/selectedStudyVersion',
       studyEpochs: 'studyEpochs/studyEpochs'
     }),
     exportDataUrl () {
@@ -155,7 +161,7 @@ export default {
           label: this.$t('_global.edit'),
           icon: 'mdi-pencil-outline',
           iconColor: 'primary',
-          condition: (item) => item.possible_actions.find(action => action === 'edit'),
+          condition: (item) => item.possible_actions.find(action => action === 'edit') && !this.selectedStudyVersion,
           click: this.editEpoch,
           accessRole: this.$roles.STUDY_WRITE
         },
@@ -163,7 +169,7 @@ export default {
           label: this.$t('_global.delete'),
           icon: 'mdi-delete-outline',
           iconColor: 'error',
-          condition: (item) => item.possible_actions.find(action => action === 'delete'),
+          condition: (item) => item.possible_actions.find(action => action === 'delete') && !this.selectedStudyVersion,
           click: this.deleteEpoch,
           accessRole: this.$roles.STUDY_WRITE
         },
@@ -215,7 +221,8 @@ export default {
     fetchEpochs (filters, sort, filtersUpdated) {
       const params = filteringParameters.prepareParameters(
         this.options, filters, sort, filtersUpdated)
-      params.studyUid = this.selectedStudy.uid
+      params.study_uid = this.selectedStudy.uid
+      params.study_value_version = this.selectedStudyVersion
       this.$store.dispatch('studyEpochs/fetchFilteredStudyEpochs', params)
     },
     switchSort () {
@@ -244,8 +251,14 @@ export default {
       this.showForm = true
     },
     onOrderChange (event) {
+      const params = {
+        study_value_version: this.selectedStudyVersion
+      }
       epochs.reorderStudyEpoch(this.selectedStudy.uid, this.studyEpochs[event.moved.oldIndex].uid, event.moved.newIndex).then(() => {
-        this.$store.dispatch('studyEpochs/fetchStudyEpochs', this.selectedStudy.uid)
+        this.$store.dispatch('studyEpochs/fetchStudyEpochs', { studyUid: this.selectedStudy.uid, data: params })
+      }).catch(err => {
+        console.log(err)
+        this.$store.dispatch('studyEpochs/fetchStudyEpochs', { studyUid: this.selectedStudy.uid, data: params })
       })
     },
     createEpoch () {
@@ -278,7 +291,6 @@ export default {
     }
   },
   mounted () {
-    this.$store.dispatch('studyEpochs/fetchStudyEpochs', this.selectedStudy.uid)
     this.$store.dispatch('studiesGeneral/fetchUnits')
     this.fetchEpochs()
   }

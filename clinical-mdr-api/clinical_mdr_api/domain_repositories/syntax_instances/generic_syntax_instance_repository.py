@@ -271,10 +271,10 @@ class GenericSyntaxInstanceRepository(
         return parameter_terms[0] if len(parameter_terms) > 0 else []
 
     def _from_repository_values(self, value):
-        pv = SimpleParameterTermVO.from_repository_values(
+        simple_parameter_term_vo = SimpleParameterTermVO.from_repository_values(
             uid=value["parameter_uid"], value=value["parameter_term"]
         )
-        return pv
+        return simple_parameter_term_vo
 
     def _get_template(
         self, root: VersionRoot, value: VersionValue, date_before: datetime

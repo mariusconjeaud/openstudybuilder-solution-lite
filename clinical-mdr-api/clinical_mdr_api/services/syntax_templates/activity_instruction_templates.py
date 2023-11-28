@@ -1,5 +1,3 @@
-from typing import Sequence
-
 from neomodel import db
 
 from clinical_mdr_api.domain_repositories.models.syntax import (
@@ -261,15 +259,15 @@ class ActivityInstructionTemplateService(
     def _get_indexings(
         self, template: BaseModel
     ) -> tuple[
-        Sequence[DictionaryTermAR],
-        Sequence[ActivityAR],
-        Sequence[ActivityGroupAR],
-        Sequence[ActivitySubGroupAR],
+        list[DictionaryTermAR],
+        list[ActivityAR],
+        list[ActivityGroupAR],
+        list[ActivitySubGroupAR],
     ]:
-        indications: Sequence[DictionaryTermAR] = []
-        activities: Sequence[ActivityAR] = []
-        activity_groups: Sequence[ActivityGroupAR] = []
-        activity_subgroups: Sequence[ActivitySubGroupAR] = []
+        indications: list[DictionaryTermAR] = []
+        activities: list[ActivityAR] = []
+        activity_groups: list[ActivityGroupAR] = []
+        activity_subgroups: list[ActivitySubGroupAR] = []
 
         if template.indication_uids:
             for uid in template.indication_uids:

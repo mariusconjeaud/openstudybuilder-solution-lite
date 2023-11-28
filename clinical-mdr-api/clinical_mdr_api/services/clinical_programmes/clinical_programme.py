@@ -1,5 +1,3 @@
-from typing import Sequence
-
 from neomodel import db  # type: ignore
 
 from clinical_mdr_api import models
@@ -18,7 +16,7 @@ def _models_clinical_programme_from_clinical_programme_ar(
     )
 
 
-def get_all_clinical_programmes() -> Sequence[models.ClinicalProgramme]:
+def get_all_clinical_programmes() -> list[models.ClinicalProgramme]:
     repos = MetaRepository()
     try:
         all_clinical_programmes = repos.clinical_programme_repository.find_all()

@@ -4,6 +4,7 @@ import pytest
 from parameterized import parameterized
 from pydantic import BaseModel
 
+import clinical_mdr_api.utils
 from clinical_mdr_api.models import utils
 
 
@@ -27,10 +28,37 @@ class TestModelUtils(unittest.TestCase):
         ]
     )
     def test_booltostr(self, boolean, true_format, expected):
-        assert utils.booltostr(boolean, true_format) == expected
+        assert clinical_mdr_api.utils.booltostr(boolean, true_format) == expected
 
     def test_booltostr_raises_exception(self):
-        self.assertRaises(ValueError, utils.booltostr, 1, "NonExistingTrueFormat")
+        self.assertRaises(
+            ValueError, clinical_mdr_api.utils.booltostr, 1, "NonExistingTrueFormat"
+        )
+
+    @parameterized.expand(
+        [
+            ("<p>[abc] dfg</p>", "[abc] dfg", "<p>[Abc] dfg</p>"),
+            ("<p>[a]</p>", "[a]", "<p>[A]</p>"),
+            ("<p>[]</p>", "[]", "<p>[]</p>"),
+            ("<p>[</p>", "[", "<p>[</p>"),
+            ("<p>abc def</p>", "abc def", "<p>abc def</p>"),
+            ("[abc] dfg", "[abc] dfg", "[Abc] dfg"),
+            ("[a]", "[a]", "[A]"),
+            ("[]", "[]", "[]"),
+            ("[", "[", "["),
+            ("abc def", "abc def", "abc def"),
+            ("", "", ""),
+        ]
+    )
+    def test_capitalize_first_letter_if_template_parameter(
+        self, name, template_plain_name, expected
+    ):
+        assert (
+            utils.capitalize_first_letter_if_template_parameter(
+                name, template_plain_name
+            )
+            == expected
+        )
 
     @parameterized.expand(
         [
@@ -129,21 +157,20 @@ class TestModelUtils(unittest.TestCase):
     ],
 )
 def test_strtobool(value, result):
-    assert utils.strtobool(value) == result
+    assert clinical_mdr_api.utils.strtobool(value) == result
 
 
 @pytest.mark.parametrize(
     "value, exception_type",
     [
-        ("", None),
         (True, AttributeError),
-        (False, None),
-        (None, None),
-        (0, None),
+        (False, AttributeError),
+        (None, AttributeError),
+        (0, AttributeError),
         (1, AttributeError),
         (-1, AttributeError),
         (0.1, AttributeError),
-        (dict(), None),
+        ({}, AttributeError),
         ([1, 2], AttributeError),
         ("foo", ValueError),
         ("BAR", ValueError),
@@ -151,12 +178,10 @@ def test_strtobool(value, result):
         ("ni", ValueError),
         ("null", ValueError),
         ("NULL", ValueError),
+        ("", ValueError),
         (" ", ValueError),
     ],
 )
 def test_strtobool_raises_exception(value, exception_type):
-    if exception_type:
-        with pytest.raises(exception_type):
-            utils.strtobool(value)
-    else:
-        assert utils.strtobool(value) is None
+    with pytest.raises(exception_type):
+        clinical_mdr_api.utils.strtobool(value)

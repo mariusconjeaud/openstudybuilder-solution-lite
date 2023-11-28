@@ -1,5 +1,3 @@
-from typing import Sequence
-
 from neomodel import db
 
 from clinical_mdr_api import exceptions, models
@@ -80,7 +78,7 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
 
     def _transform_all_to_response_model(
         self, study_selection: StudySelectionObjectivesAR, no_brackets: bool
-    ) -> Sequence[models.StudySelectionObjective]:
+    ) -> list[models.StudySelectionObjective]:
         result = []
         for order, selection in enumerate(
             study_selection.study_objectives_selection, start=1
@@ -93,7 +91,7 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
                         accepted_version=selection.accepted_version,
                         get_objective_by_uid_callback=self._transform_latest_objective_model,
                         get_objective_by_uid_version_callback=self._transform_objective_model,
-                        get_ct_term_objective_level=self._find_by_uid_or_raise_not_found,
+                        get_ct_term_by_uid=self._find_by_uid_or_raise_not_found,
                         get_study_selection_endpoints_ar_by_study_uid_callback=(
                             self._repos.study_endpoint_repository.find_by_study
                         ),
@@ -141,7 +139,7 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
             order=order,
             get_objective_by_uid_callback=self._transform_latest_objective_model,
             get_objective_by_uid_version_callback=self._transform_objective_model,
-            get_ct_term_objective_level=self._find_by_uid_or_raise_not_found,
+            get_ct_term_by_uid=self._find_by_uid_or_raise_not_found,
             get_study_selection_endpoints_ar_by_study_uid_callback=(
                 self._repos.study_endpoint_repository.find_by_study
             ),
@@ -175,7 +173,7 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
             accepted_version=new_selection.accepted_version,
             get_objective_by_uid_callback=self._transform_latest_objective_model,
             get_objective_by_uid_version_callback=self._transform_objective_model,
-            get_ct_term_objective_level=self._find_by_uid_or_raise_not_found,
+            get_ct_term_by_uid=self._find_by_uid_or_raise_not_found,
             get_study_selection_endpoints_ar_by_study_uid_callback=(
                 self._repos.study_endpoint_repository.find_by_study
             ),
@@ -264,7 +262,7 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
                 order=order,
                 get_objective_by_uid_callback=self._transform_latest_objective_model,
                 get_objective_by_uid_version_callback=self._transform_objective_model,
-                get_ct_term_objective_level=self._find_by_uid_or_raise_not_found,
+                get_ct_term_by_uid=self._find_by_uid_or_raise_not_found,
                 get_study_selection_endpoints_ar_by_study_uid_callback=(
                     self._repos.study_endpoint_repository.find_by_study
                 ),
@@ -361,7 +359,7 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
                 order=order,
                 get_objective_by_uid_callback=self._transform_latest_objective_model,
                 get_objective_by_uid_version_callback=self._transform_objective_model,
-                get_ct_term_objective_level=self._find_by_uid_or_raise_not_found,
+                get_ct_term_by_uid=self._find_by_uid_or_raise_not_found,
                 get_study_selection_endpoints_ar_by_study_uid_callback=(
                     self._repos.study_endpoint_repository.find_by_study
                 ),
@@ -381,8 +379,8 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
     def batch_select_objective_template(
         self,
         study_uid: str,
-        selection_create_input: Sequence[StudySelectionObjectiveTemplateSelectInput],
-    ) -> Sequence[StudySelectionObjective]:
+        selection_create_input: list[StudySelectionObjectiveTemplateSelectInput],
+    ) -> list[StudySelectionObjective]:
         """
         Select multiple objective templates as a batch.
 
@@ -395,7 +393,7 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
             selection_create_input (StudySelectionObjectiveBatchSelectInput): [description]
 
         Returns:
-            Sequence[StudySelectionObjective]
+            list[StudySelectionObjective]
         """
         repos = self._repos
         try:
@@ -547,7 +545,7 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
                     get_objective_by_uid_version_callback=(
                         lambda _: models.Objective.from_objective_ar(objective_ar)
                     ),
-                    get_ct_term_objective_level=self._find_by_uid_or_raise_not_found,
+                    get_ct_term_by_uid=self._find_by_uid_or_raise_not_found,
                     get_study_selection_endpoints_ar_by_study_uid_callback=(
                         self._repos.study_endpoint_repository.find_by_study
                     ),
@@ -608,12 +606,13 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
+        study_value_version: str | None = None,
     ):
         repos = self._repos
 
         if study_uid:
             objective_selection_ars = repos.study_objective_repository.find_by_study(
-                study_uid
+                study_uid, study_value_version=study_value_version
             )
 
             header_values = service_level_generic_header_filtering(
@@ -666,11 +665,12 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
         page_number: int = 1,
         page_size: int = 0,
         total_count: bool = False,
+        study_value_version: str | None = None,
     ) -> GenericFilteringReturn[models.StudySelectionObjective]:
         repos = self._repos
         try:
             objective_selection_ar = repos.study_objective_repository.find_by_study(
-                study_uid
+                study_uid, study_value_version=study_value_version
             )
             assert objective_selection_ar is not None
 
@@ -696,7 +696,7 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
 
     def _transform_history_to_response_model(
         self, study_selection_history: list[SelectionHistory], study_uid: str
-    ) -> Sequence[models.StudySelectionObjectiveCore]:
+    ) -> list[models.StudySelectionObjectiveCore]:
         result = []
         for history in study_selection_history:
             result.append(
@@ -712,7 +712,7 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
     @db.transaction
     def get_all_selection_audit_trail(
         self, study_uid: str
-    ) -> Sequence[models.StudySelectionObjectiveCore]:
+    ) -> list[models.StudySelectionObjectiveCore]:
         repos = self._repos
         try:
             try:
@@ -731,7 +731,7 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
     @db.transaction
     def get_specific_selection_audit_trail(
         self, study_uid: str, study_selection_uid: str
-    ) -> Sequence[models.StudySelectionObjectiveCore]:
+    ) -> list[models.StudySelectionObjectiveCore]:
         repos = self._repos
         try:
             selection_history = repos.study_objective_repository.find_selection_history(
@@ -746,7 +746,10 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
 
     @db.transaction
     def get_specific_selection(
-        self, study_uid: str, study_selection_uid: str
+        self,
+        study_uid: str,
+        study_selection_uid: str,
+        study_value_version: str | None = None,
     ) -> models.StudySelectionObjective:
         repos = self._repos
         (
@@ -754,7 +757,7 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
             new_selection,
             order,
         ) = self._get_specific_objective_selection_by_uids(
-            study_uid, study_selection_uid
+            study_uid, study_selection_uid, study_value_version=study_value_version
         )
         if new_selection.is_instance:
             return models.StudySelectionObjective.from_study_selection_objectives_ar_and_order(
@@ -763,7 +766,7 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
                 accepted_version=new_selection.accepted_version,
                 get_objective_by_uid_callback=self._transform_latest_objective_model,
                 get_objective_by_uid_version_callback=self._transform_objective_model,
-                get_ct_term_objective_level=self._find_by_uid_or_raise_not_found,
+                get_ct_term_by_uid=self._find_by_uid_or_raise_not_found,
                 get_study_selection_endpoints_ar_by_study_uid_callback=(
                     self._repos.study_endpoint_repository.find_by_study
                 ),
@@ -833,7 +836,7 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
                 order=order,
                 get_objective_by_uid_callback=self._transform_latest_objective_model,
                 get_objective_by_uid_version_callback=self._transform_objective_model,
-                get_ct_term_objective_level=self._find_by_uid_or_raise_not_found,
+                get_ct_term_by_uid=self._find_by_uid_or_raise_not_found,
                 get_study_selection_endpoints_ar_by_study_uid_callback=(
                     self._repos.study_endpoint_repository.find_by_study
                 ),
@@ -912,30 +915,6 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
                 None,
             )
 
-            if template_selection:
-                study_objectives = StudyObjective.nodes.has(study_value=True)
-                study_objective = next(
-                    (so for so in study_objectives if so.uid == study_selection_uid),
-                    None,
-                )
-                objective_template_root = ObjectiveTemplateRoot.nodes.get_or_none(
-                    uid=template_selection.objective_uid
-                )
-                objective_template_value = (
-                    objective_template_root.has_latest_value.get()
-                )
-                study_objective.has_selected_objective_template.disconnect(
-                    objective_template_value
-                )
-
-                objective_root = ObjectiveRoot.nodes.get_or_none(
-                    uid=selection_update_input.objective_uid
-                )
-                objective_value = objective_root.has_latest_value.get()
-                study_objective.has_selected_objective.connect(objective_value)
-
-                selection_aggregate = load_aggregate()
-
             # Load the current VO for updates
             (
                 current_vo,
@@ -984,6 +963,34 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
             # sync with DB and save the update
             repos.study_objective_repository.save(selection_aggregate, self.author)
 
+            if template_selection:
+                study_objectives = StudyObjective.nodes.has(
+                    study_value=True, has_before=False
+                )
+                study_objective = next(
+                    (so for so in study_objectives if so.uid == study_selection_uid),
+                    None,
+                )
+                objective_template_root = ObjectiveTemplateRoot.nodes.get_or_none(
+                    uid=template_selection.objective_uid
+                )
+                objective_template_value = (
+                    objective_template_root.has_latest_value.get()
+                )
+                study_objective.has_selected_objective_template.disconnect(
+                    objective_template_value
+                )
+
+                objective_root = ObjectiveRoot.nodes.get_or_none(
+                    uid=selection_update_input.objective_uid
+                )
+                objective_value = objective_root.has_latest_value.get()
+                study_objective.has_selected_objective.reconnect(
+                    old_node=objective_value, new_node=objective_value
+                )
+
+                selection_aggregate = load_aggregate()
+
             # Fetch the new selection which was just updated
             _, order = selection_aggregate.get_specific_objective_selection(
                 study_selection_uid
@@ -995,7 +1002,7 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
                 order=order,
                 get_objective_by_uid_callback=self._transform_latest_objective_model,
                 get_objective_by_uid_version_callback=self._transform_objective_model,
-                get_ct_term_objective_level=self._find_by_uid_or_raise_not_found,
+                get_ct_term_by_uid=self._find_by_uid_or_raise_not_found,
                 get_study_selection_endpoints_ar_by_study_uid_callback=(
                     self._repos.study_endpoint_repository.find_by_study
                 ),

@@ -189,8 +189,8 @@ def test__study_selection_objective__from_study_selection_objectives_ar_and_orde
         accepted_version=False,
         get_objective_by_uid_callback=lambda _: test_tuple.objective,
         get_objective_by_uid_version_callback=lambda x, y: test_tuple.objective,
-        get_ct_term_objective_level=lambda x, y: None,
-        get_study_selection_endpoints_ar_by_study_uid_callback=lambda _: test_tuple.study_selection_endpoints_ar,
+        get_ct_term_by_uid=lambda x, y, z=None: None,
+        get_study_selection_endpoints_ar_by_study_uid_callback=lambda _, study_value_version: test_tuple.study_selection_endpoints_ar,
         find_project_by_study_uid=lambda x: test_tuple.project,
     )
 

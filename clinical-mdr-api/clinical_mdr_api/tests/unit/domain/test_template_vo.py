@@ -1,5 +1,3 @@
-from typing import Sequence
-
 import pytest
 from hypothesis import given
 from hypothesis.strategies import composite, from_regex, lists
@@ -37,7 +35,7 @@ def template_string_with_valid_syntax(draw):
 
 @given(template_and_parameter_list=valid_template_with_list_of_parameter_names())
 def test__template_vo_from_input_values__success(
-    template_and_parameter_list: tuple[str, Sequence[str]]
+    template_and_parameter_list: tuple[str, list[str]]
 ):
     # event(f"template_string={template_string}")
     template_string = template_and_parameter_list[0]

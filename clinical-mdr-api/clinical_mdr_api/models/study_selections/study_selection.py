@@ -1,17 +1,11 @@
 import re
 from datetime import datetime
-from typing import Callable, Iterable, Self, Sequence
+from typing import Callable, Iterable, Self
 
 from pydantic import Field, root_validator
 
-from clinical_mdr_api.domain_repositories.study_selections.study_activity_group_repository import (
-    SelectionHistory as StudyActivityGroupSelectionHistory,
-)
 from clinical_mdr_api.domain_repositories.study_selections.study_activity_repository import (
     SelectionHistory as StudyActivitySelectionHistory,
-)
-from clinical_mdr_api.domain_repositories.study_selections.study_activity_subgroup_repository import (
-    SelectionHistory as StudyActivitySubgroupSelectionHistory,
 )
 from clinical_mdr_api.domain_repositories.study_selections.study_arm_repository import (
     SelectionHistoryArm,
@@ -58,12 +52,6 @@ from clinical_mdr_api.domains.study_selections.study_design_cell import (
 from clinical_mdr_api.domains.study_selections.study_selection_activity import (
     StudySelectionActivityAR,
 )
-from clinical_mdr_api.domains.study_selections.study_selection_activity_group import (
-    StudySelectionActivityGroupAR,
-)
-from clinical_mdr_api.domains.study_selections.study_selection_activity_subgroup import (
-    StudySelectionActivitySubGroupAR,
-)
 from clinical_mdr_api.domains.study_selections.study_selection_arm import (
     StudySelectionArmVO,
 )
@@ -93,10 +81,6 @@ from clinical_mdr_api.domains.study_selections.study_selection_objective import 
     StudySelectionObjectivesAR,
 )
 from clinical_mdr_api.models.concepts.activities.activity import Activity
-from clinical_mdr_api.models.concepts.activities.activity_group import ActivityGroup
-from clinical_mdr_api.models.concepts.activities.activity_sub_group import (
-    ActivitySubGroup,
-)
 from clinical_mdr_api.models.concepts.compound import Compound
 from clinical_mdr_api.models.concepts.compound_alias import CompoundAlias
 from clinical_mdr_api.models.concepts.concept import SimpleNumericValueWithUnit
@@ -152,7 +136,7 @@ STUDY_UID_FIELD = Field(
     ...,
     title="study_uid",
     description=STUDY_UID_DESC,
-    source="study_value.study_root.uid",
+    source="has_after.audit_trail.uid",
 )
 STUDY_OBJECTIVE_UID_FIELD = Field(
     None,
@@ -186,6 +170,11 @@ SHOW_ACTIVITY_GROUP_IN_PROTOCOL_FLOWCHART_FIELD = Field(
     None,
     title="show_activity_group_in_protocol_flowchart",
     description="show activity group in protocol flow chart",
+)
+SHOW_SOA_GROUP_IN_PROTOCOL_FLOWCHART_FIELD = Field(
+    False,
+    title="show_soa_group_in_protocol_flowchart",
+    description="show soa group in protocol flow chart",
 )
 
 
@@ -221,19 +210,24 @@ class StudySelection(BaseModel):
         :param object_to_clear:
         :return:
         """
-        used_template_parameters = []
-        for parameter_term in object_to_clear.parameter_terms:
-            for term in parameter_term.terms:
-                used_template_parameters.append(term.name)
-        for template_parameter in used_template_parameters:
-            object_to_clear.name = re.sub(
-                rf"\[?{template_parameter}\]?", template_parameter, object_to_clear.name
-            )
+
+        # Check that the object has "parameter_terms".
+        # Syntax instances do, but syntax templates do not.
+        # We can encounter both types here.
+        if hasattr(object_to_clear, "parameter_terms"):
+            used_template_parameters = []
+            for parameter_term in object_to_clear.parameter_terms:
+                for term in parameter_term.terms:
+                    used_template_parameters.append(term.name)
+            for template_parameter in used_template_parameters:
+                object_to_clear.name = re.sub(
+                    rf"\[?{re.escape(template_parameter)}\]?",
+                    template_parameter,
+                    object_to_clear.name,
+                )
 
 
-"""
-    Study objectives
-"""
+# Study objectives
 
 
 class StudySelectionObjectiveCore(StudySelection):
@@ -292,7 +286,8 @@ class StudySelectionObjectiveCore(StudySelection):
     ) -> Self:
         if study_selection_history.objective_level_uid:
             objective_level = get_ct_term_objective_level(
-                study_selection_history.objective_level_uid
+                study_selection_history.objective_level_uid,
+                codelist_name="Objective Level",
             )
         else:
             objective_level = None
@@ -394,12 +389,13 @@ class StudySelectionObjective(StudySelectionObjectiveCore):
         order: int,
         get_objective_by_uid_callback: Callable[[str], Objective],
         get_objective_by_uid_version_callback: Callable[[str], Objective],
-        get_ct_term_objective_level: Callable[[str], CTTermName],
+        get_ct_term_by_uid: Callable[[str], CTTermName],
         get_study_selection_endpoints_ar_by_study_uid_callback: Callable[
-            [str], StudySelectionEndpointsAR
+            [str, int], StudySelectionEndpointsAR
         ],
         find_project_by_study_uid: Callable,
         no_brackets: bool = False,
+        study_value_version: str | None = None,
         accepted_version: bool = False,
     ) -> Self:
         study_objective_selection = (
@@ -409,8 +405,10 @@ class StudySelectionObjective(StudySelectionObjectiveCore):
         single_study_selection = study_objective_selection[order - 1]
         study_objective_uid = single_study_selection.study_selection_uid
         objective_uid = single_study_selection.objective_uid
-        study_selection_endpoints_ar = (
-            get_study_selection_endpoints_ar_by_study_uid_callback(study_uid)
+        study_selection_endpoints_ar: StudySelectionEndpointsAR = (
+            get_study_selection_endpoints_ar_by_study_uid_callback(
+                study_uid, study_value_version=study_value_version
+            )
         )
         project = find_project_by_study_uid(study_uid)
         assert project is not None
@@ -421,8 +419,9 @@ class StudySelectionObjective(StudySelectionObjectiveCore):
         )
 
         if single_study_selection.objective_level_uid:
-            objective_level = get_ct_term_objective_level(
-                single_study_selection.objective_level_uid
+            objective_level = get_ct_term_by_uid(
+                single_study_selection.objective_level_uid,
+                codelist_name="Objective Level",
             )
         else:
             objective_level = None
@@ -518,9 +517,7 @@ class StudySelectionObjectiveNewOrder(BaseModel):
     )
 
 
-"""
-    Study endpoints
-"""
+# Study endpoints
 
 
 class EndpointUnitsInput(BaseModel):
@@ -700,11 +697,12 @@ class StudySelectionEndpoint(StudySelection):
         get_latest_endpoint_by_uid: Callable[[str], Endpoint],
         get_timeframe_by_uid_and_version: Callable[[str], Timeframe],
         get_latest_timeframe: Callable[[str], Timeframe],
-        get_ct_term_objective_level: Callable[[str], CTTermName],
+        get_ct_term_by_uid: Callable[[str], CTTermName],
         get_study_objective_by_uid: Callable[[str], StudySelectionObjective],
         find_project_by_study_uid: Callable,
         accepted_version: bool = False,
         no_brackets: bool = False,
+        study_value_version: str | None = None,
     ) -> Self:
         project = find_project_by_study_uid(study_uid)
         assert project is not None
@@ -745,21 +743,25 @@ class StudySelectionEndpoint(StudySelection):
             study_obj_model = None
         else:
             study_obj_model = get_study_objective_by_uid(
-                study_uid, study_selection.study_objective_uid, no_brackets=no_brackets
+                study_uid,
+                study_selection.study_objective_uid,
+                no_brackets=no_brackets,
+                study_value_version=study_value_version,
             )
             if no_brackets:
                 cls.remove_brackets_from_name_property(
                     object_to_clear=study_obj_model.objective
                 )
         if study_selection.endpoint_level_uid:
-            endpoint_level = get_ct_term_objective_level(
-                study_selection.endpoint_level_uid
+            endpoint_level = get_ct_term_by_uid(
+                study_selection.endpoint_level_uid, codelist_name="Endpoint Level"
             )
         else:
             endpoint_level = None
         if study_selection.endpoint_sublevel_uid:
-            endpoint_sublevel = get_ct_term_objective_level(
-                study_selection.endpoint_sublevel_uid
+            endpoint_sublevel = get_ct_term_by_uid(
+                study_selection.endpoint_sublevel_uid,
+                codelist_name="Endpoint Sub Level",
             )
         else:
             endpoint_sublevel = None
@@ -801,7 +803,7 @@ class StudySelectionEndpoint(StudySelection):
         study_uid: str,
         get_endpoint_by_uid: Callable[[str], Endpoint],
         get_timeframe_by_uid: Callable[[str], Timeframe],
-        get_ct_term_objective_level: Callable[[str], CTTermName],
+        get_ct_term_by_uid: Callable[[str], CTTermName],
         get_study_objective_by_uid: Callable[[str], StudySelectionObjective],
     ) -> Self:
         if study_selection_history.endpoint_uid:
@@ -825,14 +827,15 @@ class StudySelectionEndpoint(StudySelection):
         else:
             study_objective = None
         if study_selection_history.endpoint_level:
-            endpoint_level = get_ct_term_objective_level(
-                study_selection_history.endpoint_level
+            endpoint_level = get_ct_term_by_uid(
+                study_selection_history.endpoint_level, codelist_name="Endpoint Level"
             )
         else:
             endpoint_level = None
         if study_selection_history.endpoint_sublevel:
-            endpoint_sublevel = get_ct_term_objective_level(
-                study_selection_history.endpoint_sublevel
+            endpoint_sublevel = get_ct_term_by_uid(
+                study_selection_history.endpoint_sublevel,
+                codelist_name="Endpoint Sub Level",
             )
         else:
             endpoint_sublevel = None
@@ -959,9 +962,7 @@ class StudySelectionEndpointNewOrder(BaseModel):
     )
 
 
-"""
-    Study compounds
-"""
+# Study compounds
 
 
 class StudySelectionCompound(StudySelection):
@@ -1255,9 +1256,7 @@ class StudySelectionCompoundNewOrder(BaseModel):
     )
 
 
-"""
-    Study criteria
-"""
+# Study criteria
 
 
 class StudySelectionCriteriaCore(StudySelection):
@@ -1585,6 +1584,12 @@ class SimpleStudyActivityGroup(BaseModel):
     )
 
 
+class SimpleStudySoAGroup(BaseModel):
+    study_soa_group_uid: str = Field(...)
+    soa_group_term_uid: str = Field(...)
+    soa_group_name: str = Field(...)
+
+
 class StudySelectionActivityCore(StudySelection):
     show_activity_in_protocol_flowchart: bool | None = Field(
         None,
@@ -1597,6 +1602,9 @@ class StudySelectionActivityCore(StudySelection):
     show_activity_group_in_protocol_flowchart: bool | None = (
         SHOW_ACTIVITY_GROUP_IN_PROTOCOL_FLOWCHART_FIELD
     )
+    show_soa_group_in_protocol_flowchart: bool = (
+        SHOW_SOA_GROUP_IN_PROTOCOL_FLOWCHART_FIELD
+    )
     study_activity_uid: str | None = Field(
         ...,
         title="study_activity_uid",
@@ -1605,37 +1613,26 @@ class StudySelectionActivityCore(StudySelection):
     )
     study_activity_subgroup: SimpleStudyActivitySubGroup | None
     study_activity_group: SimpleStudyActivityGroup | None
+    study_soa_group: SimpleStudySoAGroup
     activity: Activity | None = Field(
         ...,
         title="activity",
         description="the activity selected for the study",
     )
-
-    flowchart_group: CTTermName | None = Field(
-        None,
-        title="flowchart_group",
-        description="flow chart group linked to this study activity",
-        nullable=True,
-    )
-
     start_date: datetime | None = Field(
         ...,
         title="start_date",
         description=START_DATE_DESC,
         source="has_after.date",
     )
-
     user_initials: str | None = Field(
         ...,
         title="user_initials",
         description=USER_INITIALS_DESC,
         source="has_after.user_initials",
     )
-
     end_date: datetime | None = END_DATE_FIELD
-
     status: str | None = STATUS_FIELD
-
     change_type: str | None = CHANGE_TYPE_FIELD
 
     @classmethod
@@ -1646,6 +1643,9 @@ class StudySelectionActivityCore(StudySelection):
         get_ct_term_flowchart_group: Callable[[str], CTTermName],
         get_activity_by_uid_version_callback: Callable[[str], Activity],
     ) -> Self:
+        flowchart_group = get_ct_term_flowchart_group(
+            study_selection_history.soa_group_term_uid
+        )
         activity = get_activity_by_uid_version_callback(
             study_selection_history.activity_uid,
             study_selection_history.activity_version,
@@ -1669,6 +1669,7 @@ class StudySelectionActivityCore(StudySelection):
             None,
         )
         return cls(
+            study_uid=study_uid,
             study_activity_uid=study_selection_history.study_selection_uid,
             study_activity_subgroup=SimpleStudyActivitySubGroup(
                 study_activity_subgroup_uid=study_selection_history.study_activity_subgroup_uid,
@@ -1680,14 +1681,16 @@ class StudySelectionActivityCore(StudySelection):
                 activity_group_uid=study_selection_history.activity_group_uid,
                 activity_group_name=activity_group_name,
             ),
+            study_soa_group=SimpleStudySoAGroup(
+                study_soa_group_uid=study_selection_history.study_soa_group_uid,
+                soa_group_term_uid=flowchart_group.term_uid,
+                soa_group_name=flowchart_group.sponsor_preferred_name,
+            ),
             order=study_selection_history.activity_order,
             show_activity_group_in_protocol_flowchart=study_selection_history.show_activity_group_in_protocol_flowchart,
             show_activity_subgroup_in_protocol_flowchart=study_selection_history.show_activity_subgroup_in_protocol_flowchart,
             show_activity_in_protocol_flowchart=study_selection_history.show_activity_in_protocol_flowchart,
-            study_uid=study_uid,
-            flowchart_group=get_ct_term_flowchart_group(
-                study_selection_history.flowchart_group_uid
-            ),
+            show_soa_group_in_protocol_flowchart=study_selection_history.show_soa_group_in_protocol_flowchart,
             start_date=study_selection_history.start_date,
             activity=activity,
             end_date=study_selection_history.end_date,
@@ -1730,7 +1733,7 @@ class StudySelectionActivity(StudySelectionActivityCore):
         activity_uid = single_study_selection.activity_uid
 
         flowchart_group = get_ct_term_flowchart_group(
-            single_study_selection.flowchart_group_uid
+            single_study_selection.soa_group_term_uid
         )
 
         assert activity_uid is not None
@@ -1775,13 +1778,18 @@ class StudySelectionActivity(StudySelectionActivityCore):
                 activity_group_uid=single_study_selection.activity_group_uid,
                 activity_group_name=activity_group_name,
             ),
+            study_soa_group=SimpleStudySoAGroup(
+                study_soa_group_uid=single_study_selection.study_soa_group_uid,
+                soa_group_term_uid=flowchart_group.term_uid,
+                soa_group_name=flowchart_group.sponsor_preferred_name,
+            ),
             activity=selected_activity,
             latest_activity=latest_activity,
             order=activity_order,
-            flowchart_group=flowchart_group,
             show_activity_group_in_protocol_flowchart=single_study_selection.show_activity_group_in_protocol_flowchart,
             show_activity_subgroup_in_protocol_flowchart=single_study_selection.show_activity_subgroup_in_protocol_flowchart,
             show_activity_in_protocol_flowchart=single_study_selection.show_activity_in_protocol_flowchart,
+            show_soa_group_in_protocol_flowchart=single_study_selection.show_soa_group_in_protocol_flowchart,
             accepted_version=accepted_version,
             study_uid=study_uid,
             start_date=single_study_selection.start_date,
@@ -1790,8 +1798,8 @@ class StudySelectionActivity(StudySelectionActivityCore):
 
 
 class StudySelectionActivityCreateInput(BaseModel):
-    flowchart_group_uid: str = Field(
-        title="flowchart_group_uid",
+    soa_group_term_uid: str = Field(
+        title="soa_group_term_uid",
         description="flowchart CT term uid",
     )
     activity_uid: str = Field(title="activity_uid", description="activity uid")
@@ -1814,8 +1822,11 @@ class StudySelectionActivityInput(BaseModel):
     show_activity_group_in_protocol_flowchart: bool | None = (
         SHOW_ACTIVITY_GROUP_IN_PROTOCOL_FLOWCHART_FIELD
     )
-    flowchart_group_uid: str | None = Field(
-        title="flowchart_group_uid",
+    show_soa_group_in_protocol_flowchart: bool = (
+        SHOW_SOA_GROUP_IN_PROTOCOL_FLOWCHART_FIELD
+    )
+    soa_group_term_uid: str | None = Field(
+        title="soa_group_term_uid",
         description="flowchart CT term uid",
     )
 
@@ -1861,320 +1872,6 @@ class StudySelectionActivityBatchInput(BaseModel):
 class StudySelectionActivityBatchOutput(BaseModel):
     response_code: int = RESPONSE_CODE_FIELD
     content: StudySelectionActivity | None | BatchErrorResponse
-
-
-#
-# Study Activity SubGroup
-#
-
-
-class StudySelectionActivitySubGroupCore(StudySelection):
-    show_activity_subgroup_in_protocol_flowchart: bool | None = (
-        SHOW_ACTIVITY_SUBGROUP_IN_PROTOCOL_FLOWCHART_FIELD
-    )
-    study_activity_subgroup_uid: str | None = Field(
-        ...,
-        title="study_activity_subgroup_uid",
-        description="uid for the study activity subgroup",
-        source="uid",
-    )
-    activity_subgroup: ActivitySubGroup | None = Field(
-        ...,
-        title="activity_subgroup",
-        description="the activity subgroup selected for the study",
-    )
-    study_activity_uid: str | None = Field(
-        ...,
-        title="study_activity_uid",
-        description="uid for the study activity referenced from study activity subgroup",
-        source="uid",
-    )
-    start_date: datetime | None = Field(
-        ...,
-        title="start_date",
-        description=START_DATE_DESC,
-        source="has_after.date",
-    )
-
-    user_initials: str | None = Field(
-        ...,
-        title="user_initials",
-        description=USER_INITIALS_DESC,
-        source="has_after.user_initials",
-    )
-
-    end_date: datetime | None = END_DATE_FIELD
-
-    status: str | None = STATUS_FIELD
-
-    change_type: str | None = CHANGE_TYPE_FIELD
-
-    @classmethod
-    def from_study_selection_history(
-        cls,
-        study_selection_history: StudyActivitySubgroupSelectionHistory,
-        study_uid: str,
-        get_activity_subgroup_by_uid_version_callback: Callable[
-            [str], ActivitySubGroup
-        ],
-    ) -> Self:
-        return cls(
-            study_activity_uid=study_selection_history.study_activity_selection_uid,
-            study_activity_subgroup_uid=study_selection_history.study_selection_uid,
-            order=study_selection_history.activity_subgroup_order,
-            show_activity_subgroup_in_protocol_flowchart=study_selection_history.show_activity_subgroup_in_protocol_flowchart,
-            study_uid=study_uid,
-            start_date=study_selection_history.start_date,
-            activity_subgroup=get_activity_subgroup_by_uid_version_callback(
-                study_selection_history.activity_subgroup_uid,
-                study_selection_history.activity_subgroup_version,
-            ),
-            end_date=study_selection_history.end_date,
-            change_type=study_selection_history.change_type,
-            user_initials=study_selection_history.user_initials,
-        )
-
-
-class StudySelectionActivitySubGroup(StudySelectionActivitySubGroupCore):
-    latest_activity_subgroup: ActivitySubGroup | None = Field(
-        None,
-        title="latest_activity_sibgroup",
-        description="Latest version of activity subgroup selected for study.",
-        nullable=True,
-    )
-    accepted_version: bool | None = Field(
-        None,
-        title=ACCEPTED_VERSION_DESC,
-        description="Denotes if user accepted obsolete activity subgroup versions",
-        nullable=True,
-    )
-
-    @classmethod
-    def from_study_selection_activity_subgroup_ar_and_order(
-        cls,
-        study_selection_activity_subgroup_ar: StudySelectionActivitySubGroupAR,
-        activity_subgroup_order: int,
-        get_activity_subgroup_by_uid_callback: Callable[[str], ActivitySubGroup],
-        get_activity_subgroup_by_uid_version_callback: Callable[
-            [str, str], ActivitySubGroup
-        ],
-        accepted_version: bool = False,
-    ) -> Self:
-        study_activity_subgroup_selection = (
-            study_selection_activity_subgroup_ar.study_objects_selection
-        )
-        study_uid = study_selection_activity_subgroup_ar.study_uid
-        single_study_selection = study_activity_subgroup_selection[
-            activity_subgroup_order - 1
-        ]
-        study_activity_subgroup_uid = single_study_selection.study_selection_uid
-        activity_subgroup_uid = single_study_selection.activity_subgroup_uid
-        study_activity_uid = single_study_selection.study_activity_selection_uid
-
-        assert activity_subgroup_uid is not None
-        latest_activity_subgroup = get_activity_subgroup_by_uid_callback(
-            activity_subgroup_uid
-        )
-        if (
-            latest_activity_subgroup
-            and latest_activity_subgroup.version
-            == single_study_selection.activity_subgroup_version
-        ):
-            selected_activity_subgroup = latest_activity_subgroup
-            latest_activity_subgroup = None
-        else:
-            selected_activity_subgroup = get_activity_subgroup_by_uid_version_callback(
-                activity_subgroup_uid, single_study_selection.activity_subgroup_version
-            )
-
-        return cls(
-            study_activity_uid=study_activity_uid,
-            study_activity_subgroup_uid=study_activity_subgroup_uid,
-            activity_subgroup=selected_activity_subgroup,
-            latest_activity_subgroup=latest_activity_subgroup,
-            order=activity_subgroup_order,
-            show_activity_subgroup_in_protocol_flowchart=single_study_selection.show_activity_subgroup_in_protocol_flowchart,
-            accepted_version=accepted_version,
-            study_uid=study_uid,
-            start_date=single_study_selection.start_date,
-            user_initials=single_study_selection.user_initials,
-        )
-
-
-class StudySelectionActivitySubGroupCreateInput(BaseModel):
-    activity_subgroup_uid: str = Field(
-        title="activity_subgroup_uid", description="activity_subgroup_uid"
-    )
-    study_activity_uid: str = Field(
-        title="study_activity_uid", description="study_activity_uid"
-    )
-    show_activity_subgroup_in_protocol_flowchart: bool | None = (
-        SHOW_ACTIVITY_SUBGROUP_IN_PROTOCOL_FLOWCHART_FIELD
-    )
-
-
-class StudySelectionActivityEditInput(BaseModel):
-    activity_subgroup_uid: str | None = Field(
-        None, title="activity_subgroup_uid", description="activity_subgroup_uid"
-    )
-    study_activity_uid: str | None = Field(
-        None, title="study_activity_uid", description="study_activity_uid"
-    )
-    show_activity_subgroup_in_protocol_flowchart: bool | None = (
-        SHOW_ACTIVITY_SUBGROUP_IN_PROTOCOL_FLOWCHART_FIELD
-    )
-
-
-#
-# Study Activity Group
-#
-
-
-class StudySelectionActivityGroupCore(StudySelection):
-    show_activity_group_in_protocol_flowchart: bool | None = (
-        SHOW_ACTIVITY_GROUP_IN_PROTOCOL_FLOWCHART_FIELD
-    )
-    study_activity_group_uid: str | None = Field(
-        ...,
-        title="study_activity_group_uid",
-        description="uid for the study activity group",
-    )
-    activity_group: ActivityGroup | None = Field(
-        ...,
-        title="activity_group",
-        description="the activity group selected for the study",
-    )
-    study_activity_subgroup_uid: str | None = Field(
-        ...,
-        title="study_activity_subgroup_uid",
-        description="uid for the study activity subgroup referenced from study activity group",
-    )
-    start_date: datetime | None = Field(
-        ...,
-        title="start_date",
-        description=START_DATE_DESC,
-    )
-    user_initials: str | None = Field(
-        ...,
-        title="user_initials",
-        description=USER_INITIALS_DESC,
-    )
-    end_date: datetime | None = END_DATE_FIELD
-    status: str | None = STATUS_FIELD
-    change_type: str | None = CHANGE_TYPE_FIELD
-
-    @classmethod
-    def from_study_selection_history(
-        cls,
-        study_selection_history: StudyActivityGroupSelectionHistory,
-        study_uid: str,
-        get_activity_group_by_uid_version_callback: Callable[[str, str], ActivityGroup],
-    ) -> Self:
-        return cls(
-            study_activity_subgroup_uid=study_selection_history.study_activity_subgroup_selection_uid,
-            study_activity_group_uid=study_selection_history.study_selection_uid,
-            order=study_selection_history.activity_group_order,
-            show_activity_group_in_protocol_flowchart=study_selection_history.show_activity_group_in_protocol_flowchart,
-            study_uid=study_uid,
-            start_date=study_selection_history.start_date,
-            activity_group=get_activity_group_by_uid_version_callback(
-                study_selection_history.activity_group_uid,
-                study_selection_history.activity_group_version,
-            ),
-            end_date=study_selection_history.end_date,
-            change_type=study_selection_history.change_type,
-            user_initials=study_selection_history.user_initials,
-        )
-
-
-class StudySelectionActivityGroup(StudySelectionActivityGroupCore):
-    latest_activity_group: ActivityGroup | None = Field(
-        None,
-        title="latest_activity_group",
-        description="Latest version of activity group selected for study.",
-        nullable=True,
-    )
-    accepted_version: bool | None = Field(
-        None,
-        title=ACCEPTED_VERSION_DESC,
-        description="Denotes if user accepted obsolete activity group versions",
-        nullable=True,
-    )
-
-    @classmethod
-    def from_study_selection_activity_group_ar_and_order(
-        cls,
-        study_selection_activity_group_ar: StudySelectionActivityGroupAR,
-        activity_group_order: int,
-        get_activity_group_by_uid_callback: Callable[[str], ActivityGroup],
-        get_activity_group_by_uid_version_callback: Callable[[str, str], ActivityGroup],
-        accepted_version: bool = False,
-    ) -> Self:
-        study_activity_group_selection = (
-            study_selection_activity_group_ar.study_objects_selection
-        )
-        study_uid = study_selection_activity_group_ar.study_uid
-        single_study_selection = study_activity_group_selection[
-            activity_group_order - 1
-        ]
-        study_activity_group_uid = single_study_selection.study_selection_uid
-        activity_group_uid = single_study_selection.activity_group_uid
-        study_activity_subgroup_uid = (
-            single_study_selection.study_activity_subgroup_selection_uid
-        )
-
-        assert activity_group_uid is not None
-        latest_activity_group = get_activity_group_by_uid_callback(activity_group_uid)
-        if (
-            latest_activity_group
-            and latest_activity_group.version
-            == single_study_selection.activity_group_version
-        ):
-            selected_activity_group = latest_activity_group
-            latest_activity_group = None
-        else:
-            selected_activity_group = get_activity_group_by_uid_version_callback(
-                activity_group_uid, single_study_selection.activity_group_version
-            )
-
-        return cls(
-            study_activity_subgroup_uid=study_activity_subgroup_uid,
-            study_activity_group_uid=study_activity_group_uid,
-            activity_group=selected_activity_group,
-            latest_activity_group=latest_activity_group,
-            order=activity_group_order,
-            show_activity_group_in_protocol_flowchart=single_study_selection.show_activity_group_in_protocol_flowchart,
-            accepted_version=accepted_version,
-            study_uid=study_uid,
-            start_date=single_study_selection.start_date,
-            user_initials=single_study_selection.user_initials,
-        )
-
-
-class StudySelectionActivityGroupCreateInput(BaseModel):
-    activity_group_uid: str = Field(
-        title="activity_group_uid", description="activity_group_uid"
-    )
-    study_activity_subgroup_uid: str = Field(
-        title="study_activity_subgroup_uid", description="study_activity_subgroup_uid"
-    )
-    show_activity_group_in_protocol_flowchart: bool | None = (
-        SHOW_ACTIVITY_GROUP_IN_PROTOCOL_FLOWCHART_FIELD
-    )
-
-
-class StudySelectionActivityGroupEditInput(BaseModel):
-    activity_group_uid: str | None = Field(
-        None, title="activity_group_uid", description="activity_group_uid"
-    )
-    study_activity_subgroup_uid: str | None = Field(
-        None,
-        title="study_activity_subgroup_uid",
-        description="study_activity_subgroup_uid",
-    )
-    show_activity_group_in_protocol_flowchart: bool | None = (
-        SHOW_ACTIVITY_GROUP_IN_PROTOCOL_FLOWCHART_FIELD
-    )
 
 
 #
@@ -2305,9 +2002,7 @@ class StudyActivityScheduleBatchOutput(BaseModel):
     content: StudyActivitySchedule | None | BatchErrorResponse
 
 
-"""
-    Study design cells
-"""
+# Study design cells
 
 
 class StudyDesignCell(BaseModel):
@@ -2559,9 +2254,7 @@ class StudyDesignCellBatchOutput(BaseModel):
     content: StudyDesignCell | None | BatchErrorResponse
 
 
-"""
-    Study brancharms without ArmRoot
-"""
+# Study brancharms without ArmRoot
 
 
 class StudySelectionBranchArmWithoutStudyArm(StudySelection):
@@ -2670,9 +2363,7 @@ class StudySelectionBranchArmWithoutStudyArm(StudySelection):
         )
 
 
-"""
-    Study arms
-"""
+# Study arms
 
 
 class StudySelectionArm(StudySelection):
@@ -2831,7 +2522,7 @@ class StudySelectionArm(StudySelection):
 
 
 class StudySelectionArmWithConnectedBranchArms(StudySelectionArm):
-    arm_connected_branch_arms: Sequence[
+    arm_connected_branch_arms: list[
         StudySelectionBranchArmWithoutStudyArm
     ] | None = Field(
         None,
@@ -2848,6 +2539,7 @@ class StudySelectionArmWithConnectedBranchArms(StudySelectionArm):
         order: int,
         find_simple_term_arm_type_by_term_uid: Callable,
         find_multiple_connected_branch_arm: Callable,
+        study_value_version: str | None = None,
     ):
         if selection.arm_type_uid:
             arm_type_call_back = find_simple_term_arm_type_by_term_uid(
@@ -2872,6 +2564,7 @@ class StudySelectionArmWithConnectedBranchArms(StudySelectionArm):
                 study_uid=study_uid,
                 study_arm_uid=selection.study_selection_uid,
                 user_initials=selection.user_initials,
+                study_value_version=study_value_version,
             ),
             start_date=selection.start_date,
             user_initials=selection.user_initials,
@@ -3065,9 +2758,7 @@ class StudyActivityInstructionBatchOutput(BaseModel):
     content: StudyActivityInstruction | None | BatchErrorResponse
 
 
-"""
-    Study elements
-"""
+# Study elements
 
 
 class StudySelectionElement(StudySelection):
@@ -3376,9 +3067,7 @@ class StudySelectionElementVersion(StudySelectionElement):
     changes: dict
 
 
-"""
-    Study brancharms adding Arm Root parameter
-"""
+# Study brancharms adding Arm Root parameter
 
 
 class StudySelectionBranchArm(StudySelectionBranchArmWithoutStudyArm):
@@ -3393,6 +3082,7 @@ class StudySelectionBranchArm(StudySelectionBranchArmWithoutStudyArm):
         selection: StudySelectionBranchArmVO,
         order: int,
         find_simple_term_branch_arm_root_by_term_uid: Callable,
+        study_value_version: str | None = None,
     ):
         return cls(
             study_uid=study_uid,
@@ -3406,7 +3096,9 @@ class StudySelectionBranchArm(StudySelectionBranchArmWithoutStudyArm):
             randomization_group=selection.randomization_group,
             number_of_subjects=selection.number_of_subjects,
             arm_root=find_simple_term_branch_arm_root_by_term_uid(
-                study_uid, selection.arm_root_uid
+                study_uid=study_uid,
+                study_selection_uid=selection.arm_root_uid,
+                study_value_version=study_value_version,
             ),
             start_date=selection.start_date,
             user_initials=selection.user_initials,
@@ -3552,9 +3244,7 @@ class StudySelectionBranchArmVersion(StudySelectionBranchArmHistory):
     changes: dict
 
 
-"""
-    Study cohorts
-"""
+# Study cohorts
 
 
 class StudySelectionCohortWithoutArmBranArmRoots(StudySelection):
@@ -3626,13 +3316,13 @@ class StudySelectionCohortWithoutArmBranArmRoots(StudySelection):
 
 
 class StudySelectionCohort(StudySelectionCohortWithoutArmBranArmRoots):
-    branch_arm_roots: Sequence[StudySelectionBranchArm] | None = Field(
+    branch_arm_roots: list[StudySelectionBranchArm] | None = Field(
         None,
         title="study_branch_arm_roots",
         description="Branch Arm Roots for the study Cohort",
     )
 
-    arm_roots: Sequence[StudySelectionArm] | None = Field(
+    arm_roots: list[StudySelectionArm] | None = Field(
         None, title="study_arm_roots", description="ArmRoots for the study Cohort"
     )
 
@@ -3644,6 +3334,7 @@ class StudySelectionCohort(StudySelectionCohortWithoutArmBranArmRoots):
         order: int,
         find_arm_root_by_uid: Callable | None = None,
         find_branch_arm_root_cohort_by_uid: Callable | None = None,
+        study_value_version: str | None = None,
     ):
         """
         Factory method
@@ -3657,7 +3348,11 @@ class StudySelectionCohort(StudySelectionCohortWithoutArmBranArmRoots):
         """
         if selection.branch_arm_root_uids:
             branch_arm_roots = [
-                find_branch_arm_root_cohort_by_uid(study_uid, branch_arm_root_uid)
+                find_branch_arm_root_cohort_by_uid(
+                    study_uid,
+                    branch_arm_root_uid,
+                    study_value_version=study_value_version,
+                )
                 for branch_arm_root_uid in selection.branch_arm_root_uids
             ]
         else:
@@ -3665,7 +3360,9 @@ class StudySelectionCohort(StudySelectionCohortWithoutArmBranArmRoots):
 
         if selection.arm_root_uids:
             arm_roots = [
-                find_arm_root_by_uid(study_uid, arm_root_uid)
+                find_arm_root_by_uid(
+                    study_uid, arm_root_uid, study_value_version=study_value_version
+                )
                 for arm_root_uid in selection.arm_root_uids
             ]
         else:
@@ -3693,13 +3390,13 @@ class StudySelectionCohort(StudySelectionCohortWithoutArmBranArmRoots):
 
 
 class StudySelectionCohortHistory(StudySelectionCohortWithoutArmBranArmRoots):
-    branch_arm_roots_uids: Sequence[str] | None = Field(
+    branch_arm_roots_uids: list[str] | None = Field(
         None,
         title="study_branch_arm_roots_uids",
         description="Branch Arm Roots Uids for the study Cohort",
     )
 
-    arm_roots_uids: Sequence[str] | None = Field(
+    arm_roots_uids: list[str] | None = Field(
         None,
         title="study_arm_roots_uids",
         description="ArmRoots Uids for the study Cohort",
@@ -3779,13 +3476,13 @@ class StudySelectionCohortCreateInput(BaseModel):
         description="number of subjects for the study Cohort",
     )
 
-    branch_arm_uids: Sequence[str] | None = Field(
+    branch_arm_uids: list[str] | None = Field(
         None,
         title="studybranch_arm_uid",
         description="uid for the study branch arm",
     )
 
-    arm_uids: Sequence[str] | None = Field(
+    arm_uids: list[str] | None = Field(
         None,
         title="study_armt_uid",
         description=ARM_UID_DESC,

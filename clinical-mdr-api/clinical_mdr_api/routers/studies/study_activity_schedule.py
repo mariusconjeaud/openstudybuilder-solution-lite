@@ -1,9 +1,8 @@
-from typing import Sequence
-
-from fastapi import Body, Depends, Response, status
+from fastapi import Body, Depends, Query, Response, status
 
 from clinical_mdr_api import models
 from clinical_mdr_api.models.error import ErrorResponse
+from clinical_mdr_api.models.validators import FLOAT_REGEX
 from clinical_mdr_api.oauth import get_current_user_id, rbac
 from clinical_mdr_api.routers import _generic_descriptions
 from clinical_mdr_api.routers import study_router as router
@@ -17,7 +16,7 @@ from clinical_mdr_api.services.studies.study_activity_schedule import (
     "/studies/{uid}/study-activity-schedules",
     dependencies=[rbac.STUDY_READ],
     summary="List all study activity schedules currently defined for the study",
-    response_model=Sequence[models.StudyActivitySchedule],
+    response_model=list[models.StudyActivitySchedule],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -29,10 +28,19 @@ from clinical_mdr_api.services.studies.study_activity_schedule import (
     },
 )
 def get_all_selected_activities(
-    uid: str = utils.studyUID, current_user_id: str = Depends(get_current_user_id)
-) -> Sequence[models.StudyActivitySchedule]:
+    uid: str = utils.studyUID,
+    study_value_version: str
+    | None = Query(
+        None,
+        description="StudyValueVersion to extract the StudySelections",
+        regex=FLOAT_REGEX,
+    ),
+    current_user_id: str = Depends(get_current_user_id),
+) -> list[models.StudyActivitySchedule]:
     service = StudyActivityScheduleService(author=current_user_id)
-    return service.get_all_schedules(study_uid=uid)
+    return service.get_all_schedules(
+        study_uid=uid, study_value_version=study_value_version
+    )
 
 
 @router.post(
@@ -102,7 +110,7 @@ The following values should be returned for all study activities:
 - activity
 - order
     """,
-    response_model=Sequence[models.StudyActivityScheduleHistory],
+    response_model=list[models.StudyActivityScheduleHistory],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -112,7 +120,7 @@ The following values should be returned for all study activities:
 )
 def get_all_schedules_audit_trail(
     uid: str = utils.studyUID, current_user_id: str = Depends(get_current_user_id)
-) -> Sequence[models.StudyActivityScheduleHistory]:
+) -> list[models.StudyActivityScheduleHistory]:
     service = StudyActivityScheduleService(author=current_user_id)
     return service.get_all_schedules_audit_trail(study_uid=uid)
 
@@ -121,7 +129,7 @@ def get_all_schedules_audit_trail(
     "/studies/{uid}/study-activity-schedules/batch",
     dependencies=[rbac.STUDY_WRITE],
     summary="Batch operations (create, delete) for study activity schedules",
-    response_model=Sequence[models.StudyActivityScheduleBatchOutput],
+    response_model=list[models.StudyActivityScheduleBatchOutput],
     status_code=207,
     responses={
         404: _generic_descriptions.ERROR_404,
@@ -130,10 +138,10 @@ def get_all_schedules_audit_trail(
 )
 def activity_schedule_batch_operations(
     uid: str = utils.studyUID,
-    operations: Sequence[models.StudyActivityScheduleBatchInput] = Body(
+    operations: list[models.StudyActivityScheduleBatchInput] = Body(
         description="List of operation to perform"
     ),
     current_user_id: str = Depends(get_current_user_id),
-) -> Sequence[models.StudyActivityScheduleBatchOutput]:
+) -> list[models.StudyActivityScheduleBatchOutput]:
     service = StudyActivityScheduleService(author=current_user_id)
     return service.handle_batch_operations(uid, operations)

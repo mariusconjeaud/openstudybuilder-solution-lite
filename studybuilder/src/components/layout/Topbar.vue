@@ -34,14 +34,6 @@
   <div v-if="isAuthenticated">
     <v-btn
       class="text-capitalize"
-      data-cy="topbar-add-study"
-      @click="addStudyForm = true"
-      :disabled="!checkPermission($roles.STUDY_WRITE)"
-      text>
-      {{ $t('Topbar.add_study') }}
-    </v-btn>
-    <v-btn
-      class="text-capitalize"
       data-cy="topbar-select-study"
       @click="openSelectStudyDialog"
       text>
@@ -51,7 +43,7 @@
       v-if="selectedStudy"
       data-cy="topbar-selected-study"
       class="ma-2"
-      :color="currentStudyStatus === 'DRAFT' ? 'green' : 'red'"
+      :color="currentStudyStatus === 'DRAFT' ? 'green' : currentStudyStatus === 'LOCKED' ? 'red' : 'blue'"
       >
       {{ selectedStudy.current_metadata.identification_metadata.study_id || selectedStudy.current_metadata.identification_metadata.study_acronym }}
       <v-icon
@@ -67,6 +59,12 @@
         v-else>
         mdi-lock-outline
       </v-icon>
+    </v-chip>
+    <v-chip
+      v-if="selectedStudy && this.selectedStudyVersion"
+      :color="currentStudyStatus === 'DRAFT' ? 'green' : currentStudyStatus === 'LOCKED' ? 'red' : 'blue'"
+      >
+      v{{ selectedStudy && this.selectedStudyVersion }}
     </v-chip>
   </div>
   <v-btn data-cy="topbar-admin-icon" icon :title="$t('Topbar.admin')" @click="openSettingsBox">
@@ -124,12 +122,12 @@
         {{ username }}
       </v-btn>
     </template>
-    <v-list dense max-width="200px">
+    <v-list dense>
       <v-list-item v-if="userInfo">
         <v-list-item-icon>
           <v-icon>mdi-security</v-icon>
         </v-list-item-icon>
-        <v-list-item-content>
+        <v-list-item-content style="max-width: 200px;">
           <v-list-item-title>{{ $t('_global.access_groups') }}</v-list-item-title>
           <v-list-item-subtitle v-for="(role, index) of userInfo.roles" v-bind:key="index">{{role}}</v-list-item-subtitle>
         </v-list-item-content>
@@ -171,9 +169,6 @@
   <v-dialog v-model="settingsDialog" @keydown.esc="settingsDialog = false" max-width="800">
     <settings @close="settingsDialog = false" />
   </v-dialog>
-  <study-form
-    :open="addStudyForm"
-    @close="addStudyForm = false"/>
   <confirm-dialog ref="confirm" :text-cols="5" :action-cols="6">
     <template v-slot:actions>
       <v-btn
@@ -211,7 +206,6 @@ import About from '@/components/layout/About'
 import ConfirmDialog from '@/components/tools/ConfirmDialog'
 import Settings from './Settings.vue'
 import StudyQuickSelectForm from '@/components/studies/StudyQuickSelectForm'
-import StudyForm from '@/components/studies/StudyForm'
 import { accessGuard } from '@/mixins/accessRoleVerifier'
 
 export default {
@@ -220,8 +214,7 @@ export default {
     About,
     ConfirmDialog,
     Settings,
-    StudyQuickSelectForm,
-    StudyForm
+    StudyQuickSelectForm
   },
   props: {
     hideAppBarNavIcon: {
@@ -232,6 +225,7 @@ export default {
   computed: {
     ...mapGetters({
       selectedStudy: 'studiesGeneral/selectedStudy',
+      selectedStudyVersion: 'studiesGeneral/selectedStudyVersion',
       helpUrl: 'app/helpUrl',
       section: 'app/section',
       userInfo: 'auth/userInfo'
@@ -258,7 +252,7 @@ export default {
       return this.apps.filter(app => !app.needsAuthentication || this.isAuthenticated)
     },
     isAuthenticated () {
-      return this.$config.AUTH_ENABLED === '0' || !!this.userInfo
+      return !this.$config.OAUTH_ENABLED || !!this.userInfo
     },
     currentStudyStatus () {
       if (!this.selectedStudy) {
@@ -283,8 +277,7 @@ export default {
       ],
       showAboutDialog: false,
       settingsDialog: false,
-      showSelectForm: false,
-      addStudyForm: false
+      showSelectForm: false
     }
   },
   methods: {

@@ -163,10 +163,6 @@ export default {
       this.$emit('close')
     },
     async submit () {
-      const valid = await this.$refs.observer.validate()
-      if (!valid) {
-        return
-      }
       this.$set(this.form, 'vendor_namespace_uid', this.parentUid)
       if (this.form.uid) {
         this.$set(this.form, 'change_description', this.$t('_global.change_description'))

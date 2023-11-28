@@ -24,7 +24,6 @@
           v-if="!item.children"
           active-class="submenu-item--active"
           :data-cy="item.title"
-          :to="item.url"
           link
           exact
           dark
@@ -58,7 +57,6 @@
                        :key="subitem.title"
                        @click="onMenuItemClick(item, subitem)"
                        :disabled="subitem.disabled && subitem.disabled()"
-                       :to="subitem.url"
                        link
                        :exact="(subitem.exact !== undefined) ? subitem.exact : false"
                        >
@@ -120,8 +118,10 @@ export default {
     }
   },
   methods: {
-    async onMenuItemClick (item, subitem) {
-      this.target = { subitem: subitem, item: item }
+    onMenuItemClick (item, subitem) {
+      // Here we only update target, the actual redirection will be
+      // done by the RedirectHandler component
+      this.target = { subitem, item }
     },
     toggleMenu () {
       this.mini = !this.mini

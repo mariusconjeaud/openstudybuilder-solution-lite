@@ -1,11 +1,13 @@
 import datetime
 from dataclasses import dataclass
-from typing import Sequence
 
 from neomodel import db
 
 from clinical_mdr_api import config as settings
 from clinical_mdr_api.domain_repositories._utils import helpers
+from clinical_mdr_api.domain_repositories.generic_repository import (
+    manage_previous_connected_study_selection_relationships,
+)
 from clinical_mdr_api.domain_repositories.models._utils import (
     convert_to_datetime,
     to_relation_trees,
@@ -96,14 +98,24 @@ class StudySelectionElementRepository:
         study_uid: str | None = None,
         project_name: str | None = None,
         project_number: str | None = None,
-    ) -> Sequence[StudySelectionElementVO]:
+        study_value_version: str | None = None,
+    ) -> tuple[StudySelectionElementVO]:
         query = ""
         query_parameters = {}
         if study_uid:
-            query = "MATCH (sr:StudyRoot { uid: $uid})-[l:LATEST]->(sv:StudyValue)"
-            query_parameters["uid"] = study_uid
+            if study_value_version:
+                query = "MATCH (sr:StudyRoot { uid: $uid})-[l:HAS_VERSION{status:'RELEASED', version:$study_value_version}]->(sv:StudyValue)"
+                query_parameters["study_value_version"] = study_value_version
+                query_parameters["uid"] = study_uid
+            else:
+                query = "MATCH (sr:StudyRoot { uid: $uid})-[l:LATEST]->(sv:StudyValue)"
+                query_parameters["uid"] = study_uid
         else:
-            query = "MATCH (sr:StudyRoot)-[l:LATEST]->(sv:StudyValue)"
+            if study_value_version:
+                query = "MATCH (sr:StudyRoot)-[l:HAS_VERSION{status:'RELEASED', version:$study_value_version}]->(sv:StudyValue)"
+                query_parameters["study_value_version"] = study_value_version
+            else:
+                query = "MATCH (sr:StudyRoot)-[l:LATEST]->(sv:StudyValue)"
 
         if project_name is not None or project_number is not None:
             query += (
@@ -178,7 +190,10 @@ class StudySelectionElementRepository:
         return tuple(all_selections)
 
     def find_by_study(
-        self, study_uid: str, for_update: bool = False
+        self,
+        study_uid: str,
+        for_update: bool = False,
+        study_value_version: str | None = None,
     ) -> StudySelectionElementAR | None:
         """
         Finds all the selected study endpoints for a given study, and creates the aggregate
@@ -189,7 +204,9 @@ class StudySelectionElementRepository:
         if for_update:
             self._acquire_write_lock_study_value(study_uid)
         # take the selections from the db
-        all_selections = self._retrieves_all_data(study_uid)
+        all_selections = self._retrieves_all_data(
+            study_uid, study_value_version=study_value_version
+        )
         # map to element object
         selection_aggregate = StudySelectionElementAR.from_repository_values(
             study_uid=study_uid, study_elements_selection=all_selections
@@ -199,18 +216,26 @@ class StudySelectionElementRepository:
         return selection_aggregate
 
     def find_by_uid(
-        self, study_uid: str, study_element_uid: str
+        self,
+        study_uid: str,
+        study_element_uid: str,
+        study_value_version: str | None = None,
     ) -> tuple[StudySelectionElementVO, int]:
         """Find a study element by its UID."""
         query_parameters = {
             "study_uid": study_uid,
             "study_element_uid": study_element_uid,
         }
-        query = """
-        MATCH (sr:StudyRoot {uid: $study_uid})-[l:LATEST]->(sv:StudyValue)-[:HAS_STUDY_ELEMENT]->(se:StudyElement {uid: $study_element_uid})
+        if study_value_version:
+            query = "MATCH (sr:StudyRoot {uid: $study_uid})-[l:HAS_VERSION {status:'RELEASED', version: $version}]->(sv:StudyValue)"
+            query_parameters["version"] = study_value_version
+        else:
+            query = "MATCH (sr:StudyRoot {uid: $study_uid})-[l:LATEST]->(sv:StudyValue)"
+        query += """
+        -[:HAS_STUDY_ELEMENT]->(se:StudyElement {uid: $study_element_uid})
         WITH sr, sv, se
         OPTIONAL MATCH (se)-[:HAS_ELEMENT_SUBTYPE]->(elr:CTTermRoot)
-        OPTIONAL MATCH (sar)-[:STUDY_ELEMENT_HAS_COMPOUND_DOSING]->(scd)<-[:HAS_STUDY_COMPOUND_DOSING]-(StudyValue)
+        OPTIONAL MATCH (se)-[:STUDY_ELEMENT_HAS_COMPOUND_DOSING]->(scd)<-[:HAS_STUDY_COMPOUND_DOSING]-(sv)
         MATCH (se)<-[:AFTER]-(sa:StudyAction)
         RETURN DISTINCT
             sr.uid AS study_uid,
@@ -284,9 +309,9 @@ class StudySelectionElementRepository:
 
         sdc_node = to_relation_trees(
             StudyElement.nodes.fetch_relations("has_design_cell", "has_after").filter(
-                study_value__study_root__uid=study_uid,
+                study_value__latest_value__uid=study_uid,
                 uid=element_uid,
-                has_design_cell__study_value__study_root__uid=study_uid,
+                has_design_cell__study_value__latest_value__uid=study_uid,
             )
         )
         return len(sdc_node) > 0
@@ -371,7 +396,6 @@ class StudySelectionElementRepository:
                 study_root_node=study_root_node,
                 author=author,
             )
-            self._remove_old_selection_if_exists(study_selection.study_uid, selection)
             # storage of the removed node audit trail to after put the "after" relationship to the new one
             audit_trail_nodes[selection.study_selection_uid] = audit_node
             # storage of the removed node to after get its connections
@@ -412,34 +436,6 @@ class StudySelectionElementRepository:
             )
 
     @staticmethod
-    def _remove_old_selection_if_exists(
-        study_uid: str, study_selection: StudySelectionElementVO
-    ) -> None:
-        """
-        Removal is taking both new and old uid. When a study selection is deleted, we do no longer need to use the uid
-        on that study selection node anymore, however do to database constraint the node needs to have a uid. So we are
-        overwriting a deleted node uid, with a new never used dummy uid.
-
-        We are doing this to be able to maintain the selection instead of removing it, instead a removal will only
-        detach the selection from the study value node. So we keep the old selection to have full audit trail available
-        in the database.
-        :param study_uid:
-        :param old_uid:
-        :param new_uid:
-        :return:
-        """
-        db.cypher_query(
-            """
-            MATCH (:StudyRoot { uid: $study_uid})-[:LATEST]->(:StudyValue)-[rel:HAS_STUDY_ELEMENT]->(se:StudyElement { uid: $selection_uid})
-            DELETE rel
-            """,
-            {
-                "study_uid": study_uid,
-                "selection_uid": study_selection.study_selection_uid,
-            },
-        )
-
-    @staticmethod
     def _set_before_audit_info(
         audit_node: StudyAction,
         study_selection_node: StudyElement,
@@ -461,7 +457,7 @@ class StudySelectionElementRepository:
         selection: StudySelectionElementVO,
         audit_node: StudyAction,
         for_deletion: bool = False,
-        before_node: StudyElement = None,
+        before_node: StudyElement | None = None,
     ):
         # Create new element selection
         study_element_selection_node = StudyElement(order=order).save()
@@ -487,11 +483,12 @@ class StudySelectionElementRepository:
         audit_node.has_after.connect(study_element_selection_node)
 
         if before_node is not None:
-            design_cells = before_node.has_design_cell.all()
-            for i_design_cell in design_cells:
-                # if the i_design_cell is an actual one then carry it to the new node
-                if i_design_cell.study_value.get_or_none() is not None:
-                    study_element_selection_node.has_design_cell.connect(i_design_cell)
+            manage_previous_connected_study_selection_relationships(
+                previous_item=before_node,
+                study_value_node=latest_study_value_node,
+                new_item=study_element_selection_node,
+                exclude_study_selection_relationships=[],
+            )
 
         # check if element subtype is set
         if selection.element_subtype_uid:
@@ -507,7 +504,7 @@ class StudySelectionElementRepository:
         return StudyElement.get_next_free_uid_and_increment_counter()
 
     def _get_selection_with_history(
-        self, study_uid: str, study_selection_uid: str = None
+        self, study_uid: str, study_selection_uid: str | None = None
     ):
         """
         returns the audit trail for study element either for a specific selection or for all study element for the study
@@ -591,7 +588,7 @@ class StudySelectionElementRepository:
         return result
 
     def find_selection_history(
-        self, study_uid: str, study_selection_uid: str = None
+        self, study_uid: str, study_selection_uid: str | None = None
     ) -> list[SelectionHistoryElement]:
         """
         Simple method to return all versions of a study objectives for a study.

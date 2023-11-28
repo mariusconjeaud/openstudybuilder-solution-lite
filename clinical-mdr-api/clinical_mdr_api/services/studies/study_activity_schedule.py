@@ -1,5 +1,4 @@
 import datetime
-from typing import Sequence
 
 from fastapi import status
 from neomodel import db
@@ -29,59 +28,78 @@ class StudyActivityScheduleService(StudySelectionMixin):
         self.author = author
 
     def get_all_schedules(
-        self, study_uid: str
-    ) -> Sequence[models.StudyActivitySchedule]:
+        self, study_uid: str, study_value_version: str | None = None
+    ) -> list[models.StudyActivitySchedule]:
+        if study_value_version:
+            filters = {
+                "study_value__has_version|version": study_value_version,
+                "study_activity__has_study_activity__has_version|version": study_value_version,
+                "study_visit__has_study_visit__has_version|version": study_value_version,
+                "study_value__has_version__uid": study_uid,
+                "study_activity__has_study_activity__has_version__uid": study_uid,
+                "study_visit__has_study_visit__has_version__uid": study_uid,
+            }
+        else:
+            filters = {
+                "study_value__latest_value__uid": study_uid,
+                "study_activity__has_study_activity__latest_value__uid": study_uid,
+                "study_visit__has_study_visit__latest_value__uid": study_uid,
+            }
+
         return [
             models.StudyActivitySchedule.from_orm(sas_node)
             for sas_node in to_relation_trees(
                 StudyActivityScheduleNeoModel.nodes.fetch_relations(
-                    "has_after",
+                    "has_after__audit_trail",
+                    "study_value__has_version",
                     "study_visit__has_visit_name__has_latest_value",
                     "study_activity__has_selected_activity",
-                ).filter(
-                    study_value__study_root__uid=study_uid,
-                    study_visit__has_study_visit__study_root__uid=study_uid,
-                    study_activity__has_study_activity__study_root__uid=study_uid,
                 )
+                .filter(**filters)
+                .order_by("uid")
             ).distinct()
         ]
 
     def get_all_schedules_for_specific_visit(
         self, study_uid: str, study_visit_uid: str
-    ) -> Sequence[models.StudyActivitySchedule]:
+    ) -> list[models.StudyActivitySchedule]:
         return [
             models.StudyActivitySchedule.from_orm(sas_node)
             for sas_node in to_relation_trees(
                 StudyActivityScheduleNeoModel.nodes.fetch_relations(
-                    "has_after",
+                    "has_after__audit_trail",
                     "study_visit__has_visit_name__has_latest_value",
                     "study_activity__has_selected_activity",
-                ).filter(
-                    study_value__study_root__uid=study_uid,
-                    study_visit__uid=study_visit_uid,
-                    study_visit__has_study_visit__study_root__uid=study_uid,
-                    study_activity__has_study_activity__study_root__uid=study_uid,
                 )
+                .filter(
+                    study_value__latest_value__uid=study_uid,
+                    study_visit__uid=study_visit_uid,
+                    study_visit__has_study_visit__latest_value__uid=study_uid,
+                    study_activity__has_study_activity__latest_value__uid=study_uid,
+                )
+                .order_by("uid")
             ).distinct()
         ]
 
     def get_all_schedules_for_specific_activity(
         self, study_uid: str, study_activity_uid: str
-    ) -> Sequence[models.StudyActivitySchedule]:
+    ) -> list[models.StudyActivitySchedule]:
         return [
             models.StudyActivitySchedule.from_orm(sas_node)
             for sas_node in to_relation_trees(
                 StudyActivityScheduleNeoModel.nodes.fetch_relations(
-                    "has_after",
+                    "has_after__audit_trail",
                     "study_visit__has_visit_name__has_latest_value",
                     "study_activity__has_selected_activity",
                     "study_activity__has_study_activity",
-                ).filter(
-                    study_value__study_root__uid=study_uid,
-                    study_activity__uid=study_activity_uid,
-                    study_visit__has_study_visit__study_root__uid=study_uid,
-                    study_activity__has_study_activity__study_root__uid=study_uid,
                 )
+                .filter(
+                    study_value__latest_value__uid=study_uid,
+                    study_activity__uid=study_activity_uid,
+                    study_visit__has_study_visit__latest_value__uid=study_uid,
+                    study_activity__has_study_activity__latest_value__uid=study_uid,
+                )
+                .order_by("uid")
             ).distinct()
         ]
 
@@ -91,12 +109,12 @@ class StudyActivityScheduleService(StudySelectionMixin):
     ) -> models.StudyActivitySchedule:
         sas_node = to_relation_trees(
             StudyActivityScheduleNeoModel.nodes.fetch_relations(
-                "study_activity", "study_visit", "has_after"
+                "study_activity", "study_visit", "has_after__audit_trail"
             ).filter(
-                study_value__study_root__uid=study_uid,
+                study_value__latest_value__uid=study_uid,
                 uid=schedule_uid,
-                study_visit__has_study_visit__study_root__uid=study_uid,
-                study_activity__has_study_activity__study_root__uid=study_uid,
+                study_visit__has_study_visit__latest_value__uid=study_uid,
+                study_activity__has_study_activity__latest_value__uid=study_uid,
             )
         )
         if sas_node is None or len(sas_node) == 0:
@@ -138,7 +156,7 @@ class StudyActivityScheduleService(StudySelectionMixin):
 
     def _transform_history_to_response_model(
         self, study_selection_history: list[SelectionHistory], study_uid: str
-    ) -> Sequence[models.StudyActivitySchedule]:
+    ) -> list[models.StudyActivitySchedule]:
         result = []
         for history in study_selection_history:
             result.append(
@@ -153,9 +171,7 @@ class StudyActivityScheduleService(StudySelectionMixin):
         return result
 
     @db.transaction
-    def get_all_schedules_audit_trail(
-        self, study_uid: str
-    ) -> Sequence[models.StudyActivityScheduleHistory]:
+    def get_all_schedules_audit_trail(self, study_uid: str):
         repos = self._repos
         try:
             try:
@@ -176,7 +192,7 @@ class StudyActivityScheduleService(StudySelectionMixin):
     @db.transaction
     def get_specific_selection_audit_trail(
         self, study_uid: str, schedule_uid: str
-    ) -> Sequence[models.StudyActivitySchedule]:
+    ) -> list[models.StudyActivitySchedule]:
         repos = self._repos
         try:
             try:
@@ -197,8 +213,8 @@ class StudyActivityScheduleService(StudySelectionMixin):
     def handle_batch_operations(
         self,
         study_uid: str,
-        operations: Sequence[models.StudyActivityScheduleBatchInput],
-    ) -> Sequence[models.StudyActivityScheduleBatchOutput]:
+        operations: list[models.StudyActivityScheduleBatchInput],
+    ) -> list[models.StudyActivityScheduleBatchOutput]:
         results = []
         for operation in operations:
             result = {}

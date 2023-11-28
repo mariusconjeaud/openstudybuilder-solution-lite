@@ -46,8 +46,8 @@ const mutations = {
 }
 
 const actions = {
-  fetchStudyVisits ({ commit }, studyUid) {
-    return studyEpochs.getStudyVisits(studyUid).then(resp => {
+  fetchStudyVisits ({ commit }, studyUid, params) {
+    return studyEpochs.getStudyVisits(studyUid, params).then(resp => {
       commit('SET_STUDY_VISITS', resp.data.items)
     })
   },
@@ -61,24 +61,26 @@ const actions = {
   },
   async addStudyVisit ({ commit, dispatch }, { studyUid, input }) {
     await studyEpochs.addStudyVisit(studyUid, input)
-    await dispatch('fetchStudyEpochs', studyUid)
+    await dispatch('fetchStudyEpochs', { studyUid })
   },
   updateStudyVisit ({ commit, dispatch }, { studyUid, studyVisitUid, input }) {
     return studyEpochs.updateStudyVisit(studyUid, studyVisitUid, input).then(resp => {
-      dispatch('fetchStudyEpochs', studyUid)
+      dispatch('fetchStudyEpochs', { studyUid })
     })
   },
   async deleteStudyVisit ({ commit, dispatch }, { studyUid, studyVisitUid }) {
     await studyEpochs.deleteStudyVisit(studyUid, studyVisitUid)
-    await dispatch('fetchStudyEpochs', studyUid)
+    await dispatch('fetchStudyEpochs', { studyUid })
   },
-  fetchStudyEpochs ({ commit }, studyUid) {
-    return studyEpochs.getStudyEpochs(studyUid).then(resp => {
+  fetchStudyEpochs ({ commit }, { studyUid, data }) {
+    return studyEpochs.getStudyEpochs(studyUid, data).then(resp => {
       commit('SET_STUDY_EPOCHS', resp.data.items)
     })
   },
   fetchFilteredStudyEpochs ({ commit }, data) {
-    return studyEpochs.getFilteredEpochs(data.studyUid, data).then(resp => {
+    const studyUid = data.study_uid
+    delete data.study_uid
+    return studyEpochs.getFilteredEpochs(studyUid, data).then(resp => {
       commit('SET_STUDY_EPOCHS', resp.data.items)
     })
   },

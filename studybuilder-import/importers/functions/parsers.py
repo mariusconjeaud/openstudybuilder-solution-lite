@@ -39,7 +39,7 @@ def parse_float(value: str) -> Optional[float]:
     return new_value
 
 
-def map_boolean(bool_str: str, raise_exception=False) -> bool:
+def map_boolean(bool_str: str, raise_exception=False, default=False) -> bool:
     if bool_str in ("Y", "y", "T", "True", "TRUE", "true", "Yes", "yes"):
         return True
     elif bool_str in ("N", "n", "F", "False", "FALSE", "false", "No", "no"):
@@ -48,9 +48,9 @@ def map_boolean(bool_str: str, raise_exception=False) -> bool:
         if raise_exception:
             raise ValueError(f"Unable to map string :'{bool_str}' to a boolean value")
         logger.warning(
-            f"Unable to map string :'{bool_str}' to a boolean value, default is set to false"
+            f"Unable to map string :'{bool_str}' to a boolean value, default is set to {default}"
         )
-        return False
+        return default
 
 
 def find_term_by_name(term_name: str, all_terms: Sequence[dict]) -> Optional[str]:

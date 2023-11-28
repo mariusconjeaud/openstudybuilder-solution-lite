@@ -1,7 +1,7 @@
 import abc
 import copy
 from datetime import datetime
-from typing import Any, Iterable, Mapping, Sequence, TypeVar
+from typing import Any, Iterable, Mapping, TypeVar
 
 from cachetools import TTLCache, cached
 from cachetools.keys import hashkey
@@ -118,6 +118,16 @@ class LibraryItemRepositoryImplBase(
             RETURN or.uid
         """
         items, _ = db.cypher_query(cypher_query, {"name": name})
+        if len(items) > 0:
+            return items[0][0]
+        return None
+
+    def get_property_by_uid(self, uid: str, prop: str) -> str | None:
+        cypher_query = f"""
+            MATCH (or:{self.root_class.__label__} {{uid: $uid }})-[:LATEST_FINAL|LATEST_DRAFT|LATEST_RETIRED]->(ov:{self.value_class.__label__})
+            RETURN ov.{prop}
+        """
+        items, _ = db.cypher_query(cypher_query, {"uid": uid})
         if len(items) > 0:
             return items[0][0]
         return None
@@ -305,10 +315,10 @@ class LibraryItemRepositoryImplBase(
             self._db_remove_relationship(relation)
         all_hvs = has_version_rel.all_relationships(value)
         # Set any missing end_date to the new start_date
-        for hv in all_hvs:
-            if hv.end_date is None:
-                hv.end_date = parameters["start_date"]
-                hv.save()
+        for has_version in all_hvs:
+            if has_version.end_date is None:
+                has_version.end_date = parameters["start_date"]
+                has_version.save()
         has_version_rel.connect(value, parameters)
         self._db_create_relationship(relation, value)
 
@@ -494,7 +504,7 @@ class LibraryItemRepositoryImplBase(
         self,
         root: VersionRoot,
         value: VersionValue,
-        status: LibraryItemStatus = None,
+        status: LibraryItemStatus | None = None,
     ) -> VersionRelationship:
         (
             has_version_rel,
@@ -534,7 +544,7 @@ class LibraryItemRepositoryImplBase(
         self,
         root: VersionRoot,
     ) -> tuple[
-        Sequence[tuple[Mapping, VersionValue, VersionRelationship]],
+        list[tuple[Mapping, VersionValue, VersionRelationship]],
         VersionRelationship | None,
         VersionRelationship | None,
     ]:
@@ -568,11 +578,11 @@ class LibraryItemRepositoryImplBase(
         traversal = Traversal(
             root,
             root.__label__,
-            dict(
-                node_class=self.value_class,
-                direction=OUTGOING,
-                model=VersionRelationship,
-            ),
+            {
+                "node_class": self.value_class,
+                "direction": OUTGOING,
+                "model": VersionRelationship,
+            },
         )
         itm: VersionValue
         for itm in traversal.all():
@@ -589,10 +599,10 @@ class LibraryItemRepositoryImplBase(
                 assert isinstance(
                     rel, VersionRelationship
                 )  # PIWQ: again to check whether I understand
-                d = self._get_version_data_from_db(root, itm, rel)
-                versions.append(d)
+                version_data = self._get_version_data_from_db(root, itm, rel)
+                versions.append(version_data)
 
-        versions = sorted(versions, key=lambda x: x[2].start_date, reverse=True)
+        versions.sort(key=lambda x: x[2].start_date, reverse=True)
         return versions, latest_draft, latest_final
 
     def get_all_versions_2(
@@ -626,13 +636,13 @@ class LibraryItemRepositoryImplBase(
                 else:
                     library = None
 
-        result: Sequence[_AggregateRootType] = []
+        result: list[_AggregateRootType] = []
         if root is not None:
             if self.has_library:
                 assert library is not None
             else:
                 assert library is None
-            all_version_nodes_and_relationships: Sequence[
+            all_version_nodes_and_relationships: list[
                 tuple[VersionValue, VersionRelationship]
             ]
             all_version_nodes_and_relationships = [
@@ -681,7 +691,7 @@ class LibraryItemRepositoryImplBase(
         Get all releases for provided version root node
         """
         library: Library = root.has_library.get()
-        releases: Sequence[VersionValue] = []
+        releases: list[VersionValue] = []
         (
             has_version_rel,
             _,
@@ -874,13 +884,13 @@ class LibraryItemRepositoryImplBase(
                             copy.deepcopy(result),
                         )
                     return result
-                matching_values: Sequence[VersionValue] = has_version_rel.match(
+                matching_values: list[VersionValue] = has_version_rel.match(
                     start_date__lte=at_specific_date
                 )
                 latest_matching_relationship: VersionRelationship | None = None
                 latest_matching_value: VersionValue | None = None
                 for matching_value in matching_values:
-                    relationships: Sequence[
+                    relationships: list[
                         VersionRelationship
                     ] = has_version_rel.all_relationships(matching_value)
                     for relationship in relationships:

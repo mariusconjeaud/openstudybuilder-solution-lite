@@ -18,7 +18,10 @@ from clinical_mdr_api.models.syntax_templates.template_parameter_term import (
     IndexedTemplateParameterTerm,
     MultiTemplateParameterTerm,
 )
-from clinical_mdr_api.models.utils import BaseModel
+from clinical_mdr_api.models.utils import (
+    BaseModel,
+    capitalize_first_letter_if_template_parameter,
+)
 
 
 class CriteriaPreInstance(BaseModel):
@@ -61,13 +64,13 @@ class CriteriaPreInstance(BaseModel):
         for position, parameter in enumerate(criteria_pre_instance_ar.get_parameters()):
             terms: list[IndexedTemplateParameterTerm] = []
             for index, parameter_term in enumerate(parameter.parameters):
-                pv = IndexedTemplateParameterTerm(
+                indexed_template_parameter_term = IndexedTemplateParameterTerm(
                     index=index + 1,
                     uid=parameter_term.uid,
                     name=parameter_term.value,
                     type=parameter.parameter_name,
                 )
-                terms.append(pv)
+                terms.append(indexed_template_parameter_term)
             conjunction = parameter.conjunction
 
             parameter_terms.append(
@@ -81,8 +84,14 @@ class CriteriaPreInstance(BaseModel):
             template_uid=criteria_pre_instance_ar.template_uid,
             template_name=criteria_pre_instance_ar.template_name,
             template_type_uid=None,
-            name=criteria_pre_instance_ar.name,
-            name_plain=criteria_pre_instance_ar.name_plain,
+            name=capitalize_first_letter_if_template_parameter(
+                criteria_pre_instance_ar.name,
+                criteria_pre_instance_ar.template_name_plain,
+            ),
+            name_plain=capitalize_first_letter_if_template_parameter(
+                criteria_pre_instance_ar.name_plain,
+                criteria_pre_instance_ar.template_name_plain,
+            ),
             guidance_text=criteria_pre_instance_ar._template.guidance_text
             if criteria_pre_instance_ar.guidance_text is None
             else criteria_pre_instance_ar.guidance_text,

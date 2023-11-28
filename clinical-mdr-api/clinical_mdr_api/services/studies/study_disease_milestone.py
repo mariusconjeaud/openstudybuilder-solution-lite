@@ -1,5 +1,4 @@
 import datetime
-from typing import Sequence
 
 from aenum import extend_enum
 from neomodel import db
@@ -101,6 +100,7 @@ class StudyDiseaseMilestoneService:
         filter_by: dict | None = None,
         filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
+        study_value_version: str | None = None,
         **kwargs,
     ) -> GenericFilteringReturn[StudyDiseaseMilestone]:
         items, total = self.repo.find_all_disease_milestone(
@@ -111,6 +111,7 @@ class StudyDiseaseMilestoneService:
             filter_by=filter_by,
             filter_operator=filter_operator,
             total_count=total_count,
+            study_value_version=study_value_version,
             **kwargs,
         )
 
@@ -137,7 +138,7 @@ class StudyDiseaseMilestoneService:
     def _validate_creation(
         self,
         disease_milestone_input: StudyDiseaseMilestoneCreateInput,
-        all_disease_milestones: Sequence[StudyDiseaseMilestoneVO],
+        all_disease_milestones: list[StudyDiseaseMilestoneVO],
     ):
         used_types = [
             disease_milestone.dm_type.name
@@ -341,7 +342,7 @@ class StudyDiseaseMilestoneService:
         self,
         disease_milestone_uid: str,
         study_uid: str,
-    ) -> Sequence[StudyDiseaseMilestoneVersion]:
+    ) -> list[StudyDiseaseMilestoneVersion]:
         all_versions = self.repo.get_all_versions(
             uid=disease_milestone_uid, study_uid=study_uid
         )
@@ -356,7 +357,7 @@ class StudyDiseaseMilestoneService:
     def audit_trail_all_disease_milestones(
         self,
         study_uid: str,
-    ) -> Sequence[StudyDiseaseMilestoneVersion]:
+    ) -> list[StudyDiseaseMilestoneVersion]:
         data = calculate_diffs_history(
             get_all_object_versions=self.repo.get_all_disease_milestone_versions,
             transform_all_to_history_model=self._transform_all_to_response_history_model,
@@ -373,7 +374,7 @@ class StudyDiseaseMilestoneService:
         filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
         **kwargs,
-    ) -> Sequence:
+    ):
         header_values = self.repo.get_distinct_headers(
             field_name=field_name,
             search_string=search_string,

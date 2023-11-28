@@ -1,4 +1,4 @@
-from typing import Callable, Sequence
+from typing import Callable
 
 from neomodel import db
 
@@ -43,7 +43,7 @@ class StudyElementSelectionService(
 
     def _transform_all_to_response_model(
         self, study_selection: StudySelectionElementAR
-    ) -> Sequence[models.StudySelectionElement]:
+    ) -> list[models.StudySelectionElement]:
         result = []
         # go over each VO study element selection object
         for order, selection in enumerate(
@@ -76,7 +76,7 @@ class StudyElementSelectionService(
 
     def _transform_each_history_to_response_model(
         self, study_selection_history: SelectionHistoryElement, study_uid: str
-    ) -> Sequence[models.StudySelectionElement]:
+    ) -> models.StudySelectionElement:
         repos = self._repos
         return models.StudySelectionElement.from_study_selection_history(
             study_selection_history=study_selection_history,
@@ -89,7 +89,7 @@ class StudyElementSelectionService(
     @db.transaction
     def get_all_selection_audit_trail(
         self, study_uid: str
-    ) -> Sequence[models.StudySelectionElementVersion]:
+    ) -> list[models.StudySelectionElementVersion]:
         repos = self._repos
         try:
             try:
@@ -105,9 +105,9 @@ class StudyElementSelectionService(
             for i_unique in unique_list_uids:
                 ith_selection_history = []
                 # gather the selection history of the i_unique Uid
-                for x in selection_history:
-                    if x.study_selection_uid == i_unique:
-                        ith_selection_history.append(x)
+                for selection in selection_history:
+                    if selection.study_selection_uid == i_unique:
+                        ith_selection_history.append(selection)
                 # get the versions and compare
                 versions = [
                     self._transform_each_history_to_response_model(_, study_uid).dict()
@@ -128,7 +128,7 @@ class StudyElementSelectionService(
     @db.transaction
     def get_specific_selection_audit_trail(
         self, study_uid: str, study_selection_uid: str
-    ) -> Sequence[models.StudySelectionElementVersion]:
+    ) -> list[models.StudySelectionElementVersion]:
         repos = self._repos
         try:
             selection_history = repos.study_element_repository.find_selection_history(
@@ -224,11 +224,12 @@ class StudyElementSelectionService(
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
+        study_value_version: str | None = None,
     ) -> GenericFilteringReturn[models.StudySelectionElement]:
         repos = MetaRepository()
         try:
             element_selection_ar = repos.study_element_repository.find_by_study(
-                study_uid
+                study_uid, study_value_version=study_value_version
             )
             filtered_items = service_level_generic_filtering(
                 items=self._transform_all_to_response_model(element_selection_ar),
@@ -300,14 +301,19 @@ class StudyElementSelectionService(
 
     @db.transaction
     def get_specific_selection(
-        self, study_uid: str, study_selection_uid: str
+        self,
+        study_uid: str,
+        study_selection_uid: str,
+        study_value_version: str | None = None,
     ) -> models.StudySelectionElement:
         repos = self._repos
         (
             _selection_aggregate,
             new_selection,
             order,
-        ) = self._get_specific_element_selection_by_uids(study_uid, study_selection_uid)
+        ) = self._get_specific_element_selection_by_uids(
+            study_uid, study_selection_uid, study_value_version=study_value_version
+        )
         return models.StudySelectionElement.from_study_selection_element_ar_and_order(
             study_uid=study_uid,
             selection=new_selection,
@@ -468,8 +474,11 @@ class StudyElementSelectionService(
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
+        study_value_version: str | None = None,
     ):
-        all_items = self.get_all_selection(study_uid=study_uid)
+        all_items = self.get_all_selection(
+            study_uid, study_value_version=study_value_version
+        )
 
         header_values = service_level_generic_header_filtering(
             items=all_items.items,

@@ -37,11 +37,11 @@ class TimeframeTest(api.APITest):
         ttdata = template_data.copy()
         ttdata["name"] = "Test [Indication]"
         timeframe_template = tt_models.TimeframeTemplateCreateInput(**ttdata)
-        self.tt = _service.create(timeframe_template)
-        if isinstance(self.tt, BaseModel):
-            self.tt = self.tt.dict()
-        _service.approve(self.tt["uid"])
-        self.data["ttuid"] = self.tt["uid"]
+        self.timeframe_template = _service.create(timeframe_template)
+        if isinstance(self.timeframe_template, BaseModel):
+            self.timeframe_template = self.timeframe_template.dict()
+        _service.approve(self.timeframe_template["uid"])
+        self.data["ttuid"] = self.timeframe_template["uid"]
         ttdata = template_data.copy()
         ttdata["name"] = "Test [Indication] and [Intervention]"
         timeframe_template = tt_models.TimeframeTemplateCreateInput(**ttdata)
@@ -76,9 +76,11 @@ class TimeframeNegativeTest(api.APITest):
         ttdata = template_data.copy()
         ttdata["name"] = "Test [Indication]"
         timeframe_template = tt_models.TimeframeTemplateCreateInput(**ttdata)
-        self.tt = _service.create(timeframe_template)
+        self.timeframe_template = _service.create(timeframe_template)
         tt_uid = (
-            self.tt.uid if isinstance(self.tt, TimeframeTemplate) else self.tt["uid"]
+            self.timeframe_template.uid
+            if isinstance(self.timeframe_template, TimeframeTemplate)
+            else self.timeframe_template["uid"]
         )
         _service.approve(tt_uid)
         self.data["ttuid"] = tt_uid
@@ -128,9 +130,11 @@ class TimeframeVersioningTest(api.APITest):
         self.test_client = TestClient(main.app)
         self.library = library_service.create(**library_data)
         timeframe_template = tt_models.TimeframeTemplateCreateInput(**template_data)
-        self.tt = _service.create(timeframe_template)
+        self.timeframe_template = _service.create(timeframe_template)
         tt_uid = (
-            self.tt.uid if isinstance(self.tt, TimeframeTemplate) else self.tt["uid"]
+            self.timeframe_template.uid
+            if isinstance(self.timeframe_template, TimeframeTemplate)
+            else self.timeframe_template["uid"]
         )
         _service.approve(tt_uid)
         self.data["ttuid"] = tt_uid

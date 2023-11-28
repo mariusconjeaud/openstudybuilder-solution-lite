@@ -1,4 +1,4 @@
-from typing import Any, Sequence
+from typing import Any
 
 from fastapi import APIRouter, Path, Query
 from pydantic.types import Json
@@ -10,6 +10,7 @@ from clinical_mdr_api.models.listings.listings_adam import (
     StudyVisitAdamListing,
 )
 from clinical_mdr_api.models.utils import CustomPage
+from clinical_mdr_api.models.validators import FLOAT_REGEX
 from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions
@@ -61,6 +62,12 @@ def get_adam_listing(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
+    study_value_version: str
+    | None = Query(
+        None,
+        description="StudyValueVersion to extract the StudySelections",
+        regex=FLOAT_REGEX,
+    ),
 ):
     service = ListingsService()
     all_items = service.get_report(
@@ -72,6 +79,7 @@ def get_adam_listing(
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
         sort_by=sort_by,
+        study_value_version=study_value_version,
     )
 
     return CustomPage.create(
@@ -88,7 +96,7 @@ def get_adam_listing(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=Sequence[Any],
+    response_model=list[Any],
     status_code=200,
     responses={
         404: _generic_descriptions.ERROR_404,
@@ -115,6 +123,12 @@ def get_distinct_adam_listing_values_for_header(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
+    study_value_version: str
+    | None = Query(
+        None,
+        description="StudyValueVersion to extract the StudySelections",
+        regex=FLOAT_REGEX,
+    ),
 ):
     service = ListingsService()
     return service.get_distinct_adam_listing_values_for_headers(
@@ -125,4 +139,5 @@ def get_distinct_adam_listing_values_for_header(
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
         result_count=result_count,
+        study_value_version=study_value_version,
     )

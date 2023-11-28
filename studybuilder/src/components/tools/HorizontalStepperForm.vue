@@ -54,6 +54,7 @@
                     color="secondary"
                     class="ml-2"
                     @click="goToStep(index + 1, index + 2)"
+                    :loading="loadingContinue"
                     elevation="2"
                     width="120px"
                     >
@@ -107,6 +108,7 @@
                       :data-cy="step.name + '-continue-button'"
                       color="secondary"
                       @click="goToStep(index + 1, index + 2)"
+                      :loading="loadingContinue"
                       elevation="2"
                       width="120px"
                       >
@@ -202,6 +204,10 @@ export default {
     debug: Boolean,
     formUrl: String,
     saveFromAnyStep: {
+      type: Boolean,
+      default: false
+    },
+    loadingContinue: {
       type: Boolean,
       default: false
     },

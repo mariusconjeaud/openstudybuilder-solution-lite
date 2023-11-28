@@ -15,6 +15,7 @@
   :export-data-url-params="columnDataParameters"
   double-breadcrumb
   :prepare-duplicate-payload-func="prepareDuplicatePayload"
+  @refresh="refreshTable"
   >
   <template v-slot:editform="{ closeForm, selectedObject, preInstanceMode }">
     <criteria-template-pre-instance-form
@@ -101,11 +102,16 @@ export default {
     StudybuilderTemplateTable,
     TemplateIndexingDialog
   },
+  computed: {
+    columnDataParameters () {
+      const keyName = (this.$refs.table && this.$refs.table.tab === 'pre-instances') ? 'template_type_uid' : 'type.term_uid'
+      const filters = {}
+      filters[keyName] = { v: [this.criteriaType.term_uid], op: 'eq' }
+      return { filters }
+    }
+  },
   data () {
     return {
-      columnDataParameters: {
-        filters: { 'type.term_uid': { v: [this.criteriaType.term_uid], op: 'eq' } }
-      },
       headers: [
         {
           text: '',
@@ -156,7 +162,9 @@ export default {
       }
     },
     refreshTable () {
-      this.$refs.table.$refs.sponsorTable.filter()
+      if (this.$refs.table.$refs.sponsorTable) {
+        this.$refs.table.$refs.sponsorTable.filter()
+      }
       if (this.$refs.table.$refs.preInstanceTable) {
         this.$refs.table.$refs.preInstanceTable.filter()
       }

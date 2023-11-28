@@ -6,11 +6,13 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 public class StudyBuilderHttpSwaggerAdaptorTest {
 
     private final String STUDY_ID = "Study_000001";
-    private final String STUDY_OBJECTIVE_UID = "StudyObjective_000001";
+    private final String ENDPOINT_UID = "Endpoint_000007";
+    private final String STUDY_OBJECTIVE_UID = "Objective_000010";
     private static StudyBuilderAdaptor studyBuilderAdaptor;
 
     /**
@@ -21,7 +23,7 @@ public class StudyBuilderHttpSwaggerAdaptorTest {
     @BeforeAll
     public static void init() throws IOException {
         try {
-            var file = StudyBuilderHttpSwaggerAdaptorTest.class
+            InputStream file = StudyBuilderHttpSwaggerAdaptorTest.class
                     .getClassLoader().getResourceAsStream("application.properties");
             if (file != null) System.getProperties().load(file);
         } catch (IOException e) {
@@ -41,16 +43,13 @@ public class StudyBuilderHttpSwaggerAdaptorTest {
     }
 
     @Test
-    @Disabled
     void getObjective() throws Exception {
         Assertions.assertNotNull(studyBuilderAdaptor.getObjective(STUDY_OBJECTIVE_UID));
     }
 
     @Test
-    @Disabled
-    // TODO - This is disabled until we can define how we get to single endpoint
     void getEndpoint() throws Exception {
-        Assertions.assertNotNull(studyBuilderAdaptor.getEndpoint(STUDY_ID));
+        Assertions.assertNotNull(studyBuilderAdaptor.getEndpoint(ENDPOINT_UID));
     }
 
     @Test

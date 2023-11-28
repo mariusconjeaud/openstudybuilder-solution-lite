@@ -109,7 +109,7 @@
               :disabled="!form.arm_uids"
               :value="form.number_of_subjects"
               @input="form.number_of_subjects = $event !== '' ? $event : null"
-              :label="$t('StudyCohorts.nuber_of_subjects')"
+              :label="$t('StudyCohorts.number_of_subjects')"
               data-cy="study-cohort-planned-number-of-subjects"
               :error-messages="(errors[0] && errors[0].includes($t('StudyCohorts.value_less_then'))) ? $t('StudyCohorts.number_of_subjects_exceeds') : errors"
               type="number"
@@ -186,10 +186,6 @@ export default {
   },
   methods: {
     async submit () {
-      const valid = await this.$refs.observer.validate()
-      if (!valid) {
-        return
-      }
       if (Object.keys(this.editedCohort).length !== 0) {
         this.edit()
       } else {
@@ -203,6 +199,8 @@ export default {
       arms.createCohort(this.selectedStudy.uid, this.form).then(resp => {
         bus.$emit('notification', { msg: this.$t('StudyCohorts.cohort_created') })
         this.close()
+      }, _err => {
+        this.$refs.form.working = false
       })
     },
     edit () {
@@ -212,6 +210,8 @@ export default {
       arms.editCohort(this.selectedStudy.uid, this.editedCohort.cohort_uid, this.form).then(resp => {
         bus.$emit('notification', { msg: this.$t('StudyCohorts.cohort_updated') })
         this.close()
+      }, _err => {
+        this.$refs.form.working = false
       })
     },
     close () {

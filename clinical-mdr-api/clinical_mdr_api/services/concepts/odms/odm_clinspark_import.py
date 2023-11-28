@@ -1,3 +1,5 @@
+from typing import Any
+
 from fastapi import UploadFile
 
 from clinical_mdr_api import exceptions
@@ -334,7 +336,7 @@ class OdmClinicalXmlImporterService(OdmXmlImporterService):
         return (
             OdmItemPostInput(
                 oid=item_def.getAttribute("OID"),
-                name=self.getNextAvailableName(
+                name=self.get_next_available_name(
                     item_def.getAttribute("Name"), plausible_duplicates
                 ),
                 prompt=item_def.getAttribute("Prompt"),
@@ -377,7 +379,7 @@ class OdmClinicalXmlImporterService(OdmXmlImporterService):
 
         return OdmItemGroupPostInput(
             oid=item_group_def.getAttribute("OID"),
-            name=self.getNextAvailableName(
+            name=self.get_next_available_name(
                 item_group_def.getAttribute("Name"), plausible_duplicates
             ),
             origin=item_group_def.getAttribute("Origin"),
@@ -407,7 +409,7 @@ class OdmClinicalXmlImporterService(OdmXmlImporterService):
 
         return OdmFormPostInput(
             oid=form_def.getAttribute("OID"),
-            name=self.getNextAvailableName(
+            name=self.get_next_available_name(
                 form_def.getAttribute("Name"), plausible_duplicates
             ),
             sdtm_version="",
@@ -425,14 +427,14 @@ class OdmClinicalXmlImporterService(OdmXmlImporterService):
         )
 
     @staticmethod
-    def getNextAvailableName(name: str, objs: list):
+    def get_next_available_name(name: str, objs: list[Any]):
         duplicates = []
         for obj in objs:
             before, _, after = obj.name.partition(name)
             if not before and after.strip().isdigit():
                 duplicates.append(obj)
 
-        duplicates = sorted(duplicates, key=lambda x: x.name)
+        duplicates.sort(key=lambda x: x.name)
 
         if duplicates:
             _, _, number = duplicates[-1].name.rpartition(" ")

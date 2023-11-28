@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Sequence
+from typing import Any
 
 from neomodel import db
 
@@ -68,6 +68,7 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
 
     def _create_new_value_node(self, ar: _AggregateRootType) -> VersionValue:
         return self.value_class(
+            nci_concept_id=getattr(ar.concept_vo, "nci_concept_id", None),
             name=ar.concept_vo.name,
             name_sentence_case=ar.concept_vo.name_sentence_case,
             definition=ar.concept_vo.definition,
@@ -77,6 +78,8 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
     def _has_data_changed(self, ar: _AggregateRootType, value: VersionValue) -> bool:
         return (
             ar.concept_vo.name != value.name
+            or getattr(ar.concept_vo, "nci_concept_id", None)
+            != getattr(value, "nci_concept_id", None)
             or ar.concept_vo.name_sentence_case != value.name_sentence_case
             or ar.concept_vo.definition != value.definition
             or ar.concept_vo.abbreviation != value.abbreviation
@@ -115,6 +118,7 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
                 version_rel
             WITH
                 uid,
+                concept_value.nci_concept_id AS nci_concept_id,
                 concept_value.name AS name,
                 concept_value.name_sentence_case AS name_sentence_case,
                 concept_value.definition AS definition,
@@ -123,12 +127,57 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
                 library_name,
                 is_library_editable,
                 version_rel.start_date AS start_date,
+                version_rel.end_date AS end_date,
                 version_rel.status AS status,
                 version_rel.version AS version,
                 version_rel.change_description AS change_description,
                 version_rel.user_initials AS user_initials,
                 concept_value
         """
+
+    def generic_alias_clause_all_versions(self):
+        return """
+            DISTINCT concept_root, concept_value,
+            head([(library)-[:CONTAINS_CONCEPT]->(concept_root) | library]) AS library
+            CALL {
+                WITH concept_root, concept_value
+                MATCH (concept_root)-[hv:HAS_VERSION]-(concept_value)
+                WITH hv
+                ORDER BY
+                    toInteger(split(hv.version, '.')[0]) ASC,
+                    toInteger(split(hv.version, '.')[1]) ASC,
+                    hv.end_date ASC,
+                    hv.start_date ASC
+                RETURN hv AS version_rel
+            }
+            WITH
+                concept_root,
+                concept_root.uid AS uid,
+                concept_value as concept_value,
+                library.name AS library_name,
+                library.is_editable AS is_library_editable,
+                version_rel
+            WITH
+                uid,
+                concept_value.nci_concept_id AS nci_concept_id,
+                concept_value.name AS name,
+                concept_value.name_sentence_case AS name_sentence_case,
+                concept_value.definition AS definition,
+                concept_value.abbreviation AS abbreviation,
+                CASE WHEN concept_value:TemplateParameterTermValue THEN true ELSE false END AS template_parameter,
+                library_name,
+                is_library_editable,
+                version_rel.start_date AS start_date,
+                version_rel.end_date AS end_date,
+                version_rel.status AS status,
+                version_rel.version AS version,
+                version_rel.change_description AS change_description,
+                version_rel.user_initials AS user_initials,
+                concept_value
+        """
+
+    def generic_match_clause_all_versions(self):
+        return self.generic_match_clause()
 
     def create_query_filter_statement(
         self, library: str | None = None, **kwargs
@@ -156,8 +205,9 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
+        return_all_versions: bool = False,
         **kwargs,
-    ) -> tuple[Sequence[_AggregateRootType], int]:
+    ) -> tuple[list[_AggregateRootType], int]:
         """
         Method runs a cypher query to fetch all needed data to create objects of type AggregateRootType.
         In the case of the following repository it will be some Concept aggregates.
@@ -172,16 +222,25 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
         :param filter_by:
         :param filter_operator:
         :param total_count:
+        :param return_all_versions:
         :return GenericFilteringReturn[_AggregateRootType]:
         """
-        match_clause = self.generic_match_clause()
+        match_clause = (
+            self.generic_match_clause()
+            if not return_all_versions
+            else self.generic_match_clause_all_versions()
+        )
 
         filter_statements, filter_query_parameters = self.create_query_filter_statement(
             library=library, **kwargs
         )
         match_clause += filter_statements
 
-        alias_clause = self.generic_alias_clause() + self.specific_alias_clause()
+        alias_clause = (
+            self.generic_alias_clause()
+            if not return_all_versions
+            else self.generic_alias_clause_all_versions()
+        ) + self.specific_alias_clause()
         query = CypherQueryBuilder(
             match_clause=match_clause,
             alias_clause=alias_clause,
@@ -213,7 +272,7 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
 
     def _retrieve_concepts_from_cypher_res(
         self, result_array, attribute_names
-    ) -> Sequence[_AggregateRootType]:
+    ) -> list[_AggregateRootType]:
         """
         Method maps the result of the cypher query into real aggregate objects.
         :param result_array:
@@ -242,7 +301,7 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
         filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
         **kwargs,
-    ) -> Sequence:
+    ) -> list[Any]:
         # pylint: disable=unused-argument
         """
         Method runs a cypher query to fetch possible values for a given field_name, with a limit of result_count.
@@ -254,7 +313,7 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
         :param filter_by:
         :param filter_operator: Same as for generic filtering
         :param result_count: Max number of values to return. Default 10
-        :return Sequence:
+        :return list[Any]:
         """
         # Match clause
         match_clause = self.generic_match_clause()
@@ -346,6 +405,28 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
         result, _ = db.cypher_query(query, {"name": name})
         return len(result) > 0 and len(result[0]) > 0
 
+    def latest_concept_exists_by_name(self, name: str) -> bool:
+        query = f"""
+            MATCH (concept_root:{self.root_class.__label__})-[:LATEST]->(concept_value:{self.value_class.__label__}{{name: $name}})
+            RETURN concept_root
+            """
+        result, _ = db.cypher_query(query, {"name": name})
+        return len(result) > 0 and len(result[0]) > 0
+
+    def latest_concept_in_library_exists_by_name(
+        self, library_name: str, concept_name: str
+    ) -> bool:
+        query = f"""
+            MATCH (l:Library {{name: $library_name}})-[:CONTAINS_CONCEPT]->
+                    (concept_root:{self.root_class.__label__})-[:LATEST]->
+                    (concept_value:{self.value_class.__label__}{{name: $concept_name}})
+            RETURN concept_root
+            """
+        result, _ = db.cypher_query(
+            query, {"concept_name": concept_name, "library_name": library_name}
+        )
+        return len(result) > 0 and len(result[0]) > 0
+
     def _is_new_version_necessary(self, ar: ConceptARBase, value: VersionValue) -> bool:
         return self._has_data_changed(ar, value)
 
@@ -384,9 +465,7 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
     ) -> None:
         if versioned_object.concept_vo.is_template_parameter:
             # neomodel can't add custom label to already existing node, we have to manage that by executing cypher query
-            template_parameter_name = self.root_class.__name__[
-                : len(self.root_class.__name__) - len("Root")
-            ]
+            template_parameter_name = self.root_class.__name__.removesuffix("Root")
             # we want to initiate a Comparator TemplateParameter type with the same template parameter terms as we do
             # for Compound TemplateParameter
             if template_parameter_name == "Compound":

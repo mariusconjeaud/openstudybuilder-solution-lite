@@ -1,6 +1,7 @@
 import unittest
 from typing import Callable
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains.concepts.activities.activity import (
     ActivityAR,
     ActivityGroupingVO,
@@ -21,9 +22,11 @@ def create_random_activity_grouping_vo() -> ActivityGroupingVO:
 
 
 def create_random_activity_vo() -> ActivityVO:
+    name = random_str()
     random_activity_vo = ActivityVO.from_repository_values(
-        name=random_str(),
-        name_sentence_case=random_str(),
+        nci_concept_id=random_str(),
+        name=name,
+        name_sentence_case=name,
         definition=random_str(),
         abbreviation=random_str(),
         activity_groupings=[
@@ -31,6 +34,7 @@ def create_random_activity_vo() -> ActivityVO:
             create_random_activity_grouping_vo(),
         ],
         request_rationale=random_str(),
+        is_data_collected=True,
     )
     return random_activity_vo
 
@@ -48,7 +52,7 @@ def create_random_activity_ar(
             library_name=library, is_editable=is_editable
         ),
         author="TODO Initials",
-        concept_exists_by_name_callback=lambda _: False,
+        concept_exists_by_library_and_name_callback=lambda _l, _c: False,
         activity_subgroup_exists=lambda _: True,
         activity_group_exists=lambda _: True,
     )
@@ -82,7 +86,7 @@ class TestActivity(unittest.TestCase):
             author="TODO",
             change_description="Test",
             concept_vo=activity_vo,
-            concept_exists_by_name_callback=lambda _: False,
+            concept_exists_by_library_and_name_callback=lambda _l, _c: False,
             activity_subgroup_exists=lambda _: True,
             activity_group_exists=lambda _: True,
         )
@@ -169,3 +173,70 @@ class TestActivity(unittest.TestCase):
 
         # then
         self.assertTrue(activity_ar.is_deleted)
+
+
+class TestActivityNegative(unittest.TestCase):
+    def test__init__ar_validation_failure(self):
+        name = random_str()
+        with self.assertRaises(exceptions.ValidationException) as context:
+            ActivityAR.from_input_values(
+                generate_uid_callback=random_str(),
+                concept_vo=ActivityVO.from_repository_values(
+                    nci_concept_id="C123",
+                    name=name,
+                    name_sentence_case="Different from name",
+                    definition=random_str(),
+                    abbreviation=random_str(),
+                    activity_groupings=[
+                        create_random_activity_grouping_vo(),
+                        create_random_activity_grouping_vo(),
+                    ],
+                    request_rationale=random_str(),
+                    is_data_collected=True,
+                ),
+                library=LibraryVO.from_repository_values(
+                    library_name="library", is_editable=True
+                ),
+                author="TODO Initials",
+                concept_exists_by_library_and_name_callback=lambda _l, _c: False,
+                activity_subgroup_exists=lambda _: True,
+                activity_group_exists=lambda _: True,
+            )
+
+        assert (
+            context.exception.msg
+            == f"Lowercase versions of '{name}' and 'Different from name' must be equal"
+        )
+
+    def test__edit_draft_version__name_validation_failure(self):
+        activity_ar = create_random_activity_ar()
+
+        activity_ar.approve(author="Test")
+        activity_ar.create_new_version(author="TODO")
+
+        name = random_str()
+        with self.assertRaises(exceptions.ValidationException) as context:
+            activity_ar.edit_draft(
+                author="TODO",
+                change_description="Test",
+                concept_vo=ActivityVO.from_repository_values(
+                    nci_concept_id="C123",
+                    name=name,
+                    name_sentence_case="Different from name",
+                    definition=random_str(),
+                    abbreviation=random_str(),
+                    activity_groupings=[
+                        create_random_activity_grouping_vo(),
+                        create_random_activity_grouping_vo(),
+                    ],
+                    request_rationale=random_str(),
+                    is_data_collected=True,
+                ),
+                concept_exists_by_library_and_name_callback=lambda _l, _c: False,
+                activity_subgroup_exists=lambda _: True,
+                activity_group_exists=lambda _: True,
+            )
+        assert (
+            context.exception.msg
+            == f"Lowercase versions of '{name}' and 'Different from name' must be equal"
+        )

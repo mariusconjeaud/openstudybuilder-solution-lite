@@ -15,8 +15,7 @@
           <v-icon class="mr-4" color="white" x-large>{{ icon }}</v-icon>
         </v-col>
         <v-col cols="10">
-          <div class="text-body-1 mt-1">
-             {{ message }}
+          <div class="text-body-1 mt-1" v-html="message">
           </div>
         </v-col>
       </v-row>
@@ -35,7 +34,7 @@
           </v-btn>
           <slot name="actions">
             <v-btn
-              v-if="!options.noAgree && options.redirect === ''"
+              v-if="options.redirect === null"
               color="white"
               @click.native="agree"
               data-cy="continue-popup"
@@ -99,11 +98,10 @@ export default {
         width: 450,
         zIndex: 200,
         noCancel: false,
-        noAgree: false,
         agreeLabel: this.$t('_global.continue'),
         cancelLabel: this.$t('_global.cancel'),
         cancelIsPrimaryAction: false,
-        redirect: ''
+        redirect: null
       }
     }
   },
@@ -123,8 +121,7 @@ export default {
     },
     agreeAndRedirect () {
       this.dialog = false
-      this.$router.push({ path: this.options.redirect })
-      window.location.reload()
+      this.$router.push(this.options.redirect)
     },
     cancel () {
       this.resolve(false)

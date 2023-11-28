@@ -263,7 +263,11 @@ export default {
       if (!this.nextUrl) {
         this.nextUrl = { name: this.$route.name }
       }
-      this.nextUrl.params = { study_id: generalUtils.extractStudyUidFromLocalStorage() }
+      if (!this.nextUrl.params) {
+        this.nextUrl.params = { study_id: generalUtils.extractStudyUidFromLocalStorage() }
+      } else {
+        this.nextUrl.params.study_id = generalUtils.extractStudyUidFromLocalStorage()
+      }
       const resolved = this.$router.resolve(this.nextUrl)
       const [menuItem, menuSubItem] = this.findMenuItemPath('Studies', this.nextUrl.name)
       this.$store.commit('app/SET_SECTION', 'Studies')
@@ -274,7 +278,7 @@ export default {
           this.addBreadcrumbsLevel({ text: menuSubItem.title, to: menuSubItem.url })
         }
       }
-      document.location.href = resolved.href
+      this.$router.push(resolved.href)
     },
     openSelectStudyDialog () {
       this.$refs.confirm.cancel()

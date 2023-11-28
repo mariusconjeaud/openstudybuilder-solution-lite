@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Mapping, Sequence, Type
+from typing import Any, Mapping, Type
 
 from cachetools import TTLCache
 from neomodel import RelationshipDefinition, RelationshipManager
@@ -12,7 +12,10 @@ from clinical_mdr_api.domain_repositories.models.generic import (
 )
 from clinical_mdr_api.domain_repositories.models.study_audit_trail import StudyAction
 from clinical_mdr_api.domain_repositories.models.study_field import StudyField
-from clinical_mdr_api.domain_repositories.models.study_selections import StudySelection
+from clinical_mdr_api.domain_repositories.models.study_selections import (
+    StudySelection,
+    StudySelectionMetadata,
+)
 from clinical_mdr_api.repositories._utils import sb_clear_cache
 
 
@@ -48,7 +51,7 @@ class RepositoryImpl:
     def user_initials(self) -> str | None:
         return self._user_initials
 
-    def __init__(self, user: str = None):
+    def __init__(self, user: str | None = None):
         self._user_initials = user
 
     def _get_version_relation_keys(
@@ -166,7 +169,7 @@ def get_connected_node_by_rel_name_and_study_value(
     study_value: Any = None,
     multiple_returned_nodes: bool = False,
     at_least_one_returned: bool = True,
-) -> Sequence[Any] | Any:
+) -> Any:
     """
     Having a StudySelection node created on the database, get the connected StudySelection(s)
     """
@@ -210,24 +213,26 @@ def manage_previous_connected_study_selection_relationships(
     previous_item: Any,
     study_value_node: Any,
     new_item: Any,
-    exclude_study_selection_relationships: Sequence[Sequence[str | Any] | Any] = None,
+    exclude_study_selection_relationships: list[list[str | Any] | Any] | None = None,
 ):
     """
     Method for preserving the previous version's connected StudySelection(s) relationships to the current version.
-    Take into account that the StudySelection(s) that will be kept are only
-    those that are linked to the study_value_node supplied as a parameter ":param study_value_node:".
-    It is feasible to exclude StudySelection(s) if they are already kept and can be connected and found by UID on the VO.
+    Take into account that the StudySelection(s) that will be kept are only those
+    - those StudySelections that are linked to the study_value_node supplied as a parameter ":param study_value_node:"
+    - those StudySelections that are specified as relationship on the NeoModel Class object
+
+    It is possible to exclude StudySelection(s) if they are already kept and can be connected and found by UID on the VO.
     By giving the parameter ":param exclude_study_selection_relationships:" the StudySelections will be excluded.
     This method's purpose is to be maintenance-driven (constantly maintain and define what will be omitted).
 
     :param previous_item: Any, Previous item from which relationships should be maintained
     :param study_value_node: Any, StudyValue node from which the previous item should be disconnected
     :param new_item: Any, New item to link the existing relationships
-    :param exclude_relationships: Sequence[Union[Sequence[Union[str,Any]],Any]] = None,
+    :param exclude_relationships: list[Union[list[Union[str,Any]],Any]] = None,
         Excluded relationships to keep because they are maintained (linked) by its uid
         *  There are two ways to define exclusion:
-            * Sequence[Type[StudySelectionNeoModel]: type of the node]
-            * Sequence[(str: relationship_name, Type[StudySelectionNeoModel]: type of the node )]
+            * list[Type[StudySelectionNeoModel]: type of the node]
+            * list[(str: relationship_name, Type[StudySelectionNeoModel]: type of the node )]
         * For instance:
             * we can define either simply the node type object on exclude_relationships --> [CTTermRoot,...]
             * or we can define the specific relationship exclude_relationships --> [("has_visit_contact_mode", CTTermRoot),...],
@@ -253,11 +258,11 @@ def manage_previous_connected_study_selection_relationships(
             )
         )
     ]
-    study_value_rel_name, _ = [
-        i_rel
-        for i_rel in study_selection_relationships
-        if i_rel[1] == type(study_value_node)
-    ][0]
+    study_value_rel_name = None
+    for rel_name, target_node_type in study_selection_relationships:
+        if target_node_type == type(study_value_node):
+            study_value_rel_name = rel_name
+
     study_action_rels = [
         i_rel for i_rel in study_selection_relationships if i_rel[1] == StudyAction
     ]
@@ -272,15 +277,27 @@ def manage_previous_connected_study_selection_relationships(
     ]
     # MAINTAIN non filtered relationships, just for those non filtered relationships nodes with StudyValue connection
     for connected_rel_name, connected_type in relationships_to_maintain:
-        connected_nodes: Sequence[
-            Type[connected_type]
-        ] = get_connected_node_by_rel_name_and_study_value(
-            node=previous_item,
-            connected_rel_name=connected_rel_name,
-            study_value=study_value_node,
-            multiple_returned_nodes=True,
-            at_least_one_returned=False,
-        )
+        # If we are maintaining relationships outgoing from one of below types
+        # we are directly getting all connected_nodes from this node, we don't want to compare it with assigned StudyValue
+        if isinstance(previous_item, (StudySelectionMetadata)):
+            all_connected_nodes = getattr(previous_item, connected_rel_name).all()
+            # Get only latest connected nodes
+            connected_nodes = []
+            for connected_node in all_connected_nodes:
+                before_action = connected_node.has_before.get_or_none()
+                # if node doesn't have a BEFORE assigned it means it latest version
+                if not before_action:
+                    connected_nodes.append(connected_node)
+        else:
+            connected_nodes: list[
+                Type[connected_type]
+            ] = get_connected_node_by_rel_name_and_study_value(
+                node=previous_item,
+                connected_rel_name=connected_rel_name,
+                study_value=study_value_node,
+                multiple_returned_nodes=True,
+                at_least_one_returned=False,
+            )
         # connect to those connected nodes with same study_value as new_item
         for i_connected_node in connected_nodes:
             getattr(new_item, connected_rel_name).connect(i_connected_node)
@@ -289,8 +306,9 @@ def manage_previous_connected_study_selection_relationships(
         getattr(previous_item, study_action_rel_name).single()
         getattr(new_item, study_action_rel_name).single()
     # DROP StudyValue relationship
-    if not getattr(previous_item, study_value_rel_name).single():
-        raise exceptions.BusinessLogicException(
-            f"The modified version of {previous_item.uid} of type {previous_item.__label__} is not connect to any StudyValue node"
-        )
-    getattr(previous_item, study_value_rel_name).disconnect(study_value_node)
+    if study_value_rel_name:
+        if not getattr(previous_item, study_value_rel_name).single():
+            raise exceptions.BusinessLogicException(
+                f"The modified version of {previous_item.uid} of type {previous_item.__label__} is not connect to any StudyValue node"
+            )
+        getattr(previous_item, study_value_rel_name).disconnect(study_value_node)

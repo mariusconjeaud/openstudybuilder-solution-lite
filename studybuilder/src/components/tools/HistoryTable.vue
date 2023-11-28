@@ -206,7 +206,7 @@ export default {
             value = DateTime.fromISO(value).setLocale('en').toLocaleString(DateTime.DATETIME_MED)
           }
         }
-        return value
+        return value ? value.toString() : value
       }
     }
   },

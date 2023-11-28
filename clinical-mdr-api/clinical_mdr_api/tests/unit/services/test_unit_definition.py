@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Iterable, MutableSet, Sequence
+from typing import Any, Iterable, MutableSet, Sequence
 from unittest.mock import Mock, PropertyMock, patch
 
 import pytest
@@ -65,6 +65,7 @@ class UnitDefinitionRepositoryFakeBase(UnitDefinitionRepository):
     saved_item: UnitDefinitionAR | None
 
     def __init__(self):
+        super().__init__()
         self.verified_names = set()
         self.verified_dimensions = set()
         self.verified_legacy_codes = set()
@@ -101,7 +102,7 @@ class UnitDefinitionRepositoryFakeBase(UnitDefinitionRepository):
         filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
         **kwargs,
-    ) -> tuple[Sequence, int]:
+    ) -> tuple[list[Any], int]:
         raise AssertionError("Call not expected")
 
     def find_releases(
@@ -160,7 +161,7 @@ class LibraryRepositoryFakeBase(LibraryRepository):
 )
 def test__unit_definition__get_all__library_name__result(
     unit_definition_repository_property_mock: PropertyMock,
-    find_all_result: Sequence[UnitDefinitionAR],
+    find_all_result: list[UnitDefinitionAR],
     a_library_name: str | None,
 ):
     # given
@@ -176,7 +177,7 @@ def test__unit_definition__get_all__library_name__result(
             filter_operator: FilterOperator | None = FilterOperator.AND,
             total_count: bool = False,
             **kwargs,
-        ) -> tuple[Sequence, int]:
+        ) -> tuple[list[Any], int]:
             # pylint: disable=unused-argument
             assert library == a_library_name
             return find_all_result, 0
@@ -350,7 +351,7 @@ def test__unit_definition__get_by_uid__non_existing__result(
 )
 def test__unit_definition__get_versions__existing_uid__result(
     unit_definition_repository_property_mock: PropertyMock,
-    assumed_repository_get_versions_result: Sequence[UnitDefinitionAR],
+    assumed_repository_get_versions_result: list[UnitDefinitionAR],
     a_uid: str,
 ):
     # given
@@ -1049,10 +1050,8 @@ def unit_definition_patch_inputs(draw):
     use_name = draw(booleans())
 
     change_description: str = draw(strings_with_at_least_one_non_space_char())
-    ct_units: Sequence[str] = [
-        ct_unit.uid for ct_unit in unit_definition_value.ct_units
-    ]
-    unit_subsets: Sequence[str] = [
+    ct_units: list[str] = [ct_unit.uid for ct_unit in unit_definition_value.ct_units]
+    unit_subsets: list[str] = [
         unit_subset.uid for unit_subset in unit_definition_value.unit_subsets
     ]
     convertible_unit: bool = unit_definition_value.convertible_unit

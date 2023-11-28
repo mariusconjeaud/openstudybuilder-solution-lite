@@ -29,7 +29,9 @@ log = logging.getLogger(__name__)
 
 study: Study
 compound: Compound
+compound2: Compound
 compound_alias: CompoundAlias
+compound_alias2: CompoundAlias
 
 initialize_ct_data_map = {
     "TypeOfTreatment": [("CTTerm_000001", "CTTerm_000001")],
@@ -58,14 +60,20 @@ def test_data():
 
     global study
     global compound
+    global compound2
     global compound_alias
+    global compound_alias2
 
     study = TestUtils.create_study()
 
     compound = TestUtils.create_compound(name="name-AAA", approve=True)
+    compound2 = TestUtils.create_compound(name="name-BBB", approve=True)
 
     compound_alias = TestUtils.create_compound_alias(
         name="compAlias-AAA", compound_uid=compound.uid, approve=True
+    )
+    compound_alias2 = TestUtils.create_compound_alias(
+        name="compAlias-BBB", compound_uid=compound2.uid, approve=True
     )
 
     yield
@@ -96,7 +104,7 @@ def test_compound_modify_actions_on_locked_study(api_client):
 
     # Lock
     response = api_client.post(
-        f"/studies/{study.uid}/lock",
+        f"/studies/{study.uid}/locks",
         json={"change_description": "Lock 1"},
     )
     assert response.status_code == 201
@@ -122,6 +130,43 @@ def test_compound_modify_actions_on_locked_study(api_client):
     res = response.json()
     assert response.status_code == 200
     assert old_res == res
+
+    # test cannot delete
+    response = api_client.delete(f"/studies/{study.uid}/study-compounds/{compound_uid}")
+    assert response.status_code == 400
+    assert (
+        response.json()["message"]
+        == f"Study with specified uid '{study.uid}' is locked."
+    )
+
+
+def test_get_compounds_data_for_specific_study_version(api_client):
+    # get compound data for first lock
+    response = api_client.get(f"/studies/{study.uid}/study-compounds/")
+    res = response.json()
+    assert response.status_code == 200
+    res_old = res
+
+    # Unlock
+    response = api_client.delete(f"/studies/{study.uid}/locks")
+    assert response.status_code == 200
+
+    response = api_client.post(
+        f"/studies/{study.uid}/study-compounds",
+        json={"compound_alias_uid": compound_alias2.uid},
+    )
+    res = response.json()
+    assert response.status_code == 201
+
+    # check the study compounds for version 1 is same as first locked
+    res_new = api_client.get(
+        f"/studies/{study.uid}/study-compounds",
+    ).json()
+    res_v1 = api_client.get(
+        f"/studies/{study.uid}/study-compounds?study_value_version=1",
+    ).json()
+    assert res_v1 == res_old
+    assert res_v1 != res_new
 
 
 @pytest.mark.parametrize(

@@ -13,6 +13,7 @@
     :column-data-resource="`studies/${selectedStudy.uid}/study-arms`"
     :history-data-fetcher="fetchArmsHistory"
     :history-title="$t('StudyArmsTable.global_history_title')"
+    disable-filtering
     >
     <template v-slot:afterSwitches>
       <div :title="$t('NNTableTooltips.reorder_content')">
@@ -58,13 +59,20 @@
         </tr>
       </draggable>
     </template>
+    <template v-slot:item.name="{ item }">
+      <router-link :to="{ name: 'StudyArmOverview', params: { study_id: selectedStudy.uid, id: item.arm_uid } }">
+        {{ item.name }}
+      </router-link>
+    </template>
     <template v-slot:item.start_date="{ item }">
       {{ item.start_date|date }}
     </template>
     <template v-slot:item.arm_connected_branch_arms="{ item }">
-      <template v-if="item.arm_connected_branch_arms">
-        {{ item.arm_connected_branch_arms|names }}
-      </template>
+      <div v-if="item.arm_connected_branch_arms">
+        <router-link v-for="branch of item.arm_connected_branch_arms" v-bind:key="branch.branch_arm_uid" :to="{ name: 'StudyBranchArmOverview', params: { study_id: selectedStudy.uid, id: branch.branch_arm_uid } }">
+          {{ branch.name }}
+        </router-link>
+      </div>
     </template>
     <template v-slot:item.arm_colour="{ item }">
       <v-chip :color="item.arm_colour" small />
@@ -80,7 +88,7 @@
         @click.stop="showArmsForm = true"
         :title="$t('StudyArmsForm.add_arm')"
         data-cy="add-study-arm"
-        :disabled="!checkPermission($roles.STUDY_WRITE)"
+        :disabled="!checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
         >
         <v-icon dark>
           mdi-plus
@@ -138,7 +146,8 @@ export default {
   },
   computed: {
     ...mapGetters({
-      selectedStudy: 'studiesGeneral/selectedStudy'
+      selectedStudy: 'studiesGeneral/selectedStudy',
+      selectedStudyVersion: 'studiesGeneral/selectedStudyVersion'
     }),
     exportDataUrl () {
       return `studies/${this.selectedStudy.uid}/study-arms`
@@ -174,6 +183,7 @@ export default {
           label: this.$t('_global.edit'),
           icon: 'mdi-pencil-outline',
           iconColor: 'primary',
+          condition: () => !this.selectedStudyVersion,
           click: this.editArm,
           accessRole: this.$roles.STUDY_WRITE
         },
@@ -181,6 +191,7 @@ export default {
           label: this.$t('_global.delete'),
           icon: 'mdi-delete-outline',
           iconColor: 'error',
+          condition: () => !this.selectedStudyVersion,
           click: this.deleteArm,
           accessRole: this.$roles.STUDY_WRITE
         },
@@ -211,7 +222,8 @@ export default {
       const params = filteringParameters.prepareParameters(
         this.options, filters, sort, filtersUpdated)
       params.studyUid = this.selectedStudy.uid
-      arms.getAllForStudy(this.selectedStudy.uid, params).then(resp => {
+      params.study_value_version = this.selectedStudy.current_metadata.version_metadata.version_number
+      arms.getAllForStudy(this.selectedStudy.uid, { params }).then(resp => {
         this.arms = resp.data.items
         this.total = resp.data.total
       })

@@ -104,6 +104,83 @@ def get_activity_groups(
 
 
 @router.get(
+    "/activity-groups/versions",
+    dependencies=[rbac.LIBRARY_READ],
+    summary="List all versions of all activity groups (for a given library)",
+    description=f"""
+State before:
+ - The library must exist (if specified)
+
+Business logic:
+ - List version history of all activity groups
+ - The returned versions are ordered by version start_date descending (newest entries first).
+
+State after:
+ - No change
+
+Possible errors:
+ - Invalid library name specified.
+
+{_generic_descriptions.DATA_EXPORTS_HEADER}
+""",
+    response_model=CustomPage[ActivityGroup],
+    status_code=200,
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+@decorators.allow_exports(
+    {
+        "defaults": ["uid", "name", "start_date", "status", "version"],
+        "formats": [
+            "text/csv",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "text/xml",
+            "application/json",
+        ],
+    }
+)
+# pylint: disable=unused-argument
+def get_activity_groups_versions(
+    request: Request,  # request is actually required by the allow_exports decorator
+    library: str | None = Query(None, description="The library name"),
+    page_number: int
+    | None = Query(1, ge=1, description=_generic_descriptions.PAGE_NUMBER),
+    page_size: int
+    | None = Query(
+        config.DEFAULT_PAGE_SIZE,
+        ge=0,
+        le=config.MAX_PAGE_SIZE,
+        description=_generic_descriptions.PAGE_SIZE,
+    ),
+    filters: Json
+    | None = Query(
+        None,
+        description=_generic_descriptions.FILTERS,
+        example=_generic_descriptions.FILTERS_EXAMPLE,
+    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    total_count: bool
+    | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
+    current_user_id: str = Depends(get_current_user_id),
+):
+    activity_group_service = ActivityGroupService(user=current_user_id)
+    results = activity_group_service.get_all_concept_versions(
+        library=library,
+        sort_by={"start_date": False},
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
+        filter_by=filters,
+        filter_operator=FilterOperator.from_str(operator),
+    )
+    return CustomPage.create(
+        items=results.items, total=results.total, page=page_number, size=page_size
+    )
+
+
+@router.get(
     "/activity-groups/headers",
     dependencies=[rbac.LIBRARY_READ],
     summary="Returns possible values from the database for a given header",

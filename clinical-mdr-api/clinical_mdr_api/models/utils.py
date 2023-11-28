@@ -1,7 +1,7 @@
 import json
 import re
 from copy import copy
-from typing import Any, Callable, Generic, Iterable, Self, Sequence, Type, TypeVar
+from typing import Any, Callable, Generic, Iterable, Self, Type, TypeVar
 
 from pydantic import BaseModel as PydanticBaseModel
 from pydantic import conint, create_model
@@ -33,6 +33,32 @@ def to_lower_camel(string: str) -> str:
         split[wn].capitalize() if wn > 0 else split[wn].casefold()
         for wn in range(0, len(split))
     )
+
+
+def capitalize_first_letter_if_template_parameter(
+    name: str, template_plain_name: str
+) -> str:
+    """
+    Capitalizes the first letter of `name` if the letter is part of a template parameter.
+
+    Args:
+        name (str): The input string that may have its first letter capitalized.
+        template_plain_name (str): The plain name of the template used to determine if capitalization is needed.
+
+    Returns:
+        str: `name` with the first letter capitalized if the letter is part of a template parameter; otherwise, it returns `name` without any changes.
+    """
+    if template_plain_name.startswith("["):
+        idx = name.find("[")
+        first_letter = idx + 1
+        second_letter = idx + 2
+
+        return (
+            name[:first_letter]
+            + name[first_letter:second_letter].upper()
+            + name[second_letter:]
+        )
+    return name
 
 
 def from_duration_object_to_value_and_unit(
@@ -128,9 +154,9 @@ class BaseModel(PydanticBaseModel):
                     # from all nodes in list of nodes
                     if isinstance(node, list):
                         return_node = []
-                        for n in node:
+                        for item in node:
                             extracted = _extract_part_from_node(
-                                node_to_extract=n,
+                                node_to_extract=item,
                                 path=part,
                                 extract_from_relationship=extract_from_relationship,
                             )
@@ -196,67 +222,6 @@ class BaseModel(PydanticBaseModel):
             for prop in schema.get("properties", {}).values():
                 for attr in EXCLUDE_PROPERTY_ATTRIBUTES_FROM_SCHEMA:
                     prop.pop(attr, None)
-
-
-def strtobool(value: str, default: int | None = None) -> int | None:
-    """Convert a string representation of truth to integer 1 (true) or 0 (false).
-
-    Returns 1 for True values: 'y', 'yes', 't', 'true', 'on', '1'.
-    Returns 0 for False values: 'n', 'no', 'f', 'false', 'off', '0'.
-    Otherwise raises ValueError.
-
-    Reimplemented because of deprecation https://peps.python.org/pep-0632/#migration-advice
-
-    Returns int to remain compatible with Python 3.7 distutils.util.strtobool().
-    However, a new parameter `default` has been introduced to the reimplementation.
-    If `value` evaluates to False then value of `default` will be returned.
-    """
-
-    if not value:
-        return default
-
-    val = value.lower()
-    if val in ("y", "yes", "t", "true", "on", "1"):
-        return 1
-    if val in ("n", "no", "f", "false", "off", "0"):
-        return 0
-    raise ValueError(f"invalid truth value {value:r}")
-
-
-def booltostr(b: bool | str, true_format: str = "Yes") -> str:
-    """
-    Converts a boolean value to a string representation.
-    True values are 'y', 'Yes', 'yes', 't', 'true', 'on', and '1';
-    False values are 'n', 'No', 'no', 'f', 'false', 'off', and '0'.
-
-    Args:
-        b (bool | str): The boolean value to convert. If a string is passed, it will be converted to a boolean.
-        true_format (str, optional): The string representation of the True value. Defaults to "Yes".
-
-    Returns:
-        str: The string representation of the boolean value.
-
-    Raises:
-        ValueError: If the true_format argument is invalid.
-    """
-    if isinstance(b, str):
-        b = bool(strtobool(b))
-
-    mapping = {
-        "y": "n",
-        "Yes": "No",
-        "yes": "no",
-        "t": "f",
-        "true": "false",
-        "on": "off",
-        "1": "0",
-    }
-
-    if true_format in mapping:
-        if b:
-            return true_format
-        return mapping[true_format]
-    raise ValueError(f"Invalid true format {true_format}")
 
 
 def snake_to_camel(name):
@@ -328,19 +293,19 @@ class CustomPage(GenericModel, Generic[T]):
     A generic class used as a return type for paginated queries.
 
     Attributes:
-        items (Sequence[T]): The items returned by the query.
+        items (list[T]): The items returned by the query.
         total (int): The total number of items that match the query.
         page (int): The number of the current page.
         size (int): The maximum number of items per page.
     """
 
-    items: Sequence[T]
+    items: list[T]
     total: conint(ge=0)
     page: conint(ge=0)
     size: conint(ge=0)
 
     @classmethod
-    def create(cls, items: Sequence[T], total: int, page: int, size: int) -> Self:
+    def create(cls, items: list[T], total: int, page: int, size: int) -> Self:
         return cls(total=total, items=items, page=page, size=size)
 
 
@@ -349,15 +314,15 @@ class GenericFilteringReturn(GenericModel, Generic[T]):
     A generic class used as a return type for filtered queries.
 
     Attributes:
-        items (Sequence[T]): The items returned by the query.
+        items (list[T]): The items returned by the query.
         total (int): The total number of items that match the query.
     """
 
-    items: Sequence[T]
+    items: list[T]
     total: conint(ge=0)
 
     @classmethod
-    def create(cls, items: Sequence[T], total: int) -> Self:
+    def create(cls, items: list[T], total: int) -> Self:
         return cls(items=items, total=total)
 
 

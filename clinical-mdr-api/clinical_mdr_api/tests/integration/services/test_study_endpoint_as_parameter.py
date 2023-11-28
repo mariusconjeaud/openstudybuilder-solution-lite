@@ -60,7 +60,7 @@ def test_data(request: FixtureRequest):
 
     log.debug("%s() fixture: creating database", request.fixturename)
     db_name = "services.studyendpointsparam"
-    db = inject_and_clear_db(db_name)
+    database = inject_and_clear_db(db_name)
 
     log.debug("%s() fixture: initializing database", request.fixturename)
 
@@ -73,7 +73,7 @@ def test_data(request: FixtureRequest):
 
     study = inject_base_data()
     study_uid = study.uid
-    db.cypher_query(data_library.STARTUP_PARAMETERS_CYPHER)
+    database.cypher_query(data_library.STARTUP_PARAMETERS_CYPHER)
 
     endpoint_template = TestUtils.create_endpoint_template()
     unit_definitions = [
@@ -101,10 +101,10 @@ def test_data(request: FixtureRequest):
     )
 
     log.debug("%s() fixture: setup complete", request.fixturename)
-    yield db
+    yield database
 
     # log.debug("%s() fixture: teardown: deleting database", request.fixturename)
-    # db.cypher_query("CREATE OR REPLACE DATABASE $db", {"db": db_name})
+    # database.cypher_query("CREATE OR REPLACE DATABASE $db", {"db": db_name})
 
 
 def test_crud(test_data, study_objective_service, objective_template_service):

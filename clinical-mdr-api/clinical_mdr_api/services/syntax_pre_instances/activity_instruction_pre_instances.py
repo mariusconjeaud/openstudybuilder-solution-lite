@@ -1,5 +1,3 @@
-from typing import Sequence
-
 from neomodel import db
 from pydantic import BaseModel
 
@@ -168,15 +166,15 @@ class ActivityInstructionPreInstanceService(
     def _get_indexings(
         self, template: BaseModel
     ) -> tuple[
-        Sequence[DictionaryTermAR],
-        Sequence[ActivityAR],
-        Sequence[ActivityGroupAR],
-        Sequence[ActivitySubGroupAR],
+        list[DictionaryTermAR],
+        list[ActivityAR],
+        list[ActivityGroupAR],
+        list[ActivitySubGroupAR],
     ]:
-        indications: Sequence[DictionaryTermAR] = []
-        activities: Sequence[ActivityAR] = []
-        activity_groups: Sequence[ActivityGroupAR] = []
-        activity_subgroups: Sequence[ActivitySubGroupAR] = []
+        indications: list[DictionaryTermAR] = []
+        activities: list[ActivityAR] = []
+        activity_groups: list[ActivityGroupAR] = []
+        activity_subgroups: list[ActivitySubGroupAR] = []
 
         for uid in template.indication_uids:
             indication = self._repos.dictionary_term_generic_repository.find_by_uid(

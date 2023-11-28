@@ -1,4 +1,5 @@
 from abc import ABC
+from typing import Any
 
 from neomodel import db
 
@@ -56,6 +57,7 @@ class OdmGenericRepository(ConceptGenericRepository[_AggregateRootType], ABC):
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
+        return_all_versions: bool = False,
         only_specific_status: list[str] | None = None,
         **kwargs,
     ) -> tuple[list[_AggregateRootType], int]:
@@ -73,6 +75,7 @@ class OdmGenericRepository(ConceptGenericRepository[_AggregateRootType], ABC):
         :param filter_by:
         :param filter_operator:
         :param total_count:
+        :param return_all_versions:
         :param only_specific_status:
         :return GenericFilteringReturn[_AggregateRootType]:
         """
@@ -192,7 +195,7 @@ class OdmGenericRepository(ConceptGenericRepository[_AggregateRootType], ABC):
             origin.disconnect(relation_node)
 
     def has_active_relationships(
-        self, uid: str, relationships: list, all_exist: bool = False
+        self, uid: str, relationships: list[Any], all_exist: bool = False
     ) -> bool:
         """
         Checks if the node has active relationships.
@@ -220,7 +223,7 @@ class OdmGenericRepository(ConceptGenericRepository[_AggregateRootType], ABC):
             raise AttributeError(f"{relationship} relationship was not found.") from exc
 
     def get_active_relationships(
-        self, uid: str, relationships: list
+        self, uid: str, relationships: list[Any]
     ) -> dict[str, list[str]]:
         """
         Returns a key-pair value of target node's name and a list of uids of nodes connected to source node.

@@ -143,7 +143,8 @@ class StudyExporter:
         return all_data
 
     def get_dictionary_uid(self, library):
-        data = self.get_from_api(f"/dictionaries/codelists/{library}")
+        params = {"library": library}
+        data = self.get_from_api(f"/dictionaries/codelists", params=params)
         if data is None:
             return None
         if len(data) == 0:
@@ -216,6 +217,16 @@ template_endpoints = [
     "endpoint-templates",
     "objective-templates",
     "timeframe-templates",
+    "footnote-templates",
+    "activity-instruction-templates",
+]
+
+syntax_pre_instance_endpoints = [
+    "criteria-pre-instances",
+    "endpoint-pre-instances",
+    "objective-pre-instances",
+    "footnote-pre-instances",
+    "activity-instruction-pre-instances",
 ]
 
 sponsor_ct_extensions = [
@@ -336,11 +347,6 @@ concept_endpoints = [
 
 activity_endpoints = [
     {
-        "endpoint": "activity-items",
-        "parameters": {"library": "Sponsor"},
-        "page_size": 100,
-    },
-    {
         "endpoint": "activity-item-classes",
         "parameters": {"library": "Sponsor"},
         "page_size": 100,
@@ -411,8 +417,14 @@ def run_export():
             api.save_formatted_json(data, OUTPUT_DIR, f"{study_ep}.json")
 
     # Templates
-    api.log.info("=== Export templates ===")
+    api.log.info("=== Export syntax templates ===")
     for ep in template_endpoints:
+        data = api.get_from_api(f"/{ep}")
+        api.save_formatted_json(data, OUTPUT_DIR, f"{ep}.json")
+
+    # Templates pre-instances
+    api.log.info("=== Export syntax pre-instances ===")
+    for ep in syntax_pre_instance_endpoints:
         data = api.get_from_api(f"/{ep}")
         api.save_formatted_json(data, OUTPUT_DIR, f"{ep}.json")
 

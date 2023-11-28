@@ -743,6 +743,9 @@ export default {
       return (!this.isStudyEndpointSelected(item) ? 'primary' : '')
     },
     async extraStepValidation (step) {
+      if (this.creationMode === 'template' && step === 1) {
+        this.getEndpointTemplates()
+      }
       if ((this.creationMode === 'scratch' && step === 3) || (this.creationMode === 'clone' && step === 1)) {
         if (this.form.endpoint_template && this.form.endpoint_template.name === this.endpointTemplateForm.name) {
           return true

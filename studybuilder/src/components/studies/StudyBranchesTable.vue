@@ -12,6 +12,7 @@
     export-object-label="StudyBranches"
     :history-data-fetcher="fetchBranchArmsHistory"
     :history-title="$t('StudyBranchArms.global_history_title')"
+    disable-filtering
     >
     <template v-slot:afterSwitches>
       <div :title="$t('NNTableTooltips.reorder_content')">
@@ -31,7 +32,7 @@
         @click.stop="addBranchArm"
         :title="$t('StudyBranchArms.add_branch')"
         data-cy="add-study-branch-arm"
-        :disabled="!checkPermission($roles.STUDY_WRITE)"
+        :disabled="!checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
         >
         <v-icon dark>
           mdi-plus
@@ -71,6 +72,16 @@
           <td width="10%">{{ item.user_initials }}</td>
         </tr>
       </draggable>
+    </template>
+    <template v-slot:item.name="{ item }">
+      <router-link :to="{ name: 'StudyBranchArmOverview', params: { study_id: selectedStudy.uid, id: item.branch_arm_uid } }">
+        {{ item.name }}
+      </router-link>
+    </template>
+    <template v-slot:item.arm_root.name="{ item }">
+      <router-link :to="{ name: 'StudyArmOverview', params: { study_id: selectedStudy.uid, id: item.arm_root.arm_uid } }">
+        {{ item.arm_root.name }}
+      </router-link>
     </template>
     <template v-slot:item.colour_code="{ item }">
       <v-chip :data-cy="'color='+item.colour_code" :color="item.colour_code" small />
@@ -130,7 +141,8 @@ export default {
   },
   computed: {
     ...mapGetters({
-      selectedStudy: 'studiesGeneral/selectedStudy'
+      selectedStudy: 'studiesGeneral/selectedStudy',
+      selectedStudyVersion: 'studiesGeneral/selectedStudyVersion'
     }),
     exportDataUrl () {
       return `studies/${this.selectedStudy.uid}/study-branch-arms`
@@ -165,6 +177,7 @@ export default {
           label: this.$t('_global.edit'),
           icon: 'mdi-pencil-outline',
           iconColor: 'primary',
+          condition: () => !this.selectedStudyVersion,
           click: this.editBranchArm,
           accessRole: this.$roles.STUDY_WRITE
         },
@@ -172,6 +185,7 @@ export default {
           label: this.$t('_global.delete'),
           icon: 'mdi-delete-outline',
           iconColor: 'error',
+          condition: () => !this.selectedStudyVersion,
           click: this.deleteBranchArm,
           accessRole: this.$roles.STUDY_WRITE
         },
@@ -205,9 +219,10 @@ export default {
     fetchStudyArms () {
       const params = {
         total_count: true,
-        page_size: 0
+        page_size: 0,
+        study_value_version: this.selectedStudyVersion
       }
-      arms.getAllForStudy(this.selectedStudy.uid, params).then(resp => {
+      arms.getAllForStudy(this.selectedStudy.uid, { params }).then(resp => {
         this.arms = resp.data.items
       })
     },
@@ -215,7 +230,8 @@ export default {
       const params = {
         page_number: (this.options.page),
         page_size: this.options.itemsPerPage,
-        total_count: true
+        total_count: true,
+        study_value_version: this.selectedStudyVersion
       }
       arms.getAllBranchArms(this.selectedStudy.uid, params).then(resp => {
         this.branchArms = resp.data
@@ -243,7 +259,10 @@ export default {
     },
     async deleteBranchArm (item) {
       let cellsInBranch = 0
-      await arms.getAllCellsForBranch(this.selectedStudy.uid, item.branch_arm_uid).then(resp => {
+      const params = {
+        study_value_version: this.selectedStudyVersion
+      }
+      await arms.getAllCellsForBranch(this.selectedStudy.uid, item.branch_arm_uid, params).then(resp => {
         cellsInBranch = resp.data.length
       })
       const options = {

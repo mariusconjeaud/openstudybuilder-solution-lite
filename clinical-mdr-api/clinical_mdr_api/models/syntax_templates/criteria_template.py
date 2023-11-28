@@ -205,15 +205,15 @@ class CriteriaTemplateWithCount(CriteriaTemplate):
     def from_criteria_template_ar(
         cls, criteria_template_ar: CriteriaTemplateAR
     ) -> Self:
-        ot = super().from_criteria_template_ar(criteria_template_ar)
+        criteria_template = super().from_criteria_template_ar(criteria_template_ar)
         if criteria_template_ar.counts is not None:
-            ot.counts = ItemCounts(
+            criteria_template.counts = ItemCounts(
                 draft=criteria_template_ar.counts.count_draft,
                 final=criteria_template_ar.counts.count_final,
                 retired=criteria_template_ar.counts.count_retired,
                 total=criteria_template_ar.counts.count_total,
             )
-        return ot
+        return criteria_template
 
 
 class CriteriaTemplateVersion(CriteriaTemplate):

@@ -1,6 +1,6 @@
 """Criteria templates router."""
 
-from typing import Any, Sequence
+from typing import Any
 
 from fastapi import APIRouter, Body, Depends, Path, Query, Request, Response
 from fastapi import status as fast_api_status
@@ -591,7 +591,7 @@ def patch_default_parameter_terms(
     | None = Body(
         description="Optionally, the set number of the default parameter terms to be patched. If not set, a new set will be created.",
     ),
-    default_parameter_terms: Sequence[MultiTemplateParameterTerm] = Body(
+    default_parameter_terms: list[MultiTemplateParameterTerm] = Body(
         description="The set of default parameter terms.\n"
         "If empty and an existing set_number is passed, the set will be deleted.",
     ),

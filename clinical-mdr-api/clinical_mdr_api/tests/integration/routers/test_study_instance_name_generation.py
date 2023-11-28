@@ -46,11 +46,11 @@ class StudyInstanceNameGenerationParameterTest(api.APITest):
         otdata = ot_data.copy()
         otdata["name"] = "To investigate [Indication]"
         objective_template = ot_models.ObjectiveTemplateCreateInput(**otdata)
-        self.ot = ObjectiveTemplateService().create(objective_template)
-        if isinstance(self.ot, BaseModel):
-            self.ot = self.ot.dict()
-        ObjectiveTemplateService().approve(self.ot["uid"])
-        self.data["otuid"] = self.ot["uid"]
+        self.objective_template = ObjectiveTemplateService().create(objective_template)
+        if isinstance(self.objective_template, BaseModel):
+            self.objective_template = self.objective_template.dict()
+        ObjectiveTemplateService().approve(self.objective_template["uid"])
+        self.data["otuid"] = self.objective_template["uid"]
 
     SCENARIO_PATHS = [
         os.path.join(

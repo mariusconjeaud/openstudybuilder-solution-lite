@@ -108,7 +108,6 @@ export default {
       let notifType = 'success'
       let event
 
-      this.$refs.form.working = true
       if (this.$refs.observer) {
         const isValid = await this.$refs.observer.validate()
         if (!isValid) {
@@ -168,8 +167,12 @@ export default {
     const activityGroupUids = []
     const activitySubGroupUids = []
     for (const studyActivity of this.selection) {
-      activityGroupUids.push(studyActivity.activity.activity_group.uid)
-      activitySubGroupUids.push(studyActivity.activity.activity_subgroup.uid)
+      if (studyActivity.study_activity_group.activity_group_uid) {
+        activityGroupUids.push(studyActivity.study_activity_group.activity_group_uid)
+      }
+      if (studyActivity.study_activity_subgroup.activity_subgroup_uid) {
+        activitySubGroupUids.push(studyActivity.study_activity_subgroup.activity_subgroup_uid)
+      }
     }
     const params = {
       filters: {

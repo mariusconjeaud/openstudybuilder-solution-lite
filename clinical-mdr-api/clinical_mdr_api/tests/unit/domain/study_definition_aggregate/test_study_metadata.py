@@ -2,7 +2,7 @@ import random
 import string
 import unittest
 from datetime import datetime, timedelta, timezone
-from typing import Any, Callable, Iterable, Mapping, Sequence
+from typing import Any, Callable, Iterable, Mapping
 
 import pytest
 
@@ -608,7 +608,7 @@ class TestStudyPopulation(unittest.TestCase):
                 # then
                 with self.assertRaises(exceptions.ValidationException):
                     # when
-                    test_data.validate(null_value_exists_callback=(lambda _: False))
+                    test_data.validate(null_value_exists_callback=lambda _: False)
 
 
 def random_valid_id_metadata(
@@ -666,7 +666,7 @@ def random_valid_id_metadata_sequence(
     *,
     condition: Callable[[StudyIdentificationMetadataVO], bool] | None = None,
     max_tries: int = 100,
-) -> Sequence[StudyIdentificationMetadataVO]:
+) -> list[StudyIdentificationMetadataVO]:
     return [
         random_valid_id_metadata(condition=condition, max_tries=max_tries)
         for _ in range(0, count)
@@ -792,7 +792,7 @@ class TestIdentificationMetadataVO(unittest.TestCase):
                 # then
                 with self.assertRaises(exceptions.ValidationException):
                     # when
-                    id_metadata.validate(project_exists_callback=(lambda _: True))
+                    id_metadata.validate(project_exists_callback=lambda _: True)
 
     def test__validate__wrong_project_number__failure(self):
         def has_project_number_and_validates_when_it_is_ok(
@@ -801,7 +801,7 @@ class TestIdentificationMetadataVO(unittest.TestCase):
             if id_m.project_number is None:
                 return False
             try:
-                id_m.validate(project_exists_callback=(lambda _: True))
+                id_m.validate(project_exists_callback=lambda _: True)
             except exceptions.ValidationException:
                 return False
             return True
@@ -816,7 +816,7 @@ class TestIdentificationMetadataVO(unittest.TestCase):
                 # then
                 with self.assertRaises(exceptions.ValidationException):
                     # when
-                    id_metadata.validate(project_exists_callback=(lambda _: False))
+                    id_metadata.validate(project_exists_callback=lambda _: False)
 
     def test__validate__has_study_number_or_study_acronym_and_correct_project_number_if_provided__success(
         self,
@@ -834,7 +834,7 @@ class TestIdentificationMetadataVO(unittest.TestCase):
                 assert has_study_number_or_study_acronym(id_metadata)
 
                 # when
-                id_metadata.validate(project_exists_callback=(lambda _: True))
+                id_metadata.validate(project_exists_callback=lambda _: True)
                 id_metadata.validate(project_exists_callback=None)
 
                 # then
@@ -1527,12 +1527,14 @@ class TestHighLevelStudyDesignVO(unittest.TestCase):
 
     def test__validate__invalid_trial_phase_code__failure(self):
         def has_trial_phase_code_and_is_otherwise_valid(
-            d: HighLevelStudyDesignVO,
+            high_level_study_design_vo: HighLevelStudyDesignVO,
         ) -> bool:
-            if d.trial_phase_code is None:
+            if high_level_study_design_vo.trial_phase_code is None:
                 return False
             try:
-                d.validate(trial_phase_exists_callback=(lambda _: True))
+                high_level_study_design_vo.validate(
+                    trial_phase_exists_callback=(lambda _: True)
+                )
             except exceptions.ValidationException:
                 return False
             return True
@@ -1555,12 +1557,14 @@ class TestHighLevelStudyDesignVO(unittest.TestCase):
 
     def test__validate__invalid_study_type_code__failure(self):
         def has_study_type_code_and_is_otherwise_valid(
-            d: HighLevelStudyDesignVO,
+            high_level_study_design_vo: HighLevelStudyDesignVO,
         ) -> bool:
-            if d.study_type_code is None:
+            if high_level_study_design_vo.study_type_code is None:
                 return False
             try:
-                d.validate(study_type_exists_callback=(lambda _: True))
+                high_level_study_design_vo.validate(
+                    study_type_exists_callback=(lambda _: True)
+                )
             except exceptions.ValidationException:
                 return False
             return True
@@ -1616,7 +1620,7 @@ def random_ver_metadata_sequence(
     count: int,
     condition: Callable[[StudyVersionMetadataVO], bool] | None = None,
     max_tries: int = 100,
-) -> Sequence[StudyVersionMetadataVO]:
+) -> list[StudyVersionMetadataVO]:
     return [random_ver_metadata(condition, max_tries) for _ in range(0, count)]
 
 
@@ -1646,7 +1650,7 @@ def random_study_metadata_sequence(
     count: int,
     condition: Callable[[StudyMetadataVO], bool] | None = None,
     max_tries: int = 1000,
-) -> Sequence[StudyMetadataVO]:
+) -> list[StudyMetadataVO]:
     return [random_study_metadata(condition, max_tries) for _ in range(0, count)]
 
 
@@ -1839,13 +1843,13 @@ class TestStudyMetadataVO(unittest.TestCase):
             return not is_valid(_)
 
         def combine_sequences(
-            id_metadata_sequence: Sequence[StudyIdentificationMetadataVO],
-            ver_metadata_sequence: Sequence[StudyVersionMetadataVO],
-            high_level_study_design_sequence: Sequence[HighLevelStudyDesignVO],
-            study_population_sequence: Sequence[StudyPopulationVO],
-            study_intervention_sequence: Sequence[StudyInterventionVO],
-            study_description_sequence: Sequence[StudyDescriptionVO],
-        ) -> Sequence[StudyMetadataVO]:
+            id_metadata_sequence: list[StudyIdentificationMetadataVO],
+            ver_metadata_sequence: list[StudyVersionMetadataVO],
+            high_level_study_design_sequence: list[HighLevelStudyDesignVO],
+            study_population_sequence: list[StudyPopulationVO],
+            study_intervention_sequence: list[StudyInterventionVO],
+            study_description_sequence: list[StudyDescriptionVO],
+        ) -> list[StudyMetadataVO]:
             return [
                 StudyMetadataVO(
                     id_metadata=id_metadata_sequence[i],

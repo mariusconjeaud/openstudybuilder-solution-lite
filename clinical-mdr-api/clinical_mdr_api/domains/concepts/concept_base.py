@@ -133,7 +133,14 @@ class ConceptVO:
                 f"{object_name} tried to connect to non existing concepts {errors}."
             )
 
+    def validate_name_sentence_case(self):
+        if self.name_sentence_case.lower() != self.name.lower():
+            raise ValidationException(
+                f"Lowercase versions of '{self.name}' and '{self.name_sentence_case}' must be equal"
+            )
 
+
+# pylint: disable=invalid-name
 _ConceptVOType = TypeVar("_ConceptVOType", bound=ConceptVO)
 _AggregateRootType = TypeVar("_AggregateRootType")
 

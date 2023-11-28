@@ -1,5 +1,4 @@
 from enum import Enum
-from typing import Sequence
 
 from pydantic import Field
 
@@ -32,7 +31,7 @@ class CountByType(BaseModel):
 
 class CountByTypeByYear(BaseModel):
     year: int
-    counts: Sequence[CountByType]
+    counts: list[CountByType]
 
 
 class CTStats(BaseModel):
@@ -42,12 +41,12 @@ class CTStats(BaseModel):
     packages: int = Field(
         ..., title="packages", description="Number of packages in the database"
     )
-    codelist_counts: Sequence[CodelistCount] = Field(
+    codelist_counts: list[CodelistCount] = Field(
         ...,
         title="codelist_counts",
         description="Count of codelists grouped by Library",
     )
-    term_counts: Sequence[TermCount] = Field(
+    term_counts: list[TermCount] = Field(
         ..., title="term_counts", description="Count of terms grouped by Library"
     )
     codelist_change_percentage: float = Field(
@@ -60,17 +59,17 @@ class CTStats(BaseModel):
         title="term_change_percentage",
         description="Mean percentage of evolution for terms",
     )
-    codelist_change_details: Sequence[CountByTypeByYear] = Field(
+    codelist_change_details: list[CountByTypeByYear] = Field(
         ...,
         title="codelist_change_details",
         description="Codelist changes, grouped by type and year",
     )
-    term_change_details: Sequence[CountByTypeByYear] = Field(
+    term_change_details: list[CountByTypeByYear] = Field(
         ...,
         title="term_change_details",
         description="Term changes, grouped by type and year",
     )
-    latest_added_codelists: Sequence[CTCodelistNameAndAttributes] = Field(
+    latest_added_codelists: list[CTCodelistNameAndAttributes] = Field(
         ...,
         title="latest_added_codelists",
         description="List of latest added codelists",

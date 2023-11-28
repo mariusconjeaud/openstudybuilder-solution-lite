@@ -5,7 +5,8 @@ export const studySelectedNavigationGuard = {
 
   computed: {
     ...mapGetters({
-      selectedStudy: 'studiesGeneral/selectedStudy'
+      selectedStudy: 'studiesGeneral/selectedStudy',
+      selectedStudyVersion: 'studiesGeneral/selectedStudyVersion'
     }),
     studyId () {
       const studyNumber = this.selectedStudy.current_metadata.identification_metadata.study_number

@@ -1,5 +1,3 @@
-from typing import Sequence
-
 from clinical_mdr_api.domain_repositories.concepts.concept_generic_repository import (
     ConceptGenericRepository,
 )
@@ -54,7 +52,7 @@ class ActivityGroupRepository(ConceptGenericRepository[ActivityGroupAR]):
                 status=LibraryItemStatus(input_dict.get("status")),
                 author=input_dict.get("user_initials"),
                 start_date=convert_to_datetime(value=input_dict.get("start_date")),
-                end_date=None,
+                end_date=convert_to_datetime(value=input_dict.get("end_date")),
                 major_version=int(major),
                 minor_version=int(minor),
             ),
@@ -141,13 +139,13 @@ class ActivityGroupRepository(ConceptGenericRepository[ActivityGroupAR]):
 
     def get_syntax_activity_groups(
         self, root_class: type, syntax_uid: str
-    ) -> Sequence[ActivityGroupAR] | None:
+    ) -> list[ActivityGroupAR] | None:
         """
         This method returns the activity groups for the syntax with provided uid
 
         :param root_class: The class of the root node for the syntax
         :param syntax_uid: UID of the syntax
-        :return Sequence[ActivityGroupAR]:
+        :return list[ActivityGroupAR]:
         """
         syntax = root_class.nodes.get(uid=syntax_uid)
         activity_group_nodes = syntax.has_activity_group.all()
@@ -158,3 +156,8 @@ class ActivityGroupRepository(ConceptGenericRepository[ActivityGroupAR]):
                 groups.append(group)
             return groups
         return None
+
+    def generic_match_clause_all_versions(self):
+        return """
+            MATCH (concept_root:ActivityGroupRoot)-[version:HAS_VERSION]->(concept_value:ActivityGroupValue)
+        """

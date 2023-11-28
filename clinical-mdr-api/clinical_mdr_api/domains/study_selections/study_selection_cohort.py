@@ -1,6 +1,6 @@
 import datetime
 from dataclasses import dataclass, field
-from typing import Any, Callable, Iterable, Self, Sequence
+from typing import Any, Callable, Iterable, Self
 
 from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains._utils import normalize_string
@@ -20,8 +20,8 @@ class StudySelectionCohortVO:
     description: str | None
     colour_code: str | None
     number_of_subjects: int | None
-    branch_arm_root_uids: Sequence[str] | None
-    arm_root_uids: Sequence[str] | None
+    branch_arm_root_uids: list[str] | None
+    arm_root_uids: list[str] | None
     start_date: datetime.datetime
     user_initials: str
     end_date: datetime.datetime | None
@@ -41,14 +41,14 @@ class StudySelectionCohortVO:
         description: str | None = None,
         colour_code: str | None = None,
         number_of_subjects: int | None = 0,
-        branch_arm_root_uids: Sequence[str] | None = None,
-        arm_root_uids: Sequence[str] | None = None,
+        branch_arm_root_uids: list[str] | None = None,
+        arm_root_uids: list[str] | None = None,
         start_date: datetime.datetime | None = None,
         end_date: datetime.datetime | None = None,
         status: str | None = None,
         change_type: str | None = None,
         accepted_version: bool | None = False,
-        generate_uid_callback: Callable[[], str] = None,
+        generate_uid_callback: Callable[[], str] | None = None,
     ):
         """
         Factory method
@@ -174,7 +174,7 @@ class StudySelectionCohortAR:
         return self._study_uid
 
     @property
-    def study_cohorts_selection(self) -> Sequence[StudySelectionCohortVO]:
+    def study_cohorts_selection(self) -> tuple[StudySelectionCohortVO]:
         return self._study_cohorts_selection
 
     def get_specific_cohort_selection(

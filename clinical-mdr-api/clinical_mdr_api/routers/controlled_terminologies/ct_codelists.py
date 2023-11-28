@@ -1,5 +1,5 @@
 """CTCodelist router."""
-from typing import Any, Sequence
+from typing import Any
 
 from fastapi import APIRouter, Body, Depends, Path, Query
 from pydantic.types import Json
@@ -175,7 +175,7 @@ def get_codelists(
 )
 def get_sub_codelists_that_have_given_terms(
     codelist_uid: str = CTCodelistUID,
-    term_uids: Sequence[str] = Query(
+    term_uids: list[str] = Query(
         ...,
         description="A list of term uids",
     ),

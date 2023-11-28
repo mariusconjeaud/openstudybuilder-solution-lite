@@ -43,11 +43,11 @@ class CriteriaTest(api.APITest):
         self.library = library_service.create(**library_data)
         templatedata = template_data.copy()
         criteria_template = ct_models.CriteriaTemplateCreateInput(**templatedata)
-        self.ct = CriteriaTemplateService().create(criteria_template)
-        if isinstance(self.ct, BaseModel):
-            self.ct = self.ct.dict()
-        CriteriaTemplateService().approve(self.ct["uid"])
-        self.data["ctuid"] = self.ct["uid"]
+        self.criteria_template = CriteriaTemplateService().create(criteria_template)
+        if isinstance(self.criteria_template, BaseModel):
+            self.criteria_template = self.criteria_template.dict()
+        CriteriaTemplateService().approve(self.criteria_template["uid"])
+        self.data["ctuid"] = self.criteria_template["uid"]
 
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "criteria.json")]
 

@@ -1,5 +1,3 @@
-from typing import Sequence
-
 from neomodel import db  # type: ignore
 
 from clinical_mdr_api import exceptions, models
@@ -13,7 +11,7 @@ class BrandService:
         self.user_id = user_id if user_id is not None else "-Unknown-"
         self.repos = MetaRepository()
 
-    def get_all_brands(self) -> Sequence[models.Brand]:
+    def get_all_brands(self) -> list[models.Brand]:
         try:
             all_brands = self.repos.brand_repository.find_all()
             self.repos.brand_repository.close()

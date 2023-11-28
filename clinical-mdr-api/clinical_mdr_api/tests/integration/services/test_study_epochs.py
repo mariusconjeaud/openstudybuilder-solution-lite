@@ -19,6 +19,7 @@ from clinical_mdr_api.tests.integration.utils.method_library import (
     create_study_epoch,
     create_study_epoch_codelists_ret_cat_and_lib,
 )
+from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 
 
 class TestStudyEpochManagement(unittest.TestCase):
@@ -60,7 +61,7 @@ class TestStudyEpochManagement(unittest.TestCase):
 
         assert len(epochs) == 1
 
-    def test__create_study_epoch_with_not_unique_epoch_subtype__not_raises_ForbiddenError(
+    def test__create_study_epoch_with_not_unique_epoch_subtype__not_raises_forbidden_error(
         self,
     ):
         epoch_subtype_uid = "EpochSubType_0001"
@@ -253,6 +254,9 @@ class TestStudyEpochManagement(unittest.TestCase):
         epoch_service = StudyEpochService()
 
         epoch = epoch_service.find_by_uid(epoch.uid, study_uid=epoch.study_uid)
+        # locking and unlocking to create multiple study value relationships on the existent StudySelections
+        TestUtils.create_study_fields_configuration()
+        TestUtils.lock_and_unlock_study(study_uid="study_root")
         start_rule = "New start rule"
         end_rule = "New end rule"
         edit_input = StudyEpochEditInput(
@@ -391,6 +395,10 @@ class TestStudyEpochManagement(unittest.TestCase):
         self.assertEqual(ep2.order, 3)
         self.assertEqual(ep3.epoch_name, epoch_subtype_name + " 3")
         self.assertEqual(ep3.order, 4)
+
+        # locking and unlocking to create multiple study value relationships on the existent StudySelections
+        TestUtils.create_study_fields_configuration()
+        TestUtils.lock_and_unlock_study(study_uid="study_root")
 
         epoch_service.delete(study_uid=ep1.study_uid, study_epoch_uid=ep1.uid)
 

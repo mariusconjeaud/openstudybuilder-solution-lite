@@ -4,6 +4,7 @@ import collections
 import csv
 import functools
 import io
+from typing import Any
 
 import yaml
 from dict2xml import dict2xml
@@ -31,12 +32,12 @@ def register_export_format(name: str):
     return decorator
 
 
-def _convert_headers_to_dict(headers: list) -> dict:
+def _convert_headers_to_dict(headers: list[Any]) -> dict:
     """
     Converts a list of headers to a dictionary.
 
     Args:
-        headers (list): The headers to convert.
+        headers (list[Any]): The headers to convert.
 
     Returns:
         dict: The converted headers as a dictionary.
@@ -77,8 +78,8 @@ def _extract_values_from_data(data: dict, headers: dict):
                 for index, path in enumerate(parts):
                     if isinstance(value, list):
                         items = []
-                        for el in value:
-                            subvalue = el.get(path, "")
+                        for elm in value:
+                            subvalue = elm.get(path, "")
                             if isinstance(subvalue, str):
                                 # collection[].key
                                 items.append(subvalue)
@@ -92,13 +93,15 @@ def _extract_values_from_data(data: dict, headers: dict):
                         break
             else:
                 value = item.get(target, "")
+                if isinstance(value, bool):
+                    value = "Yes" if value else "No"
             if value == []:
                 value = ""
             result[header] = value
         yield result
 
 
-def _convert_data_to_rows(data: dict, headers: list):
+def _convert_data_to_rows(data: dict, headers: list[Any]):
     """Generate rows based on given data."""
     # First, convert received headers to a more usable representation
     dict_headers = _convert_headers_to_dict(headers)
@@ -111,7 +114,7 @@ def _convert_data_to_rows(data: dict, headers: list):
         ]
 
 
-def _convert_data_to_list(data: dict, headers: list) -> list:
+def _convert_data_to_list(data: dict, headers: list[Any]) -> list[Any]:
     """Generate a list of dictionaries based on given data."""
     # First, convert received headers to a more usable representation
     dict_headers = _convert_headers_to_dict(headers)
@@ -122,7 +125,7 @@ def _convert_data_to_list(data: dict, headers: list) -> list:
 
 
 @register_export_format("text/csv")
-def _export_to_csv(data: dict, headers: list):
+def _export_to_csv(data: dict, headers: list[Any]):
     """Export given data to CSV.
 
     The generated CSV content will only contain items listed in
@@ -138,23 +141,23 @@ def _export_to_csv(data: dict, headers: list):
 @register_export_format(
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 )
-def _export_to_xslx(data: dict, headers: list):
+def _export_to_xslx(data: dict, headers: list[Any]):
     """Export given data to XLSX.
 
     The generated content will only contain items listed in headers.
     """
     stream = io.BytesIO()
-    wb = Workbook()
+    workbook = Workbook()
     # grab the active worksheet
-    ws = wb.active
+    worksheet = workbook.active
     for row in _convert_data_to_rows(data, headers):
-        ws.append(row)
-    wb.save(stream)
+        worksheet.append(row)
+    workbook.save(stream)
     return stream.getvalue()
 
 
 @register_export_format("text/xml")
-def _export_to_xml(data: dict, headers: list):
+def _export_to_xml(data: dict, headers: list[Any]):
     """Export given data to XML.
 
     The generated content will only contain items listed in headers.
@@ -165,7 +168,7 @@ def _export_to_xml(data: dict, headers: list):
 
 @register_export_format("application/x-yaml")
 # pylint: disable=unused-argument
-def _export_to_yaml(data: BaseModel, headers: list):
+def _export_to_yaml(data: BaseModel, headers: list[Any]):
     """Export given data to YAML."""
     return yaml.dump(data.dict())
 

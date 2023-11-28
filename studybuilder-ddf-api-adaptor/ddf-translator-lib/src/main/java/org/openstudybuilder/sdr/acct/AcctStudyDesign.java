@@ -4,7 +4,7 @@
 //import com.fasterxml.jackson.annotation.JsonProperty;
 //import lombok.Getter;
 //import lombok.Setter;
-//import org.CSDISC.DDF.model.Code;
+//import org.CDISC.DDF.model.Code;
 //import org.openstudybuilder.model.CurrentMetadata;
 //import org.openstudybuilder.model.StudyDesign;
 //
@@ -15,7 +15,7 @@
 //
 //@Getter @Setter
 //@JsonIgnoreProperties({"trialIntentTypes", "interventionalModel"})
-//public class AcctStudyDesign extends org.CSDISC.DDF.model.StudyDesign {
+//public class AcctStudyDesign extends org.CDISC.DDF.model.StudyDesign {
 //
 //    @JsonProperty("trialType")
 //    private List<Code> extTrialTypes;

@@ -4,7 +4,7 @@ from dataclasses import Field, dataclass, field
 from datetime import datetime, timezone
 from decimal import Decimal
 from enum import Enum
-from typing import Any, Callable, Iterable, Self, Sequence
+from typing import Any, Callable, Iterable, Self
 
 from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains._utils import normalize_string
@@ -36,10 +36,20 @@ class StudyAction(Enum):
     DELETE = "delete"
 
 
-class StudyComponentEnum(str, Enum):
+class StudyCopyComponentEnum(str, Enum):
     STUDY_DESIGN = "high_level_study_design"
     STUDY_INTERVENTION = "study_intervention"
     STUDY_POPULATION = "study_population"
+
+
+class StudyComponentEnum(str, Enum):
+    IDENTIFICATION_METADATA = "identification_metadata"
+    REGISTRY_IDENTIFIERS = "registry_identifiers"
+    VERSION_METADATA = "version_metadata"
+    STUDY_DESIGN = "high_level_study_design"
+    STUDY_INTERVENTION = "study_intervention"
+    STUDY_POPULATION = "study_population"
+    STUDY_DESCRIPTION = "study_description"
 
 
 _STUDY_NUMBER_PATTERN = re.compile("[0-9]{1,4}")
@@ -63,15 +73,12 @@ class StudyIdentificationMetadataVO:
         # we denote this param with underscore, for "internal" use
         # (i.e.) use with caution and where You know what You are doing (setting an arbitrary value here)
     ):
-        def norm_str(s: str | None) -> str | None:
-            return normalize_string(s)
-
         call_default_init(
             self,
-            project_number=norm_str(project_number),
-            study_number=norm_str(study_number),
-            study_acronym=norm_str(study_acronym),
-            study_id_prefix=norm_str(_study_id_prefix),
+            project_number=normalize_string(project_number),
+            study_number=normalize_string(study_number),
+            study_acronym=normalize_string(study_acronym),
+            study_id_prefix=normalize_string(_study_id_prefix),
             registry_identifiers=registry_identifiers,
         )
 
@@ -210,16 +217,13 @@ class StudyVersionMetadataVO:
             version_timestamp = datetime.now(timezone.utc)
         assert version_timestamp is None or isinstance(version_timestamp, datetime)
 
-        def norm_str(s: str | None) -> str | None:
-            return normalize_string(s)
-
         call_default_init(
             self,
             study_status=study_status,
             version_number=version_number,
             version_timestamp=version_timestamp,
-            version_author=norm_str(version_author),
-            version_description=norm_str(version_description),
+            version_author=normalize_string(version_author),
+            version_description=normalize_string(version_description),
         )
 
     def validate(self) -> None:
@@ -272,7 +276,7 @@ class HighLevelStudyDesignVO:
     study_type_code: str | None = None
     study_type_null_value_code: str | None = None
 
-    trial_type_codes: Sequence[str] = field(default_factory=list)
+    trial_type_codes: list[str] = field(default_factory=list)
     trial_type_null_value_code: str | None = None
 
     trial_phase_code: str | None = None
@@ -293,7 +297,7 @@ class HighLevelStudyDesignVO:
     post_auth_indicator: bool | None = None
     post_auth_indicator_null_value_code: str | None = None
 
-    def normalize_code_set(self, codes: Iterable[str]) -> Sequence[str]:
+    def normalize_code_set(self, codes: Iterable[str]) -> list[str]:
         return list(
             dict.fromkeys(
                 [_ for _ in [normalize_string(_) for _ in codes] if _ is not None]
@@ -555,13 +559,13 @@ class HighLevelStudyDesignVO:
 
 @dataclass(frozen=True)
 class StudyPopulationVO:
-    therapeutic_area_codes: Sequence[str] = field(default_factory=list)
+    therapeutic_area_codes: list[str] = field(default_factory=list)
     therapeutic_area_null_value_code: str | None = None
 
-    disease_condition_or_indication_codes: Sequence[str] = field(default_factory=list)
+    disease_condition_or_indication_codes: list[str] = field(default_factory=list)
     disease_condition_or_indication_null_value_code: str | None = None
 
-    diagnosis_group_codes: Sequence[str] = field(default_factory=list)
+    diagnosis_group_codes: list[str] = field(default_factory=list)
     diagnosis_group_null_value_code: str | None = None
 
     sex_of_participants_code: str | None = None
@@ -629,7 +633,7 @@ class StudyPopulationVO:
         number_of_expected_subjects: int | None,
         number_of_expected_subjects_null_value_code: str | None,
     ) -> Self:
-        def normalize_code_set(codes: Iterable[str] | None) -> Sequence[str]:
+        def normalize_code_set(codes: Iterable[str] | None) -> list[str]:
             if codes is None:
                 codes = []
             return list(
@@ -1015,7 +1019,7 @@ class StudyInterventionVO:
     intervention_model_code: str | None = None
     intervention_model_null_value_code: str | None = None
 
-    trial_intent_types_codes: Sequence[str] = field(default_factory=list)
+    trial_intent_types_codes: list[str] = field(default_factory=list)
     trial_intent_type_null_value_code: str | None = None
 
     is_trial_randomised: bool | None = None
@@ -1049,7 +1053,7 @@ class StudyInterventionVO:
         trial_blinding_schema_null_value_code: str | None,
         planned_study_length: str | None,
         planned_study_length_null_value_code: str | None,
-        trial_intent_types_codes: Sequence[str],
+        trial_intent_types_codes: list[str],
         trial_intent_type_null_value_code: str | None,
     ) -> Self:
         return StudyInterventionVO(
@@ -1245,7 +1249,7 @@ class StudyInterventionVO:
         trial_blinding_schema_null_value_code: str | None = field(),
         planned_study_length: str | None = field(),
         planned_study_length_null_value_code: str | None = field(),
-        trial_intent_types_codes: Sequence[str] = field(),
+        trial_intent_types_codes: list[str] = field(),
         trial_itent_type_null_value_code: str | None = field(),
     ) -> Self:
         def helper(parameter: Any, def_value: Any):

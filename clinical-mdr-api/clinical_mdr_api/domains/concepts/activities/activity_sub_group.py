@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable, List, Self
+from typing import Callable, Self
 
 from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains.concepts.concept_base import ConceptARBase, ConceptVO
@@ -16,7 +16,7 @@ class ActivitySubGroupVO(ConceptVO):
     The ActivitySubGroupVO acts as the value object for a single ActivitySubGroup aggregate
     """
 
-    activity_groups: List[str]
+    activity_groups: list[str]
 
     @classmethod
     def from_repository_values(
@@ -25,7 +25,7 @@ class ActivitySubGroupVO(ConceptVO):
         name_sentence_case: str | None,
         definition: str | None,
         abbreviation: str | None,
-        activity_groups: List[str],
+        activity_groups: list[str],
     ) -> Self:
         activity_subgroup_vo = cls(
             name=name,
@@ -44,6 +44,7 @@ class ActivitySubGroupVO(ConceptVO):
         activity_group_exists: Callable[[str], bool],
         previous_name: str | None = None,
     ):
+        self.validate_name_sentence_case()
         self.duplication_check(
             [("name", self.name, previous_name)],
             concept_exists_by_callback,
@@ -106,8 +107,8 @@ class ActivitySubGroupAR(ConceptARBase):
         author: str,
         change_description: str | None,
         concept_vo: ActivitySubGroupVO,
-        concept_exists_by_callback: Callable[[str, str, bool], bool] = None,
-        activity_group_exists: Callable[[str], bool] = None,
+        concept_exists_by_callback: Callable[[str, str, bool], bool] | None = None,
+        activity_group_exists: Callable[[str], bool] | None = None,
     ) -> None:
         """
         Creates a new draft version for the object.

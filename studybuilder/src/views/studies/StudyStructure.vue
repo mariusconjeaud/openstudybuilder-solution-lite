@@ -144,6 +144,9 @@ export default {
         index: 3,
         replace: true
       })
+    },
+    '$route.params.tab' (newValue) {
+      this.tab = newValue
     }
   }
 }

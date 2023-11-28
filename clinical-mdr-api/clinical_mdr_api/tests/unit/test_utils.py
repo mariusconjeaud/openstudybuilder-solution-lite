@@ -1,6 +1,6 @@
 from deepdiff import DeepDiff
 
-from clinical_mdr_api import utils
+from clinical_mdr_api.utils import api_version as utils
 
 
 def test_compare_versions():

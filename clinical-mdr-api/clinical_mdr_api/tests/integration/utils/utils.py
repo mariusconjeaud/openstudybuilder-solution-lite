@@ -7,7 +7,7 @@ import io
 import logging
 from datetime import datetime, timedelta, timezone
 from random import randint
-from typing import Sequence
+from typing import Any
 from xml.etree import ElementTree
 
 import openpyxl
@@ -34,10 +34,6 @@ from clinical_mdr_api.models import (
 from clinical_mdr_api.models.biomedical_concepts.activity_instance_class import (
     ActivityInstanceClass,
     ActivityInstanceClassInput,
-)
-from clinical_mdr_api.models.biomedical_concepts.activity_item import (
-    ActivityItem,
-    ActivityItemCreateInput,
 )
 from clinical_mdr_api.models.biomedical_concepts.activity_item_class import (
     ActivityItemClass,
@@ -111,7 +107,13 @@ from clinical_mdr_api.models.standard_data_models.sponsor_model_variable_class i
 from clinical_mdr_api.models.standard_data_models.variable_class import (
     VariableClass as VariableClassAPIModel,
 )
-from clinical_mdr_api.models.study_selections.study import Study, StudyCreateInput
+from clinical_mdr_api.models.study_selections.study import (
+    Study,
+    StudyCreateInput,
+    StudyDescriptionJsonModel,
+    StudyMetadataJsonModel,
+    StudyPatchRequestJsonModel,
+)
 from clinical_mdr_api.models.study_selections.study_disease_milestone import (
     StudyDiseaseMilestone,
     StudyDiseaseMilestoneCreateInput,
@@ -225,9 +227,6 @@ from clinical_mdr_api.models.utils import GenericFilteringReturn
 from clinical_mdr_api.services._meta_repository import MetaRepository
 from clinical_mdr_api.services.biomedical_concepts.activity_instance_class import (
     ActivityInstanceClassService,
-)
-from clinical_mdr_api.services.biomedical_concepts.activity_item import (
-    ActivityItemService,
 )
 from clinical_mdr_api.services.biomedical_concepts.activity_item_class import (
     ActivityItemClassService,
@@ -420,13 +419,15 @@ class TestUtils:
 
     @classmethod
     def assert_timestamp_is_in_utc_zone(cls, val: str):
-        ts: datetime = datetime.strptime(val, config.DATE_TIME_FORMAT)
-        assert ts.tzinfo == timezone.utc
+        datetime_ts: datetime = datetime.strptime(val, config.DATE_TIME_FORMAT)
+        assert datetime_ts.tzinfo == timezone.utc
 
     @classmethod
     def assert_timestamp_is_newer_than(cls, val: str, seconds: int):
-        ts: datetime = datetime.strptime(val, config.DATE_TIME_FORMAT)
-        assert abs(datetime.now(timezone.utc) - ts) < timedelta(seconds=seconds)
+        datetime_ts: datetime = datetime.strptime(val, config.DATE_TIME_FORMAT)
+        assert abs(datetime.now(timezone.utc) - datetime_ts) < timedelta(
+            seconds=seconds
+        )
 
     @classmethod
     def assert_chronological_sequence(cls, val1: str, val2: str):
@@ -1239,13 +1240,18 @@ class TestUtils:
         name: str,
         activity_instance_class_uid: str,
         name_sentence_case: str | None = None,
+        nci_concept_id: str | None = None,
         topic_code: str | None = None,
         adam_param_code: str | None = None,
+        is_required_for_activity: bool | None = False,
+        is_default_selected_for_activity: bool | None = False,
+        is_data_sharing: bool | None = False,
+        is_legacy_usage: bool | None = False,
         legacy_description: bool | None = None,
-        activities: Sequence | None = None,
-        activity_subgroups: Sequence | None = None,
-        activity_groups: Sequence | None = None,
-        activity_item_uids: Sequence | None = None,
+        activities: list[Any] | None = None,
+        activity_subgroups: list[Any] | None = None,
+        activity_groups: list[Any] | None = None,
+        activity_items: list[Any] | None = None,
         library_name: str | None = LIBRARY_NAME,
         approve: bool = True,
     ) -> ActivityInstanceClass:
@@ -1262,14 +1268,19 @@ class TestUtils:
             groupings.append(activity_grouping)
         activity_instance_input: ActivityInstanceCreateInput = (
             ActivityInstanceCreateInput(
+                nci_concept_id=nci_concept_id,
                 name=name,
                 name_sentence_case=name_sentence_case,
                 topic_code=topic_code,
                 adam_param_code=adam_param_code,
+                is_required_for_activity=is_required_for_activity,
+                is_default_selected_for_activity=is_default_selected_for_activity,
+                is_data_sharing=is_data_sharing,
+                is_legacy_usage=is_legacy_usage,
                 legacy_description=legacy_description,
                 activity_groupings=groupings,
                 activity_instance_class_uid=activity_instance_class_uid,
-                activity_item_uids=activity_item_uids if activity_item_uids else [],
+                activity_items=activity_items if activity_items else [],
                 library_name=library_name,
             )
         )
@@ -1316,6 +1327,8 @@ class TestUtils:
         role_uid: str,
         data_type_uid: str,
         activity_instance_class_uids: list[str],
+        definition: str | None = None,
+        nci_concept_id: str | None = None,
         library_name: str | None = LIBRARY_NAME,
         approve: bool = True,
     ) -> ActivityItemClass:
@@ -1323,6 +1336,8 @@ class TestUtils:
         activity_item_class_input: ActivityItemClassCreateInput = (
             ActivityItemClassCreateInput(
                 name=name,
+                definition=definition,
+                nci_concept_id=nci_concept_id,
                 order=order,
                 mandatory=mandatory,
                 role_uid=role_uid,
@@ -1337,38 +1352,17 @@ class TestUtils:
         return result
 
     @classmethod
-    def create_activity_item(
-        cls,
-        name: str,
-        activity_item_class_uid: str,
-        ct_term_uid: str | None = None,
-        unit_definition_uid: str | None = None,
-        library_name: str | None = LIBRARY_NAME,
-        approve: bool = True,
-    ) -> ActivityItem:
-        service = ActivityItemService()
-        activity_item_input: ActivityItemCreateInput = ActivityItemCreateInput(
-            name=name,
-            activity_item_class_uid=activity_item_class_uid,
-            ct_term_uid=ct_term_uid,
-            unit_definition_uid=unit_definition_uid,
-            library_name=library_name,
-        )
-        result: ActivityItem = service.create(item_input=activity_item_input)
-        if approve:
-            service.approve(result.uid)
-        return result
-
-    @classmethod
     def create_activity(
         cls,
         name: str,
         name_sentence_case: str | None = None,
+        nci_concept_id: str | None = None,
         definition: str | None = None,
         abbreviation: str | None = None,
         activity_subgroups: list[str] | None = None,
         activity_groups: list[str] | None = None,
         request_rationale: str | None = None,
+        is_data_collected: bool | None = False,
         library_name: str | None = LIBRARY_NAME,
         approve: bool = True,
     ) -> Activity:
@@ -1387,12 +1381,14 @@ class TestUtils:
             )
             groupings.append(activity_grouping)
         activity_create_input: ActivityCreateInput = ActivityCreateInput(
+            nci_concept_id=nci_concept_id,
             name=name,
-            name_sentence_case=name_sentence_case,
+            name_sentence_case=name_sentence_case if name_sentence_case else name,
             definition=definition,
             abbreviation=abbreviation,
             activity_groupings=groupings,
             request_rationale=request_rationale,
+            is_data_collected=is_data_collected,
             library_name=library_name,
         )
         result: Activity = service.create(concept_input=activity_create_input)
@@ -1415,7 +1411,7 @@ class TestUtils:
         activity_subgroup_create_input: ActivitySubGroupCreateInput = (
             ActivitySubGroupCreateInput(
                 name=name,
-                name_sentence_case=name_sentence_case,
+                name_sentence_case=name_sentence_case if name_sentence_case else name,
                 definition=definition,
                 abbreviation=abbreviation,
                 activity_groups=activity_groups,
@@ -1443,7 +1439,7 @@ class TestUtils:
         activity_group_create_input: ActivityGroupCreateInput = (
             ActivityGroupCreateInput(
                 name=name,
-                name_sentence_case=name_sentence_case,
+                name_sentence_case=name_sentence_case if name_sentence_case else name,
                 definition=definition,
                 abbreviation=abbreviation,
                 library_name=library_name,
@@ -1576,6 +1572,9 @@ class TestUtils:
         objective_level_uid: str | None = None,
         parameter_terms: list[TemplateParameterMultiSelectInput] | None = None,
     ) -> StudySelectionObjective:
+        if not parameter_terms:
+            parameter_terms = []
+
         service = StudyObjectiveSelectionService(AUTHOR)
         objective_create_input: StudySelectionObjectiveCreateInput = (
             StudySelectionObjectiveCreateInput(
@@ -1844,13 +1843,13 @@ class TestUtils:
         cls,
         catalogue_name: str = CT_CATALOGUE_NAME,
         codelist_uid: str = CT_CODELIST_UID,
-        code_submission_value: str = None,
-        name_submission_value: str = None,
-        nci_preferred_name: str = None,
-        definition: str = None,
-        sponsor_preferred_name: str = None,
-        sponsor_preferred_name_sentence_case: str = None,
-        order: int = None,
+        code_submission_value: str | None = None,
+        name_submission_value: str | None = None,
+        nci_preferred_name: str | None = None,
+        definition: str | None = None,
+        sponsor_preferred_name: str | None = None,
+        sponsor_preferred_name_sentence_case: str | None = None,
+        order: int | None = None,
         library_name: str = CT_CODELIST_LIBRARY,
         approve: bool = True,
     ) -> models.CTTerm:
@@ -1900,14 +1899,14 @@ class TestUtils:
         cls,
         catalogue_name: str = CT_CATALOGUE_NAME,
         name: str = CT_CODELIST_NAME,
-        submission_value: str = None,
-        nci_preferred_name: str = None,
-        sponsor_preferred_name: str = None,
-        definition: str = None,
+        submission_value: str | None = None,
+        nci_preferred_name: str | None = None,
+        sponsor_preferred_name: str | None = None,
+        definition: str | None = None,
         extensible: bool = False,
         template_parameter: bool = False,
-        parent_codelist_uid: str = None,
-        terms: Sequence[models.CTCodelistTermInput] = None,
+        parent_codelist_uid: str | None = None,
+        terms: list[models.CTCodelistTermInput] | None = None,
         library_name: str = LIBRARY_NAME,
         approve: bool = False,
     ) -> models.CTCodelist:
@@ -1990,15 +1989,15 @@ class TestUtils:
     @classmethod
     def create_numeric_value_with_unit(
         cls,
-        unit: str = None,
-        name: str = None,
-        name_sentence_case: str = None,
-        definition: str = None,
-        abbreviation: str = None,
+        unit: str | None = None,
+        name: str | None = None,
+        name_sentence_case: str | None = None,
+        definition: str | None = None,
+        abbreviation: str | None = None,
         library_name: str = LIBRARY_NAME,
         template_parameter: bool = False,
-        value: float = None,
-        unit_definition_uid: str = None,
+        value: float | None = None,
+        unit_definition_uid: str | None = None,
     ) -> models.NumericValueWithUnit:
         # First make sure that the specified unit exists
         if unit_definition_uid is None:
@@ -2049,17 +2048,17 @@ class TestUtils:
     @classmethod
     def create_lag_time(
         cls,
-        unit: str = None,
+        unit: str | None = None,
         sdtm_domain_label: str = "Adverse Event Domain",
-        name: str = None,
-        name_sentence_case: str = None,
-        definition: str = None,
-        abbreviation: str = None,
+        name: str | None = None,
+        name_sentence_case: str | None = None,
+        definition: str | None = None,
+        abbreviation: str | None = None,
         library_name: str = LIBRARY_NAME,
         template_parameter: bool = False,
-        value: float = None,
-        unit_definition_uid: str = None,
-        sdtm_domain_uid: str = None,
+        value: float | None = None,
+        unit_definition_uid: str | None = None,
+        sdtm_domain_uid: str | None = None,
     ) -> models.LagTime:
         # First make sure that the specified unit exists
         if unit_definition_uid is None:
@@ -2161,7 +2160,7 @@ class TestUtils:
     @classmethod
     def create_brand(
         cls,
-        name: str = None,
+        name: str | None = None,
     ) -> models.Brand:
         service = BrandService()
         return service.create(models.BrandCreateInput(name=name))
@@ -2260,9 +2259,9 @@ class TestUtils:
     @classmethod
     def create_study_fields_configuration(cls):
         config_service = CTConfigService()
-        with open(DEFAULT_STUDY_FIELD_CONFIG_FILE, encoding="UTF-8") as f:
-            r = csv.DictReader(f)
-            for line in r:
+        with open(DEFAULT_STUDY_FIELD_CONFIG_FILE, encoding="UTF-8") as file:
+            dict_reader = csv.DictReader(file)
+            for line in dict_reader:
                 if line.get("configured_codelist_uid") != "":
                     db.cypher_query(
                         """
@@ -2629,7 +2628,7 @@ class TestUtils:
         role: str | None = "role",
         term: str | None = "term",
         algorithm: str | None = "algorithm",
-        qualifiers: Sequence[str] | None = ["qualifiers"],
+        qualifiers: list[str] | None = ["qualifiers"],
         comment: str | None = "comment",
         ig_comment: str | None = "ig_comment",
         map_var_flag: bool | None = False,
@@ -2684,8 +2683,8 @@ class TestUtils:
         xml_title: str | None = "xml_title",
         structure: str | None = "structure",
         purpose: str | None = "purpose",
-        keys: Sequence[str] | None = None,
-        sort_keys: Sequence[str] | None = None,
+        keys: list[str] | None = None,
+        sort_keys: list[str] | None = None,
         source_ig: str | None = "source_ig",
         comment: str | None = "comment",
         ig_comment: str | None = "ig_comment",
@@ -2742,13 +2741,13 @@ class TestUtils:
         display_format: str | None = "display_format",
         xml_datatype: str | None = "xml_datatype",
         xml_codelist: str | None = "xml_codelist",
-        xml_codelist_multi: Sequence[str] | None = None,
+        xml_codelist_multi: list[str] | None = None,
         core: str | None = "core",
         origin: str | None = "origin",
         role: str | None = "role",
         term: str | None = "term",
         algorithm: str | None = "algorithm",
-        qualifiers: Sequence[str] | None = ["qualifiers"],
+        qualifiers: list[str] | None = ["qualifiers"],
         comment: str | None = "comment",
         ig_comment: str | None = "ig_comment",
         class_table: str | None = "class_table",
@@ -3136,3 +3135,18 @@ class TestUtils:
             text=text,
         )
         return service.create_comment_reply(thread_uid, payload)
+
+    @classmethod
+    def lock_and_unlock_study(cls, study_uid):
+        study_service = StudyService(user="TODO initials")
+        study_service.patch(
+            uid=study_uid,
+            dry=False,
+            study_patch_request=StudyPatchRequestJsonModel(
+                current_metadata=StudyMetadataJsonModel(
+                    study_description=StudyDescriptionJsonModel(study_title="new title")
+                )
+            ),
+        )
+        study_service.lock(uid=study_uid, change_description="locking it")
+        study_service.unlock(uid=study_uid)

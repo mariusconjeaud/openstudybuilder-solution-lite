@@ -1,5 +1,3 @@
-from typing import Sequence
-
 from fastapi import status
 from neomodel import db
 
@@ -41,10 +39,6 @@ class StudyActivitySelectionService(StudyActivitySelectionBaseService):
     repository_interface = StudySelectionActivityRepository
     selected_object_repository_interface = ActivityRepository
 
-    def __init__(self, author):
-        self._repos = MetaRepository()
-        self.author = author
-
     def _transform_from_ar_and_order_to_response_model(
         self,
         study_selection_activity_ar: StudySelectionActivityAR,
@@ -60,7 +54,14 @@ class StudyActivitySelectionService(StudyActivitySelectionBaseService):
             get_ct_term_flowchart_group=self._find_by_uid_or_raise_not_found,
         )
 
-    def _create_value_object(self, study_uid: str, selection_create_input):
+    def _create_value_object(
+        self,
+        study_uid: str,
+        selection_create_input: models.StudySelectionActivityCreateInput,
+        study_soa_group_selection_uid: str,
+        study_activity_subgroup_selection_uid: str | None,
+        study_activity_group_selection_uid: str | None,
+    ):
         activity_service = ActivityService()
         activity_uid = selection_create_input.activity_uid
         activity_ar = activity_service.repository.find_by_uid_2(
@@ -107,7 +108,10 @@ class StudyActivitySelectionService(StudyActivitySelectionBaseService):
             activity_uid=activity_uid,
             activity_name=activity_ar.name,
             activity_version=activity_ar.item_metadata.version,
-            flowchart_group_uid=selection_create_input.flowchart_group_uid,
+            soa_group_term_uid=selection_create_input.soa_group_term_uid,
+            study_soa_group_uid=study_soa_group_selection_uid,
+            study_activity_subgroup_uid=study_activity_subgroup_selection_uid,
+            study_activity_group_uid=study_activity_group_selection_uid,
             activity_order=None,
             generate_uid_callback=self.repository.generate_uid,
             activity_subgroup_uid=selection_create_input.activity_subgroup_uid,
@@ -118,7 +122,7 @@ class StudyActivitySelectionService(StudyActivitySelectionBaseService):
     def _transform_all_to_response_model(
         self,
         study_selection: StudySelectionActivityAR,
-    ) -> Sequence[models.StudySelectionActivity]:
+    ) -> list[models.StudySelectionActivity]:
         result = []
         for order, selection in enumerate(
             study_selection.study_objects_selection, start=1
@@ -134,7 +138,7 @@ class StudyActivitySelectionService(StudyActivitySelectionBaseService):
 
     def _transform_history_to_response_model(
         self, study_selection_history: list[SelectionHistory], study_uid: str
-    ) -> Sequence[models.StudySelectionActivityCore]:
+    ) -> list[models.StudySelectionActivityCore]:
         result = []
         for history in study_selection_history:
             result.append(
@@ -188,28 +192,6 @@ class StudyActivitySelectionService(StudyActivitySelectionBaseService):
                 study_uid=study_uid, study_activity_uid=study_selection_uid
             )
             for study_activity_subgroup in study_activity_subgroups:
-                study_activity_groups = repos.study_activity_group_repository.get_all_study_activity_groups_for_study_activity_subgroup(
-                    study_uid=study_uid,
-                    study_activity_subgroup_uid=study_activity_subgroup.uid,
-                )
-                for study_activity_group in study_activity_groups:
-                    # delete study activity group
-                    (
-                        study_activity_group_ar,
-                        _,
-                        _,
-                    ) = self._get_specific_activity_group_selection_by_uids(
-                        study_uid=study_uid,
-                        study_selection_uid=study_activity_group.uid,
-                        for_update=True,
-                    )
-                    study_activity_group_ar.remove_object_selection(
-                        study_activity_group.uid
-                    )
-                    repos.study_activity_group_repository.save(
-                        study_activity_group_ar, self.author
-                    )
-
                 # delete study activity subgroup
                 (
                     study_activity_subgroup_ar,
@@ -226,6 +208,43 @@ class StudyActivitySelectionService(StudyActivitySelectionBaseService):
                 repos.study_activity_subgroup_repository.save(
                     study_activity_subgroup_ar, self.author
                 )
+            study_activity_groups = repos.study_activity_group_repository.get_all_study_activity_groups_for_study_activity(
+                study_uid=study_uid, study_activity_uid=study_selection_uid
+            )
+            for study_activity_group in study_activity_groups:
+                # delete study activity group
+                (
+                    study_activity_group_ar,
+                    _,
+                    _,
+                ) = self._get_specific_activity_group_selection_by_uids(
+                    study_uid=study_uid,
+                    study_selection_uid=study_activity_group.uid,
+                    for_update=True,
+                )
+                study_activity_group_ar.remove_object_selection(
+                    study_activity_group.uid
+                )
+                repos.study_activity_group_repository.save(
+                    study_activity_group_ar, self.author
+                )
+
+            study_soa_groups = repos.study_soa_group_repository.get_all_study_soa_groups_for_study_activity(
+                study_uid=study_uid, study_activity_uid=study_selection_uid
+            )
+            for study_soa_group in study_soa_groups:
+                # delete study soa group
+                (
+                    study_soa_group_ar,
+                    _,
+                    _,
+                ) = self._get_specific_soa_group_selection_by_uids(
+                    study_uid=study_uid,
+                    study_selection_uid=study_soa_group.uid,
+                    for_update=True,
+                )
+                study_soa_group_ar.remove_object_selection(study_soa_group.uid)
+                repos.study_soa_group_repository.save(study_soa_group_ar, self.author)
 
             # remove the connection
             assert selection_aggregate is not None
@@ -247,7 +266,8 @@ class StudyActivitySelectionService(StudyActivitySelectionBaseService):
             show_activity_group_in_protocol_flowchart=current_study_activity.show_activity_group_in_protocol_flowchart,
             show_activity_subgroup_in_protocol_flowchart=current_study_activity.show_activity_subgroup_in_protocol_flowchart,
             show_activity_in_protocol_flowchart=current_study_activity.show_activity_in_protocol_flowchart,
-            flowchart_group_uid=current_study_activity.flowchart_group_uid,
+            show_soa_group_in_protocol_flowchart=current_study_activity.show_soa_group_in_protocol_flowchart,
+            soa_group_term_uid=current_study_activity.soa_group_term_uid,
         )
 
         # fill the missing from the inputs
@@ -255,6 +275,13 @@ class StudyActivitySelectionService(StudyActivitySelectionBaseService):
             base_model_with_missing_values=request_study_activity,
             reference_base_model=transformed_current,
         )
+        # update StudySoAGroup selection
+        updated_soa_selection = self._patch_soa_group_selection_value_object(
+            study_uid=current_study_activity.study_uid,
+            current_study_activity=current_study_activity,
+            selection_create_input=request_study_activity,
+        )
+
         return StudySelectionActivityVO.from_input_values(
             study_uid=current_study_activity.study_uid,
             activity_uid=request_study_activity.replaced_activity_uid
@@ -265,7 +292,8 @@ class StudyActivitySelectionService(StudyActivitySelectionBaseService):
             activity_version=current_study_activity.activity_version,
             activity_order=current_study_activity.activity_order,
             activity_name=current_study_activity.activity_name,
-            flowchart_group_uid=request_study_activity.flowchart_group_uid,
+            soa_group_term_uid=updated_soa_selection.soa_group_term_uid,
+            study_soa_group_uid=updated_soa_selection.study_selection_uid,
             study_selection_uid=current_study_activity.study_selection_uid,
             study_activity_subgroup_uid=current_study_activity.study_activity_subgroup_uid,
             activity_subgroup_uid=current_study_activity.activity_subgroup_uid,
@@ -274,14 +302,15 @@ class StudyActivitySelectionService(StudyActivitySelectionBaseService):
             show_activity_group_in_protocol_flowchart=request_study_activity.show_activity_group_in_protocol_flowchart,
             show_activity_subgroup_in_protocol_flowchart=request_study_activity.show_activity_subgroup_in_protocol_flowchart,
             show_activity_in_protocol_flowchart=request_study_activity.show_activity_in_protocol_flowchart,
+            show_soa_group_in_protocol_flowchart=request_study_activity.show_soa_group_in_protocol_flowchart,
             user_initials=self.author,
         )
 
     def handle_batch_operations(
         self,
         study_uid: str,
-        operations: Sequence[models.StudySelectionActivityBatchInput],
-    ) -> Sequence[models.StudySelectionActivityBatchOutput]:
+        operations: list[models.StudySelectionActivityBatchInput],
+    ) -> list[models.StudySelectionActivityBatchOutput]:
         results = []
         for operation in operations:
             result = {}

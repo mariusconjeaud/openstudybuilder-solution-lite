@@ -1,6 +1,41 @@
 from clinical_mdr_api import config
 from clinical_mdr_api.models.error import ErrorResponse
 
+
+def study_section_description(desc: str):
+    return f"""
+    Optionally specify a list of sections to {desc} from the StudyDefinition.
+
+    Valid values are:
+
+    - identification_metadata
+    - registry_identifiers
+    - version_metadata
+    - high_level_study_design
+    - study_population
+    - study_intervention
+    - study_description
+
+    If no filters are specified, the default sections are returned."""
+
+
+def study_fields_audit_trail_section_description(desc: str):
+    return f"""
+    Optionally specify a list of sections to {desc} from the StudyDefinition.
+
+    Valid values are:
+
+    - identification_metadata
+    - registry_identifiers
+    - version_metadata
+    - high_level_study_design
+    - study_population
+    - study_intervention
+    - study_description
+
+    If no sections are specified, the whole audit trail is returned."""
+
+
 SORT_BY = """
 JSON dictionary of field names and boolean flags specifying the sort order. Supported values for sort order are:
 - `true` - ascending order\n

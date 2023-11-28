@@ -1,4 +1,4 @@
-from typing import Sequence
+from typing import Any
 
 from neomodel import db
 
@@ -200,7 +200,7 @@ class CTTermAggregatedRepository:
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
-    ) -> Sequence:
+    ) -> list[Any]:
         """
         Method runs a cypher query to fetch possible values for a given field_name, with a limit of result_count.
         It uses generic filtering capability, on top of filtering the field_name with provided search_string.
@@ -214,7 +214,7 @@ class CTTermAggregatedRepository:
         :param filter_by:
         :param filter_operator: Same as for generic filtering
         :param result_count: Max number of values to return. Default 10
-        :return Sequence:
+        :return list[Any]:
         """
         # Build match_clause
         match_clause, filter_query_parameters = self._generate_generic_match_clause(
@@ -307,11 +307,11 @@ class CTTermAggregatedRepository:
 
         return match_clause, filter_query_parameters
 
-    def count_all(self) -> Sequence[TermCount]:
+    def count_all(self) -> list[TermCount]:
         """
         Returns the count of CT Terms in the database, grouped by Library
 
-        :return: Sequence[TermCount] - count of CT Terms
+        :return: list[TermCount] - count of CT Terms
         """
         query = """
             MATCH (n:CTTermRoot)<-[:CONTAINS_TERM]-(l:Library)

@@ -51,6 +51,18 @@ class StudyAction(ClinicalMdrNode):
         model=ConjunctionRelation,
         cardinality=One,
     )
+    study_selection_metadata_has_before = RelationshipTo(
+        ".study_selections.StudySelectionMetadata",
+        "BEFORE",
+        model=ConjunctionRelation,
+        cardinality=ZeroOrOne,
+    )
+    study_selection_metadata_has_after = RelationshipTo(
+        ".study_selections.StudySelectionMetadata",
+        "AFTER",
+        model=ConjunctionRelation,
+        cardinality=One,
+    )
 
 
 class Delete(StudyAction):

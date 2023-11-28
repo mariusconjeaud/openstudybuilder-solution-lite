@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Sequence, TypeVar
+from typing import Any, TypeVar
 
 from neomodel import db
 from pydantic import BaseModel
@@ -97,7 +97,7 @@ class NeomodelExtGenericService(ABC):
         filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
         **kwargs,
-    ) -> Sequence:
+    ) -> list[Any]:
         header_values = self.repository.get_distinct_headers(
             field_name=field_name,
             search_string=search_string,
@@ -137,7 +137,7 @@ class NeomodelExtGenericService(ABC):
         return item
 
     @db.transaction
-    def get_version_history(self, uid: str) -> Sequence[BaseModel]:
+    def get_version_history(self, uid: str) -> list[BaseModel]:
         if self.version_class is not None:
             all_versions = self.repository.get_all_versions_2(uid=uid)
             if all_versions is None:

@@ -17,11 +17,11 @@ from clinical_mdr_api.models.concepts.odms.odm_study_event import (
     OdmStudyEventPostInput,
     OdmStudyEventVersion,
 )
-from clinical_mdr_api.models.utils import strtobool
 from clinical_mdr_api.services._utils import get_input_or_new_value, normalize_string
 from clinical_mdr_api.services.concepts.odms.odm_generic_service import (
     OdmGenericService,
 )
+from clinical_mdr_api.utils import strtobool
 
 
 class OdmStudyEventService(OdmGenericService[OdmStudyEventAR]):

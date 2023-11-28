@@ -127,6 +127,11 @@
               <v-icon>mdi-content-copy</v-icon>
             </v-btn>
           </template>
+          <template v-slot:item.activity.is_data_collected="{ item }">
+            <div v-if="item.activity">
+              {{ item.activity.is_data_collected|yesno }}
+            </div>
+          </template>
         </n-n-table>
       </v-col>
     </template>
@@ -190,6 +195,9 @@
               </v-btn>
             </div>
           </template>
+          <template v-slot:item.is_data_collected="{ item }">
+            {{ item.is_data_collected|yesno }}
+          </template>
         </n-n-table>
       </v-col>
     </template>
@@ -197,72 +205,38 @@
       <validation-observer ref="observer">
         <v-row>
           <v-col cols="5">
-            <validation-provider
-              v-slot="{ errors }"
-              rules="required"
-              >
-              <v-autocomplete
-                :label="$t('ActivityForms.activity_group')"
-                data-cy="activity-group"
-                :items="groups"
-                v-model="form.activity_groupings[0].activity_group_uid"
-                item-text="name"
-                item-value="uid"
-                dense
-                clearable
-                :error-messages="errors"
-                />
-            </validation-provider>
-            <validation-provider
-              v-slot="{ errors }"
-              rules="required"
-              >
-              <v-autocomplete
-                :label="$t('ActivityForms.activity_subgroup')"
-                data-cy="activity-subgroup"
-                :items="filteredSubGroups"
-                v-model="form.activity_groupings[0].activity_subgroup_uid"
-                item-text="name"
-                item-value="uid"
-                dense
-                clearable
-                :disabled="form.activity_groupings[0].activity_group_uid ? false : true"
-                :error-messages="errors"
-                />
-            </validation-provider>
-            <validation-provider
-              v-slot="{ errors }"
-              rules="required"
-              >
-              <v-text-field
-                :label="$t('ActivityForms.name')"
-                data-cy="instance-name"
-                v-model="form.name"
-                dense
-                clearable
-                @input="getActivities"
-                :error-messages="errors"
-                />
-            </validation-provider>
-            <v-text-field
-              :label="$t('ActivityFormsRequested.abbreviation')"
-              data-cy="activity-abbreviation"
-              v-model="form.abbreviation"
+            <v-autocomplete
+              :label="$t('ActivityForms.activity_group')"
+              data-cy="activity-group"
+              :items="groups"
+              v-model="form.activity_groupings[0].activity_group_uid"
+              item-text="name"
+              item-value="uid"
               dense
               clearable
+              />
+            <v-autocomplete
+              :label="$t('ActivityForms.activity_subgroup')"
+              data-cy="activity-subgroup"
+              :items="filteredSubGroups"
+              v-model="form.activity_groupings[0].activity_subgroup_uid"
+              item-text="name"
+              item-value="uid"
+              dense
+              clearable
+              :disabled="form.activity_groupings[0].activity_group_uid ? false : true"
               />
             <validation-provider
               v-slot="{ errors }"
               rules="required"
               >
-              <v-textarea
-                :label="$t('ActivityFormsRequested.definition')"
-                data-cy="activity-definition"
-                v-model="form.definition"
+              <v-text-field
+                :label="$t('ActivityFormsRequested.name')"
+                data-cy="instance-name"
+                v-model="form.name"
                 dense
                 clearable
-                auto-grow
-                rows="1"
+                @input="getActivities"
                 :error-messages="errors"
                 />
             </validation-provider>
@@ -280,7 +254,11 @@
                 rows="1"
                 :error-messages="errors"
                 />
-              </validation-provider>
+            </validation-provider>
+            <v-switch
+              :label="$t('ActivityFormsRequested.data_collection')"
+              v-model="form.is_data_collected"
+              />
           </v-col>
           <v-col cols="7">
             <v-data-table
@@ -321,7 +299,6 @@ import terms from '@/api/controlledTerminology/terms'
 import ConfirmDialog from '@/components/tools/ConfirmDialog'
 import HorizontalStepperForm from '@/components/tools/HorizontalStepperForm'
 import NNTable from '@/components/tools/NNTable'
-// import StudySelectionTable from '@/components/studies/StudySelectionTable'
 import _isEmpty from 'lodash/isEmpty'
 import _isEqual from 'lodash/isEqual'
 import libConstants from '@/constants/libraries'
@@ -331,12 +308,10 @@ export default {
     ConfirmDialog,
     HorizontalStepperForm,
     NNTable
-    // StudySelectionTable
   },
   computed: {
     ...mapGetters({
-      selectedStudy: 'studiesGeneral/selectedStudy',
-      studyActivities: 'studyActivities/studyActivities'
+      selectedStudy: 'studiesGeneral/selectedStudy'
     }),
     filteredSubGroups () {
       if (!this.form.activity_groupings[0].activity_group_uid) {
@@ -357,9 +332,10 @@ export default {
       activityHeaders: [
         { text: '', value: 'actions', width: '5%' },
         { text: this.$t('_global.library'), value: 'library_name' },
-        { text: this.$t('StudyActivity.activity_group'), value: 'activity_group.name', externalFilterSource: 'concepts/activities/activity-groups$name' },
-        { text: this.$t('StudyActivity.activity_sub_group'), value: 'activity_subgroup.name', externalFilterSource: 'concepts/activities/activity-sub-groups$name' },
-        { text: this.$t('StudyActivity.activity'), value: 'name' }
+        { text: this.$t('StudyActivity.activity_group'), value: 'activity_group.name', externalFilterSource: 'concepts/activities/activity-groups$name', exludeFromHeader: ['is_data_collected'] },
+        { text: this.$t('StudyActivity.activity_sub_group'), value: 'activity_subgroup.name', externalFilterSource: 'concepts/activities/activity-sub-groups$name', exludeFromHeader: ['is_data_collected'] },
+        { text: this.$t('StudyActivity.activity'), value: 'name' },
+        { text: this.$t('StudyActivity.data_collection'), value: 'is_data_collected' }
       ],
       currentFlowchartGroup: null,
       flowchartGroups: [],
@@ -392,25 +368,28 @@ export default {
       selectionFromStudiesHeaders: [
         { text: '', value: 'actions', width: '5%' },
         { text: this.$t('_global.library'), value: 'activity.library_name' },
-        { text: this.$t('StudyActivityForm.flowchart_group'), value: 'flowchart_group.sponsor_preferred_name' },
-        { text: this.$t('StudyActivity.activity_group'), value: 'activity.activity_group.name' },
-        { text: this.$t('StudyActivity.activity_sub_group'), value: 'activity.activity_subgroup.name' },
+        { text: this.$t('StudyActivityForm.flowchart_group'), value: 'study_soa_group.soa_group_name' },
+        { text: this.$t('StudyActivity.activity_group'), value: 'study_activity_group.activity_group_name' },
+        { text: this.$t('StudyActivity.activity_sub_group'), value: 'study_activity_subgroup.activity_subgroup_name' },
         { text: this.$t('StudyActivity.activity'), value: 'name' }
       ],
       selectedActivities: [],
+      studyActivities: [],
       studyActivityHeaders: [
         { text: '', value: 'actions', width: '5%' },
         { text: this.$t('StudyActivityForm.study_id'), value: 'study_id', noFilter: true },
         { text: this.$t('_global.library'), value: 'activity.library_name' },
-        { text: this.$t('StudyActivityForm.flowchart_group'), value: 'flowchart_group.sponsor_preferred_name' },
-        { text: this.$t('StudyActivity.activity_group'), value: 'activity.activity_group.name' },
-        { text: this.$t('StudyActivity.activity_sub_group'), value: 'activity.activity_subgroup.name' },
-        { text: this.$t('StudyActivity.activity'), value: 'activity.name' }
+        { text: this.$t('StudyActivityForm.flowchart_group'), value: 'study_soa_group.soa_group_name' },
+        { text: this.$t('StudyActivity.activity_group'), value: 'study_activity_group.activity_group_name', externalFilterSource: 'concepts/activities/activity-groups$name', disableColumnFilters: true },
+        { text: this.$t('StudyActivity.activity_sub_group'), value: 'study_activity_subgroup.activity_subgroup_name', externalFilterSource: 'concepts/activities/activity-sub-groups$name', disableColumnFilters: true },
+        { text: this.$t('StudyActivity.activity'), value: 'activity.name' },
+        { text: this.$t('StudyActivity.data_collection'), value: 'activity.is_data_collected' }
       ],
       filters: '',
       form: {
         name: '',
-        activity_groupings: [{}]
+        activity_groupings: [{}],
+        is_data_collected: false
       },
       groups: [],
       subgroups: [],
@@ -546,7 +525,7 @@ export default {
               }
             }
             this.activities = activities
-            this.total = resp.data.total
+            this.activitiesTotal = resp.data.total
           }
         )
         return
@@ -724,19 +703,25 @@ export default {
     async submit () {
       if (this.creationMode !== 'selectFromLibrary' && this.creationMode !== 'selectFromStudies') {
         this.form.library_name = libConstants.LIBRARY_REQUESTED
-        this.form.name_sentence_case = this.form.name.charAt(0).toUpperCase() + this.form.name.slice(1)
+        this.form.name_sentence_case = this.form.name.toLowerCase()
         const isValid = await this.$refs.observer.validate()
         if (!isValid) {
           this.resetLoading += 1
           return
         }
+        if (_isEmpty(this.form.activity_groupings[0])) {
+          delete this.form.activity_groupings
+        }
         const createdActivity = await activities.create(this.form, 'activities')
         await activities.approve(createdActivity.data.uid, 'activities').then(resp => {
           const activity = {
             ...resp.data,
-            activity_group: { uid: resp.data.activity_groupings[0].activity_group_uid },
-            activity_subgroup: { uid: resp.data.activity_groupings[0].activity_subgroup_uid },
-            item_key: resp.data.uid + resp.data.activity_groupings[0].activity_group_uid + resp.data.activity_groupings[0].activity_subgroup_uid
+            item_key: resp.data.uid
+          }
+          if (resp.data.activity_groupings.length > 0) {
+            activity.activity_group = { uid: resp.data.activity_groupings[0].activity_group_uid }
+            activity.activity_subgroup = { uid: resp.data.activity_groupings[0].activity_subgroup_uid }
+            activity.item_key = resp.data.uid + resp.data.activity_groupings[0].activity_group_uid + resp.data.activity_groupings[0].activity_subgroup_uid
           }
           this.selectActivity(activity)
         })
@@ -751,14 +736,16 @@ export default {
         let payload
         if (this.creationMode === 'selectFromLibrary' || this.creationMode === 'createPlaceholder') {
           payload = {
-            flowchart_group_uid: item.flowchart_group.term_uid,
-            activity_uid: item.uid,
-            activity_group_uid: item.activity_group.uid,
-            activity_subgroup_uid: item.activity_subgroup.uid
+            soa_group_term_uid: item.flowchart_group.term_uid,
+            activity_uid: item.uid
+          }
+          if (this.form.activity_groupings) {
+            payload.activity_group_uid = item.activity_group.uid
+            payload.activity_subgroup_uid = item.activity_subgroup.uid
           }
         } else {
           payload = {
-            flowchart_group_uid: item.flowchart_group.term_uid,
+            soa_group_term_uid: item.study_soa_group.soa_group_term_uid,
             activity_uid: item.activity.uid,
             activity_group_uid: item.study_activity_group.activity_group_uid,
             activity_subgroup_uid: item.study_activity_subgroup.activity_subgroup_uid
@@ -790,6 +777,9 @@ export default {
       this.studies = resp.data.items.filter(study => study.uid !== this.selectedStudy.uid)
     })
     this.getGroups()
+    study.getStudyActivities(this.selectedStudy.uid, { page_size: 0 }).then(resp => {
+      this.studyActivities = resp.data.items
+    })
   },
   watch: {
     selectedStudies (val) {

@@ -48,6 +48,7 @@ from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 log = logging.getLogger(__name__)
 
 study: Study
+study_activity_uid: str
 epoch_uid: str
 DAYUID: str
 visits_basic_data: str
@@ -161,16 +162,19 @@ def test_data():
 
 
 def test_activity_modify_actions_on_locked_study(api_client):
+    global study_activity_uid
+
     response = api_client.post(
         f"/studies/{study.uid}/study-activities",
         json={
             "activity_uid": "activity_root1",
             "activity_subgroup_uid": "activity_subgroup_root1",
             "activity_group_uid": "activity_group_root1",
-            "flowchart_group_uid": "term_efficacy_uid",
+            "soa_group_term_uid": "term_efficacy_uid",
         },
     )
     res = response.json()
+    study_activity_uid = res["study_activity_uid"]
     assert response.status_code == 201
 
     # get all activities
@@ -180,7 +184,6 @@ def test_activity_modify_actions_on_locked_study(api_client):
     res = response.json()
     assert response.status_code == 200
     old_res = res
-    study_activity_uid = res[0]["study_activity_uid"]
 
     # update study title to be able to lock it
     response = api_client.patch(
@@ -191,7 +194,7 @@ def test_activity_modify_actions_on_locked_study(api_client):
 
     # Lock
     response = api_client.post(
-        f"/studies/{study.uid}/lock",
+        f"/studies/{study.uid}/locks",
         json={"change_description": "Lock 1"},
     )
     assert response.status_code == 201
@@ -202,7 +205,7 @@ def test_activity_modify_actions_on_locked_study(api_client):
             "activity_uid": "activity_root2",
             "activity_subgroup_uid": "activity_subgroup_root2",
             "activity_group_uid": "activity_group_root2",
-            "flowchart_group_uid": "term_efficacy_uid",
+            "soa_group_term_uid": "term_efficacy_uid",
         },
     )
     res = response.json()
@@ -211,7 +214,7 @@ def test_activity_modify_actions_on_locked_study(api_client):
     # edit activity
     response = api_client.patch(
         f"/studies/{study.uid}/study-activities/{study_activity_uid}",
-        json={"flowchart_group_uid": "term_efficacy_uid"},
+        json={"soa_group_term_uid": "term_efficacy_uid"},
     )
     res = response.json()
     assert response.status_code == 400
@@ -225,10 +228,94 @@ def test_activity_modify_actions_on_locked_study(api_client):
     assert response.status_code == 200
     assert old_res == res
 
-    # Unlock -- Study remain unlocked
-    response = api_client.post(f"/studies/{study.uid}/unlock")
-    assert response.status_code == 201
 
+def test_study_activity_with_study_soa_group_relationship(api_client):
+    # get specific study activity
+    response = api_client.get(
+        f"/studies/{study.uid}/study-activities/{study_activity_uid}",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["study_soa_group"]["soa_group_term_uid"] == "term_efficacy_uid"
+    before_unlock = res
+
+    # get study activity headers
+    response = api_client.get(
+        f"/studies/{study.uid}/study-activities/headers?field_name=study_soa_group.soa_group_term_uid",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res == ["term_efficacy_uid"]
+
+    # Unlock -- Study remain unlocked
+    response = api_client.delete(f"/studies/{study.uid}/locks")
+    assert response.status_code == 200
+
+    # edit study activity
+    response = api_client.patch(
+        f"/studies/{study.uid}/study-activities/{study_activity_uid}",
+        json={
+            "activity_uid": "activity_root2",
+            "soa_group_term_uid": "informed_consent_uid",
+        },
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["study_soa_group"]["soa_group_term_uid"] == "informed_consent_uid"
+
+    # get all activities of a specific study version
+    response = api_client.get(
+        f"/studies/{study.uid}/study-activities?study_value_version=1",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["items"][0] == before_unlock
+
+    # get specific study activity of a specific study version
+    response = api_client.get(
+        f"/studies/{study.uid}/study-activities/{study_activity_uid}?study_value_version=1",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res == before_unlock
+
+    # get study activity headers of specific study version
+    response = api_client.get(
+        f"/studies/{study.uid}/study-activities/headers?field_name=study_soa_group.soa_group_term_uid&study_value_version=1",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res == ["term_efficacy_uid"]
+
+    # get all activities
+    response = api_client.get(
+        f"/studies/{study.uid}/study-activities",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert (
+        res["items"][0]["study_soa_group"]["soa_group_term_uid"]
+        == "informed_consent_uid"
+    )
+
+    # get specific study activity
+    response = api_client.get(
+        f"/studies/{study.uid}/study-activities/{study_activity_uid}",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["study_soa_group"]["soa_group_term_uid"] == "informed_consent_uid"
+
+    # get study activity headers
+    response = api_client.get(
+        f"/studies/{study.uid}/study-activities/headers?field_name=study_soa_group.soa_group_term_uid",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res == ["informed_consent_uid"]
+
+
+def test_delete_study_activity(api_client):
     response = api_client.delete(
         f"/studies/{study.uid}/study-activities/{study_activity_uid}",
     )
@@ -242,7 +329,7 @@ def test_cascade_delete_on_activities_schedules(api_client):
             "activity_uid": "activity_root1",
             "activity_subgroup_uid": "activity_subgroup_root1",
             "activity_group_uid": "activity_group_root1",
-            "flowchart_group_uid": "term_efficacy_uid",
+            "soa_group_term_uid": "term_efficacy_uid",
         },
     )
     res = response.json()
@@ -280,8 +367,19 @@ def test_cascade_delete_on_activities_schedules(api_client):
         },
     )
     res = response.json()
+    assert res["study_activity_uid"] == study_activity_uid
+    assert res["study_activity_uid"] == study_activity_uid
     assert response.status_code == 201
 
+    # Lock
+    response = api_client.post(
+        f"/studies/{study.uid}/locks",
+        json={"change_description": "Lock 1"},
+    )
+    assert response.status_code == 201
+    # Unlock -- Study remain unlocked
+    response = api_client.delete(f"/studies/{study.uid}/locks")
+    assert response.status_code == 200
     # delete activity
     response = api_client.delete(
         f"/studies/{study.uid}/study-activities/{study_activity_uid}",
@@ -325,7 +423,7 @@ def test_maintain_outbound_rels(api_client):
             "activity_uid": "activity_root1",
             "activity_subgroup_uid": "activity_subgroup_root1",
             "activity_group_uid": "activity_group_root1",
-            "flowchart_group_uid": "term_efficacy_uid",
+            "soa_group_term_uid": "term_efficacy_uid",
         },
     )
     res = response.json()
@@ -396,7 +494,7 @@ def test_maintain_outbound_rels(api_client):
     response = api_client.patch(
         f"/studies/{study.uid}/study-activities/{study_activity_uid}",
         json={
-            "flowchart_group_uid": "informed_consent_uid",
+            "note": "new note",
         },
     )
     assert response.status_code == 200
@@ -435,3 +533,180 @@ def test_maintain_outbound_rels(api_client):
     )
     res = response.json()
     assert len(res) == 0
+
+
+def test_versioning_on_activity_activity_instruction_activity_schedule_as_group(
+    api_client,
+):
+    response = api_client.post(
+        f"/studies/{study.uid}/study-activities",
+        json={
+            "activity_uid": "activity_root1",
+            "activity_subgroup_uid": "activity_subgroup_root1",
+            "activity_group_uid": "activity_group_root1",
+            "soa_group_term_uid": "term_efficacy_uid",
+        },
+    )
+    res = response.json()
+    assert response.status_code == 201
+    study_activity_uid = res["study_activity_uid"]
+
+    # create visit
+    inputs = {
+        "study_epoch_uid": epoch_uid,
+        "visit_type_uid": "VisitType_0001",
+        "show_visit": True,
+        "time_reference_uid": "VisitSubType_0001",
+        "time_value": 0,
+        "time_unit_uid": DAYUID,
+        "visit_class": "SINGLE_VISIT",
+        "visit_subclass": "SINGLE_VISIT",
+        "is_global_anchor_visit": True,
+    }
+    datadict = visits_basic_data
+    datadict.update(inputs)
+    response = api_client.post(
+        f"/studies/{study.uid}/study-visits",
+        json=datadict,
+    )
+    res = response.json()
+    assert response.status_code == 201
+    study_visit_uid = res["uid"]
+
+    # add activity schedule
+    response = api_client.post(
+        f"/studies/{study.uid}/study-activity-schedules",
+        json={
+            "study_activity_uid": study_activity_uid,
+            "study_visit_uid": study_visit_uid,
+        },
+    )
+    assert response.status_code == 201
+
+    # add activity instruction
+    response = api_client.post(
+        f"/studies/{study.uid}/study-activity-instructions/batch",
+        json=[
+            {
+                "method": "POST",
+                "content": {
+                    "activity_instruction_uid": activity_instruction.uid,
+                    "study_activity_uid": study_activity_uid,
+                },
+            }
+        ],
+    )
+    assert response.status_code == 207
+
+    before_visits = api_client.get(f"/studies/{study.uid}/study-visits").json()
+    before_activities = api_client.get(f"/studies/{study.uid}/study-activities").json()
+    before_activity_schedules = api_client.get(
+        f"/studies/{study.uid}/study-activity-schedules"
+    ).json()
+    before_activity_instructions = api_client.get(
+        f"/studies/{study.uid}/study-activity-instructions"
+    ).json()
+
+    # Lock
+    response = api_client.post(
+        f"/studies/{study.uid}/locks",
+        json={"change_description": "Lock 1"},
+    )
+    assert response.status_code == 201
+
+    # test cannot delete
+    response = api_client.delete(
+        f"/studies/{study.uid}/study-activities/{study_activity_uid}",
+    )
+    assert response.status_code == 400
+    assert (
+        response.json()["message"]
+        == f"Study with specified uid '{study.uid}' is locked."
+    )
+
+    # Unlock -- Study remain unlocked
+    response = api_client.delete(f"/studies/{study.uid}/locks")
+    assert response.status_code == 200
+
+    # patch visits to be sure that the outbound relationship (Visits-->ActivitySchedule) is maintained
+    inputs = {
+        "uid": study_visit_uid,
+        "description": "new description",
+    }
+    datadict = visits_basic_data
+    datadict.update(inputs)
+    response = api_client.patch(
+        f"/studies/{study.uid}/study-visits/{study_visit_uid}",
+        json=datadict,
+    )
+    assert response.status_code == 200
+
+    # patch activities to be sure that the outbound relationship (Activity-->ActivitySchedule) is maintained
+    response = api_client.patch(
+        f"/studies/{study.uid}/study-activities/{study_activity_uid}",
+        json={
+            "note": "new note",
+        },
+    )
+    assert response.status_code == 200
+
+    # check if the activities schedules maintained the trace to StudyVisits new version
+    response = api_client.get(
+        f"/studies/{study.uid}/study-activity-schedules/",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res[0]["study_visit_uid"] == study_visit_uid
+    assert res[0]["study_activity_uid"] == study_activity_uid
+
+    # clean visits from test
+    response = api_client.delete(
+        f"/studies/{study.uid}/study-visits/{study_visit_uid}",
+    )
+    assert response.status_code == 204
+
+    # check if the activities schedules were cascade deleted by StudyVisit deletion
+    response = api_client.get(
+        f"/studies/{study.uid}/study-activity-schedules/",
+    )
+    res = response.json()
+    assert len(res) == 0
+
+    # clean activities from test
+    response = api_client.delete(
+        f"/studies/{study.uid}/study-activities/{study_activity_uid}",
+    )
+    assert response.status_code == 204
+
+    # check if the activities instructions were cascade deleted by a StudyActivity deletion
+    response = api_client.get(
+        f"/studies/{study.uid}/study-activity-instructions/",
+    )
+    res = response.json()
+    assert len(res) == 0
+
+    # get all
+    assert (
+        before_visits
+        == api_client.get(
+            f"/studies/{study.uid}/study-visits?study_value_version=3"
+        ).json()
+    )
+    assert (
+        before_activities
+        == api_client.get(
+            f"/studies/{study.uid}/study-activities?study_value_version=3"
+        ).json()
+    )
+    assert (
+        before_activity_schedules
+        == api_client.get(
+            f"/studies/{study.uid}/study-activity-schedules?study_value_version=3"
+        ).json()
+    )
+    assert (
+        before_activity_instructions
+        == api_client.get(
+            f"/studies/{study.uid}/study-activity-instructions?study_value_version=3"
+        ).json()
+    )

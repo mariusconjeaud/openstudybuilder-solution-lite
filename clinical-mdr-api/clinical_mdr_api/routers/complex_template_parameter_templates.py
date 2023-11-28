@@ -1,7 +1,5 @@
 """Objective templates router."""
 
-from typing import Sequence
-
 from fastapi import APIRouter, Body, Depends, Path, Query, Request
 
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
@@ -57,7 +55,7 @@ name='MORE TESTING of the superiority in the efficacy of [Intervention] with [Ac
     dependencies=[rbac.LIBRARY_READ],
     summary="Returns all parameter templates in their latest/newest version.",
     description=_generic_descriptions.DATA_EXPORTS_HEADER,
-    response_model=Sequence[ComplexParameterTemplate],
+    response_model=list[ComplexParameterTemplate],
     status_code=200,
     responses={
         200: {
@@ -114,8 +112,8 @@ def get_parameter_templates(
         "Valid values are: 'Final', 'Draft' or 'Retired'.",
     ),
     current_user_id: str = Depends(get_current_user_id),
-) -> Sequence[ComplexParameterTemplate]:
-    data: Sequence[ComplexParameterTemplate] = Service(current_user_id).get_all(status)
+) -> list[ComplexParameterTemplate]:
+    data: list[ComplexParameterTemplate] = Service(current_user_id).get_all(status)
     return data
 
 
@@ -157,7 +155,7 @@ The returned versions are ordered by `start_date` descending (newest entries fir
 
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=Sequence[ComplexParameterTemplateVersion],
+    response_model=list[ComplexParameterTemplateVersion],
     status_code=200,
     responses={
         200: {
@@ -208,7 +206,7 @@ def get_parameter_template_versions(
     request: Request,  # request is actually required by the allow_exports decorator
     uid: str = ComplexParameterTemplateUID,
     current_user_id: str = Depends(get_current_user_id),
-) -> Sequence[ComplexParameterTemplateVersion]:
+) -> list[ComplexParameterTemplateVersion]:
     return Service(current_user_id).get_version_history(uid)
 
 
@@ -284,7 +282,6 @@ def create_parameter_template(
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> ComplexParameterTemplate:
-    # TODO: do something to allow static type analysis
     return Service(current_user_id).create(parameter_template)
 
 
@@ -456,7 +453,6 @@ def inactivate(
     uid: str = ComplexParameterTemplateUID,
     current_user_id: str = Depends(get_current_user_id),
 ) -> ComplexParameterTemplate:
-    # TODO: do sth to make static code analysis work fine for this code
     return Service(current_user_id).inactivate_final(uid)
 
 
@@ -492,7 +488,6 @@ def reactivate(
     uid: str = ComplexParameterTemplateUID,
     current_user_id: str = Depends(get_current_user_id),
 ) -> ComplexParameterTemplate:
-    # TODO: do sth to allow for static code analysis of this code
     return Service(current_user_id).reactivate_retired(uid)
 
 
@@ -547,7 +542,7 @@ Per parameter, the parameter.values are ordered by
 Note that parameters may be used multiple times in templates.
 In that case, the same parameter (with the same values) is included multiple times in the response.
     """,
-    response_model=Sequence[ComplexTemplateParameter],
+    response_model=list[ComplexTemplateParameter],
     status_code=200,
     responses={
         404: _generic_descriptions.ERROR_404,

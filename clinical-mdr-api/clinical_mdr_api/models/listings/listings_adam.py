@@ -1,4 +1,4 @@
-from typing import Self, Sequence
+from typing import Self
 
 from pydantic import Field
 
@@ -64,22 +64,22 @@ class StudyEndpntAdamListing(BaseModel):
         title="Time Frame Plain Text",
         description="Time Frame Plain Text",
     )
-    RACT: Sequence[str] | None = Field(
+    RACT: list[str] | None = Field(
         None,
         title="Related Activities",
         description="Array list for all related Activity Group as Template Parameter in either Objective or Endpoint",
     )
-    RACTSGRP: Sequence[str] | None = Field(
+    RACTSGRP: list[str] | None = Field(
         None,
         title="Related Activity Subroups",
         description="Array list for all related Activity Subgroup as Template Parameter in either Objective or Endpoint",
     )
-    RACTGRP: Sequence[str] | None = Field(
+    RACTGRP: list[str] | None = Field(
         None,
         title="Related Activity Groups",
         description="Array list for all related Activity Group as Template Parameter in either Objective or Endpoint",
     )
-    RACTINST: Sequence[str] | None = Field(
+    RACTINST: list[str] | None = Field(
         None,
         title="Related Activity Instances",
         description="Array list for all related Activity Instamces as Template Parameter in either Objective or Endpoint",

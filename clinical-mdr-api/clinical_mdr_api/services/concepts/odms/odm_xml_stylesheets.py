@@ -20,7 +20,8 @@ class OdmXmlStylesheetService:
         for file in dir_files:
             if file.endswith(".xsl"):
                 rs.append(file.removesuffix(".xsl"))
-        return sorted(rs)
+        rs.sort()
+        return rs
 
     @staticmethod
     def get_xml_filename_by_name(stylesheet: str):
@@ -67,5 +68,5 @@ class OdmXmlStylesheetService:
             OdmXmlStylesheetService.get_xml_filename_by_name(stylesheet),
             mode="r",
             encoding="utf-8",
-        ) as f:
-            return f.read()
+        ) as file:
+            return file.read()

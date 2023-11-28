@@ -6,7 +6,7 @@
          "method": "POST",
          "request": {
             "name": "new_name",
-            "name_sentence_case": "name_sentence_case",
+            "name_sentence_case": "new_name",
             "definition": "definition",
             "abbreviation": "abbv",
             "library_name": "Sponsor"
@@ -19,7 +19,7 @@
          "result": {
             "uid": "ActivityGroup_000001",
             "name": "new_name",
-            "name_sentence_case": "name_sentence_case",
+            "name_sentence_case": "new_name",
             "definition": "definition",
             "abbreviation": "abbv",
             "library_name": "Sponsor",
@@ -53,7 +53,7 @@
                {
                   "uid": "activity_group_root1",
                   "name": "name1",
-                  "name_sentence_case": "name_sentence_case1",
+                  "name_sentence_case": "name1",
                   "definition": "definition1",
                   "abbreviation": "abbv",
                   "library_name": "Sponsor",
@@ -71,7 +71,7 @@
                {
                   "uid": "activity_group_root2",
                   "name": "name2",
-                  "name_sentence_case": "name_sentence_case2",
+                  "name_sentence_case": "name2",
                   "definition": "definition2",
                   "abbreviation": "abbv",
                   "library_name": "Sponsor",
@@ -90,7 +90,7 @@
                {
                   "uid": "activity_group_root3",
                   "name": "name3",
-                  "name_sentence_case": "name_sentence_case3",
+                  "name_sentence_case": "name3",
                   "definition": "definition3",
                   "abbreviation": "abbv",
                   "library_name": "Sponsor",
@@ -108,7 +108,7 @@
                {
                   "uid": "ActivityGroup_000001",
                   "name": "new_name",
-                  "name_sentence_case": "name_sentence_case",
+                  "name_sentence_case": "new_name",
                   "definition": "definition",
                   "abbreviation": "abbv",
                   "library_name": "Sponsor",
@@ -145,7 +145,7 @@
          "result": {
             "uid": "ActivityGroup_000001",
             "name": "new_name",
-            "name_sentence_case": "name_sentence_case",
+            "name_sentence_case": "new_name",
             "definition": "definition",
             "abbreviation": "abbv",
             "library_name": "Sponsor",
@@ -176,7 +176,7 @@
          "result": {
             "uid": "ActivityGroup_000001",
             "name": "new_name",
-            "name_sentence_case": "name_sentence_case",
+            "name_sentence_case": "new_name",
             "definition": "definition",
             "abbreviation": "abbv",
             "library_name": "Sponsor",
@@ -200,6 +200,7 @@
          "method": "PATCH",
          "request": {
             "name": "new_activity_name",
+            "name_sentence_case": "new_activity_name",
             "definition": "new_definition",
             "change_description": "activity patch"
          },
@@ -211,7 +212,7 @@
          "result": {
             "uid": "ActivityGroup_000001",
             "name": "new_activity_name",
-            "name_sentence_case": "name_sentence_case",
+            "name_sentence_case": "new_activity_name",
             "definition": "new_definition",
             "abbreviation": "abbv",
             "library_name": "Sponsor",
@@ -242,7 +243,7 @@
          "result": {
             "uid": "activity_group_root1",
             "name": "name1",
-            "name_sentence_case": "name_sentence_case1",
+            "name_sentence_case": "name1",
             "definition": "definition1",
             "abbreviation": "abbv",
             "library_name": "Sponsor",
@@ -272,7 +273,7 @@
          "result": {
             "uid": "activity_group_root1",
             "name": "name1",
-            "name_sentence_case": "name_sentence_case1",
+            "name_sentence_case": "name1",
             "definition": "definition1",
             "abbreviation": "abbv",
             "library_name": "Sponsor",

@@ -1,5 +1,3 @@
-from typing import Optional, Sequence
-
 from pydantic import Field
 
 from clinical_mdr_api.domains.standard_data_models.sponsor_model_variable_class import (
@@ -20,140 +18,140 @@ class SponsorModelVariableClass(SponsorModelBase):
         description="",
         source="uid",
     )
-    library_name: Optional[str] = Field(
+    library_name: str | None = Field(
         None,
         title="library_name",
         description="",
         source="has_library.name",
         nullable=True,
     )
-    is_basic_std: Optional[bool] = Field(
+    is_basic_std: bool | None = Field(
         None,
         title="is_basic_std",
         source="has_sponsor_model_instance.is_basic_std",
         nullable=True,
     )
-    label: Optional[str] = Field(
+    label: str | None = Field(
         None,
         title="label",
         source="has_sponsor_model_instance.label",
         nullable=True,
     )
-    order: Optional[int] = Field(
+    order: int | None = Field(
         None,
         title="order",
-        source="has_sponsor_model_instance.order",
+        source="has_sponsor_model_instance.has_variable_class|ordinal",
         nullable=True,
     )
-    variable_type: Optional[str] = Field(
+    variable_type: str | None = Field(
         None,
         title="variable_type",
         source="has_sponsor_model_instance.variable_type",
         nullable=True,
     )
-    length: Optional[int] = Field(
+    length: int | None = Field(
         None,
         title="length",
         source="has_sponsor_model_instance.length",
         nullable=True,
     )
-    display_format: Optional[str] = Field(
+    display_format: str | None = Field(
         None,
         title="display_format",
         source="has_sponsor_model_instance.display_format",
         nullable=True,
     )
-    xml_datatype: Optional[str] = Field(
+    xml_datatype: str | None = Field(
         None,
         title="xml_datatype",
         source="has_sponsor_model_instance.xml_datatype",
         nullable=True,
     )
-    xml_codelist: Optional[str] = Field(
+    xml_codelist: str | None = Field(
         None,
         title="xml_codelist",
         source="has_sponsor_model_instance.xml_codelist",
         nullable=True,
     )
-    core: Optional[str] = Field(
+    core: str | None = Field(
         None,
         title="core",
         source="has_sponsor_model_instance.core",
         nullable=True,
     )
-    origin: Optional[str] = Field(
+    origin: str | None = Field(
         None,
         title="origin",
         source="has_sponsor_model_instance.origin",
         nullable=True,
     )
-    role: Optional[str] = Field(
+    role: str | None = Field(
         None,
         title="role",
         source="has_sponsor_model_instance.role",
         nullable=True,
     )
-    term: Optional[str] = Field(
+    term: str | None = Field(
         None,
         title="term",
         source="has_sponsor_model_instance.term",
         nullable=True,
     )
-    algorithm: Optional[str] = Field(
+    algorithm: str | None = Field(
         None,
         title="algorithm",
         source="has_sponsor_model_instance.algorithm",
         nullable=True,
     )
-    qualifiers: Optional[Sequence[str]] = Field(
+    qualifiers: list[str] | None = Field(
         None,
         title="qualifiers",
         source="has_sponsor_model_instance.qualifiers",
         nullable=True,
     )
-    comment: Optional[str] = Field(
+    comment: str | None = Field(
         None,
         title="comment",
         source="has_sponsor_model_instance.comment",
         nullable=True,
     )
-    ig_comment: Optional[str] = Field(
+    ig_comment: str | None = Field(
         None,
         title="ig_comment",
         source="has_sponsor_model_instance.ig_comment",
         nullable=True,
     )
-    map_var_flag: Optional[bool] = Field(
+    map_var_flag: bool | None = Field(
         None,
         title="map_var_flag",
         source="has_sponsor_model_instance.map_var_flag",
         nullable=True,
     )
-    fixed_mapping: Optional[str] = Field(
+    fixed_mapping: str | None = Field(
         None,
         title="fixed_mapping",
         source="has_sponsor_model_instance.fixed_mapping",
         nullable=True,
     )
-    include_in_raw: Optional[bool] = Field(
+    include_in_raw: bool | None = Field(
         None,
         title="include_in_raw",
         source="has_sponsor_model_instance.include_in_raw",
         nullable=True,
     )
-    nn_internal: Optional[bool] = Field(
+    nn_internal: bool | None = Field(
         None,
         title="nn_internal",
         source="has_sponsor_model_instance.nn_internal",
         nullable=True,
     )
-    incl_cre_domain: Optional[bool] = Field(
+    incl_cre_domain: bool | None = Field(
         None,
         title="incl_cre_domain",
         source="has_sponsor_model_instance.incl_cre_domain",
         nullable=True,
     )
-    xml_codelist_values: Optional[bool] = Field(
+    xml_codelist_values: bool | None = Field(
         None,
         title="xml_codelist_values",
         source="has_sponsor_model_instance.xml_codelist_values",
@@ -227,7 +225,7 @@ class SponsorModelVariableClassInput(BaseModel):
     role: str = Field(None, title="role", description="")
     term: str = Field(None, title="term", description="")
     algorithm: str = Field(None, title="algorithm", description="")
-    qualifiers: Sequence[str] = Field(None, title="qualifiers", description="")
+    qualifiers: list[str] = Field(None, title="qualifiers", description="")
     comment: str = Field(None, title="comment", description="")
     ig_comment: str = Field(None, title="ig_comment", description="")
     map_var_flag: bool = Field(None, title="map_var_flag", description="")
@@ -236,6 +234,6 @@ class SponsorModelVariableClassInput(BaseModel):
     nn_internal: bool = Field(None, title="nn_internal", description="")
     incl_cre_domain: bool = Field(None, title="incl_cre_domain", description="")
     xml_codelist_values: bool = Field(None, title="xml_codelist_values", description="")
-    library_name: Optional[str] = Field(
+    library_name: str | None = Field(
         "CDISC", title="library_name", description="Defaults to CDISC"
     )

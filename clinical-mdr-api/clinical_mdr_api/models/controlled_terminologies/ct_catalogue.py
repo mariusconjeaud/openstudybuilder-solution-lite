@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Self, Sequence
+from typing import Self
 
 from pydantic import Field
 
@@ -25,12 +25,12 @@ class CTCatalogue(BaseModel):
 class CTCatalogueChanges(BaseModel):
     start_datetime: datetime
     end_datetime: datetime
-    new_codelists: Sequence[CodelistChangeItem]
-    deleted_codelists: Sequence[CodelistChangeItem]
-    updated_codelists: Sequence[CodelistChangeItem]
-    new_terms: Sequence[TermChangeItem]
-    deleted_terms: Sequence[TermChangeItem]
-    updated_terms: Sequence[TermChangeItem]
+    new_codelists: list[CodelistChangeItem]
+    deleted_codelists: list[CodelistChangeItem]
+    updated_codelists: list[CodelistChangeItem]
+    new_terms: list[TermChangeItem]
+    deleted_terms: list[TermChangeItem]
+    updated_terms: list[TermChangeItem]
 
     @classmethod
     def from_repository_output(

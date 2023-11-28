@@ -32,26 +32,25 @@ class RegistryIdentifiersVO:
         investigational_new_drug_application_number_ind: str | None,
         investigational_new_drug_application_number_ind_null_value_code: str | None,
     ) -> Self:
-        def norm_str(s: str | None) -> str | None:
-            return normalize_string(s)
-
         return cls(
-            ct_gov_id=norm_str(ct_gov_id),
-            ct_gov_id_null_value_code=norm_str(ct_gov_id_null_value_code),
-            eudract_id=norm_str(eudract_id),
-            eudract_id_null_value_code=norm_str(eudract_id_null_value_code),
-            universal_trial_number_utn=norm_str(universal_trial_number_utn),
-            universal_trial_number_utn_null_value_code=norm_str(
+            ct_gov_id=normalize_string(ct_gov_id),
+            ct_gov_id_null_value_code=normalize_string(ct_gov_id_null_value_code),
+            eudract_id=normalize_string(eudract_id),
+            eudract_id_null_value_code=normalize_string(eudract_id_null_value_code),
+            universal_trial_number_utn=normalize_string(universal_trial_number_utn),
+            universal_trial_number_utn_null_value_code=normalize_string(
                 universal_trial_number_utn_null_value_code
             ),
-            japanese_trial_registry_id_japic=norm_str(japanese_trial_registry_id_japic),
-            japanese_trial_registry_id_japic_null_value_code=norm_str(
+            japanese_trial_registry_id_japic=normalize_string(
+                japanese_trial_registry_id_japic
+            ),
+            japanese_trial_registry_id_japic_null_value_code=normalize_string(
                 japanese_trial_registry_id_japic_null_value_code
             ),
-            investigational_new_drug_application_number_ind=norm_str(
+            investigational_new_drug_application_number_ind=normalize_string(
                 investigational_new_drug_application_number_ind
             ),
-            investigational_new_drug_application_number_ind_null_value_code=norm_str(
+            investigational_new_drug_application_number_ind_null_value_code=normalize_string(
                 investigational_new_drug_application_number_ind_null_value_code
             ),
         )

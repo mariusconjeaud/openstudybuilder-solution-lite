@@ -1,6 +1,5 @@
 import datetime
 from dataclasses import dataclass
-from typing import Sequence
 
 from neomodel import db
 
@@ -67,7 +66,7 @@ class StudyDesignCellRepository:
         unique_design_cells = to_relation_trees(
             StudyDesignCell.nodes.fetch_relations(
                 "study_epoch__has_epoch__has_name_root__has_latest_value",
-                "has_after",
+                "has_after__audit_trail",
                 "study_epoch",
             )
             .fetch_optional_relations(
@@ -76,8 +75,8 @@ class StudyDesignCellRepository:
                 "study_element__study_value",
             )
             .filter(
-                study_value__study_root__uid=study_uid,
-                study_epoch__study_value__study_root__uid=study_uid,
+                study_value__latest_value__uid=study_uid,
+                study_epoch__study_value__latest_value__uid=study_uid,
                 uid=uid,
             )
             .order_by("order")
@@ -95,59 +94,78 @@ class StudyDesignCellRepository:
         )
 
     def find_all_design_cells_by_study(
-        self, study_uid: str
-    ) -> Sequence[StudyDesignCellVO]:
+        self,
+        study_uid: str,
+        study_value_version: str | None = None,
+    ) -> list[StudyDesignCellVO]:
+        if study_value_version:
+            filters = {
+                "study_value__has_version|version": study_value_version,
+                "study_value__has_version__uid": study_uid,
+            }
+        else:
+            filters = {"study_value__latest_value__uid": study_uid}
         all_design_cells = [
-            self._from_repository_values(study_uid=study_uid, design_cell=sas_node)
+            self._from_repository_values(
+                study_uid=study_uid,
+                design_cell=sas_node,
+                study_value_version=study_value_version,
+            )
             for sas_node in to_relation_trees(
                 StudyDesignCell.nodes.fetch_relations(
                     "study_epoch__has_epoch__has_name_root__has_latest_value",
-                    "has_after",
+                    "has_after__audit_trail",
                     "study_epoch__study_value",
+                    "study_element__study_value",
                 )
                 .fetch_optional_relations(
                     "study_arm__study_value",
                     "study_branch_arm__study_value",
-                    "study_element__study_value",
                 )
-                .filter(study_value__study_root__uid=study_uid)
+                .filter(**filters)
                 .order_by("order")
             ).distinct()
         ]
         return all_design_cells
 
     def _from_repository_values(
-        self, study_uid: str, design_cell: StudyDesignCell
+        self,
+        study_uid: str,
+        design_cell: StudyDesignCell,
+        study_value_version: str | None = None,
     ) -> StudyDesignCellVO:
         study_action = design_cell.has_after.all()[0]
-        study_arm = design_cell.study_arm.single()
-        # get study_branch_arms that has study_value
-        study_branch_arms = list(
-            filter(
-                lambda x: x.study_value.get_or_none(),
-                design_cell.study_branch_arm.all(),
-            )
-        )
-        if len(study_branch_arms) < 2:
-            study_branch_arm = (
-                study_branch_arms.pop() if len(study_branch_arms) > 0 else None
-            )
+        if study_value_version:
+            filters = {
+                "has_version|version": study_value_version,
+                "has_version__uid": study_uid,
+            }
         else:
-            raise exceptions.BusinessLogicException(
-                "Returned multiple branch arms with study_value rel "
-            )
-        study_epochs = list(
-            filter(
-                lambda x: x.study_value.get_or_none(),
-                design_cell.study_epoch.all(),
-            )
+            filters = {
+                "latest_value__uid": study_uid,
+            }
+        study_value: StudyValue = StudyValue.nodes.filter(**filters).get_or_none()[0]
+        assert isinstance(study_value, StudyValue)
+
+        assert len(set(ith.uid for ith in design_cell.study_arm.all())) <= 1
+        assert len(set(ith.uid for ith in design_cell.study_branch_arm.all())) <= 1
+        assert len(set(ith.uid for ith in design_cell.study_element.all())) <= 1
+        assert len(set(ith.uid for ith in design_cell.study_epoch.all())) <= 1
+
+        study_epoch: StudyEpoch = self.get_current_outbound_node(
+            node=design_cell, outbound_rel_name="study_epoch", study_value=study_value
         )
-        if len(study_epochs) < 2:  # check if it returns multiple values
-            study_epoch = study_epochs.pop() if len(study_epochs) > 0 else None
-        else:
-            raise exceptions.BusinessLogicException(
-                "Returned multiple branch arms with study_value rel "
-            )
+        study_arm: StudyArm = self.get_current_outbound_node(
+            node=design_cell, outbound_rel_name="study_arm", study_value=study_value
+        )
+        study_branch_arm: StudyBranchArm = self.get_current_outbound_node(
+            node=design_cell,
+            outbound_rel_name="study_branch_arm",
+            study_value=study_value,
+        )
+        study_element: StudyElement = self.get_current_outbound_node(
+            node=design_cell, outbound_rel_name="study_element", study_value=study_value
+        )
 
         study_epoch_name = (
             study_epoch.has_epoch.single()
@@ -155,18 +173,6 @@ class StudyDesignCellRepository:
             .has_latest_value.single()
             .name
         )
-        study_elements = list(
-            filter(
-                lambda x: x.study_value.get_or_none(),
-                design_cell.study_element.all(),
-            )
-        )
-        if len(study_elements) < 2:  # check if it returns multiple values
-            study_element = study_elements.pop() if len(study_elements) > 0 else None
-        else:
-            raise exceptions.BusinessLogicException(
-                "Returned multiple branch arms with study_value rel "
-            )
         return StudyDesignCellVO(
             uid=design_cell.uid,
             study_uid=study_uid,
@@ -192,13 +198,12 @@ class StudyDesignCellRepository:
         self,
         node: ClinicalMdrNodeWithUID,
         outbound_rel_name: str,
-        study_value_rel_name: str = "study_value",
+        study_value: StudyValue,
     ):
         outbound_node = None
         outbound_nodes = getattr(node, outbound_rel_name).all()
         for i_outbound_node in outbound_nodes:
-            # if the i_branch_arm is an actual one then carry it to the new node
-            if getattr(i_outbound_node, study_value_rel_name).get_or_none() is not None:
+            if i_outbound_node.study_value.is_connected(study_value):
                 outbound_node = i_outbound_node
         return outbound_node
 
@@ -229,16 +234,24 @@ class StudyDesignCellRepository:
                 )
             )
             previous_study_epoch: StudyEpoch = self.get_current_outbound_node(
-                node=previous_item, outbound_rel_name="study_epoch"
+                node=previous_item,
+                outbound_rel_name="study_epoch",
+                study_value=latest_study_value_node,
             )
             previous_study_arm: StudyArm = self.get_current_outbound_node(
-                node=previous_item, outbound_rel_name="study_arm"
+                node=previous_item,
+                outbound_rel_name="study_arm",
+                study_value=latest_study_value_node,
             )
             previous_study_branch_arm: StudyBranchArm = self.get_current_outbound_node(
-                node=previous_item, outbound_rel_name="study_branch_arm"
+                node=previous_item,
+                outbound_rel_name="study_branch_arm",
+                study_value=latest_study_value_node,
             )
             previous_study_element: StudyElement = self.get_current_outbound_node(
-                node=previous_item, outbound_rel_name="study_element"
+                node=previous_item,
+                outbound_rel_name="study_element",
+                study_value=latest_study_value_node,
             )
             to_compare_previous = [
                 previous_study_arm.uid
@@ -287,12 +300,10 @@ class StudyDesignCellRepository:
                 )
             )
             # if any StudyBranchArms connectect to StudyArm has a study_value
-            if (
-                sum(
-                    i_branch_arm.study_value.all() != []
-                    for i_branch_arm in study_arm_node.has_branch_arm.all()
-                )
-                > 0
+            if self.get_current_outbound_node(
+                node=study_arm_node,
+                outbound_rel_name="has_branch_arm",
+                study_value=latest_study_value_node,
             ):
                 raise exceptions.BusinessLogicException(
                     f"The Study Arm with uid {study_arm_node.uid} cannot be "
@@ -455,82 +466,136 @@ class StudyDesignCellRepository:
         )
 
     def get_design_cells_connected_to_branch_arm(
-        self, study_uid: str, study_branch_arm_uid: str
+        self,
+        study_uid: str,
+        study_branch_arm_uid: str,
+        study_value_version: str | None = None,
     ):
+        if study_value_version:
+            filters = {
+                "study_value__has_version|version": study_value_version,
+                "study_value__has_version__uid": study_uid,
+                "study_branch_arm__uid": study_branch_arm_uid,
+                "study_branch_arm__study_value__has_version|version": study_value_version,
+                "study_branch_arm__study_value__has_version__uid": study_uid,
+            }
+        else:
+            filters = {
+                "study_value__latest_value__uid": study_uid,
+                "study_branch_arm__uid": study_branch_arm_uid,
+                "study_branch_arm__study_value__latest_value__uid": study_uid,
+            }
         sdc_node = to_relation_trees(
             StudyDesignCell.nodes.fetch_relations(
                 "study_epoch__has_epoch__has_name_root__has_latest_value",
-                "has_after",
+                "has_after__audit_trail",
                 "study_epoch__study_value",
             )
             .fetch_optional_relations(
-                "study_branch_arm__study_value", "study_element__study_value"
+                "study_branch_arm__study_value",
+                "study_element__study_value",
             )
-            .filter(
-                study_value__study_root__uid=study_uid,
-                study_branch_arm__uid=study_branch_arm_uid,
-                study_branch_arm__study_value__study_root__uid=study_uid,
-            )
+            .filter(**filters)
             .order_by("order")
         ).distinct()
         return sdc_node
 
-    def get_design_cells_connected_to_epoch(self, study_uid: str, study_epoch_uid: str):
+    def get_design_cells_connected_to_epoch(
+        self,
+        study_uid: str,
+        study_epoch_uid: str,
+        study_value_version: str | None = None,
+    ):
+        if study_value_version:
+            filters = {
+                "study_value__has_version|version": study_value_version,
+                "study_value__has_version__uid": study_uid,
+                "study_epoch__uid": study_epoch_uid,
+                "study_epoch__study_value__has_version|version": study_value_version,
+                "study_epoch__study_value__has_version__uid": study_uid,
+            }
+        else:
+            filters = {
+                "study_value__latest_value__uid": study_uid,
+                "study_epoch__uid": study_epoch_uid,
+                "study_epoch__study_value__latest_value__uid": study_uid,
+            }
         sdc_node = to_relation_trees(
             StudyDesignCell.nodes.fetch_relations(
                 "study_epoch__has_epoch__has_name_root__has_latest_value",
-                "has_after",
-                "study_epoch",
+                "has_after__audit_trail",
+                "study_epoch__study_value",
             )
             .fetch_optional_relations(
                 "study_arm__study_value",
                 "study_branch_arm__study_value",
                 "study_element__study_value",
             )
-            .filter(
-                study_value__study_root__uid=study_uid,
-                study_epoch__uid=study_epoch_uid,
-                study_epoch__study_value__study_root__uid=study_uid,
-            )
+            .filter(**filters)
             .order_by("order")
-        )
+        ).distinct()
 
         return sdc_node
 
-    def get_design_cells_connected_to_arm(self, study_uid: str, study_arm_uid: str):
+    def get_design_cells_connected_to_arm(
+        self, study_uid: str, study_arm_uid: str, study_value_version: str | None = None
+    ):
+        if study_value_version:
+            filters = {
+                "study_value__has_version|version": study_value_version,
+                "study_value__has_version__uid": study_uid,
+                "study_arm__uid": study_arm_uid,
+                "study_arm__study_value__has_version|version": study_value_version,
+                "study_arm__study_value__has_version__uid": study_uid,
+            }
+        else:
+            filters = {
+                "study_value__latest_value__uid": study_uid,
+                "study_arm__uid": study_arm_uid,
+                "study_arm__study_value__latest_value__uid": study_uid,
+            }
         sdc_node = to_relation_trees(
             StudyDesignCell.nodes.fetch_relations(
                 "study_epoch__has_epoch__has_name_root__has_latest_value",
-                "study_arm",
-                "has_after",
+                "study_arm__study_value",
+                "has_after__audit_trail",
                 "study_epoch__study_value",
             )
             .fetch_optional_relations("study_element__study_value")
-            .filter(
-                study_value__study_root__uid=study_uid,
-                study_arm__uid=study_arm_uid,
-                study_arm__study_value__study_root__uid=study_uid,
-            )
+            .filter(**filters)
             .order_by("order")
         ).distinct()
 
         return sdc_node
 
     def get_design_cells_connected_to_element(
-        self, study_uid: str, study_element_uid: str
+        self,
+        study_uid: str,
+        study_element_uid: str,
+        study_value_version: str | None = None,
     ):
+        if study_value_version:
+            filters = {
+                "study_value__has_version|version": study_value_version,
+                "study_value__has_version__uid": study_uid,
+                "study_element__uid": study_element_uid,
+                "study_element__study_value__has_version|version": study_value_version,
+                "study_element__study_value__has_version__uid": study_uid,
+            }
+        else:
+            filters = {
+                "study_value__latest_value__uid": study_uid,
+                "study_element__uid": study_element_uid,
+                "study_element__study_value__latest_value__uid": study_uid,
+            }
         sdc_node = to_relation_trees(
             StudyDesignCell.nodes.fetch_relations(
                 "study_element",
-                "has_after",
+                "has_after__audit_trail",
             )
-            .filter(
-                study_value__study_root__uid=study_uid,
-                study_element__uid=study_element_uid,
-                study_element__study_value__study_root__uid=study_uid,
-            )
+            .filter(**filters)
             .order_by("order")
-        )
+        ).distinct()
         return sdc_node
 
     def delete(self, study_uid: str, design_cell_uid: str, author: str):
@@ -606,7 +671,9 @@ class StudyDesignCellRepository:
     def generate_uid(self) -> str:
         return StudyDesignCell.get_next_free_uid_and_increment_counter()
 
-    def _get_selection_with_history(self, study_uid: str, design_cell_uid: str = None):
+    def _get_selection_with_history(
+        self, study_uid: str, design_cell_uid: str | None = None
+    ):
         """
         returns the audit trail for study design cell either for a
         specific selection or for all study design cells for the study.
@@ -680,7 +747,7 @@ class StudyDesignCellRepository:
         return result
 
     def find_selection_history(
-        self, study_uid: str, design_cell_uid: str = None
+        self, study_uid: str, design_cell_uid: str | None = None
     ) -> list[dict | None]:
         if design_cell_uid:
             return self._get_selection_with_history(

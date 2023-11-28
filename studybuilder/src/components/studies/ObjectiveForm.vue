@@ -444,6 +444,9 @@ export default {
       return (!this.isStudyObjectiveSelected(item) ? 'primary' : '')
     },
     async extraStepValidation (step) {
+      if (this.creationMode === 'template' && step === 1) {
+        this.getObjectiveTemplates()
+      }
       if (this.creationMode === 'template' && step === 2) {
         if (this.form.objective_template === undefined || this.form.objective_template === null) {
           bus.$emit('notification', { msg: this.$t('StudyObjectiveForm.template_not_selected'), type: 'error' })

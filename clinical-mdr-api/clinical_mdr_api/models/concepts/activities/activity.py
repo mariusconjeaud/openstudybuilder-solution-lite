@@ -104,6 +104,8 @@ class ActivityBase(Concept):
 
 
 class Activity(ActivityBase):
+    nci_concept_id: str | None = None
+
     @classmethod
     def from_activity_ar(
         cls,
@@ -131,6 +133,7 @@ class Activity(ActivityBase):
             )
         return cls(
             uid=activity_ar.uid,
+            nci_concept_id=activity_ar.concept_vo.nci_concept_id,
             name=activity_ar.name,
             name_sentence_case=activity_ar.concept_vo.name_sentence_case,
             definition=activity_ar.concept_vo.definition,
@@ -151,6 +154,9 @@ class Activity(ActivityBase):
             ),
             request_rationale=activity_ar.concept_vo.request_rationale,
             replaced_by_activity=activity_ar.concept_vo.replaced_by_activity,
+            is_data_collected=activity_ar.concept_vo.is_data_collected
+            if activity_ar.concept_vo.is_data_collected
+            else False,
         )
 
     activity_groupings: list[ActivityGroupingHierarchySimpleModel] = Field(
@@ -171,6 +177,12 @@ class Activity(ActivityBase):
         description="The uid of the replacing Activity",
         nullable=True,
         remove_from_wildcard=True,
+    )
+    is_data_collected: bool = Field(
+        False,
+        title="Boolean flag indicating whether data is collected for this activity",
+        description="Boolean flag indicating whether data is collected for this activity",
+        nullable=False,
     )
 
 
@@ -214,8 +226,10 @@ class ActivityGrouping(BaseModel):
 
 
 class ActivityInput(ActivityCommonInput):
+    nci_concept_id: str | None = None
     activity_groupings: list[ActivityGrouping] | None = None
     request_rationale: str | None = None
+    is_data_collected: bool = False
 
 
 class ActivityEditInput(ActivityInput):
@@ -246,6 +260,11 @@ class ActivityVersion(Activity):
 
 
 class SimpleActivity(BaseModel):
+    nci_concept_id: str | None = Field(
+        None,
+        title="nci_concept_id",
+        description="",
+    )
     name: str | None = Field(
         None,
         title="name",
@@ -265,6 +284,12 @@ class SimpleActivity(BaseModel):
         None,
         title="abbreviation",
         description="",
+    )
+    is_data_collected: bool = Field(
+        False,
+        title="Boolean flag indicating whether data is collected for this activity",
+        description="Boolean flag indicating whether data is collected for this activity",
+        nullable=False,
     )
     library_name: str | None = Field(
         None,
@@ -293,11 +318,21 @@ class SimpleActivityInstanceClass(BaseModel):
 
 
 class SimpleActivityInstance(BaseModel):
+    uid: str
+    nci_concept_id: str | None = Field(None, title="name", description="")
     name: str = Field(..., title="name", description="")
     name_sentence_case: str | None = Field(None, title="name", description="")
     abbreviation: str | None = Field(None, title="name", description="")
     definition: str | None = Field(None, title="name", description="")
     adam_param_code: str | None = Field(None, title="name", description="")
+    is_required_for_activity: bool = Field(
+        False, title="is_required_for_activity", description=""
+    )
+    is_default_selected_for_activity: bool = Field(
+        False, title="is_default_selected_for_activity", description=""
+    )
+    is_data_sharing: bool = Field(False, title="is_data_sharing", description="")
+    is_legacy_usage: bool = Field(False, title="is_legacy_usage", description="")
     topic_code: str | None = Field(None, title="name", description="")
     library_name: str = Field(..., title="name", description="")
     activity_instance_class: SimpleActivityInstanceClass = Field(...)
@@ -312,12 +347,16 @@ class ActivityOverview(BaseModel):
     def from_repository_input(cls, overview: dict):
         return cls(
             activity=SimpleActivity(
+                nci_concept_id=overview.get("activity_value").get("nci_concept_id"),
                 name=overview.get("activity_value").get("name"),
                 name_sentence_case=overview.get("activity_value").get(
                     "name_sentence_case"
                 ),
                 definition=overview.get("activity_value").get("definition"),
                 abbreviation=overview.get("activity_value").get("abbreviation"),
+                is_data_collected=overview.get("activity_value").get(
+                    "is_data_collected", False
+                ),
                 library_name=overview.get("activity_library_name"),
             ),
             activity_groupings=[
@@ -341,11 +380,21 @@ class ActivityOverview(BaseModel):
             ],
             activity_instances=[
                 SimpleActivityInstance(
+                    uid=activity_instance.get("uid"),
+                    nci_concept_id=activity_instance.get("nci_concept_id"),
                     name=activity_instance.get("name"),
                     name_sentence_case=activity_instance.get("name_sentence_case"),
                     abbreviation=activity_instance.get("abbreviation"),
                     definition=activity_instance.get("definition"),
                     adam_param_code=activity_instance.get("adam_param_code"),
+                    is_required_for_activity=activity_instance.get(
+                        "is_required_for_activity", False
+                    ),
+                    is_default_selected_for_activity=activity_instance.get(
+                        "is_default_selected_for_activity", False
+                    ),
+                    is_data_sharing=activity_instance.get("is_data_sharing", False),
+                    is_legacy_usage=activity_instance.get("is_legacy_usage", False),
                     topic_code=activity_instance.get("topic_code"),
                     library_name=activity_instance.get(
                         "activity_instance_library_name"

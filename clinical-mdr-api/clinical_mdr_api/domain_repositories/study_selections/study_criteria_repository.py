@@ -1,6 +1,5 @@
 import datetime
 from dataclasses import dataclass
-from typing import Sequence
 
 from neomodel import db
 
@@ -60,14 +59,24 @@ class StudySelectionCriteriaRepository:
         study_uid: str | None = None,
         project_name: str | None = None,
         project_number: str | None = None,
-    ) -> Sequence[StudySelectionCriteriaVO]:
+        study_value_version: str | None = None,
+    ) -> tuple[StudySelectionCriteriaVO]:
         query = ""
         query_parameters = {}
         if study_uid:
-            query = "MATCH (sr:StudyRoot { uid: $uid})-[l:LATEST]->(sv:StudyValue)"
-            query_parameters["uid"] = study_uid
+            if study_value_version:
+                query = "MATCH (sr:StudyRoot { uid: $uid})-[l:HAS_VERSION{status:'RELEASED', version:$study_value_version}]->(sv:StudyValue)"
+                query_parameters["study_value_version"] = study_value_version
+                query_parameters["uid"] = study_uid
+            else:
+                query = "MATCH (sr:StudyRoot { uid: $uid})-[l:LATEST]->(sv:StudyValue)"
+                query_parameters["uid"] = study_uid
         else:
-            query = "MATCH (sr:StudyRoot)-[l:LATEST]->(sv:StudyValue)"
+            if study_value_version:
+                query = "MATCH (sr:StudyRoot)-[l:HAS_VERSION{status:'RELEASED', version:$study_value_version}]->(sv:StudyValue)"
+                query_parameters["study_value_version"] = study_value_version
+            else:
+                query = "MATCH (sr:StudyRoot)-[l:LATEST]->(sv:StudyValue)"
 
         if project_name is not None or project_number is not None:
             query += (
@@ -144,7 +153,7 @@ class StudySelectionCriteriaRepository:
         self,
         project_name: str | None = None,
         project_number: str | None = None,
-    ) -> Sequence[StudySelectionCriteriaAR] | None:
+    ) -> list[StudySelectionCriteriaAR]:
         """
         Finds all the selected study criteria for all studies, and create the aggregate
         :return: List of StudySelectionCriteriaAR, potentially empty
@@ -172,7 +181,10 @@ class StudySelectionCriteriaRepository:
         return selection_aggregates
 
     def find_by_study(
-        self, study_uid: str, for_update: bool = False
+        self,
+        study_uid: str,
+        for_update: bool = False,
+        study_value_version: str | None = None,
     ) -> StudySelectionCriteriaAR | None:
         """
         Finds all the selected study criteria for a given study, and creates the aggregate
@@ -183,7 +195,9 @@ class StudySelectionCriteriaRepository:
 
         if for_update:
             self._acquire_write_lock_study_value(study_uid)
-        all_selections = self._retrieves_all_data(study_uid)
+        all_selections = self._retrieves_all_data(
+            study_uid, study_value_version=study_value_version
+        )
         selection_aggregate = StudySelectionCriteriaAR.from_repository_values(
             study_uid=study_uid, study_criteria_selection=all_selections
         )
@@ -207,50 +221,6 @@ class StudySelectionCriteriaRepository:
                 return Edit()
             return Create()
         return Delete()
-
-    def update_selection_to_instance(
-        self,
-        study_uid: str,
-        study_criteria_uid: str,
-        criteria_uid: str,
-        key_criteria: bool,
-        criteria_version: str,
-    ) -> None:
-        """Update the selection to instance
-
-        Args:
-            study_uid (str): The uid of the study
-            study_criteria_uid (str): The uid of the study criteria node
-            criteria_uid (str): The uid of the instance to select
-            criteria_version (str): The version of the instance to select
-
-        Returns:
-            None
-        """
-
-        # Get criteria value node
-        criteria_root_node: CriteriaRoot = CriteriaRoot.nodes.get(uid=criteria_uid)
-        latest_criteria_value_node = criteria_root_node.get_value_for_version(
-            criteria_version
-        )
-
-        # Get the latest version of the study criteria node
-        study_root_node: StudyRoot = StudyRoot.nodes.get(uid=study_uid)
-        latest_study_value_node: StudyValue = study_root_node.latest_value.single()
-        study_criteria_selection_node: StudyCriteria = (
-            latest_study_value_node.has_study_criteria.get_or_none(
-                uid=study_criteria_uid
-            )
-        )
-        # Connect study criteria node with criteria value node
-        study_criteria_selection_node.has_selected_criteria.connect(
-            latest_criteria_value_node
-        )
-        # Detach criteria selection node from criteria template node
-        study_criteria_selection_node.has_selected_criteria_template.disconnect_all()
-
-        study_criteria_selection_node.key_criteria = key_criteria
-        study_criteria_selection_node.save()
 
     def _get_latest_study_value(self, study_uid: str) -> tuple[StudyRoot, StudyValue]:
         """Returns the study root and latest study value nodes for the given study, if re-ordering is allowed
@@ -509,7 +479,7 @@ class StudySelectionCriteriaRepository:
         self,
         study_uid: str,
         criteria_type_uid: str | None = None,
-        study_selection_uid: str = None,
+        study_selection_uid: str | None = None,
     ):
         """
         returns the audit trail for study criteria either for a specific selection or for all study criteria for the study
@@ -609,7 +579,7 @@ class StudySelectionCriteriaRepository:
         self,
         study_uid: str,
         criteria_type_uid: str | None = None,
-        study_selection_uid: str = None,
+        study_selection_uid: str | None = None,
     ) -> list[dict | None]:
         """
         Simple method to return all versions of a study criteria for a study.

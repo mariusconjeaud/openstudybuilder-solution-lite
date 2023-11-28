@@ -8,6 +8,7 @@ import lombok.Setter;
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 @Getter @Setter
 public class Element {
+
     private String elementUid;
     private String studyUid;
     private int order;

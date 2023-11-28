@@ -94,17 +94,17 @@ export default {
       this.$emit('close')
     },
     async submit () {
-      const valid = await this.$refs.observer.validate()
-      if (!valid) {
-        return
-      }
       if (this.editItem.uid) {
         crfs.editNamespace(this.editItem.uid, this.form).then(() => {
           this.close()
+        }, _err => {
+          this.$refs.form.working = false
         })
       } else {
         crfs.createNamespace(this.form).then(() => {
           this.close()
+        }, _err => {
+          this.$refs.form.working = false
         })
       }
     },

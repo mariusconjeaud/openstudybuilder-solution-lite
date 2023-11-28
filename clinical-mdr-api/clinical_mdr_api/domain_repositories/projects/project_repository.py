@@ -1,4 +1,4 @@
-from typing import Collection, Sequence
+from typing import Collection
 
 from cachetools import TTLCache, cached
 from cachetools.keys import hashkey
@@ -141,9 +141,9 @@ class ProjectRepository:
         pass
 
     def find_all(self) -> Collection[ProjectAR]:
-        projects: Sequence[Project] = Project.nodes.all()
+        projects: list[Project] = Project.nodes.all()
         # projecting results to ProjectAR instances
-        projects: Sequence[ProjectAR] = [
+        projects: list[ProjectAR] = [
             ProjectAR.from_input_values(
                 project_number=p.project_number,
                 name=p.name,

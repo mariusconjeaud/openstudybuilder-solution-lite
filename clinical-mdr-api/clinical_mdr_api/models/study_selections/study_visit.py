@@ -12,7 +12,10 @@ from clinical_mdr_api.config import (
 from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import (
     StudyStatus,
 )
-from clinical_mdr_api.domains.study_selections.study_epoch import StudyEpochEpoch
+from clinical_mdr_api.domains.study_selections.study_epoch import (
+    EpochNamedTuple,
+    StudyEpochEpoch,
+)
 from clinical_mdr_api.domains.study_selections.study_visit import (
     StudyVisitContactMode,
     StudyVisitEpochAllocation,
@@ -258,7 +261,7 @@ class StudyEpochSimpleOGM(BaseModel):
         description="The uid of the study",
         source="has_after.audit_trail.uid",
     )
-    epoch: "StudyEpochEpoch" = Field(
+    epoch: EpochNamedTuple = Field(
         ...,
         title="Visit name name",
         description="The name of the visit",

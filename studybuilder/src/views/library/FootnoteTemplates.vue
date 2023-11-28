@@ -2,7 +2,7 @@
 <div class="px-4">
   <div class="page-title d-flex align-center">
     {{ $t('FootnoteTemplatesView.title') }}
-    <help-button :help-text="$t('_help.FootnoteTemplatesTable.general')" />
+    <help-button :help-text="$t('_help.FootnotesTemplatesTable.general')" />
   </div>
   <v-tabs v-model="tab">
     <v-tab

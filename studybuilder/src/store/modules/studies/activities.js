@@ -10,20 +10,12 @@ const getters = {
   sortedStudyActivities: state => {
     const result = {}
     for (const studyActivity of state.studyActivities) {
-      const fgroup = studyActivity.flowchart_group.sponsor_preferred_name
+      const fgroup = studyActivity.study_soa_group.soa_group_name
       if (!result[fgroup]) {
         Vue.set(result, fgroup, {})
       }
-      let grouping = null
-      if (studyActivity.activity.activity_groupings.length > 0) {
-        if (studyActivity.study_activity_group && studyActivity.study_activity_subgroup) {
-          grouping = studyActivity.activity.activity_groupings.find(
-            o => o.activity_group_uid === studyActivity.study_activity_group.activity_group_uid && o.activity_subgroup_uid === studyActivity.study_activity_subgroup.activity_subgroup_uid
-          )
-        }
-      }
-      const group = grouping ? grouping.activity_group_name : '(not selected)'
-      const subgroup = grouping ? grouping.activity_subgroup_name : '(not selected)'
+      const group = studyActivity.study_activity_group && studyActivity.study_activity_group.activity_group_name ? studyActivity.study_activity_group.activity_group_name : '(not selected)'
+      const subgroup = studyActivity.study_activity_subgroup && studyActivity.study_activity_subgroup.activity_subgroup_name ? studyActivity.study_activity_subgroup.activity_subgroup_name : '(not selected)'
       if (!result[fgroup][group]) {
         Vue.set(result[fgroup], group, {})
       }

@@ -12,7 +12,10 @@ from clinical_mdr_api.domain_repositories.models.study_audit_trail import (
     Edit,
 )
 from clinical_mdr_api.domain_repositories.models.study_selections import (
+    StudyActivityGroup,
+    StudyActivitySubGroup,
     StudySoAFootnote,
+    StudySoAGroup,
 )
 from clinical_mdr_api.domain_repositories.models.syntax import (
     FootnoteRoot,
@@ -45,35 +48,45 @@ class StudySoAFootnoteRepository:
             head([(sf)-[:HAS_SELECTED_FOOTNOTE]->(footnote_value:FootnoteValue)<-[:HAS_VERSION]-(footnote_root:FootnoteRoot) | footnote_root.uid]) AS footnote_uid,
             head([(sf)-[:HAS_SELECTED_FOOTNOTE_TEMPLATE]->(footnote_template_value:FootnoteTemplateValue)
             <-[:HAS_VERSION]-(footnote_template_root:FootnoteTemplateRoot) | footnote_template_root.uid]) AS footnote_template_uid,
-            [(sf)-[:REFERENCES_STUDY_ACTIVITY]->(study_activity:StudyActivity)<-[:HAS_STUDY_ACTIVITY]-(:StudyValue) | 
+            [(sf)-[:REFERENCES_STUDY_ACTIVITY]->(study_activity:StudyActivity)<-[:HAS_STUDY_ACTIVITY]-(sv) | 
                 {
                     uid:study_activity.uid, 
                     name:head([(study_activity)-[:HAS_SELECTED_ACTIVITY]->(activity_value:ActivityValue) | activity_value.name])
                 }] AS referenced_study_activities,
-            [(sf)-[:REFERENCES_STUDY_ACTIVITY_SUBGROUP]->(study_activity_subgroup:StudyActivitySubGroup)<-[:HAS_STUDY_ACTIVITY_SUBGROUP]-(:StudyValue) | 
+            [(sf)-[:REFERENCES_STUDY_ACTIVITY_SUBGROUP]->(study_activity_subgroup:StudyActivitySubGroup)
+                <-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]-(:StudyActivity)<-[:HAS_STUDY_ACTIVITY]-(sv) | 
                 {
                     uid:study_activity_subgroup.uid, 
                     name:head([(study_activity_subgroup)-[:HAS_SELECTED_ACTIVITY_SUBGROUP]->(activity_subgroup_value:ActivitySubGroupValue) | activity_subgroup_value.name])
                 }] AS referenced_study_activity_subgroups,
-            [(sf)-[:REFERENCES_STUDY_ACTIVITY_GROUP]->(study_activity_group:StudyActivityGroup)<-[:HAS_STUDY_ACTIVITY_GROUP]-(:StudyValue) | 
+            [(sf)-[:REFERENCES_STUDY_ACTIVITY_GROUP]->(study_activity_group:StudyActivityGroup)
+                <-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]-(:StudyActivity)<-[:HAS_STUDY_ACTIVITY]-(sv) | 
                 {
                     uid:study_activity_group.uid, 
                     name:head([(study_activity_group)-[:HAS_SELECTED_ACTIVITY_GROUP]->(activity_group_value:ActivityGroupValue) | activity_group_value.name])
                 }] AS referenced_study_activity_groups,
-            [(sf)-[:REFERENCES_STUDY_EPOCH]->(study_epoch:StudyEpoch)<-[:HAS_STUDY_EPOCH]-(:StudyValue) | 
+            [(sf)-[:REFERENCES_STUDY_SOA_GROUP]->(study_soa_group:StudySoAGroup)<-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]-(:StudyActivity)<-[:HAS_STUDY_ACTIVITY]-(sv) |
+                {
+                    uid:study_soa_group.uid, 
+                    name:head([(study_soa_group)-[:HAS_FLOWCHART_GROUP]->(:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-
+                        [:LATEST]->(term_name_value:CTTermNameValue) | term_name_value.name])
+                }] AS referenced_study_soa_groups,
+            [(sf)-[:REFERENCES_STUDY_EPOCH]->(study_epoch:StudyEpoch)<-[:HAS_STUDY_EPOCH]-(sv) | 
                 {
                     uid:study_epoch.uid, 
                     name:head([(study_epoch)-[:HAS_EPOCH]-(:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(term_value:CTTermNameValue) | term_value.name])
                 }] AS referenced_study_epochs,
-            [(sf)-[:REFERENCES_STUDY_VISIT]->(study_visit:StudyVisit)<-[:HAS_STUDY_VISIT]-(:StudyValue) | 
+            [(sf)-[:REFERENCES_STUDY_VISIT]->(study_visit:StudyVisit)<-[:HAS_STUDY_VISIT]-(sv) | 
                 {
                     uid:study_visit.uid, 
                     name:study_visit.short_visit_label
                 }] AS referenced_study_visits,
-            [(sf)-[:REFERENCES_STUDY_ACTIVITY_SCHEDULE]->(study_activity_schedule:StudyActivitySchedule)<-[:HAS_STUDY_ACTIVITY_SCHEDULE]-(:StudyValue) | 
+            [(sf)-[:REFERENCES_STUDY_ACTIVITY_SCHEDULE]->(study_activity_schedule:StudyActivitySchedule)<-[:HAS_STUDY_ACTIVITY_SCHEDULE]-(sv) | 
                 {
                     uid:study_activity_schedule.uid, 
-                    name:null
+                    name:head([(activity_value:ActivityValue)<-[:HAS_SELECTED_ACTIVITY]-(:StudyActivity)-[STUDY_ACTIVITY_HAS_SCHEDULE]->
+                        (study_activity_schedule)<-[:STUDY_VISIT_HAS_SCHEDULE]-(study_visit:StudyVisit)<-[:HAS_STUDY_VISIT]-(sv) 
+                        | activity_value.name + ' ' + study_visit.short_visit_label])
                 }] AS referenced_study_activity_schedules,
             head([(sf)<-[:BEFORE]-(before_action:StudyAction) | before_action.date]) AS end_date
             RETURN DISTINCT
@@ -87,12 +100,13 @@ class StudySoAFootnoteRepository:
                 sa.user_initials AS user_initials,
                 sa.status AS status,
                 labels(sa) AS change_type,
-                referenced_study_activities,
-                referenced_study_activity_subgroups,
-                referenced_study_activity_groups,
-                referenced_study_epochs,
-                referenced_study_visits,
-                referenced_study_activity_schedules
+                apoc.coll.toSet(referenced_study_activities) AS referenced_study_activities,
+                apoc.coll.toSet(referenced_study_activity_subgroups) AS referenced_study_activity_subgroups,
+                apoc.coll.toSet(referenced_study_activity_groups) AS referenced_study_activity_groups,
+                apoc.coll.toSet(referenced_study_soa_groups) AS referenced_study_soa_groups,
+                apoc.coll.toSet(referenced_study_epochs) AS referenced_study_epochs,
+                apoc.coll.toSet(referenced_study_visits) AS referenced_study_visits,
+                apoc.coll.toSet(referenced_study_activity_schedules) AS referenced_study_activity_schedules
             """
 
     def order_by_footnote_number(self):
@@ -123,13 +137,24 @@ class StudySoAFootnoteRepository:
                     item_name=activity_subgroup.get("name"),
                 )
             )
-        selected_study_activities = selection.get("referenced_study_activity_groups")
-        for activity_group in selected_study_activities:
+        selected_study_activity_groups = selection.get(
+            "referenced_study_activity_groups"
+        )
+        for activity_group in selected_study_activity_groups:
             referenced_items.append(
                 ReferencedItemVO(
                     item_uid=activity_group.get("uid"),
                     item_type=SoAItemType.STUDY_ACTIVITY_GROUP,
                     item_name=activity_group.get("name"),
+                )
+            )
+        selected_study_soa_groups = selection.get("referenced_study_soa_groups")
+        for soa_group in selected_study_soa_groups:
+            referenced_items.append(
+                ReferencedItemVO(
+                    item_uid=soa_group.get("uid"),
+                    item_type=SoAItemType.STUDY_SOA_GROUP,
+                    item_name=soa_group.get("name"),
                 )
             )
         selected_study_epochs = selection.get("referenced_study_epochs")
@@ -205,22 +230,38 @@ class StudySoAFootnoteRepository:
         return selection_vo
 
     def find_all_footnotes(
-        self,
-        study_uid: str | None = None,
+        self, study_uid: str | None = None, study_value_version: str | None = None
     ) -> list[StudySoAFootnoteVO]:
         query_parameters = {}
         if study_uid:
-            query = (
-                "MATCH (sr:StudyRoot {uid: $uid})-[l:LATEST]->(sv:StudyValue)-[:HAS_STUDY_FOOTNOTE]->"
-                "(sf:StudySoAFootnote)<-[:AFTER]-(sa:StudyAction)"
-            )
-            query_parameters["uid"] = study_uid
+            if study_value_version:
+                query = (
+                    "MATCH (sr:StudyRoot { uid: $uid})-[l:HAS_VERSION{status:'RELEASED', version:$study_value_version}]->(sv:StudyValue)"
+                    "-[:HAS_STUDY_FOOTNOTE]->(sf:StudySoAFootnote)<-[:AFTER]-(sa:StudyAction)"
+                )
+                query_parameters["study_value_version"] = study_value_version
+                query_parameters["uid"] = study_uid
+            else:
+                query = (
+                    "MATCH (sr:StudyRoot {uid: $uid})-[l:LATEST]->(sv:StudyValue)-[:HAS_STUDY_FOOTNOTE]->"
+                    "(sf:StudySoAFootnote)<-[:AFTER]-(sa:StudyAction)"
+                )
+                query_parameters["uid"] = study_uid
         else:
-            query = (
-                "MATCH (sr:StudyRoot)-[l:LATEST]->(sv:StudyValue)-[:HAS_STUDY_FOOTNOTE]->(sf:StudySoAFootnote)"
-                "<-[:AFTER]-(sa:StudyAction)"
-            )
-        query += self.where_query()
+            if study_value_version:
+                query = (
+                    "MATCH (sr:StudyRoot)-[l:HAS_VERSION{status:'RELEASED', version:$study_value_version}]->(sv:StudyValue)"
+                    "-[:HAS_STUDY_FOOTNOTE]->(sf:StudySoAFootnote)<-[:AFTER]-(sa:StudyAction)"
+                )
+                query_parameters["study_value_version"] = study_value_version
+            else:
+                query = (
+                    "MATCH (sr:StudyRoot)-[l:LATEST]->(sv:StudyValue)-[:HAS_STUDY_FOOTNOTE]->(sf:StudySoAFootnote)"
+                    "<-[:AFTER]-(sa:StudyAction)"
+                )
+
+        if not study_value_version:
+            query += self.where_query()
         query += self.with_query()
         query += self.order_by_footnote_number()
         all_study_soa_footnotes = db.cypher_query(query, query_parameters)
@@ -230,14 +271,24 @@ class StudySoAFootnoteRepository:
             all_selections.append(selection_vo)
         return all_selections
 
-    def find_by_uid(self, uid: str) -> StudySoAFootnoteVO:
+    def find_by_uid(
+        self, uid: str, study_value_version: str | None = None
+    ) -> StudySoAFootnoteVO:
         query_parameters = {}
         query_parameters["uid"] = uid
-        query = (
-            "MATCH (sr:StudyRoot)-[l:LATEST]->(sv:StudyValue)-[:HAS_STUDY_FOOTNOTE]->"
-            "(sf:StudySoAFootnote {uid:$uid})<-[:AFTER]-(sa:StudyAction)"
-        )
-        query += self.where_query()
+        if study_value_version:
+            query = (
+                "MATCH (sr:StudyRoot)-[l:HAS_VERSION{status:'RELEASED', version:$study_value_version}]->(sv:StudyValue)-[:HAS_STUDY_FOOTNOTE]->"
+                "(sf:StudySoAFootnote {uid:$uid})<-[:AFTER]-(sa:StudyAction)"
+            )
+            query_parameters["study_value_version"] = study_value_version
+        else:
+            query = (
+                "MATCH (sr:StudyRoot)-[l:LATEST]->(sv:StudyValue)-[:HAS_STUDY_FOOTNOTE]->"
+                "(sf:StudySoAFootnote {uid:$uid})<-[:AFTER]-(sa:StudyAction)"
+            )
+        if not study_value_version:
+            query += self.where_query()
         query += self.with_query()
         query += self.order_by_footnote_number()
 
@@ -303,14 +354,14 @@ class StudySoAFootnoteRepository:
                 referenced_item.item_type.value
                 == SoAItemType.STUDY_ACTIVITY_SUBGROUP.value
             ):
-                study_activity_referenced_node = (
-                    study_value.has_study_activity_subgroup.get_or_none(
+                study_activity_subgroup_referenced_node = (
+                    StudyActivitySubGroup.nodes.has(has_before=False).get_or_none(
                         uid=referenced_item.item_uid
                     )
                 )
-                if study_activity_referenced_node:
+                if study_activity_subgroup_referenced_node:
                     soa_footnote_node.references_study_activity_subgroup.connect(
-                        study_activity_referenced_node
+                        study_activity_subgroup_referenced_node
                     )
                 else:
                     not_found_items.append(referenced_item)
@@ -319,14 +370,23 @@ class StudySoAFootnoteRepository:
                 referenced_item.item_type.value
                 == SoAItemType.STUDY_ACTIVITY_GROUP.value
             ):
-                study_activity_referenced_node = (
-                    study_value.has_study_activity_group.get_or_none(
-                        uid=referenced_item.item_uid
-                    )
-                )
-                if study_activity_referenced_node:
+                study_activity_group_referenced_node = StudyActivityGroup.nodes.has(
+                    has_before=False
+                ).get_or_none(uid=referenced_item.item_uid)
+                if study_activity_group_referenced_node:
                     soa_footnote_node.references_study_activity_group.connect(
-                        study_activity_referenced_node
+                        study_activity_group_referenced_node
+                    )
+                else:
+                    not_found_items.append(referenced_item)
+            # SoA Group
+            if referenced_item.item_type.value == SoAItemType.STUDY_SOA_GROUP.value:
+                study_soa_group_referenced_node = StudySoAGroup.nodes.has(
+                    has_before=False
+                ).get_or_none(uid=referenced_item.item_uid)
+                if study_soa_group_referenced_node:
+                    soa_footnote_node.references_study_soa_group.connect(
+                        study_soa_group_referenced_node
                     )
                 else:
                     not_found_items.append(referenced_item)

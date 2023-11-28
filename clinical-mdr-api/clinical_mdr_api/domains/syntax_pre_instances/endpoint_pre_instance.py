@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable, Self, Sequence
+from typing import Callable, Self
 
 from clinical_mdr_api.domains.controlled_terminologies.ct_term_attributes import (
     CTTermAttributesAR,
@@ -20,22 +20,22 @@ class EndpointPreInstanceAR(PreInstanceAR):
     Implementation of EndpointPreInstanceAR. Solely based on Parametrized Template.
     """
 
-    _indications: Sequence[DictionaryTermAR] | None = None
+    _indications: list[DictionaryTermAR] | None = None
 
-    _categories: Sequence[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None
+    _categories: list[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None
 
-    _subcategories: Sequence[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None
+    _subcategories: list[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None
 
     @property
-    def indications(self) -> Sequence[DictionaryTermAR]:
+    def indications(self) -> list[DictionaryTermAR]:
         return self._indications
 
     @property
-    def categories(self) -> Sequence[tuple[CTTermNameAR, CTTermAttributesAR]]:
+    def categories(self) -> list[tuple[CTTermNameAR, CTTermAttributesAR]]:
         return self._categories
 
     @property
-    def sub_categories(self) -> Sequence[tuple[CTTermNameAR, CTTermAttributesAR]]:
+    def sub_categories(self) -> list[tuple[CTTermNameAR, CTTermAttributesAR]]:
         return self._subcategories
 
     @classmethod
@@ -47,11 +47,11 @@ class EndpointPreInstanceAR(PreInstanceAR):
         item_metadata: LibraryItemMetadataVO,
         sequence_id: str,
         study_count: int = 0,
-        indications: Sequence[DictionaryTermAR] | None = None,
-        categories: Sequence[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None,
-        sub_categories: Sequence[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None,
+        indications: list[DictionaryTermAR] | None = None,
+        categories: list[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None,
+        sub_categories: list[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None,
     ) -> Self:
-        ar = cls(
+        return cls(
             _uid=uid,
             _sequence_id=sequence_id,
             _item_metadata=item_metadata,
@@ -63,8 +63,6 @@ class EndpointPreInstanceAR(PreInstanceAR):
             _study_count=study_count,
         )
 
-        return ar
-
     @classmethod
     def from_input_values(
         cls,
@@ -75,9 +73,9 @@ class EndpointPreInstanceAR(PreInstanceAR):
         next_available_sequence_id_callback: Callable[[str], str | None] = (
             lambda _: None
         ),
-        indications: Sequence[DictionaryTermAR] | None = None,
-        categories: Sequence[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None,
-        sub_categories: Sequence[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None,
+        indications: list[DictionaryTermAR] | None = None,
+        categories: list[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None,
+        sub_categories: list[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None,
     ) -> Self:
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(author=author)
 

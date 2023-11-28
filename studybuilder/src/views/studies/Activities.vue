@@ -2,6 +2,7 @@
 <div class="px-4">
   <div class="page-title d-flex align-center">
     {{ $t('ActivitiesView.title') }} ({{ studyId }})
+    <help-button-with-panels :title="$t('_global.help')" :items="helpItems" />
   </div>
   <v-tabs v-model="tab">
     <v-tab v-for="tab of tabs" :key="tab.tab" :href="tab.tab">{{ tab.name }}</v-tab>
@@ -41,6 +42,7 @@ import StudyFootnoteTable from '@/components/studies/StudyFootnoteTable'
 import { studySelectedNavigationGuard } from '@/mixins/studies'
 import UnderConstruction from '@/components/layout/UnderConstruction'
 import { mapActions } from 'vuex'
+import HelpButtonWithPanels from '@/components/tools/HelpButtonWithPanels'
 
 export default {
   mixins: [studySelectedNavigationGuard],
@@ -50,7 +52,8 @@ export default {
     StudyActivityInstructionTable,
     StudyActivityTable,
     StudyFootnoteTable,
-    UnderConstruction
+    UnderConstruction,
+    HelpButtonWithPanels
   },
   data () {
     return {
@@ -66,7 +69,22 @@ export default {
         { tab: '#protocol', name: this.$t('ActivitiesView.tab5_title') },
         { tab: '#instructions', name: this.$t('ActivitiesView.tab6_title') }
       ],
-      redirectFootnote: {}
+      redirectFootnote: {},
+      helpItems: [
+        'StudyActivity.flowchart_group',
+        'StudyActivity.activity_group',
+        'StudyActivity.activity_sub_group',
+        'StudyActivity.activity',
+        'StudyActivity.data_collection',
+        'StudyActivity.expand_all',
+        'StudyActivity.collapse_all',
+        'StudyActivity.hide_activity_selection',
+        'StudyActivity.show_activity_selection',
+        'StudyActivity.hide_flowchart_groups',
+        'StudyActivity.edit_dialog_title',
+        'StudyActivity.download_docx',
+        'StudyActivity.instructions'
+      ]
     }
   },
   mounted () {

@@ -1,5 +1,3 @@
-from typing import Sequence
-
 from neomodel import db
 
 from clinical_mdr_api import exceptions, models
@@ -43,14 +41,18 @@ class StudyArmSelectionService(StudySelectionMixin):
     def _transform_all_to_response_model(
         self,
         study_selection: StudySelectionArmAR,
-    ) -> Sequence[models.StudySelectionArmWithConnectedBranchArms]:
+        study_value_version: str | None = None,
+    ) -> list[models.StudySelectionArmWithConnectedBranchArms]:
         result = []
         for order, selection in enumerate(
             study_selection.study_arms_selection, start=1
         ):
             result.append(
                 self._transform_single_to_response_model(
-                    selection, order=order, study_uid=study_selection.study_uid
+                    selection,
+                    order=order,
+                    study_uid=study_selection.study_uid,
+                    study_value_version=study_value_version,
                 )
             )
         return result
@@ -60,14 +62,16 @@ class StudyArmSelectionService(StudySelectionMixin):
         study_selection: StudySelectionArmVO,
         order: int,
         study_uid: str,
+        study_value_version: str | None = None,
     ) -> models.StudySelectionArmWithConnectedBranchArms:
         # pylint: disable=line-too-long
-        return models.study_selections.study_selection.StudySelectionArmWithConnectedBranchArms.from_study_selection_arm_ar__order__connected_branch_arms(
+        return models.StudySelectionArmWithConnectedBranchArms.from_study_selection_arm_ar__order__connected_branch_arms(
             study_uid=study_uid,
             selection=study_selection,
             order=order,
             find_simple_term_arm_type_by_term_uid=self._find_by_uid_or_raise_not_found,
             find_multiple_connected_branch_arm=self._find_branch_arms_connected_to_arm_uid,
+            study_value_version=study_value_version,
         )
 
     @db.transaction
@@ -91,8 +95,8 @@ class StudyArmSelectionService(StudySelectionMixin):
         # In order for filtering to work, we need to unwind the aggregated AR object first
         # Unwind ARs
         selections = []
-        for ar in arm_selection_ars:
-            parsed_selections = self._transform_all_to_response_model(ar)
+        for selection_ar in arm_selection_ars:
+            parsed_selections = self._transform_all_to_response_model(selection_ar)
             for selection in parsed_selections:
                 selections.append(selection)
 
@@ -144,8 +148,8 @@ class StudyArmSelectionService(StudySelectionMixin):
         # In order for filtering to work, we need to unwind the aggregated AR object first
         # Unwind ARs
         selections = []
-        for ar in arm_selection_ars:
-            parsed_selections = self._transform_all_to_response_model(ar)
+        for selection_ar in arm_selection_ars:
+            parsed_selections = self._transform_all_to_response_model(selection_ar)
             for selection in parsed_selections:
                 selections.append(selection)
 
@@ -171,13 +175,18 @@ class StudyArmSelectionService(StudySelectionMixin):
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
+        study_value_version: str | None = None,
     ) -> GenericFilteringReturn[models.StudySelectionArmWithConnectedBranchArms]:
         repos = MetaRepository()
         try:
-            arm_selection_ar = repos.study_arm_repository.find_by_study(study_uid)
+            arm_selection_ar = repos.study_arm_repository.find_by_study(
+                study_uid, study_value_version=study_value_version
+            )
 
             filtered_items = service_level_generic_filtering(
-                items=self._transform_all_to_response_model(arm_selection_ar),
+                items=self._transform_all_to_response_model(
+                    arm_selection_ar, study_value_version=study_value_version
+                ),
                 filter_by=filter_by,
                 filter_operator=filter_operator,
                 sort_by=sort_by,
@@ -519,7 +528,7 @@ class StudyArmSelectionService(StudySelectionMixin):
             order=order,
             get_objective_by_uid_callback=self._transform_latest_objective_model,
             get_objective_by_uid_version_callback=self._transform_objective_model,
-            get_ct_term_objective_level=self._find_by_uid_or_raise_not_found,
+            get_ct_term_by_uid=self._find_by_uid_or_raise_not_found,
             get_study_selection_endpoints_ar_by_study_uid_callback=(
                 repos.study_endpoint_repository.find_by_study
             ),
@@ -530,7 +539,7 @@ class StudyArmSelectionService(StudySelectionMixin):
 
     def _transform_each_history_to_response_model(
         self, study_selection_history: SelectionHistoryArm, study_uid: str
-    ) -> Sequence[models.StudySelectionArm]:
+    ) -> models.StudySelectionArm:
         return models.StudySelectionArm.from_study_selection_history(
             study_selection_history=study_selection_history,
             study_uid=study_uid,
@@ -540,7 +549,7 @@ class StudyArmSelectionService(StudySelectionMixin):
     @db.transaction
     def get_all_selection_audit_trail(
         self, study_uid: str
-    ) -> Sequence[models.StudySelectionArmVersion]:
+    ) -> list[models.StudySelectionArmVersion]:
         repos = self._repos
         try:
             try:
@@ -557,9 +566,9 @@ class StudyArmSelectionService(StudySelectionMixin):
             for i_unique in unique_list_uids:
                 ith_selection_history = []
                 # gather the selection history of the i_unique Uid
-                for x in selection_history:
-                    if x.study_selection_uid == i_unique:
-                        ith_selection_history.append(x)
+                for selection in selection_history:
+                    if selection.study_selection_uid == i_unique:
+                        ith_selection_history.append(selection)
                 # get the versions and compare
                 versions = [
                     self._transform_each_history_to_response_model(_, study_uid).dict()
@@ -578,7 +587,7 @@ class StudyArmSelectionService(StudySelectionMixin):
     @db.transaction
     def get_specific_selection_audit_trail(
         self, study_uid: str, study_selection_uid: str
-    ) -> Sequence[models.StudySelectionArmVersion]:
+    ) -> list[models.StudySelectionArmVersion]:
         repos = self._repos
         try:
             selection_history = repos.study_arm_repository.find_selection_history(
@@ -739,7 +748,7 @@ class StudyArmSelectionService(StudySelectionMixin):
             # add the arm and return
             # With Connected BranchArms because can carry out the connected BranchARms
             # pylint: disable=line-too-long
-            return models.study_selections.study_selection.StudySelectionArmWithConnectedBranchArms.from_study_selection_arm_ar__order__connected_branch_arms(
+            return models.StudySelectionArmWithConnectedBranchArms.from_study_selection_arm_ar__order__connected_branch_arms(
                 study_uid=study_uid,
                 selection=new_selection,
                 order=order,
@@ -751,19 +760,25 @@ class StudyArmSelectionService(StudySelectionMixin):
 
     @db.transaction
     def get_specific_selection(
-        self, study_uid: str, study_selection_uid: str
+        self,
+        study_uid: str,
+        study_selection_uid: str,
+        study_value_version: str | None = None,
     ) -> models.StudySelectionArmWithConnectedBranchArms:
         (
             _,
             new_selection,
             order,
-        ) = self._get_specific_arm_selection_by_uids(study_uid, study_selection_uid)
+        ) = self._get_specific_arm_selection_by_uids(
+            study_uid, study_selection_uid, study_value_version=study_value_version
+        )
         # With Connected BranchArms due to it may has already connected BranchArms to it
         # pylint: disable=line-too-long
-        return models.study_selections.study_selection.StudySelectionArmWithConnectedBranchArms.from_study_selection_arm_ar__order__connected_branch_arms(
+        return models.StudySelectionArmWithConnectedBranchArms.from_study_selection_arm_ar__order__connected_branch_arms(
             study_uid=study_uid,
             selection=new_selection,
             order=order,
             find_simple_term_arm_type_by_term_uid=self._find_by_uid_or_raise_not_found,
             find_multiple_connected_branch_arm=self._find_branch_arms_connected_to_arm_uid,
+            study_value_version=study_value_version,
         )

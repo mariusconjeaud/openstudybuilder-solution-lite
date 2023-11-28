@@ -9,8 +9,8 @@
 //import lombok.Getter;
 //import lombok.NoArgsConstructor;
 //import lombok.Setter;
-//import org.CSDISC.DDF.model.Code;
-//import org.CSDISC.DDF.model.StudyDesign;
+//import org.CDISC.DDF.model.Code;
+//import org.CDISC.DDF.model.StudyDesign;
 //import org.openstudybuilder.model.CurrentMetadata;
 //import org.openstudybuilder.model.OpenStudy;
 //import org.openstudybuilder.sdr.acct.AcctSdrStudy;
@@ -63,11 +63,11 @@
 ////    @Getter @Setter
 ////    @NoArgsConstructor
 ////    class AcctSdrStudy {
-////        private org.CSDISC.DDF.model.Study clinicalStudy;
+////        private org.CDISC.DDF.model.Study clinicalStudy;
 ////        // get the necessary items, set properties individually if we're stubbing values
 ////    }
 ////
-////    class AcctProtocolVersion extends org.CSDISC.DDF.model.StudyProtocolVersion {
+////    class AcctProtocolVersion extends org.CDISC.DDF.model.StudyProtocolVersion {
 ////        private List<Code> protocolStatus;
 ////
 ////        public AcctProtocolVersion(UUID studyProtocolVersionId) {

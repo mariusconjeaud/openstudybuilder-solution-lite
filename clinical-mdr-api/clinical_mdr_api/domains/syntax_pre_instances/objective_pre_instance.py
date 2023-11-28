@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable, Self, Sequence
+from typing import Callable, Self
 
 from clinical_mdr_api.domains.controlled_terminologies.ct_term_attributes import (
     CTTermAttributesAR,
@@ -22,20 +22,20 @@ class ObjectivePreInstanceAR(PreInstanceAR):
 
     _is_confirmatory_testing: bool | None = None
 
-    _indications: Sequence[DictionaryTermAR] | None = None
+    _indications: list[DictionaryTermAR] | None = None
 
-    _categories: Sequence[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None
+    _categories: list[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None
 
     @property
     def is_confirmatory_testing(self) -> bool:
         return self._is_confirmatory_testing
 
     @property
-    def indications(self) -> Sequence[DictionaryTermAR]:
+    def indications(self) -> list[DictionaryTermAR]:
         return self._indications
 
     @property
-    def categories(self) -> Sequence[tuple[CTTermNameAR, CTTermAttributesAR]]:
+    def categories(self) -> list[tuple[CTTermNameAR, CTTermAttributesAR]]:
         return self._categories
 
     @classmethod
@@ -48,10 +48,10 @@ class ObjectivePreInstanceAR(PreInstanceAR):
         sequence_id: str,
         study_count: int = 0,
         is_confirmatory_testing: bool | None = None,
-        indications: Sequence[DictionaryTermAR] | None = None,
-        categories: Sequence[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None,
+        indications: list[DictionaryTermAR] | None = None,
+        categories: list[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None,
     ) -> Self:
-        ar = cls(
+        return cls(
             _uid=uid,
             _sequence_id=sequence_id,
             _item_metadata=item_metadata,
@@ -62,8 +62,6 @@ class ObjectivePreInstanceAR(PreInstanceAR):
             _categories=categories,
             _study_count=study_count,
         )
-
-        return ar
 
     @classmethod
     def from_input_values(
@@ -76,8 +74,8 @@ class ObjectivePreInstanceAR(PreInstanceAR):
             lambda _: None
         ),
         is_confirmatory_testing: bool | None = None,
-        indications: Sequence[DictionaryTermAR] | None = None,
-        categories: Sequence[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None,
+        indications: list[DictionaryTermAR] | None = None,
+        categories: list[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None,
     ) -> Self:
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(author=author)
 

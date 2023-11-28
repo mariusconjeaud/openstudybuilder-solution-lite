@@ -12,6 +12,7 @@
     :export-data-url="baseUrl"
     v-bind="$attrs"
     v-on="$listeners"
+    :filters-modify-function="updateHeaderFilters"
     >
     <template v-slot:item.name="{ item }">
       <n-n-parameter-highlighter :name="item.name" :show-prefix-and-postfix="false" />
@@ -89,7 +90,8 @@ export default {
       required: false
     },
     type: String,
-    baseUrl: String
+    baseUrl: String,
+    instanceType: String
   },
   computed: {
     historyTitle () {
@@ -121,7 +123,7 @@ export default {
           width: '5%'
         },
         { text: this.$t('_global.library'), value: 'library.name' },
-        { text: this.$t('_global.template'), value: `${this.type}_template.name`, width: '30%', filteringName: `${this.type}_template.name_plain` },
+        { text: this.$t('_global.template'), value: `${this.type}_template.name`, width: '30%', filteringName: `${this.type}_template.name` },
         { text: this.$t(`_global.${this.type}`), value: 'name', filteringName: 'name_plain' },
         { text: this.$t('_global.modified'), value: 'start_date' },
         { text: this.$t('_global.status'), value: 'status' },
@@ -155,6 +157,12 @@ export default {
         }
       }
       this.$store.dispatch(this.fetchInstancesActionName, params)
+    },
+    updateHeaderFilters (jsonFilter, params) {
+      jsonFilter['criteria_template.type.term_uid'] = { v: [this.instanceType] }
+      return {
+        jsonFilter, params
+      }
     },
     async openHistory (instance) {
       this.selectedInstance = instance

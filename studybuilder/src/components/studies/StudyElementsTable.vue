@@ -45,15 +45,23 @@
             </v-icon>
             {{ item.order }}
           </td>
+          <td width="10%">{{ item.element_type.sponsor_preferred_name }}</td>
+          <td width="10%">{{ item.element_subtype.sponsor_preferred_name }}</td>
           <td width="15%">{{ item.name }}</td>
           <td width="15%">{{ item.short_name }}</td>
-          <td width="10%">{{ item.element_subtype.sponsor_preferred_name }}</td>
-          <td width="5%">{{ item.element_type }}</td>
+          <td width="5%">{{ item.start_rule }}</td>
+          <td width="10%">{{ item.end_rule }}</td>
+          <td width="5%"><v-chip :data-cy="'color='+item.element_colour" :color="item.element_colour" small /></td>
           <td width="10%">{{ item.description }}</td>
-          <td width="10%">{{ item.start_date | date }}</td>
-          <td width="10%">{{ item.user_initials }}</td>
+          <td width="5%">{{ item.start_date | date }}</td>
+          <td width="5%">{{ item.user_initials }}</td>
         </tr>
       </draggable>
+    </template>
+    <template v-slot:item.name="{ item }">
+      <router-link :to="{ name: 'StudyElementOverview', params: { study_id: selectedStudy.uid, id: item.element_uid } }">
+        {{ item.name }}
+      </router-link>
     </template>
     <template v-slot:item.element_colour="{ item }">
       <v-chip :data-cy="'color='+item.element_colour" :color="item.element_colour" small />
@@ -77,7 +85,7 @@
         color="primary"
         @click.stop="showForm = true"
         :title="$t('StudyElements.add_element')"
-        :disabled="!checkPermission($roles.STUDY_WRITE)"
+        :disabled="!checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
       >
         <v-icon>
           mdi-plus
@@ -134,7 +142,8 @@ export default {
   },
   computed: {
     ...mapGetters({
-      selectedStudy: 'studiesGeneral/selectedStudy'
+      selectedStudy: 'studiesGeneral/selectedStudy',
+      selectedStudyVersion: 'studiesGeneral/selectedStudyVersion'
     }),
     exportDataUrl () {
       return `studies/${this.selectedStudy.uid}/study-elements`
@@ -155,6 +164,7 @@ export default {
           label: this.$t('_global.edit'),
           icon: 'mdi-pencil-outline',
           iconColor: 'primary',
+          condition: () => !this.selectedStudyVersion,
           click: this.editStudyElement,
           accessRole: this.$roles.STUDY_WRITE
         },
@@ -162,6 +172,7 @@ export default {
           label: this.$t('_global.delete'),
           icon: 'mdi-delete-outline',
           iconColor: 'error',
+          condition: () => !this.selectedStudyVersion,
           click: this.deleteStudyElement,
           accessRole: this.$roles.STUDY_WRITE
         },
@@ -209,6 +220,7 @@ export default {
       const params = filteringParameters.prepareParameters(
         this.options, filters, sort, filtersUpdated)
       params.study_uid = this.selectedStudy.uid
+      params.study_value_version = this.selectedStudyVersion
       arms.getStudyElements(this.selectedStudy.uid, params).then(resp => {
         this.studyElements = resp.data.items
         this.total = resp.data.total

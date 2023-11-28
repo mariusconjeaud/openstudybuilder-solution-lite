@@ -13,6 +13,7 @@ from clinical_mdr_api.models.study_selections.study_soa_footnote import (
     StudySoAFootnoteVersion,
 )
 from clinical_mdr_api.models.utils import CustomPage
+from clinical_mdr_api.models.validators import FLOAT_REGEX
 from clinical_mdr_api.oauth import get_current_user_id, rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
@@ -105,6 +106,12 @@ def get_all_study_soa_footnotes(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
+    study_value_version: str
+    | None = Query(
+        None,
+        description="StudyValueVersion to extract the StudySelections",
+        regex=FLOAT_REGEX,
+    ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> CustomPage[StudySoAFootnote]:
     service = StudySoAFootnoteService(author=current_user_id)
@@ -116,6 +123,7 @@ def get_all_study_soa_footnotes(
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
         sort_by=sort_by,
+        study_value_version=study_value_version,
     )
     return CustomPage.create(
         items=all_footnotes.items,
@@ -156,6 +164,12 @@ def get_distinct_values_for_header(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
+    study_value_version: str
+    | None = Query(
+        None,
+        description="StudyValueVersion to extract the StudySelections",
+        regex=FLOAT_REGEX,
+    ),
 ):
     service = StudySoAFootnoteService(author=current_user_id)
     return service.get_distinct_values_for_header(
@@ -165,6 +179,7 @@ def get_distinct_values_for_header(
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
         result_count=result_count,
+        study_value_version=study_value_version,
     )
 
 
@@ -229,9 +244,17 @@ def get_study_soa_footnote(
     uid: str = utils.studyUID,
     study_soa_footnote_uid: str = utils.study_soa_footnote_uid,
     current_user_id: str = Depends(get_current_user_id),
+    study_value_version: str
+    | None = Query(
+        None,
+        description="StudyValueVersion to extract the StudySelections",
+        regex=FLOAT_REGEX,
+    ),
 ) -> StudySoAFootnote:
     service = StudySoAFootnoteService(author=current_user_id)
-    return service.get_by_uid(uid=study_soa_footnote_uid)
+    return service.get_by_uid(
+        uid=study_soa_footnote_uid, study_value_version=study_value_version
+    )
 
 
 @router.post(

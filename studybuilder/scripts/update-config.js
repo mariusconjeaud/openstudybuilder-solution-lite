@@ -1,30 +1,36 @@
 #!/usr/bin/env node
-// Script to update config.json from stdin to stdout interpolating with some environment variables
+// Usage: $0 SRC.json [ DST.json ]
+// Update JSON document from SRC to DST (or stdout) overwriting properties from environment variables
+// if an env var with same name is set and not empty
 
 const fs = require('fs')
+
+const ENCODING = 'utf8'
 
 const args = process.argv.slice(2)
 
 if (args.length < 1 || args.length > 2) {
-  console.error('Requires one or two arguments: SRC.json [DST.json]')
+  console.error('Requires one or two arguments: SRC.json [ DST.json ]')
   process.exit(1)
 }
+const inputFilename = args.shift()
+const outputFilename = args.length ? args.shift() : null
 
-let conf = {}
-if (args.length === 2) {
-  conf = JSON.parse(fs.readFileSync(args.shift(), { encoding: 'utf8' }))
-}
+const doc = JSON.parse(fs.readFileSync(inputFilename, { encoding: ENCODING }))
 
-if (process.env.BUILD_NUMBER) {
-  conf.BUILD_NUMBER = process.env.BUILD_NUMBER
-}
-if (process.env.BUILD_BRANCH) {
-  conf.BUILD_BRANCH = process.env.BUILD_BRANCH
-}
-if (process.env.BUILD_COMMIT) {
-  conf.BUILD_COMMIT = process.env.BUILD_COMMIT
+// update all properties of doc form env var if an env var with the same name is set (and not empty)
+for (const key in doc) {
+  if (key in process.env && process.env[key]) {
+    doc[key] = process.env[key]
+  }
 }
 
-fs.writeFileSync(args[0], JSON.stringify(conf, null, 4), { encoding: 'utf8' })
+const json = JSON.stringify(doc, null, 4)
+
+if (outputFilename !== null) {
+  fs.writeFileSync(outputFilename, json, { encoding: ENCODING })
+} else {
+  process.stdout.write(json)
+}
 
 process.exit(0)

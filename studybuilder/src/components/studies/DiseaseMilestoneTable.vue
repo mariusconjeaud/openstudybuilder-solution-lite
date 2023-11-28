@@ -14,6 +14,7 @@
     :export-data-url="exportDataUrl"
     :column-data-resource="exportDataUrl"
     has-api
+    disable-filtering
     >
     <template v-slot:afterSwitches>
       <div :title="$t('NNTableTooltips.reorder_content')">
@@ -33,7 +34,7 @@
         color="primary"
         @click="createDiseaseMilestone()"
         :title="$t('DiseaseMilestoneForm.add_title')"
-        :disabled="!checkPermission($roles.STUDY_WRITE)"
+        :disabled="!checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
         >
         <v-icon dark>
           mdi-plus
@@ -130,7 +131,8 @@ export default {
   },
   computed: {
     ...mapGetters({
-      selectedStudy: 'studiesGeneral/selectedStudy'
+      selectedStudy: 'studiesGeneral/selectedStudy',
+      selectedStudyVersion: 'studiesGeneral/selectedStudyVersion'
     }),
     exportDataUrl () {
       return `studies/${this.selectedStudy.uid}/study-disease-milestones`
@@ -151,6 +153,7 @@ export default {
           label: this.$t('_global.edit'),
           icon: 'mdi-pencil-outline',
           iconColor: 'primary',
+          condition: () => !this.selectedStudyVersion,
           click: this.editDiseaseMilestone,
           accessRole: this.$roles.STUDY_WRITE
         },
@@ -158,6 +161,7 @@ export default {
           label: this.$t('_global.delete'),
           icon: 'mdi-delete-outline',
           iconColor: 'error',
+          condition: () => !this.selectedStudyVersion,
           click: this.deleteDiseaseMilestone,
           accessRole: this.$roles.STUDY_WRITE
         },
@@ -190,6 +194,7 @@ export default {
     fetchDiseaseMilestones (filters, sort, filtersUpdated) {
       const params = filteringParameters.prepareParameters(
         this.options, filters, sort, filtersUpdated)
+      params.study_value_version = this.selectedStudyVersion
       study.getStudyDiseaseMilestones(this.selectedStudy.uid, params).then(resp => {
         this.diseaseMilestones = resp.data.items
         this.total = resp.data.total

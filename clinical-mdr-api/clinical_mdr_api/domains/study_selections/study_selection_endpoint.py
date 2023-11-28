@@ -1,7 +1,7 @@
 import datetime
 import sys
 from dataclasses import dataclass, field, replace
-from typing import Any, Callable, Iterable, Self, Sequence
+from typing import Any, Callable, Iterable, Self
 
 from pydantic import Field
 
@@ -96,15 +96,15 @@ class StudySelectionEndpointVO:
         study_objective_uid: str | None,
         timeframe_uid: str | None,
         timeframe_version: str | None,
-        endpoint_units: Sequence | None,
+        endpoint_units: list[Any] | None,
         endpoint_level_order: int | None,
         user_initials: str,
         study_uid: str | None = None,
-        study_selection_uid: str = None,
+        study_selection_uid: str | None = None,
         is_instance: bool = True,
         start_date: datetime.datetime | None = None,
         accepted_version: bool | None = False,
-        generate_uid_callback: Callable[[], str] = None,
+        generate_uid_callback: Callable[[], str] | None = None,
     ):
         """
         Factory method
@@ -258,7 +258,7 @@ class StudySelectionEndpointsAR:
         return self._study_uid
 
     @property
-    def study_endpoints_selection(self) -> Sequence[StudySelectionEndpointVO]:
+    def study_endpoints_selection(self) -> tuple[StudySelectionEndpointVO]:
         return self._study_endpoints_selection
 
     def get_specific_endpoint_selection(
@@ -381,9 +381,9 @@ class StudySelectionEndpointsAR:
                 # we check if the order is being changed to lower or higher and add it to the list appropriately
                 if old_order >= new_order:
                     # moving the selection to lower order
-                    """Check if we are allowed to insert the value here, the rules are:
-                    - The study objective have to be the same as the looped selection
-                    - The endpoint level have to be the same as the looped selection"""
+                    # Check if we are allowed to insert the value here, the rules are:
+                    # - The study objective have to be the same as the looped selection
+                    # - The endpoint level have to be the same as the looped selection
                     if (
                         selection.endpoint_level_order
                         == selected_value.endpoint_level_order
@@ -402,9 +402,9 @@ class StudySelectionEndpointsAR:
                         )
                 else:
                     # moving the selection to higher order
-                    """Check if we are allowed to insert the value here, the rules are:
-                    - The study objective have to be the same as the looped selection
-                    - The endpoint level have to be the same as the looped selection"""
+                    # Check if we are allowed to insert the value here, the rules are:
+                    # - The study objective have to be the same as the looped selection
+                    # - The endpoint level have to be the same as the looped selection
                     if (
                         selection.endpoint_level_order
                         == selected_value.endpoint_level_order
@@ -516,6 +516,7 @@ class StudySelectionEndpointsAR:
         endpoints_timeframes = []
         for selection in self.study_endpoints_selection:
             if (
+                selection.study_objective_uid,
                 selection.endpoint_uid,
                 selection.timeframe_uid,
                 *selection.endpoint_units,
@@ -525,6 +526,7 @@ class StudySelectionEndpointsAR:
                 )
             endpoints_timeframes.append(
                 (
+                    selection.study_objective_uid,
                     selection.endpoint_uid,
                     selection.timeframe_uid,
                     *selection.endpoint_units,

@@ -1,6 +1,6 @@
 import datetime
 from dataclasses import dataclass, field
-from typing import Any, Callable, Iterable, Self, Sequence
+from typing import Any, Callable, Iterable, Self
 
 from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains._utils import normalize_string
@@ -35,8 +35,8 @@ class StudySelectionArmVO:
         user_initials: str,
         study_selection_uid: str | None = None,
         study_uid: str | None = None,
-        name: str = None,
-        short_name: str = None,
+        name: str | None = None,
+        short_name: str | None = None,
         code: str | None = None,
         description: str | None = None,
         arm_colour: str | None = None,
@@ -48,7 +48,7 @@ class StudySelectionArmVO:
         status: str | None = None,
         change_type: str | None = None,
         accepted_version: bool | None = False,
-        generate_uid_callback: Callable[[], str] = None,
+        generate_uid_callback: Callable[[], str] | None = None,
     ) -> Self:
         """
         Factory method
@@ -166,7 +166,7 @@ class StudySelectionArmAR:
         return self._study_uid
 
     @property
-    def study_arms_selection(self) -> Sequence[StudySelectionArmVO]:
+    def study_arms_selection(self) -> tuple[StudySelectionArmVO]:
         return self._study_arms_selection
 
     def get_specific_arm_selection(

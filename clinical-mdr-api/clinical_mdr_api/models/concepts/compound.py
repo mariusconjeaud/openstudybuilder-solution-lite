@@ -1,4 +1,4 @@
-from typing import Callable, Self, Sequence
+from typing import Callable, Self
 
 from pydantic import Field
 
@@ -47,18 +47,18 @@ class Compound(Concept):
     nnc_long_number: str | None = Field(None, nullable=True)
     is_sponsor_compound: bool | None = True
     is_name_inn: bool | None = True
-    substances: Sequence[CompoundSubstance] | None
-    dose_values: Sequence[SimpleNumericValueWithUnit] | None
-    strength_values: Sequence[SimpleNumericValueWithUnit] | None
-    lag_times: Sequence[SimpleLagTime] | None
-    delivery_devices: Sequence[SimpleTermModel] | None
-    dispensers: Sequence[SimpleTermModel] | None
-    projects: Sequence[Project] | None
-    brands: Sequence[Brand] | None
+    substances: list[CompoundSubstance] | None
+    dose_values: list[SimpleNumericValueWithUnit] | None
+    strength_values: list[SimpleNumericValueWithUnit] | None
+    lag_times: list[SimpleLagTime] | None
+    delivery_devices: list[SimpleTermModel] | None
+    dispensers: list[SimpleTermModel] | None
+    projects: list[Project] | None
+    brands: list[Brand] | None
     half_life: SimpleNumericValueWithUnit | None
-    dose_frequencies: Sequence[SimpleTermModel] | None
-    dosage_forms: Sequence[SimpleTermModel] | None
-    routes_of_administration: Sequence[SimpleTermModel] | None
+    dose_frequencies: list[SimpleTermModel] | None
+    dosage_forms: list[SimpleTermModel] | None
+    routes_of_administration: list[SimpleTermModel] | None
 
     @classmethod
     def from_compound_ar(
@@ -249,17 +249,17 @@ class CompoundCreateInput(ConceptInput):
     nnc_long_number: str | None = None
     is_sponsor_compound: bool = True
     is_name_inn: bool = True
-    substance_terms_uids: Sequence[str] | None = []
-    dose_values_uids: Sequence[str] = []
-    strength_values_uids: Sequence[str] = []
-    lag_times_uids: Sequence[str] = []
-    delivery_devices_uids: Sequence[str] = []
-    dispensers_uids: Sequence[str] = []
-    projects_uids: Sequence[str] = []
-    brands_uids: Sequence[str] = []
-    dose_frequency_uids: Sequence[str] = []
-    dosage_form_uids: Sequence[str] = []
-    route_of_administration_uids: Sequence[str] = []
+    substance_terms_uids: list[str] | None = []
+    dose_values_uids: list[str] = []
+    strength_values_uids: list[str] = []
+    lag_times_uids: list[str] = []
+    delivery_devices_uids: list[str] = []
+    dispensers_uids: list[str] = []
+    projects_uids: list[str] = []
+    brands_uids: list[str] = []
+    dose_frequency_uids: list[str] = []
+    dosage_form_uids: list[str] = []
+    route_of_administration_uids: list[str] = []
     half_life_uid: str | None = None
 
 
@@ -269,18 +269,18 @@ class CompoundEditInput(ConceptInput):
     nnc_long_number: str | None
     is_sponsor_compound: bool | None
     is_name_inn: bool | None
-    substance_terms_uids: Sequence[str] | None = []
-    dose_values_uids: Sequence[str] | None = []
-    strength_values_uids: Sequence[str] | None = []
-    lag_times_uids: Sequence[str] | None = []
-    delivery_devices_uids: Sequence[str] | None = []
-    dispensers_uids: Sequence[str] | None = []
-    projects_uids: Sequence[str] | None = []
-    brands_uids: Sequence[str] | None = []
+    substance_terms_uids: list[str] | None = []
+    dose_values_uids: list[str] | None = []
+    strength_values_uids: list[str] | None = []
+    lag_times_uids: list[str] | None = []
+    delivery_devices_uids: list[str] | None = []
+    dispensers_uids: list[str] | None = []
+    projects_uids: list[str] | None = []
+    brands_uids: list[str] | None = []
     half_life_uid: str | None
-    dose_frequency_uids: Sequence[str] | None = []
-    dosage_form_uids: Sequence[str] | None = []
-    route_of_administration_uids: Sequence[str] | None = []
+    dose_frequency_uids: list[str] | None = []
+    dosage_form_uids: list[str] | None = []
+    route_of_administration_uids: list[str] | None = []
     change_description: str
 
 

@@ -95,5 +95,7 @@ class StudyActivityInstructionRepository(base.StudySelectionRepository):
             )
         return node
 
-    def _get_selection_with_history(self, study_uid: str, selection_uid: str = None):
+    def _get_selection_with_history(
+        self, study_uid: str, selection_uid: str | None = None
+    ):
         raise NotImplementedError

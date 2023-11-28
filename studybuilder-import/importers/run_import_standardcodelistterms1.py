@@ -269,7 +269,7 @@ class StandardCodelistTerms1(BaseImporter):
                     data["body"]["change_description"] = "Migration modification"
                     _res = self.api.simple_patch(
                         data["body"],
-                        f"/ct/terms{term_uid}/names",
+                        f"/ct/terms/{term_uid}/names",
                         "/ct/terms/{uid}/names",
                     )
                     # Approve Names

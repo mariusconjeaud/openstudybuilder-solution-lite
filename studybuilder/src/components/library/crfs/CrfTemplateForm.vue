@@ -189,11 +189,15 @@ export default {
         crfs.updateTemplate(this.form, this.selectedTemplate.uid).then(resp => {
           bus.$emit('notification', { msg: this.$t('CrfTemplates.template_updated') })
           this.close()
+        }, _err => {
+          this.$refs.form.working = false
         })
       } else {
         crfs.createTemplate(this.form).then(resp => {
           bus.$emit('notification', { msg: this.$t('CrfTemplates.template_created') })
           this.close()
+        }, _err => {
+          this.$refs.form.working = false
         })
       }
     },

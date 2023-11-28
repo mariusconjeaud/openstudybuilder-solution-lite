@@ -51,14 +51,11 @@
       </v-btn>
     </template>
     <template v-slot:item.actions="{ item }">
-      <v-btn
-        v-if="item.showExpandButton"
-        icon
-        @click="toggleExpandLockedHistory"
-        >
-        <v-icon v-if="!expandLockedHistory">mdi-chevron-right</v-icon>
-        <v-icon v-else>mdi-chevron-down</v-icon>
-      </v-btn>
+      <actions-menu
+        v-if="checkIfSelectable(item)"
+        :actions="actions"
+        :item="item"
+        />
     </template>
     <template v-slot:item.current_metadata.version_metadata.study_status="{ item }">
       <status-chip
@@ -90,6 +87,7 @@ import NNTable from '@/components/tools/NNTable'
 import StatusChip from '@/components/tools/StatusChip'
 import StudyStatusForm from './StudyStatusForm'
 import { accessGuard } from '@/mixins/accessRoleVerifier'
+import ActionsMenu from '@/components/tools/ActionsMenu'
 
 export default {
   mixins: [accessGuard],
@@ -97,20 +95,21 @@ export default {
     ConfirmDialog,
     NNTable,
     StatusChip,
-    StudyStatusForm
+    StudyStatusForm,
+    ActionsMenu
   },
   computed: {
     ...mapGetters({
-      selectedStudy: 'studiesGeneral/selectedStudy'
+      selectedStudy: 'studiesGeneral/selectedStudy',
+      selectedStudyVersion: 'studiesGeneral/selectedStudyVersion'
     })
   },
   data () {
     return {
       editedStudy: null,
-      expandLockedHistory: false,
       headers: [
-        { text: this.$t('Study.status'), value: 'current_metadata.version_metadata.study_status' },
         { text: '', value: 'actions', width: '5' },
+        { text: this.$t('Study.status'), value: 'current_metadata.version_metadata.study_status' },
         { text: this.$t('_global.version'), value: 'current_metadata.version_metadata.version_number' },
         { text: this.$t('Study.release_description'), value: 'current_metadata.version_metadata.version_description' },
         { text: this.$t('_global.modified'), value: 'current_metadata.version_metadata.version_timestamp' },
@@ -121,10 +120,25 @@ export default {
       showStatusForm: false,
       statusAction: null,
       items: [],
-      total: 0
+      total: 0,
+      actions: [
+        {
+          label: this.$t('StudyTable.select'),
+          icon: 'mdi-check-circle-outline',
+          iconColor: 'primary',
+          click: this.selectStudyVersion
+        }
+      ]
     }
   },
   methods: {
+    checkIfSelectable (studyVersion) {
+      return studyVersion.current_metadata.version_metadata.version_number !== this.selectedStudyVersion ||
+        studyVersion.current_metadata.version_metadata.study_status !== this.selectedStudy.current_metadata.version_metadata.study_status
+    },
+    selectStudyVersion (studyVersion) {
+      this.$store.dispatch('studiesGeneral/selectStudy', { studyObj: studyVersion, forceReload: true })
+    },
     closeEditForm () {
       this.showEditForm = false
       this.fetchItems()

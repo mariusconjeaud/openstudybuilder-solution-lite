@@ -59,13 +59,15 @@ def _return_false_callback(_val) -> bool:
     return False
 
 
-def create_random_valid_vo(selection_uid: str = None) -> StudySelectionCompoundVO:
+def create_random_valid_vo(
+    selection_uid: str | None = None,
+) -> StudySelectionCompoundVO:
     if selection_uid is None:
         selection_uid = random_str()
     uid_compound = random_str()
     uid_list.append(uid_compound)
-    dt = datetime.datetime.now(datetime.timezone.utc)
-    vo = StudySelectionCompoundVO.from_input_values(
+    start_datetime = datetime.datetime.now(datetime.timezone.utc)
+    study_selection_compound_vo = StudySelectionCompoundVO.from_input_values(
         compound_uid=uid_compound,
         compound_alias_uid=uid_compound,
         type_of_treatment_uid=random_str(),
@@ -77,24 +79,24 @@ def create_random_valid_vo(selection_uid: str = None) -> StudySelectionCompoundV
         device_uid="delivery_devices_uid1",
         formulation_uid=random_str(),
         other_info=random_str(),
-        start_date=dt,
+        start_date=start_datetime,
         user_initials="TODO USER",
         study_selection_uid=selection_uid,
     )
-    vo.validate(
+    study_selection_compound_vo.validate(
         selection_uid_by_details_callback=_return_false_callback,
         reason_for_missing_callback=_check_uid_exists_callback,
         compound_exist_callback=_check_uid_exists_callback,
         compound_alias_exist_callback=_check_uid_exists_callback,
         compound_callback=_compound_callback,
     )
-    return vo
+    return study_selection_compound_vo
 
 
 # test StudySelectionCompoundVO
 class TestStudySelectionCompoundVO(unittest.TestCase):
     def test__validate__success(self):
-        dt = datetime.datetime.now(datetime.timezone.utc)
+        start_datetime = datetime.datetime.now(datetime.timezone.utc)
         test_tuples = [
             [
                 "uid_compound",
@@ -196,7 +198,7 @@ class TestStudySelectionCompoundVO(unittest.TestCase):
                     device_uid=test_tuple[10],
                     formulation_uid=test_tuple[12],
                     other_info=test_tuple[14],
-                    start_date=dt,
+                    start_date=start_datetime,
                     user_initials="TODO USER",
                     study_selection_uid="dummy",
                 )
@@ -209,7 +211,7 @@ class TestStudySelectionCompoundVO(unittest.TestCase):
                 )
 
     def test__validate__failure(self):
-        dt = datetime.datetime.now(datetime.timezone.utc)
+        start_datetime = datetime.datetime.now(datetime.timezone.utc)
         test_tuples = [
             [
                 "uid_compound",
@@ -294,7 +296,7 @@ class TestStudySelectionCompoundVO(unittest.TestCase):
                     device_uid=test_tuple[10],
                     formulation_uid=test_tuple[12],
                     other_info=test_tuple[14],
-                    start_date=dt,
+                    start_date=start_datetime,
                     user_initials="TODO USER",
                     study_selection_uid="dummy",
                 )

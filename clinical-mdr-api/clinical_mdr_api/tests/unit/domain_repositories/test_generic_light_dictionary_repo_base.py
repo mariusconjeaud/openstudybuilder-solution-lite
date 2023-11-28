@@ -26,7 +26,7 @@ class AnEntityRepository(GenericLightDictionaryRepoBase[str, AnEntity]):
         return instance.key
 
 
-a_repository_refresh_counter = 0
+a_repository_refresh_counter = 0  # pylint: disable=invalid-name
 
 
 class ARepository(AnEntityRepository):
@@ -43,7 +43,7 @@ class ARepository(AnEntityRepository):
         }
 
 
-b_repository_refresh_counter = 0
+b_repository_refresh_counter = 0  # pylint: disable=invalid-name
 
 
 class BRepository(AnEntityRepository):

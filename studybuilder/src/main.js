@@ -21,6 +21,20 @@ export const bus = new Vue()
 
 fetch(process.env.BASE_URL + 'config.json').then(resp => {
   resp.json().then((config) => {
+    config.OAUTH_ENABLED = Boolean(config.OAUTH_ENABLED) &&
+      ['true', 'on', '1', 'yes', 'y'].indexOf(config.OAUTH_ENABLED.toString().toLowerCase()) !== -1
+    config.APPINSIGHTS_DISABLE = Boolean(config.APPINSIGHTS_DISABLE) &&
+      ['true', 'on', '1', 'yes', 'y'].indexOf(config.APPINSIGHTS_DISABLE.toString().toLowerCase()) !== -1
+
+    // backward compatibility with deprecated config properties //
+    if (!config.OAUTH_ENABLED && config.AUTH_ENABLED) {
+      config.OAUTH_ENABLED = ['true', 'on', '1', 'yes'].indexOf(config.AUTH_ENABLED.toString().toLowerCase()) !== -1
+    }
+    config.OAUTH_METADATA_URL = config.OAUTH_METADATA_URL ? config.OAUTH_METADATA_URL : config.AUTH_AUTHORITY +
+      (config.AUTH_AUTHORITY.endsWith('/') ? '' : '/') + '/.well-known/openid-configuration'
+    config.OAUTH_UI_APP_ID = config.OAUTH_UI_APP_ID ? config.OAUTH_UI_APP_ID : config.AUTH_CLIENT_ID
+    config.OAUTH_API_APP_ID = config.OAUTH_API_APP_ID ? config.OAUTH_API_APP_ID : config.AUTH_APP_ID
+
     Vue.prototype.$config = config
     Vue.use(auth)
     new Vue({

@@ -281,7 +281,7 @@ def get_versions(
 
 @router.post(
     "",
-    dependencies=[rbac.LIBRARY_WRITE],
+    dependencies=[rbac.LIBRARY_WRITE_OR_STUDY_WRITE],
     summary="Creates a new timeframe in 'Draft' status.",
     description="""This request is only valid if
 * the specified timeframe template is in 'Final' status and
@@ -324,7 +324,7 @@ def create(
 
 @router.post(
     "/preview",
-    dependencies=[rbac.LIBRARY_WRITE],
+    dependencies=[rbac.LIBRARY_WRITE_OR_STUDY_WRITE],
     summary="Previews the creation of a new timeframe.",
     description="""This request is only valid if
 * the specified timeframe template is in 'Final' status and
@@ -407,7 +407,7 @@ def edit(
 
 @router.post(
     "/{uid}/approvals",
-    dependencies=[rbac.LIBRARY_WRITE],
+    dependencies=[rbac.LIBRARY_WRITE_OR_STUDY_WRITE],
     summary="Approves the timeframe identified by 'uid'.",
     description="""This request is only valid if the timeframe
 * is in 'Draft' status and

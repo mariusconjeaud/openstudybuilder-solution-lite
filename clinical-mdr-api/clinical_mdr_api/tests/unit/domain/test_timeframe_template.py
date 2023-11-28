@@ -19,14 +19,14 @@ class TestTimeframeTemplateDomain(unittest.TestCase):
         # given
 
         # when
-        tv = TemplateVO.from_repository_values(
+        template_vo = TemplateVO.from_repository_values(
             template_name=self.default_template_name,
             template_name_plain=self.default_template_name,
         )
         lib = LibraryVO.from_repository_values(library_name="Library", is_editable=True)
-        # ar = TimeframeTemplateAR(_template=tv, _library=lib)
+        # ar = TimeframeTemplateAR(_template=template_vo, _library=lib)
         ar = TimeframeTemplateAR.from_repository_values(
-            template=tv,
+            template=template_vo,
             uid="some-uid",
             sequence_id="some-sequence_id",
             library=lib,
@@ -43,14 +43,14 @@ class TestTimeframeTemplateDomain(unittest.TestCase):
 
     def test__approve__version_created(self):
         # given
-        tv = TemplateVO.from_repository_values(
+        template_vo = TemplateVO.from_repository_values(
             template_name=self.default_template_name,
             template_name_plain=self.default_template_name,
         )
         lib = LibraryVO.from_repository_values(library_name="Library", is_editable=True)
-        # ar = TimeframeTemplateAR(_template=tv, _library=lib)
+        # ar = TimeframeTemplateAR(_template=template_vo, _library=lib)
         ar = TimeframeTemplateAR.from_repository_values(
-            template=tv,
+            template=template_vo,
             uid="some-uid",
             sequence_id="some-sequence_id",
             library=lib,
@@ -70,14 +70,14 @@ class TestTimeframeTemplateDomain(unittest.TestCase):
 
     def test__create_new_version__version_created(self):
         # given
-        tv = TemplateVO.from_repository_values(
+        template_vo = TemplateVO.from_repository_values(
             template_name=self.default_template_name,
             template_name_plain=self.default_template_name,
         )
         lib = LibraryVO.from_repository_values(library_name="Library", is_editable=True)
-        # ar = TimeframeTemplateAR(_template=tv, _library=lib)
+        # ar = TimeframeTemplateAR(_template=template_vo, _library=lib)
         ar = TimeframeTemplateAR.from_repository_values(
-            template=tv,
+            template=template_vo,
             uid="some-uid",
             sequence_id="some-sequence_id",
             library=lib,
@@ -102,14 +102,14 @@ class TestTimeframeTemplateDomain(unittest.TestCase):
 
     def test__edit_draft_version__version_created(self):
         # given
-        tv = TemplateVO.from_repository_values(
+        template_vo = TemplateVO.from_repository_values(
             template_name=self.default_template_name,
             template_name_plain=self.default_template_name,
         )
         lib = LibraryVO.from_repository_values(library_name="Library", is_editable=True)
-        # ar = TimeframeTemplateAR(_template=tv, _library=lib)
+        # ar = TimeframeTemplateAR(_template=template_vo, _library=lib)
         ar = TimeframeTemplateAR.from_repository_values(
-            template=tv,
+            template=template_vo,
             uid="some-uid",
             sequence_id="some-sequence_id",
             library=lib,
@@ -143,14 +143,14 @@ class TestTimeframeTemplateDomain(unittest.TestCase):
 
     def test__inactivate__version_created(self):
         # given
-        tv = TemplateVO.from_repository_values(
+        template_vo = TemplateVO.from_repository_values(
             template_name=self.default_template_name,
             template_name_plain=self.default_template_name,
         )
         lib = LibraryVO.from_repository_values(library_name="Library", is_editable=True)
-        # ar = TimeframeTemplateAR(_template=tv, _library=lib)
+        # ar = TimeframeTemplateAR(_template=template_vo, _library=lib)
         ar = TimeframeTemplateAR.from_repository_values(
-            template=tv,
+            template=template_vo,
             uid="some-uid",
             sequence_id="some-sequence_id",
             library=lib,
@@ -173,14 +173,14 @@ class TestTimeframeTemplateDomain(unittest.TestCase):
 
     def test__reactivate__version_created(self):
         # given
-        tv = TemplateVO.from_repository_values(
+        template_vo = TemplateVO.from_repository_values(
             template_name=self.default_template_name,
             template_name_plain=self.default_template_name,
         )
         lib = LibraryVO.from_repository_values(library_name="Library", is_editable=True)
-        # ar = TimeframeTemplateAR(_template=tv, _library=lib)
+        # ar = TimeframeTemplateAR(_template=template_vo, _library=lib)
         ar = TimeframeTemplateAR.from_repository_values(
-            template=tv,
+            template=template_vo,
             uid="some-uid",
             sequence_id="some-sequence_id",
             library=lib,

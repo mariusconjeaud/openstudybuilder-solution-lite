@@ -1,5 +1,3 @@
-from typing import Optional, Sequence
-
 from pydantic import Field
 
 from clinical_mdr_api.domains.standard_data_models.sponsor_model_dataset_variable import (
@@ -20,188 +18,188 @@ class SponsorModelDatasetVariable(SponsorModelBase):
         description="",
         source="uid",
     )
-    library_name: Optional[str] = Field(
+    library_name: str | None = Field(
         None,
         title="library_name",
         description="",
         source="has_library.name",
         nullable=True,
     )
-    is_basic_std: Optional[bool] = Field(
+    is_basic_std: bool | None = Field(
         None,
         title="is_basic_std",
         source="has_sponsor_model_instance.is_basic_std",
         nullable=True,
     )
-    label: Optional[str] = Field(
+    label: str | None = Field(
         None,
         title="label",
         source="has_sponsor_model_instance.label",
         nullable=True,
     )
-    order: Optional[int] = Field(
+    order: int | None = Field(
         None,
         title="order",
-        source="has_sponsor_model_instance.order",
+        source="has_sponsor_model_instance.has_variable|ordinal",
         nullable=True,
     )
-    variable_type: Optional[str] = Field(
+    variable_type: str | None = Field(
         None,
         title="variable_type",
         source="has_sponsor_model_instance.variable_type",
         nullable=True,
     )
-    length: Optional[int] = Field(
+    length: int | None = Field(
         None,
         title="length",
         source="has_sponsor_model_instance.length",
         nullable=True,
     )
-    display_format: Optional[str] = Field(
+    display_format: str | None = Field(
         None,
         title="display_format",
         source="has_sponsor_model_instance.display_format",
         nullable=True,
     )
-    xml_datatype: Optional[str] = Field(
+    xml_datatype: str | None = Field(
         None,
         title="xml_datatype",
         source="has_sponsor_model_instance.xml_datatype",
         nullable=True,
     )
-    xml_codelist: Optional[str] = Field(
+    xml_codelist: str | None = Field(
         None,
         title="xml_codelist",
         source="has_sponsor_model_instance.xml_codelist",
         nullable=True,
     )
-    xml_codelist_multi: Optional[Sequence[str]] = Field(
+    xml_codelist_multi: list[str] | None = Field(
         None,
         title="xml_codelist_multi",
         source="has_sponsor_model_instance.xml_codelist_multi",
         nullable=True,
     )
-    core: Optional[str] = Field(
+    core: str | None = Field(
         None,
         title="core",
         source="has_sponsor_model_instance.core",
         nullable=True,
     )
-    origin: Optional[str] = Field(
+    origin: str | None = Field(
         None,
         title="origin",
         source="has_sponsor_model_instance.origin",
         nullable=True,
     )
-    role: Optional[str] = Field(
+    role: str | None = Field(
         None,
         title="role",
         source="has_sponsor_model_instance.role",
         nullable=True,
     )
-    term: Optional[str] = Field(
+    term: str | None = Field(
         None,
         title="term",
         source="has_sponsor_model_instance.term",
         nullable=True,
     )
-    algorithm: Optional[str] = Field(
+    algorithm: str | None = Field(
         None,
         title="algorithm",
         source="has_sponsor_model_instance.algorithm",
         nullable=True,
     )
-    qualifiers: Optional[Sequence[str]] = Field(
+    qualifiers: list[str] | None = Field(
         None,
         title="qualifiers",
         source="has_sponsor_model_instance.qualifiers",
         nullable=True,
     )
-    comment: Optional[str] = Field(
+    comment: str | None = Field(
         None,
         title="comment",
         source="has_sponsor_model_instance.comment",
         nullable=True,
     )
-    ig_comment: Optional[str] = Field(
+    ig_comment: str | None = Field(
         None,
         title="ig_comment",
         source="has_sponsor_model_instance.ig_comment",
         nullable=True,
     )
-    class_table: Optional[str] = Field(
+    class_table: str | None = Field(
         None,
         title="class_table",
         source="has_sponsor_model_instance.class_table",
         nullable=True,
     )
-    class_column: Optional[str] = Field(
+    class_column: str | None = Field(
         None,
         title="class_column",
         source="has_sponsor_model_instance.class_column",
         nullable=True,
     )
-    map_var_flag: Optional[bool] = Field(
+    map_var_flag: bool | None = Field(
         None,
         title="map_var_flag",
         source="has_sponsor_model_instance.map_var_flag",
         nullable=True,
     )
-    fixed_mapping: Optional[str] = Field(
+    fixed_mapping: str | None = Field(
         None,
         title="fixed_mapping",
         source="has_sponsor_model_instance.fixed_mapping",
         nullable=True,
     )
-    include_in_raw: Optional[bool] = Field(
+    include_in_raw: bool | None = Field(
         None,
         title="include_in_raw",
         source="has_sponsor_model_instance.include_in_raw",
         nullable=True,
     )
-    nn_internal: Optional[bool] = Field(
+    nn_internal: bool | None = Field(
         None,
         title="nn_internal",
         source="has_sponsor_model_instance.nn_internal",
         nullable=True,
     )
-    value_lvl_where_cols: Optional[str] = Field(
+    value_lvl_where_cols: str | None = Field(
         None,
         title="value_lvl_where_cols",
         source="has_sponsor_model_instance.value_lvl_where_cols",
         nullable=True,
     )
-    value_lvl_label_col: Optional[str] = Field(
+    value_lvl_label_col: str | None = Field(
         None,
         title="value_lvl_label_col",
         source="has_sponsor_model_instance.value_lvl_label_col",
         nullable=True,
     )
-    value_lvl_collect_ct_val: Optional[str] = Field(
+    value_lvl_collect_ct_val: str | None = Field(
         None,
         title="value_lvl_collect_ct_val",
         source="has_sponsor_model_instance.value_lvl_collect_ct_val",
         nullable=True,
     )
-    value_lvl_ct_codelist_id_col: Optional[str] = Field(
+    value_lvl_ct_codelist_id_col: str | None = Field(
         None,
         title="value_lvl_ct_codelist_id_col",
         source="has_sponsor_model_instance.value_lvl_ct_codelist_id_col",
         nullable=True,
     )
-    enrich_build_order: Optional[int] = Field(
+    enrich_build_order: int | None = Field(
         None,
         title="enrich_build_order",
         source="has_sponsor_model_instance.enrich_build_order",
         nullable=True,
     )
-    enrich_rule: Optional[str] = Field(
+    enrich_rule: str | None = Field(
         None,
         title="enrich_rule",
         source="has_sponsor_model_instance.enrich_rule",
         nullable=True,
     )
-    xml_codelist_values: Optional[bool] = Field(
+    xml_codelist_values: bool | None = Field(
         None,
         title="xml_codelist_values",
         source="has_sponsor_model_instance.xml_codelist_values",
@@ -278,7 +276,7 @@ class SponsorModelDatasetVariableInput(BaseModel):
     display_format: str = Field(None, title="display_format", description="")
     xml_datatype: str = Field(None, title="xml_datatype", description="")
     xml_codelist: str = Field(None, title="xml_codelist", description="")
-    xml_codelist_multi: Sequence[str] = Field(
+    xml_codelist_multi: list[str] = Field(
         None, title="xml_codelist_multi", description=""
     )
     core: str = Field(None, title="core", description="")
@@ -286,7 +284,7 @@ class SponsorModelDatasetVariableInput(BaseModel):
     role: str = Field(None, title="role", description="")
     term: str = Field(None, title="term", description="")
     algorithm: str = Field(None, title="algorithm", description="")
-    qualifiers: Sequence[str] = Field(None, title="qualifiers", description="")
+    qualifiers: list[str] = Field(None, title="qualifiers", description="")
     comment: str = Field(None, title="comment", description="")
     ig_comment: str = Field(None, title="ig_comment", description="")
     class_table: str = Field(None, title="class_table", description="")
@@ -308,6 +306,6 @@ class SponsorModelDatasetVariableInput(BaseModel):
     enrich_build_order: int = Field(None, title="enrich_build_order", description="")
     enrich_rule: str = Field(None, title="enrich_rule", description="")
     xml_codelist_values: bool = Field(None, title="xml_codelist_values", description="")
-    library_name: Optional[str] = Field(
+    library_name: str | None = Field(
         "CDISC", title="library_name", description="Defaults to CDISC"
     )

@@ -3,6 +3,7 @@ from neomodel import (
     RelationshipFrom,
     RelationshipTo,
     StringProperty,
+    ZeroOrMore,
     ZeroOrOne,
 )
 
@@ -16,10 +17,13 @@ from clinical_mdr_api.domain_repositories.models.study_selections import StudySe
 
 class StudyDiseaseMilestone(StudySelection):
     study_value = RelationshipFrom(
-        StudyValue, "HAS_STUDY_DISEASE_MILESTONE", cardinality=ZeroOrOne
+        StudyValue, "HAS_STUDY_DISEASE_MILESTONE", cardinality=ZeroOrMore
     )
     status = StringProperty()
     has_disease_milestone_type = RelationshipTo(
-        CTTermRoot, "HAS_DISEASE_MILESTONE_TYPE", model=ClinicalMdrRel
+        CTTermRoot,
+        "HAS_DISEASE_MILESTONE_TYPE",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrOne,
     )
     repetition_indicator = BooleanProperty()

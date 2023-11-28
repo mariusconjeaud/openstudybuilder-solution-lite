@@ -98,20 +98,20 @@ export default {
       this.$refs.observer.reset()
     },
     async submit () {
-      const valid = await this.$refs.observer.validate()
-      if (!valid) {
-        return
-      }
       this.form.library_name = 'Sponsor'
       if (Object.keys(this.editedItem).length !== 0) {
         crfs.editAlias(this.editedItem.uid, this.form).then(() => {
           bus.$emit('notification', { msg: this.$t('CrfAliases.alias_edited') })
           this.close()
+        }, _err => {
+          this.$refs.form.working = false
         })
       } else {
         crfs.addAlias(this.form).then(() => {
           bus.$emit('notification', { msg: this.$t('CrfAliases.alias_created') })
           this.close()
+        }, _err => {
+          this.$refs.form.working = false
         })
       }
     }

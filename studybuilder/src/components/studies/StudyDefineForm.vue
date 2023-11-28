@@ -112,7 +112,6 @@
               :label="$t('StudyDefineForm.studystoprule')"
               :error-messages="errors"
               dense
-              clearable
               :disabled="stopRulesNone"
               ></v-text-field>
           </validation-provider>
@@ -240,7 +239,8 @@ export default {
       data.trial_type_codes = this.getTermsPayload('trial_type_codes')
       data.trial_phase_code = this.getTermPayload('trial_phase_code')
       if (this.stopRulesNone) {
-        data.studyStopRules = studyConstants.STOP_RULE_NONE
+        // This whole block can be removed if we decide to store NONE values as null in the backend
+        data.study_stop_rules = studyConstants.STOP_RULE_NONE
       }
       return data
     },
@@ -261,11 +261,6 @@ export default {
       }
     },
     async submit () {
-      const valid = await this.$refs.observer.validate()
-      if (!valid) {
-        return
-      }
-      this.$refs.form.working = true
       const data = this.prepareRequestPayload()
       try {
         await this.$store.dispatch('manageStudies/editStudyType', [this.selectedStudy.uid, data])
@@ -279,6 +274,8 @@ export default {
     updateStopRules (value) {
       if (value) {
         this.$set(this.form, 'study_stop_rules', null)
+      } else {
+        this.$set(this.form, 'study_stop_rules', '')
       }
     }
   },
@@ -292,8 +289,11 @@ export default {
         if (!this.metadata.confirmed_response_minimum_duration) {
           this.metadata.confirmed_response_minimum_duration = null
         }
-        if (this.metadata.study_stop_rules === studyConstants.STOP_RULE_NONE) {
+        if (this.form.study_stop_rules == null || this.form.study_stop_rules === studyConstants.STOP_RULE_NONE) {
           this.stopRulesNone = true
+          this.form.study_stop_rules = null
+        } else {
+          this.stopRulesNone = false
         }
       },
       immediate: true

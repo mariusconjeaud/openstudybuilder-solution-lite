@@ -18,7 +18,7 @@
           "name_plain": "Time to first occurrence of MACE+, a composite endpoint consisting of: CV death, nonfatal MI,nonfatal stroke, or hospitalization for unstable\u00a0angina",
           "uid": "ObjectiveTemplate_000005"
         },
-        "parameter_values": [],
+        "parameter_terms": [],
         "possible_actions": [
           "inactivate"
         ],
@@ -74,7 +74,7 @@
           "name_plain": "Time from randomisation to all cause death",
           "uid": "ObjectiveTemplate_000006"
         },
-        "parameter_values": [],
+        "parameter_terms": [],
         "possible_actions": [
           "inactivate"
         ],

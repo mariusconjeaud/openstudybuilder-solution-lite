@@ -184,6 +184,7 @@ export default {
     close () {
       this.form = { template: {} }
       this.templateForm = {}
+      this.parameters = []
       if (this.$refs.observer_1) {
         this.$refs.observer_1.reset()
       }

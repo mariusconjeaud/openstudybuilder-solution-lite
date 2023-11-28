@@ -1,7 +1,7 @@
-const DESCRIPTION_METADATA = '+current_metadata.study_description'
-const HIGH_LEVEL_STUDY_DESIGN_METADATA = '+current_metadata.high_level_study_design'
-const INTERVENTION_METADATA = '+current_metadata.study_intervention'
-const POPULATION_METADATA = '+current_metadata.study_population'
+const DESCRIPTION_METADATA = 'study_description'
+const HIGH_LEVEL_STUDY_DESIGN_METADATA = 'high_level_study_design'
+const INTERVENTION_METADATA = 'study_intervention'
+const POPULATION_METADATA = 'study_population'
 
 const STOP_RULE_NONE = 'NONE'
 

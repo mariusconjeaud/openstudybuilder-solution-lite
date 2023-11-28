@@ -40,7 +40,7 @@ class FootnoteTemplateRepository(GenericSyntaxTemplateRepository[FootnoteTemplat
         relationship: VersionRelationship,
         value: FootnoteTemplateValue,
         study_count: int = 0,
-        counts: InstantiationCountsVO = None,
+        counts: InstantiationCountsVO | None = None,
     ) -> FootnoteTemplateAR:
         return FootnoteTemplateAR.from_repository_values(
             uid=root.uid,

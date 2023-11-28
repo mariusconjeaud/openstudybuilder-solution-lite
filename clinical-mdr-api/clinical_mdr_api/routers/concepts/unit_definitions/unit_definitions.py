@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Sequence
+from typing import Any
 
 from fastapi import APIRouter, Body, Depends, Path, Query, Request, Response
 from fastapi import status as fast_api_status
@@ -262,7 +262,7 @@ The returned versions are ordered by `start_date` descending (newest entries fir
 
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=Sequence[UnitDefinitionModel],
+    response_model=list[UnitDefinitionModel],
     status_code=200,
     responses={
         200: {
@@ -323,7 +323,7 @@ def get_versions(
     request: Request,  # request is actually required by the allow_exports decorator
     uid: str = UnitDefinitionUID,
     service: Service = Depends(),
-) -> Sequence[UnitDefinitionModel]:
+) -> list[UnitDefinitionModel]:
     return service.get_versions(uid)
 
 

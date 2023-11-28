@@ -201,6 +201,14 @@
           </v-col>
         </v-row>
       </validation-provider>
+      <validation-provider v-if="editing" v-slot="{ errors }" rules="required">
+        <v-row>
+          <v-col>
+            <label class="v-label">{{ $t('UnitForm.reason_for_change') }}</label>
+            <v-textarea v-model="form.change_description" :error-messages="errors" dense clearable auto-grow rows="1" />
+          </v-col>
+        </v-row>
+      </validation-provider>
     </validation-observer>
   </template>
 </simple-form-dialog>
@@ -209,6 +217,7 @@
 <script>
 import { bus } from '@/main'
 import terms from '@/api/controlledTerminology/terms'
+import _isEmpty from 'lodash/isEmpty'
 import libraries from '@/api/libraries'
 import SimpleFormDialog from '@/components/tools/SimpleFormDialog'
 import StudybuilderUCUMField from '@/components/tools/StudybuilderUCUMField'
@@ -227,6 +236,9 @@ export default {
       return (this.unit.uid)
         ? this.$t('UnitForm.edit_title')
         : this.$t('UnitForm.add_title')
+    },
+    editing () {
+      return !_isEmpty(this.unit)
     }
   },
   data () {
@@ -284,7 +296,6 @@ export default {
     async submit () {
       const isValid = await this.$refs.observer.validate()
       if (!isValid) return
-      this.$refs.form.working = true
       if (this.form.ucum && this.form.ucum.term_uid) {
         this.$set(this.form, 'ucum', this.form.ucum.term_uid)
       }

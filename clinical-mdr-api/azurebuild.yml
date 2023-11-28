@@ -5,9 +5,7 @@ trigger:
   batch: true # Whether to batch changes per branch.  (false,n,no,off,on,true,y,yes)
   branches:  
     include: 
-    - main
-    - release/*
-
+    - feature/1555289-query-study-for-specific-version
 # Pipeline parameters
 parameters:
 - name: SERVICE_CONN
@@ -44,7 +42,6 @@ jobs:
 - job: test_app
   displayName: 'Testing the application' 
   timeoutInMinutes: 90
-  continueOnError: true
   steps:
     - checkout: self
       persistCredentials: true
@@ -87,9 +84,9 @@ jobs:
         NEO4J_DSN: 'bolt://neo4j:changeme1234@localhost:5087/neo4j'
         ALLOW_ORIGIN_REGEX: '.*'
         OAUTH_ENABLED: 'False'
-        OIDC_METADATA_DOCUMENT: $(CLINICAL-MDR-TEST-${{parameters.DEPLOY_ID_NUMBER}}-OIDC-DOC)
-        OAUTH_APP_ID: $(CLINICAL-MDR-AUTH-1-STUDYB-SERVER-ID)
-        OAUTH_APP_SECRET: $(CLINICAL-MDR-API-OAUTH-APP-SECRET)
+        OAUTH_METADATA_URL: $(CLINICAL-MDR-AUTH-${{parameters.DEPLOY_ID_NUMBER}}-OIDC-METADATA)
+        OAUTH_API_APP_ID: $(CLINICAL-MDR-AUTH-${{parameters.DEPLOY_ID_NUMBER}}-STUDYB-SERVER-ID)
+        OAUTH_API_APP_SECRET: $(CLINICAL-MDR-API-OAUTH-APP-SECRET)
         MS_GRAPH_INTEGRATION_ENABLED: $(MS_GRAPH_INTEGRATION_ENABLED)
         MS_GRAPH_GROUPS_QUERY: $(CLINICAL-MDR-API-MS-GRAPH-GROUPS-QUERY)
 
@@ -112,8 +109,8 @@ jobs:
         NEO4J_DSN: "bolt://neo4j:changeme1234@localhost:5087/neo4j"
         ALLOW_ORIGIN_REGEX: ".*"
         # Authentication is enabled unless OAUTH_ENABLED is false
-        OIDC_METADATA_DOCUMENT: $(CLINICAL-MDR-TEST-${{parameters.DEPLOY_ID_NUMBER}}-OIDC-DOC)
-        OAUTH_APP_ID: $(CLINICAL-MDR-AUTH-1-STUDYB-SERVER-ID)
+        OAUTH_METADATA_URL: $(CLINICAL-MDR-AUTH-${{parameters.DEPLOY_ID_NUMBER}}-OIDC-METADATA)
+        OAUTH_API_APP_ID: $(CLINICAL-MDR-AUTH-${{parameters.DEPLOY_ID_NUMBER}}-STUDYB-SERVER-ID)
         EXPIRED_ACCESS_TOKEN: $(CLINICAL-MDR-TEST-${{parameters.DEPLOY_ID_NUMBER}}-EXP-ACCESS-TOKEN)
 
     # Publish test results to Azure Pipelines
@@ -212,7 +209,6 @@ jobs:
 #############################################################################
 - job: evaluate_app
   displayName: 'Quality and license tasks' 
-  continueOnError: true
   timeoutInMinutes: 90
   steps:
     - checkout: self
@@ -252,7 +248,7 @@ jobs:
         
         pipenv run build-sbom > sbom.md
 
-        if [[ "$(Build.SourceBranchName)" != "main" && "$(Build.Reason)" == "PullRequest" && `git diff --exit-code sbom.md` ]]; then
+        if [[ "$(Build.SourceBranchName)" != "feature/1555289-query-study-for-specific-version" && "$(Build.Reason)" == "PullRequest" && `git diff --exit-code sbom.md` ]]; then
           git config --global user.email pipeline@studybuilder.com
           git config --global user.name "Pipeline $(Build.BuildNumber)"
 
@@ -286,8 +282,8 @@ jobs:
           echo "Committed and pushed changes to API specification." 
         fi
 
-        # Add git tag for api version only when building main branch
-        if [[ "$(Build.SourceBranchName)" == "main" ]]; then
+        # Add git tag for api version only when building feature/1555289-query-study-for-specific-version branch
+        if [[ "$(Build.SourceBranchName)" == "feature/1555289-query-study-for-specific-version" ]]; then
           git config --global user.email pipeline@studybuilder.com
           git config --global user.name "Pipeline $(Build.BuildNumber)"
 
@@ -317,7 +313,6 @@ jobs:
     - script: >-
         pipenv check | tee pipenv_report.txt
       displayName: "Check packages for security vulnerabilities"
-      continueOnError: true
 
     # black check
     - script: >-
@@ -331,8 +326,13 @@ jobs:
 
     # Check for absolute paths
     - script: >-
-        ./.git-hooks/absolute-import-paths.sh ./clinical_mdr_api
+        ./.git-hooks/absolute-import-paths.sh
       displayName: "Absolute Import Paths Check"
+
+    # Check for unnecessary typing imports
+    - script: >-
+        ./.git-hooks/no-unnecessary-importing-from-typing.sh
+      displayName: "Unnecessary Typing Imports Check"
 
     # Linting
     - script: >-
@@ -367,7 +367,6 @@ jobs:
 - job: schemathesis
   displayName: 'Schemathesis tests of API schema' 
   timeoutInMinutes: 90
-  continueOnError: true
   steps:
     - checkout: self
       persistCredentials: true
@@ -383,12 +382,12 @@ jobs:
 
     - template: pipelines/templates/docker-up.yml
       parameters:
-        OAUTH_ENABLED: false
-        OIDC_METADATA_DOCUMENT: $(CLINICAL-MDR-TEST-${{parameters.DEPLOY_ID_NUMBER}}-OIDC-DOC)
-        OAUTH_APP_ID: $(CLINICAL-MDR-AUTH-1-STUDYB-SERVER-ID)
-        OAUTH_APP_SECRET: $(CLINICAL-MDR-API-OAUTH-APP-SECRET)
-        MS_GRAPH_INTEGRATION_ENABLED: $(MS_GRAPH_INTEGRATION_ENABLED)
+        OAUTH_ENABLED: False
+        OAUTH_API_APP_ID: $(CLINICAL-MDR-AUTH-${{parameters.DEPLOY_ID_NUMBER}}-STUDYB-SERVER-ID)
+        OAUTH_API_APP_SECRET: $(CLINICAL-MDR-API-OAUTH-APP-SECRET)
+        OAUTH_METADATA_URL: $(CLINICAL-MDR-AUTH-${{parameters.DEPLOY_ID_NUMBER}}-OIDC-METADATA)
         MS_GRAPH_GROUPS_QUERY: $(CLINICAL-MDR-API-MS-GRAPH-GROUPS-QUERY)
+        MS_GRAPH_INTEGRATION_ENABLED: True
 
     - script: >-  # a single-line script, newlines replaced with spaces, no tailing newline
         wget --output-document - --progress=dot --retry-connrefused --timeout 3 --tries 20 \

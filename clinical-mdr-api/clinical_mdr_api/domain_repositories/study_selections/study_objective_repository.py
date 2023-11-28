@@ -1,14 +1,17 @@
 import datetime
 from dataclasses import dataclass
-from typing import Sequence
 
 from neomodel import db
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domain_repositories._utils import helpers
 from clinical_mdr_api.domain_repositories.generic_repository import (
     manage_previous_connected_study_selection_relationships,
 )
-from clinical_mdr_api.domain_repositories.models._utils import convert_to_datetime
+from clinical_mdr_api.domain_repositories.models._utils import (
+    convert_to_datetime,
+    to_relation_trees,
+)
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
     CTTermRoot,
 )
@@ -29,6 +32,8 @@ from clinical_mdr_api.domains.study_selections.study_selection_objective import 
     StudySelectionObjectiveVO,
 )
 from clinical_mdr_api.domains.versioned_object_aggregate import VersioningException
+
+# from clinical_mdr_api.models.study_selections.study_selection
 
 
 @dataclass
@@ -64,14 +69,24 @@ class StudySelectionObjectiveRepository:
         study_uid: str | None = None,
         project_name: str | None = None,
         project_number: str | None = None,
-    ) -> Sequence[StudySelectionObjectiveVO]:
+        study_value_version: str | None = None,
+    ) -> tuple[StudySelectionObjectiveVO]:
         query = ""
         query_parameters = {}
         if study_uid:
-            query = "MATCH (sr:StudyRoot { uid: $uid})-[l:LATEST]->(sv:StudyValue)"
-            query_parameters["uid"] = study_uid
+            if study_value_version:
+                query = "MATCH (sr:StudyRoot { uid: $uid})-[l:HAS_VERSION{status:'RELEASED', version:$study_value_version}]->(sv:StudyValue)"
+                query_parameters["study_value_version"] = study_value_version
+                query_parameters["uid"] = study_uid
+            else:
+                query = "MATCH (sr:StudyRoot { uid: $uid})-[l:LATEST]->(sv:StudyValue)"
+                query_parameters["uid"] = study_uid
         else:
-            query = "MATCH (sr:StudyRoot)-[l:LATEST]->(sv:StudyValue)"
+            if study_value_version:
+                query = "MATCH (sr:StudyRoot)-[l:HAS_VERSION{status:'RELEASED', version:$study_value_version}]->(sv:StudyValue)"
+                query_parameters["study_value_version"] = study_value_version
+            else:
+                query = "MATCH (sr:StudyRoot)-[l:LATEST]->(sv:StudyValue)"
 
         if project_name is not None or project_number is not None:
             query += (
@@ -149,7 +164,7 @@ class StudySelectionObjectiveRepository:
         self,
         project_name: str | None = None,
         project_number: str | None = None,
-    ) -> Sequence[StudySelectionObjectivesAR] | None:
+    ) -> list[StudySelectionObjectivesAR]:
         """
         Finds all the selected study objectives for all studies, and create the aggregate
         :return: List of StudySelectionObjectivesAR, potentially empty
@@ -176,7 +191,10 @@ class StudySelectionObjectiveRepository:
         return selection_aggregates
 
     def find_by_study(
-        self, study_uid: str, for_update: bool = False
+        self,
+        study_uid: str,
+        for_update: bool = False,
+        study_value_version: str | None = None,
     ) -> StudySelectionObjectivesAR | None:
         """
         Finds all the selected study objectives for a given study, and creates the aggregate
@@ -186,13 +204,37 @@ class StudySelectionObjectiveRepository:
         """
         if for_update:
             self._acquire_write_lock_study_value(study_uid)
-        all_selections = self._retrieves_all_data(study_uid)
+        all_selections = self._retrieves_all_data(
+            study_uid, study_value_version=study_value_version
+        )
         selection_aggregate = StudySelectionObjectivesAR.from_repository_values(
             study_uid=study_uid, study_objectives_selection=all_selections
         )
         if for_update:
             selection_aggregate.repository_closure_data = all_selections
         return selection_aggregate
+
+    def find_by_uid_specific_version(
+        self, uid: str, version: int
+    ) -> list[StudySelectionObjectiveVO]:
+        objective_node = to_relation_trees(
+            StudyObjective.nodes.fetch_relations(
+                "study_value__has_version",
+            ).filter(uid=uid, **{"study_value__has_version|version": str(version)})
+        )
+        unique_objectives = []
+        for ith_objective_node in objective_node:
+            if ith_objective_node not in unique_objectives:
+                unique_objectives.extend([ith_objective_node])
+        if len(unique_objectives) > 1:
+            raise exceptions.ValidationException(
+                f"Found more than one Study Objective node with uid='{uid}'."
+            )
+        if len(unique_objectives) == 0:
+            raise exceptions.ValidationException(
+                f"The Study Objective with uid='{uid}' could not be found."
+            )
+        return unique_objectives
 
     def _get_audit_node(
         self, study_selection: StudySelectionObjectivesAR, study_selection_uid: str
@@ -401,7 +443,7 @@ class StudySelectionObjectiveRepository:
         return StudyObjective.get_next_free_uid_and_increment_counter()
 
     def _get_selection_with_history(
-        self, study_uid: str, study_selection_uid: str = None
+        self, study_uid: str, study_selection_uid: str | None = None
     ):
         """
         returns the audit trail for study objectives either for a specific selection or for all study objectives for the study
@@ -478,7 +520,7 @@ class StudySelectionObjectiveRepository:
         return result
 
     def find_selection_history(
-        self, study_uid: str, study_selection_uid: str = None
+        self, study_uid: str, study_selection_uid: str | None = None
     ) -> list[dict | None]:
         """
         Simple method to return all versions of a study objectives for a study.

@@ -35,6 +35,7 @@ from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 log = logging.getLogger(__name__)
 
 study: Study
+study_objective_uid: str
 
 
 @pytest.fixture(scope="module")
@@ -63,6 +64,8 @@ def test_data():
 
 
 def test_objective_modify_actions_on_locked_study(api_client):
+    global study_objective_uid
+
     response = api_client.post(
         f"/studies/{study.uid}/study-objectives",
         json={
@@ -72,6 +75,8 @@ def test_objective_modify_actions_on_locked_study(api_client):
     )
     res = response.json()
     assert response.status_code == 201
+    assert res["objective_level"]["term_uid"] == "term_root_final"
+    study_objective_uid = res["study_objective_uid"]
 
     # get all objectives
     response = api_client.get(
@@ -80,7 +85,6 @@ def test_objective_modify_actions_on_locked_study(api_client):
     res = response.json()
     assert response.status_code == 200
     old_res = res
-    objective_uid = res[0]["study_objective_uid"]
 
     # update study title to be able to lock it
     response = api_client.patch(
@@ -91,7 +95,7 @@ def test_objective_modify_actions_on_locked_study(api_client):
 
     # Lock
     response = api_client.post(
-        f"/studies/{study.uid}/lock",
+        f"/studies/{study.uid}/locks",
         json={"change_description": "Lock 1"},
     )
     assert response.status_code == 201
@@ -105,7 +109,7 @@ def test_objective_modify_actions_on_locked_study(api_client):
     assert res["message"] == f"Study with specified uid '{study.uid}' is locked."
     # edit objective
     response = api_client.patch(
-        f"/studies/{study.uid}/study-objectives/{objective_uid}",
+        f"/studies/{study.uid}/study-objectives/{study_objective_uid}",
         json={"new_order": 2},
     )
     res = response.json()
@@ -119,6 +123,99 @@ def test_objective_modify_actions_on_locked_study(api_client):
     res = response.json()
     assert response.status_code == 200
     assert old_res == res
+
+    # test cannot delete
+    response = api_client.delete(
+        f"/studies/{study.uid}/study-objectives/{study_objective_uid}"
+    )
+    assert response.status_code == 400
+    assert (
+        response.json()["message"]
+        == f"Study with specified uid '{study.uid}' is locked."
+    )
+
+
+def test_study_objective_with_objective_level_relationship(api_client):
+    # get specific study objective
+    response = api_client.get(
+        f"/studies/{study.uid}/study-objectives/{study_objective_uid}",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["objective_level"]["term_uid"] == "term_root_final"
+    before_unlock = res
+
+    # get study objective headers
+    response = api_client.get(
+        f"/studies/{study.uid}/study-objectives/headers?field_name=objective_level.term_uid",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res == ["term_root_final"]
+
+    # Unlock
+    response = api_client.delete(f"/studies/{study.uid}/locks")
+    assert response.status_code == 200
+
+    # edit study objective
+    response = api_client.patch(
+        f"/studies/{study.uid}/study-objectives/{study_objective_uid}",
+        json={
+            "objective_uid": "Objective_000001",
+            "objective_level_uid": "term_root_final5",
+        },
+    )
+    res = response.json()
+    assert res["objective_level"]["term_uid"] == "term_root_final5"
+    assert response.status_code == 200
+
+    # get all study objectives of a specific study version
+    response = api_client.get(
+        f"/studies/{study.uid}/study-objectives?study_value_version=1",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["items"][0] == before_unlock
+
+    # get specific study objective of a specific study version
+    response = api_client.get(
+        f"/studies/{study.uid}/study-objectives/{study_objective_uid}?study_value_version=1",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res == before_unlock
+
+    # get study objective headers of specific study version
+    response = api_client.get(
+        f"/studies/{study.uid}/study-objectives/headers?field_name=objective_level.term_uid&study_value_version=1",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res == ["term_root_final"]
+
+    # get all study objectives
+    response = api_client.get(
+        f"/studies/{study.uid}/study-objectives",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["items"][0]["objective_level"]["term_uid"] == "term_root_final5"
+
+    # get specific study objective
+    response = api_client.get(
+        f"/studies/{study.uid}/study-objectives/{study_objective_uid}",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["objective_level"]["term_uid"] == "term_root_final5"
+
+    # get study objective headers
+    response = api_client.get(
+        f"/studies/{study.uid}/study-objectives/headers?field_name=objective_level.term_uid",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res == ["term_root_final5"]
 
 
 @pytest.mark.parametrize(

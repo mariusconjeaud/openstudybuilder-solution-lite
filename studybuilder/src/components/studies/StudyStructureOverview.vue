@@ -90,6 +90,7 @@ export default {
   computed: {
     ...mapGetters({
       selectedStudy: 'studiesGeneral/selectedStudy',
+      selectedStudyVersion: 'studiesGeneral/selectedStudyVersion',
       studyEpochs: 'studyEpochs/studyEpochs'
     }),
     plannedNumberOfSubjects () {
@@ -130,19 +131,23 @@ export default {
     }
   },
   mounted () {
-    this.$store.dispatch('studyEpochs/fetchStudyEpochs', this.selectedStudy.uid)
+    const params = {
+      study_value_version: this.selectedStudyVersion
+    }
+    this.$store.dispatch('studyEpochs/fetchStudyEpochs', { studyUid: this.selectedStudy.uid, data: params })
     this.cellsLoading = true
-    arms.getAllStudyCells(this.selectedStudy.uid).then(resp => {
+    arms.getAllStudyCells(this.selectedStudy.uid, params).then(resp => {
       this.cells = resp.data
       this.cellsLoading = false
     })
     this.armsLoading = true
-    arms.getAllForStudy(this.selectedStudy.uid, { page_size: 0 }).then(resp => {
+    params.page_size = 0
+    arms.getAllForStudy(this.selectedStudy.uid, { params }).then(resp => {
       this.arms = resp.data.items
       this.armsLoading = false
     })
     this.metadataLoading = true
-    study.getStudyInterventionMetadata(this.selectedStudy.uid).then(resp => {
+    study.getStudyInterventionMetadata(this.selectedStudy.uid, this.selectedStudyVersion).then(resp => {
       this.metadata = resp.data.current_metadata.study_intervention
       this.metadataLoading = false
     })

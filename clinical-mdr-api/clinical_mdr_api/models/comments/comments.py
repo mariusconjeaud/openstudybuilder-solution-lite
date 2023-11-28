@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Callable, Self, Sequence
+from typing import Callable, Self
 
 from pydantic import Field
 
@@ -96,7 +96,7 @@ class CommentThread(BaseModel):
         None,
         nullable=True,
     )
-    replies: Sequence[CommentReply] = Field([])
+    replies: list[CommentReply] = Field([])
 
     @classmethod
     def from_uid(

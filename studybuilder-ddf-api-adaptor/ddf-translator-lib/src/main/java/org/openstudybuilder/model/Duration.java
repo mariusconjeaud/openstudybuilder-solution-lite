@@ -8,6 +8,7 @@ import lombok.Setter;
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 @Getter @Setter
 public class Duration {
+
     private int durationValue;
     private Code durationUnitCode;
 }

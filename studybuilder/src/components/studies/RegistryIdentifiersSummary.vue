@@ -31,7 +31,8 @@ export default {
   },
   computed: {
     ...mapGetters({
-      selectedStudy: 'studiesGeneral/selectedStudy'
+      selectedStudy: 'studiesGeneral/selectedStudy',
+      selectedStudyVersion: 'studiesGeneral/selectedStudyVersion'
     })
   },
   data () {
@@ -73,7 +74,7 @@ export default {
   },
   mounted () {
     this.$store.dispatch('studiesGeneral/fetchNullValues')
-    study.getStudy(this.selectedStudy.uid).then(resp => {
+    study.getStudy(this.selectedStudy.uid, false, this.selectedStudyVersion).then(resp => {
       this.identifiers = resp.data.current_metadata.identification_metadata.registry_identifiers
     })
   }

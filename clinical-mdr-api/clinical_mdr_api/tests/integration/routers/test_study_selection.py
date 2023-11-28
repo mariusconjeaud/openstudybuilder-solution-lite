@@ -197,7 +197,9 @@ class StudyCompoundsTest(api.APITest):
         TestUtils.create_study_ct_data_map(
             codelist_uid="CTCodelist_000001", ct_data_map=initialize_ct_data_map
         )
+        TestUtils.create_study_fields_configuration()
         db.cypher_query(STARTUP_STUDY_COMPOUND_CYPHER)
+
         from clinical_mdr_api import main
 
         self.test_client = TestClient(main.app)
@@ -214,6 +216,7 @@ class StudyCompoundsTest(api.APITest):
             "PClass",
             "change_description",
             "user_initials",
+            "version_timestamp",
         ]
 
 
@@ -274,6 +277,8 @@ class StudyArmsTest(api.APITest):
         from clinical_mdr_api import main
 
         self.test_client = TestClient(main.app)
+        # locking and unlocking to create multiple study value relationships on the existent StudySelections
+        TestUtils.create_study_fields_configuration()
 
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "study_selection_arms.json")]
 
@@ -286,6 +291,7 @@ class StudyArmsTest(api.APITest):
             "uid",
             "user_initials",
             "codelist_uid",
+            "version_timestamp",
         ]
 
 
@@ -395,6 +401,8 @@ class StudyElementsTest(api.APITest):
             ct_units=[week_term.uid],
             unit_subsets=[study_time_subset.uid],
         )
+        # locking and unlocking to create multiple study value relationships on the existent StudySelections
+        TestUtils.create_study_fields_configuration()
 
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "study_selection_elements.json")]
 
@@ -407,6 +415,7 @@ class StudyElementsTest(api.APITest):
             "uid",
             "user_initials",
             "codelist_uid",
+            "version_timestamp",
         ]
 
 
@@ -486,6 +495,8 @@ class StudyBranchArmsTest(api.APITest):
             study_design_cell_uid=self.design_cell.design_cell_uid,
             study_uid=self.study.uid,
         )
+        # locking and unlocking to create multiple study value relationships on the existent StudySelections
+        TestUtils.create_study_fields_configuration()
         from clinical_mdr_api import main
 
         self.test_client = TestClient(main.app)
@@ -503,6 +514,7 @@ class StudyBranchArmsTest(api.APITest):
             "uid",
             "user_initials",
             "codelist_uid",
+            "version_timestamp",
         ]
 
 
@@ -694,6 +706,8 @@ class StudyDesignCellsTest(api.APITest):
         db.cypher_query(STARTUP_CT_TERM_NAME_CYPHER)
         db.cypher_query(STARTUP_STUDY_ARM_CYPHER)
         db.cypher_query(STARTUP_STUDY_BRANCH_ARM_CYPHER)
+        # locking and unlocking to create multiple study value relationships on the existent StudySelections
+        TestUtils.create_study_fields_configuration()
 
         from clinical_mdr_api import main
 
@@ -713,6 +727,7 @@ class StudyDesignCellsTest(api.APITest):
             "uid",
             "user_initials",
             "codelist_uid",
+            "version_timestamp",
         ]
 
 
@@ -911,6 +926,8 @@ class StudyDesignJointTest(api.APITest):
             study_epoch_uid=epoch.uid,
             study_epoch_input=edit_input,
         )
+        # locking and unlocking to create multiple study value relationships on the existent StudySelections
+        TestUtils.create_study_fields_configuration()
 
         from clinical_mdr_api import main
 
@@ -928,4 +945,5 @@ class StudyDesignJointTest(api.APITest):
             "uid",
             "user_initials",
             "codelist_uid",
+            "version_timestamp",
         ]

@@ -14,7 +14,7 @@
 //    @BeforeAll
 //    public static void init() {
 //        try {
-//            var file = SDRWrapperTest.class
+//            InputStream file = SDRWrapperTest.class
 //                    .getClassLoader().getResourceAsStream("application.properties");
 //            if (file != null) System.getProperties().load(file);
 //        } catch (IOException e) {

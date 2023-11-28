@@ -1,10 +1,13 @@
-from os import walk
+from os import walk, path
 import csv
 import sys
 
 df_path = 'datafiles'
 e2e_df_path = 'e2e_datafiles'
-path_to_skip = 'datafiles/mockup/exported'
+paths_to_skip = [
+    'datafiles/mockup/exported',
+    'e2e_datafiles/mockup/exported'
+]
 
 
 def sort_and_ignore_json(files):
@@ -22,25 +25,25 @@ def read_header_csv(root, file):
     return header
 
 
-def check_no_diff_in_file(path1, path2, skip_path):
+def check_no_diff_in_file(path1, path2, skip_paths):
     print('------------------- Test Started -------------------------')
     list_of_new_files = []
     list_of_changed_files = []
     list_of_missing_files = []
-    for (root1, dirs1, files1), (root2, dirs2, files2) in zip(walk(path1), walk(path2)):
-        print(f'Scanning: {root1}')
-        dirs1 = set(dirs1)
-        dirs2 = set(dirs2)
-        if dirs1 != dirs2:
+    for (root1, dirs1, files1), (root2, dirs2, files2) in zip(walk(path1, topdown=True), walk(path2, topdown=True)):
+        print(f'Comparing: {root1} <> {root2} ')
+        dirs1[:] = [d for d in dirs1 if not any(path.join(root1, d).startswith(p) for p in skip_paths)]
+        dirs2[:] = [d for d in dirs2 if not any(path.join(root2, d).startswith(p) for p in skip_paths)]
+        dirs1set = set(dirs1)
+        dirs2set = set(dirs2)
+        if dirs1set != dirs2set:
             print(
-                f'-> ERROR: Difference in sub-directories detected in: {root1}')
-            if dirs1-dirs2:
-                print(f'-> New folder in {root1}: {dirs1-dirs2}')
-            if dirs2-dirs1:
-                print(f'-> Missing folder in {root1}: {dirs2-dirs1}')
+                f'-> ERROR: Difference in sub-directories detected between {root1} and {root2}')
+            if dirs1set-dirs2set:
+                print(f'-> Missing folder in {root2}: {", ".join(dirs1set-dirs2set)}')
+            if dirs2set-dirs1set:
+                print(f'-> Missing folder in {root1}: {", ".join(dirs2set-dirs1set)}')
             return False
-        elif root1 == skip_path:
-            print(f'-> Skipping: {root1}')
         else:
             files1 = sort_and_ignore_json(files1)
             files2 = sort_and_ignore_json(files2)
@@ -69,7 +72,7 @@ def check_no_diff_in_file(path1, path2, skip_path):
         return True
     elif list_of_new_files or list_of_changed_files or list_of_missing_files:
         if list_of_new_files:
-            print(f'-> ERROR: New file(s) in datafiles: {list_of_new_files}')
+            print(f'-> ERROR: File(s) missing in e2e_datafiles: {list_of_new_files}')
         if list_of_changed_files:
             print(
                 f'-> ERROR: Changes in the following CSV file(s): {list_of_changed_files}')
@@ -88,4 +91,4 @@ def run_check_e2e_sync_test(path1, path2, skip_path):
 
 
 if __name__ == '__main__':
-    run_check_e2e_sync_test(df_path, e2e_df_path, path_to_skip)
+    run_check_e2e_sync_test(df_path, e2e_df_path, paths_to_skip)

@@ -1,5 +1,3 @@
-from typing import Sequence
-
 from neomodel import db
 
 from clinical_mdr_api.domain_repositories.concepts.concept_generic_repository import (
@@ -122,7 +120,7 @@ class CompoundAliasRepository(ConceptGenericRepository):
                 concept_value.is_preferred_synonym AS is_preferred_synonym
             """
 
-    def get_compound_preferred_synonyms(self, compound_uid: str) -> Sequence[str]:
+    def get_compound_preferred_synonyms(self, compound_uid: str) -> list[str]:
         query = f"""
             MATCH (concept_root:{self.root_class.__label__})-[:LATEST]->
                 (concept_value {{is_preferred_synonym:True}})-[IS_COMPOUND]->

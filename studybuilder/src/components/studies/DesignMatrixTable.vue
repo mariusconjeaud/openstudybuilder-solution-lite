@@ -20,7 +20,7 @@
         color="primary"
         @click.stop="edit"
         :title="$t('_global.edit')"
-        :disabled="!checkPermission($roles.STUDY_WRITE)"
+        :disabled="!checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
         >
         <v-icon dark>
           mdi-pencil-outline
@@ -58,19 +58,23 @@
           :study-elements="elements"
           :epoch="header.value"
           :arm="item.item.id ? null : item.item.uid "
-          :armBranch="item.item.id" />
+          :armBranch="item.item.id"/>
       </td>
     </template>
     <template v-slot:item.arms="item">
       <td>
         <v-chip v-if="item.item.armColor" small :color="item.item.armColor" class="mr-1"/>
-        {{ item.value }}
+        <router-link :to="{ name: 'StudyArmOverview', params: { study_id: selectedStudy.uid, id: item.item.uid } }">
+          {{ item.value }}
+        </router-link>
       </td>
     </template>
     <template v-slot:item.branches="item">
       <td>
         <v-chip v-if="item.item.branchColor" small :color="item.item.branchColor" class="mr-1"/>
-        {{ item.value }}
+        <router-link :to="{ name: 'StudyBranchArmOverview', params: { study_id: selectedStudy.uid, id: item.item.id } }">
+          {{ item.value }}
+        </router-link>
       </td>
     </template>
   </n-n-table>
@@ -95,6 +99,7 @@ export default {
   computed: {
     ...mapGetters({
       selectedStudy: 'studiesGeneral/selectedStudy',
+      selectedStudyVersion: 'studiesGeneral/selectedStudyVersion',
       studyEpochs: 'studyEpochs/studyEpochs'
     }),
     exportDataUrl () {
@@ -143,18 +148,20 @@ export default {
       }
     },
     async fetchStudyArms () {
+      const studyValueVersion = this.selectedStudyVersion
       const params = {
         page_number: (this.options.page),
         page_size: this.options.itemsPerPage,
-        total_count: true
+        total_count: true,
+        study_value_version: studyValueVersion
       }
-      await arms.getAllForStudy(this.selectedStudy.uid, params).then(async resp => {
+      await arms.getAllForStudy(this.selectedStudy.uid, { params }).then(async resp => {
         this.arms = resp.data.items
         this.total = resp.data.total
         this.matrix = []
         this.branchArms = {}
         for (const el of this.arms) {
-          await arms.getAllBranchesForArm(this.selectedStudy.uid, el.arm_uid).then(resp => {
+          await arms.getAllBranchesForArm(this.selectedStudy.uid, el.arm_uid, studyValueVersion).then(resp => {
             this.branchArms[el.arm_uid] = resp.data
           })
         }
@@ -179,7 +186,11 @@ export default {
       this.matrixPushCalls(matrixPushStack)
     },
     async fetchStudyElements () {
-      return arms.getStudyElements(this.selectedStudy.uid, { page_size: 0 }).then(resp => {
+      const params = {
+        page_size: 0
+      }
+      params.study_value_version = this.selectedStudyVersion
+      return arms.getStudyElements(this.selectedStudy.uid, params).then(resp => {
         this.elements = resp.data.items
       })
     },
@@ -194,7 +205,10 @@ export default {
         arms.cellsBatchUpdate(this.selectedStudy.uid, this.updateObject).then(resp => {
           this.editLoading = false
           this.editMode = false
-          arms.getAllStudyCells(this.selectedStudy.uid).then(resp => {
+          const params = {
+            study_value_version: this.selectedStudyVersion
+          }
+          arms.getAllStudyCells(this.selectedStudy.uid, params).then(resp => {
             this.cells = resp
             bus.$emit('notification', { msg: this.$t('DesignMatrix.matrix_updated') })
             this.editLoading = false
@@ -214,9 +228,14 @@ export default {
     }
   },
   async mounted () {
-    this.$store.dispatch('studyEpochs/fetchStudyEpochs', this.selectedStudy.uid)
+    const params = {}
+    params.study_value_version = this.selectedStudyVersion
+    this.$store.dispatch('studyEpochs/fetchStudyEpochs', { studyUid: this.selectedStudy.uid, data: params })
     await this.fetchStudyElements()
-    await arms.getAllStudyCells(this.selectedStudy.uid).then(resp => {
+    const paramsCells = {
+      study_value_version: this.selectedStudyVersion
+    }
+    await arms.getAllStudyCells(this.selectedStudy.uid, paramsCells).then(resp => {
       this.cells = resp
     })
   },
@@ -230,7 +249,10 @@ export default {
       this.fetchStudyArms()
     },
     refresh () {
-      arms.getAllStudyCells(this.selectedStudy.uid).then(resp => {
+      const params = {
+        study_value_version: this.selectedStudyVersion
+      }
+      arms.getAllStudyCells(this.selectedStudy.uid, params).then(resp => {
         this.cells = resp
         this.fetchStudyArms()
         this.fetchStudyElements()
