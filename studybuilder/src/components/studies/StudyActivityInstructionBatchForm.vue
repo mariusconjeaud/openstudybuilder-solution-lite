@@ -142,7 +142,7 @@
           @filter="getTemplates"
           >
           <template v-slot:item.indications.name="{ item }">
-            <template v-if="item.indications">
+            <template v-if="item.indications && item.indications.length">
               {{ item.indications|names }}
             </template>
             <template v-else>
@@ -277,7 +277,10 @@ export default {
       const result = []
       if (!this.noTemplateAvailableAtAll) {
         for (const studyActivity of this.studyActivities) {
-          result.push(studyActivity.activity.activity_group)
+          result.push({
+            uid: studyActivity.activity.activity_groupings.activity_group_uid,
+            name: studyActivity.activity.activity_groupings.activity_group_name
+          })
         }
       }
       return result
@@ -286,7 +289,10 @@ export default {
       const result = []
       if (!this.noTemplateAvailableAtAll) {
         for (const studyActivity of this.studyActivities) {
-          result.push(studyActivity.activity.activity_subgroup)
+          result.push({
+            uid: studyActivity.activity.activity_groupings.activity_subgroup_uid,
+            name: studyActivity.activity.activity_groupings.activity_subgroup_name
+          })
         }
       }
       return result
@@ -365,6 +371,7 @@ export default {
       this.form = {}
       this.apiEndpoint = this.preInstanceApi
       this.preInstanceApi = true
+      this.parameters = []
     },
     getObserver (step) {
       return this.$refs[`observer_${step}`]

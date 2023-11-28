@@ -95,9 +95,8 @@ class NumericValueWithUnitAR(NumericValueAR):
         library: LibraryVO,
         generate_uid_callback: Callable[[], str | None] = (lambda: None),
         find_uid_by_name_callback: Callable[[str], str | None] = (lambda _: None),
-        find_uid_by_value_and_unit_callback: Callable[
-            [str, str | None], str | None
-        ] = None,
+        find_uid_by_value_and_unit_callback: Callable[[str, str | None], str | None]
+        | None = None,
     ) -> Self:
         item_metadata = LibraryItemMetadataVO(
             _change_description="Initial version",

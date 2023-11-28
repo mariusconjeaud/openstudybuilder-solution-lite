@@ -1,5 +1,3 @@
-from typing import Sequence
-
 from neomodel import db
 
 from clinical_mdr_api import exceptions
@@ -328,10 +326,10 @@ class FootnoteTemplateService(GenericSyntaxTemplateService[FootnoteTemplateAR]):
         list[ActivitySubGroupAR],
     ]:
         footnote_type: tuple[CTTermNameAR, CTTermAttributesAR] | None = None
-        indications: Sequence[DictionaryTermAR] = []
-        activities: Sequence[ActivityAR] = []
-        activity_groups: Sequence[ActivityGroupAR] = []
-        activity_subgroups: Sequence[ActivitySubGroupAR] = []
+        indications: list[DictionaryTermAR] = []
+        activities: list[ActivityAR] = []
+        activity_groups: list[ActivityGroupAR] = []
+        activity_subgroups: list[ActivitySubGroupAR] = []
 
         footnote_type_term_uid = getattr(
             template, "type_uid", None

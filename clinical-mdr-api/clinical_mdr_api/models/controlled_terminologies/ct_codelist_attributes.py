@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Callable, Self, Sequence
+from typing import Callable, Self
 
 from pydantic import Field
 
@@ -72,7 +72,7 @@ class CTCodelistAttributes(BaseModel):
         nullable=True,
     )
 
-    child_codelist_uids: Sequence[str] = Field(
+    child_codelist_uids: list[str] = Field(
         [], title="child_codelist_uids", description="", remove_from_wildcard=True
     )
 

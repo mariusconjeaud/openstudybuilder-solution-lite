@@ -1137,11 +1137,15 @@ MERGE (library)-[:CONTAINS_CONCEPT]->(
 activity_instance_root1:ConceptRoot:ActivityInstanceRoot:TemplateParameterTermRoot:ReminderRoot {uid:"activity_instance_root1"})
 -[:LATEST]->(activity_instance_value1:ConceptValue:ActivityInstanceValue:TemplateParameterTermValue:ReminderValue {
 name:"name1",
-name_sentence_case:"name_sentence_case1",
+name_sentence_case:"name1",
 definition:"definition1",
 abbreviation:"abbv",
 topic_code:"topic_code1",
 adam_param_code:"adam_param_code1",
+is_required_for_activity:false,
+is_default_selected_for_activity:false,
+is_data_sharing:false,
+is_legacy_usage:false,
 legacy_description:"legacy_description1"
 })-[:HAS_ACTIVITY]-(activity_grouping:ActivityGrouping {uid:"ActivityGrouping_000001"})
 MERGE (activity_grouping)<-[:HAS_GROUPING]-(activity_hierarchy_value1)
@@ -1164,11 +1168,15 @@ MERGE (library)-[:CONTAINS_CONCEPT]->(
 activity_instance_root2:ConceptRoot:ActivityInstanceRoot:TemplateParameterTermRoot:ReminderRoot {uid:"activity_instance_root2"})
 -[:LATEST]->(activity_instance_value2:ConceptValue:ActivityInstanceValue:TemplateParameterTermValue:ReminderValue {
 name:"name2",
-name_sentence_case:"name_sentence_case2",
+name_sentence_case: "name2",
 definition:"definition2",
 abbreviation:"abbv",
 topic_code:"topic_code2",
 adam_param_code:"adam_param_code2",
+is_required_for_activity:false,
+is_default_selected_for_activity:false,
+is_data_sharing:false,
+is_legacy_usage:false,
 legacy_description:"legacy_description2"
 })-[:HAS_ACTIVITY]->(activity_grouping2:ActivityGrouping {uid:"ActivityGrouping_000002"})
 MERGE (activity_grouping2)<-[:HAS_GROUPING]-(activity_hierarchy_value2)
@@ -1219,7 +1227,7 @@ MERGE (library)-[:CONTAINS_CONCEPT]->(
 activity_instance_root1:ConceptRoot:ActivityInstanceRoot:FindingRoot:NumericFindingRoot {uid:"activity_instance_root1"})
 -[:LATEST]->(new_activity_instance_value1:ConceptValue:ActivityInstanceValue:FindingValue:NumericFindingValue {
 name:"new_name1",
-name_sentence_case:"name_sentence_case1",
+name_sentence_case:"new_name1",
 definition:"definition1",
 abbreviation:"abbv",
 topic_code:"topic_code1",
@@ -1251,7 +1259,7 @@ MERGE (library)-[:CONTAINS_CONCEPT]->(
 activity_instance_root2:ConceptRoot:ActivityInstanceRoot:InterventionRoot:CompoundDosingRoot {uid:"activity_instance_root2"})
 -[:LATEST]->(activity_instance_value2:ConceptValue:ActivityInstanceValue:InterventionValue:CompoundDosingValue {
 name:"name2",
-name_sentence_case:"name_sentence_case2",
+name_sentence_case:"name2",
 definition:"definition2",
 abbreviation:"abbv",
 topic_code:"topic_code2",
@@ -1285,7 +1293,7 @@ MERGE (library:Library {name:"Sponsor", is_editable:true})
 MERGE (library)-[:CONTAINS_CONCEPT]->(activity_group_root1:ConceptRoot:ActivityGroupRoot {uid:"activity_group_root1"})
 -[:LATEST]->(activity_group_value1:ConceptValue:ActivityGroupValue {
 name:"name1",
-name_sentence_case:"name_sentence_case1",
+name_sentence_case:"name1",
 definition:"definition1",
 abbreviation:"abbv"
 })
@@ -1296,7 +1304,7 @@ SET has_version1 = final_properties
 MERGE (library)-[:CONTAINS_CONCEPT]->(activity_group_root2:ConceptRoot:ActivityGroupRoot {uid:"activity_group_root2"})
 -[:LATEST]->(activity_group_value2:ConceptValue:ActivityGroupValue {
 name:"name2",
-name_sentence_case:"name_sentence_case2",
+name_sentence_case:"name2",
 definition:"definition2",
 abbreviation:"abbv"
 })
@@ -1308,7 +1316,7 @@ SET has_version2 = draft_properties
 MERGE (library)-[:CONTAINS_CONCEPT]->(activity_group_root3:ConceptRoot:ActivityGroupRoot {uid:"activity_group_root3"})
 -[:LATEST]->(activity_group_value3:ConceptValue:ActivityGroupValue {
 name:"name3",
-name_sentence_case:"name_sentence_case3",
+name_sentence_case:"name3",
 definition:"definition3",
 abbreviation:"abbv"
 })
@@ -1338,7 +1346,7 @@ MERGE (library:Library {name:"Sponsor", is_editable:true})
 MERGE (library)-[:CONTAINS_CONCEPT]->(activity_subgroup_root1:ConceptRoot:ActivitySubGroupRoot {uid:"activity_subgroup_root1"})
 -[:LATEST]->(activity_subgroup_value1:ConceptValue:ActivitySubGroupValue {
 name:"name1",
-name_sentence_case:"name_sentence_case1",
+name_sentence_case:"name1",
 definition:"definition1",
 abbreviation:"abbv"
 })
@@ -1356,7 +1364,7 @@ MERGE (activity_group_root1)-[:HAS_VERSION]->(activity_group_value1)
 MERGE (library)-[:CONTAINS_CONCEPT]->(activity_subgroup_root2:ConceptRoot:ActivitySubGroupRoot {uid:"activity_subgroup_root2"})
 -[:LATEST]->(activity_subgroup_value2:ConceptValue:ActivitySubGroupValue {
 name:"name2",
-name_sentence_case:"name_sentence_case2",
+name_sentence_case:"name2",
 definition:"definition2",
 abbreviation:"abbv"
 })
@@ -1375,7 +1383,7 @@ MERGE (activity_subgroup_value2)-[:HAS_GROUP]->(avf2)
 MERGE (library)-[:CONTAINS_CONCEPT]->(activity_subgroup_root3:ConceptRoot:ActivitySubGroupRoot {uid:"activity_subgroup_root3"})
 -[:LATEST]->(activity_subgroup_value3:ConceptValue:ActivitySubGroupValue {
 name:"name3",
-name_sentence_case:"name_sentence_case3",
+name_sentence_case:"name3",
 definition:"definition3",
 abbreviation:"abbv"
 })
@@ -1413,7 +1421,7 @@ MERGE (library:Library {name:"Sponsor", is_editable:true})
 MERGE (library)-[:CONTAINS_CONCEPT]->(activity_root1:ConceptRoot:ActivityRoot {uid:"activity_root1"})
 -[:LATEST]->(activity_value1:ConceptValue:ActivityValue {
 name:"name1",
-name_sentence_case:"name_sentence_case1",
+name_sentence_case:"name1",
 definition:"definition1",
 abbreviation:"abbv"
 })
@@ -1440,7 +1448,7 @@ MERGE (activity_valid_group)-[:IN_GROUP]->(activity_group_value)
 MERGE (library)-[:CONTAINS_CONCEPT]->(activity_root2:ConceptRoot:ActivityRoot {uid:"activity_root2"})
 -[:LATEST]->(activity_value2:ConceptValue:ActivityValue {
 name:"name2",
-name_sentence_case:"name_sentence_case2",
+name_sentence_case:"name2",
 definition:"definition2",
 abbreviation:"abbv"
 })
@@ -1463,7 +1471,7 @@ MERGE (activity_valid_group2)-[:IN_GROUP]->(activity_group_value2)
 MERGE (library)-[:CONTAINS_CONCEPT]->(activity_root3:ConceptRoot:ActivityRoot {uid:"activity_root3"})
 -[:LATEST]->(activity_value3:ConceptValue:ActivityValue {
 name:"name3",
-name_sentence_case:"name_sentence_case3",
+name_sentence_case:"name3",
 definition:"definition3",
 abbreviation:"abbv"
 })
@@ -2256,6 +2264,26 @@ set hv6.start_date = datetime()
 set hv6.status = "Draft"
 set hv6.user_initials = "TODO initials"
 set hv6.version = "0.1"
+
+MERGE (cr)-[has_term5:HAS_TERM]->(term_root5:CTTermRoot {uid:"term_root_final5"})-[:HAS_NAME_ROOT]->
+    (term_ver_root5:CTTermNameRoot)-[:LATEST]-(term_ver_value5:CTTermNameValue 
+        {name:"term_value_name1", name_sentence_case:"term_value_name_sentence_case"})
+MERGE (editable_lib)-[:CONTAINS_TERM]->(term_root5)
+MERGE (term_ver_root5)-[hv7:HAS_VERSION]->(term_ver_value5)
+CREATE (term_ver_root5)-[hv8:HAS_VERSION]->(term_ver_value5)
+MERGE (term_ver_root5)-[lf12:LATEST_FINAL]->(term_ver_value5)
+set has_term5.order = 1
+set hv8.change_description = "Approved version"
+set hv8.start_date = datetime()
+set hv8.status = "Final"
+set hv8.user_initials = "TODO initials"
+set hv8.version = "1.0"
+set hv7.change_description = "Initial version"
+set hv7.start_date = datetime()
+set hv7.end_date = datetime()
+set hv7.status = "Draft"
+set hv7.user_initials = "TODO initials"
+set hv7.version = "0.1"
 """
 
 STARTUP_PARAMETERS_CYPHER = f"""
@@ -2403,6 +2431,7 @@ SET p.description = "Description ABC",
 CREATE (c)-[:HOLDS_PROJECT]->(p)
 MERGE (sr:StudyRoot {uid: "study_root"})-[:LATEST]->(sv:StudyValue{study_id_prefix: "some_id", study_number:0})
 MERGE (p)-[:HAS_FIELD]->(:StudyField:StudyProjectField)<-[:HAS_PROJECT]-(sv)
+MERGE (sr)-[ld:LATEST_DRAFT]->(sv)
 MERGE (ot:ObjectiveTemplateRoot:SyntaxTemplateRoot:SyntaxIndexingTemplateRoot {uid:"ObjectiveTemplate_000001", sequence_id: "O1"})-[relt:LATEST_FINAL]->(otv:ObjectiveTemplateValue:SyntaxTemplateValue:SyntaxIndexingTemplateValue {name :"objective_1", name_plain : "objective_1"})
 MERGE (ot)-[relthv:HAS_VERSION]->(otv)
 MERGE (ot)-[:LATEST]->(otv)
@@ -2586,10 +2615,27 @@ MERGE (termroot)<-[has_term:HAS_TERM]-(codelistroot:CTCodelistRoot {uid: "ct_cod
     (cnv:TemplateParameter:CTCodelistNameValue {name: "Endpoint Level"})
 set has_term.order = 1
 MERGE (cnr)-[clname_hv:HAS_VERSION]->(cnv)
+MERGE (cnr)-[:LATEST]->(cnv)
 set clname_hv = final_properties
+
+WITH *
+MATCH (termroot1:CTTermRoot {uid:"term_root_final5"})
+MERGE (termroot1)<-[has_term1:HAS_TERM]-(codelistroot)
+set has_term.order = 1
 
 MERGE (catalogue:CTCatalogue {uid:"CTCatalogue_000001", name:"SDTM CT"})
 MERGE (catalogue)-[:HAS_CODELIST]->(codelistroot)
+
+WITH *
+MATCH (termroot2:CTTermRoot {uid:"term_root_final_non_edit"})
+MERGE (termroot2)<-[has_term2:HAS_TERM]-(codelistroot2:CTCodelistRoot {uid: "ct_codelist_root_endpoint_sub"})-[:HAS_NAME_ROOT]->(cnr2:CTCodelistNameRoot)-[:LATEST_FINAL]->
+    (cnv2:TemplateParameter:CTCodelistNameValue {name: "Endpoint Sub Level"})
+set has_term2.order = 1
+MERGE (cnr2)-[clname_hv2:HAS_VERSION]->(cnv2)
+MERGE (cnr2)-[:LATEST]->(cnv2)
+set clname_hv2 = final_properties
+
+MERGE (catalogue)-[:HAS_CODELIST]->(codelistroot2)
 """
 
 STARTUP_STUDY_LIST_CYPHER = """
@@ -2662,7 +2708,7 @@ set saa.user_initials = "TODO user initials"
 MERGE (cp:ClinicalProgramme{uid: "ClinicalProgramme_000001"})
     SET cp.name="Test CP"
 MERGE (p:Project{uid: "Project_000001"})
-    SET p.description="description", p.name="name", p.project_number="project_number"
+    SET p.description="description", p.name="name", p.project_number="123"
 MERGE (cp)-[:HOLDS_PROJECT]->(p)-[:HAS_FIELD]->(sf:StudyField:StudyProjectField)<-[:HAS_PROJECT]-(sv)
 """
 
@@ -2676,7 +2722,7 @@ SET p.description = "Description ABC",
     p.name = "Project ABC",
     p.project_number = "123",
     p.uid = "project_uid"
-CREATE (c)-[:HOLDS_PROJECT]->(p)
+MERGE (c)-[:HOLDS_PROJECT]->(p)
 MERGE (sr:StudyRoot {uid: "study_root"})-[:LATEST]->(sv:StudyValue{study_id_prefix: "some_id", study_number:0})
 MERGE (p)-[:HAS_FIELD]->(:StudyField:StudyProjectField)<-[:HAS_PROJECT]-(sv)
 MERGE (sr)-[hv:HAS_VERSION]->(sv)
@@ -3367,8 +3413,8 @@ def _create_paths(app: FastAPI, path_prefix="") -> list[dict[str, any]]:
     paths = []
     for route in app.routes:
         if isinstance(route, APIRoute):
-            st = create_stub(path_prefix + route.path, route.methods)
-            paths.append(st)
+            path = create_stub(path_prefix + route.path, route.methods)
+            paths.append(path)
         elif isinstance(route, Mount):
             paths += _create_paths(route.app, route.path)
     return paths
@@ -3420,10 +3466,4 @@ def inject_base_data() -> Study:
     ## Study
     study = TestUtils.create_study("123", "study_root", project.project_number)
 
-    # TODO : Add optionally callable methods to add other data, for instance
-    ## CT data
-    ### Random codelists
-    ### Random terms
-    ### Random dict
-    ## Syntax templates
     return study

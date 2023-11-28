@@ -123,7 +123,9 @@ class StudyActivityScheduleRepository(base.StudySelectionRepository):
     def generate_uid(self) -> str:
         return StudyActivity.get_next_free_uid_and_increment_counter()
 
-    def _get_selection_with_history(self, study_uid: str, selection_uid: str = None):
+    def _get_selection_with_history(
+        self, study_uid: str, selection_uid: str | None = None
+    ):
         """
         returns the audit trail for study activity schedule either for a
         specific selection or for all study activity schedules for the study.

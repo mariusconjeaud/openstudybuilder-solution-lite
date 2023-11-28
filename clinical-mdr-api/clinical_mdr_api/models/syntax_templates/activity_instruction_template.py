@@ -233,17 +233,17 @@ class ActivityInstructionTemplateWithCount(ActivityInstructionTemplate):
     def from_activity_instruction_template_ar(
         cls, activity_instruction_template_ar: ActivityInstructionTemplateAR, **kwargs
     ) -> Self:
-        ot = super().from_activity_instruction_template_ar(
+        activity_instruction_template = super().from_activity_instruction_template_ar(
             activity_instruction_template_ar, **kwargs
         )
         if activity_instruction_template_ar.counts is not None:
-            ot.counts = ItemCounts(
+            activity_instruction_template.counts = ItemCounts(
                 draft=activity_instruction_template_ar.counts.count_draft,
                 final=activity_instruction_template_ar.counts.count_final,
                 retired=activity_instruction_template_ar.counts.count_retired,
                 total=activity_instruction_template_ar.counts.count_total,
             )
-        return ot
+        return activity_instruction_template
 
 
 class ActivityInstructionTemplateVersion(ActivityInstructionTemplate):

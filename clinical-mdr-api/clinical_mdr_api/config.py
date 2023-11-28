@@ -24,7 +24,7 @@ if db_name:
 class Settings(BaseSettings):
     app_name: str = "Clinical MDR API"
     neo4j_dsn: str | None
-    neo4j_database: str = environ.get("NEO4J_DATABASE", "neo4j")
+    neo4j_database: str = environ.get("NEO4J_DATABASE") or "neo4j"
 
 
 settings = Settings()
@@ -86,11 +86,16 @@ DEFAULT_STUDY_FIELD_CONFIG_FILE = (
 
 LIBRARY_SUBSTANCES_CODELIST_NAME = "UNII"
 
+SPONSOR_MODEL_PREFIX = "mastermodel"
+SPONSOR_MODEL_VERSION_NUMBER_PREFIX = "NN"
+
 APPINSIGHTS_CONNECTION = environ.get("APPLICATIONINSIGHTS_CONNECTION_STRING", "")
 
-OPENAPI_SCHEMA_API_ROOT_PATH = environ.get("UVICORN_ROOT_PATH", "/")
+OPENAPI_SCHEMA_API_ROOT_PATH = environ.get("UVICORN_ROOT_PATH") or "/"
 
-TRACING_DISABLED = environ.get("TRACING_DISABLED", "false").lower() == "true"
+TRACING_DISABLED = environ.get("TRACING_DISABLED", "").upper().strip() not in (
+    _UPPERCASE_FALSE_STRINGS
+)
 
 # Absolute path of application root directory
 APP_ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
@@ -99,3 +104,10 @@ MS_GRAPH_GROUPS_QUERY = environ.get("MS_GRAPH_GROUPS_QUERY")
 MS_GRAPH_INTEGRATION_ENABLED = environ.get(
     "MS_GRAPH_INTEGRATION_ENABLED", ""
 ).upper().strip() not in (_UPPERCASE_FALSE_STRINGS)
+
+ALLOW_ORIGIN_REGEX = environ.get("ALLOW_ORIGIN_REGEX")
+ALLOW_CREDENTIALS = environ.get("ALLOW_CREDENTIALS", "true").upper().strip() not in (
+    _UPPERCASE_FALSE_STRINGS
+)
+ALLOW_METHODS = environ.get("ALLOW_METHODS", "*").split(",")
+ALLOW_HEADERS = environ.get("ALLOW_HEADERS", "*").split(",")

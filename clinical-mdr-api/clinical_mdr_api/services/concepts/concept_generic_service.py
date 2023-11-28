@@ -28,7 +28,6 @@ from clinical_mdr_api.services._utils import (
 )
 
 _AggregateRootType = TypeVar("_AggregateRootType")
-_VOType = TypeVar("_VOType")
 
 
 class ConceptGenericService(Generic[_AggregateRootType], ABC):
@@ -155,7 +154,7 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
-        only_specific_status: Sequence[str] | None = None,
+        only_specific_status: list[str] | None = None,
         **kwargs,
     ) -> GenericFilteringReturn[BaseModel]:
         return self.non_transactional_get_all_concepts(
@@ -179,7 +178,7 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
-        only_specific_status: Sequence[str] | None = None,
+        only_specific_status: list[str] | None = None,
         **kwargs,
     ) -> GenericFilteringReturn[BaseModel]:
         self.enforce_library(library)
@@ -213,7 +212,7 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
         filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
         **kwargs,
-    ) -> Sequence:
+    ) -> list[Any]:
         self.enforce_library(library)
 
         header_values = self.repository.get_distinct_headers(
@@ -227,6 +226,41 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
         )
 
         return header_values
+
+    @db.transaction
+    def get_all_concept_versions(
+        self,
+        library: str | None = None,
+        sort_by: dict | None = None,
+        page_number: int = 1,
+        page_size: int = 0,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
+        total_count: bool = False,
+        **kwargs,
+    ) -> GenericFilteringReturn[BaseModel]:
+        self.enforce_library(library)
+
+        items, total = self.repository.find_all(
+            library=library,
+            total_count=total_count,
+            sort_by=sort_by,
+            filter_by=filter_by,
+            filter_operator=filter_operator,
+            page_number=page_number,
+            page_size=page_size,
+            return_all_versions=True,
+            only_specific_status=None,
+            **kwargs,
+        )
+
+        all_concept_versions = GenericFilteringReturn.create(items, total)
+        all_concept_versions.items = [
+            self._transform_aggregate_root_to_pydantic_model(concept_ar)
+            for concept_ar in all_concept_versions.items
+        ]
+
+        return all_concept_versions
 
     @db.transaction
     def get_by_uid(
@@ -264,7 +298,7 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
         return item
 
     @db.transaction
-    def get_version_history(self, uid: str) -> Sequence[BaseModel]:
+    def get_version_history(self, uid: str) -> list[BaseModel]:
         if self.version_class is not None:
             all_versions = self.repository.get_all_versions_2(uid=uid)
             if all_versions is None:

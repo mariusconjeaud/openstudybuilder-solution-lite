@@ -256,6 +256,7 @@ export default {
   computed: {
     ...mapGetters({
       selectedStudy: 'studiesGeneral/selectedStudy',
+      selectedStudyVersion: 'studiesGeneral/selectedStudyVersion',
       studyCompounds: 'studyCompounds/studyCompounds',
       studyCompoundDosings: 'studyCompounds/studyCompoundDosings'
     }),
@@ -362,7 +363,11 @@ export default {
   },
   mounted () {
     this.$store.dispatch('studyCompounds/fetchStudyCompounds', { studyUid: this.selectedStudy.uid, page_size: 0 })
-    arms.getStudyElements(this.selectedStudy.uid, { page_size: 0 }).then(resp => {
+    const params = {
+      page_size: 0,
+      study_value_version: this.selectedStudyVersion
+    }
+    arms.getStudyElements(this.selectedStudy.uid, { params }).then(resp => {
       this.studyElements = resp.data.items
     })
     terms.getByCodelist('elementTypes').then(resp => {

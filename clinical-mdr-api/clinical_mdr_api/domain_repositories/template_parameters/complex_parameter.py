@@ -45,7 +45,7 @@ class ComplexTemplateParameterRepository:
             self.concepts = None
 
     def _fetch_concepts(self):
-        tu = parameter_concept_create_factory(
+        time_unit = parameter_concept_create_factory(
             name="TimeUnit",
             query="""
             MATCH (n:UnitDefinitionRoot)-[:LATEST_FINAL]->(v:UnitDefinitionValue)-[:HAS_CT_DIMENSION]->
@@ -53,7 +53,7 @@ class ComplexTemplateParameterRepository:
             return n.uid as uid, v.name as name, 'TimeUnit' as type
             """,
         )
-        au = parameter_concept_create_factory(
+        acidity_unit = parameter_concept_create_factory(
             name="AcidityUnit",
             query="""
             MATCH (n:UnitDefinitionRoot)-[:LATEST_FINAL]->(v:UnitDefinitionValue)-[:HAS_CT_DIMENSION]->
@@ -61,7 +61,7 @@ class ComplexTemplateParameterRepository:
             return n.uid as uid, v.name as name, 'AcidityUnit' as type
             """,
         )
-        cu = parameter_concept_create_factory(
+        concentration_unit = parameter_concept_create_factory(
             name="ConcentrationUnit",
             query="""
             MATCH (n:UnitDefinitionRoot)-[:LATEST_FINAL]->(v:UnitDefinitionValue)-[:HAS_CT_DIMENSION]->
@@ -69,7 +69,7 @@ class ComplexTemplateParameterRepository:
             return n.uid as uid, v.name as name, 'ConcentrationUnit' as type
             """,
         )
-        self.concepts = [tu, au, cu]
+        self.concepts = [time_unit, acidity_unit, concentration_unit]
 
     def find_extended(self):
         values = self.find_all_with_samples()

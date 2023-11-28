@@ -1,4 +1,4 @@
-from typing import VT, Callable, Iterator, Sequence
+from typing import VT, Callable, Iterator
 
 from pydantic import Field
 
@@ -6,13 +6,13 @@ from clinical_mdr_api.models.utils import BaseModel
 
 
 class TableDimension(dict):
-    default_factory: Callable[..., VT] = None
+    default_factory: Callable[..., VT] | None = None
     _size: int = 0
 
     def __init__(
         self,
-        default_factory: Callable[..., VT] = None,
-        values: Sequence[VT] | None = None,
+        default_factory: Callable[..., VT] | None = None,
+        values: list[VT] | None = None,
     ) -> None:
         self.default_factory = default_factory
         if values:

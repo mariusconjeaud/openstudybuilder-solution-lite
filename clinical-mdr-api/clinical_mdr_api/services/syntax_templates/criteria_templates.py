@@ -1,5 +1,3 @@
-from typing import Sequence
-
 from neomodel import db
 
 from clinical_mdr_api import exceptions
@@ -220,9 +218,9 @@ class CriteriaTemplateService(GenericSyntaxTemplateService[CriteriaTemplateAR]):
         self, template: BaseModel, template_uid: str | None = None
     ) -> tuple[
         tuple[CTTermNameAR, CTTermAttributesAR] | None,
-        Sequence[DictionaryTermAR],
-        Sequence[tuple[CTTermNameAR, CTTermAttributesAR]],
-        Sequence[tuple[CTTermNameAR, CTTermAttributesAR]],
+        list[DictionaryTermAR],
+        list[tuple[CTTermNameAR, CTTermAttributesAR]],
+        list[tuple[CTTermNameAR, CTTermAttributesAR]],
     ]:
         criteria_type: tuple[CTTermNameAR, CTTermAttributesAR] | None = None
 

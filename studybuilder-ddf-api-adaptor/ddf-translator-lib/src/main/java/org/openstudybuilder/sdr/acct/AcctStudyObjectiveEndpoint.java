@@ -3,13 +3,13 @@
 //import com.fasterxml.jackson.annotation.JsonProperty;
 //import lombok.Getter;
 //import lombok.Setter;
-//import org.CSDISC.DDF.model.Code;
-//import org.CSDISC.DDF.model.Endpoint;
+//import org.CDISC.DDF.model.Code;
+//import org.CDISC.DDF.model.Endpoint;
 //
 //import java.util.List;
 //
 //@Getter @Setter
-//public class AcctStudyObjectiveEndpoint extends org.CSDISC.DDF.model.Endpoint {
+//public class AcctStudyObjectiveEndpoint extends org.CDISC.DDF.model.Endpoint {
 //    @JsonProperty("endpointLevel")
 //    private List<Code> extEndpointLevel;
 //    // This is a field not available in CDISC endpoint

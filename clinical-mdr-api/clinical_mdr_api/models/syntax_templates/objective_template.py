@@ -198,15 +198,15 @@ class ObjectiveTemplateWithCount(ObjectiveTemplate):
     def from_objective_template_ar(
         cls, objective_template_ar: ObjectiveTemplateAR
     ) -> Self:
-        ot = super().from_objective_template_ar(objective_template_ar)
+        objective_template = super().from_objective_template_ar(objective_template_ar)
         if objective_template_ar.counts is not None:
-            ot.counts = ItemCounts(
+            objective_template.counts = ItemCounts(
                 draft=objective_template_ar.counts.count_draft,
                 final=objective_template_ar.counts.count_final,
                 retired=objective_template_ar.counts.count_retired,
                 total=objective_template_ar.counts.count_total,
             )
-        return ot
+        return objective_template
 
 
 class ObjectiveTemplateVersion(ObjectiveTemplate):

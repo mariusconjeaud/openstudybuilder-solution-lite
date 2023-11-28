@@ -1,31 +1,15 @@
 <template>
-<v-card>
-  <stepper-form
-    ref="stepper"
+<div>
+  <simple-form-dialog
+    ref="form"
     :title="title"
-    :steps="steps"
-    @close="cancel"
-    @save="submit"
-    :form-observer-getter="getObserver"
     :help-items="helpItems"
+    @close="close"
+    @submit="submit"
+    :open="open"
     >
-    <template v-slot:step.select="{ step }">
-      <validation-observer :ref="`observer_${step}`">
-        <v-row>
-          <v-col>
-            <v-radio-group
-              v-model="subgroup"
-              :disabled="editing"
-            >
-              <v-radio :label="$t('ActivityForms.group')" :value="false" />
-              <v-radio :label="$t('ActivityForms.subgroup')" :value="true" />
-            </v-radio-group>
-          </v-col>
-        </v-row>
-      </validation-observer>
-    </template>
-    <template v-slot:step.details="{ step }">
-      <validation-observer :ref="`observer_${step}`">
+    <template v-slot:body>
+      <validation-observer ref="observer">
         <validation-provider
           v-slot="{ errors }"
           rules="required"
@@ -43,7 +27,7 @@
                 clearable
                 multiple
                 :error-messages="errors"
-              />
+                />
             </v-col>
           </v-row>
         </validation-provider>
@@ -56,12 +40,23 @@
               <v-text-field
                 v-model="form.name"
                 :label="subgroup ? $t('ActivityForms.subgroup_name') : $t('ActivityForms.group_name')"
-                hide-details
                 :error-messages="errors"
-              />
+                />
             </v-col>
           </v-row>
         </validation-provider>
+        <sentence-case-name-field
+          :name="form.name"
+          :initial-name="form.name_sentence_case"
+          v-model="form.name_sentence_case"/>
+        <v-row>
+          <v-col>
+            <v-text-field
+              v-model="form.abbreviation"
+              :label="$t('ActivityForms.abbreviation')"
+              />
+          </v-col>
+        </v-row>
         <validation-provider
           v-slot="{ errors }"
           rules="required"
@@ -71,11 +66,10 @@
               <v-textarea
                 v-model="form.definition"
                 :label="$t('ActivityForms.definition')"
-                hide-details
                 :error-messages="errors"
                 auto-grow
                 rows="1"
-              />
+                />
             </v-col>
           </v-row>
         </validation-provider>
@@ -89,19 +83,18 @@
               <v-textarea
                 v-model="form.change_description"
                 :label="$t('ActivityForms.change_description')"
-                hide-details
                 :error-messages="errors"
                 auto-grow
                 rows="1"
-              />
+                />
             </v-col>
-          </v-row>
+        </v-row>
         </validation-provider>
       </validation-observer>
     </template>
-  </stepper-form>
+  </simple-form-dialog>
   <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
-</v-card>
+</div>
 </template>
 
 <script>
@@ -109,28 +102,37 @@ import { bus } from '@/main'
 import ConfirmDialog from '@/components/tools/ConfirmDialog'
 import _isEqual from 'lodash/isEqual'
 import _isEmpty from 'lodash/isEmpty'
-import StepperForm from '@/components/tools/StepperForm'
 import activities from '@/api/activities'
+import SimpleFormDialog from '@/components/tools/SimpleFormDialog'
+import SentenceCaseNameField from '@/components/tools/SentenceCaseNameField'
 
 export default {
   components: {
     ConfirmDialog,
-    StepperForm
+    SimpleFormDialog,
+    SentenceCaseNameField
   },
   props: {
-    editedGroupOrSubgroup: Object
+    open: Boolean,
+    editedGroupOrSubgroup: Object,
+    subgroup: Boolean
   },
   computed: {
     title () {
-      return (!_isEmpty(this.editedGroupOrSubgroup))
-        ? this.$t('ActivityForms.edit_group')
-        : this.$t('ActivityForms.add_group')
+      if (!this.subgroup) {
+        return !_isEmpty(this.editedGroupOrSubgroup)
+          ? this.$t('ActivityForms.edit_group')
+          : this.$t('ActivityForms.add_group')
+      } else {
+        return !_isEmpty(this.editedGroupOrSubgroup)
+          ? this.$t('ActivityForms.edit_subgroup')
+          : this.$t('ActivityForms.add_subgroup')
+      }
     }
   },
   data () {
     return {
       form: {},
-      subgroup: false,
       steps: [
         { name: 'select', title: this.$t('ActivityForms.select_type') },
         { name: 'details', title: this.$t('ActivityForms.add_additional_data') }
@@ -140,7 +142,6 @@ export default {
       editing: false,
       libraries: [],
       helpItems: [
-        'ActivityFormsGrouping.select_type',
         'ActivityFormsGrouping.name',
         'ActivityFormsGrouping.definition'
       ]
@@ -149,19 +150,14 @@ export default {
   methods: {
     initForm (value) {
       this.editing = true
-      if (value.uid.includes('SubGroup')) {
-        this.subgroup = true
-      } else {
-        this.subgroup = false
-      }
       this.form = {
         name: value.name,
-        name_sentence_case: '',
+        name_sentence_case: value.name_sentence_case,
         definition: value.definition,
-        change_description: ''
+        change_description: '',
+        abbreviation: value.abbreviation
       }
       if (!_isEmpty(value)) {
-        this.form.name_sentence_case = value.name.charAt(0).toUpperCase() + value.name.slice(1)
         if (value.activity_groups) {
           const uids = []
           for (const item of value.activity_groups) {
@@ -169,14 +165,8 @@ export default {
           }
           this.$set(this.form, 'activity_groups', uids)
         }
-        if (this.$refs.stepper) {
-          this.$refs.stepper.setCurrentStep(2)
-        }
       }
       this.$store.commit('form/SET_FORM', this.form)
-    },
-    getObserver (step) {
-      return this.$refs[`observer_${step}`]
     },
     async cancel () {
       if (this.$store.getters['form/form'] === '' || _isEqual(this.$store.getters['form/form'], JSON.stringify(this.form))) {
@@ -195,24 +185,27 @@ export default {
     close () {
       this.$emit('close')
       this.form = {}
-      this.subgroup = false
       this.editing = false
+      this.$refs.form.working = false
       this.$store.commit('form/CLEAR_FORM')
-      this.$refs.stepper.reset()
+      this.$refs.observer.reset()
     },
     async submit () {
       this.form.library_name = 'Sponsor' // Hardcoded for now at the Sinna and Mikkel request
-      this.form.name_sentence_case = this.form.name.charAt(0).toUpperCase() + this.form.name.slice(1)
       if (!this.editedGroupOrSubgroup) {
         if (!this.subgroup) {
           activities.create(this.form, 'activity-groups').then(resp => {
             bus.$emit('notification', { msg: this.$t('ActivityForms.group_created') })
             this.close()
+          }, _err => {
+            this.$refs.form.working = false
           })
         } else {
           activities.create(this.form, 'activity-sub-groups').then(resp => {
             bus.$emit('notification', { msg: this.$t('ActivityForms.subgroup_created') })
             this.close()
+          }, _err => {
+            this.$refs.form.working = false
           })
         }
       } else {
@@ -220,15 +213,18 @@ export default {
           activities.update(this.editedGroupOrSubgroup.uid, this.form, 'activity-groups').then(resp => {
             bus.$emit('notification', { msg: this.$t('ActivityForms.group_updated') })
             this.close()
+          }, _err => {
+            this.$refs.form.working = false
           })
         } else {
           activities.update(this.editedGroupOrSubgroup.uid, this.form, 'activity-sub-groups').then(resp => {
             bus.$emit('notification', { msg: this.$t('ActivityForms.subgroup_updated') })
             this.close()
+          }, _err => {
+            this.$refs.form.working = false
           })
         }
       }
-      this.$refs.stepper.loading = false
     },
     checkIfEqual () {
       if (_isEqual(this.form.change_description, this.editedGroupOrSubgroup.change_description) &&

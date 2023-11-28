@@ -42,12 +42,12 @@ class ParameterTemplateRepository(GenericSyntaxTemplateRepository[ParameterTempl
         relationship: VersionRelationship,
         value: ParameterTemplateValue,
     ) -> ParameterTemplateAR:
-        pt = root.has_parameter_term.get()
+        parameter_term = root.has_parameter_term.get()
         library = root.has_library.get()
 
         return ParameterTemplateAR.from_repository_values(
             uid=root.uid,
-            parameter_name=pt.name,
+            parameter_name=parameter_term.name,
             item_metadata=self._library_item_metadata_vo_from_relation(relationship),
             library=LibraryVO.from_input_values_2(
                 library_name=library.name,
@@ -88,12 +88,12 @@ class ParameterTemplateRepository(GenericSyntaxTemplateRepository[ParameterTempl
         root = self.root_class(uid=item.uid)
         self._db_save_node(root)
 
-        tp = TemplateParameter.nodes.get_or_none(name=parameter_name)
-        if tp is None:
-            tp = TemplateParameter(name=parameter_name)
-            self._db_save_node(tp)
-        root.has_parameter_term.connect(tp)
-        root.has_definition.connect(tp)
+        template_parameter = TemplateParameter.nodes.get_or_none(name=parameter_name)
+        if template_parameter is None:
+            template_parameter = TemplateParameter(name=parameter_name)
+            self._db_save_node(template_parameter)
+        root.has_parameter_term.connect(template_parameter)
+        root.has_definition.connect(template_parameter)
 
         library = self._get_library(item.library.name)
         root.has_library.connect(library)

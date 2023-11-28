@@ -1,3 +1,5 @@
+from typing import Any
+
 from clinical_mdr_api.domain_repositories._generic_repository_interface import (
     _AggregateRootType,
 )
@@ -81,7 +83,7 @@ class FormalExpressionRepository(OdmGenericRepository[OdmFormalExpressionAR]):
 
         return odm_formal_expression_ar
 
-    def specific_alias_clause(self, _: list = None) -> str:
+    def specific_alias_clause(self, _: list[Any] | None = None) -> str:
         return """
         WITH *,
         concept_value.context AS context,

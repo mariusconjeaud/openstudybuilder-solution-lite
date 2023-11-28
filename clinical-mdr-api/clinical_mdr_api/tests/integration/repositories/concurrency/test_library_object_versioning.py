@@ -1,5 +1,4 @@
 import unittest
-from typing import Sequence
 
 from neomodel import db
 
@@ -38,7 +37,7 @@ class ObjectiveRepositoryConcurrencyTest(unittest.TestCase):
     library_name = "Sponsor"
     user_initials = "TEST"
     template_name = "Example Template"
-    parameter_terms: Sequence[ParameterTermEntryVO] = []
+    parameter_terms: list[ParameterTermEntryVO] = []
 
     # These are set as part of the test for [Objective, Endpoint, Timeframe]
     template_uid = None
@@ -57,7 +56,7 @@ class ObjectiveRepositoryConcurrencyTest(unittest.TestCase):
     def setUpClass(cls) -> None:
         inject_and_clear_db("concurrency.versioning")
 
-    def setUp_base_graph_for_objectives(self):
+    def set_up_base_graph_for_objectives(self):
         db.cypher_query("MATCH (n) DETACH DELETE n")
         db.cypher_query(self.INIT_TEST_DATA)
         self.template_uid = "ObjectiveTemplate_000002"
@@ -115,7 +114,7 @@ class ObjectiveRepositoryConcurrencyTest(unittest.TestCase):
         self.object_repository.save(self.object_ar)
 
     def test_soft_delete_objective_aborted_on_approval(self):
-        self.setUp_base_graph_for_objectives()
+        self.set_up_base_graph_for_objectives()
         with self.assertRaises(VersioningException) as message:
             OptimisticLockingValidator().assert_optimistic_locking_ensures_execution_order(
                 main_operation_before=self.approve_object_without_save,
@@ -125,7 +124,7 @@ class ObjectiveRepositoryConcurrencyTest(unittest.TestCase):
         self.assertEqual("Object has been accepted", str(message.exception))
 
     def test_approve_objective_aborted_on_soft_delete(self):
-        self.setUp_base_graph_for_objectives()
+        self.set_up_base_graph_for_objectives()
         with self.assertRaises(VersioningException) as message:
             OptimisticLockingValidator().assert_optimistic_locking_ensures_execution_order(
                 main_operation_before=self.soft_delete_object_with_save,
@@ -138,7 +137,7 @@ class ObjectiveRepositoryConcurrencyTest(unittest.TestCase):
         )
 
     def test_edit_objective_aborted_on_approval(self):
-        self.setUp_base_graph_for_objectives()
+        self.set_up_base_graph_for_objectives()
         with self.assertRaises(VersioningException) as message:
             OptimisticLockingValidator().assert_optimistic_locking_ensures_execution_order(
                 main_operation_before=self.approve_object_without_save,
@@ -148,7 +147,7 @@ class ObjectiveRepositoryConcurrencyTest(unittest.TestCase):
         self.assertEqual("The object is not in draft status.", str(message.exception))
 
     def test_edit_objective_aborted_on_soft_delete(self):
-        self.setUp_base_graph_for_objectives()
+        self.set_up_base_graph_for_objectives()
         with self.assertRaises(VersioningException) as message:
             OptimisticLockingValidator().assert_optimistic_locking_ensures_execution_order(
                 main_operation_before=self.soft_delete_object_with_save,
@@ -161,7 +160,7 @@ class ObjectiveRepositoryConcurrencyTest(unittest.TestCase):
         )
 
     def test_inactivate_aborted_on_new_version(self):
-        self.setUp_base_graph_for_objectives()
+        self.set_up_base_graph_for_objectives()
         with db.transaction:
             self.approve_object_with_save()
         with self.assertRaises(VersioningException) as message:
@@ -173,7 +172,7 @@ class ObjectiveRepositoryConcurrencyTest(unittest.TestCase):
         self.assertEqual("Cannot retire draft version.", str(message.exception))
 
     def test_new_version_aborted_on_inactivate(self):
-        self.setUp_base_graph_for_objectives()
+        self.set_up_base_graph_for_objectives()
         with db.transaction:
             self.approve_object_with_save()
         with self.assertRaises(VersioningException) as message:
@@ -185,7 +184,7 @@ class ObjectiveRepositoryConcurrencyTest(unittest.TestCase):
         self.assertEqual("Cannot create new Draft version", str(message.exception))
 
     def test_new_version_aborted_on_reactivate(self):
-        self.setUp_base_graph_for_objectives()
+        self.set_up_base_graph_for_objectives()
         with db.transaction:
             self.approve_object_with_save()
         with db.transaction:
@@ -201,7 +200,7 @@ class ObjectiveRepositoryConcurrencyTest(unittest.TestCase):
         )
 
     def test_reactivate_aborted_on_new_version(self):
-        self.setUp_base_graph_for_objectives()
+        self.set_up_base_graph_for_objectives()
         with db.transaction:
             self.approve_object_with_save()
         with db.transaction:
@@ -216,9 +215,7 @@ class ObjectiveRepositoryConcurrencyTest(unittest.TestCase):
             "Only RETIRED version can be reactivated.", str(message.exception)
         )
 
-    """
-    Helper functions to be used by the locking validator:
-    """
+    # Helper functions to be used by the locking validator:
 
     def approve_object_without_save(self):
         object_ar = self.object_repository.find_by_uid_2(

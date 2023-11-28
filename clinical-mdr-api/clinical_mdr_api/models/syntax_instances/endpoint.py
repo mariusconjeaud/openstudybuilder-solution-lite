@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Self, Sequence
+from typing import Self
 
 from pydantic import Field
 
@@ -15,7 +15,10 @@ from clinical_mdr_api.models.syntax_templates.template_parameter_multi_select_in
 from clinical_mdr_api.models.syntax_templates.template_parameter_term import (
     MultiTemplateParameterTerm,
 )
-from clinical_mdr_api.models.utils import BaseModel
+from clinical_mdr_api.models.utils import (
+    BaseModel,
+    capitalize_first_letter_if_template_parameter,
+)
 
 
 class Endpoint(BaseModel):
@@ -30,7 +33,7 @@ class Endpoint(BaseModel):
     change_description: str | None = Field(None, nullable=True)
     user_initials: str | None = Field(None, nullable=True)
 
-    possible_actions: Sequence[str] | None = Field(
+    possible_actions: list[str] | None = Field(
         None,
         description=(
             "Holds those actions that can be performed on the endpoint. "
@@ -39,7 +42,7 @@ class Endpoint(BaseModel):
     )
 
     endpoint_template: EndpointTemplateNameUidLibrary | None
-    parameter_terms: Sequence[MultiTemplateParameterTerm] | None = Field(
+    parameter_terms: list[MultiTemplateParameterTerm] | None = Field(
         None,
         description="Holds the parameter terms that are used within the endpoint. The terms are ordered as they occur in the endpoint name.",
     )
@@ -54,13 +57,13 @@ class Endpoint(BaseModel):
         for position, parameter in enumerate(endpoint_ar.get_parameters()):
             terms: list[IndexedTemplateParameterTerm] = []
             for index, parameter_term in enumerate(parameter.parameters):
-                pv = IndexedTemplateParameterTerm(
+                indexed_template_parameter_term = IndexedTemplateParameterTerm(
                     index=index + 1,
                     uid=parameter_term.uid,
                     name=parameter_term.value,
                     type=parameter.parameter_name,
                 )
-                terms.append(pv)
+                terms.append(indexed_template_parameter_term)
             conjunction = parameter.conjunction
 
             parameter_terms.append(
@@ -70,8 +73,14 @@ class Endpoint(BaseModel):
             )
         return cls(
             uid=endpoint_ar.uid,
-            name=endpoint_ar.name,
-            name_plain=endpoint_ar.name_plain,
+            name=capitalize_first_letter_if_template_parameter(
+                endpoint_ar.name,
+                endpoint_ar.template_name_plain,
+            ),
+            name_plain=capitalize_first_letter_if_template_parameter(
+                endpoint_ar.name_plain,
+                endpoint_ar.template_name_plain,
+            ),
             start_date=endpoint_ar.item_metadata.start_date,
             end_date=endpoint_ar.item_metadata.end_date,
             status=endpoint_ar.item_metadata.status.value,

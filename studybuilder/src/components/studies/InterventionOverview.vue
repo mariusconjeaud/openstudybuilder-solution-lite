@@ -225,7 +225,8 @@ export default {
       selectedStudy: 'studiesGeneral/selectedStudy',
       studyCompounds: 'studyCompounds/studyCompounds',
       studyCompounds__Loading: 'studyCompounds/studyCompounds__Loading',
-      compoundDosings: 'studyCompounds/getStudyCompoundDosingsByStudyCompound'
+      compoundDosings: 'studyCompounds/getStudyCompoundDosingsByStudyCompound',
+      selectedStudyVersion: 'studiesGeneral/selectedStudyVersion'
     }),
     cols () {
       return this.studyCompounds.length ? this.studyCompounds.length : 1
@@ -258,10 +259,10 @@ export default {
     }
   },
   mounted () {
-    this.$store.dispatch('studyCompounds/fetchStudyCompounds', { studyUid: this.selectedStudy.uid, page_size: 0 }).then(resp => {
+    this.$store.dispatch('studyCompounds/fetchStudyCompounds', { studyUid: this.selectedStudy.uid, page_size: 0, studyValueVersion: this.selectedStudyVersion }).then(resp => {
       this.getAllCompoundAliases()
     })
-    this.$store.dispatch('studyCompounds/fetchStudyCompoundDosings', { studyUid: this.selectedStudy.uid, page_size: 0 })
+    this.$store.dispatch('studyCompounds/fetchStudyCompoundDosings', { studyUid: this.selectedStudy.uid, page_size: 0, studyValueVersion: this.selectedStudyVersion })
   },
   watch: {
     studyCompounds (value) {

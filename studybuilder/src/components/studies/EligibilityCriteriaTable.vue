@@ -11,6 +11,11 @@
     :history-data-fetcher="fetchAllCriteriaHistory"
     :history-title="$t('EligibilityCriteriaTable.global_history_title')"
     :history-html-fields="historyHtmlFields"
+    has-api
+    :column-data-resource="`studies/${selectedStudy.uid}/study-criteria`"
+    :options.sync="options"
+    :server-items-length="total"
+    @filter="getStudyCriteria"
     >
     <template v-slot:afterSwitches>
       <div :title="$t('NNTableTooltips.reorder_content')">
@@ -30,14 +35,14 @@
         color="primary"
         @click.stop="addCriteria"
         :title="$t('EligibilityCriteriaTable.add_criteria')"
-        :disabled="!checkPermission($roles.STUDY_WRITE)"
+        :disabled="!checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
         >
         <v-icon dark>
           mdi-plus
         </v-icon>
       </v-btn>
     </template>
-    <template v-slot:item.name="{ item }">
+    <template v-slot:item.criteria.name="{ item }">
       <template v-if="item.criteria_template">
         <n-n-parameter-highlighter
           :name="item.criteria_template.name"
@@ -51,7 +56,7 @@
           />
       </template>
     </template>
-    <template v-slot:item.guidance_text="{ item }">
+    <template v-slot:item.criteria.criteria_template.guidance_text="{ item }">
       <template v-if="item.criteria_template">
         <span v-html="item.criteria_template.guidance_text" />
       </template>
@@ -198,6 +203,8 @@ import NNParameterHighlighter from '@/components/tools/NNParameterHighlighter'
 import NNTable from '@/components/tools/NNTable'
 import study from '@/api/study'
 import { accessGuard } from '@/mixins/accessRoleVerifier'
+import filteringParameters from '@/utils/filteringParameters'
+import statuses from '@/constants/statuses'
 
 export default {
   mixins: [accessGuard],
@@ -216,7 +223,8 @@ export default {
   },
   computed: {
     ...mapGetters({
-      selectedStudy: 'studiesGeneral/selectedStudy'
+      selectedStudy: 'studiesGeneral/selectedStudy',
+      selectedStudyVersion: 'studiesGeneral/selectedStudyVersion'
     }),
     exportDataUrl () {
       return `studies/${this.selectedStudy.uid}/study-criteria`
@@ -239,9 +247,25 @@ export default {
     return {
       actions: [
         {
+          label: this.$t('EligibilityCriteriaTable.update_version_retired_tooltip'),
+          icon: 'mdi-alert-outline',
+          iconColor: 'orange',
+          condition: (item) => this.isLatestRetired(item),
+          accessRole: this.$roles.STUDY_WRITE
+        },
+        {
+          label: this.$t('EligibilityCriteriaTable.update_version_tooltip'),
+          icon: 'mdi-bell-ring-outline',
+          iconColorFunc: this.criteriaUpdateAborted,
+          condition: (item) => this.needUpdate(item) && !this.selectedStudyVersion,
+          click: this.updateVersion,
+          accessRole: this.$roles.STUDY_WRITE
+        },
+        {
           label: this.$t('_global.edit'),
           icon: 'mdi-pencil-outline',
           iconColor: 'primary',
+          condition: () => !this.selectedStudyVersion,
           click: this.editStudyCriteria,
           accessRole: this.$roles.STUDY_WRITE
         },
@@ -249,6 +273,7 @@ export default {
           label: this.$t('_global.delete'),
           icon: 'mdi-delete-outline',
           iconColor: 'error',
+          condition: () => !this.selectedStudyVersion,
           click: this.deleteStudyCriteria,
           accessRole: this.$roles.STUDY_WRITE
         },
@@ -263,8 +288,8 @@ export default {
       headers: [
         { text: '', value: 'actions', width: '5%' },
         { text: '#', value: 'order', width: '5%' },
-        { text: this.criteriaType.sponsor_preferred_name, value: 'name', width: '30%' },
-        { text: this.$t('EligibilityCriteriaTable.guidance_text'), value: 'guidance_text', width: '20%' },
+        { text: this.criteriaType.sponsor_preferred_name, value: 'criteria.name', width: '30%' },
+        { text: this.$t('EligibilityCriteriaTable.guidance_text'), value: 'criteria.criteria_template.guidance_text', width: '20%' },
         { text: this.$t('EligibilityCriteriaTable.key_criteria'), value: 'key_criteria' },
         { text: this.$t('_global.modified'), value: 'start_date' },
         { text: this.$t('_global.modified_by'), value: 'user_initials' }
@@ -274,15 +299,29 @@ export default {
       showEditForm: false,
       showForm: false,
       showHistory: false,
-      sortMode: false
+      sortMode: false,
+      total: 0,
+      options: {}
     }
   },
   methods: {
     async fetchAllCriteriaHistory () {
       const resp = await study.getStudyCriteriaAllAuditTrail(this.selectedStudy.uid, this.criteriaType.term_uid)
-      return this.transformItems(resp.data)
+      const auditTrailData = this.transformItems(resp.data)
+      auditTrailData.forEach(item => {
+        if (!item.criteria) {
+          item.criteria = item.criteria_template
+        }
+      })
+      return auditTrailData
     },
     actionsMenuBadge (item) {
+      if (this.needUpdate(item)) {
+        return {
+          color: 'error',
+          icon: 'mdi-bell-outline'
+        }
+      }
       if (!item.criteria && item.criteria_template.parameters.length > 0) {
         return {
           color: 'error',
@@ -315,6 +354,11 @@ export default {
       this.selectedStudyCriteria = studyCriteria
       const resp = await study.getStudyCriteriaAuditTrail(this.selectedStudy.uid, studyCriteria.study_criteria_uid)
       this.criteriaHistoryItems = this.transformItems(resp.data)
+      this.criteriaHistoryItems.forEach(item => {
+        if (!item.criteria) {
+          item.criteria = item.criteria_template
+        }
+      })
       this.showHistory = true
     },
     editStudyCriteria (studyCriteria) {
@@ -332,12 +376,13 @@ export default {
         bus.$emit('notification', { msg: this.$t('EligibilityCriteriaTable.delete_success') })
       }
     },
-    getStudyCriteria (sortByOrder) {
-      study.getStudyCriteriaWithType(this.selectedStudy.uid, this.criteriaType).then(resp => {
+    getStudyCriteria (filters, sort, filtersUpdated) {
+      const params = filteringParameters.prepareParameters(
+        this.options, filters, sort, filtersUpdated)
+      params.study_value_version = this.selectedStudyVersion
+      study.getStudyCriteriaWithType(this.selectedStudy.uid, this.criteriaType, params).then(resp => {
         this.criteria = this.transformItems(resp.data.items)
-        if (sortByOrder) {
-          this.sortStudyCriteria()
-        }
+        this.total = resp.data.total
       })
     },
     onOrderChange (event) {
@@ -345,11 +390,6 @@ export default {
       const replacedStudyCriteria = this.criteria[event.moved.newIndex]
       study.updateStudyCriteriaOrder(this.selectedStudy.uid, studyCriteria.study_criteria_uid, replacedStudyCriteria.order).then(resp => {
         this.getStudyCriteria()
-      })
-    },
-    sortStudyCriteria () {
-      this.criteria.sort((a, b) => {
-        return a.order - b.order
       })
     },
     updateKeyCriteria (value, studyCriteriaUid) {
@@ -371,6 +411,48 @@ export default {
         result.push(newItem)
       }
       return result
+    },
+    needUpdate (item) {
+      if (item.latest_criteria) {
+        if (!this.isLatestRetired(item)) {
+          return item.criteria.version !== item.latest_criteria.version
+        }
+      }
+      return false
+    },
+    criteriaUpdateAborted (item) {
+      return item.accepted_version ? '' : 'error'
+    },
+    isLatestRetired (item) {
+      if (item.latest_criteria) {
+        return item.latest_criteria.status === statuses.RETIRED
+      }
+      return false
+    },
+    async updateVersion (item) {
+      const options = {
+        type: 'warning',
+        width: 1000,
+        cancelLabel: this.$t('EligibilityCriteriaTable.keep_old_version'),
+        agreeLabel: this.$t('EligibilityCriteriaTable.use_new_version')
+      }
+      const message = this.$t('EligibilityCriteriaTable.update_version_alert') + '<br>' + this.$t('EligibilityCriteriaTable.previous_version') + ' ' + item.criteria.name_plain +
+      '<br>' + this.$t('EligibilityCriteriaTable.new_version') + ' ' + item.latest_criteria.name_plain
+
+      if (await this.$refs.confirm.open(message, options)) {
+        study.updateStudyCriteriaLatestVersion(item.study_uid, item.study_criteria_uid).then(() => {
+          bus.$emit('notification', { msg: this.$t('EligibilityCriteriaTable.update_version_successful') })
+          this.getStudyCriteria()
+        }).catch(error => {
+          bus.$emit('notification', { type: 'error', msg: error.response.data.message })
+        })
+      } else {
+        study.updateStudyCriteriaAcceptVersion(item.study_uid, item.study_criteria_uid).then(() => {
+          this.getStudyCriteria()
+        }).catch(error => {
+          bus.$emit('notification', { type: 'error', msg: error.response.data.message })
+        })
+      }
     }
   },
   mounted () {
@@ -382,7 +464,6 @@ export default {
       this.headers.forEach(header => {
         this.$set(header, 'sortable', !value)
       })
-      this.sortStudyCriteria()
     }
   }
 }

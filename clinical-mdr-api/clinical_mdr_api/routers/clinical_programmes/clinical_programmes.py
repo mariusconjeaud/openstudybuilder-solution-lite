@@ -1,5 +1,3 @@
-from typing import Sequence
-
 from fastapi import APIRouter, Body, Depends
 
 from clinical_mdr_api import models
@@ -17,14 +15,14 @@ router = APIRouter()
     "",
     dependencies=[rbac.LIBRARY_READ],
     summary="Returns all clinical programmes.",
-    response_model=Sequence[models.ClinicalProgramme],
+    response_model=list[models.ClinicalProgramme],
     status_code=200,
     responses={
         404: _generic_descriptions.ERROR_404,
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_projects() -> Sequence[models.ClinicalProgramme]:
+def get_projects() -> list[models.ClinicalProgramme]:
     return clinical_programme_service.get_all_clinical_programmes()
 
 

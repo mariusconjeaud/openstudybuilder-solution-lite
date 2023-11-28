@@ -1,6 +1,6 @@
 import abc
 from datetime import datetime
-from typing import Any, Generic, Sequence, TypeVar
+from typing import Any, Generic, TypeVar
 
 from neomodel import db
 from pydantic import BaseModel
@@ -94,7 +94,7 @@ class CTCodelistGenericService(Generic[_AggregateRootType], abc.ABC):
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
-    ) -> Sequence:
+    ) -> list[Any]:
         self.enforce_catalogue_library_package(catalogue_name, library, package)
 
         header_values = self.repository.get_distinct_headers(
@@ -149,7 +149,7 @@ class CTCodelistGenericService(Generic[_AggregateRootType], abc.ABC):
         return item
 
     @db.transaction
-    def get_version_history(self, codelist_uid) -> Sequence[BaseModel]:
+    def get_version_history(self, codelist_uid) -> list[BaseModel]:
         if self.version_class is not None:
             all_versions = self.repository.get_all_versions(codelist_uid)
             if all_versions is None:

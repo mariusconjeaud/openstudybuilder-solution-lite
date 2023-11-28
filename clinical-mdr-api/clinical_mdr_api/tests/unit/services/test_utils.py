@@ -55,21 +55,24 @@ class TestServiceUtils(unittest.TestCase):
         self.assertRaises(ValueError, _utils.get_input_or_new_value, None, "Y", None)
 
     def test_to_dict(self):
-        class B:
-            y: str
+        class ClassB:
+            z: str
 
-            def __init__(self, y) -> None:
+            def __init__(self, z) -> None:
+                self.z = z
+
+        class ClassA:
+            x: str
+            y: ClassB
+
+            def __init__(self, x, y) -> None:
+                self.x = x
                 self.y = y
 
-        class A:
-            x: str
-            b: B
-
-            def __init__(self, x, b) -> None:
-                self.x = x
-                self.b = b
-
-        assert _utils.to_dict(A(x="a", b=B(y="b"))) == {"b": {"y": "b"}, "x": "a"}
+        assert _utils.to_dict(ClassA(x="a", y=ClassB(z="b"))) == {
+            "y": {"z": "b"},
+            "x": "a",
+        }
 
     @parameterized.expand(
         [
@@ -78,8 +81,8 @@ class TestServiceUtils(unittest.TestCase):
             ({"x": 1, "y": 2}, None, {}),
         ]
     )
-    def test_object_diff(self, a, b, expected):
-        assert _utils.object_diff(a, b) == expected
+    def test_object_diff(self, obj1, obj2, expected):
+        assert _utils.object_diff(obj1, obj2) == expected
 
     @parameterized.expand(
         [

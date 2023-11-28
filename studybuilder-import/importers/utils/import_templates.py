@@ -91,7 +91,7 @@ study_patch = {
             },
         },
         "study_population": {
-            "therapeutic_areas_codes": [{"term_uid": "string", "name": "string"}],
+            "therapeutic_area_codes": [{"term_uid": "string", "name": "string"}],
             "therapeutic_areas_null_value_code": {
                 "term_uid": "string",
                 "name": "string",
@@ -326,7 +326,7 @@ study_branch = {
 }
 
 study_activity = {
-    "flowchart_group_uid": "string",
+    "soa_group_term_uid": "string",
     "activity_uid": "string",
     "activity_subgroup_uid": "string",
     "activity_group_uid": "string",
@@ -337,7 +337,7 @@ objective_template = {
     "name": "string",
     "guidance_text": "string",
     "study_uid": "string",
-    "library_name": "Sponsor",
+    "library_name": "string",
     "default_parameter_terms": [
         {
             "position": 0,
@@ -356,7 +356,7 @@ criteria_template = {
     "name": "string",
     "guidance_text": "string",
     "study_uid": "string",
-    "library_name": "Sponsor",
+    "library_name": "string",
     "default_parameter_terms": [
         {
             "position": 0,
@@ -375,14 +375,14 @@ criteria_template = {
 timeframe_template = {
     "name": "string",
     "guidance_text": "string",
-    "library_name": "Sponsor",
+    "library_name": "string",
 }
 
 endpoint_template = {
     "name": "string",
     "guidance_text": "string",
     "study_uid": "string",
-    "library_name": "Sponsor",
+    "library_name": "string",
     "default_parameter_terms": [
         {
             "position": 0,
@@ -400,7 +400,7 @@ endpoint_template = {
 activity_instruction_template = {
     "name": "string",
     "guidance_text": "string",
-    "library_name": "Sponsor",
+    "library_name": "string",
     "default_parameter_terms": [
         {
             "position": 0,

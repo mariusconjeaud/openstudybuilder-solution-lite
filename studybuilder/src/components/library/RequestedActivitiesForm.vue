@@ -55,7 +55,7 @@
         <v-row>
           <v-col>
             <v-text-field
-              :label="$t('ActivityForms.name')"
+              :label="$t('ActivityForms.activity_name')"
               v-model="form.name"
               :error-messages="errors"
               dense
@@ -64,6 +64,10 @@
           </v-col>
         </v-row>
       </validation-provider>
+      <sentence-case-name-field
+        :name="form.name"
+        :initial-name="form.name_sentence_case"
+        v-model="form.name_sentence_case"/>
       <validation-provider
         v-slot="{ errors }"
         >
@@ -144,10 +148,12 @@ import _isEmpty from 'lodash/isEmpty'
 import activities from '@/api/activities'
 import SimpleFormDialog from '@/components/tools/SimpleFormDialog'
 import libConstants from '@/constants/libraries'
+import SentenceCaseNameField from '@/components/tools/SentenceCaseNameField'
 
 export default {
   components: {
-    SimpleFormDialog
+    SimpleFormDialog,
+    SentenceCaseNameField
   },
   props: {
     editedActivity: Object,
@@ -219,21 +225,21 @@ export default {
       this.$refs.observer.reset()
     },
     async submit () {
-      const valid = await this.$refs.observer.validate()
-      if (!valid) {
-        return
-      }
       this.form.library_name = libConstants.LIBRARY_REQUESTED
       this.form.name_sentence_case = this.form.name.charAt(0).toUpperCase() + this.form.name.slice(1)
       if (!this.isEdit) {
         activities.create(this.form, 'activities').then(resp => {
           bus.$emit('notification', { msg: this.$t('ActivityForms.activity_created') })
           this.close()
+        }, _err => {
+          this.$refs.form.working = false
         })
       } else {
         activities.update(this.editedActivity.uid, this.form, 'activities').then(resp => {
           bus.$emit('notification', { msg: this.$t('ActivityForms.activity_updated') })
           this.close()
+        }, _err => {
+          this.$refs.form.working = false
         })
       }
     },

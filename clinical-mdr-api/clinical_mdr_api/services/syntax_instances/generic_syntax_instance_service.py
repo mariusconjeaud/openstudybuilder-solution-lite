@@ -1,5 +1,5 @@
 import abc
-from typing import Callable, Sequence, TypeVar
+from typing import Callable, TypeVar
 
 from neomodel import core, db
 from pydantic import BaseModel
@@ -21,6 +21,9 @@ from clinical_mdr_api.domains.libraries.parameter_term import (
     NumericParameterTermVO,
     ParameterTermEntryVO,
     SimpleParameterTermVO,
+)
+from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import (
+    StudyComponentEnum,
 )
 from clinical_mdr_api.domains.syntax_templates.template import TemplateVO
 from clinical_mdr_api.domains.versioned_object_aggregate import (
@@ -77,8 +80,8 @@ class GenericSyntaxInstanceService(GenericSyntaxService[_AggregateRootType], abc
         Return parameter term based on uid
         """
         params = []
-        for p in self._allowed_parameters:
-            params.extend(p["terms"])
+        for allowed_parameter in self._allowed_parameters:
+            params.extend(allowed_parameter["terms"])
         params_dict = {item["uid"]: item for item in params}
         return params_dict.get(uid, {}).get("name")
 
@@ -236,9 +239,9 @@ class GenericSyntaxInstanceService(GenericSyntaxService[_AggregateRootType], abc
         template_uid: str | None = None,
         study_uid: str | None = None,
         include_study_endpoints: bool | None = False,
-    ) -> Sequence[ParameterTermEntryVO]:
+    ) -> list[ParameterTermEntryVO]:
         """
-        Creates sequence of Parameter Term Entries that is used in aggregate. These contain:
+        Creates list of Parameter Term Entries that is used in aggregate. These contain:
         parameter name, conjunctions, uids, and terms of parameters
         """
         if template_uid is None:
@@ -262,15 +265,15 @@ class GenericSyntaxInstanceService(GenericSyntaxService[_AggregateRootType], abc
                 for param_name in param_names:
                     parameter = template.parameter_terms[idx]
                     if param_name != "NumericValue":
-                        tp = SimpleParameterTermVO(
+                        parameter_term_vo = SimpleParameterTermVO(
                             uid=parameter.terms[0].uid, value=parameter.terms[0].name
                         )
                     else:
-                        tp = NumericParameterTermVO(
+                        parameter_term_vo = NumericParameterTermVO(
                             uid="", value=template.parameter_terms[idx].value
                         )
                     idx += 1
-                    params.append(tp)
+                    params.append(parameter_term_vo)
                 parameter_terms.append(
                     ComplexParameterTerm(
                         uid=allowed_parameter.get("definition"),
@@ -309,11 +312,11 @@ class GenericSyntaxInstanceService(GenericSyntaxService[_AggregateRootType], abc
                 else:
                     # Else, iterate over the provided values, store them and their type dynamically.
                     for item in parameter.terms:
-                        pv = SimpleParameterTermVO.from_input_values(
+                        parameter_term_vo = SimpleParameterTermVO.from_input_values(
                             parameter_term_by_uid_lookup_callback=self._get_parameter_term,
                             uid=item.uid,
                         )
-                        uids.append(pv)
+                        uids.append(parameter_term_vo)
                     pve = ParameterTermEntryVO.from_input_values(
                         parameter_exists_callback=self._repos.parameter_repository.parameter_name_exists,
                         conjunction_exists_callback=lambda _: True,  # TODO: provide proper callback here
@@ -336,8 +339,12 @@ class GenericSyntaxInstanceService(GenericSyntaxService[_AggregateRootType], abc
 
     @db.transaction
     def get_referencing_studies(
-        self, uid: str, node_type: core.NodeMeta, fields: str | None = ""
-    ) -> Sequence[Study]:
+        self,
+        uid: str,
+        node_type: core.NodeMeta,
+        include_sections: list[StudyComponentEnum] | None = None,
+        exclude_sections: list[StudyComponentEnum] | None = None,
+    ) -> list[Study]:
         studies = self.study_repository.find_all_by_library_item_uid(
             uid=uid, library_item_type=node_type, sort_by={"uid": True}
         ).items
@@ -349,14 +356,15 @@ class GenericSyntaxInstanceService(GenericSyntaxService[_AggregateRootType], abc
                 find_project_by_project_number=self._repos.project_repository.find_by_project_number,
                 find_clinical_programme_by_uid=self._repos.clinical_programme_repository.find_by_uid,
                 find_all_study_time_units=self._repos.unit_definition_repository.find_all,
-                fields=fields,
+                include_sections=include_sections,
+                exclude_sections=exclude_sections,
             )
             for item in studies
         ]
         return return_items
 
     @db.transaction
-    def get_releases_referenced_by_any_study(self) -> Sequence[BaseModel]:
+    def get_releases_referenced_by_any_study(self) -> list[BaseModel]:
         items = self.repository.find_instances_referenced_by_any_study()
         return [
             self._transform_aggregate_root_to_pydantic_model(item) for item in items

@@ -72,6 +72,9 @@ const actions = {
   },
   fetchProjects ({ commit }) {
     return study.projects_all().then(resp => {
+      resp.data.sort(function (a, b) {
+        return a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+      })
       commit('SET_PROJECTS', resp.data)
     })
   }

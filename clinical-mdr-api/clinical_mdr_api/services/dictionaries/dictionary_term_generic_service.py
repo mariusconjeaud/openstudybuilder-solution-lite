@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import Any, Generic, Sequence, TypeVar
+from typing import Any, Generic, TypeVar
 
 from neomodel import db
 from pydantic import BaseModel
@@ -133,7 +133,7 @@ class DictionaryTermGenericService(Generic[_AggregateRootType], ABC):
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
-    ) -> Sequence[str]:
+    ) -> list[str]:
         # First, check that attributes provided for filtering exist in the return class
         # Properties can be nested => check if root property exists in class
         if not models.utils.is_attribute_in_model(
@@ -169,7 +169,7 @@ class DictionaryTermGenericService(Generic[_AggregateRootType], ABC):
         return item
 
     @db.transaction
-    def get_version_history(self, term_uid: str) -> Sequence[BaseModel]:
+    def get_version_history(self, term_uid: str) -> list[BaseModel]:
         if self.version_class is not None:
             all_versions = self.repository.get_all_versions_2(term_uid)
             if all_versions is None:

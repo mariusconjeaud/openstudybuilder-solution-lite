@@ -1,4 +1,4 @@
-from typing import Sequence
+from typing import Any
 
 from neomodel import db
 
@@ -202,7 +202,7 @@ class CTCodelistAggregatedRepository:
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
-    ) -> Sequence:
+    ) -> list[Any]:
         """
         Method runs a cypher query to fetch possible values for a given field_name, with a limit of result_count.
         It uses generic filtering capability, on top of filtering the field_name with provided search_string.
@@ -215,7 +215,7 @@ class CTCodelistAggregatedRepository:
         :param filter_by:
         :param filter_operator: Same as for generic filtering
         :param result_count: Max number of values to return. Default 10
-        :return Sequence:
+        :return list[Any]:
         """
         # Build match_clause
         # Build specific filtering for catalogue, package and library
@@ -300,11 +300,11 @@ class CTCodelistAggregatedRepository:
 
         return match_clause
 
-    def count_all(self) -> Sequence[CodelistCount]:
+    def count_all(self) -> list[CodelistCount]:
         """
         Returns the count of CT Codelists in the database, grouped by Library
 
-        :return: Sequence[CodelistCount] - count of CT Codelists
+        :return: list[CodelistCount] - count of CT Codelists
         """
         query = """
             MATCH (n:CTCodelistRoot)<-[:CONTAINS_CODELIST]-(l:Library)

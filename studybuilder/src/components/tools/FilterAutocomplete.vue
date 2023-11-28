@@ -111,7 +111,7 @@
     </template>
     <template v-slot:selection="{index}">
       <div v-if="index === 0">
-        <span class="items-font-size">{{ data[0].substring(0, 12) + '...' }}</span>
+        <span class="items-font-size">{{ (typeof data[0]) !== 'boolean' ? data[0].substring(0, 12) + '...' : data[0] }}</span>
       </div>
       <span
         v-if="index === 1"
@@ -151,6 +151,10 @@ export default {
     initialData: {
       type: Array,
       required: false
+    },
+    selectedData: {
+      type: Array,
+      required: false
     }
   },
   data () {
@@ -167,6 +171,9 @@ export default {
       this.getColumnData(this.item.value)
     } else {
       this.items = [...this.initialData]
+    }
+    if (this.selectedData) {
+      this.data = this.selectedData
     }
   },
   methods: {
@@ -203,6 +210,11 @@ export default {
       }
       let jsonFilter = JSON.parse(this.filters)
       delete jsonFilter[value]
+      if (this.item.exludeFromHeader) {
+        this.item.exludeFromHeader.forEach(header => {
+          delete jsonFilter[header]
+        })
+      }
       let params = {
         field_name: (this.item.externalFilterSource ? this.item.externalFilterSource.substring(this.item.externalFilterSource.indexOf('$') + 1) : (this.item.filteringName ? this.item.filteringName : value)),
         search_string: this.searchString,
@@ -227,6 +239,9 @@ export default {
       }
       if (this.item.externalFilterSource) {
         this.resource[0] = this.item.externalFilterSource.substring(0, this.item.externalFilterSource.indexOf('$'))
+      }
+      if (this.item.disableColumnFilters) {
+        params.filters = {}
       }
       columnData.getHeaderData(params, this.resource[0]).then(resp => {
         this.items = this.booleanValidator(resp.data)

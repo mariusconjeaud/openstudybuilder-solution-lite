@@ -62,7 +62,7 @@ class TestCTCodelistRepository(unittest.TestCase):
                         codelist_attributes.approve(author=current_function_name())
                         self.codelist_attributes_repo.save(codelist_attributes)
                         codelist_names = create_random_ct_codelist_name_ar(
-                            generate_uid_callback=lambda: codelist_attributes.uid,
+                            generate_uid_callback=lambda x=codelist_attributes.uid: x,
                             library=library,
                             is_editable=True,
                             catalogue=catalogue,

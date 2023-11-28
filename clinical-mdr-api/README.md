@@ -17,17 +17,11 @@ This repository contains an API providing read/write access to Clinical MDR (Cli
 * Run `pipenv sync --dev` from root folder to install the required python libraries.
 
 ## Setup environment variables
+Copy `.env.example` and name it `.env` and update the variables as needed.
 
-Create `.env` file (in the root of the repository) with the following content:
-```shell
-UID=1000
-NEO4J_DSN=bolt://neo4j:test1234@localhost:7687/neo4j
-OAUTH_ENABLED=false
-ALLOW_ORIGIN_REGEX='.*'
-```
 Notes:
 - Update the value of `UID` to your actual user id reported by `id` command.
-- `NEO4J_DSN` variable needs to be in alignment with the actual environmemt variables used when starting the target neo4j database, e.g.
+- `NEO4J_DSN` variable needs to be in alignment with the actual environment variables used when starting the target neo4j database, e.g.
 
   ```
   NEO4J_MDR_BOLT_PORT=7687
@@ -35,36 +29,32 @@ Notes:
   NEO4J_MDR_AUTH_USER=neo4j
   NEO4J_MDR_AUTH_PASSWORD=test1234
   ```
-- To enable authentication, add and set the following variables too.
-Update them according to your auth configuration (the values below are random-generated examples).
+- To enable authentication, update the following variables according to your auth configuration (the values below are random-generated examples).
   ```shell
   OAUTH_ENABLED=True
-  OIDC_METADATA_DOCUMENT='https://login.microsoftonline.com/bd70d9d2-5ba8-4bb8-8ca5-55fdaf0c76d1/v2.0/.well-known/openid-configuration'
-  OAUTH_APP_ID='0b4bb293-433f-44d3-b992-8c95ad1665b9'
+  OAUTH_METADATA_URL='https://login.microsoftonline.com/bd70d9d2-5ba8-4bb8-8ca5-55fdaf0c76d1/v2.0/.well-known/openid-configuration'
+  OAUTH_API_APP_ID='0b4bb293-433f-44d3-b992-8c95ad1665b9'
   
   # required for MS Graph API integration only, which will be used by a future feature #
-  OAUTH_APP_SECRET='21u9UAnFKXUCYt6yxqRA7xAQ'
+  OAUTH_API_APP_SECRET='21u9UAnFKXUCYt6yxqRA7xAQ'
   MS_GRAPH_INTEGRATION_ENABLED=true
   # optional, for MS Graph API integration: filter expression for group discovery  #
   MS_GRAPH_GROUPS_QUERY="$filter=startsWith(displayName, 'StudyBuilder')"
   
   # required for the FastAPI-built-in Swagger UI only #
-  OAUTH_CLIENT_ID='db8a95f6-a638-4535-bb1d-4a131748165a'
-  OAUTH_AUTHORIZATION_URL='https://login.microsoftonline.com/bd70d9d2-5ba8-4bb8-8ca5-55fdaf0c76d1/oauth2/v2.0/authorize'
-  OAUTH_TOKEN_URL='https://login.microsoftonline.com/bd70d9d2-5ba8-4bb8-8ca5-55fdaf0c76d1/oauth2/v2.0/token'
+  OAUTH_SWAGGER_APP_ID='db8a95f6-a638-4535-bb1d-4a131748165a'
   ```
 
-- For integration with Azure Monitoring / Application Insights (logs, tracing, correlation)
-add these variables as well (replacing the key):
+- For integration with Azure Monitoring / Application Insights (logs, tracing, correlation) update these variables:
   ```shell
   APPLICATIONINSIGHTS_CONNECTION_STRING='InstrumentationKey=00000000-0000-0000-0000-000000000000'
   UVICORN_LOG_CONFIG='logging-azure.yaml'
   ```
 
-- The application uses a tracing middle ware to log useful information for each request.
-  If this is not desired, add this variable:
+- The application uses a tracing middleware to log useful information for each request.
+  If this is not desired, set `TRACING_DISABLED` variable to `false`:
   ```shell
-  TRACING_DISABLED="true"
+  TRACING_DISABLED=false
   ```
 
 ## Launch API locally

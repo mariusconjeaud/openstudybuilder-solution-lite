@@ -131,15 +131,15 @@ class TimeframeTemplateWithCount(TimeframeTemplate):
     def from_timeframe_template_ar(
         cls, timeframe_template_ar: TimeframeTemplateAR
     ) -> Self:
-        ot = super().from_timeframe_template_ar(timeframe_template_ar)
+        timeframe_template = super().from_timeframe_template_ar(timeframe_template_ar)
         if timeframe_template_ar.counts is not None:
-            ot.counts = ItemCounts(
+            timeframe_template.counts = ItemCounts(
                 draft=timeframe_template_ar.counts.count_draft,
                 final=timeframe_template_ar.counts.count_final,
                 retired=timeframe_template_ar.counts.count_retired,
                 total=timeframe_template_ar.counts.count_total,
             )
-        return ot
+        return timeframe_template
 
 
 class TimeframeTemplateVersion(TimeframeTemplate):

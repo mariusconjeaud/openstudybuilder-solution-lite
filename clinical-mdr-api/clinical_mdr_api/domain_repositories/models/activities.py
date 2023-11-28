@@ -11,13 +11,18 @@ from neomodel import (
 
 from clinical_mdr_api.domain_repositories.models.biomedical_concepts import (
     ActivityInstanceClassRoot,
-    ActivityItemValue,
+    ActivityItemClassRoot,
 )
 from clinical_mdr_api.domain_repositories.models.concepts import (
     ConceptRoot,
     ConceptValue,
+    UnitDefinitionRoot,
+)
+from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
+    CTTermRoot,
 )
 from clinical_mdr_api.domain_repositories.models.generic import (
+    ClinicalMdrNode,
     ClinicalMdrNodeWithUID,
     ClinicalMdrRel,
     VersionRelationship,
@@ -141,9 +146,30 @@ class ActivityRoot(ConceptRoot):
     )
 
 
+class ActivityItem(ClinicalMdrNode):
+    has_activity_item_class = RelationshipFrom(
+        ActivityItemClassRoot,
+        "HAS_ACTIVITY_ITEM",
+        model=ClinicalMdrRel,
+    )
+    has_ct_term = RelationshipTo(
+        CTTermRoot, "HAS_CT_TERM", model=ClinicalMdrRel, cardinality=ZeroOrMore
+    )
+    has_unit_definition = RelationshipTo(
+        UnitDefinitionRoot,
+        "HAS_UNIT_DEFINITION",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrMore,
+    )
+
+
 class ActivityInstanceValue(ConceptValue):
     topic_code = StringProperty()
     adam_param_code = StringProperty()
+    is_required_for_activity = BooleanProperty()
+    is_default_selected_for_activity = BooleanProperty()
+    is_data_sharing = BooleanProperty()
+    is_legacy_usage = BooleanProperty()
     legacy_description = StringProperty()
 
     has_activity = RelationshipTo(
@@ -156,7 +182,7 @@ class ActivityInstanceValue(ConceptValue):
         model=ClinicalMdrRel,
     )
     contains_activity_item = RelationshipTo(
-        ActivityItemValue, "CONTAINS_ACTIVITY_ITEM", model=ClinicalMdrRel
+        ActivityItem, "CONTAINS_ACTIVITY_ITEM", model=ClinicalMdrRel
     )
 
 

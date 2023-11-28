@@ -3,7 +3,7 @@ import logging
 import re
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Sequence
+from typing import Any, Callable
 
 from dateutil.parser import isoparse
 from neo4j.exceptions import CypherSyntaxError
@@ -108,26 +108,23 @@ def get_wildcard_filter(filter_elem, model: BaseModel):
             field_source in model_sources
             and field.type_ is str
             and not issubclass(model, SponsorModelBase)
-        ):
-            if not field.field_info.extra.get("remove_from_wildcard", False):
-                if issubclass(field.type_, BaseModel):
-                    q_obj = get_wildcard_filter(
-                        filter_elem=filter_elem, model=field.type_
-                    )
-                    wildcard_filter.append(q_obj)
-                elif field.type_ is str and name not in ["possible_actions"]:
-                    q_obj = Q(**{f"{field_source}__icontains": filter_elem.v[0]})
-                    wildcard_filter.append(q_obj)
+        ) and not field.field_info.extra.get("remove_from_wildcard", False):
+            if issubclass(field.type_, BaseModel):
+                q_obj = get_wildcard_filter(filter_elem=filter_elem, model=field.type_)
+                wildcard_filter.append(q_obj)
+            elif field.type_ is str and name not in ["possible_actions"]:
+                q_obj = Q(**{f"{field_source}__icontains": filter_elem.v[0]})
+                wildcard_filter.append(q_obj)
     return functools.reduce(lambda filter1, filter2: filter1 | filter2, wildcard_filter)
 
 
-def get_embedded_field(fields: list, model: BaseModel):
+def get_embedded_field(fields: list[Any], model: BaseModel):
     """
     Returns the embedded field to filter by. For instance we can obtain 'flowchart_group.name' filter clause
     from the client which means that we want to filter by the name property in the flowchart_group nested model.
 
     Args:
-        fields (list): A list of fields representing the nesting of the desired field.
+        fields (list[Any]): A list of fields representing the nesting of the desired field.
         model (BaseModel): The model to search for the nested field.
 
     Returns:
@@ -138,8 +135,8 @@ def get_embedded_field(fields: list, model: BaseModel):
     """
     if len(fields) == 1:
         return model.__fields__.get(fields[0])
-    for x in fields:
-        if len(x.strip()) == 0:
+    for field in fields:
+        if len(field.strip()) == 0:
             raise exceptions.ValidationException(
                 "Supplied value for 'field_name' is not valid. Example valid value is: 'field.sub_field'."
             )
@@ -214,7 +211,7 @@ def validate_page_number_and_page_size(page_number: int, page_size: int) -> int:
     return page_number
 
 
-def get_versioning_q_filter(filter_elem, field, q_filters: list):
+def get_versioning_q_filter(filter_elem, field, q_filters: list[Any]):
     neomodel_filter = comparison_operator_to_neomodel.get(filter_elem.op)
     if neomodel_filter is None:
         raise AttributeError(
@@ -226,7 +223,7 @@ def get_versioning_q_filter(filter_elem, field, q_filters: list):
     )
 
 
-def get_version_properties_sources() -> list:
+def get_version_properties_sources() -> list[Any]:
     return [
         field.field_info.extra.get("source")
         for field in VersionProperties.__fields__.values()
@@ -325,7 +322,7 @@ def is_date(string):
 
 
 class GenericFilteringReturn:
-    def __init__(self, items: Sequence[Any], total: int):
+    def __init__(self, items: list[Any], total: int):
         self.items = items
         self.total = total
 
@@ -449,7 +446,7 @@ class CypherQueryBuilder:
         filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
         return_model: type | None = None,
-        wildcard_properties_list: Sequence[str] | None = None,
+        wildcard_properties_list: list[str] | None = None,
         format_filter_sort_keys: Callable | None = None,
         union_match_clause: str | None = None,
     ):
@@ -489,7 +486,7 @@ class CypherQueryBuilder:
         self.build_count_query()
 
     def _handle_nested_base_model_filtering(
-        self, _predicates, _alias, _parsed_operator, _query_param_name, el
+        self, _predicates, _alias, _parsed_operator, _query_param_name, elm
     ):
         if "." in _alias:
             nested_path = _alias.split(".")
@@ -513,7 +510,7 @@ class CypherQueryBuilder:
                 _predicates.append(
                     f"any(attr in {path} WHERE toLower(attr.{_alias}) CONTAINS ${_query_param_name})"
                 )
-            self.parameters[f"{_query_param_name}"] = el.lower()
+            self.parameters[f"{_query_param_name}"] = elm.lower()
         else:
             attr_desc = self.return_model.__fields__.get(_alias)
             # name=$name_0 with name_0 defined in parameter objects
@@ -528,7 +525,7 @@ class CypherQueryBuilder:
                 _predicates.append(
                     f"any(attr in {_alias} WHERE toLower(attr.name) CONTAINS ${_query_param_name})"
                 )
-            self.parameters[f"{_query_param_name}"] = el.lower()
+            self.parameters[f"{_query_param_name}"] = elm.lower()
 
     def build_filter_clause(self) -> None:
         _filter_clause = "WHERE "
@@ -594,11 +591,11 @@ class CypherQueryBuilder:
                         self.parameters[f"{_query_param_prefix}_0"] = _values[0]
                         self.parameters[f"{_query_param_prefix}_1"] = _values[1]
                     else:
-                        exceptions.NotFoundException(
+                        raise exceptions.NotFoundException(
                             "Between operator not supported with wildcard filtering"
                         )
                 else:
-                    exceptions.NotFoundException(
+                    raise exceptions.NotFoundException(
                         "For between operator to work, exactly 2 values must be provided"
                     )
             else:
@@ -613,11 +610,11 @@ class CypherQueryBuilder:
                         )
                     _predicates.append(f"{_alias} IS NULL")
                 else:
-                    for index, el in enumerate(_values):
+                    for index, elm in enumerate(_values):
                         # If filter is a wildcard
                         if _alias == "*":
                             # Wildcard filtering only accepts a search value of type string
-                            if isinstance(el, str):
+                            if isinstance(elm, str):
                                 # If a list of wildcard properties is provided, use it
                                 if len(self.wildcard_properties_list) > 0:
                                     for db_property in self.wildcard_properties_list:
@@ -680,7 +677,7 @@ class CypherQueryBuilder:
                                     raise exceptions.ValidationException(
                                         "Wildcard filtering not properly covered for this object"
                                     )
-                                self.parameters[f"wildcard_{index}"] = el.lower()
+                                self.parameters[f"wildcard_{index}"] = elm.lower()
                             else:
                                 raise exceptions.NotFoundException(
                                     "Wildcard filtering only supports a search value of type string"
@@ -707,7 +704,7 @@ class CypherQueryBuilder:
                                     _alias=_alias,
                                     _parsed_operator=_parsed_operator,
                                     _query_param_name=_query_param_name,
-                                    el=el,
+                                    elm=elm,
                                 )
                             elif (
                                 self.return_model
@@ -719,16 +716,16 @@ class CypherQueryBuilder:
                                 is str
                             ):
                                 _predicates.append(f"${_query_param_name} IN {_alias}")
-                                self.parameters[_query_param_name] = el
+                                self.parameters[_query_param_name] = elm
                             elif (
-                                isinstance(el, str)
+                                isinstance(elm, str)
                                 and ComparisonOperator(_operator)
                                 == ComparisonOperator.CONTAINS
                             ):
                                 _predicates.append(
                                     f"toLower(toString({_alias})){_parsed_operator}${_query_param_name}"
                                 )
-                                self.parameters[f"{_query_param_name}"] = el.lower()
+                                self.parameters[f"{_query_param_name}"] = elm.lower()
                             else:
                                 _predicates.append(
                                     f"{_alias}{_parsed_operator}${_query_param_name}"
@@ -736,11 +733,11 @@ class CypherQueryBuilder:
                                 # If the provided value is a string that can be parsed as a date,
                                 # also add a predicate with a datetime casting on the Neo4j side
                                 # It is necessary to check if it is a string because the value could also be a boolean here
-                                if isinstance(el, str) and is_date(el):
+                                if isinstance(elm, str) and is_date(elm):
                                     _predicates.append(
                                         f"{_alias}{_parsed_operator}datetime(${_query_param_name})"
                                     )
-                                self.parameters[_query_param_name] = el
+                                self.parameters[_query_param_name] = elm
 
                 # If multiple values, will create a clause with OR or AND, between ()
                 _predicate = _predicate_operator.join(_predicates)

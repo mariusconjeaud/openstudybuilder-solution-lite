@@ -2,7 +2,7 @@ import datetime
 from dataclasses import dataclass
 from functools import reduce
 from operator import add
-from typing import AbstractSet, Callable, Self, Sequence
+from typing import AbstractSet, Callable, Self
 
 from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains._utils import (
@@ -32,7 +32,7 @@ class ParametrizedTemplateVO:
     template_uid: str
     template_sequence_id: str | None
     guidance_text: str | None
-    parameter_terms: Sequence[ParameterTermEntryVO]
+    parameter_terms: list[ParameterTermEntryVO]
     library_name: str | None = None
 
     @classmethod
@@ -42,7 +42,7 @@ class ParametrizedTemplateVO:
         template_name: str,
         template_uid: str,
         template_sequence_id: str,
-        parameter_terms: Sequence[ParameterTermEntryVO],
+        parameter_terms: list[ParameterTermEntryVO],
         library_name: str,
         guidance_text: str | None = None,
     ) -> Self:
@@ -64,7 +64,7 @@ class ParametrizedTemplateVO:
         *,
         template_uid: str,
         template_sequence_id: str,
-        parameter_terms: Sequence[ParameterTermEntryVO],
+        parameter_terms: list[ParameterTermEntryVO],
         library_name: str,
         get_final_template_vo_by_template_uid_callback: Callable[
             [str], TemplateVO | None
@@ -95,7 +95,7 @@ class ParametrizedTemplateVO:
         cls,
         name: str,
         template_uid: str,
-        parameter_terms: Sequence[ParameterTermEntryVO],
+        parameter_terms: list[ParameterTermEntryVO],
         library_name: str,
         template_sequence_id: str | None = None,
         guidance_text: str | None = None,
@@ -111,7 +111,7 @@ class ParametrizedTemplateVO:
 
     @staticmethod
     def _create_name_from_template(
-        template_name: str, parameter_terms: Sequence[ParameterTermEntryVO]
+        template_name: str, parameter_terms: list[ParameterTermEntryVO]
     ) -> str:
         """
         Calculates current name based on template name and current list of parameters
@@ -299,7 +299,7 @@ class ParametrizedTemplateARBase(LibraryItemAggregateRootBase):
         sequence_id: str | None = None,
         study_count: int = 0,
     ) -> Self:
-        ar = cls(
+        return cls(
             _uid=uid,
             _sequence_id=sequence_id,
             _item_metadata=item_metadata,
@@ -307,8 +307,6 @@ class ParametrizedTemplateARBase(LibraryItemAggregateRootBase):
             _template=template,
             _study_count=study_count,
         )
-
-        return ar
 
     @classmethod
     def from_input_values(
@@ -325,14 +323,13 @@ class ParametrizedTemplateARBase(LibraryItemAggregateRootBase):
 
         generated_uid = generate_uid_callback()
 
-        ar = cls(
+        return cls(
             _uid=generated_uid,
             _sequence_id=next_available_sequence_id_callback(template.template_uid),
             _library=library,
             _template=template,
             _item_metadata=item_metadata,
         )
-        return ar
 
     def edit_draft(
         self, author: str, change_description: str, template: ParametrizedTemplateVO
@@ -390,7 +387,7 @@ class ParametrizedTemplateARBase(LibraryItemAggregateRootBase):
     def name_plain(self) -> str:
         return self._template.expanded_plain_template_value
 
-    def get_parameters(self) -> Sequence[ParameterTermEntryVO]:
+    def get_parameters(self) -> list[ParameterTermEntryVO]:
         return self._template.parameter_terms
 
     def get_possible_actions(self) -> AbstractSet[ObjectAction]:

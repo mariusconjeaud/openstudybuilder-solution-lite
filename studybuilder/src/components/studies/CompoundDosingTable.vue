@@ -18,7 +18,7 @@
         color="primary"
         @click.stop="showForm = true"
         :title="$t('StudyCompoundForm.add_title')"
-        :disabled="!checkPermission($roles.STUDY_WRITE)"
+        :disabled="!checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
         >
         <v-icon>
           mdi-plus
@@ -82,6 +82,7 @@ export default {
   computed: {
     ...mapGetters({
       selectedStudy: 'studiesGeneral/selectedStudy',
+      selectedStudyVersion: 'studiesGeneral/selectedStudyVersion',
       studyCompoundDosings: 'studyCompounds/studyCompoundDosings'
     }),
     exportDataUrl () {
@@ -106,6 +107,7 @@ export default {
           label: this.$t('_global.edit'),
           icon: 'mdi-pencil-outline',
           iconColor: 'primary',
+          condition: () => !this.selectedStudyVersion,
           click: this.editStudyCompoundDosing,
           accessRole: this.$roles.STUDY_WRITE
         },
@@ -113,6 +115,7 @@ export default {
           label: this.$t('_global.delete'),
           icon: 'mdi-delete-outline',
           iconColor: 'error',
+          condition: () => !this.selectedStudyVersion,
           click: this.deleteStudyCompoundDosing,
           accessRole: this.$roles.STUDY_WRITE
         },
@@ -192,7 +195,7 @@ export default {
     }
   },
   mounted () {
-    this.$store.dispatch('studyCompounds/fetchStudyCompoundDosings', this.selectedStudy.uid)
+    this.$store.dispatch('studyCompounds/fetchStudyCompoundDosings', { studyUid: this.selectedStudy.uid, studyValueVersion: this.selectedStudyVersion })
   }
 }
 </script>

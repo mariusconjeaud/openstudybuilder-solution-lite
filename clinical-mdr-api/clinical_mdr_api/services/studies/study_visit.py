@@ -1,6 +1,6 @@
 import dataclasses
 import datetime
-from typing import Sequence
+from typing import Any
 
 from aenum import extend_enum
 from neomodel import Q, db
@@ -58,6 +58,9 @@ from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import 
     StudyStatus,
 )
 from clinical_mdr_api.domains.study_selections.study_epoch import (
+    EpochNamedTuple,
+    EpochSubtypeNamedTuple,
+    EpochTypeNamedTuple,
     StudyEpochEpoch,
     StudyEpochSubType,
     StudyEpochType,
@@ -154,16 +157,16 @@ class StudyVisitService:
         )
 
         for uid, name in self.study_epoch_types.items():
-            if uid not in StudyEpochType._member_map_:
-                extend_enum(StudyEpochType, uid, name)
+            if uid not in StudyEpochType:
+                StudyEpochType[uid] = EpochTypeNamedTuple(uid, name)
 
         for uid, name in self.study_epoch_subtypes.items():
-            if uid not in StudyEpochSubType._member_map_:
-                extend_enum(StudyEpochSubType, uid, name)
+            if uid not in StudyEpochSubType:
+                StudyEpochSubType[uid] = EpochSubtypeNamedTuple(uid, name)
 
         for uid, name in self.study_epoch_epochs.items():
-            if uid not in StudyEpochEpoch._member_map_:
-                extend_enum(StudyEpochEpoch, uid, name)
+            if uid not in StudyEpochEpoch:
+                StudyEpochEpoch[uid] = EpochNamedTuple(uid, name)
 
     def get_valid_visit_types_for_epoch_type(self, epoch_type_uid: str, study_uid: str):
         resp = []
@@ -173,7 +176,10 @@ class StudyVisitService:
             resp.append(
                 AllowedVisitTypesForEpochType(visit_type_uid=uid, visit_type_name=name)
             )
-        return sorted(resp, key=lambda visit_type: visit_type.visit_type_name)
+
+        resp.sort(key=lambda visit_type: visit_type.visit_type_name)
+
+        return resp
 
     def get_allowed_time_references_for_study(self, study_uid: str):
         resp = []
@@ -188,9 +194,10 @@ class StudyVisitService:
             resp = [
                 item for item in resp if item.time_reference_name != PREVIOUS_VISIT_NAME
             ]
-        return sorted(
-            resp, key=lambda time_reference: time_reference.time_reference_name
-        )
+
+        resp.sort(key=lambda time_reference: time_reference.time_reference_name)
+
+        return resp
 
     def _transform_all_to_response_model(
         self, visit: StudyVisitVO, study_activity_count: int | None = None
@@ -282,10 +289,14 @@ class StudyVisitService:
         )
         return study_visit
 
-    def _get_all_visits(self, study_uid: str) -> Sequence[StudyVisitVO]:
+    def _get_all_visits(
+        self, study_uid: str, study_value_version: str | None = None
+    ) -> list[StudyVisitVO]:
         repos = self._repos
         try:
-            study_visits = self.repo.find_all_visits_by_study_uid(study_uid=study_uid)
+            study_visits = self.repo.find_all_visits_by_study_uid(
+                study_uid=study_uid, study_value_version=study_value_version
+            )
             timeline = TimelineAR(study_uid=study_uid, _visits=study_visits)
             assert study_visits is not None
             return timeline.ordered_study_visits
@@ -298,7 +309,7 @@ class StudyVisitService:
         visits_in_given_study_epoch = to_relation_trees(
             StudyVisitNeoModel.nodes.fetch_relations().filter(
                 study_epoch_has_study_visit__uid=study_epoch_uid,
-                has_study_visit__study_root__uid=study_uid,
+                has_study_visit__latest_value__uid=study_uid,
             )
         )
         return len(visits_in_given_study_epoch)
@@ -309,7 +320,7 @@ class StudyVisitService:
                 "has_visit_name__has_latest_value",
                 "has_visit_type__has_name_root__has_latest_value",
             ).filter(
-                has_study_visit__study_root__uid=study_uid,
+                has_study_visit__latest_value__uid=study_uid,
                 is_global_anchor_visit=True,
             )
         )
@@ -321,13 +332,13 @@ class StudyVisitService:
 
     def get_anchor_visits_in_a_group_of_subvisits(
         self, study_uid: str
-    ) -> Sequence[SimpleStudyVisit]:
+    ) -> list[SimpleStudyVisit]:
         anchor_visits_in_a_group_of_subv = to_relation_trees(
             StudyVisitNeoModel.nodes.fetch_relations(
                 "has_visit_name__has_latest_value",
                 "has_visit_type__has_name_root__has_latest_value",
             ).filter(
-                has_study_visit__study_root__uid=study_uid,
+                has_study_visit__latest_value__uid=study_uid,
                 visit_subclass=VisitSubclass.ANCHOR_VISIT_IN_GROUP_OF_SUBV.name,
             )
         )
@@ -336,9 +347,7 @@ class StudyVisitService:
             for anchor_visit in anchor_visits_in_a_group_of_subv
         ]
 
-    def get_anchor_for_special_visit(
-        self, study_uid: str
-    ) -> Sequence[SimpleStudyVisit]:
+    def get_anchor_for_special_visit(self, study_uid: str) -> list[SimpleStudyVisit]:
         anchor_visits_for_special_visit = to_relation_trees(
             StudyVisitNeoModel.nodes.fetch_relations(
                 "has_visit_name__has_latest_value",
@@ -347,7 +356,7 @@ class StudyVisitService:
                 Q(visit_subclass=VisitSubclass.SINGLE_VISIT.name)
                 | Q(visit_subclass=VisitSubclass.ANCHOR_VISIT_IN_GROUP_OF_SUBV.name),
                 visit_class=VisitClass.SINGLE_VISIT.name,
-                has_study_visit__study_root__uid=study_uid,
+                has_study_visit__latest_value__uid=study_uid,
             )
         )
         return [
@@ -364,12 +373,17 @@ class StudyVisitService:
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
+        study_value_version: str | None = None,
     ) -> GenericFilteringReturn[StudyVisit]:
-        visits = self._get_all_visits(study_uid)
+        visits = self._get_all_visits(
+            study_uid, study_value_version=study_value_version
+        )
         visits = [
             self._transform_all_to_response_model(
                 visit,
-                study_activity_count=self.repo.count_activities(visit_uid=visit.uid),
+                study_activity_count=self.repo.count_activities(
+                    visit_uid=visit.uid, study_value_version=study_value_version
+                ),
             )
             for visit in visits
         ]
@@ -393,8 +407,11 @@ class StudyVisitService:
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
+        study_value_version: str | None = None,
     ):
-        all_items = self.get_all_visits(study_uid=study_uid)
+        all_items = self.get_all_visits(
+            study_uid=study_uid, study_value_version=study_value_version
+        )
 
         # Do filtering, sorting, pagination and count
         header_values = service_level_generic_header_filtering(
@@ -409,7 +426,7 @@ class StudyVisitService:
         return header_values
 
     @db.transaction
-    def get_all_references(self, study_uid: str) -> Sequence[StudyVisit]:
+    def get_all_references(self, study_uid: str) -> list[StudyVisit]:
         def is_reference(visit: StudyVisitVO):
             if visit.visit_type.value in self.study_visit_timeref.values():
                 return True
@@ -424,21 +441,33 @@ class StudyVisitService:
         ]
 
     @db.transaction
-    def find_by_uid(self, uid: str) -> StudyVisit:
+    def find_by_uid(
+        self, study_uid: str, uid: str, study_value_version: str | None = None
+    ) -> StudyVisit:
         """
         finds latest version of visit by uid, status ans version
         if user do not give status and version - will be overwritten by DRAFT
         """
         repos = self._repos
         try:
-            study_visit = self.repo.find_by_uid(uid)
+            study_visit = self.repo.find_by_uid(
+                study_uid=study_uid, uid=uid, study_value_version=study_value_version
+            )
 
-            study_visits = self.repo.find_all_visits_by_study_uid(study_visit.study_uid)
+            study_visits = self.repo.find_all_visits_by_study_uid(
+                study_visit.study_uid, study_value_version=study_value_version
+            )
             timeline = TimelineAR(study_uid=study_visit.study_uid, _visits=study_visits)
             assert study_visits is not None
-            for v in timeline.ordered_study_visits:
-                if v.uid == study_visit.uid:
-                    return self._transform_all_to_response_model(v)
+            for ordered_study_visit in timeline.ordered_study_visits:
+                if ordered_study_visit.uid == study_visit.uid:
+                    return self._transform_all_to_response_model(
+                        ordered_study_visit,
+                        study_activity_count=self.repo.count_activities(
+                            visit_uid=study_visit.uid,
+                            study_value_version=study_value_version,
+                        ),
+                    )
         finally:
             repos.close()
 
@@ -894,7 +923,7 @@ class StudyVisitService:
         return study_visit_vo
 
     def synchronize_visit_numbers(
-        self, ordered_visits: Sequence, start_index_to_synchronize: int
+        self, ordered_visits: list[Any], start_index_to_synchronize: int
     ):
         """
         Fixes the visit number if some visit was added in between of others or some of the visits were removed, edited.
@@ -969,7 +998,7 @@ class StudyVisitService:
         study_visit_input: StudyVisitEditInput,
     ):
         study_visits = self.repo.find_all_visits_by_study_uid(study_uid)
-        study_visit = self.repo.find_by_uid(study_visit_uid)
+        study_visit = self.repo.find_by_uid(study_uid=study_uid, uid=study_visit_uid)
 
         epoch = self._repos.study_epoch_repository.find_by_uid(
             uid=study_visit_input.study_epoch_uid, study_uid=study_uid
@@ -1024,7 +1053,7 @@ class StudyVisitService:
             raise exceptions.ValidationException(
                 "Cannot delete visits in non DRAFT study"
             )
-        study_visit = self.repo.find_by_uid(study_visit_uid)
+        study_visit = self.repo.find_by_uid(study_uid=study_uid, uid=study_visit_uid)
         if study_visit.status != StudyStatus.DRAFT:
             raise ValidationException("Cannot delete visits non DRAFT status")
 
@@ -1078,7 +1107,7 @@ class StudyVisitService:
         self,
         visit_uid: str,
         study_uid: str,
-    ) -> Sequence[StudyVisitVersion]:
+    ) -> list[StudyVisitVersion]:
         all_versions = self.repo.get_all_versions(visit_uid, study_uid=study_uid)
         versions = [
             self._transform_all_to_response_history_model(_).dict()
@@ -1091,7 +1120,7 @@ class StudyVisitService:
     def audit_trail_all_visits(
         self,
         study_uid: str,
-    ) -> Sequence[StudyVisitVersion]:
+    ) -> list[StudyVisitVersion]:
         data = calculate_diffs_history(
             get_all_object_versions=self.repo.get_all_visit_versions,
             transform_all_to_history_model=self._transform_all_to_response_history_model,
@@ -1116,13 +1145,15 @@ class StudyVisitService:
     def assign_visit_consecutive_group(
         self,
         study_uid: str,
-        visits_to_assign: Sequence[str],
+        visits_to_assign: list[str],
         overwrite_visit_from_template: str | None = None,
-    ) -> Sequence[StudyVisit]:
+    ) -> list[StudyVisit]:
         study_visits = self.repo.find_all_visits_by_study_uid(study_uid=study_uid)
         timeline = TimelineAR(study_uid=study_uid, _visits=study_visits)
         ordered_visits = timeline.ordered_study_visits
 
+        # Sort Visits that are about to be grouped
+        visits_to_assign.sort()
         # Get StudyVisitVOs for these visits that should be assigned to consecutive visit group
         visits_to_be_assigned = self._get_visits_to_be_assigned_to_cons_group(
             visit_to_assign_uids=visits_to_assign, ordered_visits=ordered_visits
@@ -1137,7 +1168,6 @@ class StudyVisitService:
             study_uid=study_uid,
             visit_to_assign_uids=visits_to_assign,
             visits_to_be_assigned=visits_to_be_assigned,
-            consecutive_visit_group=consecutive_visit_group,
             overwrite_visit_from_template=overwrite_visit_from_template,
         )
         updated_visits = []
@@ -1150,8 +1180,8 @@ class StudyVisitService:
 
     def _get_visits_to_be_assigned_to_cons_group(
         self,
-        visit_to_assign_uids: Sequence[str],
-        ordered_visits: Sequence[StudyVisitVO],
+        visit_to_assign_uids: list[str],
+        ordered_visits: list[StudyVisitVO],
     ):
         visits_to_assign = sorted(visit_to_assign_uids)
         idx_of_first_vis_in_cons_group = None
@@ -1175,9 +1205,8 @@ class StudyVisitService:
     def _validate_consecutive_group_assignment(
         self,
         study_uid: str,
-        visit_to_assign_uids: Sequence[str],
-        visits_to_be_assigned: Sequence[StudyVisitVO],
-        consecutive_visit_group: str,
+        visit_to_assign_uids: list[str],
+        visits_to_be_assigned: list[StudyVisitVO],
         overwrite_visit_from_template: str | None = None,
     ):
         visit_to_overwrite_from = None
@@ -1203,8 +1232,7 @@ class StudyVisitService:
         for visit_to_assign, ordered_visit in zip(visit_to_assign_uids, chunk_uids):
             if visit_to_assign != ordered_visit:
                 raise ValidationException(
-                    f"The {visit_to_assign} that is trying to be assigned to {consecutive_visit_group} "
-                    f"consecutive visit group is not subsequent with other visits"
+                    "To create visits group please select consecutive visits."
                 )
 
         # add check if visits that we want to group are the same

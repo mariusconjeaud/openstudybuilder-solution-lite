@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from typing import Self, Sequence
+from typing import Any, Self
 
 from pydantic import Field
 
@@ -87,7 +87,7 @@ class TermChangeItem(BaseModel):
     uid: str
     value_node: dict
     change_date: datetime
-    codelists: Sequence
+    codelists: list[Any]
 
     @classmethod
     def from_repository_output(cls, query_output) -> Self:
@@ -102,13 +102,13 @@ class TermChangeItem(BaseModel):
 class CTPackageChanges(BaseModel):
     from_package: str
     to_package: str
-    new_codelists: Sequence[CodelistChangeItem]
-    deleted_codelists: Sequence[CodelistChangeItem]
-    updated_codelists: Sequence[CodelistChangeItem]
+    new_codelists: list[CodelistChangeItem]
+    deleted_codelists: list[CodelistChangeItem]
+    updated_codelists: list[CodelistChangeItem]
 
-    new_terms: Sequence[TermChangeItem]
-    deleted_terms: Sequence[TermChangeItem]
-    updated_terms: Sequence[TermChangeItem]
+    new_terms: list[TermChangeItem]
+    deleted_terms: list[TermChangeItem]
+    updated_terms: list[TermChangeItem]
 
     @classmethod
     def from_repository_output(
@@ -145,7 +145,7 @@ class CTPackageChanges(BaseModel):
 
 
 class CTPackageChangesSpecificCodelist(CTPackageChanges):
-    not_modified_terms: Sequence[TermChangeItem]
+    not_modified_terms: list[TermChangeItem]
 
     @classmethod
     def from_repository_output(
@@ -188,7 +188,7 @@ class CTPackageChangesSpecificCodelist(CTPackageChanges):
 class CTPackageDates(BaseModel):
     @classmethod
     def from_repository_output(
-        cls, catalogue_name: str, effective_dates: Sequence[date]
+        cls, catalogue_name: str, effective_dates: list[date]
     ) -> Self:
         return cls(catalogue_name=catalogue_name, effective_dates=effective_dates)
 
@@ -197,6 +197,4 @@ class CTPackageDates(BaseModel):
         title="catalogue_name",
         description="",
     )
-    effective_dates: Sequence[date] = Field(
-        ..., title="effective_dates", description=""
-    )
+    effective_dates: list[date] = Field(..., title="effective_dates", description="")

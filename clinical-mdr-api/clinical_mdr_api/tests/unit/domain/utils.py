@@ -1,6 +1,5 @@
 import random
 import uuid
-from typing import Sequence
 
 
 def random_str() -> str:
@@ -16,21 +15,21 @@ def random_opt_str(null_probability: float = 0.5) -> str | None:
 
 
 def random_opt_c_code(
-    c_code_list: Sequence[str], null_probability: float = 0.5
+    c_code_list: list[str], null_probability: float = 0.5
 ) -> str | None:
     return None if random.random() < null_probability else random.choice(c_code_list)[0]
 
 
 def random_c_code_sequence(
-    c_code_list: Sequence[str], null_probability: float = 0.5
-) -> Sequence[str]:
+    c_code_list: list[str], null_probability: float = 0.5
+) -> list[str]:
     result = []
     while random.random() >= null_probability:
         result.append(random.choice(c_code_list)[0])
     return result
 
 
-def random_str_sequence() -> Sequence[str]:
+def random_str_sequence() -> list[str]:
     probability = 0.3
     result = []
     while random.random() >= probability:

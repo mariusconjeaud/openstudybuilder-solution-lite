@@ -3,13 +3,13 @@
 //import com.fasterxml.jackson.annotation.JsonProperty;
 //import lombok.Getter;
 //import lombok.Setter;
-//import org.CSDISC.DDF.model.Code;
+//import org.CDISC.DDF.model.Code;
 //
 //import java.util.List;
 //import java.util.UUID;
 //
 //@Getter @Setter
-//public class AcctStudyProtocolVersion extends org.CSDISC.DDF.model.StudyProtocolVersion {
+//public class AcctStudyProtocolVersion extends org.CDISC.DDF.model.StudyProtocolVersion {
 //    @JsonProperty("protocolStatus")
 //    private List<Code> extProtocolStatus;
 //    @JsonProperty("protocolEffectiveDate")

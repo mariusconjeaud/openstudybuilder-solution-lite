@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Self, Sequence
+from typing import Self
 
 from pydantic import Field
 
@@ -17,7 +17,10 @@ from clinical_mdr_api.models.syntax_templates.template_parameter_term import (
     IndexedTemplateParameterTerm,
     MultiTemplateParameterTerm,
 )
-from clinical_mdr_api.models.utils import BaseModel
+from clinical_mdr_api.models.utils import (
+    BaseModel,
+    capitalize_first_letter_if_template_parameter,
+)
 
 
 class ActivityInstructionNameUid(BaseModel):
@@ -44,7 +47,7 @@ class ActivityInstruction(ActivityInstructionNameUid):
     study_count: int = Field(
         0, description="Count of studies referencing activity instruction"
     )
-    possible_actions: Sequence[str] | None = Field(
+    possible_actions: list[str] | None = Field(
         None,
         description=(
             "Holds those actions that can be performed on the endpoint. "
@@ -60,13 +63,13 @@ class ActivityInstruction(ActivityInstructionNameUid):
         for position, parameter in enumerate(activity_instruction_ar.get_parameters()):
             terms: list[IndexedTemplateParameterTerm] = []
             for index, parameter_term in enumerate(parameter.parameters):
-                pv = IndexedTemplateParameterTerm(
+                indexed_template_parameter_term = IndexedTemplateParameterTerm(
                     index=index + 1,
                     uid=parameter_term.uid,
                     name=parameter_term.value,
                     type=parameter.parameter_name,
                 )
-                terms.append(pv)
+                terms.append(indexed_template_parameter_term)
             conjunction = parameter.conjunction
 
             parameter_terms.append(
@@ -76,8 +79,14 @@ class ActivityInstruction(ActivityInstructionNameUid):
             )
         return cls(
             uid=activity_instruction_ar.uid,
-            name=activity_instruction_ar.name,
-            name_plain=activity_instruction_ar.name_plain,
+            name=capitalize_first_letter_if_template_parameter(
+                activity_instruction_ar.name,
+                activity_instruction_ar.template_name_plain,
+            ),
+            name_plain=capitalize_first_letter_if_template_parameter(
+                activity_instruction_ar.name_plain,
+                activity_instruction_ar.template_name_plain,
+            ),
             start_date=activity_instruction_ar.item_metadata.start_date,
             end_date=activity_instruction_ar.item_metadata.end_date,
             status=activity_instruction_ar.item_metadata.status.value,

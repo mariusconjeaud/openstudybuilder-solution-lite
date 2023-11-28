@@ -108,7 +108,8 @@ class LagTimeAR(NumericValueWithUnitAR):
         generate_uid_callback: Callable[[], str | None] = (lambda: None),
         find_uid_by_value_unit_and_domain_callback: Callable[
             [str, str, str], str | None
-        ] = None,
+        ]
+        | None = None,
     ) -> Self:
         item_metadata = LibraryItemMetadataVO(
             _change_description="Initial version",

@@ -1,5 +1,3 @@
-from typing import Sequence
-
 import httpx
 
 JSON_CONTENT_TYPE = "application/json"
@@ -7,7 +5,7 @@ PLAIN_TEXT_CONTENT_TYPE = "text/plain"
 MARKDOWN_TEXT_CONTENT_TYPE = "text/markdown"
 
 
-def assert_response_status_code(response: httpx.Response, status: int | Sequence[int]):
+def assert_response_status_code(response: httpx.Response, status: int | list[int]):
     """Assert request.Response status code"""
     # pylint:disable=unused-variable
     __tracebackhide__ = True

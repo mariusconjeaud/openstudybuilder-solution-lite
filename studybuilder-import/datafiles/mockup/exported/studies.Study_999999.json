@@ -158,7 +158,7 @@
         "duration_value": 1
       },
       "stable_disease_minimum_duration_null_value_code": null,
-      "therapeutic_areas_codes": [
+      "therapeutic_area_codes": [
         {
           "name": "Heart failure",
           "term_uid": "DictionaryTerm_000015"

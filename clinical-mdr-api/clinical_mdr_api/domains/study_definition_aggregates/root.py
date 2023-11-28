@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from decimal import Decimal
-from typing import AbstractSet, Any, Callable, MutableSequence, Self, Sequence
+from typing import AbstractSet, Any, Callable, MutableSequence, Self
 
 from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains.study_definition_aggregates._utils import (
@@ -68,9 +68,9 @@ class StudyDefinitionSnapshot:
         version_number: Decimal | None = None
         study_type_code: str | None = None
         study_type_null_value_code: str | None = None
-        trial_intent_types_codes: Sequence[str] = ()
+        trial_intent_types_codes: tuple[str] = ()
         trial_intent_type_null_value_code: str | None = None
-        trial_type_codes: Sequence[str] = ()
+        trial_type_codes: tuple[str] = ()
         trial_type_null_value_code: str | None = None
         trial_phase_code: str | None = None
         trial_phase_null_value_code: str | None = None
@@ -83,13 +83,13 @@ class StudyDefinitionSnapshot:
         study_stop_rules: str | None = None
         study_stop_rules_null_value_code: str | None = None
 
-        therapeutic_area_codes: Sequence[str] = ()
+        therapeutic_area_codes: tuple[str] = ()
         therapeutic_area_null_value_code: str | None = None
 
-        disease_condition_or_indication_codes: Sequence[str] = ()
+        disease_condition_or_indication_codes: tuple[str] = ()
         disease_condition_or_indication_null_value_code: str | None = None
 
-        diagnosis_group_codes: Sequence[str] = ()
+        diagnosis_group_codes: tuple[str] = ()
         diagnosis_group_null_value_code: str | None = None
 
         sex_of_participants_code: str | None = None
@@ -164,6 +164,7 @@ class StudyDefinitionSnapshot:
     ]  # = field(default_factory=list)
     study_status: str | None
     deleted: bool  # = False
+    specific_metadata: StudyMetadataSnapshot | None = None
 
 
 # a global helper variables used as a default for some methods arguments in the StudyDefinitionAR class
@@ -250,6 +251,7 @@ class StudyDefinitionAR:
     # index on list corresponds to locked version number (so earliest goes first)
     _locked_metadata_versions: list[StudyMetadataVO]
     _deleted: bool
+    _specific_metadata: StudyMetadataVO | None = None
 
     @property
     def uid(self) -> str:
@@ -283,6 +285,10 @@ class StudyDefinitionAR:
         if self.draft_metadata:
             return self._draft_metadata
         return self.released_metadata
+
+    @property
+    def version_specific_metadata(self):
+        return self._specific_metadata
 
     @property
     def study_status(self):
@@ -707,7 +713,7 @@ class StudyDefinitionAR:
             metadata_to_return = self._released_metadata
         return metadata_to_return
 
-    def get_all_locked_versions(self) -> Sequence[StudyMetadataVO]:
+    def get_all_locked_versions(self) -> list[StudyMetadataVO]:
         # we do copy to assure immutability of list stored inside our instance
         return list(self._locked_metadata_versions)
 
@@ -880,6 +886,7 @@ class StudyDefinitionAR:
 
         draft_metadata: StudyMetadataVO | None = None
         released_metadata: StudyMetadataVO | None = None
+        specific_metadata: StudyMetadataVO | None = None
         uid = study_snapshot.uid
 
         if study_snapshot.draft_metadata is not None:
@@ -896,6 +903,11 @@ class StudyDefinitionAR:
                 study_snapshot.released_metadata, StudyStatus.RELEASED
             )
 
+        if study_snapshot.specific_metadata is not None:
+            specific_metadata = study_metadata_values_from_snapshot(
+                study_snapshot.specific_metadata, StudyStatus.RELEASED
+            )
+
         locked_metadata_versions = [
             study_metadata_values_from_snapshot(
                 study_snapshot.locked_metadata_versions[i], StudyStatus.LOCKED
@@ -909,6 +921,7 @@ class StudyDefinitionAR:
             _released_metadata=released_metadata,
             _locked_metadata_versions=locked_metadata_versions,
             _deleted=study_snapshot.deleted,
+            _specific_metadata=specific_metadata,
         )
 
     @staticmethod

@@ -1,6 +1,7 @@
 import json
 import os
 from datetime import datetime
+from typing import Any
 
 from neomodel import db
 
@@ -46,7 +47,7 @@ class QueryService:
         )
         return filter_statements, filter_query_parameters
 
-    def get_metadata(self, dataset_name) -> list:
+    def get_metadata(self, dataset_name) -> list[Any]:
         """Get metadata for legacy (and other) datasets"""
 
         with open(
@@ -96,6 +97,10 @@ class QueryService:
               n.name                       as lb,
               n.topic_code                 as topic_cd,
               n.adam_param_code            as short_topic_cd,
+              coalesce(n.is_required_for_activity, false)   as is_required_for_activity,
+              coalesce(n.is_default_selected_for_activity, false) as is_default_selected_for_activity,
+              coalesce(n.is_data_sharing, false) as is_data_sharing,
+              coalesce(n.is_legacy_usage, false) as is_legacy_usage,
               n.legacy_description         as description,
               n.molecular_weight           as molecular_weight,
               n.value_sas_display_format   as sas_display_format,
@@ -399,7 +404,7 @@ class QueryService:
 
         return GenericFilteringReturn.create(items=result, total=total)
 
-    def get_tv(self, study_uid) -> list:
+    def get_tv(self, study_uid) -> list[Any]:
         query = """
         MATCH (sr:StudyRoot {uid: $study_uid})-[:LATEST]->(sv:StudyValue)-[:HAS_STUDY_VISIT]->(v:StudyVisit)
         OPTIONAL MATCH  (v)-->(nr:VisitNameRoot)-[:LATEST]->(nv:VisitNameValue),
@@ -422,9 +427,19 @@ class QueryService:
 
         return helpers.db_result_to_list(result_array)
 
-    def get_mdvisit(self, study_uid) -> list:
-        query = """
-        MATCH (sr:StudyRoot {uid: $study_uid})-[:LATEST]->(sv:StudyValue)-[:HAS_STUDY_VISIT]->(v:StudyVisit)
+    def get_mdvisit(
+        self,
+        study_uid: str,
+        study_value_version: str | None = None,
+    ) -> list[Any]:
+        if study_value_version:
+            query = "MATCH (sr:StudyRoot {uid: $study_uid})-[l:HAS_VERSION{status:'RELEASED', version:$study_value_version}]->(sv:StudyValue) "
+        else:
+            query = "MATCH (sr:StudyRoot {uid: $study_uid})-[:LATEST]->(sv:StudyValue)"
+        query = (
+            query
+            + """
+        MATCH (sv)-[:HAS_STUDY_VISIT]->(v:StudyVisit)
         OPTIONAL MATCH  (v)-->(nr:VisitNameRoot)-[:LATEST]->(nv:VisitNameValue)
         OPTIONAL MATCH  (v)-->(dr:StudyDayRoot)-[:LATEST]->(dv:StudyDayValue)
         OPTIONAL MATCH  (v)-->(wr:StudyWeekRoot)-[:LATEST]->(wv:StudyWeekValue)
@@ -439,17 +454,33 @@ class QueryService:
             wv.name AS WEEK_NAME,
             toInteger(wv.value) AS WEEK_VALUE,   
             vtnv.name as VISIT_TYPE_NAME
-        ORDER BY v.unique_visit_number;
+        ORDER BY VISIT_NUM;
         """
+        )
         result_array = db.cypher_query(
-            query=query, params={"study_uid": str(study_uid)}
+            query=query,
+            params={
+                "study_uid": str(study_uid),
+                "study_value_version": str(study_value_version),
+            },
         )
 
         return helpers.db_result_to_list(result_array)
 
-    def get_mdendpnt(self, study_uid) -> list:
-        query = """
-        MATCH (s_r:StudyRoot{uid: $study_uid})-[:LATEST]-(s_v:StudyValue)
+    def get_mdendpnt(
+        self,
+        study_uid: str,
+        study_value_version: str | None = None,
+    ) -> list[Any]:
+        if study_value_version:
+            query = "MATCH (s_r:StudyRoot {uid: $study_uid})-[l:HAS_VERSION{status:'RELEASED', version:$study_value_version}]->(s_v:StudyValue) "
+        else:
+            query = (
+                "MATCH (s_r:StudyRoot {uid: $study_uid})-[:LATEST]->(s_v:StudyValue)"
+            )
+        query = (
+            query
+            + """
         MATCH (s_v)-[:HAS_STUDY_OBJECTIVE]-(s_obj:StudyObjective)
         // fetch objective data
         OPTIONAL MATCH (s_obj)-[:HAS_OBJECTIVE_LEVEL]->(:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(obj_lev:CTTermNameValue)
@@ -511,14 +542,20 @@ class QueryService:
             activity_subgroup_tem_par_root_uid_collected AS RACTSGRP,
             activity_group_tem_par_root_uid_collected AS RACTGRP,
             activity_instance_tem_par_root_uid_collected AS RACTINST
+        ORDER BY STUDYID, OBJTV, ENDPNT, TMFRM
         """
+        )
         result_array = db.cypher_query(
-            query=query, params={"study_uid": str(study_uid)}
+            query=query,
+            params={
+                "study_uid": str(study_uid),
+                "study_value_version": str(study_value_version),
+            },
         )
 
         return helpers.db_result_to_list(result_array)
 
-    def get_ta(self, study_uid) -> list:
+    def get_ta(self, study_uid) -> list[Any]:
         query = """
         CALL 
             {
@@ -585,7 +622,7 @@ class QueryService:
 
         return helpers.db_result_to_list(result_array)
 
-    def get_ti(self, study_uid) -> list:
+    def get_ti(self, study_uid) -> list[Any]:
         query = """
         MATCH (sr:StudyRoot {uid: $study_uid})-[:LATEST]->(sv:StudyValue)-->(sc:StudyCriteria)
         MATCH (sc)-->(cv:CriteriaValue)<-[:LATEST]-(cr:CriteriaRoot)<--(ctr:CriteriaTemplateRoot)-->(i:CTTermRoot)-->(atr:CTTermAttributesRoot)-[:LATEST]->(atv:CTTermAttributesValue)
@@ -606,7 +643,7 @@ class QueryService:
 
         return helpers.db_result_to_list(result_array)
 
-    def get_ts(self, study_uid) -> list:
+    def get_ts(self, study_uid) -> list[Any]:
         query = """
         CALL {
         MATCH (sr:StudyRoot {uid: $study_uid})-[:LATEST]->(sv:StudyValue)-->(sf:StudyField)
@@ -869,7 +906,7 @@ class QueryService:
 
         return helpers.db_result_to_list(result_array)
 
-    def get_te(self, study_uid) -> list:
+    def get_te(self, study_uid) -> list[Any]:
         query = """
         MATCH (sr:StudyRoot {uid: $study_uid})-[:LATEST]->(sv:StudyValue)-[:HAS_STUDY_ELEMENT]->(se:StudyElement)
         RETURN 
@@ -888,7 +925,7 @@ class QueryService:
         )
         return helpers.db_result_to_list(result_array)
 
-    def get_tdm(self, study_uid) -> list:
+    def get_tdm(self, study_uid) -> list[Any]:
         query = """
         MATCH (sr:StudyRoot {uid: $study_uid})-[:LATEST]->(sv:StudyValue)-[:HAS_STUDY_DISEASE_MILESTONE]->(sdm:StudyDiseaseMilestone)
         MATCH (sdm)-[:HAS_DISEASE_MILESTONE_TYPE]-(tr:CTTermRoot)-[:HAS_NAME_ROOT]-(:CTTermNameRoot)-[:LATEST]-(sdm_term:CTTermNameValue)

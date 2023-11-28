@@ -6,7 +6,7 @@
     :headers="headers"
     :items="studyActivities"
     :server-items-length="total"
-    item-key="item-key"
+    item-key="study_activity_uid"
     export-object-label="StudyActivities"
     :export-data-url="exportDataUrl"
     :options.sync="options"
@@ -16,6 +16,7 @@
     :history-data-fetcher="fetchActivitiesHistory"
     :history-title="$t('StudyActivityTable.global_history_title')"
     :extra-item-class="getItemRowClass"
+    :filters-modify-function="modifyFilters"
     >
     <template v-slot:afterSwitches>
       <div :title="$t('NNTableTooltips.reorder_content')">
@@ -35,7 +36,7 @@
         color="primary"
         @click="openBatchEditForm(slot.selected)"
         :title="$t('StudyActivityTable.edit_activity_selection')"
-        :disabled="!checkPermission($roles.STUDY_WRITE)"
+        :disabled="!checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
         >
         <v-icon>
           mdi-pencil-box-multiple-outline
@@ -49,7 +50,7 @@
         data-cy="add-study-activity"
         @click.stop="showActivityForm = true"
         :title="$t('StudyActivityForm.add_title')"
-        :disabled="!checkPermission($roles.STUDY_WRITE)"
+        :disabled="!checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
         >
         <v-icon>
           mdi-plus
@@ -90,11 +91,11 @@
             {{ item.order }}
           </td>
           <td>{{ item.activity.library_name }}</td>
-          <td>{{ item.flowchart_group.sponsor_preferred_name }}</td>
-          <td>{{ item.activity.activity_group.name }}</td>
-          <td>{{ item.activity.activity_subgroup.name }}</td>
+          <td>{{ item.study_soa_group.soa_group_name }}</td>
+          <td>{{ item.study_activity_group.activity_group_name }}</td>
+          <td>{{ item.study_activity_subgroup.activity_subgroup_name }}</td>
           <td>{{ item.activity.name }}</td>
-          <td>{{ item.note }}</td>
+          <td>{{ item.activity.is_data_collected|yesno }}</td>
           <td>{{ item.start_date|date }}</td>
           <td>{{ item.user_initials }}</td>
         </tr>
@@ -106,6 +107,9 @@
         :item="item"
         :badge="actionsMenuBadge(item)"
         />
+    </template>
+    <template v-slot:item.activity.is_data_collected="{ item }">
+      {{ item.activity.is_data_collected | yesno }}
     </template>
     <template v-slot:item.start_date="{ item }">
       {{ item.start_date | date }}
@@ -187,7 +191,8 @@ export default {
   },
   computed: {
     ...mapGetters({
-      selectedStudy: 'studiesGeneral/selectedStudy'
+      selectedStudy: 'studiesGeneral/selectedStudy',
+      selectedStudyVersion: 'studiesGeneral/selectedStudyVersion'
     }),
     exportDataUrl () {
       return `studies/${this.selectedStudy.uid}/study-activities`
@@ -209,6 +214,7 @@ export default {
           label: this.$t('_global.edit'),
           icon: 'mdi-pencil-outline',
           iconColor: 'primary',
+          condition: () => !this.selectedStudyVersion,
           click: this.editStudyActivity,
           accessRole: this.$roles.STUDY_WRITE
         },
@@ -216,6 +222,7 @@ export default {
           label: this.$t('_global.delete'),
           icon: 'mdi-delete-outline',
           iconColor: 'error',
+          condition: () => !this.selectedStudyVersion,
           click: this.deleteStudyActivity,
           accessRole: this.$roles.STUDY_WRITE
         },
@@ -236,10 +243,11 @@ export default {
         { text: '', value: 'actions', width: '5%' },
         { text: '#', value: 'order', width: '5%' },
         { text: this.$t('_global.library'), value: 'activity.library_name' },
-        { text: this.$t('StudyActivity.flowchart_group'), value: 'flowchart_group.sponsor_preferred_name' },
-        { text: this.$t('StudyActivity.activity_group'), value: 'activity.activity_group.name' },
-        { text: this.$t('StudyActivity.activity_sub_group'), value: 'activity.activity_subgroup.name' },
+        { text: this.$t('StudyActivity.flowchart_group'), value: 'study_soa_group.soa_group_name' },
+        { text: this.$t('StudyActivity.activity_group'), value: 'study_activity_group.activity_group_name', externalFilterSource: 'concepts/activities/activity-groups$name', exludeFromHeader: ['activity.is_data_collected'] },
+        { text: this.$t('StudyActivity.activity_sub_group'), value: 'study_activity_subgroup.activity_subgroup_name', externalFilterSource: 'concepts/activities/activity-sub-groups$name', exludeFromHeader: ['activity.is_data_collected'] },
         { text: this.$t('StudyActivity.activity'), value: 'activity.name' },
+        { text: this.$t('StudyActivity.data_collection'), value: 'activity.is_data_collected' },
         { text: this.$t('_global.modified'), value: 'start_date' },
         { text: this.$t('_global.modified_by'), value: 'user_initials' }
       ],
@@ -314,42 +322,65 @@ export default {
     async getStudyActivities (filters, sort, filtersUpdated) {
       const params = filteringParameters.prepareParameters(
         this.options, filters, sort, filtersUpdated)
-      params.studyUid = this.selectedStudy.uid
-      const resp = await this.$store.dispatch('studyActivities/fetchStudyActivities', params)
-      const activities = []
-      for (const item of resp.data.items) {
-        let grouping = null
-        if (item.activity.activity_groupings.length > 0) {
-          if (item.study_activity_group && item.study_activity_subgroup) {
-            grouping = item.activity.activity_groupings.find(
-              o => o.activity_group_uid === item.study_activity_group.activity_group_uid && o.activity_subgroup_uid === item.study_activity_subgroup.activity_subgroup_uid
-            )
-          }
+      if (filters && filters !== undefined && filters !== '{}') {
+        const filtersObj = JSON.parse(filters)
+        if (filtersObj['study_activity_group.activity_group_name']) {
+          params.activity_group_names = []
+          filtersObj['study_activity_group.activity_group_name'].v.forEach(value => {
+            params.activity_group_names.push(value)
+          })
+          delete filtersObj['study_activity_group.activity_group_name']
         }
-        if (grouping) {
-          activities.push({
-            ...item,
-            activity: {
-              activity_group: { name: grouping.activity_group_name, uid: grouping.activity_group_uid },
-              activity_subgroup: { name: grouping.activity_subgroup_name, uid: grouping.activity_subgroup_uid },
-              ...item.activity
-            },
-            item_key: item.activity.uid + grouping.activity_group_uid + grouping.activity_subgroup_uid
+        if (filtersObj['study_activity_subgroup.activity_subgroup_name']) {
+          params.activity_subgroup_names = []
+          filtersObj['study_activity_subgroup.activity_subgroup_name'].v.forEach(value => {
+            params.activity_subgroup_names.push(value)
           })
-        } else {
-          activities.push({
-            ...item,
-            activity: {
-              ...item.activity,
-              activity_group: { name: '', uid: '' },
-              activity_subgroup: { name: '', uid: '' }
-            },
-            item_key: item.activity.uid
+          delete filtersObj['study_activity_subgroup.activity_subgroup_name']
+        }
+        if (filtersObj.name) {
+          params.activity_names = []
+          filtersObj.name.v.forEach(value => {
+            params.activity_names.push(value)
           })
+          delete filtersObj.name
+        }
+        if (Object.keys(filtersObj).length) {
+          params.filters = JSON.stringify(filtersObj)
         }
       }
-      this.studyActivities = activities
+      params.studyUid = this.selectedStudy.uid
+      params.study_value_version = this.selectedStudyVersion
+      const resp = await this.$store.dispatch('studyActivities/fetchStudyActivities', params)
+      this.studyActivities = resp.data.items
       this.total = resp.data.total
+    },
+    modifyFilters (jsonFilter, params) {
+      if (jsonFilter['study_activity_group.activity_group_name']) {
+        params.activity_group_names = []
+        jsonFilter['study_activity_group.activity_group_name'].v.forEach(value => {
+          params.activity_group_names.push(value)
+        })
+        delete jsonFilter['study_activity_group.activity_group_name']
+      }
+      if (jsonFilter['study_activity_subgroup.activity_subgroup_name']) {
+        params.activity_subgroup_names = []
+        jsonFilter['study_activity_subgroup.activity_subgroup_name'].v.forEach(value => {
+          params.activity_subgroup_names.push(value)
+        })
+        delete jsonFilter['study_activity_subgroup.activity_subgroup_name']
+      }
+      if (jsonFilter['activity.name']) {
+        params.activity_names = []
+        jsonFilter['activity.name'].v.forEach(value => {
+          params.activity_names.push(value)
+        })
+        delete jsonFilter['activity.name']
+      }
+      return {
+        jsonFilter: jsonFilter,
+        params: params
+      }
     },
     openBatchEditForm (selection) {
       if (!selection.length) {

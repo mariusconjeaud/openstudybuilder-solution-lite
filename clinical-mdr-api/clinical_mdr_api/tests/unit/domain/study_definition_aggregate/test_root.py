@@ -2,7 +2,7 @@ import random
 import unittest
 from datetime import datetime, timezone
 from decimal import Decimal
-from typing import Any, Callable, Mapping, Sequence
+from typing import Any, Callable, Mapping
 from unittest.mock import patch
 
 from clinical_mdr_api import exceptions
@@ -297,7 +297,7 @@ def prepare_random_study_sequence(
     generate_uid_callback: Callable[[], str],
     max_count: int = 100,
     condition: Callable[[StudyDefinitionAR], bool] = lambda _: True,
-) -> Sequence[StudyDefinitionAR]:
+) -> list[StudyDefinitionAR]:
     return [
         prepare_random_study(
             generate_uid_callback=generate_uid_callback,

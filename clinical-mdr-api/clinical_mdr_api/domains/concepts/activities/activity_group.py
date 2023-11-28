@@ -33,6 +33,18 @@ class ActivityGroupVO(ConceptVO):
 
         return activity_group_vo
 
+    def validate(
+        self,
+        concept_exists_by_callback: Callable[[str, str, bool], bool],
+        previous_name: str | None = None,
+    ) -> None:
+        self.validate_name_sentence_case()
+        self.duplication_check(
+            [("name", self.name, previous_name)],
+            concept_exists_by_callback,
+            "Activity Group",
+        )
+
 
 @dataclass
 class ActivityGroupAR(ConceptARBase):
@@ -63,10 +75,9 @@ class ActivityGroupAR(ConceptARBase):
             raise exceptions.BusinessLogicException(
                 f"The library with the name='{library.name}' does not allow to create objects."
             )
-        ActivityGroupVO.duplication_check(
-            [("name", concept_vo.name, None)],
-            concept_exists_by_callback,
-            "Activity Group",
+
+        concept_vo.validate(
+            concept_exists_by_callback=concept_exists_by_callback,
         )
 
         activity_group_ar = cls(
@@ -89,10 +100,9 @@ class ActivityGroupAR(ConceptARBase):
         """
         Creates a new draft version for the object.
         """
-        ActivityGroupVO.duplication_check(
-            [("name", concept_vo.name, self.concept_vo.name)],
-            concept_exists_by_callback,
-            "Activity Group",
+        concept_vo.validate(
+            concept_exists_by_callback=concept_exists_by_callback,
+            previous_name=self.name,
         )
 
         if self._concept_vo != concept_vo:

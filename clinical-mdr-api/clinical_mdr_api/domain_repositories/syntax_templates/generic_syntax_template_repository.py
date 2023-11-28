@@ -1,6 +1,6 @@
 import abc
 import re
-from typing import Sequence, TypeVar
+from typing import Any, TypeVar
 
 from neomodel import db
 
@@ -33,6 +33,7 @@ from clinical_mdr_api.domains.syntax_templates.template import (
     TemplateAggregateRootBase,
     TemplateVO,
 )
+from clinical_mdr_api.domains.versioned_object_aggregate import LibraryVO
 
 _AggregateRootType = TypeVar("_AggregateRootType")
 
@@ -41,12 +42,16 @@ class GenericSyntaxTemplateRepository(
     GenericSyntaxRepository[_AggregateRootType], abc.ABC
 ):
     def next_available_sequence_id(
-        self, uid: str, prefix: str | None = None, type_uid: str | None = None
+        self,
+        uid: str,
+        prefix: str | None = None,
+        type_uid: str | None = None,
+        library: LibraryVO | None = None,
     ) -> str | None:
-        query = f"MATCH (r:{self.root_class.__name__})"
+        query = f"""MATCH (r:{self.root_class.__name__})<-[:CONTAINS_SYNTAX_TEMPLATE]-(l:Library {{name: "{library.name}"}})"""
 
         if type_uid:
-            query += f"""-[:HAS_TYPE]->(:CTTermRoot {{uid: "{type_uid}"}})"""
+            query += f"""MATCH (r)-[:HAS_TYPE]->(:CTTermRoot {{uid: "{type_uid}"}})"""
 
         query += "RETURN r.sequence_id"
 
@@ -56,6 +61,9 @@ class GenericSyntaxTemplateRepository(
         prefix = (
             prefix if prefix else "".join([char for char in name if char.isupper()])
         )
+        if library.name == "User Defined":
+            prefix = "U-" + prefix
+
         if rs[0]:
             rs[0].sort(key=lambda x, p=prefix: int(x[0].split(p)[1]), reverse=True)
 
@@ -106,7 +114,7 @@ class GenericSyntaxTemplateRepository(
     def patch_default_parameter_terms(
         self,
         versioned_object: _AggregateRootType,
-        parameters: Sequence[ParameterTermEntryVO],
+        parameters: list[ParameterTermEntryVO],
         set_number: int | None = None,
     ):
         (
@@ -186,7 +194,7 @@ class GenericSyntaxTemplateRepository(
     def _create_default_parameter_term_set(
         self,
         value: SyntaxTemplateValue,
-        parameters: Sequence[ParameterTermEntryVO],
+        parameters: list[ParameterTermEntryVO],
         set_number: int | None = 0,
     ) -> None:
         for position, parameter_config in enumerate(parameters):
@@ -296,7 +304,12 @@ class GenericSyntaxTemplateRepository(
             cypher_query, {"uid": template_uid, "name": STUDY_ENDPOINT_TP_NAME}
         )
         data = [
-            dict(name=item[0], definition=item[1], template=item[2], terms=item[3])
+            {
+                "name": item[0],
+                "definition": item[1],
+                "template": item[2],
+                "terms": item[3],
+            }
             for item in dataset
         ]
 
@@ -347,7 +360,12 @@ class GenericSyntaxTemplateRepository(
                 },
             )
             data += [
-                dict(name=item[0], definition=item[1], template=item[2], terms=item[3])
+                {
+                    "name": item[0],
+                    "definition": item[1],
+                    "template": item[2],
+                    "terms": item[3],
+                }
                 for item in dataset
             ]
 
@@ -355,7 +373,7 @@ class GenericSyntaxTemplateRepository(
 
     def get_default_parameter_terms(
         self, template_uid: str
-    ) -> dict[int, Sequence[ParameterTermEntryVO]]:
+    ) -> dict[int, list[ParameterTermEntryVO]]:
         cypher_query = f"""
         MATCH  (param:TemplateParameter)<-[u:USES_PARAMETER]-
           (tr:{self.root_class.__label__})-[:LATEST]->(tv)
@@ -414,7 +432,7 @@ class GenericSyntaxTemplateRepository(
             """
         return query_to_subset
 
-    def subset_parameters_to_specific_study(self, data: list, study_uid: str):
+    def subset_parameters_to_specific_study(self, data: list[Any], study_uid: str):
         for parameter in data:
             query_to_subset = None
             param_name = parameter["name"]
@@ -456,7 +474,7 @@ class GenericSyntaxTemplateRepository(
                 )
         return data
 
-    def flatten_neomodel_output(self, output: list):
+    def flatten_neomodel_output(self, output: list[Any]):
         flatted_output = []
         if len(output) > 0:
             for value in output:
@@ -464,7 +482,7 @@ class GenericSyntaxTemplateRepository(
         return flatted_output
 
     def subset_value_list_for_given_tp(
-        self, data: list, param_name: str, subset_list: list
+        self, data: list[Any], param_name: str, subset_list: list[Any]
     ):
         for template_param_value in data:
             if template_param_value["name"] == param_name:

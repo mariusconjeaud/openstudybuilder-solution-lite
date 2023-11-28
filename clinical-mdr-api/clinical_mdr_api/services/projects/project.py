@@ -1,5 +1,3 @@
-from typing import Sequence
-
 from neomodel import db  # type: ignore
 
 from clinical_mdr_api import models
@@ -14,7 +12,7 @@ class ProjectService:
     def __init__(self, user: str | None = None):
         self.user_initials = user if user is not None else "TODO user initials"
 
-    def get_all_projects(self) -> Sequence[models.Project]:
+    def get_all_projects(self) -> list[models.Project]:
         repos = MetaRepository()
         try:
             all_projects = repos.project_repository.find_all()

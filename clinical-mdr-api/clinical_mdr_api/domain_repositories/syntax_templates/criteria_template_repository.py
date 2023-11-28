@@ -40,7 +40,7 @@ class CriteriaTemplateRepository(GenericSyntaxTemplateRepository[CriteriaTemplat
         relationship: VersionRelationship,
         value: CriteriaTemplateValue,
         study_count: int = 0,
-        counts: InstantiationCountsVO = None,
+        counts: InstantiationCountsVO | None = None,
     ) -> CriteriaTemplateAR:
         return CriteriaTemplateAR.from_repository_values(
             uid=root.uid,

@@ -26,7 +26,8 @@ export default {
   },
   computed: {
     ...mapGetters({
-      selectedStudy: 'studiesGeneral/selectedStudy'
+      selectedStudy: 'studiesGeneral/selectedStudy',
+      selectedStudyVersion: 'studiesGeneral/selectedStudyVersion'
     })
   },
   data () {
@@ -87,7 +88,7 @@ export default {
     this.$store.dispatch('studiesGeneral/fetchTrialPhases')
     this.$store.dispatch('studiesGeneral/fetchTrialTypes')
     this.$store.dispatch('studiesGeneral/fetchNullValues')
-    study.getHighLevelStudyDesignMetadata(this.selectedStudy.uid).then(resp => {
+    study.getHighLevelStudyDesignMetadata(this.selectedStudy.uid, this.selectedStudyVersion).then(resp => {
       this.metadata = resp.data.current_metadata.high_level_study_design
     })
   }

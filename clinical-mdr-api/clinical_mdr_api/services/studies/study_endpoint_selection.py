@@ -1,5 +1,3 @@
-from typing import Sequence
-
 from neomodel import db
 
 from clinical_mdr_api import exceptions, models
@@ -39,10 +37,16 @@ class StudyEndpointSelectionService(StudySelectionMixin):
         self.author = author
 
     def _transform_single_study_objective_to_model(
-        self, study_uid: str, study_selection_uid: str, no_brackets: bool = False
+        self,
+        study_uid: str,
+        study_selection_uid: str,
+        no_brackets: bool = False,
+        study_value_version: str | None = None,
     ) -> models.StudySelectionObjective:
         repos = self._repos
-        selection_aggregate = repos.study_objective_repository.find_by_study(study_uid)
+        selection_aggregate = repos.study_objective_repository.find_by_study(
+            study_uid, study_value_version=study_value_version
+        )
         assert selection_aggregate is not None
         _, order = selection_aggregate.get_specific_objective_selection(
             study_selection_uid
@@ -52,18 +56,22 @@ class StudyEndpointSelectionService(StudySelectionMixin):
             order=order,
             get_objective_by_uid_callback=self._transform_latest_objective_model,
             get_objective_by_uid_version_callback=self._transform_objective_model,
-            get_ct_term_objective_level=self._find_by_uid_or_raise_not_found,
+            get_ct_term_by_uid=self._find_by_uid_or_raise_not_found,
             get_study_selection_endpoints_ar_by_study_uid_callback=(
                 repos.study_endpoint_repository.find_by_study
             ),
             no_brackets=no_brackets,
             find_project_by_study_uid=self._repos.project_repository.find_by_study_uid,
+            study_value_version=study_value_version,
         )
         return result
 
     def _transform_all_to_response_model(
-        self, study_selection: StudySelectionEndpointsAR, no_brackets: bool = False
-    ) -> Sequence[models.StudySelectionEndpoint]:
+        self,
+        study_selection: StudySelectionEndpointsAR,
+        no_brackets: bool = False,
+        study_value_version: str | None = None,
+    ) -> list[models.StudySelectionEndpoint]:
         result = []
         for order, selection in enumerate(
             study_selection.study_endpoints_selection, start=1
@@ -74,6 +82,7 @@ class StudyEndpointSelectionService(StudySelectionMixin):
                     order=order,
                     study_uid=study_selection.study_uid,
                     no_brackets=no_brackets,
+                    study_value_version=study_value_version,
                 )
             )
         return result
@@ -86,6 +95,7 @@ class StudyEndpointSelectionService(StudySelectionMixin):
         no_brackets: bool = False,
         get_latest_endpoint_by_uid=None,
         get_endpoint_by_uid_and_version=None,
+        study_value_version: str | None = None,
     ) -> models.StudySelectionEndpoint:
         if study_selection.is_instance:
             get_endpoint_by_uid_and_version = (
@@ -110,19 +120,20 @@ class StudyEndpointSelectionService(StudySelectionMixin):
                 else get_endpoint_by_uid_and_version
             )
 
-        return models.study_selections.study_selection.StudySelectionEndpoint.from_study_selection_endpoint(
+        return models.StudySelectionEndpoint.from_study_selection_endpoint(  # StudySelectionEndpoint.from_study_selection_endpoint(
             study_selection=study_selection,
             study_uid=study_uid,
             get_endpoint_by_uid_and_version=get_endpoint_by_uid_and_version,
             get_latest_endpoint_by_uid=get_latest_endpoint_by_uid,
             get_timeframe_by_uid_and_version=self._transform_timeframe_model,
             get_latest_timeframe=self._transform_latest_timeframe_model,
-            get_ct_term_objective_level=self._find_by_uid_or_raise_not_found,
+            get_ct_term_by_uid=self._find_by_uid_or_raise_not_found,
             get_study_objective_by_uid=self._transform_single_study_objective_to_model,
             order=order,
             accepted_version=study_selection.accepted_version,
             no_brackets=no_brackets,
             find_project_by_study_uid=self._repos.project_repository.find_by_study_uid,
+            study_value_version=study_value_version,
         )
 
     @db.transaction
@@ -300,10 +311,12 @@ class StudyEndpointSelectionService(StudySelectionMixin):
                 timeframe_ar = None
 
             if selection_create_input.endpoint_units:
-                units = tuple(
-                    {"uid": unit}
-                    for unit in selection_create_input.endpoint_units.units
-                )
+                units = ()
+                for unit in selection_create_input.endpoint_units.units:
+                    name = self._repos.unit_definition_repository.get_property_by_uid(
+                        unit, "name"
+                    )
+                    units += ({"uid": unit, "name": name},)
                 separator = selection_create_input.endpoint_units.separator
 
             else:
@@ -377,8 +390,8 @@ class StudyEndpointSelectionService(StudySelectionMixin):
     def batch_select_endpoint_template(
         self,
         study_uid: str,
-        selection_create_input: Sequence[StudySelectionEndpointTemplateSelectInput],
-    ) -> Sequence[StudySelectionEndpoint]:
+        selection_create_input: list[StudySelectionEndpointTemplateSelectInput],
+    ) -> list[StudySelectionEndpoint]:
         """
         Select multiple endpoint templates as a batch.
 
@@ -391,7 +404,7 @@ class StudyEndpointSelectionService(StudySelectionMixin):
             selection_create_input (StudySelectionEndpointBatchSelectInput): [description]
 
         Returns:
-            Sequence[StudySelectionEndpoint]
+            list[StudySelectionEndpoint]
         """
         repos = self._repos
         try:
@@ -641,12 +654,13 @@ class StudyEndpointSelectionService(StudySelectionMixin):
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
+        study_value_version: str | None = None,
     ):
         repos = self._repos
 
         if study_uid:
             endpoint_selection_ars = repos.study_endpoint_repository.find_by_study(
-                study_uid
+                study_uid, study_value_version=study_value_version
             )
 
             header_values = service_level_generic_header_filtering(
@@ -699,14 +713,17 @@ class StudyEndpointSelectionService(StudySelectionMixin):
         page_number: int = 1,
         page_size: int = 0,
         total_count: bool = False,
+        study_value_version: str | None = None,
     ) -> GenericFilteringReturn:
         repos = MetaRepository()
         try:
             endpoint_selection_ar = repos.study_endpoint_repository.find_by_study(
-                study_uid
+                study_uid, study_value_version=study_value_version
             )
             selection = self._transform_all_to_response_model(
-                endpoint_selection_ar, no_brackets=no_brackets
+                endpoint_selection_ar,
+                no_brackets=no_brackets,
+                study_value_version=study_value_version,
             )
             # Do filtering, sorting, pagination and count
             selection = service_level_generic_filtering(
@@ -723,19 +740,25 @@ class StudyEndpointSelectionService(StudySelectionMixin):
 
     @db.transaction
     def get_specific_selection(
-        self, study_uid: str, study_selection_uid: str, for_update: bool = False
+        self,
+        study_uid: str,
+        study_selection_uid: str,
+        for_update: bool = False,
+        study_value_version: str | None = None,
     ) -> models.StudySelectionEndpoint:
         repos = self._repos
         try:
             selection_aggregate = repos.study_endpoint_repository.find_by_study(
-                study_uid, for_update
+                study_uid,
+                for_update=for_update,
+                study_value_version=study_value_version,
             )
             (
                 new_selection,
                 order,
             ) = selection_aggregate.get_specific_endpoint_selection(study_selection_uid)
             return self._transform_single_to_response_model(
-                new_selection, order, study_uid
+                new_selection, order, study_uid, study_value_version=study_value_version
             )
         finally:
             repos.close()
@@ -1013,7 +1036,7 @@ class StudyEndpointSelectionService(StudySelectionMixin):
         self,
         study_selection_history: list[StudyEndpointSelectionHistory],
         study_uid: str,
-    ) -> Sequence[models.StudySelectionEndpoint]:
+    ) -> list[models.StudySelectionEndpoint]:
         result = []
 
         for history in study_selection_history:
@@ -1024,7 +1047,7 @@ class StudyEndpointSelectionService(StudySelectionMixin):
                     get_endpoint_by_uid=self._transform_endpoint_model,
                     get_timeframe_by_uid=self._transform_timeframe_model,
                     get_study_objective_by_uid=self._transform_single_study_objective_to_model,
-                    get_ct_term_objective_level=self._find_by_uid_or_raise_not_found,
+                    get_ct_term_by_uid=self._find_by_uid_or_raise_not_found,
                 )
             )
         return result
@@ -1032,7 +1055,7 @@ class StudyEndpointSelectionService(StudySelectionMixin):
     @db.transaction
     def get_all_selection_audit_trail(
         self, study_uid: str
-    ) -> Sequence[models.StudySelectionEndpoint]:
+    ) -> list[models.StudySelectionEndpoint]:
         repos = self._repos
         try:
             selection_history = repos.study_endpoint_repository.find_selection_history(
@@ -1047,7 +1070,7 @@ class StudyEndpointSelectionService(StudySelectionMixin):
     @db.transaction
     def get_specific_selection_audit_trail(
         self, study_uid: str, study_selection_uid: str
-    ) -> Sequence[models.StudySelectionEndpoint]:
+    ) -> list[models.StudySelectionEndpoint]:
         repos = self._repos
         try:
             selection_history = repos.study_endpoint_repository.find_selection_history(

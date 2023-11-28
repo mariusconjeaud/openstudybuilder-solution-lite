@@ -51,10 +51,10 @@ def test_returns_traceresponse_header(app_client):
 def test_build_valid_traceresponse_header(app_client):
     """Tests that if traceparent header was missing, a valid traceresponse header is built"""
     traceresponse = get_traceresponse_header(app_client)
-    assertTraceresponse_syntax(traceresponse)
+    assert_traceresponse_syntax(traceresponse)
 
 
-def assertTraceresponse_syntax(traceresponse):
+def assert_traceresponse_syntax(traceresponse):
     # pylint:disable=unused-variable
     __tracebackhide__ = True  # Tell Pytest to hide the body of this function from tracebacks (it's an assertion helper)
 
@@ -91,7 +91,7 @@ def test_inherits_traceresponse_header_correctly(app_client):
 
     traceresponse = get_traceresponse_header(app_client, traceparent=traceparent)
     log.info("traceparent: %s traceresponse: %s", traceparent, traceresponse)
-    _, parent_id, span_id, _ = assertTraceresponse_syntax(traceresponse)
+    _, parent_id, span_id, _ = assert_traceresponse_syntax(traceresponse)
 
     assert (
         parent_id == parent_trace_id

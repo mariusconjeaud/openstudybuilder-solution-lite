@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Sequence
+from typing import Any
 
 from neomodel import NodeMeta
 
@@ -82,6 +82,7 @@ class StudyDefinitionRepository(ABC):
         self,
         uid: str,
         for_update: bool = False,
+        study_value_version: str | None = None,
     ) -> StudyDefinitionAR | None:
         """
         Public repository method for bringing an instance of study aggregate (StudyDefinitionAR class) restored from its
@@ -116,6 +117,7 @@ class StudyDefinitionRepository(ABC):
         (snapshot, additional_closure) = self._retrieve_snapshot_by_uid(
             uid=uid,
             for_update=for_update,
+            study_value_version=study_value_version,
         )
 
         # if no data, then no object
@@ -140,9 +142,9 @@ class StudyDefinitionRepository(ABC):
     def find_uid_by_study_number(study_number: int):
         all_study_values = StudyValue.nodes.filter(study_number=study_number)
         for study_value in all_study_values:
-            sr = study_value.study_root.get_or_none()
-            if sr is not None:
-                return sr.uid
+            study_root = study_value.latest_value.get_or_none()
+            if study_root is not None:
+                return study_root.uid
         return None
 
     @staticmethod
@@ -265,7 +267,7 @@ class StudyDefinitionRepository(ABC):
             deleted=deleted,
         )
         # projecting results to StudyDefinitionAR instances
-        studies: Sequence[StudyDefinitionAR] = [
+        studies: list[StudyDefinitionAR] = [
             StudyDefinitionAR.from_snapshot(s) for s in snapshots.items
         ]
 
@@ -299,7 +301,7 @@ class StudyDefinitionRepository(ABC):
             total_count=total_count,
         )
 
-        studies: Sequence[StudyDefinitionAR] = [
+        studies: list[StudyDefinitionAR] = [
             StudyDefinitionAR.from_snapshot(s) for s in study_snapshots.items
         ]
 
@@ -352,7 +354,7 @@ class StudyDefinitionRepository(ABC):
             study_selection_object_node_type=library_item_type,
         )
         # Project results to StudyDefinitionAR instances
-        studies: Sequence[StudyDefinitionAR] = [
+        studies: list[StudyDefinitionAR] = [
             StudyDefinitionAR.from_snapshot(s) for s in snapshots.items
         ]
 
@@ -383,6 +385,7 @@ class StudyDefinitionRepository(ABC):
         self,
         uid: str,
         for_update: bool,
+        study_value_version: str | None = None,
     ) -> tuple[StudyDefinitionSnapshot | None, Any]:
         """
         Abstract method of the study repository, which is supposed to:
@@ -491,18 +494,18 @@ class StudyDefinitionRepository(ABC):
     @abstractmethod
     def _retrieve_fields_audit_trail(
         self, uid: str
-    ) -> Sequence[StudyFieldAuditTrailEntryAR] | None:
+    ) -> list[StudyFieldAuditTrailEntryAR] | None:
         """
         Private method to retrieve an audit trail for a study by UID.
-        :return: A sequence of Study field audit trail objects.
+        :return: A list of Study field audit trail objects.
         """
 
     def get_audit_trail_by_uid(
         self, uid: str
-    ) -> Sequence[StudyFieldAuditTrailEntryAR] | None:
+    ) -> list[StudyFieldAuditTrailEntryAR] | None:
         """
         Public method which is to retrieve the audit trail for a given study identified by UID.
-        :return: A sequence of retrieved data in a form StudyAuditTrailAR instances.
+        :return: A list of retrieved data in a form StudyAuditTrailAR instances.
         """
         return self._retrieve_fields_audit_trail(uid)
 
@@ -565,4 +568,20 @@ class StudyDefinitionRepository(ABC):
         """
         A method that checks whether a Study with specified study_uid is deleted
         :return: bool
+        """
+
+    @staticmethod
+    @abstractmethod
+    def check_if_study_uid_and_version_exists(
+        study_uid: str, study_value_version: str | None = None
+    ) -> bool:
+        """
+        Check if the study with the given study_uid and optionally with the study_value_version exists.
+
+        Args:
+            study_uid (str): The unique identifier of the study.
+            study_value_version (str | None): The version of the study to check. Defaults to None.
+
+        Returns:
+            bool: True if the study exists, False otherwise.
         """

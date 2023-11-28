@@ -23,7 +23,7 @@
         color="primary"
         @click.stop="showForm = true"
         :title="$t('StudyFootnoteForm.add_title')"
-        :disabled="!checkPermission($roles.STUDY_WRITE)"
+        :disabled="!checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
         >
         <v-icon>
           mdi-plus
@@ -48,7 +48,7 @@
       </template>
     </template>
     <template v-slot:item.referenced_items="{ item }">
-      {{ item.referenced_items | itemNames }}
+      {{ removeDuplicates(item.referenced_items) | itemNames }}
     </template>
     <template v-slot:item.start_date="{ item }">
       {{ item.start_date | date }}
@@ -125,6 +125,7 @@ export default {
   computed: {
     ...mapGetters({
       selectedStudy: 'studiesGeneral/selectedStudy',
+      selectedStudyVersion: 'studiesGeneral/selectedStudyVersion',
       studyFootnotes: 'studyFootnotes/studyFootnotes',
       total: 'studyFootnotes/total'
     }),
@@ -152,6 +153,7 @@ export default {
           icon: 'mdi-pencil-outline',
           iconColor: 'primary',
           click: this.editStudyFootnote,
+          condition: () => !this.selectedStudyVersion,
           accessRole: this.$roles.STUDY_WRITE
         },
         {
@@ -159,6 +161,7 @@ export default {
           icon: 'mdi-delete-outline',
           iconColor: 'error',
           click: this.deleteStudyFootnote,
+          condition: () => !this.selectedStudyVersion,
           accessRole: this.$roles.STUDY_WRITE
         },
         {
@@ -183,6 +186,20 @@ export default {
     }
   },
   methods: {
+    removeDuplicates (arr) {
+      const uniqueItems = {}
+      const result = []
+
+      for (const item of arr) {
+        const key = `${item.item_name}_${item.item_type}`
+        if (!uniqueItems[key]) {
+          uniqueItems[key] = true
+          result.push(item)
+        }
+      }
+
+      return result
+    },
     actionsMenuBadge (item) {
       if (!item.footnote && item.footnote_template.parameters.length > 0) {
         return {
@@ -226,6 +243,7 @@ export default {
       const params = filteringParameters.prepareParameters(
         this.options, filters, sort, filtersUpdated)
       params.studyUid = this.selectedStudy.uid
+      params.study_value_version = this.selectedStudyVersion
       this.$store.dispatch('studyFootnotes/fetchStudyFootnotes', params)
     },
     editStudyFootnote (studyFootnote) {

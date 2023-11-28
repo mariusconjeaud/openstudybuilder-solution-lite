@@ -661,6 +661,31 @@ def test_timeframe_template_audit_trail(api_client):
     assert actual_uids == expected_uids
 
 
+def test_timeframe_template_sequence_id_generation(api_client):
+    lib = TestUtils.create_library("User Defined")
+    data = {
+        "name": "user defined [TextValue]",
+        "guidance_text": "user_defined_guidance_text",
+        "library_name": lib["name"],
+    }
+    response = api_client.post(URL, json=data)
+    res = response.json()
+    log.info("Created Timeframe Template: %s", res)
+
+    assert response.status_code == 201
+    assert res["uid"]
+    assert res["sequence_id"] == "U-T1"
+    assert res["name"] == "user defined [TextValue]"
+    assert res["guidance_text"] == "user_defined_guidance_text"
+    assert res["parameters"][0]["name"] == "TextValue"
+    assert res["parameters"][0]["terms"] == []
+    assert res["version"] == "0.1"
+    assert res["status"] == "Draft"
+    assert set(list(res.keys())) == set(TIMEFRAME_TEMPLATE_FIELDS_ALL)
+    for key in TIMEFRAME_TEMPLATE_FIELDS_NOT_NULL:
+        assert res[key] is not None
+
+
 def test_cannot_create_timeframe_template_with_existing_name(api_client):
     data = {
         "name": "Default name with [TextValue]",

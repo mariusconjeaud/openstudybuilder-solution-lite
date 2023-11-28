@@ -23,11 +23,17 @@
 <script>
 import study from '@/api/study'
 import exportLoader from '@/utils/exportLoader'
+import { mapGetters } from 'vuex'
 
 export default {
   props: {
-    studyUid: String,
     update: Number
+  },
+  computed: {
+    ...mapGetters({
+      selectedStudy: 'studiesGeneral/selectedStudy',
+      selectedStudyVersion: 'studiesGeneral/selectedStudyVersion'
+    })
   },
   data () {
     return {
@@ -38,15 +44,15 @@ export default {
   methods: {
     updateFlowchart () {
       this.loadingMessage = this.$t('ProtocolFlowchart.loading')
-      study.getStudyProtocolFlowchartHtml(this.studyUid).then(resp => {
+      study.getStudyProtocolFlowchartHtml(this.selectedStudy.uid, this.selectedStudyVersion).then(resp => {
         this.protocolFlowchart = resp.data
       }).then(this.finally).catch(this.finally)
     },
     downloadDocx () {
       this.loadingMessage = this.$t('ProtocolFlowchart.downloading')
-      study.getStudyProtocolFlowchartDocx(this.studyUid).then(response => {
+      study.getStudyProtocolFlowchartDocx(this.selectedStudy.uid, this.selectedStudyVersion).then(response => {
         exportLoader.downloadFile(response.data, response.headers['content-type'] ||
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document', `${this.studyUid} flowchart.docx`)
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document', `${this.selectedStudy.current_metadata.identification_metadata.study_id} flowchart.docx`)
       }).then(this.finally).catch(this.finally)
     },
     finally (error) {
@@ -66,72 +72,88 @@ export default {
 </script>
 
 <style lang="scss">
-#ProtocolFlowchartTable {
-  width: 100%;
-  border-collapse: collapse;
-  table-layout: auto;
-  resize: both;
+#protocolFlowchart {
+  TABLE {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: auto;
+    resize: both;
 
-  &, & TH, & TD {
-    border: 1px solid #ebe8e5;
-    padding: 1px 3px;
-  }
-
-  & THEAD {
-    background-color: var(--v-tableGray-base);
-
-    & TH {
-      border-color: white;
+    &, & TH, & TD {
+      border: 1px solid #ebe8e5;
+      padding: 1px 3px;
     }
 
-    & .header1 TH:nth-child(n+2) {
-      writing-mode: vertical-rl;
-      vertical-align: bottom;
-    }
+    & THEAD {
+      background-color: var(--v-tableGray-base);
 
-    & TH:first-child {
-      text-align: left;
-    }
-  }
+      & TH {
+        border-color: white;
+      }
 
-  & TBODY {
-    & TH {
-      text-align: left;
-      font-weight: normal;
-    }
+      & .header1:nth-child(n+2) {
+        vertical-align: top;
+        writing-mode: sideways-lr;
+        text-orientation: mixed;
+      }
 
-    & TR TD:nth-child(n+2) {
-      text-align: center;
-      vertical-align: middle;
-    }
-
-    & .fchGroup {
-      text-transform: uppercase;
-      background-color: #b1d5f2;
-      TH {
-        font-weight: bold;
+      & TH:first-child {
+        text-align: left;
       }
     }
 
-    & .group {
-      background-color: #d8eaf8;
-      TH {
+    & TBODY {
+      & TH {
+        text-align: left;
+        font-weight: normal;
+      }
+
+      & TR TD:nth-child(n+2) {
+        text-align: center;
+        vertical-align: middle;
+      }
+
+      & .soaGroup {
+        text-transform: uppercase;
+        background-color: #b1d5f2;
         font-weight: bold;
       }
-    }
 
-    & .subGroup {
-      TH {
+      & .soaGroup ~ TD {
+        background-color: #b1d5f2;
+      }
+
+      & .group {
+        background-color: #d8eaf8;
+        font-weight: bold;
+      }
+
+      & .group ~ TD {
+        background-color: #d8eaf8;
+      }
+
+      & .subGroup:first-child {
         font-weight: bold;
         padding-left: 1em;
       }
-    }
 
-    & .activity {
-      TH {
+      & .activity:first-child {
         padding-left: 1em;
       }
     }
+  }
+
+  DL.footnotes {
+    margin: 1em;
+
+    display: grid;
+    grid-template-columns: 1em auto;
+
+    DT {
+      font-size: 70%;
+      vertical-align: top;
+    }
+
   }
 }
 </style>

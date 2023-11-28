@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable, Self, Sequence
+from typing import Callable, Self
 
 from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains.concepts.concept_base import ConceptARBase, ConceptVO
@@ -18,18 +18,18 @@ class CompoundVO(ConceptVO):
     analyte_number: str | None
     nnc_short_number: str | None
     nnc_long_number: str | None
-    substance_terms_uids: Sequence[str]
-    dose_values_uids: Sequence[str] | None
-    strength_values_uids: Sequence[str] | None
-    lag_time_uids: Sequence[str] | None
-    delivery_devices_uids: Sequence[str] | None
-    dispensers_uids: Sequence[str] | None
-    dose_frequency_uids: Sequence[str] | None
-    dosage_form_uids: Sequence[str] | None
-    route_of_administration_uids: Sequence[str] | None
+    substance_terms_uids: list[str]
+    dose_values_uids: list[str] | None
+    strength_values_uids: list[str] | None
+    lag_time_uids: list[str] | None
+    delivery_devices_uids: list[str] | None
+    dispensers_uids: list[str] | None
+    dose_frequency_uids: list[str] | None
+    dosage_form_uids: list[str] | None
+    route_of_administration_uids: list[str] | None
     half_life_uid: str | None
-    projects_uids: Sequence[str] | None
-    brands_uids: Sequence[str] | None
+    projects_uids: list[str] | None
+    brands_uids: list[str] | None
     is_sponsor_compound: bool = True
     is_name_inn: bool = True
 
@@ -40,23 +40,23 @@ class CompoundVO(ConceptVO):
         name_sentence_case: str | None,
         definition: str | None,
         abbreviation: str | None,
-        dose_frequency_uids: Sequence[str] | None,
-        dosage_form_uids: Sequence[str] | None,
-        route_of_administration_uids: Sequence[str] | None,
+        dose_frequency_uids: list[str] | None,
+        dosage_form_uids: list[str] | None,
+        route_of_administration_uids: list[str] | None,
         analyte_number: str | None,
         nnc_short_number: str | None,
         nnc_long_number: str | None,
         is_sponsor_compound: bool,
         is_name_inn: bool,
-        substance_terms_uids: Sequence[str],
-        dose_values_uids: Sequence[str] | None,
-        strength_values_uids: Sequence[str] | None,
-        lag_time_uids: Sequence[str] | None,
-        delivery_devices_uids: Sequence[str] | None,
-        dispensers_uids: Sequence[str] | None,
+        substance_terms_uids: list[str],
+        dose_values_uids: list[str] | None,
+        strength_values_uids: list[str] | None,
+        lag_time_uids: list[str] | None,
+        delivery_devices_uids: list[str] | None,
+        dispensers_uids: list[str] | None,
         half_life_uid: str | None,
-        projects_uids: Sequence[str] | None,
-        brands_uids: Sequence[str] | None,
+        projects_uids: list[str] | None,
+        brands_uids: list[str] | None,
     ) -> Self:
         compound_vo = cls(
             name=name,
@@ -269,14 +269,15 @@ class CompoundAR(ConceptARBase):
         author: str,
         change_description: str | None,
         concept_vo: CompoundVO,
-        concept_exists_by_callback: Callable[[str, str, bool], bool] = None,
-        compound_uid_by_property_value_callback: Callable[[str, str], str] = None,
-        ct_term_exists_callback: Callable[[str], bool] = None,
-        numeric_value_exists_callback: Callable[[str], bool] = None,
-        dictionary_term_exists_callback: Callable[[str], bool] = None,
-        lag_time_exists_callback: Callable[[str], bool] = None,
-        project_exists_callback: Callable[[str], bool] = None,
-        brand_exists_callback: Callable[[str], bool] = None,
+        concept_exists_by_callback: Callable[[str, str, bool], bool] | None = None,
+        compound_uid_by_property_value_callback: Callable[[str, str], str]
+        | None = None,
+        ct_term_exists_callback: Callable[[str], bool] | None = None,
+        numeric_value_exists_callback: Callable[[str], bool] | None = None,
+        dictionary_term_exists_callback: Callable[[str], bool] | None = None,
+        lag_time_exists_callback: Callable[[str], bool] | None = None,
+        project_exists_callback: Callable[[str], bool] | None = None,
+        brand_exists_callback: Callable[[str], bool] | None = None,
     ) -> None:
         """
         Creates a new draft version for the object.

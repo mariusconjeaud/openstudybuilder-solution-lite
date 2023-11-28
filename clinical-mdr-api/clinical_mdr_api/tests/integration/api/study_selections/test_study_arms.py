@@ -26,6 +26,7 @@ from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 log = logging.getLogger(__name__)
 
 study: Study
+arm_uid: str
 
 
 @pytest.fixture(scope="module")
@@ -49,6 +50,7 @@ def test_data():
 
 
 def test_arm_modify_actions_on_locked_study(api_client):
+    global arm_uid
     response = api_client.post(
         f"/studies/{study.uid}/study-arms",
         json={
@@ -82,7 +84,7 @@ def test_arm_modify_actions_on_locked_study(api_client):
 
     # Lock
     response = api_client.post(
-        f"/studies/{study.uid}/lock",
+        f"/studies/{study.uid}/locks",
         json={"change_description": "Lock 1"},
     )
     assert response.status_code == 201
@@ -120,6 +122,46 @@ def test_arm_modify_actions_on_locked_study(api_client):
     res = response.json()
     assert response.status_code == 200
     assert old_res == res
+
+    # test cannot delete
+    response = api_client.delete(f"/studies/{study.uid}/study-arms/{arm_uid}")
+    assert response.status_code == 400
+    assert (
+        response.json()["message"]
+        == f"Study with specified uid '{study.uid}' is locked."
+    )
+
+
+def test_study_arm_previous_study_version(api_client):
+    # get specific arm
+    response = api_client.get(
+        f"/studies/{study.uid}/study-arms/{arm_uid}",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    before_unlock = res
+
+    # Unlock
+    response = api_client.delete(f"/studies/{study.uid}/locks")
+    assert response.status_code == 200
+
+    # edit arm
+    response = api_client.patch(
+        f"/studies/{study.uid}/study-arms/{arm_uid}",
+        json={
+            "name": "New_Arm_Name_1",
+        },
+    )
+    res = response.json()
+    assert response.status_code == 200
+
+    # get all arm of a specific study version
+    response = api_client.get(
+        f"/studies/{study.uid}/study-arms?study_value_version=1",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["items"][0] == before_unlock
 
 
 @pytest.mark.parametrize(

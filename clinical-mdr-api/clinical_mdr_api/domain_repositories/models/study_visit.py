@@ -4,6 +4,8 @@ from neomodel import (
     RelationshipFrom,
     RelationshipTo,
     StringProperty,
+    ZeroOrMore,
+    ZeroOrOne,
 )
 
 from clinical_mdr_api.domain_repositories.models.concepts import (
@@ -24,15 +26,22 @@ from clinical_mdr_api.domain_repositories.models.study_epoch import StudyEpoch
 from clinical_mdr_api.domain_repositories.models.study_selections import (
     StudyActivitySchedule,
     StudySelection,
+    StudySoAFootnote,
 )
 
 
 class StudyVisit(StudySelection):
     has_study_visit = RelationshipFrom(
-        StudyValue, "HAS_STUDY_VISIT", model=ClinicalMdrRel
+        StudyValue,
+        "HAS_STUDY_VISIT",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrMore,
     )
     study_epoch_has_study_visit = RelationshipFrom(
-        StudyEpoch, "STUDY_EPOCH_HAS_STUDY_VISIT", model=ClinicalMdrRel
+        StudyEpoch,
+        "STUDY_EPOCH_HAS_STUDY_VISIT",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrOne,
     )
 
     legacy_visit_id = StringProperty()
@@ -42,7 +51,12 @@ class StudyVisit(StudySelection):
 
     visit_number = IntegerProperty()
 
-    has_visit_type = RelationshipTo(CTTermRoot, "HAS_VISIT_TYPE", model=ClinicalMdrRel)
+    has_visit_type = RelationshipTo(
+        CTTermRoot,
+        "HAS_VISIT_TYPE",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrOne,
+    )
 
     visit_sublabel = StringProperty()
     visit_sublabel_uid = StringProperty()
@@ -58,38 +72,78 @@ class StudyVisit(StudySelection):
     visit_window_max = IntegerProperty()
 
     has_window_unit = RelationshipTo(
-        UnitDefinitionRoot, "HAS_WINDOW_UNIT", model=ClinicalMdrRel
+        UnitDefinitionRoot,
+        "HAS_WINDOW_UNIT",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrOne,
     )
 
     description = StringProperty()
     start_rule = StringProperty()
     end_rule = StringProperty()
     has_visit_contact_mode = RelationshipTo(
-        CTTermRoot, "HAS_VISIT_CONTACT_MODE", model=ClinicalMdrRel
+        CTTermRoot,
+        "HAS_VISIT_CONTACT_MODE",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrOne,
     )
     has_epoch_allocation = RelationshipTo(
-        CTTermRoot, "HAS_EPOCH_ALLOCATION", model=ClinicalMdrRel
+        CTTermRoot,
+        "HAS_EPOCH_ALLOCATION",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrOne,
     )
     is_global_anchor_visit = BooleanProperty()
     status = StringProperty()
     visit_class = StringProperty()
     visit_subclass = StringProperty()
 
-    has_timepoint = RelationshipTo(TimePointRoot, "HAS_TIMEPOINT", model=ClinicalMdrRel)
-    has_study_day = RelationshipTo(StudyDayRoot, "HAS_STUDY_DAY", model=ClinicalMdrRel)
+    has_timepoint = RelationshipTo(
+        TimePointRoot,
+        "HAS_TIMEPOINT",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrOne,
+    )
+    has_study_day = RelationshipTo(
+        StudyDayRoot,
+        "HAS_STUDY_DAY",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrOne,
+    )
     has_study_duration_days = RelationshipTo(
-        StudyDurationDaysRoot, "HAS_STUDY_DURATION_DAYS", model=ClinicalMdrRel
+        StudyDurationDaysRoot,
+        "HAS_STUDY_DURATION_DAYS",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrOne,
     )
     has_study_week = RelationshipTo(
-        StudyWeekRoot, "HAS_STUDY_WEEK", model=ClinicalMdrRel
+        StudyWeekRoot,
+        "HAS_STUDY_WEEK",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrMore,
     )
     has_study_duration_weeks = RelationshipTo(
-        StudyDurationWeeksRoot, "HAS_STUDY_DURATION_WEEKS", model=ClinicalMdrRel
+        StudyDurationWeeksRoot,
+        "HAS_STUDY_DURATION_WEEKS",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrOne,
     )
     has_visit_name = RelationshipTo(
-        VisitNameRoot, "HAS_VISIT_NAME", model=ClinicalMdrRel
+        VisitNameRoot,
+        "HAS_VISIT_NAME",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrOne,
     )
 
     has_study_activity_schedule = RelationshipTo(
-        StudyActivitySchedule, "STUDY_VISIT_HAS_SCHEDULE", model=ClinicalMdrRel
+        StudyActivitySchedule,
+        "STUDY_VISIT_HAS_SCHEDULE",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrMore,
+    )
+    study_soa_footnote_references_study_visit = RelationshipFrom(
+        StudySoAFootnote,
+        "REFERENCES_STUDY_VISIT",
+        cardinality=ZeroOrMore,
+        model=ClinicalMdrRel,
     )

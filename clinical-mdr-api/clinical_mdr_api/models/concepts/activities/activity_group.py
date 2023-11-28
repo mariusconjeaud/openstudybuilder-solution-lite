@@ -44,7 +44,7 @@ class ActivityGroupCreateInput(ActivityGroupInput):
     library_name: str
 
 
-class ActivityGroupVersion(ActivityGroupInput):
+class ActivityGroupVersion(ActivityGroup):
     """
     Class for storing ActivityGroup and calculation of differences
     """

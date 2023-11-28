@@ -18,7 +18,7 @@
     @filter="filter"
     :history-title="$t('_global.audit_trail')"
     :history-data-fetcher="fetchGlobalAuditTrail"
-    :history-html-fields="['name', 'guidance_text']"
+    :history-html-fields="['template_name', 'name', 'guidance_text']"
     history-change-field="change_description"
     :history-change-field-label="$t('_global.change_description')"
     :history-excluded-headers="historyExcludedHeaders"
@@ -253,56 +253,64 @@ export default Vue.extend({
         icon: 'mdi-plus-circle-outline',
         iconColor: 'primary',
         condition: (item) => this.objectType !== 'timeframeTemplates' && !this.preInstanceMode && item.status === statuses.FINAL,
-        click: this.openPreInstanceForm
+        click: this.openPreInstanceForm,
+        accessRole: this.$roles.LIBRARY_WRITE
       },
       {
         label: this.$t('_global.edit'),
         icon: 'mdi-pencil-outline',
         iconColor: 'primary',
         condition: (item) => item.possible_actions.find(action => action === 'edit'),
-        click: this.editTemplate
+        click: this.editTemplate,
+        accessRole: this.$roles.LIBRARY_WRITE
       },
       {
         label: this.$t('_global.approve'),
         icon: 'mdi-check-decagram',
         iconColor: 'success',
         condition: (item) => item.possible_actions.find(action => action === 'approve'),
-        click: this.approveTemplate
+        click: this.approveTemplate,
+        accessRole: this.$roles.LIBRARY_WRITE
       },
       {
         label: this.$t('_global.new_version'),
         icon: 'mdi-plus-circle-outline',
         iconColor: 'primary',
         condition: (item) => item.possible_actions.find(action => action === 'new_version'),
-        click: this.createNewVersion
+        click: this.createNewVersion,
+        accessRole: this.$roles.LIBRARY_WRITE
       },
       {
         label: this.$t('_global.duplicate'),
         icon: 'mdi-content-copy',
         iconColor: 'primary',
         condition: (item) => this.preInstanceMode && item.status === statuses.FINAL,
-        click: this.duplicatePreInstance
+        click: this.duplicatePreInstance,
+        accessRole: this.$roles.LIBRARY_WRITE
       },
       {
         label: this.$t('_global.inactivate'),
         icon: 'mdi-close-octagon-outline',
         iconColor: 'primary',
         condition: (item) => item.possible_actions.find(action => action === 'inactivate'),
-        click: this.inactivateTemplate
+        click: this.inactivateTemplate,
+        accessRole: this.$roles.LIBRARY_WRITE
       },
       {
         label: this.$t('_global.reactivate'),
         icon: 'mdi-undo-variant',
         iconColor: 'primary',
         condition: (item) => item.possible_actions.find(action => action === 'reactivate'),
-        click: this.reactivateTemplate
+        click: this.reactivateTemplate,
+        accessRole: this.$roles.LIBRARY_WRITE
       },
       {
         label: this.$t('_global.delete'),
         icon: 'mdi-delete-outline',
         iconColor: 'error',
         condition: (item) => item.possible_actions.find(action => action === 'delete'),
-        click: this.deleteTemplate
+        click: this.deleteTemplate,
+        accessRole: this.$roles.LIBRARY_WRITE
       },
       {
         label: this.$t('_global.history'),
@@ -316,7 +324,8 @@ export default Vue.extend({
         icon: 'mdi-pencil-outline',
         iconColor: 'primary',
         condition: (item) => item.status === statuses.FINAL,
-        click: this.editTemplateIndexing
+        click: this.editTemplateIndexing,
+        accessRole: this.$roles.LIBRARY_WRITE
       })
     }
     return {

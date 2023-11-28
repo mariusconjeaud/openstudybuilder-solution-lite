@@ -4,11 +4,14 @@
     :headers="returnHeaders()"
     :items="activities"
     export-object-label="Activities"
+    :hide-export-button="source === 'activities-by-grouping'"
+    :hide-default-switches="source === 'activities-by-grouping'"
     :export-data-url="`concepts/activities/${source}`"
     item-key="item_key"
     :server-items-length="total"
     :options.sync="options"
     has-api
+    :show-filter-bar-by-default="['activities', 'activity-instances'].includes(source) && !requested"
     @filter="fetchActivities"
     :column-data-resource="`concepts/activities/${source}`"
     @item-expanded="getSubGroups"
@@ -17,8 +20,11 @@
     single-expand
     :filters-modify-function="modifyFilters"
     :modifiable-table="!isExpand()"
-    class="tableMinWidth"
-    :disable-filtering="source === 'activity-groups'"
+    :disable-filtering="source === 'activities-by-grouping'"
+    :history-title="$t('_global.audit_trail')"
+    :history-data-fetcher="source !== 'activities-by-grouping' ? fetchGlobalAuditTrail : null"
+    history-change-field="change_description"
+    :history-excluded-headers="historyExcludedHeaders"
     >
     <template v-slot:item="{ item, expand, isExpanded }" v-if="isExpand()">
       <tr style="background-color: var(--v-dfltBackgroundLight1-base)">
@@ -36,7 +42,7 @@
         </td>
         <td width="40%" :class="'font-weight-bold'">
           <v-row class="mt-2">
-            <actions-menu :actions="actions" :item="item"/>{{ item.name }}
+            {{ item.name }}
           </v-row>
         </td>
         <td width="25%">{{ item.start_date | date }}</td>
@@ -69,13 +75,31 @@
       {{ item.start_date | date }}
     </template>
     <template v-slot:item.activity_groups="{ item }">
-      {{ groupsDisplay(item) }}
+      {{ item.activity_groups | names }}
     </template>
-    <template v-slot:item.activity_sub_groups="{ item }">
-      {{ subGroupsDisplay(item) }}
+    <template v-slot:item.activity_group.name="{ item }">
+      <div v-html="groupsDisplay(item)" />
+    </template>
+    <template v-slot:item.activity_subgroup.name="{ item }">
+      <div v-html="subGroupsDisplay(item)" />
     </template>
     <template v-slot:item.activities.name="{ item }">
       {{ activitiesDisplay(item) }}
+    </template>
+    <template v-slot:item.is_data_collected="{ item }">
+      {{ item.is_data_collected|yesno }}
+    </template>
+    <template v-slot:item.is_required_for_activity="{ item }">
+      {{ item.is_required_for_activity|yesno }}
+    </template>
+    <template v-slot:item.is_default_selected_for_activity="{ item }">
+      {{ item.is_default_selected_for_activity|yesno }}
+    </template>
+    <template v-slot:item.is_data_sharing="{ item }">
+      {{ item.is_data_sharing|yesno }}
+    </template>
+    <template v-slot:item.is_legacy_usage="{ item }">
+      {{ item.is_legacy_usage|yesno }}
     </template>
     <template v-slot:expanded-item="{ headers }">
       <td :colspan="headers.length" class="pa-0">
@@ -110,7 +134,7 @@
               <td width="40%" class="font-weight-bold">
                 <div class="ml-6">
                   <v-row class="mt-2">
-                    <actions-menu :actions="actions" :item="item" :source="'activity-sub-groups'"/>{{ item.name }}
+                    {{ item.name }}
                   </v-row>
                 </div>
               </td>
@@ -142,7 +166,7 @@
                     <td width="40%">
                       <div class="ml-12">
                         <v-row class="mt-2">
-                          <actions-menu :actions="actions" :item="item" :source="'activities'"/>{{ item.name }}
+                          {{ item.name }}
                         </v-row>
                       </div>
                     </td>
@@ -160,6 +184,7 @@
     <template v-slot:actions="">
       <slot name="extraActions"></slot>
       <v-btn
+        v-if="source !== 'activities-by-grouping'"
         fab
         dark
         small
@@ -190,16 +215,20 @@
     >
     <activities-groups-form
       ref="groupform"
+      :open="showGroupsForm"
+      :subgroup="!groupMode"
       @close="closeForm"
-      :edited-group-or-subgroup="activeItem"/>
+      :edited-group-or-subgroup="activeItem"
+      />
   </v-dialog>
   <v-dialog
       v-model="showInstantiationsForm"
       persistent
-      max-width="800px"
-      content-class="top-dialog"
+      fullscreen
+      content-class="fullscreen-dialog"
     >
     <activities-instantiations-form
+      class="fullscreen-dialog"
       @close="closeForm"
       :edited-activity="activeItem"/>
   </v-dialog>
@@ -213,6 +242,21 @@
       @close="closeForm"
       :edited-activity="activeItem"/>
   </v-dialog>
+  <v-dialog
+    v-model="showHistory"
+    @keydown.esc="closeHistory"
+    persistent
+    :max-width="globalHistoryDialogMaxWidth"
+    :fullscreen="globalHistoryDialogFullscreen"
+    >
+    <history-table
+      :title="itemHistoryTitle"
+      @close="closeHistory"
+      :headers="returnHeaders()"
+      :items="historyItems"
+      :excluded-headers="historyExcludedHeaders"
+      />
+  </v-dialog>
 </div>
 </template>
 
@@ -220,6 +264,7 @@
 import activities from '@/api/activities'
 import ActionsMenu from '@/components/tools/ActionsMenu'
 import { bus } from '@/main'
+import HistoryTable from '@/components/tools/HistoryTable'
 import NNTable from '@/components/tools/NNTable'
 import StatusChip from '@/components/tools/StatusChip'
 import ActivitiesForm from '@/components/library/ActivitiesForm'
@@ -234,6 +279,7 @@ export default {
   mixins: [accessGuard],
   components: {
     ActionsMenu,
+    HistoryTable,
     NNTable,
     StatusChip,
     ActivitiesForm,
@@ -250,6 +296,31 @@ export default {
         return this.$t('ActivityForms.addInstance')
       } else if (this.source === 'activity-groups') {
         return this.$t('ActivityForms.add_group')
+      } else if (this.source === 'activity-sub-groups') {
+        return this.$t('ActivityForms.add_subgroup')
+      }
+      return ''
+    },
+    itemHistoryTitle () {
+      if (this.activeItem) {
+        let type
+        switch (this.source) {
+          case 'activities':
+            type = this.$t('ActivitiesTable.activity')
+            break
+          case 'activity-groups':
+            type = this.$t('ActivitiesTable.activity_group')
+            break
+          case 'activity-sub-groups':
+            type = this.$t('ActivitiesTable.activity_subgroup')
+            break
+          case 'activity-instances':
+            type = this.$t('ActivitiesTable.activity_instance')
+            break
+        }
+        return this.$t(
+          'ActivitiesTable.item_history_title',
+          { uid: this.activeItem.uid, type })
       }
       return ''
     }
@@ -319,30 +390,43 @@ export default {
           condition: (item) => item.possible_actions.find(action => action === 'delete'),
           accessRole: this.$roles.LIBRARY_WRITE,
           click: this.deleteItem
+        },
+        {
+          label: this.$t('_global.history'),
+          icon: 'mdi-history',
+          accessRole: this.$roles.LIBRARY_READ,
+          click: this.openItemHistory
         }
       ],
       activities: [],
       activitiesHeaders: [
-        { text: '', value: 'possible_actions', width: '5%' },
+        { text: '', value: 'possible_actions', width: '5%', noFilter: true },
         { text: this.$t('_global.library'), value: 'library_name' },
-        { text: this.$t('ActivityTable.activity_group'), value: 'activity_group.name', externalFilterSource: 'concepts/activities/activity-groups$name' },
-        { text: this.$t('ActivityTable.activity_subgroup'), value: 'activity_subgroup.name', externalFilterSource: 'concepts/activities/activity-sub-groups$name' },
+        { text: this.$t('ActivityTable.activity_group'), value: 'activity_group.name', externalFilterSource: 'concepts/activities/activity-groups$name', width: '15%', exludeFromHeader: ['is_data_collected'] },
+        { text: this.$t('ActivityTable.activity_subgroup'), value: 'activity_subgroup.name', externalFilterSource: 'concepts/activities/activity-sub-groups$name', width: '15%', exludeFromHeader: ['is_data_collected'] },
         { text: this.$t('ActivityTable.activity_name'), value: 'name', externalFilterSource: 'concepts/activities/activities$name' },
         { text: this.$t('ActivityTable.sentence_case_name'), value: 'name_sentence_case' },
+        { text: this.$t('ActivityTable.nci_concept_id'), value: 'nci_concept_id' },
         { text: this.$t('ActivityTable.abbreviation'), value: 'abbreviation' },
+        { text: this.$t('ActivityTable.is_data_collected'), value: 'is_data_collected' },
         { text: this.$t('_global.modified'), value: 'start_date' },
         { text: this.$t('_global.status'), value: 'status' },
         { text: this.$t('_global.version'), value: 'version' }
       ],
       instantiationsHeaders: [
-        { text: '', value: 'possible_actions', width: '5%' },
+        { text: '', value: 'possible_actions', width: '5%', noFilter: true },
         { text: this.$t('_global.library'), value: 'library_name' },
         { text: this.$t('ActivityTable.type'), value: 'activity_instance_class.name' },
-        { text: this.$t('ActivityTable.activity'), value: 'activities.name', externalFilterSource: 'concepts/activities/activities$name' },
+        { text: this.$t('ActivityTable.activity'), value: 'activities.name', externalFilterSource: 'concepts/activities/activities$name', disableColumnFilters: true },
         { text: this.$t('ActivityTable.instance'), value: 'name' },
         { text: this.$t('_global.definition'), value: 'definition' },
+        { text: this.$t('ActivityTable.nci_concept_id'), value: 'nci_concept_id' },
         { text: this.$t('ActivityTable.topic_code'), value: 'topic_code' },
         { text: this.$t('ActivityTable.adam_code'), value: 'adam_param_code' },
+        { text: this.$t('ActivityTable.is_required_for_activity'), value: 'is_required_for_activity' },
+        { text: this.$t('ActivityTable.is_default_selected_for_activity'), value: 'is_default_selected_for_activity' },
+        { text: this.$t('ActivityTable.is_data_sharing'), value: 'is_data_sharing' },
+        { text: this.$t('ActivityTable.is_legacy_usage'), value: 'is_legacy_usage' },
         { text: this.$t('_global.modified'), value: 'start_date' },
         { text: this.$t('_global.modified_by'), value: 'user_initials' },
         { text: this.$t('_global.status'), value: 'status' },
@@ -368,6 +452,32 @@ export default {
         { text: this.$t('_global.status'), value: 'status' },
         { text: this.$t('_global.version'), value: 'version' }
       ],
+      activityGroupHeaders: [
+        { text: '', value: 'possible_actions', width: '5%' },
+        { text: this.$t('ActivityTable.activity_group'), value: 'name' },
+        { text: this.$t('ActivityTable.sentence_case_name'), value: 'name_sentence_case' },
+        { text: this.$t('ActivityTable.abbreviation'), value: 'abbreviation' },
+        { text: this.$t('_global.definition'), value: 'definition' },
+        { text: this.$t('_global.modified'), value: 'start_date' },
+        { text: this.$t('_global.status'), value: 'status' },
+        { text: this.$t('_global.version'), value: 'version' }
+      ],
+      activitySubgroupHeaders: [
+        { text: '', value: 'possible_actions', width: '5%' },
+        { text: this.$t('ActivityTable.activity_group'), value: 'activity_groups', externalFilterSource: 'concepts/activities/activity-groups$name' },
+        { text: this.$t('ActivityTable.activity_subgroup'), value: 'name' },
+        { text: this.$t('ActivityTable.sentence_case_name'), value: 'name_sentence_case' },
+        { text: this.$t('ActivityTable.abbreviation'), value: 'abbreviation' },
+        { text: this.$t('_global.definition'), value: 'definition' },
+        { text: this.$t('_global.modified'), value: 'start_date' },
+        { text: this.$t('_global.status'), value: 'status' },
+        { text: this.$t('_global.version'), value: 'version' }
+      ],
+      groupMode: false,
+      historyItems: [],
+      historyExcludedHeaders: [
+        'possible_actions'
+      ],
       total: 0,
       options: {},
       filters: '',
@@ -377,6 +487,7 @@ export default {
       showActivityForm: false,
       showRequestedActivityForm: false,
       showGroupsForm: false,
+      showHistory: false,
       showInstantiationsForm: false,
       showSponsorFromRequestedForm: false,
       activeItem: null,
@@ -386,6 +497,56 @@ export default {
     }
   },
   methods: {
+    transformItems (items) {
+      const activities = []
+      if (this.source === 'activities') {
+        for (const item of items) {
+          if (item.activity_groupings.length > 0) {
+            const groups = []
+            const subgroups = []
+            for (const grouping of item.activity_groupings) {
+              groups.push(grouping.activity_group_name)
+              subgroups.push(grouping.activity_subgroup_name)
+            }
+            activities.push({
+              activity_group: { name: groups },
+              activity_subgroup: { name: subgroups },
+              item_key: item.uid,
+              ...item
+            })
+          } else {
+            activities.push({
+              activity_group: { name: '' },
+              activity_subgroup: { name: '' },
+              item_key: item.uid,
+              ...item
+            })
+          }
+        }
+      } else if (this.source === 'activity-instances') {
+        for (const item of items) {
+          if (item.activity_groupings.length > 0) {
+            item.activities = [item.activity_groupings[0].activity]
+            item.activity_group = item.activity_groupings[0].activity_group
+            item.activity_subgroup = item.activity_groupings[0].activity_subgroup
+          } else {
+            item.activities = []
+          }
+          item.item_key = item.uid
+          activities.push(
+            item
+          )
+        }
+      } else {
+        for (const item of items) {
+          item.item_key = item.uid
+          activities.push(
+            item
+          )
+        }
+      }
+      return activities
+    },
     fetchActivities (filters, sort, filtersUpdated) {
       if (filtersUpdated) {
         /* Filters changed, reset page number */
@@ -455,57 +616,13 @@ export default {
         if (!params.filters) {
           params.filters = {}
         }
-        // params.filters.status = { v: [statuses.FINAL], op: 'eq' }
       }
       if (this.options.sortBy.length !== 0 && sort !== undefined) {
         params.sort_by = `{"${this.options.sortBy[0]}":${!sort}}`
       }
-      activities.get(params, this.source).then(resp => {
-        // TODO temporary solution for handling grouping, pagination might show more entries than expected, it will be fixed in the future
-        const activities = []
-        if (this.source === 'activities') {
-          for (const item of resp.data.items) {
-            if (item.activity_groupings.length > 0) {
-              for (const grouping of item.activity_groupings) {
-                activities.push({
-                  activity_group: { name: grouping.activity_group_name, uid: grouping.activity_group_uid },
-                  activity_subgroup: { name: grouping.activity_subgroup_name, uid: grouping.activity_subgroup_uid },
-                  item_key: item.uid + grouping.activity_group_uid + grouping.activity_subgroup_uid,
-                  ...item
-                })
-              }
-            } else {
-              activities.push({
-                activity_group: { name: '', uid: '' },
-                activity_subgroup: { name: '', uid: '' },
-                item_key: item.uid,
-                ...item
-              })
-            }
-          }
-        } else if (this.source === 'activity-instances') {
-          for (const item of resp.data.items) {
-            if (item.activity_groupings.length > 0) {
-              item.activities = [item.activity_groupings[0].activity]
-              item.activity_group = item.activity_groupings[0].activity_group
-              item.activity_subgroup = item.activity_groupings[0].activity_subgroup
-            } else {
-              item.activities = []
-            }
-            item.item_key = item.uid
-            activities.push(
-              item
-            )
-          }
-        } else {
-          for (const item of resp.data.items) {
-            item.item_key = item.uid
-            activities.push(
-              item
-            )
-          }
-        }
-        this.activities = activities
+      const source = this.source !== 'activities-by-grouping' ? this.source : 'activity-groups'
+      activities.get(params, source).then(resp => {
+        this.activities = this.transformItems(resp.data.items)
         this.total = resp.data.total
       })
       activities.getSubGroups(this.currentGroup).then(resp => {
@@ -517,6 +634,10 @@ export default {
       if (this.$refs.groupform) {
         this.$refs.groupform.getGroups()
       }
+    },
+    async fetchGlobalAuditTrail (options) {
+      const resp = await activities.getAuditTrail(this.source, options)
+      return this.transformItems(resp.data.items)
     },
     modifyFilters (jsonFilter, params) {
       if (jsonFilter['activity_group.name']) {
@@ -560,21 +681,29 @@ export default {
       }
     },
     isExpand () {
-      return this.source === 'activity-groups'
+      return this.source === 'activities-by-grouping'
     },
     subGroupsDisplay (item) {
       let display = ''
-      item.activity_sub_groups.forEach(element => {
-        display += element.name + ', '
-      })
-      return display.slice(0, -2)
+      if (item.activity_subgroup.name === '') {
+        return ''
+      } else {
+        item.activity_subgroup.name.forEach(element => {
+          display += '&#9679; ' + element + '</br>'
+        })
+        return display
+      }
     },
     groupsDisplay (item) {
       let display = ''
-      item.activity_groups.forEach(element => {
-        display += element.name + ', '
-      })
-      return display.slice(0, -2)
+      if (item.activity_group.name === '') {
+        return ''
+      } else {
+        item.activity_group.name.forEach(element => {
+          display += '&#9679; ' + element + '</br>'
+        })
+        return display
+      }
     },
     activitiesDisplay (item) {
       let display = ''
@@ -588,6 +717,10 @@ export default {
         case 'activities':
           return this.requested ? this.requestedHeaders : this.activitiesHeaders
         case 'activity-groups':
+          return this.activityGroupHeaders
+        case 'activity-sub-groups':
+          return this.activitySubgroupHeaders
+        case 'activities-by-grouping':
           return this.groupsHeaders
         case 'activity-instances':
           return this.instantiationsHeaders
@@ -638,6 +771,11 @@ export default {
           }
           return
         case 'activity-groups':
+          this.groupMode = true
+          this.showGroupsForm = true
+          return
+        case 'activity-sub-groups':
+          this.groupMode = false
           this.showGroupsForm = true
           return
         case 'activity-instances':
@@ -655,11 +793,26 @@ export default {
           }
           return
         case 'activity-groups':
+          this.groupMode = true
+          this.showGroupsForm = true
+          return
+        case 'activity-sub-groups':
+          this.groupMode = false
           this.showGroupsForm = true
           return
         case 'activity-instances':
           this.showInstantiationsForm = true
       }
+    },
+    async openItemHistory (item) {
+      this.activeItem = item
+      const resp = await activities.getVersions(this.source, item.uid)
+      this.historyItems = this.transformItems(resp.data)
+      this.showHistory = true
+    },
+    closeHistory () {
+      this.activeItem = null
+      this.showHistory = false
     },
     createSponsorFromRequested (item) {
       this.activeItem = item
@@ -706,9 +859,3 @@ export default {
   }
 }
 </script>
-<style scoped>
-.tableMinWidth {
-  min-width: 1440px !important;
-}
-
-</style>

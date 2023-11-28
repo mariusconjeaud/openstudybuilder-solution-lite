@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Collection, Sequence
+from typing import Collection
 
 from cachetools import TTLCache, cached
 from cachetools.keys import hashkey
@@ -137,7 +137,7 @@ class CommentsRepository:
         self,
         item_latest: CommentThreadAR,
         item_previous: CommentThreadAR,
-        user_id: str = None,
+        user_id: str | None = None,
     ) -> None:
         now = datetime.now()
 
@@ -243,7 +243,7 @@ class CommentsRepository:
         status: CommentThreadStatus | None = None,
         page_number: int = 1,
         page_size: int = 0,
-    ) -> tuple[Sequence[CommentThreadAR], int]:
+    ) -> tuple[list[CommentThreadAR], int]:
         validate_max_skip_clause(page_number=page_number, page_size=page_size)
 
         topic_clause = ""
@@ -304,7 +304,7 @@ class CommentsRepository:
                 query=full_query, params=None
             )
 
-            threads_ars: Sequence[CommentThreadAR] = []
+            threads_ars: list[CommentThreadAR] = []
             items = [dict(zip(attributes_names, res)) for res in result_array]
             for item in items:
                 reply_ars = [
@@ -361,7 +361,7 @@ class CommentsRepository:
         topic_path_partial_match: bool = False,
         page_number: int = 1,
         page_size: int = 0,
-    ) -> tuple[Sequence[CommentTopicAR], int]:
+    ) -> tuple[list[CommentTopicAR], int]:
         validate_max_skip_clause(page_number=page_number, page_size=page_size)
 
         topic_clause = ""
@@ -405,7 +405,7 @@ class CommentsRepository:
                 query=full_query, params=None
             )
 
-            topics_ars: Sequence[CommentTopicAR] = []
+            topics_ars: list[CommentTopicAR] = []
             items = [dict(zip(attributes_names, res)) for res in result_array]
             for item in items:
                 active_count = 0
@@ -438,10 +438,10 @@ class CommentsRepository:
     def find_all_comment_thread_replies(
         self, thread_uid: str
     ) -> Collection[CommentReplyAR]:
-        items: Sequence[CommentReply] = CommentReply.nodes.filter(
+        items: list[CommentReply] = CommentReply.nodes.filter(
             is_deleted=False, reply_to__uid=thread_uid, reply_to__is_deleted=False
         )
-        item_ars: Sequence[CommentReplyAR] = [
+        item_ars: list[CommentReplyAR] = [
             CommentReplyAR.from_repository_values(
                 uid=p[0].uid,
                 text=p[0].text,

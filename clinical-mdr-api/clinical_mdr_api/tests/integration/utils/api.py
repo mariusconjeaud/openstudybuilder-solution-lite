@@ -130,18 +130,18 @@ class APITest(TestCase):
         return diff
 
     def _diff(self, expected, actual):
-        t = type(expected)
-        if t is int:
+        type_of_expected = type(expected)
+        if type_of_expected is int:
             return self._int_diff(expected, actual)
-        if t is str:
+        if type_of_expected is str:
             return self._str_diff(expected, actual)
-        if t is bool:
+        if type_of_expected is bool:
             return self._bool_diff(expected, actual)
-        if t is float:
+        if type_of_expected is float:
             return self._float_diff(expected, actual)
-        if t is dict:
+        if type_of_expected is dict:
             return self._dict_diff(expected, actual)
-        if t is list:
+        if type_of_expected is list:
             return self._list_diff(expected, actual)
         if isinstance(expected, CaseInsensitiveDict):
             return self._dict_diff(dict(expected), actual)
@@ -191,16 +191,16 @@ class APITest(TestCase):
 
         # read scenario JSON
         indent = None
-        with open(self.current_scenario_file_path, "r", encoding="utf-8") as f:
-            f.readline()
+        with open(self.current_scenario_file_path, "r", encoding="utf-8") as file:
+            file.readline()
 
             # detect indentation
-            line = f.readline()
+            line = file.readline()
             if line:
                 indent = line[: len(line) - len(line.lstrip())]
-            f.seek(0)
+            file.seek(0)
 
-            scenario = json.load(f)
+            scenario = json.load(file)
 
         # find the scenario item
         item = scenario[self.current_scenario_item_index]
@@ -224,8 +224,8 @@ class APITest(TestCase):
         update_dict_recursive(self.current_scenario_item, updates)
 
         # save the scenario
-        with open(self.current_scenario_file_path, "w", encoding="UTF-8") as f:
-            json.dump(scenario, f, indent=indent)
+        with open(self.current_scenario_file_path, "w", encoding="UTF-8") as file:
+            json.dump(scenario, file, indent=indent)
 
     def _list_diff(self, expected, actual):
         expected = expected if expected is not None else []
@@ -284,8 +284,8 @@ class APITest(TestCase):
     def test_scenario(self):
         for path in self.SCENARIO_PATHS:
             self.current_scenario_file_path = path
-            with open(path, encoding="UTF-8") as f:
-                scenario = json.load(f)
+            with open(path, encoding="UTF-8") as file:
+                scenario = json.load(file)
                 print(f"\n\n============ {path} ===============")
                 index = 0
                 for item in scenario:

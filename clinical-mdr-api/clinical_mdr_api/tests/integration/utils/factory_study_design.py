@@ -29,12 +29,19 @@ from clinical_mdr_api.services.studies.study_element_selection import (
 )
 
 
-def create_study_element(element_subtype_uid: str, study_uid: str):
+def create_study_element(
+    element_subtype_uid: str,
+    study_uid: str,
+    name: str = "Element_Name_1",
+    short_name: str = "Element_Short_Name_1",
+    code: str = "Element_code_1",
+    description: str = "desc...",
+):
     study_selection_element_create_input = StudySelectionElementCreateInput(
-        name="Element_Name_1",
-        short_name="Element_Short_Name_1",
-        code="Element_code_1",
-        description="desc...",
+        name=name,
+        short_name=short_name,
+        code=code,
+        description=description,
         element_subtype_uid=element_subtype_uid,
     )
     item = StudyElementSelectionService(author="test").make_selection(

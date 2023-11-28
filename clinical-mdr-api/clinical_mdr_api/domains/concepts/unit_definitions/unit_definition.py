@@ -1,6 +1,6 @@
 import math
 from dataclasses import dataclass
-from typing import AbstractSet, Callable, Self, Sequence
+from typing import AbstractSet, Callable, Self
 
 from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains._utils import normalize_string
@@ -24,8 +24,8 @@ class CTTerm:
 
 @dataclass(frozen=True)
 class UnitDefinitionValueVO(ConceptVO):
-    ct_units: Sequence[CTTerm]
-    unit_subsets: Sequence[CTTerm]
+    ct_units: list[CTTerm]
+    unit_subsets: list[CTTerm]
     ucum_uid: str | None
     unit_dimension_uid: str | None
     # TODO temporary solution to not break performance
@@ -54,8 +54,8 @@ class UnitDefinitionValueVO(ConceptVO):
         master_unit: bool,
         si_unit: bool,
         us_conventional_unit: bool,
-        ct_units: Sequence[str],
-        unit_subsets: Sequence[str],
+        ct_units: list[str],
+        unit_subsets: list[str],
         ucum_uid: str | None,
         unit_dimension_uid: str | None,
         legacy_code: str | None,
@@ -157,8 +157,8 @@ class UnitDefinitionValueVO(ConceptVO):
         master_unit: bool,
         si_unit: bool,
         us_conventional_unit: bool,
-        ct_units: Sequence[CTTerm],
-        unit_subsets: Sequence[CTTerm],
+        ct_units: list[CTTerm],
+        unit_subsets: list[CTTerm],
         ucum_uid: str | None,
         unit_dimension_uid: str | None,
         ucum_name: str | None,
@@ -218,10 +218,10 @@ class UnitDefinitionAR(ConceptARBase):
         *,
         author: str,
         change_description: str,
-        new_unit_definition_value: UnitDefinitionValueVO = None,
-        concept_exists_by_callback: Callable[[str, str, bool], bool] = None,
-        master_unit_exists_for_dimension_predicate: Callable[[str], bool] = None,
-        unit_definition_exists_by_legacy_code: Callable[[str], bool] = None,
+        new_unit_definition_value: UnitDefinitionValueVO | None = None,
+        concept_exists_by_callback: Callable[[str, str, bool], bool] | None = None,
+        master_unit_exists_for_dimension_predicate: Callable[[str], bool] | None = None,
+        unit_definition_exists_by_legacy_code: Callable[[str], bool] | None = None,
     ) -> None:
         """
         Edits a draft version of the object, creating a new draft version.

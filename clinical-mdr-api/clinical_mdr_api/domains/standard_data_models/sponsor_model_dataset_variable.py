@@ -1,6 +1,6 @@
 import datetime
 from dataclasses import dataclass
-from typing import Optional, Self, Sequence
+from typing import Self
 
 from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemAggregateRootBase,
@@ -29,13 +29,13 @@ class SponsorModelDatasetVariableVO:
     display_format: str
     xml_datatype: str
     xml_codelist: str
-    xml_codelist_multi: Sequence[str]
+    xml_codelist_multi: list[str]
     core: str
     origin: str
     role: str
     term: str
     algorithm: str
-    qualifiers: Sequence[str]
+    qualifiers: list[str]
     comment: str
     ig_comment: str
     class_table: str
@@ -57,8 +57,8 @@ class SponsorModelDatasetVariableVO:
         cls,
         dataset_uid: str,
         variable_uid: str,
-        sponsor_model_name: Optional[str],
-        sponsor_model_version_number: Optional[str],
+        sponsor_model_name: str | None,
+        sponsor_model_version_number: str | None,
         is_basic_std: bool,
         label: str,
         order: int,
@@ -67,13 +67,13 @@ class SponsorModelDatasetVariableVO:
         display_format: str,
         xml_datatype: str,
         xml_codelist: str,
-        xml_codelist_multi: Sequence[str],
+        xml_codelist_multi: list[str],
         core: str,
         origin: str,
         role: str,
         term: str,
         algorithm: str,
-        qualifiers: Sequence[str],
+        qualifiers: list[str],
         comment: str,
         ig_comment: str,
         class_table: str,

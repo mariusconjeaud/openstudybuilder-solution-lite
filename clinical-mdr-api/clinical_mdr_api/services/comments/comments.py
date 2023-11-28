@@ -1,6 +1,5 @@
 import copy
 from datetime import datetime
-from typing import Sequence
 
 from neomodel import db  # type: ignore
 
@@ -179,7 +178,7 @@ class CommmentsService:
 
     def get_all_comment_thread_replies(
         self, thread_uid: str
-    ) -> Sequence[models.CommentReply]:
+    ) -> list[models.CommentReply]:
         try:
             all_items = self.repos.comments_repository.find_all_comment_thread_replies(
                 thread_uid

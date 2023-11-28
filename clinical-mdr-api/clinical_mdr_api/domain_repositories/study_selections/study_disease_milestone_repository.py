@@ -1,5 +1,5 @@
 import datetime
-from typing import Sequence, TypeVar
+from typing import Any, TypeVar
 
 from neomodel import Q, db
 
@@ -35,6 +35,7 @@ from clinical_mdr_api.repositories._utils import (
     validate_page_number_and_page_size,
 )
 
+# pylint: disable=invalid-name
 _StandardsReturnType = TypeVar("_StandardsReturnType")
 
 
@@ -68,10 +69,14 @@ class StudyDiseaseMilestoneRepository:
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
+        study_value_version: str | None = None,
         **kwargs,
-    ) -> tuple[Sequence[StudyDiseaseMilestoneOGM], int]:
+    ) -> tuple[list[StudyDiseaseMilestoneOGM], int]:
         q_filters = self.create_query_filter_statement_neomodel(
-            study_uid=study_uid, filter_by=filter_by, **kwargs
+            study_uid=study_uid,
+            study_value_version=study_value_version,
+            filter_by=filter_by,
+            **kwargs,
         )
         q_filters = merge_q_query_filters(q_filters, filter_operator=filter_operator)
         sort_paths = get_order_by_clause(
@@ -90,7 +95,7 @@ class StudyDiseaseMilestoneRepository:
             )
             .order_by(sort_paths[0] if len(sort_paths) > 0 else "uid")
             .filter(*q_filters)[start:end]
-        )
+        ).distinct()
         all_activities = [
             StudyDiseaseMilestoneOGM.from_orm(activity_node) for activity_node in nodes
         ]
@@ -100,13 +105,22 @@ class StudyDiseaseMilestoneRepository:
         return all_activities, all_nodes if total_count else 0
 
     def create_query_filter_statement_neomodel(
-        self, study_uid: str | None = None, filter_by: dict | None = None
-    ) -> tuple[dict, Sequence[Q]]:
+        self,
+        study_uid: str | None = None,
+        study_value_version: str | None = None,
+        filter_by: dict | None = None,
+    ) -> tuple[dict, list[Q]]:
         q_filters = transform_filters_into_neomodel(
             filter_by=filter_by, model=StudyDiseaseMilestoneOGM
         )
         if study_uid:
-            q_filters.append(Q(study_value__study_root__uid=study_uid))
+            if study_value_version:
+                q_filters.append(Q(study_value__has_version__uid=study_uid))
+                q_filters.append(
+                    Q(**{"study_value__has_version|version": study_value_version})
+                )
+            else:
+                q_filters.append(Q(study_value__latest_value__uid=study_uid))
         return q_filters
 
     def find_all_disease_milestones_by_study(
@@ -120,9 +134,9 @@ class StudyDiseaseMilestoneRepository:
                     "has_disease_milestone_type__has_name_root__latest_final",
                     "has_disease_milestone_type__has_attributes_root__latest_final",
                 )
-                .filter(study_value__study_root__uid=study_uid)
+                .filter(study_value__latest_value__uid=study_uid)
                 .order_by("order")
-            )
+            ).distinct()
         ]
         return all_disease_milestones
 
@@ -130,11 +144,11 @@ class StudyDiseaseMilestoneRepository:
         disease_milestone_node = to_relation_trees(
             StudyDiseaseMilestone.nodes.fetch_relations(
                 "has_after__audit_trail",
-                "study_value",
+                "study_value__latest_value",
                 "has_disease_milestone_type__has_name_root__latest_final",
                 "has_disease_milestone_type__has_attributes_root__latest_final",
             ).filter(uid=uid)
-        )
+        ).distinct()
 
         if len(disease_milestone_node) > 1:
             raise exceptions.ValidationException(
@@ -147,35 +161,41 @@ class StudyDiseaseMilestoneRepository:
         return StudyDiseaseMilestoneOGM.from_orm(disease_milestone_node[0])
 
     def get_all_versions(self, uid: str, study_uid):
-        version_nodes = [
-            StudyDiseaseMilestoneOGMVer.from_orm(se_node)
-            for se_node in to_relation_trees(
-                StudyDiseaseMilestone.nodes.fetch_relations(
-                    "has_after__audit_trail",
-                    "has_disease_milestone_type__has_name_root__latest_final",
-                    "has_disease_milestone_type__has_attributes_root__latest_final",
+        return sorted(
+            [
+                StudyDiseaseMilestoneOGMVer.from_orm(se_node)
+                for se_node in to_relation_trees(
+                    StudyDiseaseMilestone.nodes.fetch_relations(
+                        "has_after__audit_trail",
+                        "has_disease_milestone_type__has_name_root__latest_final",
+                        "has_disease_milestone_type__has_attributes_root__latest_final",
+                    )
+                    .fetch_optional_relations("has_before")
+                    .filter(uid=uid, has_after__audit_trail__uid=study_uid)
                 )
-                .fetch_optional_relations("has_before")
-                .filter(uid=uid, has_after__audit_trail__uid=study_uid)
-            )
-        ]
-        return sorted(version_nodes, key=lambda item: item.start_date, reverse=True)
+            ],
+            key=lambda item: item.start_date,
+            reverse=True,
+        )
 
     def get_all_disease_milestone_versions(self, study_uid: str):
-        version_nodes = [
-            StudyDiseaseMilestoneOGMVer.from_orm(se_node)
-            for se_node in to_relation_trees(
-                StudyDiseaseMilestone.nodes.fetch_relations(
-                    "has_after__audit_trail",
-                    "has_disease_milestone_type__has_name_root__latest_final",
-                    "has_disease_milestone_type__has_attributes_root__latest_final",
+        return sorted(
+            [
+                StudyDiseaseMilestoneOGMVer.from_orm(se_node)
+                for se_node in to_relation_trees(
+                    StudyDiseaseMilestone.nodes.fetch_relations(
+                        "has_after__audit_trail",
+                        "has_disease_milestone_type__has_name_root__latest_final",
+                        "has_disease_milestone_type__has_attributes_root__latest_final",
+                    )
+                    .fetch_optional_relations("has_before")
+                    .filter(has_after__audit_trail__uid=study_uid)
+                    .order_by("order")
                 )
-                .fetch_optional_relations("has_before")
-                .filter(has_after__audit_trail__uid=study_uid)
-                .order_by("order")
-            )
-        ]
-        return sorted(version_nodes, key=lambda item: item.start_date, reverse=True)
+            ],
+            key=lambda item: item.start_date,
+            reverse=True,
+        )
 
     def save(self, disease_milestone: StudyDiseaseMilestoneVO, delete_flag=False):
         # if exists
@@ -195,9 +215,11 @@ class StudyDiseaseMilestoneRepository:
         self, item: StudyDiseaseMilestoneVO, create: bool = False, delete=False
     ):
         study_root: StudyRoot = StudyRoot.nodes.get(uid=item.study_uid)
-        study_value = study_root.latest_value.get_or_none()
+        study_value: StudyValue = study_root.latest_value.get_or_none()
         if study_value is None:
             raise exceptions.ValidationException("Study does not have draft version")
+        if not create:
+            previous_item = study_value.has_study_disease_milestone.get(uid=item.uid)
         new_study_disease_milestone = StudyDiseaseMilestone(
             uid=item.uid,
             accepted_version=item.accepted_version,
@@ -221,9 +243,6 @@ class StudyDiseaseMilestoneRepository:
             )
             new_study_disease_milestone.study_value.connect(study_value)
         else:
-            previous_item = StudyDiseaseMilestone.nodes.filter(uid=item.uid).has(
-                study_value=True
-            )[0]
             if delete is False:
                 # update
                 self.manage_versioning_update(
@@ -309,7 +328,7 @@ class StudyDiseaseMilestoneRepository:
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
-    ) -> Sequence:
+    ) -> list[Any]:
         """
         Method runs a cypher query to fetch possible values for a given field_name, with a limit of result_count.
         It uses generic filtering capability, on top of filtering the field_name with provided search_string.
@@ -319,7 +338,7 @@ class StudyDiseaseMilestoneRepository:
         :param filter_by:
         :param filter_operator: Same as for generic filtering
         :param result_count: Max number of values to return. Default 10
-        :return Sequence:
+        :return list[Any]:
         """
 
         # Add header field name to filter_by, to filter with a CONTAINS pattern

@@ -76,14 +76,14 @@ def from_file(filename):
     dataset = []
     codelist_repo = CTCodelistNameRepository()
     all_codelists = codelist_repo.find_all().items
-    with open(filename, encoding="UTF-8") as f:
-        r = csv.DictReader(f)
-        for line in r:
+    with open(filename, encoding="UTF-8") as file:
+        dict_reader = csv.DictReader(file)
+        for line in dict_reader:
             line["study_field_data_type"] = StudyFieldType(
                 line["study_field_data_type"]
             )
             data = {}
-            for k, v in line.items():
+            for k, value in line.items():
                 # creating a mapping based on codelist name
                 if line.get("configured_codelist_name") is not None:
                     for codelist in all_codelists:
@@ -93,26 +93,28 @@ def from_file(filename):
                         ):
                             line["configured_codelist_uid"] = codelist.uid
                 if k in fieldnames:
-                    data[k] = sanitize_value(v)
+                    data[k] = sanitize_value(value)
                     if k == "study_field_grouping":
-                        if v == "id_metadata":
+                        if value == "id_metadata":
                             data[
                                 "study_value_object_class"
                             ] = StudyIdentificationMetadataVO
-                        elif v == "ver_metadata":
+                        elif value == "ver_metadata":
                             data["study_value_object_class"] = StudyVersionMetadataVO
-                        elif v == "high_level_study_design":
+                        elif value == "high_level_study_design":
                             data["study_value_object_class"] = HighLevelStudyDesignVO
-                        elif v == "study_population":
+                        elif value == "study_population":
                             data["study_value_object_class"] = StudyPopulationVO
-                        elif v == "study_intervention":
+                        elif value == "study_intervention":
                             data["study_value_object_class"] = StudyInterventionVO
-                        elif v == "study_description":
+                        elif value == "study_description":
                             data["study_value_object_class"] = StudyDescriptionVO
-                        elif v == "id_metadata.registry_identifiers":
+                        elif value == "id_metadata.registry_identifiers":
                             data["study_value_object_class"] = RegistryIdentifiersVO
                         else:
-                            raise exceptions.ValidationException(f"Unknow field {v}")
+                            raise exceptions.ValidationException(
+                                f"Unknown field {value}"
+                            )
             item = StudyFieldConfigurationEntry(**data)
             dataset.append(item)
     return dataset
@@ -126,43 +128,43 @@ def from_database():
         line = item
         linedata = line.dict()
         data = {}
-        for k, v in linedata.items():
+        for k, value in linedata.items():
             if k in fieldnames:
                 if k == "study_field_data_type":
-                    data[k] = StudyFieldType(v)
+                    data[k] = StudyFieldType(value)
                 else:
-                    data[k] = sanitize_value(v)
+                    data[k] = sanitize_value(value)
                 if k == "study_field_grouping":
-                    if v == "id_metadata":
+                    if value == "id_metadata":
                         data["study_value_object_class"] = StudyIdentificationMetadataVO
-                    elif v == "ver_metadata":
+                    elif value == "ver_metadata":
                         data["study_value_object_class"] = StudyVersionMetadataVO
-                    elif v == "high_level_study_design":
+                    elif value == "high_level_study_design":
                         data["study_value_object_class"] = HighLevelStudyDesignVO
-                    elif v == "study_population":
+                    elif value == "study_population":
                         data["study_value_object_class"] = StudyPopulationVO
-                    elif v == "study_intervention":
+                    elif value == "study_intervention":
                         data["study_value_object_class"] = StudyInterventionVO
-                    elif v == "study_description":
+                    elif value == "study_description":
                         data["study_value_object_class"] = StudyDescriptionVO
-                    elif v == "id_metadata.registry_identifiers":
+                    elif value == "id_metadata.registry_identifiers":
                         data["study_value_object_class"] = RegistryIdentifiersVO
                     else:
-                        raise exceptions.ValidationException(f"Unknown field {v}")
+                        raise exceptions.ValidationException(f"Unknown field {value}")
         item = StudyFieldConfigurationEntry(**data)
         dataset.append(item)
     return dataset
 
 
 def to_file(filename, data):
-    with open(filename, "w", encoding="UTF-8") as f:
-        wr = csv.DictWriter(f, fieldnames)
-        wr.writeheader()
+    with open(filename, "w", encoding="UTF-8") as file:
+        dict_writer = csv.DictWriter(file, fieldnames)
+        dict_writer.writeheader()
         item: StudyFieldConfigurationEntry
         for item in data:
             datadict = asdict(item)
             datadict["study_field_name"] = item.study_field_data_type.name
-            wr.writerow(datadict)
+            dict_writer.writerow(datadict)
 
 
 class FieldConfiguration:

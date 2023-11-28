@@ -102,7 +102,7 @@
         "work_in_progress": "Work in Progress",
         "links": "Links",
         "load": "Load",
-        "sentence_case_name": "Sentence Case Name",
+        "sentence_case_name": "Sentence case name",
         "abbreviation": "Abbreviation",
         "add_new": "Add New",
         "mandatory": "Mandatory",
@@ -146,7 +146,8 @@
         "duration_incomplete": "You must select a value and a unit",
         "validation_error": "Data validation error:",
         "select_at_least_one": "Select a value or a reason for missing",
-        "no_parameter_values_selected": "No value(s) selected"
+        "no_parameter_values_selected": "No value(s) selected",
+        "identical_name": "Sentence case name value must be identical to name value"
     },
     "_help": {
         "CrfTemplates": {
@@ -211,57 +212,93 @@
         },
         "ActivityInstructionTemplateForm": {
             "indications": "Indications, conditions, diseases or disorders in scope for the template. Select NA (not applicable), if template is generic not targeted specific indication.",
-            "group": "Select the default group the activity belongs to (grouping is used e.g. in protocol flowchart display). It can ben changed on study level if needed.",
-            "sub_group": "Select one (or more) default sub-group(s) the activity belongs to (gub-grouping is used e.g. in protocol flowchart display) . It can ben changed on study level if needed.",
+            "group": "Select the default group the activity belongs to (grouping is used e.g. in protocol SoA display). It can ben changed on study level if needed.",
+            "sub_group": "Select one (or more) default subgroup(s) the activity belongs to (gub-grouping is used e.g. in protocol SoA display) . It can ben changed on study level if needed.",
             "activity": "Select NA (not applicable), if template not targeting specific activities."
         },
         "ActivityInstructionTable": {
-            "general": "FIXME"
+            "general": "A list of Activity instructions used on studies."
         },
         "ActivityForms": {
+            "activity_group": "The group(s) that the Activity belongs to. To add more group click on the '+' in the top right corner.",
             "activity_subgroup": "Specify the sub-groups for which the activity should belong, e.g. select Body Measures.",
             "name": "Specify the name of the activity. e.g. Body Frame Size",
-            "definition": "Provide a description/definition of the activity., e.g. The categorization of a person's body frame into small, medium and large based on the measurement of wrist circumference or the breadth of the elbow."
+            "nci_concept_id": "The reference to the NCI (National Cancer Institute) Concept ID. These are codes starting with 'C' followed by a set of numbers. The code provided may or may not be a CDISC used C-code (CDISC C-codes are a subset of NCI C-codes).",
+            "is_data_collected": "Tick if the Activity involves collection of data",
+            "abbreviation": "An abbreviated term for the Activity/Activity Instance/Group/Sub-group. Can be used in displays of the data.",
+            "definition": "Provide a description/definition of the activity., e.g. The categorization of a person's body frame into small, medium and large based on the measurement of wrist circumference or the breadth of the elbow.",
+            "activity_name": "Specify the name of the activity. e.g. Body Frame Size"
         },
         "ActivityFormsGrouping": {
-            "select_type": "Select if a group or a sub_group need to be defined.",
-            "name": "Specify the name of the group. Groups are being used for search and in Study Activities/Flowchart displays",
-            "definition": "Provide a description/definition of the group."
+            "name": "Specify the name of the group or subgroup. Groups and subgroups are utilized for search purposes and in the display of Study Activities/SoA.",
+            "definition": "Provide a description/definition of the group or subgroup."
         },
         "ActivityFormsInstantiations": {
-            "select_type": "Select type if instance being defined.",
+            "activities": "Select one activity applicable for the definition of the instance.",
+            "activity_group": "The group(s)/sub-groups() for the Activity that the Activity Instance belongs to.",
+            "select_type": "Select class of instance being defined.",
             "name": "Specify the name of the instance. ",
             "definition": "Provide a description/definition of the instance.",
-            "activities": "Select one activity applicable for the definition of the instance.",
+            "nci_concept_id": "The reference to the NCI (National Cancer Institute) Concept ID. These are codes starting with 'C' followed by a set of numbers. The code provided may or may not be a CDISC used C-code (CDISC C-codes are a subset of NCI C-codes).",
             "topicCode": "Specify the Topic Code name.",
             "adamCode": "Specify the ADaM Parameter Code (convention is Parameter (unit))",
-            "legacyDesc": "Description from legacy system (MMA)."
+            "is_required_for_activity": "Indicates if the Activity Instance is required for the Activity, i.e. if the Activity is in the SoA then the Activity Instance must be included in the operational SoA.",
+            "is_default_selected_for_activity": "The default Activity Instance for the Activity, if nothing else is selected.",
+            "is_data_sharing": "Specifies if the Activity Instance is allowed for data sharing",
+            "is_legacy_usage": "Specifies if the Activity Instance is included for legacy usage - and should not be used fot future studies."
         },
         "ActivityTable": {
-            "activity": "",
-            "activity_group": "",
-            "activity_subgroup": "",
-            "instances": ""
+            "activities": "List of Activities",
+            "activity_groups": "List of Activity Groups defined.To create a new group or list the groups, navigate to this tab.",
+            "activity_subgroups": "List of Activity Sub-groups defined. To create a new sub-group or list the sub-groups, navigate to this tab.",
+            "activities_overview": "Displays the Activities ordered by their group and sub-group",
+            "instances": "A list of Activity Instances. Displays the Activity's relation ADaM parameter(s).",
+            "requested": "List of any requests for new/update to Activities",
+            "activity_name": "The name of the Activity",
+            "sentence_case_name": "The name in sentence case for the Activity/Activity Instance/Group/Sub-group",
+            "abbreviation": "An abbreviated term for the Activity/Activity Instance/Group/Sub-group. Can be used in displays of the data.",
+            "definition": "The definition for the Activity Instance/Group/Sub-group",
+            "nci_concept_id": "The reference to the NCI (National Cancer Institute) Concept ID. These are codes starting with 'C' followed by a set of numbers. The code provided may or may not be a CDISC used C-code (CDISC C-codes are a subset of NCI C-codes).",
+            "topic_code": "The CDW Topic code.",
+            "adam_code": "The code used as the PARAM code in the ADaM data.",
+            "activity_group": "The group(s) that the Activity belongs to.",
+            "activity_subgroup": "The sub-group(s) that the Activity belongs to.",
+            "is_data_collected": "Specifies if the Activity involves collection of data.",
+            "activity": "The Activity that the Activity Instance is related to. An activity Instance can belong to only one Activity.",
+            "instance": "A detailed specification of the Activity. E.g. for the Activity 'Triglycerides' the Instance can specify items like the test code, unit, specimen etc. There can be multiple Activity Instances related to an Activity each describing specific items.",
+            "is_required_for_activity": "Indicates if the Activity Instance is required for the Activity, i.e. if the Activity is in the SoA then the Activity Instance must be included in the operational SoA.",
+            "is_default_selected_for_activity": "The default Activity Instance for the Activity, if nothing else is selected.",
+            "is_data_sharing": "Specifies if the Activity Instance is allowed for data sharing",
+            "is_legacy_usage": "Specifies if the Activity Instance is included for legacy usage - and should not be used fot future studies.",
+            "rationale_for_request": "A written note on why the request is needed."
         },
         "ActivityOverview": {
-            "general": "An activity is a definition of an activity performed on a subject. The activity is the overall name of the activity used in the protocol flowchart.",
-            "cosmos_yaml": "The tab displays the activity instance in a YAML file structure. The naming complies with the CDISC COSMoS Biomedical Concept structure.",
-            "activity_groups": "The overall group(s) that the activity belongs to. The grouping is also used for protocol flowchart display and for searching in the list of activities.",
-            "activity_subgroups": "This is a sub-grouping within a group. The sub-grouping is also used for protocol flowchart display and for searching in the list of activities.",
+            "general": "An Activity is a definition of an activity performed on a subject. The Activity is the overall name of the activity used in the protocol SoA.",
+            "cosmos_yaml": "The tab displays the Activity Instance in a YAML file structure. The naming complies with the CDISC COSMoS Biomedical Concept structure.",
+            "activity_groups": "The overall group(s) that the Activity belongs to. The grouping is also used for protocol SoA display and for searching in the List of Activities.",
+            "activity_subgroups": "This is a sub-grouping within a group. The sub-grouping is also used for protocol SoA display and for searching in the List of Activities.",
             "adam_code": "The code used as the PARAM code in the ADaM data.",
             "topic_code": "The CDW Topic Code",
-            "class": "The class in which the a given instance of the activity belong.",
-            "instances": "The list of instances for the activity. An instance is a detailed definition of the activity specifying e.g. unit, specimen, location etc. To view the detailed definition of instances then navigate to the Activity Instance tab."
+            "class": "The class in which the Activity Instance(s) of the Activity belongs to.",
+            "instances": "The list of Activity Instances for the Activity. An Activity Instance is a detailed definition of the activity specifying e.g. unit, specimen, location etc. To view the detailed definition of Activity Instances then navigate to the Activity Instance tab.",
+            "is_data_collected": "Specifies if the Activity involves data collection.",
+            "activity_groupings": "The list of groups and sub-groups the Activity is assigned to. "
         },
         "ActivityInstanceOverview": {
-            "general": "An instance is detailed definition of an activity, showing the relevant qualifiers/items, e.g. unit, location, specimen, dose regimen.",
-            "cosmos_yaml": "The tab displays the activity instance in a YAML file structure. The naming complies with the CDISC COSMoS Biomedical Concept structure.",
-            "class": "The class in which the a given instance of the activity belong.",
+            "general": "An Activity Instance is detailed definition of an activity, showing the relevant qualifiers/items, e.g. unit, location, specimen, dose regimen.",
+            "cosmos_yaml": "The tab displays the Activity Instance in a YAML file structure. The naming complies with the CDISC COSMoS Biomedical Concept structure.",
+            "class": "The class in which the a given Activity Instance of the Activity belongs to.",
             "adam_code": "The code used as the PARAM code in the ADaM data.",
             "topic_code": "The CDW Topic Code",
-            "activity_groups": "The overall group(s) that the activity instance belongs to. The activity instance can only belong to groups that the corresponding activity belongs to.",
-            "activity_subgroups": "This is a sub-grouping within a group. The activity instance can only belong to sub-group that the corresponding activity belongs to.",
-            "activity": "Reference to the activity to which the instance belong.",
+            "activity_group": "The overall group(s) that the Activity Instance belongs to. The Activity Instance can only belong to groups that the corresponding Activity belongs to.",
+            "activity_subgroup": "This is a sub-grouping within a group. The Activity Instance can only belong to sub-group that the corresponding Activity belongs to.",
+            "activity": "Reference to the Activity to which the Activity Instance belongs to.",
+            "activity_groupings": "The list of groups and sub-groups the Activity Instance is assigned to.",
+            "is_required_for_activity": "Indicates if the Activity Instance is required for the Activity, i.e. if the Activity is in the SoA then the Activity Instance must be included in the operational SoA.",
+            "is_default_selected_for_activity": "The default instance for the activity, if nothing else is selected",
+            "is_data_sharing": "Specifies if the instance is allowed for data sharing",
+            "is_legacy_usage": "Specifies if the instance is included for legacy usage - and should not be used fot future studies.",
+            "item_type": "The list of qualifiers/items that defines the Activity Instance. The items can vary for a given Activity Instance.",
             "items": "The list of qualifiers/items that defines the instance. The items can vary for a given instance.",
             "ct_term_name": "The term being referred to for the item, if applicable. It will list the possible/allowable terms.",
             "unit_def_name": "The list of allowable/possible units.",
@@ -480,7 +517,7 @@
         "StudyVisitForm": {
             "vtype_step_label": "Select the type of visit: Scheduled visit is a planned visit as per protocol, Non Visit is for study activities not planned, e.g. an AE. Unscheduled visit is for additional visits that was not planned for, e.g. extra lab samples. The Non Visit and Unscheduled Visit is used for Form setup. Special Visit is a visit without specific timing but related to data collection. Example: early treatment discontinuation, where certain data are to be collected, but not at the timing of the planned End of Treatment visit. A special visit is always related to another visit and is shown in the schedule of activities as visit VXXA (XX being the number of the related visit). there can only be one Special Visits per Epoch.",
             "period": "The epoch types corresponds to the epochs defined in the Study Epochs tab. Select the one applicable for the visit",
-            "single_visit": "Single visit. Default should be set to Single Visit. If visits need sub-grouping, e.g. a set of days need to be grouped into a visit then select Anchor Visit in Group. For subsequent select additional sub-visit",
+            "single_visit": "Single visit. Default should be set to Single Visit. If visits need subgrouping, e.g. a set of days need to be grouped into a visit then select Anchor Visit in Group. For subsequent select additional sub-visit",
             "anchor_visit_in_group": "If ticked, it will create a local anchor visit. Visits referencing to a Anchor visit in group will have the same Visit number concatenated with number of days. Eg. if Visits 3 (V3) is Anchor visit in group then a visits referring this (Time reference) will have same visit but visits short name as V3D2, if it occurs 2 days after the anchor visit. Remember to tick subsequent visits as Additional Sub-visit. This will allow for selecting the local anchor visit from the time reference drop-down.",
             "visit_type": "For definition of visit types see <a href='https://studybuilder.clinicalmdr-dev.corp.azure.novonordisk.com/library/ct_catalogues/All/CTCodelist_000005' target='_blank'>[Visit Type]<a>",
             "contact_mode": "How did study subject interact with the study investigator at the visit",
@@ -500,8 +537,8 @@
             "epoch_allocation": "Observations at a visit might be affected by treatment administered in a previous epoch. Example: Baseline visit (in treatment epoch) where subjects are instructed to take first medication the next day will have measurements taken that represents 'Pre Treatment' epoch treatment, i.e. No treatment. In this case the Epoch Allocation Rule should be Previous Visit. In most cases the rule is Current Visit, i.e. measurements at this visit is measurements of the treatment (element) given in the epoch. The corresponding rules with Date is to be used for Non-visits and unscheduled visits. The Actual Treatment is used if the actual treatment of the subject at the visit is to be used instead of the planned treatment. ",
             "visit_start_rule": "Enter visit start rule. Describe when the visit starts, in relation to the sequence of elements, e.g. 2 weeks after start of Treatment Epoch",
             "visit_stop_rule": "Enter visit stop rule. Describe when the visit ends, in relation to the sequence of elements e.g. At End of Trial",
-            "visit_notes": "Notes for the visit that need to be added to the flowchart as footnotes.",
-            "collapsible_visit": "Indicate whether the visit is part of a group of visits which should be shown as a range of visits in the flowchart. This will provide an additional label to the visit(s).",
+            "visit_notes": "Notes for the visit that need to be added to the SoA as footnotes.",
+            "collapsible_visit": "Indicate whether the visit is part of a group of visits which should be shown as a range of visits in the SoA. This will provide an additional label to the visit(s).",
             "duplicate_visit": "Specify the timing for the new visit. The time reference is the same for the visit being copied from. E.g. if the reference is global anchor visit and you are copying visit 7 being 7 days after global anchor visit, then if you select 8 days in the timing the new visit will be visit 8 (8 days after global anchor visit). Note, you cannot copy a randomisation visit."
         },
         "StudyVisitDuplicate": {
@@ -651,7 +688,7 @@
             "description": "Add an description of the UCUM code."
         },
         "ActivitiesTable": {
-            "general": "Activities are definitions of measurements or activities performed as part of a clinical study on a study subject. First tab (List of Activities) is list of all activities. The Activities by Grouping displays the activities ordered by their group, and the Activities Instance displays the activity's relation to SDTM domain(s) and ADaM parameter(s)."
+            "general": "Activities are definitions of measurements or activities performed as part of a clinical study on a study subject."
         },
         "ObjectiveTemplatesTable": {
             "general": "Generic templates for objectives are defined here. Click on the + button to add a new template. In the User Defined Templates you can view templates being defined on different studies. To make a template accessible for use it must be approved. Use the Approve in the left context-menu (3 vertical dots to the left of the template). To set default values for parameters use the 'Default' values in the context menu."
@@ -722,9 +759,25 @@
         "ActivitiesView": {
             "general": "Studies Activities specifies what to be administered, measured and collected during a study at the different visits",
             "activity_list": "From this tab add the activities for the study. To add an activity use the + button",
-            "detailed_flowchart": "Once activities are added, go to detailed flowchart to select which visits the activities occur.",
-            "protocol_flowchart": "Displays the rendered flowchart as it will look in the protocol",
+            "detailed_flowchart": "Once activities are added, go to detailed SoA to select which visits the activities occur.",
+            "protocol_flowchart": "Displays the rendered SoA as it will look in the protocol",
             "activity_instructions": "Tab for specification of instructions for an activity. E.g. Study drug must be given the next day after randomisation"
+        },
+        "StudyActivity": {
+            "general": "An Activity is a definition of an activity performed on a subject. The Activity is the overall name of the activity used in the protocol Schedule of Activities (SoA).",
+            "flowchart_group": "The overall group of the Schedule of Activities (SoA) that the Activity belongs to.",
+            "activity_group": "The overall group(s) that the Activity belongs to. The grouping is also used for protocol SoA display and for searching in the List of Activities.",
+            "activity_sub_group": "This is a sub-grouping within a group. The sub-grouping is also used for protocol SoA display and for searching in the List of Activities.",
+            "activity": "The name of the Activity",
+            "data_collection": "Specifies if the Activity involves data collection. Some Activities are reminders and do not invole data collection. ",
+            "expand_all": "Expand table to view all activities. Select the visit (tick the circle) in which the activities are to occur. To tick multiple visits for multiple activities then  select the activities (tick the box next to the activity) then press the blue pencil icon above the table (to the right).",
+            "collapse_all": "Collapse table to only view the high-level SoA groups",
+            "hide_activity_selection": "Some activity details may not be needed in the high-level protocol SoA. Hide activity that are not needed in protocol SoA using the hide eye indicator. To hide multiple activities, select the activities (or activity groups) and use the grey hide eye-indicator above the table (to the right)",
+            "show_activity_selection": "Show activity in protocol SoA using the green show eye-indicator. To show multiple activities, select the activities (or activity groups) and use the show green eye-indicator above the table (to the right)",
+            "hide_flowchart_groups": "To show/hide the overall SoA group from the view then slide the toggle. In general, the SoA groups are not shown in the Protocol SoA",
+            "edit_dialog_title": "To edit the activities, epochs or visits press on the pencil in the left corner of the SoA table. This will navigate to the relevant page in the study builder.",
+            "download_docx": "Press DOWNLOAD DOCX to download the WORD version of the SoA",
+            "instructions": "To add an instruction to the activities selected, then add from a study, from a template or from scratch"
         },
         "StudyActivityForm": {
             "general": "Select the activities for the study. ",
@@ -732,32 +785,22 @@
             "select_from_library": "Select from predefined activities in the library",
             "create_placeholder": "Create a placeholder (if activity doesn't exists in library. Should be requested as new activity)",
             "select_studies": "Select studies from where you want to copy activities. Press 'CONTINUE' and copy activities as needed using the copy icon ",
-            "flowchart_group": "Template and Placeholder: Specify the high level flowchart group the activity should belong to",
+            "flowchart_group": "Template and Placeholder: Specify the high level SoA group the activity should belong to",
             "copy_activity_instructions": "Select the activities to copy using the copy icon. Press SAVE. NOTE: if search or filtering has been applied then the copy symbol on the table header (next to Activity Group) will copy all displayed activities."
-        },
-        "DetailedFlowchart": {
-            "general": "Expand table to view all activities. Select the visit (tick the circle) in which the activities are to occur. To tick multiple visits for multiple activities then  select the activities (tick the box next to the activity) then press the blue pencil icon above the table (to the right).",
-            "expand_all": "Expand table to view full details",
-            "collapse_all": "Collapse table to only view the high-level flowchart groups",
-            "hide_activity_selection": "Some activity details may not be needed in the high-level protocol flowchart. Hide activity that are not needed in protocol flowchart using the hide eye indicator. To hide multiple activities, select the activities (or activity groups) and use the grey hide eye-indicator above the table (to the right)",
-            "show_activity_selection": "Show activity in protocol flowchart using the green show eye-indicator. To show multiple activities, select the activities (or activity groups) and use the show green eye-indicator above the table (to the right)",
-            "hide_flowchart_groups": "To show/hide the overall flowchart group from the view then slide the toggle. In general, the flowcharts groups are not shown in the Protocol Flowchart",
-            "edit_dialog_title": "To edit the activities, epochs or visits press on the pencil in the left corner of the flowchart table. This will navigate to the relevant page in the study builder."
         },
         "StudyActivityBatchEditForm": {
             "general": "Select the visits where the activities are to be collected."
         },
         "ProtocolFlowchart": {
-            "update_flowchart": "Press UPDATE FLOWCHART to view the protocol flowchart rendering. Press button to view changes made in the detailed flowchart view",
-            "download_docx": "Press DOWNLOAD DOCX to download the WORD version of the flowchart"
+            "update_flowchart": "Press UPDATE SOA to view the protocol SoA rendering. Press button to view changes made in the detailed SoA view",
+            "download_docx": "Press DOWNLOAD DOCX to download the WORD version of the SoA"
         },
         "StudyActivityInstructionBatchForm": {
             "general": "To add an instruction to the activities selected, then add from a study, from a template or from scratch"
         },
         "StudyActivityEditForm": {
             "general": "Edit the study activity selected. To edit more than one activity, go back to the List of Study Activities, slide 'Select Rows' and select the relevant activities. The press the blue edit icon above the table (to the right)",
-            "flowchart_group": "Select the flowchart group the activity/activities should be assigned to",
-            "footnote": "Add a footnote for the activity/activities if applicable"
+            "flowchart_group": "Select the SoA group the activity/activities should be assigned to"
         },
         "StudyStatus": {
             "core_attributes": "Study Core Attributes",
@@ -781,13 +824,15 @@
             "protocol_version_body": "Specification of the relationship between versions of study definition instances and the corresponding protocol document versions."
         },
         "FootnotesTemplatesTable": {
-            "general": "FIXME"
+            "general": "Select from the table of templates. Either from generic templates or pre-specified templates, by using the 'Select from pre-instance'-slide in the top of the table."
         },
         "FootnotesTable": {
-            "general": "FIXME"
+            "general": "List of footnotes applicable for the Schedule of Activities (SoA).",
+            "covered_items": "The itmes in the SoA that the footnote is related to, e.g. a visits or an Activity."
         },
         "StudyFootnoteForm": {
-            "general": "FIXME"
+            "general": "Footnotes are additional information pertaining to elements of the SoA. For instruction related to Activities, The Activity Instruction tab should be used.",
+            "creation_mode_label": "Select the type of method for creating a footnote: use a standard, from an existing study, or make one form scratch."
         }
     },
     "Topbar": {
@@ -838,7 +883,7 @@
     },
     "About": {
         "header": "We are using the following combination of components:",
-        "about_release_number": "StudyBuilder release number:",
+        "about_release_number": "StudyBuilder version:",
         "components_list": "Clinical-MDR and StudyBuilder build number:",
         "component": "Component",
         "description": "Description",
@@ -925,7 +970,7 @@
         },
         "study": {
             "about": "About Studies",
-            "manage": "Manage Studies",
+            "manage": "Manage Study",
             "define": "Define Study",
             "design": "Design",
             "study_status": "Study",
@@ -960,7 +1005,7 @@
             "randomisation_criteria": "Randomisation Criteria",
             "standarisation_plan": "Standarisation Plan",
             "protocol_elements": "Protocol Elements",
-            "flow_chart": "Flowchart",
+            "flow_chart": "SoA",
             "objective_endpoints_estimands": "Objectives and Endpoints",
             "study_design": "Study Design",
             "study_properties": "Study Properties",
@@ -1286,7 +1331,8 @@
     },
     "UnderConstruction": {
         "title": "Under Construction",
-        "back_home": "Return to Home page"
+        "back_home": "Return to Home page",
+        "not_supported": "Page Not Supported"
     },
     "EndpointsView": {
         "title": "Endpoints"
@@ -1826,15 +1872,15 @@
         "abbreviation": "Abbreviation",
         "definition": "Definition",
         "rationale_for_request": "Rationale for activity request",
-        "create_sponsor_from_request": "Create Sponsor Activity from Activity Request",
+        "create_sponsor_from_request": "Handle placeholder request",
         "topic_code": "Topic code",
         "adam_code": "ADaM parameter code",
         "specimen": "Specimen",
         "activity_group": "Activity group",
         "activity_subgroup": "Activity subgroup",
         "activity": "Activity",
-        "activity_name": "Activity Name",
-        "activities": "List of Activities",
+        "activity_name": "Activity name",
+        "activities": "Activities",
         "sdtm_domain": "SDTM domain",
         "sdtm_variable": "SDTM variable",
         "sdtm_category": "SDTM category",
@@ -1843,8 +1889,16 @@
         "instances": "Activities Instances",
         "instance": "Activity Instance",
         "activities_overview": "Activities by Grouping",
-        "type": "Instance type",
-        "requested": "Requested Activities"
+        "type": "Activity instance class",
+        "requested": "Requested Activities",
+        "activity_groups": "Activity Groups",
+        "activity_subgroups": "Activity Subgroups",
+        "is_data_collected": "Data collection",
+        "is_required_for_activity": "Required for activity",
+        "is_default_selected_for_activity": "Default selected for activity",
+        "is_data_sharing": "Data sharing",
+        "is_legacy_usage": "Legacy usage",
+        "nci_concept_id": "NCI Concept ID"
     },
     "ActivityFormsInstantiations": {
         "select_type": "Select type",
@@ -1853,7 +1907,14 @@
         "activities": "Activities",
         "topicCode": "Topic Code",
         "adamCode": "ADaM Parameter Code",
-        "legacyDesc": "Legacy Description"
+        "legacyDesc": "Legacy Description",
+        "activity_group": "Activity Group",
+        "activity_subgroup": "Activity Subgroup",
+        "nci_concept_id": "NCI Concept ID",
+        "is_required_for_activity": "Required for activity",
+        "is_default_selected_for_activity": "Default selected for activity",
+        "is_data_sharing": "Data sharing",
+        "is_legacy_usage": "Legacy usage"
     },
     "ActivityFormsGrouping": {
         "select_type": "Select type",
@@ -1861,6 +1922,7 @@
         "definition": "Definition"
     },
     "ActivityFormsRequested": {
+        "name": "Activity name",
         "activity_request": "Activity Request",
         "sponsor_activity": "Sponsor Activity",
         "confirmation": "Confirmation",
@@ -1869,13 +1931,14 @@
         "rationale_for_request": "Rationale for activity request",
         "requested_activity": "Requested Activity",
         "new_sponsor_concept": "New Sponsor Activity Concept",
-        "new_concept_warning": "New Activity Concept must be approved before available for selection, and this will retire the replacing Activity Concept"
+        "new_concept_warning": "New Activity Concept must be approved before available for selection, and this will retire the replacing Activity Concept",
+        "data_collection": "Data collection relevance"
     },
     "ActivityForms": {
         "activity_subgroup": "Activity subgroup",
         "activity_group": "Activity group",
         "activity_name": "Activity name",
-        "name": "Instance name",
+        "activity_ins_name": "Activity instance name",
         "definition": "Definition",
         "reason_for_change": "Reason for change",
         "activity_created": "Activity created",
@@ -1883,13 +1946,15 @@
         "edit_activity": "Edit activity",
         "add_activity": "Add activity",
         "group": "Group",
-        "groups": "Groups",
+        "groups": "Activity groups",
         "subgroup": "Subgroup",
-        "group_name": "Group Name",
-        "subgroup_name": "Subgroup Name",
+        "group_name": "Group name",
+        "subgroup_name": "Subgroup name",
         "change_description": "Change Description",
-        "edit_group": "Edit Activity group or subgroup",
-        "add_group": "Add activity group or subgroup",
+        "edit_group": "Edit activity group",
+        "add_group": "Add activity group",
+        "edit_subgroup": "Edit activity subgroup",
+        "add_subgroup": "Add activity subgroup",
         "add_additional_data": "Add additional data",
         "select_type": "Select type",
         "group_created": "Group created",
@@ -1898,16 +1963,27 @@
         "subgroup_updated": "Subgroup updated",
         "library": "Library",
         "activity": "Activity",
-        "type": "Type",
+        "instance_class": "Activity instance class",
         "activities": "Activities",
-        "topicCode": "Topic Code",
-        "adamCode": "ADaM Parameter Code",
+        "topicCode": "Topic code",
+        "adamCode": "ADaM parameter code",
         "legacyDesc": "Legacy Description",
-        "editInstance": "Edit Activity Instance",
-        "addInstance": "Add Activity Instance",
+        "editInstance": "Edit activity instance",
+        "addInstance": "Add activity instance",
         "addBasicData": "Add basic data",
         "addAdditionalData": "Add additional data",
-        "abbreviation": "Abbreviation"
+        "abbreviation": "Abbreviation",
+        "activity_groupings": "Activity groupings",
+        "is_data_collected": "Data collection",
+        "is_required_for_activity": "Required for activity",
+        "is_default_selected_for_activity": "Default selected for activity",
+        "is_data_sharing": "Data sharing",
+        "is_legacy_usage": "Legacy usage",
+        "select_activities": "Select Activity groupings",
+        "grouping_selection_info": "You need to choose at least one Activity Grouping",
+        "name_sentence_case": "Sentence case name",
+        "select_class": "Select class",
+        "nci_concept_id": "NCI Concept ID"
     },
     "ClinicalMetadataView": {
         "title": "General Clinical Metadata",
@@ -1974,7 +2050,7 @@
     "StudyProtocolElementsView": {
         "title": "Protocol Elements",
         "title_page": "Title Page Information",
-        "protocol_flowchart": "Protocol Flowchart",
+        "protocol_flowchart": "Protocol SoA",
         "study_interventions": "Study Interventions",
         "procedures_and_activities": "Procedures and Activities",
         "study_design": "Study Design",
@@ -2208,7 +2284,8 @@
         "legacy_code": "Legacy code",
         "add_success": "Unit added",
         "molecular_weight": "Molecular weight",
-        "conversion_factor": "Conversion factor to master"
+        "conversion_factor": "Conversion factor to master",
+        "reason_for_change": "Reason for change"
     },
     "UCUMUnitField": {
         "label": "UCUM unit"
@@ -2404,7 +2481,8 @@
         "delete_pre_instance_success": "Pre-instance deleted",
         "duplicate_success": "Pre-instance duplicated",
         "inactivate_pre_instance_success": "Pre-Instance inactivated",
-        "reactivate_pre_instance_success": "Pre-Instance reactivated"
+        "reactivate_pre_instance_success": "Pre-Instance reactivated",
+        "singular_title": "Criteria Template"
     },
     "CriteriaTemplateForm": {
         "add_title": "Add {type} criteria template",
@@ -2468,7 +2546,15 @@
         "confirm_delete": "The criterion: '{criterion}' will be deleted",
         "delete_success": "Study criteria deleted",
         "global_history_title": "Study criteria history",
-        "study_criteria_history_title": "History for study criteria [{studyCriteriaUid}]"
+        "study_criteria_history_title": "History for study criteria [{studyCriteriaUid}]",
+        "update_version_tooltip": "Update template",
+        "update_version_retired_tooltip": "Template retired",
+        "keep_old_version": "Keep old version",
+        "use_new_version": "Use new version",
+        "update_version_alert": "The underlying template has been updated",
+        "previous_version": "Old version:",
+        "new_version": "New version:",
+        "update_version_successful": "criteria version updated"
     },
     "EligibilityCriteriaForm": {
         "add_inclusion_criteria": "Add inclusion criteria",
@@ -2547,6 +2633,7 @@
         "history_title": "Stucy Epoch"
     },
     "StudyVisitForm": {
+        "study_visit": "Study visit",
         "add_title": "Add study visit",
         "edit_title": "Edit study visit",
         "epoch_allocation": "Epoch Allocation Rule",
@@ -2684,7 +2771,9 @@
         "epoch_duration_rule": "Epoch duration rule",
         "epoch_time_unit": "Epoch time unit",
         "expected_epoch_duration": "Expected epoch duration",
-        "epoch_linked_to_visits_warning": "Epoch '{epoch}' has one or more visits assigned to it and only certain fields can be edited"
+        "epoch_linked_to_visits_warning": "Epoch '{epoch}' has one or more visits assigned to it and only certain fields can be edited",
+        "epoch": "Study Epoch",
+        "visit_count": "Number of visits"
     },
     "StudyQuickSelectForm": {
         "title": "Select study ID or acronym",
@@ -2842,9 +2931,9 @@
         "other_interventions": "Other Interventions",
         "study_visits": "Study Visits",
         "time_profiles": "Time Profiles",
-        "activity_list": "List of Activities",
-        "detailed_flowchart": "Detailed Flowchart",
-        "protocol_flowchart": "Protocol Flowchart",
+        "activity_list": "Study Activities",
+        "detailed_flowchart": "Detailed SoA",
+        "protocol_flowchart": "Protocol SoA",
         "activity_instructions": "Activity Instructions",
         "study_structure": "Study Structure",
         "overview": "Overview",
@@ -2915,7 +3004,7 @@
     },
     "ActivitiesView": {
         "title": "Study Activities",
-        "study_flowchart": "Study flowchart",
+        "study_flowchart": "Study SoA",
         "tab1_title": "Study Activities",
         "tab2_title": "Study Activity Instances",
         "tab3_title": "Detailed SoA",
@@ -2925,7 +3014,7 @@
     },
     "ProtocolFlowchart": {
         "title": "Protocol SoA",
-        "update_flowchart": "Update flowchart",
+        "update_flowchart": "Update SoA",
         "downloading": "Download in progress...",
         "loading": "Protocol SoA is reloading..."
     },
@@ -2937,7 +3026,7 @@
     },
     "StudyActivityTable": {
         "confirm_delete": "The study activity '{activity}' will be removed",
-        "confirm_delete_side_effect": "Removing this study activity will impact protocol flowchart display",
+        "confirm_delete_side_effect": "Removing this study activity will impact protocol SoA display",
         "delete_success": "Study activity deleted",
         "batch_edit_no_selection": "Select the items (rows) in scope for Batch Editing. Use the Select rows switch button to activate the row-selection boxes. Then select the rows in scope for the editing. You can batch select rows by using search or filters to zoom in on the relevant rows and then select all by using the tick-box in the header row.",
         "edit_activity_selection": "Batch edit selected rows",
@@ -2952,8 +3041,17 @@
         "activity": "Activity",
         "flowchart_group": "SoA group",
         "footnote": "Footnote",
-        "detailed_flowchart": "Detailed flowchart",
-        "protocol_flowchart": "Protocol flowchart"
+        "detailed_flowchart": "Detailed SoA",
+        "protocol_flowchart": "Protocol SoA",
+        "data_collection": "Data collection",
+        "expand_all": "Expand table",
+        "collapse_all": "Collapse table",
+        "hide_activity_selection": "Hide activity in protocol SoA",
+        "show_activity_selection": "Show activity in protocol SoA",
+        "hide_flowchart_groups": "Hide SoA groups",
+        "edit_dialog_title": "Edit",
+        "download_docx": "Download DOCX",
+        "instructions": "Instructions"
     },
     "StudyActivityForm": {
         "add_title": "Add study activities",
@@ -2982,7 +3080,7 @@
     },
     "DetailedFlowchart": {
         "activities": "Activities",
-        "include_in_protocol_flowchart": "Include in protocol flowchart",
+        "include_in_protocol_flowchart": "Include in protocol SoA",
         "include_in_design_figure": "Include in design figure",
         "study_epoch": "Epoch",
         "visit_short_name": "Visit",
@@ -2990,11 +3088,12 @@
         "visit_window": "Window",
         "expand_all": "Expand table",
         "collapse_all": "Collapse table",
-        "toggle_group_display": "Show/hide activity group in the protocol flowchart",
-        "toggle_subgroup_display": "Show/hide activity subgroup in the protocol flowchart",
-        "toggle_activity_display": "Show/hide activity in the protocol flowchart",
-        "hide_activity_selection": "Hide activity in protocol flowchart",
-        "show_activity_selection": "Show activity in protocol flowchart",
+        "toggle_soa_group_display": "Show/hide SoA group in the protocol SoA",
+        "toggle_group_display": "Show/hide activity group in the protocol SoA",
+        "toggle_subgroup_display": "Show/hide activity subgroup in the protocol SoA",
+        "toggle_activity_display": "Show/hide activity in the protocol SoA",
+        "hide_activity_selection": "Hide activity in protocol SoA",
+        "show_activity_selection": "Show activity in protocol SoA",
         "edit_activity_selection": "Edit current activity selection",
         "update_success": "Selection updated",
         "edit_from": "Edit from",
@@ -3003,12 +3102,13 @@
         "study_epochs": "Study Epochs",
         "study_visits": "Study Visits",
         "batch_edit_no_selection": "Select the items (rows) in scope for Batch Editing.",
-        "hide_flowchart_groups": "Hide flowchart groups",
+        "hide_flowchart_groups": "Hide SoA groups",
         "edit_dialog_title": "Do you want to edit",
-        "table_caption": "Flowchart table",
+        "table_caption": "SoA table",
         "confirm_group_deletion": "Collapsible visit group {group} will be deleted",
         "soa_footnotes": "SoA footnotes",
-        "activity_instructions": "Activity Instructions"
+        "activity_instructions": "Activity Instructions",
+        "batch_edit_warning": "Batch-editing will overwrite existing choices. Only activities expected to have same schedule should be batch-edited together. Do you want to continue?"
     },
     "StudyActivityInstructionTable": {
         "activities": "Activities",
@@ -3057,6 +3157,7 @@
         "study_arm_history_title": "History for study arm [{armUid}]"
     },
     "StudyArmsForm": {
+        "study_arm":"Study Arm",
         "connected_branches": "Connected Branches",
         "add_arm": "Add study arm",
         "edit_arm": "Edit study arm",
@@ -3152,7 +3253,7 @@
         "estimands_defined": "Estimands defined:",
         "study_activities": "Study Activities",
         "list_of_activities_tab": "List of Activities tab",
-        "detailed_flowchart_tab": "Detailed Flowchart tab",
+        "detailed_flowchart_tab": "Detailed SoA tab",
         "activities_defined": "Activities defined:",
         "activities_with_visits": "Activities with visits assigned:",
         "activities_no_visits": "Activities with no visits assigned:",
@@ -3193,7 +3294,9 @@
         "confirm_delete": "The study element '{element}' will be removed",
         "confirm_delete_cascade": "The study element '{element}' and {compoundDosings} study compound dosing(s) will be removed",
         "global_history_title": "Study elements history",
-        "study_element_history_title": "History for study element [{elementUid}]"
+        "study_element_history_title": "History for study element [{elementUid}]",
+        "planned_duration": "Planned duration",
+        "description": "Description"
     },
     "DesignMatrix": {
         "global_help": "For each of the Study Arms, select the relevant elements in the given epochs. If a study element is missing then go back to the Study Elements tab to create/update the elments",
@@ -3367,7 +3470,7 @@
         "cohort_name": "Cohort Name",
         "cohort_short_name": "Cohort Short Name",
         "cohort_code": "Cohort Code",
-        "nuber_of_subjects": "Planned number of subjects in Cohort",
+        "planned_number_of_subjects": "Planned number of subjects in Cohort",
         "edit_cohort": "Edit Cohort",
         "add_cohort": "Add Cohort",
         "add_arm": "Add study arm",
@@ -3377,7 +3480,10 @@
         "add_study_cohort": "Add Study Cohort",
         "global_history_title": "Study cohorts history",
         "study_arm_history_title": "History for study cohort [{cohortUid}]",
-        "cohort_code_error": "This field can only contain numbers from 1-99"
+        "cohort_code_error": "This field can only contain numbers from 1-99",
+        "description": "Description",
+        "connected_arms": "Connected Arms",
+        "connected_branches": "Connected Branch Arms"
     },
     "CrfTemplates": {
         "add_template": "Add Template",
@@ -3588,7 +3694,12 @@
         "inactivate_activity-groups_success": "Activity group inactivated",
         "reactivate_activity-groups_success": "Activity group reactivated",
         "delete_activity-groups_success": "Activity group deleted",
-        "approve_activity-groups_success": "Activity group is now in Final state"
+        "approve_activity-groups_success": "Activity group is now in Final state",
+        "item_history_title": "History for {type} [{uid}]",
+        "activity": "Activity",
+        "activity_group": "Activity Group",
+        "activity_subgroup": "Activity Subgroup",
+        "activity_instance": "Activity Instance"
     },
     "DataModels": {
         "status": "Status",
@@ -3633,8 +3744,7 @@
     },
     "ActivityInstanceOverview": {
         "cosmos_yaml": "COSMoS YAML",
-        "activity_groups": "Activity groups",
-        "activity_subgroups": "Activity subgroups",
+        "osb_yaml": "OSB YAML",
         "activity_group": "Activity group",
         "activity_subgroup": "Activity subgroup",
         "activity": "Activity",
@@ -3642,25 +3752,37 @@
         "topic_code": "Topic code",
         "class": "Activity instance class",
         "items": "Activity items",
-        "ct_term_name": "CT term name",
-        "unit_def_name": "Unit name",
         "item_class": "Activity item class",
-        "activity_groupings": "Activity groupings"
+        "activity_groupings": "Activity groupings",
+        "item_type": "Item type",
+        "item_type_unit": "Unit definition",
+        "item_type_term": "CT term",
+        "is_required_for_activity": "Required for activity",
+        "is_default_selected_for_activity": "Default selected for activity",
+        "is_data_sharing": "Data sharing",
+        "is_legacy_usage": "Legacy usage",
+        "history_title": "History for activity instance [{uid}]"
     },
     "ActivityOverview": {
         "cosmos_yaml": "COSMoS YAML",
+        "osb_yaml": "OSB YAML",
         "activity_groups": "Activity groups",
         "activity_subgroups": "Activity subgroups",
         "activity_group": "Activity group",
         "activity_subgroup": "Activity subgroup",
         "adam_code": "ADaM parameter code",
         "topic_code": "Topic code",
+        "is_data_collected": "Data collection",
         "class": "Activity instance class",
         "instances": "Activity instances",
-        "activity_groupings": "Activity groupings"
+        "activity_groupings": "Activity groupings",
+        "history_title": "History for activity [{uid}]"
     },
     "YamlViewer": {
-        "search_content": "Search for content"
+        "search_content": "Search for content",
+        "expand_all": "Expand all",
+        "download": "Download YAML content",
+        "close_tab": "Close YAML viewer"
     },
     "ActivityInstructionsView": {
         "title": "Activity Instructions"
@@ -3755,7 +3877,9 @@
         "link_items": "Link SoA items",
         "linked_items": "Linked SoA items",
         "ref_activities": "Study Activities, Groups and Subgroups",
-        "ref_epochs_visits": "Study Visits and Epochs"
+        "ref_epochs_visits": "Study Visits and Epochs",
+        "ref_schedules": "Study Schedules",
+        "ref_soa_groups": "Study SoA Groups"
     },
     "Comments": {
         "filter_by_ALL": "All comments",

@@ -1,10 +1,12 @@
 import datetime
 from dataclasses import dataclass
-from typing import Sequence
 
 from neomodel import db
 
 from clinical_mdr_api.domain_repositories._utils import helpers
+from clinical_mdr_api.domain_repositories.generic_repository import (
+    manage_previous_connected_study_selection_relationships,
+)
 from clinical_mdr_api.domain_repositories.models._utils import (
     convert_to_datetime,
     to_relation_trees,
@@ -12,13 +14,7 @@ from clinical_mdr_api.domain_repositories.models._utils import (
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
     CTTermRoot,
 )
-from clinical_mdr_api.domain_repositories.models.study import (
-    StudyBranchArm,
-    StudyCohort,
-    StudyDesignCell,
-    StudyRoot,
-    StudyValue,
-)
+from clinical_mdr_api.domain_repositories.models.study import StudyRoot, StudyValue
 from clinical_mdr_api.domain_repositories.models.study_audit_trail import (
     Create,
     Delete,
@@ -29,9 +25,6 @@ from clinical_mdr_api.domain_repositories.models.study_selections import StudyAr
 from clinical_mdr_api.domains.study_selections.study_selection_arm import (
     StudySelectionArmAR,
     StudySelectionArmVO,
-)
-from clinical_mdr_api.domains.study_selections.study_selection_endpoint import (
-    StudySelectionEndpointsAR,
 )
 from clinical_mdr_api.domains.versioned_object_aggregate import VersioningException
 
@@ -80,9 +73,9 @@ class StudySelectionArmRepository:
 
         sdc_node = to_relation_trees(
             StudyArm.nodes.fetch_relations("has_design_cell", "has_after").filter(
-                study_value__study_root__uid=study_uid,
+                study_value__latest_value__uid=study_uid,
                 uid=arm_uid,
-                has_design_cell__study_value__study_root__uid=study_uid,
+                has_design_cell__study_value__latest_value__uid=study_uid,
             )
         )
         return len(sdc_node) > 0
@@ -95,7 +88,7 @@ class StudySelectionArmRepository:
 
         sdc_node = to_relation_trees(
             StudyArm.nodes.fetch_relations("has_cohort", "has_after").filter(
-                study_value__study_root__uid=study_uid, uid=arm_uid
+                study_value__latest_value__uid=study_uid, uid=arm_uid
             )
         )
         return len(sdc_node) > 0
@@ -110,7 +103,7 @@ class StudySelectionArmRepository:
 
         sdc_node = to_relation_trees(
             StudyArm.nodes.fetch_relations("has_branch_arm", "has_after").filter(
-                study_value__study_root__uid=study_uid, uid=arm_uid
+                study_value__latest_value__uid=study_uid, uid=arm_uid
             )
         )
         return len(sdc_node) > 0
@@ -120,14 +113,24 @@ class StudySelectionArmRepository:
         study_uid: str | None = None,
         project_name: str | None = None,
         project_number: str | None = None,
-    ) -> Sequence[StudySelectionArmVO]:
+        study_value_version: str | None = None,
+    ) -> tuple[StudySelectionArmVO]:
         query = ""
         query_parameters = {}
-        if study_uid:
-            query = "MATCH (sr:StudyRoot { uid: $uid})-[l:LATEST]->(sv:StudyValue)"
-            query_parameters["uid"] = study_uid
+        if study_value_version:
+            if study_uid:
+                query = "MATCH (sr:StudyRoot { uid: $uid})-[l:HAS_VERSION{status:'RELEASED', version:$study_value_version}]->(sv:StudyValue)"
+                query_parameters["study_value_version"] = study_value_version
+                query_parameters["uid"] = study_uid
+            else:
+                query = "MATCH (sr:StudyRoot)-[l:HAS_VERSION{status:'RELEASED', version:$study_value_version}]->(sv:StudyValue)"
+                query_parameters["study_value_version"] = study_value_version
         else:
-            query = "MATCH (sr:StudyRoot)-[l:LATEST]->(sv:StudyValue)"
+            if study_uid:
+                query = "MATCH (sr:StudyRoot { uid: $uid})-[l:LATEST]->(sv:StudyValue)"
+                query_parameters["uid"] = study_uid
+            else:
+                query = "MATCH (sr:StudyRoot)-[l:LATEST]->(sv:StudyValue)"
 
         if project_name is not None or project_number is not None:
             query += (
@@ -200,10 +203,10 @@ class StudySelectionArmRepository:
         self,
         project_name: str | None = None,
         project_number: str | None = None,
-    ) -> Sequence[StudySelectionEndpointsAR] | None:
+    ) -> list[StudySelectionArmAR]:
         """
         Finds all the selected study endpoints for all studies, and create the aggregate
-        :return: List of StudySelectionEndpointsAR, potentially empty
+        :return: List of StudySelectionArmAR, potentially empty
         """
         all_selections = self._retrieves_all_data(
             project_name=project_name,
@@ -227,7 +230,10 @@ class StudySelectionArmRepository:
         return selection_aggregates
 
     def find_by_study(
-        self, study_uid: str, for_update: bool = False
+        self,
+        study_uid: str,
+        for_update: bool = False,
+        study_value_version: str | None = None,
     ) -> StudySelectionArmAR | None:
         """
         Finds all the selected study arms for a given study
@@ -237,7 +243,9 @@ class StudySelectionArmRepository:
         """
         if for_update:
             self._acquire_write_lock_study_value(study_uid)
-        all_selections = self._retrieves_all_data(study_uid)
+        all_selections = self._retrieves_all_data(
+            study_uid, study_value_version=study_value_version
+        )
         selection_aggregate = StudySelectionArmAR.from_repository_values(
             study_uid=study_uid, study_arms_selection=all_selections
         )
@@ -342,7 +350,6 @@ class StudySelectionArmRepository:
                 study_root_node=study_root_node,
                 author=author,
             )
-            self._remove_old_selection_if_exists(study_selection.study_uid, selection)
             # storage of the removed node audit trail to after put the "after" relationship to the new one
             audit_trail_nodes[selection.study_selection_uid] = audit_node
             # storage of the removed node to after get its connections
@@ -384,34 +391,6 @@ class StudySelectionArmRepository:
             )
 
     @staticmethod
-    def _remove_old_selection_if_exists(
-        study_uid: str, study_selection: StudySelectionArmVO
-    ) -> None:
-        """
-        Removal is taking both new and old uid. When a study selection is deleted, we do no longer need to use the uid
-        on that study selection node anymore, however do to database constraint the node needs to have a uid. So we are
-        overwriting a deleted node uid, with a new never used dummy uid.
-
-        We are doing this to be able to maintain the selection instead of removing it, instead a removal will only
-        detach the selection from the study value node. So we keep the old selection to have full audit trail available
-        in the database.
-        :param study_uid:
-        :param old_uid:
-        :param new_uid:
-        :return:
-        """
-        db.cypher_query(
-            """
-            MATCH (:StudyRoot { uid: $study_uid})-[:LATEST]->(:StudyValue)-[rel:HAS_STUDY_ARM]->(se:StudyArm { uid: $selection_uid})
-            DELETE rel
-            """,
-            {
-                "study_uid": study_uid,
-                "selection_uid": study_selection.study_selection_uid,
-            },
-        )
-
-    @staticmethod
     def _set_before_audit_info(
         audit_node: StudyAction,
         study_selection_node: StudyArm,
@@ -435,7 +414,7 @@ class StudySelectionArmRepository:
             StudyArm.nodes.has(study_value=True)
             .filter(
                 uid__ne=arm_vo.study_selection_uid,
-                study_value__study_root__uid=arm_vo.study_uid,
+                study_value__latest_value__uid=arm_vo.study_uid,
             )
             .get_or_none(**{db_property: kwarg_value})
         )
@@ -448,7 +427,7 @@ class StudySelectionArmRepository:
         selection: StudySelectionArmVO,
         audit_node: StudyAction,
         for_deletion: bool = False,
-        before_node: StudyArm = None,
+        before_node: StudyArm | None = None,
     ):
         # Create new arm selection
         study_arm_selection_node: StudyArm = StudyArm(order=order).save()
@@ -471,23 +450,12 @@ class StudySelectionArmRepository:
         audit_node.has_after.connect(study_arm_selection_node)
 
         if before_node is not None:
-            design_cells: Sequence[StudyDesignCell] = before_node.has_design_cell.all()
-            for i_design_cell in design_cells:
-                # if the i_design_cell is an actual one then carry it to the new node
-                if i_design_cell.study_value.get_or_none() is not None:
-                    study_arm_selection_node.has_design_cell.connect(i_design_cell)
-
-            branch_arms: Sequence[StudyBranchArm] = before_node.has_branch_arm.all()
-            for i_branch_arm in branch_arms:
-                # if the i_branch_arm is an actual one then carry it to the new node
-                if i_branch_arm.study_value.get_or_none() is not None:
-                    study_arm_selection_node.has_branch_arm.connect(i_branch_arm)
-
-            cohorts: Sequence[StudyCohort] = before_node.has_cohort.all()
-            for i_cohort in cohorts:
-                # if the i_cohort is an actual one then carry it to the new node
-                if i_cohort.study_value.get_or_none() is not None:
-                    study_arm_selection_node.has_cohort.connect(i_cohort)
+            manage_previous_connected_study_selection_relationships(
+                previous_item=before_node,
+                study_value_node=latest_study_value_node,
+                new_item=study_arm_selection_node,
+                exclude_study_selection_relationships=[],
+            )
 
         # check if arm type is set
         if selection.arm_type_uid:
@@ -513,7 +481,7 @@ class StudySelectionArmRepository:
         return len(result) > 0
 
     def _get_selection_with_history(
-        self, study_uid: str, study_selection_uid: str = None
+        self, study_uid: str, study_selection_uid: str | None = None
     ):
         """
         returns the audit trail for study arm either for a specific selection or for all study arm for the study
@@ -593,7 +561,7 @@ class StudySelectionArmRepository:
         return result
 
     def find_selection_history(
-        self, study_uid: str, study_selection_uid: str = None
+        self, study_uid: str, study_selection_uid: str | None = None
     ) -> list[SelectionHistoryArm]:
         """
         Simple method to return all versions of a study objectives for a study.

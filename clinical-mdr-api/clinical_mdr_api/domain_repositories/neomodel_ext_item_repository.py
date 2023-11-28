@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Sequence, TypeVar
+from typing import Any, TypeVar
 
 from clinical_mdr_api.domain_repositories.models._utils import (
     CustomNodeSet,
@@ -16,6 +16,7 @@ from clinical_mdr_api.repositories._utils import (
     validate_page_number_and_page_size,
 )
 
+# pylint: disable=invalid-name
 _StandardsReturnType = TypeVar("_StandardsReturnType")
 
 
@@ -43,7 +44,7 @@ class NeomodelExtBaseRepository:
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
-    ) -> tuple[Sequence[_StandardsReturnType], int]:
+    ) -> tuple[list[_StandardsReturnType], int]:
         q_filters = transform_filters_into_neomodel(
             filter_by=filter_by, model=self.return_model
         )
@@ -77,7 +78,7 @@ class NeomodelExtBaseRepository:
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
-    ) -> Sequence:
+    ) -> list[Any]:
         """
         Fetches possible values for a given field_name, with a limit of result_count.
         It uses generic filtering capability, on top of filtering the field_name with provided search_string.
@@ -90,7 +91,7 @@ class NeomodelExtBaseRepository:
             result_count (int, optional): The maximum number of values to return. Defaults to 10.
 
         Returns:
-            Sequence: A sequence of possible values for the given field_name.
+        A `sequence` of possible values for the given field_name.
         """
         # Add header field name to filter_by, to filter with a CONTAINS pattern
         if search_string != "":

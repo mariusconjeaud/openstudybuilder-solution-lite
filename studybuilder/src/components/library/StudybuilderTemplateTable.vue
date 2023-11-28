@@ -191,6 +191,7 @@ export default Vue.extend({
           replace: true
         })
       }
+      this.$emit('refresh')
     },
     '$route.params.tab' (newValue) {
       this.tab = newValue

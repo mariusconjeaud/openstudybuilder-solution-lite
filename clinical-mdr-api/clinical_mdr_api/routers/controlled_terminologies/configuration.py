@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Sequence
 
 from fastapi import APIRouter, Body, Depends, Path, Query, Request, Response
 from fastapi import status as fast_api_status
@@ -32,7 +31,7 @@ CodelistConfigUID = Path(None, description="The unique id of configuration.")
     "",
     dependencies=[rbac.LIBRARY_READ],
     summary="Returns all configurations in their latest/newest version.",
-    response_model=Sequence[CTConfigOGM],
+    response_model=list[CTConfigOGM],
     status_code=200,
     responses={
         200: {
@@ -78,7 +77,7 @@ CodelistConfigUID = Path(None, description="The unique id of configuration.")
 def get_all(
     request: Request,  # request is actually required by the allow_exports decorator
     service: Service = Depends(),
-) -> Sequence[CTConfigOGM]:
+) -> list[CTConfigOGM]:
     return service.get_all()
 
 
@@ -143,7 +142,7 @@ def get_by_uid(
     summary="Returns the version history of a specific configuration identified by 'uid'.",
     description="The returned versions are ordered by\n"
     "0. start_date descending (newest entries first)",
-    response_model=Sequence[CTConfigModel],
+    response_model=list[CTConfigModel],
     status_code=200,
     responses={
         200: {
@@ -194,7 +193,7 @@ def get_versions(
     request: Request,  # request is actually required by the allow_exports decorator
     uid: str = CodelistConfigUID,
     service: Service = Depends(),
-) -> Sequence[CTConfigModel]:
+) -> list[CTConfigModel]:
     return service.get_versions(uid)
 
 

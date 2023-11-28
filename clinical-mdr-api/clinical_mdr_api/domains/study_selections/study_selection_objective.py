@@ -1,6 +1,6 @@
 import datetime
 from dataclasses import dataclass, field, replace
-from typing import Any, Callable, Iterable, Self, Sequence
+from typing import Any, Callable, Iterable, Self
 
 from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains._utils import normalize_string
@@ -36,7 +36,7 @@ class StudySelectionObjectiveVO:
         study_selection_uid: str | None = None,
         is_instance: bool = True,
         start_date: datetime.datetime | None = None,
-        generate_uid_callback: Callable[[], str] = None,
+        generate_uid_callback: Callable[[], str] | None = None,
         accepted_version: bool = False,
     ):
         if not objective_level_order:
@@ -108,7 +108,7 @@ class StudySelectionObjectivesAR:
         return self._study_uid
 
     @property
-    def study_objectives_selection(self) -> Sequence[StudySelectionObjectiveVO]:
+    def study_objectives_selection(self) -> tuple[StudySelectionObjectiveVO]:
         return self._study_objectives_selection
 
     def get_specific_objective_selection(

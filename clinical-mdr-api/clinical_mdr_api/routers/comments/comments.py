@@ -1,5 +1,3 @@
-from typing import Sequence
-
 from fastapi import APIRouter, Body, Depends, Path, Query, Response, status
 
 from clinical_mdr_api import config, models
@@ -220,7 +218,7 @@ def create_comment_reply(
     "/comment-threads/{thread_uid}/replies",
     dependencies=[rbac.ANY],
     summary="Returns all replies to the specified comment thread",
-    response_model=Sequence[models.CommentReply],
+    response_model=list[models.CommentReply],
     status_code=200,
     responses={
         404: _generic_descriptions.ERROR_404,
@@ -230,7 +228,7 @@ def create_comment_reply(
 def get_comment_thread_replies(
     thread_uid: str = CommentThreadUID,
     current_user: UserInfo = Depends(get_current_user_info),
-) -> Sequence[models.CommentReply]:
+) -> list[models.CommentReply]:
     return Service(current_user).get_all_comment_thread_replies(thread_uid)
 
 

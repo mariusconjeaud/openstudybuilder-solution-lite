@@ -25,8 +25,8 @@ class OdmXmlStylesheetTest(TestCase):
 
         with open(
             XML_STYLESHEET_DIR_PATH + "blank.xsl", mode="r", encoding="utf-8"
-        ) as f:
-            expected_xml = f.read()
+        ) as file:
+            expected_xml = file.read()
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.headers.get("content-type"), "application/xml")

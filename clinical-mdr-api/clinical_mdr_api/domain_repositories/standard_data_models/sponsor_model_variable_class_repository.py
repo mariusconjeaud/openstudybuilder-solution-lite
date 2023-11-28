@@ -18,6 +18,9 @@ from clinical_mdr_api.domain_repositories.models.standard_data_model import (
 from clinical_mdr_api.domain_repositories.neomodel_ext_item_repository import (
     NeomodelExtBaseRepository,
 )
+from clinical_mdr_api.domain_repositories.standard_data_models.utils import (
+    get_sponsor_model_info_from_dataset_class,
+)
 from clinical_mdr_api.domains.standard_data_models.sponsor_model_variable_class import (
     SponsorModelVariableClassAR,
     SponsorModelVariableClassVO,
@@ -153,26 +156,44 @@ class SponsorModelVariableClassRepository(
         relationship: VersionRelationship,
         value: SponsorModelVariableClassInstance,
     ) -> SponsorModelVariableClassAR:
+        # Get parent class-related info
         dataset_class_value: SponsorModelDatasetClassInstance = (
             value.has_variable_class.get_or_none()
         )
         dataset_class_uid = None
+        sponsor_model_name = None
+        sponsor_model_version = None
+        ordinal = None
         if dataset_class_value is not None:
+            # Get parent class uid
             dataset_class: DatasetClass = (
                 dataset_class_value.has_sponsor_model_instance.single()
             )
             if dataset_class is not None:
                 dataset_class_uid = dataset_class.uid
+
+            # Get order in parent class
+            dataset_class_rel = value.has_variable_class.relationship(
+                dataset_class_value
+            )
+            if dataset_class_rel is not None:
+                ordinal = dataset_class_rel.ordinal
+
+            # Get sponsor model-related info
+            (
+                sponsor_model_name,
+                sponsor_model_version,
+            ) = get_sponsor_model_info_from_dataset_class(dataset_class_value)
         return SponsorModelVariableClassAR.from_repository_values(
             variable_class_uid=root.uid,
             sponsor_model_variable_class_vo=SponsorModelVariableClassVO.from_repository_values(
                 dataset_class_uid=dataset_class_uid,
                 variable_class_uid=root.uid,
-                sponsor_model_name=None,
-                sponsor_model_version_number=None,
+                sponsor_model_name=sponsor_model_name,
+                sponsor_model_version_number=sponsor_model_version,
                 is_basic_std=value.is_basic_std,
                 label=value.label,
-                order=value.order,
+                order=ordinal,
                 variable_type=value.variable_type,
                 length=value.length,
                 display_format=value.display_format,

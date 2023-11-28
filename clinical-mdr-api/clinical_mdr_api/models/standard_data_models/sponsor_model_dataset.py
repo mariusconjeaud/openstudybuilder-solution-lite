@@ -1,4 +1,4 @@
-from typing import Optional, Self, Sequence
+from typing import Self
 
 from pydantic import Field
 
@@ -41,15 +41,13 @@ class SponsorModelDataset(SponsorModelBase):
     purpose: str = Field(
         None, title="purpose", source="has_sponsor_model_instance.purpose"
     )
-    keys: Sequence[str] | None = Field(
-        None,
-        title="keys",
+    keys: list[str] | None = Field(
+        None, title="keys", source="has_sponsor_model_instance.has_key.uid"
     )
-    sort_keys: Sequence[str] | None = Field(
-        None,
-        title="sort_keys",
+    sort_keys: list[str] | None = Field(
+        None, title="sort_keys", source="has_sponsor_model_instance.has_sort_key.uid"
     )
-    source_ig: Optional[str] = Field(
+    source_ig: str | None = Field(
         None, title="Source IG", source="has_sponsor_model_instance.source_ig"
     )
     comment: str = Field(
@@ -81,21 +79,21 @@ class SponsorModelDataset(SponsorModelBase):
     enrich_build_order: int = Field(
         None,
         title="enrich_build_order",
-        source="has_sponsor_model_instance.enrich_build_order",
+        source="has_sponsor_model_instance.has_dataset|ordinal",
     )
-    label: Optional[str] = Field(
+    label: str | None = Field(
         None,
         title="label",
         source="has_sponsor_model_instance.label",
         nullable=True,
     )
-    state: Optional[str] = Field(
+    state: str | None = Field(
         None,
         title="state",
         source="has_sponsor_model_instance.state",
         nullable=True,
     )
-    extended_domain: Optional[str] = Field(
+    extended_domain: str | None = Field(
         None,
         title="extended_domain",
         source="has_sponsor_model_instance.extended_domain",
@@ -150,8 +148,8 @@ class SponsorModelDatasetInput(BaseModel):
     xml_title: str = Field(None, title="xml_title", description="")
     structure: str = Field(None, title="structure", description="")
     purpose: str = Field(None, title="purpose", description="")
-    keys: Sequence[str] = Field(None, title="keys", description="")
-    sort_keys: Sequence[str] = Field(None, title="sort_keys", description="")
+    keys: list[str] = Field(None, title="keys", description="")
+    sort_keys: list[str] = Field(None, title="sort_keys", description="")
     source_ig: str = Field(
         None,
         title="source_ig",

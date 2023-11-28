@@ -96,7 +96,7 @@ class DictionaryTermSubstanceService(
     @db.transaction
     def get_all_dictionary_terms(
         self,
-        codelist_uid: str = None,
+        codelist_uid: str | None = None,
         sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,

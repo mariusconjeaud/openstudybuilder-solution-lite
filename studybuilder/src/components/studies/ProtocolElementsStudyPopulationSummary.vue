@@ -50,7 +50,8 @@ import study from '@/api/study'
 export default {
   computed: {
     ...mapGetters({
-      selectedStudy: 'studiesGeneral/selectedStudy'
+      selectedStudy: 'studiesGeneral/selectedStudy',
+      selectedStudyVersion: 'studiesGeneral/selectedStudyVersion'
     })
   },
   data () {
@@ -69,7 +70,7 @@ export default {
     }
   },
   mounted () {
-    study.getStudyCriteria(this.selectedStudy.uid).then(resp => {
+    study.getStudyCriteria(this.selectedStudy.uid, this.selectedStudyVersion).then(resp => {
       resp.data.items.forEach(el => {
         if (el.criteria_type.sponsor_preferred_name in this.studyCriterias) {
           this.studyCriterias[el.criteria_type.sponsor_preferred_name].push(el.criteria ? this.removeBrackets(el.criteria.name) : this.removeBrackets(el.criteria_template.name))

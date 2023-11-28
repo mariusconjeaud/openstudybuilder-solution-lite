@@ -34,11 +34,11 @@ class LibraryInstanceNameGenerationSingleParameterTest(api.APITest):
         otdata = template_data.copy()
         otdata["name"] = "To investigate [Indication]"
         objective_template = ct_models.ObjectiveTemplateCreateInput(**otdata)
-        self.ot = ObjectiveTemplateService().create(objective_template)
-        if isinstance(self.ot, BaseModel):
-            self.ot = self.ot.dict()
-        ObjectiveTemplateService().approve(self.ot["uid"])
-        self.data["otuid"] = self.ot["uid"]
+        self.objective_template = ObjectiveTemplateService().create(objective_template)
+        if isinstance(self.objective_template, BaseModel):
+            self.objective_template = self.objective_template.dict()
+        ObjectiveTemplateService().approve(self.objective_template["uid"])
+        self.data["otuid"] = self.objective_template["uid"]
 
     SCENARIO_PATHS = [
         os.path.join(BASE_SCENARIO_PATH, "library_instance_name_generation_single.json")
@@ -60,11 +60,11 @@ class LibraryInstanceNameGenerationMultiParameterTest1(api.APITest):
         otdata = template_data.copy()
         otdata["name"] = "To investigate [Indication] and [Intervention]"
         objective_template = ct_models.ObjectiveTemplateCreateInput(**otdata)
-        self.ot = ObjectiveTemplateService().create(objective_template)
-        if isinstance(self.ot, BaseModel):
-            self.ot = self.ot.dict()
-        ObjectiveTemplateService().approve(self.ot["uid"])
-        self.data["otuid"] = self.ot["uid"]
+        self.objective_template = ObjectiveTemplateService().create(objective_template)
+        if isinstance(self.objective_template, BaseModel):
+            self.objective_template = self.objective_template.dict()
+        ObjectiveTemplateService().approve(self.objective_template["uid"])
+        self.data["otuid"] = self.objective_template["uid"]
         self.data["otname"] = otdata["name"]
         self.data["otseperator"] = " and "
 
@@ -91,11 +91,11 @@ class LibraryInstanceNameGenerationMultiParameterTest2(api.APITest):
         otdata = template_data.copy()
         otdata["name"] = "To investigate [Indication], [Intervention]"
         objective_template = ct_models.ObjectiveTemplateCreateInput(**otdata)
-        self.ot = ObjectiveTemplateService().create(objective_template)
-        if isinstance(self.ot, BaseModel):
-            self.ot = self.ot.dict()
-        ObjectiveTemplateService().approve(self.ot["uid"])
-        self.data["otuid"] = self.ot["uid"]
+        self.objective_template = ObjectiveTemplateService().create(objective_template)
+        if isinstance(self.objective_template, BaseModel):
+            self.objective_template = self.objective_template.dict()
+        ObjectiveTemplateService().approve(self.objective_template["uid"])
+        self.data["otuid"] = self.objective_template["uid"]
         self.data["otname"] = otdata["name"]
         self.data["otseperator"] = ", "
 
@@ -121,11 +121,11 @@ class LibraryInstanceNameGenerationMultiParameterTest3(api.APITest):
         otdata = template_data.copy()
         otdata["name"] = "To investigate [Indication] [Intervention]"
         objective_template = ct_models.ObjectiveTemplateCreateInput(**otdata)
-        self.ot = ObjectiveTemplateService().create(objective_template)
-        if isinstance(self.ot, BaseModel):
-            self.ot = self.ot.dict()
-        ObjectiveTemplateService().approve(self.ot["uid"])
-        self.data["otuid"] = self.ot["uid"]
+        self.objective_template = ObjectiveTemplateService().create(objective_template)
+        if isinstance(self.objective_template, BaseModel):
+            self.objective_template = self.objective_template.dict()
+        ObjectiveTemplateService().approve(self.objective_template["uid"])
+        self.data["otuid"] = self.objective_template["uid"]
         self.data["otname"] = otdata["name"]
         self.data["otseperator"] = " "
 
@@ -152,11 +152,11 @@ class LibraryInstanceNameGenerationMultiParameterTest4(api.APITest):
         otdata = template_data.copy()
         otdata["name"] = "To investigate [Indication] ([Intervention])"
         objective_template = ct_models.ObjectiveTemplateCreateInput(**otdata)
-        self.ot = ObjectiveTemplateService().create(objective_template)
-        if isinstance(self.ot, BaseModel):
-            self.ot = self.ot.dict()
-        ObjectiveTemplateService().approve(self.ot["uid"])
-        self.data["otuid"] = self.ot["uid"]
+        self.objective_template = ObjectiveTemplateService().create(objective_template)
+        if isinstance(self.objective_template, BaseModel):
+            self.objective_template = self.objective_template.dict()
+        ObjectiveTemplateService().approve(self.objective_template["uid"])
+        self.data["otuid"] = self.objective_template["uid"]
         self.data["otname"] = otdata["name"]
 
     SCENARIO_PATHS = [

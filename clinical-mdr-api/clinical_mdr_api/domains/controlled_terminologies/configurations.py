@@ -74,7 +74,7 @@ class CTConfigValueVO:
     def validate(
         self,
         ct_configuration_exists_by_name_callback: Callable[[str], bool],
-        previous_name: str = None,
+        previous_name: str | None = None,
     ):
         if (
             ct_configuration_exists_by_name_callback(self.study_field_name)

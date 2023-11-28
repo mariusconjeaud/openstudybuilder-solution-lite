@@ -1,4 +1,4 @@
-from typing import Any, Callable, Self, Sequence
+from typing import Any, Callable, Self
 
 from pydantic import Field
 
@@ -184,7 +184,7 @@ class StudyTypeListingModel(HighLevelStudyDesignJsonModel):
     study_type_code: str | None = Field(None, nullable=True)
     study_type_null_value_code: str | None = Field(None, nullable=True)
 
-    trial_type_codes: Sequence[SimpleListingCTModel] | None = Field(None, nullable=True)
+    trial_type_codes: list[SimpleListingCTModel] | None = Field(None, nullable=True)
     trial_type_null_value_code: str | None = Field(None, nullable=True)
 
     trial_phase_code: str | None = Field(None, nullable=True)
@@ -284,19 +284,19 @@ class StudyPopulationListingModel(StudyPopulationJsonModel):
         title = "Study population model for listing"
         description = "Study population model for listing"
 
-    therapeutic_area_codes: Sequence[SimpleListingCTModel] | None = Field(
+    therapeutic_area_codes: list[SimpleListingCTModel] | None = Field(
         None, nullable=True
     )
     therapeutic_area_null_value_code: str | None = Field(None, nullable=True)
 
-    disease_condition_or_indication_codes: Sequence[
-        SimpleListingCTModel
-    ] | None = Field(None, nullable=True)
+    disease_condition_or_indication_codes: list[SimpleListingCTModel] | None = Field(
+        None, nullable=True
+    )
     disease_condition_or_indication_null_value_code: str | None = Field(
         None, nullable=True
     )
 
-    diagnosis_group_codes: Sequence[SimpleListingCTModel] | None = Field(
+    diagnosis_group_codes: list[SimpleListingCTModel] | None = Field(
         None, nullable=True
     )
     diagnosis_group_null_value_code: str | None = Field(None, nullable=True)
@@ -496,7 +496,7 @@ class StudyAttributesListingModel(StudyInterventionJsonModel):
     planned_study_length: str | None = Field(None, nullable=True)
     planned_study_length_null_value_code: str | None = Field(None, nullable=True)
 
-    trial_intent_types_codes: Sequence[SimpleListingCTModel] | None = Field(
+    trial_intent_types_codes: list[SimpleListingCTModel] | None = Field(
         None, nullable=True
     )
     trial_intent_types_null_value_code: str | None = Field(None, nullable=True)
@@ -619,7 +619,7 @@ class StudyBranchArmListingModel(StudySelctionListingModel):
     @staticmethod
     def from_study_selection_branch_arm_ar(
         study_selection_branch_arm_ar: StudySelectionBranchArmAR,
-    ) -> Sequence["StudyBranchArmListingModel"]:
+    ) -> list["StudyBranchArmListingModel"]:
         branch_arms = []
         for selection in study_selection_branch_arm_ar.study_branch_arms_selection:
             branch_arms.append(
@@ -638,7 +638,7 @@ class StudyArmListingModel(StudySelctionListingModel):
     uid: str
     randomization_group: str | None
     arm_type: str
-    connected_branches: Sequence[StudyBranchArmListingModel] | None = None
+    connected_branches: list[StudyBranchArmListingModel] | None = None
 
     @classmethod
     def from_study_selection_arm_vo(
@@ -676,7 +676,7 @@ class StudyArmListingModel(StudySelctionListingModel):
         study_selection_arm_ar: StudySelectionArmAR,
         find_simple_term_arm_type_by_term_uid: Callable,
         find_multiple_connected_branch_arm: Callable,
-    ) -> Sequence["StudyArmListingModel"]:
+    ) -> list["StudyArmListingModel"]:
         arms = []
         for selection in study_selection_arm_ar.study_arms_selection:
             arms.append(
@@ -695,8 +695,8 @@ class StudyCohortListingModel(StudySelctionListingModel):
         title = "study attributes model for listing"
         description = "Study attributes model for listing"
 
-    arm_uid: Sequence[str] | None = Field(None, nullable=True)
-    branch_arm_uid: Sequence[str] | None = Field(None, nullable=True)
+    arm_uid: list[str] | None = Field(None, nullable=True)
+    branch_arm_uid: list[str] | None = Field(None, nullable=True)
 
     @classmethod
     def from_study_selection_cohort_vo(
@@ -717,7 +717,7 @@ class StudyCohortListingModel(StudySelctionListingModel):
     @staticmethod
     def from_study_selection_cohort_ar(
         study_selection_cohort_ar: StudySelectionCohortAR,
-    ) -> Sequence["StudyCohortListingModel"] | None:
+    ) -> list["StudyCohortListingModel"]:
         cohorts = []
         for selection in study_selection_cohort_ar.study_cohorts_selection:
             cohorts.append(
@@ -759,9 +759,9 @@ class StudyEpochListingModel(BaseModel):
 
     @staticmethod
     def from_all_study_epochs(
-        all_study_epochs: Sequence[StudyEpoch],
+        all_study_epochs: list[StudyEpoch],
         find_term_by_uid: Callable,
-    ) -> Sequence["StudyEpochListingModel"] | None:
+    ) -> list["StudyEpochListingModel"]:
         epochs = []
         for epoch in all_study_epochs:
             epochs.append(
@@ -810,7 +810,7 @@ class StudyElementListingModel(BaseModel):
     def from_study_element_ar(
         study_element_ar: StudySelectionElementAR,
         find_term_by_uid: Callable,
-    ) -> Sequence["StudyEpochListingModel"] | None:
+    ) -> list["StudyEpochListingModel"]:
         elements = []
         for element in study_element_ar.study_elements_selection:
             elements.append(
@@ -842,8 +842,8 @@ class StudyDesignMatrixListingModel(BaseModel):
 
     @staticmethod
     def from_all_study_design_cells(
-        all_design_cells: Sequence[StudyDesignCellVO],
-    ) -> Sequence["StudyDesignMatrixListingModel"] | None:
+        all_design_cells: list[StudyDesignCellVO],
+    ) -> list["StudyDesignMatrixListingModel"]:
         design_cells = []
         for design_cell in all_design_cells:
             design_cells.append(
@@ -902,8 +902,8 @@ class StudyVisitListingModel(BaseModel):
 
     @staticmethod
     def from_all_study_visits(
-        all_study_visits: Sequence[StudyVisitVO],
-    ) -> Sequence["StudyVisitListingModel"] | None:
+        all_study_visits: list[StudyVisitVO],
+    ) -> list["StudyVisitListingModel"]:
         study_visits = []
         for study_visit in all_study_visits:
             study_visits.append(
@@ -942,7 +942,7 @@ class StudyCriteriaListingModel(BaseModel):
         study_criteria_ar: StudySelectionCriteriaAR,
         find_term_by_uid: Callable[[str], CTTermAttributesAR | None],
         find_criteria_by_uid: Callable[[str], Criteria | None],
-    ) -> Sequence["StudyCriteriaListingModel"] | None:
+    ) -> list["StudyCriteriaListingModel"]:
         study_criterias = []
         for study_criteria in study_criteria_ar.study_criteria_selection:
             if study_criteria.is_instance:
@@ -986,7 +986,7 @@ class StudyObjectiveListingModel(BaseModel):
         study_objective_ar: StudySelectionObjectivesAR,
         find_term_by_uid: Callable[[str], CTTermAttributesAR | None],
         find_objective_by_uid: Callable[[str], Objective | None],
-    ) -> Sequence["StudyObjectiveListingModel"] | None:
+    ) -> list["StudyObjectiveListingModel"]:
         study_objectives = []
         for study_objective in study_objective_ar.study_objectives_selection:
             study_objectives.append(
@@ -1049,7 +1049,7 @@ class StudyEndpointListingModel(BaseModel):
         find_term_by_uid: Callable[[str], CTTermAttributesAR | None],
         find_endpoint_by_uid: Callable[[str], Endpoint | None],
         find_timeframe_by_uid: Callable[[str], Timeframe | None],
-    ) -> Sequence["StudyEndpointListingModel"] | None:
+    ) -> list["StudyEndpointListingModel"]:
         study_endpoints = []
         for study_endpoint in study_endpoint_ar.study_endpoints_selection:
             study_endpoints.append(
@@ -1075,25 +1075,19 @@ class StudyMetadataListingModel(BaseModel):
     study_type: StudyTypeListingModel | None = Field(None, nullable=True)
     study_attributes: StudyAttributesListingModel | None = Field(None, nullable=True)
     study_population: StudyPopulationListingModel | None = Field(None, nullable=True)
-    study_arms: Sequence[StudyArmListingModel] | None = Field(None, nullable=True)
-    study_cohorts: Sequence[StudyCohortListingModel] | None = Field(None, nullable=True)
-    study_epochs: Sequence[StudyEpochListingModel] | None = Field(None, nullable=True)
-    study_elements: Sequence[StudyElementListingModel] | None = Field(
+    study_arms: list[StudyArmListingModel] | None = Field(None, nullable=True)
+    study_cohorts: list[StudyCohortListingModel] | None = Field(None, nullable=True)
+    study_epochs: list[StudyEpochListingModel] | None = Field(None, nullable=True)
+    study_elements: list[StudyElementListingModel] | None = Field(None, nullable=True)
+    study_design_matrix: list[StudyDesignMatrixListingModel] | None = Field(
         None, nullable=True
     )
-    study_design_matrix: Sequence[StudyDesignMatrixListingModel] | None = Field(
+    study_visits: list[StudyVisitListingModel] | None = Field(None, nullable=True)
+    study_criterias: list[StudyCriteriaListingModel] | None = Field(None, nullable=True)
+    study_objectives: list[StudyObjectiveListingModel] | None = Field(
         None, nullable=True
     )
-    study_visits: Sequence[StudyVisitListingModel] | None = Field(None, nullable=True)
-    study_criterias: Sequence[StudyCriteriaListingModel] | None = Field(
-        None, nullable=True
-    )
-    study_objectives: Sequence[StudyObjectiveListingModel] | None = Field(
-        None, nullable=True
-    )
-    study_endpoints: Sequence[StudyEndpointListingModel] | None = Field(
-        None, nullable=True
-    )
+    study_endpoints: list[StudyEndpointListingModel] | None = Field(None, nullable=True)
 
     @classmethod
     def from_study_metadata_vo(
@@ -1102,10 +1096,10 @@ class StudyMetadataListingModel(BaseModel):
         study_metadata_vo: StudyMetadataVO,
         study_selection_arm_ar: StudySelectionArmAR,
         study_selection_cohort_ar: StudySelectionCohortAR,
-        study_epochs: Sequence[StudyEpoch],
+        study_epochs: list[StudyEpoch],
         study_element_ar: StudySelectionElementAR,
-        study_design_cells: Sequence[StudyDesignCellVO],
-        study_visits: Sequence[StudyVisitVO],
+        study_design_cells: list[StudyDesignCellVO],
+        study_visits: list[StudyVisitVO],
         study_criteria_ar: StudySelectionCriteriaAR,
         study_objective_ar: StudySelectionObjectivesAR,
         study_endpoint_ar: StudySelectionEndpointsAR,

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable, Self, Sequence
+from typing import Callable, Self
 
 from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains.concepts.concept_base import ConceptARBase, ConceptVO
@@ -45,7 +45,7 @@ class CompoundAliasVO(ConceptVO):
         uid: str | None,
         compound_exists_callback: Callable[[str], bool],
         compound_alias_uid_by_property_value_callback: Callable[[str, str], str],
-        compound_existing_preferred_synonyms_callback: Callable[[str], Sequence[str]],
+        compound_existing_preferred_synonyms_callback: Callable[[str], list[str]],
     ):
         self.validate_uniqueness(
             lookup_callback=compound_alias_uid_by_property_value_callback,
@@ -105,7 +105,7 @@ class CompoundAliasAR(ConceptARBase):
         library: LibraryVO,
         compound_alias_uid_by_property_value_callback: Callable[[str, str], str],
         compound_exists_callback: Callable[[str], bool],
-        compound_existing_preferred_synonyms_callback: Callable[[str], Sequence[str]],
+        compound_existing_preferred_synonyms_callback: Callable[[str], list[str]],
         generate_uid_callback: Callable[[], str | None] = (lambda: None),
     ) -> Self:
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(author=author)
@@ -136,12 +136,12 @@ class CompoundAliasAR(ConceptARBase):
         author: str,
         change_description: str | None,
         concept_vo: CompoundAliasVO,
-        concept_exists_by_callback: Callable[[str, str, bool], bool] = None,
-        compound_existing_preferred_synonyms_callback: Callable[
-            [str], Sequence[str]
-        ] = None,
-        compound_exists_callback: Callable[[str], bool] = None,
-        compound_alias_uid_by_property_value_callback: Callable[[str, str], str] = None,
+        concept_exists_by_callback: Callable[[str, str, bool], bool] | None = None,
+        compound_existing_preferred_synonyms_callback: Callable[[str], list[str]]
+        | None = None,
+        compound_exists_callback: Callable[[str], bool] | None = None,
+        compound_alias_uid_by_property_value_callback: Callable[[str, str], str]
+        | None = None,
     ) -> None:
         """
         Creates a new draft version for the object.

@@ -63,7 +63,6 @@ from clinical_mdr_api.models.concepts.unit_definitions.unit_definition import (
 from clinical_mdr_api.models.controlled_terminologies.ct_term_attributes import (
     CTTermAttributes,
 )
-from clinical_mdr_api.models.utils import strtobool
 from clinical_mdr_api.oauth import get_current_user_id
 from clinical_mdr_api.services._meta_repository import MetaRepository
 from clinical_mdr_api.services._utils import is_library_editable, normalize_string
@@ -97,6 +96,7 @@ from clinical_mdr_api.services.controlled_terminologies.ct_term_attributes impor
     CTTermAttributesService,
 )
 from clinical_mdr_api.services.utils.odm_xml_mapper import map_xml
+from clinical_mdr_api.utils import strtobool
 
 
 class OdmXmlImporterService:
@@ -247,7 +247,7 @@ class OdmXmlImporterService:
             },
         )
 
-        rs = sorted(rs, key=lambda elm: elm.name)
+        rs.sort(key=lambda elm: elm.name)
 
         self.db_vendor_namespaces = [
             self.odm_vendor_namespace_service._transform_aggregate_root_to_pydantic_model(
@@ -267,7 +267,7 @@ class OdmXmlImporterService:
             filter_by={"uid": {"v": vendor_attribute_uids, "op": "eq"}},
         )
 
-        rs = sorted(rs, key=lambda elm: elm.name)
+        rs.sort(key=lambda elm: elm.name)
 
         self.db_vendor_attributes = [
             self.odm_vendor_attribute_service._transform_aggregate_root_to_pydantic_model(
@@ -287,7 +287,7 @@ class OdmXmlImporterService:
             filter_by={"uid": {"v": vendor_element_uids, "op": "eq"}},
         )
 
-        rs = sorted(rs, key=lambda elm: elm.name)
+        rs.sort(key=lambda elm: elm.name)
 
         self.db_vendor_elements = [
             self.odm_vendor_element_service._transform_aggregate_root_to_pydantic_model(
@@ -1121,7 +1121,7 @@ class OdmXmlImporterService:
             },
         )
 
-        rs = sorted(rs, key=lambda elm: elm.name)
+        rs.sort(key=lambda elm: elm.name)
 
         return [
             self.odm_vendor_namespace_service._transform_aggregate_root_to_pydantic_model(
@@ -1143,7 +1143,7 @@ class OdmXmlImporterService:
             },
         )
 
-        rs = sorted(rs, key=lambda elm: elm.name)
+        rs.sort(key=lambda elm: elm.name)
 
         return [
             self.odm_vendor_attribute_service._transform_aggregate_root_to_pydantic_model(
@@ -1164,7 +1164,7 @@ class OdmXmlImporterService:
             },
         )
 
-        rs = sorted(rs, key=lambda elm: elm.name)
+        rs.sort(key=lambda elm: elm.name)
 
         return [
             self.odm_vendor_element_service._transform_aggregate_root_to_pydantic_model(
@@ -1183,7 +1183,7 @@ class OdmXmlImporterService:
             },
         )
 
-        rs = sorted(rs, key=lambda elm: elm.name)
+        rs.sort(key=lambda elm: elm.name)
 
         return [
             self.odm_study_event_service._transform_aggregate_root_to_pydantic_model(
@@ -1202,7 +1202,7 @@ class OdmXmlImporterService:
             },
         )
 
-        rs = sorted(rs, key=lambda elm: elm.name)
+        rs.sort(key=lambda elm: elm.name)
 
         return [
             self.odm_form_service._transform_aggregate_root_to_pydantic_model(
@@ -1221,7 +1221,7 @@ class OdmXmlImporterService:
             }
         )
 
-        rs = sorted(rs, key=lambda elm: elm.name)
+        rs.sort(key=lambda elm: elm.name)
 
         return [
             self.odm_item_group_service._transform_aggregate_root_to_pydantic_model(
@@ -1240,7 +1240,7 @@ class OdmXmlImporterService:
             }
         )
 
-        rs = sorted(rs, key=lambda elm: elm.name)
+        rs.sort(key=lambda elm: elm.name)
 
         return [
             self.odm_condition_service._transform_aggregate_root_to_pydantic_model(
@@ -1259,7 +1259,7 @@ class OdmXmlImporterService:
             }
         )
 
-        rs = sorted(rs, key=lambda elm: elm.name)
+        rs.sort(key=lambda elm: elm.name)
 
         return [
             self.odm_method_service._transform_aggregate_root_to_pydantic_model(
@@ -1278,7 +1278,7 @@ class OdmXmlImporterService:
             }
         )
 
-        rs = sorted(rs, key=lambda elm: elm.name)
+        rs.sort(key=lambda elm: elm.name)
 
         return [
             self.odm_item_service._transform_aggregate_root_to_pydantic_model(

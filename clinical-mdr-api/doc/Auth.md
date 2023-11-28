@@ -148,10 +148,10 @@ with a different identity provider.
 - **Manifest**: Edit the manifest document, and change:
   `"accessTokenAcceptedVersion": 2,`
 
-On the **Overview** page take a note of *Application ID* which is going to be the `OAUTH_APP_ID` setting for 
-clinical-mdr-api and `AUTH_APP_ID` setting for StudyBuilder UI, and on the *App registrations* / *Endpoints* menu 
-(top of the center content-area) the *OpenID Connect metadata document* which will go into `OIDC_METADATA_DOCUMENT` 
-setting for clinical-mdr-api and truncated(!) into `AUTH_AUTHORITY` settings of StudyBuilder UI. (see below)
+On the **Overview** page take a note of *Application ID* which is going to be the `OAUTH_API_APP_ID` setting,
+and on the *App registrations* / *Endpoints* menu 
+(top of the center content-area) the *OpenID Connect metadata document* which will go into `OAUTH_METADATA_URL` 
+setting.
 
 
 ## Client application registration:
@@ -181,7 +181,7 @@ registration between StudyBuilder UI and Swagger UI, just add the URLs of both a
 - **Go back to the clinical-mdr-api registration,** and register this new client application on the **Expose API** page.
 
 On the **Overview** page take a note of the *Application (client) ID* which in case of StudyBuilder UI will go as 
-the `OUATH_CLIENT_ID` setting, or for the Swagger UI of clinical-mdr-api as `OUATH_CLIENT_ID` setting.
+the `OAUTH_UI_APP_ID` setting, or for the Swagger UI of clinical-mdr-api as `OAUTH_SWAGGER_APP_ID` setting.
 
 
 # Setting up groups
@@ -211,9 +211,8 @@ groups, so they have to be granted to each user instead.
 ## Configuring any client application
 
 - **Metadata document**: The *OpenID Connect metadata document* URI noted from above, if the client application
-  supports OpenID Connect Discovery. For StudyBuilder UI it's the `AUTH_AUTHORITY` property in `config.json`.
-- **Application ID / Client ID**: The application id as noted at registration time. `AUTH_APP_ID` property in 
-  `config.json` for the StudyBuilder UI, or `OAUTH_APP_ID` environment variable for the clinical-mdr-api.
+  supports OpenID Connect Discovery.
+- **Application ID / Client ID**: The application id as noted at registration time.
 - **Response type**: *code*
 - **Response mode**: *fragment*
 - **Scope**: a space separated string, if set incorrectly, the received token may miss some claims or will be 
@@ -223,16 +222,15 @@ groups, so they have to be granted to each user instead.
   - `email` to get the email address of the user
   - `offline_access` to get a refresh token too
   - `api://d3e62185-f259-4d5b-8a8c-a9134fd34d47/API.call` prefix `API.call` with the *Application ID URI*
-    of the clinical-mdr-api registration. We must claim at least one scope of the clinical-mdr-api, otherwise 
-    the audience claim in the access token will be incorrect (*000003-....* Microsoft Graph API)
-    and also token validation would fail with signature validation error. 
+    of the clinical-mdr-api registration.
 
 
 ## Configuring clinical-mdr-api
 
 Configuration is done through environment variables, set on the container deployment. If Docker compose is used, the 
-compose files are prepared to forward these environment variables to the services. In case of Docker compose, 
-environment variables can also be set in the `.env` file.
+compose files are crafted to forward these environment variables to the affected services.
+Docker compose can also read environment variables from the `.env` file in the same folder as the compose-file.
+An environment variable with empty string value is considered unset by clinical-mdr-api.
 
 `OAUTH_ENABLED=false`
 : Authorization is required, unless this variable is set to a false value like  value is `false`, `0` or `off` 
@@ -242,15 +240,16 @@ environment variables can also be set in the `.env` file.
 `OAUTH_RBAC_ENABLED=false`
 : Role-based Access Control can be disabled with a false value like value is `false`, `0` or `off` (case-insensitive).
 
-`OIDC_METADATA_DOCUMENT='https://login.microsoftonline.com/YOUR_TENANT_ID/v2.0/.well-known/openid-configuration'`
+`OAUTH_METADATA_URL='https://login.microsoftonline.com/YOUR_TENANT_ID/v2.0/.well-known/openid-configuration'`
 : URL to the OpenID Connect metadata document. The OAuth and JWK library is automatically configured by this 
   document. clinical-mdr-api nees to be able to fetch this resource in case of a restricted network environment.
+  The built-in Swagger UI is also configured automatically.  
 
-`OAUTH_APP_ID='YOUR_APPLICATION_ID'`
+`OAUTH_API_APP_ID='YOUR_APPLICATION_ID'`
 : Application id of the clinical-mdr-api as registered with the OAuth authority.
   The `aud` claim of the access token checked with this value.
 
-`OAUTH_APP_SECRET='YOUR_APPLICATION_SECRET'`
+`OAUTH_API_APP_SECRET='YOUR_APPLICATION_SECRET'`
 : An application secret created for the clinical-mdr-api registration at the OAuth authority.
   Only required for the MS Graph API integration to fetch access tokens to the Graph service.
 
@@ -260,36 +259,31 @@ environment variables can also be set in the `.env` file.
 The Swagger UI is built into FastAPI, and available in clinical-mdr-api documentation page `/docs`.
 Configuring the Swagger UI with OAuth is completely optional, clinical-mdr-api should work fine without these settings.
 
-`OAUTH_AUTHORIZATION_URL='https://login.microsoftonline.com/YOUR_TENANT_ID/oauth2/v2.0/authroize'`
-: The endpoint used for authentication. You can also copy this form the OpenID Connect metadata document.
+`OAUTH_SWAGGER_APP_ID='YOUR_CLIENT_ID'`
+: The application id of the Swagger UI client. Defaults to *OAUTH_API_APP_ID* when unset.
 
-`OAUTH_TOKEN_URL='https://login.microsoftonline.com/YOUR_TENANT_ID/oauth2/v2.0/token'`
-: The endpoint used for retrieving tokens. You can also copy this form the OpenID Connect metadata document.
-
-`OUATH_CLIENT_ID='YOUR_CLIENT_ID'`
-: The application id of the Swagger UI registration.
-
-`OAUTH_APP_ID_URI='api://YOUR_APPLICATION_ID'`
+`OAUTH_API_APP_ID_URI='api://YOUR_APPLICATION_ID'`
 : The application id of the clinical-mdr-api as registeration in URI format, used for prefixing the 
-  application-defined scopes (like `${OAUTH_APP_ID_URI}/API.call`). Used for constructing the *scopes* parameter
-  when the Swagger UI initiates an authorization code flow.
+  application-defined scopes (like `${OAUTH_API_APP_ID_URI}/API.call`). Used for constructing the *scopes* parameter
+  when the Swagger UI initiates an authorization code flow. Defaults to the above example.
 
 
 ## Configuring the StudyBuilder UI
 
-At the moment the *frontend* container image does not consume configuration from environment variables, 
-configuration has to be provided in the `studybuilder/config/config.json` file before (re)building the image.
+At the startup of the *frontend* container image, `config.json` is updated with any environment variables of the same 
+name as the properties, before starting the Nginx daemon. Docker compose will forward relevant environment variables 
+to the service, (and also from the `.env` file in the same folder as the compose file).
 
-`AUTH_ENABLED: "1",`
-: Should be a string of `"0"` to disable, or `"1"` to enable authentication in the client.
+`OAUTH_ENABLED: "true",`
+: Should be a string of `true`, `on`, `1`, `yes
 
-`AUTH_AUTHORITY: "https://login.microsoftonline.com/YOUR_TENANT_ID/v2.0/",`
-: The truncated prefix to the URL of the OpenID Connect metadata document, as by this example.
+`OAUTH_METADATA_URL: 'https://login.microsoftonline.com/YOUR_TENANT_ID/v2.0/.well-known/openid-configuration'`
+: URL to the OpenID Connect metadata document. 
 
-`AUTH_APP_ID: "YOUR_APPLICATION_ID",`
+`OAUTH_API_APP_ID: "YOUR_APPLICATION_ID",`
 : Application id of the clinical-mdr-api registration.
 
-`AUTH_CLIENT_ID: "YOUR_CLIENT_ID",`
+`OAUTH_UI_APP_ID: "YOUR_CLIENT_ID",`
 : The application id of the StudyBuilder UI registration.
 
 
@@ -308,7 +302,7 @@ The *validate_token* dependency uses *authlib* Python library to validate:
 - Claims (the key-vale payload in the token):
   - token is not expired, nor used prematurely
     (access-tokens are short-lived, the typical lifetime is 5 minutes to few hours)
-  - *aud*ience is checked, must match `OAUTH_APP_ID` the id of the registered clinical-mdr-api application.
+  - *aud*ience is checked, must match `OAUTH_API_APP_ID` the id of the registered clinical-mdr-api application.
 - Then saves user-related information to a request-bound context object.
 
 Currently, clinical-mdr-api does not require any scopes to be claimed in the access token.

@@ -31,6 +31,7 @@ from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 
 # Global variables shared between fixtures and tests
 study: Study
+study_epoch_uid: str
 epoch_subtype_uid: str
 epoch_subtype2_uid: str
 
@@ -59,11 +60,11 @@ def test_data():
     epoch_subtype_uid = "EpochSubType_0001"
     epoch_subtype2_uid = "EpochSubType_0002"
     yield
-
     drop_db(db_name)
 
 
 def test_epoch_modify_actions_on_locked_study(api_client):
+    global study_epoch_uid
     response = api_client.post(
         f"/studies/{study.uid}/study-epochs",
         json={
@@ -81,7 +82,7 @@ def test_epoch_modify_actions_on_locked_study(api_client):
     res = response.json()
     assert response.status_code == 200
     old_res = res
-    epoch_uid = res[0]["uid"]
+    study_epoch_uid = res[0]["uid"]
 
     # update study title to be able to lock it
     response = api_client.patch(
@@ -92,7 +93,7 @@ def test_epoch_modify_actions_on_locked_study(api_client):
 
     # Lock
     response = api_client.post(
-        f"/studies/{study.uid}/lock",
+        f"/studies/{study.uid}/locks",
         json={"change_description": "Lock 1"},
     )
     assert response.status_code == 201
@@ -110,7 +111,7 @@ def test_epoch_modify_actions_on_locked_study(api_client):
 
     # edit epoch
     response = api_client.patch(
-        f"/studies/{study.uid}/study-epochs/{epoch_uid}",
+        f"/studies/{study.uid}/study-epochs/{study_epoch_uid}",
         json={
             "study_uid": study.uid,
             "name": "New_epoch_Name_1",
@@ -129,6 +130,98 @@ def test_epoch_modify_actions_on_locked_study(api_client):
     assert response.status_code == 200
     assert old_res == res
 
+    # test cannot delete
+    response = api_client.delete(f"/studies/{study.uid}/study-epochs/{study_epoch_uid}")
+    assert response.status_code == 400
+    assert (
+        response.json()["message"]
+        == f"Study with specified uid '{study.uid}' is locked."
+    )
+
+
+def test_study_epoch_with_study_epoch_subtype_relationship(api_client):
+    # get specific study epoch
+    response = api_client.get(
+        f"/studies/{study.uid}/study-epochs/{study_epoch_uid}",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["epoch_subtype"] == epoch_subtype_uid
+    before_unlock = res
+
+    # get study epoch headers
+    response = api_client.get(
+        f"/studies/{study.uid}/study-epochs/headers?field_name=epoch_subtype",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res == [epoch_subtype_uid]
+
+    # Unlock -- Study remain unlocked
+    response = api_client.delete(f"/studies/{study.uid}/locks")
+    assert response.status_code == 200
+
+    # edit study epoch
+    response = api_client.patch(
+        f"/studies/{study.uid}/study-epochs/{study_epoch_uid}",
+        json={
+            "study_uid": study.uid,
+            "epoch_subtype": epoch_subtype2_uid,
+            "change_description": "new epoch subtype",
+        },
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["epoch_subtype"] == epoch_subtype2_uid
+
+    # get all study epochs of a specific study version
+    response = api_client.get(
+        f"/studies/{study.uid}/study-epochs?study_value_version=1",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["items"][0] == before_unlock
+
+    # get specific study epoch of a specific study version
+    response = api_client.get(
+        f"/studies/{study.uid}/study-epochs/{study_epoch_uid}?study_value_version=1",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res == before_unlock
+
+    # get study epoch headers of specific study version
+    response = api_client.get(
+        f"/studies/{study.uid}/study-epochs/headers?field_name=epoch_subtype&study_value_version=1",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res == [epoch_subtype_uid]
+
+    # get all study epochs
+    response = api_client.get(
+        f"/studies/{study.uid}/study-epochs",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["items"][0]["epoch_subtype"] == epoch_subtype2_uid
+
+    # get specific study epoch
+    response = api_client.get(
+        f"/studies/{study.uid}/study-epochs/{study_epoch_uid}",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["epoch_subtype"] == epoch_subtype2_uid
+
+    # get study epochs headers
+    response = api_client.get(
+        f"/studies/{study.uid}/study-epochs/headers?field_name=epoch_subtype",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res == [epoch_subtype2_uid]
+
 
 @pytest.mark.parametrize(
     "export_format",
@@ -143,3 +236,127 @@ def test_epoch_modify_actions_on_locked_study(api_client):
 def test_get_study_epochs_csv_xml_excel(api_client, export_format):
     url = f"/studies/{study.uid}/study-epochs"
     TestUtils.verify_exported_data_format(api_client, export_format, url)
+
+
+def test_study_epoch_order_when_epoch_get_deleted_or_modified(api_client):
+    study_for_tests = TestUtils.create_study()
+    response = api_client.post(
+        f"/studies/{study_for_tests.uid}/study-epochs",
+        json={
+            "study_uid": study_for_tests.uid,
+            "epoch_subtype": epoch_subtype_uid,
+        },
+    )
+    epoch_subtype_1 = response.json()
+    assert response.status_code == 201
+    assert epoch_subtype_1["order"] == 1
+    assert epoch_subtype_1["epoch_name"] == "Epoch Subtype"
+
+    response = api_client.post(
+        f"/studies/{study_for_tests.uid}/study-epochs",
+        json={
+            "study_uid": study_for_tests.uid,
+            "epoch_subtype": epoch_subtype_uid,
+        },
+    )
+    epoch_subtype_2 = response.json()
+    assert response.status_code == 201
+    assert epoch_subtype_2["order"] == 2
+    assert epoch_subtype_2["epoch_name"] == "Epoch Subtype 2"
+
+    # Deleting an Epoch from the same Subtype
+    response = api_client.delete(
+        f"/studies/{study_for_tests.uid}/study-epochs/{epoch_subtype_1['uid']}",
+    )
+    assert response.status_code == 204
+    response = api_client.get(
+        f"/studies/{study_for_tests.uid}/study-epochs/{epoch_subtype_2['uid']}",
+    )
+    old_subtype_2_new_subtype_1 = response.json()
+    assert response.status_code == 200
+    assert old_subtype_2_new_subtype_1["order"] == 1
+    assert old_subtype_2_new_subtype_1["epoch_name"] == "Epoch Subtype"
+
+    response = api_client.post(
+        f"/studies/{study_for_tests.uid}/study-epochs",
+        json={
+            "study_uid": study_for_tests.uid,
+            "epoch_subtype": epoch_subtype2_uid,
+        },
+    )
+    epoch_subtype_2_1 = response.json()
+    assert response.status_code == 201
+    assert epoch_subtype_2_1["order"] == 2
+    assert epoch_subtype_2_1["epoch_name"] == "Epoch Subtype1"
+
+    response = api_client.delete(
+        f"/studies/{study_for_tests.uid}/study-epochs/{old_subtype_2_new_subtype_1['uid']}",
+    )
+    assert response.status_code == 204
+
+    response = api_client.get(
+        f"/studies/{study_for_tests.uid}/study-epochs/{epoch_subtype_2_1['uid']}",
+    )
+    assert response.status_code == 200
+    epoch_subtype_2_1 = response.json()
+    assert epoch_subtype_2_1["order"] == 1
+    assert epoch_subtype_2_1["epoch_name"] == "Epoch Subtype1"
+
+    response = api_client.get(
+        f"/studies/{study_for_tests.uid}/study-epochs",
+    )
+    assert response.status_code == 200
+    all_epochs = response.json()["items"]
+    assert len(all_epochs) == 1
+
+    response = api_client.post(
+        f"/studies/{study_for_tests.uid}/study-epochs",
+        json={
+            "study_uid": study_for_tests.uid,
+            "epoch_subtype": epoch_subtype2_uid,
+        },
+    )
+    epoch_subtype_2_2 = response.json()
+    assert response.status_code == 201
+    assert epoch_subtype_2_2["order"] == 2
+    assert epoch_subtype_2_2["epoch_name"] == "Epoch Subtype1 2"
+
+    response = api_client.get(
+        f"/studies/{study_for_tests.uid}/study-epochs/{epoch_subtype_2_1['uid']}",
+    )
+    assert response.status_code == 200
+    epoch_subtype_2_1 = response.json()
+    assert epoch_subtype_2_1["order"] == 1
+    assert epoch_subtype_2_1["epoch_name"] == "Epoch Subtype1 1"
+
+    response = api_client.post(
+        f"/studies/{study_for_tests.uid}/study-epochs",
+        json={
+            "study_uid": study_for_tests.uid,
+            "epoch_subtype": epoch_subtype2_uid,
+        },
+    )
+    epoch_subtype_2_3 = response.json()
+    assert response.status_code == 201
+    assert epoch_subtype_2_3["order"] == 3
+    assert epoch_subtype_2_3["epoch_name"] == "Epoch Subtype1 3"
+
+    response = api_client.patch(
+        f"/studies/{study_for_tests.uid}/study-epochs/{epoch_subtype_2_1['uid']}/order/2"
+    )
+    assert response.status_code == 200
+    res = response.json()
+    assert res["order"] == 3
+
+    response = api_client.get(
+        f"/studies/{study_for_tests.uid}/study-epochs",
+    )
+    assert response.status_code == 200
+    all_epochs = response.json()["items"]
+    assert len(all_epochs) == 3
+    assert all_epochs[0]["uid"] == epoch_subtype_2_2["uid"]
+    assert all_epochs[0]["order"] == 1
+    assert all_epochs[1]["uid"] == epoch_subtype_2_3["uid"]
+    assert all_epochs[1]["order"] == 2
+    assert all_epochs[2]["uid"] == epoch_subtype_2_1["uid"]
+    assert all_epochs[2]["order"] == 3

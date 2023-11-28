@@ -1,5 +1,4 @@
 import unittest
-from typing import Sequence
 
 from neomodel import db
 
@@ -40,7 +39,7 @@ class ObjectiveRepositoryConcurrencyTest(unittest.TestCase):
     library_name = "Sponsor"
     user_initials = "TEST"
     template_name = "Example Template"
-    parameter_terms: Sequence[ParameterTermEntryVO] = []
+    parameter_terms: list[ParameterTermEntryVO] = []
 
     # These are set as part of the test for [Objective, Endpoint, Timeframe]
     template_uid = None

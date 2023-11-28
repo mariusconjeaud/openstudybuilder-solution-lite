@@ -92,13 +92,13 @@ export default {
         : ''
     },
     activity_group () {
-      return (this.studyActivity && this.studyActivity.activity && this.studyActivity.activity.activity_group)
-        ? this.studyActivity.activity.activity_group.name
+      return (this.studyActivity && this.studyActivity.study_activity_group && this.studyActivity.study_activity_group.activity_group_name)
+        ? this.studyActivity.study_activity_group.activity_group_name
         : ''
     },
     activity_subgroup () {
-      return (this.studyActivity && this.studyActivity.activity && this.studyActivity.activity.activity_subgroup)
-        ? this.studyActivity.activity.activity_subgroup.name
+      return (this.studyActivity && this.studyActivity.study_activity_subgroup && this.studyActivity.study_activity_subgroup.activity_subgroup_name)
+        ? this.studyActivity.study_activity_subgroup.activity_subgroup_name
         : ''
     },
     activity () {
@@ -130,13 +130,15 @@ export default {
       }
       this.working = true
       const data = {
-        flowchart_group_uid: this.form.flowchart_group.term_uid,
+        soa_group_term_uid: this.form.flowchart_group.term_uid,
         note: this.form.note
       }
       study.updateStudyActivity(this.studyActivity.study_uid, this.studyActivity.study_activity_uid, data).then(resp => {
         bus.$emit('notification', { type: 'success', msg: this.$t('StudyActivityEditForm.update_success') })
         this.$emit('updated')
         this.close()
+      }, _err => {
+        this.working = false
       })
     }
   },

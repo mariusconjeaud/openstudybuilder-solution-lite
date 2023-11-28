@@ -2,7 +2,7 @@ import copy
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from decimal import Decimal
-from typing import Any, Mapping, MutableSequence, Sequence, cast
+from typing import Any, Mapping, MutableSequence, cast
 
 from neomodel import NodeMeta, db
 from neomodel.exceptions import DoesNotExist
@@ -79,20 +79,22 @@ from clinical_mdr_api.repositories._utils import (
 
 
 def _is_metadata_snapshot_and_status_equal_comparing_study_value_properties(
-    a: StudyDefinitionSnapshot, b: StudyDefinitionSnapshot
+    current: StudyDefinitionSnapshot, previous: StudyDefinitionSnapshot
 ) -> bool:
     """
     A convenience function for comparing two snapshot for equality of StudyValue node properties.
-    :param a: A StudyDefinitionSnapshot to compare.
-    :param b: Another StudyDefinitionSnapshot to compare.
-    :return: True if a == b (comparing StudyValue node properties), otherwise False
+    :param current: A StudyDefinitionSnapshot to compare.
+    :param previous: Another StudyDefinitionSnapshot to compare.
+    :return: True if current == previous (comparing StudyValue node properties), otherwise False
     """
     return (
-        a.current_metadata.study_number == b.current_metadata.study_number
-        and a.current_metadata.study_acronym == b.current_metadata.study_acronym
-        and a.current_metadata.study_id_prefix == b.current_metadata.study_id_prefix
-        and a.study_status == b.study_status
-        and a.released_metadata == b.released_metadata
+        current.current_metadata.study_number == previous.current_metadata.study_number
+        and current.current_metadata.study_acronym
+        == previous.current_metadata.study_acronym
+        and current.current_metadata.study_id_prefix
+        == previous.current_metadata.study_id_prefix
+        and current.study_status == previous.study_status
+        and current.released_metadata == previous.released_metadata
     )
 
 
@@ -235,15 +237,15 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
 
     @classmethod
     def _retrieve_all_snapshots_from_cypher_query_result(
-        cls, result_set: Sequence[dict], deleted: bool = False
-    ) -> Sequence[StudyDefinitionSnapshot]:
+        cls, result_set: list[dict], deleted: bool = False
+    ) -> list[StudyDefinitionSnapshot]:
         """
         Function maps the result of the cypher query which is list of dictionaries into
         the list of domain layer objects called StudyDefinitionSnapshot.
         It uses StudyDefinitionRepositoryImpl._study_metadata_snapshot_from_cypher_res to create specific members
         of StudyDefinitionSnapshot that are called StudyMetadataSnapshots.
         :param result_set:
-        :return Sequence[StudyDefinitionSnapshot]:
+        :return list[StudyDefinitionSnapshot]:
         """
         snapshots: list[StudyDefinitionSnapshot] = []
         for study in result_set:
@@ -283,11 +285,33 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
     def _retrieve_snapshot(
         cls,
         item: StudyRoot,
+        study_value_version: str | None = None,
     ) -> tuple[StudyDefinitionSnapshot, _AdditionalClosure]:
         root: StudyRoot = item
+        specific_study_value: StudyValue | None = None
+        specific_study_value_relationship: VersionRelationship = None
+
+        if study_value_version:
+            study_value, _ = StudyValue.nodes.filter(
+                **{
+                    "has_version|version": study_value_version,
+                    "has_version__uid": root.uid,
+                }
+            ).get_or_none()
+
+            assert isinstance(study_value, StudyValue)
+            specific_study_value = study_value
+            # To be updated to below if the HAS_VERSION status:draft relationship is removed
+            # specific_study_value_relationship = root.has_version.relationship(
+            #     specific_study_value
+            # )
+            specific_study_value_relationship = [
+                ith
+                for ith in root.has_version.all_relationships(specific_study_value)
+                if ith.status == "RELEASED"
+            ][0]
 
         latest_value: StudyValue = root.latest_value.single()
-
         latest_value_relationship: VersionRelationship = root.latest_value.relationship(
             latest_value
         )
@@ -321,6 +345,11 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
             latest_released_relationship=latest_released_relationship,
         )
 
+        specific_metadata_snapshot = cls._retrieve_released_study_metadata_snapshot(
+            latest_released_value=specific_study_value,
+            latest_released_relationship=specific_study_value_relationship,
+        )
+
         locked_metadata_snapshots = cls._retrieve_locked_study_metadata_snapshots(
             root=root
         )
@@ -340,6 +369,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
             current_metadata=current_metadata_snapshot,
             draft_metadata=draft_metadata_snapshot,
             released_metadata=released_metadata_snapshot,
+            specific_metadata=specific_metadata_snapshot,
             locked_metadata_versions=locked_metadata_snapshots,
             uid=root.uid,
             # since we do not have study definition status stored directly in DB we need to derive it
@@ -384,6 +414,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
         self,
         uid: str,
         for_update: bool,
+        study_value_version: str | None = None,
     ) -> tuple[StudyDefinitionSnapshot | None, Any]:
         if for_update:
             self._ensure_transaction()
@@ -403,6 +434,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
 
         snapshot, model_data = self._retrieve_snapshot(
             item=root,
+            study_value_version=study_value_version,
         )
 
         return snapshot, (model_data if for_update else None)
@@ -469,9 +501,11 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
         ):
             from dataclasses import asdict
 
-            for k, v in asdict(current_snapshot.locked_metadata_versions[0]).items():
-                v1 = getattr(previous_snapshot.locked_metadata_versions[0], k)
-                assert v == v1
+            for k, value in asdict(
+                current_snapshot.locked_metadata_versions[0]
+            ).items():
+                version1 = getattr(previous_snapshot.locked_metadata_versions[0], k)
+                assert value == version1
             assert asdict(current_snapshot.locked_metadata_versions[0]) == asdict(
                 previous_snapshot.locked_metadata_versions[0]
             )
@@ -518,6 +552,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
             expected_latest_value=expected_latest_value,
             root=root,
             current_snapshot=current_snapshot,
+            previous_snapshot=previous_snapshot,
             previous_latest_value=previous_value,
         )
 
@@ -590,10 +625,28 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
     ):
         # check if new value node is created
         if expected_latest_value is not previous_value:
-            # remove the relation from the old value node
             study_selection_nodes = getattr(previous_value, relation_name).all()
-            getattr(previous_value, relation_name).disconnect_all()
-
+            if relation_name not in [
+                "has_study_objective",
+                "has_study_endpoint",
+                "has_study_criteria",
+                "has_study_activity",
+                "has_study_activity_schedule",
+                "has_study_activity_instruction",
+                "has_study_visit",
+                "has_study_epoch",
+                "has_study_element",
+                "has_study_design_cell",
+                "has_study_cohort",
+                "has_study_arm",
+                "has_study_branch_arm",
+                "has_study_compound",
+                "has_study_compound_dosing",
+                "has_study_disease_milestone",
+                "has_study_footnote",
+            ]:
+                # remove the relation from the old value node
+                getattr(previous_value, relation_name).disconnect_all()
             # add the relation to the new node
             for study_selection_node in study_selection_nodes:
                 getattr(expected_latest_value, relation_name).connect(
@@ -635,8 +688,13 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
         # node as the previous
         expected_latest_value = previous_value
 
-        if not _is_metadata_snapshot_and_status_equal_comparing_study_value_properties(
-            current_snapshot, previous_snapshot
+        if (
+            not _is_metadata_snapshot_and_status_equal_comparing_study_value_properties(
+                current_snapshot,
+                previous_snapshot
+                # we don't wan't to create new StudyValue node if we've just LOCKED a Study
+            )
+            and current_snapshot.study_status != StudyStatus.LOCKED.value
         ):
             # we need a new node (for a new value)
             expected_latest_value = self._study_value_from_study_metadata_snapshot(
@@ -734,6 +792,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
         expected_latest_value: StudyValue,
         root: StudyRoot,
         current_snapshot: StudyDefinitionSnapshot,
+        previous_snapshot: StudyDefinitionSnapshot,
         previous_latest_value: StudyValue,
     ):
         assert (
@@ -743,7 +802,12 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
         # 1. close the instance of the relation which is open and connected to current value
         # 2. create new instance of the relation connected to expected_latest_value (which may be new one or the same)
 
-        if expected_latest_value != previous_latest_value:
+        # We want to maintain HAS_VERSION if we've created a new StudyValue node or StudyStatus is different
+        # for going from DRAFT -> LOCKED we are not creating a new StudyValue node
+        if (
+            expected_latest_value != previous_latest_value
+            or current_snapshot.study_status != previous_snapshot.study_status
+        ):
             # here goes step 1 (closing the old HAS_VERSION instance)
             has_version_relationship: VersionRelationship
             for has_version_relationship in root.has_version.all_relationships(
@@ -1776,7 +1840,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
 
     def _retrieve_fields_audit_trail(
         self, uid: str
-    ) -> Sequence[StudyFieldAuditTrailEntryAR] | None:
+    ) -> list[StudyFieldAuditTrailEntryAR] | None:
         query = """
         MATCH (root:StudyRoot {uid: $studyuid})-[:AUDIT_TRAIL]->(action)
  
@@ -2367,4 +2431,27 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
             RETURN study_root
             """
         result, _ = db.cypher_query(query, {"uid": study_uid})
+        return len(result) > 0 and len(result[0]) > 0
+
+    @staticmethod
+    def check_if_study_uid_and_version_exists(
+        study_uid: str, study_value_version: str | None = None
+    ) -> bool:
+        if study_value_version:
+            query = """
+                MATCH (r:StudyRoot {uid: $uid})-[hv:HAS_VERSION]->(v:StudyValue)
+                WHERE NOT (v)<-[:BEFORE]-(:Delete) AND hv.version=$version
+                RETURN r
+                """
+        else:
+            query = """
+                MATCH (r:StudyRoot {uid: $uid})-[:LATEST]->(v:StudyValue)
+                WHERE NOT (v)<-[:BEFORE]-(:Delete)
+                RETURN r
+                """
+
+        result, _ = db.cypher_query(
+            query, {"uid": study_uid, "version": study_value_version}
+        )
+
         return len(result) > 0 and len(result[0]) > 0

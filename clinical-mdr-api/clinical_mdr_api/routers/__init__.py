@@ -3,9 +3,6 @@ from clinical_mdr_api.routers.admin import router as admin_router
 from clinical_mdr_api.routers.biomedical_concepts.activity_instance_classes import (
     router as activity_instance_classes_router,
 )
-from clinical_mdr_api.routers.biomedical_concepts.activity_item import (
-    router as activity_items_router,
-)
 from clinical_mdr_api.routers.biomedical_concepts.activity_item_classes import (
     router as activity_item_classes_router,
 )
@@ -277,7 +274,6 @@ __all__ = [
     "activity_instances_router",
     "activity_instance_classes_router",
     "activity_item_classes_router",
-    "activity_items_router",
     "odm_metadata_router",
     "compounds_router",
     "compound_aliases_router",

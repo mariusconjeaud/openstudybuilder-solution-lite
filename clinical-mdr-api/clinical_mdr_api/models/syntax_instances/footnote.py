@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Callable, Self, Sequence
+from typing import Any, Callable, Self
 
 from pydantic.fields import Field
 
@@ -17,7 +17,10 @@ from clinical_mdr_api.models.syntax_templates.template_parameter_term import (
     IndexedTemplateParameterTerm,
     MultiTemplateParameterTerm,
 )
-from clinical_mdr_api.models.utils import BaseModel
+from clinical_mdr_api.models.utils import (
+    BaseModel,
+    capitalize_first_letter_if_template_parameter,
+)
 
 
 class FootnoteTemplateWithType(FootnoteTemplateNameUidLibrary):
@@ -34,7 +37,7 @@ class Footnote(BaseModel):
     version: str | None = Field(None, nullable=True)
     change_description: str | None = Field(None, nullable=True)
     user_initials: str | None = Field(None, nullable=True)
-    possible_actions: Sequence[str] | None = Field(
+    possible_actions: list[str] | None = Field(
         None,
         description=(
             "Holds those actions that can be performed on the footnote. "
@@ -44,7 +47,7 @@ class Footnote(BaseModel):
         exclude_from_orm=True,
     )
     footnote_template: FootnoteTemplateWithType | None
-    parameter_terms: Sequence[MultiTemplateParameterTerm] | None = Field(
+    parameter_terms: list[MultiTemplateParameterTerm] | None = Field(
         None,
         description="Holds the parameter terms that are used within the footnote. The terms are ordered as they occur in the footnote name.",
     )
@@ -60,13 +63,13 @@ class Footnote(BaseModel):
         for position, parameter in enumerate(footnote_ar.get_parameters()):
             terms: list[IndexedTemplateParameterTerm] = []
             for index, parameter_term in enumerate(parameter.parameters):
-                pv = IndexedTemplateParameterTerm(
+                indexed_template_parameter_term = IndexedTemplateParameterTerm(
                     index=index + 1,
                     uid=parameter_term.uid,
                     name=parameter_term.value,
                     type=parameter.parameter_name,
                 )
-                terms.append(pv)
+                terms.append(indexed_template_parameter_term)
             conjunction = parameter.conjunction
 
             parameter_terms.append(
@@ -76,8 +79,14 @@ class Footnote(BaseModel):
             )
         return cls(
             uid=footnote_ar.uid,
-            name=footnote_ar.name,
-            name_plain=footnote_ar.name_plain,
+            name=capitalize_first_letter_if_template_parameter(
+                footnote_ar.name,
+                footnote_ar.template_name_plain,
+            ),
+            name_plain=capitalize_first_letter_if_template_parameter(
+                footnote_ar.name_plain,
+                footnote_ar.template_name_plain,
+            ),
             start_date=footnote_ar.item_metadata.start_date,
             end_date=footnote_ar.item_metadata.end_date,
             status=footnote_ar.item_metadata.status.value,
@@ -114,13 +123,13 @@ class FootnoteWithType(Footnote):
         for position, parameter in enumerate(footnote_ar.get_parameters()):
             terms: list[IndexedTemplateParameterTerm] = []
             for index, parameter_term in enumerate(parameter.parameters):
-                pv = IndexedTemplateParameterTerm(
+                indexed_template_parameter_term = IndexedTemplateParameterTerm(
                     index=index + 1,
                     uid=parameter_term.uid,
                     name=parameter_term.value,
                     type=parameter.parameter_name,
                 )
-                terms.append(pv)
+                terms.append(indexed_template_parameter_term)
             conjunction = parameter.conjunction
 
             parameter_terms.append(

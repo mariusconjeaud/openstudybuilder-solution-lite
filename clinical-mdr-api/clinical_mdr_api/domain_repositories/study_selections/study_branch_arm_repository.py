@@ -1,10 +1,12 @@
 import datetime
 from dataclasses import dataclass
-from typing import Sequence
 
 from neomodel import db
 
 from clinical_mdr_api.domain_repositories._utils import helpers
+from clinical_mdr_api.domain_repositories.generic_repository import (
+    manage_previous_connected_study_selection_relationships,
+)
 from clinical_mdr_api.domain_repositories.models._utils import (
     convert_to_datetime,
     to_relation_trees,
@@ -68,15 +70,24 @@ class StudySelectionBranchArmRepository:
         study_uid: str | None = None,
         project_name: str | None = None,
         project_number: str | None = None,
-    ) -> Sequence[StudySelectionBranchArmVO]:
+        study_value_version: str | None = None,
+    ) -> tuple[StudySelectionBranchArmVO]:
         query = ""
         query_parameters = {}
-        if study_uid:
-            query = "MATCH (sr:StudyRoot { uid: $uid})-[l:LATEST]->(sv:StudyValue)"
-            query_parameters["uid"] = study_uid
+        if study_value_version:
+            if study_uid:
+                query = "MATCH (sr:StudyRoot { uid: $uid})-[l:HAS_VERSION{status:'RELEASED', version:$study_value_version}]->(sv:StudyValue)"
+                query_parameters["study_value_version"] = study_value_version
+                query_parameters["uid"] = study_uid
+            else:
+                query = "MATCH (sr:StudyRoot)-[l:HAS_VERSION{status:'RELEASED', version:$study_value_version}]->(sv:StudyValue)"
+                query_parameters["study_value_version"] = study_value_version
         else:
-            query = "MATCH (sr:StudyRoot)-[l:LATEST]->(sv:StudyValue)"
-
+            if study_uid:
+                query = "MATCH (sr:StudyRoot { uid: $uid})-[l:LATEST]->(sv:StudyValue)"
+                query_parameters["uid"] = study_uid
+            else:
+                query = "MATCH (sr:StudyRoot)-[l:LATEST]->(sv:StudyValue)"
         if project_name is not None or project_number is not None:
             query += (
                 "-[:HAS_PROJECT]->(:StudyProjectField)<-[:HAS_FIELD]-(proj:Project)"
@@ -93,27 +104,38 @@ class StudySelectionBranchArmRepository:
 
         query += """
             WITH sr, sv
-            MATCH (sv)-[:HAS_STUDY_BRANCH_ARM]->(sar:StudyBranchArm)
-            WITH DISTINCT sr, sar 
+            MATCH (sv)-[:HAS_STUDY_BRANCH_ARM]->(sba:StudyBranchArm)
+            WITH DISTINCT sr, sba 
+
+        """
+        if study_value_version:
+            query += """
+                OPTIONAL MATCH (sba)<-[:STUDY_ARM_HAS_BRANCH_ARM]-(ar:StudyArm)<-[:HAS_STUDY_ARM]-(:StudyValue)<-[l:HAS_VERSION{status:'RELEASED', version:$study_value_version}]-(:StudyRoot)
+            """
+        else:
+            query += """
             
-            OPTIONAL MATCH (ar:StudyArm)-[:STUDY_ARM_HAS_BRANCH_ARM]->(sar)
-            
-            MATCH (sar)<-[:AFTER]-(sa:StudyAction)
+                OPTIONAL MATCH (:StudyValue)--(ar:StudyArm)-[:STUDY_ARM_HAS_BRANCH_ARM]->(sba)
+        
+             """
+
+        query += """
+            MATCH (sba)<-[:AFTER]-(sa:StudyAction)
 
             RETURN DISTINCT 
                 sr.uid AS study_uid,
-                sar.uid AS study_selection_uid,
-                sar.name AS branch_arm_name,
-                sar.short_name AS branch_arm_short_name,
-                sar.branch_arm_code AS branch_arm_code,
-                sar.description AS branch_arm_description,
-                sar.colour_code AS branch_arm_colour_code,
-                sar.order AS order,
-                sar.accepted_version AS accepted_version,
-                sar.number_of_subjects AS number_of_subjects,
-                sar.randomization_group AS randomization_group,
+                sba.uid AS study_selection_uid,
+                sba.name AS branch_arm_name,
+                sba.short_name AS branch_arm_short_name,
+                sba.branch_arm_code AS branch_arm_code,
+                sba.description AS branch_arm_description,
+                sba.colour_code AS branch_arm_colour_code,
+                sba.order AS order,
+                sba.accepted_version AS accepted_version,
+                sba.number_of_subjects AS number_of_subjects,
+                sba.randomization_group AS randomization_group,
                 ar.uid AS arm_root_uid,
-                sar.text AS text,
+                sba.text AS text,
                 sa.date AS start_date,
                 sa.user_initials AS user_initials
                 ORDER BY order
@@ -146,18 +168,28 @@ class StudySelectionBranchArmRepository:
 
     def _retrieves_all_data_within_arm(
         self,
-        study_arm_uid: str = None,
+        study_arm_uid: str | None = None,
         study_uid: str | None = None,
         project_name: str | None = None,
         project_number: str | None = None,
-    ) -> Sequence[StudySelectionBranchArmVO]:
+        study_value_version: str | None = None,
+    ) -> tuple[StudySelectionBranchArmVO]:
         query = ""
         query_parameters = {}
-        if study_uid:
-            query = "MATCH (sr:StudyRoot { uid: $uid})-[l:LATEST]->(sv:StudyValue)"
-            query_parameters["uid"] = study_uid
+        if study_value_version:
+            if study_uid:
+                query = "MATCH (sr:StudyRoot { uid: $uid})-[l:HAS_VERSION{status:'RELEASED', version:$study_value_version}]->(sv:StudyValue)"
+                query_parameters["study_value_version"] = study_value_version
+                query_parameters["uid"] = study_uid
+            else:
+                query = "MATCH (sr:StudyRoot)-[l:HAS_VERSION{status:'RELEASED', version:$study_value_version}]->(sv:StudyValue)"
+                query_parameters["study_value_version"] = study_value_version
         else:
-            query = "MATCH (sr:StudyRoot)-[l:LATEST]->(sv:StudyValue)"
+            if study_uid:
+                query = "MATCH (sr:StudyRoot { uid: $uid})-[l:LATEST]->(sv:StudyValue)"
+                query_parameters["uid"] = study_uid
+            else:
+                query = "MATCH (sr:StudyRoot)-[l:LATEST]->(sv:StudyValue)"
 
         if project_name is not None or project_number is not None:
             query += (
@@ -182,25 +214,25 @@ class StudySelectionBranchArmRepository:
 
         query += """
             WITH sr, sv, ar
-            MATCH (sv)-[:HAS_STUDY_BRANCH_ARM]->(sar:StudyBranchArm)<-[:STUDY_ARM_HAS_BRANCH_ARM]-(ar)
-            WITH DISTINCT sr, sar, ar
+            MATCH (sv)-[:HAS_STUDY_BRANCH_ARM]->(sba:StudyBranchArm)<-[:STUDY_ARM_HAS_BRANCH_ARM]-(ar)
+            WITH DISTINCT sr, sba, ar
             
-            MATCH (sar)<-[:AFTER]-(sa:StudyAction)
+            MATCH (sba)<-[:AFTER]-(sa:StudyAction)
 
             RETURN DISTINCT 
                 sr.uid AS study_uid,
-                sar.uid AS study_selection_uid,
-                sar.name AS branch_arm_name,
-                sar.short_name AS branch_arm_short_name,
-                sar.branch_arm_code AS branch_arm_code,
-                sar.description AS branch_arm_description,
-                sar.colour_code AS branch_arm_colour_code,
-                sar.order AS order,
-                sar.accepted_version AS accepted_version,
-                sar.number_of_subjects AS number_of_subjects,
-                sar.randomization_group AS randomization_group,
+                sba.uid AS study_selection_uid,
+                sba.name AS branch_arm_name,
+                sba.short_name AS branch_arm_short_name,
+                sba.branch_arm_code AS branch_arm_code,
+                sba.description AS branch_arm_description,
+                sba.colour_code AS branch_arm_colour_code,
+                sba.order AS order,
+                sba.accepted_version AS accepted_version,
+                sba.number_of_subjects AS number_of_subjects,
+                sba.randomization_group AS randomization_group,
                 ar.uid AS arm_root_uid,
-                sar.text AS text,
+                sba.text AS text,
                 sa.date AS start_date,
                 sa.user_initials AS user_initials
                 ORDER BY order
@@ -232,7 +264,10 @@ class StudySelectionBranchArmRepository:
         return tuple(all_selections)
 
     def find_by_study(
-        self, study_uid: str, for_update: bool = False
+        self,
+        study_uid: str,
+        for_update: bool = False,
+        study_value_version: str | None = None,
     ) -> StudySelectionBranchArmAR | None:
         """
         Finds all the selected study branch arms for a given study
@@ -242,16 +277,23 @@ class StudySelectionBranchArmRepository:
         """
         if for_update:
             self._acquire_write_lock_study_value(study_uid)
-        all_selections = self._retrieves_all_data(study_uid)
+        all_selections = self._retrieves_all_data(
+            study_uid, study_value_version=study_value_version
+        )
         selection_aggregate = StudySelectionBranchArmAR.from_repository_values(
-            study_uid=study_uid, study_branch_arms_selection=all_selections
+            study_uid=study_uid,
+            study_branch_arms_selection=all_selections,
         )
         if for_update:
             selection_aggregate.repository_closure_data = all_selections
         return selection_aggregate
 
     def find_by_arm(
-        self, study_uid: str, study_arm_uid: str, for_update: bool = False
+        self,
+        study_uid: str,
+        study_arm_uid: str,
+        for_update: bool = False,
+        study_value_version: str | None = None,
     ) -> StudySelectionBranchArmAR | None:
         """
         Finds all the selected study branch arms for a given study_arm
@@ -262,7 +304,9 @@ class StudySelectionBranchArmRepository:
         """
         if for_update:
             self._acquire_write_lock_study_value(study_uid)
-        all_selections = self._retrieves_all_data_within_arm(study_arm_uid)
+        all_selections = self._retrieves_all_data_within_arm(
+            study_arm_uid, study_value_version=study_value_version
+        )
         selection_aggregate = StudySelectionBranchArmAR.from_repository_values(
             study_uid=study_uid, study_branch_arms_selection=all_selections
         )
@@ -271,7 +315,11 @@ class StudySelectionBranchArmRepository:
         return selection_aggregate
 
     def find_by_arm_nested_info(
-        self, study_uid: str, study_arm_uid: str, user_initials: str
+        self,
+        study_uid: str,
+        study_arm_uid: str,
+        user_initials: str,
+        study_value_version: str | None = None,
     ) -> tuple[StudySelectionBranchArmVO, int] | None:
         """
         Return StudySelectionBranchArmVO's connected to the specified StudyArmUid
@@ -280,17 +328,37 @@ class StudySelectionBranchArmRepository:
         :param user_initials: str
         :return: Return a list of tuples of StudySelectionBranchArmVO and ordering
         """
+        if study_value_version:
+            filters = {
+                "uid": study_arm_uid,
+                "study_value__has_version|version": str(study_value_version),
+                "has_branch_arm__study_value__has_version|version": str(
+                    study_value_version
+                ),
+                "study_value__has_version__uid": study_uid,
+                "has_branch_arm__study_value__has_version__uid": study_uid,
+            }
+        else:
+            filters = {
+                "uid": study_arm_uid,
+                "study_value__latest_value__uid": study_uid,
+                "has_branch_arm__study_value__latest_value__uid": study_uid,
+            }
         sa_nodes = (
-            StudyArm.nodes.fetch_relations("has_branch_arm__study_value__study_root")
-            .filter(uid=study_arm_uid, study_value__study_root__uid=study_uid)
+            StudyArm.nodes.fetch_relations("has_branch_arm__study_value__has_version")
+            .filter(**filters)
             .order_by("order")
             .all()
         )
-        sba_nodes = [i_sa_nodes[0] for i_sa_nodes in sa_nodes]
-        sba_nodes = sorted(sba_nodes, key=lambda sba_node: sba_node.order)
+        sba_nodes_non_unique = [i_sa_nodes[0] for i_sa_nodes in sa_nodes]
+        sba_nodes = []
+        for ith in sba_nodes_non_unique:
+            if ith not in sba_nodes:
+                sba_nodes.append(ith)
+        sba_nodes.sort(key=lambda sba_node: sba_node.order)
         # Tuple for the StudySelectionBranchArmVO and the order
         study_branch_arms: list[tuple[StudySelectionBranchArmVO, int]] = []
-        if sba_nodes != []:
+        if sba_nodes:
             for i_sdc_node in sba_nodes:
                 study_branch_arms.append(
                     (
@@ -306,7 +374,7 @@ class StudySelectionBranchArmRepository:
                             randomization_group=i_sdc_node.randomization_group,
                             number_of_subjects=i_sdc_node.number_of_subjects,
                             arm_root_uid=None,
-                            start_date=None,
+                            start_date=i_sdc_node.has_after.single().date,
                             end_date=None,
                             status=None,
                             change_type=None,
@@ -344,15 +412,15 @@ class StudySelectionBranchArmRepository:
         """
         sdc_node = to_relation_trees(
             StudyBranchArm.nodes.fetch_relations("has_after").filter(
-                study_value__study_root__uid=study_uid, uid=branch_arm_uid
+                study_value__latest_value__uid=study_uid, uid=branch_arm_uid
             )
         )
         return len(sdc_node) > 0
 
     def get_branch_arms_connected_to_arm(self, study_uid: str, study_arm_uid: str):
         sdc_nodes = (
-            StudyArm.nodes.fetch_relations("has_branch_arm__study_value__study_root")
-            .filter(uid=study_arm_uid, study_value__study_root__uid=study_uid)
+            StudyArm.nodes.fetch_relations("has_branch_arm__study_value__latest_value")
+            .filter(uid=study_arm_uid, study_value__latest_value__uid=study_uid)
             .order_by("order")
             .all()
         )
@@ -372,7 +440,7 @@ class StudySelectionBranchArmRepository:
         sdc_node = to_relation_trees(
             StudyBranchArm.nodes.fetch_relations(
                 "has_design_cell__study_value", "has_after"
-            ).filter(study_value__study_root__uid=study_uid, uid=branch_arm_uid)
+            ).filter(study_value__latest_value__uid=study_uid, uid=branch_arm_uid)
         )
         return len(sdc_node) > 0
 
@@ -385,7 +453,9 @@ class StudySelectionBranchArmRepository:
         """
         sdc_node = to_relation_trees(
             StudyBranchArm.nodes.fetch_relations("arm_root", "has_after")
-            .filter(study_value__study_root__uid=study_uid, arm_root__uid=arm_root_uid)
+            .filter(
+                study_value__latest_value__uid=study_uid, arm_root__uid=arm_root_uid
+            )
             .exclude(uid=branch_arm_uid)
         )
         return len(sdc_node) == 0
@@ -497,9 +567,6 @@ class StudySelectionBranchArmRepository:
                     study_root_node=study_root_node,
                     author=author,
                 )
-                self._remove_old_selection_if_exists(
-                    study_selection.study_uid, selected_object
-                )
 
                 audit_trail_nodes[selected_object.study_selection_uid] = audit_node
                 last_nodes[
@@ -542,34 +609,6 @@ class StudySelectionBranchArmRepository:
                 )
 
     @staticmethod
-    def _remove_old_selection_if_exists(
-        study_uid: str, study_selection: StudySelectionBranchArmVO
-    ) -> None:
-        """
-        Removal is taking both new and old uid. When a study selection is deleted, we do no longer need to use the uid
-        on that study selection node anymore, however do to database constraint the node needs to have a uid. So we are
-        overwriting a deleted node uid, with a new never used dummy uid.
-
-        We are doing this to be able to maintain the selection instead of removing it, instead a removal will only
-        detach the selection from the study value node. So we keep the old selection to have full audit trail available
-        in the database.
-        :param study_uid:
-        :param old_uid:
-        :param new_uid:
-        :return:
-        """
-        db.cypher_query(
-            """
-            MATCH (:StudyRoot { uid: $study_uid})-[:LATEST]->(:StudyValue)-[rel:HAS_STUDY_BRANCH_ARM]->(se:StudyBranchArm { uid: $selection_uid})
-            DELETE rel
-            """,
-            {
-                "study_uid": study_uid,
-                "selection_uid": study_selection.study_selection_uid,
-            },
-        )
-
-    @staticmethod
     def _set_before_audit_info(
         audit_node: StudyAction,
         study_selection_node: StudyBranchArm,
@@ -599,8 +638,8 @@ class StudySelectionBranchArmRepository:
                 # If it matches a branch_arm with a different arm_root, then it would
                 # mean that it is trying to change its arm_root, even though it's having design_cells connected to the BranchArm.
                 arm_root__uid__ne=branch_arm_vo.arm_root_uid,
-                study_value__study_root__uid=branch_arm_vo.study_uid,
-                has_design_cell__study_value__study_root__uid=branch_arm_vo.study_uid,
+                study_value__latest_value__uid=branch_arm_vo.study_uid,
+                has_design_cell__study_value__latest_value__uid=branch_arm_vo.study_uid,
             )
             .get_or_none(uid=branch_arm_vo.study_selection_uid)
         )
@@ -615,7 +654,7 @@ class StudySelectionBranchArmRepository:
             StudyBranchArm.nodes.has(study_value=True)
             .filter(
                 uid__ne=branch_arm_vo.study_selection_uid,
-                study_value__study_root__uid=branch_arm_vo.study_uid,
+                study_value__latest_value__uid=branch_arm_vo.study_uid,
             )
             .get_or_none(**{db_property: kwarg_value})
         )
@@ -628,7 +667,7 @@ class StudySelectionBranchArmRepository:
         selection: StudySelectionBranchArmVO,
         audit_node: StudyAction,
         for_deletion: bool = False,
-        before_node: StudyBranchArm = None,
+        before_node: StudyBranchArm | None = None,
     ):
         """
         Add new BranchArm Selection
@@ -664,25 +703,19 @@ class StudySelectionBranchArmRepository:
         audit_node.has_after.connect(study_branch_arm_selection_node)
 
         if before_node is not None:
-            design_cells = before_node.has_design_cell.all()
-            for i_design_cell in design_cells:
-                if i_design_cell.study_value.get_or_none():
-                    study_branch_arm_selection_node.has_design_cell.connect(
-                        i_design_cell
-                    )
-
-            cohorts = before_node.has_cohort.all()
-            for i_cohort in cohorts:
-                # if the i_cohort is an actual one then carry it to the new node
-                if i_cohort.study_value.get_or_none() is not None:
-                    study_branch_arm_selection_node.has_cohort.connect(i_cohort)
+            manage_previous_connected_study_selection_relationships(
+                previous_item=before_node,
+                study_value_node=latest_study_value_node,
+                new_item=study_branch_arm_selection_node,
+                exclude_study_selection_relationships=[StudyArm],
+            )
 
         # check if arm root is set
         if selection.arm_root_uid:
             # find the objective
-            study_arm_root = StudyArm.nodes.fetch_relations("study_value").get(
+            study_arm_root = latest_study_value_node.has_study_arm.get(
                 uid=selection.arm_root_uid
-            )[1]
+            )
             # connect to node
             # pylint: disable=no-member
             study_branch_arm_selection_node.arm_root.connect(study_arm_root)
@@ -691,7 +724,7 @@ class StudySelectionBranchArmRepository:
         return StudyBranchArm.get_next_free_uid_and_increment_counter()
 
     def _get_selection_with_history(
-        self, study_uid: str, study_selection_uid: str = None
+        self, study_uid: str, study_selection_uid: str | None = None
     ):
         """
         returns the audit trail for study branch arm either for a specific selection or for all study branch arm for the study
@@ -773,7 +806,7 @@ class StudySelectionBranchArmRepository:
         return result
 
     def find_selection_history(
-        self, study_uid: str, study_selection_uid: str = None
+        self, study_uid: str, study_selection_uid: str | None = None
     ) -> list[SelectionHistoryBranchArm]:
         """
         Simple method to return all versions of a study objectives for a study.

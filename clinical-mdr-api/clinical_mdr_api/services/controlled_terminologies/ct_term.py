@@ -1,4 +1,4 @@
-from typing import Sequence, TypeVar
+from typing import Any, TypeVar
 
 from neomodel import db
 
@@ -182,7 +182,7 @@ class CTTermService:
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
-    ) -> Sequence:
+    ) -> list[Any]:
         self.enforce_codelist_package_library(
             codelist_uid, codelist_name, library, package
         )

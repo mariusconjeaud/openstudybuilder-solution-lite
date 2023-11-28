@@ -138,6 +138,7 @@ def test_data():
 
 ACTIVITY_REQUEST_FIELDS_ALL = [
     "uid",
+    "nci_concept_id",
     "name",
     "name_sentence_case",
     "definition",
@@ -145,6 +146,7 @@ ACTIVITY_REQUEST_FIELDS_ALL = [
     "activity_groupings",
     "request_rationale",
     "replaced_by_activity",
+    "is_data_collected",
     "library_name",
     "start_date",
     "end_date",
@@ -362,7 +364,10 @@ def test_edit_activity_request(api_client):
     )
     response = api_client.patch(
         f"/concepts/activities/activities/{activity_request.uid}",
-        json={"name": "new name"},
+        json={
+            "name": "new name",
+            "name_sentence_case": "new name",
+        },
     )
     res = response.json()
     assert response.status_code == 200
@@ -383,6 +388,7 @@ def test_post_activity_request(api_client):
             "name_sentence_case": "new activity request name",
             "library_name": "Requested",
             "request_rationale": "Activity request rationale",
+            "is_data_collected": True,
         },
     )
     assert response.status_code == 201
@@ -396,6 +402,7 @@ def test_post_activity_request(api_client):
     assert res["activity_groupings"] == []
     assert res["possible_actions"] == ["approve", "delete", "edit"]
     assert res["request_rationale"] == "Activity request rationale"
+    assert res["is_data_collected"] is True
 
 
 def test_post_sponsor_activity_from_activity_request(api_client):
@@ -435,8 +442,8 @@ def test_post_sponsor_activity_from_activity_request(api_client):
         "/concepts/activities/activities/sponsor-activities",
         json={
             "activity_request_uid": activity_requests_all[0].uid,
-            "name": "New Sponsor Activity from Activity Request",
-            "name_sentence_case": "new sponsor activity from activity request",
+            "name": activity_requests_all[0].name,
+            "name_sentence_case": activity_requests_all[0].name_sentence_case,
             "definition": "definition",
             "abbreviation": "abbreviation",
             "activity_groupings": [
@@ -450,8 +457,8 @@ def test_post_sponsor_activity_from_activity_request(api_client):
     )
     assert response.status_code == 201
     res = response.json()
-    assert res["name"] == "New Sponsor Activity from Activity Request"
-    assert res["name_sentence_case"] == "new sponsor activity from activity request"
+    assert res["name"] == "name A"
+    assert res["name_sentence_case"] == "name A"
     assert res["library_name"] == "Sponsor"
     assert res["definition"] == "definition"
     assert res["abbreviation"] == "abbreviation"
@@ -483,6 +490,7 @@ def test_post_sponsor_activity_from_activity_request(api_client):
     assert res["request_rationale"] == "New activity request rationale"
     assert res["activity_groupings"] == []
     assert res["replaced_by_activity"] == replaced_activity_uid
+    assert res["is_data_collected"] is False
 
 
 def test_update_activity_request_to_sponsor_in_study_activity(api_client):
@@ -506,7 +514,7 @@ def test_update_activity_request_to_sponsor_in_study_activity(api_client):
         activity_uid=activity_request.uid,
         activity_subgroup_uid=None,
         activity_group_uid=None,
-        flowchart_group_uid=biomarkers_flowchart.term_uid,
+        soa_group_term_uid=biomarkers_flowchart.term_uid,
     )
     # Create sponsor activity from activity request
     response = api_client.post(

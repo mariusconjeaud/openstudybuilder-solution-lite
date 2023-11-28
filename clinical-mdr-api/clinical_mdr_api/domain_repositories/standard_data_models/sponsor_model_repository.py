@@ -1,5 +1,9 @@
 from neomodel import RelationshipDefinition
 
+from clinical_mdr_api.config import (
+    SPONSOR_MODEL_PREFIX,
+    SPONSOR_MODEL_VERSION_NUMBER_PREFIX,
+)
 from clinical_mdr_api.domain_repositories.library_item_repository import (
     LibraryItemRepositoryImplBase,
 )
@@ -56,16 +60,16 @@ class SponsorModelRepository(
         name = "_".join(
             [
                 str.lower(ig_uid),
-                "mastermodel",
+                SPONSOR_MODEL_PREFIX,
                 ig_version_number,
-                f"NN{version_number}",
+                f"{SPONSOR_MODEL_VERSION_NUMBER_PREFIX}{version_number}",
             ]
         )
         return name
 
     def _find_latest_version_number(self, ig_uid: str) -> int:
-        ig = DataModelIGRoot.nodes.get_or_none(uid=ig_uid)
-        if ig is None:
+        data_model_ig_root = DataModelIGRoot.nodes.get_or_none(uid=ig_uid)
+        if data_model_ig_root is None:
             raise BusinessLogicException(
                 f"The target Implementation Guide {ig_uid} does not exist in the database."
             )

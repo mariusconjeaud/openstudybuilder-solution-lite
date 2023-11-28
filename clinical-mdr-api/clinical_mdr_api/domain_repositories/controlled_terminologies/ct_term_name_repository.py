@@ -78,7 +78,6 @@ class CTTermNameRepository(CTTermGenericRepository[CTTermNameAR]):
             had_term_relationship: CodelistTermRelationship = (
                 ct_codelist_root_node.had_term.relationship(ct_term_root_node)
             )
-
         return CTTermNameAR.from_repository_values(
             uid=ct_term_root_node.uid,
             ct_term_name_vo=CTTermNameVO.from_repository_values(
@@ -87,7 +86,7 @@ class CTTermNameRepository(CTTermGenericRepository[CTTermNameAR]):
                 name_sentence_case=value.name_sentence_case,
                 order=has_term_relationship.order
                 if has_term_relationship
-                else had_term_relationship,
+                else had_term_relationship.order,
                 catalogue_name=ct_codelist_root_node.has_codelist.single().name,
             ),
             library=LibraryVO.from_input_values_2(

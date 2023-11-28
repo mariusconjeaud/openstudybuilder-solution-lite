@@ -1,4 +1,4 @@
-from typing import Any, Sequence
+from typing import Any
 
 from fastapi import APIRouter, Depends, Query
 
@@ -20,7 +20,6 @@ CACHE_STORE_NAMES = [
     "/caches",
     dependencies=[rbac.ADMIN_READ],
     summary="Returns all cache stores",
-    response_model=Sequence[Any],
     status_code=200,
     responses={
         404: _generic_descriptions.ERROR_404,
@@ -30,7 +29,7 @@ CACHE_STORE_NAMES = [
 def get_caches(
     _current_user_id: str = Depends(get_current_user_id),
     show_items: bool | None = Query(False),
-) -> Sequence[Any]:
+) -> list[dict]:
     all_repos = _get_all_repos()
     return [_get_cache_info(x, show_items) for x in all_repos]
 
@@ -39,7 +38,6 @@ def get_caches(
     "/caches",
     dependencies=[rbac.ADMIN_WRITE],
     summary="Clears all cache stores",
-    response_model=Sequence[Any],
     status_code=200,
     responses={
         404: _generic_descriptions.ERROR_404,
@@ -48,7 +46,7 @@ def get_caches(
 )
 def clear_caches(
     current_user_id: str = Depends(get_current_user_id),
-) -> Sequence[Any]:
+) -> list[dict]:
     all_repos = _get_all_repos()
     for repo in all_repos:
         for store_name in CACHE_STORE_NAMES:
@@ -69,7 +67,7 @@ def _get_all_repos():
     return all_repos
 
 
-def _get_cache_info(repo: Any, show_items: bool = False) -> Any:
+def _get_cache_info(repo: Any, show_items: bool = False) -> dict:
     ret = {
         "class": str(repo.__class__),
         "cache_stores": [],

@@ -56,14 +56,18 @@ Possible errors:
 @decorators.allow_exports(
     {
         "defaults": [
-            "uid",
             "library_name",
-            "activity=activities.name",
-            "name",
+            "activity_instance_class=activity_instance_class.name",
+            "activity=activity_groupings.activity.name",
+            "activity_instance=name",
             "definition",
+            "nci_concept_id",
             "topic_code",
             "adam_param_code",
-            "sdtm_domain=sdtm_domain.name",
+            "is_required_for_activity",
+            "is_default_selected_for_activity",
+            "is_data_sharing",
+            "is_legacy_usage",
             "start_date",
             "user_initials",
             "status",
@@ -120,6 +124,114 @@ def get_activities(
         activity_names=activity_names,
         activity_instance_class_names=activity_instance_class_names,
         sort_by=sort_by,
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
+        filter_by=filters,
+        filter_operator=FilterOperator.from_str(operator),
+    )
+    return CustomPage.create(
+        items=results.items, total=results.total, page=page_number, size=page_size
+    )
+
+
+@router.get(
+    "/versions",
+    dependencies=[rbac.LIBRARY_READ],
+    summary="List all versions of all activity instances (for a given library)",
+    description=f"""
+State before:
+ - The library must exist (if specified)
+ 
+Business logic:
+ - List version history of all activity instances
+ - The returned versions are ordered by version start_date descending (newest entries first).
+
+State after:
+ - No change
+ 
+Possible errors:
+ - Invalid library name specified.
+
+{_generic_descriptions.DATA_EXPORTS_HEADER}
+""",
+    response_model=CustomPage[ActivityInstance],
+    status_code=200,
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+@decorators.allow_exports(
+    {
+        "defaults": [
+            "uid",
+            "library_name",
+            "activity=activities.name",
+            "name",
+            "definition",
+            "topic_code",
+            "adam_param_code",
+            "is_required_for_activity",
+            "is_default_selected_for_activity",
+            "is_data_sharing",
+            "is_legacy_usage",
+            "sdtm_domain=sdtm_domain.name",
+            "start_date",
+            "user_initials",
+            "status",
+            "version",
+        ],
+        "formats": [
+            "text/csv",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "text/xml",
+            "application/json",
+        ],
+    }
+)
+# pylint: disable=unused-argument
+def get_activity_instances_versions(
+    request: Request,  # request is actually required by the allow_exports decorator
+    library: str | None = Query(None, description=""),
+    activity_names: list[str]
+    | None = Query(
+        None,
+        description="A list of activity names to use as a specific filter",
+        alias="activity_names[]",
+    ),
+    activity_instance_class_names: list[str]
+    | None = Query(
+        None,
+        description="A list of activity_instance_class names to use as a specific filter",
+        alias="activity_instance_class_names[]",
+    ),
+    page_number: int
+    | None = Query(1, ge=1, description=_generic_descriptions.PAGE_NUMBER),
+    page_size: int
+    | None = Query(
+        config.DEFAULT_PAGE_SIZE,
+        ge=0,
+        le=config.MAX_PAGE_SIZE,
+        description=_generic_descriptions.PAGE_SIZE,
+    ),
+    filters: Json
+    | None = Query(
+        None,
+        description=_generic_descriptions.FILTERS,
+        example=_generic_descriptions.FILTERS_EXAMPLE,
+    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    total_count: bool
+    | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
+    current_user_id: str = Depends(get_current_user_id),
+):
+    activity_instance_service = ActivityInstanceService(user=current_user_id)
+    results = activity_instance_service.get_all_concept_versions(
+        library=library,
+        activity_names=activity_names,
+        activity_instance_class_names=activity_instance_class_names,
+        sort_by={"start_date": False},
         page_number=page_number,
         page_size=page_size,
         total_count=total_count,

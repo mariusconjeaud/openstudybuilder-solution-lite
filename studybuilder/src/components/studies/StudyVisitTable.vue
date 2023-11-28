@@ -105,7 +105,7 @@
         :title="$t('GroupStudyVisits.title')"
         v-show="!loading && showSelectBoxes"
         @click="groupSelectedVisits(selected)"
-        :disabled="!checkPermission($roles.STUDY_WRITE)"
+        :disabled="!checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
         >
         <v-icon>mdi-arrow-expand-horizontal</v-icon>
       </v-btn>
@@ -116,7 +116,7 @@
         @click.stop="openForm"
         v-show="!loading"
         :title="$t('NNTableTooltips.add_content')"
-        :disabled="!checkPermission($roles.STUDY_WRITE)"
+        :disabled="!checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
         data-cy="add-visit"
         >
         <v-icon dark>
@@ -132,7 +132,7 @@
         data-cy="edit-study-visits"
         class="ml-2"
         v-if="!editMode && !loading"
-        :disabled="!checkPermission($roles.STUDY_WRITE)"
+        :disabled="!checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
         >
         <v-icon dark>
           mdi-pencil-outline
@@ -145,6 +145,11 @@
         class="ml-2"
         >
       </v-progress-circular>
+    </template>
+    <template v-slot:item.visit_name="{ item }">
+      <router-link :to="{ name: 'StudyVisitOverview', params: { study_id: selectedStudy.uid, id: item.uid } }">
+        {{ item.visit_name }}
+      </router-link>
     </template>
     <template v-slot:item.visit_window="{ item }">
       <div v-if="editMode && item.visit_class === 'SINGLE_VISIT'">
@@ -178,9 +183,6 @@
       <template v-else-if="item.min_visit_window_value !== null && item.max_visit_window_value !== null">
         {{ item.min_visit_window_value }} / {{ item.max_visit_window_value }} {{ getUnitName(item.visit_window_unit_uid) }}
       </template>
-    </template>
-    <template v-slot:item.study_epoch_uid="{ item }">
-      {{ getStudyEpochName(item.study_epoch_uid) }}
     </template>
     <template v-slot:item.show_visit="{ item }">
       <div v-if="editMode && item.visit_class === 'SINGLE_VISIT'">
@@ -317,7 +319,7 @@
     </template>
     <template v-slot:item.actions="{ item }">
       <actions-menu
-        v-if="!itemsDisabled || item.disabled"
+        v-if="(!itemsDisabled || item.disabled) && selectedStudyVersion === null"
         :actions="actions"
         :item="item"
         />
@@ -427,10 +429,11 @@ export default {
   computed: {
     ...mapGetters({
       selectedStudy: 'studiesGeneral/selectedStudy',
+      selectedStudyVersion: 'studiesGeneral/selectedStudyVersion',
       studyPreferredTimeUnit: 'studiesGeneral/studyPreferredTimeUnit',
-      studyEpochs: 'studyEpochs/studyEpochs',
       studyVisits: 'studyEpochs/studyVisits',
-      totalVisits: 'studyEpochs/totalVisits'
+      totalVisits: 'studyEpochs/totalVisits',
+      studyEpochs: 'studyEpochs/studyEpochs'
     }),
     barChartStyles () {
       return {
@@ -494,9 +497,10 @@ export default {
       ],
       headers: [
         { text: '', value: 'actions', width: '5%' },
-        { text: this.$t('StudyVisitForm.study_epoch'), value: 'study_epoch_uid' },
+        { text: this.$t('StudyVisitForm.study_epoch'), value: 'study_epoch_name' },
         { text: this.$t('StudyVisitForm.visit_type'), value: 'visit_type_name' },
         { text: this.$t('StudyVisitForm.visit_class'), value: 'visit_class' },
+        { text: this.$t('StudyVisitForm.visit_name'), value: 'visit_name' },
         { text: this.$t('StudyVisitForm.anchor_visit_in_group'), value: 'visit_subclass' },
         { text: this.$t('StudyVisitForm.visit_group'), value: 'visit_subname' },
         { text: this.$t('StudyVisitForm.global_anchor_visit'), value: 'is_global_anchor_visit' },
@@ -505,7 +509,6 @@ export default {
         { text: this.$t('StudyVisitForm.time_value'), value: 'time_value' },
         { text: this.$t('StudyVisitForm.visit_number'), value: 'order' },
         { text: this.$t('StudyVisitForm.unique_visit_number'), value: 'unique_visit_number' },
-        { text: this.$t('StudyVisitForm.visit_name'), value: 'visit_name' },
         { text: this.$t('StudyVisitForm.visit_short_name'), value: 'visit_short_name' },
         { text: this.$t('StudyVisitForm.study_duration_days'), value: 'study_duration_days_label' },
         { text: this.$t('StudyVisitForm.study_duration_weeks'), value: 'study_duration_weeks_label' },
@@ -523,9 +526,10 @@ export default {
       ],
       defaultColumns: [
         { text: '', value: 'actions', width: '5%' },
-        { text: this.$t('StudyVisitForm.study_epoch'), value: 'study_epoch_uid' },
+        { text: this.$t('StudyVisitForm.study_epoch'), value: 'study_epoch_name' },
         { text: this.$t('StudyVisitForm.visit_type'), value: 'visit_type_name' },
         { text: this.$t('StudyVisitForm.visit_class'), value: 'visit_class' },
+        { text: this.$t('StudyVisitForm.visit_name'), value: 'visit_name' },
         { text: this.$t('StudyVisitForm.anchor_visit_in_group'), value: 'visit_subclass' },
         { text: this.$t('StudyVisitForm.visit_group'), value: 'visit_subname' },
         { text: this.$t('StudyVisitForm.global_anchor_visit'), value: 'is_global_anchor_visit' },
@@ -534,7 +538,6 @@ export default {
         { text: this.$t('StudyVisitForm.time_value'), value: 'time_value' },
         { text: this.$t('StudyVisitForm.visit_number'), value: 'order' },
         { text: this.$t('StudyVisitForm.unique_visit_number'), value: 'unique_visit_number' },
-        { text: this.$t('StudyVisitForm.visit_name'), value: 'visit_name' },
         { text: this.$t('StudyVisitForm.visit_short_name'), value: 'visit_short_name' },
         { text: this.$t('StudyVisitForm.study_duration_days'), value: 'study_duration_days_label' },
         { text: this.$t('StudyVisitForm.study_duration_weeks'), value: 'study_duration_weeks_label' },
@@ -670,7 +673,8 @@ export default {
       showCollapsibleGroupForm: false,
       showStudyVisitsHistory: false,
       visitHistoryItems: [],
-      visitSelection: []
+      visitSelection: [],
+      fetchedStudyEpochs: []
     }
   },
   methods: {
@@ -735,6 +739,7 @@ export default {
       const params = filteringParameters.prepareParameters(
         this.options, filters, sort, filtersUpdated)
       params.studyUid = this.selectedStudy.uid
+      params.study_value_version = this.selectedStudyVersion
       this.$store.dispatch('studyEpochs/fetchFilteredStudyVisits', params)
     },
     getDisplay (item, name) {
@@ -762,7 +767,9 @@ export default {
           type: 'warning',
           cancelLabel: this.$t('_global.cancel'),
           agreeLabel: this.$t('StudyVisitForm.add_epoch'),
-          redirect: 'epochs'
+          redirect: {
+            name: 'StudyStructure', params: { tab: 'epochs' }
+          }
         }
         if (!await this.$refs.confirm.open(this.$t('StudyVisitForm.create_epoch'), options)) {
           return
@@ -790,8 +797,11 @@ export default {
       this.showVisitHistory = false
     },
     getStudyEpochName (studyEpochUid) {
-      if (this.studyEpochs) {
-        const epoch = this.studyEpochs.find(item => item.uid === studyEpochUid)
+      if (this.studyEpochs && this.studyEpochs.length > 0) {
+        this.fetchedStudyEpochs = this.studyEpochs
+      }
+      if (this.fetchedStudyEpochs) {
+        const epoch = this.fetchedStudyEpochs.find(item => item.uid === studyEpochUid)
         return epoch.epoch_name
       }
       return ''
@@ -930,12 +940,16 @@ export default {
         this.calculatedItems.epoch_uid = this.createMapping(resp.data.items, 'term_uid', 'sponsor_preferred_name')
       })
     })
-    this.$store.dispatch('studyEpochs/fetchStudyEpochs', this.selectedStudy.uid).then(() => {
+    const params = {
+      study_value_version: this.selectedStudyVersion
+    }
+    this.$store.dispatch('studyEpochs/fetchStudyEpochs', { studyUid: this.selectedStudy.uid, data: params }).then(() => {
       const params = {
         page_number: 1,
         total_count: true,
         page_size: this.$refs.table.computedItemsPerPage,
-        studyUid: this.selectedStudy.uid
+        studyUid: this.selectedStudy.uid,
+        study_value_version: this.selectedStudyVersion
       }
       this.$store.dispatch('studyEpochs/fetchFilteredStudyVisits', params)
     })

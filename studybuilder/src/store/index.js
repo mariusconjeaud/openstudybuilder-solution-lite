@@ -4,6 +4,7 @@ import Vuex from 'vuex'
 import app from '@/store/modules/app'
 import auth from '@/store/modules/auth'
 import form from '@/store/modules/form'
+import filteringParams from '@/store/filteringParams'
 
 // Library modules
 import objectives from '@/store/modules/library/objectives'
@@ -53,6 +54,7 @@ export default new Vuex.Store({
     studyFootnotes,
     tablesLayout,
     form,
-    crfs
+    crfs,
+    filteringParams
   }
 })

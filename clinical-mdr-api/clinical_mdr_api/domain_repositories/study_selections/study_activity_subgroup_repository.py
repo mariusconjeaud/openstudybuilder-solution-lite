@@ -17,7 +17,6 @@ from clinical_mdr_api.domain_repositories.models.study_audit_trail import StudyA
 from clinical_mdr_api.domain_repositories.models.study_selections import (
     StudyActivity,
     StudyActivitySubGroup,
-    StudySelection,
 )
 from clinical_mdr_api.domain_repositories.study_selections.study_activity_base_repository import (
     StudySelectionActivityBaseRepository,
@@ -33,13 +32,10 @@ class SelectionHistory:
     """Class for selection history items"""
 
     study_selection_uid: str
-    study_activity_selection_uid: str
     activity_subgroup_uid: str
     user_initials: str
     change_type: str
     start_date: datetime.datetime
-    show_activity_subgroup_in_protocol_flowchart: bool | None
-    activity_subgroup_order: int | None
     end_date: datetime.datetime | None
     activity_subgroup_version: str | None
 
@@ -49,19 +45,17 @@ class StudySelectionActivitySubGroupRepository(
 ):
     _aggregate_root_type = StudySelectionActivitySubGroupAR
 
+    def is_repository_based_on_ordered_selection(self):
+        return False
+
     def _create_value_object_from_repository(
         self, selection: dict, acv: bool
     ) -> StudySelectionActivitySubGroupVO:
         return StudySelectionActivitySubGroupVO.from_input_values(
             study_selection_uid=selection["study_selection_uid"],
-            study_activity_selection_uid=selection["study_activity_selection_uid"],
             study_uid=selection["study_uid"],
             activity_subgroup_uid=selection["activity_subgroup_uid"],
             activity_subgroup_version=selection["activity_subgroup_version"],
-            activity_subgroup_order=selection["activity_subgroup_order"],
-            show_activity_subgroup_in_protocol_flowchart=selection[
-                "show_activity_subgroup_in_protocol_flowchart"
-            ],
             start_date=convert_to_datetime(value=selection["start_date"]),
             user_initials=selection["user_initials"],
             accepted_version=acv,
@@ -70,20 +64,24 @@ class StudySelectionActivitySubGroupRepository(
     def _additional_match(self) -> str:
         return """
             WITH sr, sv
-            MATCH (sv)-[:HAS_STUDY_ACTIVITY_SUBGROUP]->(sa:StudyActivitySubGroup)-[:HAS_SELECTED_ACTIVITY_SUBGROUP]->(av:ActivitySubGroupValue)<-[ver:HAS_VERSION]-(ar:ActivitySubGroupRoot)
-            MATCH (sa)<-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]-(study_activity)
+            MATCH (sv)-[:HAS_STUDY_ACTIVITY]->(study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]->
+                (sa:StudyActivitySubGroup)-[:HAS_SELECTED_ACTIVITY_SUBGROUP]->(av:ActivitySubGroupValue)<-[ver:HAS_VERSION]-(ar:ActivitySubGroupRoot)
         """
 
     def _filter_clause(self, query_parameters: dict, **kwargs) -> str:
         return ""
 
+    def _order_by_query(self):
+        return """
+            WITH DISTINCT *
+            ORDER BY study_activity.order ASC
+            MATCH (sa)<-[:AFTER]-(sac:StudyAction)
+        """
+
     def _return_clause(self) -> str:
         return """RETURN DISTINCT
-                study_activity.uid AS study_activity_selection_uid,
                 sr.uid AS study_uid,
-                sa.order AS activity_subgroup_order,
                 sa.uid AS study_selection_uid,
-                sa.show_activity_subgroup_in_protocol_flowchart AS show_activity_subgroup_in_protocol_flowchart,
                 sa.accepted_version AS accepted_version,
                 ar.uid AS activity_subgroup_uid,
                 sac.date AS start_date,
@@ -95,24 +93,19 @@ class StudySelectionActivitySubGroupRepository(
     ):
         return SelectionHistory(
             study_selection_uid=selection["study_selection_uid"],
-            study_activity_selection_uid=selection["study_activity_selection_uid"],
             activity_subgroup_uid=selection["activity_subgroup_uid"],
-            activity_subgroup_order=selection["activity_subgroup_order"],
             activity_subgroup_version=selection["activity_subgroup_version"],
             user_initials=selection["user_initials"],
             change_type=change_type,
             start_date=convert_to_datetime(value=selection["start_date"]),
-            show_activity_subgroup_in_protocol_flowchart=selection[
-                "show_activity_subgroup_in_protocol_flowchart"
-            ],
             end_date=end_date,
         )
 
     def get_audit_trail_query(self, study_selection_uid: str):
         if study_selection_uid:
             audit_trail_cypher = """
-            MATCH (sr:StudyRoot { uid: $study_uid})-[:AUDIT_TRAIL]->(:StudyAction)-[:BEFORE|AFTER]->(sa:StudyActivitySubGroup { uid: $study_selection_uid})
-            <-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]-(study_activity:StudyActivity)
+            MATCH (sr:StudyRoot { uid: $study_uid})-[:AUDIT_TRAIL]->(:StudyAction)-[:BEFORE|AFTER]->(sa:StudyActivitySubGroup {uid: $study_selection_uid})
+                <-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]-(study_activity:StudyActivity)
             WITH sa, study_activity
             MATCH (sa)-[:AFTER|BEFORE*0..]-(all_sa:StudyActivitySubGroup)
             WITH distinct(all_sa), study_activity
@@ -120,7 +113,7 @@ class StudySelectionActivitySubGroupRepository(
         else:
             audit_trail_cypher = """
             MATCH (sr:StudyRoot { uid: $study_uid})-[:AUDIT_TRAIL]->(:StudyAction)-[:BEFORE|AFTER]->(all_sa:StudyActivitySubGroup)
-            <-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]-(study_activity:StudyActivity)
+                <-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]-(study_activity:StudyActivity)
             WITH DISTINCT all_sa, study_activity
             """
         audit_trail_cypher += """
@@ -136,16 +129,13 @@ class StudySelectionActivitySubGroupRepository(
                     }
 
                     WITH DISTINCT all_sa, ar, ver, study_activity
-                    ORDER BY all_sa.order ASC
+                    ORDER BY study_activity.order ASC
                     MATCH (all_sa)<-[:AFTER]-(asa:StudyAction)
                     OPTIONAL MATCH (all_sa)<-[:BEFORE]-(bsa:StudyAction)
-                    WITH all_sa, ar, asa, bsa, ver, fgr, study_activity
+                    WITH all_sa, ar, asa, bsa, ver, fgr
                     ORDER BY all_sa.uid, asa.date DESC
                     RETURN
-                        study_activity.uid AS study_activity_selection_uid,
-                        all_sa.order AS activity_subgroup_order,
                         all_sa.uid AS study_selection_uid,
-                        all_sa.show_activity_subgroup_in_protocol_flowchart AS show_activity_subgroup_in_protocol_flowchart,
                         ar.uid AS activity_subgroup_uid,
                         asa.date AS start_date,
                         asa.user_initials AS user_initials,
@@ -156,9 +146,9 @@ class StudySelectionActivitySubGroupRepository(
         return audit_trail_cypher
 
     def get_study_selection_node_from_latest_study_value(
-        self, study_value: StudyValue, study_selection: StudySelection
+        self, study_value: StudyValue, study_selection: StudyActivitySubGroup
     ):
-        return study_value.has_study_activity_subgroup.get(
+        return StudyActivitySubGroup.nodes.has(has_before=False).get(
             uid=study_selection.study_selection_uid
         )
 
@@ -181,34 +171,21 @@ class StudySelectionActivitySubGroupRepository(
             )
         )
         # Create new activity subgroup selection
-        study_activity_subgroup_selection_node = StudyActivitySubGroup(
-            order=order,
-            show_activity_subgroup_in_protocol_flowchart=selection.show_activity_subgroup_in_protocol_flowchart,
-        )
+        study_activity_subgroup_selection_node = StudyActivitySubGroup()
         study_activity_subgroup_selection_node.uid = selection.study_selection_uid
         study_activity_subgroup_selection_node.accepted_version = (
             selection.accepted_version
         )
         study_activity_subgroup_selection_node.save()
-        if not for_deletion:
-            # Connect new node with study value
-            latest_study_value_node.has_study_activity_subgroup.connect(
-                study_activity_subgroup_selection_node
-            )
-        # Connect new node with Study Activity
-        study_activity_node = StudyActivity.nodes.has(has_before=False).get(
-            uid=selection.study_activity_selection_uid
-        )
-        study_activity_subgroup_selection_node.study_activity_has_study_activity_subgroup.connect(
-            study_activity_node
-        )
+
         # Connect new node with audit trail
-        audit_node.has_after.connect(study_activity_subgroup_selection_node)
+        audit_node.study_selection_metadata_has_after.connect(
+            study_activity_subgroup_selection_node
+        )
         # Connect new node with Activity subgroup value
         study_activity_subgroup_selection_node.has_selected_activity_subgroup.connect(
             latest_activity_subgroup_value_node
         )
-
         if last_study_selection_node:
             manage_previous_connected_study_selection_relationships(
                 previous_item=last_study_selection_node,
@@ -228,8 +205,25 @@ class StudySelectionActivitySubGroupRepository(
     ) -> list[StudyActivitySubGroup]:
         study_activity_subgroups = to_relation_trees(
             StudyActivitySubGroup.nodes.filter(
-                has_study_activity_subgroup__study_root__uid=study_uid,
+                study_activity_has_study_activity_subgroup__has_study_activity__latest_value__uid=study_uid,
                 study_activity_has_study_activity_subgroup__uid=study_activity_uid,
             ).has(has_before=False)
         ).distinct()
         return study_activity_subgroups
+
+    def find_study_activity_subgroup_with_same_groupings(
+        self,
+        study_uid: str,
+        activity_subgroup_uid: str,
+        activity_group_uid: str,
+        soa_group_term_uid: str,
+    ) -> StudyActivitySubGroup:
+        study_activity_subgroups = to_relation_trees(
+            StudyActivitySubGroup.nodes.filter(
+                study_activity_has_study_activity_subgroup__has_study_activity__latest_value__uid=study_uid,
+                has_selected_activity_subgroup__has_version__uid=activity_subgroup_uid,
+                study_activity_subgroup_has_study_activity_group__has_selected_activity_group__has_version__uid=activity_group_uid,
+                study_activity_has_study_activity_subgroup__has_soa_group_selection__has_flowchart_group__uid=soa_group_term_uid,
+            ).has(has_before=False)
+        ).distinct()
+        return study_activity_subgroups[0]

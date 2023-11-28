@@ -247,7 +247,10 @@ export default {
       }
     },
     async updateTemplate () {
-      const data = { ...this.form }
+      const data = {
+        ...this.form,
+        indication_uids: (this.form.indications) ? this.form.indications.map(item => item.term_uid) : []
+      }
 
       try {
         let template

@@ -1,11 +1,11 @@
-from .utils.importer import BaseImporter, open_file, open_file_async
+from .utils.importer import BaseImporter, open_file_async
 from .utils.path_join import path_join
 from .utils.metrics import Metrics
 from .functions.parsers import map_boolean
 import asyncio
 import aiohttp
 import csv
-from typing import Optional, Sequence, Any
+from typing import Any
 
 from .functions.utils import load_env
 from .functions.caselessdict import CaselessDict
@@ -118,18 +118,44 @@ class Activities(BaseImporter):
         return name_submvals
 
     # Get a dictionary with valid ct terms that may map to values in a given column of the activity instances file
-    def _get_terms_for_columns(self):
+    def _get_terms_for_item_classes(self):
         ct_codelists = {
             "specimen": "SPECTYPE",
-            "SDTM_DOMAIN": "DOMAIN",
+            "domain": "DOMAIN",
             "unit_dimension": "UNITDIM",
             "laterality": "LAT",
             "location": "LOC",
+            "position": "POSITION",
         }
+
         result = {}
         for key, val in ct_codelists.items():
             result[key] = self._get_submissionvalues_for_codelist(val)
         return result
+    
+    # Get a dictionary of terms for the most common SDTM variable codelists
+    def _get_terms_for_codelist_submvals(self):
+        self.log.info("Fetching terms for common sdtm variable codelists")
+        codelists = [
+            "FATESTCD",
+            "LBTESTCD",
+            "VSTESTCD",
+            "PROTMLST",
+            "RPTESTCD"
+        ]
+
+        result = {"NO_LINKAGE_NEEDED": []}
+        for cd in codelists:
+            result[cd] = self._get_submissionvalues_for_codelist(cd)
+        self.terms_for_codelist_submval = result
+
+    # Add a new codelist to the dictionary of terms for SDTM variable codelists
+    def _get_terms_for_additional_codelist_submval(self, submval):
+        self.log.info(f"Fetching terms for codelist with submission value '{submval}'")
+        cl_terms = self._get_submissionvalues_for_codelist(submval)
+        if cl_terms is not None and len(cl_terms) == 0:
+            cl_terms = None
+        self.terms_for_codelist_submval[submval] = cl_terms
 
     # Sort a list of activity items by class, returns a dict with class as key
     def _sort_activity_items_by_class(self, items):
@@ -291,6 +317,25 @@ class Activities(BaseImporter):
                 )
         await asyncio.gather(*api_tasks)
 
+    def _are_groupings_equal(self, old, new):
+        # Convert both old and new to lists of tuples, (group_uid, subgroup_uid)
+        # These are hashable so the lists can be made into sets for easy comparison
+        new_groupings = set((item["activity_group_uid"], item["activity_subgroup_uid"]) for item in new)
+        old_groupings = set((item["activity_group_uid"], item["activity_subgroup_uid"]) for item in old)
+        return new_groupings == old_groupings
+
+    def _are_activities_equal(self, old, new):
+        existing_groupings = old["activity_groupings"]
+        new_groupings = new["activity_groupings"]
+        return (
+            old.get("nci_concept_id") == new.get("nci_concept_id")
+            and old.get("is_data_collected") == new.get("is_data_collected")
+            and old.get("name_sentence_case") == new.get("name_sentence_case")
+            and old.get("definition") == new.get("definition")
+            and self._are_groupings_equal(existing_groupings, new_groupings)
+        )
+
+
     @open_file_async()
     async def handle_activities(self, csvfile, session):
         # Populate the activities in sponsor library
@@ -343,35 +388,35 @@ class Activities(BaseImporter):
                 "activity_group_uid": group_uid,
                 "activity_subgroup_uid": subgroup_uid,
             }
+            # WIP
+            # - nci_concept_id: not existing in current data.
+            # - is_data_collected: will be False for reminders. These activities don't have instances. These are not yet imported.
+            # - definition: not existing in current data.
+            # TODO determine how to provide nci_concept_id for activity
+            # TODO determine how to specify reminder activities
             if activity_name not in unique_activities:
                 unique_activities[activity_name] = {
                     "name": activity_name,
                     "name_sentence_case": activity_name.lower(),
+                    "definition": "",
                     "library_name": "Sponsor",
                     "activity_groupings": [grouping],
+                    "nci_concept_id": None,
+                    "is_data_collected": True,
                 }
             else:
                 existing_data = unique_activities[activity_name]
                 if grouping not in existing_data["activity_groupings"]:
                     existing_data["activity_groupings"].append(grouping)
 
-        def compare_groupings(old, new):
-            # Convert both old and new to lists of tuples, (group_uid, subgroup_uid)
-            # These are hashable so the lists can be made into sets for easy comparison
-            new_groupings = set((item["activity_group_uid"], item["activity_subgroup_uid"]) for item in new)
-            old_groupings = set((item["activity_group_uid"], item["activity_subgroup_uid"]) for item in old)
-            return new_groupings == old_groupings
-
-
         for _key, item_data in unique_activities.items():
             activity_name = item_data["name"]
             # Check if activity exists
             if activity_name in existing_activities:
                 # If the activity does not already have all groups -> patch it
-                existing_groupings = existing_activities[activity_name]["activity_groupings"]
                 groupings = item_data["activity_groupings"]
-                if compare_groupings(existing_groupings, groupings):
-                    self.log.info(f"Activity '{activity_name}' already has groupings '{groupings}'")
+                if self._are_activities_equal(existing_activities[activity_name], item_data):
+                    self.log.info(f"Identical activity '{activity_name}' already exists")
                     continue
                 data = {
                     "path": ACTIVITIES_PATH,
@@ -584,6 +629,21 @@ class Activities(BaseImporter):
         await asyncio.gather(*api_tasks_for_3_level_ac)
         await asyncio.gather(*api_tasks_for_4_level_ac)
 
+    def are_item_classes_equal(self, new, existing):
+        new_order = int(new.get("order")) if new.get("order") else None
+        new_instance_class_names = set(new.get("activity_instance_class_names")) if new.get("activity_instance_class_names") else set()
+        existing_instance_class_names = set(inst_cls["name"] for inst_cls in existing.get("activity_instance_classes"))
+        result = (existing.get("name") == new.get("name")
+                and existing.get("library_name") == new.get("library_name")
+                and existing.get("mandatory") == new.get("mandatory")
+                and existing.get("definition") == new.get("definition")
+                and existing.get("nci_concept_id") == new.get("nci_concept_id")
+                and existing.get("order") == new_order
+                and existing.get("role").get("uid") == new.get("role_uid")
+                and existing.get("data_type").get("uid") == new.get("data_type_uid")
+                and existing_instance_class_names == new_instance_class_names)
+        return result
+
     @open_file_async()
     async def handle_activity_item_classes(self, csvfile, session):
         self.ensure_cache()
@@ -601,19 +661,6 @@ class Activities(BaseImporter):
             identifier="name",
             value="uid",
         )
-
-        def are_item_classes_equal(new, existing):
-            new_order = int(new.get("order")) if new.get("order") else None
-            new_instance_class_names = set(new.get("activity_instance_class_names")) if new.get("activity_instance_class_names") else set()
-            existing_instance_class_names = set(inst_cls["name"] for inst_cls in existing.get("activity_instance_classes"))
-            result = (existing.get("name") == new.get("name")
-                    and existing.get("library_name") == new.get("library_name")
-                    and existing.get("mandatory") == new.get("mandatory")
-                    and existing.get("order") == new_order
-                    and existing.get("role").get("uid") == new.get("role_uid")
-                    and existing.get("data_type").get("uid") == new.get("data_type_uid")
-                    and existing_instance_class_names == new_instance_class_names)
-            return result
 
         activity_item_data = {}
         for row in readCSV:
@@ -651,6 +698,8 @@ class Activities(BaseImporter):
                     "name": activity_item_class_name,
                     "order": row[headers.index("ORDER")],
                     "mandatory": map_boolean(row[headers.index("MANDATORY")]),
+                    "definition": row[headers.index("DEFINITION")],
+                    "nci_concept_id": row[headers.index("NCI_C_CODE")],
                     "activity_instance_class_uids": [instance_class_uid],
                     "activity_instance_class_names": [activity_instance_class_name],
                     "role_uid": role_uid,
@@ -686,7 +735,7 @@ class Activities(BaseImporter):
                         data=item_data, session=session, approve=True
                     )
                 )
-            elif not are_item_classes_equal(item_data["body"], existing_rows[item_name]):
+            elif not self.are_item_classes_equal(item_data["body"], existing_rows[item_name]):
                 self.log.info(
                     f"Patch activity item class '{item_data['body']['name']}' to library '{item_data['body']['library_name']}'"
                 )
@@ -714,6 +763,56 @@ class Activities(BaseImporter):
 
         await asyncio.gather(*api_tasks)
         # await session.close()
+
+    def compare_instance_items(self, old, new):
+        new_items = set(
+            (
+                item.get("activity_item_class_uid"),
+                frozenset(item.get("ct_term_uids", [])),
+                frozenset(item.get("unit_definition_uids", []))
+            )
+            for item in new
+        )
+        old_items = set(
+            (
+                item.get("activity_item_class", {}).get("uid"),
+                frozenset(term["uid"] for term in item.get("ct_terms", [])),
+                frozenset(unit["uid"] for unit in item.get("unit_definitions", []))
+            )
+            for item in old
+        )
+        return new_items == old_items
+
+    def compare_instance_groupings(self, old, new):
+        # Convert both old and new to lists of tuples, (activity_uid, group_uid, subgroup_uid)
+        # These are hashable so the lists can be made into sets for easy comparison
+        new_groupings = set((item["activity_uid"], item["activity_group_uid"], item["activity_subgroup_uid"]) for item in new)
+        old_groupings = set(
+            (
+                item.get("activity", {}).get("uid"),
+                item.get("activity_group", {}).get("uid"),
+                item.get("activity_subgroup", {}).get("uid")
+            )
+            for item in old
+        )
+        return new_groupings == old_groupings
+
+    def are_instances_equal(self, new, existing):
+        result = (existing.get("activity_instance_class").get("uid") == new.get("activity_instance_class_uid")
+                and existing.get("library_name") == new.get("library_name")
+                and existing.get("name_sentence_case") == new.get("name_sentence_case")
+                and existing.get("definition") == new.get("definition")
+                and existing.get("adam_param_code") == new.get("adam_param_code")
+                and existing.get("legacy_description") == new.get("legacy_description")
+                and existing.get("topic_code") == new.get("topic_code")
+                and existing.get("nci_concept_id") == new.get("nci_concept_id")
+                and existing.get("is_required_for_activity") == new.get("is_required_for_activity")
+                and existing.get("is_default_selected_for_activity") == new.get("is_default_selected_for_activity")
+                and existing.get("is_data_sharing") == new.get("is_data_sharing")
+                and existing.get("is_legacy_usage") == new.get("is_legacy_usage")
+                and self.compare_instance_items(existing["activity_items"], new["activity_items"])
+                and self.compare_instance_groupings(existing["activity_groupings"], new["activity_groupings"]))
+        return result
 
     @open_file_async()
     async def handle_activity_instances(self, csvfile, session):
@@ -743,17 +842,26 @@ class Activities(BaseImporter):
             value="uid",
         )
 
-        # Names may overlap between different item classes.
-        # Store the different classes in separate dicts.
-        all_activity_items = self.api.get_all_from_api(ACTIVITY_ITEMS_PATH)
-        items_by_class = {}
-        for item in all_activity_items:
-            itemclass = item["activity_item_class"]["name"]
-            if itemclass not in items_by_class:
-                items_by_class[itemclass] = {}
-            name = item["name"]
-            uid= item["uid"]
-            items_by_class[itemclass][name] = uid
+        self.all_activity_item_classes = self.api.get_all_identifiers(
+            self.api.get_all_from_api(ACTIVITY_ITEM_CLASSES_PATH),
+            identifier="name",
+            value="uid",
+        )
+
+        self.all_units = self.api.get_all_identifiers(
+            self.api.get_all_from_api("/concepts/unit-definitions"),
+            identifier="name",
+            value="uid",
+        )
+
+        sdtm_cats, sdtm_subcats = self._get_all_cats_and_subcats()
+        self.sdtm_cats = sdtm_cats
+        self.sdtm_subcats = sdtm_subcats
+
+        self.log.info("Fetching terms for item classes")
+        terms_for_item_classes = self._get_terms_for_item_classes()
+
+        self._get_terms_for_codelist_submvals()
 
         existing_instances = self.api.get_all_activity_objects("activity-instances")
         existing_rows_by_name = self.api.response_to_dict(
@@ -764,33 +872,6 @@ class Activities(BaseImporter):
             existing_instances,
             identifier="topic_code",
         )
-
-        def compare_groupings(old, new):
-            # Convert both old and new to lists of tuples, (activity_uid, group_uid, subgroup_uid)
-            # These are hashable so the lists can be made into sets for easy comparison
-            new_groupings = set((item["activity_uid"], item["activity_group_uid"], item["activity_subgroup_uid"]) for item in new)
-            old_groupings = set(
-                (
-                    item.get("activity", {}).get("uid"),
-                    item.get("activity_group", {}).get("uid"),
-                    item.get("activity_subgroup", {}).get("uid")
-                )
-                for item in old
-            )
-            return new_groupings == old_groupings
-    
-        def are_instances_equal(new, existing):
-            new_item_uids = set(new.get("activity_item_uids")) if new.get("activity_item_uids") else set()
-            existing_item_uids = set(item["uid"] for item in existing.get("activity_items"))
-            result = (existing.get("activity_instance_class").get("uid") == new.get("activity_instance_class_uid")
-                    and existing.get("library_name") == new.get("library_name")
-                    and existing.get("name_sentence_case") == new.get("name_sentence_case")
-                    and existing.get("adam_param_code") == existing.get("adam_param_code")
-                    and existing.get("legacy_description") == existing.get("legacy_description")
-                    and existing.get("topic_code") == existing.get("topic_code")
-                    and existing_item_uids == new_item_uids
-                    and compare_groupings(existing["activity_groupings"], new["activity_groupings"]))
-            return result
 
         file_data = []
         for row in readCSV:
@@ -822,34 +903,36 @@ class Activities(BaseImporter):
                 sgrp = subgroup in all_subgroups
                 self.log.warning(f"Missing items, found activity '{activity}' {act}, group '{group}' {grp}, subgroup '{subgroup}' {sgrp}")
 
-            # find related Activity Items
-            activity_item_uids = []
-
-            def add_item_uid(in_key):
-                if row[in_key] != "":
-                    value = row[in_key]
-                    if "|" in value:
-                        items = value.split("|")
-                    else:
-                        items = [value]
-                    for item in items:
-                        # look up item of correct item class
-                        domain = row["GENERAL_DOMAIN_CLASS"]
-                        itemclass = self._get_item_class(in_key, domain)
-                        item_uid = items_by_class.get(itemclass, {}).get(item)
-                        if item_uid is not None:
-                            activity_item_uids.append(item_uid)
-                        else:
-                            self.log.info(f"Term for '{in_key}' = '{item}' not found")
-            add_item_uid("specimen")
-            add_item_uid("SDTM_DOMAIN")
-            add_item_uid("sdtm_cat")
-            add_item_uid("sdtm_sub_cat")
-            add_item_uid("sdtm_variable")
-            add_item_uid("laterality")
-            add_item_uid("location")
-            add_item_uid("unit_dimension")
-            add_item_uid("std_unit")
+            domain = row["GENERAL_DOMAIN_CLASS"]
+            item_cols = [
+                "specimen",
+                "SDTM_DOMAIN",
+                "sdtm_cat",
+                "sdtm_sub_cat",
+                "unit_dimension",
+                "laterality",
+                "location",
+                "std_unit",
+                "sdtm_variable"
+            ]
+            item_data = []
+            for col in item_cols:
+                value = row[col]
+                sdtm_codelist = row["stdm_codelist"]
+                if not value:
+                    continue
+                if "|" in value:
+                    items = value.split("|")
+                else:
+                    items = [value]
+                data = self._create_activity_item(items, col, domain, terms_for_item_classes, sdtm_codelist)
+                if not data:
+                    continue
+                existing_for_class = next((existing for existing in item_data if self._are_items_same_class(data, existing)), None)
+                if existing_for_class:
+                    self._append_item_terms_or_units(existing_for_class, data)
+                else:
+                    item_data.append(data)
 
             # find related Activity Instance Class
             sub_domain_class = row["sub_domain_class"]
@@ -883,6 +966,12 @@ class Activities(BaseImporter):
                     f"Activity instance '{activity_instance_name}' has an unknown domain class '{sub_domain_class}'"
                 )
                 continue
+            # WIP, column names in data file are preliminary:
+            # - nci_concept_id
+            # - is_required_for_activity
+            # - is_default_selected_for_activity
+            # - is_data_sharing
+            # - is_legacy_usage
             data = {
                 "path": ACTIVITY_INSTANCES_PATH,
                 "approve_path": ACTIVITY_INSTANCES_PATH,
@@ -890,29 +979,49 @@ class Activities(BaseImporter):
                     "activity_instance_class_uid": activity_instance_class_uid,
                     "name": activity_instance_name,
                     "name_sentence_case": activity_instance_name.lower(),
+                    "definition": row.get("definition"),
                     "adam_param_code": row["adam_param_code"],
                     "activity_groupings": activity_groupings,
-                    "activity_item_uids": activity_item_uids,
+                    "activity_items": item_data,
                     "legacy_description": row["legacy_description"],
                     "topic_code": row["TOPIC_CD"],
                     "library_name": "Sponsor",
+                    "nci_concept_id": row.get("nci_concept_id"),
+                    "is_required_for_activity": map_boolean(row.get("is_required_for_activity")),
+                    "is_default_selected_for_activity": map_boolean(row.get("is_default_selected_for_activity")),
+                    "is_data_sharing": map_boolean(row.get("is_data_sharing"), default=True),
+                    "is_legacy_usage": map_boolean(row.get("is_legacy_usage")),
                 },
             }
             if activity_instance_name not in all_data:
+                # This is a new activity instance
                 all_data[activity_instance_name] = data
             else:
+                # This activity instance already exists, add more data to it
                 current_activity_items = all_data[activity_instance_name]["body"][
-                    "activity_item_uids"
+                    "activity_items"
                 ]
-                for activity_item_uid in activity_item_uids:
-                    if activity_item_uid not in current_activity_items:
-                        current_activity_items.append(activity_item_uid)
+                # Items
+                for activity_item in item_data:
+                    existing_for_class = next((existing for existing in current_activity_items if self._are_items_same_class(activity_item, existing)), None)
+                    if existing_for_class:
+                        # There is already an activity item of this class, add any new units or terms to it
+                        self._append_item_terms_or_units(existing_for_class, activity_item)
+                    else:
+                        current_activity_items.append(activity_item)
+                # Groupings
                 current_groupings = all_data[activity_instance_name]["body"]["activity_groupings"]
                 for grouping in data["body"]["activity_groupings"]:
                     if grouping not in current_groupings:
                         current_groupings.append(grouping)
 
         for activity_instance_name, activity_instance_data in all_data.items():
+
+            # Convert the sets to lists, needed for json serialization
+            for item in activity_instance_data['body']["activity_items"]:
+                item["ct_term_uids"] = list(item["ct_term_uids"])
+                item["unit_definition_uids"] = list(item["unit_definition_uids"])
+
             topic_code = activity_instance_data['body']["topic_code"]
             if activity_instance_name not in existing_rows_by_name and topic_code not in existing_rows_by_tc:
                 self.log.info(f"Adding activity instance '{activity_instance_name}'")
@@ -923,7 +1032,7 @@ class Activities(BaseImporter):
                 self.log.warning(f"Not adding activity instance for topic code {topic_code}"
                              f" since instance with name {activity_instance_name} already exists"
                              f" with different topic code {existing_rows_by_name[activity_instance_name]['topic_code']}")
-            elif not are_instances_equal(activity_instance_data["body"], existing_rows_by_tc[topic_code]):
+            elif not self.are_instances_equal(activity_instance_data["body"], existing_rows_by_tc[topic_code]):
                 self.log.info(f"Patch activity instance '{activity_instance_name}'")
                 activity_instance_data["patch_path"] = path_join(
                     ACTIVITY_INSTANCES_PATH,
@@ -976,25 +1085,25 @@ class Activities(BaseImporter):
             return "standard_unit"
 
     # Helper to create a single activity item
-    def _create_activity_item(self, item, column, domain, terms_for_columns):
+    def _create_activity_item(self, items, column, domain, terms_for_item_classes, sdtm_codelist):
         item_class = self._get_item_class(column, domain)
         if not item_class:
             return
-        if item_class not in self.all_migrated_items:
-            self.all_migrated_items[item_class] = []
-        migrated_items = self.all_migrated_items[item_class]
-        if item != "" and item not in migrated_items:
-            unit_uid = None
-            item_uid = None
+        unit_uids = set()
+        term_uids = set()
+        for item in items:
+            if item == "":
+                continue
             if item_class in ["standard_unit"]:
                 unit_uid = self.all_units.get(item)
                 if unit_uid:
                     self.log.info(
-                        f"Activity item '{item}' found unit def '{item}'"
+                        f"Activity item '{item}' found unit def '{unit_uid}'"
                     )
+                    unit_uids.add(unit_uid)
                 else:
                     self.log.warning(
-                        f"Activity item '{item}' could not find unit def '{item}'"
+                        f"Activity item '{item}' could not find unit definition"
                     )
             else:
                 if item_class == "finding_category":
@@ -1012,175 +1121,96 @@ class Activities(BaseImporter):
                 else:
                     submval = item
                 if column == "sdtm_cat" and item in self.sdtm_cats:
-                    item_uid = self.sdtm_cats[item]
+                    term_uid = self.sdtm_cats[item]
                     self.log.info(
-                        f"Activity item '{item}' found underlying ct term with uid '{item_uid}' for item class '{item_class}'"
+                        f"Activity item '{item}' found underlying ct term with uid '{term_uid}' for item class '{item_class}'"
                     )
+                    term_uids.add(term_uid)
                 elif column == "sdtm_sub_cat" and item in self.sdtm_subcats:
-                    item_uid = self.sdtm_subcats[item]
+                    term_uid = self.sdtm_subcats[item]
                     self.log.info(
-                        f"Activity item '{item}' found underlying ct term with uid '{item_uid}' for item class '{item_class}'"
+                        f"Activity item '{item}' found underlying ct term with uid '{term_uid}' for item class '{item_class}'"
                     )
-                elif column in terms_for_columns:
-                    terms = terms_for_columns[column]
+                    term_uids.add(term_uid)
+                elif item_class in terms_for_item_classes:
+                    terms = terms_for_item_classes[item_class]
                     if submval in terms:
-                        item_uid = terms[submval]
+                        term_uid = terms[submval]
                         self.log.info(
-                            f"Activity item '{item}' found underlying ct term with uid '{item_uid}' for item class '{item_class}'"
+                            f"Activity item '{item}' found underlying ct term with uid '{term_uid}' for item class '{item_class}'"
                         )
+                        term_uids.add(term_uid)
                     else:
                         self.log.warning(
                             f"Activity item '{item}' from column '{column}' can't find underlying ct term for item class '{item_class}'"
                         )
-                        migrated_items.append(item)
-                        return
+                        continue
+                elif column == "sdtm_variable":
+                    if sdtm_codelist not in self.terms_for_codelist_submval:
+                        self.log.info(f"Fetching terms for codelist with submission value '{sdtm_codelist}'")
+                        cl_terms = self._get_submissionvalues_for_codelist(sdtm_codelist)
+                        if cl_terms is not None and len(cl_terms) == 0:
+                            cl_terms = None
+                        self.terms_for_codelist_submval[sdtm_codelist] = cl_terms
 
-                elif submval in self.cache.all_terms_name_submission_values:
-                    item_uid = self.cache.all_terms_name_submission_values[submval]
-                    self.log.info(
-                        f"Activity item '{item}' found underlying ct term with uid '{item_uid}' for item class '{item_class}'"
-                    )
-                elif submval in self.cache.all_terms_code_submission_values:
-                    item_uid = self.cache.all_terms_code_submission_values[submval]
-                    self.log.info(
-                        f"Activity item '{item}' found underlying ct term with uid '{item_uid}' for item class '{item_class}'"
-                    )
+                    available_terms = self.terms_for_codelist_submval[sdtm_codelist]
+                    if available_terms is None:
+                        self.log.warning(
+                                f"Activity item '{item}' can't find codelist '{sdtm_codelist}' for item class '{item_class}'"
+                            )
+                        continue
+                    if submval in available_terms:
+                        term_uid = available_terms[submval]
+                        self.log.info(
+                            f"Activity item '{item}' found ct term for SDTM variable with submval '{submval}' with uid '{term_uid}' in codelist '{sdtm_codelist}' for item class '{item_class}'"
+                        )
+                        term_uids.add(term_uid)
+                    else:
+                        self.log.warning(
+                            f"Activity item '{item}' can't find ct term for SDTM variable with submval '{submval}' in codelist '{sdtm_codelist}' for item class '{item_class}'"
+                        )
+                        continue
                 else:
                     self.log.warning(
-                        f"Activity item '{item}' can't find underlying ct term for item class '{item_class}'"
+                        f"Activity item '{item}' from column '{column}' can't find underlying ct term for item class '{item_class}'"
                     )
-                    migrated_items.append(item)
-                    return
-            if item not in migrated_items:
-                item_data = {
-                    "path": ACTIVITY_ITEMS_PATH,
-                    "approve_path": ACTIVITY_ITEMS_PATH,
-                    "body": {
-                        "name": item,
-                        "activity_item_class_uid": self.all_activity_item_classes.get(item_class),
-                        "library_name": "Sponsor",
-                        "activity_item_class_name": item_class,
-                    },
-                }
-                if unit_uid and item_uid:
-                    self.log.warning(f"Activity Item '{item}' can't link both to CTTerm and UnitDefinition, ignoring the unit")
-                if item_uid:
-                    item_data["body"]["ct_term_uid"] = item_uid
-                elif unit_uid:
-                    item_data["body"]["unit_definition_uid"] = unit_uid
-                else:
-                    self.log.warning(f"Activity Item '{item}' is not linked with any related nodes like"
-                                     f"CTTerm or UnitDefinition")
-                    return
-                if item_data["body"]["activity_item_class_uid"] is None:
-                    self.log.warning(f"Activity Item '{item}' has unknown item class '{item_class}'")
-                    return
-                migrated_items.append(item)
-                return item_data
+                    continue
+        item_data = {
+            "activity_item_class_uid": self.all_activity_item_classes.get(item_class),
+            "ct_term_uids": set(),
+            "unit_definition_uids": set()
+        }
+        if len(unit_uids) > 0 and len(term_uids) > 0:
+            self.log.warning(f"Activity Item '{items}' can't link both to CTTerm and UnitDefinition, ignoring the units")
+        if len(term_uids) > 0:
+            item_data["ct_term_uids"] = term_uids
+        elif len(unit_uids) > 0:
+            item_data["unit_definition_uids"] = unit_uids
+        else:
+            self.log.warning(f"Activity Items '{items}' could not be linked with any related nodes like"
+                             f"CTTerm or UnitDefinition")
+            return
+        if item_data["activity_item_class_uid"] is None:
+            self.log.warning(f"Activity Items '{items}' have unknown item class '{item_class}'")
+            return
+        return item_data
 
-
-    @open_file_async()
-    async def handle_activity_items(self, csvfile, session):
-        self.ensure_cache()
-        readCSV = csv.reader(csvfile, delimiter=",")
-        headers = next(readCSV)
-        api_tasks = []
-
-
-        self.all_activity_item_classes = self.api.get_all_identifiers(
-            self.api.get_all_from_api(ACTIVITY_ITEM_CLASSES_PATH),
-            identifier="name",
-            value="uid",
+    def _are_items_equal(self, new, existing):
+        result = (
+            existing.get("activity_item_class_uid") == new.get("activity_item_class_uid")
+            and existing.get("unit_definition_uids") == new.get("unit_definition_uids")
+            and existing.get("ct_term_uids") == new.get("ct_term_uids")
         )
+        return result
 
-        existing_items = self.api.get_all_from_api(ACTIVITY_ITEMS_PATH)
-        existing_rows = self.api.get_all_identifiers(
-            existing_items,
-            identifier="name",
-            value="uid",
-        )
-        existing_items_by_class = self._sort_activity_items_by_class(existing_items)
+    def _are_items_same_class(self, new, existing):
+        return existing.get("activity_item_class_uid") == new.get("activity_item_class_uid")
 
-        self.all_units = self.api.get_all_identifiers(
-            self.api.get_all_from_api("/concepts/unit-definitions"),
-            identifier="name",
-            value="uid",
-        )
-
-        sdtm_cats, sdtm_subcats = self._get_all_cats_and_subcats()
-        self.sdtm_cats = sdtm_cats
-        self.sdtm_subcats = sdtm_subcats
-
-        terms_for_columns = self._get_terms_for_columns()
-
-        def are_items_equal(new, existing):
-            existing_unit_name = existing.get("unit_definition").get("name") if existing.get("unit_definition") else None
-            existing_term_uid = existing.get("ct_term").get("uid") if existing.get("ct_term") else None
-            new_unit_name = new["name"] if new.get("unit_definition_uid") else None
-            result = (existing.get("activity_item_class").get("name") == new.get("activity_item_class_name")
-                    and existing.get("library_name") == new.get("library_name")
-                    and existing_unit_name == new_unit_name
-                    and existing_term_uid == new.get("ct_term_uid"))
-            return result
-
-        self.all_migrated_items = {}
-        for row in readCSV:
-            item_data = []
-            domain = row[headers.index("GENERAL_DOMAIN_CLASS")]
-            cols = ["specimen", "SDTM_DOMAIN", "sdtm_cat", "sdtm_sub_cat", "unit_dimension", "laterality", "location", "std_unit", "sdtm_variable"]
-            for col in cols:
-                value = row[headers.index(col)]
-                if "|" in value:
-                    items = value.split("|")
-                else:
-                    items = [value]
-                for item in items:
-                    data = self._create_activity_item(item, col, domain, terms_for_columns)
-                    if data:
-                        item_data.append(data)
-
-            for data in item_data:
-                if data:
-                    activity_item_name = data["body"]["name"]
-                    activity_item_class = data["body"]["activity_item_class_uid"]
-                    activity_item_class_name = data["body"]["activity_item_class_name"]
-                    if not existing_items_by_class.get(activity_item_class_name, {}).get(activity_item_name):
-                        self.log.info(
-                            f"Adding activity item '{activity_item_name}' to activity item class '{activity_item_class}'"
-                        )
-                        if "activity_item_class" in data["body"]:
-                            data["body"].pop("activity_item_class")
-                        api_tasks.append(
-                            self.api.post_then_approve(
-                                data=data, session=session, approve=True
-                            )
-                        )
-                    elif not are_items_equal(data["body"], existing_items_by_class.get(activity_item_class_name, {}).get(activity_item_name)):
-                        self.log.info(
-                            f"Patching activity item '{activity_item_name}' to activity item class '{activity_item_class}'"
-                        )
-                        data["patch_path"] = path_join(
-                            ACTIVITY_ITEMS_PATH,
-                            existing_items_by_class[activity_item_class_name][activity_item_name].get("uid"),
-                        )
-                        data["new_path"] = path_join(
-                            ACTIVITY_ITEMS_PATH,
-                            existing_items_by_class[activity_item_class_name][activity_item_name].get("uid"),
-                            "versions",
-                        )
-                        data["body"]["change_description"] = "Migration modification"
-                        if "activity_item_class" in data["body"]:
-                            data["body"].pop("activity_item_class")
-                        api_tasks.append(
-                            self.api.new_version_patch_then_approve(
-                                data=data, session=session, approve=True
-                            )
-                        )
-                    else:
-                        self.log.info(
-                            f"Identical activity item '{activity_item_name}' in item class '{activity_item_class}' already exists"
-                        )
-        await asyncio.gather(*api_tasks)
+    def _append_item_terms_or_units(self, existing, additional):
+        if not self._are_items_same_class(additional, existing):
+            raise RuntimeError(f"Trying to merge two items of different classes '{existing['activity_item_class_uid']}' and '{additional['activity_item_class_uid']}'")
+        existing["unit_definition_uids"] = existing["unit_definition_uids"] | additional["unit_definition_uids"]
+        existing["ct_term_uids"] = existing["ct_term_uids"] | additional["ct_term_uids"]
 
     async def async_run(self):
 
@@ -1203,9 +1233,6 @@ class Activities(BaseImporter):
             )
             await self.handle_activity_item_classes(
                 mdr_migration_activity_item_classes, session
-            )
-            await self.handle_activity_items(
-                mdr_migration_activity_instances, session
             )
             await self.handle_activity_instances(
                 mdr_migration_activity_instances, session

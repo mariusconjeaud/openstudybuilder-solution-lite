@@ -219,11 +219,6 @@ export default {
       return { length: this.userData.studyNumberLength }
     },
     async submit () {
-      const valid = await this.$refs.observer.validate()
-      if (!valid) {
-        return
-      }
-      this.$refs.form.working = true
       try {
         if (!this.editedStudy) {
           await this.addStudy()

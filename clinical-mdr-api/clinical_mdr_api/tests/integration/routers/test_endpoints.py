@@ -35,11 +35,11 @@ class EndpointTest(api.APITest):
         epdata = template_data.copy()
         epdata["name"] = "Test [Indication]"
         endpoint_template = ep_models.EndpointTemplateCreateInput(**epdata)
-        self.ep = EndpointTemplateService().create(endpoint_template)
-        assert isinstance(self.ep, EndpointTemplate)
-        EndpointTemplateService().approve(self.ep.uid)
-        self.data["etuid"] = self.ep.uid
-        print(self.ep.uid)
+        self.endpoint_template = EndpointTemplateService().create(endpoint_template)
+        assert isinstance(self.endpoint_template, EndpointTemplate)
+        EndpointTemplateService().approve(self.endpoint_template.uid)
+        self.data["etuid"] = self.endpoint_template.uid
+        print(self.endpoint_template.uid)
 
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "endpoints.json")]
 
@@ -63,10 +63,10 @@ class EndpointNegativeTest(EndpointTest):
         self.library = library_service.create(name="Test library", is_editable=True)
         etdata = template_data.copy()
         endpoint_template = ep_models.EndpointTemplateCreateInput(**etdata)
-        self.et = EndpointTemplateService().create(endpoint_template)
-        assert isinstance(self.et, EndpointTemplate)
-        EndpointTemplateService().approve(self.et.uid)
-        self.data["etuid"] = self.et.uid
+        self.endpoint_template = EndpointTemplateService().create(endpoint_template)
+        assert isinstance(self.endpoint_template, EndpointTemplate)
+        EndpointTemplateService().approve(self.endpoint_template.uid)
+        self.data["etuid"] = self.endpoint_template.uid
         etdt = template_data.copy()
         etdt["name"] = "Name not approved"
         endpoint_template = ep_models.EndpointTemplateCreateInput(**etdt)
@@ -105,10 +105,10 @@ class EndpointVersioningTest(EndpointTest):
         epdata = template_data.copy()
         epdata["name"] = "Test [Indication]"
         endpoint_template = ep_models.EndpointTemplateCreateInput(**epdata)
-        self.ep = EndpointTemplateService().create(endpoint_template)
-        assert isinstance(self.ep, EndpointTemplate)
-        EndpointTemplateService().approve(self.ep.uid)
-        self.data["etuid"] = self.ep.uid
+        self.endpoint_template = EndpointTemplateService().create(endpoint_template)
+        assert isinstance(self.endpoint_template, EndpointTemplate)
+        EndpointTemplateService().approve(self.endpoint_template.uid)
+        self.data["etuid"] = self.endpoint_template.uid
 
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "endpoint_versioning.json")]
 

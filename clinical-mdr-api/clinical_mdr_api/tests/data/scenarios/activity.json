@@ -6,7 +6,8 @@
          "method": "POST",
          "request": {
             "name": "new_name",
-            "name_sentence_case": "name_sentence_case",
+            "name_sentence_case": "new_name",
+            "nci_concept_id": "C12345",
             "definition": "definition",
             "abbreviation": "abbv",
             "library_name": "Sponsor",
@@ -19,7 +20,8 @@
                   "activity_subgroup_uid": "activity_subgroup_root3",
                   "activity_group_uid": "activity_group_root3"
                }
-            ]
+            ],
+            "is_data_collected": true
          },
          "url": "/concepts/activities/activities"
       },
@@ -29,7 +31,8 @@
          "result": {
             "uid": "Activity_000001",
             "name": "new_name",
-            "name_sentence_case": "name_sentence_case",
+            "name_sentence_case": "new_name",
+            "nci_concept_id": "C12345",
             "definition": "definition",
             "abbreviation": "abbv",
             "library_name": "Sponsor",
@@ -47,6 +50,7 @@
                   "activity_group_name": "name3"
                }
             ],
+            "is_data_collected": true,
             "start_date": "2021-03-18T11:54:20.898Z",
             "end_date": null,
             "status": "Draft",
@@ -79,7 +83,8 @@
                {
                   "uid": "activity_root1",
                   "name": "name1",
-                  "name_sentence_case": "name_sentence_case1",
+                  "name_sentence_case": "name1",
+                  "nci_concept_id": null,
                   "definition": "definition1",
                   "abbreviation": "abbv",
                   "library_name": "Sponsor",
@@ -91,6 +96,7 @@
                         "activity_group_name": "name1"
                      }
                   ],
+                  "is_data_collected": false,
                   "start_date": "2021-03-18T11:54:20.898Z",
                   "end_date": null,
                   "status": "Final",
@@ -107,7 +113,8 @@
                {
                   "uid": "activity_root2",
                   "name": "name2",
-                  "name_sentence_case": "name_sentence_case2",
+                  "name_sentence_case": "name2",
+                  "nci_concept_id": null,
                   "definition": "definition2",
                   "abbreviation": "abbv",
                   "library_name": "Sponsor",
@@ -119,6 +126,7 @@
                         "activity_group_name": "name2"
                      }
                   ],
+                  "is_data_collected": false,
                   "start_date": "2021-03-18T11:54:20.898Z",
                   "end_date": null,
                   "status": "Draft",
@@ -136,7 +144,8 @@
                {
                   "uid": "activity_root3",
                   "name": "name3",
-                  "name_sentence_case": "name_sentence_case3",
+                  "name_sentence_case": "name3",
+                  "nci_concept_id": null,
                   "definition": "definition3",
                   "abbreviation": "abbv",
                   "library_name": "Sponsor",
@@ -148,6 +157,7 @@
                         "activity_group_name": "name3"
                      }
                   ],
+                  "is_data_collected": false,
                   "start_date": "2021-03-18T11:54:20.898Z",
                   "end_date": null,
                   "status": "Final",
@@ -164,7 +174,8 @@
                {
                   "uid": "Activity_000001",
                   "name": "new_name",
-                  "name_sentence_case": "name_sentence_case",
+                  "name_sentence_case": "new_name",
+                  "nci_concept_id": "C12345",
                   "definition": "definition",
                   "abbreviation": "abbv",
                   "library_name": "Sponsor",
@@ -182,6 +193,7 @@
                         "activity_group_name": "name3"
                      }
                   ],
+                  "is_data_collected": true,
                   "start_date": "2021-03-18T11:54:20.898Z",
                   "end_date": null,
                   "status": "Draft",
@@ -219,7 +231,8 @@
                {
                   "uid": "activity_root2",
                   "name": "name2",
-                  "name_sentence_case": "name_sentence_case2",
+                  "name_sentence_case": "name2",
+                  "nci_concept_id": null,
                   "definition": "definition2",
                   "abbreviation": "abbv",
                   "library_name": "Sponsor",
@@ -231,6 +244,7 @@
                         "activity_group_name": "name2"
                      }
                   ],
+                  "is_data_collected": false,
                   "start_date": "2021-03-18T11:54:20.898Z",
                   "end_date": null,
                   "status": "Draft",
@@ -268,7 +282,8 @@
                {
                   "uid": "activity_root2",
                   "name": "name2",
-                  "name_sentence_case": "name_sentence_case2",
+                  "name_sentence_case": "name2",
+                  "nci_concept_id": null,
                   "definition": "definition2",
                   "abbreviation": "abbv",
                   "library_name": "Sponsor",
@@ -280,6 +295,7 @@
                         "activity_group_name": "name2"
                      }
                   ],
+                  "is_data_collected": false,
                   "start_date": "2021-03-18T11:54:20.898Z",
                   "end_date": null,
                   "status": "Draft",
@@ -317,7 +333,8 @@
                {
                   "uid": "activity_root2",
                   "name": "name2",
-                  "name_sentence_case": "name_sentence_case2",
+                  "name_sentence_case": "name2",
+                  "nci_concept_id": null,
                   "definition": "definition2",
                   "abbreviation": "abbv",
                   "library_name": "Sponsor",
@@ -329,6 +346,7 @@
                         "activity_group_name": "name2"
                      }
                   ],
+                  "is_data_collected": false,
                   "start_date": "2021-03-18T11:54:20.898Z",
                   "end_date": null,
                   "status": "Draft",
@@ -366,7 +384,8 @@
                {
                   "uid": "activity_root2",
                   "name": "name2",
-                  "name_sentence_case": "name_sentence_case2",
+                  "name_sentence_case": "name2",
+                  "nci_concept_id": null,
                   "definition": "definition2",
                   "abbreviation": "abbv",
                   "library_name": "Sponsor",
@@ -378,6 +397,7 @@
                         "activity_group_name": "name2"
                      }
                   ],
+                  "is_data_collected": false,
                   "start_date": "2021-03-18T11:54:20.898Z",
                   "end_date": null,
                   "status": "Draft",
@@ -413,7 +433,8 @@
          "result": {
             "uid": "Activity_000001",
             "name": "new_name",
-            "name_sentence_case": "name_sentence_case",
+            "name_sentence_case": "new_name",
+            "nci_concept_id": "C12345",
             "definition": "definition",
             "abbreviation": "abbv",
             "library_name": "Sponsor",
@@ -431,6 +452,7 @@
                   "activity_group_name": "name3"
                }
             ],
+            "is_data_collected": true,
             "start_date": "2021-03-18T11:54:20.898Z",
             "end_date": null,
             "status": "Final",
@@ -460,7 +482,8 @@
          "result": {
             "uid": "Activity_000001",
             "name": "new_name",
-            "name_sentence_case": "name_sentence_case",
+            "name_sentence_case": "new_name",
+            "nci_concept_id": "C12345",
             "definition": "definition",
             "abbreviation": "abbv",
             "library_name": "Sponsor",
@@ -478,6 +501,7 @@
                   "activity_group_name": "name3"
                }
             ],
+            "is_data_collected": true,
             "start_date": "2021-03-18T11:54:20.898Z",
             "end_date": null,
             "status": "Draft",
@@ -507,7 +531,8 @@
          "result": {
             "uid": "activity_root1",
             "name": "name1",
-            "name_sentence_case": "name_sentence_case1",
+            "name_sentence_case": "name1",
+            "nci_concept_id": null,
             "definition": "definition1",
             "abbreviation": "abbv",
             "library_name": "Sponsor",
@@ -519,6 +544,7 @@
                   "activity_group_name": "name1"
                }
             ],
+            "is_data_collected": false,
             "start_date": "2021-03-18T11:54:20.898Z",
             "end_date": null,
             "status": "Retired",
@@ -547,7 +573,8 @@
          "result": {
             "uid": "activity_root1",
             "name": "name1",
-            "name_sentence_case": "name_sentence_case1",
+            "name_sentence_case": "name1",
+            "nci_concept_id": null,
             "definition": "definition1",
             "abbreviation": "abbv",
             "library_name": "Sponsor",
@@ -559,6 +586,7 @@
                   "activity_group_name": "name1"
                }
             ],
+            "is_data_collected": false,
             "start_date": "2021-03-18T11:54:20.898Z",
             "end_date": null,
             "status": "Final",

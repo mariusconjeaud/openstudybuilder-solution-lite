@@ -41,6 +41,7 @@ from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 
 log = logging.getLogger(__name__)
 study: Study
+objective_uid: str
 
 
 @pytest.fixture(scope="module")
@@ -58,6 +59,7 @@ def test_data():
     inject_base_data()
     global study
     study = TestUtils.create_study()
+    TestUtils.create_study_fields_configuration()
 
     db.cypher_query(CREATE_BASE_TEMPLATE_PARAMETER_TREE)
     db.cypher_query(STARTUP_CT_TERM_NAME_CYPHER)
@@ -83,6 +85,7 @@ def test_adam_listing_mdendpnt(api_client):
         },
     )
     res = response.json()
+    global objective_uid
     objective_uid = res["study_objective_uid"]
     assert response.status_code == 201
 
@@ -142,7 +145,7 @@ def test_adam_listing_mdendpnt(api_client):
         RACTGRP=[],
         RACTINST=[],
     )
-    assert res[1] == expected_output
+    assert res[0] == expected_output
 
     # headers endpoint testing
     field_name = "OBJTVLVL"
@@ -151,8 +154,8 @@ def test_adam_listing_mdendpnt(api_client):
         value = res_objective[field_name]
         if value:
             expected_result.append(value)
-    URL = "/listings/studies/Study_000002/adam/mdendpnt"
-    response = api_client.get(f"{URL}/headers?field_name={field_name}&result_count=100")
+    url = "/listings/studies/Study_000002/adam/mdendpnt"
+    response = api_client.get(f"{url}/headers?field_name={field_name}&result_count=100")
     res_headers = response.json()
 
     assert response.status_code == 200
@@ -164,3 +167,84 @@ def test_adam_listing_mdendpnt(api_client):
         assert all(item in res_headers for item in expected_result)
     else:
         assert len(res_headers) == 0
+
+
+def test_adam_listing_mdendpnt_versioning(api_client):
+    # update study title to be able to lock it
+    response = api_client.patch(
+        f"/studies/{study.uid}",
+        json={"current_metadata": {"study_description": {"study_title": "new title"}}},
+    )
+    assert response.status_code == 200
+
+    # Lock
+    response = api_client.post(
+        f"/studies/{study.uid}/locks",
+        json={"change_description": "Lock 1"},
+    )
+    assert response.status_code == 201
+
+    response = api_client.get(
+        f"/listings/studies/{study.uid}/adam/mdendpnt/",
+    )
+    assert response.status_code == 200
+    res = response.json()["items"]
+    assert res is not None
+    md_endpnt_before_unlock = res
+
+    # get study endpoint headers
+    response = api_client.get(
+        f"/listings/studies/{study.uid}/adam/mdendpnt/headers?field_name=OBJTVLVL",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    md_endpnt_headers_before_unlock = res
+
+    # Unlock -- Study remain unlocked
+    response = api_client.delete(f"/studies/{study.uid}/locks")
+    assert response.status_code == 200
+
+    # edit study endpoint
+    response = api_client.patch(
+        f"/studies/{study.uid}/study-endpoints/StudyEndpoint_000001",
+        json={
+            "endpoint_uid": "Endpoint_000001",
+            "endpoint_level_uid": "term_root_final5",
+        },
+    )
+    res = response.json()
+    assert res["endpoint_level"]["term_uid"] == "term_root_final5"
+    assert response.status_code == 200
+
+    # get all study mdendpts of a specific study version
+    response = api_client.get(
+        f"/listings/studies/{study.uid}/adam/mdendpnt",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["items"][1]["ENDPNTLVL"] == "term_value_name1"
+
+    # get all mdendpts of a specific study version
+    response = api_client.get(
+        f"/listings/studies/{study.uid}/adam/mdendpnt?study_value_version=1",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["items"] == md_endpnt_before_unlock
+    assert res["items"][1]["ENDPNTLVL"] is None
+
+    # get mdendpt headers
+    response = api_client.get(
+        f"/listings/studies/{study.uid}/adam/mdendpnt/headers?field_name=OBJTVLVL",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert "term_value_name1" in res
+
+    # get study mdendpt headers
+    response = api_client.get(
+        f"/listings/studies/{study.uid}/adam/mdendpnt/headers?field_name=OBJTVLVL&study_value_version=1",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res == md_endpnt_headers_before_unlock

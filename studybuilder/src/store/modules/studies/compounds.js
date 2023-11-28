@@ -100,8 +100,8 @@ const actions = {
       commit('REMOVE_STUDY_COMPOUND', studyCompoundUid)
     })
   },
-  fetchStudyCompoundDosings ({ commit }, studyUid) {
-    study.getStudyCompoundDosings(studyUid).then(resp => {
+  fetchStudyCompoundDosings ({ commit }, { studyUid, studyValueVersion }) {
+    study.getStudyCompoundDosings(studyUid, studyValueVersion).then(resp => {
       commit('SET_STUDY_COMPOUND_DOSINGS', resp.data.items)
     })
   },

@@ -12,6 +12,7 @@ from importers.run_import_crfs import Crfs
 from importers.run_import_mockdata import Mockdata
 from importers.run_import_mockdatajson import MockdataJson
 from importers.run_import_sponsormodels import SponsorModels
+from importers.run_import_e2e import MockdataJsonE2E
 
 
 def main():
@@ -64,6 +65,10 @@ def main():
     # Import mock data from json
     mockdatajson = MockdataJson(metrics_inst=metr, cache=cache)
     mockdatajson.run()
+
+    # Import E2E specific data from json
+    mockdatae2e = MockdataJsonE2E(metrics_inst=metr, cache=cache)
+    mockdatae2e.run()
 
     # Display metrics
     metr.print_sorted_by_key()

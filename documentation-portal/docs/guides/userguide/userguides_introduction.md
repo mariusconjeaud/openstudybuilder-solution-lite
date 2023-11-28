@@ -1,6 +1,6 @@
 # Introduction
 
-This is the user guide of the MDR Study Builder application.
+This is the user guide of the StudyBuilder application.
 The solution is a combination of the following:
 - A graph database - Here we are using Neo4j (in version 4.0)
 - An API - We are using the Python FastAPI application
@@ -8,23 +8,32 @@ The solution is a combination of the following:
 
 We have a central shared solution mostly dealing with a API.
 
-[![Conceptual architecture for the clinical-MDR and the StudyBuilder](~@source/images/documentation/conceptual-architecture.png)](../../images/documentation/conceptual-architecture.png)
+[![Conceptual architecture for the StudyBuilder solution](~@source/images/documentation/conceptual-architecture.png)](../../images/documentation/conceptual-architecture.png)
+
+> Note: For the current release of StudyBuilder, documented evidence verifying the complete functionality has not been established. If output from StudyBuilder is to be used in GxP relevant processes, sufficient quality gateways must be established ensuring fit for intended use for the specific process.
+
+> Internally at Novo Nordisk the solution is named as "StudyBuilder". The solution is also shared as an open-source project named as "OpenStudyBuilder".
+
 
 ## Home page of the application
 
-Please use the following URL to access the MDR Study Builder application:
 
-    https://xxx.yyyyyy.zzz
+The URL to access the StudyBuilder application will follow this pattern, where text in '[ ]' is optional and *italic* text is replaced by environment specific values:
+
+> [open]studybuilder[.*environment*].*domain*
+
+See you system environment definition for specific options and values.
 
 ![Study Builder](~@source/images/schema_02.png)
 
+
 ## User authentication
 
-Before being able to fully work with the **Study Builder** you need to authenticate by providing a User and a Password information.
-
-Use the following link to log in the application.
+Before being able to fully work with the **Study Builder** you need to authenticate by providing a User and a Password information. This is done by SSO using the browser authentication.
 
 ## After being authenticated
+
+You will see the StudyBuilder application with you login user name in the top bar. If you select your user name you can see your system access roles and logout option.
 
 ## Different User access
 
@@ -58,28 +67,57 @@ The secondary navigation is located on the left-hand side and is distinct for ea
 | ![Rows per page](~@source/images/bt_rows_blue.png) | You can also filter the number of record to be displayed in the table by changing the number of row per page. |
 | ![Pagination buttons](~@source/images/bt_pagination_blue.png) | Based on the number of record displayed, the pagination of the table will display multiple pages. | 
 
-## Versioning of each element
+## Versioning and Audit Trail
 
-Each element in the MDR system is versioned automatically with its creation and has two attributes to support the process: 
-- Status: Can be either **'Draft'**, **'Final'** or **'Retired'**. The status is changed manually upon verification of the element.
-- Version: Is incremented manually upon adding a new template version from the **'Actions'** column
+Versioning and audit trails are two sides of the same solution approach in StudyBuilder system, as extracting data for a specific versioning actually is extracting data for a marked point in the audit trail.
+
+Generally, you browse the audit trail by displaying the history for any versioned item that are being versioned, either by page level (showing the latest actions on items on a specific page), or by row level (showing the actions for a specific item).
+
+Via the API, you generally have two GET endpoints, one named /xxx/audit-trail returning actions for all items covered by the /xxx/ (typical corresponding to page level history); and a /xxx/{uid}/versions returning the actions for a specific element (row history)
+
+All elements have a workflow, corresponding the state changes, with API POST endpoints actions for approval, new version, inactivate, reactivate and delete.
+
+All of this is stored in the physical data model as a set of root-value pair nodes with relationships for all actions holding timestamps and audit trail info. This data model support generic queries across any element and can be used by the global audit trail report. There are a few differences in principles between the versioning of library elements versus studies – thus two separate reports have been developed, one for versioning in library and one for versioning in studies.
+
+We do also have a few ‘administrative’ data elements that are not versioned, so these are not covered by the audit trail – among them some configuration items (study fields) and project codes (intended to be imported from master data, currently done by an import pipeline).
 
 
-## Audit trail
+### Versioning of each library element
+
+Each library element in the MDR system is versioned automatically with its creation and has two attributes to support the process: 
+- Status: Can be either **'Draft'**, **'Final'** or **'Retired'**. The status is changed manually upon verification of the library element.
+- Version: Is incremented automatically upon adding a new version for a library element from the **'Actions'** column
+
+
+### Versioning of each study definitions
+
+Each study definition is versioned as a set of metadata definitions for the study - so the principle here is different than for library elemets. A study can be in the following status: **'Draft'**, **'Released'** or **'Locked'**. **'Released'** corespond to a minor version, **'Locked'** to a major version.
+
+For more information on the study versioning see also the [Maintain Study Status and Versioning user guide](studies/manage_studies.md#maintain-study-status-and-versioning).
+
+
+### Audit trail
 
 Throughout the MDR application each entry made is documented in the audit trail.
-The audit trail provides users with the appropriate permissions to view a table with the following information about each entry in the MDR system:
+The audit trail provides users with the appropriate permissions to view a table with the following sample information for a template about each event in the MDR system:
 
 | Column name | Description |
 |:------:|:----------------|
-| Library |  |
-| Template |  |
-| Change description |  |
-| Status |  |
-| Version |  |
-| User | containing the initials of the person who made the last modification |
-| From | containing date and timepoint of the last modification |
-| To |  |
+| Library | For templates this can be for Sponsor standards or user defined |
+| Template | The syntax template text |
+| Change description | Reason for change |
+| Status | Draft, Final, Retired |
+| Version | Version number |
+| User | Containing the initials of the person who made the last modification |
+| From | Containing date and timepoint of the from modification |
+| To | Containing date and timepoint of the to modification, missing mean lates |
+
+
+## API activity logging (incl. Export and Extracts)
+All StudyBuilder application user activity (via user interface) and direct request from interfacing systems goes through the StudyBuilder API. All API activities are logged to Azure Monitoring, where they can be addressed and analysed as required.
+
+To ensure sufficient logging of the business used of StudyBuilder data, all business related data extracts and exports af data from StudyBuilder, must be performed through API calls. 
+
 
 ## Working with the tables
 
@@ -89,7 +127,3 @@ General actions are listed in the table ribbon:
 [!Table Ribbon (/table_ribbon.png)]
 
 The current export options include CSV, XML, JSON and Excel.
-
-
-
-

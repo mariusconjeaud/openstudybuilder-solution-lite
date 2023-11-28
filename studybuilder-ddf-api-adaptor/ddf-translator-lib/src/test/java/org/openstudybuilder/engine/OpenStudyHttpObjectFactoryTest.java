@@ -4,6 +4,7 @@ import org.junit.jupiter.api.*;
 import org.openstudybuilder.model.*;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,7 +21,7 @@ public class OpenStudyHttpObjectFactoryTest {
     @BeforeAll
     public static void init() {
         try {
-            var file = OpenStudyHttpObjectFactoryTest.class
+            InputStream file = OpenStudyHttpObjectFactoryTest.class
                     .getClassLoader().getResourceAsStream("application.properties");
             if (file != null) System.getProperties().load(file);
         } catch (IOException e) {
@@ -34,10 +35,10 @@ public class OpenStudyHttpObjectFactoryTest {
         // Leaving First Study in the list checking against CDISC DEV-0
         List<OpenStudy> openStudies = objectFactory.getStudies();
         Assertions.assertNotEquals(0, openStudies.size());
-        Assertions.assertEquals("CDISC DEV-0",openStudies.get(0).getStudyId());
         CurrentMetadata currentMetadata = openStudies.get(0).getCurrentMetadata();
         IdentificationMetadata identificationMetadata = currentMetadata.getIdentificationMetadata();
         VersionMetadata versionMetadata = currentMetadata.getVersionMetadata();
+        Assertions.assertEquals("CDISC DEV-0", identificationMetadata.getStudyId());
         Assertions.assertEquals("CDISC DEV", identificationMetadata.getProjectNumber());
         Assertions.assertEquals("DRAFT", currentMetadata.getVersionMetadata().getStudyStatus());
     }
@@ -56,7 +57,7 @@ public class OpenStudyHttpObjectFactoryTest {
         Assertions.assertEquals("C48262_SCREENING",epochs.get(0).getEpoch());
         Assertions.assertEquals("Initial Version", epochs.get(0).getChangeDescription());
         Assertions.assertEquals("C48262_SCREENING", epochs.get(0).getEpochSubtype());
-        Assertions.assertEquals("CTTerm_000002", epochs.get(0).getEpochType());
+        Assertions.assertEquals("CTTerm_000003", epochs.get(0).getEpochType());
         Assertions.assertEquals(1, epochs.get(0).getOrder());
         Assertions.assertEquals("edit", epochs.get(0).getPossibleActions().get(0));
         Assertions.assertEquals(-14, epochs.get(0).getStartDay());
@@ -76,12 +77,11 @@ public class OpenStudyHttpObjectFactoryTest {
     }
 
     @Test
-    @Disabled("No endpoints for test Study") // TODO
     void getStudyEndpointSections() throws Exception {
         List<StudySelectionEndpoint> studySelectionEndpoints =
                 objectFactory.getStudyEndpointSections(STUDY_UID);
         Assertions.assertNotEquals(0, studySelectionEndpoints.size());
-        var firstEndpointItem = studySelectionEndpoints.get(0);
+        StudySelectionEndpoint firstEndpointItem = studySelectionEndpoints.get(0);
         Assertions.assertEquals("StudyEndpoint_000001", firstEndpointItem.getStudyEndpointUid());
         // Sample study no longer has an endpoint level
         //Assertions.assertEquals("C98772_OUTMSPRI", firstEndpointItem.getEndpointLevel().getTermUid());
@@ -99,18 +99,19 @@ public class OpenStudyHttpObjectFactoryTest {
         List<StudySelectionObjective> studySelectionObjectives =
                 objectFactory.getStudyObjectiveSections(STUDY_UID);
         Assertions.assertNotEquals(0, studySelectionObjectives.size());
-        var firstObjectiveItem = studySelectionObjectives.get(0);
+        StudySelectionObjective firstObjectiveItem = studySelectionObjectives.get(0);
         Assertions.assertEquals("StudyObjective_000001", firstObjectiveItem.getStudyObjectiveUid());
         Assertions.assertEquals("SDTM CT", firstObjectiveItem.getObjectiveLevel().getCatalogueName());
-        Assertions.assertEquals("Objective_000001", firstObjectiveItem.getObjective().getUid());
+        Assertions.assertEquals("Objective_000006", firstObjectiveItem.getObjective().getUid());
     }
 
     @Test
+    @Disabled("Missing data") // TODO
     void getStudyCriterias() throws Exception {
         List<StudySelectionCriteria> studyCriteria =
                 objectFactory.getCriterias(STUDY_UID);
         Assertions.assertNotEquals(0, studyCriteria.size());
-        var firstCriteriaItem = studyCriteria.get(0);
+        StudySelectionCriteria firstCriteriaItem = studyCriteria.get(0);
         Assertions.assertEquals("StudyCriteria_000001", firstCriteriaItem.getStudyCriteriaUid());
         Assertions.assertEquals("Exclusion Criteria", firstCriteriaItem.getCriteriaType()
                 .getSponsorPreferredName());
@@ -121,7 +122,7 @@ public class OpenStudyHttpObjectFactoryTest {
     void getStudyActivitySections() throws Exception {
         List<StudyActivitySection> studyActivitySections = objectFactory.getActivitySections(STUDY_UID);
         Assertions.assertNotEquals(0, studyActivitySections.size());
-        var firstActivityItem = studyActivitySections.get(0);
+        StudyActivitySection firstActivityItem = studyActivitySections.get(0);
         Assertions.assertEquals("StudyActivity_000001", firstActivityItem.getStudyActivityUid());
         Assertions.assertEquals("Randomized", firstActivityItem.getActivity().getName());
     }
@@ -142,14 +143,12 @@ public class OpenStudyHttpObjectFactoryTest {
     }
 
     @Test
-    // TODO: Disabled because endpoint sample data is not present
-    @Disabled
     void getSingleEndpoint() throws Exception {
         Endpoint endpoint = objectFactory.getEndpoint(ENDPOINT_UID);
         Assertions.assertNotNull(endpoint);
-        Assertions.assertEquals("test [Accidental Misadministration] and [Alzheimer's disease]",
+        Assertions.assertEquals("<p>Disease control rate of [azd6738] + [durvalumab] cohort</p>",
                 endpoint.getName());
-        Assertions.assertEquals("EndpointTemplate_000002", endpoint.getEndpointTemplate().getUid());
+        Assertions.assertEquals("EndpointTemplate_000006", endpoint.getEndpointTemplate().getUid());
     }
 
     @Test

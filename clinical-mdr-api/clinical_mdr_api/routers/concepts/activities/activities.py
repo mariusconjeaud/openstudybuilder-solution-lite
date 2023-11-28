@@ -60,8 +60,12 @@ Possible errors:
         "defaults": [
             "uid",
             "name",
-            "activity_group=activity_group.name",
-            "activity_subgroup=activity_subgroup.name",
+            "activity_group.name=activity_groupings.activity_group_name",
+            "activity_subgroup.name=activity_groupings.activity_subgroup_name",
+            "sentence_case_name=name_sentence_case",
+            "abbreviation",
+            "nci_concept_id",
+            "is_data_collected",
             "start_date",
             "status",
             "version",
@@ -126,6 +130,119 @@ def get_activities(
     results = activity_service.get_all_concepts(
         library=library,
         sort_by=sort_by,
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
+        filter_by=filters,
+        filter_operator=FilterOperator.from_str(operator),
+        activity_subgroup_uid=activity_subgroup_uid,
+        activity_names=activity_names,
+        activity_subgroup_names=activity_subgroup_names,
+        activity_group_names=activity_group_names,
+    )
+    return CustomPage.create(
+        items=results.items, total=results.total, page=page_number, size=page_size
+    )
+
+
+@router.get(
+    "/activities/versions",
+    dependencies=[rbac.LIBRARY_READ],
+    summary="List all versions of activities",
+    description=f"""
+State before:
+ - The library must exist (if specified)
+
+Business logic:
+ - List version history of activities
+ - The returned versions are ordered by version start_date descending (newest entries first).
+
+State after:
+ - No change
+
+Possible errors:
+ - Invalid library name specified.
+
+{_generic_descriptions.DATA_EXPORTS_HEADER}  
+""",
+    response_model=CustomPage[Activity],
+    response_model_exclude_unset=True,
+    status_code=200,
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+@decorators.allow_exports(
+    {
+        "defaults": [
+            "uid",
+            "name",
+            "activity_group=activity_group.name",
+            "activity_subgroup=activity_subgroup.name",
+            "start_date",
+            "status",
+            "version",
+        ],
+        "formats": [
+            "text/csv",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "text/xml",
+            "application/json",
+        ],
+    }
+)
+# pylint: disable=unused-argument
+def get_activities_versions(
+    request: Request,  # request is actually required by the allow_exports decorator
+    library: str | None = Query(None, description="The library name"),
+    activity_subgroup_uid: str
+    | None = Query(
+        None,
+        description="The unique id of the activity sub group to use as a specific filter",
+    ),
+    activity_names: list[str]
+    | None = Query(
+        None,
+        description="A list of activity names to use as a specific filter",
+        alias="activity_names[]",
+    ),
+    activity_subgroup_names: list[str]
+    | None = Query(
+        None,
+        description="A list of activity sub group names to use as a specific filter",
+        alias="activity_subgroup_names[]",
+    ),
+    activity_group_names: list[str]
+    | None = Query(
+        None,
+        description="A list of activity group names to use as a specific filter",
+        alias="activity_group_names[]",
+    ),
+    page_number: int
+    | None = Query(1, ge=1, description=_generic_descriptions.PAGE_NUMBER),
+    page_size: int
+    | None = Query(
+        config.DEFAULT_PAGE_SIZE,
+        ge=0,
+        le=config.MAX_PAGE_SIZE,
+        description=_generic_descriptions.PAGE_SIZE,
+    ),
+    filters: Json
+    | None = Query(
+        None,
+        description=_generic_descriptions.FILTERS,
+        example=_generic_descriptions.FILTERS_EXAMPLE,
+    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    total_count: bool
+    | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
+    current_user_id: str = Depends(get_current_user_id),
+):
+    activity_service = ActivityService(user=current_user_id)
+    results = activity_service.get_all_concept_versions(
+        library=library,
+        sort_by={"start_date": False},
         page_number=page_number,
         page_size=page_size,
         total_count=total_count,

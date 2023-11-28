@@ -13,6 +13,7 @@ from clinical_mdr_api.domains.study_definition_aggregates.registry_identifiers i
 from clinical_mdr_api.domains.study_definition_aggregates.root import StudyDefinitionAR
 from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import (
     HighLevelStudyDesignVO,
+    StudyComponentEnum,
     StudyIdentificationMetadataVO,
     StudyStatus,
 )
@@ -158,7 +159,7 @@ class TestStudyService(unittest.TestCase):
                 study_service = StudyService(user="PIWQ")
                 service_response = study_service.get_by_uid(
                     uid=sample_study_definition.uid,
-                    fields="+current_metadata.study_population",
+                    include_sections=[StudyComponentEnum.STUDY_POPULATION],
                 )
 
                 # then
@@ -390,8 +391,8 @@ class TestStudyService(unittest.TestCase):
         study_service = StudyService(user="PIWQ")
         service_response = study_service.get_by_uid(
             uid=sample_study_definition.uid,
-            fields=" - current_metadata . identification_metadata , "
-            " + current_metadata . high_level_study_design   ",
+            include_sections=[StudyComponentEnum.STUDY_DESIGN],
+            exclude_sections=[StudyComponentEnum.IDENTIFICATION_METADATA],
         )
 
         # then
@@ -507,7 +508,7 @@ class TestStudyService(unittest.TestCase):
         StudyService.__module__ + ".MetaRepository.study_definition_repository",
         new_callable=PropertyMock,
     )
-    def test__StudyService__create__success(
+    def test__study_service__create__success(
         self,
         study_definition_repository_property_mock: PropertyMock,
         project_repository_property_mock: PropertyMock,
@@ -574,7 +575,7 @@ class TestStudyService(unittest.TestCase):
         StudyService.__module__ + ".MetaRepository.study_definition_repository",
         new_callable=PropertyMock,
     )
-    def test__StudyService__get_by_uid__success(
+    def test__study_service__get_by_uid__success(
         self,
         study_definition_repository_property_mock: PropertyMock,
         project_repository_property_mock: PropertyMock,
@@ -635,7 +636,7 @@ class TestStudyService(unittest.TestCase):
         StudyService.__module__ + ".MetaRepository.study_definition_repository",
         new_callable=PropertyMock,
     )
-    def test__StudyService__get_all__success(
+    def test__study_service__get_all__success(
         self,
         study_definition_repository_property_mock: PropertyMock,
         project_repository_property_mock: PropertyMock,

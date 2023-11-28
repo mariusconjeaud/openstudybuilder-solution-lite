@@ -25,7 +25,7 @@
             "method": "POST",
             "request": {
                 "name": "name1",
-                "name_sentence_case": "name_sentence_case3",
+                "name_sentence_case": "name1",
                 "definition": "definition3",
                 "library_name": "Sponsor"
             },
@@ -49,6 +49,7 @@
             "method": "PATCH",
             "request": {
                 "name": "name1",
+                "name_sentence_case": "name1",
                 "change_description": "Test change"
             },
             "url": "/concepts/activities/activity-groups/activity_group_root2"

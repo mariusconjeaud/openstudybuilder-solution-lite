@@ -1,5 +1,4 @@
 import datetime
-from typing import Sequence
 
 from neomodel import db
 
@@ -55,12 +54,15 @@ class StudyCompoundDosingSelectionService(StudySelectionMixin):
         study_compound_uid: str,
         compound_uid: str,
         compound_alias_uid: str,
+        study_value_version: str | None = None,
     ) -> models.StudySelectionCompound:
         (
             study_compound,
             order,
         ) = self._repos.study_compound_repository.find_by_uid(
-            study_uid, study_compound_uid
+            study_uid=study_uid,
+            study_compound_uid=study_compound_uid,
+            study_value_version=study_value_version,
         )
         compound = self._transform_compound_model(compound_uid)
         compound_alias = self._transform_compound_alias_model(compound_alias_uid)
@@ -78,13 +80,18 @@ class StudyCompoundDosingSelectionService(StudySelectionMixin):
         )
 
     def _transform_study_element_model(
-        self, study_uid: str, study_element_uid: str
+        self,
+        study_uid: str,
+        study_element_uid: str,
+        study_value_version: str | None = None,
     ) -> models.StudySelectionElement:
         (
             study_element,
             order,
         ) = self._repos.study_element_repository.find_by_uid(
-            study_uid, study_element_uid
+            study_uid,
+            study_element_uid,
+            study_value_version=study_value_version,
         )
         return models.StudySelectionElement.from_study_selection_element_ar_and_order(
             study_uid,
@@ -96,7 +103,11 @@ class StudyCompoundDosingSelectionService(StudySelectionMixin):
         )
 
     def _transform_to_response_model(
-        self, study_uid: str, compound_dosing_vo: StudyCompoundDosingVO, order: int
+        self,
+        study_uid: str,
+        compound_dosing_vo: StudyCompoundDosingVO,
+        order: int,
+        study_value_version: str | None = None,
     ) -> models.StudyCompoundDosing:
         return models.StudyCompoundDosing.from_vo(
             compound_dosing_vo,
@@ -106,9 +117,12 @@ class StudyCompoundDosingSelectionService(StudySelectionMixin):
                 compound_dosing_vo.study_compound_uid,
                 compound_dosing_vo.compound_uid,
                 compound_dosing_vo.compound_alias_uid,
+                study_value_version=study_value_version,
             ),
             self._transform_study_element_model(
-                study_uid, compound_dosing_vo.study_element_uid
+                study_uid,
+                compound_dosing_vo.study_element_uid,
+                study_value_version=study_value_version,
             ),
             find_simple_term_model_name_by_term_uid=self.find_term_name_by_uid,
             find_numeric_value_by_uid=self._repos.numeric_value_with_unit_repository.find_by_uid_2,
@@ -116,15 +130,20 @@ class StudyCompoundDosingSelectionService(StudySelectionMixin):
         )
 
     def _transform_all_to_response_model(
-        self, study_selection: StudySelectionCompoundDosingsAR
-    ) -> Sequence[models.StudyCompoundDosing]:
+        self,
+        study_selection: StudySelectionCompoundDosingsAR,
+        study_value_version: str | None = None,
+    ) -> list[models.StudyCompoundDosing]:
         result = []
         for order, selection in enumerate(
             study_selection.study_compound_dosings_selection, start=1
         ):
             result.append(
                 self._transform_to_response_model(
-                    study_selection.study_uid, selection, order
+                    study_selection.study_uid,
+                    selection,
+                    order,
+                    study_value_version=study_value_version,
                 )
             )
         return result
@@ -133,6 +152,7 @@ class StudyCompoundDosingSelectionService(StudySelectionMixin):
     def get_all_compound_dosings(
         self,
         study_uid: str,
+        study_value_version: str | None = None,
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
         page_number: int = 1,
@@ -142,9 +162,12 @@ class StudyCompoundDosingSelectionService(StudySelectionMixin):
         repos = MetaRepository()
         try:
             selection_ar = repos.study_compound_dosing_repository.find_by_study(
-                study_uid
+                study_uid,
+                study_value_version,
             )
-            selection = self._transform_all_to_response_model(selection_ar)
+            selection = self._transform_all_to_response_model(
+                selection_ar, study_value_version=study_value_version
+            )
             # Do filtering, sorting, pagination and count
             selection = service_level_generic_filtering(
                 items=selection,
@@ -190,8 +213,8 @@ class StudyCompoundDosingSelectionService(StudySelectionMixin):
         # In order for filtering to work, we need to unwind the aggregated AR object first
         # Unwind ARs
         selections = []
-        for ar in selection_ars:
-            parsed_selections = self._transform_all_to_response_model(ar)
+        for selection_ar in selection_ars:
+            parsed_selections = self._transform_all_to_response_model(selection_ar)
             for selection in parsed_selections:
                 selections.append(selection)
 
@@ -211,7 +234,7 @@ class StudyCompoundDosingSelectionService(StudySelectionMixin):
         self,
         study_selection_history: list[SelectionHistory],
         study_uid: str,
-    ) -> Sequence[models.StudyCompoundDosing]:
+    ) -> list[models.StudyCompoundDosing]:
         result = []
         for history in study_selection_history:
             result.append(
@@ -238,7 +261,7 @@ class StudyCompoundDosingSelectionService(StudySelectionMixin):
     @db.transaction
     def get_all_selection_audit_trail(
         self, study_uid: str
-    ) -> Sequence[models.StudyCompoundDosing]:
+    ) -> list[models.StudyCompoundDosing]:
         try:
             selection_history = (
                 self._repos.study_compound_dosing_repository.find_selection_history(
@@ -253,7 +276,7 @@ class StudyCompoundDosingSelectionService(StudySelectionMixin):
 
     def get_compound_dosing_audit_trail(
         self, study_uid: str, compound_dosing_uid: str
-    ) -> Sequence[models.StudyCompoundDosing]:
+    ) -> models.StudyCompoundDosing:
         try:
             selection_history = (
                 self._repos.study_compound_dosing_repository.find_selection_history(

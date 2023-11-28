@@ -34,7 +34,7 @@
         color="primary"
         @click.stop="showForm = true"
         :title="$t('StudyEndpointsTable.add_endpoint')"
-        :disabled="!checkPermission($roles.STUDY_WRITE)"
+        :disabled="!checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
         >
         <v-icon dark>
           mdi-plus
@@ -74,11 +74,33 @@
             <template v-if="item.endpoint_sublevel">{{ item.endpoint_sublevel.sponsor_preferred_name }}</template>
           </td>
           <td width="25%">
-            <n-n-parameter-highlighter
-              v-if="item.endpoint"
-              :name="item.endpoint.name"
-              :show-prefix-and-postfix="false"
-              />
+            <div class="d-flex">
+              <n-n-parameter-highlighter
+                v-if="item.endpoint"
+                :name="item.endpoint.name"
+                :show-prefix-and-postfix="false"
+                />
+              <n-n-parameter-highlighter
+                v-else
+                :name="item.endpoint_template.name"
+                :show-prefix-and-postfix="false"
+                />
+              <v-tooltip
+                v-if="item.endpoint && item.endpoint.name.length > 254"
+                bottom
+                >
+                <template v-slot:activator="{ on, attrs }">
+                  <v-icon
+                    class="mb-2 ml-1"
+                    v-bind="attrs"
+                    v-on="on"
+                    color="red">
+                    mdi-alert-circle-outline
+                  </v-icon>
+                </template>
+                <span>{{ $t('StudyEndpointForm.endpoint_title_warning') }}</span>
+              </v-tooltip>
+            </div>
           </td>
           <td width="10%">{{ item.units }}</td>
           <td width="25%">
@@ -133,10 +155,17 @@
         :name="item.endpoint.name"
         :show-prefix-and-postfix="false"
         />
-      <v-tooltip bottom>
+      <n-n-parameter-highlighter
+        v-else
+        :name="item.endpoint_template.name"
+        :show-prefix-and-postfix="false"
+        />
+      <v-tooltip
+        v-if="item.endpoint && item.endpoint.name.length > 254"
+        bottom
+        >
         <template v-slot:activator="{ on, attrs }">
           <v-icon
-            v-if="item.endpoint && item.endpoint.name.length > 254"
             class="mb-2 ml-1"
             v-bind="attrs"
             v-on="on"
@@ -241,6 +270,7 @@ export default {
   computed: {
     ...mapGetters({
       selectedStudy: 'studiesGeneral/selectedStudy',
+      selectedStudyVersion: 'studiesGeneral/selectedStudyVersion',
       studyEndpoints: 'studyEndpoints/studyEndpoints',
       total: 'studyEndpoints/total'
     }),
@@ -270,14 +300,14 @@ export default {
           label: this.$t('StudyEndpointsTable.update_timeframe_version_retired'),
           icon: 'mdi-alert-outline',
           iconColor: 'orange',
-          condition: this.isTimeframeRetired,
+          condition: this.isTimeframeRetired || !this.selectedStudyVersion,
           accessRole: this.$roles.STUDY_WRITE
         },
         {
           label: this.$t('StudyEndpointsTable.update_timeframe_version'),
           icon: 'mdi-bell-ring-outline',
           iconColorFunc: this.itemUpdateAborted,
-          condition: this.timeframeNeedsUpdate,
+          condition: this.timeframeNeedsUpdate || !this.selectedStudyVersion,
           click: this.updateTimeframeVersion,
           accessRole: this.$roles.STUDY_WRITE
         },
@@ -285,14 +315,14 @@ export default {
           label: this.$t('StudyEndpointsTable.update_endpoint_version_retired'),
           icon: 'mdi-alert-outline',
           iconColor: 'orange',
-          condition: this.isEndpointRetired,
+          condition: this.isEndpointRetired || !this.selectedStudyVersion,
           accessRole: this.$roles.STUDY_WRITE
         },
         {
           label: this.$t('StudyEndpointsTable.update_endpoint_version'),
           icon: 'mdi-bell-ring-outline',
           iconColorFunc: this.itemUpdateAborted,
-          condition: this.endpointNeedsUpdate,
+          condition: this.endpointNeedsUpdate || !this.selectedStudyVersion,
           click: this.updateEndpointVersion,
           accessRole: this.$roles.STUDY_WRITE
         },
@@ -300,6 +330,7 @@ export default {
           label: this.$t('_global.edit'),
           icon: 'mdi-pencil-outline',
           iconColor: 'primary',
+          condition: () => !this.selectedStudyVersion,
           click: this.editStudyEndpoint,
           accessRole: this.$roles.STUDY_WRITE
         },
@@ -307,6 +338,7 @@ export default {
           label: this.$t('_global.delete'),
           icon: 'mdi-delete-outline',
           iconColor: 'error',
+          condition: () => !this.selectedStudyVersion,
           click: this.deleteStudyEndpoint,
           accessRole: this.$roles.STUDY_WRITE
         },
@@ -323,7 +355,7 @@ export default {
         { text: this.$t('StudyEndpointsTable.order'), value: 'order', width: '5%' },
         { text: this.$t('StudyEndpointsTable.endpoint_level'), value: 'endpoint_level.sponsor_preferred_name' },
         { text: this.$t('StudyEndpointsTable.endpoint_sub_level'), value: 'endpoint_sublevel.sponsor_preferred_name' },
-        { text: this.$t('StudyEndpointsTable.endpoint_title'), value: 'name', width: '25%' },
+        { text: this.$t('StudyEndpointsTable.endpoint_title'), value: 'endpoint.name', width: '25%' },
         { text: this.$t('StudyEndpointsTable.units'), value: 'units', width: '10%' },
         { text: this.$t('StudyEndpointsTable.time_frame'), value: 'timeframe.name', width: '25%' },
         { text: this.$t('StudyEndpointsTable.objective'), value: 'study_objective.objective.name', filteringName: 'study_objective.objective.name', width: '25%' },
@@ -353,6 +385,7 @@ export default {
       const params = filteringParameters.prepareParameters(
         this.options, filters, sort, filtersUpdated)
       params.studyUid = this.selectedStudy.uid
+      params.study_value_version = this.selectedStudyVersion
       this.$store.dispatch('studyEndpoints/fetchStudyEndpoints', params)
     },
     async fetchEndpointsHistory () {

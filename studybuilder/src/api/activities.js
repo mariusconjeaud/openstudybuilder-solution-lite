@@ -9,6 +9,9 @@ export default {
     }
     return repository.get(`${resource}/${source}`, { params })
   },
+  getObject (source, uid) {
+    return repository.get(`${resource}/${source}/${uid}`)
+  },
   getObjectOverview (source, uid, format) {
     const options = {}
     if (format === 'yaml') {
@@ -17,6 +20,19 @@ export default {
       }
     }
     return repository.get(`${resource}/${source}/${uid}/overview`, options)
+  },
+  getVersions (source, uid) {
+    return repository.get(`${resource}/${source}/${uid}/versions`)
+  },
+  getAuditTrail (source, options) {
+    const params = {
+      page_number: options ? options.page : 1,
+      total_count: true
+    }
+    if (options) {
+      params.page_size = options.itemsPerPage
+    }
+    return repository.get(`${resource}/${source}/versions`, { params })
   },
   inactivate (uid, source) {
     return repository.delete(`${resource}/${source}/${uid}/activations`)

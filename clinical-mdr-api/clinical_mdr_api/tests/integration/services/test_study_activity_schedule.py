@@ -34,7 +34,7 @@ class StudyActivityScheduleTestCase(unittest.TestCase):
         self.epoch1 = create_study_epoch("EpochSubType_0001")
         self.epoch2 = create_study_epoch("EpochSubType_0002")
         self.epoch3 = create_study_epoch("EpochSubType_0003")
-        self.DAYUID = get_unit_uid_by_name("day")
+        self.day_uid = get_unit_uid_by_name("day")
         super().setUp()
 
     def test_create_delete_schedule(self):
@@ -43,7 +43,7 @@ class StudyActivityScheduleTestCase(unittest.TestCase):
             visit_type_uid="VisitType_0001",
             time_reference_uid="VisitSubType_0001",
             time_value=0,
-            time_unit_uid=self.DAYUID,
+            time_unit_uid=self.day_uid,
         )
         sa1 = create_study_activity("study_root")
         service = StudyActivityScheduleService("test")
@@ -66,14 +66,14 @@ class StudyActivityScheduleTestCase(unittest.TestCase):
             visit_type_uid="VisitType_0001",
             time_reference_uid="VisitSubType_0001",
             time_value=0,
-            time_unit_uid=self.DAYUID,
+            time_unit_uid=self.day_uid,
         )
         create_visit_with_update(
             study_epoch_uid=self.epoch1.uid,
             visit_type_uid="VisitType_0003",
             time_reference_uid="VisitSubType_0001",
             time_value=4,
-            time_unit_uid=self.DAYUID,
+            time_unit_uid=self.day_uid,
         )
         sa1 = create_study_activity("study_root")
         sa2 = create_study_activity(

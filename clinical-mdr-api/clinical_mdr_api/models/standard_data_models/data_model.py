@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Sequence
 
 from pydantic import Field
 
@@ -25,7 +24,7 @@ class DataModel(BaseModel):
         title="name_sentence_case",
         description="",
     )
-    implementation_guides: Sequence[SimpleImplementationGuide] = Field(
+    implementation_guides: list[SimpleImplementationGuide] = Field(
         [],
         title="implementation_guides",
         description="",

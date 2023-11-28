@@ -1,5 +1,3 @@
-from typing import Sequence
-
 from fastapi import APIRouter, Body, Depends, Path, Response, status
 
 from clinical_mdr_api import models
@@ -19,7 +17,7 @@ Service = BrandService
     "",
     dependencies=[rbac.LIBRARY_READ],
     summary="Returns all brands.",
-    response_model=Sequence[models.Brand],
+    response_model=list[models.Brand],
     status_code=200,
     responses={
         404: _generic_descriptions.ERROR_404,
@@ -28,7 +26,7 @@ Service = BrandService
 )
 def get_brands(
     current_user_id: str = Depends(get_current_user_id),
-) -> Sequence[models.Brand]:
+) -> list[models.Brand]:
     return Service(current_user_id).get_all_brands()
 
 

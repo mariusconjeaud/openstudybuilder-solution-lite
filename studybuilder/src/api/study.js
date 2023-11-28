@@ -18,8 +18,12 @@ export default {
     const url = `/${resource}`
     return repository.get(url, { params: { page_size: 0 } })
   },
-  getStudy (studyUid, ignoreErrors) {
-    return repository.get(`${resource}/${studyUid}`, { ignoreErrors: ignoreErrors })
+  getStudy (studyUid, ignoreErrors, studyVersion) {
+    const params = {
+      ignoreErrors: ignoreErrors,
+      study_value_version: studyVersion
+    }
+    return repository.get(`${resource}/${studyUid}`, { params })
   },
   getStudySnapshotHistory (studyUid, params) {
     return repository.get(`${resource}/${studyUid}/snapshot-history`, { params })
@@ -31,10 +35,10 @@ export default {
     return repository.post(`${resource}/${studyUid}/release`, data)
   },
   lockStudy (studyUid, data) {
-    return repository.post(`${resource}/${studyUid}/lock`, data)
+    return repository.post(`${resource}/${studyUid}/locks`, data)
   },
   unlockStudy (studyUid) {
-    return repository.post(`${resource}/${studyUid}/unlock`)
+    return repository.delete(`${resource}/${studyUid}/locks`)
   },
   getStudyPreferredTimeUnit (studyUid) {
     return repository.get(`${resource}/${studyUid}/time-units`, { ignoreErrors: true })
@@ -42,33 +46,46 @@ export default {
   updateStudyPreferredTimeUnit (studyUid, data) {
     return repository.patch(`${resource}/${studyUid}/time-units`, data)
   },
-  getStudyProtocolTitle (studyUid) {
-    return repository.get(`${resource}/${studyUid}/protocol-title`)
+  getStudyProtocolTitle (studyUid, studyVersion) {
+    const params = {
+      study_value_version: studyVersion
+    }
+    return repository.get(`${resource}/${studyUid}/protocol-title`, { params })
   },
-  getStudyDescriptionMetadata (studyUid) {
-    const fields = encodeURIComponent(constants.DESCRIPTION_METADATA)
-    return repository.get(`${resource}/${studyUid}?fields=${fields}`)
+  getStudyDescriptionMetadata (studyUid, studyVersion) {
+    const params = {
+      study_value_version: studyVersion
+    }
+    return repository.get(`${resource}/${studyUid}?include_sections=${constants.DESCRIPTION_METADATA}`, { params })
   },
-  getHighLevelStudyDesignMetadata (studyUid) {
-    const fields = encodeURIComponent(constants.HIGH_LEVEL_STUDY_DESIGN_METADATA)
-    return repository.get(`${resource}/${studyUid}?fields=${fields}`)
+  getHighLevelStudyDesignMetadata (studyUid, studyVersion) {
+    const includeSections = [constants.HIGH_LEVEL_STUDY_DESIGN_METADATA]
+    const params = {
+      study_value_version: studyVersion
+    }
+    return repository.get(`${resource}/${studyUid}?include_sections=${includeSections}`, { params })
   },
-  getStudyPopulationMetadata (studyUid) {
-    const fields = encodeURIComponent(constants.POPULATION_METADATA)
-    return repository.get(`${resource}/${studyUid}?fields=${fields}`)
+  getStudyPopulationMetadata (studyUid, studyVersion) {
+    const includeSections = [constants.POPULATION_METADATA]
+    const params = {
+      study_value_version: studyVersion
+    }
+    return repository.get(`${resource}/${studyUid}?include_sections=${includeSections}`, { params })
   },
-  getStudyInterventionMetadata (studyUid) {
-    const fields = encodeURIComponent(constants.INTERVENTION_METADATA)
-    return repository.get(`${resource}/${studyUid}?fields=${fields}`)
+  getStudyInterventionMetadata (studyUid, studyVersion) {
+    const includeSections = [constants.INTERVENTION_METADATA]
+    const params = {
+      study_value_version: studyVersion
+    }
+    return repository.get(`${resource}/${studyUid}?include_sections=${includeSections}`, { params })
   },
   getStudyFieldsAuditTrail (studyUid, section) {
-    let params
-    if (section === 'identification_metadata') {
-      params = {}
-    } else {
-      params = { sections: `+${section},-identification_metadata` }
+    const includeSections = []
+    if (section !== 'identification_metadata') {
+      includeSections.push(section)
+      return repository.get(`${resource}/${studyUid}/fields-audit-trail?include_sections=${includeSections}&exclude_sections=identification_metadata`)
     }
-    return repository.get(`${resource}/${studyUid}/fields-audit-trail`, { params })
+    return repository.get(`${resource}/${studyUid}/fields-audit-trail`)
   },
   getAllStudyObjectives (params) {
     return repository.get('study-objectives', { params })
@@ -191,8 +208,12 @@ export default {
   deleteStudyCompound (studyUid, studyCompoundUid) {
     return repository.delete(`studies/${studyUid}/study-compounds/${studyCompoundUid}`)
   },
-  getStudyCompoundDosings (studyUid) {
-    return repository.get(`studies/${studyUid}/study-compound-dosings`, { params: { page_size: 0 } })
+  getStudyCompoundDosings (studyUid, studyValueVersion) {
+    const params = {
+      study_value_version: studyValueVersion,
+      page_size: 0
+    }
+    return repository.get(`studies/${studyUid}/study-compound-dosings`, { params })
   },
   getStudyCompoundDosingsAuditTrail (studyUid) {
     return repository.get(`studies/${studyUid}/study-compound-dosings/audit-trail`)
@@ -240,8 +261,11 @@ export default {
   updateToApprovedActivity (studyUid, studyActivityUid) {
     return repository.patch(`studies/${studyUid}/study-activities/${studyActivityUid}/activity-requests-approvals`)
   },
-  getStudyActivitySchedules (studyUid) {
-    return repository.get(`studies/${studyUid}/study-activity-schedules`)
+  getStudyActivitySchedules (studyUid, options) {
+    const params = {
+      ...options
+    }
+    return repository.get(`studies/${studyUid}/study-activity-schedules`, { params })
   },
   createStudyActivitySchedule (studyUid, data) {
     return repository.post(`studies/${studyUid}/study-activity-schedules`, data)
@@ -255,13 +279,20 @@ export default {
   getAllStudyCriteria (params) {
     return repository.get('study-criteria', { params })
   },
-  getStudyCriteria (studyUid) {
-    return repository.get(`studies/${studyUid}/study-criteria`, { params: { page_size: 0 } })
-  },
-  getStudyCriteriaWithType (studyUid, criteriaType) {
+  getStudyCriteria (studyUid, studyVersion) {
     const params = {
       page_size: 0,
-      filters: JSON.stringify({ 'criteria_type.sponsor_preferred_name_sentence_case': { v: [criteriaType.sponsor_preferred_name_sentence_case] } })
+      study_value_version: studyVersion
+    }
+    return repository.get(`studies/${studyUid}/study-criteria`, { params })
+  },
+  getStudyCriteriaWithType (studyUid, criteriaType, params) {
+    if (!params.filters) {
+      params.filters = JSON.stringify({ 'criteria_type.sponsor_preferred_name_sentence_case': { v: [criteriaType.sponsor_preferred_name_sentence_case] } })
+    } else {
+      const filters = JSON.parse(params.filters)
+      filters['criteria_type.sponsor_preferred_name_sentence_case'] = { v: [criteriaType.sponsor_preferred_name_sentence_case] }
+      params.filters = JSON.stringify(filters)
     }
     return repository.get(`studies/${studyUid}/study-criteria`, { params })
   },
@@ -294,11 +325,17 @@ export default {
   deleteStudyCriteria (studyUid, studyCriteriaUid) {
     return repository.delete(`studies/${studyUid}/study-criteria/${studyCriteriaUid}`)
   },
+  updateStudyCriteriaAcceptVersion (studyUid, studyCriteriaUid) {
+    return repository.post(`studies/${studyUid}/study-criteria/${studyCriteriaUid}/accept-version`)
+  },
+  updateStudyCriteriaLatestVersion (studyUid, studyCriteriaUid) {
+    return repository.post(`studies/${studyUid}/study-criteria/${studyCriteriaUid}/sync-latest-version`)
+  },
   getAllStudyActivityInstructions (params) {
     return repository.get('study-activity-instructions', { params })
   },
-  getStudyActivityInstructions (studyUid) {
-    return repository.get(`studies/${studyUid}/study-activity-instructions`)
+  getStudyActivityInstructions (studyUid, params) {
+    return repository.get(`studies/${studyUid}/study-activity-instructions`, { params })
   },
   studyActivityInstructionBatchOperations (studyUid, data) {
     return repository.post(`studies/${studyUid}/study-activity-instructions/batch`, data)
@@ -349,11 +386,18 @@ export default {
     }
     return repository.patch(`${resource}/${studyUid}`, payload)
   },
-  getStudyProtocolFlowchartHtml (studyUid) {
-    return repository.get(`${resource}/${studyUid}/flowchart.html`)
+  getStudyProtocolFlowchartHtml (studyUid, studyVersion) {
+    const params = {
+      study_value_version: studyVersion
+    }
+    return repository.get(`${resource}/${studyUid}/flowchart.html`, { params })
   },
-  getStudyProtocolFlowchartDocx (studyUid) {
-    return repository.get(`${resource}/${studyUid}/flowchart.docx`, { responseType: 'arraybuffer' })
+  getStudyProtocolFlowchartDocx (studyUid, studyVersion) {
+    const params = {
+      study_value_version: studyVersion,
+      responseType: 'arraybuffer'
+    }
+    return repository.get(`${resource}/${studyUid}/flowchart.docx`, { params })
   },
   getStudyProtocolInterventionsTableHtml (studyUid) {
     return repository.get(`${resource}/${studyUid}/interventions.html`)

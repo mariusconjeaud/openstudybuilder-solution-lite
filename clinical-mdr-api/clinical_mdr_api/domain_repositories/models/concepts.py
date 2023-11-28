@@ -25,6 +25,7 @@ from clinical_mdr_api.domain_repositories.models.generic import (
 
 class ConceptValue(VersionValue):
     __optional_labels__ = ["TemplateParameterTermValue"]
+    nci_concept_id = StringProperty()
     name = StringProperty()
     name_sentence_case = StringProperty()
     definition = StringProperty()

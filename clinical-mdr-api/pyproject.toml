@@ -26,14 +26,14 @@ generated-members = '(.*)\.nodes\.(.*),(.*)\.connect$,(.*)\.__label__$,(.*)\.fil
 
 [tool.pylint.'MESSAGES CONTROL']
 # Temporarily disabling trivial warnings
-disable = 'missing-function-docstring,missing-class-docstring,missing-module-docstring,fixme,invalid-name,global-statement,import-outside-toplevel,pointless-string-statement,protected-access,too-few-public-methods,too-many-ancestors,too-many-function-args,arguments-differ,cell-var-from-loop,super-init-not-called,cyclic-import,use-dict-literal,superfluous-parens,pointless-exception-statement,broad-exception-raised'
+disable = 'missing-function-docstring,missing-class-docstring,missing-module-docstring,fixme,global-statement,import-outside-toplevel,protected-access,too-few-public-methods,too-many-ancestors,too-many-function-args,arguments-differ,cyclic-import'
 
 [tool.pylint.'FORMAT']
 max-line-length = 150
 max-module-lines = 5000
 
 [tool.pylint.'BASIC']
-good-names = 'i,j,k,ex,Run,_,e'
+good-names = '_,e,i,j,k,x,y,z,ar,ex,rs,_AggregateRootType'
 
 [tool.pylint.'DESIGN']
 max-args = 35

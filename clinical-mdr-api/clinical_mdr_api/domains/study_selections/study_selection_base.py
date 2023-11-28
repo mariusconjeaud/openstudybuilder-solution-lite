@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Any, Callable, Iterable, Self, Sequence, Type, TypeVar
+from typing import Any, Callable, Iterable, Self, Type, TypeVar
 
 from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains._utils import normalize_string
@@ -14,6 +14,7 @@ class StudySelectionBaseVO:
         raise NotImplementedError
 
 
+# pylint: disable=invalid-name
 TStudySelectionVO = TypeVar("TStudySelectionVO", bound="StudySelectionBaseVO")
 
 
@@ -47,7 +48,7 @@ class StudySelectionBaseAR:
         return self._study_uid
 
     @property
-    def study_objects_selection(self) -> Sequence[Type[StudySelectionBaseVO]]:
+    def study_objects_selection(self) -> tuple[Type[StudySelectionBaseVO]]:
         return self._study_objects_selection
 
     def get_specific_object_selection(
@@ -72,7 +73,7 @@ class StudySelectionBaseAR:
 
         # add new value object in the list based on the object order
         selection_inserted = False
-        if getattr(study_object_selection, self._order_field_name):
+        if getattr(study_object_selection, self._order_field_name, None):
             updated_selections = []
             for selection in self._study_objects_selection:
                 if (
@@ -152,8 +153,8 @@ class StudySelectionBaseAR:
                 updated_selection.append(selection)
             else:
                 if getattr(
-                    updated_study_object_selection, self._order_field_name
-                ) == getattr(selection, self._order_field_name):
+                    updated_study_object_selection, self._order_field_name, None
+                ) == getattr(selection, self._order_field_name, None):
                     updated_selection.append(updated_study_object_selection)
                 else:
                     # the object level has changed so the object order is changed

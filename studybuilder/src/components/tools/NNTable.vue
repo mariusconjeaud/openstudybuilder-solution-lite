@@ -137,6 +137,7 @@
               :resource="[columnDataResource, codelistUid]"
               :parameters="columnDataParameters"
               :initial-data="getColumnInitialData(item)"
+              :selected-data="getColumnSelectedData(item)"
               :filters-modify-function="filtersModifyFunction"/>
           </div>
         </span>
@@ -470,7 +471,8 @@ export default {
   computed: {
     ...mapGetters({
       userData: 'app/userData',
-      columns: 'tablesLayout/columns'
+      columns: 'tablesLayout/columns',
+      filteringParams: 'filteringParams/filteringParams'
     }),
     filteredItems () {
       if (this.hasApi) {
@@ -509,14 +511,15 @@ export default {
   mounted () {
     this.showSelectBoxes = this.showSelect
     this.$store.commit('tablesLayout/INITIATE_COLUMNS')
-    if (!this.columns[this.$route.fullPath] || this.columns[this.$route.fullPath].length === 0) {
+    this.$store.commit('filteringParams/INITIATE_FILTERING_PARAMS')
+    if (!this.columns[window.location.pathname] || this.columns[window.location.pathname].length === 0) {
       if (this.defaultHeaders && this.defaultHeaders.length !== 0) {
         this.shownColumns = this.defaultHeaders
       } else {
         this.shownColumns = JSON.parse(JSON.stringify(this.headers))
       }
     } else {
-      this.shownColumns = this.columns[this.$route.fullPath]
+      this.shownColumns = this.columns[window.location.pathname]
       const check = new Set()
       this.shownColumns = this.shownColumns.filter(obj => !check.has(obj.value) && check.add(obj.value))
     }
@@ -527,6 +530,19 @@ export default {
     }
     if (this.items && this.items.length) {
       this.loading = false
+    }
+    // For now we will implement saving of latest filtering only for Library Activities, it might change in the future
+    if (this.filteringParams.tableName === window.location.pathname && window.location.pathname.indexOf('library/activities') > 0) {
+      const map = JSON.parse(this.filteringParams.apiParams)
+      for (const key in map) {
+        if (key !== '*') {
+          this.itemsToFilter.push(this.shownColumns.find(column => column.value === key))
+        } else {
+          this.search = map[key][0]
+        }
+      }
+      this.selectedColumnData = map
+      this.$emit('filter', this.filteringParams.filters, true, true)
     }
   },
   updated () {
@@ -596,7 +612,8 @@ export default {
       ],
       timeout: null,
       toggleSelectAll: false,
-      columnsOpened: false
+      columnsOpened: false,
+      filterMap: {}
     }
   },
   methods: {
@@ -617,6 +634,9 @@ export default {
     },
     getColumnInitialData (column) {
       return this.initialColumnData ? this.initialColumnData[column.value] : undefined
+    },
+    getColumnSelectedData (column) {
+      return this.selectedColumnData ? this.selectedColumnData[column.value] : undefined
     },
     sortAscending (header) {
       this.options.sortBy[0] = header.value
@@ -639,7 +659,7 @@ export default {
     hideColumn (header) {
       this.shownColumns.splice(this.shownColumns.findIndex(el => el.value === header.value), 1)
       const layoutMap = new Map()
-      layoutMap.set(this.$route.fullPath, this.shownColumns)
+      layoutMap.set(window.location.pathname, this.shownColumns)
       this.$store.commit('tablesLayout/SET_COLUMNS', layoutMap)
     },
     rowClass (item) {
@@ -731,6 +751,10 @@ export default {
           const bracketIndex = this.filters.indexOf(']', index) + 1
           this.filters = this.filters.substring(0, bracketIndex) + ', "op": "bw"' + this.filters.substring(bracketIndex)
         }
+        // For now we will implement saving of latest filtering only for Library Activities, it might change in the future
+        if (window.location.pathname.indexOf('library/activities') >= 0) {
+          this.$store.commit('filteringParams/SET_FILTERING_PARAMS', { filters: this.filters, tableName: window.location.pathname, apiParams: JSON.stringify(Object.fromEntries(this.apiParams)) })
+        }
         this.$emit('filter', this.filters, sort, filtersUpdated)
         this.refreshFiltersTrigger += 1
       }, 500)
@@ -787,7 +811,6 @@ export default {
           this.apiParams.delete(key)
         }
       })
-      this.filterTable()
     }
   }
 }

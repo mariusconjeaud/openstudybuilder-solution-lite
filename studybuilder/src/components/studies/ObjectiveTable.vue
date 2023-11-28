@@ -34,7 +34,7 @@
         color="primary"
         @click.stop="showForm = true"
         :title="$t('StudyObjectiveForm.add_title')"
-        :disabled="!checkPermission($roles.STUDY_WRITE)"
+        :disabled="!checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
         >
         <v-icon>
           mdi-plus
@@ -189,6 +189,7 @@ export default {
   computed: {
     ...mapGetters({
       selectedStudy: 'studiesGeneral/selectedStudy',
+      selectedStudyVersion: 'studiesGeneral/selectedStudyVersion',
       studyObjectives: 'studyObjectives/studyObjectives',
       total: 'studyObjectives/total'
     }),
@@ -211,14 +212,14 @@ export default {
           label: this.$t('StudyObjectivesTable.update_version_retired_tooltip'),
           icon: 'mdi-alert-outline',
           iconColor: 'orange',
-          condition: (item) => this.isLatestRetired(item),
+          condition: (item) => this.isLatestRetired(item) && !this.selectedStudyVersion,
           accessRole: this.$roles.STUDY_WRITE
         },
         {
           label: this.$t('StudyObjectivesTable.update_version_tooltip'),
           icon: 'mdi-bell-ring-outline',
           iconColorFunc: this.objectiveUpdateAborted,
-          condition: this.needUpdate,
+          condition: (item) => this.needUpdate(item) && !this.selectedStudyVersion,
           click: this.updateVersion,
           accessRole: this.$roles.STUDY_WRITE
         },
@@ -226,6 +227,7 @@ export default {
           label: this.$t('_global.edit'),
           icon: 'mdi-pencil-outline',
           iconColor: 'primary',
+          condition: () => !this.selectedStudyVersion,
           click: this.editObjective,
           accessRole: this.$roles.STUDY_WRITE
         },
@@ -233,6 +235,7 @@ export default {
           label: this.$t('_global.delete'),
           icon: 'mdi-delete-outline',
           iconColor: 'error',
+          condition: () => !this.selectedStudyVersion,
           click: this.deleteStudyObjective,
           accessRole: this.$roles.STUDY_WRITE
         },
@@ -275,6 +278,7 @@ export default {
       const params = filteringParameters.prepareParameters(
         this.options, filters, sort, filtersUpdated)
       params.studyUid = this.selectedStudy.uid
+      params.study_value_version = this.selectedStudyVersion
       this.$store.dispatch('studyObjectives/fetchStudyObjectives', params)
     },
     async fetchObjectivesHistory () {
@@ -290,13 +294,13 @@ export default {
       return false
     },
     actionsMenuBadge (item) {
-      if (this.needUpdate(item)) {
+      if (this.needUpdate(item) && !this.selectedStudyVersion) {
         return {
           color: 'error',
           icon: 'mdi-bell-outline'
         }
       }
-      if (!item.objective && item.objective_template.parameters.length > 0) {
+      if (!item.objective && item.objective_template.parameters.length > 0 && !this.selectedStudyVersion) {
         return {
           color: 'error',
           icon: 'mdi-exclamation'

@@ -22,7 +22,7 @@ def _check_uid_exists_callback(uid: str) -> bool:
 
 
 def create_random_valid_vo(
-    selection_uid: str = None, objective_order: int = 2
+    selection_uid: str | None = None, objective_order: int = 2
 ) -> StudySelectionObjectiveVO:
     if selection_uid is None:
         selection_uid = random_str()
@@ -30,7 +30,7 @@ def create_random_valid_vo(
     uid2 = random_str()
     version = "1.1"
     uid_list.extend([uid, uid2])
-    vo = StudySelectionObjectiveVO.from_input_values(
+    study_selection_objective_vo = StudySelectionObjectiveVO.from_input_values(
         objective_uid=uid,
         study_selection_uid=selection_uid,
         objective_version=version,
@@ -39,19 +39,21 @@ def create_random_valid_vo(
         start_date=datetime.datetime.now(datetime.timezone.utc),
         user_initials=random_str(),
     )
-    vo.validate(_check_uid_exists_callback, _check_uid_exists_callback)
-    return vo
+    study_selection_objective_vo.validate(
+        _check_uid_exists_callback, _check_uid_exists_callback
+    )
+    return study_selection_objective_vo
 
 
 # test StudySelectionObjectivesVO
 class TestStudySelectionObjectiveVO(unittest.TestCase):
     def test__validate__success(self):
-        dt = datetime.datetime.now(datetime.timezone.utc)
+        start_datetime = datetime.datetime.now(datetime.timezone.utc)
         test_tuples = [
-            ["uid_1", "ctterm_1", dt, "1.0", "todo user initials", 1],
-            [" uid_2", "ctterm_2", dt, " 2.0 ", "todo user initials", 2],
-            ["uid_3 ", None, dt, " 3.0", "todo user initials", None],
-            [" uid_3 ", "", dt, "4.0", "todo user initials", None],
+            ["uid_1", "ctterm_1", start_datetime, "1.0", "todo user initials", 1],
+            [" uid_2", "ctterm_2", start_datetime, " 2.0 ", "todo user initials", 2],
+            ["uid_3 ", None, start_datetime, " 3.0", "todo user initials", None],
+            [" uid_3 ", "", start_datetime, "4.0", "todo user initials", None],
         ]
         for test_tuple in test_tuples:
             with self.subTest(test_tuple=test_tuple):
@@ -69,13 +71,13 @@ class TestStudySelectionObjectiveVO(unittest.TestCase):
                 )
 
     def test__validate__failure(self):
-        dt = datetime.datetime.now(datetime.timezone.utc)
+        start_datetime = datetime.datetime.now(datetime.timezone.utc)
         test_tuples = [
-            ["uid_1_200", "uid_1", dt, "1.0", "todo user initials", None],
-            ["", None, dt, "2.0", "todo user initials", 1],
-            ["____////", "", dt, "3.0", "todo user initials", 3],
-            ["uid_1", "Primary", dt, "3.0", "todo user initials", 1],
-            ["uid_1", "_uid_1", dt, "3.0", "todo user initials", 2],
+            ["uid_1_200", "uid_1", start_datetime, "1.0", "todo user initials", None],
+            ["", None, start_datetime, "2.0", "todo user initials", 1],
+            ["____////", "", start_datetime, "3.0", "todo user initials", 3],
+            ["uid_1", "Primary", start_datetime, "3.0", "todo user initials", 1],
+            ["uid_1", "_uid_1", start_datetime, "3.0", "todo user initials", 2],
         ]
         for test_tuple in test_tuples:
             with self.subTest(test_tuple=test_tuple):

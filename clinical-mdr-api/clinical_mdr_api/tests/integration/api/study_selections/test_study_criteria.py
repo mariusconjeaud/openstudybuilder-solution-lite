@@ -29,6 +29,7 @@ log = logging.getLogger(__name__)
 # Global variables shared between fixtures and tests
 study: Study
 study_uid: str
+study_criteria_uid: str
 url_prefix: str
 ct_term_inclusion_criteria: models.CTTerm
 ct_term_exclusion_criteria: models.CTTerm
@@ -37,6 +38,7 @@ incl_criteria_template_2: models.CriteriaTemplate
 excl_criteria_template_1: models.CriteriaTemplate
 excl_criteria_template_2: models.CriteriaTemplate
 excl_criteria_template_with_param: models.CriteriaTemplate
+expected_criteria_with_param_name: str
 inclusion_type_output: dict
 exclusion_type_output: dict
 incl_criteria_template_1_output: dict
@@ -79,7 +81,7 @@ def test_data():
     global default_study_criteria_output
     global change_description_approve
 
-    """Initialize test data"""
+    # Initialize test data
     inject_and_clear_db("studycriteria.api")
     study = inject_base_data()
     study_uid = study.uid
@@ -253,6 +255,8 @@ def test_crud_study_criteria(api_client):
     * Get headers for a specific study
 
     """
+    global expected_criteria_with_param_name
+
     # Selection preview
     response = api_client.post(
         url=f"{url_prefix}/preview",
@@ -371,6 +375,10 @@ def test_crud_study_criteria(api_client):
         res[2], expected_excl_criteria_2, exclude_paths=full_exclude_paths
     )
 
+    # locking and unlocking to create multiple study value relationships on the existent StudySelections
+    TestUtils.create_study_fields_configuration()
+    TestUtils.lock_and_unlock_study(study_uid=study_uid)
+
     # Test reorder
     response = api_client.patch(
         url=f"{url_prefix}/StudyCriteria_000001/order",
@@ -438,6 +446,10 @@ def test_crud_study_criteria(api_client):
     assert not DeepDiff(
         res["items"][3], expected_excl_criteria_2, exclude_paths=full_exclude_paths
     )
+
+    # locking and unlocking to create multiple study value relationships on the existent StudySelections
+    TestUtils.create_study_fields_configuration()
+    TestUtils.lock_and_unlock_study(study_uid=study_uid)
 
     # Test delete
     response = api_client.delete(url=f"{url_prefix}/StudyCriteria_000002")
@@ -566,6 +578,30 @@ def test_crud_study_criteria(api_client):
     # Test get with project name and number filter
     project_name = res["project_name"]
     project_number = res["project_number"]
+
+    # get audit and check that template was in the first version and instance in the second
+    response = api_client.get(
+        f"{url_prefix}/StudyCriteria_000005/audit-trail/",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert (
+        res[1]["criteria_template"]["name"]
+        == vars(excl_criteria_template_with_param)["name"]
+    )
+    assert (
+        res[1]["criteria_template"]["name_plain"]
+        == vars(excl_criteria_template_with_param)["name_plain"]
+    )
+    assert (
+        res[1]["criteria_template"]["uid"]
+        == vars(excl_criteria_template_with_param)["uid"]
+    )
+    assert res[0]["criteria"]["uid"] == "Criteria_000005"
+    assert res[0]["criteria"]["name"] == expected_criteria_with_param_name
+    assert res[0]["criteria"]["name_plain"] == expected_criteria_with_param_name_plain
+    assert res[0]["key_criteria"] is True
+
     response = api_client.get(
         url=f"{url_prefix}?project_name={project_name}&project_number={project_number}"
     )
@@ -680,13 +716,16 @@ def test_errors(api_client):
 
 
 def test_study_locking_study_criteria(api_client):
-    study = TestUtils.create_study()
+    global study_criteria_uid
+
     url_prefix = f"/studies/{study.uid}/study-criteria"
     # Create selection
-    api_client.post(
+    response = api_client.post(
         url=f"{url_prefix}?create_criteria=true",
         json=default_study_criteria_input,
     )
+    res = response.json()
+    study_criteria_uid = res["study_criteria_uid"]
 
     # get all criteria
     response = api_client.get(
@@ -695,7 +734,6 @@ def test_study_locking_study_criteria(api_client):
     res = response.json()
     assert response.status_code == 200
     old_res = res
-    criteria_uid = res[0]["study_criteria_uid"]
 
     # update study title to be able to lock it
     response = api_client.patch(
@@ -706,7 +744,7 @@ def test_study_locking_study_criteria(api_client):
 
     # Lock
     response = api_client.post(
-        f"/studies/{study.uid}/lock",
+        f"/studies/{study.uid}/locks",
         json={"change_description": "Lock 1"},
     )
     assert response.status_code == 201
@@ -720,7 +758,7 @@ def test_study_locking_study_criteria(api_client):
     assert res["message"] == f"Study with specified uid '{study.uid}' is locked."
 
     response = api_client.patch(
-        url=f"{url_prefix}/{criteria_uid}/order",
+        url=f"{url_prefix}/{study_criteria_uid}/order",
         json={"new_order": 2},
     )
     res = response.json()
@@ -734,6 +772,142 @@ def test_study_locking_study_criteria(api_client):
     res = response.json()
     assert response.status_code == 200
     assert old_res == res
+
+    # test cannot delete
+    response = api_client.delete(
+        f"/studies/{study.uid}/study-criteria/{study_criteria_uid}"
+    )
+    assert response.status_code == 400
+    assert (
+        response.json()["message"]
+        == f"Study with specified uid '{study.uid}' is locked."
+    )
+
+
+def test_study_criteria_with_key_criteria(api_client):
+    criteria_template = TestUtils.create_criteria_template(
+        name="study value version test", type_uid=ct_term_inclusion_criteria.term_uid
+    )
+
+    # get specific criteria
+    response = api_client.get(
+        f"/studies/{study.uid}/study-criteria/{study_criteria_uid}",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["key_criteria"] is False
+    before_unlock = res
+
+    # get study criteria headers
+    response = api_client.get(
+        f"/studies/{study.uid}/study-criteria/headers?field_name=criteria.name",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res == [
+        incl_criteria_template_1.name,
+        excl_criteria_template_1.name,
+        excl_criteria_template_2.name,
+        expected_criteria_with_param_name,
+    ]
+
+    # Unlock
+    response = api_client.delete(f"/studies/{study.uid}/locks")
+    assert response.status_code == 200
+
+    # edit study criteria
+    response = api_client.patch(
+        f"/studies/{study.uid}/study-criteria/{study_criteria_uid}",
+        json={
+            "criteria_template_uid": criteria_template.uid,
+            "library_name": incl_criteria_template_1.library.name,
+            "parameter_terms": [],
+            "key_criteria": True,
+        },
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["key_criteria"] is True
+    assert res["criteria"]["criteria_template"]["uid"] == criteria_template.uid
+
+    # get all study criteria of a specific study version
+    response = api_client.get(
+        f"/studies/{study.uid}/study-criteria?study_value_version=3",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert (
+        next(
+            (
+                item
+                for item in res["items"]
+                if item["study_criteria_uid"] == study_criteria_uid
+            ),
+            None,
+        )
+        == before_unlock
+    )
+
+    # get specific study criteria of a specific study version
+    response = api_client.get(
+        f"/studies/{study.uid}/study-criteria/{study_criteria_uid}?study_value_version=3",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res == before_unlock
+
+    # get study criteria headers of specific study version
+    response = api_client.get(
+        f"/studies/{study.uid}/study-criteria/headers?field_name=criteria.name&study_value_version=3",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res == [
+        incl_criteria_template_1.name,
+        excl_criteria_template_1.name,
+        excl_criteria_template_2.name,
+        expected_criteria_with_param_name,
+    ]
+
+    # get all study criteria
+    response = api_client.get(
+        f"/studies/{study.uid}/study-criteria",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    res_key_criteria, res_criteria = next(
+        (
+            (item["key_criteria"], item["criteria"])
+            for item in res["items"]
+            if item["study_criteria_uid"] == study_criteria_uid
+        ),
+        (None, None),
+    )
+    assert res_key_criteria is True
+    assert res_criteria["criteria_template"]["uid"] == criteria_template.uid
+
+    # get specific study criteria
+    response = api_client.get(
+        f"/studies/{study.uid}/study-criteria/{study_criteria_uid}",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["key_criteria"] is True
+    assert res["criteria"]["criteria_template"]["uid"] == criteria_template.uid
+
+    # get study study criteria headers
+    response = api_client.get(
+        f"/studies/{study.uid}/study-criteria/headers?field_name=criteria.name",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res == [
+        incl_criteria_template_1.name,
+        criteria_template.name,
+        excl_criteria_template_1.name,
+        excl_criteria_template_2.name,
+        expected_criteria_with_param_name,
+    ]
 
 
 @pytest.mark.parametrize(

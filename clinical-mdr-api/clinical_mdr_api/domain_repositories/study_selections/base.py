@@ -97,12 +97,14 @@ class StudySelectionRepository:
         # Delete relation
         selection.study_value.disconnect(latest_study_value_node)
 
-    def _get_selection_with_history(self, study_uid: str, selection_uid: str = None):
+    def _get_selection_with_history(
+        self, study_uid: str, selection_uid: str | None = None
+    ):
         """Must be defined by subclasses."""
         raise NotImplementedError
 
     def find_selection_history(
-        self, study_uid: str, selection_uid: str = None
+        self, study_uid: str, selection_uid: str | None = None
     ) -> list[dict | None]:
         kwargs = {}
         if selection_uid:

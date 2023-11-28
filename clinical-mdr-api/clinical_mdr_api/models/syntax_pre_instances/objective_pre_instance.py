@@ -18,7 +18,10 @@ from clinical_mdr_api.models.syntax_templates.template_parameter_term import (
     IndexedTemplateParameterTerm,
     MultiTemplateParameterTerm,
 )
-from clinical_mdr_api.models.utils import BaseModel
+from clinical_mdr_api.models.utils import (
+    BaseModel,
+    capitalize_first_letter_if_template_parameter,
+)
 
 IS_CONFIRMATORY_TESTING_DESC = (
     "Indicates if pre-instance is related to confirmatory testing."
@@ -65,13 +68,13 @@ class ObjectivePreInstance(BaseModel):
         ):
             terms: list[IndexedTemplateParameterTerm] = []
             for index, parameter_term in enumerate(parameter.parameters):
-                pv = IndexedTemplateParameterTerm(
+                indexed_template_parameter_term = IndexedTemplateParameterTerm(
                     index=index + 1,
                     uid=parameter_term.uid,
                     name=parameter_term.value,
                     type=parameter.parameter_name,
                 )
-                terms.append(pv)
+                terms.append(indexed_template_parameter_term)
             conjunction = parameter.conjunction
 
             parameter_terms.append(
@@ -84,8 +87,14 @@ class ObjectivePreInstance(BaseModel):
             sequence_id=objective_pre_instance_ar.sequence_id,
             template_uid=objective_pre_instance_ar.template_uid,
             template_name=objective_pre_instance_ar.template_name,
-            name=objective_pre_instance_ar.name,
-            name_plain=objective_pre_instance_ar.name_plain,
+            name=capitalize_first_letter_if_template_parameter(
+                objective_pre_instance_ar.name,
+                objective_pre_instance_ar.template_name_plain,
+            ),
+            name_plain=capitalize_first_letter_if_template_parameter(
+                objective_pre_instance_ar.name_plain,
+                objective_pre_instance_ar.template_name_plain,
+            ),
             start_date=objective_pre_instance_ar.item_metadata.start_date,
             end_date=objective_pre_instance_ar.item_metadata.end_date,
             status=objective_pre_instance_ar.item_metadata.status.value,

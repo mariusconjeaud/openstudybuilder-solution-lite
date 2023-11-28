@@ -236,14 +236,9 @@ export default {
         this.close()
         return
       }
-      const valid = await this.$refs.observer.validate()
-      if (!valid) {
-        return
-      }
       const data = {
         registry_identifiers: this.form
       }
-      this.$refs.form.working = true
       try {
         await this.$store.dispatch('manageStudies/editStudyIdentification', [this.selectedStudy.uid, data])
         this.$emit('updated', this.form)

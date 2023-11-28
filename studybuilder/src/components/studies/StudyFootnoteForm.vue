@@ -10,6 +10,7 @@
     :extra-step-validation="extraStepValidation"
     :helpItems="helpItems"
     :editData="form"
+    :loadingContinue="loadingContinue"
     >
     <template v-slot:step.creationMode>
       <v-radio-group
@@ -154,7 +155,7 @@
             </template>
           </template>
           <template v-slot:item.indications="{ item }">
-            <template v-if="item.indications">
+            <template v-if="item.indications && item.indications.length">
               {{ item.indications | names }}
             </template>
             <template v-else>
@@ -350,6 +351,7 @@ export default {
         { text: this.$t('Study.study_id'), value: 'study_id' },
         { text: this.$t('StudyFootnoteForm.study_footnote'), value: 'footnote.name' }
       ],
+      loadingContinue: false,
       options: {},
       total: 0
     }
@@ -452,6 +454,9 @@ export default {
       return (!this.isStudyFootnoteselected(item) ? 'primary' : '')
     },
     async extraStepValidation (step) {
+      if (this.creationMode === 'template' && step === 1) {
+        this.getFootnoteTemplates()
+      }
       if (this.creationMode === 'template' && step === 2) {
         if (this.form.footnote_template === undefined || this.form.footnote_template === null) {
           bus.$emit('notification', { msg: this.$t('StudyFootnoteForm.template_not_selected'), type: 'error' })
@@ -472,10 +477,13 @@ export default {
         type_uid: this.footnoteType.term_uid
       }
       try {
+        this.loadingContinue = true
         const resp = await footnoteTemplates.create(data)
         if (resp.data.status === statuses.DRAFT) await footnoteTemplates.approve(resp.data.uid)
         this.$set(this.form, 'footnote_template', resp.data)
+        this.loadingContinue = false
       } catch (error) {
+        this.loadingContinue = false
         return false
       }
       this.loadParameters(this.form.footnote_template)

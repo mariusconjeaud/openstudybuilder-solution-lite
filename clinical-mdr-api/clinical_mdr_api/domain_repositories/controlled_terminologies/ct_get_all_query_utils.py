@@ -1,8 +1,6 @@
 """
 Utility module to store the common parts of terms get all and specific term get all requests.
 """
-from typing import Sequence
-
 from clinical_mdr_api.domain_repositories.models._utils import convert_to_datetime
 from clinical_mdr_api.domains.controlled_terminologies.ct_codelist_attributes import (
     CTCodelistAttributesAR,
@@ -201,7 +199,7 @@ def create_term_attributes_aggregate_instances_from_cypher_result(
     return term_attributes_ar
 
 
-def format_term_filter_sort_keys(key: str, prefix: str = None) -> str:
+def format_term_filter_sort_keys(key: str, prefix: str | None = None) -> str:
     """
     Maps a fieldname as provided by the API query (equal to output model) to the same fieldname as defined in the database and/or Cypher query
 
@@ -258,7 +256,7 @@ def format_term_filter_sort_keys(key: str, prefix: str = None) -> str:
 
 def list_term_wildcard_properties(
     is_aggregated: bool = True, target_model: BaseModel | None = None
-) -> Sequence[str]:
+) -> list[str]:
     """
     Returns a list of properties on which to apply wildcard filtering, formatted as defined in the database and/or Cypher query
     :param is_aggregated: bool.
@@ -440,7 +438,7 @@ def create_codelist_attributes_aggregate_instances_from_cypher_result(
     return codelist_attributes_ar
 
 
-def format_codelist_filter_sort_keys(key: str, prefix: str = None) -> str:
+def format_codelist_filter_sort_keys(key: str, prefix: str | None = None) -> str:
     """
     Maps a fieldname as provided by the API query (equal to output model) to the same fieldname as defined in the database and/or Cypher query
 
@@ -483,8 +481,8 @@ def format_codelist_filter_sort_keys(key: str, prefix: str = None) -> str:
 
 
 def list_codelist_wildcard_properties(
-    is_aggregated: bool = True, target_model: BaseModel = None
-) -> Sequence[str]:
+    is_aggregated: bool = True, target_model: BaseModel | None = None
+) -> list[str]:
     """
     Returns a list of properties on which to apply wildcard filtering, formatted as defined in the database and/or Cypher query
     :param is_aggregated: bool.

@@ -1,6 +1,6 @@
 import datetime
-from dataclasses import dataclass, field
-from typing import Any, Callable, Iterable, Self, Sequence
+from dataclasses import dataclass, field, replace
+from typing import Any, Callable, Iterable, Self
 
 from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains._utils import normalize_string
@@ -38,7 +38,7 @@ class StudySelectionCriteriaVO:
         study_uid: str | None = None,
         study_selection_uid: str | None = None,
         start_date: datetime.datetime | None = None,
-        generate_uid_callback: Callable[[], str] = None,
+        generate_uid_callback: Callable[[], str] | None = None,
         accepted_version: bool = False,
     ):
         if study_selection_uid is None:
@@ -79,6 +79,12 @@ class StudySelectionCriteriaVO:
                 f"There is no approved criteria type identified by provided term uid ({self.criteria_type_uid})"
             )
 
+    def update_version(self, criteria_version: str):
+        return replace(self, syntax_object_version=criteria_version)
+
+    def accept_versions(self):
+        return replace(self, accepted_version=True)
+
 
 @dataclass
 class StudySelectionCriteriaAR:
@@ -102,7 +108,7 @@ class StudySelectionCriteriaAR:
         return self._study_uid
 
     @property
-    def study_criteria_selection(self) -> Sequence[StudySelectionCriteriaVO]:
+    def study_criteria_selection(self) -> tuple[StudySelectionCriteriaVO]:
         return self._study_criteria_selection
 
     def get_specific_criteria_selection(
@@ -177,7 +183,7 @@ class StudySelectionCriteriaAR:
                 updated_selection.append(selection)
         self._study_criteria_selection = tuple(updated_selection)
 
-    def set_key_criteria_property(
+    def update_study_criteria_on_aggregated(
         self,
         updated_study_criteria_selection: StudySelectionCriteriaVO,
     ) -> None:
@@ -245,6 +251,28 @@ class StudySelectionCriteriaAR:
             study_criteria_selection_with_different_type
             + study_criteria_selection_with_type
         )
+
+    def update_selection(
+        self,
+        updated_study_criteria_selection: StudySelectionCriteriaVO,
+        criteria_exist_callback: Callable[[str], bool] = (lambda _: True),
+        ct_term_criteria_type_exist_callback: Callable[[str], bool] = (lambda _: True),
+    ) -> None:
+        updated_study_criteria_selection.validate(
+            criteria_exist_callback=criteria_exist_callback,
+            ct_term_criteria_type_exist_callback=ct_term_criteria_type_exist_callback,
+        )
+        updated_selection = []
+        for selection in self.study_criteria_selection:
+            if (
+                selection.study_selection_uid
+                == updated_study_criteria_selection.study_selection_uid
+            ):
+                updated_selection.append(updated_study_criteria_selection)
+            else:
+                updated_selection.append(selection)
+
+        self._study_criteria_selection = tuple(updated_selection)
 
     def validate(self):
         criteria = []

@@ -1,26 +1,25 @@
 import datetime
-from typing import Sequence
 
 from neomodel import db
 
 from clinical_mdr_api import config as settings
 from clinical_mdr_api import exceptions
+from clinical_mdr_api.domain_repositories.generic_repository import (
+    manage_previous_connected_study_selection_relationships,
+)
 from clinical_mdr_api.domain_repositories.models._utils import to_relation_trees
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
     CTTermRoot,
 )
-from clinical_mdr_api.domain_repositories.models.study import (
-    StudyDesignCell,
-    StudyRoot,
-    StudyValue,
-)
+from clinical_mdr_api.domain_repositories.models.study import StudyRoot, StudyValue
 from clinical_mdr_api.domain_repositories.models.study_audit_trail import (
     Create,
     Delete,
     Edit,
 )
 from clinical_mdr_api.domain_repositories.models.study_epoch import StudyEpoch
-from clinical_mdr_api.domain_repositories.models.study_visit import StudyVisit
+
+# from clinical_mdr_api.domain_repositories.models.study_visit import StudyVisit
 from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import (
     StudyStatus,
 )
@@ -82,21 +81,33 @@ class StudyEpochRepository:
         )
         return basic_visit[0][0] if len(basic_visit) > 0 else None
 
-    def find_all_epochs_by_study(self, study_uid: str) -> Sequence[StudyEpochVO]:
-        all_epochs = [
+    def find_all_epochs_by_study(
+        self, study_uid: str, study_value_version: str | None = None
+    ) -> list[StudyEpochVO]:
+        if study_value_version:
+            filters = {
+                "study_value__has_version|version": study_value_version,
+                "study_value__has_version__uid": study_uid,
+            }
+        else:
+            filters = {"study_value__latest_value__uid": study_uid}
+
+        return [
             self._from_neomodel_to_vo(
                 study_epoch_ogm_input=StudyEpochOGM.from_orm(sas_node)
             )
             for sas_node in to_relation_trees(
                 StudyEpoch.nodes.fetch_relations(
-                    "has_epoch", "has_epoch_subtype", "has_epoch_type", "has_after"
+                    "has_epoch",
+                    "has_epoch_subtype",
+                    "has_epoch_type",
+                    "has_after__audit_trail",
                 )
                 .fetch_optional_relations("has_duration_unit")
-                .filter(study_value__study_root__uid=study_uid)
+                .filter(**filters)
                 .order_by("order")
-            )
+            ).distinct()
         ]
-        return all_epochs
 
     def epoch_specific_has_connected_design_cell(
         self, study_uid: str, epoch_uid: str
@@ -108,22 +119,39 @@ class StudyEpochRepository:
 
         sdc_node = to_relation_trees(
             StudyEpoch.nodes.fetch_relations(
-                "has_design_cell__study_value", "has_after"
-            ).filter(study_value__study_root__uid=study_uid, uid=epoch_uid)
+                "has_design_cell__study_value",
+                "has_after",
+                "has_after__audit_trail",
+            ).filter(study_value__latest_value__uid=study_uid, uid=epoch_uid)
         )
         return len(sdc_node) > 0
 
-    def find_by_uid(self, uid: str, study_uid: str) -> StudyEpochVO:
+    def find_by_uid(
+        self, uid: str, study_uid: str, study_value_version: str | None = None
+    ) -> StudyEpochVO:
+        if study_value_version:
+            filters = {
+                "uid": uid,
+                "study_value__has_version__uid": study_uid,
+                "study_value__has_version|version": study_value_version,
+            }
+        else:
+            filters = {
+                "uid": uid,
+                "study_value__latest_value__uid": study_uid,
+            }
+
         epoch_node = to_relation_trees(
             StudyEpoch.nodes.fetch_relations(
                 "has_epoch",
                 "has_epoch_subtype",
                 "has_epoch_type",
-                "has_after",
+                "has_after__audit_trail",
+                "study_value__has_version",
             )
             .fetch_optional_relations("has_duration_unit")
-            .filter(study_value__study_root__uid=study_uid, uid=uid)
-        )
+            .filter(**filters)
+        ).distinct()
 
         if len(epoch_node) > 1:
             raise exceptions.ValidationException(
@@ -138,41 +166,47 @@ class StudyEpochRepository:
         )
 
     def get_all_versions(self, uid: str, study_uid):
-        version_nodes = [
-            self._from_neomodel_to_history_vo(
-                study_epoch_ogm_input=StudyEpochOGMVer.from_orm(se_node)
-            )
-            for se_node in to_relation_trees(
-                StudyEpoch.nodes.fetch_relations(
-                    "has_after__audit_trail",
-                    "has_epoch",
-                    "has_epoch_subtype",
-                    "has_epoch_type",
+        return sorted(
+            [
+                self._from_neomodel_to_history_vo(
+                    study_epoch_ogm_input=StudyEpochOGMVer.from_orm(se_node)
                 )
-                .fetch_optional_relations("has_duration_unit", "has_before")
-                .filter(uid=uid, has_after__audit_trail__uid=study_uid)
-            )
-        ]
-        return sorted(version_nodes, key=lambda item: item.start_date, reverse=True)
+                for se_node in to_relation_trees(
+                    StudyEpoch.nodes.fetch_relations(
+                        "has_after__audit_trail",
+                        "has_epoch",
+                        "has_epoch_subtype",
+                        "has_epoch_type",
+                    )
+                    .fetch_optional_relations("has_duration_unit", "has_before")
+                    .filter(uid=uid, has_after__audit_trail__uid=study_uid)
+                )
+            ],
+            key=lambda item: item.start_date,
+            reverse=True,
+        )
 
     def get_all_epoch_versions(self, study_uid: str):
-        version_nodes = [
-            self._from_neomodel_to_history_vo(
-                study_epoch_ogm_input=StudyEpochOGMVer.from_orm(se_node)
-            )
-            for se_node in to_relation_trees(
-                StudyEpoch.nodes.fetch_relations(
-                    "has_after__audit_trail",
-                    "has_epoch",
-                    "has_epoch_subtype",
-                    "has_epoch_type",
+        return sorted(
+            [
+                self._from_neomodel_to_history_vo(
+                    study_epoch_ogm_input=StudyEpochOGMVer.from_orm(se_node)
                 )
-                .fetch_optional_relations("has_duration_unit", "has_before")
-                .filter(has_after__audit_trail__uid=study_uid)
-                .order_by("order")
-            )
-        ]
-        return sorted(version_nodes, key=lambda item: item.start_date, reverse=True)
+                for se_node in to_relation_trees(
+                    StudyEpoch.nodes.fetch_relations(
+                        "has_after__audit_trail",
+                        "has_epoch",
+                        "has_epoch_subtype",
+                        "has_epoch_type",
+                    )
+                    .fetch_optional_relations("has_duration_unit", "has_before")
+                    .filter(has_after__audit_trail__uid=study_uid)
+                    .order_by("order")
+                )
+            ],
+            key=lambda item: item.start_date,
+            reverse=True,
+        )
 
     def _from_neomodel_to_vo(self, study_epoch_ogm_input: StudyEpochOGM):
         return StudyEpochVO(
@@ -219,9 +253,11 @@ class StudyEpochRepository:
 
     def _update(self, item: StudyEpochVO, create: bool = False):
         study_root = StudyRoot.nodes.get(uid=item.study_uid)
-        study_value = study_root.latest_value.get_or_none()
+        study_value: StudyValue = study_root.latest_value.get_or_none()
         if study_value is None:
             raise exceptions.ValidationException("Study does not have draft version")
+        if not create:
+            previous_item = study_value.has_study_epoch.get(uid=item.uid)
         new_study_epoch = StudyEpoch(
             uid=item.uid,
             accepted_version=item.accepted_version,
@@ -245,16 +281,12 @@ class StudyEpochRepository:
         new_study_epoch.has_epoch_type.connect(ct_epoch_type)
         ct_epoch = CTTermRoot.nodes.get(uid=item.epoch.name)
         new_study_epoch.has_epoch.connect(ct_epoch)
-
         if create:
+            new_study_epoch.study_value.connect(study_value)
             self.manage_versioning_create(
                 study_root=study_root, item=item, new_item=new_study_epoch
             )
-            new_study_epoch.study_value.connect(study_value)
         else:
-            previous_item = StudyEpoch.nodes.filter(uid=item.uid).has(study_value=True)[
-                0
-            ]
             if item.is_deleted:
                 self.manage_versioning_delete(
                     study_root=study_root,
@@ -263,65 +295,21 @@ class StudyEpochRepository:
                     new_item=new_study_epoch,
                 )
             else:
+                new_study_epoch.study_value.connect(study_value)
                 self.manage_versioning_update(
                     study_root=study_root,
                     item=item,
                     previous_item=previous_item,
                     new_item=new_study_epoch,
                 )
-                new_study_epoch.study_value.connect(study_value)
-            self.manage_previous_outbound_relationships(
+            manage_previous_connected_study_selection_relationships(
                 previous_item=previous_item,
-                latest_study_value_node=study_value,
+                study_value_node=study_value,
                 new_item=new_study_epoch,
+                exclude_study_selection_relationships=[],
             )
 
         return item
-
-    def manage_previous_outbound_relationships(
-        self,
-        previous_item: StudyEpoch,
-        latest_study_value_node: StudyValue,
-        new_item: StudyEpoch,
-    ):
-        # DROP StudyValue relationship
-        previous_item.study_value.disconnect(latest_study_value_node)
-
-        # MANTAIN StudyDesignCell relationships, just for those StudyDesignCell with StudyValue connection
-        connected_study_design_cells: Sequence[
-            StudyDesignCell
-        ] = previous_item.has_design_cell.all()
-        for study_design_cell_node in connected_study_design_cells:
-            # if the studydesigncell is connected to study value
-            if study_design_cell_node.study_value.get_or_none():
-                # then connect it to the new epoch
-                new_item.has_design_cell.connect(study_design_cell_node)
-        connected_study_visits: Sequence[
-            StudyVisit
-        ] = previous_item.has_study_visit.all()
-        for study_visit_node in connected_study_visits:
-            # if the StudyVisit is connected to study value
-            if study_visit_node.has_study_visit.get_or_none():
-                # then connect it to the new epoch
-                new_item.has_study_visit.connect(study_visit_node)
-
-    def _maintain_relationship_on_save(
-        self,
-        relation_name: str,
-        expected_latest_value: StudyEpoch,
-        previous_value: StudyEpoch,
-    ):
-        # check if new value node is created
-        if expected_latest_value is not previous_value:
-            # remove the relation from the old value node
-            study_selection_nodes = getattr(previous_value, relation_name).all()
-            getattr(previous_value, relation_name).disconnect_all()
-
-            # add the relation to the new node
-            for study_selection_node in study_selection_nodes:
-                getattr(expected_latest_value, relation_name).connect(
-                    study_selection_node
-                )
 
     def manage_versioning_create(
         self, study_root: StudyRoot, item: StudyEpochVO, new_item: StudyEpoch

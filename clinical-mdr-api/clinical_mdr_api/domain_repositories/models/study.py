@@ -18,10 +18,8 @@ from clinical_mdr_api.domain_repositories.models.study_field import (
 from clinical_mdr_api.domain_repositories.models.study_selections import (
     AuditTrailMixin,
     StudyActivity,
-    StudyActivityGroup,
     StudyActivityInstruction,
     StudyActivitySchedule,
-    StudyActivitySubGroup,
     StudyArm,
     StudyBranchArm,
     StudyCohort,
@@ -46,8 +44,6 @@ class StudyValue(ClinicalMdrNode, AuditTrailMixin):
     study_number = StringProperty()
     study_acronym = StringProperty()
     study_id_prefix = StringProperty()
-
-    study_root = RelationshipFrom("StudyRoot", "LATEST")
 
     has_project = RelationshipTo(StudyProjectField, "HAS_PROJECT", model=ClinicalMdrRel)
     has_time_field = RelationshipTo(
@@ -94,12 +90,6 @@ class StudyValue(ClinicalMdrNode, AuditTrailMixin):
     has_study_activity = RelationshipTo(
         StudyActivity, "HAS_STUDY_ACTIVITY", model=ClinicalMdrRel
     )
-    has_study_activity_subgroup = RelationshipTo(
-        StudyActivitySubGroup, "HAS_STUDY_ACTIVITY_SUBGROUP", model=ClinicalMdrRel
-    )
-    has_study_activity_group = RelationshipTo(
-        StudyActivityGroup, "HAS_STUDY_ACTIVITY_GROUP", model=ClinicalMdrRel
-    )
     has_study_activity_schedule = RelationshipTo(
         StudyActivitySchedule, "HAS_STUDY_ACTIVITY_SCHEDULE", model=ClinicalMdrRel
     )
@@ -109,8 +99,6 @@ class StudyValue(ClinicalMdrNode, AuditTrailMixin):
     has_study_design_cell = RelationshipTo(
         StudyDesignCell, "HAS_STUDY_DESIGN_CELL", model=ClinicalMdrRel
     )
-
-    has_latest = RelationshipFrom(ClinicalMdrNode, "LATEST", model=ClinicalMdrRel)
 
     has_study_arm = RelationshipTo(StudyArm, "HAS_STUDY_ARM", model=ClinicalMdrRel)
 
@@ -137,6 +125,10 @@ class StudyValue(ClinicalMdrNode, AuditTrailMixin):
         model=ClinicalMdrRel,
     )
     latest_value = RelationshipFrom("StudyRoot", "LATEST", model=ClinicalMdrRel)
+
+    has_version = RelationshipFrom(
+        "StudyRoot", "HAS_VERSION", model=VersionRelationship
+    )
 
 
 class StudyRoot(ClinicalMdrNodeWithUID):

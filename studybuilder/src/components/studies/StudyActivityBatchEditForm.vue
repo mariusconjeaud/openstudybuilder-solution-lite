@@ -18,13 +18,6 @@
       clearable
       class="border-top mt-4"
       />
-    <v-textarea
-      v-model="form.note"
-      :label="$t('StudyActivity.footnote')"
-      rows="1"
-      clearable
-      auto-grow
-      />
     <v-checkbox
       v-model="form.deleteSelection"
       :color="form.deleteSelection ? 'error': ''"
@@ -92,7 +85,7 @@ export default {
             note: this.form.note
           }
           if (this.form.flowchart_group) {
-            content.flowchart_group_uid = this.form.flowchart_group.term_uid
+            content.soa_group_term_uid = this.form.flowchart_group.term_uid
           }
           data.push({
             method: 'PATCH',
@@ -104,7 +97,7 @@ export default {
         }
       }
       if (data.length) {
-        study.studyActivityBatchOperations(this.selectedStudy.uid, data).then(resp => {
+        study.studyActivityBatchOperations(this.selectedStudy.uid, data).then(() => {
           bus.$emit('notification', { type: 'success', msg: this.$t('StudyActivityBatchEditForm.update_success') })
           this.$emit('updated')
           this.close()

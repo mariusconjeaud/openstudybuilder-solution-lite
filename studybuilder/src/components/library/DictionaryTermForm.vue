@@ -163,6 +163,7 @@ export default {
     },
     close () {
       this.form = {}
+      this.$refs.form.working = false
       this.$store.commit('form/CLEAR_FORM')
       this.$emit('close')
     },
@@ -184,13 +185,11 @@ export default {
         bus.$emit('notification', { msg: this.$t('DictionaryTermForm.update_success') })
         this.$emit('save')
         this.close()
+      }, _err => {
+        this.$refs.form.working = false
       })
     },
     async create () {
-      const valid = await this.$refs.observer.validate()
-      if (!valid) {
-        return
-      }
       this.form.library_name = this.dictionaryName
       this.form.codelist_uid = this.editedTermCategory
       const data = JSON.parse(JSON.stringify(this.form))
@@ -198,6 +197,8 @@ export default {
         bus.$emit('notification', { msg: this.$t('DictionaryTermForm.create_success') })
         this.$emit('save')
         this.close()
+      }, _err => {
+        this.$refs.form.working = false
       })
     },
     initForm (form) {

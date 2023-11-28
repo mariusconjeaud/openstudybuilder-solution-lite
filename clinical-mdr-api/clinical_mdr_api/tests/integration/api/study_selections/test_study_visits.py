@@ -37,6 +37,7 @@ from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 
 # Global variables shared between fixtures and tests
 study: Study
+study_visit_uid: str
 epoch_uid: str
 DAYUID: str
 visits_basic_data: dict
@@ -75,6 +76,8 @@ def test_data():
 
 
 def test_visit_modify_actions_on_locked_study(api_client):
+    global study_visit_uid
+
     inputs = {
         "study_epoch_uid": epoch_uid,
         "visit_type_uid": "VisitType_0001",
@@ -93,6 +96,7 @@ def test_visit_modify_actions_on_locked_study(api_client):
         json=datadict,
     )
     res = response.json()
+    study_visit_uid = res["uid"]
     assert response.status_code == 201
 
     # get all visits
@@ -102,7 +106,6 @@ def test_visit_modify_actions_on_locked_study(api_client):
     res = response.json()
     assert response.status_code == 200
     old_res = res
-    visit_uid = res[0]["uid"]
 
     # update study title to be able to lock it
     response = api_client.patch(
@@ -113,7 +116,7 @@ def test_visit_modify_actions_on_locked_study(api_client):
 
     # Lock
     response = api_client.post(
-        f"/studies/{study.uid}/lock",
+        f"/studies/{study.uid}/locks",
         json={"change_description": "Lock 1"},
     )
     assert response.status_code == 201
@@ -141,7 +144,7 @@ def test_visit_modify_actions_on_locked_study(api_client):
 
     # edit visit
     inputs = {
-        "uid": visit_uid,
+        "uid": study_visit_uid,
         "study_uid": study.uid,
         "description": "new description",
         "study_epoch_uid": epoch_uid,
@@ -157,7 +160,7 @@ def test_visit_modify_actions_on_locked_study(api_client):
     datadict = visits_basic_data
     datadict.update(inputs)
     response = api_client.patch(
-        f"/studies/{study.uid}/study-visits/{visit_uid}",
+        f"/studies/{study.uid}/study-visits/{study_visit_uid}",
         json=datadict,
     )
     res = response.json()
@@ -171,6 +174,111 @@ def test_visit_modify_actions_on_locked_study(api_client):
     res = response.json()
     assert response.status_code == 200
     assert old_res == res
+
+    # test cannot delete
+    response = api_client.delete(f"/studies/{study.uid}/study-visits/{study_visit_uid}")
+    assert response.status_code == 400
+    assert (
+        response.json()["message"]
+        == f"Study with specified uid '{study.uid}' is locked."
+    )
+
+
+def test_study_visit_versioning(api_client):
+    _study_epoch = create_study_epoch("EpochSubType_0003", study_uid=study.uid)
+
+    # get specific study visit
+    response = api_client.get(
+        f"/studies/{study.uid}/study-visits/{study_visit_uid}",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["study_epoch_uid"] == epoch_uid
+    before_unlock = res
+
+    # get study visit headers
+    response = api_client.get(
+        f"/studies/{study.uid}/study-visits/headers?field_name=study_epoch_uid",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res == [epoch_uid]
+
+    # Unlock -- Study remain unlocked
+    response = api_client.delete(f"/studies/{study.uid}/locks")
+    assert response.status_code == 200
+
+    # edit study visit
+    response = api_client.patch(
+        f"/studies/{study.uid}/study-visits/{study_visit_uid}",
+        json={
+            "show_visit": True,
+            "time_unit_uid": "UnitDefinition_000001",
+            "time_value": 0,
+            "visit_contact_mode_uid": "VisitContactMode_0001",
+            "visit_type_uid": "VisitType_0001",
+            "time_reference_uid": "VisitSubType_0001",
+            "is_global_anchor_visit": True,
+            "visit_class": "SINGLE_VISIT",
+            "study_epoch_uid": _study_epoch.uid,
+            "uid": "StudyVisit_000001",
+            "study_uid": "Study_000002",
+        },
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["study_epoch_uid"] == _study_epoch.uid
+
+    # delete epoch
+    response = api_client.delete(f"/studies/{study.uid}/study-epochs/{epoch_uid}")
+    assert response.status_code == 204
+
+    # get all study visits of a specific study version
+    response = api_client.get(
+        f"/studies/{study.uid}/study-visits?study_value_version=1",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["items"][0] == before_unlock
+
+    # get specific study visit of a specific study version
+    response = api_client.get(
+        f"/studies/{study.uid}/study-visits/{study_visit_uid}?study_value_version=1",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res == before_unlock
+
+    # get study visit headers of specific study version
+    response = api_client.get(
+        f"/studies/{study.uid}/study-visits/headers?field_name=study_epoch_uid&study_value_version=1",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res == [epoch_uid]
+
+    # get all study visits
+    response = api_client.get(
+        f"/studies/{study.uid}/study-visits",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["items"][0]["study_epoch_uid"] == _study_epoch.uid
+
+    # get specific study visit
+    response = api_client.get(
+        f"/studies/{study.uid}/study-visits/{study_visit_uid}",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["study_epoch_uid"] == _study_epoch.uid
+    # get study visits headers
+    response = api_client.get(
+        f"/studies/{study.uid}/study-visits/headers?field_name=study_epoch_uid",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res == [_study_epoch.uid]
 
 
 @pytest.mark.parametrize(

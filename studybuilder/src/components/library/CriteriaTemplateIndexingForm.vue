@@ -6,7 +6,7 @@
   <template v-slot:templateIndexFields>
     <not-applicable-field
       class="mt-4"
-      :checked="template && !template.categories"
+      :checked="template && (!template.categories || !template.categories.length)"
       :clean-function="value => $set(form, 'categories', null)"
       >
       <template v-slot:mainField="{ notApplicable }">
@@ -30,7 +30,7 @@
     </not-applicable-field>
     <not-applicable-field
       class="mt-4"
-      :checked="template && !template.sub_categories"
+      :checked="template && (!template.sub_categories || !template.sub_categories.length)"
       :clean-function="value => $set(form, 'sub_categories', null)"
       >
       <template v-slot:mainField="{ notApplicable }">

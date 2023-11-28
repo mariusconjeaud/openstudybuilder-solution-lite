@@ -22,7 +22,7 @@
         small
         @click.stop="openCopyForm"
         :title="$t('NNTableTooltips.copy_from_study')"
-        :disabled="!checkPermission($roles.STUDY_WRITE)"
+        :disabled="!checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
         >
         <v-icon>mdi-content-copy</v-icon>
       </v-btn>
@@ -33,7 +33,7 @@
         color="primary"
         @click.stop="openForm"
         :title="$t('NNTableTooltips.edit_content')"
-        :disabled="!checkPermission($roles.STUDY_WRITE)"
+        :disabled="!checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
         data-cy="edit-content"
         >
         <v-icon>
@@ -124,6 +124,7 @@ export default {
   computed: {
     ...mapGetters({
       selectedStudy: 'studiesGeneral/selectedStudy',
+      selectedStudyVersion: 'studiesGeneral/selectedStudyVersion',
       studyTypes: 'studiesGeneral/studyTypes',
       trialIntentTypes: 'studiesGeneral/trialIntentTypes',
       trialTypes: 'studiesGeneral/trialTypes',
@@ -230,6 +231,9 @@ export default {
         let values = this.metadata[field.name]
         if (field.name === 'sex_of_participants_code' && values !== undefined && values !== null) {
           values = values.name
+        }
+        if (field.name === 'study_stop_rules' && values == null) {
+          values = this.$t('StudyDefineForm.none')
         }
         result.push({
           name: field.label,

@@ -149,20 +149,20 @@ STUDY_ENDPOINTS = (
     STUDY_ENDPOINT_17,
 )
 
-UNIT_ATTRS = dict(
-    start_date=DATETIME_799,
-    status="Final",
-    version="1.0",
-    user_initials=USER_INITIALS,
-    change_description="Approved version",
-    library_name="Sponsor",
-    convertible_unit=True,
-    display_unit=True,
-    master_unit=True,
-    us_conventional_unit=True,
-    unit_subsets=[],
-    template_parameter=False,
-)
+UNIT_ATTRS = {
+    "start_date": DATETIME_799,
+    "status": "Final",
+    "version": "1.0",
+    "user_initials": USER_INITIALS,
+    "change_description": "Approved version",
+    "library_name": "Sponsor",
+    "convertible_unit": True,
+    "display_unit": True,
+    "master_unit": True,
+    "us_conventional_unit": True,
+    "unit_subsets": [],
+    "template_parameter": False,
+}
 
 UNITS = {
     "UnitDefinition_000002": UnitDefinitionModel(

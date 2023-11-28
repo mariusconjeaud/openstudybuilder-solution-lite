@@ -87,6 +87,8 @@ def test_data():
     activity_item_classes_all = [
         TestUtils.create_activity_item_class(
             name="name A",
+            definition="definition A",
+            nci_concept_id="nci id A",
             order=1,
             mandatory=True,
             activity_instance_class_uids=[
@@ -98,6 +100,8 @@ def test_data():
         ),
         TestUtils.create_activity_item_class(
             name="name-AAA",
+            definition="definition AAA",
+            nci_concept_id="nci id AAA",
             order=2,
             mandatory=True,
             activity_instance_class_uids=[activity_instance_class.uid],
@@ -106,6 +110,8 @@ def test_data():
         ),
         TestUtils.create_activity_item_class(
             name="name-BBB",
+            definition="definition BBB",
+            nci_concept_id="nci id BBB",
             order=3,
             mandatory=True,
             activity_instance_class_uids=[activity_instance_class.uid],
@@ -114,6 +120,8 @@ def test_data():
         ),
         TestUtils.create_activity_item_class(
             name="name XXX",
+            definition="definition XXX",
+            nci_concept_id="nci id XXX",
             order=4,
             mandatory=True,
             activity_instance_class_uids=[activity_instance_class.uid],
@@ -122,6 +130,8 @@ def test_data():
         ),
         TestUtils.create_activity_item_class(
             name="name YYY",
+            definition="definition YYY",
+            nci_concept_id="nci id YYY",
             order=5,
             mandatory=True,
             activity_instance_class_uids=[activity_instance_class.uid],
@@ -134,6 +144,8 @@ def test_data():
         activity_item_classes_all.append(
             TestUtils.create_activity_item_class(
                 name=f"name-AAA-{index}",
+                definition=f"definition AAA-{index}",
+                nci_concept_id=f"nci id AAA-{index}",
                 order=(index * 4) + 1,
                 mandatory=False,
                 activity_instance_class_uids=[activity_instance_class2.uid],
@@ -144,6 +156,8 @@ def test_data():
         activity_item_classes_all.append(
             TestUtils.create_activity_item_class(
                 name=f"name-BBB-{index}",
+                definition=f"definition BBB-{index}",
+                nci_concept_id=f"nci id BBB-{index}",
                 order=(index * 4) + 2,
                 mandatory=False,
                 activity_instance_class_uids=[activity_instance_class2.uid],
@@ -154,6 +168,8 @@ def test_data():
         activity_item_classes_all.append(
             TestUtils.create_activity_item_class(
                 name=f"name-XXX-{index}",
+                definition=f"definition XXX-{index}",
+                nci_concept_id=f"nci id XXX-{index}",
                 order=(index * 4) + 3,
                 mandatory=False,
                 activity_instance_class_uids=[activity_instance_class2.uid],
@@ -164,6 +180,8 @@ def test_data():
         activity_item_classes_all.append(
             TestUtils.create_activity_item_class(
                 name=f"name-YYY-{index}",
+                definition=f"definition YYY-{index}",
+                nci_concept_id=f"nci id YYY-{index}",
                 order=(index * 4) + 4,
                 mandatory=False,
                 activity_instance_class_uids=[activity_instance_class2.uid],
@@ -176,6 +194,8 @@ def test_data():
 ACTIVITY_IC_FIELDS_ALL = [
     "uid",
     "name",
+    "definition",
+    "nci_concept_id",
     "order",
     "mandatory",
     "activity_instance_classes",
@@ -218,6 +238,8 @@ def test_get_activity_item_class(api_client):
 
     assert res["uid"] == activity_item_classes_all[0].uid
     assert res["name"] == "name A"
+    assert res["definition"] == "definition A"
+    assert res["nci_concept_id"] == "nci id A"
     assert res["mandatory"] is True
     assert res["order"] == 1
     assert sorted(
@@ -467,6 +489,8 @@ def test_edit_activity_item_class(api_client):
         f"/activity-item-classes/{activity_item_class.uid}",
         json={
             "name": "new name for item class",
+            "definition": "new definition for item class",
+            "nci_concept_id": "new nci concept id",
             "mandatory": False,
             "order": 45,
             "activity_instance_class_uids": [activity_instance_class_after_edit.uid],
@@ -475,6 +499,8 @@ def test_edit_activity_item_class(api_client):
     res = response.json()
     assert response.status_code == 200
     assert res["name"] == "new name for item class"
+    assert res["definition"] == "new definition for item class"
+    assert res["nci_concept_id"] == "new nci concept id"
     assert res["mandatory"] is False
     assert res["order"] == 45
     assert res["activity_instance_classes"][0]["name"] == "Activity IC after edit"
@@ -499,6 +525,8 @@ def test_post_activity_item_class(api_client):
         "/activity-item-classes",
         json={
             "name": "New AIC Name",
+            "definition": "New AIC Def",
+            "nci_concept_id": "New nci id",
             "mandatory": True,
             "order": 36,
             "library_name": "Sponsor",
@@ -510,6 +538,8 @@ def test_post_activity_item_class(api_client):
     assert response.status_code == 201
     res = response.json()
     assert res["name"] == "New AIC Name"
+    assert res["definition"] == "New AIC Def"
+    assert res["nci_concept_id"] == "New nci id"
     assert res["order"] == 36
     assert res["mandatory"] is True
     assert res["activity_instance_classes"][0]["uid"] == activity_instance_class.uid

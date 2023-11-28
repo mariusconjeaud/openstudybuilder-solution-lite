@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Any, Callable
 
 from neomodel import db
 
@@ -36,7 +36,6 @@ from clinical_mdr_api.services._utils import (
     service_level_generic_filtering,
     service_level_generic_header_filtering,
 )
-from clinical_mdr_api.services.studies.study_flowchart import StudyFlowchartService
 from clinical_mdr_api.services.syntax_instances.footnotes import FootnoteService
 
 
@@ -53,7 +52,7 @@ class StudySoAFootnoteService:
     def _transform_vo_to_pydantic_model(
         self,
         study_soa_footnote_vo: StudySoAFootnoteVO,
-        find_footnote_by_uid: Callable[[str], FootnoteAR | None] = None,
+        find_footnote_by_uid: Callable[[str], FootnoteAR | None] | None = None,
     ) -> StudySoAFootnote:
         return StudySoAFootnote.from_study_soa_footnote_vo(
             study_soa_footnote_vo=study_soa_footnote_vo,
@@ -84,8 +83,11 @@ class StudySoAFootnoteService:
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
+        study_value_version: str | None = None,
     ) -> GenericFilteringReturn[StudySoAFootnote]:
-        items = self.repository.find_all_footnotes()
+        items = self.repository.find_all_footnotes(
+            study_value_version=study_value_version
+        )
         items = [
             self._transform_vo_to_pydantic_model(study_soa_footnote_vo=item)
             for item in items
@@ -113,9 +115,10 @@ class StudySoAFootnoteService:
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
+        study_value_version: str | None = None,
     ) -> GenericFilteringReturn[StudySoAFootnote]:
         items = self.repository.find_all_footnotes(
-            study_uid=study_uid,
+            study_uid=study_uid, study_value_version=study_value_version
         )
         items = [
             self._transform_vo_to_pydantic_model(study_soa_footnote_vo=item)
@@ -143,11 +146,14 @@ class StudySoAFootnoteService:
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
-    ) -> list:
+        study_value_version: str | None = None,
+    ) -> list[Any]:
         if study_uid:
-            all_items = self.get_all_by_study_uid(study_uid=study_uid)
+            all_items = self.get_all_by_study_uid(
+                study_uid=study_uid, study_value_version=study_value_version
+            )
         else:
-            all_items = self.get_all()
+            all_items = self.get_all(study_value_version=study_value_version)
         header_values = service_level_generic_header_filtering(
             items=all_items.items,
             field_name=field_name,
@@ -162,8 +168,11 @@ class StudySoAFootnoteService:
     def get_by_uid(
         self,
         uid: str,
+        study_value_version: str | None = None,
     ):
-        item = self.repository.find_by_uid(uid=uid)
+        item = self.repository.find_by_uid(
+            uid=uid, study_value_version=study_value_version
+        )
         return self._transform_vo_to_pydantic_model(study_soa_footnote_vo=item)
 
     def derive_footnote_number(
@@ -172,39 +181,51 @@ class StudySoAFootnoteService:
         referenced_items: list[ReferencedItem],
         all_soa_footnotes: list[StudySoAFootnoteVO],
     ):
-        flowchart_matrix = StudyFlowchartService(current_user_id="test").get_table(
-            study_uid=study_uid,
-            time_unit="day",
-            use_uid_instead_of_name=True,
+        # local import to avoid circular import
+        from clinical_mdr_api.services.studies.study_flowchart import (
+            StudyFlowchartService,
         )
-        matrix = (
-            [flowchart_matrix.headers[0].data]
-            + [flowchart_matrix.headers[1].data]
-            + flowchart_matrix.data
-        )
-        footnote_orders = []
-        new_footnote = "new_footnote"
-        for row in matrix:
-            for elem in row:
-                for footnote in all_soa_footnotes:
-                    if any(item.item_uid == elem for item in footnote.referenced_items):
-                        if footnote.uid not in footnote_orders:
-                            footnote_orders.append(footnote.uid)
-                if any(item.item_uid == elem for item in referenced_items):
-                    if new_footnote not in footnote_orders:
-                        footnote_orders.append(new_footnote)
-        # if soa footnote referenced item is found in flowchart, assign a footnote order
-        if new_footnote in footnote_orders:
-            footnote_number = footnote_orders.index(new_footnote) + 1
-        # if soa footnote referenced item is not found in flowchart, assign footnote order to the end
-        elif len(referenced_items) == 0:
-            footnote_number = len(all_soa_footnotes) + 1
-        # The item from referenced items wasn't found in the flowchart
-        else:
-            raise exceptions.ValidationException(
-                f"Some of the referenced items {(referenced_items)} were not found in the flowchart"
-            )
-        return footnote_number
+
+        # substitute for uid of current footnote
+        current_footnote_uid = "_CURRENT_FOOTNOTE_"
+
+        # shortcuts
+        if not all_soa_footnotes:
+            return 1
+        if not referenced_items:
+            return len(all_soa_footnotes) + 1
+
+        # get coordinates mapping uid -> [row, column] position of items in protocol SoA flowchart table
+        uid_coordinates_in_flowchart = StudyFlowchartService(
+            self.author
+        ).get_flowchart_item_uid_coordinates(study_uid=study_uid)
+
+        # collect coordinates of items referenced by existing footnotes
+        footnote_coordinates = []
+        for footnote in all_soa_footnotes:
+            for item in footnote.referenced_items:
+                if coordinates := uid_coordinates_in_flowchart.get(item.item_uid):
+                    footnote_coordinates.append((footnote.uid, coordinates))
+
+        # add coordinates of items referenced by the current footnote
+        for item in referenced_items:
+            if coordinates := uid_coordinates_in_flowchart.get(item.item_uid):
+                footnote_coordinates.append((current_footnote_uid, coordinates))
+
+        # sort by coordinates
+        footnote_coordinates.sort(key=lambda uid_coordinates: uid_coordinates[1])
+
+        # find the current footnotes order
+        unique_footnote_uids = set()
+        for uid, _ in footnote_coordinates:
+            # add uid to a set, so practically the length of the set is the order of the current footnote of the loop
+            unique_footnote_uids.add(uid)
+
+            # If current edited footnote, length of set is the order
+            if uid == current_footnote_uid:
+                return len(unique_footnote_uids)
+
+        return len(all_soa_footnotes) + 1
 
     def instantiate_study_soa_vo(
         self,
@@ -213,7 +234,7 @@ class StudySoAFootnoteService:
         footnote_template_uid: str,
         referenced_items: list[ReferencedItem],
         footnote_number: int,
-        uid: str = None,
+        uid: str | None = None,
     ):
         footnote_vo = StudySoAFootnoteVO.from_input_values(
             study_uid=study_uid,
@@ -377,7 +398,7 @@ class StudySoAFootnoteService:
         self,
         footnote_uid: str | None,
         footnote_template_uid: str | None,
-        all_soa_footnotes: list,
+        all_soa_footnotes: list[Any],
         soa_footnote_uid: str,
     ):
         if (

@@ -3,7 +3,6 @@ import datetime
 import logging
 import random
 import uuid
-from typing import Sequence
 
 import httpx
 import pytest
@@ -38,7 +37,7 @@ def mock_jwks_service():
 def mock_token(mock_jwks_service):
     key = mock_jwks_service.keys[list(mock_jwks_service.keys.keys())[0]]
 
-    def factory(roles: Sequence[str] | None = None):
+    def factory(roles: list[str] | None = None):
         claims = mk_claims(
             audience=mock_jwks_service.audience, issuer=mock_jwks_service.audience
         )
@@ -290,9 +289,9 @@ def _mk_required_parameters(parameters, where):
     params = {}
     for param in parameters:
         if param.get("required") and param.get("in") == where:
-            n = param.get("name")
-            params[n] = param.get("schema", {}).get(
-                "default", PARAMETER_DEFAULTS.get(n, f"MISSING__{n}")
+            name = param.get("name")
+            params[name] = param.get("schema", {}).get(
+                "default", PARAMETER_DEFAULTS.get(name, f"MISSING__{name}")
             )
     return params
 

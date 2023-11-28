@@ -9,6 +9,7 @@
     export-object-label="Criteria"
     column-data-resource="criteria"
     :server-items-length="total"
+    :instance-type="criteriaType.term_uid"
     />
 </div>
 </template>

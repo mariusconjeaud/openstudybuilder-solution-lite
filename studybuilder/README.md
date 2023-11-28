@@ -31,10 +31,10 @@ sudo apt-get install yarn -y
 
 Edit the ``config.json`` file and update or define the following variables:
 ```
-"AUTH_ENABLED": "1",
-"AUTH_AUTHORITY": "<Address of you authority server>",
-"AUTH_APP_ID": "<Application ID>",
-"AUTH_CLIENT_ID": "<Client ID>",
+"OAUTH_ENABLED": "true",
+"OAUTH_METADATA_URL": "<URL to the OpenID Connect Metadata document>",
+"OAUTH_API_APP_ID": "<Application ID of the clinical-mdr-api>",
+"OAUTH_UI_APP_ID": "<Applicaiton ID of StudyBuilder UI>",
 ```
 
 ## Project setup

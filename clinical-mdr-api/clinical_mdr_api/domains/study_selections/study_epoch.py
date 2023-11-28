@@ -1,7 +1,7 @@
 import datetime
+from collections import namedtuple
 from dataclasses import dataclass, field
-from enum import Enum
-from typing import Mapping, Sequence
+from typing import Mapping
 
 from clinical_mdr_api.config import (
     BASIC_EPOCH_NAME,
@@ -27,16 +27,14 @@ class StudyEpochAllowedConfig:
     epoch_type: str
 
 
-class StudyEpochType(Enum):
-    pass
+EpochTypeNamedTuple = namedtuple("EpochTypeNamedTuple", ["name", "value"])
+StudyEpochType: dict[str, EpochTypeNamedTuple] = {}
 
+EpochSubtypeNamedTuple = namedtuple("EpochSubtypeNamedTuple", ["name", "value"])
+StudyEpochSubType: dict[str, EpochSubtypeNamedTuple] = {}
 
-class StudyEpochSubType(Enum):
-    pass
-
-
-class StudyEpochEpoch(Enum):
-    pass
+EpochNamedTuple = namedtuple("EpochNamedTuple", ["name", "value"])
+StudyEpochEpoch: dict[str, EpochNamedTuple] = {}
 
 
 @dataclass
@@ -232,7 +230,7 @@ class TimelineAR:
     """
 
     study_uid: str
-    _visits: Sequence["StudyVisitOGM"]
+    _visits: list["StudyVisitOGM"]
 
     def _generate_timeline(self):
         """
@@ -380,13 +378,13 @@ class TimelineAR:
         return ordered_visits
 
     def collect_visits_to_epochs(
-        self, epochs: Sequence[StudyEpochVO]
+        self, epochs: list[StudyEpochVO]
     ) -> Mapping[str, list[StudyVisitVO]]:
         """
         Creates dictionary mapping of study epoch uids to StudyVisitsVO list. Allows to match visits with
         epochs. Additionally adds information for epoch what is first following visit.
         """
-        epochs = sorted(epochs, key=lambda epoch: epoch.order)
+        epochs.sort(key=lambda epoch: epoch.order)
 
         epoch_visits: Mapping[str, list[StudyVisitVO]] = {}
         for epoch in epochs:

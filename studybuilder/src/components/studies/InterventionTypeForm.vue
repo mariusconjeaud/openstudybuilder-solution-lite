@@ -279,12 +279,7 @@ export default {
       return data
     },
     async submit () {
-      const valid = await this.$refs.observer.validate()
-      if (!valid) {
-        return
-      }
       const data = this.prepareRequestPayload()
-      this.$refs.form.working = true
       try {
         await this.$store.dispatch('manageStudies/updateStudyIntervention', [this.selectedStudy.uid, data])
         this.$emit('updated', data)

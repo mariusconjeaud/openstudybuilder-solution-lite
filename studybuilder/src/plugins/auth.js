@@ -8,10 +8,7 @@ let manager = null
 const authInterface = {
   validateAccess: function (to, from, next) {
     manager.getUser().then(user => {
-      if (user && !user.expired) {
-        next()
-      } else {
-        localStorage.clear()
+      if (!user || user.expired) {
         if (to.name !== 'Login') {
           sessionStorage.setItem('next', to.name)
           sessionStorage.setItem('nextParams', JSON.stringify(to.params))
@@ -53,13 +50,14 @@ const authInterface = {
 export default {
   async install (Vue, options) {
     manager = new UserManager({
-      authority: Vue.prototype.$config.AUTH_AUTHORITY,
-      client_id: Vue.prototype.$config.AUTH_CLIENT_ID,
+      metadataUrl: Vue.prototype.$config.OAUTH_METADATA_URL,
+      authority: 'studybuilder-frontend',
+      client_id: Vue.prototype.$config.OAUTH_UI_APP_ID,
       redirect_uri: location.origin + '/oauth-callback',
       response_type: 'code',
       response_mode: 'fragment',
       post_logout_redirect_uri: location.origin,
-      scope: `openid profile email offline_access api://${Vue.prototype.$config.AUTH_APP_ID}/API.call`
+      scope: `openid profile email offline_access api://${Vue.prototype.$config.OAUTH_API_APP_ID}/API.call`
     })
     Vue.prototype.$auth = authInterface
     Vue.prototype.$roles = roles

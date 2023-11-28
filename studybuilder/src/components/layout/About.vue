@@ -10,7 +10,7 @@
       </v-btn>
     </v-card-actions>
     <v-card-text>
-      <p>{{ $t('About.about_release_number') }} {{ $config.RELEASE_VERSION_NUMBER }}</p>
+      <p>{{ $t('About.about_release_number') }} {{ $config.BUILD_BRANCH }}</p>
       <p>{{ $t('About.components_list') }} {{ $config.STUDYBUILDER_VERSION }}</p>
       <p>{{ $t('About.header') }}</p>
       <v-simple-table>

@@ -25,7 +25,6 @@ from clinical_mdr_api.models.concepts.odms.odm_item_group import (
     OdmItemGroupPostInput,
     OdmItemGroupVersion,
 )
-from clinical_mdr_api.models.utils import strtobool
 from clinical_mdr_api.services._utils import (
     get_input_or_new_value,
     normalize_string,
@@ -37,6 +36,7 @@ from clinical_mdr_api.services.concepts.odms.odm_descriptions import (
 from clinical_mdr_api.services.concepts.odms.odm_generic_service import (
     OdmGenericService,
 )
+from clinical_mdr_api.utils import strtobool
 
 
 class OdmItemGroupService(OdmGenericService[OdmItemGroupAR]):
@@ -143,8 +143,8 @@ class OdmItemGroupService(OdmGenericService[OdmItemGroupAR]):
                 library=concept_input.library_name,
                 oid=get_input_or_new_value(concept_input.oid, "G.", concept_input.name),
                 name=concept_input.name,
-                repeating=strtobool(concept_input.repeating),
-                is_reference_data=strtobool(concept_input.is_reference_data),
+                repeating=concept_input.repeating,
+                is_reference_data=concept_input.is_reference_data,
                 sas_dataset_name=concept_input.sas_dataset_name,
                 origin=concept_input.origin,
                 purpose=concept_input.purpose,

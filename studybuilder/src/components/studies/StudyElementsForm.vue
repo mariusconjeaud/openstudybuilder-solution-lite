@@ -232,25 +232,24 @@ export default {
       }
     },
     async submit () {
-      const valid = await this.$refs.observer.validate()
-      if (!valid) {
-        return
-      }
       if (this.colorHash) {
         this.form.element_colour = this.colorHash.hexa !== undefined ? this.colorHash.hexa : this.colorHash
       }
-      this.$refs.form.working = true
       if (this.metadata) {
         arms.editStudyElement(this.selectedStudy.uid, this.metadata.element_uid, this.form).then(resp => {
           bus.$emit('notification', { msg: this.$t('StudyElements.el_edited') })
           this.$refs.form.working = false
           this.close()
+        }, _err => {
+          this.$refs.form.working = false
         })
       } else {
         arms.addStudyElement(this.selectedStudy.uid, this.form).then(resp => {
           bus.$emit('notification', { msg: this.$t('StudyElements.el_created') })
           this.$refs.form.working = false
           this.close()
+        }, _err => {
+          this.$refs.form.working = false
         })
       }
     }

@@ -65,7 +65,7 @@ class StudyEpochOGM(BaseModel):
         ...,
         title="Uid",
         description="Uid of the study",
-        source="study_value.study_root.uid",
+        source="has_after.audit_trail.uid",
     )
     epoch: str = Field(
         ...,

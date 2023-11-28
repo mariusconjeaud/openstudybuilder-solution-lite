@@ -1,5 +1,3 @@
-from typing import Sequence
-
 from clinical_mdr_api.domain_repositories.library_item_repository import (
     LibraryItemRepositoryImplBase,
 )
@@ -9,7 +7,6 @@ from clinical_mdr_api.domain_repositories.models.generic import (
     VersionRelationship,
 )
 from clinical_mdr_api.domain_repositories.models.standard_data_model import (
-    DataModelIGRoot,
     Dataset,
     DatasetVariable,
     SponsorModelDatasetInstance,
@@ -17,6 +14,9 @@ from clinical_mdr_api.domain_repositories.models.standard_data_model import (
 )
 from clinical_mdr_api.domain_repositories.neomodel_ext_item_repository import (
     NeomodelExtBaseRepository,
+)
+from clinical_mdr_api.domain_repositories.standard_data_models.utils import (
+    get_sponsor_model_info_from_dataset,
 )
 from clinical_mdr_api.domains.standard_data_models.sponsor_model_dataset import (
     SponsorModelDatasetAR,
@@ -37,22 +37,12 @@ class SponsorModelDatasetRepository(
     return_model = SponsorModelDataset
 
     def get_neomodel_extension_query(self) -> CustomNodeSet:
-        return (
-            Dataset.nodes.fetch_relations(
-                "has_sponsor_model_instance__has_dataset",
-                "has_dataset__has_library",
-            )
-            # .fetch_optional_relations(
-            #     "has_latest_sponsor_model_value__has_activity_instance_class"
-            # )
-            # .fetch_optional_single_relation_of_type(
-            #     {
-            #         "has_sponsor_model_version": (
-            #             "latest_version",
-            #             LATEST_VERSION_ORDER_BY,
-            #         ),
-            #     }
-            # )
+        return Dataset.nodes.fetch_relations(
+            "has_sponsor_model_instance__has_dataset",
+            "has_dataset__has_library",
+        ).fetch_optional_relations_and_collect(
+            "has_sponsor_model_instance__has_key",
+            "has_sponsor_model_instance__has_sort_key",
         )
 
     def _has_data_changed(
@@ -157,19 +147,15 @@ class SponsorModelDatasetRepository(
         relationship: VersionRelationship,
         value: SponsorModelDatasetInstance,
     ) -> SponsorModelDatasetAR:
-        sponsor_model: SponsorModelValue = value.has_dataset.get_or_none()
         sponsor_model_name = None
         sponsor_model_version = None
-        if sponsor_model is not None:
-            # TODO : Get the keys and sort keys
-            data_model_ig: DataModelIGRoot = (
-                sponsor_model.has_sponsor_model_version.single()
-            )
-            sponsor_model_name = sponsor_model.name
-            rels: Sequence[
-                VersionRelationship
-            ] = sponsor_model.has_sponsor_model_version.all_relationships(data_model_ig)
-            sponsor_model_version = rels[0].version
+        enrich_build_order = None
+        # Get sponsor model-related info
+        (
+            sponsor_model_name,
+            sponsor_model_version,
+            enrich_build_order,
+        ) = get_sponsor_model_info_from_dataset(value)
         return SponsorModelDatasetAR.from_repository_values(
             dataset_uid=root.uid,
             sponsor_model_dataset_vo=SponsorModelDatasetVO.from_repository_values(
@@ -190,7 +176,7 @@ class SponsorModelDatasetRepository(
                 suppl_qual_flag=value.suppl_qual_flag,
                 include_in_raw=value.include_in_raw,
                 gen_raw_seqno_flag=value.gen_raw_seqno_flag,
-                enrich_build_order=value.enrich_build_order,
+                enrich_build_order=enrich_build_order,
                 label=value.label,
                 state=value.state,
                 extended_domain=value.extended_domain,

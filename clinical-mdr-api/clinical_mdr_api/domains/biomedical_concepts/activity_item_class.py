@@ -18,6 +18,8 @@ class ActivityItemClassVO:
     """
 
     name: str
+    definition: str | None
+    nci_concept_id: str | None
     mandatory: bool
     order: int
     activity_instance_class_uids: list[str]
@@ -36,6 +38,8 @@ class ActivityItemClassVO:
         activity_instance_class_uids: list[str],
         data_type_uid: str,
         role_uid: str,
+        definition: str | None = None,
+        nci_concept_id: str | None = None,
         data_type_name: str | None = None,
         role_name: str | None = None,
         variable_class_uids: list[str] | None = None,
@@ -50,6 +54,8 @@ class ActivityItemClassVO:
             role_uid=role_uid,
             role_name=role_name,
             variable_class_uids=variable_class_uids,
+            definition=definition,
+            nci_concept_id=nci_concept_id,
         )
 
         return activity_item_class_vo
@@ -98,6 +104,14 @@ class ActivityItemClassAR(LibraryItemAggregateRootBase):
     @property
     def name(self) -> str:
         return self._activity_item_class_vo.name
+
+    @property
+    def definition(self) -> str | None:
+        return self._activity_item_class_vo.definition
+
+    @property
+    def nci_concept_id(self) -> str | None:
+        return self._activity_item_class_vo.nci_concept_id
 
     @activity_item_class_vo.setter
     def activity_item_class_vo(self, activity_item_class_vo: ActivityItemClassVO):

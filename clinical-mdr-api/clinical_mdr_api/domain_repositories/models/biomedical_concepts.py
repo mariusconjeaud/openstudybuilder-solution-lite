@@ -8,7 +8,6 @@ from neomodel import (
     StringProperty,
 )
 
-from clinical_mdr_api.domain_repositories.models.concepts import UnitDefinitionRoot
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
     CTTermRoot,
 )
@@ -62,10 +61,18 @@ class ActivityInstanceClassRoot(VersionRoot):
 
 
 class ActivityItemClassValue(VersionValue):
+    definition = StringProperty()
+    nci_concept_id = StringProperty()
     order = IntegerProperty()
     mandatory = BooleanProperty()
     has_latest_value = RelationshipFrom(
         "ActivityItemClassRoot", "LATEST", model=ClinicalMdrRel
+    )
+    has_version = RelationshipFrom(
+        "ActivityItemClassRoot",
+        "HAS_VERSION",
+        model=ClinicalMdrRel,
+        cardinality=OneOrMore,
     )
     has_data_type = RelationshipTo(
         CTTermRoot, "HAS_DATA_TYPE", model=ClinicalMdrRel, cardinality=One
@@ -102,38 +109,5 @@ class ActivityItemClassRoot(VersionRoot):
     maps_variable_class = RelationshipTo(
         VariableClass,
         "MAPS_VARIABLE_CLASS",
-        model=ClinicalMdrRel,
-    )
-
-
-class ActivityItemValue(VersionValue):
-    has_version = RelationshipFrom(
-        "ActivityItemRoot", "HAS_VERSION", model=VersionRelationship
-    )
-    has_ct_term = RelationshipTo(CTTermRoot, "HAS_CT_TERM", model=ClinicalMdrRel)
-    has_unit_definition = RelationshipTo(
-        UnitDefinitionRoot, "HAS_UNIT_DEFINITION", model=ClinicalMdrRel
-    )
-
-
-class ActivityItemRoot(VersionRoot):
-    LIBRARY_REL_LABEL = "CONTAINS_ACTIVITY_ITEM"
-
-    has_version = RelationshipTo(
-        ActivityItemValue, "HAS_VERSION", model=VersionRelationship
-    )
-    has_latest_value = RelationshipTo(ActivityItemValue, "LATEST", model=ClinicalMdrRel)
-    latest_draft = RelationshipTo(
-        ActivityItemValue, "LATEST_DRAFT", model=ClinicalMdrRel
-    )
-    latest_final = RelationshipTo(
-        ActivityItemValue, "LATEST_FINAL", model=ClinicalMdrRel
-    )
-    latest_retired = RelationshipTo(
-        ActivityItemValue, "LATEST_RETIRED", model=ClinicalMdrRel
-    )
-    has_activity_item_class = RelationshipFrom(
-        ActivityItemClassRoot,
-        "HAS_ACTIVITY_ITEM",
         model=ClinicalMdrRel,
     )

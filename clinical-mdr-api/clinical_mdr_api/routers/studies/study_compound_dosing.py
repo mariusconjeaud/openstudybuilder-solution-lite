@@ -1,4 +1,4 @@
-from typing import Any, Sequence
+from typing import Any
 
 from fastapi import Body, Depends, Query, Request, Response, status
 from pydantic.types import Json
@@ -57,6 +57,7 @@ from clinical_mdr_api.services.studies.study_compound_dosing_selection import (
 def get_all_selected_compound_dosings(
     request: Request,  # request is actually required by the allow_exports decorator
     uid: str = utils.studyUID,
+    study_value_version: str | None = None,
     current_user_id: str = Depends(get_current_user_id),
     filters: Json
     | None = Query(
@@ -80,6 +81,7 @@ def get_all_selected_compound_dosings(
     service = StudyCompoundDosingSelectionService(author=current_user_id)
     all_items = service.get_all_compound_dosings(
         study_uid=uid,
+        study_value_version=study_value_version,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
         page_number=page_number,
@@ -101,7 +103,7 @@ def get_all_selected_compound_dosings(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=Sequence[Any],
+    response_model=list[Any],
     status_code=200,
     responses={
         404: {
@@ -144,7 +146,7 @@ def get_distinct_values_for_header(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=Sequence[Any],
+    response_model=list[Any],
     status_code=200,
     responses={
         404: {
@@ -205,7 +207,7 @@ Possible errors:
 Returned data:
  - List of actions and changes related to study compounds.
     """,
-    response_model=Sequence[models.StudyCompoundDosing],
+    response_model=list[models.StudyCompoundDosing],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -215,7 +217,7 @@ Returned data:
 )
 def get_all_compound_dosings_audit_trail(
     uid: str = utils.studyUID, current_user_id: str = Depends(get_current_user_id)
-) -> Sequence[models.StudyCompoundDosing]:
+) -> list[models.StudyCompoundDosing]:
     service = StudyCompoundDosingSelectionService(author=current_user_id)
     return service.get_all_selection_audit_trail(study_uid=uid)
 
@@ -247,7 +249,7 @@ Possible errors:
 Returned data:
  - List of actions and changes related to the specified study compound dosing.
     """,
-    response_model=Sequence[models.StudyCompoundDosing],
+    response_model=list[models.StudyCompoundDosing],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -288,6 +290,7 @@ def get_compound_dosing_audit_trail(
         500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def create_study_compound_dosing(
     uid: str = utils.studyUID,
     selection: models.StudyCompoundDosingInput = Body(
@@ -314,6 +317,7 @@ def create_study_compound_dosing(
         500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def delete_compound_dosing(
     uid: str = utils.studyUID,
     study_compound_dosing_uid: str = utils.study_compound_dosing_uid,
@@ -355,6 +359,7 @@ State after:
         500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def update_compound_dosing(
     uid: str = utils.studyUID,
     study_compound_dosing_uid: str = utils.study_compound_dosing_uid,

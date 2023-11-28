@@ -85,11 +85,6 @@ export default {
       this.$emit('close')
     },
     async submit () {
-      const valid = await this.$refs.observer.validate()
-      if (!valid) {
-        return
-      }
-      this.$refs.form.working = true
       try {
         if (this.action === 'release') {
           await api.releaseStudy(this.selectedStudy.uid, this.form)

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable, Self, Sequence
+from typing import Callable, Self
 
 from clinical_mdr_api.domains.concepts.activities.activity import ActivityAR
 from clinical_mdr_api.domains.concepts.activities.activity_group import ActivityGroupAR
@@ -25,28 +25,28 @@ class ActivityInstructionTemplateAR(TemplateAggregateRootBase):
     behavior. Inherits generic template versioning behaviors
     """
 
-    _indications: Sequence[DictionaryTermAR] | None = None
+    _indications: list[DictionaryTermAR] | None = None
 
-    _activities: Sequence[ActivityAR] | None = None
+    _activities: list[ActivityAR] | None = None
 
-    _activity_groups: Sequence[ActivityGroupAR] | None = None
+    _activity_groups: list[ActivityGroupAR] | None = None
 
-    _activity_subgroups: Sequence[ActivitySubGroupAR] | None = None
+    _activity_subgroups: list[ActivitySubGroupAR] | None = None
 
     @property
-    def indications(self) -> Sequence[DictionaryTermAR]:
+    def indications(self) -> list[DictionaryTermAR]:
         return self._indications
 
     @property
-    def activities(self) -> Sequence[ActivityAR]:
+    def activities(self) -> list[ActivityAR]:
         return self._activities
 
     @property
-    def activity_groups(self) -> Sequence[ActivityGroupAR]:
+    def activity_groups(self) -> list[ActivityGroupAR]:
         return self._activity_groups
 
     @property
-    def activity_subgroups(self) -> Sequence[ActivitySubGroupAR]:
+    def activity_subgroups(self) -> list[ActivitySubGroupAR]:
         return self._activity_subgroups
 
     @classmethod
@@ -59,12 +59,12 @@ class ActivityInstructionTemplateAR(TemplateAggregateRootBase):
         item_metadata: LibraryItemMetadataVO,
         study_count: int = 0,
         counts: InstantiationCountsVO | None = None,
-        indications: Sequence[DictionaryTermAR] | None = None,
-        activities: Sequence[ActivityAR] | None = None,
-        activity_groups: Sequence[ActivityGroupAR] | None = None,
-        activity_subgroups: Sequence[ActivitySubGroupAR] | None = None,
+        indications: list[DictionaryTermAR] | None = None,
+        activities: list[ActivityAR] | None = None,
+        activity_groups: list[ActivityGroupAR] | None = None,
+        activity_subgroups: list[ActivitySubGroupAR] | None = None,
     ) -> Self:
-        ar = cls(
+        return cls(
             _uid=uid,
             _sequence_id=sequence_id,
             _item_metadata=item_metadata,
@@ -77,7 +77,6 @@ class ActivityInstructionTemplateAR(TemplateAggregateRootBase):
             _study_count=study_count,
             _counts=counts,
         )
-        return ar
 
     @classmethod
     def from_input_values(
@@ -87,13 +86,13 @@ class ActivityInstructionTemplateAR(TemplateAggregateRootBase):
         template: TemplateVO,
         library: LibraryVO,
         generate_uid_callback: Callable[[], str | None] = (lambda: None),
-        next_available_sequence_id_callback: Callable[[str], str | None] = (
-            lambda _: None
-        ),
-        indications: Sequence[DictionaryTermAR] | None = None,
-        activities: Sequence[ActivityAR] | None = None,
-        activity_groups: Sequence[ActivityGroupAR] | None = None,
-        activity_subgroups: Sequence[ActivitySubGroupAR] | None = None,
+        next_available_sequence_id_callback: Callable[
+            [str, LibraryVO | None], str | None
+        ] = lambda uid, library: None,
+        indications: list[DictionaryTermAR] | None = None,
+        activities: list[ActivityAR] | None = None,
+        activity_groups: list[ActivityGroupAR] | None = None,
+        activity_subgroups: list[ActivitySubGroupAR] | None = None,
     ) -> Self:
         ar: Self = super().from_input_values(
             author=author,

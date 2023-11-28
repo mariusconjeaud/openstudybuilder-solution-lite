@@ -28,7 +28,7 @@ def _check_uid_exists_callback(uid: str) -> bool:
 
 
 def create_random_valid_vo(
-    selection_uid: str = None, endpoint_order: int = 2
+    selection_uid: str | None = None, endpoint_order: int = 2
 ) -> StudySelectionEndpointVO:
     if selection_uid is None:
         selection_uid = random_str()
@@ -37,11 +37,11 @@ def create_random_valid_vo(
     uid_study_objective = "uid_study_objective_000001"
     uid_level = random_str()
     uid_sublevel = random_str()
-    dt = datetime.datetime.now(datetime.timezone.utc)
+    start_datetime = datetime.datetime.now(datetime.timezone.utc)
     uid_list.extend(
         [uid_study_objective, uid_timeframe, uid_endpoint, uid_level, uid_sublevel]
     )
-    vo = StudySelectionEndpointVO.from_input_values(
+    study_selection_endpoint_vo = StudySelectionEndpointVO.from_input_values(
         endpoint_level_order=endpoint_order,
         endpoint_uid=uid_endpoint,
         endpoint_level_uid=uid_level,
@@ -53,20 +53,20 @@ def create_random_valid_vo(
             {"uid": random_str(), "name": random_str()},
             {"uid": random_str(), "name": random_str()},
         ],
-        start_date=dt,
+        start_date=start_datetime,
         user_initials=random_str(),
         study_selection_uid=selection_uid,
         timeframe_version="1.0",
         endpoint_version="2.0",
     )
-    vo.validate(_check_uid_exists_callback)
-    return vo
+    study_selection_endpoint_vo.validate(_check_uid_exists_callback)
+    return study_selection_endpoint_vo
 
 
 # test StudySelectionObjectivesVO
 class TestStudySelectionEndpointVO(unittest.TestCase):
     def test__validate__success(self):
-        dt = datetime.datetime.now(datetime.timezone.utc)
+        start_datetime = datetime.datetime.now(datetime.timezone.utc)
         test_tuples = [
             [
                 "uid_endpoint",
@@ -77,7 +77,7 @@ class TestStudySelectionEndpointVO(unittest.TestCase):
                 "uid_timeframe",
                 [{"uid": random_str(), "name": random_str()}],
                 "uid_objective",
-                dt,
+                start_datetime,
                 "0.3",
                 "0.4",
             ],
@@ -94,7 +94,7 @@ class TestStudySelectionEndpointVO(unittest.TestCase):
                     {"uid": random_str(), "name": random_str()},
                 ],
                 "uid_objective ",
-                dt,
+                start_datetime,
                 "1.3",
                 "0.4",
             ],
@@ -110,7 +110,7 @@ class TestStudySelectionEndpointVO(unittest.TestCase):
                     {"uid": random_str(), "name": random_str()},
                 ],
                 " uid_objective",
-                dt,
+                start_datetime,
                 "2.3",
                 "1.4",
             ],
@@ -123,7 +123,7 @@ class TestStudySelectionEndpointVO(unittest.TestCase):
                 " uid_timeframe ",
                 [{"uid": random_str(), "name": random_str()}],
                 " uid_objective ",
-                dt,
+                start_datetime,
                 "2.0",
                 "1.0",
             ],
@@ -153,7 +153,7 @@ class TestStudySelectionEndpointVO(unittest.TestCase):
                 )
 
     def test__validate__failure(self):
-        dt = datetime.datetime.now(datetime.timezone.utc)
+        start_datetime = datetime.datetime.now(datetime.timezone.utc)
         test_tuples = [
             [
                 "wrong_endpoint_uid",
@@ -164,7 +164,7 @@ class TestStudySelectionEndpointVO(unittest.TestCase):
                 "uid_timeframe",
                 [{"uid": random_str()}, {"uid": random_str()}],
                 "uid_objective",
-                dt,
+                start_datetime,
             ],
             [
                 "uid_endpoint",
@@ -178,7 +178,7 @@ class TestStudySelectionEndpointVO(unittest.TestCase):
                     {"uid": random_str(), "name": random_str()},
                 ],
                 "uid_objective",
-                dt,
+                start_datetime,
             ],
             [
                 "uid_endpoint",
@@ -192,7 +192,7 @@ class TestStudySelectionEndpointVO(unittest.TestCase):
                     {"uid": random_str(), "name": random_str()},
                 ],
                 "uid_objective",
-                dt,
+                start_datetime,
             ],
         ]
         for test_tuple in test_tuples:
@@ -221,7 +221,7 @@ class TestStudySelectionEndpointVO(unittest.TestCase):
                     )
 
     def test__validate__success_unit_separator_states(self):
-        dt = datetime.datetime.now(datetime.timezone.utc)
+        start_datetime = datetime.datetime.now(datetime.timezone.utc)
         test_tuples = [
             [
                 "uid_endpoint",
@@ -232,7 +232,7 @@ class TestStudySelectionEndpointVO(unittest.TestCase):
                 "uid_timeframe",
                 [{"uid": random_str(), "name": random_str()}],
                 None,
-                dt,
+                start_datetime,
             ],
             [
                 "uid_endpoint ",
@@ -243,7 +243,7 @@ class TestStudySelectionEndpointVO(unittest.TestCase):
                 "uid_timeframe ",
                 None,
                 ["uid_objective "],
-                dt,
+                start_datetime,
             ],
             [
                 " uid_endpoint",
@@ -257,7 +257,7 @@ class TestStudySelectionEndpointVO(unittest.TestCase):
                     {"uid": random_str(), "name": random_str()},
                 ],
                 [" uid_objective", "unit"],
-                dt,
+                start_datetime,
             ],
             [
                 " uid_endpoint ",
@@ -272,7 +272,7 @@ class TestStudySelectionEndpointVO(unittest.TestCase):
                     {"uid": random_str(), "name": random_str()},
                 ],
                 [" uid_objective", "unit"],
-                dt,
+                start_datetime,
             ],
         ]
         for test_tuple in test_tuples:
@@ -300,7 +300,7 @@ class TestStudySelectionEndpointVO(unittest.TestCase):
                 )
 
     def test__validate__failure__unit_separator_states(self):
-        dt = datetime.datetime.now(datetime.timezone.utc)
+        start_datetime = datetime.datetime.now(datetime.timezone.utc)
         test_tuples = [
             [
                 "uid_endpoint",
@@ -311,7 +311,7 @@ class TestStudySelectionEndpointVO(unittest.TestCase):
                 "uid_timeframe",
                 None,
                 "uid_objective",
-                dt,
+                start_datetime,
             ],
             [
                 "uid_endpoint",
@@ -322,7 +322,7 @@ class TestStudySelectionEndpointVO(unittest.TestCase):
                 "uid_timeframe",
                 [{"uid": random_str(), "name": random_str()}],
                 "uid_objective",
-                dt,
+                start_datetime,
             ],
             [
                 "uid_endpoint ",
@@ -337,7 +337,7 @@ class TestStudySelectionEndpointVO(unittest.TestCase):
                     {"uid": random_str()},
                 ],
                 "uid_objective ",
-                dt,
+                start_datetime,
             ],
             [
                 "uid_endpoint ",
@@ -351,7 +351,7 @@ class TestStudySelectionEndpointVO(unittest.TestCase):
                     {"uid": random_str(), "name": random_str()},
                 ],
                 "uid_objective ",
-                dt,
+                start_datetime,
             ],
         ]
         for test_tuple in test_tuples:

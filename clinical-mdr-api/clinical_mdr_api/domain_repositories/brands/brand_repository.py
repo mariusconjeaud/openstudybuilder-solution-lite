@@ -1,5 +1,3 @@
-from typing import Collection, Sequence
-
 from cachetools import TTLCache, cached
 from cachetools.keys import hashkey
 
@@ -73,9 +71,9 @@ class BrandRepository:
     def close(self) -> None:
         pass
 
-    def find_all(self) -> Collection[BrandAR]:
-        brands: Sequence[Brand] = Brand.nodes.filter(is_deleted=False)
-        brand_ars: Sequence[BrandAR] = [
+    def find_all(self) -> list[BrandAR]:
+        brands: list[Brand] = Brand.nodes.filter(is_deleted=False)
+        brand_ars: list[BrandAR] = [
             BrandAR(
                 _uid=p.uid,
                 name=p.name,

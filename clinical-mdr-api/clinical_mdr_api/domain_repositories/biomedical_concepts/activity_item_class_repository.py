@@ -1,5 +1,3 @@
-from typing import Sequence
-
 from clinical_mdr_api.domain_repositories.library_item_repository import (
     LibraryItemRepositoryImplBase,
     _AggregateRootType,
@@ -65,16 +63,23 @@ class ActivityItemClassRepository(
     def _has_data_changed(
         self, ar: ActivityItemClassAR, value: ActivityItemClassValue
     ) -> bool:
-        activity_instance_class_uids = [
+        existing_activity_instance_class_uids = set(
             node.uid
-            for node in value.has_latest_value.get().has_activity_instance_class.all()
-        ]
+            for node in value.has_version.single().has_activity_instance_class.all()
+        )
+        new_activity_instance_class_uids = set(
+            ar.activity_item_class_vo.activity_instance_class_uids
+        )
         return (
             ar.activity_item_class_vo.name != value.name
+            or ar.activity_item_class_vo.definition != value.definition
+            or ar.activity_item_class_vo.nci_concept_id != value.nci_concept_id
             or ar.activity_item_class_vo.order != value.order
             or ar.activity_item_class_vo.mandatory != value.mandatory
-            or sorted(ar.activity_item_class_vo.activity_instance_class_uids)
-            != sorted(activity_instance_class_uids)
+            or len(
+                new_activity_instance_class_uids - existing_activity_instance_class_uids
+            )
+            > 0
             or ar.activity_item_class_vo.role_uid != value.has_role.get().uid
             or ar.activity_item_class_vo.data_type_uid != value.has_data_type.get().uid
         )
@@ -85,19 +90,12 @@ class ActivityItemClassRepository(
         for itm in root.has_version.all():
             if not self._has_data_changed(ar, itm):
                 return itm
-        latest_draft = root.latest_draft.get_or_none()
-        if latest_draft and not self._has_data_changed(ar, latest_draft):
-            return latest_draft
-        latest_final = root.latest_final.get_or_none()
-        if latest_final and not self._has_data_changed(ar, latest_final):
-            return latest_final
-        latest_retired = root.latest_retired.get_or_none()
-        if latest_retired and not self._has_data_changed(ar, latest_retired):
-            return latest_retired
         new_value = ActivityItemClassValue(
             name=ar.activity_item_class_vo.name,
             order=ar.activity_item_class_vo.order,
             mandatory=ar.activity_item_class_vo.mandatory,
+            definition=ar.activity_item_class_vo.definition,
+            nci_concept_id=ar.activity_item_class_vo.nci_concept_id,
         )
         self._db_save_node(new_value)
         for (
@@ -136,6 +134,8 @@ class ActivityItemClassRepository(
             uid=root.uid,
             activity_item_class_vo=ActivityItemClassVO.from_repository_values(
                 name=value.name,
+                definition=value.definition,
+                nci_concept_id=value.nci_concept_id,
                 order=value.order,
                 mandatory=value.mandatory,
                 activity_instance_class_uids=activity_instance_class_uids,
@@ -154,7 +154,7 @@ class ActivityItemClassRepository(
             item_metadata=self._library_item_metadata_vo_from_relation(relationship),
         )
 
-    def patch_mappings(self, uid: str, variable_class_uids: Sequence[str]) -> None:
+    def patch_mappings(self, uid: str, variable_class_uids: list[str]) -> None:
         root = ActivityItemClassRoot.nodes.get(uid=uid)
         root.maps_variable_class.disconnect_all()
         for variable_class in variable_class_uids:

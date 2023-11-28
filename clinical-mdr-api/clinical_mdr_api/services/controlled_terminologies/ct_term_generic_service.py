@@ -1,6 +1,6 @@
 import abc
 from datetime import datetime
-from typing import Any, Generic, Sequence, TypeVar
+from typing import Any, Generic, TypeVar
 
 from neomodel import db
 from pydantic import BaseModel
@@ -126,7 +126,7 @@ class CTTermGenericService(Generic[_AggregateRootType], abc.ABC):
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
-    ) -> Sequence:
+    ) -> list[Any]:
         self.enforce_codelist_package_library(
             codelist_uid, codelist_name, library, package
         )
@@ -147,8 +147,8 @@ class CTTermGenericService(Generic[_AggregateRootType], abc.ABC):
 
     @db.transaction
     def get_term_name_and_attributes_by_codelist_uids(
-        self, codelist_uids: Sequence[str]
-    ) -> list:
+        self, codelist_uids: list[str]
+    ) -> list[Any]:
         (
             items,
             prop_names,
@@ -194,7 +194,7 @@ class CTTermGenericService(Generic[_AggregateRootType], abc.ABC):
         return item
 
     @db.transaction
-    def get_version_history(self, term_uid) -> Sequence[BaseModel]:
+    def get_version_history(self, term_uid) -> list[BaseModel]:
         if self.version_class is not None:
             all_versions = self.repository.get_all_versions(term_uid)
             if all_versions is None:

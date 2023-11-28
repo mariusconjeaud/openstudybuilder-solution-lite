@@ -19,7 +19,10 @@
         <span
           v-bind="attrs"
           v-on="on">
-          {{ getElementShortName(element) }}</span>
+          <router-link :to="{ name: 'StudyElementOverview', params: { study_id: selectedStudy.uid, id: element } }">
+            {{ getElementShortName(element) }}
+          </router-link>
+        </span>
       </template>
         <span>{{ getElementName(element) }}</span>
     </v-tooltip>
@@ -99,7 +102,9 @@ export default {
     }
   },
   mounted () {
-    this.cell = this.cells.data.find(this.findCell)
+    if (this.cells.data) {
+      this.cell = this.cells.data.find(this.findCell)
+    }
     if (this.cell) {
       this.element = this.cell.study_element_uid
     }
@@ -109,6 +114,12 @@ export default {
       if (value) {
         this.$emit('addToObject', this.data)
         this.data = {}
+      }
+    },
+    cells (value) {
+      this.cell = value.data.find(this.findCell)
+      if (this.cell) {
+        this.element = this.cell.study_element_uid
       }
     }
   }

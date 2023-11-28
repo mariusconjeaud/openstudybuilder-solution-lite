@@ -5,6 +5,7 @@ import units from '@/api/units'
 
 const state = {
   selectedStudy: null,
+  selectedStudyVersion: null,
   studyPreferredTimeUnit: null,
   studyTypes: [],
   trialIntentTypes: [],
@@ -26,6 +27,7 @@ const state = {
 
 const getters = {
   selectedStudy: state => state.selectedStudy,
+  selectedStudyVersion: state => state.selectedStudyVersion,
   studyPreferredTimeUnit: state => state.studyPreferredTimeUnit,
   studyTypes: state => state.studyTypes,
   trialIntentTypes: state => state.trialIntentTypes,
@@ -58,6 +60,7 @@ const getters = {
 const mutations = {
   SELECT_STUDY (state, { studyObj, forceReload }) {
     state.selectedStudy = studyObj
+    state.selectedStudyVersion = studyObj.current_metadata.version_metadata.version_number
     localStorage.setItem('selectedStudy', JSON.stringify(studyObj))
     if (forceReload) {
       document.location.reload()

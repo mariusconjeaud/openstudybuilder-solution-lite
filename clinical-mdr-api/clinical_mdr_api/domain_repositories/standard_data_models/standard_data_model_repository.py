@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Sequence
+from typing import Any
 
 from neomodel import db
 
@@ -115,12 +115,13 @@ class StandardDataModelRepository(ABC):
                 standard_value.description AS description,
                 standard_value,
                 version_rel.start_date AS start_date,
+                version_rel.end_date AS end_date,
                 version_rel.status AS status
         """
 
     def _retrieve_items_from_cypher_res(
         self, result_array, attribute_names
-    ) -> Sequence[BaseModel]:
+    ) -> list[BaseModel]:
         """
         Method maps the result of the cypher query into real aggregate objects.
         :param result_array:
@@ -157,7 +158,7 @@ class StandardDataModelRepository(ABC):
         filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
         **kwargs,
-    ) -> tuple[Sequence[BaseModel], int]:
+    ) -> tuple[list[BaseModel], int]:
         """
         Method runs a cypher query to fetch all needed data to create objects of type AggregateRootType.
         In the case of the following repository it will be some Concept aggregates.
@@ -224,7 +225,7 @@ class StandardDataModelRepository(ABC):
         filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
         **kwargs,
-    ) -> Sequence:
+    ) -> list[Any]:
         # pylint: disable=unused-argument
         """
         Method runs a cypher query to fetch possible values for a given field_name, with a limit of result_count.
@@ -235,7 +236,7 @@ class StandardDataModelRepository(ABC):
         :param filter_by:
         :param filter_operator: Same as for generic filtering
         :param result_count: Max number of values to return. Default 10
-        :return Sequence:
+        :return list[Any]:
         """
         # Match clause
         match_clause = self.generic_match_clause(versioning_relationship="HAS_VERSION")

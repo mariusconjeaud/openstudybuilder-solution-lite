@@ -1,6 +1,5 @@
 import datetime
 from dataclasses import dataclass
-from typing import Sequence
 
 from neomodel import db
 
@@ -78,19 +77,26 @@ class StudySelectionCompoundRepository:
     def _retrieves_all_data(
         self,
         study_uid: str | None = None,
+        study_value_version: str | None = None,
         project_name: str | None = None,
         project_number: str | None = None,
         type_of_treatment: str | None = None,
-    ) -> Sequence[StudySelectionCompoundVO]:
+    ) -> tuple[StudySelectionCompoundVO]:
         query = ""
         query_parameters = {}
         if study_uid:
-            query = "MATCH (sr:StudyRoot { uid: $uid})-[l:LATEST]->(sv:StudyValue)-[:HAS_STUDY_COMPOUND]->(sc:StudyCompound)"
-            query_parameters["uid"] = study_uid
+            if study_value_version:
+                query = "MATCH (sr:StudyRoot { uid: $uid})-[l:HAS_VERSION { version: $version}]->(sv:StudyValue)"
+                query_parameters["uid"] = study_uid
+                query_parameters["version"] = study_value_version
+            else:
+                query = "MATCH (sr:StudyRoot { uid: $uid})-[l:LATEST]->(sv:StudyValue)"
+                query_parameters["uid"] = study_uid
         else:
-            query = "MATCH (sr:StudyRoot)-[l:LATEST]->(sv:StudyValue)-[:HAS_STUDY_COMPOUND]->(sc:StudyCompound)"
+            query = "MATCH (sr:StudyRoot)-[l:LATEST]->(sv:StudyValue)"
 
         query += """
+        -[:HAS_STUDY_COMPOUND]->(sc:StudyCompound)
         OPTIONAL MATCH (sc)-[:HAS_SELECTED_COMPOUND]->(:CompoundAliasValue)<-[:LATEST]-(car:CompoundAliasRoot)
         OPTIONAL MATCH (sc)-[:HAS_SELECTED_COMPOUND]->(:CompoundAliasValue)-[:IS_COMPOUND]->(cr:CompoundRoot)
         WITH DISTINCT sr, sv, sc, car, cr
@@ -99,7 +105,7 @@ class StudySelectionCompoundRepository:
         if project_name is not None or project_number is not None:
             query += """
                 MATCH (sv)-[:HAS_PROJECT]->(:StudyProjectField)<-[:HAS_FIELD]-(proj:Project)
-                WITH sr, sc, car, cr, proj
+                WITH sr, sv, sc, car, cr, proj
             """
             filter_list = []
             if project_name is not None:
@@ -119,7 +125,7 @@ class StudySelectionCompoundRepository:
             query += " OPTIONAL MATCH (sc)-[:HAS_TYPE_OF_TREATMENT]->(tot:CTTermRoot)"
 
         query += """
-            WITH DISTINCT sr, sc, car, cr, tot
+            WITH DISTINCT sr, sv, sc, car, cr, tot
             OPTIONAL MATCH (sc)-[:HAS_ROUTE_OF_ADMINISTRATION]->(roa:CTTermRoot)
             OPTIONAL MATCH (sc)-[:HAS_STRENGTH_VALUE]->(str:NumericValueWithUnitRoot)
             OPTIONAL MATCH (sc)-[:HAS_DOSAGE_FORM]->(df:CTTermRoot)
@@ -128,7 +134,7 @@ class StudySelectionCompoundRepository:
             OPTIONAL MATCH (sc)-[:HAS_FORMULATION]->(fo:CTTermRoot)
 
             OPTIONAL MATCH (sc)-[:HAS_REASON_FOR_NULL_VALUE]->(nvr:CTTermRoot)
-            OPTIONAL MATCH (sc)-[:STUDY_COMPOUND_HAS_COMPOUND_DOSING]->(scd)<-[:HAS_STUDY_COMPOUND_DOSING]-(StudyValue)
+            OPTIONAL MATCH (sc)-[:STUDY_COMPOUND_HAS_COMPOUND_DOSING]->(scd:StudyCompoundDosing)<-[:HAS_STUDY_COMPOUND_DOSING]-(sv)
 
             MATCH (sc)<-[:AFTER]-(sa:StudyAction)
 
@@ -153,7 +159,6 @@ class StudySelectionCompoundRepository:
                 sa.user_initials AS user_initials
                 ORDER BY order
             """
-
         all_compound_selections = db.cypher_query(query, query_parameters)
         all_selections = []
         for selection in helpers.db_result_to_list(all_compound_selections):
@@ -183,7 +188,7 @@ class StudySelectionCompoundRepository:
         project_name: str | None = None,
         project_number: str | None = None,
         type_of_treatment: str | None = None,
-    ) -> Sequence[StudySelectionCompoundsAR] | None:
+    ) -> list[StudySelectionCompoundsAR]:
         """
         Finds all the selected study compounds for all studies, and create the aggregate
         :return: List of StudySelectionCompoundsAR, potentially empty
@@ -211,17 +216,24 @@ class StudySelectionCompoundRepository:
         return selection_aggregates
 
     def find_by_study(
-        self, study_uid: str, for_update: bool = False, **filters
+        self,
+        study_uid: str,
+        study_value_version: str | None = None,
+        for_update: bool = False,
+        **filters,
     ) -> StudySelectionCompoundsAR | None:
         """
         Finds all the selected study compounds for a given study, and creates the aggregate
         :param study_uid:
+        :param study_value_version:
         :param for_update:
         :return:
         """
         if for_update:
             self._acquire_write_lock_study_value(study_uid)
-        all_selections = self._retrieves_all_data(study_uid, **filters)
+        all_selections = self._retrieves_all_data(
+            study_uid, study_value_version, **filters
+        )
         selection_aggregate = StudySelectionCompoundsAR.from_repository_values(
             study_uid=study_uid, study_compounds_selection=all_selections
         )
@@ -230,20 +242,28 @@ class StudySelectionCompoundRepository:
         return selection_aggregate
 
     def find_by_uid(
-        self, study_uid: str, study_compound_uid: str
+        self,
+        study_uid: str,
+        study_compound_uid: str,
+        study_value_version: str | None = None,
     ) -> tuple[StudySelectionCompoundVO, int]:
         """Find a study compound by its UID."""
         query_parameters = {
             "study_uid": study_uid,
             "study_compound_uid": study_compound_uid,
         }
-        query = """
-        MATCH (sr:StudyRoot {uid: $study_uid})-[l:LATEST]->(sv:StudyValue)-[:HAS_STUDY_COMPOUND]->(sc:StudyCompound {uid: $study_compound_uid})
+        if study_value_version:
+            query = "MATCH (sr:StudyRoot {uid: $study_uid})-[l:HAS_VERSION {status:'RELEASED', version: $version}]->(sv:StudyValue)"
+            query_parameters["version"] = study_value_version
+        else:
+            query = "MATCH (sr:StudyRoot {uid: $study_uid})-[l:LATEST]->(sv:StudyValue)"
+        query += """
+        -[:HAS_STUDY_COMPOUND]->(sc:StudyCompound {uid: $study_compound_uid})
         OPTIONAL MATCH (sc)-[:HAS_SELECTED_COMPOUND]->(:CompoundAliasValue)<-[:LATEST]-(car:CompoundAliasRoot)
         OPTIONAL MATCH (sc)-[:HAS_SELECTED_COMPOUND]->(:CompoundAliasValue)-[:IS_COMPOUND]->(cr:CompoundRoot)
         WITH DISTINCT sr, sv, sc, car, cr
         OPTIONAL MATCH (sc)-[:HAS_TYPE_OF_TREATMENT]->(tot:CTTermRoot)
-        WITH DISTINCT sr, sc, car, cr, tot
+        WITH DISTINCT sr, sv, sc, car, cr, tot
         OPTIONAL MATCH (sc)-[:HAS_ROUTE_OF_ADMINISTRATION]->(roa:CTTermRoot)
         OPTIONAL MATCH (sc)-[:HAS_STRENGTH_VALUE]->(str:NumericValueWithUnitRoot)
         OPTIONAL MATCH (sc)-[:HAS_DOSAGE_FORM]->(df:CTTermRoot)
@@ -251,7 +271,7 @@ class StudySelectionCompoundRepository:
         OPTIONAL MATCH (sc)-[:HAS_DEVICE]->(de:CTTermRoot)
         OPTIONAL MATCH (sc)-[:HAS_FORMULATION]->(fo:CTTermRoot)
         OPTIONAL MATCH (sc)-[:HAS_REASON_FOR_NULL_VALUE]->(nvr:CTTermRoot)
-        OPTIONAL MATCH (sc)-[:STUDY_COMPOUND_HAS_COMPOUND_DOSING]->(scd)<-[:HAS_STUDY_COMPOUND_DOSING]-(StudyValue)
+        OPTIONAL MATCH (sc)-[:STUDY_COMPOUND_HAS_COMPOUND_DOSING]->(scd)<-[:HAS_STUDY_COMPOUND_DOSING]-(sv)
         MATCH (sc)<-[:AFTER]-(sa:StudyAction)
 
         WITH sr, sc, car, cr, tot, roa, str, df, di, de, fo, nvr, scd, sa
@@ -589,7 +609,7 @@ class StudySelectionCompoundRepository:
         return StudyCompound.get_next_free_uid_and_increment_counter()
 
     def _get_selection_with_history(
-        self, study_uid: str, study_selection_uid: str = None
+        self, study_uid: str, study_selection_uid: str | None = None
     ):
         """
         returns the audit trail for study compounds either for a specific selection or for all study compounds for the study
@@ -679,7 +699,7 @@ class StudySelectionCompoundRepository:
         return result
 
     def find_selection_history(
-        self, study_uid: str, study_selection_uid: str = None
+        self, study_uid: str, study_selection_uid: str | None = None
     ) -> list[dict | None]:
         """
         Simple method to return all versions of a study objectives for a study.

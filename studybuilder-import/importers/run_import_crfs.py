@@ -254,16 +254,22 @@ class Crfs(BaseImporter):
         for row in csvdata:
             if len(row) == 0:
                 continue
-            self.log.info(f'Adding odm item group {row["name"]}')
+            self.log.info(f"Adding odm item group '{row['name']}'")
 
-            # Look up sdtm domain
-            domain = row["domain"].split("_")[1]
-            domain_uid = all_sdtm_domains.get(domain)
-            if domain is not None:
-                domains = [domain_uid]
-            else:
-                domains = []
-                self.log.warning(f"Unable to find domain {row['domain']}")
+            # Look up sdtm domains
+            domains = []
+            for raw_domain in row["domain"].split("|"):
+                if not raw_domain:
+                    continue
+                if "_" in raw_domain:
+                    domain = raw_domain.split("_")[1]
+                else:
+                    domain = raw_domain
+                domain_uid = all_sdtm_domains.get(domain)
+                if domain_uid is not None:
+                    domains.append(domain_uid)
+                else:
+                    self.log.warning(f"Unable to find domain '{raw_domain}'")
 
             data = odm_itemgroup(row, [], domains)
 

@@ -66,6 +66,12 @@ export default {
     exportDataUrlParams: {
       type: Object,
       required: false
+    },
+    columnDataParameters: {
+      type: Object,
+      default () {
+        return { filters: {} }
+      }
     }
   },
   data () {
@@ -94,7 +100,7 @@ export default {
   },
   methods: {
     async filter (filters, sort, filtersUpdated) {
-      filters = (filters) ? JSON.parse(filters) : {}
+      filters = (filters) ? { ...JSON.parse(filters), ...this.columnDataParameters.filters } : { ...this.columnDataParameters.filters }
       filters['library.name'] = { v: [libraryConstants.LIBRARY_USER_DEFINED] }
       const params = filteringParameters.prepareParameters(
         this.options, filters, sort, filtersUpdated)

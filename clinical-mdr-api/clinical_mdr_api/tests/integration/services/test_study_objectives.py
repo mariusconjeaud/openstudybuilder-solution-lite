@@ -5,9 +5,12 @@ import pytest
 from bs4 import BeautifulSoup
 from docx import Document
 
+from clinical_mdr_api.config import STUDY_ENDPOINT_TP_NAME
+from clinical_mdr_api.models import study_selections
 from clinical_mdr_api.tests.integration.utils.api import inject_and_clear_db
 from clinical_mdr_api.tests.integration.utils.data_library import inject_base_data
 from clinical_mdr_api.tests.integration.utils.method_library import generate_study_root
+from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 from clinical_mdr_api.tests.utils.checks import (
     assert_response_content_type,
     assert_response_status_code,
@@ -40,11 +43,81 @@ def test_docx_response(app_client, test_database):
         response,
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     )
-    doc = Document(BytesIO(response.content))
-    assert len(doc.tables) == 1, "DOCX document must have exactly one table"
-    table = doc.tables[0]
+    old_doc = Document(BytesIO(response.content))
+    assert len(old_doc.tables) == 1, "DOCX document must have exactly one table"
+    table = old_doc.tables[0]
     assert len(table.columns) == 4, "expected 4 columns of table"
-    assert len(table.rows) >= 1, "expected at least 1 row of table"
+    assert len(table.rows) == 1, "expected 1 row of table"
+
+    # update study title to be able to lock it
+    response = app_client.patch(
+        f"/studies/{study.uid}",
+        json={"current_metadata": {"study_description": {"study_title": "new title"}}},
+    )
+    assert response.status_code == 200
+    # Lock
+    response = app_client.post(
+        f"/studies/{study.uid}/locks",
+        json={"change_description": "Lock 1"},
+    )
+    assert response.status_code == 201
+    # Unlock
+    response = app_client.delete(f"/studies/{study.uid}/locks")
+    assert response.status_code == 200
+
+    study_objective = TestUtils.create_study_objective(
+        study.uid,
+        objective_template_uid=TestUtils.create_objective_template().uid,
+        objective_level_uid=TestUtils.create_ct_term(
+            codelist_uid=TestUtils.create_ct_codelist(
+                name="Objective Level",
+                sponsor_preferred_name="Objective Level",
+                extensible=True,
+                approve=True,
+            ).codelist_uid,
+            sponsor_preferred_name="level",
+        ).term_uid,
+    )
+    unit_definition = TestUtils.create_unit_definition(name="unit1")
+    timeframe = TestUtils.create_timeframe(
+        timeframe_template_uid=TestUtils.create_timeframe_template().uid
+    )
+    TestUtils.create_template_parameter(STUDY_ENDPOINT_TP_NAME)
+    TestUtils.create_study_endpoint(
+        study.uid,
+        endpoint_template_uid=TestUtils.create_endpoint_template().uid,
+        study_objective_uid=study_objective.study_objective_uid,
+        endpoint_units=study_selections.study_selection.EndpointUnitsInput(
+            units=[unit_definition.uid]
+        ),
+        timeframe_uid=timeframe.uid,
+    )
+
+    response = app_client.get(
+        f"/studies/{study.uid}/study-objectives.docx?study_value_version=1"
+    )
+    assert_response_status_code(response, 200)
+    assert_response_content_type(
+        response,
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    )
+    doc = Document(BytesIO(response.content))
+    table = doc.tables[0]
+    assert len(doc.tables) == 1, "DOCX document must have exactly one table"
+    assert len(table.columns) == 4, "expected 4 columns of table"
+    assert len(table.rows) == 1, "expected 1 row of table"
+
+    response = app_client.get(f"/studies/{study.uid}/study-objectives.docx")
+    assert_response_status_code(response, 200)
+    assert_response_content_type(
+        response,
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    )
+    doc = Document(BytesIO(response.content))
+    table = doc.tables[0]
+    assert len(doc.tables) == 1, "DOCX document must have exactly one table"
+    assert len(table.columns) == 4, "expected 4 columns of table"
+    assert len(table.rows) == 3, "expected 3 rows of table"
 
 
 # pylint: disable=unused-argument,redefined-outer-name

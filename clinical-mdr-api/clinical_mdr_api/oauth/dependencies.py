@@ -1,5 +1,4 @@
 import logging
-from collections.abc import Sequence
 
 import pydantic
 from authlib.integrations.starlette_client import OAuth
@@ -21,11 +20,13 @@ log = logging.getLogger(__name__)
 oauth = OAuth()
 oidc_client = oauth.register(
     "default",
-    server_metadata_url=config.OIDC_METADATA_URL,
+    server_metadata_url=config.OAUTH_METADATA_URL,
 )
 
 jwks_service = JWKService(
-    oidc_client, audience=config.OAUTH_APP_ID, leeway_seconds=config.JWT_LEEWAY_SECONDS
+    oidc_client,
+    audience=config.OAUTH_API_APP_ID,
+    leeway_seconds=config.JWT_LEEWAY_SECONDS,
 )
 
 oauth_scheme = OAuth2AuthorizationCodeBearer(
@@ -105,7 +106,7 @@ def _validate_scopes(
 
     for scope in security_scopes.scopes:
         if scope not in claims.scp:
-            NotAuthenticatedException(
+            raise NotAuthenticatedException(
                 f"Scope '{scope}' is not within claimed scopes: {claims.scp}",
                 security_scopes,
             )
@@ -175,10 +176,10 @@ if config.OAUTH_ENABLED and config.OAUTH_RBAC_ENABLED:
         Dependency checks that required roles are all present in the access token claims.
 
         Args:
-            roles: A sequence of roles required for the request.
+            roles: A list of roles required for the request.
         """
 
-        def __init__(self, roles: Sequence[str]):
+        def __init__(self, roles: list[str]):
             self.required_roles = set(roles)
 
         def __call__(self, claims: AccessTokenClaims = Depends(validate_token)):
@@ -186,12 +187,12 @@ if config.OAUTH_ENABLED and config.OAUTH_RBAC_ENABLED:
                 claimed_roles=claims.roles, required_roles=self.required_roles
             )
 
-    def require_any_role(required_roles: Sequence[str]):
+    def require_any_role(required_roles: list[str]):
         """
         Checks that required roles are all present in the access token claims.
 
         Args:
-            required_roles (Sequence[str]): A sequence of roles required for the request.
+            required_roles (list[str]): A sequence of roles required for the request.
 
         Returns:
             None

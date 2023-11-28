@@ -40,7 +40,7 @@ class ObjectiveTemplateRepository(GenericSyntaxTemplateRepository[ObjectiveTempl
         relationship: VersionRelationship,
         value: ObjectiveTemplateValue,
         study_count: int = 0,
-        counts: InstantiationCountsVO = None,
+        counts: InstantiationCountsVO | None = None,
     ) -> ObjectiveTemplateAR:
         return ObjectiveTemplateAR.from_repository_values(
             uid=root.uid,

@@ -1,4 +1,4 @@
-from typing import Any, Sequence
+from typing import Any
 
 from fastapi import Body, Depends, Path, Query, Request, Response, status
 from pydantic.types import Json
@@ -7,6 +7,7 @@ from clinical_mdr_api import config
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.study_selections import study_disease_milestone
 from clinical_mdr_api.models.utils import CustomPage
+from clinical_mdr_api.models.validators import FLOAT_REGEX
 from clinical_mdr_api.oauth import get_current_user_id, rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
@@ -99,6 +100,12 @@ def get_all(
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
     uid: str = Path(description="the study"),
+    study_value_version: str
+    | None = Query(
+        None,
+        description="StudyValueVersion to extract the StudySelections",
+        regex=FLOAT_REGEX,
+    ),
     current_user_id: str = Depends(get_current_user_id),
 ):
     disease_milestone_service = StudyDiseaseMilestoneService(current_user_id)
@@ -110,6 +117,7 @@ def get_all(
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
         sort_by=sort_by,
+        study_value_version=study_value_version,
     )
 
     return CustomPage.create(
@@ -126,7 +134,7 @@ def get_all(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=Sequence[Any],
+    response_model=list[Any],
     status_code=200,
     responses={
         404: {
@@ -139,6 +147,12 @@ def get_all(
 # pylint: disable=unused-argument
 def get_distinct_values_for_header(
     uid: str = studyUID,  # TODO: Use this argument!
+    study_value_version: str
+    | None = Query(
+        None,
+        description="StudyValueVersion to extract the StudySelections",
+        regex=FLOAT_REGEX,
+    ),
     field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
     search_string: str
     | None = Query("", description=_generic_descriptions.HEADER_SEARCH_STRING),
@@ -181,7 +195,7 @@ State after:
 Possible errors:
  - Invalid study-uid.
      """,
-    response_model=Sequence[study_disease_milestone.StudyDiseaseMilestoneVersion],
+    response_model=list[study_disease_milestone.StudyDiseaseMilestoneVersion],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -195,7 +209,7 @@ Possible errors:
 def get_study_disease_milestones_all_audit_trail(
     uid: str = studyUID,
     current_user_id: str = Depends(get_current_user_id),
-) -> Sequence[study_disease_milestone.StudyDiseaseMilestoneVersion]:
+) -> list[study_disease_milestone.StudyDiseaseMilestoneVersion]:
     service = StudyDiseaseMilestoneService(current_user_id)
     return service.audit_trail_all_disease_milestones(uid)
 
@@ -262,7 +276,7 @@ State after:
 Possible errors:
  - Invalid study-uid.
      """,
-    response_model=Sequence[study_disease_milestone.StudyDiseaseMilestoneVersion],
+    response_model=list[study_disease_milestone.StudyDiseaseMilestoneVersion],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -277,7 +291,7 @@ def get_study_disease_milestone_audit_trail(
     uid: str = studyUID,
     study_disease_milestone_uid: str = study_disease_milestone_uid_description,
     current_user_id: str = Depends(get_current_user_id),
-) -> Sequence[study_disease_milestone.StudyDiseaseMilestoneVersion]:
+) -> list[study_disease_milestone.StudyDiseaseMilestoneVersion]:
     service = StudyDiseaseMilestoneService(current_user_id)
     return service.audit_trail(
         study_uid=uid, disease_milestone_uid=study_disease_milestone_uid

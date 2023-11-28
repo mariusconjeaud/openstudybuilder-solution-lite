@@ -4,15 +4,7 @@ import re
 from collections.abc import Hashable
 from dataclasses import dataclass
 from time import time
-from typing import (
-    AbstractSet,
-    Callable,
-    Mapping,
-    MutableMapping,
-    Self,
-    Sequence,
-    TypeVar,
-)
+from typing import AbstractSet, Any, Callable, Mapping, MutableMapping, Self, TypeVar
 
 from pydantic import BaseModel
 
@@ -131,14 +123,14 @@ def object_diff(objt1, objt2=None):
     return {name: objt1[name] != objt2[name] for name in objt1.keys()}
 
 
-def get_otv(version_object_class, ot, ot2=None):
+def get_otv(version_object_class, object1, object2=None):
     """
-    Creates object of the version_object_class extending object ot
-    with the differences with object ot2
+    Creates object of the version_object_class extending object object1
+    with the differences with object object2
     """
 
-    changes = object_diff(ot, ot2) if ot2 is not None else {}
-    return version_object_class(changes=changes, **ot)
+    changes = object_diff(object1, object2) if object2 is not None else {}
+    return version_object_class(changes=changes, **object1)
 
 
 def calculate_diffs(result_list, version_object_class):
@@ -425,12 +417,12 @@ def create_duration_object_from_api_input(
     return None
 
 
-def normalize_string(s: str | None) -> str | None:
+def normalize_string(string: str | None) -> str | None:
     """
     Normalizes a string by stripping whitespace and returning None if the resulting string is empty.
 
     Args:
-        s (str | None): The string to normalize.
+        string (str | None): The string to normalize.
 
     Returns:
         str | None: The normalized string, or None if the resulting string is empty.
@@ -439,13 +431,13 @@ def normalize_string(s: str | None) -> str | None:
         >>> normalize_string("   hello world   ")
         "hello world"
     """
-    if s:
-        s = s.strip()
-    return s or None
+    if string:
+        string = string.strip()
+    return string or None
 
 
 def service_level_generic_filtering(
-    items: list,
+    items: list[Any],
     filter_by: dict | None = None,
     filter_operator: FilterOperator = FilterOperator.AND,
     sort_by: dict | None = None,
@@ -457,7 +449,7 @@ def service_level_generic_filtering(
     Filters and sorts a list of items based on the provided filter and sort criteria.
 
     Args:
-        items (list): The list of items to filter and sort.
+        items (list[Any]): The list of items to filter and sort.
         filter_by (dict | None, optional): A dictionary of filter criteria.
         filter_operator (FilterOperator, optional): The operator to use when filtering elements.
         sort_by (dict | None, optional): A dictionary of sort criteria.
@@ -560,18 +552,18 @@ def service_level_generic_filtering(
 
 
 def service_level_generic_header_filtering(
-    items: list,
+    items: list[Any],
     field_name: str,
     filter_operator: FilterOperator = FilterOperator.AND,
     search_string: str = "",
     filter_by: dict | None = None,
     result_count: int = 10,
-) -> list:
+) -> list[Any]:
     """
     Filters and returns a list of values for a specific field in a list of dictionaries.
 
     Args:
-        items (list): The list of dictionaries to filter.
+        items (list[Any]): The list of dictionaries to filter.
         field_name (str): The name of the field to extract values from.
         filter_operator (FilterOperator, optional): The filter operator to use (AND or OR).
         search_string (str, optional): A search string to filter by. Defaults to "".
@@ -686,7 +678,7 @@ def extract_properties_for_wildcard(item, prefix: str = ""):
     # item can be None - ignore if it is
     if item:
         # We only want to extract the property keys from one of the items in the list
-        if isinstance(item, list) and len(item) > 0:
+        if isinstance(item, (list, tuple)) and len(item) > 0:
             return extract_properties_for_wildcard(item[0], prefix[:-1])
         # Otherwise, let's iterate over all the attributes of the single item we have
         for attribute, attr_desc in item.__fields__.items():
@@ -753,7 +745,7 @@ def filter_aggregated_items(item, filter_key, filter_values, filter_operator):
 
 
 def apply_filter_operator(
-    value, operator: ComparisonOperator, filter_values: Sequence
+    value, operator: ComparisonOperator, filter_values: list[Any]
 ) -> bool:
     """
     Applies the specified comparison operator to the given value and filter values.
@@ -761,7 +753,7 @@ def apply_filter_operator(
     Args:
         value: The value to compare.
         operator (ComparisonOperator): The comparison operator to apply.
-        filter_values (Sequence): The filter values to compare against.
+        filter_values (list[Any]): The filter values to compare against.
 
     Returns:
         bool: True if the comparison is successful, False otherwise.
@@ -842,18 +834,20 @@ def process_complex_parameters(parameters, parameter_repository):
                                     name=val["name"], uid=val["uid"], type=val["type"]
                                 )
                                 param_term_list.append(tpt)
-                tp = TemplateParameter(name=param_name, terms=param_term_list)
-                params.append(tp)
+                template_parameter = TemplateParameter(
+                    name=param_name, terms=param_term_list
+                )
+                params.append(template_parameter)
             return_parameters.append(
                 ComplexTemplateParameter(
                     name=item["name"], format=item["template"], parameters=params
                 )
             )
         else:
-            for v in item["terms"]:
-                if v["uid"] is not None:
+            for term in item["terms"]:
+                if term["uid"] is not None:
                     tpt = TemplateParameterTerm(
-                        name=v["name"], uid=v["uid"], type=v["type"]
+                        name=term["name"], uid=term["uid"], type=term["type"]
                     )
                     item_terms.append(tpt)
             return_parameters.append(
@@ -878,11 +872,10 @@ def calculate_diffs_history(
     for i_unique in unique_list_uids:
         ith_selection_history = []
         # gather the selection history of the i_unique Uid
-        for x in selection_history:
-            if x.uid == i_unique:
-                ith_selection_history.append(x)
-        ith_selection_history = sorted(
-            ith_selection_history,
+        for selection in selection_history:
+            if selection.uid == i_unique:
+                ith_selection_history.append(selection)
+        ith_selection_history.sort(
             key=lambda ith_selection: ith_selection.start_date,
             reverse=True,
         )
@@ -905,7 +898,7 @@ def calculate_diffs_history(
     return data
 
 
-def raise_404_if_none(val: any, message: str):
+def raise_404_if_none(val: Any, message: str):
     """Raises NotFoundException if the supplied object is None"""
     if not val:
         raise exceptions.NotFoundException(message)

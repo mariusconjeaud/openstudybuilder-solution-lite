@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable, Self, Sequence
+from typing import Callable, Self
 
 from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains._utils import extract_parameters
@@ -56,7 +56,7 @@ class NumericParameterTermVO(SimpleParameterTermVO):
 
 @dataclass(frozen=True)
 class ComplexParameterTerm(ParameterTermVO):
-    parameters: Sequence[SimpleParameterTermVO]
+    parameters: list[SimpleParameterTermVO]
     parameter_template: str
     conjunction: str = ""
 
@@ -76,7 +76,7 @@ class ParameterTermEntryVO:
     values to be combined into resulting name.
     """
 
-    parameters: Sequence[ParameterTermVO]
+    parameters: list[ParameterTermVO]
     conjunction: str
     parameter_name: str
 
@@ -85,7 +85,7 @@ class ParameterTermEntryVO:
         cls,
         *,
         parameter_name: str,
-        parameters: Sequence[ParameterTermVO],
+        parameters: list[ParameterTermVO],
         conjunction: str,
     ) -> Self:
         return cls(
@@ -99,7 +99,7 @@ class ParameterTermEntryVO:
         cls,
         *,
         parameter_name: str,
-        parameters: Sequence[ParameterTermVO],
+        parameters: list[ParameterTermVO],
         conjunction: str,
         parameter_exists_callback: Callable[[str], bool],
         parameter_term_uid_exists_for_parameter_callback: Callable[[str, str], bool],

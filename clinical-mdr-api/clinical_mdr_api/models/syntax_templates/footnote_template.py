@@ -241,19 +241,19 @@ class FootnoteTemplateWithCount(FootnoteTemplate):
         find_activity_subgroup_by_uid: Callable[[str], ActivitySubGroupAR | None],
         find_activity_group_by_uid: Callable[[str], ActivityGroupAR | None],
     ) -> Self:
-        ot = super().from_footnote_template_ar(
+        footnote_template = super().from_footnote_template_ar(
             footnote_template_ar,
             find_activity_subgroup_by_uid,
             find_activity_group_by_uid,
         )
         if footnote_template_ar.counts is not None:
-            ot.counts = ItemCounts(
+            footnote_template.counts = ItemCounts(
                 draft=footnote_template_ar.counts.count_draft,
                 final=footnote_template_ar.counts.count_final,
                 retired=footnote_template_ar.counts.count_retired,
                 total=footnote_template_ar.counts.count_total,
             )
-        return ot
+        return footnote_template
 
 
 class FootnoteTemplateVersion(FootnoteTemplate):

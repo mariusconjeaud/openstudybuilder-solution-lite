@@ -13,10 +13,10 @@ class StudyDiseaseMilestoneAllowedConfig:
     dm_type2: str
 
 
-Type_name_definition = namedtuple("Type_name_definition", ["named", "definition"])
+TypeNameDefinition = namedtuple("TypeNameDefinition", ["named", "definition"])
 
 
-class StudyDiseaseMilestoneType(Type_name_definition, Enum):
+class StudyDiseaseMilestoneType(TypeNameDefinition, Enum):
     pass
 
 

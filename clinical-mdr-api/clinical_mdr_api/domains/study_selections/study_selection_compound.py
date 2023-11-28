@@ -1,6 +1,6 @@
 import datetime
 from dataclasses import dataclass, field
-from typing import Any, Callable, Iterable, Self, Sequence
+from typing import Any, Callable, Iterable, Self
 
 from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains._utils import normalize_string
@@ -222,7 +222,7 @@ class StudySelectionCompoundVO:
 @dataclass
 class StudySelectionCompoundsAR:
     _study_uid: str
-    _study_compounds_selection: Sequence
+    _study_compounds_selection: list[StudySelectionCompoundVO]
     repository_closure_data: Any = field(
         init=False, compare=False, repr=True, default=None
     )
@@ -232,7 +232,7 @@ class StudySelectionCompoundsAR:
         return self._study_uid
 
     @property
-    def study_compounds_selection(self) -> Sequence[StudySelectionCompoundVO]:
+    def study_compounds_selection(self) -> list[StudySelectionCompoundVO]:
         return self._study_compounds_selection
 
     def get_specific_compound_selection(

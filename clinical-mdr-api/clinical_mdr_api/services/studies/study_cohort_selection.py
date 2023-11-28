@@ -1,5 +1,3 @@
-from typing import Sequence
-
 from neomodel import db
 
 from clinical_mdr_api import exceptions, models
@@ -31,14 +29,18 @@ class StudyCohortSelectionService(StudySelectionMixin):
     def _transform_all_to_response_model(
         self,
         study_selection: StudySelectionCohortAR,
-    ) -> Sequence[models.StudySelectionCohort]:
+        study_value_version: str | None = None,
+    ) -> list[models.StudySelectionCohort]:
         result = []
         for order, selection in enumerate(
             study_selection.study_cohorts_selection, start=1
         ):
             result.append(
                 self._transform_single_to_response_model(
-                    selection, order=order, study_uid=study_selection.study_uid
+                    selection,
+                    order=order,
+                    study_uid=study_selection.study_uid,
+                    study_value_version=study_value_version,
                 )
             )
         return result
@@ -48,6 +50,7 @@ class StudyCohortSelectionService(StudySelectionMixin):
         study_selection: StudySelectionCohortVO,
         order: int,
         study_uid: str,
+        study_value_version: str | None = None,
     ) -> models.StudySelectionCohort:
         return models.StudySelectionCohort.from_study_selection_cohort_ar_and_order(
             study_uid=study_uid,
@@ -55,6 +58,7 @@ class StudyCohortSelectionService(StudySelectionMixin):
             order=order,
             find_arm_root_by_uid=self._get_specific_arm_selection,
             find_branch_arm_root_cohort_by_uid=self._get_specific_branch_arm_selection,
+            study_value_version=study_value_version,
         )
 
     @db.transaction
@@ -70,6 +74,7 @@ class StudyCohortSelectionService(StudySelectionMixin):
         filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
         arm_uid: str | None = None,
+        study_value_version: str | None = None,
     ) -> GenericFilteringReturn[models.StudySelectionCohort]:
         repos = self._repos
         try:
@@ -78,12 +83,13 @@ class StudyCohortSelectionService(StudySelectionMixin):
                 arm_uid=arm_uid,
                 project_name=project_name,
                 project_number=project_number,
+                study_value_version=study_value_version,
             )
             # In order for filtering to work, we need to unwind the aggregated AR object first
             # Unwind ARs
             selections = []
             parsed_selections = self._transform_all_to_response_model(
-                cohort_selection_ar
+                cohort_selection_ar, study_value_version=study_value_version
             )
             for selection in parsed_selections:
                 selections.append(selection)
@@ -152,7 +158,7 @@ class StudyCohortSelectionService(StudySelectionMixin):
 
     def _transform_each_history_to_response_model(
         self, study_selection_history: SelectionHistoryCohort, study_uid: str
-    ) -> Sequence[models.StudySelectionCohortHistory]:
+    ) -> models.StudySelectionCohortHistory:
         return models.StudySelectionCohortHistory.from_study_selection_history(
             study_selection_history=study_selection_history,
             study_uid=study_uid,
@@ -161,7 +167,7 @@ class StudyCohortSelectionService(StudySelectionMixin):
     @db.transaction
     def get_all_selection_audit_trail(
         self, study_uid: str
-    ) -> Sequence[models.StudySelectionCohortVersion]:
+    ) -> list[models.StudySelectionCohortVersion]:
         repos = self._repos
         try:
             try:
@@ -178,9 +184,9 @@ class StudyCohortSelectionService(StudySelectionMixin):
             for i_unique in unique_list_uids:
                 ith_selection_history = []
                 # gather the selection history of the i_unique Uid
-                for x in selection_history:
-                    if x.study_selection_uid == i_unique:
-                        ith_selection_history.append(x)
+                for selection in selection_history:
+                    if selection.study_selection_uid == i_unique:
+                        ith_selection_history.append(selection)
                 # get the versions and compare
                 versions = [
                     self._transform_each_history_to_response_model(_, study_uid).dict()
@@ -199,7 +205,7 @@ class StudyCohortSelectionService(StudySelectionMixin):
     @db.transaction
     def get_specific_selection_audit_trail(
         self, study_uid: str, study_selection_uid: str
-    ) -> Sequence[models.StudySelectionCohortVersion]:
+    ) -> list[models.StudySelectionCohortVersion]:
         repos = self._repos
         try:
             selection_history = repos.study_cohort_repository.find_selection_history(
@@ -215,13 +221,15 @@ class StudyCohortSelectionService(StudySelectionMixin):
             repos.close()
 
     def _get_specific_arm_selection(
-        self, study_uid: str, study_selection_uid: str
+        self, study_uid: str, study_selection_uid: str, study_value_version: str
     ) -> models.StudySelectionArm:
         (
             _,
             new_selection,
             order,
-        ) = self._get_specific_arm_selection_by_uids(study_uid, study_selection_uid)
+        ) = self._get_specific_arm_selection_by_uids(
+            study_uid, study_selection_uid, study_value_version=study_value_version
+        )
         # Without Connected BranchArms due to only is necessary to have the StudyArm
         return models.StudySelectionArm.from_study_selection_arm_ar_and_order(
             study_uid=study_uid,
@@ -231,20 +239,26 @@ class StudyCohortSelectionService(StudySelectionMixin):
         )
 
     def _get_specific_branch_arm_selection(
-        self, study_uid: str, study_selection_uid: str
+        self,
+        study_uid: str,
+        study_selection_uid: str,
+        study_value_version: str | None = None,
     ) -> models.StudySelectionBranchArm:
         (
             _,
             new_selection,
             order,
         ) = self._get_specific_branch_arm_selection_by_uids(
-            study_uid, study_selection_uid
+            study_uid,
+            study_selection_uid,
+            study_value_version=study_value_version,
         )
         return models.StudySelectionBranchArm.from_study_selection_branch_arm_ar_and_order(
             study_uid=study_uid,
             selection=new_selection,
             order=order,
             find_simple_term_branch_arm_root_by_term_uid=self._get_specific_arm_selection,
+            study_value_version=study_value_version,
         )
 
     def make_selection(
@@ -403,17 +417,23 @@ class StudyCohortSelectionService(StudySelectionMixin):
 
     @db.transaction
     def get_specific_selection(
-        self, study_uid: str, study_selection_uid: str
+        self,
+        study_uid: str,
+        study_selection_uid: str,
+        study_value_version: str | None = None,
     ) -> models.StudySelectionCohort:
         (
             _,
             new_selection,
             order,
-        ) = self._get_specific_cohort_selection_by_uids(study_uid, study_selection_uid)
+        ) = self._get_specific_cohort_selection_by_uids(
+            study_uid, study_selection_uid, study_value_version=study_value_version
+        )
         return models.StudySelectionCohort.from_study_selection_cohort_ar_and_order(
             study_uid=study_uid,
             selection=new_selection,
             order=order,
             find_arm_root_by_uid=self._get_specific_arm_selection,
             find_branch_arm_root_cohort_by_uid=self._get_specific_branch_arm_selection,
+            study_value_version=study_value_version,
         )

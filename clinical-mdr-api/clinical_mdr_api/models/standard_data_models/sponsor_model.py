@@ -8,11 +8,11 @@ from clinical_mdr_api.models.concepts.concept import VersionProperties
 from clinical_mdr_api.models.utils import BaseModel
 
 
-class SponsorModelBase(VersionProperties):
+class SponsorModelBase(BaseModel):
     pass
 
 
-class SponsorModel(SponsorModelBase):
+class SponsorModel(SponsorModelBase, VersionProperties):
     class Config:
         orm_mode = True
 

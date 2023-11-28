@@ -67,11 +67,6 @@ export default {
       this.$refs.form.working = false
     },
     async submit () {
-      const valid = await this.$refs.observer.validate()
-      if (!valid) {
-        return
-      }
-      this.$refs.form.working = true
       const visitUids = this.visits.map(item => item.uid)
       await studyEpochs.createCollapsibleVisitGroup(this.selectedStudy.uid, visitUids, this.visitTemplate)
       this.$emit('created')

@@ -3,6 +3,8 @@ import re
 
 from clinical_mdr_api.exceptions import ValidationException
 
+FLOAT_REGEX = "^[0-9]+\\.?[0-9]*$"
+
 
 # pylint: disable=unused-argument
 def validate_string_represents_boolean(cls, value, values, field):

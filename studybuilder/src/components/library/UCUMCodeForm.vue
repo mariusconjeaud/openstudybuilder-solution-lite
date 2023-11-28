@@ -76,11 +76,6 @@ export default {
       this.$emit('close')
     },
     async submit () {
-      const valid = await this.$refs.observer.validate()
-      if (!valid) {
-        return
-      }
-      this.$refs.form.working = true
       this.$set(this.form, 'library_name', 'UCUM')
       this.$set(this.form, 'name_sentence_case', this.form.name)
       this.$set(this.form, 'dictionary_id', this.form.name)
@@ -88,6 +83,8 @@ export default {
         bus.$emit('notification', { msg: this.$t('DictionaryTermForm.create_success') })
         this.$emit('save')
         this.close()
+      }, _err => {
+        this.$refs.form.working = false
       })
     }
   },

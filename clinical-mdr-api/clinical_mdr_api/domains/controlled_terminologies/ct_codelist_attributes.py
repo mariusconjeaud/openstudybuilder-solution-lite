@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import AbstractSet, Callable, Self, Sequence
+from typing import AbstractSet, Callable, Self
 
 from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains.versioned_object_aggregate import (
@@ -20,7 +20,7 @@ class CTCodelistAttributesVO:
     name: str | None
     catalogue_name: str
     parent_codelist_uid: str | None
-    child_codelist_uids: Sequence[str] | None
+    child_codelist_uids: list[str] | None
     submission_value: str | None
     preferred_term: str | None
     definition: str | None
@@ -32,7 +32,7 @@ class CTCodelistAttributesVO:
         name: str | None,
         catalogue_name: str,
         parent_codelist_uid: str | None,
-        child_codelist_uids: Sequence[str] | None,
+        child_codelist_uids: list[str] | None,
         submission_value: str | None,
         preferred_term: str | None,
         definition: str | None,
@@ -146,13 +146,12 @@ class CTCodelistAttributesAR(LibraryItemAggregateRootBase):
             raise exceptions.BusinessLogicException(
                 f"The library with the name='{library.name}' does not allow to create objects."
             )
-        ar = cls(
+        return cls(
             _uid=generate_uid_callback(),
             _item_metadata=item_metadata,
             _library=library,
             _ct_codelist_attributes_vo=ct_codelist_attributes_vo,
         )
-        return ar
 
     def edit_draft(
         self,
@@ -203,13 +202,13 @@ class CTCodelistAttributesAR(LibraryItemAggregateRootBase):
                 return {ObjectAction.NEWVERSION}
         return frozenset()
 
-    def inactivate(self, author: str, change_description: str = None):
+    def inactivate(self, author: str, change_description: str | None = None):
         """
         Inactivates latest version.
         """
         raise NotImplementedError()
 
-    def reactivate(self, author: str, change_description: str = None):
+    def reactivate(self, author: str, change_description: str | None = None):
         """
         Reactivates latest retired version and sets the version to draft.
         """

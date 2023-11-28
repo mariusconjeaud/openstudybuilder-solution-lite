@@ -27,10 +27,10 @@ class TracingMiddleware:
     def __init__(
         self,
         app: ASGIApp,
-        exclude_paths: Iterable[str] = None,
-        exclude_hosts: Iterable[str] = None,
-        sampler: Sampler = None,
-        exporter: Exporter = None,
+        exclude_paths: Iterable[str] | None = None,
+        exclude_hosts: Iterable[str] | None = None,
+        sampler: Sampler | None = None,
+        exporter: Exporter | None = None,
         propagator=None,
     ) -> None:
         self.app = app
@@ -218,10 +218,10 @@ class TracingMiddleware:
     def get_path_qs(scope) -> list[str]:
         path_qs = [TracingMiddleware.get_path(scope)]
 
-        qs = scope.get("query_string")
-        if qs:
-            qs = qs.decode("utf-8", "replace")
-            path_qs.append(qs)
+        query_string = scope.get("query_string")
+        if query_string:
+            query_string = query_string.decode("utf-8", "replace")
+            path_qs.append(query_string)
 
         return path_qs
 

@@ -1,7 +1,6 @@
 from datetime import datetime, timezone
 from functools import cached_property
 from types import MappingProxyType
-from typing import Sequence
 
 # pylint:disable=wrong-import-order # disagreement between isort and pylint
 import ctrxml
@@ -10,6 +9,9 @@ from xsdata.formats.dataclass.serializers.config import SerializerConfig
 from xsdata.models.datatype import XmlDateTime
 
 from clinical_mdr_api.domains._utils import get_iso_lang_data
+from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import (
+    StudyComponentEnum,
+)
 from clinical_mdr_api.exceptions import BusinessLogicException
 from clinical_mdr_api.models import (
     CTCodelistAttributes,
@@ -42,7 +44,7 @@ from clinical_mdr_api.services.studies.study_visit import StudyVisitService
 
 def iso639_shortest(code: str) -> str:
     """Convert a language code to the shortest ISO 639 code, suitable value for xml:lang attribute"""
-    return get_iso_lang_data(q=code, return_key="639-1")
+    return get_iso_lang_data(query=code, return_key="639-1")
 
 
 class CTRXMLService:
@@ -83,26 +85,23 @@ class ODMBuilder:
 
     @cached_property
     def study_metadata(self) -> StudyMetadataJsonModel:
-        fields = (
-            f"+current_metadata.{m}"
-            for m in (
-                "identification_metadata",
-                "version_metadata",
-                "high_level_study_design",
-                "study_description",
-                "study_population",
-                "study_intervention",
-            )
-        )
+        include_sections = [
+            StudyComponentEnum.IDENTIFICATION_METADATA,
+            StudyComponentEnum.VERSION_METADATA,
+            StudyComponentEnum.STUDY_DESIGN,
+            StudyComponentEnum.STUDY_DESCRIPTION,
+            StudyComponentEnum.STUDY_POPULATION,
+            StudyComponentEnum.STUDY_INTERVENTION,
+        ]
         study = StudyService(user=get_current_user_id()).get_by_uid(
-            uid=self.study_uid, fields=",".join(fields)
+            uid=self.study_uid, include_sections=include_sections
         )
         if study.current_metadata is None:
             raise BusinessLogicException("Missing study metadata")
         return study.current_metadata
 
     @cached_property
-    def study_visits(self) -> Sequence[StudyVisit]:
+    def study_visits(self) -> list[StudyVisit]:
         result = StudyVisitService(author=get_current_user_id()).get_all_visits(
             self.study_uid
         )
@@ -231,7 +230,7 @@ class ODMBuilder:
         ]
 
     @cached_property
-    def odm_forms(self) -> Sequence[OdmForm]:
+    def odm_forms(self) -> list[OdmForm]:
         # TODO: add filtering by StudyUID when it gets implemented in database schema
         result = OdmFormService(user=get_current_user_id()).get_all_concepts()
         # noinspection PyTypeChecker
@@ -273,7 +272,7 @@ class ODMBuilder:
         ]
 
     @cached_property
-    def odm_item_groups(self) -> Sequence[OdmItemGroup]:
+    def odm_item_groups(self) -> list[OdmItemGroup]:
         uids = [
             item_group.uid for form in self.odm_forms for item_group in form.item_groups
         ]
@@ -324,7 +323,7 @@ class ODMBuilder:
         ]
 
     @cached_property
-    def odm_items(self) -> Sequence[OdmItem]:
+    def odm_items(self) -> list[OdmItem]:
         uids = [
             item.uid for item_group in self.odm_item_groups for item in item_group.items
         ]
@@ -357,7 +356,7 @@ class ODMBuilder:
         ]
 
     @cached_property
-    def ct_codelist_attributes(self) -> Sequence[CTCodelistAttributes]:
+    def ct_codelist_attributes(self) -> list[CTCodelistAttributes]:
         uids = [item.codelist.uid for item in self.odm_items if item.codelist]
         result = CTCodelistAttributesService(
             user=get_current_user_id()
@@ -372,7 +371,6 @@ class ODMBuilder:
                 }
             },
         )
-        # noinspection PyTypeChecker
         return result.items
 
     def get_odm_codelists(self) -> list[ctrxml.CodeList]:

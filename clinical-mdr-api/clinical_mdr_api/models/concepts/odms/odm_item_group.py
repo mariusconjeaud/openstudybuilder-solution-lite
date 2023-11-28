@@ -54,8 +54,8 @@ from clinical_mdr_api.models.concepts.odms.odm_vendor_element import (
 from clinical_mdr_api.models.controlled_terminologies.ct_term import (
     SimpleCTTermAttributes,
 )
-from clinical_mdr_api.models.utils import booltostr
 from clinical_mdr_api.models.validators import validate_string_represents_boolean
+from clinical_mdr_api.utils import booltostr
 
 
 class OdmItemGroup(ConceptModel):

@@ -29,6 +29,7 @@ log = logging.getLogger(__name__)
 # Global variables shared between fixtures and tests
 study: Study
 study_arm: StudySelectionArm
+branch_arm_uid: str
 
 
 @pytest.fixture(scope="module")
@@ -59,6 +60,7 @@ def test_data():
 
 
 def test_branch_arm_modify_actions_on_locked_study(api_client):
+    global branch_arm_uid
     response = api_client.post(
         f"/studies/{study.uid}/study-branch-arms",
         json={
@@ -93,7 +95,7 @@ def test_branch_arm_modify_actions_on_locked_study(api_client):
 
     # Lock
     response = api_client.post(
-        f"/studies/{study.uid}/lock",
+        f"/studies/{study.uid}/locks",
         json={"change_description": "Lock 1"},
     )
     assert response.status_code == 201
@@ -133,6 +135,58 @@ def test_branch_arm_modify_actions_on_locked_study(api_client):
     res = response.json()
     assert response.status_code == 200
     assert old_res == res
+
+    # test cannot delete
+    response = api_client.delete(
+        f"/studies/{study.uid}/study-branch-arms/{branch_arm_uid}"
+    )
+    assert response.status_code == 400
+    assert (
+        response.json()["message"]
+        == f"Study with specified uid '{study.uid}' is locked."
+    )
+
+
+def test_study_branch_arm_study_versions(api_client):
+    before_unlock_arms = api_client.get(f"/studies/{study.uid}/study-arms").json()
+    before_unlock_branch_arms = api_client.get(
+        f"/studies/{study.uid}/study-branch-arms"
+    ).json()
+    # Unlock -- Study remain unlocked
+    response = api_client.delete(f"/studies/{study.uid}/locks")
+    assert response.status_code == 200
+
+    # edit arm
+    response = api_client.patch(
+        f"/studies/{study.uid}/study-arms/{study_arm.arm_uid}",
+        json={
+            "name": "New_Arm_Name_2",
+        },
+    )
+    assert response.status_code == 200
+
+    # edit branch arm
+    response = api_client.patch(
+        f"/studies/{study.uid}/study-branch-arms/{branch_arm_uid}",
+        json={
+            "name": "New_Branch_Arm_Name_1",
+        },
+    )
+    assert response.status_code == 200
+
+    # get all
+    assert (
+        before_unlock_arms
+        == api_client.get(
+            f"/studies/{study.uid}/study-arms?study_value_version=1"
+        ).json()
+    )
+    assert (
+        before_unlock_branch_arms
+        == api_client.get(
+            f"/studies/{study.uid}/study-branch-arms?study_value_version=1"
+        ).json()
+    )
 
 
 @pytest.mark.parametrize(

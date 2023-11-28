@@ -1,6 +1,6 @@
 import abc
 from datetime import datetime
-from typing import Generic, Sequence, TypeVar
+from typing import Generic, TypeVar
 
 from neomodel import db
 from pydantic import BaseModel
@@ -148,7 +148,7 @@ class GenericSyntaxService(Generic[_AggregateRootType], abc.ABC):
     @db.transaction
     def get_all(
         self, status: str | None = None, return_study_count: bool | None = True
-    ) -> Sequence[BaseModel]:
+    ) -> list[BaseModel]:
         if status is not None:
             all_items = self.repository.find_all(
                 status=LibraryItemStatus(status), return_study_count=return_study_count
@@ -249,7 +249,7 @@ class GenericSyntaxService(Generic[_AggregateRootType], abc.ABC):
     @db.transaction
     def get_version_history(
         self, uid: str, return_study_count: bool | None = True
-    ) -> Sequence[BaseModel]:
+    ) -> list[BaseModel]:
         if self.version_class is not None:
             all_versions = self.repository.get_all_versions_2(
                 uid, return_study_count=return_study_count
@@ -266,7 +266,7 @@ class GenericSyntaxService(Generic[_AggregateRootType], abc.ABC):
     @db.transaction
     def get_releases(
         self, uid: str, return_study_count: bool | None = True
-    ) -> Sequence[BaseModel]:
+    ) -> list[BaseModel]:
         releases = self.repository.find_releases(
             uid=uid, return_study_count=return_study_count
         )
@@ -367,13 +367,13 @@ class GenericSyntaxService(Generic[_AggregateRootType], abc.ABC):
     def _get_indexings(
         self, template: BaseModel
     ) -> tuple[
-        Sequence[DictionaryTermAR],
-        Sequence[tuple[CTTermNameAR, CTTermAttributesAR]],
-        Sequence[tuple[CTTermNameAR, CTTermAttributesAR]],
+        list[DictionaryTermAR],
+        list[tuple[CTTermNameAR, CTTermAttributesAR]],
+        list[tuple[CTTermNameAR, CTTermAttributesAR]],
     ]:
-        indications: Sequence[DictionaryTermAR] = []
-        categories: Sequence[tuple[CTTermNameAR, CTTermAttributesAR]] = []
-        sub_categories: Sequence[tuple[CTTermNameAR, CTTermAttributesAR]] = []
+        indications: list[DictionaryTermAR] = []
+        categories: list[tuple[CTTermNameAR, CTTermAttributesAR]] = []
+        sub_categories: list[tuple[CTTermNameAR, CTTermAttributesAR]] = []
 
         if (
             getattr(template, "indication_uids", None)

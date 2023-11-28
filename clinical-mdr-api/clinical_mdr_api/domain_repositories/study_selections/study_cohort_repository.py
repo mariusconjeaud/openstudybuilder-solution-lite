@@ -1,6 +1,5 @@
 import datetime
 from dataclasses import dataclass
-from typing import Sequence
 
 from neomodel import db
 
@@ -37,8 +36,8 @@ class SelectionHistoryCohort:
     cohort_description: str | None
     cohort_colour_code: str | None
     cohort_number_of_subjects: int | None
-    branch_arm_roots: Sequence[str] | None
-    arm_roots: Sequence[str] | None
+    branch_arm_roots: list[str] | None
+    arm_roots: list[str] | None
     # Study selection Versioning
     start_date: datetime.datetime
     user_initials: str | None
@@ -67,14 +66,24 @@ class StudySelectionCohortRepository:
         project_name: str | None = None,
         project_number: str | None = None,
         arm_uid: str | None = None,
-    ) -> Sequence[StudySelectionCohortVO]:
+        study_value_version: str | None = None,
+    ) -> tuple[StudySelectionCohortVO]:
         query = ""
         query_parameters = {}
-        if study_uid:
-            query = "MATCH (sr:StudyRoot { uid: $uid})-[l:LATEST]->(sv:StudyValue)"
-            query_parameters["uid"] = study_uid
+        if study_value_version:
+            if study_uid:
+                query = "MATCH (sr:StudyRoot { uid: $uid})-[l:HAS_VERSION{status:'RELEASED', version:$study_value_version}]->(sv:StudyValue)"
+                query_parameters["study_value_version"] = study_value_version
+                query_parameters["uid"] = study_uid
+            else:
+                query = "MATCH (sr:StudyRoot)-[l:HAS_VERSION{status:'RELEASED', version:$study_value_version}]->(sv:StudyValue)"
+                query_parameters["study_value_version"] = study_value_version
         else:
-            query = "MATCH (sr:StudyRoot)-[l:LATEST]->(sv:StudyValue)"
+            if study_uid:
+                query = "MATCH (sr:StudyRoot { uid: $uid})-[l:LATEST]->(sv:StudyValue)"
+                query_parameters["uid"] = study_uid
+            else:
+                query = "MATCH (sr:StudyRoot)-[l:LATEST]->(sv:StudyValue)"
 
         if project_name is not None or project_number is not None:
             query += (
@@ -156,6 +165,7 @@ class StudySelectionCohortRepository:
         arm_uid: str | None = None,
         project_name: str | None = None,
         project_number: str | None = None,
+        study_value_version: str | None = None,
     ) -> StudySelectionCohortAR | None:
         """
         Finds all the selected study cohorts for a given study
@@ -173,6 +183,7 @@ class StudySelectionCohortRepository:
             arm_uid=arm_uid,
             project_name=project_name,
             project_number=project_number,
+            study_value_version=study_value_version,
         )
         selection_aggregate = StudySelectionCohortAR.from_repository_values(
             study_uid=study_uid, study_cohorts_selection=all_selections
@@ -207,7 +218,7 @@ class StudySelectionCohortRepository:
             StudyCohort.nodes.has(study_value=True)
             .filter(
                 uid__ne=cohort_vo.study_selection_uid,
-                study_value__study_root__uid=cohort_vo.study_uid,
+                study_value__latest_value__uid=cohort_vo.study_uid,
             )
             .get_or_none(**{db_property: kwarg_value})
         )
@@ -391,7 +402,7 @@ class StudySelectionCohortRepository:
             for arm_root_uid in selection.arm_root_uids:
                 # find the objective
                 study_arm_root = StudyArm.nodes.filter(
-                    study_value__study_root__uid=selection.study_uid
+                    study_value__latest_value__uid=selection.study_uid
                 ).get_or_none(uid=arm_root_uid)[0]
                 # connect to node
                 # pylint: disable=no-member
@@ -402,7 +413,7 @@ class StudySelectionCohortRepository:
             for branch_arm_root_uid in selection.branch_arm_root_uids:
                 # find the objective
                 study_branch_arm_root = StudyBranchArm.nodes.filter(
-                    study_value__study_root__uid=selection.study_uid
+                    study_value__latest_value__uid=selection.study_uid
                 ).get_or_none(uid=branch_arm_root_uid)[0]
                 # connect to node]
                 # pylint: disable=no-member
@@ -414,7 +425,7 @@ class StudySelectionCohortRepository:
         return StudyCohort.get_next_free_uid_and_increment_counter()
 
     def _get_selection_with_history(
-        self, study_uid: str, study_selection_uid: str = None
+        self, study_uid: str, study_selection_uid: str | None = None
     ):
         """
         returns the audit trail for study cohort either for a specific selection or for all study cohort for the study
@@ -497,7 +508,7 @@ class StudySelectionCohortRepository:
         return result
 
     def find_selection_history(
-        self, study_uid: str, study_selection_uid: str = None
+        self, study_uid: str, study_selection_uid: str | None = None
     ) -> list[SelectionHistoryCohort]:
         """
         Simple method to return all versions of a study objectives for a study.

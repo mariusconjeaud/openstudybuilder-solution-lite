@@ -12,10 +12,15 @@ from clinical_mdr_api.domain_repositories.models.activities import (
     ActivityGrouping,
     ActivityInstanceRoot,
     ActivityInstanceValue,
+    ActivityItem,
 )
 from clinical_mdr_api.domain_repositories.models.biomedical_concepts import (
     ActivityInstanceClassRoot,
-    ActivityItemRoot,
+    ActivityItemClassRoot,
+)
+from clinical_mdr_api.domain_repositories.models.concepts import UnitDefinitionRoot
+from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
+    CTTermRoot,
 )
 from clinical_mdr_api.domain_repositories.models.generic import (
     Library,
@@ -25,7 +30,10 @@ from clinical_mdr_api.domains.concepts.activities.activity_instance import (
     ActivityInstanceAR,
     ActivityInstanceGroupingVO,
     ActivityInstanceVO,
-    SimpleActivityItemVO,
+)
+from clinical_mdr_api.domains.concepts.activities.activity_item import (
+    ActivityItemVO,
+    LibraryItem,
 )
 from clinical_mdr_api.domains.concepts.concept_base import _AggregateRootType
 from clinical_mdr_api.domains.versioned_object_aggregate import (
@@ -61,6 +69,12 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
         value_node: ActivityInstanceValue = super()._create_new_value_node(ar=ar)
         value_node.topic_code = ar.concept_vo.topic_code
         value_node.adam_param_code = ar.concept_vo.adam_param_code
+        value_node.is_required_for_activity = ar.concept_vo.is_required_for_activity
+        value_node.is_default_selected_for_activity = (
+            ar.concept_vo.is_default_selected_for_activity
+        )
+        value_node.is_data_sharing = ar.concept_vo.is_data_sharing
+        value_node.is_legacy_usage = ar.concept_vo.is_legacy_usage
         value_node.legacy_description = ar.concept_vo.legacy_description
 
         value_node.save()
@@ -88,14 +102,80 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
         )
         value_node.activity_instance_class.connect(activity_instance_class)
 
-        for activity_item_uid in (
-            activity_item.uid for activity_item in ar.concept_vo.activity_items
-        ):
-            activity_item_value = ActivityItemRoot.nodes.get(
-                uid=activity_item_uid
-            ).has_latest_value.get()
-            value_node.contains_activity_item.connect(activity_item_value)
+        for item in ar.concept_vo.activity_items:
+            activity_item_node = ActivityItem()
+            activity_item_node.save()
+            activity_item_class = ActivityItemClassRoot.nodes.get_or_none(
+                uid=item.activity_item_class_uid
+            )
+            activity_item_node.has_activity_item_class.connect(activity_item_class)
+            for term in item.ct_terms:
+                ct_term_root = CTTermRoot.nodes.get_or_none(uid=term.uid)
+                activity_item_node.has_ct_term.connect(ct_term_root)
+            for unit in item.unit_definitions:
+                unit_definition = UnitDefinitionRoot.nodes.get_or_none(uid=unit.uid)
+                activity_item_node.has_unit_definition.connect(unit_definition)
+            value_node.contains_activity_item.connect(activity_item_node)
         return value_node
+
+    def _has_item_data_changed(self, ar_items, value_item_nodes):
+        ar_activity_items = []
+        for item in ar_items:
+            ar_activity_items.append(
+                {
+                    "class": item.activity_item_class_uid,
+                    "units": set(unit.uid for unit in item.unit_definitions),
+                    "terms": set(term.uid for term in item.ct_terms),
+                }
+            )
+
+        value_activity_items = []
+        for activity_item_node in value_item_nodes:
+            item_class_uid = activity_item_node.has_activity_item_class.get().uid
+            unit_nodes = activity_item_node.has_unit_definition.all()
+            ct_term_nodes = activity_item_node.has_ct_term.all()
+            value_activity_items.append(
+                {
+                    "class": item_class_uid,
+                    "units": set(unit_node.uid for unit_node in unit_nodes),
+                    "terms": set(ct_term_node.uid for ct_term_node in ct_term_nodes),
+                }
+            )
+        for item in ar_activity_items:
+            if item not in value_activity_items:
+                return True
+        for item in value_activity_items:
+            if item not in ar_activity_items:
+                return True
+        return False
+
+    def _has_grouping_data_changed(self, ar_groupings, value_groupings):
+        value_group_pairs = []
+        for activity_grouping_node in value_groupings:
+            activity_valid_group_nodes = activity_grouping_node.in_subgroup.all()
+            for activity_valid_group_node in activity_valid_group_nodes:
+                value_group_pairs.append(
+                    (
+                        activity_valid_group_node.has_group.get()
+                        .has_version.single()
+                        .uid,
+                        activity_valid_group_node.in_group.get()
+                        .has_version.single()
+                        .uid,
+                    )
+                )
+
+        ar_group_pairs = [
+            (grouping.activity_subgroup_uid, grouping.activity_group_uid)
+            for grouping in ar_groupings
+        ]
+        for pair in ar_group_pairs:
+            if pair not in value_group_pairs:
+                return True
+        for pair in value_group_pairs:
+            if pair not in ar_group_pairs:
+                return True
+        return False
 
     def _has_data_changed(
         self, ar: ActivityInstanceAR, value: ActivityInstanceValue
@@ -104,46 +184,25 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
         are_props_changed = (
             ar.concept_vo.topic_code != value.topic_code
             or ar.concept_vo.adam_param_code != value.adam_param_code
+            or ar.concept_vo.is_required_for_activity != value.is_required_for_activity
+            or ar.concept_vo.is_default_selected_for_activity
+            != value.is_default_selected_for_activity
+            or ar.concept_vo.is_data_sharing != value.is_data_sharing
+            or ar.concept_vo.is_legacy_usage != value.is_legacy_usage
             or ar.concept_vo.legacy_description != value.legacy_description
         )
 
-        activity_subgroup_uids = []
-        activity_group_uids = []
-        activity_grouping_nodes = value.has_activity.all()
-        for activity_grouping_node in activity_grouping_nodes:
-            activity_valid_group_nodes = activity_grouping_node.in_subgroup.all()
-            for activity_valid_group_node in activity_valid_group_nodes:
-                activity_subgroup_uids.append(
-                    activity_valid_group_node.has_group.get().has_version.single().uid
-                )
-                activity_group_uids.append(
-                    activity_valid_group_node.in_group.get().has_version.single().uid
-                )
-
-        activity_item_uids = [
-            node.has_version.single().uid for node in value.contains_activity_item.all()
-        ]
+        item_data_changed = self._has_item_data_changed(
+            ar.concept_vo.activity_items, value.contains_activity_item.all()
+        )
+        grouping_data_changed = self._has_grouping_data_changed(
+            ar.concept_vo.activity_groupings, value.has_activity.all()
+        )
         are_rels_changed = (
             ar.concept_vo.activity_instance_class_uid
             != value.activity_instance_class.get().uid
-            or sorted(
-                [
-                    activity_grouping.activity_group_uid
-                    for activity_grouping in ar.concept_vo.activity_groupings
-                ]
-            )
-            != sorted(activity_group_uids)
-            or sorted(
-                [
-                    activity_grouping.activity_subgroup_uid
-                    for activity_grouping in ar.concept_vo.activity_groupings
-                ]
-            )
-            != sorted(activity_subgroup_uids)
-            or sorted(
-                [activity_item.uid for activity_item in ar.concept_vo.activity_items]
-            )
-            != sorted(activity_item_uids)
+            or grouping_data_changed
+            or item_data_changed
         )
         return are_concept_properties_changed or are_props_changed or are_rels_changed
 
@@ -164,6 +223,7 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
         return self.aggregate_class.from_repository_values(
             uid=input_dict.get("uid"),
             concept_vo=self.value_object_class.from_repository_values(
+                nci_concept_id=input_dict.get("nci_concept_id"),
                 name=input_dict.get("name"),
                 name_sentence_case=input_dict.get("name_sentence_case"),
                 activity_instance_class_uid=input_dict.get(
@@ -176,6 +236,14 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
                 abbreviation=input_dict.get("abbreviation"),
                 topic_code=input_dict.get("topic_code"),
                 adam_param_code=input_dict.get("adam_param_code"),
+                is_required_for_activity=input_dict.get(
+                    "is_required_for_activity", False
+                ),
+                is_default_selected_for_activity=input_dict.get(
+                    "is_default_selected_for_activity", False
+                ),
+                is_data_sharing=input_dict.get("is_data_sharing", False),
+                is_legacy_usage=input_dict.get("is_legacy_usage", False),
                 legacy_description=input_dict.get("legacy_description"),
                 activity_groupings=[
                     ActivityInstanceGroupingVO(
@@ -188,15 +256,21 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
                     for activity_grouping in input_dict.get("activity_groupings")
                 ],
                 activity_items=[
-                    SimpleActivityItemVO.from_repository_values(
-                        uid=activity_item.get("uid"),
-                        name=activity_item.get("name"),
+                    ActivityItemVO.from_repository_values(
                         activity_item_class_uid=activity_item.get(
                             "activity_item_class_uid"
                         ),
                         activity_item_class_name=activity_item.get(
                             "activity_item_class_name"
                         ),
+                        ct_terms=[
+                            LibraryItem(uid=term["uid"], name=term["name"])
+                            for term in activity_item.get("ct_terms")
+                        ],
+                        unit_definitions=[
+                            LibraryItem(uid=unit["uid"], name=unit["name"])
+                            for unit in activity_item.get("unit_definitions")
+                        ],
                     )
                     for activity_item in input_dict.get("activity_items", [])
                 ],
@@ -212,7 +286,7 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
                 status=LibraryItemStatus(input_dict.get("status")),
                 author=input_dict.get("user_initials"),
                 start_date=convert_to_datetime(value=input_dict.get("start_date")),
-                end_date=None,
+                end_date=convert_to_datetime(value=input_dict.get("end_date")),
                 major_version=int(major),
                 minor_version=int(minor),
             ),
@@ -229,16 +303,33 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
         activity_items = value.contains_activity_item.all()
         activity_item_vos = []
         for activity_item in activity_items:
-            activity_item_root = activity_item.has_version.single()
             activity_item_class_root = (
-                activity_item_root.has_activity_item_class.get_or_none()
+                activity_item.has_activity_item_class.get_or_none()
             )
+            # unit_definitions = activity_item.has_unit_definition.all()
+            # ct_terms = activity_item.has_ct_term.all()
+            ct_terms = []
+            unit_definitions = []
+            for unit in activity_item.has_unit_definition.all():
+                unit_definitions.append(
+                    LibraryItem(
+                        uid=unit.uid,
+                        name=unit.has_version.single().name,
+                    )
+                )
+            for term in activity_item.has_ct_term.all():
+                ct_terms.append(
+                    LibraryItem(
+                        uid=term.uid,
+                        name=term.has_name_root.single().has_version.single().name,
+                    )
+                )
             activity_item_vos.append(
-                SimpleActivityItemVO.from_repository_values(
-                    uid=activity_item_root.uid,
-                    name=activity_item.name,
+                ActivityItemVO.from_repository_values(
                     activity_item_class_uid=activity_item_class_root.uid,
                     activity_item_class_name=activity_item_class_root.has_latest_value.get_or_none().name,
+                    ct_terms=ct_terms,
+                    unit_definitions=unit_definitions,
                 )
             )
         activity_groupings_nodes = value.has_activity.all()
@@ -262,6 +353,7 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
         return self.aggregate_class.from_repository_values(
             uid=root.uid,
             concept_vo=self.value_object_class.from_repository_values(
+                nci_concept_id=value.nci_concept_id,
                 name=value.name,
                 name_sentence_case=value.name_sentence_case,
                 activity_instance_class_uid=activity_instance_class.uid,
@@ -270,6 +362,18 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
                 abbreviation=value.abbreviation,
                 topic_code=value.topic_code,
                 adam_param_code=value.adam_param_code,
+                is_required_for_activity=value.is_required_for_activity
+                if value.is_required_for_activity
+                else False,
+                is_default_selected_for_activity=value.is_default_selected_for_activity
+                if value.is_default_selected_for_activity
+                else False,
+                is_data_sharing=value.is_data_sharing
+                if value.is_data_sharing
+                else False,
+                is_legacy_usage=value.is_legacy_usage
+                if value.is_legacy_usage
+                else False,
                 legacy_description=value.legacy_description,
                 activity_groupings=[
                     ActivityInstanceGroupingVO(
@@ -295,20 +399,23 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
         WITH *,
             concept_value.topic_code AS topic_code,
             concept_value.adam_param_code AS adam_param_code,
+            coalesce(concept_value.is_required_for_activity, false) AS is_required_for_activity,
+            coalesce(concept_value.is_default_selected_for_activity, false) AS is_default_selected_for_activity,
+            coalesce(concept_value.is_data_sharing, false) AS is_data_sharing,
+            coalesce(concept_value.is_legacy_usage, false) AS is_legacy_usage,
             concept_value.legacy_description AS legacy_description,
             
             head([(concept_value)-[:ACTIVITY_INSTANCE_CLASS]->
             (activity_instance_class_root:ActivityInstanceClassRoot)-[:LATEST]->(activity_instance_class_value:ActivityInstanceClassValue)
                 | {uid:activity_instance_class_root.uid, name:activity_instance_class_value.name}]) AS activity_instance_class,
-            [(concept_value)-[:CONTAINS_ACTIVITY_ITEM]->
-            (activity_item_value:ActivityItemValue)<-[:HAS_VERSION]-(activity_item_root:ActivityItemRoot)
+            [(concept_value)-[:CONTAINS_ACTIVITY_ITEM]->(activity_item:ActivityItem)
             <-[:HAS_ACTIVITY_ITEM]-(activity_item_class_root:ActivityItemClassRoot)-[:LATEST]->
             (activity_item_class_value:ActivityItemClassValue)
                 | {
-                    uid:activity_item_root.uid, 
-                    name:activity_item_value.name,
-                    activity_item_class_uid:activity_item_class_root.uid,
-                    activity_item_class_name:activity_item_class_value.name
+                    activity_item_class_uid: activity_item_class_root.uid,
+                    activity_item_class_name: activity_item_class_value.name,
+                    ct_terms: [(activity_item)-[:HAS_CT_TERM]->(term_root:CTTermRoot)-[:HAS_NAME_ROOT]->(term_name_root:CTTermNameRoot)-[:LATEST]->(term_name_value:CTTermNameValue) | {uid: term_root.uid, name: term_name_value.name}],
+                    unit_definitions: [(activity_item)-[:HAS_UNIT_DEFINITION]->(unit_definition_root:UnitDefinitionRoot)-[:LATEST]->(unit_definition_value:UnitDefinitionValue) | {uid: unit_definition_root.uid, name: unit_definition_value.name}]
                 }] AS activity_items,
             apoc.coll.toSet([(concept_value)-[:HAS_ACTIVITY]->(activity_grouping:ActivityGrouping)-[:IN_SUBGROUP]->(activity_valid_group:ActivityValidGroup)
             <-[:HAS_GROUP]-(activity_subgroup_value)<-[:HAS_VERSION]-(activity_subgroup_root:ActivitySubGroupRoot)
@@ -374,6 +481,7 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
         WITH *,
             [(activity_instance_value)-[:HAS_ACTIVITY]->(activity_grouping:ActivityGrouping)<-[:HAS_GROUPING]-(activity_value:ActivityValue) | 
                 {
+                    uid: head([(activity_value)<-[HAS_VERSION]-(activity_root) | activity_root.uid]),
                     activity_value: activity_value,
                     activity_library_name: head([(activity_value:ActivityValue)<-[:HAS_VERSION]-(activity_root:ActivityRoot)<-[:CONTAINS_CONCEPT]-(library) 
                     | library.name]),
@@ -384,24 +492,24 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
                         | activity_group_value])
                 }
             ] AS hierarchy,
-            apoc.coll.toSet([(activity_instance_value)-[:CONTAINS_ACTIVITY_ITEM]->(activity_item_value)<-[:HAS_VERSION]-(activity_item_root)
+            apoc.coll.toSet([(activity_instance_value)-[:CONTAINS_ACTIVITY_ITEM]->(activity_item)
             <-[HAS_ACTIVITY_ITEM]-(activity_item_class_root)-[:LATEST]->(activity_item_class_value) | 
             {
-                name: activity_item_value.name,
                 activity_item_class: activity_item_class_value,
                 activity_item_class_role: head([(activity_item_class_value)-[:HAS_ROLE]->()-[:HAS_NAME_ROOT]->()-[:LATEST]->(role_value) | role_value.name]),
                 activity_item_class_data_type: head([(activity_item_class_value)-[:HAS_DATA_TYPE]->()-[:HAS_NAME_ROOT]->()-[:LATEST]->(data_type_value) | data_type_value.name]),
-                activity_item: activity_item_value,
-                ct_term: head([(activity_item_value)-[:HAS_CT_TERM]->(term_root)-[:HAS_NAME_ROOT]->(term_name_root)-[:LATEST]->(term_name_value) | term_name_value]),
-                unit_definition: head([(activity_item_value)-[:HAS_UNIT_DEFINITION]->(unit_definition_root)-[:LATEST]->(unit_definition_value) | unit_definition_value])
+                activity_item: activity_item,
+                ct_terms: [(activity_item)-[:HAS_CT_TERM]->(term_root:CTTermRoot)-[:HAS_NAME_ROOT]->(term_name_root:CTTermNameRoot)-[:LATEST]->(term_name_value:CTTermNameValue) | {uid: term_root.uid, name: term_name_value.name}],
+                unit_definitions: [(activity_item)-[:HAS_UNIT_DEFINITION]->(unit_definition_root:UnitDefinitionRoot)-[:LATEST]->(unit_definition_value:UnitDefinitionValue) | {uid: unit_definition_root.uid, name: unit_definition_value.name}]
             }
             ]) AS activity_items
         WITH DISTINCT 
+            activity_instance_root,
             activity_instance_value,
             instance_library_name,
             activity_instance_class,
             hierarchy,
-            apoc.coll.sortMaps(activity_items, '^name') as activity_items
+            activity_items
         RETURN *
         """
         result_array, attribute_names = db.cypher_query(
@@ -416,3 +524,9 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
         for overview_prop, attribute_name in zip(overview, attribute_names):
             overview_dict[attribute_name] = overview_prop
         return overview_dict
+
+    def generic_match_clause_all_versions(self):
+        return """
+            MATCH (concept_root:ActivityInstanceRoot)-[version:HAS_VERSION]->(concept_value:ActivityInstanceValue)
+                   -[:HAS_ACTIVITY]->(activity_grouping:ActivityGrouping)<-[:HAS_GROUPING]-(activity_value:ActivityValue)
+        """

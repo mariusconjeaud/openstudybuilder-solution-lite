@@ -1,7 +1,6 @@
 """Service for study activity instructions."""
 
 import datetime
-from typing import Sequence
 
 from fastapi import status
 from neomodel import db
@@ -46,14 +45,14 @@ class StudyActivityInstructionService(StudySelectionMixin):
         total_count: bool = False,
     ) -> GenericFilteringReturn[models.StudyActivityInstruction]:
         query = StudyActivityInstructionNeoModel.nodes.fetch_relations(
-            "study_value__study_root",
+            "study_value__latest_value",
             "study_activity",
             "activity_instruction_value__activity_instruction_root",
-            "has_after",
+            "has_after__audit_trail",
         )
         items = [
             models.StudyActivityInstruction.from_orm(sai_node)
-            for sai_node in to_relation_trees(query)
+            for sai_node in to_relation_trees(query).distinct()
         ]
 
         # Do filtering, sorting, pagination and count
@@ -70,36 +69,47 @@ class StudyActivityInstructionService(StudySelectionMixin):
 
     @db.transaction
     def get_all_instructions(
-        self, study_uid: str
-    ) -> Sequence[models.StudyActivityInstruction]:
+        self, study_uid: str, study_value_version: str | None = None
+    ) -> list[models.StudyActivityInstruction]:
+        if study_value_version:
+            filters = {
+                "study_value__has_version|version": study_value_version,
+                "study_activity__has_study_activity__has_version|version": study_value_version,
+                "study_value__has_version__uid": study_uid,
+                "study_activity__has_study_activity__has_version__uid": study_uid,
+            }
+        else:
+            filters = {
+                "study_value__latest_value__uid": study_uid,
+                "study_activity__has_study_activity__latest_value__uid": study_uid,
+            }
+
         return [
             models.StudyActivityInstruction.from_orm(sai_node)
             for sai_node in to_relation_trees(
                 StudyActivityInstructionNeoModel.nodes.fetch_relations(
                     "study_activity",
+                    "study_value__has_version",
                     "activity_instruction_value__activity_instruction_root",
-                    "has_after",
-                ).filter(
-                    study_value__study_root__uid=study_uid,
-                    study_activity__has_study_activity__study_root__uid=study_uid,
-                )
-            )
+                    "has_after__audit_trail",
+                ).filter(**filters)
+            ).distinct()
         ]
 
     def get_all_study_instructions_for_specific_study_activity(
         self, study_uid: str, study_activity_uid: str
-    ) -> Sequence[models.StudyActivityInstruction]:
+    ) -> list[models.StudyActivityInstruction]:
         return [
             models.StudyActivityInstruction.from_orm(sas_node)
             for sas_node in to_relation_trees(
                 StudyActivityInstructionNeoModel.nodes.fetch_relations(
                     "study_activity",
                     "activity_instruction_value__activity_instruction_root",
-                    "has_after",
+                    "has_after__audit_trail",
                 ).filter(
-                    study_value__study_root__uid=study_uid,
+                    study_value__latest_value__uid=study_uid,
                     study_activity__uid=study_activity_uid,
-                    study_activity__has_study_activity__study_root__uid=study_uid,
+                    study_activity__has_study_activity__latest_value__uid=study_uid,
                 )
             ).distinct()
         ]
@@ -181,8 +191,8 @@ class StudyActivityInstructionService(StudySelectionMixin):
     def handle_batch_operations(
         self,
         study_uid: str,
-        operations: Sequence[models.StudyActivityInstructionBatchInput],
-    ) -> Sequence[models.StudyActivityInstructionBatchOutput]:
+        operations: list[models.StudyActivityInstructionBatchInput],
+    ) -> list[models.StudyActivityInstructionBatchOutput]:
         results = []
         for operation in operations:
             result = {}

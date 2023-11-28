@@ -1,6 +1,6 @@
 """Timeframe templates router."""
 
-from typing import Any, Sequence
+from typing import Any
 
 from fastapi import APIRouter, Body, Depends, Path, Query, Request, Response
 from fastapi import status as fast_api_status
@@ -279,7 +279,7 @@ The returned versions are ordered by `start_date` descending (newest entries fir
 
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=Sequence[TimeframeTemplateVersion],
+    response_model=list[TimeframeTemplateVersion],
     status_code=200,
     responses={
         200: {
@@ -330,7 +330,7 @@ def get_timeframe_template_versions(
     request: Request,  # request is actually required by the allow_exports decorator
     uid: str = TimeframeTemplateUID,
     current_user_id: str = Depends(get_current_user_id),
-) -> Sequence[TimeframeTemplateVersion]:
+) -> list[TimeframeTemplateVersion]:
     return Service(current_user_id).get_version_history(uid)
 
 
@@ -669,7 +669,7 @@ Per parameter, the parameter.values are ordered by
 Note that parameters may be used multiple times in templates.
 In that case, the same parameter (with the same values) is included multiple times in the response.
     """,
-    response_model=Sequence[ComplexTemplateParameter],
+    response_model=list[ComplexTemplateParameter],
     status_code=200,
     responses={
         404: _generic_descriptions.ERROR_404,

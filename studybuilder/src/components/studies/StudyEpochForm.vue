@@ -285,11 +285,6 @@ export default {
       }
     },
     async submit () {
-      const valid = await this.$refs.observer.validate()
-      if (!valid) {
-        return
-      }
-      this.$refs.form.working = true
       try {
         if (!this.studyEpoch) {
           await this.addObject()
@@ -308,7 +303,7 @@ export default {
       }
       data.study_uid = this.selectedStudy.uid
       return this.$store.dispatch('studyEpochs/addStudyEpoch', { studyUid: this.selectedStudy.uid, input: data }).then(resp => {
-        this.$store.dispatch('studyEpochs/fetchStudyEpochs', this.selectedStudy.uid)
+        this.$store.dispatch('studyEpochs/fetchStudyEpochs', { studyUid: this.selectedStudy.uid })
         bus.$emit('notification', { msg: this.$t('StudyEpochForm.add_success') })
       })
     },
@@ -318,7 +313,7 @@ export default {
         data.color_hash = this.colorHash.hexa !== undefined ? this.colorHash.hexa : this.colorHash
       }
       return this.$store.dispatch('studyEpochs/updateStudyEpoch', { studyUid: this.selectedStudy.uid, studyEpochUid: this.studyEpoch.uid, input: data }).then(resp => {
-        this.$store.dispatch('studyEpochs/fetchStudyEpochs', this.selectedStudy.uid)
+        this.$store.dispatch('studyEpochs/fetchStudyEpochs', { studyUid: this.selectedStudy.uid })
         bus.$emit('notification', { msg: this.$t('StudyEpochForm.update_success') })
       })
     },

@@ -1,5 +1,4 @@
 from datetime import datetime, timezone
-from typing import Sequence
 
 from neomodel import db
 
@@ -181,6 +180,7 @@ class DictionaryCodelistGenericRepository(
                 library_name,
                 is_library_editable,
                 version_rel.start_date AS start_date,
+                version_rel.end_date AS end_date,
                 version_rel.status AS status,
                 version_rel.version AS version,
                 version_rel.change_description AS change_description,
@@ -191,14 +191,14 @@ class DictionaryCodelistGenericRepository(
 
     def find_all(
         self,
-        library: DictionaryType = None,
+        library: DictionaryType | None = None,
         sort_by: dict | None = None,
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
         page_number: int = 1,
         page_size: int = 0,
         total_count: bool = False,
-    ) -> tuple[Sequence[DictionaryCodelistAR], int]:
+    ) -> tuple[list[DictionaryCodelistAR], int]:
         """
         Method runs a cypher query to fetch all needed data to create objects of type AggregateRootType.
         In the case of the following repository it will be some Codelists aggregates.
@@ -245,12 +245,12 @@ class DictionaryCodelistGenericRepository(
 
     def _retrieve_codelists_from_cypher_res(
         self, result_array, attribute_names
-    ) -> Sequence[DictionaryCodelistAR]:
+    ) -> list[DictionaryCodelistAR]:
         """
         Method maps the result of the cypher query into real aggregate objects.
         :param result_array:
         :param attribute_names:
-        :return Iterable[DictionaryCodelistAR]:
+        :return list[DictionaryCodelistAR]:
         """
         codelist_ars = []
         for codelist in result_array:
@@ -273,7 +273,7 @@ class DictionaryCodelistGenericRepository(
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
-    ) -> Sequence[str]:
+    ) -> list[str]:
         # Match clause
         match_clause = self.generic_match_clause(dictionary_type=library)
 

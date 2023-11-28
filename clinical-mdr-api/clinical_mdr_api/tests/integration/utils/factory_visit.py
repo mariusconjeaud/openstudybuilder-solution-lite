@@ -58,8 +58,8 @@ WEEK = {
 
 
 def generate_default_input_data_for_visit():
-    DAYUID = get_unit_uid_by_name("day")
-    WEEKUID = get_unit_uid_by_name("week")
+    day_uid = get_unit_uid_by_name("day")
+    week_uid = get_unit_uid_by_name("week")
     return {
         "legacy_visit_id": "legacy_visit",
         "legacy_visit_type_alias": "legacyVT",
@@ -71,8 +71,8 @@ def generate_default_input_data_for_visit():
         "show_visit": True,
         "min_visit_window_value": -1,
         "max_visit_window_value": 1,
-        "visit_window_unit_uid": DAYUID,
-        "time_unit_uid": WEEKUID,
+        "visit_window_unit_uid": day_uid,
+        "time_unit_uid": week_uid,
         "time_value": 12,
         "description": "description",
         "start_rule": "start_rule",
@@ -359,14 +359,14 @@ def create_some_visits(
         )
         epoch1 = create_study_epoch("EpochSubType_0001")
         epoch2 = create_study_epoch("EpochSubType_0002")
-    DAYUID = get_unit_uid_by_name("day")
+    day_uid = get_unit_uid_by_name("day")
     create_visit_with_update(
         study_uid=study_uid,
         study_epoch_uid=epoch1.uid,
         visit_type_uid="VisitType_0001",
         time_reference_uid="VisitSubType_0001",
         time_value=0,
-        time_unit_uid=DAYUID,
+        time_unit_uid=day_uid,
     )
     create_visit_with_update(
         study_uid=study_uid,
@@ -374,7 +374,7 @@ def create_some_visits(
         visit_type_uid="VisitType_0003",
         time_reference_uid="VisitSubType_0001",
         time_value=12,
-        time_unit_uid=DAYUID,
+        time_unit_uid=day_uid,
     )
     create_visit_with_update(
         study_uid=study_uid,
@@ -382,24 +382,24 @@ def create_some_visits(
         visit_type_uid="VisitType_0003",
         time_reference_uid="VisitSubType_0001",
         time_value=10,
-        time_unit_uid=DAYUID,
+        time_unit_uid=day_uid,
     )
 
-    v3 = create_visit_with_update(
+    version3 = create_visit_with_update(
         study_uid=study_uid,
         study_epoch_uid=epoch1.uid,
         visit_type_uid="VisitType_0004",
         time_reference_uid="VisitSubType_0001",
         time_value=20,
-        time_unit_uid=DAYUID,
+        time_unit_uid=day_uid,
     )
-    v4 = create_visit_with_update(
+    version4 = create_visit_with_update(
         study_uid=study_uid,
         study_epoch_uid=epoch2.uid,
         visit_type_uid="VisitType_0002",
         time_reference_uid="VisitSubType_0001",
         time_value=30,
-        time_unit_uid=DAYUID,
+        time_unit_uid=day_uid,
         visit_sublabel_codelist_uid="VisitSubLabel_0001",
         visit_sublabel_reference=None,
         visit_class="SINGLE_VISIT",
@@ -411,20 +411,20 @@ def create_some_visits(
         visit_type_uid="VisitType_0003",
         time_reference_uid="VisitSubType_0002",
         time_value=31,
-        time_unit_uid=DAYUID,
+        time_unit_uid=day_uid,
         visit_sublabel_codelist_uid="VisitSubLabel_0002",
-        visit_sublabel_reference=v4.uid,
+        visit_sublabel_reference=version4.uid,
         visit_class="SINGLE_VISIT",
         visit_subclass="ADDITIONAL_SUBVISIT_IN_A_GROUP_OF_SUBV",
     )
 
     update_visit_with_update(
-        v3.uid,
+        version3.uid,
         study_uid=study_uid,
-        uid=v3.uid,
+        uid=version3.uid,
         study_epoch_uid=epoch1.uid,
         visit_type_uid="VisitType_0004",
         time_reference_uid="VisitSubType_0001",
         time_value=35,
-        time_unit_uid=DAYUID,
+        time_unit_uid=day_uid,
     )

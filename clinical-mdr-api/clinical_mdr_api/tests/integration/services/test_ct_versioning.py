@@ -23,15 +23,15 @@ def test_data(request: FixtureRequest):
 
     log.debug("%s() fixture: creating database", request.fixturename)
     db_name = "services.ctversioning"
-    db = inject_and_clear_db(db_name)
+    database = inject_and_clear_db(db_name)
 
     log.debug("%s() fixture: initializing database", request.fixturename)
     inject_base_data()
     log.debug("%s() fixture: setup complete", request.fixturename)
-    yield db
+    yield database
 
     # log.debug("%s() fixture: teardown: deleting database", request.fixturename)
-    # db.cypher_query("CREATE OR REPLACE DATABASE $db", {"db": db_name})
+    # database.cypher_query("CREATE OR REPLACE DATABASE $db", {"db": db_name})
 
 
 def test_version_sequence(test_data):

@@ -84,10 +84,6 @@ export default {
       this.$refs.observer.reset()
     },
     async submit () {
-      const valid = await this.$refs.observer.validate()
-      if (!valid) {
-        return
-      }
       const data = { ...this.form }
       data.study_uid = this.selectedStudy.uid
       if (data.repetition_indicator === undefined) {
@@ -98,12 +94,16 @@ export default {
           this.$refs.form.working = false
           bus.$emit('notification', { msg: this.$t('DiseaseMilestoneForm.add_success') })
           this.close()
+        }, _err => {
+          this.$refs.form.working = false
         })
       } else {
         study.updateStudyDiseaseMilestone(this.selectedStudy.uid, this.diseaseMilestone.uid, data).then(resp => {
           this.$refs.form.working = false
           bus.$emit('notification', { msg: this.$t('DiseaseMilestoneForm.update_success') })
           this.close()
+        }, _err => {
+          this.$refs.form.working = false
         })
       }
     }

@@ -4,10 +4,10 @@ const resource = 'studies'
 
 export default {
   getAllForStudy (uid, options) {
-    const params = {
-      ...options
-    }
-    return repository.get(`${resource}/${uid}/study-arms`, { params })
+    return repository.get(`${resource}/${uid}/study-arms`, options)
+  },
+  getStudyArm (studyUid, armUid) {
+    return repository.get(`${resource}/${studyUid}/study-arms/${armUid}`)
   },
   create (uid, data) {
     const params = {
@@ -45,8 +45,11 @@ export default {
   getStudyElementsAllowedConfigs () {
     return repository.get('study-elements/allowed-element-configs')
   },
-  getAllStudyCells (uid) {
-    return repository.get(`${resource}/${uid}/study-design-cells`)
+  getAllStudyCells (uid, options) {
+    const params = {
+      ...options
+    }
+    return repository.get(`${resource}/${uid}/study-design-cells`, { params })
   },
   createStudyCell (uid, data) {
     return repository.post(`${resource}/${uid}/study-design-cells`, data)
@@ -62,6 +65,9 @@ export default {
       ...options
     }
     return repository.get(`${resource}/${uid}/study-branch-arms`, { params })
+  },
+  getStudyBranchArm (studyUid, branchArmUid) {
+    return repository.get(`${resource}/${studyUid}/study-branch-arms/${branchArmUid}`)
   },
   createBranchArm (uid, data) {
     return repository.post(`${resource}/${uid}/study-branch-arms`, data)
@@ -81,14 +87,20 @@ export default {
   updateElementOrder (uid, elementUid, data) {
     return repository.patch(`${resource}/${uid}/study-elements/${elementUid}/order`, data)
   },
-  getAllBranchesForArm (uid, armUid) {
-    return repository.get(`${resource}/${uid}/study-branch-arms/arm/${armUid}`)
+  getAllBranchesForArm (uid, armUid, studyValueVersion) {
+    const params = {
+      study_value_version: studyValueVersion
+    }
+    return repository.get(`${resource}/${uid}/study-branch-arms/arm/${armUid}`, { params })
   },
   getAllCohorts (uid, options) {
     const params = {
       ...options
     }
     return repository.get(`${resource}/${uid}/study-cohorts`, { params })
+  },
+  getStudyCohort (studyUid, cohortUid) {
+    return repository.get(`${resource}/${studyUid}/study-cohorts/${cohortUid}`)
   },
   getAllCohortsForArm (uid, armUid) {
     const params = { armUid: armUid }
@@ -109,11 +121,11 @@ export default {
   cellsBatchUpdate (uid, data) {
     return repository.post(`${resource}/${uid}/study-design-cells/batch`, data)
   },
-  getAllCellsForArm (uid, armUid) {
-    return repository.get(`${resource}/${uid}/study-design-cells/arm/${armUid}`)
+  getAllCellsForArm (uid, armUid, data) {
+    return repository.get(`${resource}/${uid}/study-design-cells/arm/${armUid}`, data)
   },
-  getAllCellsForBranch (uid, branchArmUid) {
-    return repository.get(`${resource}/${uid}/study-design-cells/branch-arm/${branchArmUid}`)
+  getAllCellsForBranch (uid, branchArmUid, data) {
+    return repository.get(`${resource}/${uid}/study-design-cells/branch-arm/${branchArmUid}`, data)
   },
   getStudyCohortVersions (studyUid, studyCohortUid) {
     return repository.get(`${resource}/${studyUid}/study-cohorts/${studyCohortUid}/audit-trail`)

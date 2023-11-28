@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Callable, Sequence, cast
+from typing import Callable, cast
 
 from fastapi import Depends
 from neomodel import db
@@ -146,7 +146,7 @@ class UnitDefinitionService:
         )
 
     @db.transaction
-    def get_versions(self, uid: str) -> Sequence[UnitDefinitionModel]:
+    def get_versions(self, uid: str) -> list[UnitDefinitionModel]:
         versions = self._repos.unit_definition_repository.get_all_versions_2(uid)
         if not versions:
             raise NotFoundException("Resource not found.")

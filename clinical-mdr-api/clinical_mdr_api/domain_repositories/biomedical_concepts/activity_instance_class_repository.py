@@ -1,5 +1,3 @@
-from typing import Sequence
-
 from clinical_mdr_api.domain_repositories.library_item_repository import (
     LibraryItemRepositoryImplBase,
     _AggregateRootType,
@@ -125,7 +123,7 @@ class ActivityInstanceClassRepository(
             item_metadata=self._library_item_metadata_vo_from_relation(relationship),
         )
 
-    def patch_mappings(self, uid: str, dataset_class_uids: Sequence[str]) -> None:
+    def patch_mappings(self, uid: str, dataset_class_uids: list[str]) -> None:
         root = ActivityInstanceClassRoot.nodes.get(uid=uid)
         root.maps_dataset_class.disconnect_all()
         for dataset_class in dataset_class_uids:

@@ -18,18 +18,18 @@ class StudyFieldsTest(api.APITest):
 
     def setUp(self):
         inject_and_clear_db(self.TEST_DB_NAME)
-        cp = TestUtils.create_clinical_programme(name="CP")
+        clinical_programme = TestUtils.create_clinical_programme(name="CP")
         TestUtils.create_project(
             name="Project ABC",
             project_number="123",
             description="Description ABC",
-            clinical_programme_uid=cp.uid,
+            clinical_programme_uid=clinical_programme.uid,
         )
         TestUtils.create_project(
             name="Project DEF",
             project_number="456",
             description="Description DEF",
-            clinical_programme_uid=cp.uid,
+            clinical_programme_uid=clinical_programme.uid,
         )
         # create library
         library = TestUtils.create_library(name="Sponsor", is_editable=True)
@@ -104,18 +104,18 @@ class StudyFieldsNegativeTest(api.APITest):
 
     def setUp(self):
         inject_and_clear_db(self.TEST_DB_NAME)
-        cp = TestUtils.create_clinical_programme(name="CP")
+        clinical_programme = TestUtils.create_clinical_programme(name="CP")
         TestUtils.create_project(
             name="Project ABC",
             project_number="123",
             description="Description ABC",
-            clinical_programme_uid=cp.uid,
+            clinical_programme_uid=clinical_programme.uid,
         )
         TestUtils.create_project(
             name="Project DEF",
             project_number="456",
             description="Description DEF",
-            clinical_programme_uid=cp.uid,
+            clinical_programme_uid=clinical_programme.uid,
         )
         TestUtils.create_library(name="Sponsor", is_editable=True)
         TestUtils.create_library(name="UCUM", is_editable=True)

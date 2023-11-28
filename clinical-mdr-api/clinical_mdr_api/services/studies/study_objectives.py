@@ -53,13 +53,22 @@ class StudyObjectivesService:
         )
         self._units = None
 
-    def _get_all_selection(self, study_uid):
+    def _get_all_selection(
+        self,
+        study_uid,
+        study_value_version: str | None = None,
+    ):
         # Check if study exists
-        StudyService(user=get_current_user_id()).get_by_uid(uid=study_uid)
+        StudyService(user=get_current_user_id()).get_by_uid(
+            uid=study_uid,
+            study_value_version=study_value_version,
+        )
 
         # Get Endpoint Selections
         selection = self._study_endpoint_selection_service.get_all_selection(
-            study_uid=study_uid, no_brackets=True
+            study_uid=study_uid,
+            no_brackets=True,
+            study_value_version=study_value_version,
         )
 
         return selection.items
@@ -81,8 +90,12 @@ class StudyObjectivesService:
         root = self._build_condensed_tree(selection)
         return self._build_condensed_docx(root)
 
-    def get_standard_docx(self, study_uid) -> DocxBuilder:
-        selection = self._get_all_selection(study_uid)
+    def get_standard_docx(
+        self, study_uid, study_value_version: str | None = None
+    ) -> DocxBuilder:
+        selection = self._get_all_selection(
+            study_uid, study_value_version=study_value_version
+        )
         tree = self._build_tree(selection)
         return self._build_standard_docx(tree)
 

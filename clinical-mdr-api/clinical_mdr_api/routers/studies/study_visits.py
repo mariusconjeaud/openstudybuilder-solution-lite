@@ -1,4 +1,4 @@
-from typing import Any, Sequence
+from typing import Any
 
 from fastapi import Body, Depends, Path, Query
 from pydantic.types import Json
@@ -11,6 +11,7 @@ from clinical_mdr_api import config
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.study_selections import study_epoch
 from clinical_mdr_api.models.utils import CustomPage
+from clinical_mdr_api.models.validators import FLOAT_REGEX
 from clinical_mdr_api.oauth import get_current_user_id, rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
@@ -114,6 +115,12 @@ def get_all(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
+    study_value_version: str
+    | None = Query(
+        None,
+        description="StudyValueVersion to extract the StudySelections",
+        regex=FLOAT_REGEX,
+    ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> CustomPage[clinical_mdr_api.models.study_selections.study_visit.StudyVisit]:
     service = StudyVisitService(current_user_id)
@@ -125,6 +132,7 @@ def get_all(
         total_count=total_count,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
+        study_value_version=study_value_version,
     )
     return CustomPage.create(
         items=results.items, total=results.total, page=page_number, size=page_size
@@ -162,6 +170,12 @@ def get_distinct_values_for_header(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
+    study_value_version: str
+    | None = Query(
+        None,
+        description="StudyValueVersion to extract the StudySelections",
+        regex=FLOAT_REGEX,
+    ),
 ):
     return StudyVisitService(current_user_id).get_distinct_values_for_header(
         study_uid=uid,
@@ -170,6 +184,7 @@ def get_distinct_values_for_header(
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
         result_count=result_count,
+        study_value_version=study_value_version,
     )
 
 
@@ -177,7 +192,7 @@ def get_distinct_values_for_header(
     "/studies/{uid}/study-visits-references",
     dependencies=[rbac.STUDY_READ],
     summary="Returns all study visit references for study currently selected",
-    response_model=Sequence[
+    response_model=list[
         clinical_mdr_api.models.study_selections.study_visit.StudyVisit
     ],
     response_model_exclude_unset=True,
@@ -189,7 +204,7 @@ def get_distinct_values_for_header(
 )
 def get_all_references(
     uid: str = studyUID, current_user_id: str = Depends(get_current_user_id)
-) -> Sequence[clinical_mdr_api.models.study_selections.study_visit.StudyVisit]:
+) -> list[clinical_mdr_api.models.study_selections.study_visit.StudyVisit]:
     service = StudyVisitService(current_user_id)
     return service.get_all_references(study_uid=uid)
 
@@ -309,7 +324,7 @@ def post_preview_visit(
     "/studies/{uid}/study-visits/allowed-visit-types",
     dependencies=[rbac.STUDY_READ],
     summary="Returns all allowed Visit Types for specified epoch type",
-    response_model=Sequence[
+    response_model=list[
         clinical_mdr_api.models.study_selections.study_visit.AllowedVisitTypesForEpochType
     ],
     response_model_exclude_unset=True,
@@ -327,7 +342,7 @@ def get_allowed_visit_types_for_epoch_type(
         "allowed visit types should be returned",
     ),
     uid: str = Path(description="The unique uid of the study"),
-) -> Sequence[
+) -> list[
     clinical_mdr_api.models.study_selections.study_visit.AllowedVisitTypesForEpochType
 ]:
     service = StudyVisitService(current_user_id)
@@ -340,7 +355,7 @@ def get_allowed_visit_types_for_epoch_type(
     "/studies/{uid}/study-visits/allowed-time-references",
     dependencies=[rbac.STUDY_READ],
     summary="Returns all allowed time references for a study visit",
-    response_model=Sequence[
+    response_model=list[
         clinical_mdr_api.models.study_selections.study_visit.AllowedTimeReferences
     ],
     response_model_exclude_unset=True,
@@ -353,9 +368,7 @@ def get_allowed_visit_types_for_epoch_type(
 def get_allowed_time_references_for_given_study(
     current_user_id: str = Depends(get_current_user_id),
     uid: str = Path(description="The unique uid of the study"),
-) -> Sequence[
-    clinical_mdr_api.models.study_selections.study_visit.AllowedTimeReferences
-]:
+) -> list[clinical_mdr_api.models.study_selections.study_visit.AllowedTimeReferences]:
     service = StudyVisitService(current_user_id)
     return service.get_allowed_time_references_for_study(study_uid=uid)
 
@@ -465,7 +478,7 @@ State after:
 Possible errors:
  - Invalid study-uid.
      """,
-    response_model=Sequence[
+    response_model=list[
         clinical_mdr_api.models.study_selections.study_visit.StudyVisitVersion
     ],
     response_model_exclude_unset=True,
@@ -483,7 +496,7 @@ def get_study_visit_audit_trail(
     uid: str = studyUID,
     study_visit_uid: str = study_visit_uid_description,
     current_user_id: str = Depends(get_current_user_id),
-) -> Sequence[clinical_mdr_api.models.study_selections.study_visit.StudyVisitVersion]:
+) -> list[clinical_mdr_api.models.study_selections.study_visit.StudyVisitVersion]:
     service = StudyVisitService(current_user_id)
     return service.audit_trail(study_visit_uid, study_uid=uid)
 
@@ -506,7 +519,7 @@ State after:
 Possible errors:
  - Invalid study-uid.
      """,
-    response_model=Sequence[
+    response_model=list[
         clinical_mdr_api.models.study_selections.study_visit.StudyVisitVersion
     ],
     response_model_exclude_unset=True,
@@ -522,7 +535,7 @@ Possible errors:
 def get_study_visits_all_audit_trail(
     uid: str = studyUID,
     current_user_id: str = Depends(get_current_user_id),
-) -> Sequence[clinical_mdr_api.models.study_selections.study_visit.StudyVisitVersion]:
+) -> list[clinical_mdr_api.models.study_selections.study_visit.StudyVisitVersion]:
     service = StudyVisitService(current_user_id)
     return service.audit_trail_all_visits(study_uid=uid)
 
@@ -565,9 +578,17 @@ def get_study_visit(
     uid: str = studyUID,
     study_visit_uid: str = study_visit_uid_description,
     current_user_id: str = Depends(get_current_user_id),
+    study_value_version: str
+    | None = Query(
+        None,
+        description="StudyValueVersion to extract the StudySelections",
+        regex=FLOAT_REGEX,
+    ),
 ) -> clinical_mdr_api.models.study_selections.study_visit.StudyVisit:
     service = StudyVisitService(current_user_id)
-    return service.find_by_uid(study_visit_uid)
+    return service.find_by_uid(
+        study_uid=uid, uid=study_visit_uid, study_value_version=study_value_version
+    )
 
 
 @router.get(
@@ -657,7 +678,7 @@ State after:
 Possible errors:
  - Invalid study-uid.
     """,
-    response_model=Sequence[
+    response_model=list[
         clinical_mdr_api.models.study_selections.study_visit.SimpleStudyVisit
     ],
     response_model_exclude_unset=True,
@@ -669,7 +690,7 @@ Possible errors:
 )
 def get_anchor_visits_in_group_of_subvisits(
     uid: str = studyUID, current_user_id: str = Depends(get_current_user_id)
-) -> Sequence[clinical_mdr_api.models.study_selections.study_visit.SimpleStudyVisit]:
+) -> list[clinical_mdr_api.models.study_selections.study_visit.SimpleStudyVisit]:
     service = StudyVisitService(current_user_id)
     return service.get_anchor_visits_in_a_group_of_subvisits(study_uid=uid)
 
@@ -691,7 +712,7 @@ State after:
 Possible errors:
  - Invalid study-uid.
     """,
-    response_model=Sequence[
+    response_model=list[
         clinical_mdr_api.models.study_selections.study_visit.SimpleStudyVisit
     ],
     response_model_exclude_unset=True,
@@ -703,7 +724,7 @@ Possible errors:
 )
 def get_anchor_visits_for_special_visit(
     uid: str = studyUID, current_user_id: str = Depends(get_current_user_id)
-) -> Sequence[clinical_mdr_api.models.study_selections.study_visit.SimpleStudyVisit]:
+) -> list[clinical_mdr_api.models.study_selections.study_visit.SimpleStudyVisit]:
     service = StudyVisitService(current_user_id)
     return service.get_anchor_for_special_visit(study_uid=uid)
 
@@ -725,7 +746,7 @@ State after:
 Possible errors:
  - Invalid study-uid.
     """,
-    response_model=Sequence[
+    response_model=list[
         clinical_mdr_api.models.study_selections.study_visit.StudyVisit
     ],
     response_model_exclude_unset=True,
@@ -742,7 +763,7 @@ def assign_consecutive_visit_group_for_selected_study_visit(
         description="The properties needed to assign visits into consecutive visit group",
     ),
     current_user_id: str = Depends(get_current_user_id),
-) -> Sequence[clinical_mdr_api.models.study_selections.study_visit.StudyVisit]:
+) -> list[clinical_mdr_api.models.study_selections.study_visit.StudyVisit]:
     service = StudyVisitService(current_user_id)
     return service.assign_visit_consecutive_group(
         study_uid=uid,

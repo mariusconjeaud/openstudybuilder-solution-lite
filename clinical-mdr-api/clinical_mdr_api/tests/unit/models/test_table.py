@@ -8,69 +8,76 @@ class Undefined:
 
 
 def test_table_dimension():
-    td = TableDimension(lambda: Undefined)
-    assert td.size == 0
-    assert not list(td.keys())
-    assert not list(td)
+    table_dimension = TableDimension(lambda: Undefined)
+    assert table_dimension.size == 0
+    assert not list(table_dimension.keys())
+    assert not list(table_dimension)
 
     # Getitem on non-existing index creates that item, and may extend the length of the series
-    assert td[2] is Undefined  # sets index[2] to Undefined and size to 3
-    keys = list(range(td.size))
+    assert table_dimension[2] is Undefined  # sets index[2] to Undefined and size to 3
+    keys = list(range(table_dimension.size))
     values = [Undefined, Undefined, Undefined]
-    assert td.size == len(td) == 3
-    assert list(td.keys()) == keys
-    assert list(td) == values
+    assert table_dimension.size == len(table_dimension) == 3
+    assert list(table_dimension.keys()) == keys
+    assert list(table_dimension) == values
 
     # Repeat the tests, as getitem may alter the series
-    assert td[2] is Undefined
-    assert list(td) == values
-    assert list(td.keys()) == keys
-    assert len(td) == td.size == 3
+    assert table_dimension[2] is Undefined
+    assert list(table_dimension) == values
+    assert list(table_dimension.keys()) == keys
+    assert len(table_dimension) == table_dimension.size == 3
 
     value = "foo"
 
     # Deleting the last item will shrink the series
-    td[5] = value
+    table_dimension[5] = value
     keys = [0, 1, 2, 3, 4, 5]
     values = [Undefined, Undefined, Undefined, Undefined, Undefined, value]
-    assert td[5] == value
-    assert td.size == len(td) == 6
-    assert list(td.keys()) == keys
-    assert list(td) == values
+    assert table_dimension[5] == value
+    assert table_dimension.size == len(table_dimension) == 6
+    assert list(table_dimension.keys()) == keys
+    assert list(table_dimension) == values
     # Repeat the tests, as getitem may alter the series
-    assert list(td.keys()) == keys
-    assert td.size == len(td) == 6
-    assert td[5] == value
+    assert list(table_dimension.keys()) == keys
+    assert table_dimension.size == len(table_dimension) == 6
+    assert table_dimension[5] == value
 
     # Deleting the last item will shrink the series
-    del td[5]
-    assert td.size == 5
-    assert len(td) == td.size
-    assert list(td) == [Undefined] * 5
+    del table_dimension[5]
+    assert table_dimension.size == 5
+    assert len(table_dimension) == table_dimension.size
+    assert list(table_dimension) == [Undefined] * 5
 
     # Modifying an item
     value = "bar"
-    td[2] = value
-    assert td.size == 5
-    assert len(td) == td.size
-    assert list(td) == [Undefined, Undefined, value, Undefined, Undefined]
-    assert set(td.keys()) == set(range(td.size))
+    table_dimension[2] = value
+    assert table_dimension.size == 5
+    assert len(table_dimension) == table_dimension.size
+    assert list(table_dimension) == [Undefined, Undefined, value, Undefined, Undefined]
+    assert set(table_dimension.keys()) == set(range(table_dimension.size))
 
     # Adding an item
     value2 = "waz"
-    td[5] = value2
-    assert td.size == 6
-    assert len(td) == td.size
-    assert list(td) == [Undefined, Undefined, value, Undefined, Undefined, value2]
-    assert set(td.keys()) == set(range(td.size))
+    table_dimension[5] = value2
+    assert table_dimension.size == 6
+    assert len(table_dimension) == table_dimension.size
+    assert list(table_dimension) == [
+        Undefined,
+        Undefined,
+        value,
+        Undefined,
+        Undefined,
+        value2,
+    ]
+    assert set(table_dimension.keys()) == set(range(table_dimension.size))
 
     invalid_key = "hello"
 
     with pytest.raises(KeyError):
-        _ = td[invalid_key]
+        _ = table_dimension[invalid_key]
 
     with pytest.raises(KeyError):
-        td[invalid_key] = value
+        table_dimension[invalid_key] = value
 
 
 def test_table():

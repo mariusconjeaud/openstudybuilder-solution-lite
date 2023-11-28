@@ -9,6 +9,7 @@ import lombok.Setter;
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 @Getter @Setter
 public class Code {
+
     private String termUid;
     private String name;
     private String id;

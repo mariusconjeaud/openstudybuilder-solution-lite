@@ -9,7 +9,7 @@ export const accessGuard = {
   },
   methods: {
     checkPermission (permission) {
-      if (this.$config.AUTH_ENABLED === '1') {
+      if (this.$config.OAUTH_ENABLED) {
         return this.userInfo.roles.includes(permission)
       }
       return true

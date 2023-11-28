@@ -1,5 +1,3 @@
-from typing import Sequence
-
 from neomodel import db
 
 from clinical_mdr_api import models
@@ -34,7 +32,7 @@ class StudyCompoundSelectionService(
 
     def _transform_all_to_response_model(
         self, study_selection: StudySelectionCompoundsAR
-    ) -> Sequence[models.StudySelectionCompound]:
+    ) -> list[models.StudySelectionCompound]:
         result = []
         for order, selection in enumerate(
             study_selection.study_compounds_selection, start=1
@@ -179,9 +177,9 @@ class StudyCompoundSelectionService(
         # In order for filtering to work, we need to unwind the aggregated AR object first
         # Unwind ARs
         selections = []
-        for ar in compound_selection_ars:
+        for compound_selection_ar in compound_selection_ars:
             parsed_selections = self._transform_all_to_response_model(
-                ar,
+                compound_selection_ar,
             )
             for selection in parsed_selections:
                 selections.append(selection)
@@ -203,6 +201,7 @@ class StudyCompoundSelectionService(
         self,
         field_name: str,
         study_uid: str | None = None,
+        study_value_version: str | None = None,
         project_name: str | None = None,
         project_number: str | None = None,
         search_string: str | None = "",
@@ -214,7 +213,7 @@ class StudyCompoundSelectionService(
 
         if study_uid:
             compound_selection_ars = repos.study_compound_repository.find_by_study(
-                study_uid
+                study_uid, study_value_version
             )
 
             header_values = service_level_generic_header_filtering(
@@ -236,8 +235,10 @@ class StudyCompoundSelectionService(
         # In order for filtering to work, we need to unwind the aggregated AR object first
         # Unwind ARs
         selections = []
-        for ar in compound_selection_ars:
-            parsed_selections = self._transform_all_to_response_model(ar)
+        for compound_selection_ar in compound_selection_ars:
+            parsed_selections = self._transform_all_to_response_model(
+                compound_selection_ar
+            )
             for selection in parsed_selections:
                 selections.append(selection)
 
@@ -257,6 +258,7 @@ class StudyCompoundSelectionService(
     def get_all_selection(
         self,
         study_uid: str,
+        study_value_version: str | None = None,
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
         page_number: int = 1,
@@ -266,7 +268,8 @@ class StudyCompoundSelectionService(
         repos = MetaRepository()
         try:
             compound_selection_ar = repos.study_compound_repository.find_by_study(
-                study_uid
+                study_uid,
+                study_value_version,
             )
             selection = self._transform_all_to_response_model(compound_selection_ar)
             # Do filtering, sorting, pagination and count
@@ -444,7 +447,7 @@ class StudyCompoundSelectionService(
         self,
         study_selection_history: list[StudyCompoundSelectionHistory],
         study_uid: str,
-    ) -> Sequence[models.StudySelectionCompound]:
+    ) -> list[models.StudySelectionCompound]:
         result = []
         for history in study_selection_history:
             result.append(
@@ -463,7 +466,7 @@ class StudyCompoundSelectionService(
     @db.transaction
     def get_all_selection_audit_trail(
         self, study_uid: str
-    ) -> Sequence[models.StudySelectionCompound]:
+    ) -> list[models.StudySelectionCompound]:
         repos = self._repos
         try:
             selection_history = repos.study_compound_repository.find_selection_history(
@@ -478,7 +481,7 @@ class StudyCompoundSelectionService(
     @db.transaction
     def get_specific_selection_audit_trail(
         self, study_uid: str, study_selection_uid: str
-    ) -> Sequence[models.StudySelectionCompound]:
+    ) -> list[models.StudySelectionCompound]:
         repos = self._repos
         try:
             selection_history = repos.study_compound_repository.find_selection_history(

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable, Self, Sequence
+from typing import Callable, Self
 
 from clinical_mdr_api.domains.concepts.activities.activity import ActivityAR
 from clinical_mdr_api.domains.concepts.activities.activity_group import ActivityGroupAR
@@ -21,28 +21,28 @@ class ActivityInstructionPreInstanceAR(PreInstanceAR):
     Implementation of ActivityInstructionPreInstanceAR. Solely based on Parametrized Template.
     """
 
-    _indications: Sequence[DictionaryTermAR] | None = None
+    _indications: list[DictionaryTermAR] | None = None
 
-    _activities: Sequence[ActivityAR] | None = None
+    _activities: list[ActivityAR] | None = None
 
-    _activity_groups: Sequence[ActivityGroupAR] | None = None
+    _activity_groups: list[ActivityGroupAR] | None = None
 
-    _activity_subgroups: Sequence[ActivitySubGroupAR] | None = None
+    _activity_subgroups: list[ActivitySubGroupAR] | None = None
 
     @property
-    def indications(self) -> Sequence[DictionaryTermAR]:
+    def indications(self) -> list[DictionaryTermAR] | None:
         return self._indications
 
     @property
-    def activities(self) -> Sequence[ActivityAR]:
+    def activities(self) -> list[ActivityAR] | None:
         return self._activities
 
     @property
-    def activity_groups(self) -> Sequence[ActivityGroupAR]:
+    def activity_groups(self) -> list[ActivityGroupAR] | None:
         return self._activity_groups
 
     @property
-    def activity_subgroups(self) -> Sequence[ActivitySubGroupAR]:
+    def activity_subgroups(self) -> list[ActivitySubGroupAR] | None:
         return self._activity_subgroups
 
     @classmethod
@@ -54,12 +54,12 @@ class ActivityInstructionPreInstanceAR(PreInstanceAR):
         item_metadata: LibraryItemMetadataVO,
         sequence_id: str,
         study_count: int = 0,
-        indications: Sequence[DictionaryTermAR] | None = None,
-        activities: Sequence[ActivityAR] | None = None,
-        activity_groups: Sequence[ActivityGroupAR] | None = None,
-        activity_subgroups: Sequence[ActivitySubGroupAR] | None = None,
+        indications: list[DictionaryTermAR] | None = None,
+        activities: list[ActivityAR] | None = None,
+        activity_groups: list[ActivityGroupAR] | None = None,
+        activity_subgroups: list[ActivitySubGroupAR] | None = None,
     ) -> Self:
-        ar = cls(
+        return cls(
             _uid=uid,
             _sequence_id=sequence_id,
             _item_metadata=item_metadata,
@@ -72,8 +72,6 @@ class ActivityInstructionPreInstanceAR(PreInstanceAR):
             _study_count=study_count,
         )
 
-        return ar
-
     @classmethod
     def from_input_values(
         cls,
@@ -84,10 +82,10 @@ class ActivityInstructionPreInstanceAR(PreInstanceAR):
         next_available_sequence_id_callback: Callable[[str], str | None] = (
             lambda _: None
         ),
-        indications: Sequence[DictionaryTermAR] | None = None,
-        activities: Sequence[ActivityAR] | None = None,
-        activity_groups: Sequence[ActivityGroupAR] | None = None,
-        activity_subgroups: Sequence[ActivitySubGroupAR] | None = None,
+        indications: list[DictionaryTermAR] | None = None,
+        activities: list[ActivityAR] | None = None,
+        activity_groups: list[ActivityGroupAR] | None = None,
+        activity_subgroups: list[ActivitySubGroupAR] | None = None,
     ) -> Self:
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(author=author)
 

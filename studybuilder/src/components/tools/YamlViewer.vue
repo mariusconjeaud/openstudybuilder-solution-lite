@@ -1,22 +1,31 @@
 <template>
 <div>
-  <div class="d-flex ma-4">
+  <div class="d-flex align-end mb-4">
     <v-text-field
       v-model="search"
       :label="$t('YamlViewer.search_content')"
       append-icon="mdi-magnify"
       hide-details
       clearable
-      class="search-input"
+      class="search-input mr-6"
+      dense
       ></v-text-field>
+    <v-switch
+      :label="$t('YamlViewer.expand_all')"
+      @change="toggleTreeview"
+      hide-details
+      class="mr-auto"
+      />
   </div>
 
   <v-treeview
+    ref="tree"
     :items="yamlTree"
     :search="search"
     dense
     open-on-click
     transition
+    :open-all="expanded"
     />
 </div>
 </template>
@@ -30,6 +39,7 @@ export default {
   },
   data () {
     return {
+      expanded: false,
       search: null,
       yamlTree: null
     }
@@ -55,6 +65,10 @@ export default {
       }
       this.yamlTree = retValue
       return retValue
+    },
+    toggleTreeview () {
+      this.expanded = !this.expanded
+      this.$refs.tree.updateAll(this.expanded)
     }
   },
   watch: {

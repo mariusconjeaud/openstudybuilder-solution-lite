@@ -16,7 +16,7 @@ from clinical_mdr_api.tests.integration.utils.data_library import (
 
 class TestCreate(TestCase):
     TEST_DB_NAME = "utversioning"
-    ot = None
+    objective_template = None
 
     @classmethod
     def setUp(cls):
@@ -31,7 +31,7 @@ class TestCreate(TestCase):
         self.assertEqual(result.name, template_data["name"])
         self.assertEqual(result.status, "Draft")
         self.assertEqual(result.version, "0.1")
-        self.ot = result.dict()
+        self.objective_template = result.dict()
 
 
 class TestDraftEdit(TestCase):
@@ -42,17 +42,21 @@ class TestDraftEdit(TestCase):
         inject_and_clear_db(cls.TEST_DB_NAME)
         cls.library = library_service.create(**library_data)
         objective_template = models.ObjectiveTemplateCreateInput(**template_data)
-        cls.ot = service.ObjectiveTemplateService().create(objective_template)
-        if isinstance(cls.ot, BaseModel):
-            cls.ot = cls.ot.dict()
+        cls.objective_template = service.ObjectiveTemplateService().create(
+            objective_template
+        )
+        if isinstance(cls.objective_template, BaseModel):
+            cls.objective_template = cls.objective_template.dict()
 
     def test_edit(self):
         data = {
             "name": template_data["name"] + " edited",
             "change_description": "tested",
         }
-        ot = models.ObjectiveTemplateEditInput(**data)
-        result = service.ObjectiveTemplateService().edit_draft(self.ot["uid"], ot)
+        objective_template = models.ObjectiveTemplateEditInput(**data)
+        result = service.ObjectiveTemplateService().edit_draft(
+            self.objective_template["uid"], objective_template
+        )
         if isinstance(result, BaseModel):
             result = result.dict()
         self.assertEqual(result["version"], "0.2")
@@ -63,8 +67,10 @@ class TestDraftEdit(TestCase):
             "name": template_data["name"] + " edited again",
             "change_description": "tested",
         }
-        ot = models.ObjectiveTemplateEditInput(**data)
-        result = service.ObjectiveTemplateService().edit_draft(self.ot["uid"], ot)
+        objective_template = models.ObjectiveTemplateEditInput(**data)
+        result = service.ObjectiveTemplateService().edit_draft(
+            self.objective_template["uid"], objective_template
+        )
         if isinstance(result, BaseModel):
             result = result.dict()
         self.assertEqual(result["version"], "0.3")
@@ -80,12 +86,16 @@ class TestApprove(TestCase):
         inject_and_clear_db(cls.TEST_DB_NAME)
         cls.library = library_service.create(**library_data)
         objective_template = models.ObjectiveTemplateCreateInput(**template_data)
-        cls.ot = service.ObjectiveTemplateService().create(objective_template)
-        if isinstance(cls.ot, BaseModel):
-            cls.ot = cls.ot.dict()
+        cls.objective_template = service.ObjectiveTemplateService().create(
+            objective_template
+        )
+        if isinstance(cls.objective_template, BaseModel):
+            cls.objective_template = cls.objective_template.dict()
 
     def test_approve(self):
-        result = service.ObjectiveTemplateService().approve(self.ot["uid"])
+        result = service.ObjectiveTemplateService().approve(
+            self.objective_template["uid"]
+        )
         assert isinstance(result, models.ObjectiveTemplate)
         self.assertEqual(result.version, "1.0")
         self.assertEqual(result.status, "Final")
@@ -99,25 +109,37 @@ class TestActivation(TestCase):
         inject_and_clear_db(cls.TEST_DB_NAME)
         cls.library = library_service.create(**library_data)
         objective_template = models.ObjectiveTemplateCreateInput(**template_data)
-        ot = service.ObjectiveTemplateService().create(objective_template)
-        cls.ot = service.ObjectiveTemplateService().approve(ot.uid)
-        if isinstance(cls.ot, BaseModel):
-            cls.ot = cls.ot.dict()
+        objective_template = service.ObjectiveTemplateService().create(
+            objective_template
+        )
+        cls.objective_template = service.ObjectiveTemplateService().approve(
+            objective_template.uid
+        )
+        if isinstance(cls.objective_template, BaseModel):
+            cls.objective_template = cls.objective_template.dict()
 
     def test_activation(self):
-        result = service.ObjectiveTemplateService().inactivate_final(self.ot["uid"])
+        result = service.ObjectiveTemplateService().inactivate_final(
+            self.objective_template["uid"]
+        )
         assert isinstance(result, models.ObjectiveTemplate)
         self.assertEqual(result.version, "1.0")
         self.assertEqual(result.status, "Retired")
         with self.assertRaises(BusinessLogicException):
-            service.ObjectiveTemplateService().inactivate_final(self.ot["uid"])
+            service.ObjectiveTemplateService().inactivate_final(
+                self.objective_template["uid"]
+            )
 
-        result = service.ObjectiveTemplateService().reactivate_retired(self.ot["uid"])
+        result = service.ObjectiveTemplateService().reactivate_retired(
+            self.objective_template["uid"]
+        )
         assert isinstance(result, models.ObjectiveTemplate)
         self.assertEqual(result.version, "1.0")
         self.assertEqual(result.status, "Final")
         with self.assertRaises(BusinessLogicException):
-            service.ObjectiveTemplateService().reactivate_retired(self.ot["uid"])
+            service.ObjectiveTemplateService().reactivate_retired(
+                self.objective_template["uid"]
+            )
 
 
 class TestSoftDelete(TestCase):
@@ -128,12 +150,16 @@ class TestSoftDelete(TestCase):
         inject_and_clear_db(cls.TEST_DB_NAME)
         cls.library = library_service.create(**library_data)
         objective_template = models.ObjectiveTemplateCreateInput(**template_data)
-        cls.ot = service.ObjectiveTemplateService().create(objective_template)
-        if isinstance(cls.ot, BaseModel):
-            cls.ot = cls.ot.dict()
+        cls.objective_template = service.ObjectiveTemplateService().create(
+            objective_template
+        )
+        if isinstance(cls.objective_template, BaseModel):
+            cls.objective_template = cls.objective_template.dict()
 
     def test_softdelete(self):
-        service.ObjectiveTemplateService().soft_delete(self.ot["uid"])
+        service.ObjectiveTemplateService().soft_delete(self.objective_template["uid"])
         repos = MetaRepository()
-        item = repos.objective_template_repository.find_by_uid_2(self.ot["uid"])
+        item = repos.objective_template_repository.find_by_uid_2(
+            self.objective_template["uid"]
+        )
         self.assertIsNone(item)

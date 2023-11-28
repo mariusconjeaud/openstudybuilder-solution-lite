@@ -1,13 +1,17 @@
 <template>
-<div v-if="activityInstance" class="px-4">
+<div v-if="activityInstanceOverview" class="px-4">
   <div class="d-flex page-title">
-    {{ activityInstance.activity_instance.name }}
-    <help-button :help-text="$t('_help.ActivityInstanceOverview.general')" />
+    {{ activityInstanceOverview.activity_instance.name }}
+    <help-button-with-panels :help-text="$t('_help.ActivityInstanceOverview.general')" :items="helpItems"/>
   </div>
   <activity-instance-overview
-    v-if="activityInstance"
-    :activity-instance="activityInstance"
+    v-if="activityInstanceOverview"
+    source="activity-instances"
+    :item-uid="$route.params.id"
+    :item-overview="activityInstanceOverview"
     :yaml-version="activityInstanceYAML"
+    @refresh="fetchOverview"
+    @closePage="closePage"
     />
 </div>
 </template>
@@ -15,37 +19,60 @@
 <script>
 import ActivityInstanceOverview from '@/components/library/ActivityInstanceOverview'
 import activities from '@/api/activities'
-import HelpButton from '@/components/tools/HelpButton'
+import HelpButtonWithPanels from '@/components/tools/HelpButtonWithPanels'
 import { mapActions } from 'vuex'
 
 export default {
   components: {
     ActivityInstanceOverview,
-    HelpButton
+    HelpButtonWithPanels
   },
   data () {
     return {
-      activityInstance: null,
-      activityInstanceYAML: null
+      activityInstanceOverview: null,
+      activityInstanceYAML: null,
+      helpItems: [
+        'ActivityInstanceOverview.cosmos_yaml',
+        'ActivityInstanceOverview.class',
+        'ActivityInstanceOverview.adam_code',
+        'ActivityInstanceOverview.topic_code',
+        'ActivityInstanceOverview.activity_group',
+        'ActivityInstanceOverview.activity_subgroup',
+        'ActivityInstanceOverview.activity',
+        'ActivityInstanceOverview.activity_groupings',
+        'ActivityInstanceOverview.is_required_for_activity',
+        'ActivityInstanceOverview.is_default_selected_for_activity',
+        'ActivityInstanceOverview.is_data_sharing',
+        'ActivityInstanceOverview.is_legacy_usage',
+        'ActivityInstanceOverview.item_type',
+        'ActivityInstanceOverview.items',
+        'ActivityInstanceOverview.item_class'
+      ]
     }
   },
   methods: {
     ...mapActions({
       addBreadcrumbsLevel: 'app/addBreadcrumbsLevel'
-    })
+    }),
+    fetchOverview () {
+      activities.getObjectOverview('activity-instances', this.$route.params.id).then(resp => {
+        this.activityInstanceOverview = resp.data
+        this.addBreadcrumbsLevel({
+          text: this.activityInstanceOverview.activity_instance.name,
+          to: { name: 'ActivityInstanceOverview', params: this.$route.params },
+          index: 4
+        })
+      })
+      activities.getObjectOverview('activity-instances', this.$route.params.id, 'yaml').then(resp => {
+        this.activityInstanceYAML = resp.data
+      })
+    },
+    closePage () {
+      this.$router.push({ name: 'Activities', params: { tab: 'activity-instances' } })
+    }
   },
   created () {
-    activities.getObjectOverview('activity-instances', this.$route.params.id).then(resp => {
-      this.activityInstance = resp.data
-      this.addBreadcrumbsLevel({
-        text: this.activityInstance.activity_instance.name,
-        to: { name: 'ActivityInstanceOverview', params: this.$route.params },
-        index: 4
-      })
-    })
-    activities.getObjectOverview('activity-instances', this.$route.params.id, 'yaml').then(resp => {
-      this.activityInstanceYAML = resp.data
-    })
+    this.fetchOverview()
   }
 }
 </script>

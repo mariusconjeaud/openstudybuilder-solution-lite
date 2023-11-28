@@ -407,7 +407,7 @@ export default {
         params.filters = {}
       }
       if (!this.preInstanceMode) {
-        Object.assign(params.filters, { 'type.name.sponsor_preferred_name_sentence_case': { v: [this.criteriaType.sponsor_preferred_name_sentence_case] } })
+        Object.assign(params.filters, { 'type.name.sponsor_preferred_name_sentence_case': { v: [this.criteriaType.sponsor_preferred_name_sentence_case] }, 'library.name': { v: [libraries.LIBRARY_SPONSOR] } })
       } else {
         Object.assign(params.filters, {
           template_type_uid: {
@@ -440,6 +440,9 @@ export default {
       }
     },
     async createTemplate (step) {
+      if (this.creationMode === 'template' && step === 1) {
+        this.getCriteriaTemplates()
+      }
       if (this.creationMode !== 'scratch' || step !== 2) {
         return true
       }

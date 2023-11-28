@@ -40,6 +40,8 @@ class ActivityItemClassService(NeomodelExtGenericService):
             author=self.user_initials,
             activity_item_class_vo=ActivityItemClassVO.from_repository_values(
                 name=item_input.name,
+                definition=item_input.definition,
+                nci_concept_id=item_input.nci_concept_id,
                 order=item_input.order,
                 mandatory=item_input.mandatory,
                 activity_instance_class_uids=item_input.activity_instance_class_uids,
@@ -61,6 +63,8 @@ class ActivityItemClassService(NeomodelExtGenericService):
             change_description=item_edit_input.change_description,
             activity_item_class_vo=ActivityItemClassVO.from_repository_values(
                 name=item_edit_input.name,
+                definition=item_edit_input.definition,
+                nci_concept_id=item_edit_input.nci_concept_id,
                 order=item_edit_input.order,
                 mandatory=item_edit_input.mandatory,
                 activity_instance_class_uids=item_edit_input.activity_instance_class_uids,

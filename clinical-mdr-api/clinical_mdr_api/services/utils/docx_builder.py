@@ -3,7 +3,7 @@ import logging
 import os
 from functools import reduce
 from itertools import zip_longest
-from typing import Mapping, Sequence
+from typing import Mapping
 
 from bs4 import BeautifulSoup, NavigableString, Tag
 from docx import Document
@@ -30,7 +30,7 @@ class DocxBuilder:
         self,
         styles: Mapping | None = None,
         landscape: bool | None = False,
-        margins: Sequence[float] | None = None,
+        margins: list[float] | None = None,
     ):
         template_filename = os.path.join(
             os.path.dirname(__file__), self.TEMPLATE_FILENAME
@@ -60,9 +60,9 @@ class DocxBuilder:
         section = self.document.sections[-1]
         if section.orientation != WD_ORIENTATION.LANDSCAPE:
             section.orientation = WD_ORIENTATION.LANDSCAPE
-            pw = section.page_width
+            page_width = section.page_width
             section.page_width = section.page_height
-            section.page_height = pw
+            section.page_height = page_width
         return section
 
     def create_styles(self, styles: Mapping):
@@ -83,8 +83,8 @@ class DocxBuilder:
     @staticmethod
     def load_document(template_filename: str) -> Document:
         log.debug("Reading document: %s", template_filename)
-        with open(template_filename, "rb") as f:
-            return Document(f)
+        with open(template_filename, "rb") as file:
+            return Document(file)
 
     def create_table(self, num_rows: int, num_columns: int) -> Table:
         table = self.document.add_table(rows=num_rows, cols=num_columns)
@@ -98,27 +98,27 @@ class DocxBuilder:
     def add_row(table: Table, cell_text_content: list[str | None]) -> _Row:
         """Adds a row to the table and fills the cells text content"""
         row = table.add_row()
-        for i, t in enumerate(cell_text_content):
-            if t is not None:
-                row.cells[i].text = t
+        for i, text in enumerate(cell_text_content):
+            if text is not None:
+                row.cells[i].text = text
         return row
 
     @staticmethod
-    def format_row(row: _Row, styles: Sequence[str] | None = None, **kwargs):
+    def format_row(row: _Row, styles: list[str] | None = None, **kwargs):
         """Applies styles on each cell of a table row, and sets paragraph formattings from kwargs"""
         for cell, style in zip_longest(row.cells, styles or []):
             paragraph = cell.paragraphs[0]
             if style is not None:
                 paragraph.style = style
-            for k, v in kwargs.items():
-                setattr(paragraph, k, v)
+            for k, value in kwargs.items():
+                setattr(paragraph, k, value)
 
     @staticmethod
     def repeat_table_header(row: _Row):
         """Set table row to repeat on every page"""
         # pylint: disable=protected-access
-        tr = row._tr
-        tr_pr = tr.get_or_add_trPr()
+        table_row = row._tr
+        tr_pr = table_row.get_or_add_trPr()
         tbl_header = OxmlElement("w:tblHeader")
         tbl_header.set(qn("w:val"), "true")
         tr_pr.append(tbl_header)
@@ -128,8 +128,8 @@ class DocxBuilder:
         """Set text direction to vertical for a cell: tbRl -- top to bottom, btLr -- bottom to top"""
         # pylint: disable=protected-access
         assert direction in ("tbRl", "btLr")
-        tc = cell._tc
-        tc_pr = tc.get_or_add_tcPr()
+        table_cell = cell._tc
+        tc_pr = table_cell.get_or_add_tcPr()
         text_direction = OxmlElement("w:textDirection")
         text_direction.set(qn("w:val"), direction)  # btLr tbRl
         tc_pr.append(text_direction)
@@ -139,16 +139,16 @@ class DocxBuilder:
         return reduce(lambda c1, c2: c1.merge(c2), cells)
 
     def get_document_stream(self) -> io.BytesIO:
-        f = io.BytesIO()
-        self.document.save(f)
-        f.seek(0)
-        return f
+        doc = io.BytesIO()
+        self.document.save(doc)
+        doc.seek(0)
+        return doc
 
     @staticmethod
     def delete_paragraph(paragraph: Paragraph) -> None:
-        p = paragraph._element  # pylint: disable=protected-access
-        p.getparent().remove(p)
-        p._p = p._element = None
+        element = paragraph._element  # pylint: disable=protected-access
+        element.getparent().remove(element)
+        element._p = element._element = None
 
     def add_html(
         self,

@@ -11,7 +11,7 @@
   :get-object-from-selection="selection => selection.footnote"
   @initForm="initForm"
   @submit="submit"
-  @close="$emit('close')"
+  @close="close"
   :prepare-template-payload-func="prepareTemplatePayload"
   >
   <template v-slot:formFields="{}">
@@ -26,6 +26,18 @@
       <v-icon>mdi-table-plus</v-icon>
     </v-btn>
     </p>
+    <v-row>
+      <v-col cols="12">
+        <v-text-field
+          v-if="referencedSoAGroups.length > 0"
+          :label="$t('StudyFootnoteEditForm.ref_soa_groups')"
+          v-model="referencedSoAGroups"
+          dense
+          disabled
+          readonly
+          />
+      </v-col>
+    </v-row>
     <v-row>
       <v-col cols="12">
         <v-text-field
@@ -44,6 +56,18 @@
           v-if="referencedEpochsAndVisits.length > 0"
           :label="$t('StudyFootnoteEditForm.ref_epochs_visits')"
           v-model="referencedEpochsAndVisits"
+          dense
+          disabled
+          readonly
+          />
+      </v-col>
+    </v-row>
+    <v-row>
+      <v-col cols="12">
+        <v-text-field
+          v-if="referencedSchedules.length > 0"
+          :label="$t('StudyFootnoteEditForm.ref_schedules')"
+          v-model="referencedSchedules"
           dense
           disabled
           readonly
@@ -87,8 +111,10 @@ export default {
   },
   data () {
     return {
+      referencedSoAGroups: [],
       referencedActivities: [],
-      referencedEpochsAndVisits: []
+      referencedEpochsAndVisits: [],
+      referencedSchedules: []
     }
   },
   mounted () {
@@ -103,7 +129,11 @@ export default {
   },
   methods: {
     redirectToDetailedSoA () {
-      this.$router.push({ name: 'StudyActivities', params: { tab: 'detailed', footnote: this.studyFootnote } })
+      if (window.location.href.includes('detailed')) {
+        this.$emit('enableFootnoteMode', this.studyFootnote)
+      } else {
+        this.$router.push({ name: 'StudyActivities', params: { tab: 'detailed', footnote: this.studyFootnote } })
+      }
       this.$refs.form.close()
     },
     initForm (form) {
@@ -111,14 +141,25 @@ export default {
       this.referencedActivities = []
       this.referencedEpochsAndVisits = []
       this.studyFootnote.referenced_items.forEach(item => {
-        if (['StudyActivity', 'StudyActivityGroup', 'StudyActivitySubGroup'].indexOf(item.item_type) > -1) {
+        if (['StudySoAGroup'].indexOf(item.item_type) > -1) {
+          this.referencedSoAGroups.push(item.item_name)
+        } else if (['StudyActivity', 'StudyActivityGroup', 'StudyActivitySubGroup'].indexOf(item.item_type) > -1) {
           this.referencedActivities.push(item.item_name)
         } else if (['StudyVisit', 'StudyEpoch'].indexOf(item.item_type) > -1) {
           this.referencedEpochsAndVisits.push(item.item_name)
+        } else if (['StudyActivitySchedule'].indexOf(item.item_type) > -1) {
+          this.referencedSchedules.push(item.item_name)
         }
       })
-      this.referencedActivities = this.referencedActivities.join(', ')
+      this.referencedActivities = this.removeDuplicates(this.referencedActivities).join(', ')
+      this.referencedSoAGroups = this.removeDuplicates(this.referencedSoAGroups).join(', ')
       this.referencedEpochsAndVisits = this.referencedEpochsAndVisits.join(', ')
+      this.referencedSchedules = this.referencedSchedules.join(', ')
+    },
+    removeDuplicates (arr) {
+      return arr.filter((item, index, self) => {
+        return self.indexOf(item) === index
+      })
     },
     prepareTemplatePayload (data) {
       data.type_uid = this.footnoteType.term_uid
@@ -162,6 +203,13 @@ export default {
       bus.$emit('notification', { msg: this.$t('StudyFootnoteEditForm.update_success') })
       this.$emit('updated')
       this.$refs.form.close()
+    },
+    close () {
+      this.referencedSoAGroups = []
+      this.referencedActivities = []
+      this.referencedEpochsAndVisits = []
+      this.referencedSchedules = []
+      this.$emit('close')
     }
   }
 }

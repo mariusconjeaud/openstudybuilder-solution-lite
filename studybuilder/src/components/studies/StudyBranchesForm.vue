@@ -199,10 +199,6 @@ export default {
       return Object.keys(this.editedBranchArm).length !== 0
     },
     async submit () {
-      const valid = await this.$refs.observer.validate()
-      if (!valid) {
-        return
-      }
       if (Object.keys(this.editedBranchArm).length !== 0) {
         this.edit()
       } else {

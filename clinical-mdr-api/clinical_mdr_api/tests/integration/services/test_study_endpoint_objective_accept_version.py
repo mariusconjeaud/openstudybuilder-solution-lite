@@ -73,6 +73,7 @@ from clinical_mdr_api.tests.integration.utils.data_library import (
     STARTUP_PARAMETERS_CYPHER,
     STARTUP_STUDY_ENDPOINT_CYPHER,
 )
+from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 
 
 class TestStudyEndpointUpversion(unittest.TestCase):
@@ -109,17 +110,19 @@ class TestStudyEndpointUpversion(unittest.TestCase):
         self.endpoint_template_service = EndpointTemplateService()
 
         self.library = LibraryVO(name="Library", is_editable=True)
-        self.tv = TemplateVO(
+        self.template_vo = TemplateVO(
             name=self.default_template_name,
             name_plain=self.default_template_name,
         )
-        self.im = LibraryItemMetadataVO.get_initial_item_metadata(author="Test")
+        self.item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(
+            author="Test"
+        )
         self.ot_ar = ObjectiveTemplateAR(
             _uid=self.otr.root_class.get_next_free_uid_and_increment_counter(),
             _sequence_id="some sequence id",
-            _template=self.tv,
+            _template=self.template_vo,
             _library=self.library,
-            _item_metadata=self.im,
+            _item_metadata=self.item_metadata,
         )
         self.otr.save(self.ot_ar)
 
@@ -133,7 +136,7 @@ class TestStudyEndpointUpversion(unittest.TestCase):
             self.ot_ar.uid, for_update=True
         )
         self.ot_ar.create_new_version(
-            author="TEST", change_description="Change", template=self.tv
+            author="TEST", change_description="Change", template=self.template_vo
         )
         self.ot_ar.approve(author="TEST")
         self.otr.save(self.ot_ar)
@@ -141,9 +144,9 @@ class TestStudyEndpointUpversion(unittest.TestCase):
         self.et_ar = EndpointTemplateAR(
             _uid=self.etr.root_class.get_next_free_uid_and_increment_counter(),
             _sequence_id="some sequence id",
-            _template=self.tv,
+            _template=self.template_vo,
             _library=self.library,
-            _item_metadata=self.im,
+            _item_metadata=self.item_metadata,
         )
         self.etr.save(self.et_ar)
 
@@ -157,7 +160,7 @@ class TestStudyEndpointUpversion(unittest.TestCase):
             self.et_ar.uid, for_update=True
         )
         self.et_ar.create_new_version(
-            author="TEST", change_description="Change", template=self.tv
+            author="TEST", change_description="Change", template=self.template_vo
         )
         self.et_ar.approve(author="TEST")
         self.etr.save(self.et_ar)
@@ -165,9 +168,9 @@ class TestStudyEndpointUpversion(unittest.TestCase):
         self.tt_ar = TimeframeTemplateAR(
             _uid=self.ttr.root_class.get_next_free_uid_and_increment_counter(),
             _sequence_id="some sequence id",
-            _template=self.tv,
+            _template=self.template_vo,
             _library=self.library,
-            _item_metadata=self.im,
+            _item_metadata=self.item_metadata,
         )
         self.ttr.save(self.tt_ar)
 
@@ -181,7 +184,7 @@ class TestStudyEndpointUpversion(unittest.TestCase):
             self.tt_ar.uid, for_update=True
         )
         self.tt_ar.create_new_version(
-            author="TEST", change_description="Change", template=self.tv
+            author="TEST", change_description="Change", template=self.template_vo
         )
         self.ttr.save(self.tt_ar)
 
@@ -232,20 +235,28 @@ class TestStudyEndpointUpversion(unittest.TestCase):
         self.term_roots = []
         self.term_values = []
         for i in range(count):
-            vr = TemplateParameterTermRoot(uid=label + "uid__" + str(i))
-            vr.save()
-            vv = TemplateParameterTermValue(name=label + "__" + str(i))
-            vv.save()
-            vr.has_parameter_term.connect(self.tpr)
-            vr.latest_final.connect(vv)
-        for vr in self.tpr.has_parameter_term.all():
-            self.term_roots.append(vr)
-            vv = vr.latest_final.single()
-            self.term_values.append(vv)
+            template_parameter_term_root = TemplateParameterTermRoot(
+                uid=label + "uid__" + str(i)
+            )
+            template_parameter_term_root.save()
+            template_parameter_term_value = TemplateParameterTermValue(
+                name=label + "__" + str(i)
+            )
+            template_parameter_term_value.save()
+            template_parameter_term_root.has_parameter_term.connect(self.tpr)
+            template_parameter_term_root.latest_final.connect(
+                template_parameter_term_value
+            )
+        for template_parameter_term_root in self.tpr.has_parameter_term.all():
+            self.term_roots.append(template_parameter_term_root)
+            template_parameter_term_value = (
+                template_parameter_term_root.latest_final.single()
+            )
+            self.term_values.append(template_parameter_term_value)
 
     def create_objectives(self, count=10, approved=False, retired=False):
         for i in range(count):
-            pv = TemplateParameterMultiSelectInput(
+            template_parameter = TemplateParameterMultiSelectInput(
                 template_parameter=self.TPR_LABEL,
                 conjunction="",
                 terms=[
@@ -261,10 +272,10 @@ class TestStudyEndpointUpversion(unittest.TestCase):
             template = ObjectiveCreateInput(
                 objective_template_uid=self.ot_ar.uid,
                 library_name="Library",
-                parameter_terms=[pv],
+                parameter_terms=[template_parameter],
             )
 
-            print("CREATE", pv)
+            print("CREATE", template_parameter)
             item = self.objective_service.create(template)
             if approved:
                 self.objective_service.approve(item.uid)
@@ -273,7 +284,7 @@ class TestStudyEndpointUpversion(unittest.TestCase):
 
     def create_timeframes(self, count=10, approved=False, retired=False):
         for i in range(count):
-            pv = TemplateParameterMultiSelectInput(
+            template_parameter = TemplateParameterMultiSelectInput(
                 template_parameter=self.TPR_LABEL,
                 conjunction="",
                 terms=[
@@ -289,7 +300,7 @@ class TestStudyEndpointUpversion(unittest.TestCase):
             template = TimeframeCreateInput(
                 timeframe_template_uid=self.tt_ar.uid,
                 library_name="Library",
-                parameter_terms=[pv],
+                parameter_terms=[template_parameter],
             )
 
             item = self.timeframe_service.create(template)
@@ -300,7 +311,7 @@ class TestStudyEndpointUpversion(unittest.TestCase):
 
     def create_endpoints(self, count=10, approved=False, retired=False):
         for i in range(count):
-            pv = TemplateParameterMultiSelectInput(
+            template_parameter = TemplateParameterMultiSelectInput(
                 template_parameter=self.TPR_LABEL,
                 conjunction="",
                 terms=[
@@ -316,7 +327,7 @@ class TestStudyEndpointUpversion(unittest.TestCase):
             template = EndpointCreateInput(
                 endpoint_template_uid=self.et_ar.uid,
                 library_name="Library",
-                parameter_terms=[pv],
+                parameter_terms=[template_parameter],
             )
             item = self.endpoint_service.create(template)
             if approved:
@@ -357,6 +368,10 @@ class TestStudyEndpointUpversion(unittest.TestCase):
             selection.endpoint.version, selection.latest_endpoint.version
         )
         self.assertFalse(selection.accepted_version)
+
+        # locking and unlocking to create multiple study value relationships on the existent StudySelections
+        TestUtils.create_study_fields_configuration()
+        TestUtils.lock_and_unlock_study(study_uid="study_root")
 
         # when
 

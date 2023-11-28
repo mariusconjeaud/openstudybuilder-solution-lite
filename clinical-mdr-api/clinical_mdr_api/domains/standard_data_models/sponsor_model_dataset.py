@@ -1,6 +1,6 @@
 import datetime
 from dataclasses import dataclass
-from typing import Self, Sequence
+from typing import Self
 
 from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemAggregateRootBase,
@@ -33,8 +33,8 @@ class SponsorModelDatasetVO:
     include_in_raw: bool
     gen_raw_seqno_flag: bool
     enrich_build_order: int
-    keys: Sequence[str]
-    sort_keys: Sequence[str]
+    keys: list[str]
+    sort_keys: list[str]
     label: str
     state: str
     extended_domain: str
@@ -50,8 +50,8 @@ class SponsorModelDatasetVO:
         xml_title: str,
         structure: str,
         purpose: str,
-        keys: Sequence[str],
-        sort_keys: Sequence[str],
+        keys: list[str],
+        sort_keys: list[str],
         source_ig: str,
         comment: str,
         ig_comment: str,

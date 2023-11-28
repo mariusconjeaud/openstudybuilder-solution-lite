@@ -120,14 +120,16 @@ export default {
       return this.$refs.indexingForm.preparePayload(form)
     },
     prepareDuplicatePayload (payload, preInstance) {
-      if (preInstance.categories && preInstance.categories.length) {
+      if (preInstance?.categories?.length) {
         payload.category_uids = preInstance.categories.map(item => item.term_uid)
       } else {
         payload.category_uids = []
       }
     },
     refreshTable () {
-      this.$refs.table.$refs.sponsorTable.filter()
+      if (this.$refs.table.$refs.sponsorTable) {
+        this.$refs.table.$refs.sponsorTable.filter()
+      }
       if (this.$refs.table.$refs.preInstanceTable) {
         this.$refs.table.$refs.preInstanceTable.filter()
       }
@@ -136,7 +138,7 @@ export default {
       if (item.is_confirmatory_testing !== null) {
         item.is_confirmatory_testing = dataFormating.yesno(item.is_confirmatory_testing)
       }
-      if (item.categories && item.categories.length) {
+      if (item?.categories?.length) {
         item.categories = { name: { sponsor_preferred_name: dataFormating.terms(item.categories) } }
       } else {
         item.categories = { name: { sponsor_preferred_name: this.$t('_global.not_applicable_long') } }

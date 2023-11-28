@@ -71,6 +71,7 @@ class OdmXmlExporterService:
     OSB_LANG = "osb:lang"
     OSB_INSTRUCTION = "osb:instruction"
     OSB_SPONSOR_INSTRUCTION = "osb:sponsorInstruction"
+    SDTM_MSG_COLOURS = ["#bfffff", "#ffff96", "#96ff96", "#ffbf9c"]
 
     def __init__(
         self,
@@ -407,7 +408,7 @@ class OdmXmlExporterService:
                                 lang=Attribute(
                                     self.XML_LANG,
                                     get_iso_lang_data(
-                                        q=description.language, return_key="639-1"
+                                        query=description.language, return_key="639-1"
                                     ),
                                 ),
                                 **self._get_vendor_attributes_or_empty_dict(
@@ -458,8 +459,6 @@ class OdmXmlExporterService:
             ]
 
         def create_odm_item_group_def():
-            SDTM_MSG_COLOURS = ["#bfffff", "#ffff96", "#96ff96", "#ffbf9c"]
-
             return [
                 ItemGroupDef(
                     oid=Attribute("OID", item_group.oid),
@@ -514,7 +513,7 @@ class OdmXmlExporterService:
                     osb_domain_colors=self._get_vendor_elements_or_empty_list(
                         [
                             OsbDomainColor(
-                                f"{sdtm_domain.code_submission_value}:{SDTM_MSG_COLOURS[idx]};"
+                                f"{sdtm_domain.code_submission_value}:{self.SDTM_MSG_COLOURS[idx]};"
                             )
                             for idx, sdtm_domain in enumerate(item_group.sdtm_domains)
                         ]
@@ -528,7 +527,7 @@ class OdmXmlExporterService:
                                 lang=Attribute(
                                     self.XML_LANG,
                                     get_iso_lang_data(
-                                        q=description.language, return_key="639-1"
+                                        query=description.language, return_key="639-1"
                                     ),
                                 ),
                                 **self._get_vendor_attributes_or_empty_dict(
@@ -633,7 +632,7 @@ class OdmXmlExporterService:
                                 lang=Attribute(
                                     self.XML_LANG,
                                     get_iso_lang_data(
-                                        q=description.language, return_key="639-1"
+                                        query=description.language, return_key="639-1"
                                     ),
                                 ),
                                 **self._get_vendor_attributes_or_empty_dict(
@@ -655,7 +654,7 @@ class OdmXmlExporterService:
                                 lang=Attribute(
                                     self.XML_LANG,
                                     get_iso_lang_data(
-                                        q=description.language, return_key="639-1"
+                                        query=description.language, return_key="639-1"
                                     ),
                                 ),
                                 **self._get_vendor_attributes_or_empty_dict(
@@ -729,7 +728,7 @@ class OdmXmlExporterService:
                                 lang=Attribute(
                                     self.XML_LANG,
                                     get_iso_lang_data(
-                                        q=description.language, return_key="639-1"
+                                        query=description.language, return_key="639-1"
                                     ),
                                 ),
                                 **self._get_vendor_attributes_or_empty_dict(
@@ -788,7 +787,7 @@ class OdmXmlExporterService:
                                 lang=Attribute(
                                     self.XML_LANG,
                                     get_iso_lang_data(
-                                        q=description.language, return_key="639-1"
+                                        query=description.language, return_key="639-1"
                                     ),
                                 ),
                                 **self._get_vendor_attributes_or_empty_dict(
@@ -858,7 +857,7 @@ class OdmXmlExporterService:
                                             Attribute(
                                                 self.XML_LANG,
                                                 get_iso_lang_data(
-                                                    q="eng", return_key="639-1"
+                                                    query="eng", return_key="639-1"
                                                 ),
                                             ),
                                         )
@@ -919,7 +918,9 @@ class OdmXmlExporterService:
                                     unit_definition.name,
                                     lang=Attribute(
                                         self.XML_LANG,
-                                        get_iso_lang_data(q="eng", return_key="639-1"),
+                                        get_iso_lang_data(
+                                            query="eng", return_key="639-1"
+                                        ),
                                     ),
                                 )
                             ),

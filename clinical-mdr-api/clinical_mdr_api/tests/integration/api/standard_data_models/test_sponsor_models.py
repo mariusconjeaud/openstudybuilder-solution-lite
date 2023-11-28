@@ -208,6 +208,7 @@ def test_post_variable_class(api_client):
         "sponsor_model_name": sponsor_model.name,
         "sponsor_model_version_number": sponsor_model.version,
         "is_basic_std": True,
+        "order": 10,
     }
 
     # Making a POST request to create a variable class with the sponsor model
@@ -218,6 +219,7 @@ def test_post_variable_class(api_client):
     res = response.json()
     assert response.status_code == 201
     assert res["uid"] == common_params["variable_class_uid"]
+    assert res["order"] == common_params["order"]
 
     # Making another POST request to create a variable class with a nonexistent sponsor model
     params2 = common_params.copy()
@@ -284,6 +286,7 @@ def test_post_dataset(api_client):
     res = response.json()
     assert response.status_code == 201
     assert res["uid"] == common_params["dataset_uid"]
+    assert res["enrich_build_order"] == common_params["enrich_build_order"]
 
     # Making another POST request to create a dataset with a nonexistent sponsor model
     params2 = common_params.copy()
@@ -335,6 +338,7 @@ def test_post_dataset_variable(api_client):
         "sponsor_model_name": sponsor_model.name,
         "sponsor_model_version_number": sponsor_model.version,
         "is_basic_std": True,
+        "order": 20,
     }
 
     # Making a POST request to create a dataset variable with the sponsor model
@@ -345,6 +349,7 @@ def test_post_dataset_variable(api_client):
     res = response.json()
     assert response.status_code == 201
     assert res["uid"] == common_params["dataset_variable_uid"]
+    assert res["order"] == common_params["order"]
 
     # Making another POST request to create a dataset variable with a nonexistent sponsor model
     params2 = common_params.copy()

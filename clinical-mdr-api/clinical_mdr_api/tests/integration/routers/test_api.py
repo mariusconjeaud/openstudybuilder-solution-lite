@@ -68,9 +68,9 @@ class TestApi(TestCase):
                     elif path == "/dictionaries/codelists":
                         # This test fails because of missing required query parameter `library`
                         self.assertIn(response.status_code, [422])
-                    elif path == "/study-flowchart/flowchart":
-                        # This test fails because of mandatory query parameter
-                        self.assertIn(response.status_code, [422, 404])
+                    elif path.startswith("/studies/{study_uid}/flowchart"):
+                        # What is the purpose of this test when it is full of exceptions with paths that always fail?
+                        self.assertIn(response.status_code, [404])
                     elif path == "/study-visits/allowed-visit-types":
                         # This test fails because of mandatory query parameter
                         self.assertIn(response.status_code, [422])

@@ -1,4 +1,4 @@
-from typing import Callable, Self, Sequence
+from typing import Callable, Self
 
 from pydantic import Field
 
@@ -22,8 +22,8 @@ class UnitDefinitionModel(ConceptModel):
     master_unit: bool
     si_unit: bool
     us_conventional_unit: bool
-    ct_units: Sequence[SimpleTermModel]
-    unit_subsets: Sequence[SimpleTermModel]
+    ct_units: list[SimpleTermModel]
+    unit_subsets: list[SimpleTermModel]
     ucum: SimpleTermModel | None = Field(None, nullable=True)
     unit_dimension: SimpleTermModel | None = Field(None, nullable=True)
     legacy_code: str | None = Field(None, nullable=True)
@@ -126,8 +126,8 @@ class UnitDefinitionPostInput(ConceptPostInput):
     master_unit: bool
     si_unit: bool
     us_conventional_unit: bool
-    ct_units: Sequence[str]
-    unit_subsets: Sequence[str] | None = []
+    ct_units: list[str]
+    unit_subsets: list[str] | None = []
     ucum: str | None
     unit_dimension: str | None
     legacy_code: str | None
@@ -145,8 +145,8 @@ class UnitDefinitionPatchInput(ConceptPatchInput):
     master_unit: bool | None = None
     si_unit: bool | None = None
     us_conventional_unit: bool | None = None
-    ct_units: Sequence[str] | None = []
-    unit_subsets: Sequence[str] | None = []
+    ct_units: list[str] | None = []
+    unit_subsets: list[str] | None = []
     ucum: str | None = None
     unit_dimension: str | None = None
     legacy_code: str | None = None

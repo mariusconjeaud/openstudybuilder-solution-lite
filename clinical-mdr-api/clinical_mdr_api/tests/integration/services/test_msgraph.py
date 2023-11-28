@@ -1,6 +1,7 @@
 import json
 import re
 import urllib.parse
+from typing import Any
 
 import pytest
 
@@ -186,7 +187,7 @@ class MockResponse:
         reason: str = "OK",
         url: str = "/hello+world",
         text: str = "Hello world!",
-        payload: any = None,
+        payload: Any = None,
     ):
         self.status_code = status_code
         self.reason_phrase = reason

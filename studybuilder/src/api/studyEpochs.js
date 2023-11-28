@@ -4,11 +4,24 @@ import repository from './repository'
 const resource = 'studies'
 
 export default {
-  getFilteredEpochs (studyUid, params) {
+  getFilteredEpochs (studyUid, options) {
+    const params = {
+      ...options
+    }
     return repository.get(`${resource}/${studyUid}/study-epochs`, { params })
   },
-  getStudyEpochs (studyUid) {
-    return repository.get(`${resource}/${studyUid}/study-epochs`, { params: { page_size: 0 } })
+  getStudyEpochs (studyUid, options) {
+    const params = {
+      ...options
+    }
+    params.page_size = 0
+    return repository.get(`${resource}/${studyUid}/study-epochs`, { params })
+  },
+  getStudyEpoch (studyUid, epochUid) {
+    return repository.get(`${resource}/${studyUid}/study-epochs/${epochUid}`)
+  },
+  getStudyVisit (studyUid, visitUid) {
+    return repository.get(`${resource}/${studyUid}/study-visits/${visitUid}`)
   },
   getStudyVisits (studyUid, options) {
     const params = {

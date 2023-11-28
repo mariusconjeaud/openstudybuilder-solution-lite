@@ -1,7 +1,7 @@
 """Study Protocol Interventions service"""
 
 import logging
-from typing import Mapping, Sequence
+from typing import Mapping
 
 import yattag
 from docx.enum.style import WD_STYLE_TYPE
@@ -80,117 +80,117 @@ class StudyInterventionsService:
 
     @staticmethod
     def mk_table(
-        compounds: Sequence[models.StudySelectionCompound],
-        arms: Mapping[str, Sequence[models.StudySelectionArm]],
-        dosings: Mapping[str, Sequence[models.StudyCompoundDosing]],
+        compounds: list[models.StudySelectionCompound],
+        arms: Mapping[str, list[models.StudySelectionArm]],
+        dosings: Mapping[str, list[models.StudyCompoundDosing]],
     ) -> Table:
         table = Table.new()
         table.num_header_rows = 1
         table.num_header_columns = 1
 
-        r = 0
-        table.data[r][0] = _gettext("intervention_or_arm_name")
-        table.meta[r][0]["class"] = "header1"
-        for c, cmp in enumerate(compounds, start=1):
-            table.data[r][c] = StudyInterventionsService._arm_txt(cmp, arms)
-            table.meta[r][c]["class"] = "header2"
+        x = 0
+        table.data[x][0] = _gettext("intervention_or_arm_name")
+        table.meta[x][0]["class"] = "header1"
+        for idx, cmp in enumerate(compounds, start=1):
+            table.data[x][idx] = StudyInterventionsService._arm_txt(cmp, arms)
+            table.meta[x][idx]["class"] = "header2"
 
-        r += 1
-        table.data[r][0] = _gettext("intervention_name")
-        table.meta[r][0]["class"] = "header2"
-        for c, cmp in enumerate(compounds, start=1):
-            table.data[r][c] = cmp.compound.name if cmp.compound.name else ""
+        x += 1
+        table.data[x][0] = _gettext("intervention_name")
+        table.meta[x][0]["class"] = "header2"
+        for idx, cmp in enumerate(compounds, start=1):
+            table.data[x][idx] = cmp.compound.name if cmp.compound.name else ""
 
-        r += 1
-        table.data[r][0] = _gettext("intervention_type")
-        table.meta[r][0]["class"] = "header2"
-        for c, cmp in enumerate(compounds, start=1):
-            table.data[r][c] = (
+        x += 1
+        table.data[x][0] = _gettext("intervention_type")
+        table.meta[x][0]["class"] = "header2"
+        for idx, cmp in enumerate(compounds, start=1):
+            table.data[x][idx] = (
                 cmp.type_of_treatment.name if cmp.type_of_treatment else ""
             )
 
-        r += 1
-        table.data[r][0] = _gettext("investigational_or_non_investigational")
-        table.meta[r][0]["class"] = "header2"
-        for c, _ in enumerate(compounds, start=1):
-            table.data[r][c] = "?"  # TODO
+        x += 1
+        table.data[x][0] = _gettext("investigational_or_non_investigational")
+        table.meta[x][0]["class"] = "header2"
+        for idx, _ in enumerate(compounds, start=1):
+            table.data[x][idx] = "?"  # TODO
 
-        r += 1
-        table.data[r][0] = _gettext("pharmaceutical_form")
-        table.meta[r][0]["class"] = "header2"
-        for c, cmp in enumerate(compounds, start=1):
-            table.data[r][c] = cmp.dosage_form.name if cmp.dosage_form else ""
+        x += 1
+        table.data[x][0] = _gettext("pharmaceutical_form")
+        table.meta[x][0]["class"] = "header2"
+        for idx, cmp in enumerate(compounds, start=1):
+            table.data[x][idx] = cmp.dosage_form.name if cmp.dosage_form else ""
 
-        r += 1
-        table.data[r][0] = _gettext("route_of_administration")
-        table.meta[r][0]["class"] = "header2"
-        for c, cmp in enumerate(compounds, start=1):
-            table.data[r][c] = (
+        x += 1
+        table.data[x][0] = _gettext("route_of_administration")
+        table.meta[x][0]["class"] = "header2"
+        for idx, cmp in enumerate(compounds, start=1):
+            table.data[x][idx] = (
                 cmp.route_of_administration.name if cmp.route_of_administration else ""
             )
 
-        r += 1
-        table.data[r][0] = _gettext("medical_device")
-        table.meta[r][0]["class"] = "header2"
-        for c, cmp in enumerate(compounds, start=1):
-            m = {
+        x += 1
+        table.data[x][0] = _gettext("medical_device")
+        table.meta[x][0]["class"] = "header2"
+        for idx, cmp in enumerate(compounds, start=1):
+            mapping = {
                 "device": cmp.device.name if cmp.device else _gettext("None"),
                 "dispensed_in": (
                     cmp.dispensed_in.name if cmp.dispensed_in else _gettext("None")
                 ),
             }
-            table.data[r][c] = _gettext("medical_device_template").format_map(m)
+            table.data[x][idx] = _gettext("medical_device_template").format_map(mapping)
 
-        r += 1
-        table.data[r][0] = _gettext("trial_product_strength")
-        table.meta[r][0]["class"] = "header2"
-        for c, cmp in enumerate(compounds, start=1):
+        x += 1
+        table.data[x][0] = _gettext("trial_product_strength")
+        table.meta[x][0]["class"] = "header2"
+        for idx, cmp in enumerate(compounds, start=1):
             if cmp.strength_value:
-                m = {
+                mapping = {
                     "unit": cmp.strength_value.unit_label,
                     "value": cmp.strength_value.value,
                 }
-                table.data[r][c] = _gettext(
+                table.data[x][idx] = _gettext(
                     "trial_product_strength_template"
-                ).format_map(m)
+                ).format_map(mapping)
             else:
-                table.data[r][c] = ""
+                table.data[x][idx] = ""
 
-        r += 1
-        table.data[r][0] = _gettext("dose_and_frequency")
-        table.meta[r][0]["class"] = "header2"
-        for c, cmp in enumerate(compounds, start=1):
-            table.data[r][c] = StudyInterventionsService._dosing_txt(cmp, dosings)
+        x += 1
+        table.data[x][0] = _gettext("dose_and_frequency")
+        table.meta[x][0]["class"] = "header2"
+        for idx, cmp in enumerate(compounds, start=1):
+            table.data[x][idx] = StudyInterventionsService._dosing_txt(cmp, dosings)
 
-        r += 1
-        table.data[r][0] = _gettext("dosing_and_administration")
-        table.meta[r][0]["class"] = "header2"
-        for c, cmp in enumerate(compounds, start=1):
-            table.data[r][c] = cmp.other_info or _gettext("no_information")
+        x += 1
+        table.data[x][0] = _gettext("dosing_and_administration")
+        table.meta[x][0]["class"] = "header2"
+        for idx, cmp in enumerate(compounds, start=1):
+            table.data[x][idx] = cmp.other_info or _gettext("no_information")
 
-        r += 1
-        table.data[r][0] = _gettext("transfer_from_other_therapy")
-        table.meta[r][0]["class"] = "header2"
-        for c, _ in enumerate(compounds, start=1):
-            table.data[r][c] = "?"  # TODO
+        x += 1
+        table.data[x][0] = _gettext("transfer_from_other_therapy")
+        table.meta[x][0]["class"] = "header2"
+        for idx, _ in enumerate(compounds, start=1):
+            table.data[x][idx] = "?"  # TODO
 
-        r += 1
-        table.data[r][0] = _gettext("sourcing")
-        table.meta[r][0]["class"] = "header2"
-        for c, _ in enumerate(compounds, start=1):
-            table.data[r][c] = "?"  # TODO
+        x += 1
+        table.data[x][0] = _gettext("sourcing")
+        table.meta[x][0]["class"] = "header2"
+        for idx, _ in enumerate(compounds, start=1):
+            table.data[x][idx] = "?"  # TODO
 
-        r += 1
-        table.data[r][0] = _gettext("packaging_and_labelling")
-        table.meta[r][0]["class"] = "header2"
-        for c, _ in enumerate(compounds, start=1):
-            table.data[r][c] = "?"  # TODO
+        x += 1
+        table.data[x][0] = _gettext("packaging_and_labelling")
+        table.meta[x][0]["class"] = "header2"
+        for idx, _ in enumerate(compounds, start=1):
+            table.data[x][idx] = "?"  # TODO
 
-        r += 1
-        table.data[r][0] = _gettext("authorisation_status_in")
-        table.meta[r][0]["class"] = "header2"
-        for c, _ in enumerate(compounds, start=1):
-            table.data[r][c] = "?"  # TODO
+        x += 1
+        table.data[x][0] = _gettext("authorisation_status_in")
+        table.meta[x][0]["class"] = "header2"
+        for idx, _ in enumerate(compounds, start=1):
+            table.data[x][idx] = "?"  # TODO
 
         return table
 
@@ -209,9 +209,7 @@ class StudyInterventionsService:
             arm.name for arm in arms.get(compound.study_compound_uid, [])
         ) or _gettext("no_information")
 
-    def _get_study_compounds(
-        self, study_uid
-    ) -> Sequence[models.StudySelectionCompound]:
+    def _get_study_compounds(self, study_uid) -> list[models.StudySelectionCompound]:
         return (
             StudyCompoundSelectionService(author=self.current_user_id)
             .get_all_selection(

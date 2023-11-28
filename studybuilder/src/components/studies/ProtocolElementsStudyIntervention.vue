@@ -1,5 +1,5 @@
 <template>
-<div class="pa-4">
+<div class="pa-4" v-if="selectedStudyVersion === null">
   <div class="mt-6 d-flex align-center">
     <span class="text-h6">{{ $t('ProtocolInterventionsTable.title') }}</span>
     <v-spacer/>
@@ -18,13 +18,26 @@
   </div>
   <div class="mt-4" v-html="protocolInterventionsTable" id="ProtocolInterventions"></div>
 </div>
+<div v-else>
+  <under-construction :message="$t('UnderConstruction.not_supported')"/>
+</div>
 </template>
 
 <script>
 import study from '@/api/study'
 import exportLoader from '@/utils/exportLoader'
+import { mapGetters } from 'vuex'
+import UnderConstruction from '@/components/layout/UnderConstruction'
 
 export default {
+  components: {
+    UnderConstruction
+  },
+  computed: {
+    ...mapGetters({
+      selectedStudyVersion: 'studiesGeneral/selectedStudyVersion'
+    })
+  },
   props: {
     studyUid: String,
     update: Number

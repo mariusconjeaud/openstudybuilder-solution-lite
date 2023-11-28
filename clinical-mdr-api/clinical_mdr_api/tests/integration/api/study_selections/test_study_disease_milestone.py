@@ -28,7 +28,9 @@ log = logging.getLogger(__name__)
 
 # Global variables shared between fixtures and tests
 study: Study
+disease_milestone_uid: str
 disease_milestone_type_term: CTTerm
+disease_milestone_type_term2: CTTerm
 
 
 @pytest.fixture(scope="module")
@@ -45,6 +47,7 @@ def test_data():
     inject_and_clear_db(db_name)
     inject_base_data()
     global disease_milestone_type_term
+    global disease_milestone_type_term2
     global study
     study = TestUtils.create_study()
 
@@ -58,12 +61,17 @@ def test_data():
         codelist_uid=type_codelist.codelist_uid,
         sponsor_preferred_name="Disease Milestone Type",
     )
+    disease_milestone_type_term2 = TestUtils.create_ct_term(
+        codelist_uid=type_codelist.codelist_uid,
+        sponsor_preferred_name="Disease Milestone Type 2",
+    )
     yield
 
     drop_db(db_name)
 
 
 def test_disease_milestone_modify_actions_on_locked_study(api_client):
+    global disease_milestone_uid
     response = api_client.post(
         f"/studies/{study.uid}/study-disease-milestones",
         json={
@@ -94,7 +102,7 @@ def test_disease_milestone_modify_actions_on_locked_study(api_client):
 
     # Lock
     response = api_client.post(
-        f"/studies/{study.uid}/lock",
+        f"/studies/{study.uid}/locks",
         json={"change_description": "Lock 1"},
     )
     assert response.status_code == 201
@@ -127,6 +135,54 @@ def test_disease_milestone_modify_actions_on_locked_study(api_client):
     res = response.json()
     assert response.status_code == 200
     assert old_res == res
+
+    # test cannot delete
+    response = api_client.delete(
+        f"/studies/{study.uid}/study-disease-milestones/{disease_milestone_uid}"
+    )
+    assert response.status_code == 400
+    assert (
+        response.json()["message"]
+        == f"Study with specified uid '{study.uid}' is locked."
+    )
+
+
+def test_get_compound_data_for_specific_study_version(api_client):
+    # get the study disease milestone for 1st locked: version 1, used for compare later
+    res_old = api_client.get(
+        f"/studies/{study.uid}/study-disease-milestones",
+    ).json()
+
+    # Unlock
+    response = api_client.delete(f"/studies/{study.uid}/locks")
+    assert response.status_code == 200
+    # add another disease milestone
+    response = api_client.post(
+        f"/studies/{study.uid}/study-disease-milestones",
+        json={
+            "study_uid": study.uid,
+            "repetition_indicator": True,
+            "description": "test_description",
+            "disease_milestone_type": disease_milestone_type_term2.term_uid,
+        },
+    )
+    assert response.status_code == 201
+
+    response = api_client.patch(
+        f"/studies/{study.uid}/study-disease-milestones/{disease_milestone_uid}",
+        json={"repetition_indicator": False},
+    )
+    assert response.status_code == 200
+
+    # check the study disease milestone for version 1 is same as first locked
+    res_new = api_client.get(
+        f"/studies/{study.uid}/study-disease-milestones",
+    ).json()
+    res_v1 = api_client.get(
+        f"/studies/{study.uid}/study-disease-milestones?study_value_version=1",
+    ).json()
+    assert res_v1 == res_old
+    assert res_v1 != res_new
 
 
 @pytest.mark.parametrize(

@@ -31,12 +31,12 @@ steps:
       scriptType: bash
       scriptLocation: inlineScript
       inlineScript: |
-        set -e
+        set -ex
         
-        acrname=`az resource list --resource-type "Microsoft.ContainerRegistry/registries" --query "[?tags.environmentNumber == '${{parameters.DEPLOY_ID_NUMBER}}'].name" -o tsv`
+        acrname="`az resource list --resource-type "Microsoft.ContainerRegistry/registries" --query "[?tags.environmentNumber == '${{parameters.DEPLOY_ID_NUMBER}}'].name" -o tsv`"
         echo "##vso[task.setvariable variable=acrname;isOutput=true;]$acrname"
         
-        namesuffix=`az resource list --resource-type "Microsoft.Network/applicationGateways" --query "[?tags.environmentNumber == '${{parameters.DEPLOY_ID_NUMBER}}'].name" -o tsv | cut -d "-" -f 2`
+        namesuffix="`az resource list --resource-type "Microsoft.Network/applicationGateways" --query "[?tags.environmentNumber == '${{parameters.DEPLOY_ID_NUMBER}}'].name" -o tsv | cut -d "-" -f 2`"
         echo "##vso[task.setvariable variable=namesuffix;isOutput=true;]$namesuffix"
 
   # Get secrets from AzureKeyVault
@@ -47,10 +47,9 @@ steps:
       KeyVaultName: '${{parameters.VAULT_NAME_PREFIX}}-$(azmd.namesuffix)'
       RunAsPreJob: false
       SecretsFilter:
-        CLINICAL-MDR-TEST-${{parameters.DEPLOY_ID_NUMBER}}-OIDC-DOC,
-        CLINICAL-MDR-AUTH-1-STUDYB-SERVER-ID,
-        CLINICAL-MDR-TEST-${{parameters.DEPLOY_ID_NUMBER}}-EXP-ACCESS-TOKEN,
+        CLINICAL-MDR-AUTH-${{parameters.DEPLOY_ID_NUMBER}}-STUDYB-SERVER-ID,
         CLINICAL-MDR-API-OAUTH-APP-SECRET,
+        CLINICAL-MDR-AUTH-${{parameters.DEPLOY_ID_NUMBER}}-OIDC-METADATA,
         CLINICAL-MDR-API-MS-GRAPH-GROUPS-QUERY,
-        CLINICAL-MDR-API-SMTP-RELAY
+        CLINICAL-MDR-TEST-${{parameters.DEPLOY_ID_NUMBER}}-EXP-ACCESS-TOKEN
 

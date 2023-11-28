@@ -96,6 +96,9 @@ class ActivityItemClass(VersionProperties):
     name: str = Field(
         None, title="name", description="", source="has_latest_value.name"
     )
+    definition: str | None = Field(
+        None, title="definition", description="", source="has_latest_value.definition"
+    )
     order: int = Field(
         ..., title="order", description="", source="has_latest_value.order"
     )
@@ -114,6 +117,12 @@ class ActivityItemClass(VersionProperties):
         title="library_name",
         description="",
         source="has_library.name",
+    )
+    nci_concept_id: str | None = Field(
+        None,
+        title="nci_concept_id",
+        description="",
+        source="has_latest_value.nci_concept_id",
     )
     possible_actions: list[str] = Field(
         ...,
@@ -160,6 +169,8 @@ class ActivityItemClass(VersionProperties):
         return cls(
             uid=activity_item_class_ar.uid,
             name=activity_item_class_ar.name,
+            definition=activity_item_class_ar.definition,
+            nci_concept_id=activity_item_class_ar.nci_concept_id,
             order=activity_item_class_ar.activity_item_class_vo.order,
             mandatory=activity_item_class_ar.activity_item_class_vo.mandatory,
             activity_instance_classes=[
@@ -177,8 +188,8 @@ class ActivityItemClass(VersionProperties):
                 name=activity_item_class_ar.activity_item_class_vo.role_name,
             ),
             variable_classes=[
-                SimpleVariableClass(uid=variable_class.uid)
-                for variable_class in activity_item_class_ar.activity_item_class_vo.variable_class_uids
+                SimpleVariableClass(uid=variable_class_uid)
+                for variable_class_uid in activity_item_class_ar.activity_item_class_vo.variable_class_uids
             ]
             if activity_item_class_ar.activity_item_class_vo.variable_class_uids
             else [],
@@ -197,6 +208,8 @@ class ActivityItemClass(VersionProperties):
 
 class ActivityItemClassCreateInput(BaseModel):
     name: str
+    definition: str | None
+    nci_concept_id: str | None
     order: int
     mandatory: bool
     activity_instance_class_uids: list[str]
@@ -207,6 +220,8 @@ class ActivityItemClassCreateInput(BaseModel):
 
 class ActivityItemClassEditInput(ActivityItemClassCreateInput):
     name: str | None = None
+    definition: str | None = None
+    nci_concept_id: str | None = None
     order: int | None = None
     mandatory: bool | None = None
     activity_instance_class_uids: list[str] = []

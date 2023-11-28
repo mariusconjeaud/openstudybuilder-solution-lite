@@ -49,7 +49,8 @@ export default {
   },
   computed: {
     ...mapGetters({
-      selectedStudy: 'studiesGeneral/selectedStudy'
+      selectedStudy: 'studiesGeneral/selectedStudy',
+      selectedStudyVersion: 'studiesGeneral/selectedStudyVersion'
     })
   },
   data () {
@@ -99,6 +100,8 @@ export default {
         this.$emit('updated')
         this.close()
         this.$refs.baseForm.loading = false
+      }, _err => {
+        this.$refs.baseForm.loading = false
       })
     }
   },
@@ -107,6 +110,7 @@ export default {
     // for batch operations...
     const params = {
       page_size: 0,
+      study_value_version: this.selectedStudyVersion,
       filters: {
         consecutive_visit_group: { v: [null], op: 'eq' }
       }

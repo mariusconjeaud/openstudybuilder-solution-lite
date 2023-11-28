@@ -1,5 +1,5 @@
 import unittest
-from typing import Collection, Sequence
+from typing import Collection
 from unittest.mock import Mock, patch
 
 from clinical_mdr_api.domain_repositories.models.project import Project
@@ -68,16 +68,16 @@ class TestProjectRepositoryImpl(unittest.TestCase):
         project: Project = create_random_project_node()
         project_mock.nodes.get_or_none.return_value = project
         # when
-        projectAR: ProjectAR | None = repo.find_by_uid(project.uid)
+        project_ar: ProjectAR | None = repo.find_by_uid(project.uid)
 
         # then
-        self.assertEqual(project.uid, projectAR.uid)
-        self.assertEqual(project.project_number, projectAR.project_number)
-        self.assertEqual(project.name, projectAR.name)
+        self.assertEqual(project.uid, project_ar.uid)
+        self.assertEqual(project.project_number, project_ar.project_number)
+        self.assertEqual(project.name, project_ar.name)
         self.assertEqual(
-            project.holds_project.single().uid, projectAR.clinical_programme_uid
+            project.holds_project.single().uid, project_ar.clinical_programme_uid
         )
-        self.assertEqual(project.description, projectAR.description)
+        self.assertEqual(project.description, project_ar.description)
 
     @patch(ProjectRepository.__module__ + ".Project")
     def test__find_by_uid_mocked_project_not_exist(self, project_mock):
@@ -86,41 +86,42 @@ class TestProjectRepositoryImpl(unittest.TestCase):
         project_mock.nodes.get_or_none.return_value = None
 
         # when
-        projectAR: ProjectAR | None = repo.find_by_uid(random_str())
+        project_ar: ProjectAR | None = repo.find_by_uid(random_str())
 
         # then
-        self.assertIsNone(projectAR)
+        self.assertIsNone(project_ar)
 
     @patch(ProjectRepository.__module__ + ".Project")
     def test__find_all_mocked_projects_exist(self, project_mock):
         # given
         repo = ProjectRepository()
-        projects: Sequence[Project] = [create_random_project_node() for _ in range(10)]
+        projects: list[Project] = [create_random_project_node() for _ in range(10)]
         project_mock.nodes.all.return_value = projects
 
         # when
-        projectARs: Collection[ProjectAR] = repo.find_all()
+        project_ars: Collection[ProjectAR] = repo.find_all()
 
         # then
-        for project, projectAR in zip(projects, projectARs):
+        for project, project_ar in zip(projects, project_ars):
             with self.subTest():
-                self.assertEqual(project.uid, projectAR.uid)
-                self.assertEqual(project.project_number, projectAR.project_number)
-                self.assertEqual(project.name, projectAR.name)
+                self.assertEqual(project.uid, project_ar.uid)
+                self.assertEqual(project.project_number, project_ar.project_number)
+                self.assertEqual(project.name, project_ar.name)
                 self.assertEqual(
-                    project.holds_project.single().uid, projectAR.clinical_programme_uid
+                    project.holds_project.single().uid,
+                    project_ar.clinical_programme_uid,
                 )
-                self.assertEqual(project.description, projectAR.description)
+                self.assertEqual(project.description, project_ar.description)
 
     @patch(ProjectRepository.__module__ + ".Project")
     def test__find_all_mocked_project_not_exist(self, project_mock):
         # given
         repo = ProjectRepository()
-        projects: Sequence[Project] = []
+        projects: list[Project] = []
         project_mock.nodes.all.return_value = projects
 
         # when
-        projectARs: Collection[ProjectAR] = repo.find_all()
+        project_ars: Collection[ProjectAR] = repo.find_all()
 
         # then
-        self.assertTrue(len(projectARs) == 0)
+        self.assertTrue(len(project_ars) == 0)

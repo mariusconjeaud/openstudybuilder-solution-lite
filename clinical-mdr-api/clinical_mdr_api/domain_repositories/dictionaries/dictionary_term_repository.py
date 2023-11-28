@@ -1,6 +1,6 @@
 from abc import ABC
 from datetime import datetime, timezone
-from typing import Sequence
+from typing import Any
 
 from neomodel import db
 
@@ -175,6 +175,7 @@ class DictionaryTermGenericRepository(
                 library_name,
                 is_library_editable,
                 version_rel.start_date AS start_date,
+                version_rel.end_date AS end_date,
                 version_rel.status AS status,
                 version_rel.version AS version,
                 version_rel.change_description AS change_description,
@@ -191,14 +192,14 @@ class DictionaryTermGenericRepository(
 
     def find_all(
         self,
-        codelist_uid: str = None,
+        codelist_uid: str | None = None,
         sort_by: dict | None = None,
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
         page_number: int = 1,
         page_size: int = 0,
         total_count: bool = False,
-    ) -> tuple[Sequence[DictionaryTermAR], int]:
+    ) -> tuple[list[DictionaryTermAR], int]:
         """
         Method runs a cypher query to fetch all needed data to create objects of type AggregateRootType.
         In the case of the following repository it will be some Terms aggregates.
@@ -247,12 +248,12 @@ class DictionaryTermGenericRepository(
 
     def _retrieve_terms_from_cypher_res(
         self, result_array, attribute_names
-    ) -> Sequence[DictionaryTermAR]:
+    ) -> list[DictionaryTermAR]:
         """
         Method maps the result of the cypher query into real aggregate objects.
         :param result_array:
         :param attribute_names:
-        :return Iterable[_AggregateRootType]:
+        :return list[_AggregateRootType]:
         """
         term_ars = []
         for term in result_array:
@@ -273,7 +274,7 @@ class DictionaryTermGenericRepository(
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
-    ) -> Sequence[str]:
+    ) -> list[Any]:
         # Match clause
         match_clause = self.generic_match_clause()
 
@@ -311,13 +312,13 @@ class DictionaryTermGenericRepository(
 
     def get_syntax_indications(
         self, root_class: type, syntax_uid: str
-    ) -> Sequence[DictionaryTermAR] | None:
+    ) -> list[DictionaryTermAR] | None:
         """
         This method returns the indications for the syntax with provided uid
 
         :param root_class: The class of the root node for the syntax
         :param syntax_uid: UID of the syntax
-        :return Sequence[DictionaryTermAR]:
+        :return list[DictionaryTermAR] | None:
         """
         syntax = root_class.nodes.get(uid=syntax_uid)
         indication_nodes = syntax.has_indication.all()

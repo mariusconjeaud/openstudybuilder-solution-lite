@@ -37,11 +37,11 @@ class ObjectiveTest(api.APITest):
         otdata = template_data.copy()
         otdata["name"] = "Test [Indication]"
         objective_template = ct_models.ObjectiveTemplateCreateInput(**otdata)
-        self.ot = ObjectiveTemplateService().create(objective_template)
-        if isinstance(self.ot, BaseModel):
-            self.ot = self.ot.dict()
-        ObjectiveTemplateService().approve(self.ot["uid"])
-        self.data["otuid"] = self.ot["uid"]
+        self.objective_template = ObjectiveTemplateService().create(objective_template)
+        if isinstance(self.objective_template, BaseModel):
+            self.objective_template = self.objective_template.dict()
+        ObjectiveTemplateService().approve(self.objective_template["uid"])
+        self.data["otuid"] = self.objective_template["uid"]
 
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "objectives.json")]
 
@@ -64,11 +64,11 @@ class ObjectiveNegativeTest(api.APITest):
         self.library = library_service.create(name="Test library", is_editable=True)
         otdata = template_data.copy()
         objective_template = ct_models.ObjectiveTemplateCreateInput(**otdata)
-        self.ot = ObjectiveTemplateService().create(objective_template)
-        if isinstance(self.ot, BaseModel):
-            self.ot = self.ot.dict()
-        ObjectiveTemplateService().approve(self.ot["uid"])
-        self.data["otuid"] = self.ot["uid"]
+        self.objective_template = ObjectiveTemplateService().create(objective_template)
+        if isinstance(self.objective_template, BaseModel):
+            self.objective_template = self.objective_template.dict()
+        ObjectiveTemplateService().approve(self.objective_template["uid"])
+        self.data["otuid"] = self.objective_template["uid"]
         otdt = template_data.copy()
         otdt["name"] = "Name not approved"
         objective_template = ct_models.ObjectiveTemplateCreateInput(**otdt)
@@ -105,11 +105,11 @@ class ObjectiveVersioningTest(api.APITest):
         self.test_client = TestClient(main.app)
         self.library = library_service.create(**library_data)
         objective_template = ct_models.ObjectiveTemplateCreateInput(**template_data)
-        self.ot = ObjectiveTemplateService().create(objective_template)
-        if isinstance(self.ot, BaseModel):
-            self.ot = self.ot.dict()
-        ObjectiveTemplateService().approve(self.ot["uid"])
-        self.data["otuid"] = self.ot["uid"]
+        self.objective_template = ObjectiveTemplateService().create(objective_template)
+        if isinstance(self.objective_template, BaseModel):
+            self.objective_template = self.objective_template.dict()
+        ObjectiveTemplateService().approve(self.objective_template["uid"])
+        self.data["otuid"] = self.objective_template["uid"]
 
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "objective_versioning.json")]
 

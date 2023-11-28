@@ -31,7 +31,7 @@ class TimeframeTemplateRepository(GenericSyntaxTemplateRepository[TimeframeTempl
         relationship: VersionRelationship,
         value: TimeframeTemplateValue,
         study_count: int = 0,
-        counts: InstantiationCountsVO = None,
+        counts: InstantiationCountsVO | None = None,
     ) -> TimeframeTemplateAR:
         return TimeframeTemplateAR.from_repository_values(
             uid=root.uid,

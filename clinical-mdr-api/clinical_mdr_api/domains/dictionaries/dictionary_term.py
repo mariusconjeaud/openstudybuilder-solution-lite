@@ -139,13 +139,12 @@ class DictionaryTermAR(LibraryItemAggregateRootBase):
             term_exists_by_name_callback=term_exists_by_name_callback
         )
 
-        ar = cls(
+        return cls(
             _uid=generate_uid_callback(),
             _item_metadata=item_metadata,
             _library=library,
             _dictionary_term_vo=dictionary_term_vo,
         )
-        return ar
 
     def edit_draft(
         self,

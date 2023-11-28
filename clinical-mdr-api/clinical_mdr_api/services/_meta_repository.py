@@ -6,9 +6,6 @@ from clinical_mdr_api.domain_repositories.biomedical_concepts.activity_instance_
 from clinical_mdr_api.domain_repositories.biomedical_concepts.activity_item_class_repository import (
     ActivityItemClassRepository,
 )
-from clinical_mdr_api.domain_repositories.biomedical_concepts.activity_item_repository import (
-    ActivityItemRepository,
-)
 from clinical_mdr_api.domain_repositories.brands.brand_repository import BrandRepository
 from clinical_mdr_api.domain_repositories.clinical_programmes.clinical_programme_repository import (
     ClinicalProgrammeRepository,
@@ -224,6 +221,9 @@ from clinical_mdr_api.domain_repositories.study_selections.study_objective_repos
 from clinical_mdr_api.domain_repositories.study_selections.study_soa_footnote_repository import (
     StudySoAFootnoteRepository,
 )
+from clinical_mdr_api.domain_repositories.study_selections.study_soa_group_repository import (
+    StudySoAGroupRepository,
+)
 from clinical_mdr_api.domain_repositories.study_selections.study_visit_repository import (
     StudyVisitRepository,
 )
@@ -359,10 +359,6 @@ class MetaRepository:
     @property
     def activity_item_class_repository(self) -> ActivityItemClassRepository:
         return ActivityItemClassRepository()
-
-    @property
-    def activity_item_repository(self) -> ActivityItemRepository:
-        return ActivityItemRepository()
 
     @property
     def compound_repository(self) -> CompoundRepository:
@@ -661,6 +657,12 @@ class MetaRepository:
         self,
     ) -> StudySelectionActivityGroupRepository:
         return StudySelectionActivityGroupRepository()
+
+    @property
+    def study_soa_group_repository(
+        self,
+    ) -> StudySoAGroupRepository:
+        return StudySoAGroupRepository()
 
     @property
     def study_activity_schedule_repository(self) -> StudyActivityScheduleRepository:

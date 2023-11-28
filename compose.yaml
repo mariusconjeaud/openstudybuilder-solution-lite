@@ -54,11 +54,17 @@ services:
       ALLOW_ORIGIN_REGEX: "${ALLOW_ORIGIN_REGEX:-.*}"
       OAUTH_ENABLED: "${OAUTH_ENABLED:-False}"
       OAUTH_RBAC_ENABLED: "${OAUTH_RBAC_ENABLED:-False}"
-      OIDC_METADATA_DOCUMENT: "${OIDC_METADATA_DOCUMENT}"
-      OAUTH_APP_ID: "${OAUTH_APP_ID}"
-      OAUTH_APP_SECRET: "${OAUTH_APP_SECRET}"
-      MS_GRAPH_INTEGRATION_ENABLED: "${MS_GRAPH_INTEGRATION_ENABLED}"
-      MS_GRAPH_GROUPS_QUERY: "${MS_GRAPH_GROUPS_QUERY}"
+      OAUTH_METADATA_URL: "${OAUTH_METADATA_URL:-}"
+      OAUTH_API_APP_ID: "${OAUTH_API_APP_ID:-}"
+      OAUTH_API_APP_SECRET: "${OAUTH_API_APP_SECRET:-}"
+      OAUTH_SWAGGER_APP_ID: "${OAUTH_SWAGGER_APP_ID:-}"
+      MS_GRAPH_INTEGRATION_ENABLED: "${MS_GRAPH_INTEGRATION_ENABLED:-}"
+      MS_GRAPH_GROUPS_QUERY: "${MS_GRAPH_GROUPS_QUERY:-}"
+      # deprecated #
+      OAUTH_APP_ID: "${OAUTH_APP_ID:-}"
+      OAUTH_APP_SECRET: "${OAUTH_APP_SECRET:-}"
+      OAUTH_CLIENT_ID: "${OAUTH_CLIENT_ID:-}"
+      OIDC_METADATA_DOCUMENT: "${OIDC_METADATA_DOCUMENT:-}"
 
   # Frontend image for production (see UI service for local development)
   frontend:
@@ -79,6 +85,15 @@ services:
         condition: service_healthy
     ports:
       - "${BIND_ADDRESS:-127.0.0.1}:${FRONTEND_PORT:-5005}:5005"
+    environment:
+      API_BASE_URL: "${API_PATH:-}"
+      DOC_BASE_URL: "${DOC_PATH:-}"
+      NEODASH_BASE_URL: "${NEODASH_PATH:-}"
+      OAUTH_ENABLED: "${OAUTH_ENABLED:-false}"
+      OAUTH_METADATA_URL: "${OAUTH_METADATA_URL:-}"
+      OAUTH_API_APP_ID: "${OAUTH_API_APP_ID:-}"
+      OAUTH_UI_APP_ID: "${OAUTH_UI_APP_ID:-}"
+      APPINSIGHTS_DISABLE: "true"
 
   # Documentation portal image for production (see docs service for local development)
   documentation:

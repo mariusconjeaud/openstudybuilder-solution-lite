@@ -26,7 +26,8 @@ export default {
   },
   computed: {
     ...mapGetters({
-      selectedStudy: 'studiesGeneral/selectedStudy'
+      selectedStudy: 'studiesGeneral/selectedStudy',
+      selectedStudyVersion: 'studiesGeneral/selectedStudyVersion'
     })
   },
   data () {
@@ -89,7 +90,7 @@ export default {
     this.$store.dispatch('studiesGeneral/fetchInterventionModels')
     this.$store.dispatch('studiesGeneral/fetchTrialIntentTypes')
     this.$store.dispatch('studiesGeneral/fetchInterventionTypes')
-    study.getStudyInterventionMetadata(this.selectedStudy.uid).then(resp => {
+    study.getStudyInterventionMetadata(this.selectedStudy.uid, this.selectedStudyVersion).then(resp => {
       this.metadata = resp.data.current_metadata.study_intervention
     })
   }

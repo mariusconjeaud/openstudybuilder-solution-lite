@@ -40,6 +40,8 @@ from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 
 log = logging.getLogger(__name__)
 study: Study
+endpoint_uid: str
+study_objective_uid1: str
 
 
 @pytest.fixture(scope="module")
@@ -73,7 +75,10 @@ def test_data():
     drop_db(db_name)
 
 
-def test_endpoint_modify_actions_on_locked_study(api_client):
+def test_study_endpoint_modify_actions_on_locked_study(api_client):
+    global endpoint_uid
+    global study_objective_uid1
+
     response = api_client.post(
         f"/studies/{study.uid}/study-objectives",
         json={
@@ -82,14 +87,20 @@ def test_endpoint_modify_actions_on_locked_study(api_client):
         },
     )
     res = response.json()
-    objective_uid = res["study_objective_uid"]
     assert response.status_code == 201
+    assert res["objective_level"]["term_uid"] == "term_root_final"
+    study_objective_uid1 = res["study_objective_uid"]
 
     response = api_client.post(
         f"/studies/{study.uid}/study-endpoints",
-        json={"endpoint_uid": "Endpoint_000001", "study_objective_uid": objective_uid},
+        json={
+            "endpoint_uid": "Endpoint_000001",
+            "study_objective_uid": study_objective_uid1,
+            "endpoint_level_uid": "term_root_final",
+        },
     )
     res = response.json()
+    assert res["endpoint_level"]["term_uid"] == "term_root_final"
     assert response.status_code == 201
 
     # get all endpoints
@@ -101,6 +112,14 @@ def test_endpoint_modify_actions_on_locked_study(api_client):
     old_res = res
     endpoint_uid = res[0]["study_endpoint_uid"]
 
+    # get specific endpoint of a specific study version
+    response = api_client.get(
+        f"/studies/{study.uid}/study-endpoints/{endpoint_uid}",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["endpoint_level"]["term_uid"] == "term_root_final"
+
     # update study title to be able to lock it
     response = api_client.patch(
         f"/studies/{study.uid}",
@@ -110,7 +129,7 @@ def test_endpoint_modify_actions_on_locked_study(api_client):
 
     # Lock
     response = api_client.post(
-        f"/studies/{study.uid}/lock",
+        f"/studies/{study.uid}/locks",
         json={"change_description": "Lock 1"},
     )
     assert response.status_code == 201
@@ -119,12 +138,13 @@ def test_endpoint_modify_actions_on_locked_study(api_client):
         f"/studies/{study.uid}/study-endpoints",
         json={
             "timeframe_uid": "Timeframe_000001",
-            "study_objective_uid": objective_uid,
+            "study_objective_uid": study_objective_uid1,
         },
     )
     res = response.json()
     assert response.status_code == 400
     assert res["message"] == f"Study with specified uid '{study.uid}' is locked."
+
     # edit endpoint
     response = api_client.patch(
         f"/studies/{study.uid}/study-endpoints/{endpoint_uid}",
@@ -141,6 +161,129 @@ def test_endpoint_modify_actions_on_locked_study(api_client):
     res = response.json()
     assert response.status_code == 200
     assert old_res == res
+
+    # test cannot delete
+    response = api_client.delete(f"/studies/{study.uid}/study-endpoints/{endpoint_uid}")
+    assert response.status_code == 400
+    assert (
+        response.json()["message"]
+        == f"Study with specified uid '{study.uid}' is locked."
+    )
+
+
+def test_study_endpoint_with_study_objective_relationship(api_client):
+    # get specific study endpoint
+    response = api_client.get(
+        f"/studies/{study.uid}/study-endpoints/{endpoint_uid}",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["endpoint_level"]["term_uid"] == "term_root_final"
+    assert res["study_objective"]["study_objective_uid"] == study_objective_uid1
+    before_unlock = res
+    before_unlock_objectives = api_client.get(
+        f"/studies/{study.uid}/study-objectives"
+    ).json()
+
+    # get study endpoint headers
+    response = api_client.get(
+        f"/studies/{study.uid}/study-endpoints/headers?field_name=endpoint_level.term_uid",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res == ["term_root_final"]
+
+    # Unlock
+    response = api_client.delete(f"/studies/{study.uid}/locks")
+    assert response.status_code == 200
+
+    # edit study endpoint
+    response = api_client.patch(
+        f"/studies/{study.uid}/study-endpoints/{endpoint_uid}",
+        json={
+            "endpoint_uid": "Endpoint_000001",
+            "endpoint_level_uid": "term_root_final5",
+        },
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["endpoint_level"]["term_uid"] == "term_root_final5"
+
+    # edit study objective
+    response = api_client.patch(
+        f"/studies/{study.uid}/study-objectives/{study_objective_uid1}",
+        json={
+            "objective_uid": "Objective_000002",
+            "objective_level_uid": "term_root_final5",
+        },
+    )
+    res = response.json()
+    assert res["objective_level"]["term_uid"] == "term_root_final5"
+    assert response.status_code == 200
+
+    # get all study endpoints of a specific study version
+    response = api_client.get(
+        f"/studies/{study.uid}/study-endpoints?study_value_version=1",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["items"][0] == before_unlock
+
+    # get all
+    assert (
+        before_unlock_objectives
+        == api_client.get(
+            f"/studies/{study.uid}/study-objectives?study_value_version=1"
+        ).json()
+    )
+
+    # get specific study endpoint of a specific study version
+    response = api_client.get(
+        f"/studies/{study.uid}/study-endpoints/{endpoint_uid}?study_value_version=1",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res == before_unlock
+
+    # get study endpoint headers of specific study version
+    response = api_client.get(
+        f"/studies/{study.uid}/study-endpoints/headers?field_name=endpoint_level.term_uid&study_value_version=1",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res == ["term_root_final"]
+
+    # get all study endpoints
+    response = api_client.get(
+        f"/studies/{study.uid}/study-endpoints",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["items"][0]["endpoint_level"]["term_uid"] == "term_root_final5"
+
+    # get specific study endpoint
+    response = api_client.get(
+        f"/studies/{study.uid}/study-endpoints/{endpoint_uid}",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["endpoint_level"]["term_uid"] == "term_root_final5"
+
+
+def test_study_value_version_validation(api_client):
+    # get all study endpoints of a specific study version
+    response = api_client.get(
+        f"/studies/{study.uid}/study-endpoints?study_value_version=a",
+    )
+    assert response.status_code == 422
+
+    # get study study endpoint headers
+    response = api_client.get(
+        f"/studies/{study.uid}/study-endpoints/headers?field_name=endpoint_level.term_uid",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res == ["term_root_final5"]
 
 
 @pytest.mark.parametrize(

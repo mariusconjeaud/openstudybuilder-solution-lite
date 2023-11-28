@@ -125,13 +125,12 @@ class DictionaryCodelistAR(LibraryItemAggregateRootBase):
             raise exceptions.BusinessLogicException(
                 f"The library with the name='{library.name}' does not allow to create objects."
             )
-        ar = cls(
+        return cls(
             _uid=generate_uid_callback(),
             _item_metadata=item_metadata,
             _library=library,
             _dictionary_codelist_vo=dictionary_codelist_vo,
         )
-        return ar
 
     def edit_draft(
         self,
@@ -170,13 +169,13 @@ class DictionaryCodelistAR(LibraryItemAggregateRootBase):
             return {ObjectAction.NEWVERSION}
         return frozenset()
 
-    def inactivate(self, author: str, change_description: str = None):
+    def inactivate(self, author: str, change_description: str | None = None):
         """
         Inactivates latest version.
         """
         raise NotImplementedError()
 
-    def reactivate(self, author: str, change_description: str = None):
+    def reactivate(self, author: str, change_description: str | None = None):
         """
         Reactivates latest retired version and sets the version to draft.
         """

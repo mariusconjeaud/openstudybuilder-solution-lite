@@ -7,6 +7,9 @@ from pydantic.types import Json
 
 from clinical_mdr_api import config, models
 from clinical_mdr_api.domain_repositories.models.syntax import ObjectiveValue
+from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import (
+    StudyComponentEnum,
+)
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.study_selections.study import Study
@@ -14,6 +17,7 @@ from clinical_mdr_api.models.utils import CustomPage
 from clinical_mdr_api.oauth import get_current_user_id, rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
+from clinical_mdr_api.routers._generic_descriptions import study_section_description
 from clinical_mdr_api.services.syntax_instances.objectives import ObjectiveService
 
 # Prefixed with "/objectives"
@@ -287,30 +291,22 @@ def get_versions(
 def get_studies(
     uid: str = ObjectiveUID,
     current_user_id: str = Depends(get_current_user_id),
-    fields: str
-    | None = Query(
-        default=None,
-        description="Parameter specifies which parts of the whole Study Definition representation to retrieve. In"
-        " the form of comma separated name of the fields prefixed by (optional) `+` "
-        " if the client wishes"
-        " to retrieve the field or `-` if the client wants to skip the field."
-        " If not specified identification metadata and version metadata are retrieved."
-        " If value starts with `+` or `-` above default is extended or reduced by the specified fields"
-        " otherwise (if not started with `+` or `-`) provided fields specification"
-        " replaces the default. Currently supported fields are"
-        " `current_metadata.identification_metadata`, `current_metadata.high_level_study_design`"
-        " , `current_metadata.study_population` and `current_metadata.study_intervention`"
-        " , `current_metadata.study_description`.",
-    ),
+    include_sections: list[StudyComponentEnum]
+    | None = Query(None, description=study_section_description("include")),
+    exclude_sections: list[StudyComponentEnum]
+    | None = Query(None, description=study_section_description("exclude")),
 ):
     return Service(current_user_id).get_referencing_studies(
-        uid=uid, node_type=ObjectiveValue, fields=fields
+        uid=uid,
+        node_type=ObjectiveValue,
+        include_sections=include_sections,
+        exclude_sections=exclude_sections,
     )
 
 
 @router.post(
     "",
-    dependencies=[rbac.LIBRARY_WRITE],
+    dependencies=[rbac.LIBRARY_WRITE_OR_STUDY_WRITE],
     summary="Creates a new objective in 'Draft' status.",
     description="""This request is only valid if
 * the specified objective template is in 'Final' status and
@@ -436,7 +432,7 @@ def edit(
 
 @router.post(
     "/{uid}/approvals",
-    dependencies=[rbac.LIBRARY_WRITE],
+    dependencies=[rbac.LIBRARY_WRITE_OR_STUDY_WRITE],
     summary="Approves the objective identified by 'uid'.",
     description="""This request is only valid if the objective
 * is in 'Draft' status and

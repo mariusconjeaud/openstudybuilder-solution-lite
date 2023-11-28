@@ -1,7 +1,7 @@
 import logging
 import os
 from collections import OrderedDict
-from typing import Mapping, MutableMapping, Sequence
+from typing import Mapping, MutableMapping
 
 import yattag
 from colour import Color
@@ -206,8 +206,8 @@ class StudyDesignFigureService:
         )
         return study_elements
 
-    def _get_study_design_cells(self, study_uid) -> Sequence[models.StudyDesignCell]:
-        """Returns a sequence of Study Design Cells"""
+    def _get_study_design_cells(self, study_uid) -> list[models.StudyDesignCell]:
+        """Returns a list of Study Design Cells"""
         study_design_cells = StudyDesignCellService(
             self._current_user_id
         ).get_all_design_cells(study_uid)
@@ -290,7 +290,7 @@ class StudyDesignFigureService:
 
     @staticmethod
     def _select_first_visits(study_visits, study_epochs):
-        """Returns a sequence of visit data about the first visit of each epoch"""
+        """Returns a list of visit data about the first visit of each epoch"""
 
         visits = [{} for _ in range(len(study_epochs))]
 
@@ -339,56 +339,56 @@ class StudyDesignFigureService:
         ) / PIXEL_SIZE - DOC_MARGIN * 2
 
         # epochs
-        for e in table[0][1:]:
+        for epoch in table[0][1:]:
             (
-                e["optimal-width"],
-                e["min-width"],
-            ) = self._calculate_text_dimensions(e["text"])
+                epoch["optimal-width"],
+                epoch["min-width"],
+            ) = self._calculate_text_dimensions(epoch["text"])
 
             # add paddings to widths
-            e["optimal-width"] += EPOCH_PADDINGS[0] * 2
-            e["min-width"] += EPOCH_PADDINGS[0] * 2
+            epoch["optimal-width"] += EPOCH_PADDINGS[0] * 2
+            epoch["min-width"] += EPOCH_PADDINGS[0] * 2
 
         for row in table[1:]:
             # arms
-            a = row[0]
+            arm = row[0]
             (
-                a["optimal-width"],
-                a["min-width"],
-            ) = self._calculate_text_dimensions(a["text"])
+                arm["optimal-width"],
+                arm["min-width"],
+            ) = self._calculate_text_dimensions(arm["text"])
 
             # add paddings to widths
-            a["optimal-width"] += ARM_PADDINGS[0] * 2
-            a["min-width"] += ARM_PADDINGS[0] * 2
+            arm["optimal-width"] += ARM_PADDINGS[0] * 2
+            arm["min-width"] += ARM_PADDINGS[0] * 2
 
             # minimum and optimal text-width of arms column
             table[0][0]["min-width"] = max(
-                table[0][0].get("min-width", 0), a["min-width"]
+                table[0][0].get("min-width", 0), arm["min-width"]
             )
             table[0][0]["optimal-width"] = max(
-                table[0][0].get("optimal-width", 0), a["optimal-width"]
+                table[0][0].get("optimal-width", 0), arm["optimal-width"]
             )
 
             # elements
-            for i, e in enumerate(row[1:], start=1):
-                if not e:
+            for i, element in enumerate(row[1:], start=1):
+                if not element:
                     continue
                 (
-                    e["optimal-width"],
-                    e["min-width"],
-                ) = self._calculate_text_dimensions(e["text"])
+                    element["optimal-width"],
+                    element["min-width"],
+                ) = self._calculate_text_dimensions(element["text"])
 
                 # add paddings and margin to widths
-                e["optimal-width"] += ELEMENT_PADDINGS[0] * 2
-                e["min-width"] += ELEMENT_PADDINGS[0] * 2
+                element["optimal-width"] += ELEMENT_PADDINGS[0] * 2
+                element["min-width"] += ELEMENT_PADDINGS[0] * 2
 
                 # alter minimum and optimal widths for this epoch column
                 table[0][i]["min-width"] = max(
-                    table[0][i]["min-width"], e["min-width"] + ELEMENT_MARGIN * 2
+                    table[0][i]["min-width"], element["min-width"] + ELEMENT_MARGIN * 2
                 )
                 table[0][i]["optimal-width"] = max(
                     table[0][i]["optimal-width"],
-                    e["optimal-width"] + ELEMENT_MARGIN * 2,
+                    element["optimal-width"] + ELEMENT_MARGIN * 2,
                 )
 
         margins = EPOCH_MARGIN * (n_cols - 2) + ARM_PADDINGS[0]
@@ -424,8 +424,8 @@ class StudyDesignFigureService:
 
         # Divide the remaining space between columns
         expand_per_column = int(expand_width / n_cols)
-        for c in table[0]:
-            c["width"] = c.get(key, 0) + expand_per_column
+        for column in table[0]:
+            column["width"] = column.get(key, 0) + expand_per_column
 
         # First column gets extended also by the remainder of the extra space
         table[0][0]["width"] += int(expand_width % n_cols)
@@ -465,21 +465,21 @@ class StudyDesignFigureService:
             row_height = max(cell.get("height", 0) for cell in row[1:])
 
             # Arms
-            a = row[0]
+            arm = row[0]
             # alter arm height, and flow text to column width
-            a["width"] = table[0][0]["width"]
-            _, h, a["lines"] = self._flow_text(
-                a["text"], table[0][0]["width"], ARM_PADDINGS, center=ARM_CENTER
+            arm["width"] = table[0][0]["width"]
+            _, height, arm["lines"] = self._flow_text(
+                arm["text"], table[0][0]["width"], ARM_PADDINGS, center=ARM_CENTER
             )
             # row shall be high enough to accommodate all elements
-            a["height"] = max(h, row_height + ELEMENT_MARGIN * 2)
+            arm["height"] = max(height, row_height + ELEMENT_MARGIN * 2)
 
             # all element cells in the row should fill the arm height
-            row_height = a["height"] - ELEMENT_MARGIN * 2
-            for c in row[1:]:
-                c["height"] = row_height
+            row_height = arm["height"] - ELEMENT_MARGIN * 2
+            for cell in row[1:]:
+                cell["height"] = row_height
 
-            fig_height += a["height"] + ARM_MARGIN
+            fig_height += arm["height"] + ARM_MARGIN
 
         # Epochs
         for cell in table[0][1:]:
@@ -495,22 +495,22 @@ class StudyDesignFigureService:
         # calculate cell coordinates
         x, y = DOC_MARGIN, DOC_MARGIN
         total_width = 0
-        for r, row in enumerate(table):
-            for c, cell in enumerate(row):
+        for ridx, row in enumerate(table):
+            for cidx, cell in enumerate(row):
                 # add margin between Epoch columns
-                if c > 1:
+                if cidx > 1:
                     x += EPOCH_MARGIN
 
                 cell["x"] = x
                 cell["y"] = y
 
                 # add further margin to Element boxes only (row > 0 and column > 0)
-                if r and c:
+                if ridx and cidx:
                     cell["x"] += ELEMENT_MARGIN
                     cell["y"] += ELEMENT_MARGIN
 
                 # next column
-                x += table[0][c]["width"]
+                x += table[0][cidx]["width"]
 
             total_width = max(total_width, x + DOC_MARGIN + ARM_PADDINGS[0])
 
@@ -551,8 +551,8 @@ class StudyDesignFigureService:
             )
 
             if center:
-                w = self._get_text_size_px(cell["text"])[0]
-                x = max(0, int((cell["width"] - paddings[0] * 2 - w) / 2))
+                width = self._get_text_size_px(cell["text"])[0]
+                x = max(0, int((cell["width"] - paddings[0] * 2 - width) / 2))
 
             cell["lines"] = ((x, self.font_size, cell["text"]),)
 
@@ -567,11 +567,11 @@ class StudyDesignFigureService:
         cell_width: int,
         paddings: tuple[int, int],
         center: bool | None = False,
-    ) -> tuple[int, int, Sequence[tuple[int, int, str]]]:
+    ) -> tuple[int, int, list[tuple[int, int, str]]]:
         """Calculates text flow for a given width, wrapping text if necessary, optional centering
 
         Returns width and height of the cell (px int),
-        and a sequence of (x, y, text) for each line,
+        and a list of (x, y, text) for each line,
         where x/y coordinates (px int) and are relative to the enclosing box.
         """
         # pylint:disable=unused-variable
@@ -604,12 +604,12 @@ class StudyDesignFigureService:
 
         while words:
             # how large is the string if we include the next word
-            w, h = self._get_text_size_px(" ".join(line + [words[0]]))
+            width, height = self._get_text_size_px(" ".join(line + [words[0]]))
 
             # next word fits in line, or line must have at least a single word in it
-            if not line or w <= max_width:
+            if not line or width <= max_width:
                 line.append(words.pop(0))
-                line_width, line_height = w, h
+                line_width, line_height = width, height
 
             # next word won't fit into this line, start a new line
             else:
@@ -734,15 +734,15 @@ class StudyDesignFigureService:
         timeline["labels"].append(labels)
 
         y = doc_height - DOC_MARGIN + TIMELINE_ROW_MARGINS[0]
-        for c, v in enumerate(visits, start=1):
-            if not v:
+        for idx, visit in enumerate(visits, start=1):
+            if not visit:
                 # Epoch may contain no visits while drafting
                 continue
 
             # look up epoch column
-            col = table[0][c]
+            col = table[0][idx]
 
-            if v.get("type_uid") == label.get("id"):
+            if visit.get("type_uid") == label.get("id"):
                 # same visit type, span to next column
                 label["width"] = col["x"] - label["x"] + col["width"]
                 # reflow text with new width
@@ -752,16 +752,16 @@ class StudyDesignFigureService:
 
             else:
                 # a different visit type deserves a new label
-                label = dict(
-                    id=v.get("type_uid"),
-                    klass="visit-type",
-                    paddings=(0, 0),
-                    text=v.get("type_name"),
+                label = {
+                    "id": visit.get("type_uid"),
+                    "klass": "visit-type",
+                    "paddings": (0, 0),
+                    "text": visit.get("type_name"),
                     # inherit coordinates form epoch column
-                    width=col["width"],
-                    x=col["x"],
-                    y=y,
-                )
+                    "width": col["width"],
+                    "x": col["x"],
+                    "y": y,
+                }
 
                 _, label["height"], label["lines"] = self._flow_text(
                     label["text"], label["width"], (0, 0), center=True
@@ -786,13 +786,13 @@ class StudyDesignFigureService:
         y_offset = -int(TIMELINE_ROW_MARGINS[1] / 2)
         for label in labels:
             arrows.append(
-                dict(
-                    klass="timeline-arrow",
-                    x1=label["x"],
-                    x2=label["x"] + label["width"] + EPOCH_MARGIN,
-                    y1=y + y_offset,
-                    y2=y + y_offset,
-                )
+                {
+                    "klass": "timeline-arrow",
+                    "x1": label["x"],
+                    "x2": label["x"] + label["width"] + EPOCH_MARGIN,
+                    "y1": y + y_offset,
+                    "y2": y + y_offset,
+                }
             )
 
         # construct labels for epochs first visits
@@ -801,32 +801,32 @@ class StudyDesignFigureService:
 
         row_height = 0
         y += row_height + TIMELINE_ROW_MARGINS[2]
-        for c, v in enumerate(visits, start=1):
-            if not v:
+        for idx, visit in enumerate(visits, start=1):
+            if not visit:
                 # Epoch may contain no visits while drafting
                 continue
 
             # look up epoch column
-            col = table[0][c]
+            col = table[0][idx]
 
-            w, h = self._get_text_size_px(v.get("week_label") or "")
+            width, height = self._get_text_size_px(visit.get("week_label") or "")
             x = col["x"]
 
-            label = dict(
-                id=v.get("id"),
-                klass="visit-timing",
-                paddings=(0, 0),
-                text=v.get("week_label") or "",
-                x=x,
-                y=y,
-                width=w,
-                height=h,
-            )
+            label = {
+                "id": visit.get("id"),
+                "klass": "visit-timing",
+                "paddings": (0, 0),
+                "text": visit.get("week_label") or "",
+                "x": x,
+                "y": y,
+                "width": width,
+                "height": height,
+            }
             label["lines"] = ((0, self.font_size, label["text"]),)
 
             labels.append(label)
 
-            row_height = max(row_height, h)
+            row_height = max(row_height, height)
 
         # calculate new document height
         if labels:
@@ -836,13 +836,13 @@ class StudyDesignFigureService:
         y_offset = -row_height
         for label in labels:
             arrows.append(
-                dict(
-                    klass="visit-arrow",
-                    x1=label["x"],
-                    x2=label["x"],
-                    y1=label["y"] + y_offset + VISIT_ARROW_HEIGHT,
-                    y2=label["y"] + y_offset,
-                )
+                {
+                    "klass": "visit-arrow",
+                    "x1": label["x"],
+                    "x2": label["x"],
+                    "y1": label["y"] + y_offset + VISIT_ARROW_HEIGHT,
+                    "y2": label["y"] + y_offset,
+                }
             )
 
         return timeline, doc_height
@@ -1041,8 +1041,8 @@ class StudyDesignFigureService:
 
         for selector in styles:
             style.append(f"    {selector} {{")
-            for k, v in styles[selector].items():
-                style.append(f"      {k}: {v};")
+            for k, value in styles[selector].items():
+                style.append(f"      {k}: {value};")
             style.append("    }")
 
         style.append("  ")  # indents closing </style> tag

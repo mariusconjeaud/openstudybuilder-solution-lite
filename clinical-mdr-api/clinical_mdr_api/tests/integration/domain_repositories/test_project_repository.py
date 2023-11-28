@@ -37,7 +37,7 @@ class TestProjectRepository(unittest.TestCase):
     def tear_down_class(cls) -> None:
         wipe_clinical_programme_repository()
 
-    def test__project_number_exist__non_existing_pr__returns_False(self):
+    def test__project_number_exist__non_existing_pr__returns_false(self):
         # given
         non_existing_project_number = f"this-uid-for-sure-does-not-exists-especially-after-adding-this-{random_str()}"
         repo = ProjectRepository()
@@ -49,7 +49,7 @@ class TestProjectRepository(unittest.TestCase):
         # then
         self.assertFalse(result)
 
-    def test__project_number_exist__existing_pr__returns_True(self):
+    def test__project_number_exist__existing_pr__returns_true(self):
         # given
         repo = ProjectRepository()
         created_project = create_random_project(
@@ -77,7 +77,7 @@ class TestProjectRepository(unittest.TestCase):
         # then
         self.assertIsNone(result)
 
-    def test__find_by_uid__existing_uid__returns_projectAR(self):
+    def test__find_by_uid__existing_uid__returns_project_ar(self):
         # given
         repo = ProjectRepository()
         created_project = create_random_project(

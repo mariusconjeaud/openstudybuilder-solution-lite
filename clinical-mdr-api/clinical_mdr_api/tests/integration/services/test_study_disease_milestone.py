@@ -187,6 +187,9 @@ class TestStudyDiseaseMilestoneManagement(unittest.TestCase):
             change_description="rules change",
             repetition_indicator=repetition_indicator,
         )
+        # locking and unlocking to create multiple study value relationships on the existent StudySelections
+        TestUtils.create_study_fields_configuration()
+        TestUtils.lock_and_unlock_study(study_uid="study_root")
         edited_disease_milestone = disease_milestone_service.edit(
             study_disease_milestone_uid=disease_milestone.uid,
             study_disease_milestone_input=edit_input,
@@ -283,6 +286,10 @@ class TestStudyDiseaseMilestoneManagement(unittest.TestCase):
         self.assertEqual(dm1.order, 2)
         self.assertEqual(dm2.order, 3)
         self.assertEqual(dm3.order, 4)
+
+        # locking and unlocking to create multiple study value relationships on the existent StudySelections
+        TestUtils.create_study_fields_configuration()
+        TestUtils.lock_and_unlock_study(study_uid="study_root")
 
         disease_milestone_service.delete(study_disease_milestone_uid=dm1.uid)
 

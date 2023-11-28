@@ -188,6 +188,8 @@ class MockdataJson(BaseImporter):
         super().__init__(api=api, metrics_inst=metrics_inst, cache=cache)
         self.log.info("Preparing lookup tables")
 
+        self.import_dir = IMPORT_DIR
+
         # TODO replace all these lookup tables with lookup functions
         self.all_study_times = self.api.get_all_identifiers(
             self.api.get_all_from_api("/concepts/unit-definitions", params={"subset": UNIT_SUBSET_STUDY_TIME}),
@@ -295,7 +297,6 @@ class MockdataJson(BaseImporter):
             return uid
         self.log.warning(f"Could not find ct codelist with name '{name}'")
 
-    @lru_cache(maxsize=10000)
     def get_study_by_key(self, key, value):
         filt = {key: {"v": [value], "op": "eq"}}
         items = self.api.get_all_from_api(
@@ -946,7 +947,7 @@ class MockdataJson(BaseImporter):
 
         self.fill_snomed_term_list(metadata, "diagnosis_groups_codes")
         self.fill_snomed_term_list(metadata, "disease_conditions_or_indications_codes")
-        self.fill_snomed_term_list(metadata, "therapeutic_areas_codes")
+        self.fill_snomed_term_list(metadata, "therapeutic_area_codes")
         self.fill_null_value_codes(metadata, template)
 
     def fill_study_intervention(self, data):
@@ -1108,7 +1109,7 @@ class MockdataJson(BaseImporter):
         filtered_studies = self.filter_studies(all_studies)
         for study_data in filtered_studies:
             exported_uid = study_data["uid"]
-            study_json = os.path.join(IMPORT_DIR, f"studies.{exported_uid}.json")
+            study_json = os.path.join(self.import_dir, f"studies.{exported_uid}.json")
             study_name = self.handle_study(study_json)
             self.handle_study_design(exported_uid, study_name)
 
@@ -1175,64 +1176,64 @@ class MockdataJson(BaseImporter):
         self.log.info(f"======== Study Design for {study_name} ========")
         # Epochs
 
-        epoch_json = os.path.join(IMPORT_DIR, f"studies.{exported_uid}.study-epochs.json")
+        epoch_json = os.path.join(self.import_dir, f"studies.{exported_uid}.study-epochs.json")
         self.handle_study_epochs(epoch_json, study_name)
         ## Visits
-        visit_json = os.path.join(IMPORT_DIR, f"studies.{exported_uid}.study-visits.json")
+        visit_json = os.path.join(self.import_dir, f"studies.{exported_uid}.study-visits.json")
         self.handle_study_visits(visit_json, study_name)
         # Arms
-        arms_json = os.path.join(IMPORT_DIR, f"studies.{exported_uid}.study-arms.json")
+        arms_json = os.path.join(self.import_dir, f"studies.{exported_uid}.study-arms.json")
         self.handle_study_arms(arms_json, study_name)
 
         # Study branches
         branches_json = os.path.join(
-            IMPORT_DIR, f"studies.{exported_uid}.study-branch-arms.json"
+            self.import_dir, f"studies.{exported_uid}.study-branch-arms.json"
         )
         self.handle_study_branch_arms(branches_json, study_name)
 
         # TODO Study cohorts
-        cohorts_json = os.path.join(IMPORT_DIR, f"studies.{exported_uid}.study-cohorts.json")
+        cohorts_json = os.path.join(self.import_dir, f"studies.{exported_uid}.study-cohorts.json")
         self.handle_study_cohorts(cohorts_json, study_name)
 
         # Elements
         elements_json = os.path.join(
-            IMPORT_DIR, f"studies.{exported_uid}.study-elements.json"
+            self.import_dir, f"studies.{exported_uid}.study-elements.json"
         )
         self.handle_study_elements(elements_json, study_name)
         # Matrix
         matrix_json = os.path.join(
-            IMPORT_DIR, f"studies.{exported_uid}.study-design-cells.json"
+            self.import_dir, f"studies.{exported_uid}.study-design-cells.json"
         )
         self.handle_study_matrix(matrix_json, study_name)
         # Activities
         activities_json = os.path.join(
-            IMPORT_DIR, f"studies.{exported_uid}.study-activities.json"
+            self.import_dir, f"studies.{exported_uid}.study-activities.json"
         )
         self.handle_study_activities(activities_json, study_name)
         # Criteria
         criteria_json = os.path.join(
-            IMPORT_DIR, f"studies.{exported_uid}.study-criteria.json"
+            self.import_dir, f"studies.{exported_uid}.study-criteria.json"
         )
         self.handle_study_template_instances(criteria_json, "criteria", study_name)
         # Objectives
         objective_json = os.path.join(
-            IMPORT_DIR, f"studies.{exported_uid}.study-objectives.json"
+            self.import_dir, f"studies.{exported_uid}.study-objectives.json"
         )
         self.handle_study_template_instances(objective_json, "objective", study_name)
         # Endpoints
         endpoint_json = os.path.join(
-            IMPORT_DIR, f"studies.{exported_uid}.study-endpoints.json"
+            self.import_dir, f"studies.{exported_uid}.study-endpoints.json"
         )
         self.handle_study_template_instances(endpoint_json, "endpoint", study_name)
         # Study compounds
         comp_json = os.path.join(
-            IMPORT_DIR, f"studies.{exported_uid}.study-compounds.json"
+            self.import_dir, f"studies.{exported_uid}.study-compounds.json"
         )
         self.handle_study_compounds(comp_json, study_name)
 
         # Study activity schedule
         sched_json = os.path.join(
-            IMPORT_DIR, f"studies.{exported_uid}.study-activity-schedules.json"
+            self.import_dir, f"studies.{exported_uid}.study-activity-schedules.json"
         )
         self.handle_study_activity_schedules(sched_json, study_name)
 
@@ -1317,15 +1318,28 @@ class MockdataJson(BaseImporter):
         for item in imported:
             data = dict(import_templates.study_activity)
             data["activity_instance_uid"] = None
-            flow_name = item["flowchart_group"]["sponsor_preferred_name"]
-            data["flowchart_group_uid"] = self.lookup_ct_term_uid(
-                CODELIST_FLOWCHART_GROUP, flow_name
-            )
-            if data["flowchart_group_uid"] is None:
-                self.log.error(
-                    f"Unable to find flowchart group {flow_name}, skipping this entry"
+
+            # Workaround for old format data
+            if "flowchart_group" in item:
+                flow_name = item["flowchart_group"]["sponsor_preferred_name"]
+                data["soa_group_term_uid"] = self.lookup_ct_term_uid(
+                    CODELIST_FLOWCHART_GROUP, flow_name
                 )
-                continue
+                if data["soa_group_term_uid"] is None:
+                    self.log.error(
+                        f"Unable to find SoA group {flow_name}, skipping this entry"
+                    )
+                    continue
+            else:
+                flow_name = item["study_soa_group"]["soa_group_name"]
+                data["soa_group_term_uid"] = self.lookup_ct_term_uid(
+                    CODELIST_FLOWCHART_GROUP, flow_name
+                )
+                if data["soa_group_term_uid"] is None:
+                    self.log.error(
+                        f"Unable to find SoA group {flow_name}, skipping this entry"
+                    )
+                    continue
             act_name = item["activity"]["name"]
             data["activity_uid"] = self.lookup_activity_uid(act_name)
             if data["activity_uid"] is None:
@@ -1360,7 +1374,7 @@ class MockdataJson(BaseImporter):
             # print(json.dumps(data, indent=2))
             path = f"/studies/{study_uid}/study-activities"
             self.log.info(
-                f"Add study activity '{act_name}' with flowchart group '{flow_name}' for study '{study_name}' with id '{study_uid}'"
+                f"Add study activity '{act_name}' with SoA group '{flow_name}' for study '{study_name}' with id '{study_uid}'"
             )
             self.api.simple_post_to_api(path, data, "/study-activities")
 
@@ -1809,20 +1823,20 @@ class MockdataJson(BaseImporter):
 
     def handle_templates(self):
         self.log.info("======== Syntax templates ========")
-        objective_template_json = os.path.join(IMPORT_DIR, "objective-templates.json")
+        objective_template_json = os.path.join(self.import_dir, "objective-templates.json")
         self.handle_all_templates(objective_template_json, "objective")
 
-        criteria_template_json = os.path.join(IMPORT_DIR, "criteria-templates.json")
+        criteria_template_json = os.path.join(self.import_dir, "criteria-templates.json")
         self.handle_all_templates(criteria_template_json, "criteria")
 
-        endpoint_template_json = os.path.join(IMPORT_DIR, "endpoint-templates.json")
+        endpoint_template_json = os.path.join(self.import_dir, "endpoint-templates.json")
         self.handle_all_templates(endpoint_template_json, "endpoint")
 
-        timeframe_template_json = os.path.join(IMPORT_DIR, "timeframe-templates.json")
+        timeframe_template_json = os.path.join(self.import_dir, "timeframe-templates.json")
         self.handle_all_templates(timeframe_template_json, "timeframe")
 
         activity_instruction_template_json = os.path.join(
-            IMPORT_DIR, "activity-instruction-templates.json"
+            self.import_dir, "activity-instruction-templates.json"
         )
         self.handle_all_templates(
             activity_instruction_template_json, "activity_instruction"
@@ -1869,6 +1883,11 @@ class MockdataJson(BaseImporter):
                         if not isinstance(value, (dict, list, tuple)):
                             data[key] = value
             shortname = data["name"]
+
+            # Get the library name, default to "Sponsor" if not given
+            library_name = imported_template.get("library", {}).get("name", "Sponsor")
+            data["library_name"] = library_name
+
             if len(shortname) > 60:
                 shortname = shortname[0:60] + "..."
             if self.lookup_template_uid(data["name"], template_type, log=True, shortname=shortname) is not None:
@@ -1902,7 +1921,7 @@ class MockdataJson(BaseImporter):
 
             if "indication_uids" in post_data:
                 data["indication_uids"] = []
-                if imported_template["indications"] is not None:
+                if imported_template.get("indications") is not None:
                     for indication in imported_template["indications"]:
                         name = indication["name"]
                         library = indication["library_name"]
@@ -1911,7 +1930,7 @@ class MockdataJson(BaseImporter):
                             data["indication_uids"].append(uid)
             if "category_uids" in post_data:
                 data["category_uids"] = []
-                if imported_template["categories"] is not None:
+                if imported_template.get("categories") is not None:
                     for category in imported_template["categories"]:
                         name = category["name"]["sponsor_preferred_name"]
                         uid = self.lookup_codelist_term_uid(category_codelist, name)
@@ -1919,7 +1938,7 @@ class MockdataJson(BaseImporter):
                             data["category_uids"].append(uid)
             if "sub_category_uids" in post_data:
                 data["sub_category_uids"] = []
-                if imported_template["sub_categories"] is not None:
+                if imported_template.get("sub_categories") is not None:
                     for category in imported_template["sub_categories"]:
                         name = category["name"]["sponsor_preferred_name"]
                         uid = self.lookup_codelist_term_uid(subcategory_codelist, name)
@@ -1927,7 +1946,7 @@ class MockdataJson(BaseImporter):
                             data["category_uids"].append(uid)
             if "activity_uids" in post_data:
                 data["activity_uids"] = []
-                if imported_template["activities"] is not None:
+                if imported_template.get("activities") is not None:
                     for act in imported_template["activities"]:
                         name = act["name"]
                         uid = self.lookup_activity_uid(name)
@@ -1935,7 +1954,7 @@ class MockdataJson(BaseImporter):
                             data["activity_uids"].append(uid)
             if "activity_group_uids" in post_data:
                 data["activity_group_uids"] = []
-                if imported_template["activity_groups"] is not None:
+                if imported_template.get("activity_groups") is not None:
                     for group in imported_template["activity_groups"]:
                         name = group["name"]
                         uid = self.lookup_activity_group_uid(name)
@@ -1943,7 +1962,7 @@ class MockdataJson(BaseImporter):
                             data["activity_group_uids"].append(uid)
             if "activity_subgroup_uids" in post_data:
                 data["activity_subgroup_uids"] = []
-                if imported_template["activity_subgroups"] is not None:
+                if imported_template.get("activity_subgroups") is not None:
                     for group in imported_template["activity_subgroups"]:
                         name = group["name"]
                         uid = self.lookup_activity_subgroup_uid(name)
@@ -2051,12 +2070,15 @@ class MockdataJson(BaseImporter):
         if template_type == "objective":
             post_data = import_templates.study_objective
             path = f"/studies/{study_uid}/study-objectives"
+            params = None
         elif template_type == "criteria":
             post_data = import_templates.study_criteria
             path = f"/studies/{study_uid}/study-criteria"
+            params = {"create_criteria": True}
         elif template_type == "endpoint":
             post_data = import_templates.study_endpoint
             path = f"/studies/{study_uid}/study-endpoints"
+            params = None
         #elif template_type == "activity_instruction":
         #    post_data = import_templates.study_activity_instruction
         #    path = f"/studies/{study_uid}/study-activities"
@@ -2147,10 +2169,10 @@ class MockdataJson(BaseImporter):
                 else:
                     data["timeframe_uid"] = None
 
-            # print("====================  Data to post for", template_type, "study templates")
-            # print(json.dumps(data, indent=2))
+            #print("====================  Data to post for", template_type, "study templates")
+            #print(json.dumps(data, indent=2))
             # TODO check for duplicates before posting
-            res = self.api.simple_post_to_api(path, data, path)
+            res = self.api.simple_post_to_api(path, data, path, params=params)
             if res is None:
                 self.log.error(f"Failed to add {template_type} template")
 
@@ -2605,51 +2627,51 @@ class MockdataJson(BaseImporter):
         self.log.info("Migrating json mock data")
 
         if MDR_MIGRATION_EXPORTED_PROGRAMMES:
-          programmes_json = os.path.join(IMPORT_DIR, "clinical-programmes.json")
+          programmes_json = os.path.join(self.import_dir, "clinical-programmes.json")
           self.handle_clinical_programmes(programmes_json)
         else:
            self.log.info("Skipping clinical programmes")
         
         if MDR_MIGRATION_EXPORTED_BRANDS:
-           brands_json = os.path.join(IMPORT_DIR, "brands.json")
+           brands_json = os.path.join(self.import_dir, "brands.json")
            self.handle_brands(brands_json)
         else:
             self.log.info("Skipping brands")
 
         # Dictionaries
-        snomed_json = os.path.join(IMPORT_DIR, "dictionaries.SNOMED.json")
+        snomed_json = os.path.join(self.import_dir, "dictionaries.SNOMED.json")
         self.handle_dictionaries(snomed_json, "SNOMED")
-        unii_json = os.path.join(IMPORT_DIR, "dictionaries.UNII.json")
+        unii_json = os.path.join(self.import_dir, "dictionaries.UNII.json")
         self.handle_dictionaries(unii_json, "UNII")
-        medrt_json = os.path.join(IMPORT_DIR, "dictionaries.MED-RT.json")
+        medrt_json = os.path.join(self.import_dir, "dictionaries.MED-RT.json")
         self.handle_dictionaries(medrt_json, "MED-RT")
-        ucum_json = os.path.join(IMPORT_DIR, "dictionaries.UCUM.json")
+        ucum_json = os.path.join(self.import_dir, "dictionaries.UCUM.json")
         self.handle_dictionaries(ucum_json, "UCUM")
 
         # Unit definitions
-        units_ct_json = os.path.join(IMPORT_DIR, "ct.terms.Unit.json")
+        units_ct_json = os.path.join(self.import_dir, "ct.terms.Unit.json")
         self.handle_ct_extensions(units_ct_json, "Unit")
 
         # Unit definitions
         if MDR_MIGRATION_EXPORTED_UNITS:
-            units_json = os.path.join(IMPORT_DIR, "concepts.unit-definitions.json")
+            units_json = os.path.join(self.import_dir, "concepts.unit-definitions.json")
             self.handle_unit_definitions(units_json)
         else:
             self.log.info("Skipping units")
 
         # Value concepts
         if MDR_MIGRATION_EXPORTED_CONCEPT_VALUES:
-            self.handle_all_value_concepts(IMPORT_DIR)
+            self.handle_all_value_concepts(self.import_dir)
         else:
             self.log.info("Skipping concept values")
 
         # Activities
         if MDR_MIGRATION_EXPORTED_ACTIVITIES:
-            act_grp_json = os.path.join(IMPORT_DIR, "concepts.activities.activity-groups.json")
+            act_grp_json = os.path.join(self.import_dir, "concepts.activities.activity-groups.json")
             self.handle_activity_groups(act_grp_json)
-            act_subgrp_json = os.path.join(IMPORT_DIR, "concepts.activities.activity-sub-groups.json")
+            act_subgrp_json = os.path.join(self.import_dir, "concepts.activities.activity-sub-groups.json")
             self.handle_activity_subgroups(act_subgrp_json)
-            act_json = os.path.join(IMPORT_DIR, "concepts.activities.activities.json")
+            act_json = os.path.join(self.import_dir, "concepts.activities.activities.json")
             self.handle_activities(act_json)
         else:
             self.log.info("Skipping activities")
@@ -2658,9 +2680,9 @@ class MockdataJson(BaseImporter):
 
         # Compounds and compound aliases
         if MDR_MIGRATION_EXPORTED_COMPOUNDS:
-            compounds_json = os.path.join(IMPORT_DIR, "concepts.compounds.json")
+            compounds_json = os.path.join(self.import_dir, "concepts.compounds.json")
             self.handle_compounds(compounds_json)
-            comp_alias_json = os.path.join(IMPORT_DIR, "concepts.compound-aliases.json")
+            comp_alias_json = os.path.join(self.import_dir, "concepts.compound-aliases.json")
             self.handle_compound_aliases(comp_alias_json)
         else:
             self.log.info("Skipping compounds")
@@ -2679,7 +2701,7 @@ class MockdataJson(BaseImporter):
 
         # Studies with study design
         if MDR_MIGRATION_EXPORTED_STUDIES:
-            studies_json = os.path.join(IMPORT_DIR, "studies.json")
+            studies_json = os.path.join(self.import_dir, "studies.json")
             self.handle_studies(studies_json)
         else:
             self.log.info("Skipping studies")

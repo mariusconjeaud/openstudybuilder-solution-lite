@@ -62,11 +62,15 @@ activity_group: models.ActivityGroup
 activity_subgroup: models.ActivitySubGroup
 text_value_1: models.TextValue
 text_value_2: models.TextValue
+sa_randomized: models.StudySelectionActivity
 randomized_sas: models.StudyActivitySchedule
+sa_body_mes: models.StudySelectionActivity
 body_mes_sas: models.StudyActivitySchedule
+sa_weight: models.StudySelectionActivity
 weight_sas: models.StudyActivitySchedule
 study_epoch: StudyEpoch
 first_visit: StudyVisit
+second_visit: StudyVisit
 sa_weight: models.StudySelectionActivity
 
 
@@ -98,11 +102,15 @@ def test_data():
     global activity_subgroup
     global text_value_1
     global text_value_2
+    global sa_randomized
     global randomized_sas
+    global sa_body_mes
     global body_mes_sas
+    global sa_weight
     global weight_sas
     global study_epoch
     global first_visit
+    global second_visit
     global sa_weight
 
     # Create Template Parameter
@@ -253,7 +261,7 @@ def test_data():
         activity_uid=randomized_activity.uid,
         activity_subgroup_uid=randomisation_activity_subgroup.uid,
         activity_group_uid=general_activity_group.uid,
-        flowchart_group_uid=flowchart_group.term_uid,
+        soa_group_term_uid=flowchart_group.term_uid,
     )
     randomized_sas = TestUtils.create_study_activity_schedule(
         study_uid=study.uid,
@@ -283,7 +291,7 @@ def test_data():
         activity_uid=body_mes_activity.uid,
         activity_subgroup_uid=randomisation_activity_subgroup.uid,
         activity_group_uid=general_activity_group.uid,
-        flowchart_group_uid=flowchart_group.term_uid,
+        soa_group_term_uid=flowchart_group.term_uid,
     )
     body_mes_sas = TestUtils.create_study_activity_schedule(
         study_uid=study.uid,
@@ -307,7 +315,7 @@ def test_data():
         activity_uid=weight_activity.uid,
         activity_subgroup_uid=body_measurements_activity_subgroup.uid,
         activity_group_uid=general_activity_group.uid,
-        flowchart_group_uid=flowchart_group.term_uid,
+        soa_group_term_uid=flowchart_group.term_uid,
     )
     weight_sas = TestUtils.create_study_activity_schedule(
         study_uid=study.uid,
@@ -627,6 +635,10 @@ def test_footnote_reordering_when_adding_new_footnote(api_client):
         res[0]["referenced_items"][0]["item_type"]
         == SoAItemType.STUDY_ACTIVITY_SCHEDULE.value
     )
+    assert (
+        res[0]["referenced_items"][0]["item_name"]
+        == f"{sa_randomized.activity.name} {first_visit.visit_short_name}"
+    )
     assert res[0]["footnote_template"]["uid"] == footnote_templates[0].uid
     assert res[0]["order"] == 1
 
@@ -638,6 +650,10 @@ def test_footnote_reordering_when_adding_new_footnote(api_client):
         res[1]["referenced_items"][0]["item_type"]
         == SoAItemType.STUDY_ACTIVITY_SCHEDULE.value
     )
+    assert (
+        res[1]["referenced_items"][0]["item_name"]
+        == f"{sa_body_mes.activity.name} {first_visit.visit_short_name}"
+    )
     assert res[1]["footnote_template"]["uid"] == footnote_templates[0].uid
     assert res[1]["order"] == 2
 
@@ -648,6 +664,10 @@ def test_footnote_reordering_when_adding_new_footnote(api_client):
     assert (
         res[2]["referenced_items"][0]["item_type"]
         == SoAItemType.STUDY_ACTIVITY_SCHEDULE.value
+    )
+    assert (
+        res[2]["referenced_items"][0]["item_name"]
+        == f"{sa_weight.activity.name} {second_visit.visit_short_name}"
     )
     assert res[2]["footnote_template"]["uid"] == footnote_templates[1].uid
     assert res[2]["order"] == 3
@@ -1022,3 +1042,237 @@ def test_add_footnotes_to_subgroup_and_group(api_client):
         f"/studies/{study.uid}/study-soa-footnotes",
     )
     assert response.status_code == 200
+
+
+def test_modify_actions_on_locked_study(api_client):
+    _study_epoch = create_study_epoch("EpochSubType_0002", study_uid=study.uid)
+
+    response = api_client.patch(
+        f"/studies/{study.uid}/study-soa-footnotes/StudySoAFootnote_000008",
+        json={
+            "referenced_items": [
+                {
+                    "item_uid": first_visit.uid,
+                    "item_type": SoAItemType.STUDY_VISIT.value,
+                },
+                {
+                    "item_uid": _study_epoch.uid,
+                    "item_type": SoAItemType.STUDY_EPOCH.value,
+                },
+                {
+                    "item_uid": "StudyActivity_000001",
+                    "item_type": SoAItemType.STUDY_ACTIVITY.value,
+                },
+                {
+                    "item_uid": weight_sas.study_activity_schedule_uid,
+                    "item_type": SoAItemType.STUDY_ACTIVITY_SCHEDULE.value,
+                },
+            ]
+        },
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["referenced_items"] == [
+        {"item_name": None, "item_type": "StudyVisit", "item_uid": "StudyVisit_000001"},
+        {"item_name": None, "item_type": "StudyEpoch", "item_uid": "StudyEpoch_000002"},
+        {
+            "item_name": None,
+            "item_type": "StudyActivity",
+            "item_uid": "StudyActivity_000001",
+        },
+        {
+            "item_name": None,
+            "item_type": "StudyActivitySchedule",
+            "item_uid": weight_sas.study_activity_schedule_uid,
+        },
+    ]
+
+    response = api_client.get(
+        f"/studies/{study.uid}/study-soa-footnotes/StudySoAFootnote_000008"
+    )
+    res = response.json()
+    assert response.status_code == 200
+    before_unlock = res
+
+    response = api_client.get(
+        f"/studies/{study.uid}/study-visits/StudyVisit_000001",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    before_unlock_visit = res
+
+    response = api_client.get(
+        f"/studies/{study.uid}/study-epochs/StudyEpoch_000002",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    before_unlock_epoch = res
+
+    response = api_client.get(
+        f"/studies/{study.uid}/study-activities/StudyActivity_000001",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    before_unlock_activity = res
+
+    response = api_client.get(
+        f"/studies/{study.uid}/study-activity-schedules",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    before_unlock_activity_schedule = res
+
+    # update study title to be able to lock it
+    response = api_client.patch(
+        f"/studies/{study.uid}",
+        json={"current_metadata": {"study_description": {"study_title": "new title"}}},
+    )
+    assert response.status_code == 200
+
+    # Lock
+    response = api_client.post(
+        f"/studies/{study.uid}/locks",
+        json={"change_description": "Lock 1"},
+    )
+    assert response.status_code == 201
+
+    # test cannot delete
+    response = api_client.delete(
+        f"/studies/{study.uid}/study-soa-footnotes/StudySoAFootnote_000008"
+    )
+    assert response.status_code == 400
+    assert (
+        response.json()["message"]
+        == f"Study with specified uid '{study.uid}' is locked."
+    )
+
+    # Unlock
+    response = api_client.delete(f"/studies/{study.uid}/locks")
+    assert response.status_code == 200
+
+    # edit study soa footnote
+    response = api_client.patch(
+        f"/studies/{study.uid}/study-soa-footnotes/StudySoAFootnote_000008",
+        json={
+            "referenced_items": [
+                {
+                    "item_uid": second_visit.uid,
+                    "item_type": SoAItemType.STUDY_VISIT.value,
+                }
+            ]
+        },
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["referenced_items"] == [
+        {"item_name": None, "item_type": "StudyVisit", "item_uid": "StudyVisit_000002"},
+    ]
+
+    response = api_client.delete(
+        f"/studies/{study.uid}/study-visits/{first_visit.uid}",
+    )
+    assert response.status_code == 204
+
+    response = api_client.delete(
+        f"/studies/{study.uid}/study-epochs/{_study_epoch.uid}",
+    )
+    assert response.status_code == 204
+
+    response = api_client.delete(
+        f"/studies/{study.uid}/study-activities/StudyActivity_000001",
+    )
+    assert response.status_code == 204
+
+    response = api_client.delete(
+        f"/studies/{study.uid}/study-activity-schedules/{weight_sas.study_activity_schedule_uid}",
+    )
+    assert response.status_code == 204
+
+    # get all study soa footnotes of a specific study version
+    response = api_client.get(
+        f"/studies/{study.uid}/study-soa-footnotes?study_value_version=1",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["items"][2] == before_unlock
+
+    # get specific study soa footnote of a specific study version
+    response = api_client.get(
+        f"/studies/{study.uid}/study-soa-footnotes/StudySoAFootnote_000008?study_value_version=1",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res == before_unlock
+
+    # get study soa footnote headers of specific study version
+    response = api_client.get(
+        f"/studies/{study.uid}/study-soa-footnotes/headers?field_name=referenced_items.item_name&study_value_version=1",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res == [
+        "Epoch Subtype",
+        "V1",
+        "Randomized",
+        "Epoch Subtype1",
+        "Weight V2",
+        "Body Measurement activity V1",
+        "Body Measurements",
+        "General",
+    ]
+
+    response = api_client.get(
+        f"/studies/{study.uid}/study-visits/StudyVisit_000001?study_value_version=1",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res == before_unlock_visit
+
+    response = api_client.get(
+        f"/studies/{study.uid}/study-epochs/StudyEpoch_000002?study_value_version=1",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res == before_unlock_epoch
+
+    response = api_client.get(
+        f"/studies/{study.uid}/study-activities/StudyActivity_000001?study_value_version=1",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res == before_unlock_activity
+
+    response = api_client.get(
+        f"/studies/{study.uid}/study-activity-schedules?study_value_version=1",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res == before_unlock_activity_schedule
+
+    # get all study soa footnotes
+    response = api_client.get(
+        f"/studies/{study.uid}/study-soa-footnotes",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["items"][2]["referenced_items"] == [
+        {"item_name": "V1", "item_type": "StudyVisit", "item_uid": "StudyVisit_000002"},
+    ]
+
+    # get specific study soa footnote
+    response = api_client.get(
+        f"/studies/{study.uid}/study-soa-footnotes/StudySoAFootnote_000008",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["referenced_items"] == [
+        {"item_name": "V1", "item_type": "StudyVisit", "item_uid": "StudyVisit_000002"},
+    ]
+
+    # get study soa footnote headers
+    response = api_client.get(
+        f"/studies/{study.uid}/study-soa-footnotes/headers?field_name=referenced_items.item_name",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res == ["Epoch Subtype", "V1", "Body Measurements", "General"]

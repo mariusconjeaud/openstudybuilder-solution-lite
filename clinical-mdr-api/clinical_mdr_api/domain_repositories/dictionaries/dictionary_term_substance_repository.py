@@ -1,5 +1,3 @@
-from typing import Sequence
-
 from neomodel import db
 
 from clinical_mdr_api.domain_repositories._generic_repository_interface import (
@@ -127,15 +125,15 @@ class DictionaryTermSubstanceRepository(
 
     def find_all(
         self,
-        codelist_uid: str = None,
+        codelist_uid: str | None = None,
         sort_by: dict | None = None,
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
         page_number: int = 1,
         page_size: int = 0,
         total_count: bool = False,
-        codelist_name: str = None,
-    ) -> tuple[Sequence[DictionaryTermSubstanceAR], int]:
+        codelist_name: str | None = None,
+    ) -> tuple[list[DictionaryTermSubstanceAR], int]:
         """
         Method runs a cypher query to fetch all needed data to create objects of type AggregateRootType.
         In the case of the following repository it will be some Terms aggregates.

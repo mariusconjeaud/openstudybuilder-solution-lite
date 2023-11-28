@@ -1,5 +1,3 @@
-from typing import Sequence
-
 from clinical_mdr_api.domain_repositories.library_item_repository import (
     LibraryItemRepositoryImplBase,
 )
@@ -9,13 +7,15 @@ from clinical_mdr_api.domain_repositories.models.generic import (
     VersionRelationship,
 )
 from clinical_mdr_api.domain_repositories.models.standard_data_model import (
-    DataModelIGRoot,
     DatasetClass,
     SponsorModelDatasetClassInstance,
     SponsorModelValue,
 )
 from clinical_mdr_api.domain_repositories.neomodel_ext_item_repository import (
     NeomodelExtBaseRepository,
+)
+from clinical_mdr_api.domain_repositories.standard_data_models.utils import (
+    get_sponsor_model_info_from_dataset_class,
 )
 from clinical_mdr_api.domains.standard_data_models.sponsor_model_dataset_class import (
     SponsorModelDatasetClassAR,
@@ -105,18 +105,10 @@ class SponsorModelDatasetClassRepository(
         relationship: VersionRelationship,
         value: SponsorModelDatasetClassInstance,
     ) -> SponsorModelDatasetClassAR:
-        sponsor_model: SponsorModelValue = value.has_dataset_class.get_or_none()
-        sponsor_model_name = None
-        sponsor_model_version = None
-        if sponsor_model is not None:
-            data_model_ig: DataModelIGRoot = (
-                sponsor_model.has_sponsor_model_version.single()
-            )
-            sponsor_model_name = sponsor_model.name
-            rels: Sequence[
-                VersionRelationship
-            ] = sponsor_model.has_sponsor_model_version.all_relationships(data_model_ig)
-            sponsor_model_version = rels[0].version
+        (
+            sponsor_model_name,
+            sponsor_model_version,
+        ) = get_sponsor_model_info_from_dataset_class(value)
         return SponsorModelDatasetClassAR.from_repository_values(
             dataset_class_uid=root.uid,
             sponsor_model_dataset_class_vo=SponsorModelDatasetClassVO.from_repository_values(

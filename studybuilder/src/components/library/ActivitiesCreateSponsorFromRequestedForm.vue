@@ -28,7 +28,7 @@
           <v-col>
             <v-autocomplete
               :label="$t('ActivityForms.activity_subgroup')"
-              :items="filteredSubGroups"
+              :items="subGroups"
               v-model="activity.activity_groupings[0].activity_subgroup_uid"
               item-text="name"
               item-value="uid"
@@ -40,7 +40,7 @@
         <v-row>
           <v-col>
             <v-text-field
-              :label="$t('ActivityForms.name')"
+              :label="$t('ActivityForms.activity_name')"
               v-model="activity.name"
               dense
               clearable
@@ -90,7 +90,7 @@
     <template v-slot:step.sponsor="{ step }">
       <validation-observer :ref="`observer_${step}`">
         <v-row>
-          <v-col cols="5">
+          <v-col>
             <validation-provider
               v-slot="{ errors }"
               rules="required"
@@ -103,8 +103,8 @@
                 item-value="uid"
                 dense
                 clearable
-                return-object
                 :error-messages="errors"
+                @change="filterSubGroups"
                 />
             </validation-provider>
             <validation-provider
@@ -129,7 +129,7 @@
               rules="required"
               >
               <v-text-field
-                :label="$t('ActivityForms.name')"
+                :label="$t('ActivityForms.activity_name')"
                 v-model="form.name"
                 dense
                 clearable
@@ -137,6 +137,20 @@
                 :error-messages="errors"
                 />
             </validation-provider>
+            <sentence-case-name-field
+              :name="form.name"
+              :initial-name="form.name_sentence_case"
+              v-model="form.name_sentence_case"/>
+            <v-row>
+              <v-col>
+                <v-text-field
+                  :label="$t('ActivityForms.nci_concept_id')"
+                  v-model="form.nci_concept_id"
+                  dense
+                  clearable
+                  />
+              </v-col>
+            </v-row>
             <v-text-field
               :label="$t('ActivityFormsRequested.abbreviation')"
               v-model="form.abbreviation"
@@ -171,17 +185,14 @@
                 :error-messages="errors"
                 />
               </validation-provider>
-          </v-col>
-          <v-col cols="7">
-            <v-data-table
-              :headers="headers"
-              :items="activities"
-              :options.sync="options"
-              :server-items-length="total"
-              @pagination="getActivities"
-              :items-per-page="5"
-              item-key="item-key">
-            </v-data-table>
+              <v-row>
+                <v-col>
+                  <v-checkbox
+                    :label="$t('ActivityForms.is_data_collected')"
+                    v-model="form.is_data_collected">
+                  </v-checkbox>
+                </v-col>
+              </v-row>
           </v-col>
         </v-row>
       </validation-observer>
@@ -206,7 +217,7 @@
               v-if="activity.activity_groupings[0].activity_group_uid ? false : true"
               />
             <v-text-field
-              :label="$t('ActivityForms.name')"
+              :label="$t('ActivityForms.activity_name')"
               v-model="activity.name"
               dense
               readonly
@@ -229,7 +240,7 @@
               v-if="subgroup"
               />
             <v-text-field
-              :label="$t('ActivityForms.name')"
+              :label="$t('ActivityForms.activity_name')"
               v-model="form.name"
               dense
               readonly
@@ -249,11 +260,13 @@ import ConfirmDialog from '@/components/tools/ConfirmDialog'
 import StepperForm from '@/components/tools/StepperForm'
 import activities from '@/api/activities'
 import libConstants from '@/constants/libraries'
+import SentenceCaseNameField from '@/components/tools/SentenceCaseNameField'
 
 export default {
   components: {
     ConfirmDialog,
-    StepperForm
+    StepperForm,
+    SentenceCaseNameField
   },
   props: {
     editedActivity: Object
@@ -261,14 +274,8 @@ export default {
   computed: {
     title () {
       return (this.editedActivity)
-        ? this.$t('ActivityForms.edit_group')
-        : this.$t('ActivityForms.add_group')
-    },
-    filteredSubGroups () {
-      if (!this.form.activity_groupings[0].activity_group_uid) {
-        return []
-      }
-      return this.subGroups.filter(el => el.activity_groups.find(o => o.uid === this.form.activity_groupings[0].activity_group_uid) !== undefined)
+        ? this.$t('ActivityForms.edit_activity')
+        : this.$t('ActivityForms.add_activity')
     }
   },
   data () {
@@ -291,7 +298,8 @@ export default {
         { text: this.$t('ActivityTable.activity'), value: 'name' }
       ],
       options: {},
-      total: 0
+      total: 0,
+      filteredSubGroups: []
     }
   },
   methods: {
@@ -299,24 +307,22 @@ export default {
       if (this.editedActivity) {
         this.activity = this.editedActivity
         this.form = JSON.parse(JSON.stringify(this.activity))
-        this.form.activity_groupings = [{}]
+        this.form.activity_groupings = []
         if (!_isEmpty(this.activity)) {
-          const grouping = [{}]
-          if (this.activity.activity_group) {
-            grouping[0].activity_group_name = this.activity.activity_group.name
-            grouping[0].activity_group_uid = this.activity.activity_group.uid
+          this.form.activity_groupings.push(this.activity.activity_groupings[0])
+          if (this.subGroups.length > 0) {
+            this.subgroup = this.subGroups.find(sg => sg.uid === this.activity.activity_groupings[0].activity_subgroup_uid)
           }
-          if (this.activity.activity_subgroup) {
-            grouping[0].activity_subgroup_name = this.activity.activity_subgroup.name
-            grouping[0].activity_subgroup_uid = this.activity.activity_subgroup.uid
-          }
-          this.$set(this.form, 'activity_groupings', grouping)
         }
       } else {
         this.activity = { activity_groupings: [{}] }
       }
-
-      this.subgroup = this.form.activity_subgroup
+    },
+    filterSubGroups () {
+      if (!this.form.activity_groupings[0].activity_group_uid) {
+        this.filteredSubGroups = []
+      }
+      this.filteredSubGroups = this.subGroups.filter(el => el.activity_groups.find(o => o.uid === this.form.activity_groupings[0].activity_group_uid) !== undefined)
     },
     getObserver (step) {
       return this.$refs[`observer_${step}`]
@@ -331,11 +337,14 @@ export default {
       this.form.name_sentence_case = this.form.name.charAt(0).toUpperCase() + this.form.name.slice(1)
       this.form.activity_request_uid = this.editedActivity.uid
       this.$set(this.form, 'activity_subgroup', this.subgroup.uid)
+      this.form.activity_groupings[0].activity_subgroup_uid = this.subgroup.uid
       activities.createFromActivityRequest(this.form).then(resp => {
         bus.$emit('warning', { msg: this.$t('ActivityFormsRequested.new_concept_warning') })
         this.close()
+        this.$refs.stepper.loading = false
+      }, _err => {
+        this.$refs.form.working = false
       })
-      this.$refs.stepper.loading = false
     },
     getGroups () {
       activities.get({ page_size: 0 }, 'activity-groups').then(resp => {
@@ -343,6 +352,8 @@ export default {
       })
       activities.get({ page_size: 0 }, 'activity-sub-groups').then(resp => {
         this.subGroups = resp.data.items
+        this.filterSubGroups()
+        this.subgroup = this.subGroups.find(sg => sg.uid === this.activity.activity_groupings[0].activity_subgroup_uid)
       })
     },
     getActivities () {

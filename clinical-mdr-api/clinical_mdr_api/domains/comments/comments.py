@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Sequence
+from typing import Any, Callable
 
 
 class CommentThreadStatus(Enum):
@@ -94,7 +94,7 @@ class CommentThreadAR:
     status_modified_at: str | None = None
     status_modified_by: str | None = None
     deleted_at: str | None = None
-    replies: Sequence[CommentReplyAR] = field(default_factory=list)
+    replies: list[CommentReplyAR] = field(default_factory=list)
 
     @property
     def uid(self) -> str:
@@ -141,7 +141,7 @@ class CommentThreadAR:
         status_modified_at: datetime | None = None,
         status_modified_by: str | None = None,
         deleted_at: datetime | None = None,
-        replies: Sequence[CommentReplyAR] = None,
+        replies: list[CommentReplyAR] | None = None,
     ):
         return CommentThreadAR(
             _uid=uid,

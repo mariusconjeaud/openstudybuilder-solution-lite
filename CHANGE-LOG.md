@@ -1,5 +1,24 @@
 # OpenStudyBuilder Commits changelog
 
+##  V 0.7.2
+
+### Fixes and Enhancements
+- Physical data model updates made for relationships from ActivityItemClass via ActivityItems to CTTerms for each ActivityInstnance, including simplifying the relationship cardinality. Name attribute removed from ActivityItem node, and ActivityItem node is no longer individually versioned in root/value pairs, but versioned as part of the outbound relationship from ActivityInstanceValue nodes..
+- Study activity selection support selection of a specific activity grouping combination. Support the same activity can be added to the study activities multiple times under different groupings. Ability to display/hide groups for specific Activity Group combination. Ability to add SoA footnote at Activity Group level for specific group combination. Data collection Boolean added when searching and selection activities. Filtering corrected when searching and selection activities.is not working yet.
+- New tabs added under Library -> Concepts -> Activities to support to support definition of activity groups and subgroups.Definition of activities and activity instances updated to use new activity groupings. Exiting tab for Activities by Groping now only support a hierarchal display of activity groupings. Page/size numbering is corrected when displaying activities in multiple groups. Data collection Boolean added for activities. NCI concept ID added for activities, activity instances and activity item class. Filtering and other display issues are corrected.
+- Deleting a study epoch now reorders the remaining epochs correctly.
+- The content on the Study Epoch page now remains visible after loading the Study Epochs page
+- Adding a new visit more than once is now possible without reloading the Study Visit page under Study Structure.
+- Proper error handling of strings with unbalanced parenthesis in Syntax Templates has been implemented in the API.
+- API patching has been implemented for activityitemclass, if more than one version exists.
+- Users are now able to select multiple study endpoints for secondary objectives under Study Purpose.
+- The search bar on the Study Endpoints under Study Purpose is now working as intended.
+- Indexes and constraints added to the database to improve query performance. This reduces loading times for the various pages related to syntax templates in the front-end.
+
+### Other Changes
+
+- StudyBuilder now supports creation and maintenance of footnotes in the Protocol SoA.
+
 ##  V 0.6
 
 ### Fixes and Enhancements

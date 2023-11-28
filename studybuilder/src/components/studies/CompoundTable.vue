@@ -22,7 +22,7 @@
         color="primary"
         @click.stop="showForm = true"
         :title="$t('StudyCompoundForm.add_title')"
-        :disabled="!checkPermission($roles.STUDY_WRITE)"
+        :disabled="!checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
         >
         <v-icon>
           mdi-plus
@@ -88,6 +88,7 @@ export default {
     ...mapGetters({
       nullValues: 'studiesGeneral/nullValues',
       selectedStudy: 'studiesGeneral/selectedStudy',
+      selectedStudyVersion: 'studiesGeneral/selectedStudyVersion',
       studyCompounds: 'studyCompounds/studyCompounds'
     }),
     exportDataUrl () {
@@ -112,6 +113,7 @@ export default {
           label: this.$t('_global.edit'),
           icon: 'mdi-pencil-outline',
           iconColor: 'primary',
+          condition: () => !this.selectedStudyVersion,
           click: this.editStudyCompound,
           accessRole: this.$roles.STUDY_WRITE
         },
@@ -119,6 +121,7 @@ export default {
           label: this.$t('_global.delete'),
           icon: 'mdi-delete-outline',
           iconColor: 'error',
+          condition: () => !this.selectedStudyVersion,
           click: this.deleteStudyCompound,
           accessRole: this.$roles.STUDY_WRITE
         },
@@ -166,6 +169,7 @@ export default {
       const params = filteringParameters.prepareParameters(
         this.options, filters, sort, filtersUpdated)
       params.studyUid = this.selectedStudy.uid
+      params.study_value_version = this.selectedStudyVersion
       this.$store.dispatch('studyCompounds/fetchStudyCompounds', params).then(resp => {
         this.total = resp.data.total
       })

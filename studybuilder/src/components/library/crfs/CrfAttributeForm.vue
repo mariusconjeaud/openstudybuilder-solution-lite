@@ -108,10 +108,6 @@ export default {
       this.$emit('close')
     },
     async submit () {
-      const valid = await this.$refs.observer.validate()
-      if (!valid) {
-        return
-      }
       if (this.parentType === crfTypes.NAMESPACE) {
         this.$set(this.form, 'vendor_namespace_uid', this.parentUid)
       } else {

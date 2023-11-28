@@ -1,11 +1,9 @@
-from typing import Sequence
-
 from pydantic import BaseModel
 
 
 def list_concept_wildcard_properties(
     target_model: BaseModel | None = None,
-) -> Sequence[str]:
+) -> list[str]:
     """
     Returns a list of properties on which to apply wildcard filtering, formatted as defined in the Cypher query.
 
