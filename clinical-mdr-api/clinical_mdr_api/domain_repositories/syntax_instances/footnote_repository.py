@@ -25,12 +25,12 @@ class FootnoteRepository(GenericSyntaxInstanceRepository[FootnoteAR]):
 
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
-        *,
         root: FootnoteRoot,
         library: Library,
         relationship: VersionRelationship,
         value: FootnoteValue,
         study_count: int = 0,
+        **_kwargs,
     ) -> FootnoteAR:
         return cast(
             FootnoteAR,

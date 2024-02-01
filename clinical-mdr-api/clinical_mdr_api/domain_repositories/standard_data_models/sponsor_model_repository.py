@@ -191,11 +191,11 @@ class SponsorModelRepository(
 
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
-        *,
         root: DataModelIGRoot,
         library: Library,
         relationship: VersionRelationship,
         value: SponsorModelValue,
+        **_kwargs,
     ) -> SponsorModelAR:
         return SponsorModelAR.from_repository_values(
             ig_uid=root.uid,

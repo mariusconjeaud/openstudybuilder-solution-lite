@@ -31,7 +31,7 @@ class EndpointPreInstanceService(EndpointService[EndpointPreInstanceAR]):
         self, item_ar: EndpointPreInstanceAR
     ) -> EndpointPreInstance:
         item = EndpointPreInstance.from_endpoint_pre_instance_ar(item_ar)
-        self._set_indexings(item)
+        self._set_indexings(item, self.root_node_class.nodes.get(uid=item.uid))
         return item
 
     def create_ar_from_input_values(

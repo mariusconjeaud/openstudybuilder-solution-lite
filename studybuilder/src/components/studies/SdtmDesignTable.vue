@@ -6,6 +6,8 @@
   :server-items-length="total"
   :options.sync="options"
   :items="items"
+  :export-data-url="exportDataUrl"
+  :export-object-label="this.type"
   show-column-names-toggle-button
   >
 </n-n-table>
@@ -23,7 +25,10 @@ export default {
   computed: {
     ...mapGetters({
       selectedStudy: 'studiesGeneral/selectedStudy'
-    })
+    }),
+    exportDataUrl () {
+      return `listings/studies/${this.selectedStudy.uid}/sdtm/${this.type.toLowerCase()}`
+    }
   },
   props: {
     type: {

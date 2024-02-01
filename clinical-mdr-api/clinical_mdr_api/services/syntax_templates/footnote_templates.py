@@ -1,6 +1,7 @@
 from neomodel import db
 
 from clinical_mdr_api import exceptions
+from clinical_mdr_api.domain_repositories.models.generic import VersionRoot
 from clinical_mdr_api.domain_repositories.models.syntax import FootnoteTemplateRoot
 from clinical_mdr_api.domain_repositories.syntax_instances.footnote_repository import (
     FootnoteRepository,
@@ -75,7 +76,7 @@ class FootnoteTemplateService(GenericSyntaxTemplateService[FootnoteTemplateAR]):
             find_activity_subgroup_by_uid=self._repos.activity_subgroup_repository.find_by_uid_2,
             find_activity_group_by_uid=self._repos.activity_group_repository.find_by_uid_2,
         )
-        self._set_indexings(item)
+        self._set_indexings(item, self.root_node_class.nodes.get(uid=item.uid))
         return item
 
     def get_all(
@@ -153,7 +154,11 @@ class FootnoteTemplateService(GenericSyntaxTemplateService[FootnoteTemplateAR]):
                 self.repository.check_exists_by_name_in_library(
                     name=template.name,
                     library=item.library.name,
-                    type_uid=self.repository.get_template_type_uid(uid),
+                    type_uid=self.repository.get_template_type_uid(
+                        self._repos.footnote_template_repository.root_class.nodes.get_or_none(
+                            uid=uid
+                        )
+                    ),
                 )
                 and template.name != item.name
             ):
@@ -231,7 +236,7 @@ class FootnoteTemplateService(GenericSyntaxTemplateService[FootnoteTemplateAR]):
             ),
         )
 
-    def _set_indexings(self, item: FootnoteTemplate) -> None:
+    def _set_indexings(self, item: FootnoteTemplate, syntax_node: VersionRoot) -> None:
         """
         This method fetches and sets the indexing properties to a template.
         """
@@ -239,15 +244,12 @@ class FootnoteTemplateService(GenericSyntaxTemplateService[FootnoteTemplateAR]):
             return
 
         # Get type
-        footnote_type_name = (
-            self._repos.ct_term_name_repository.get_syntax_template_type(
-                self.root_node_class, item.uid
-            )
+        type_node = syntax_node.has_type.single()
+        footnote_type_name = self._repos.ct_term_name_repository.find_by_uid(
+            type_node.uid
         )
         footnote_type_attributes = (
-            self._repos.ct_term_attributes_repository.get_syntax_template_type(
-                self.root_node_class, item.uid
-            )
+            self._repos.ct_term_attributes_repository.find_by_uid(type_node.uid)
         )
         if footnote_type_name is not None and footnote_type_attributes is not None:
             item.type = CTTermNameAndAttributes.from_ct_term_ars(
@@ -258,7 +260,7 @@ class FootnoteTemplateService(GenericSyntaxTemplateService[FootnoteTemplateAR]):
         # Get indications
         indications = (
             self._repos.dictionary_term_generic_repository.get_syntax_indications(
-                self.root_node_class, item.uid
+                syntax_node
             )
         )
         if indications:
@@ -270,9 +272,7 @@ class FootnoteTemplateService(GenericSyntaxTemplateService[FootnoteTemplateAR]):
                 key=lambda x: x.term_uid,
             )
         # Get activities
-        activities = self._repos.activity_repository.get_syntax_activities(
-            self.root_node_class, item.uid
-        )
+        activities = self._repos.activity_repository.get_syntax_activities(syntax_node)
         if activities:
             item.activities = sorted(
                 [
@@ -288,7 +288,7 @@ class FootnoteTemplateService(GenericSyntaxTemplateService[FootnoteTemplateAR]):
         # Get activity groups
         activity_groups = (
             self._repos.activity_group_repository.get_syntax_activity_groups(
-                self.root_node_class, item.uid
+                syntax_node
             )
         )
         if activity_groups:
@@ -302,7 +302,7 @@ class FootnoteTemplateService(GenericSyntaxTemplateService[FootnoteTemplateAR]):
         # Get activity sub_groups
         activity_subgroups = (
             self._repos.activity_subgroup_repository.get_syntax_activity_subgroups(
-                self.root_node_class, item.uid
+                syntax_node
             )
         )
         if activity_subgroups:
@@ -334,7 +334,9 @@ class FootnoteTemplateService(GenericSyntaxTemplateService[FootnoteTemplateAR]):
         footnote_type_term_uid = getattr(
             template, "type_uid", None
         ) or self._repos.footnote_template_repository.get_template_type_uid(
-            template_uid
+            self._repos.footnote_template_repository.root_class.nodes.get_or_none(
+                uid=template_uid
+            )
         )
 
         if footnote_type_term_uid is not None:

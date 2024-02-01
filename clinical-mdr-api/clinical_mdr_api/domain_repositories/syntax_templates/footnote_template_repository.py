@@ -34,7 +34,6 @@ class FootnoteTemplateRepository(GenericSyntaxTemplateRepository[FootnoteTemplat
 
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
-        *,
         root: FootnoteTemplateRoot,
         library: Library,
         relationship: VersionRelationship,

@@ -41,6 +41,7 @@ class MethodRepository(OdmGenericRepository[OdmMethodAR]):
         library: Library | None,
         relationship: VersionRelationship,
         value: VersionValue,
+        **_kwargs,
     ) -> OdmMethodAR:
         return OdmMethodAR.from_repository_values(
             uid=root.uid,

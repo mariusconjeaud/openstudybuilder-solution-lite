@@ -23,12 +23,12 @@ class ObjectiveRepository(GenericSyntaxInstanceRepository[ObjectiveAR]):
 
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
-        *,
         root: ObjectiveRoot,
         library: Library,
         relationship: VersionRelationship,
         value: ObjectiveValue,
         study_count: int = 0,
+        **_kwargs,
     ) -> ObjectiveAR:
         return cast(
             ObjectiveAR,

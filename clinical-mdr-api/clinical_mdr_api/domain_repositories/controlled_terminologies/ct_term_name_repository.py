@@ -61,6 +61,7 @@ class CTTermNameRepository(CTTermGenericRepository[CTTermNameAR]):
         library: Library | None,
         relationship: VersionRelationship,
         value: CTTermNameValue,
+        **_kwargs,
     ) -> CTTermNameAR:
         ct_term_root_node = root.has_root.single()
         ct_codelist_root_node = ct_term_root_node.has_term.single()

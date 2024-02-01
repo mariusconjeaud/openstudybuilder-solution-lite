@@ -31,7 +31,7 @@ class ObjectivePreInstanceService(ObjectiveService[ObjectivePreInstanceAR]):
         self, item_ar: ObjectivePreInstanceAR
     ) -> ObjectivePreInstance:
         item = ObjectivePreInstance.from_objective_pre_instance_ar(item_ar)
-        self._set_indexings(item)
+        self._set_indexings(item, self.root_node_class.nodes.get(uid=item.uid))
         return item
 
     def create_ar_from_input_values(

@@ -670,10 +670,6 @@ def test_errors(api_client):
     """
     # Test selecting with a non-existent template uid
     dummy_template_uid = "dummy_template_uid"
-    expected_response_code = 404
-    expected_response_text = (
-        f"Syntax Template with uid {dummy_template_uid} does not exist"
-    )
 
     # Preview
     dummy_study_criteria_input = copy.deepcopy(default_study_criteria_input)
@@ -686,8 +682,8 @@ def test_errors(api_client):
     )
     res = response.json()
 
-    assert response.status_code == expected_response_code
-    assert res["message"] == expected_response_text
+    assert response.status_code == 404
+    assert res["message"] == "The requested Syntax Template does not exist."
 
     # Creation
     response = api_client.post(
@@ -696,8 +692,8 @@ def test_errors(api_client):
     )
     res = response.json()
 
-    assert response.status_code == expected_response_code
-    assert res["message"] == expected_response_text
+    assert response.status_code == 404
+    assert res["message"] == "The requested Syntax Template does not exist."
 
     # Batch selection
     response = api_client.post(
@@ -711,8 +707,11 @@ def test_errors(api_client):
     )
     res = response.json()
 
-    assert response.status_code == expected_response_code
-    assert res["message"] == expected_response_text
+    assert response.status_code == 404
+    assert (
+        res["message"]
+        == f"Syntax Template with uid {dummy_template_uid} does not exist"
+    )
 
 
 def test_study_locking_study_criteria(api_client):

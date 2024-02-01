@@ -40,6 +40,7 @@ class FormalExpressionRepository(OdmGenericRepository[OdmFormalExpressionAR]):
         library: Library | None,
         relationship: VersionRelationship,
         value: VersionValue,
+        **_kwargs,
     ) -> OdmFormalExpressionAR:
         return OdmFormalExpressionAR.from_repository_values(
             uid=root.uid,

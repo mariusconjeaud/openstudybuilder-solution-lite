@@ -40,7 +40,7 @@ class ObjectiveTemplateService(GenericSyntaxTemplateService[ObjectiveTemplateAR]
         item_ar = self._set_default_parameter_terms(item_ar)
         cls = ObjectiveTemplateWithCount if item_ar.counts != 0 else ObjectiveTemplate
         item = cls.from_objective_template_ar(item_ar)
-        self._set_indexings(item)
+        self._set_indexings(item, self.root_node_class.nodes.get(uid=item.uid))
         return item
 
     def get_all(

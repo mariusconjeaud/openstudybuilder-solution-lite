@@ -104,6 +104,7 @@ class NumericValueWithUnitRepository(
         library: Library | None,
         relationship: VersionRelationship,
         value: VersionValue,
+        **_kwargs,
     ) -> NumericValueWithUnitAR:
         return self.aggregate_class.from_repository_values(
             uid=root.uid,

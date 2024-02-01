@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 
+from clinical_mdr_api.domain_repositories.models.generic import VersionRoot
 from clinical_mdr_api.domain_repositories.models.syntax import TimeframeTemplateRoot
 from clinical_mdr_api.domain_repositories.syntax_instances.timeframe_repository import (
     TimeframeRepository,
@@ -64,7 +65,7 @@ class TimeframeTemplateService(GenericSyntaxTemplateService[TimeframeTemplateAR]
 
         return filtered_items
 
-    def _set_indexings(self, item: BaseModel) -> None:
+    def _set_indexings(self, item: BaseModel, syntax_node: VersionRoot) -> None:
         """
         This method overrides its parent's method
         """

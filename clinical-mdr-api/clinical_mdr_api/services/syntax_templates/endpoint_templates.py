@@ -42,7 +42,7 @@ class EndpointTemplateService(GenericSyntaxTemplateService[EndpointTemplateAR]):
             EndpointTemplateWithCount if item_ar.study_count != 0 else EndpointTemplate
         )
         item = cls.from_endpoint_template_ar(item_ar)
-        self._set_indexings(item)
+        self._set_indexings(item, self.root_node_class.nodes.get(uid=item.uid))
         return item
 
     def get_all(

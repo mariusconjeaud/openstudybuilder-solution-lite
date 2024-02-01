@@ -46,6 +46,7 @@ class ItemGroupRepository(OdmGenericRepository[OdmItemGroupAR]):
         library: Library | None,
         relationship: VersionRelationship,
         value: VersionValue,
+        **_kwargs,
     ) -> OdmItemGroupAR:
         return OdmItemGroupAR.from_repository_values(
             uid=root.uid,

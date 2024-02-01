@@ -170,7 +170,7 @@ E.g.:
 ## API Conventions
 
 ### Paths
-- We use only nouns in URLs (preferrably in plural form). The API describes resources, so the only place where actions should appear is in the HTTP methods.
+- We use only nouns in URLs (preferably in plural form). The API describes resources, so the only place where actions should appear is in the HTTP methods.
 - Endpoints names should be specified in `kebab-case` (lowercase). 
 - We avoid deep nesting of the endpoints if possible.
 - We minimize the number of root endpoints.
@@ -241,7 +241,7 @@ Broadly speaking, they fall into the following categories:
       ``` 
 
 1. Validation errors raised by our code when our business rules or additional validation constraints (not handled by Pydantic) are unmet, resulting in HTTP response status `400`.
-   - Example response when API consumer tries to create an entity with the same name as the name of an already existing entiry of same type:
+   - Example response when API consumer tries to create an entity with the same name as the name of an already existing entity of same type:
       ```
       {
         "type": "ValidationException",
@@ -265,8 +265,8 @@ Broadly speaking, they fall into the following categories:
       ``` 
 
 
-1. Authenthication/Authorization erros
-   - Example 1: `Bearer` token not suplied in the `Authorization` header, resulting in response status `401` 
+1. Authentication/Authorization errors
+   - Example 1: `Bearer` token not supplied in the `Authorization` header, resulting in response status `401` 
        ```
       // Example to be added later
       ```   
@@ -277,7 +277,7 @@ Broadly speaking, they fall into the following categories:
       ```   
 
 
-All exceptions raised explicity in our code and their corresponding  HTTP reponse statuses are defined [here](clinical_mdr_api/exceptions/__init__.py). 
+All exceptions raised explicitly in our code and their corresponding  HTTP response statuses are defined [here](clinical_mdr_api/exceptions/__init__.py). 
 No other exceptions should ever be raised by our code.
 
 

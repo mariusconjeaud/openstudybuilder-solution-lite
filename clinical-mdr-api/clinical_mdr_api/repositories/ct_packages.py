@@ -59,21 +59,6 @@ WITH collect(diff) as items_diffs, added_items, removed_items, collect(not_modif
 RETURN added_items, removed_items, items_diffs, not_modified_items
 """
 
-CODELIST_DATA_RETRIEVAL = """
-MATCH (old_package:CTPackage {name:$old_package_name})-[:CONTAINS_CODELIST]->(package_codelist:CTPackageCodelist)-[:CONTAINS_ATTRIBUTES]->
-(codelist_attr_val)<-[old_versions:HAS_VERSION]-(codelist_attr_root)<-[:HAS_ATTRIBUTES_ROOT]-(old_codelist_root)
-WITH old_codelist_root, codelist_attr_val, max(old_versions.start_date) AS latest_date
-WITH collect(apoc.map.fromValues([old_codelist_root.uid, {
-    value_node:codelist_attr_val,
-    change_date: latest_date}])) AS old_items
-
-MATCH (new_package:CTPackage {name:$new_package_name})-[:CONTAINS_CODELIST]->(package_codelist:CTPackageCodelist)-[:CONTAINS_ATTRIBUTES]->
-(codelist_attr_val)<-[new_versions:HAS_VERSION]-(codelist_attr_root)<-[:HAS_ATTRIBUTES_ROOT]-(new_codelist_root)
-WITH old_items, new_codelist_root, codelist_attr_val, max(new_versions.start_date) AS latest_date
-WITH old_items, collect(apoc.map.fromValues([new_codelist_root.uid, {
-    value_node:codelist_attr_val,
-    change_date: latest_date}])) AS new_items
-"""
 CODELIST_DIFF_CLAUSE = """
 CASE WHEN old_items_map[common_item] <> new_items_map[common_item] THEN
 apoc.map.fromValues([
@@ -84,9 +69,21 @@ apoc.map.fromValues([
     ])
 END AS diff
 """
+
 CODELIST_RETURN_CLAUSE = """
 WITH collect(diff) as items_diffs, added_items, removed_items, new_items_map
 RETURN added_items, removed_items, items_diffs, new_items_map
+"""
+
+PACKAGE_CODELISTS_DATA_RETRIEVAL = """
+MATCH (package:CTPackage {name:$package_name})-[:CONTAINS_CODELIST]->(package_codelist:CTPackageCodelist)-[:CONTAINS_ATTRIBUTES]->
+(codelist_attr_val)<-[versions:HAS_VERSION]-(codelist_attr_root)<-[:HAS_ATTRIBUTES_ROOT]-(codelist_root)
+WITH codelist_root, codelist_attr_val, max(versions.start_date) AS latest_date
+WITH collect(apoc.map.fromValues([codelist_root.uid, {
+    uid: codelist_root.uid,
+    value_node:codelist_attr_val,
+    change_date: latest_date}])) AS items
+RETURN apoc.map.mergeList(items) AS items_map
 """
 
 PACKAGE_TERMS_DATA_RETRIEVAL = """
@@ -115,6 +112,7 @@ apoc.map.fromValues([
     ])
 END AS diff
 """
+
 TERM_RETURN_CLAUSE = """
 WITH collect(diff) as items_diffs, added_items, removed_items
 RETURN added_items, removed_items, items_diffs
@@ -245,16 +243,38 @@ def get_ct_packages_codelist_changes(
     return output
 
 
+def are_optional_lists_different(left_list, right_list):
+    if left_list == right_list:
+        return False
+    if left_list is None or right_list is None:
+        return True
+    return set(left_list) != set(right_list)
+
+
 def are_terms_different(left_term, right_term):
     left_value = left_term["value_node"]
     right_value = right_term["value_node"]
     return (
         left_term["change_date"] != right_term["change_date"]
         or left_value["preferred_term"] != right_value["preferred_term"]
-        or left_value["synonyms"] != right_value["synonyms"]
+        or are_optional_lists_different(left_value["synonyms"], right_value["synonyms"])
         or left_value["code_submission_value"] != right_value["code_submission_value"]
         or left_value["name_submission_value"] != right_value["name_submission_value"]
         or left_value["definition"] != right_value["definition"]
+    )
+
+
+def are_codelists_different(left_cl, right_cl):
+    left_value = left_cl["value_node"]
+    right_value = right_cl["value_node"]
+    return (
+        left_cl["change_date"] != right_cl["change_date"]
+        or left_value["preferred_term"] != right_value["preferred_term"]
+        or are_optional_lists_different(left_value["synonyms"], right_value["synonyms"])
+        or left_value["name"] != right_value["name"]
+        or left_value["definition"] != right_value["definition"]
+        or left_value["extensible"] != right_value["extensible"]
+        or left_value["submission_value"] != right_value["submission_value"]
     )
 
 
@@ -297,39 +317,24 @@ def term_diff(left_term, right_term):
     return result
 
 
+def codelist_diff(left_cl, right_cl):
+    left_value = left_cl["value_node"]
+    right_value = right_cl["value_node"]
+
+    value_diff = diff_dicts(left_value, right_value)
+    result = {
+        "uid": right_cl["uid"],
+        "change_date": right_cl["change_date"],
+        "value_node": value_diff,
+    }
+    return result
+
+
 @db.transaction
 def get_ct_packages_changes(old_package_name: str, new_package_name: str) -> dict:
-    query_params = {
-        "old_package_name": old_package_name,
-        "new_package_name": new_package_name,
-    }
-
     output = {}
     # codelists query
-    complete_codelist_query = " ".join(
-        [
-            CODELIST_DATA_RETRIEVAL,
-            COMPARISON_PART,
-            CODELIST_DIFF_CLAUSE,
-            CODELIST_RETURN_CLAUSE,
-        ]
-    )
-    codelist_ret, _ = db.cypher_query(complete_codelist_query, query_params)
-    output["new_codelists"] = (
-        sorted(codelist_ret[0][0], key=lambda ct_codelist: ct_codelist["change_date"])
-        if len(codelist_ret) > 0
-        else []
-    )
-    output["deleted_codelists"] = (
-        sorted(codelist_ret[0][1], key=lambda ct_codelist: ct_codelist["change_date"])
-        if len(codelist_ret) > 0
-        else []
-    )
-    output["updated_codelists"] = codelist_ret[0][2] if len(codelist_ret) > 0 else []
-    all_codelists_in_package = codelist_ret[0][3] if len(codelist_ret) > 0 else {}
-
-    # terms query
-    # Fetch the terms and do the comparison here.
+    # Fetch the codelists and terms and do the comparison here.
     # Doing the comparison in cypher uses too much ram.
     query_params_old = {
         "package_name": old_package_name,
@@ -337,6 +342,47 @@ def get_ct_packages_changes(old_package_name: str, new_package_name: str) -> dic
     query_params_new = {
         "package_name": new_package_name,
     }
+    old_codelists_ret, _ = db.cypher_query(
+        PACKAGE_CODELISTS_DATA_RETRIEVAL, query_params_old
+    )
+    new_codelists_ret, _ = db.cypher_query(
+        PACKAGE_CODELISTS_DATA_RETRIEVAL, query_params_new
+    )
+
+    new_codelists = new_codelists_ret[0][0]
+    old_codelists = old_codelists_ret[0][0]
+    old_uids = set(old_codelists.keys())
+    new_uids = set(new_codelists.keys())
+    added_uids = new_uids - old_uids
+    deleted_uids = old_uids - new_uids
+    added_codelists = [new_codelists[uid] for uid in added_uids]
+    deleted_codelists = [old_codelists[uid] for uid in deleted_uids]
+
+    # Find changed codelists
+    cl_common_uids = new_uids & old_uids
+    changed_codelists = []
+    for uid in cl_common_uids:
+        old_codelist = old_codelists[uid]
+        new_codelist = new_codelists[uid]
+        if are_codelists_different(old_codelist, new_codelist):
+            changed_codelists.append(codelist_diff(old_codelist, new_codelist))
+
+    output["new_codelists"] = (
+        sorted(added_codelists, key=lambda ct_codelist: ct_codelist["change_date"])
+        if len(added_codelists) > 0
+        else []
+    )
+    output["deleted_codelists"] = (
+        sorted(deleted_codelists, key=lambda ct_codelist: ct_codelist["change_date"])
+        if len(deleted_codelists) > 0
+        else []
+    )
+    output["updated_codelists"] = (
+        sorted(changed_codelists, key=lambda ct_codelist: ct_codelist["change_date"])
+        if len(changed_codelists) > 0
+        else []
+    )
+
     old_terms_ret, _ = db.cypher_query(PACKAGE_TERMS_DATA_RETRIEVAL, query_params_old)
     new_terms_ret, _ = db.cypher_query(PACKAGE_TERMS_DATA_RETRIEVAL, query_params_new)
 
@@ -374,9 +420,7 @@ def get_ct_packages_changes(old_package_name: str, new_package_name: str) -> dic
         else []
     )
 
-    update_modified_codelists(
-        output=output, all_codelists_in_package=all_codelists_in_package
-    )
+    update_modified_codelists(output=output, all_codelists_in_package=new_codelists)
     return output
 
 

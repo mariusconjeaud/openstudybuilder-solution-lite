@@ -104,6 +104,7 @@ class DictionaryCodelistGenericRepository(
         library: Library | None,
         relationship: VersionRelationship,
         value: VersionValue,
+        **_kwargs,
     ) -> DictionaryCodelistAR:
         current_terms = []
         previous_terms = []

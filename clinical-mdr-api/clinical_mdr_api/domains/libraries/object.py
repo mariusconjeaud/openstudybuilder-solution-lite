@@ -130,7 +130,7 @@ class ParametrizedTemplateVO:
                     combined_name = values[0].value
                 else:
                     # Use a Python reduce function to combine the values array and the conjunctions array into a string.
-                    # We use comma's for the first few items, and the specified conjuction word between the last two.
+                    # We use comma's for the first few items, and the specified conjunction word between the last two.
                     combined_name = reduce(
                         add,
                         [
@@ -163,17 +163,18 @@ class ParametrizedTemplateVO:
             "[NA]": "[]",
             ",,": ",",
             "  ": " ",
-            "[] []": "[][]",
-            "[] ([": "[]([",
-            "[) []": "])[]",
-            "] and []": "][]",
-            "[] and [": "[][",
-            "], []": "][]",
-            "[], [": "[][",
-            "] or []": "][]",
-            "[] or [": "[][",
-            "] []": "][]",
-            "[] [": "[][",
+            "[] []": "",
+            "[] ([": "([",
+            "[) []": "])",
+            "] and []": "]",
+            "[] and [": "[",
+            "], []": "]",
+            "[], [": "[",
+            "] or []": "]",
+            "[] or [": "[",
+            "] []": "]",
+            "[] [": "[",
+            "[]": "",
             "()": "",
             "(,)": "",
         }

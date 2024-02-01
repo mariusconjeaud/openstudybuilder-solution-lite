@@ -38,6 +38,7 @@ class StudyEventRepository(OdmGenericRepository[OdmStudyEventAR]):
         library: Library | None,
         relationship: VersionRelationship,
         value: VersionValue,
+        **_kwargs,
     ) -> OdmStudyEventAR:
         return OdmStudyEventAR.from_repository_values(
             uid=root.uid,

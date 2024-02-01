@@ -98,11 +98,11 @@ class ActivityInstanceClassRepository(
 
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
-        *,
         root: ActivityInstanceClassRoot,
         library: Library,
         relationship: VersionRelationship,
         value: ActivityInstanceClassValue,
+        **_kwargs,
     ) -> ActivityInstanceClassAR:
         parent_class = root.parent_class.get_or_none()
         dataset_class_uids = [node.uid for node in root.maps_dataset_class.all()]

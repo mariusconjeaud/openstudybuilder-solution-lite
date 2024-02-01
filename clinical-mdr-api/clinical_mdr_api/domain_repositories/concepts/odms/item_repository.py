@@ -51,6 +51,7 @@ class ItemRepository(OdmGenericRepository[OdmItemAR]):
         library: Library | None,
         relationship: VersionRelationship,
         value: VersionValue,
+        **_kwargs,
     ) -> OdmItemAR:
         return OdmItemAR.from_repository_values(
             uid=root.uid,

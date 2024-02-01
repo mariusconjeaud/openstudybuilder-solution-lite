@@ -150,11 +150,11 @@ class SponsorModelVariableClassRepository(
 
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
-        *,
         root: VariableClass,
         library: Library,
         relationship: VersionRelationship,
         value: SponsorModelVariableClassInstance,
+        **_kwargs,
     ) -> SponsorModelVariableClassAR:
         # Get parent class-related info
         dataset_class_value: SponsorModelDatasetClassInstance = (

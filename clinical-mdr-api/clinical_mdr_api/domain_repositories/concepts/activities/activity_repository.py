@@ -87,6 +87,7 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
         library: Library | None,
         relationship: VersionRelationship,
         value: VersionValue,
+        **_kwargs,
     ) -> ActivityAR:
         replaced_activity = value.replaced_by_activity.get_or_none()
         activity_groupings_nodes = value.has_grouping.all()
@@ -256,17 +257,15 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
         return are_concept_properties_changed or are_rels_changed or are_props_changed
 
     def get_syntax_activities(
-        self, root_class: type, syntax_uid: str
+        self, syntax_node: VersionRoot
     ) -> list[ActivityAR] | None:
         """
-        This method returns the activities for the syntax with provided uid
+        This method returns the activities for the provided syntax
 
-        :param root_class: The class of the root node for the syntax
-        :param syntax_uid: UID of the syntax
+        :param syntax_node: Syntax Root node
         :return list[ActivityAR] | None:
         """
-        syntax = root_class.nodes.get(uid=syntax_uid)
-        activity_nodes = syntax.has_activity.all()
+        activity_nodes = syntax_node.has_activity.all()
         if activity_nodes:
             activities = []
             for node in activity_nodes:

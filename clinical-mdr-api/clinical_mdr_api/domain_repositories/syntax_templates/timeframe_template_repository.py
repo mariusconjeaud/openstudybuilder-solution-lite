@@ -25,7 +25,6 @@ class TimeframeTemplateRepository(GenericSyntaxTemplateRepository[TimeframeTempl
 
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
-        *,
         root: TimeframeTemplateRoot,
         library: Library,
         relationship: VersionRelationship,

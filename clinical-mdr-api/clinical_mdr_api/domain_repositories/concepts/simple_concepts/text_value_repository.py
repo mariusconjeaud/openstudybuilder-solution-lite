@@ -67,6 +67,7 @@ class TextValueRepository(SimpleConceptGenericRepository[TextValueAR]):
         library: Library | None,
         relationship: VersionRelationship,
         value: VersionValue,
+        **_kwargs,
     ) -> TextValueAR:
         return self.aggregate_class.from_repository_values(
             uid=root.uid,

@@ -41,6 +41,9 @@ def test_global_security_dependency_with_invalid_token(
             response = app_client.request(
                 method,
                 path,
-                headers={"Authorization": f"Bearer {EXPIRED_ACCESS_TOKEN}"},
+                headers={
+                    "Authorization": f"Bearer {EXPIRED_ACCESS_TOKEN}",
+                    "User-Agent": "test",
+                },
             )
             assert response.status_code == 401, f"Bad status code for {method} {path}"

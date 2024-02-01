@@ -25,12 +25,12 @@ class ActivityInstructionPreInstanceRepository(
 
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
-        *,
         root: ActivityInstructionPreInstanceRoot,
         library: Library,
         relationship: VersionRelationship,
         value: ActivityInstructionPreInstanceValue,
         study_count: int = 0,
+        **_kwargs,
     ):
         return ActivityInstructionPreInstanceAR.from_repository_values(
             uid=root.uid,

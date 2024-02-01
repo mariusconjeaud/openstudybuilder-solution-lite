@@ -108,11 +108,11 @@ class UnitDefinitionRepository(ConceptGenericRepository[UnitDefinitionAR]):
 
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
-        *,
         root: VersionRoot,
         library: Library,
         relationship: VersionRelationship,
         value: VersionValue,
+        **_kwargs,
     ) -> UnitDefinitionAR:
         ar_root = cast(UnitDefinitionRoot, root)
         ar_value = cast(UnitDefinitionValue, value)

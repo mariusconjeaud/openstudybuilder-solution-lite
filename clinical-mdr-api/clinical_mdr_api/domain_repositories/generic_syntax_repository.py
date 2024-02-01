@@ -17,6 +17,7 @@ from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
     CTTermRoot,
 )
 from clinical_mdr_api.domain_repositories.models.dictionary import DictionaryTermRoot
+from clinical_mdr_api.domain_repositories.models.syntax import SyntaxTemplateRoot
 from clinical_mdr_api.domain_repositories.models.template_parameter import (
     ParameterTemplateRoot,
     TemplateParameterComplexRoot,
@@ -232,12 +233,12 @@ class GenericSyntaxRepository(
         )
         return simple_parameter_term_vo
 
-    def get_template_type_uid(self, template_uid: str) -> str:
+    def get_template_type_uid(self, syntax_node: SyntaxTemplateRoot) -> str:
         """
         Get the UID of the type associated with a given Syntax Template.
 
         Args:
-            template_uid (str): The UID of the Syntax Template to get the type for.
+            syntax_node (SyntaxTemplateRoot): Syntax Template Root to get the type for.
 
         Returns:
             str: The UID of the type associated with the given Syntax Template.
@@ -246,12 +247,10 @@ class GenericSyntaxRepository(
             NotFoundException: If a Syntax Template does not exist.
         """
 
-        if not (root := self.root_class.nodes.get_or_none(uid=template_uid)):
-            raise NotFoundException(
-                f"Syntax Template with uid {template_uid} does not exist"
-            )
+        if not syntax_node:
+            raise NotFoundException("The requested Syntax Template does not exist.")
 
-        ct_term = root.has_type.get_or_none()
+        ct_term = syntax_node.has_type.get_or_none()
 
         return ct_term.uid if ct_term else None
 

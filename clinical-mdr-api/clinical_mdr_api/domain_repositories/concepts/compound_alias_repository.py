@@ -94,6 +94,7 @@ class CompoundAliasRepository(ConceptGenericRepository):
         library: Library | None,
         relationship: VersionRelationship,
         value: VersionValue,
+        **_kwargs,
     ) -> CompoundAliasAR:
         return CompoundAliasAR.from_repository_values(
             uid=root.uid,

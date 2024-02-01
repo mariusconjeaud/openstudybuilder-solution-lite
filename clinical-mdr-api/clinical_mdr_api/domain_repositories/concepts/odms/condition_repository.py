@@ -44,6 +44,7 @@ class ConditionRepository(OdmGenericRepository[OdmConditionAR]):
         library: Library | None,
         relationship: VersionRelationship,
         value: VersionValue,
+        **_kwargs,
     ) -> OdmConditionAR:
         return OdmConditionAR.from_repository_values(
             uid=root.uid,

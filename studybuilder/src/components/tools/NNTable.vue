@@ -381,6 +381,10 @@ export default {
       type: Array,
       required: false
     },
+    initialFilters: {
+      type: Object,
+      required: false
+    },
     itemsPerPage: {
       type: Number,
       required: false
@@ -543,6 +547,15 @@ export default {
       }
       this.selectedColumnData = map
       this.$emit('filter', this.filteringParams.filters, true, true)
+    }
+    if (this.initialFilters !== undefined) {
+      this.selectedColumnData = this.initialFilters
+      const filters = {}
+      for (const key in this.initialFilters) {
+        filters[key] = { v: this.initialFilters[key] }
+      }
+      this.filters = JSON.stringify(filters)
+      this.$emit('filter', this.filters, true, true)
     }
   },
   updated () {

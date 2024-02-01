@@ -31,8 +31,8 @@
       },
       "result": {
         "uid": "8220b276-0bd3-4308-8e27-91231f1e4c9d",
-        "name": "To investigate [][]",
-        "name_plain": "To investigate ",
+        "name": "To investigate",
+        "name_plain": "To investigate",
         "start_date": "2020-11-11T01:06:37+00:00",
         "end_date": null,
         "status": "Draft",
@@ -111,7 +111,7 @@
       },
       "result": {
         "uid": "8220b276-0bd3-4308-8e27-91231f1e4c9d",
-        "name": "To investigate [type 2 diabetes][]",
+        "name": "To investigate [type 2 diabetes]",
         "name_plain": "To investigate type 2 diabetes",
         "start_date": "2020-11-11T01:06:37+00:00",
         "end_date": null,
@@ -204,7 +204,7 @@
       },
       "result": {
         "uid": "8220b276-0bd3-4308-8e27-91231f1e4c9d",
-        "name": "To investigate [type 2 diabetes and coronary heart disease][]",
+        "name": "To investigate [type 2 diabetes and coronary heart disease]",
         "name_plain": "To investigate type 2 diabetes and coronary heart disease",
         "start_date": "2020-11-11T01:06:37+00:00",
         "end_date": null,
@@ -309,7 +309,7 @@
       },
       "result": {
         "uid": "8220b276-0bd3-4308-8e27-91231f1e4c9d",
-        "name": "To investigate [type 2 diabetes, coronary heart disease and breathing problems][]",
+        "name": "To investigate [type 2 diabetes, coronary heart disease and breathing problems]",
         "name_plain": "To investigate type 2 diabetes, coronary heart disease and breathing problems",
         "start_date": "2020-11-11T01:06:37+00:00",
         "end_date": null,
@@ -408,7 +408,7 @@
       },
       "result": {
         "uid": "8220b276-0bd3-4308-8e27-91231f1e4c9d",
-        "name": "To investigate []([Metformin])",
+        "name": "To investigate ([Metformin])",
         "name_plain": "To investigate (Metformin)",
         "start_date": "2020-11-11T01:06:37+00:00",
         "end_date": null,

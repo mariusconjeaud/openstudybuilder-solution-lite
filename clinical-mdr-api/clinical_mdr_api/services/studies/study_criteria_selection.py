@@ -116,7 +116,9 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
                     ):
                         criteria_type_uid = (
                             criteria_template_repo.get_template_type_uid(
-                                template_uid=criteria_template.uid
+                                criteria_template_repo.root_class.nodes.get_or_none(
+                                    uid=criteria_template.uid
+                                )
                             )
                         )
 
@@ -255,7 +257,9 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
 
                 criteria_type_uid = (
                     repos.criteria_template_repository.get_template_type_uid(
-                        criteria_data.criteria_template_uid
+                        repos.criteria_template_repository.root_class.nodes.get_or_none(
+                            uid=criteria_data.criteria_template_uid
+                        )
                     )
                 )
 
@@ -324,9 +328,9 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
                     f"There is no approved criteria identified by provided uid ({selection_create_input.criteria_uid})"
                 )
 
-            criteria_type_uid = (
-                self._repos.criteria_template_repository.get_template_type_uid(
-                    template_uid=selected_criteria.template_uid
+            criteria_type_uid = self._repos.criteria_template_repository.get_template_type_uid(
+                self._repos.criteria_template_repository.root_class.nodes.get_or_none(
+                    uid=selected_criteria.template_uid
                 )
             )
 
@@ -391,7 +395,9 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
         try:
             # get criteria type uid from the criteria template
             criteria_type_uid = repos.criteria_template_repository.get_template_type_uid(
-                template_uid=selection_create_input.criteria_data.criteria_template_uid
+                self._repos.criteria_template_repository.root_class.nodes.get_or_none(
+                    uid=selection_create_input.criteria_data.criteria_template_uid
+                )
             )
 
             criteria_ar = self._create_or_get_criteria_instance(
@@ -457,7 +463,9 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
 
                 # get criteria type uid from the criteria template
                 criteria_type_uid = repos.criteria_template_repository.get_template_type_uid(
-                    template_uid=selection_create_input.criteria_data.criteria_template_uid
+                    self._repos.criteria_template_repository.root_class.nodes.get_or_none(
+                        uid=selection_create_input.criteria_data.criteria_template_uid
+                    )
                 )
 
                 # create criteria instance

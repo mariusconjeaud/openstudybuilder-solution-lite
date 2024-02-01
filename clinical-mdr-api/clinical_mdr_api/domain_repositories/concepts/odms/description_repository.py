@@ -40,6 +40,7 @@ class DescriptionRepository(OdmGenericRepository[OdmDescriptionAR]):
         library: Library | None,
         relationship: VersionRelationship,
         value: VersionValue,
+        **_kwargs,
     ) -> OdmDescriptionAR:
         return OdmDescriptionAR.from_repository_values(
             uid=root.uid,

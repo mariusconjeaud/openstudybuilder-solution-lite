@@ -27,7 +27,9 @@ from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
 from clinical_mdr_api.domain_repositories.models.generic import (
     Library,
     VersionRelationship,
+    VersionRoot,
 )
+from clinical_mdr_api.domain_repositories.models.syntax import SyntaxTemplateRoot
 from clinical_mdr_api.domains.controlled_terminologies.utils import TermParentType
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
 from clinical_mdr_api.models.utils import GenericFilteringReturn
@@ -119,6 +121,7 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
         library: Library | None,
         relationship: VersionRelationship,
         value: ControlledTerminology,
+        **_kwargs,
     ) -> _AggregateRootType:
         raise NotImplementedError
 
@@ -336,31 +339,27 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
         return terms_ars
 
     def get_syntax_template_type(
-        self, root_class: type, syntax_uid: str
+        self, syntax_node: SyntaxTemplateRoot
     ) -> _AggregateRootType:
         """
-        This method returns the template type for the syntax with provided uid.
+        This method returns the template type for the provided syntax.
 
-        :param root_class: The class of the root node for the syntax
-        :param syntax_uid: UID of the syntax
+        :param syntax_node: Syntax Root node
         :return _AggregateRootType:
         """
-        syntax = root_class.nodes.get(uid=syntax_uid)
-        type_node = syntax.has_type.single()
+        type_node = syntax_node.has_type.single()
         return self.find_by_uid(term_uid=type_node.uid)
 
     def get_syntax_categories(
-        self, root_class: type, syntax_uid: str
+        self, syntax_node: VersionRoot
     ) -> list[_AggregateRootType] | None:
         """
-        This method returns the categories for the syntax with provided uid.
+        This method returns the categories for the provided syntax.
 
-        :param root_class: The class of the root node for the syntax
-        :param syntax_uid: UID of the syntax
+        :param syntax_node: Syntax Root node
         :return list[_AggregateRootType] | None:
         """
-        syntax = root_class.nodes.get(uid=syntax_uid)
-        category_nodes = syntax.has_category.all()
+        category_nodes = syntax_node.has_category.all()
         if category_nodes:
             categories = []
             for node in category_nodes:
@@ -371,17 +370,15 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
         return None
 
     def get_syntax_subcategories(
-        self, root_class: type, syntax_uid: str
+        self, syntax_node: VersionRoot
     ) -> list[_AggregateRootType] | None:
         """
-        This method returns the sub_categories for the syntax with provided uid.
+        This method returns the sub_categories for the provided syntax.
 
-        :param root_class: The class of the root node for the syntax
-        :param syntax_uid: UID of the syntax
+        :param syntax_node: Syntax Root node
         :return list[_AggregateRootType] | None:
         """
-        syntax = root_class.nodes.get(uid=syntax_uid)
-        sub_category_nodes = syntax.has_subcategory.all()
+        sub_category_nodes = syntax_node.has_subcategory.all()
         if sub_category_nodes:
             sub_categories = []
             for node in sub_category_nodes:

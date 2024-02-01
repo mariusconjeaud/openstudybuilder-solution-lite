@@ -54,8 +54,8 @@
         },
         "objective": {
           "uid": "Objective_000001",
-          "name": "To investigate []",
-          "name_plain": "To investigate ",
+          "name": "To investigate",
+          "name_plain": "To investigate",
           "start_date": "2021-10-25T13:17:02.868961",
           "end_date": null,
           "status": "Final",
@@ -70,7 +70,7 @@
             "name_plain": "To investigate [Indication]",
             "uid": "ObjectiveTemplate_000001",
             "sequence_id": "O1",
-          "library_name": "Test library"
+            "library_name": "Test library"
           },
           "parameter_terms": [
             {
@@ -171,7 +171,7 @@
             "name_plain": "To investigate [Indication]",
             "uid": "ObjectiveTemplate_000001",
             "sequence_id": "O1",
-          "library_name": "Test library"
+            "library_name": "Test library"
           },
           "parameter_terms": [
             {
@@ -285,7 +285,7 @@
             "name_plain": "To investigate [Indication]",
             "uid": "ObjectiveTemplate_000001",
             "sequence_id": "O1",
-          "library_name": "Test library"
+            "library_name": "Test library"
           },
           "parameter_terms": [
             {
@@ -411,7 +411,7 @@
             "name_plain": "To investigate [Indication]",
             "uid": "ObjectiveTemplate_000001",
             "sequence_id": "O1",
-          "library_name": "Test library"
+            "library_name": "Test library"
           },
           "parameter_terms": [
             {

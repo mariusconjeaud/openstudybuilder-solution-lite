@@ -1,5 +1,27 @@
 # OpenStudyBuilder Commits changelog
 
+##  V 0.7.3
+
+### Fixes and Enhancements
+
+## Studies
+- Unwanted HTML tags are removed when listing 'Study Endpoint' template parameter values for selection in e.g. Study Objectives of Study Purpose.
+- In the Version history table for various study elements, HTML characters in the text columns have been removed in Study Criteria.
+- SDTM study design datasets can now be downloaded without error.
+- Hiding retired activities and showing only Final activities in the list by default for better view in 'Studies' Module.
+
+## Libraries
+- Out of Memory error issue resolved when comparing the first and last version of a SDTM CT package in codelists.
+- Removing "ADaM parameter code" as a mandatory field when adding a new Activitiy instance under concepts.
+- If you hide a parameter in a sequence of parameters, the sentence generation is in correct format going forward for all template categories under Syntax templates.
+- Hiding retired activities and showing only Final activities in the list by default for better view in 'Library' Module.
+- On the "Overview" pages of "Activities" and "Activities Instances" boolean values are now displayed properly on the OSB YAML panel.
+- Downloaded (.csv file) version of Inclusion Criteria Pre-instances contains all information going forward.
+
+## API
+- Refactoring parts of the API code, including reduction of the number of calls made by the backend to the DataBase, to improve loading times when working with syntax templates.
+- The fundamental fix on API query parameter 'at_specified_date_time'is implemented resulted with no errors in API endpoints going forward.
+
 ##  V 0.7.2
 
 ### Fixes and Enhancements

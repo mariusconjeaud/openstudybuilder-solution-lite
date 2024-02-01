@@ -88,6 +88,7 @@ class LagTimeRepository(NumericValueWithUnitRepository):
         library: Library | None,
         relationship: VersionRelationship,
         value: VersionValue,
+        **_kwargs,
     ) -> LagTimeAR:
         return self.aggregate_class.from_repository_values(
             uid=root.uid,

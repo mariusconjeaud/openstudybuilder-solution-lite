@@ -36,11 +36,11 @@ class ParameterTemplateRepository(GenericSyntaxTemplateRepository[ParameterTempl
 
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
-        *,
         root: ParameterTemplateRoot,
         library: Library,
         relationship: VersionRelationship,
         value: ParameterTemplateValue,
+        **_kwargs,
     ) -> ParameterTemplateAR:
         parameter_term = root.has_parameter_term.get()
         library = root.has_library.get()
