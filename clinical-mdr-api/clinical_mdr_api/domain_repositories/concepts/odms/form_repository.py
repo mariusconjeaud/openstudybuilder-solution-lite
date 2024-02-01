@@ -46,6 +46,7 @@ class FormRepository(OdmGenericRepository[OdmFormAR]):
         library: Library | None,
         relationship: VersionRelationship,
         value: VersionValue,
+        **_kwargs,
     ) -> OdmFormAR:
         return OdmFormAR.from_repository_values(
             uid=root.uid,

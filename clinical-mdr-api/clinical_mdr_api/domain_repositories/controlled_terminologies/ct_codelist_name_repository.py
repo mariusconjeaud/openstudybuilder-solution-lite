@@ -83,6 +83,7 @@ class CTCodelistNameRepository(CTCodelistGenericRepository[CTCodelistNameAR]):
         library: Library | None,
         relationship: VersionRelationship,
         value: CTCodelistNameValue,
+        **_kwargs,
     ) -> CTCodelistNameAR:
         ct_codelist_root_node = root.has_root.single()
         return CTCodelistNameAR.from_repository_values(

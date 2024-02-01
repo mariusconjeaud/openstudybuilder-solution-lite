@@ -66,6 +66,7 @@
         <n-n-parameter-highlighter
           :name="templateForm.name"
           default-color="orange"
+          :tooltip="false"
           />
       </v-card-text>
     </v-card>

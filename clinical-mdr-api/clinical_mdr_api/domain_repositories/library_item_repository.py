@@ -5,7 +5,14 @@ from typing import Any, Iterable, Mapping, TypeVar
 
 from cachetools import TTLCache, cached
 from cachetools.keys import hashkey
-from neomodel import OUTGOING, NodeClassNotDefined, RelationshipManager, Traversal, db
+from neomodel import (
+    OUTGOING,
+    NodeClassNotDefined,
+    RelationshipDefinition,
+    RelationshipManager,
+    Traversal,
+    db,
+)
 from neomodel.exceptions import DoesNotExist
 
 from clinical_mdr_api import config, exceptions
@@ -51,7 +58,6 @@ class LibraryItemRepositoryImplBase(
     @abc.abstractmethod
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
-        *,
         root: VersionRoot,
         library: Library,
         relationship: VersionRelationship,
@@ -269,25 +275,24 @@ class LibraryItemRepositoryImplBase(
             is_data_changed
             or previous_versioned_object.item_metadata != versioned_object.item_metadata
         ):
-            # Updating latest_draft nad latest_final relationship if necessary
+            # Updating latest_draft, latest_final or latest_retired relationship if necessary
             if versioned_object.item_metadata.status == LibraryItemStatus.DRAFT:
                 self._recreate_relationship(
                     root, latest_draft_rel, new_value, versioning_data
                 )
-                self._close_relationship(root, latest_final_rel, versioning_data)
 
             elif versioned_object.item_metadata.status == LibraryItemStatus.FINAL:
                 self._recreate_relationship(
                     root, latest_final_rel, new_value, versioning_data
                 )
-                self._close_relationship(root, latest_draft_rel, versioning_data)
-                self._close_relationship(root, latest_retired_rel, versioning_data)
 
             elif versioned_object.item_metadata.status == LibraryItemStatus.RETIRED:
                 self._recreate_relationship(
                     root, latest_retired_rel, new_value, versioning_data
                 )
-                self._close_relationship(root, latest_final_rel, versioning_data)
+
+            # close all previous HAS_VERSIONs
+            self._close_previous_versions(root, versioning_data)
 
         # recreating parameters connections
         self._maintain_parameters(versioned_object, root, new_value)
@@ -323,10 +328,9 @@ class LibraryItemRepositoryImplBase(
         self._db_create_relationship(relation, value)
 
     @sb_clear_cache(caches=["cache_store_item_by_uid"])
-    def _close_relationship(
+    def _close_previous_versions(
         self,
         root: VersionRoot,
-        relation: VersionRelationship,
         parameters: Mapping[str, Any],
     ):
         (
@@ -339,7 +343,6 @@ class LibraryItemRepositoryImplBase(
         all_values = has_version_rel.all()
         for value in all_values:
             all_rels = has_version_rel.all_relationships(value)
-            self._db_remove_relationship(relation)
             # Set any missing end_date to the new start_date, for all except the new version
             for rel in all_rels:
                 if rel.version != parameters["version"] and rel.end_date is None:
@@ -455,19 +458,16 @@ class LibraryItemRepositoryImplBase(
                 value: VersionValue = latest_retired_rel.single()
 
             relationship: VersionRelationship = self._get_latest_version(root, value)
-            if return_study_count:
-                study_count: int = self._get_study_count(value)
-                ar = self._create_aggregate_root_instance_from_version_root_relationship_and_value(
-                    root=root,
-                    library=library,
-                    relationship=relationship,
-                    value=value,
-                    study_count=study_count,
-                )
-            else:
-                ar = self._create_aggregate_root_instance_from_version_root_relationship_and_value(
-                    root=root, library=library, relationship=relationship, value=value
-                )
+
+            ar = self._create_aggregate_root_instance_based_on_return_counts(
+                library=library,
+                root=root,
+                value=value,
+                relationship=relationship,
+                return_instantiation_counts=False,
+                return_study_count=return_study_count,
+            )
+
             ar.repository_closure_data = RETRIEVED_READ_ONLY_MARK
             aggregates.append(ar)
         return aggregates
@@ -725,19 +725,15 @@ class LibraryItemRepositoryImplBase(
             )
             relationship: VersionRelationship = latest_version
 
-            if return_study_count:
-                study_count: int = self._get_study_count(release)
-                ar = self._create_aggregate_root_instance_from_version_root_relationship_and_value(
-                    root=root,
-                    library=library,
-                    relationship=relationship,
-                    value=release,
-                    study_count=study_count,
-                )
-            else:
-                ar = self._create_aggregate_root_instance_from_version_root_relationship_and_value(
-                    root=root, library=library, relationship=relationship, value=release
-                )
+            ar = self._create_aggregate_root_instance_based_on_return_counts(
+                library=library,
+                root=root,
+                value=release,
+                relationship=relationship,
+                return_instantiation_counts=False,
+                return_study_count=return_study_count,
+            )
+
             ar.repository_closure_data = RETRIEVED_READ_ONLY_MARK
             aggregates.append(ar)
 
@@ -773,6 +769,58 @@ class LibraryItemRepositoryImplBase(
             return_instantiation_counts,
         )
 
+    def _create_aggregate_root_instance_based_on_return_counts(
+        self,
+        library: Library,
+        root: VersionRoot,
+        value: VersionValue,
+        relationship: VersionRelationship,
+        return_instantiation_counts: bool,
+        return_study_count: bool,
+    ) -> _AggregateRootType:
+        if return_instantiation_counts:
+            final, draft, retired = self._get_counts(root)
+            counts = InstantiationCountsVO.from_counts(
+                final=final, draft=draft, retired=retired
+            )
+        else:
+            counts = None
+
+        if return_study_count:
+            study_count = self._get_study_count(value)
+        else:
+            study_count = 0
+
+        return self._create_aggregate_root_instance_from_version_root_relationship_and_value(
+            root=root,
+            library=library,
+            relationship=relationship,
+            value=value,
+            counts=counts,
+            study_count=study_count,
+        )
+
+    def _get_version_active_at_date_time(
+        self, has_version_rel: RelationshipDefinition, at_specific_date: datetime
+    ) -> tuple[VersionValue | None, VersionRelationship | None]:
+        matching_values: list[VersionValue] = has_version_rel.match(
+            start_date__lte=at_specific_date
+        )
+        latest_matching_relationship: VersionRelationship | None = None
+        latest_matching_value: VersionValue | None = None
+        for matching_value in matching_values:
+            relationships: list[
+                VersionRelationship
+            ] = has_version_rel.all_relationships(matching_value)
+            for relationship in relationships:
+                if (
+                    latest_matching_relationship is None
+                    or latest_matching_relationship.start_date < relationship.start_date
+                ):
+                    latest_matching_relationship = relationship
+                    latest_matching_value = matching_value
+        return latest_matching_value, latest_matching_relationship
+
     @cached(cache=cache_store_item_by_uid, key=hashkey_library_item)
     def find_by_uid_2(
         self,
@@ -795,6 +843,122 @@ class LibraryItemRepositoryImplBase(
         if for_update:
             self._lock_object(uid)
 
+        root, library = self._get_root_and_library(uid)
+        if not root:
+            return None
+
+        value: VersionValue | None
+        relationship: VersionRelationship | None
+
+        (
+            has_version_rel,
+            has_latest_value_rel,
+            latest_draft_rel,
+            latest_final_rel,
+            latest_retired_rel,
+        ) = self._get_version_relation_keys(root)
+
+        result: _AggregateRootType | None = None
+
+        if version is None:
+            if status is None:
+                if at_specific_date is None:
+                    # Find the latest version (regardless of status)
+                    value = has_latest_value_rel.single()
+                    relationship = self._get_latest_version(root, value)
+                else:
+                    # Find the latest version (regardless of status) that exists at the specified date
+                    value, relationship = self._get_version_active_at_date_time(
+                        has_version_rel, at_specific_date
+                    )
+            else:
+                # Find the latest version with the specified status
+                value, relationship = self._get_latest_value_with_status(
+                    root,
+                    status,
+                    has_version_rel,
+                    latest_draft_rel,
+                    latest_final_rel,
+                    latest_retired_rel,
+                )
+        else:
+            # Find the version with the specified version number, and optionally status
+            value, relationship = self._get_value_with_version_number(
+                root, version, status
+            )
+
+        if value and relationship:
+            result = self._create_aggregate_root_instance_based_on_return_counts(
+                library=library,
+                root=root,
+                value=value,
+                relationship=relationship,
+                return_instantiation_counts=return_instantiation_counts,
+                return_study_count=return_study_count,
+            )
+            if for_update:
+                result.repository_closure_data = (
+                    root,
+                    value,
+                    library,
+                    copy.deepcopy(result),
+                )
+            else:
+                result.repository_closure_data = RETRIEVED_READ_ONLY_MARK
+        return result
+
+    def _get_value_with_version_number(
+        self, root: VersionRoot, version: str, status: LibraryItemStatus | None = None
+    ) -> tuple[VersionValue | None, VersionRelationship | None]:
+        matching_value = root.get_value_for_version(version)
+        active_relationship: VersionRelationship | None = None
+        active_value: VersionValue | None = None
+        if matching_value is not None:
+            active_relationship = root.get_relation_for_version(version)
+            active_value = matching_value
+
+        if active_relationship is None:
+            return None, None
+
+        if status is not None and active_relationship.status != status.value:
+            return None, None
+
+        return active_value, active_relationship
+
+    def _get_latest_value_with_status(
+        self,
+        root: VersionRoot,
+        status: LibraryItemStatus,
+        has_version_rel: RelationshipManager,
+        latest_draft_rel: RelationshipManager,
+        latest_final_rel: RelationshipManager,
+        latest_retired_rel: RelationshipManager,
+    ) -> tuple[VersionValue | None, VersionRelationship | None]:
+        relationship: VersionRelationship | None = None
+        value: VersionValue | None = None
+
+        relationship_manager_to_use: RelationshipManager = latest_retired_rel
+        if status == LibraryItemStatus.FINAL:
+            relationship_manager_to_use = latest_final_rel
+        elif status == LibraryItemStatus.DRAFT:
+            relationship_manager_to_use = latest_draft_rel
+        value = relationship_manager_to_use.get_or_none()
+        if value is None:
+            value = has_version_rel.match(status=status.value).all()
+            if not value:
+                return None, None
+            end_dates = {
+                has_version_rel.relationship(node).end_date: node for node in value
+            }
+            last_date = max(end_dates.keys())
+            value = end_dates[last_date]
+
+        relationship = self._get_latest_version_for_status(root, value, status)
+        return value, relationship
+
+    def _get_root_and_library(
+        self, uid: str
+    ) -> tuple[VersionRoot | None, Library | None]:
         if not self._is_repository_related_to_ct():
             try:
                 root: VersionRoot | None = self.root_class.nodes.get_or_none(uid=uid)
@@ -803,7 +967,7 @@ class LibraryItemRepositoryImplBase(
                     "Object labels were changed - likely the object was deleted in a concurrent transaction."
                 ) from exc
             if root is None:
-                return None
+                return None, None
             if self.has_library:
                 library: Library = root.has_library.get()
             else:
@@ -816,172 +980,13 @@ class LibraryItemRepositoryImplBase(
             )
             root = result[0][0]
             if root is None:
-                return None
+                return None, None
             ct_root = root.has_root.single()
             if self.has_library:
                 library: Library = ct_root.has_library.get()
             else:
                 library = None
-
-        value: VersionValue | None
-        (
-            has_version_rel,
-            has_latest_value_rel,
-            latest_draft_rel,
-            latest_final_rel,
-            latest_retired_rel,
-        ) = self._get_version_relation_keys(root)
-        if version is None:
-            if status is None:
-                if at_specific_date is None:
-                    value = has_latest_value_rel.single()
-                    if return_instantiation_counts:
-                        final, draft, retired = self._get_counts(root)
-                        counts = InstantiationCountsVO.from_counts(
-                            final=final, draft=draft, retired=retired
-                        )
-                        if return_study_count:
-                            study_count = self._get_study_count(value)
-                            result = self._create_aggregate_root_instance_from_version_root_relationship_and_value(
-                                root=root,
-                                library=library,
-                                relationship=self._get_latest_version(root, value),
-                                value=value,
-                                counts=counts,
-                                study_count=study_count,
-                            )
-                        else:
-                            result = self._create_aggregate_root_instance_from_version_root_relationship_and_value(
-                                root=root,
-                                library=library,
-                                relationship=self._get_latest_version(root, value),
-                                value=value,
-                                counts=counts,
-                            )
-                    else:
-                        counts = None
-                        if return_study_count:
-                            study_count = self._get_study_count(value)
-                            result = self._create_aggregate_root_instance_from_version_root_relationship_and_value(
-                                root=root,
-                                library=library,
-                                relationship=self._get_latest_version(root, value),
-                                value=value,
-                                study_count=study_count,
-                            )
-                        else:
-                            result = self._create_aggregate_root_instance_from_version_root_relationship_and_value(
-                                root=root,
-                                library=library,
-                                relationship=self._get_latest_version(root, value),
-                                value=value,
-                            )
-                    if for_update:
-                        result.repository_closure_data = (
-                            root,
-                            value,
-                            library,
-                            copy.deepcopy(result),
-                        )
-                    return result
-                matching_values: list[VersionValue] = has_version_rel.match(
-                    start_date__lte=at_specific_date
-                )
-                latest_matching_relationship: VersionRelationship | None = None
-                latest_matching_value: VersionValue | None = None
-                for matching_value in matching_values:
-                    relationships: list[
-                        VersionRelationship
-                    ] = has_version_rel.all_relationships(matching_value)
-                    for relationship in relationships:
-                        if (
-                            latest_matching_relationship is None
-                            or latest_matching_relationship.start_date
-                            < relationship.start_date
-                        ):
-                            latest_matching_relationship = relationship
-                            latest_matching_value = matching_value
-
-            else:
-                relationship_for_retrieve: VersionRelationship | None = None
-                value_for_retrieve: VersionValue | None = None
-                relationship_manager_to_use: RelationshipManager = latest_retired_rel
-                if status == LibraryItemStatus.FINAL:
-                    relationship_manager_to_use = latest_final_rel
-                elif status == LibraryItemStatus.DRAFT:
-                    relationship_manager_to_use = latest_draft_rel
-                value_for_retrieve = relationship_manager_to_use.get_or_none()
-                if value_for_retrieve is None:
-                    value_for_retrieve = has_version_rel.match(
-                        status=status.value
-                    ).all()
-                    if not value_for_retrieve:
-                        return None
-                    end_dates = {
-                        has_version_rel.relationship(node).end_date: node
-                        for node in value_for_retrieve
-                    }
-                    last_date = max(end_dates.keys())
-                    value_for_retrieve = end_dates[last_date]
-                relationship_manager_to_use = has_version_rel
-
-                relationship_for_retrieve = self._get_latest_version_for_status(
-                    root, value_for_retrieve, status
-                )
-                if return_study_count:
-                    study_count = self._get_study_count(value_for_retrieve)
-                    result = self._create_aggregate_root_instance_from_version_root_relationship_and_value(
-                        root=root,
-                        value=value_for_retrieve,
-                        library=library,
-                        relationship=relationship_for_retrieve,
-                        study_count=study_count,
-                    )
-                else:
-                    result = self._create_aggregate_root_instance_from_version_root_relationship_and_value(
-                        root=root,
-                        value=value_for_retrieve,
-                        library=library,
-                        relationship=relationship_for_retrieve,
-                    )
-                result.repository_closure_data = RETRIEVED_READ_ONLY_MARK
-                return result
-        else:
-            matching_value = root.get_value_for_version(version)
-            latest_matching_relationship: VersionRelationship | None = None
-            latest_matching_value: VersionValue | None = None
-            if matching_value is not None:
-                latest_matching_relationship = root.get_relation_for_version(version)
-                latest_matching_value = matching_value
-
-            if latest_matching_relationship is None:
-                return None
-
-            if (
-                status is not None
-                and latest_matching_relationship.status != status.value
-            ):
-                return None
-
-            if return_study_count:
-                study_count = self._get_study_count(latest_matching_value)
-                result = self._create_aggregate_root_instance_from_version_root_relationship_and_value(
-                    root=root,
-                    library=library,
-                    relationship=latest_matching_relationship,
-                    value=latest_matching_value,
-                    study_count=study_count,
-                )
-            else:
-                result = self._create_aggregate_root_instance_from_version_root_relationship_and_value(
-                    root=root,
-                    library=library,
-                    relationship=latest_matching_relationship,
-                    value=latest_matching_value,
-                )
-            result.repository_closure_data = RETRIEVED_READ_ONLY_MARK
-            return result
-        return None
+        return root, library
 
     def _get_counts(self, item: VersionRoot) -> tuple[int, int, int]:
         finals: int

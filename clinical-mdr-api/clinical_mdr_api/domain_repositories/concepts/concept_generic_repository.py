@@ -52,6 +52,7 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
         library: Library | None,
         relationship: VersionRelationship,
         value: VersionValue,
+        **_kwargs,
     ) -> _AggregateRootType:
         raise NotImplementedError
 

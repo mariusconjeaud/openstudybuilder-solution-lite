@@ -23,12 +23,12 @@ class EndpointRepository(GenericSyntaxInstanceRepository[EndpointAR]):
 
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
-        *,
         root: EndpointRoot,
         library: Library,
         relationship: VersionRelationship,
         value: EndpointValue,
         study_count: int = 0,
+        **_kwargs,
     ) -> EndpointAR:
         return cast(
             EndpointAR,

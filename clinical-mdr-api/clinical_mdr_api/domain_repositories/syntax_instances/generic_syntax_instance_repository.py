@@ -6,6 +6,9 @@ from typing import Iterable, TypeVar
 from neomodel import db
 
 from clinical_mdr_api import exceptions
+from clinical_mdr_api.domain_repositories._utils.helpers import (
+    get_latest_version_properties,
+)
 from clinical_mdr_api.domain_repositories.generic_syntax_repository import (
     GenericSyntaxRepository,
 )
@@ -19,6 +22,7 @@ from clinical_mdr_api.domains.libraries.parameter_term import (
     ComplexParameterTerm,
     SimpleParameterTermVO,
 )
+from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
 from clinical_mdr_api.exceptions import NotFoundException
 
 _AggregateRootType = TypeVar("_AggregateRootType")
@@ -117,7 +121,8 @@ class GenericSyntaxInstanceRepository(
 
         # Double check that we actually performed a valid connection to the template that isn't retired.
         # this needs to be done after connecting, as there might be concurrent transactions retiring the template.
-        if template.latest_retired.get_or_none() is not None:
+        latest_version = get_latest_version_properties(template)
+        if latest_version and latest_version.status == LibraryItemStatus.RETIRED.value:
             raise exceptions.BusinessLogicException(
                 root.uid + " cannot be added to " + template.uid + ", as it is retired."
             )

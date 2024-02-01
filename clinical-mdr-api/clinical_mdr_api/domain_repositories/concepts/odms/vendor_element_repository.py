@@ -46,6 +46,7 @@ class VendorElementRepository(OdmGenericRepository[OdmVendorElementAR]):
         library: Library | None,
         relationship: VersionRelationship,
         value: VersionValue,
+        **_kwargs,
     ) -> OdmVendorElementAR:
         return OdmVendorElementAR.from_repository_values(
             uid=root.uid,

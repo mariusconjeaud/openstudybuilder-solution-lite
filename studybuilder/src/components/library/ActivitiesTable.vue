@@ -25,6 +25,8 @@
     :history-data-fetcher="source !== 'activities-by-grouping' ? fetchGlobalAuditTrail : null"
     history-change-field="change_description"
     :history-excluded-headers="historyExcludedHeaders"
+    :initial-filters="requested ? { status: ['Draft', 'Final'] } : { status: ['Final'] }"
+    :default-filters="[{ text: this.$t('_global.status'), value: 'status' }]"
     >
     <template v-slot:item="{ item, expand, isExpanded }" v-if="isExpand()">
       <tr style="background-color: var(--v-dfltBackgroundLight1-base)">

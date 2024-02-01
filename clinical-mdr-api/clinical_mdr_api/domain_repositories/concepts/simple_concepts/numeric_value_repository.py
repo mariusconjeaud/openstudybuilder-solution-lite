@@ -84,6 +84,7 @@ class NumericValueRepository(SimpleConceptGenericRepository[NumericValueAR]):
         library: Library | None,
         relationship: VersionRelationship,
         value: VersionValue,
+        **_kwargs,
     ) -> NumericValueAR:
         return self.aggregate_class.from_repository_values(
             uid=root.uid,

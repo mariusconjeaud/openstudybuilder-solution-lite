@@ -71,11 +71,11 @@ class CTConfigRepository(LibraryItemRepositoryImplBase[CTConfigAR]):
 
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
-        *,
         root: VersionRoot,
         library: Library,
         relationship: VersionRelationship,
         value: VersionValue,
+        **_kwargs,
     ) -> CTConfigAR:
         ar_root = cast(CTConfigRoot, root)
         ar_value = cast(CTConfigValue, value)

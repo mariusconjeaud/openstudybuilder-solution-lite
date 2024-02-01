@@ -5,6 +5,7 @@ from neomodel import db
 from clinical_mdr_api.domain_repositories._generic_repository_interface import (
     _AggregateRootType,
 )
+from clinical_mdr_api.domain_repositories._utils.helpers import is_codelist_in_final
 from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_get_all_query_utils import (
     create_term_attributes_aggregate_instances_from_cypher_result,
 )
@@ -73,6 +74,7 @@ class CTTermAttributesRepository(CTTermGenericRepository[CTTermAttributesAR]):
         library: Library | None,
         relationship: VersionRelationship,
         value: CTTermAttributesValue,
+        **_kwargs,
     ) -> CTTermAttributesAR:
         ct_term_root_node = root.has_root.single()
         ct_codelist_root_node = ct_term_root_node.has_term.single()
@@ -183,20 +185,14 @@ class CTTermAttributesRepository(CTTermGenericRepository[CTTermAttributesAR]):
         )
 
         # Validate that the term is added to a codelist that isn't in a draft state.
-        if ct_codelist_root_node:
-            attributes_root = ct_codelist_root_node.has_attributes_root.get_or_none()
-            if attributes_root:
-                has_latest_draft = (
-                    attributes_root.latest_draft.get_or_none() is not None
-                )
-                if has_latest_draft:
-                    raise VersioningException(
-                        "Term '"
-                        + item.uid
-                        + "' cannot be added to '"
-                        + item.ct_term_vo.codelist_uid
-                        + "' as the codelist is in a draft state."
-                    )
+        if not is_codelist_in_final(ct_codelist_root_node):
+            raise VersioningException(
+                "Term '"
+                + item.uid
+                + "' cannot be added to '"
+                + item.ct_term_vo.codelist_uid
+                + "' as the codelist is in a draft state."
+            )
 
         self._maintain_parameters(item, root, value)
 

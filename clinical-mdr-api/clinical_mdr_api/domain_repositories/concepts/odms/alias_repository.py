@@ -34,6 +34,7 @@ class AliasRepository(OdmGenericRepository[OdmAliasAR]):
         library: Library | None,
         relationship: VersionRelationship,
         value: VersionValue,
+        **_kwargs,
     ) -> OdmAliasAR:
         return OdmAliasAR.from_repository_values(
             uid=root.uid,

@@ -86,8 +86,6 @@
               <v-text-field
                 v-model="form.name"
                 :label="$t('ActivityForms.activity_ins_name')"
-                hide-details
-                class="mb-4"
                 :error-messages="errors"
               />
             </v-col>
@@ -110,8 +108,6 @@
               <v-textarea
                 v-model="form.definition"
                 :label="$t('ActivityForms.definition')"
-                hide-details
-                class="mb-4"
                 :error-messages="errors"
                 auto-grow
                 rows="2"
@@ -138,29 +134,20 @@
               <v-text-field
                 v-model="form.topic_code"
                 :label="$t('ActivityForms.topicCode')"
-                hide-details
-                class="mb-4"
                 :error-messages="errors"
               />
             </v-col>
           </v-row>
         </validation-provider>
-        <validation-provider
-          v-slot="{ errors }"
-          rules="required"
-          >
-          <v-row>
-            <v-col cols="8">
-              <v-text-field
-                v-model="form.adam_param_code"
-                :label="$t('ActivityForms.adamCode')"
-                hide-details
-                class="mb-4"
-                :error-messages="errors"
-              />
-            </v-col>
-          </v-row>
-        </validation-provider>
+        <v-row>
+          <v-col cols="8">
+            <v-text-field
+              v-model="form.adam_param_code"
+              :label="$t('ActivityForms.adamCode')"
+              hide-details
+            />
+          </v-col>
+        </v-row>
         <v-row>
           <v-col>
             <v-checkbox

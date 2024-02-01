@@ -199,6 +199,7 @@ class CompoundRepository(ConceptGenericRepository):
         library: Library | None,
         relationship: VersionRelationship,
         value: VersionValue,
+        **_kwargs,
     ) -> CompoundAR:
         return CompoundAR.from_repository_values(
             uid=root.uid,

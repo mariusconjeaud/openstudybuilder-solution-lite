@@ -64,6 +64,7 @@ class ActivityGroupRepository(ConceptGenericRepository[ActivityGroupAR]):
         library: Library | None,
         relationship: VersionRelationship,
         value: VersionValue,
+        **_kwargs,
     ) -> ActivityGroupAR:
         return ActivityGroupAR.from_repository_values(
             uid=root.uid,
@@ -138,17 +139,15 @@ class ActivityGroupRepository(ConceptGenericRepository[ActivityGroupAR]):
         return value_node
 
     def get_syntax_activity_groups(
-        self, root_class: type, syntax_uid: str
+        self, syntax_node: VersionRoot
     ) -> list[ActivityGroupAR] | None:
         """
-        This method returns the activity groups for the syntax with provided uid
+        This method returns the activity groups for the provided syntax
 
-        :param root_class: The class of the root node for the syntax
-        :param syntax_uid: UID of the syntax
+        :param syntax_node: Syntax Root node
         :return list[ActivityGroupAR]:
         """
-        syntax = root_class.nodes.get(uid=syntax_uid)
-        activity_group_nodes = syntax.has_activity_group.all()
+        activity_group_nodes = syntax_node.has_activity_group.all()
         if activity_group_nodes:
             groups = []
             for node in activity_group_nodes:

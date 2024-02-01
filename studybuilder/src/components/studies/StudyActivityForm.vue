@@ -170,6 +170,7 @@
           :server-items-length="activitiesTotal"
           has-api
           @filter="getActivities"
+          :initial-filters="{ status: ['Final'] }"
           column-data-resource="concepts/activities/activities"
           :filters-modify-function="modifyFilters"
           >
@@ -177,7 +178,7 @@
             <v-btn
               icon
               :color="getCopyButtonColor(item)"
-              :disabled="isActivitySelected(item)"
+              :disabled="isActivitySelected(item) || isActivityNotFinal(item)"
               data-cy="copy-activity"
               @click="selectActivity(item)"
               :title="$t('StudyActivityForm.copy_activity')">
@@ -272,7 +273,7 @@
                 <v-btn
                   icon
                   :color="getCopyButtonColor(item)"
-                  :disabled="isActivitySelected(item)"
+                  :disabled="isActivitySelected(item) || isActivityNotFinal(item)"
                   data-cy="copy-activity"
                   @click="selectActivityFromPlaceholder(item)"
                   :title="$t('StudyActivityForm.copy_activity')">
@@ -324,9 +325,6 @@ export default {
     return {
       creationMode: 'selectFromLibrary',
       activities: [],
-      extraDataFetcherFilters: {
-        'activity.status': { v: [statuses.FINAL] }
-      },
       options: {},
       activitiesTotal: 0,
       activityHeaders: [
@@ -335,7 +333,8 @@ export default {
         { text: this.$t('StudyActivity.activity_group'), value: 'activity_group.name', externalFilterSource: 'concepts/activities/activity-groups$name', exludeFromHeader: ['is_data_collected'] },
         { text: this.$t('StudyActivity.activity_sub_group'), value: 'activity_subgroup.name', externalFilterSource: 'concepts/activities/activity-sub-groups$name', exludeFromHeader: ['is_data_collected'] },
         { text: this.$t('StudyActivity.activity'), value: 'name' },
-        { text: this.$t('StudyActivity.data_collection'), value: 'is_data_collected' }
+        { text: this.$t('StudyActivity.data_collection'), value: 'is_data_collected' },
+        { text: this.$t('_global.status'), value: 'status' }
       ],
       currentFlowchartGroup: null,
       flowchartGroups: [],
@@ -692,6 +691,9 @@ export default {
         return !this.currentFlowchartGroup || selected !== undefined
       }
       return false
+    },
+    isActivityNotFinal (activity) {
+      return activity.status !== statuses.FINAL
     },
     isStudyActivitySelected (studyActivity) {
       let selected = this.selectedActivities.find(item => item.activity.uid === studyActivity.activity.uid)

@@ -25,12 +25,12 @@ class CriteriaPreInstanceRepository(
 
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
-        *,
         root: CriteriaPreInstanceRoot,
         library: Library,
         relationship: VersionRelationship,
         value: CriteriaPreInstanceValue,
         study_count: int = 0,
+        **_kwargs,
     ):
         return CriteriaPreInstanceAR.from_repository_values(
             uid=root.uid,

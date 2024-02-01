@@ -86,6 +86,7 @@ class DictionaryTermSubstanceRepository(
         library: Library | None,
         relationship: VersionRelationship,
         value: VersionValue,
+        **_kwargs,
     ) -> DictionaryTermSubstanceAR:
         dictionary_codelist_root = root.has_term.single()
         library = dictionary_codelist_root.has_library.get_or_none()

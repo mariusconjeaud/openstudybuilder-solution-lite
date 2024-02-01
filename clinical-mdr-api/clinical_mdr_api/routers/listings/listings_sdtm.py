@@ -1,11 +1,12 @@
 from fastapi import APIRouter, Path, Query
 from pydantic.types import Json
+from starlette.requests import Request
 
 from clinical_mdr_api import config, models
 from clinical_mdr_api.models.utils import CustomPage
 from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
-from clinical_mdr_api.routers import _generic_descriptions
+from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.listings.listings_sdtm import (
     SDTMListingsService as ListingsService,
 )
@@ -26,7 +27,30 @@ router = APIRouter()
         500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.allow_exports(
+    {
+        "defaults": [
+            "STUDYID",
+            "DOMAIN",
+            "VISITNUM",
+            "VISIT",
+            "VISITDY",
+            "ARMCD",
+            "ARM",
+            "TVSTRL",
+            "TVENRL",
+        ],
+        "formats": [
+            "text/csv",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "text/xml",
+            "application/json",
+        ],
+    }
+)
+# pylint: disable=unused-argument
 def get_tv(
+    request: Request,  # request is actually required by the allow_exports decorator
     study_uid: str = Path(
         None,
         description="Return study visit data of a given study in SDTM TV domain format.",
@@ -82,7 +106,31 @@ def get_tv(
         500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.allow_exports(
+    {
+        "defaults": [
+            "STUDYID",
+            "DOMAIN",
+            "ARMCD",
+            "ARM",
+            "TAETORD",
+            "ETCD",
+            "ELEMENT",
+            "TABRANCH",
+            "TATRANS",
+            "EPOCH",
+        ],
+        "formats": [
+            "text/csv",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "text/xml",
+            "application/json",
+        ],
+    }
+)
+# pylint: disable=unused-argument
 def get_ta(
+    request: Request,  # request is actually required by the allow_exports decorator
     study_uid: str = Path(
         None,
         description="Return study arm data of a given study number in SDTM TA domain format.",
@@ -138,7 +186,29 @@ def get_ta(
         500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.allow_exports(
+    {
+        "defaults": [
+            "STUDYID",
+            "DOMAIN",
+            "IETESTCD",
+            "IETEST",
+            "IECAT",
+            "IESCAT",
+            "TIRL",
+            "TIVERS",
+        ],
+        "formats": [
+            "text/csv",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "text/xml",
+            "application/json",
+        ],
+    }
+)
+# pylint: disable=unused-argument
 def get_ti(
+    request: Request,  # request is actually required by the allow_exports decorator
     study_uid: str = Path(
         None,
         description="Return study criterion data of a given study in SDTM TI domain format.",
@@ -194,7 +264,30 @@ def get_ti(
         500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.allow_exports(
+    {
+        "defaults": [
+            "STUDYID",
+            "DOMAIN",
+            "TSPARMCD",
+            "TSPARM",
+            "TSVAL",
+            "TSVALNF",
+            "TSVALCD",
+            "TSVCDREF",
+            "TSVCDVER",
+        ],
+        "formats": [
+            "text/csv",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "text/xml",
+            "application/json",
+        ],
+    }
+)
+# pylint: disable=unused-argument
 def get_ts(
+    request: Request,  # request is actually required by the allow_exports decorator
     study_uid: str = Path(
         None,
         description="Return study summary data of a given study in SDTM TS domain format.",
@@ -250,7 +343,28 @@ def get_ts(
         500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.allow_exports(
+    {
+        "defaults": [
+            "STUDYID",
+            "DOMAIN",
+            "ETCD",
+            "ELEMENT",
+            "TESTRL",
+            "TEENRL",
+            "TEDUR",
+        ],
+        "formats": [
+            "text/csv",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "text/xml",
+            "application/json",
+        ],
+    }
+)
+# pylint: disable=unused-argument
 def get_te(
+    request: Request,  # request is actually required by the allow_exports decorator
     study_uid: str = Path(
         None,
         description="Return study element data of a given study number in SDTM TE domain format.",
@@ -306,7 +420,26 @@ def get_te(
         500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.allow_exports(
+    {
+        "defaults": [
+            "STUDYID",
+            "DOMAIN",
+            "MIDSTYPE",
+            "TMDEF",
+            "TMRPT",
+        ],
+        "formats": [
+            "text/csv",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "text/xml",
+            "application/json",
+        ],
+    }
+)
+# pylint: disable=unused-argument
 def get_tdm(
+    request: Request,  # request is actually required by the allow_exports decorator
     study_uid: str = Path(
         None,
         description="Return study disease milestone data of a given study number in SDTM TDM domain format.",

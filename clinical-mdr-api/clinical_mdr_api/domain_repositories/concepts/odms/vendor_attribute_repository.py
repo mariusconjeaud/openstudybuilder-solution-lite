@@ -50,6 +50,7 @@ class VendorAttributeRepository(OdmGenericRepository[OdmVendorAttributeAR]):
         library: Library | None,
         relationship: VersionRelationship,
         value: VersionValue,
+        **_kwargs,
     ) -> OdmVendorAttributeAR:
         return OdmVendorAttributeAR.from_repository_values(
             uid=root.uid,

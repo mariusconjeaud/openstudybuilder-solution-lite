@@ -221,7 +221,6 @@ def retrieve_audit_trail(
         500: _generic_descriptions.ERROR_500,
     },
 )
-# pylint: disable=unused-argument
 def get(
     uid: str = TimeframeUID,
     at_specified_date_time: datetime
@@ -229,8 +228,7 @@ def get(
         None,
         description="If specified, the latest/newest representation of the timeframe at this point in time is returned.\n"
         "The point in time needs to be specified in ISO 8601 format including the timezone, e.g.: "
-        "'2020-10-31T16:00:00+02:00' for October 31, 2020 at 4pm in UTC+2 timezone. "
-        "If the timezone is ommitted, UTC±0 is assumed.",
+        "'2020-10-31T16:00:00+02:00' for October 31, 2020 at 4pm in UTC+2 timezone. ",
     ),
     status: LibraryItemStatus
     | None = Query(
@@ -253,8 +251,11 @@ def get(
     current_user_id: str = Depends(get_current_user_id),
 ):
     return Service(current_user_id).get_by_uid(
-        uid=uid
-    )  # TODO:, at_specific_date=at_specified_date_time, status=status, version=version)
+        uid=uid,
+        version=version,
+        status=status,
+        at_specified_datetime=at_specified_date_time,
+    )
 
 
 @router.get(

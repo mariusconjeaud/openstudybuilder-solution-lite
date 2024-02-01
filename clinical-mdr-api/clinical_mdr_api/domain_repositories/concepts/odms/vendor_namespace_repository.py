@@ -38,6 +38,7 @@ class VendorNamespaceRepository(OdmGenericRepository[OdmVendorNamespaceAR]):
         library: Library | None,
         relationship: VersionRelationship,
         value: VersionValue,
+        **_kwargs,
     ) -> OdmVendorNamespaceAR:
         return OdmVendorNamespaceAR.from_repository_values(
             uid=root.uid,

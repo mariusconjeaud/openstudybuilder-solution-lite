@@ -32,6 +32,9 @@ class FootnoteService(GenericSyntaxInstanceService[FootnoteAR | _AggregateRootTy
     ) -> Footnote:
         return FootnoteWithType.from_footnote_ar(
             item_ar,
+            syntax_template_node=self._repos.footnote_template_repository.root_class.nodes.get_or_none(
+                uid=item_ar.template_uid
+            ),
             get_footnote_type_name=self._repos.ct_term_name_repository.get_syntax_template_type,
             get_footnote_type_attributes=self._repos.ct_term_attributes_repository.get_syntax_template_type,
         )

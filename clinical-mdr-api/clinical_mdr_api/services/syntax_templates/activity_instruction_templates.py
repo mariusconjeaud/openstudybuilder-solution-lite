@@ -1,5 +1,6 @@
 from neomodel import db
 
+from clinical_mdr_api.domain_repositories.models.generic import VersionRoot
 from clinical_mdr_api.domain_repositories.models.syntax import (
     ActivityInstructionTemplateRoot,
 )
@@ -70,7 +71,7 @@ class ActivityInstructionTemplateService(
             find_activity_subgroup_by_uid=self._repos.activity_subgroup_repository.find_by_uid_2,
             find_activity_group_by_uid=self._repos.activity_group_repository.find_by_uid_2,
         )
-        self._set_indexings(item)
+        self._set_indexings(item, self.root_node_class.nodes.get(uid=item.uid))
         return item
 
     def get_all(
@@ -188,7 +189,9 @@ class ActivityInstructionTemplateService(
             ),
         )
 
-    def _set_indexings(self, item: ActivityInstructionTemplate) -> None:
+    def _set_indexings(
+        self, item: ActivityInstructionTemplate, syntax_node: VersionRoot
+    ) -> None:
         """
         This method fetches and sets the indexing properties to a syntax activity instruction template.
         """
@@ -198,7 +201,7 @@ class ActivityInstructionTemplateService(
         # Get indications
         indications = (
             self._repos.dictionary_term_generic_repository.get_syntax_indications(
-                self.root_node_class, item.uid
+                syntax_node
             )
         )
         if indications:
@@ -210,9 +213,7 @@ class ActivityInstructionTemplateService(
                 key=lambda x: x.term_uid,
             )
         # Get activities
-        activities = self._repos.activity_repository.get_syntax_activities(
-            self.root_node_class, item.uid
-        )
+        activities = self._repos.activity_repository.get_syntax_activities(syntax_node)
         if activities:
             item.activities = sorted(
                 [
@@ -228,7 +229,7 @@ class ActivityInstructionTemplateService(
         # Get activity groups
         activity_groups = (
             self._repos.activity_group_repository.get_syntax_activity_groups(
-                self.root_node_class, item.uid
+                syntax_node
             )
         )
         if activity_groups:
@@ -242,7 +243,7 @@ class ActivityInstructionTemplateService(
         # Get activity sub_groups
         activity_subgroups = (
             self._repos.activity_subgroup_repository.get_syntax_activity_subgroups(
-                self.root_node_class, item.uid
+                syntax_node
             )
         )
         if activity_subgroups:

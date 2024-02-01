@@ -294,7 +294,7 @@ export default {
         { text: this.$t('_global.modified'), value: 'start_date' },
         { text: this.$t('_global.modified_by'), value: 'user_initials' }
       ],
-      historyHtmlFields: ['name', 'guidance_text'],
+      historyHtmlFields: ['criteria.name', 'criteria.criteria_template.guidance_text'],
       selectedStudyCriteria: null,
       showEditForm: false,
       showForm: false,

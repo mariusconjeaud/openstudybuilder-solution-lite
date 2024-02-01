@@ -298,6 +298,7 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
         library: Library | None,
         relationship: VersionRelationship,
         value: ActivityInstanceValue,
+        **_kwargs,
     ) -> ActivityInstanceAR:
         activity_instance_class = value.activity_instance_class.get()
         activity_items = value.contains_activity_item.all()

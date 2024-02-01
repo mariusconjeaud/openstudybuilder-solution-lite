@@ -23,12 +23,12 @@ class TimeframeRepository(GenericSyntaxInstanceRepository[TimeframeAR]):
 
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
-        *,
         root: TimeframeRoot,
         library: Library,
         relationship: VersionRelationship,
         value: TimeframeValue,
         study_count: int = 0,
+        **_kwargs,
     ) -> TimeframeAR:
         return cast(
             TimeframeAR,

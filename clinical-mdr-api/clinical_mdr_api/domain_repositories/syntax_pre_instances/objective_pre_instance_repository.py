@@ -25,12 +25,12 @@ class ObjectivePreInstanceRepository(
 
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
-        *,
         root: ObjectivePreInstanceRoot,
         library: Library,
         relationship: VersionRelationship,
         value: ObjectivePreInstanceValue,
         study_count: int = 0,
+        **_kwargs,
     ):
         return ObjectivePreInstanceAR.from_repository_values(
             uid=root.uid,

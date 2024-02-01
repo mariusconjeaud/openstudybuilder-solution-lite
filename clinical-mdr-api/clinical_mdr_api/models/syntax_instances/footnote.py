@@ -116,8 +116,9 @@ class FootnoteWithType(Footnote):
     def from_footnote_ar(
         cls,
         footnote_ar: FootnoteAR,
-        get_footnote_type_name: Callable[[type, str], Any],
-        get_footnote_type_attributes: Callable[[type, str], Any],
+        syntax_template_node: FootnoteTemplateRoot,
+        get_footnote_type_name: Callable[[str], Any],
+        get_footnote_type_attributes: Callable[[str], Any],
     ) -> Self:
         parameter_terms: list[MultiTemplateParameterTerm] = []
         for position, parameter in enumerate(footnote_ar.get_parameters()):
@@ -139,8 +140,14 @@ class FootnoteWithType(Footnote):
             )
         return cls(
             uid=footnote_ar.uid,
-            name=footnote_ar.name,
-            name_plain=footnote_ar.name_plain,
+            name=capitalize_first_letter_if_template_parameter(
+                footnote_ar.name,
+                footnote_ar.template_name_plain,
+            ),
+            name_plain=capitalize_first_letter_if_template_parameter(
+                footnote_ar.name_plain,
+                footnote_ar.template_name_plain,
+            ),
             start_date=footnote_ar.item_metadata.start_date,
             end_date=footnote_ar.item_metadata.end_date,
             status=footnote_ar.item_metadata.status.value,
@@ -156,11 +163,9 @@ class FootnoteWithType(Footnote):
                 uid=footnote_ar.template_uid,
                 sequence_id=footnote_ar.template_sequence_id,
                 type=CTTermNameAndAttributes.from_ct_term_ars(
-                    ct_term_name_ar=get_footnote_type_name(
-                        FootnoteTemplateRoot, footnote_ar.template_uid
-                    ),
+                    ct_term_name_ar=get_footnote_type_name(syntax_template_node),
                     ct_term_attributes_ar=get_footnote_type_attributes(
-                        FootnoteTemplateRoot, footnote_ar.template_uid
+                        syntax_template_node
                     ),
                 ),
                 library_name=footnote_ar.template_library_name,

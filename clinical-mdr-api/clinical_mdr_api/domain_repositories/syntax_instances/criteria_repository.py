@@ -57,12 +57,12 @@ class CriteriaRepository(GenericSyntaxInstanceRepository[CriteriaAR]):
 
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
-        *,
         root: CriteriaRoot,
         library: Library,
         relationship: VersionRelationship,
         value: CriteriaValue,
         study_count: int = 0,
+        **_kwargs,
     ) -> CriteriaAR:
         return cast(
             CriteriaAR,

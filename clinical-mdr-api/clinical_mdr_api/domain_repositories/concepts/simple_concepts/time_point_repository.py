@@ -107,6 +107,7 @@ class TimePointRepository(SimpleConceptGenericRepository[TimePointAR]):
         library: Library | None,
         relationship: VersionRelationship,
         value: VersionValue,
+        **_kwargs,
     ) -> TimePointAR:
         return TimePointAR.from_repository_values(
             uid=root.uid,

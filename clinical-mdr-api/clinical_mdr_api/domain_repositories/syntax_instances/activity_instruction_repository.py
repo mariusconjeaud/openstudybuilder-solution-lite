@@ -27,12 +27,12 @@ class ActivityInstructionRepository(
 
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
-        *,
         root: ActivityInstructionRoot,
         library: Library,
         relationship: VersionRelationship,
         value: ActivityInstructionValue,
         study_count: int = 0,
+        **_kwargs,
     ) -> ActivityInstructionAR:
         return cast(
             ActivityInstructionAR,

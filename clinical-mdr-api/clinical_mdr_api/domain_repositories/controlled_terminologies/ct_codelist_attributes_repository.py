@@ -109,6 +109,7 @@ class CTCodelistAttributesRepository(
         library: Library | None,
         relationship: VersionRelationship,
         value: CTCodelistAttributesValue,
+        **_kwargs,
     ) -> CTCodelistAttributesAR:
         ct_codelist_root_node = root.has_root.single()
         return CTCodelistAttributesAR.from_repository_values(

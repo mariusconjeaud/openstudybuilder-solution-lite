@@ -12,6 +12,7 @@
           :show-prefix-and-postfix="false"
           :parameters="parameters"
           edition-mode
+          :tooltip="false"
           />
       </v-card-text>
     </v-card>
@@ -55,6 +56,7 @@
               v-model="parameter.selectedValues"
               :label="parameter.name"
               :items="parameter.terms"
+              :item-text="(item) => `${item.name.replace(/<\/?[^>]+(>|$)/g, '')}`"
               :errors="errors"
               return-object
               :disabled="disabled || parameter.skip"
@@ -145,11 +147,12 @@
                 auto-grow
                 />
               <multiple-select
-                :data-cy="parameter.name"
                 v-else
+                :data-cy="parameter.name"
                 v-model="parameter.selectedValues"
                 :label="parameter.name"
                 :items="parameter.terms"
+                :item-text="(item) => `${item.name.replace(/<\/?[^>]+(>|$)/g, '')}`"
                 :errors="errors"
                 return-object
                 :disabled="parameter.skip"
@@ -306,18 +309,21 @@ export default {
     cleanName (value) {
       const rules = {
         '([])': '[]',
+        '[NA]': '[]',
+        ',,': ',',
         '  ': ' ',
-        '[] []': '[][]',
-        '[] ([': '[]([',
-        '[) []': '])[]',
-        '] and []': '][]',
-        '[] and [': '[][',
-        '], []': '][]',
-        '[], [': '[][',
-        '] or []': '][]',
-        '[] or [': '[][',
-        '] []': '][]',
-        '[] [': '[]['
+        '[] []': '',
+        '[] ([': '([',
+        '[) []': '])',
+        '] and []': ']',
+        '[] and [': '[',
+        '], []': ']',
+        '[], [': '[',
+        '] or []': ']',
+        '[] or [': '[',
+        '] []': ']',
+        '[] [': '[',
+        '[]': ''
       }
       for (const original of Object.keys(rules)) {
         value = value.replace(original, rules[original])

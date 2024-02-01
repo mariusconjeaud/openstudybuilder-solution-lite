@@ -69,6 +69,7 @@ class ActivitySubGroupRepository(ConceptGenericRepository[ActivitySubGroupAR]):
         library: Library | None,
         relationship: VersionRelationship,
         value: VersionValue,
+        **_kwargs,
     ) -> ActivitySubGroupAR:
         activity_valid_groups = value.has_group.all()
         activity_groups_uid = []
@@ -193,17 +194,15 @@ class ActivitySubGroupRepository(ConceptGenericRepository[ActivitySubGroupAR]):
         return are_concept_properties_changed or are_rels_changed
 
     def get_syntax_activity_subgroups(
-        self, root_class: type, syntax_uid: str
+        self, syntax_node: VersionRoot
     ) -> list[ActivitySubGroupAR] | None:
         """
-        This method returns the activity sub groups for the syntax with provided uid
+        This method returns the activity sub groups for the provided syntax
 
-        :param root_class: The class of the root node for the syntax
-        :param syntax_uid: UID of the syntax
+        :param syntax_node: Syntax Root node
         :return list[ActivitySubGroupAR] | None:
         """
-        syntax = root_class.nodes.get(uid=syntax_uid)
-        activity_subgroup_nodes = syntax.has_activity_subgroup.all()
+        activity_subgroup_nodes = syntax_node.has_activity_subgroup.all()
         if activity_subgroup_nodes:
             groups = []
             for node in activity_subgroup_nodes:

@@ -118,11 +118,11 @@ class ActivityItemClassRepository(
 
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
-        *,
         root: ActivityItemClassRoot,
         library: Library,
         relationship: VersionRelationship,
         value: ActivityItemClassValue,
+        **_kwargs,
     ) -> ActivityItemClassAR:
         activity_instance_class_uids = [
             node.uid for node in root.has_activity_instance_class.all()

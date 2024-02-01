@@ -263,7 +263,7 @@ def do_request_with_token(
     is_json,
     content_type,
 ) -> httpx.Response:
-    headers = {"Authorization": f"Bearer {token}"}
+    headers = {"Authorization": f"Bearer {token}", "User-Agent": "test"}
     if content_type:
         headers["Content-Type"] = content_type
 

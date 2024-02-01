@@ -113,8 +113,9 @@ class CriteriaWithType(Criteria):
     def from_criteria_ar(
         cls,
         criteria_ar: CriteriaAR,
-        get_criteria_type_name: Callable[[type, str], Any],
-        get_criteria_type_attributes: Callable[[type, str], Any],
+        syntax_template_node: CriteriaTemplateRoot,
+        get_criteria_type_name: Callable[[str], Any],
+        get_criteria_type_attributes: Callable[[str], Any],
     ) -> Self:
         parameter_terms: list[MultiTemplateParameterTerm] = []
         for position, parameter in enumerate(criteria_ar.get_parameters()):
@@ -160,11 +161,9 @@ class CriteriaWithType(Criteria):
                 sequence_id=criteria_ar.template_sequence_id,
                 guidance_text=criteria_ar.guidance_text,
                 type=CTTermNameAndAttributes.from_ct_term_ars(
-                    ct_term_name_ar=get_criteria_type_name(
-                        CriteriaTemplateRoot, criteria_ar.template_uid
-                    ),
+                    ct_term_name_ar=get_criteria_type_name(syntax_template_node),
                     ct_term_attributes_ar=get_criteria_type_attributes(
-                        CriteriaTemplateRoot, criteria_ar.template_uid
+                        syntax_template_node
                     ),
                 ),
                 library_name=criteria_ar.template_library_name,

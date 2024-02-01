@@ -31,10 +31,12 @@ class CriteriaPreInstanceService(CriteriaService[CriteriaPreInstanceAR]):
         self, item_ar: CriteriaPreInstanceAR
     ) -> CriteriaPreInstance:
         item = CriteriaPreInstance.from_criteria_pre_instance_ar(item_ar)
-        self._set_indexings(item)
+        self._set_indexings(item, self.root_node_class.nodes.get(uid=item.uid))
         item.template_type_uid = (
             self._repos.criteria_template_repository.get_template_type_uid(
-                item.template_uid
+                self._repos.criteria_template_repository.root_class.nodes.get(
+                    uid=item.template_uid
+                )
             )
         )
         return item

@@ -8,6 +8,7 @@ from clinical_mdr_api import exceptions
 from clinical_mdr_api.domain_repositories._generic_repository_interface import (
     _AggregateRootType,
 )
+from clinical_mdr_api.domain_repositories._utils.helpers import is_codelist_in_final
 from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_get_all_query_utils import (
     create_codelist_filter_statement,
     format_codelist_filter_sort_keys,
@@ -451,17 +452,14 @@ class CTCodelistGenericRepository(
         )
 
         # Validate that the term is removed from a codelist that isn't in a draft state.
-        attributes_root = ct_codelist_node.has_attributes_root.get_or_none()
-        if attributes_root:
-            has_latest_draft = attributes_root.latest_draft.get_or_none() is not None
-            if has_latest_draft:
-                raise VersioningException(
-                    "Term '"
-                    + term_uid
-                    + "' cannot be added to '"
-                    + codelist_uid
-                    + "' as the codelist is in a draft state."
-                )
+        if not is_codelist_in_final(ct_codelist_node):
+            raise VersioningException(
+                "Term '"
+                + term_uid
+                + "' cannot be added to '"
+                + codelist_uid
+                + "' as the codelist is in a draft state."
+            )
 
         query = """
             MATCH (codelist_root:CTCodelistRoot {uid: $codelist_uid})-[:HAS_NAME_ROOT]->()-[:LATEST]->
@@ -518,19 +516,14 @@ class CTCodelistGenericRepository(
                 )
 
                 # Validate that the term is removed from a codelist that isn't in a draft state.
-                attributes_root = ct_codelist_node.has_attributes_root.get_or_none()
-                if attributes_root:
-                    has_latest_draft = (
-                        attributes_root.latest_draft.get_or_none() is not None
+                if not is_codelist_in_final(ct_codelist_node):
+                    raise VersioningException(
+                        "Term '"
+                        + term_uid
+                        + "' cannot be removed from '"
+                        + codelist_uid
+                        + "' as the codelist is in a draft state."
                     )
-                    if has_latest_draft:
-                        raise VersioningException(
-                            "Term '"
-                            + term_uid
-                            + "' cannot be removed from '"
-                            + codelist_uid
-                            + "' as the codelist is in a draft state."
-                        )
 
                 query = """
                     MATCH (codelist_root:CTCodelistRoot {uid: $codelist_uid})-[:HAS_NAME_ROOT]->()-[:LATEST]->

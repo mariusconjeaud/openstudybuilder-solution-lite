@@ -1,6 +1,7 @@
 from neomodel import db
 
 from clinical_mdr_api import exceptions
+from clinical_mdr_api.domain_repositories.models.generic import VersionRoot
 from clinical_mdr_api.domain_repositories.models.syntax import CriteriaTemplateRoot
 from clinical_mdr_api.domain_repositories.syntax_instances.criteria_repository import (
     CriteriaRepository,
@@ -59,7 +60,7 @@ class CriteriaTemplateService(GenericSyntaxTemplateService[CriteriaTemplateAR]):
             CriteriaTemplateWithCount if item_ar.study_count != 0 else CriteriaTemplate
         )
         item = cls.from_criteria_template_ar(item_ar)
-        self._set_indexings(item)
+        self._set_indexings(item, self.root_node_class.nodes.get(uid=item.uid))
         return item
 
     def get_all(
@@ -132,7 +133,11 @@ class CriteriaTemplateService(GenericSyntaxTemplateService[CriteriaTemplateAR]):
                 self.repository.check_exists_by_name_in_library(
                     name=template.name,
                     library=item.library.name,
-                    type_uid=self.repository.get_template_type_uid(uid),
+                    type_uid=self.repository.get_template_type_uid(
+                        self._repos.criteria_template_repository.root_class.nodes.get_or_none(
+                            uid=uid
+                        )
+                    ),
                 )
                 and template.name != item.name
             ):
@@ -188,7 +193,7 @@ class CriteriaTemplateService(GenericSyntaxTemplateService[CriteriaTemplateAR]):
             ),
         )
 
-    def _set_indexings(self, item: CriteriaTemplate) -> None:
+    def _set_indexings(self, item: CriteriaTemplate, syntax_node: VersionRoot) -> None:
         """
         This method fetches and sets the indexing properties to a template.
         """
@@ -196,15 +201,12 @@ class CriteriaTemplateService(GenericSyntaxTemplateService[CriteriaTemplateAR]):
             return None
 
         # Get type
-        criteria_type_name = (
-            self._repos.ct_term_name_repository.get_syntax_template_type(
-                self.root_node_class, item.uid
-            )
+        type_node = syntax_node.has_type.single()
+        criteria_type_name = self._repos.ct_term_name_repository.find_by_uid(
+            type_node.uid
         )
         criteria_type_attributes = (
-            self._repos.ct_term_attributes_repository.get_syntax_template_type(
-                self.root_node_class, item.uid
-            )
+            self._repos.ct_term_attributes_repository.find_by_uid(type_node.uid)
         )
         if criteria_type_name is not None and criteria_type_attributes is not None:
             item.type = CTTermNameAndAttributes.from_ct_term_ars(
@@ -212,7 +214,7 @@ class CriteriaTemplateService(GenericSyntaxTemplateService[CriteriaTemplateAR]):
                 ct_term_attributes_ar=criteria_type_attributes,
             )
 
-        return super()._set_indexings(item)
+        return super()._set_indexings(item, syntax_node)
 
     def _get_indexings(
         self, template: BaseModel, template_uid: str | None = None
@@ -227,7 +229,9 @@ class CriteriaTemplateService(GenericSyntaxTemplateService[CriteriaTemplateAR]):
         criteria_type_term_uid = getattr(
             template, "type_uid", None
         ) or self._repos.criteria_template_repository.get_template_type_uid(
-            template_uid
+            self._repos.criteria_template_repository.root_class.nodes.get_or_none(
+                uid=template_uid
+            )
         )
 
         if criteria_type_term_uid is not None:

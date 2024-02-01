@@ -111,6 +111,7 @@ class DictionaryTermGenericRepository(
         library: Library | None,
         relationship: VersionRelationship,
         value: VersionValue,
+        **_kwargs,
     ) -> DictionaryTermAR:
         dictionary_codelist_root = root.has_term.single()
         library = dictionary_codelist_root.has_library.get_or_none()
@@ -311,17 +312,15 @@ class DictionaryTermGenericRepository(
         )
 
     def get_syntax_indications(
-        self, root_class: type, syntax_uid: str
+        self, syntax_node: VersionRoot
     ) -> list[DictionaryTermAR] | None:
         """
-        This method returns the indications for the syntax with provided uid
+        This method returns the indications for the provided syntax
 
-        :param root_class: The class of the root node for the syntax
-        :param syntax_uid: UID of the syntax
+        :param syntax_node: Syntax Root node
         :return list[DictionaryTermAR] | None:
         """
-        syntax = root_class.nodes.get(uid=syntax_uid)
-        indication_nodes = syntax.has_indication.all()
+        indication_nodes = syntax_node.has_indication.all()
         if indication_nodes:
             indications = []
             for node in indication_nodes:

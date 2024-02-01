@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from clinical_mdr_api.domain_repositories._generic_repository_interface import (
     GenericRepository,
 )
+from clinical_mdr_api.domain_repositories.models.generic import VersionRoot
 from clinical_mdr_api.domain_repositories.study_definitions.study_definition_repository import (
     StudyDefinitionRepository,
 )
@@ -83,11 +84,18 @@ class GenericSyntaxService(Generic[_AggregateRootType], abc.ABC):
     def get_by_uid(
         self,
         uid: str,
+        at_specified_datetime: datetime | None = None,
+        status: str | None = None,
+        version: str | None = None,
         return_instantiation_counts: bool = False,
         return_study_count: bool | None = True,
     ) -> BaseModel:
         item = self._find_by_uid_or_raise_not_found(
             uid,
+            status=LibraryItemStatus(status) if status is not None else None,
+            version=version,
+            for_update=False,
+            at_specific_date=at_specified_datetime,
             return_study_count=return_study_count,
             return_instantiation_counts=return_instantiation_counts,
         )
@@ -292,7 +300,7 @@ class GenericSyntaxService(Generic[_AggregateRootType], abc.ABC):
             "Default parameter terms handler is not implemented for this service."
         )
 
-    def _set_indexings(self, item: BaseModel) -> None:
+    def _set_indexings(self, item: BaseModel, syntax_node: VersionRoot) -> None:
         """
         This method fetches and sets the indexing properties to a template.
         """
@@ -302,7 +310,7 @@ class GenericSyntaxService(Generic[_AggregateRootType], abc.ABC):
         # Get indications
         indications = (
             self._repos.dictionary_term_generic_repository.get_syntax_indications(
-                self.root_node_class, item.uid
+                syntax_node
             )
         )
         if indications and hasattr(item, "indications"):
@@ -315,12 +323,10 @@ class GenericSyntaxService(Generic[_AggregateRootType], abc.ABC):
             )
         # Get categories
         category_names = self._repos.ct_term_name_repository.get_syntax_categories(
-            self.root_node_class, item.uid
+            syntax_node
         )
         category_attributes = (
-            self._repos.ct_term_attributes_repository.get_syntax_categories(
-                self.root_node_class, item.uid
-            )
+            self._repos.ct_term_attributes_repository.get_syntax_categories(syntax_node)
         )
         if category_names and category_attributes and hasattr(item, "categories"):
             item.categories = sorted(
@@ -337,13 +343,11 @@ class GenericSyntaxService(Generic[_AggregateRootType], abc.ABC):
             )
         # Get sub_categories
         sub_category_names = (
-            self._repos.ct_term_name_repository.get_syntax_subcategories(
-                self.root_node_class, item.uid
-            )
+            self._repos.ct_term_name_repository.get_syntax_subcategories(syntax_node)
         )
         sub_category_attributes = (
             self._repos.ct_term_attributes_repository.get_syntax_subcategories(
-                self.root_node_class, item.uid
+                syntax_node
             )
         )
         if (

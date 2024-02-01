@@ -25,12 +25,12 @@ class FootnotePreInstanceRepository(
 
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
-        *,
         root: FootnotePreInstanceRoot,
         library: Library,
         relationship: VersionRelationship,
         value: FootnotePreInstanceValue,
         study_count: int = 0,
+        **_kwargs,
     ):
         return FootnotePreInstanceAR.from_repository_values(
             uid=root.uid,

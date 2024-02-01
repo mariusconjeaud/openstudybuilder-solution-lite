@@ -40,26 +40,29 @@ export default {
   data () {
     return {
       expanded: false,
+      index: 0,
       search: null,
       yamlTree: null
     }
   },
   methods: {
-    renderTreeView (obj, index) {
+    renderTreeView (obj) {
       const retValue = []
 
-      if (!index) {
-        index = 0
-      }
       for (const key in obj) {
-        index += 1
+        this.index += 1
         if (typeof obj[key] === 'object') {
-          retValue.push({ id: index, name: key, children: this.renderTreeView(obj[key], index) })
+          retValue.push({ id: this.index, name: key, children: this.renderTreeView(obj[key]) })
         } else {
           if (!isNaN(key)) {
-            retValue.push({ id: index, name: obj[key] })
+            retValue.push({ id: this.index, name: obj[key] })
           } else {
-            retValue.push({ id: index, name: key, children: [{ id: index, name: obj[key] }] })
+            let value = obj[key]
+            if (typeof obj[key] === 'boolean') {
+              value = !obj[key] ? 'no' : 'yes'
+            }
+            retValue.push({ id: this.index, name: key, children: [{ id: this.index + 1, name: value }] })
+            this.index += 1
           }
         }
       }

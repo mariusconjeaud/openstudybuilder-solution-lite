@@ -105,8 +105,7 @@ def get_by_uid(
         None,
         description="If specified, the latest/newest representation of the configuration at this point in time is returned.\n"
         "The point in time needs to be specified in ISO 8601 format including the timezone, e.g.: "
-        "'2020-10-31T16:00:00+02:00' for October 31, 2020 at 4pm in UTC+2 timezone. "
-        "If the timezone is ommitted, UTC±0 is assumed.",
+        "'2020-10-31T16:00:00+02:00' for October 31, 2020 at 4pm in UTC+2 timezone. ",
     ),
     status: LibraryItemStatus
     | None = Query(

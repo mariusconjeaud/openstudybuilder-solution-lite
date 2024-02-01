@@ -107,7 +107,7 @@ export default {
   },
   computed: {
     columnDataParameters () {
-      const keyName = (this.$refs.table && this.$refs.table.tab === 'pre-instances') ? 'template_type_uid' : 'type.term_uid'
+      const keyName = (this.$route.params && this.$route.params.tab === 'pre-instances') ? 'template_type_uid' : 'type.term_uid'
       const filters = {}
       filters[keyName] = { v: [this.footnoteType.term_uid], op: 'eq' }
       return { filters }

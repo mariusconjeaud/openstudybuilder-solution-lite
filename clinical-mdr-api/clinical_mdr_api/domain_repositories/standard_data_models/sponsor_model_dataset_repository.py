@@ -141,11 +141,11 @@ class SponsorModelDatasetRepository(
 
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
-        *,
         root: Dataset,
         library: Library,
         relationship: VersionRelationship,
         value: SponsorModelDatasetInstance,
+        **_kwargs,
     ) -> SponsorModelDatasetAR:
         sponsor_model_name = None
         sponsor_model_version = None
