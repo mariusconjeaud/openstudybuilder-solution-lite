@@ -3,10 +3,6 @@ from typing import Callable, Self
 
 from pydantic import Field
 
-from clinical_mdr_api.domains.concepts.activities.activity_group import ActivityGroupAR
-from clinical_mdr_api.domains.concepts.activities.activity_sub_group import (
-    ActivitySubGroupAR,
-)
 from clinical_mdr_api.domains.study_selections.study_soa_footnote import (
     SoAItemType,
     StudySoAFootnoteVO,
@@ -17,7 +13,7 @@ from clinical_mdr_api.domains.syntax_templates.footnote_template import (
     FootnoteTemplateAR,
 )
 from clinical_mdr_api.models import Footnote, FootnoteCreateInput, FootnoteTemplate
-from clinical_mdr_api.models.utils import BaseModel
+from clinical_mdr_api.models.utils import BaseModel, get_latest_on_datetime_str
 
 
 class ReferencedItem(BaseModel):
@@ -41,6 +37,11 @@ class StudySoAFootnote(BaseModel):
         ...,
         title="The uid of the study",
     )
+    study_version: str | None = Field(
+        None,
+        title="study version or date information",
+        description="Study version number, if specified, otherwise None.",
+    )
     order: int = Field(
         ...,
         title="The uid of the study",
@@ -61,26 +62,38 @@ class StudySoAFootnote(BaseModel):
         study_soa_footnote_vo: StudySoAFootnoteVO,
         find_footnote_by_uid: Callable[[str], FootnoteAR | None],
         find_footnote_template_by_uid: Callable[[str], FootnoteTemplateAR | None],
-        find_activity_group_by_uid: Callable[[str], ActivityGroupAR | None],
-        find_activity_subgroup_by_uid: Callable[[str], ActivitySubGroupAR | None],
+        study_value_version: str | None = None,
     ) -> Self:
         footnote = None
         footnote_template = None
         if study_soa_footnote_vo.footnote_uid:
             footnote = Footnote.from_footnote_ar(
-                find_footnote_by_uid(study_soa_footnote_vo.footnote_uid)
+                find_footnote_by_uid(
+                    study_soa_footnote_vo.footnote_uid,
+                    version=study_soa_footnote_vo.footnote_version,
+                )
+                if study_soa_footnote_vo.footnote_version
+                else find_footnote_by_uid(study_soa_footnote_vo.footnote_uid)
             )
         elif study_soa_footnote_vo.footnote_template_uid:
             footnote_template = FootnoteTemplate.from_footnote_template_ar(
                 find_footnote_template_by_uid(
+                    study_soa_footnote_vo.footnote_template_uid,
+                    version=study_soa_footnote_vo.footnote_template_version,
+                )
+                if study_soa_footnote_vo.footnote_template_version
+                else find_footnote_template_by_uid(
                     study_soa_footnote_vo.footnote_template_uid
-                ),
-                find_activity_group_by_uid=find_activity_group_by_uid,
-                find_activity_subgroup_by_uid=find_activity_subgroup_by_uid,
+                )
             )
         return cls(
             uid=study_soa_footnote_vo.uid,
             study_uid=study_soa_footnote_vo.study_uid,
+            study_version=(
+                study_value_version
+                if study_value_version
+                else get_latest_on_datetime_str()
+            ),
             order=study_soa_footnote_vo.footnote_number,
             referenced_items=[
                 ReferencedItem(
@@ -159,8 +172,6 @@ class StudySoAFootnoteHistory(StudySoAFootnote):
         study_soa_footnote_vo: StudySoAFootnoteVOHistory,
         find_footnote_by_uid: Callable[[str], FootnoteAR | None],
         find_footnote_template_by_uid: Callable[[str], FootnoteTemplateAR | None],
-        find_activity_group_by_uid: Callable[[str], ActivityGroupAR | None],
-        find_activity_subgroup_by_uid: Callable[[str], ActivitySubGroupAR | None],
     ) -> Self:
         footnote = None
         footnote_template = None
@@ -172,9 +183,7 @@ class StudySoAFootnoteHistory(StudySoAFootnote):
             footnote_template = FootnoteTemplate.from_footnote_template_ar(
                 find_footnote_template_by_uid(
                     study_soa_footnote_vo.footnote_template_uid
-                ),
-                find_activity_group_by_uid=find_activity_group_by_uid,
-                find_activity_subgroup_by_uid=find_activity_subgroup_by_uid,
+                )
             )
         return cls(
             uid=study_soa_footnote_vo.uid,

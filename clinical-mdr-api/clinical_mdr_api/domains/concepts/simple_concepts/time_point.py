@@ -63,19 +63,19 @@ class TimePointVO(SimpleConceptVO):
         numeric_value = find_numeric_value_by_uid(numeric_value_uid)
         if numeric_value is None:
             raise exceptions.ValidationException(
-                f"{cls.__name__} tried to connect to non existing numeric value identified by uid ({numeric_value_uid})"
+                f"{cls.__name__} tried to connect to non-existent numeric value identified by uid ({numeric_value_uid})"
             )
 
         unit_definition = find_unit_definition_by_uid(unit_definition_uid)
         if unit_definition is None:
             raise exceptions.ValidationException(
-                f"{cls.__name__} tried to connect to non existing unit definition identified by uid ({unit_definition_uid})"
+                f"{cls.__name__} tried to connect to non-existent unit definition identified by uid ({unit_definition_uid})"
             )
 
         time_reference = find_time_reference_by_uid(time_reference_uid)
         if time_reference is None:
             raise exceptions.ValidationException(
-                f"{cls.__name__} tried to connect to non existing CTTermRoot identified by uid ({time_reference_uid})"
+                f"{cls.__name__} tried to connect to non-existent CTTermRoot identified by uid ({time_reference_uid})"
             )
 
         simple_concept_vo = cls(

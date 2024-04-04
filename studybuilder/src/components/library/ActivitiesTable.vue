@@ -25,7 +25,7 @@
     :history-data-fetcher="source !== 'activities-by-grouping' ? fetchGlobalAuditTrail : null"
     history-change-field="change_description"
     :history-excluded-headers="historyExcludedHeaders"
-    :initial-filters="requested ? { status: ['Draft', 'Final'] } : { status: ['Final'] }"
+    :initial-filters="makeInitialFilters(requested)"
     :default-filters="[{ text: this.$t('_global.status'), value: 'status' }]"
     >
     <template v-slot:item="{ item, expand, isExpanded }" v-if="isExpand()">
@@ -69,6 +69,9 @@
         </router-link>
       </template>
       <div v-else :class="isExpand() ? 'font-weight-bold' : ''"> {{ item.name }} </div>
+    </template>
+    <template v-slot:item.nci_concept_id="{ item }">
+      <n-c-i-concept-link :conceptId="item.nci_concept_id" />
     </template>
     <template v-slot:item.status="{ item }">
       <status-chip :status="item.status" />
@@ -191,6 +194,7 @@
         dark
         small
         color="primary"
+        data-cy="add-activity"
         @click.stop="showForm"
         :title="itemCreationTitle"
         :disabled="!checkPermission($roles.LIBRARY_WRITE)"
@@ -264,6 +268,7 @@
 
 <script>
 import activities from '@/api/activities'
+import statuses from '@/constants/statuses'
 import ActionsMenu from '@/components/tools/ActionsMenu'
 import { bus } from '@/main'
 import HistoryTable from '@/components/tools/HistoryTable'
@@ -276,6 +281,7 @@ import ActivitiesInstantiationsForm from '@/components/library/ActivitiesInstant
 import ActivitiesCreateSponsorFromRequestedForm from '@/components/library/ActivitiesCreateSponsorFromRequestedForm'
 import libConstants from '@/constants/libraries'
 import { accessGuard } from '@/mixins/accessRoleVerifier'
+import NCIConceptLink from '@/components/tools/NCIConceptLink'
 
 export default {
   mixins: [accessGuard],
@@ -288,7 +294,8 @@ export default {
     RequestedActivitiesForm,
     ActivitiesGroupsForm,
     ActivitiesInstantiationsForm,
-    ActivitiesCreateSponsorFromRequestedForm
+    ActivitiesCreateSponsorFromRequestedForm,
+    NCIConceptLink
   },
   computed: {
     itemCreationTitle () {
@@ -341,7 +348,7 @@ export default {
           label: this.$t('ActivityTable.create_sponsor_from_request'),
           icon: 'mdi-pencil-outline',
           iconColor: 'primary',
-          condition: (item) => item.status === 'Final' && this.requested,
+          condition: (item) => item.status === statuses.FINAL && this.requested,
           accessRole: this.$roles.LIBRARY_WRITE,
           click: this.createSponsorFromRequested
         },
@@ -611,8 +618,20 @@ export default {
         if (Object.keys(filtersObj).length !== 0 && filtersObj.constructor === Object) {
           params.filters = JSON.stringify(filtersObj)
         }
-      } else if (filters !== undefined && filters !== '{}') {
-        params.filters = filters
+      } else if (this.filters !== undefined && this.filters !== '{}' && this.source === 'activity-sub-groups') {
+        const filtersObj = JSON.parse(this.filters)
+        if (filtersObj.activity_groups) {
+          params.activity_group_names = []
+          filtersObj.activity_groups.v.forEach(value => {
+            params.activity_group_names.push(value)
+          })
+          delete filtersObj.activity_groups
+        }
+        if (Object.keys(filtersObj).length !== 0 && filtersObj.constructor === Object) {
+          params.filters = JSON.stringify(filtersObj)
+        }
+      } else if (this.filters !== undefined && this.filters !== '{}') {
+        params.filters = this.filters
       }
       if (this.requested) {
         if (!params.filters) {
@@ -648,6 +667,13 @@ export default {
           params.activity_group_names.push(value)
         })
         delete jsonFilter['activity_group.name']
+      }
+      if (jsonFilter.activity_groups) {
+        params.activity_group_names = []
+        jsonFilter.activity_groups.v.forEach(value => {
+          params.activity_group_names.push(value)
+        })
+        delete jsonFilter.activity_groups
       }
       if (jsonFilter['activity_subgroup.name']) {
         params.activity_subgroup_names = []
@@ -846,6 +872,13 @@ export default {
       this.showSponsorFromRequestedForm = false
       this.activeItem = null
       this.fetchActivities()
+    },
+    makeInitialFilters (requested) {
+      if (requested) {
+        return { status: [statuses.DRAFT, statuses.FINAL] }
+      } else {
+        return { status: [statuses.FINAL] }
+      }
     }
   },
   mounted () {

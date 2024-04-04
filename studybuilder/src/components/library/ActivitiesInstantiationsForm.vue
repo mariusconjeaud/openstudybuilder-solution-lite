@@ -15,6 +15,7 @@
         <validation-provider
           v-slot="{ errors }"
           rules="required"
+          data-cy="instanceform-activity-class"
           >
           <v-row>
             <v-col cols="4">
@@ -22,6 +23,7 @@
                 v-model="selectedActivity"
                 :items="activities"
                 :label="$t('ActivityForms.activity')"
+                data-cy="instanceform-activity-dropdown"
                 item-text="name"
                 dense
                 clearable
@@ -29,6 +31,8 @@
                 class="mt-4"
                 return-object
                 @change="selectedGroupings = []"
+                :loading="activitiesLoading"
+                @click="getActivities"
               />
             </v-col>
           </v-row>
@@ -44,6 +48,7 @@
                 v-model="selectedGroupings"
                 :headers="headers"
                 item-key="activity_subgroup_uid"
+                data-cy="instanceform-activitygroup-table"
                 :items="selectedActivity.activity_groupings"/>
             </v-col>
           </v-row>
@@ -56,6 +61,7 @@
         <validation-provider
           v-slot="{ errors }"
           rules="required"
+          data-cy="instanceform-instanceclass-class"
           >
           <v-row>
             <v-col cols="4">
@@ -63,6 +69,7 @@
                 v-model="form.activity_instance_class_uid"
                 :items="activityInstanceClasses"
                 :label="$t('ActivityForms.instance_class')"
+                data-cy="instanceform-instanceclass-dropdown"
                 item-text="name"
                 item-value="uid"
                 dense
@@ -86,6 +93,7 @@
               <v-text-field
                 v-model="form.name"
                 :label="$t('ActivityForms.activity_ins_name')"
+                data-cy="instanceform-instancename-field"
                 :error-messages="errors"
               />
             </v-col>
@@ -108,6 +116,7 @@
               <v-textarea
                 v-model="form.definition"
                 :label="$t('ActivityForms.definition')"
+                data-cy="instanceform-definition-field"
                 :error-messages="errors"
                 auto-grow
                 rows="2"
@@ -119,6 +128,7 @@
           <v-col cols="8">
             <v-text-field
               :label="$t('ActivityTable.nci_concept_id')"
+              data-cy="instanceform-nciconceptid-field"
               v-model="form.nci_concept_id"
               dense
               clearable
@@ -134,6 +144,7 @@
               <v-text-field
                 v-model="form.topic_code"
                 :label="$t('ActivityForms.topicCode')"
+                data-cy="instanceform-topiccode-field"
                 :error-messages="errors"
               />
             </v-col>
@@ -144,6 +155,7 @@
             <v-text-field
               v-model="form.adam_param_code"
               :label="$t('ActivityForms.adamCode')"
+              data-cy="instanceform-adamcode-field"
               hide-details
             />
           </v-col>
@@ -152,6 +164,7 @@
           <v-col>
             <v-checkbox
               :label="$t('ActivityForms.is_required_for_activity')"
+              data-cy="instanceform-requiredforactivity-checkbox"
               v-model="form.is_required_for_activity">
             </v-checkbox>
             <v-checkbox
@@ -181,6 +194,7 @@
 import _isEqual from 'lodash/isEqual'
 import activityInstanceClasses from '@/api/activityInstanceClasses'
 import activities from '@/api/activities'
+import statuses from '@/constants/statuses'
 import { bus } from '@/main'
 import ConfirmDialog from '@/components/tools/ConfirmDialog'
 import libraries from '@/constants/libraries'
@@ -254,7 +268,8 @@ export default {
         { text: this.$t('ActivityFormsInstantiations.activity_subgroup'), value: 'activity_subgroup_name' }
       ],
       selectedActivity: null,
-      selectedGroupings: []
+      selectedGroupings: [],
+      activitiesLoading: false
     }
   },
   methods: {
@@ -343,8 +358,17 @@ export default {
       return this.$refs[`observer_${step}`]
     },
     getActivities () {
-      activities.get({ page_size: 0 }, 'activities').then(resp => {
+      this.activitiesLoading = true
+      const params = {
+        page_size: 0,
+        filters: {
+          status: { v: [statuses.FINAL] },
+          library_name: { v: [libraries.LIBRARY_SPONSOR] }
+        }
+      }
+      activities.get(params, 'activities').then(resp => {
         this.activities = resp.data.items
+        this.activitiesLoading = false
       })
     },
     setActivityGroupings () {
@@ -374,6 +398,7 @@ export default {
     },
     editedActivity: {
       handler (value) {
+        this.getActivities()
         if (value) {
           this.initForm(value)
         }

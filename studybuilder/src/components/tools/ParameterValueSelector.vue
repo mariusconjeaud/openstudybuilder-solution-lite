@@ -56,7 +56,7 @@
               v-model="parameter.selectedValues"
               :label="parameter.name"
               :items="parameter.terms"
-              :item-text="(item) => `${item.name.replace(/<\/?[^>]+(>|$)/g, '')}`"
+              :item-text="cleanItemName"
               :errors="errors"
               return-object
               :disabled="disabled || parameter.skip"
@@ -152,7 +152,7 @@
                 v-model="parameter.selectedValues"
                 :label="parameter.name"
                 :items="parameter.terms"
-                :item-text="(item) => `${item.name.replace(/<\/?[^>]+(>|$)/g, '')}`"
+                :item-text="cleanItemName"
                 :errors="errors"
                 return-object
                 :disabled="parameter.skip"
@@ -321,6 +321,7 @@ export default {
         '[], [': '[',
         '] or []': ']',
         '[] or [': '[',
+        '] with [],': ']',
         '] []': ']',
         '[] [': '[',
         '[]': ''
@@ -329,6 +330,10 @@ export default {
         value = value.replace(original, rules[original])
       }
       return value.trim()
+    },
+    cleanItemName (item) {
+      // Return the name without any html tags such as <p> or </p>
+      return `${item.name.replace(/<\/?[^>]+(>)/g, '')}`
     },
     getNamePreview (hideEmptyParams) {
       if (!this.template) {
@@ -395,9 +400,11 @@ export default {
           }
           for (const param of extractedParams) {
             const resp = await templateParameterTypes.getTerms(param)
+            // remove any term with an empty name or where the name only consists of whitespaces
+            const data = resp.data.filter(term => term.name.trim().length > 0)
             this.parameters.push({
               name: param,
-              terms: resp.data
+              terms: data
             })
           }
           if (this.value.length) {

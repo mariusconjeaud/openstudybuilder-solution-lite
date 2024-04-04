@@ -7,7 +7,6 @@ from clinical_mdr_api import config
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.study_selections import study_disease_milestone
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.models.validators import FLOAT_REGEX
 from clinical_mdr_api.oauth import get_current_user_id, rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
@@ -21,6 +20,7 @@ studyUID = Path(..., description="The unique id of the study.")
 study_disease_milestone_uid_description = Path(
     None, description="The unique id of the study disease_milestone."
 )
+
 
 """
     API endpoints to study disease_milestones
@@ -68,6 +68,8 @@ Possible errors:
             "disease_milestone_type_named",
             "disease_milestone_type_definition",
             "repetition_indicator",
+            "study_uid",
+            "study_version",
         ],
         "formats": [
             "text/csv",
@@ -100,14 +102,9 @@ def get_all(
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
     uid: str = Path(description="the study"),
-    study_value_version: str
-    | None = Query(
-        None,
-        description="StudyValueVersion to extract the StudySelections",
-        regex=FLOAT_REGEX,
-    ),
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
     current_user_id: str = Depends(get_current_user_id),
-):
+) -> CustomPage[study_disease_milestone.StudyDiseaseMilestone]:
     disease_milestone_service = StudyDiseaseMilestoneService(current_user_id)
     all_items = disease_milestone_service.get_all_disease_milestones(
         study_uid=uid,
@@ -147,12 +144,7 @@ def get_all(
 # pylint: disable=unused-argument
 def get_distinct_values_for_header(
     uid: str = studyUID,  # TODO: Use this argument!
-    study_value_version: str
-    | None = Query(
-        None,
-        description="StudyValueVersion to extract the StudySelections",
-        regex=FLOAT_REGEX,
-    ),
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
     field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
     search_string: str
     | None = Query("", description=_generic_descriptions.HEADER_SEARCH_STRING),

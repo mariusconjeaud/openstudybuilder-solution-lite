@@ -1,5 +1,5 @@
 <template>
-<div class="px-4" v-if="selectedStudyVersion === null">
+<div class="px-4">
   <div class="page-title d-flex align-center">
     {{ $t('Sidebar.study.analysis_study_metadata_new') }}
     <help-button :help-text="$t('_help.SdtmSpecificationTable.general')" />
@@ -41,27 +41,18 @@
     </v-tab-item>
   </v-tabs-items>
 </div>
-<div v-else>
-  <under-construction :message="$t('UnderConstruction.not_supported')"/>
-</div>
 </template>
 
 <script>
+import { studySelectedNavigationGuard } from '@/mixins/studies'
 import AnalysisMetadataTable from '@/components/studies/AnalysisMetadataTable'
 import HelpButton from '@/components/tools/HelpButton'
-import { mapGetters } from 'vuex'
-import UnderConstruction from '@/components/layout/UnderConstruction'
 
 export default {
+  mixins: [studySelectedNavigationGuard],
   components: {
     AnalysisMetadataTable,
-    HelpButton,
-    UnderConstruction
-  },
-  computed: {
-    ...mapGetters({
-      selectedStudyVersion: 'studiesGeneral/selectedStudyVersion'
-    })
+    HelpButton
   },
   data () {
     return {

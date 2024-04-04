@@ -14,10 +14,6 @@ from clinical_mdr_api.models import (
     StudySelectionObjective,
     Timeframe,
 )
-from clinical_mdr_api.models.concepts.unit_definitions.unit_definition import (
-    UnitDefinitionModel,
-)
-from clinical_mdr_api.models.controlled_terminologies.ct_term import SimpleTermModel
 from clinical_mdr_api.services.studies.study_objectives import StudyObjectivesService
 
 USER_INITIALS = "unknown-user"
@@ -149,40 +145,6 @@ STUDY_ENDPOINTS = (
     STUDY_ENDPOINT_17,
 )
 
-UNIT_ATTRS = {
-    "start_date": DATETIME_799,
-    "status": "Final",
-    "version": "1.0",
-    "user_initials": USER_INITIALS,
-    "change_description": "Approved version",
-    "library_name": "Sponsor",
-    "convertible_unit": True,
-    "display_unit": True,
-    "master_unit": True,
-    "us_conventional_unit": True,
-    "unit_subsets": [],
-    "template_parameter": False,
-}
-
-UNITS = {
-    "UnitDefinition_000002": UnitDefinitionModel(
-        uid="UnitDefinition_000002",
-        name="beats/min",
-        si_unit=False,
-        ct_units=[SimpleTermModel(term_uid="C49673_beats/min", name="beats/min")],
-        **UNIT_ATTRS,
-    ),
-    "UnitDefinition_000006": UnitDefinitionModel(
-        uid="UnitDefinition_000006",
-        name="kg/m^2",
-        si_unit=True,
-        ct_units=[
-            SimpleTermModel(term_uid="C49671_kg/m2", name="Kilogram per Square Meter")
-        ],
-        **UNIT_ATTRS,
-    ),
-}
-
 STANDARD_TREE = {
     "C85826_OBJPRIM": (
         TERM_PRI_OBJ,
@@ -226,7 +188,6 @@ CONDENSED_TREE = {
 @pytest.fixture(scope="module")
 def study_objectives_service():
     service = StudyObjectivesService(USER_INITIALS)
-    setattr(service, "_units", UNITS)
     return service
 
 

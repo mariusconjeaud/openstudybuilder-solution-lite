@@ -79,8 +79,8 @@ class EndpointNegativeTest(EndpointTest):
     def post_test(self):
         def check_endpoints_empty():
             repos = MetaRepository()
-            data = repos.endpoint_repository.find_all()
-            self.assertListEqual(list(data), [])
+            data = repos.endpoint_repository.get_all()
+            self.assertListEqual(list(data), [[], 0])
 
         check_endpoints_empty()
 

@@ -9,17 +9,20 @@ Tests for activity-instructions activity_instructions
 # pytest fixture functions have other fixture functions as arguments,
 # which pylint interprets as unused arguments
 
+import json
 import logging
+from functools import reduce
 
 import pytest
 from fastapi.testclient import TestClient
+from neomodel import db
 
 from clinical_mdr_api import models
 from clinical_mdr_api.main import app
-
-# from clinical_mdr_api.models.study_selections.study_selection import (
-#     StudySelectionActivityInstructionInput,
-# )
+from clinical_mdr_api.models.study_selections.study_selection import (
+    StudyActivityInstructionCreateInput,
+    StudySelectionActivityCreateInput,
+)
 from clinical_mdr_api.models.syntax_instances.activity_instruction import (
     ActivityInstruction,
 )
@@ -30,14 +33,19 @@ from clinical_mdr_api.models.syntax_templates.template_parameter_term import (
     IndexedTemplateParameterTerm,
     MultiTemplateParameterTerm,
 )
-
-# from clinical_mdr_api.services.studies.study_activity_instruction_selection import (
-#     StudyActivityInstructionSelectionService,
-# )
+from clinical_mdr_api.services.studies.study_activity_instruction import (
+    StudyActivityInstructionService,
+)
+from clinical_mdr_api.services.studies.study_activity_selection import (
+    StudyActivitySelectionService,
+)
 from clinical_mdr_api.tests.integration.utils.api import (
     drop_db,
     inject_and_clear_db,
     inject_base_data,
+)
+from clinical_mdr_api.tests.integration.utils.data_library import (
+    get_codelist_with_term_cypher,
 )
 from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 
@@ -115,21 +123,6 @@ def test_data():
         library_name=indications_library_name,
     )
 
-    parameter_terms = [
-        MultiTemplateParameterTerm(
-            position=1,
-            conjunction="",
-            terms=[
-                IndexedTemplateParameterTerm(
-                    index=1,
-                    name=text_value_1.name,
-                    uid=text_value_1.uid,
-                    type="TextValue",
-                )
-            ],
-        )
-    ]
-
     def generate_parameter_terms():
         text_value = TestUtils.create_text_value()
         return [
@@ -151,7 +144,6 @@ def test_data():
         name="Default name with [TextValue]",
         guidance_text="Default guidance text",
         library_name="Sponsor",
-        default_parameter_terms=parameter_terms,
         indication_uids=[dictionary_term_indication.term_uid],
         activity_uids=[activity.uid],
         activity_group_uids=[activity_group.uid],
@@ -164,7 +156,20 @@ def test_data():
         TestUtils.create_activity_instruction(
             activity_instruction_template_uid=activity_instruction_template.uid,
             library_name="Sponsor",
-            parameter_terms=parameter_terms,
+            parameter_terms=[
+                MultiTemplateParameterTerm(
+                    position=1,
+                    conjunction="",
+                    terms=[
+                        IndexedTemplateParameterTerm(
+                            index=1,
+                            name=text_value_1.name,
+                            uid=text_value_1.uid,
+                            type="TextValue",
+                        )
+                    ],
+                )
+            ],
         )
     )
     activity_instructions.append(
@@ -229,18 +234,38 @@ def test_data():
             )
         )
 
-    # TODO Should be enabled when Study Footnote Selection has been implemented
-    # study_activity_instruction_selection_service = StudyActivityInstructionSelectionService(
-    #     author="test"
-    # )
-    # for activity_instruction in activity_instructions:
-    #     if activity_instruction.status == "Final":
-    #         study_activity_instruction_selection_service.make_selection(
-    #             study_uid="Study_000001",
-    #             selection_create_input=StudySelectionActivityInstructionInput(
-    #                 activity_instruction_uid=activity_instruction.uid
-    #             ),
-    #         )
+    flowchart_group_codelist = TestUtils.create_ct_codelist(
+        sponsor_preferred_name="Flowchart Group", extensible=True, approve=True
+    )
+    ct_term_soa_group = TestUtils.create_ct_term(
+        sponsor_preferred_name="SoA Group",
+        codelist_uid=flowchart_group_codelist.codelist_uid,
+    )
+    db.cypher_query(
+        get_codelist_with_term_cypher(
+            "EFFICACY", "Flowchart Group", term_uid="term_efficacy_uid"
+        )
+    )
+
+    study_activity = StudyActivitySelectionService(author="test").make_selection(
+        study_uid="Study_000001",
+        selection_create_input=StudySelectionActivityCreateInput(
+            soa_group_term_uid=ct_term_soa_group.term_uid,
+            activity_uid=activity.uid,
+            activity_group_uid=activity_group.uid,
+            activity_subgroup_uid=activity_subgroup.uid,
+        ),
+    )
+
+    for activity_instruction in activity_instructions:
+        if activity_instruction.status == "Final":
+            StudyActivityInstructionService(author="test").create(
+                study_uid="Study_000001",
+                study_activity_instruction_input=StudyActivityInstructionCreateInput(
+                    activity_instruction_uid=activity_instruction.uid,
+                    study_activity_uid=study_activity.study_activity_uid,
+                ),
+            )
 
     yield
 
@@ -298,110 +323,109 @@ def test_get_activity_instruction(api_client):
     assert res["status"] == "Final"
 
 
-# TODO Should be enabled when Study Footnote Selection has been implemented
-# def test_get_activity_instructions_pagination(api_client):
-#     results_paginated: dict = {}
-#     sort_by = '{"uid": true}'
-#     for page_number in range(1, 4):
-#         response = api_client.get(
-#             f"{URL}?page_number={page_number}&page_size=10&sort_by={sort_by}"
-#         )
-#         res = response.json()
-#         res_uids = list(map(lambda x: x["uid"], res["items"]))
-#         results_paginated[page_number] = res_uids
-#         log.info("Page %s: %s", page_number, res_uids)
+def test_get_activity_instructions_pagination(api_client):
+    results_paginated: dict = {}
+    sort_by = '{"uid": true}'
+    for page_number in range(1, 4):
+        response = api_client.get(
+            f"{URL}?page_number={page_number}&page_size=10&sort_by={sort_by}"
+        )
+        res = response.json()
+        res_uids = list(map(lambda x: x["uid"], res["items"]))
+        results_paginated[page_number] = res_uids
+        log.info("Page %s: %s", page_number, res_uids)
 
-#     log.info("All pages: %s", results_paginated)
+    log.info("All pages: %s", results_paginated)
 
-#     results_paginated_merged = list(
-#         list(reduce(lambda a, b: a + b, list(results_paginated.values())))
-#     )
-#     log.info("All rows returned by pagination: %s", results_paginated_merged)
+    results_paginated_merged = list(
+        list(reduce(lambda a, b: a + b, list(results_paginated.values())))
+    )
+    log.info("All rows returned by pagination: %s", results_paginated_merged)
 
-#     res_all = api_client.get(
-#         f"{URL}?page_number=1&page_size=100&sort_by={sort_by}"
-#     ).json()
-#     results_all_in_one_page = list(map(lambda x: x["uid"], res_all["items"]))
-#     log.info("All rows in one page: %s", results_all_in_one_page)
-#     assert len(results_all_in_one_page) == len(results_paginated_merged)
-#     assert len(
-#         [
-#             activity_instruction
-#             for activity_instruction in activity_instructions
-#             if activity_instruction.status == "Final"
-#         ]
-#     ) == len(results_paginated_merged)
+    res_all = api_client.get(
+        f"{URL}?page_number=1&page_size=100&sort_by={sort_by}"
+    ).json()
+    results_all_in_one_page = list(map(lambda x: x["uid"], res_all["items"]))
+    log.info("All rows in one page: %s", results_all_in_one_page)
+    assert len(results_all_in_one_page) == len(results_paginated_merged)
+    assert len(
+        [
+            activity_instruction
+            for activity_instruction in activity_instructions
+            if activity_instruction.status == "Final"
+        ]
+    ) == len(results_paginated_merged)
 
 
-# @pytest.mark.parametrize(
-#     "page_size, page_number, total_count, sort_by, expected_result_len",
-#     [
-#         pytest.param(None, None, True, None, 10),
-#         pytest.param(3, 1, True, None, 3),
-#         pytest.param(3, 2, True, None, 3),
-#         pytest.param(10, 2, True, None, 10),
-#         pytest.param(10, 3, True, None, 2),
-#         pytest.param(10, 1, True, '{"name": false}', 10),
-#         pytest.param(10, 2, True, '{"name": true}', 10),
-#     ],
-# )
-# def test_get_activity_instructions(
-#     api_client, page_size, page_number, total_count, sort_by, expected_result_len
-# ):
-#     url = URL
-#     query_params = []
-#     if page_size:
-#         query_params.append(f"page_size={page_size}")
-#     if page_number:
-#         query_params.append(f"page_number={page_number}")
-#     if total_count:
-#         query_params.append(f"total_count={total_count}")
-#     if sort_by:
-#         query_params.append(f"sort_by={sort_by}")
+@pytest.mark.parametrize(
+    "page_size, page_number, total_count, sort_by, expected_result_len",
+    [
+        pytest.param(None, None, True, None, 10),
+        pytest.param(3, 1, True, None, 3),
+        pytest.param(3, 2, True, None, 3),
+        pytest.param(10, 2, True, None, 10),
+        pytest.param(10, 3, True, None, 2),
+        pytest.param(10, 1, True, '{"name": false}', 10),
+        pytest.param(10, 2, True, '{"name": true}', 10),
+    ],
+)
+def test_get_activity_instructions(
+    api_client, page_size, page_number, total_count, sort_by, expected_result_len
+):
+    url = URL
+    query_params = []
+    if page_size:
+        query_params.append(f"page_size={page_size}")
+    if page_number:
+        query_params.append(f"page_number={page_number}")
+    if total_count:
+        query_params.append(f"total_count={total_count}")
+    if sort_by:
+        query_params.append(f"sort_by={sort_by}")
 
-#     if query_params:
-#         url = f"{url}?{'&'.join(query_params)}"
+    if query_params:
+        url = f"{url}?{'&'.join(query_params)}"
 
-#     log.info("GET %s", url)
-#     response = api_client.get(url)
-#     res = response.json()
+    log.info("GET %s", url)
+    response = api_client.get(url)
+    res = response.json()
 
-#     assert response.status_code == 200
+    assert response.status_code == 200
 
-#     # Check fields included in the response
-#     assert list(res.keys()) == ["items", "total", "page", "size"]
-#     assert len(res["items"]) == expected_result_len
-#     assert res["total"] == (
-#         len(
-#             [
-#                 activity_instruction
-#                 for activity_instruction in activity_instructions
-#                 if activity_instruction.status == "Final"
-#             ]
-#         )
-#         if total_count
-#         else 0
-#     )
-#     assert res["page"] == (page_number if page_number else 1)
-#     assert res["size"] == (page_size if page_size else 10)
+    # Check fields included in the response
+    assert list(res.keys()) == ["items", "total", "page", "size"]
+    assert len(res["items"]) == expected_result_len
+    assert res["total"] == (
+        len(
+            [
+                activity_instruction
+                for activity_instruction in activity_instructions
+                if activity_instruction.status == "Final"
+            ]
+        )
+        if total_count
+        else 0
+    )
+    assert res["page"] == (page_number if page_number else 1)
+    assert res["size"] == (page_size if page_size else 10)
 
-#     for item in res["items"]:
-#         assert set(list(item.keys())) == set(ACTIVITY_INSTRUCTION_FIELDS_ALL)
-#         for key in ACTIVITY_INSTRUCTION_FIELDS_NOT_NULL:
-#             assert item[key] is not None
+    for item in res["items"]:
+        assert set(list(item.keys())) == set(ACTIVITY_INSTRUCTION_FIELDS_ALL)
+        for key in ACTIVITY_INSTRUCTION_FIELDS_NOT_NULL:
+            assert item[key] is not None
 
-#     if sort_by:
-#         # sort_by is JSON string in the form: {"sort_field_name": is_ascending_order}
-#         sort_by_dict = json.loads(sort_by)
-#         sort_field: str = list(sort_by_dict.keys())[0]
-#         sort_order_ascending: bool = list(sort_by_dict.values())[0]
+    if sort_by:
+        # sort_by is JSON string in the form: {"sort_field_name": is_ascending_order}
+        sort_by_dict = json.loads(sort_by)
+        sort_field: str = list(sort_by_dict.keys())[0]
+        sort_order_ascending: bool = list(sort_by_dict.values())[0]
 
-#         # extract list of values of 'sort_field_name' field from the returned result
-#         result_vals = list(map(lambda x: x[sort_field], res["items"]))
-#         result_vals_sorted_locally = result_vals.copy()
-#         result_vals_sorted_locally.sort(reverse=not sort_order_ascending)
-#         # This assert fails due to API issue with sorting coupled with pagination
-#         # assert result_vals == result_vals_sorted_locally
+        # extract list of values of 'sort_field_name' field from the returned result
+        result_vals = list(map(lambda x: x[sort_field], res["items"]))
+        result_vals_sorted_locally = result_vals.copy()
+        result_vals_sorted_locally.sort(reverse=not sort_order_ascending)
+        # This assert fails due to API issue with sorting coupled with pagination
+        # assert result_vals == result_vals_sorted_locally
 
 
 def test_get_all_parameters_of_activity_instruction(api_client):
@@ -429,96 +453,95 @@ def test_get_versions_of_activity_instruction(api_client):
     assert res[1]["status"] == "Draft"
 
 
-# TODO Should be enabled when Study Footnote Selection has been implemented
-# @pytest.mark.parametrize(
-#     "filter_by, expected_matched_field, expected_result_prefix",
-#     [
-#         pytest.param(
-#             '{"*": {"v": ["Default name with"], "op": "co"}}',
-#             "name",
-#             "Default name with",
-#         ),
-#         pytest.param('{"*": {"v": ["cc"], "op": "co"}}', None, None),
-#         pytest.param('{"*": {"v": ["cc"], "op": "co"}}', None, None),
-#     ],
-# )
-# def test_filtering_wildcard(
-#     api_client, filter_by, expected_matched_field, expected_result_prefix
-# ):
-#     response = api_client.get(f"{URL}?filters={filter_by}")
-#     res = response.json()
+@pytest.mark.parametrize(
+    "filter_by, expected_matched_field, expected_result_prefix",
+    [
+        pytest.param(
+            '{"*": {"v": ["Default name with"], "op": "co"}}',
+            "name",
+            "Default name with",
+        ),
+        pytest.param('{"*": {"v": ["cc"], "op": "co"}}', None, None),
+        pytest.param('{"*": {"v": ["cc"], "op": "co"}}', None, None),
+    ],
+)
+def test_filtering_wildcard(
+    api_client, filter_by, expected_matched_field, expected_result_prefix
+):
+    response = api_client.get(f"{URL}?filters={filter_by}")
+    res = response.json()
 
-#     assert response.status_code == 200
-#     if expected_result_prefix:
-#         assert len(res["items"]) > 0
-#         # Each returned row has a field that starts with the specified filter value
-#         for row in res["items"]:
-#             assert row[expected_matched_field].startswith(expected_result_prefix)
-#     else:
-#         assert len(res["items"]) == 0
-
-
-# @pytest.mark.parametrize(
-#     "filter_by, expected_matched_field, expected_result",
-#     [
-#         pytest.param('{"name": {"v": ["Default"], "op": "co"}}', "name", "Default"),
-#         pytest.param('{"name": {"v": ["cc"], "op": "co"}}', None, None),
-#     ],
-# )
-# def test_filtering_exact(
-#     api_client, filter_by, expected_matched_field, expected_result
-# ):
-#     response = api_client.get(f"{URL}?filters={filter_by}")
-#     res = response.json()
-
-#     assert response.status_code == 200
-#     if expected_result:
-#         assert len(res["items"]) > 0
-#         # Each returned row has a field whose value is equal to the specified filter value
-#         for row in res["items"]:
-#             if isinstance(expected_result, list):
-#                 assert all(
-#                     item in row[expected_matched_field] for item in expected_result
-#                 )
-#             else:
-#                 assert expected_result in row[expected_matched_field]
-#     else:
-#         assert len(res["items"]) == 0
+    assert response.status_code == 200
+    if expected_result_prefix:
+        assert len(res["items"]) > 0
+        # Each returned row has a field that starts with the specified filter value
+        for row in res["items"]:
+            assert row[expected_matched_field].startswith(expected_result_prefix)
+    else:
+        assert len(res["items"]) == 0
 
 
-# @pytest.mark.parametrize(
-#     "field_name",
-#     [
-#         pytest.param("name"),
-#     ],
-# )
-# def test_headers(api_client, field_name):
-#     response = api_client.get(f"{URL}/headers?field_name={field_name}&result_count=100")
-#     res = response.json()
+@pytest.mark.parametrize(
+    "filter_by, expected_matched_field, expected_result",
+    [
+        pytest.param('{"name": {"v": ["Default"], "op": "co"}}', "name", "Default"),
+        pytest.param('{"name": {"v": ["cc"], "op": "co"}}', None, None),
+    ],
+)
+def test_filtering_exact(
+    api_client, filter_by, expected_matched_field, expected_result
+):
+    response = api_client.get(f"{URL}?filters={filter_by}")
+    res = response.json()
 
-#     assert response.status_code == 200
-#     expected_result = []
-#     for activity_instruction in activity_instructions:
-#         value = getattr(activity_instruction, field_name)
-#         if value and activity_instruction.status == "Final":
-#             expected_result.append(value)
-#     log.info("Expected result is %s", expected_result)
-#     log.info("Returned %s", res)
-#     if expected_result:
-#         assert len(res) > 0
-#         assert len(set(expected_result)) == len(res)
-#         assert all(item in res for item in expected_result)
-#     else:
-#         assert len(res) == 0
+    assert response.status_code == 200
+    if expected_result:
+        assert len(res["items"]) > 0
+        # Each returned row has a field whose value is equal to the specified filter value
+        for row in res["items"]:
+            if isinstance(expected_result, list):
+                assert all(
+                    item in row[expected_matched_field] for item in expected_result
+                )
+            else:
+                assert expected_result in row[expected_matched_field]
+    else:
+        assert len(res["items"]) == 0
 
 
-# def test_get_studies_of_activity_instruction(api_client):
-#     response = api_client.get(f"{URL}/{activity_instructions[0].uid}/studies")
-#     res = response.json()
+@pytest.mark.parametrize(
+    "field_name",
+    [
+        pytest.param("name"),
+    ],
+)
+def test_headers(api_client, field_name):
+    response = api_client.get(f"{URL}/headers?field_name={field_name}&result_count=100")
+    res = response.json()
 
-#     assert response.status_code == 200
-#     assert len(res) == 1
-#     assert res[0]["uid"] == "Study_000001"
+    assert response.status_code == 200
+    expected_result = []
+    for activity_instruction in activity_instructions:
+        value = getattr(activity_instruction, field_name)
+        if value and activity_instruction.status == "Final":
+            expected_result.append(value)
+    log.info("Expected result is %s", expected_result)
+    log.info("Returned %s", res)
+    if expected_result:
+        assert len(res) > 0
+        assert len(set(expected_result)) == len(res)
+        assert all(item in res for item in expected_result)
+    else:
+        assert len(res) == 0
+
+
+def test_get_studies_of_activity_instruction(api_client):
+    response = api_client.get(f"{URL}/{activity_instructions[0].uid}/studies")
+    res = response.json()
+
+    assert response.status_code == 200
+    assert len(res) == 1
+    assert res[0]["uid"] == "Study_000001"
 
 
 def test_create_activity_instruction(api_client):
@@ -691,12 +714,8 @@ def test_activity_instruction_audit_trail(api_client):
     log.info("Activity Instruction Audit Trail: %s", res)
 
     assert response.status_code == 200
-    assert res["total"] == 50
+    assert res["total"] == 44
     expected_uids = [
-        "ActivityInstruction_000004",
-        "ActivityInstruction_000004",
-        "ActivityInstruction_000004",
-        "ActivityInstruction_000026",
         "ActivityInstruction_000025",
         "ActivityInstruction_000025",
         "ActivityInstruction_000024",
@@ -737,8 +756,6 @@ def test_activity_instruction_audit_trail(api_client):
         "ActivityInstruction_000007",
         "ActivityInstruction_000006",
         "ActivityInstruction_000006",
-        "ActivityInstruction_000005",
-        "ActivityInstruction_000004",
         "ActivityInstruction_000002",
         "ActivityInstruction_000002",
         "ActivityInstruction_000001",

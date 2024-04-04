@@ -35,7 +35,9 @@ const mutations = {
     state.studyEpochs.filter((item, pos) => {
       if (item.uid === studyEpoch.uid) {
         Vue.set(state.studyEpochs, pos, studyEpoch)
+        return true
       }
+      return false
     })
   },
   REMOVE_STUDY_EPOCH (state, uid) {

@@ -139,75 +139,75 @@ class CompoundVO(ConceptVO):
         for term_uid in self.substance_terms_uids:
             if not dictionary_term_exists_callback(term_uid):
                 raise exceptions.ValidationException(
-                    f"{type(self).__name__} tried to connect to non existing substance identified by uid ({term_uid})"
+                    f"{type(self).__name__} tried to connect to non-existent substance identified by uid ({term_uid})"
                 )
 
         for dose_frequency_uid in self.dose_frequency_uids:
             if not ct_term_exists_callback(dose_frequency_uid):
                 raise exceptions.ValidationException(
-                    f"{type(self).__name__} tried to connect to non existing dose frequency identified by uid ({dose_frequency_uid})"
+                    f"{type(self).__name__} tried to connect to non-existent or non-final dose frequency identified by uid ({dose_frequency_uid})"
                 )
 
         for dosage_form_uid in self.dosage_form_uids:
             if not ct_term_exists_callback(dosage_form_uid):
                 raise exceptions.ValidationException(
-                    f"{type(self).__name__} tried to connect to non existing dosage form identified by uid ({dosage_form_uid})"
+                    f"{type(self).__name__} tried to connect to non-existent or non-final dosage form identified by uid ({dosage_form_uid})"
                 )
 
         for route_of_administration_uid in self.route_of_administration_uids:
             if not ct_term_exists_callback(route_of_administration_uid):
                 raise exceptions.ValidationException(
-                    f"{type(self).__name__} tried to connect to non existing "
+                    f"{type(self).__name__} tried to connect to non-existent or non-final "
                     f"route of administration identified by uid ({route_of_administration_uid})"
                 )
 
         for dose_values_uid in self.dose_values_uids:
             if not numeric_value_exists_callback(dose_values_uid):
                 raise exceptions.ValidationException(
-                    f"{type(self).__name__} tried to connect to non existing dose value identified by uid ({dose_values_uid})"
+                    f"{type(self).__name__} tried to connect to non-existent dose value identified by uid ({dose_values_uid})"
                 )
 
         for strength_values_uid in self.strength_values_uids:
             if not numeric_value_exists_callback(strength_values_uid):
                 raise exceptions.ValidationException(
-                    f"{type(self).__name__} tried to connect to non existing strength value identified by uid ({strength_values_uid})"
+                    f"{type(self).__name__} tried to connect to non-existent strength value identified by uid ({strength_values_uid})"
                 )
 
         for lag_time_uid in self.lag_time_uids:
             if not lag_time_exists_callback(lag_time_uid):
                 raise exceptions.ValidationException(
-                    f"{type(self).__name__} tried to connect to non existing lag-time identified by uid ({lag_time_uid})"
+                    f"{type(self).__name__} tried to connect to non-existent lag-time identified by uid ({lag_time_uid})"
                 )
 
         for delivery_devices_uid in self.delivery_devices_uids:
             if not ct_term_exists_callback(delivery_devices_uid):
                 raise exceptions.ValidationException(
-                    f"{type(self).__name__} tried to connect to non existing delivery device identified by uid ({delivery_devices_uid})"
+                    f"{type(self).__name__} tried to connect to non-existent or non-final delivery device identified by uid ({delivery_devices_uid})"
                 )
 
         for dispensers_uid in self.dispensers_uids:
             if not ct_term_exists_callback(dispensers_uid):
                 raise exceptions.ValidationException(
-                    f"{type(self).__name__} tried to connect to non existing dispenser identified by uid ({dispensers_uid})"
+                    f"{type(self).__name__} tried to connect to non-existent or non-final dispenser identified by uid ({dispensers_uid})"
                 )
 
         for projects_uid in self.projects_uids:
             if not project_exists_callback(projects_uid):
                 raise exceptions.ValidationException(
-                    f"{type(self).__name__} tried to connect to non existing project identified by uid ({projects_uid})"
+                    f"{type(self).__name__} tried to connect to non-existent project identified by uid ({projects_uid})"
                 )
 
         for brands_uid in self.brands_uids:
             if not brand_exists_callback(brands_uid):
                 raise exceptions.ValidationException(
-                    f"{type(self).__name__} tried to connect to non existing brand identified by uid ({brands_uid})"
+                    f"{type(self).__name__} tried to connect to non-existent brand identified by uid ({brands_uid})"
                 )
 
         if self.half_life_uid is not None and not numeric_value_exists_callback(
             self.half_life_uid
         ):
             raise exceptions.ValidationException(
-                f"{type(self).__name__} tried to connect to non existing half life value identified by uid ({self.half_life_uid})"
+                f"{type(self).__name__} tried to connect to non-existent half life value identified by uid ({self.half_life_uid})"
             )
 
 

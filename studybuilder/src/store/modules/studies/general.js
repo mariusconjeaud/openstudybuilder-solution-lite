@@ -7,6 +7,7 @@ const state = {
   selectedStudy: null,
   selectedStudyVersion: null,
   studyPreferredTimeUnit: null,
+  soaPreferredTimeUnit: null,
   studyTypes: [],
   trialIntentTypes: [],
   trialTypes: [],
@@ -29,6 +30,7 @@ const getters = {
   selectedStudy: state => state.selectedStudy,
   selectedStudyVersion: state => state.selectedStudyVersion,
   studyPreferredTimeUnit: state => state.studyPreferredTimeUnit,
+  soaPreferredTimeUnit: state => state.soaPreferredTimeUnit,
   studyTypes: state => state.studyTypes,
   trialIntentTypes: state => state.trialIntentTypes,
   trialTypes: state => state.trialTypes,
@@ -72,6 +74,9 @@ const mutations = {
   },
   SET_STUDY_PREFERRED_TIME_UNIT (state, timeUnit) {
     state.studyPreferredTimeUnit = timeUnit
+  },
+  SET_SOA_PREFERRED_TIME_UNIT (state, timeUnit) {
+    state.soaPreferredTimeUnit = timeUnit
   },
   SET_UNITS (state, data) {
     state.units = data
@@ -136,16 +141,21 @@ const actions = {
       }
     }
   },
-  selectStudy ({ commit }, { studyObj, forceReload }) {
+  selectStudy ({ commit, state }, { studyObj, forceReload }) {
     commit('SELECT_STUDY', { studyObj, forceReload })
-    study.getStudyPreferredTimeUnit(studyObj.uid).then(resp => {
+    study.getStudyPreferredTimeUnit(studyObj.uid, studyObj.current_metadata.version_metadata.version_number).then(resp => {
       commit('SET_STUDY_PREFERRED_TIME_UNIT', resp.data)
     })
+    study.getSoAPreferredTimeUnit(studyObj.uid, studyObj.current_metadata.version_metadata.version_number).then(resp => {
+      commit('SET_SOA_PREFERRED_TIME_UNIT', resp.data)
+    })
   },
-  setStudyPreferredTimeUnit ({ commit, state }, timeUnitUid) {
-    const data = { unit_definition_uid: timeUnitUid }
-    return study.updateStudyPreferredTimeUnit(state.selectedStudy.uid, data).then(resp => {
-      commit('SET_STUDY_PREFERRED_TIME_UNIT', resp.data)
+  setStudyPreferredTimeUnit ({ commit, state }, { timeUnitUid, protocolSoa }) {
+    const data = {
+      unit_definition_uid: timeUnitUid
+    }
+    return study.updateStudyPreferredTimeUnit(state.selectedStudy.uid, data, protocolSoa).then(resp => {
+      protocolSoa ? commit('SET_SOA_PREFERRED_TIME_UNIT', resp.data) : commit('SET_STUDY_PREFERRED_TIME_UNIT', resp.data)
     })
   },
   fetchUnits ({ commit, state }) {

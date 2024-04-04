@@ -1,11 +1,6 @@
 from dataclasses import dataclass
 from typing import Callable, Self
 
-from clinical_mdr_api.domains.controlled_terminologies.ct_term_attributes import (
-    CTTermAttributesAR,
-)
-from clinical_mdr_api.domains.controlled_terminologies.ct_term_name import CTTermNameAR
-from clinical_mdr_api.domains.dictionaries.dictionary_term import DictionaryTermAR
 from clinical_mdr_api.domains.syntax_templates.template import (
     InstantiationCountsVO,
     TemplateAggregateRootBase,
@@ -14,6 +9,10 @@ from clinical_mdr_api.domains.syntax_templates.template import (
 from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemMetadataVO,
     LibraryVO,
+)
+from clinical_mdr_api.models.controlled_terminologies.ct_term import (
+    SimpleCTTermNameAndAttributes,
+    SimpleTermModel,
 )
 
 
@@ -24,22 +23,22 @@ class EndpointTemplateAR(TemplateAggregateRootBase):
     behavior. Inherits generic template versioning behaviors
     """
 
-    _indications: list[DictionaryTermAR] | None = None
+    _indications: SimpleTermModel | None = None
 
-    _categories: list[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None
+    _categories: list[SimpleCTTermNameAndAttributes] | None = None
 
-    _subcategories: list[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None
+    _subcategories: list[SimpleCTTermNameAndAttributes] | None = None
 
     @property
-    def indications(self) -> list[DictionaryTermAR]:
+    def indications(self) -> SimpleTermModel:
         return self._indications
 
     @property
-    def categories(self) -> list[tuple[CTTermNameAR, CTTermAttributesAR]]:
+    def categories(self) -> list[SimpleCTTermNameAndAttributes]:
         return self._categories
 
     @property
-    def sub_categories(self) -> list[tuple[CTTermNameAR, CTTermAttributesAR]]:
+    def sub_categories(self) -> list[SimpleCTTermNameAndAttributes]:
         return self._subcategories
 
     @classmethod
@@ -52,9 +51,9 @@ class EndpointTemplateAR(TemplateAggregateRootBase):
         item_metadata: LibraryItemMetadataVO,
         study_count: int = 0,
         counts: InstantiationCountsVO | None = None,
-        indications: list[DictionaryTermAR] | None = None,
-        categories: list[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None,
-        sub_categories: list[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None,
+        indications: SimpleTermModel | None = None,
+        categories: list[SimpleCTTermNameAndAttributes] | None = None,
+        sub_categories: list[SimpleCTTermNameAndAttributes] | None = None,
     ) -> Self:
         return cls(
             _uid=uid,
@@ -80,9 +79,9 @@ class EndpointTemplateAR(TemplateAggregateRootBase):
         next_available_sequence_id_callback: Callable[
             [str, LibraryVO | None], str | None
         ] = lambda uid, library: None,
-        indications: list[DictionaryTermAR] | None = None,
-        categories: list[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None,
-        sub_categories: list[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None,
+        indications: SimpleTermModel | None = None,
+        categories: list[SimpleCTTermNameAndAttributes] | None = None,
+        sub_categories: list[SimpleCTTermNameAndAttributes] | None = None,
     ) -> Self:
         ar: Self = super().from_input_values(
             author=author,

@@ -1,11 +1,11 @@
 [
     {
-        "name": "Test get all terms from non existing codelist",
+        "name": "Test get all terms from non-existent codelist",
         "request": {
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "/ct/terms/names?codelist_uid=non_existing_codelist"
+            "url": "/ct/terms/names?codelist_uid=non_existent_codelist"
         },
         "response": {
             "code": 400,
@@ -14,9 +14,9 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "There is no CTCodelistRoot identified by provided codelist uid (non_existing_codelist)",
+                "message": "There is no CTCodelistRoot identified by provided codelist uid (non_existent_codelist)",
                 "method": "GET",
-                "path": "http://testserver/ct/terms/names?codelist_uid=non_existing_codelist",
+                "path": "http://testserver/ct/terms/names?codelist_uid=non_existent_codelist",
                 "time": "2020-11-03T23:42:41.518146",
                 "type": "BusinessLogicException"
             }

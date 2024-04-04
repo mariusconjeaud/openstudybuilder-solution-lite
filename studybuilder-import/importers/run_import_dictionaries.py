@@ -1,11 +1,10 @@
 import copy
 import csv
-from .utils.metrics import Metrics
 
 from .functions.parsers import map_boolean
 from .functions.utils import load_env
 from .utils.importer import BaseImporter, open_file
-
+from .utils.metrics import Metrics
 
 # ---------------------------------------------------------------
 # Env loading
@@ -113,7 +112,15 @@ class Dictionaries(BaseImporter):
     # Create the libraries
     def create_libraries(self):
         libs = self.api.get_libraries()
-        new_libs = ["Sponsor", "SNOMED", "MED-RT", "UNII", "UCUM", "User Defined", "Requested"]
+        new_libs = [
+            "Sponsor",
+            "SNOMED",
+            "MED-RT",
+            "UNII",
+            "UCUM",
+            "User Defined",
+            "Requested",
+        ]
         for lib in new_libs:
             self.log.info(f"Create library {lib}")
             if lib not in libs:
@@ -133,7 +140,9 @@ class Dictionaries(BaseImporter):
         headers = next(csv_data)
         # TODO why only check against SMOMED?
         all_dictionary_codelist_names = self.api.get_all_identifiers(
-            self.api.get_all_from_api("/dictionaries/codelists", params={"library":"SNOMED"}),
+            self.api.get_all_from_api(
+                "/dictionaries/codelists", params={"library": "SNOMED"}
+            ),
             identifier="name",
         )
         for row in csv_data:
@@ -161,7 +170,9 @@ class Dictionaries(BaseImporter):
             csv_data = csv.reader(csvfile, delimiter=",")
             headers = next(csv_data)
             all_dictionary_codelist = self.api.get_all_identifiers(
-                self.api.get_all_from_api(f"/dictionaries/codelists", params={"library":library}),
+                self.api.get_all_from_api(
+                    f"/dictionaries/codelists", params={"library": library}
+                ),
                 identifier="name",
                 value="codelist_uid",
             )
@@ -234,7 +245,9 @@ class Dictionaries(BaseImporter):
     def migrate_substances(
         self, library, file_env_variable, mappings, codelist_name, encoding="utf-8"
     ):
-        pclass_codelists = self.api.get_all_from_api("/dictionaries/codelists", params={"library":"MED-RT"})
+        pclass_codelists = self.api.get_all_from_api(
+            "/dictionaries/codelists", params={"library": "MED-RT"}
+        )
         all_pclass_terms = {}
         for pclass_codelist in pclass_codelists:
             all_pclass_terms.update(
@@ -251,7 +264,9 @@ class Dictionaries(BaseImporter):
             readCSV = csv.reader(csvfile, delimiter=",")
             headers = next(readCSV)
             all_dictionary_codelist = self.api.get_all_identifiers(
-                self.api.get_all_from_api(f"/dictionaries/codelists", params={"library":library}),
+                self.api.get_all_from_api(
+                    f"/dictionaries/codelists", params={"library": library}
+                ),
                 identifier="name",
                 value="codelist_uid",
             )

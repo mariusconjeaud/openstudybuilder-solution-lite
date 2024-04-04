@@ -10,7 +10,7 @@ from clinical_mdr_api.services.utils.docx_builder import DocxBuilder
 
 class Ref(BaseModel):
     type: str | None = Field(..., title="Referenced item type")
-    uid: str | None = Field(..., title="Referenced item uid")
+    uid: str = Field(..., title="Referenced item uid")
 
     def __init__(self, type_=None, uid=None, **kwargs):
         if type_ is not None:
@@ -24,7 +24,7 @@ class TableCell(BaseModel):
     text: str = Field("", title="Text contents of cell")
     span: int = Field(1, title="Horizontal spanning of cell, 1 by default")
     style: str | None = Field(None, title="Associated style to cell")
-    ref: Ref | None = Field(None, title="Reference to item")
+    refs: list[Ref] = Field(default_factory=list, title="Reference to item")
     footnotes: list[str] | None = Field(None, title="Referenced footnotes")
     vertical: bool | None = Field(None, title="Text text direction")
 

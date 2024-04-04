@@ -88,12 +88,12 @@ class CTConfigRepository(LibraryItemRepositoryImplBase[CTConfigAR]):
                 study_field_name=ar_value.study_field_name,
                 study_field_data_type=ar_value.study_field_data_type,
                 study_field_null_value_code=ar_value.study_field_null_value_code,
-                configured_codelist_uid=configured_codelist.uid
-                if configured_codelist is not None
-                else None,
-                configured_term_uid=configured_term.uid
-                if configured_term is not None
-                else None,
+                configured_codelist_uid=(
+                    configured_codelist.uid if configured_codelist is not None else None
+                ),
+                configured_term_uid=(
+                    configured_term.uid if configured_term is not None else None
+                ),
                 study_field_grouping=ar_value.study_field_grouping,
                 study_field_name_api=ar_value.study_field_name_api,
                 is_dictionary_term=ar_value.is_dictionary_term,

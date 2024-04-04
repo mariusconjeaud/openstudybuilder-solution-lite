@@ -6,6 +6,9 @@ from pydantic import Field
 from clinical_mdr_api.domains.controlled_terminologies.ct_term_attributes import (
     CTTermAttributesAR,
 )
+from clinical_mdr_api.models.controlled_terminologies.ct_term_codelist import (
+    CTTermCodelist,
+)
 from clinical_mdr_api.models.libraries.library import Library
 from clinical_mdr_api.models.utils import BaseModel
 
@@ -16,7 +19,13 @@ class CTTermAttributes(BaseModel):
         return cls(
             term_uid=ct_term_attributes_ar.uid,
             catalogue_name=ct_term_attributes_ar.ct_term_vo.catalogue_name,
-            codelist_uid=ct_term_attributes_ar.ct_term_vo.codelist_uid,
+            codelists=[
+                CTTermCodelist(
+                    codelist_uid=x.codelist_uid,
+                    order=x.order,
+                )
+                for x in ct_term_attributes_ar.ct_term_vo.codelists
+            ],
             concept_id=ct_term_attributes_ar.ct_term_vo.concept_id,
             code_submission_value=ct_term_attributes_ar.ct_term_vo.code_submission_value,
             name_submission_value=ct_term_attributes_ar.ct_term_vo.name_submission_value,
@@ -69,11 +78,10 @@ class CTTermAttributes(BaseModel):
         nullable=True,
     )
 
-    codelist_uid: str | None = Field(
-        None,
-        title="codelist_uid",
+    codelists: list[CTTermCodelist] = Field(
+        [],
+        title="codelists",
         description="",
-        nullable=True,
     )
 
     concept_id: str | None = Field(

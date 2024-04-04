@@ -39,11 +39,3 @@ class CTConfigRoot(VersionRoot):
     latest_retired = RelationshipTo(
         CTConfigValue, "LATEST_RETIRED", model=ClinicalMdrRel
     )
-
-
-class FieldNameConfigRoot(CTConfigRoot):
-    study_field_name = StringProperty()
-
-
-class SelectionRelTypeConfigRoot(CTConfigRoot):
-    study_selection_rel_type = StringProperty()

@@ -1,18 +1,14 @@
 from dataclasses import dataclass
 from typing import Callable, Self
 
-from clinical_mdr_api.domains.concepts.activities.activity import ActivityAR
-from clinical_mdr_api.domains.concepts.activities.activity_group import ActivityGroupAR
-from clinical_mdr_api.domains.concepts.activities.activity_sub_group import (
-    ActivitySubGroupAR,
-)
-from clinical_mdr_api.domains.dictionaries.dictionary_term import DictionaryTermAR
 from clinical_mdr_api.domains.libraries.object import ParametrizedTemplateVO
 from clinical_mdr_api.domains.syntax_pre_instances.pre_instance_ar import PreInstanceAR
 from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemMetadataVO,
     LibraryVO,
 )
+from clinical_mdr_api.models.controlled_terminologies.ct_term import SimpleTermModel
+from clinical_mdr_api.models.generic_models import SimpleNameModel
 
 
 @dataclass
@@ -21,28 +17,28 @@ class FootnotePreInstanceAR(PreInstanceAR):
     Implementation of FootnotePreInstanceAR. Solely based on Parametrized Template.
     """
 
-    _indications: list[DictionaryTermAR] | None = None
+    _indications: list[SimpleTermModel] | None = None
 
-    _activities: list[ActivityAR] | None = None
+    _activities: list[SimpleNameModel] | None = None
 
-    _activity_groups: list[ActivityGroupAR] | None = None
+    _activity_groups: list[SimpleNameModel] | None = None
 
-    _activity_subgroups: list[ActivitySubGroupAR] | None = None
+    _activity_subgroups: list[SimpleNameModel] | None = None
 
     @property
-    def indications(self) -> list[DictionaryTermAR]:
+    def indications(self) -> list[SimpleTermModel]:
         return self._indications
 
     @property
-    def activities(self) -> list[ActivityAR]:
+    def activities(self) -> list[SimpleNameModel]:
         return self._activities
 
     @property
-    def activity_groups(self) -> list[ActivityGroupAR]:
+    def activity_groups(self) -> list[SimpleNameModel]:
         return self._activity_groups
 
     @property
-    def activity_subgroups(self) -> list[ActivitySubGroupAR]:
+    def activity_subgroups(self) -> list[SimpleNameModel]:
         return self._activity_subgroups
 
     @classmethod
@@ -54,10 +50,10 @@ class FootnotePreInstanceAR(PreInstanceAR):
         item_metadata: LibraryItemMetadataVO,
         sequence_id: str,
         study_count: int = 0,
-        indications: list[DictionaryTermAR] | None = None,
-        activities: list[ActivityAR] | None = None,
-        activity_groups: list[ActivityGroupAR] | None = None,
-        activity_subgroups: list[ActivitySubGroupAR] | None = None,
+        indications: list[SimpleTermModel] | None = None,
+        activities: list[SimpleNameModel] | None = None,
+        activity_groups: list[SimpleNameModel] | None = None,
+        activity_subgroups: list[SimpleNameModel] | None = None,
     ) -> Self:
         return cls(
             _uid=uid,
@@ -82,10 +78,10 @@ class FootnotePreInstanceAR(PreInstanceAR):
         next_available_sequence_id_callback: Callable[[str], str | None] = (
             lambda _: None
         ),
-        indications: list[DictionaryTermAR] | None = None,
-        activities: list[ActivityAR] | None = None,
-        activity_groups: list[ActivityGroupAR] | None = None,
-        activity_subgroups: list[ActivitySubGroupAR] | None = None,
+        indications: list[SimpleTermModel] | None = None,
+        activities: list[SimpleNameModel] | None = None,
+        activity_groups: list[SimpleNameModel] | None = None,
+        activity_subgroups: list[SimpleNameModel] | None = None,
     ) -> Self:
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(author=author)
 

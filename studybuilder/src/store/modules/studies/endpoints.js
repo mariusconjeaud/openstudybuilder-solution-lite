@@ -27,7 +27,9 @@ const mutations = {
     state.studyEndpoints.filter((item, pos) => {
       if (item.study_endpoint_uid === studyEndpoint.study_endpoint_uid) {
         Vue.set(state.studyEndpoints, pos, studyEndpoint)
+        return true
       }
+      return false
     })
   },
   REMOVE_STUDY_ENDPOINT (state, studyEndpointUid) {

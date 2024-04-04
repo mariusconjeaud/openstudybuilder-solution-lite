@@ -19,6 +19,7 @@ RUN apt-get update \
         libpango-1.0-0 \
         libharfbuzz0b \
         libpangoft2-1.0-0 \
+        jq \
     && pip install --upgrade pip pipenv wheel \
     && apt-get clean && rm -rf /var/lib/apt/lists && rm -rf ~/.cache
 
@@ -74,6 +75,8 @@ ENV NEO4J_MDR_BOLT_PORT=7687 \
     NEO4J_CDISC_IMPORT_DATABASE=cdisc-import \
     NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
 
+ARG reportDate="2024-01-05 14:54:32 +0100"
+
 # Start Neo4j then run init and import
 RUN /neo4j/bin/neo4j-admin dbms set-initial-password "$NEO4J_MDR_AUTH_PASSWORD" \
     # start neo4j server
@@ -84,6 +87,13 @@ RUN /neo4j/bin/neo4j-admin dbms set-initial-password "$NEO4J_MDR_AUTH_PASSWORD" 
     && set -x \
     # init database
     && cd neo4j-mdr-db && pipenv run init_neo4j \
+    # import neodash reports
+    && mkdir -p neodash_reports/import && FILES="neodash_reports/*LATEST.json" \
+    && for f in $FILES; do echo "Processing $f file..."; filename=`basename $f` content=`cat $f` ; \
+    title=`jq -r .title $f`; uuid=`jq -r .uuid $f`; version=`jq -r .version $f`; echo "$title" "$uuid" "$version"; \
+    jq -n --slurpfile content $f --arg title "$title" --arg uuid "$uuid" --arg version "$version" --arg date "$reportDate" '. += {"content": $content, "title": $title, "uuid": $uuid, "version": $version, "date": $date, "user": "kwl@novonordisk.com"}' > neodash_reports/import/$filename; \
+    done \
+    && python -m pipenv run import_reports neodash_reports/import \
     # imports
     && cd ../mdr-standards-import && pipenv run pipeline_bulk_import "IMPORT" "packages" true \
     # stop neo4j server gently, but first wait a little for recent transactions to finish

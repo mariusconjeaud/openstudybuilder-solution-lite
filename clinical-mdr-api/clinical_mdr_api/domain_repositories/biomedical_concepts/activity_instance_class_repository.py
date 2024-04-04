@@ -136,4 +136,6 @@ class ActivityInstanceClassRepository(
         root: ActivityInstanceClassRoot,
         value: ActivityInstanceClassValue,
     ) -> None:
+        # This method from parent repo is not needed for this repo
+        # So we use pass to skip implementation
         pass

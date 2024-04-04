@@ -1,10 +1,10 @@
 ## Installed packages
 
-- requests==2.30.0
-  - certifi [required: >=2017.4.17, installed: 2023.5.7]
-  - charset-normalizer [required: >=2,<4, installed: 3.1.0]
-  - idna [required: >=2.5,<4, installed: 3.4]
-  - urllib3 [required: >=1.21.1,<3, installed: 2.0.2]
+- requests==2.31.0
+├── certifi [required: >=2017.4.17, installed: 2023.7.22]
+├── charset-normalizer [required: >=2,<4, installed: 3.2.0]
+├── idna [required: >=2.5,<4, installed: 3.4]
+└── urllib3 [required: >=1.21.1,<3, installed: 2.0.4]
 
 
 ## Third-party package licenses
@@ -309,8 +309,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ### License for 3rd party library setuptools
 
-Copyright Jason R. Coombs
-
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to
 deal in the Software without restriction, including without limitation the
@@ -336,7 +334,7 @@ IN THE SOFTWARE.
 
 MIT License
 
-Copyright (c) 2008-2020 Andrey Petrov and contributors (see CONTRIBUTORS.txt)
+Copyright (c) 2008-2020 Andrey Petrov and contributors.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

@@ -574,7 +574,7 @@ class StudyDesignFigureService:
         and a list of (x, y, text) for each line,
         where x/y coordinates (px int) and are relative to the enclosing box.
         """
-        # pylint:disable=unused-variable
+        # pylint: disable=unused-variable
 
         max_width = cell_width - paddings[0] * 2
 
@@ -585,7 +585,7 @@ class StudyDesignFigureService:
         total_width, total_height = 0, 0
         line, line_width, line_height = [], 0, 0
 
-        # pylint:disable=unused-variable
+        # pylint: disable=unused-variable
         def newline():
             """Appends the line of text with X,Y coordinates and starts a new line"""
             nonlocal lines, total_width, total_height, line, line_width, line_height
@@ -629,7 +629,7 @@ class StudyDesignFigureService:
     @staticmethod
     def _merge_cells_horizontally(table):
         """Merges cells with identical Study Element horizontally"""
-        # pylint:disable=unsubscriptable-object,unsupported-assignment-operation
+        # pylint: disable=unsubscriptable-object,unsupported-assignment-operation
         for row in table[1:]:
             prev_cell: Mapping | None = None
             for cell in row[1:]:
@@ -651,7 +651,7 @@ class StudyDesignFigureService:
     @staticmethod
     def _merge_cells_vertically(table):
         """Merges cells with identical Study Element vertically"""
-        # pylint:disable=unsubscriptable-object,unsupported-assignment-operation
+        # pylint: disable=unsubscriptable-object,unsupported-assignment-operation
         n_cols = len(table[0])
         for i in range(1, n_cols):
             prev_cell: Mapping | None = None

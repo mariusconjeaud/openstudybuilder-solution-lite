@@ -226,3 +226,18 @@ def defactorize_dict(data: dict) -> dict:
         new_key = key[1:] if key.startswith("_") else key
         return_dict[new_key] = value
     return return_dict
+
+
+def are_floats_equal(float_1: float, float_2: float) -> bool:
+    """
+    Asserts that two floating point numbers are equal, using the default tolerance.
+
+    Args:
+        float_1 (float): The first floating point number.
+        float_2 (float): The second floating point number.
+
+    Returns:
+        bool: True if the two floating point numbers are equal.
+    """
+    epsilon = 1e-6
+    return abs(float_1 - float_2) < epsilon

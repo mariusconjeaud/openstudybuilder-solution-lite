@@ -4,6 +4,9 @@ from typing import Any, TypeVar
 from neomodel import Q, db
 
 from clinical_mdr_api import exceptions
+from clinical_mdr_api.domain_repositories.generic_repository import (
+    manage_previous_connected_study_selection_relationships,
+)
 from clinical_mdr_api.domain_repositories.models._utils import to_relation_trees
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
     CTTermRoot,
@@ -260,17 +263,12 @@ class StudyDiseaseMilestoneRepository:
                     previous_item=previous_item,
                     new_item=new_study_disease_milestone,
                 )
-            self.manage_previous_outbound_relationships(
+            manage_previous_connected_study_selection_relationships(
                 previous_item=previous_item,
-                latest_study_value_node=study_value,
+                study_value_node=study_value,
+                new_item=new_study_disease_milestone,
             )
         return item
-
-    def manage_previous_outbound_relationships(
-        self, previous_item: StudyDiseaseMilestone, latest_study_value_node: StudyValue
-    ):
-        # DROP StudyValue relationship
-        previous_item.study_value.disconnect(latest_study_value_node)
 
     def manage_versioning_create(
         self,

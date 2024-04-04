@@ -1,10 +1,11 @@
 import json
 import re
 from copy import copy
+from datetime import datetime
 from typing import Any, Callable, Generic, Iterable, Self, Type, TypeVar
 
 from pydantic import BaseModel as PydanticBaseModel
-from pydantic import conint, create_model
+from pydantic import conint
 from pydantic.generics import GenericModel
 from starlette.responses import Response
 
@@ -18,21 +19,6 @@ EXCLUDE_PROPERTY_ATTRIBUTES_FROM_SCHEMA = {
     "source",
     "exclude_from_orm",
 }
-
-BASIC_TYPE_MAP = {
-    "StringProperty": str,
-    "BooleanProperty": bool,
-    "UniqueIdProperty": str,
-    "IntegerProperty": int,
-}
-
-
-def to_lower_camel(string: str) -> str:
-    split = string.split("_")
-    return "".join(
-        split[wn].capitalize() if wn > 0 else split[wn].casefold()
-        for wn in range(0, len(split))
-    )
 
 
 def capitalize_first_letter_if_template_parameter(
@@ -78,6 +64,10 @@ def from_duration_object_to_value_and_unit(
             found_unit = unit
             break
     return duration_value, found_unit
+
+
+def get_latest_on_datetime_str():
+    return f"LATEST on {datetime.utcnow().isoformat()}"
 
 
 class BaseModel(PydanticBaseModel):
@@ -251,30 +241,6 @@ def camel_case_data(datadict):
     for key, value in datadict.items():
         return_value[snake_to_camel(key)] = value
     return return_value
-
-
-def pydantic_model_factory(neomodel_root: type, neomodel_value: type):
-    root_definition = neomodel_root.get_definition()
-    value_definition = neomodel_value.get_definition()
-    pydantic_definition = {}
-    for name, value in value_definition.items():
-        camel_name = snake_to_camel(name)
-        pydantic_definition[camel_name] = (
-            BASIC_TYPE_MAP[value.__class__.__name__],
-            ...,
-        )
-
-    create_model_name = neomodel_root.__name__.replace("Root", "CreateInput")
-    basic_model_name = neomodel_root.__name__.replace("Root", "Model")
-    create_py_model = create_model(create_model_name, **pydantic_definition)
-    for name, value in root_definition.items():
-        camel_name = snake_to_camel(name)
-        pydantic_definition[camel_name] = (
-            BASIC_TYPE_MAP[value.__class__.__name__],
-            ...,
-        )
-    pydantic_model = create_model(basic_model_name, **pydantic_definition)
-    return pydantic_model, create_py_model
 
 
 def is_attribute_in_model(attribute: str, model: BaseModel) -> bool:

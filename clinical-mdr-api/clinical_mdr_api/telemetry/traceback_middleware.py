@@ -38,7 +38,7 @@ class ExceptionTracebackMiddleware:
         try:
             await self.app(scope, receive, _send)
 
-        # pylint:disable=broad-except
+        # pylint: disable=broad-except
         except Exception as exc:
             # add tracing attributes
             tracer = execution_context.get_opencensus_tracer()

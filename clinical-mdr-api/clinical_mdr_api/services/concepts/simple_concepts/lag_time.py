@@ -23,7 +23,10 @@ class LagTimeService(SimpleConceptGenericService[LagTimeAR]):
     def _transform_aggregate_root_to_pydantic_model(
         self, item_ar: LagTimeAR
     ) -> LagTime:
-        return LagTime.from_concept_ar(numeric_value=item_ar)
+        return LagTime.from_concept_ar(
+            numeric_value=item_ar,
+            find_unit_by_uid=self._repos.unit_definition_repository.find_by_uid_2,
+        )
 
     def _create_aggregate_root(self, concept_input: LagTimeInput, library) -> LagTimeAR:
         return self.aggregate_class.from_input_values(

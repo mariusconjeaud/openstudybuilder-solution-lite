@@ -22,6 +22,7 @@ from clinical_mdr_api.domain_repositories.models.generic import (
     VersionValue,
 )
 from clinical_mdr_api.domain_repositories.models.project import Project
+from clinical_mdr_api.domains._utils import ObjectStatus
 from clinical_mdr_api.domains.concepts.compound import CompoundAR, CompoundVO
 from clinical_mdr_api.domains.concepts.concept_base import _AggregateRootType
 from clinical_mdr_api.domains.versioned_object_aggregate import (
@@ -240,7 +241,9 @@ class CompoundRepository(ConceptGenericRepository):
             item_metadata=self._library_item_metadata_vo_from_relation(relationship),
         )
 
-    def specific_alias_clause(self) -> str:
+    def specific_alias_clause(
+        self, only_specific_status: str = ObjectStatus.LATEST.name
+    ) -> str:
         return """
             WITH *,            
                 [(concept_value)-[:HAS_DOSE_FREQUENCY]->(dose_frequency:CTTermRoot) | dose_frequency] AS dose_frequencies,

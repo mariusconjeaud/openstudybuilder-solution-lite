@@ -1,4 +1,4 @@
-# pylint:disable=unused-wildcard-import,wildcard-import
+# pylint: disable=unused-wildcard-import,wildcard-import
 
 from clinical_mdr_api.tests.fixtures.app import *
 from clinical_mdr_api.tests.fixtures.catalogue import *

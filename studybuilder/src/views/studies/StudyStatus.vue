@@ -60,7 +60,7 @@
       <study-status-table />
     </v-tab-item>
     <v-tab-item id="subparts">
-      <under-construction />
+      <study-subparts-table />
     </v-tab-item>
     <v-tab-item id="protocolversions">
       <under-construction />
@@ -74,6 +74,7 @@ import HelpButton from '@/components/tools/HelpButton'
 import StudyIdentificationSummary from '@/components/studies/StudyIdentificationSummary'
 import { studySelectedNavigationGuard } from '@/mixins/studies'
 import StudyStatusTable from '@/components/studies/StudyStatusTable'
+import StudySubpartsTable from '@/components/studies/StudySubpartsTable'
 import UnderConstruction from '@/components/layout/UnderConstruction'
 
 export default {
@@ -82,6 +83,7 @@ export default {
     HelpButton,
     StudyIdentificationSummary,
     StudyStatusTable,
+    StudySubpartsTable,
     UnderConstruction
   },
   data () {

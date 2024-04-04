@@ -372,21 +372,21 @@ class StudyArmSelectionService(StudySelectionMixin):
         endpoint_repo = self._repos.endpoint_repository
         timeframe_repo = self._repos.timeframe_repository
         if request_study_endpoint.endpoint_uid:
-            endpoint_ar: EndpointAR = endpoint_repo.find_by_uid_2(
+            endpoint_ar: EndpointAR = endpoint_repo.find_by_uid(
                 request_study_endpoint.endpoint_uid
             )
         elif current_study_endpoint.endpoint_uid:
-            endpoint_ar: EndpointAR = endpoint_repo.find_by_uid_2(
+            endpoint_ar: EndpointAR = endpoint_repo.find_by_uid(
                 current_study_endpoint.endpoint_uid
             )
         else:
             endpoint_ar = None
         if request_study_endpoint.timeframe_uid:
-            timeframe_ar: TimeframeAR = timeframe_repo.find_by_uid_2(
+            timeframe_ar: TimeframeAR = timeframe_repo.find_by_uid(
                 request_study_endpoint.timeframe_uid
             )
         elif current_study_endpoint.timeframe_uid:
-            timeframe_ar: TimeframeAR = timeframe_repo.find_by_uid_2(
+            timeframe_ar: TimeframeAR = timeframe_repo.find_by_uid(
                 current_study_endpoint.timeframe_uid
             )
         else:
@@ -427,9 +427,9 @@ class StudyArmSelectionService(StudySelectionMixin):
             endpoint_sublevel_uid=request_study_endpoint.endpoint_sublevel_uid,
             endpoint_units=request_study_endpoint.endpoint_units.units,
             timeframe_uid=request_study_endpoint.timeframe_uid,
-            timeframe_version=timeframe_ar.item_metadata.version
-            if timeframe_ar
-            else None,
+            timeframe_version=(
+                timeframe_ar.item_metadata.version if timeframe_ar else None
+            ),
             unit_separator=request_study_endpoint.endpoint_units.separator,
             study_objective_uid=request_study_endpoint.study_objective_uid,
             study_selection_uid=current_study_endpoint.study_selection_uid,
@@ -445,7 +445,7 @@ class StudyArmSelectionService(StudySelectionMixin):
             study_uid, study_selection_uid, for_update=True
         )
         endpoint_uid = selection.endpoint_uid
-        endpoint_ar = self._repos.endpoint_repository.find_by_uid_2(endpoint_uid)
+        endpoint_ar = self._repos.endpoint_repository.find_by_uid(endpoint_uid)
         if endpoint_ar.item_metadata.status == LibraryItemStatus.DRAFT:
             endpoint_ar.approve(self.author)
             self._repos.endpoint_repository.save(endpoint_ar)
@@ -471,7 +471,7 @@ class StudyArmSelectionService(StudySelectionMixin):
             study_uid, study_selection_uid, for_update=True
         )
         timeframe_uid = selection.timeframe_uid
-        timeframe_ar = self._repos.timeframe_repository.find_by_uid_2(timeframe_uid)
+        timeframe_ar = self._repos.timeframe_repository.find_by_uid(timeframe_uid)
         if timeframe_ar.item_metadata.status == LibraryItemStatus.DRAFT:
             timeframe_ar.approve(self.author)
             self._repos.timeframe_repository.save(timeframe_ar)
@@ -498,7 +498,7 @@ class StudyArmSelectionService(StudySelectionMixin):
             study_uid, study_selection_uid, for_update=True
         )
         endpoint_uid = selection.endpoint_uid
-        endpoint_ar = self._repos.endpoint_repository.find_by_uid_2(endpoint_uid)
+        endpoint_ar = self._repos.endpoint_repository.find_by_uid(endpoint_uid)
         if endpoint_ar.item_metadata.status == LibraryItemStatus.DRAFT:
             endpoint_ar.approve(self.author)
             self._repos.endpoint_repository.save(endpoint_ar)

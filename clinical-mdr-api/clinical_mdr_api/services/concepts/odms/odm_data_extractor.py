@@ -42,7 +42,7 @@ from clinical_mdr_api.services.controlled_terminologies.ct_term_attributes impor
 class OdmDataExtractor:
     target_uid: str
     target_name: str
-    status: list[str]
+    status: str
 
     odm_vendor_namespaces: dict[str, dict]
     odm_vendor_elements: dict[str, dict]
@@ -72,7 +72,7 @@ class OdmDataExtractor:
         self,
         target_uid: str,
         target_type: TargetType,
-        status: list[str],
+        status: str,
         unit_definition_service,
     ):
         self.unit_definition_service = unit_definition_service

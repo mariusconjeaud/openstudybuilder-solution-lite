@@ -30,8 +30,3 @@ class TableHeader(BaseModel):
             for i in range(span - 1):
                 self.data.append("")
                 self.spans.append(0)
-
-
-class TableWithHeaders(BaseModel):
-    headers: list[TableHeader]
-    data: list[list[str]]

@@ -166,6 +166,10 @@
                 {
                     "name": "VisitName",
                     "terms": []
+                },
+                {
+                    "name": "WeekInStudy",
+                    "terms": []
                 }
             ]
         }

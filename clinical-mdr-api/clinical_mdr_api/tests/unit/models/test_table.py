@@ -13,7 +13,7 @@ def test_table_dimension():
     assert not list(table_dimension.keys())
     assert not list(table_dimension)
 
-    # Getitem on non-existing index creates that item, and may extend the length of the series
+    # Getitem on non-existent index creates that item, and may extend the length of the series
     assert table_dimension[2] is Undefined  # sets index[2] to Undefined and size to 3
     keys = list(range(table_dimension.size))
     values = [Undefined, Undefined, Undefined]

@@ -64,7 +64,7 @@
     <template v-slot:item.arms="item">
       <td>
         <v-chip v-if="item.item.armColor" small :color="item.item.armColor" class="mr-1"/>
-        <router-link :to="{ name: 'StudyArmOverview', params: { study_id: selectedStudy.uid, id: item.item.uid } }">
+        <router-link :to="{ name: 'StudyArmOverview', params: { study_id: selectedStudy.uid, id: item.item.uid, root_tab: 'design_matrix' } }">
           {{ item.value }}
         </router-link>
       </td>
@@ -72,7 +72,7 @@
     <template v-slot:item.branches="item">
       <td>
         <v-chip v-if="item.item.branchColor" small :color="item.item.branchColor" class="mr-1"/>
-        <router-link :to="{ name: 'StudyBranchArmOverview', params: { study_id: selectedStudy.uid, id: item.item.id } }">
+        <router-link :to="{ name: 'StudyBranchArmOverview', params: { study_id: selectedStudy.uid, id: item.item.id, root_tab: 'design_matrix' } }">
           {{ item.value }}
         </router-link>
       </td>

@@ -105,13 +105,13 @@ class TestCTCodelistRepository(unittest.TestCase):
             with self.subTest(filter_tuple):
                 all_codelists_attributes_in_db = self.codelist_attributes_repo.find_all(
                     catalogue_name=filter_tuple[0],
-                    library=filter_tuple[1],
+                    library_name=filter_tuple[1],
                     package=filter_tuple[2],
                 ).items
 
                 all_codelists_names_in_db = self.codelist_names_repo.find_all(
                     catalogue_name=filter_tuple[0],
-                    library=filter_tuple[1],
+                    library_name=filter_tuple[1],
                     package=filter_tuple[2],
                 ).items
 

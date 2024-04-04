@@ -42,6 +42,7 @@
       },
       "result": {
         "study_uid": "study_root",
+            "study_version": null,
         "cohort_uid": "StudyCohort_000001",
         "order": 1,
         "name": "Cohort_Name_77",
@@ -68,10 +69,18 @@
             "arm_type": {
               "term_uid": "term_root_final",
               "catalogue_name": "SDTM CT",
-              "codelist_uid": "ct_codelist_root_endpoint",
+              "codelists": [
+                {
+                  "codelist_uid": "ct_codelist_root_endpoint",
+                  "order": 1
+                },
+                {
+                  "codelist_uid": "editable_cr",
+                  "order": 1
+                }
+              ],
               "sponsor_preferred_name": "term_value_name1",
               "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
-              "order": 1,
               "library_name": "Sponsor",
               "start_date": "2022-07-11T22:55:21.939000",
               "end_date": null,
@@ -119,6 +128,7 @@
           "order": 1,
           "project_number": null,
           "project_name": null,
+          "study_version": null,
           "cohort_uid": "StudyCohort_000001",
           "name": "Cohort_Name_77",
           "short_name": "Cohort_Short_Name_4",
@@ -141,6 +151,7 @@
             "order": false,
             "project_number": false,
             "project_name": false,
+            "study_version": false,
             "cohort_uid": false,
             "name": true,
             "short_name": true,
@@ -163,6 +174,7 @@
           "order": 1,
           "project_number": null,
           "project_name": null,
+            "study_version": null,
           "cohort_uid": "StudyCohort_000001",
           "name": "Cohort_Name_1",
           "short_name": "Cohort_Short_Name_1",
@@ -208,6 +220,7 @@
       "result": {
         "study_uid": "study_root",
         "order": 1,
+            "study_version": null,
         "cohort_uid": "StudyCohort_000001",
         "name": "Cohort_Name_1",
         "short_name": "Cohort_Short_Name_5",
@@ -231,10 +244,18 @@
             "arm_type": {
               "term_uid": "term_root_final",
               "catalogue_name": "SDTM CT",
-              "codelist_uid": "ct_codelist_root_endpoint",
+              "codelists": [
+                {
+                  "codelist_uid": "ct_codelist_root_endpoint",
+                  "order": 1
+                },
+                {
+                  "codelist_uid": "editable_cr",
+                  "order": 1
+                }
+              ],
               "sponsor_preferred_name": "term_value_name1",
               "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
-              "order": 1,
               "library_name": "Sponsor",
               "start_date": "2022-07-11T22:55:21.939000",
               "end_date": null,

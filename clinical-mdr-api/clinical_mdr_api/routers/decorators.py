@@ -64,7 +64,7 @@ def _extract_values_from_data(data: dict, headers: dict):
     Yields:
         dict: The extracted values as a dictionary.
     """
-    if isinstance(data, (utils.CustomPage, utils.GenericFilteringReturn)):
+    if isinstance(data, utils.CustomPage | utils.GenericFilteringReturn):
         data = data.items
 
     for item in data:
@@ -80,13 +80,13 @@ def _extract_values_from_data(data: dict, headers: dict):
                         items = []
                         for elm in value:
                             subvalue = elm.get(path, "")
-                            if isinstance(subvalue, str):
+                            if isinstance(subvalue, float | int | str):
                                 # collection[].key
-                                items.append(subvalue)
+                                items.append(str(subvalue))
                             elif isinstance(subvalue, dict):
                                 # collection[].key1.key2
                                 items.append(subvalue[parts[index + 1]])
-                        value = ",".join(items)
+                        value = ", ".join(items)
                     elif isinstance(value, dict):
                         value = value.get(path, "")
                     if not value:
@@ -107,11 +107,17 @@ def _convert_data_to_rows(data: dict, headers: list[Any]):
     dict_headers = _convert_headers_to_dict(headers)
     yield list(dict_headers.keys())
     for value in _extract_values_from_data(data, dict_headers):
-        yield [
-            # openpyxl library only supports these data types: int, float, str, bool
-            x if isinstance(x, bool | float | int | str) else str(x)
-            for x in value.values()
-        ]
+        rs = []
+        for x in value.values():
+            if isinstance(x, str):
+                rs.append(x.replace("\n", " ").replace("\r", " "))
+            elif isinstance(x, bool | float | int):
+                rs.append(x)
+            elif x is None:
+                rs.append("")
+            else:
+                rs.append(str(x))
+        yield rs
 
 
 def _convert_data_to_list(data: dict, headers: list[Any]) -> list[Any]:
@@ -185,7 +191,7 @@ def export(export_format: str, data: dict, export_definition: dict, *args, **kwa
     else:
         headers = export_definition["defaults"]
     if export_format in REGISTERED_EXPORT_FORMATS:
-        if isinstance(data, (utils.CustomPage, utils.GenericFilteringReturn)):
+        if isinstance(data, utils.CustomPage | utils.GenericFilteringReturn):
             data = data.items
         result = REGISTERED_EXPORT_FORMATS[export_format](
             data, headers, *args, **kwargs

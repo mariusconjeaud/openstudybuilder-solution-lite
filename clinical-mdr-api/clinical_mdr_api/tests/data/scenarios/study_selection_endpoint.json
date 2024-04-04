@@ -99,10 +99,14 @@
                 "endpoint_level": {
                     "term_uid": "term_root_final",
                     "catalogue_name": "SDTM CT",
-                    "codelist_uid": "ct_codelist_root_endpoint",
+                    "codelists": [
+                        {
+                            "codelist_uid": "ct_codelist_root_endpoint",
+                            "order": 1
+                        }
+                    ],
                     "sponsor_preferred_name": "term_value_name1",
                     "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
-                    "order": 1,
                     "library_name": "Sponsor",
                     "start_date": "2021-06-07T11:41:14.430000",
                     "end_date": null,
@@ -118,10 +122,14 @@
                 "endpoint_sublevel": {
                     "term_uid": "term_root_final_non_edit",
                     "catalogue_name": "SDTM CT",
-                    "codelist_uid": "ct_codelist_root_endpoint_sub",
+                    "codelists": [
+                        {
+                            "codelist_uid": "ct_codelist_root_endpoint_sub",
+                            "order": 1
+                        }
+                    ],
                     "sponsor_preferred_name": "term_value_name3",
                     "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
-                    "order": 1,
                     "library_name": "CDISC",
                     "start_date": "2021-06-07T11:41:14.430000",
                     "end_date": null,
@@ -152,6 +160,7 @@
                 "order": 1,
                 "project_number": null,
                 "project_name": null,
+                "study_version": null, 
                 "study_endpoint_uid": "StudyEndpoint_000001",
                 "study_objective": {
                     "endpoint_count": 1,
@@ -189,6 +198,7 @@
                     "order": 1,
                     "project_number": null,
                     "project_name": null,
+                    "study_version": null, 
                     "study_objective_uid": "StudyObjective_000001",
                     "accepted_version": false,
                     "study_uid": "study_root"
@@ -277,10 +287,14 @@
                         "endpoint_level": {
                             "term_uid": "term_root_final",
                             "catalogue_name": "SDTM CT",
-                            "codelist_uid": "ct_codelist_root_endpoint",
+                            "codelists": [
+                                {
+                                    "codelist_uid": "ct_codelist_root_endpoint",
+                                    "order": 1
+                                }
+                            ],
                             "sponsor_preferred_name": "term_value_name1",
                             "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
-                            "order": 1,
                             "library_name": "Sponsor",
                             "start_date": "2021-06-07T11:41:14.430000",
                             "end_date": null,
@@ -296,10 +310,14 @@
                         "endpoint_sublevel": {
                             "term_uid": "term_root_final_non_edit",
                             "catalogue_name": "SDTM CT",
-                            "codelist_uid": "ct_codelist_root_endpoint_sub",
+                            "codelists": [
+                                {
+                                    "codelist_uid": "ct_codelist_root_endpoint_sub",
+                                    "order": 1
+                                }
+                            ],
                             "sponsor_preferred_name": "term_value_name3",
                             "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
-                            "order": 1,
                             "library_name": "CDISC",
                             "start_date": "2021-06-07T11:41:14.430000",
                             "end_date": null,
@@ -330,6 +348,8 @@
                         "order": 1,
                         "project_number": "123",
                         "project_name": "Project ABC",
+                        "study_version": null,
+                "study_version": null, 
                         "study_endpoint_uid": "StudyEndpoint_000001",
                         "accepted_version": false,
                         "study_objective": {
@@ -369,6 +389,7 @@
                             "order": 1,
                             "project_number": null,
                             "project_name": null,
+                    "study_version": null, 
                             "study_objective_uid": "StudyObjective_000001",
                             "study_uid": "study_root"
                         },
@@ -430,12 +451,14 @@
                         "order": 1,
                         "project_number": "123",
                         "project_name": "Project ABC",
+                        "study_version": null, 
                         "study_endpoint_uid": "StudyEndpoint_000001",
                         "study_objective": {
                             "study_uid": "study_root",
                             "order": 1,
                             "project_number": null,
                             "project_name": null,
+                            "study_version": null,
                             "study_objective_uid": "StudyObjective_000001",
                             "objective_level": null,
                             "objective": {
@@ -474,10 +497,14 @@
                         "endpoint_level": {
                             "term_uid": "term_root_final",
                             "catalogue_name": "SDTM CT",
-                            "codelist_uid": "ct_codelist_root_endpoint",
+                            "codelists": [
+                                {
+                                    "codelist_uid": "ct_codelist_root_endpoint",
+                                    "order": 1
+                                }
+                            ],
                             "sponsor_preferred_name": "term_value_name1",
                             "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
-                            "order": 1,
                             "library_name": "Sponsor",
                             "start_date": "2021-10-12T07:20:25.398000",
                             "end_date": null,
@@ -493,10 +520,14 @@
                         "endpoint_sublevel": {
                             "term_uid": "term_root_final_non_edit",
                             "catalogue_name": "SDTM CT",
-                            "codelist_uid": "ct_codelist_root_endpoint_sub",
+                            "codelists": [
+                                {
+                                    "codelist_uid": "ct_codelist_root_endpoint_sub",
+                                    "order": 1
+                                }
+                            ],
                             "sponsor_preferred_name": "term_value_name3",
                             "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
-                            "order": 1,
                             "library_name": "CDISC",
                             "start_date": "2021-06-07T11:41:14.430000",
                             "end_date": null,
@@ -632,10 +663,14 @@
                     "endpoint_level": {
                         "term_uid": "term_root_final",
                         "catalogue_name": "SDTM CT",
-                        "codelist_uid": "ct_codelist_root_endpoint",
+                        "codelists": [
+                            {
+                                "codelist_uid": "ct_codelist_root_endpoint",
+                                "order": 1
+                            }
+                        ],
                         "sponsor_preferred_name": "term_value_name1",
                         "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
-                        "order": 1,
                         "library_name": "Sponsor",
                         "start_date": "2021-06-07T11:41:14.430000",
                         "end_date": null,
@@ -651,10 +686,14 @@
                     "endpoint_sublevel": {
                         "term_uid": "term_root_final_non_edit",
                         "catalogue_name": "SDTM CT",
-                        "codelist_uid": "ct_codelist_root_endpoint_sub",
+                        "codelists": [
+                            {
+                                "codelist_uid": "ct_codelist_root_endpoint_sub",
+                                "order": 1
+                            }
+                        ],
                         "sponsor_preferred_name": "term_value_name3",
                         "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
-                        "order": 1,
                         "library_name": "CDISC",
                         "start_date": "2021-06-07T11:41:14.430000",
                         "end_date": null,
@@ -724,6 +763,7 @@
                         "order": 1,
                         "project_number": null,
                         "project_name": null,
+                        "study_version": null,
                         "study_objective_uid": "StudyObjective_000001",
                         "study_uid": "study_root"
                     },
@@ -814,6 +854,7 @@
                 "order": 2,
                 "project_number": null,
                 "project_name": null,
+                "study_version": null, 
                 "study_endpoint_uid": "StudyEndpoint_000003",
                 "accepted_version": false,
                 "study_objective": {
@@ -853,6 +894,7 @@
                     "order": 1,
                     "project_number": null,
                     "project_name": null,
+                    "study_version": null, 
                     "study_objective_uid": "StudyObjective_000001",
                     "study_uid": "study_root"
                 },
@@ -914,10 +956,14 @@
                         "endpoint_level": {
                             "term_uid": "term_root_final",
                             "catalogue_name": "SDTM CT",
-                            "codelist_uid": "ct_codelist_root_endpoint",
+                            "codelists": [
+                                {
+                                    "codelist_uid": "ct_codelist_root_endpoint",
+                                    "order": 1
+                                }
+                            ],
                             "sponsor_preferred_name": "term_value_name1",
                             "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
-                            "order": 1,
                             "library_name": "Sponsor",
                             "start_date": "2021-06-07T11:41:14.430000",
                             "end_date": null,
@@ -933,10 +979,14 @@
                         "endpoint_sublevel": {
                             "term_uid": "term_root_final_non_edit",
                             "catalogue_name": "SDTM CT",
-                            "codelist_uid": "ct_codelist_root_endpoint_sub",
+                            "codelists": [
+                                {
+                                    "codelist_uid": "ct_codelist_root_endpoint_sub",
+                                    "order": 1
+                                }
+                            ],
                             "sponsor_preferred_name": "term_value_name3",
                             "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
-                            "order": 1,
                             "library_name": "CDISC",
                             "start_date": "2021-06-07T11:41:14.430000",
                             "end_date": null,
@@ -967,6 +1017,7 @@
                         "order": 1,
                         "project_number": "123",
                         "project_name": "Project ABC",
+                "study_version": null, 
                         "study_endpoint_uid": "StudyEndpoint_000001",
                         "study_objective": {
                             "endpoint_count": 2,
@@ -1005,6 +1056,7 @@
                             "order": 1,
                             "project_number": null,
                             "project_name": null,
+                    "study_version": null, 
                             "study_objective_uid": "StudyObjective_000001",
                             "study_uid": "study_root"
                         },
@@ -1075,6 +1127,7 @@
                         "order": 2,
                         "project_number": "123",
                         "project_name": "Project ABC",
+                "study_version": null, 
                         "study_endpoint_uid": "StudyEndpoint_000003",
                         "accepted_version": false,
                         "study_objective": {
@@ -1114,6 +1167,7 @@
                             "order": 1,
                             "project_number": null,
                             "project_name": null,
+                    "study_version": null, 
                             "study_objective_uid": "StudyObjective_000001",
                             "study_uid": "study_root"
                         },
@@ -1151,6 +1205,7 @@
                 "order": 2,
                 "project_number": null,
                 "project_name": null,
+                "study_version": null, 
                 "study_endpoint_uid": "StudyEndpoint_000003",
                 "accepted_version": false,
                 "study_objective": null,
@@ -1187,6 +1242,7 @@
                 "order": 2,
                 "project_number": null,
                 "project_name": null,
+                "study_version": null, 
                 "study_endpoint_uid": "StudyEndpoint_000003",
                 "accepted_version": false,
                 "study_objective": null,
@@ -1218,10 +1274,14 @@
                 "endpoint_level": {
                     "term_uid": "term_root_final",
                     "catalogue_name": "SDTM CT",
-                    "codelist_uid": "ct_codelist_root_endpoint",
+                    "codelists": [
+                        {
+                            "codelist_uid": "ct_codelist_root_endpoint",
+                            "order": 1
+                        }
+                    ],
                     "sponsor_preferred_name": "term_value_name1",
                     "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
-                    "order": 1,
                     "library_name": "Sponsor",
                     "start_date": "2021-06-07T11:41:14.430000",
                     "end_date": null,
@@ -1241,6 +1301,7 @@
                 "order": 2,
                 "project_number": null,
                 "project_name": null,
+                "study_version": null, 
                 "study_endpoint_uid": "StudyEndpoint_000003",
                 "accepted_version": false,
                 "study_objective": null,
@@ -1272,10 +1333,14 @@
                 "endpoint_level": {
                     "term_uid": "term_root_final",
                     "catalogue_name": "SDTM CT",
-                    "codelist_uid": "ct_codelist_root_endpoint",
+                    "codelists": [
+                        {
+                            "codelist_uid": "ct_codelist_root_endpoint",
+                            "order": 1
+                        }
+                    ],
                     "sponsor_preferred_name": "term_value_name1",
                     "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
-                    "order": 1,
                     "library_name": "Sponsor",
                     "start_date": "2021-06-07T11:41:14.430000",
                     "end_date": null,
@@ -1295,6 +1360,7 @@
                 "order": 2,
                 "project_number": null,
                 "project_name": null,
+                "study_version": null, 
                 "study_endpoint_uid": "StudyEndpoint_000003",
                 "accepted_version": false,
                 "study_objective": {
@@ -1334,6 +1400,7 @@
                     "order": 1,
                     "project_number": null,
                     "project_name": null,
+                    "study_version": null, 
                     "study_objective_uid": "StudyObjective_000001",
                     "study_uid": "study_root"
                 },
@@ -1365,10 +1432,14 @@
                 "endpoint_level": {
                     "term_uid": "term_root_final",
                     "catalogue_name": "SDTM CT",
-                    "codelist_uid": "ct_codelist_root_endpoint",
+                    "codelists": [
+                        {
+                            "codelist_uid": "ct_codelist_root_endpoint",
+                            "order": 1
+                        }
+                    ],
                     "sponsor_preferred_name": "term_value_name1",
                     "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
-                    "order": 1,
                     "library_name": "Sponsor",
                     "start_date": "2021-06-07T11:41:14.430000",
                     "end_date": null,
@@ -1388,6 +1459,7 @@
                 "order": 2,
                 "project_number": null,
                 "project_name": null,
+                "study_version": null, 
                 "study_endpoint_uid": "StudyEndpoint_000003",
                 "accepted_version": false,
                 "study_objective": null,
@@ -1482,6 +1554,7 @@
                 "project_number": null,
                 "project_name": null,
                 "study_uid": "study_root",
+                "study_version": null,
                 "study_endpoint_uid": "preview",
                 "study_objective": null,
                 "endpoint_level": null,
@@ -1587,6 +1660,7 @@
                 "project_number": null,
                 "project_name": null,
                 "study_uid": "study_root",
+                "study_version": null, 
                 "study_endpoint_uid": "StudyEndpoint_000008",
                 "study_objective": {
                     "endpoint_count": 2,
@@ -1625,16 +1699,21 @@
                     "order": 1,
                     "project_number": null,
                     "project_name": null,
+                    "study_version": null, 
                     "study_objective_uid": "StudyObjective_000001",
                     "study_uid": "study_root"
                 },
                 "endpoint_level": {
                     "term_uid": "term_root_final",
                     "catalogue_name": "SDTM CT",
-                    "codelist_uid": "ct_codelist_root_endpoint",
+                    "codelists": [
+                        {
+                            "codelist_uid": "ct_codelist_root_endpoint",
+                            "order": 1
+                        }
+                    ],
                     "sponsor_preferred_name": "term_value_name1",
                     "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
-                    "order": 1,
                     "library_name": "Sponsor",
                     "start_date": "2021-06-07T11:41:14.430000",
                     "end_date": null,
@@ -1653,11 +1732,11 @@
                     "units": [
                         {
                             "uid": "unit 1",
-                            "name":"name 1"
+                            "name": "name 1"
                         },
                         {
                             "uid": "unit 2",
-                            "name":"name 2"
+                            "name": "name 2"
                         }
                     ]
                 },

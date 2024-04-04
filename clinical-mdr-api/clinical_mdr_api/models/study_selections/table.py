@@ -68,12 +68,6 @@ class TableDimension(dict):
         return range(self.size)
 
 
-class TableCellMetadata(BaseModel):
-    col_span: int = 0
-    row_span: int = 0
-    klass: str | None = None
-
-
 class Table(BaseModel):
     data: TableDimension = Field(
         ...,

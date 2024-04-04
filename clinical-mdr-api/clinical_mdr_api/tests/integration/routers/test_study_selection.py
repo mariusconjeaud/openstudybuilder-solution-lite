@@ -85,7 +85,14 @@ class StudyObjectivesTest(api.APITest):
     ]
 
     def ignored_fields(self):
-        return ["start_date", "end_date", "time", "uid", "user_initials"]
+        return [
+            "start_date",
+            "end_date",
+            "time",
+            "uid",
+            "user_initials",
+            "study_version",
+        ]
 
     def preprocess_expected_response(self, resp_item, actual_response, url):
         """
@@ -163,6 +170,7 @@ class StudyEndpointsTest(api.APITest):
             "uid",
             "user_initials",
             "codelist_uid",
+            "study_version",
         ]
 
 
@@ -217,6 +225,7 @@ class StudyCompoundsTest(api.APITest):
             "change_description",
             "user_initials",
             "version_timestamp",
+            "study_version",
         ]
 
 
@@ -264,7 +273,14 @@ class StudyActivityTest(api.APITest):
         db.cypher_query(STARTUP_STUDY_ACTIVITY_CYPHER)
 
     def ignored_fields(self):
-        return ["start_date", "end_date", "time", "uid", "user_initials"]
+        return [
+            "start_date",
+            "end_date",
+            "time",
+            "uid",
+            "user_initials",
+            "study_version",
+        ]
 
 
 class StudyArmsTest(api.APITest):
@@ -292,6 +308,7 @@ class StudyArmsTest(api.APITest):
             "user_initials",
             "codelist_uid",
             "version_timestamp",
+            "study_version",
         ]
 
 
@@ -416,6 +433,7 @@ class StudyElementsTest(api.APITest):
             "user_initials",
             "codelist_uid",
             "version_timestamp",
+            "study_version",
         ]
 
 
@@ -515,6 +533,7 @@ class StudyBranchArmsTest(api.APITest):
             "user_initials",
             "codelist_uid",
             "version_timestamp",
+            "study_version",
         ]
 
 
@@ -543,6 +562,7 @@ class StudyBranchArmsNegativeTest(api.APITest):
             "uid",
             "user_initials",
             "codelist_uid",
+            "study_version",
         ]
 
 
@@ -593,6 +613,7 @@ class StudyCohortsTest(api.APITest):
             "uid",
             "user_initials",
             "codelist_uid",
+            "study_version",
         ]
 
 
@@ -658,6 +679,7 @@ class StudyCohortsNegativeTest(api.APITest):
             "uid",
             "user_initials",
             "codelist_uid",
+            "study_version",
         ]
 
 
@@ -728,6 +750,7 @@ class StudyDesignCellsTest(api.APITest):
             "user_initials",
             "codelist_uid",
             "version_timestamp",
+            "study_version",
         ]
 
 
@@ -946,4 +969,5 @@ class StudyDesignJointTest(api.APITest):
             "user_initials",
             "codelist_uid",
             "version_timestamp",
+            "study_version",
         ]

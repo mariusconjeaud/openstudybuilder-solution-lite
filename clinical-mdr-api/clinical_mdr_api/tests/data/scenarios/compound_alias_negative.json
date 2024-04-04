@@ -61,6 +61,7 @@
                 "name": "7.5 [UnitDefinition_000001] for SDTM domain [sdtm_domain_uid1]",
                 "value": 7.5,
                 "unit_definition_uid": "UnitDefinition_000001",
+                "unit_label": "name_1",
                 "sdtm_domain_uid": "sdtm_domain_uid1",
                 "name_sentence_case": "7.5",
                 "definition": "lag_time_definition1",
@@ -421,19 +422,19 @@
         }
     },
     {
-        "name": "Test GET all compound alias not existing Library passed",
+        "name": "Test GET all compound alias non-existent Library passed",
         "request": {
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "/concepts/compound-aliases?library=not_existing"
+            "url": "/concepts/compound-aliases?library=non-existent"
         },
         "response": {
             "code": 400,
             "result": {
-                "message": "There is no library identified by provided library name (not_existing)",
+                "message": "There is no library identified by provided library name (non-existent)",
                 "method": "GET",
-                "path": "http://testserver/concepts/compound-aliases?library=not_existing",
+                "path": "http://testserver/concepts/compound-aliases?library=non-existent",
                 "time": "2020-11-10T01:51:17.884429",
                 "type": "BusinessLogicException"
             }
@@ -633,7 +634,7 @@
         }
     },
     {
-        "name": "Test CREATE compound alias with non-existing compound",
+        "name": "Test CREATE compound alias with non-existent compound",
         "request": {
             "headers": {},
             "method": "POST",
@@ -642,7 +643,7 @@
                 "name_sentence_case": "compound_alias_name_sentence_case3",
                 "definition": "compound_alias_definition3",
                 "abbreviation": "abbv3",
-                "compound_uid": "non-existing-uid",
+                "compound_uid": "non-existent-uid",
                 "is_preferred_synonym": true,
                 "library_name": "Sponsor"
             },
@@ -651,7 +652,7 @@
         "response": {
             "code": 400,
             "result": {
-                "message": "CompoundAliasVO tried to connect to non existing compound identified by uid (non-existing-uid)",
+                "message": "CompoundAliasVO tried to connect to non-existent compound identified by uid (non-existent-uid)",
                 "method": "POST",
                 "path": "http://testserver/concepts/compound-aliases",
                 "time": "2020-11-10T01:51:17.884429",

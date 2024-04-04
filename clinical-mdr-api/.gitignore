@@ -25,3 +25,4 @@ linting_report.txt
 .DS_Store
 .scannerwork
 .coverage*
+/reports

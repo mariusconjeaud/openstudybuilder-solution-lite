@@ -464,6 +464,9 @@ export default {
       this.headers.forEach(header => {
         this.$set(header, 'sortable', !value)
       })
+    },
+    options () {
+      this.getStudyCriteria()
     }
   }
 }

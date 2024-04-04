@@ -63,7 +63,7 @@ class NumericValueWithUnitVO(NumericValueVO):
         unit_definition = find_unit_definition_by_uid(unit_definition_uid)
         if unit_definition is None:
             raise exceptions.ValidationException(
-                f"{cls.__name__} tried to connect to non existing unit definition identified by uid ({unit_definition_uid})"
+                f"{cls.__name__} tried to connect to non-existent unit definition identified by uid ({unit_definition_uid})"
             )
         value = cls.derive_value_property(value=value)
         simple_concept_vo = cls(

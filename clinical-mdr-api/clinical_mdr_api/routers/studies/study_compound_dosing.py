@@ -44,6 +44,8 @@ from clinical_mdr_api.services.studies.study_compound_dosing_selection import (
             "dose_value_value=dose_value.value",
             "dose_value_unit=dose_value.unit_label",
             "dose_frequency=dose_frequency.name",
+            "study_uid",
+            "study_version",
         ],
         "formats": [
             "text/csv",
@@ -57,7 +59,7 @@ from clinical_mdr_api.services.studies.study_compound_dosing_selection import (
 def get_all_selected_compound_dosings(
     request: Request,  # request is actually required by the allow_exports decorator
     uid: str = utils.studyUID,
-    study_value_version: str | None = None,
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
     current_user_id: str = Depends(get_current_user_id),
     filters: Json
     | None = Query(
@@ -77,7 +79,7 @@ def get_all_selected_compound_dosings(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-):
+) -> CustomPage[models.StudyCompoundDosing]:
     service = StudyCompoundDosingSelectionService(author=current_user_id)
     all_items = service.get_all_compound_dosings(
         study_uid=uid,

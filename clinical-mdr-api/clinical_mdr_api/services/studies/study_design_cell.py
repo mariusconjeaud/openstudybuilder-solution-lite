@@ -43,7 +43,9 @@ class StudyDesignCellService(StudySelectionMixin):
             )
         )
         design_cells = [
-            models.StudyDesignCell.from_vo(i_design_cell)
+            models.StudyDesignCell.from_vo(
+                i_design_cell, study_value_version=study_value_version
+            )
             for i_design_cell in design_cell_ar
         ]
         return design_cells
@@ -66,7 +68,8 @@ class StudyDesignCellService(StudySelectionMixin):
                     study_uid=study_uid,
                     design_cell=sdc_node,
                     study_value_version=study_value_version,
-                )
+                ),
+                study_value_version=study_value_version,
             )
             for sdc_node in sdc_nodes
         ]
@@ -89,7 +92,8 @@ class StudyDesignCellService(StudySelectionMixin):
                     study_uid=study_uid,
                     design_cell=sdc_node,
                     study_value_version=study_value_version,
-                )
+                ),
+                study_value_version=study_value_version,
             )
             for sdc_node in sdc_nodes
         ]
@@ -110,7 +114,8 @@ class StudyDesignCellService(StudySelectionMixin):
                     study_uid=study_uid,
                     design_cell=sdc_node,
                     study_value_version=study_value_version,
-                )
+                ),
+                study_value_version=study_value_version,
             )
             for sdc_node in sdc_nodes
         ]

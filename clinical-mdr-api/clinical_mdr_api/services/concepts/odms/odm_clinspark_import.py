@@ -75,11 +75,11 @@ class OdmClinicalXmlImporterService(OdmXmlImporterService):
 
         rs_names = {item.name for item in rs}
 
-        non_existing_measurement_unit_names = measurement_unit_names - rs_names
+        non_existent_measurement_unit_names = measurement_unit_names - rs_names
 
-        if non_existing_measurement_unit_names:
+        if non_existent_measurement_unit_names:
             raise exceptions.BusinessLogicException(
-                f"MeasurementUnits identified by following names {non_existing_measurement_unit_names} don't match any Unit Definition."
+                f"MeasurementUnits identified by following names {non_existent_measurement_unit_names} don't match any Unit Definition."
             )
 
         self.db_unit_definitions = [
@@ -203,7 +203,8 @@ class OdmClinicalXmlImporterService(OdmXmlImporterService):
                 if (
                     codelist_item.getAttribute("CodedValue")
                     != item.ct_term_vo.code_submission_value
-                    or item.ct_term_vo.codelist_uid != active_codelist.codelist_uid
+                    or item.ct_term_vo.codelists[0].codelist_uid
+                    != active_codelist.codelist_uid
                 ):
                     continue
 
@@ -235,7 +236,11 @@ class OdmClinicalXmlImporterService(OdmXmlImporterService):
                 }
             }
         )
-        term_codelist_uids = {item.ct_term_vo.codelist_uid for item in rs.items}
+        term_codelist_uids = {
+            codelist.codelist_uid
+            for item in rs.items
+            for codelist in item.ct_term_vo.codelists
+        }
         term_code_submission_values = {
             item.ct_term_vo.code_submission_value for item in rs.items
         }
@@ -321,7 +326,7 @@ class OdmClinicalXmlImporterService(OdmXmlImporterService):
             input_terms = [
                 OdmItemTermRelationshipInput(
                     uid=db_ct_term_attribute.term_uid,
-                    order=int(float(codelist_item.getAttribute("Rank"))),
+                    order=int(float(codelist_item.getAttribute("Rank") or "1")),
                     display_text=codelist_item.getElementsByTagName("TranslatedText")[
                         0
                     ].firstChild.nodeValue,
@@ -330,7 +335,7 @@ class OdmClinicalXmlImporterService(OdmXmlImporterService):
                 for db_ct_term_attribute in self.db_ct_term_attributes
                 if codelist_item.getAttribute("CodedValue")
                 == db_ct_term_attribute.code_submission_value
-                and db_ct_term_attribute.codelist_uid == codelist_uid
+                and db_ct_term_attribute.codelists[0].codelist_uid == codelist_uid
             ]
 
         return (

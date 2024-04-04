@@ -53,7 +53,7 @@ class ActivitySubGroupVO(ConceptVO):
         for activity_group in self.activity_groups:
             if not activity_group_exists(activity_group):
                 raise BusinessLogicException(
-                    "Activity Subgroup tried to connect to non existing concepts "
+                    "Activity Subgroup tried to connect to non-existent or non-final concepts "
                     f"""[('Concept Name: Activity Group', "uids: {{'{activity_group}'}}")]."""
                 )
 

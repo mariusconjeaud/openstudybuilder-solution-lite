@@ -15,6 +15,7 @@
   "dependencies": {
     "@lhncbc/ucum-lhc": "4.1.4",
     "@microsoft/applicationinsights-web": "*",
+    "@microsoft/applicationinsights-clickanalytics-js": "*",
     "axios": "0.21.1",
     "buffer": "^6.0.3",
     "chart.js": "2.9.4",

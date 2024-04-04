@@ -39,18 +39,6 @@ def create_unicode_brand_name_for_testing(app_client, test_string):
     return payload
 
 
-def create_unicode_configuration_property_for_testing(app_client, test_string):
-    response = request_with_json_payload(
-        app_client,
-        "POST",
-        "/configurations",
-        {"study_field_name": test_string},
-    )
-    response.raise_for_status()
-    payload = response.json()
-    return payload
-
-
 def test_unicode_input(app_client):
     """Validates if we can send unicode characters as properties"""
     test_string = create_unicode_test_string()

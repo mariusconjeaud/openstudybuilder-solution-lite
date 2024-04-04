@@ -19,7 +19,7 @@
         <span
           v-bind="attrs"
           v-on="on">
-          <router-link :to="{ name: 'StudyElementOverview', params: { study_id: selectedStudy.uid, id: element } }">
+          <router-link :to="{ name: 'StudyElementOverview', params: { study_id: selectedStudy.uid, id: element, root_tab: 'design_matrix' } }">
             {{ getElementShortName(element) }}
           </router-link>
         </span>

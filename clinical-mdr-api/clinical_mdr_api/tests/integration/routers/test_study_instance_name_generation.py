@@ -60,4 +60,4 @@ class StudyInstanceNameGenerationParameterTest(api.APITest):
     ]
 
     def ignored_fields(self):
-        return ["start_date", "end_date", "uid", "time"]
+        return ["start_date", "end_date", "uid", "time", "study_version"]

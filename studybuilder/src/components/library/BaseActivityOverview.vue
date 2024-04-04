@@ -3,6 +3,7 @@
   <v-tabs v-model="tab">
     <v-tab href="#html">{{ $t('_global.overview') }}</v-tab>
     <v-tab href="#yaml">{{ $t('ActivityOverview.osb_yaml') }}</v-tab>
+    <v-tab v-if="cosmosVersion" href="#cosmos">{{ $t('ActivityOverview.cosmos_yaml') }}</v-tab>
   </v-tabs>
   <v-tabs-items v-model="tab">
     <v-tab-item id="html">
@@ -65,6 +66,35 @@
         </v-card-text>
       </v-card>
     </v-tab-item>
+    <v-tab-item v-if="cosmosVersion" id="cosmos">
+      <v-card elevation="0" class="rounded-0">
+        <v-card-title>
+          <v-spacer />
+          <v-btn
+            fab
+            small
+            color="nnGreen1"
+            class="white--text"
+            :title="$t('YamlViewer.download')"
+            @click="downloadCosmosContent"
+            >
+            <v-icon>mdi-download-outline</v-icon>
+          </v-btn>
+          <v-btn
+            fab
+            small
+            :title="$t('YamlViewer.close_tab')"
+            @click="closeYamlTab"
+            class="ml-2"
+            >
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </v-card-title>
+        <v-card-text>
+          <yaml-viewer :content="cosmosVersion" />
+        </v-card-text>
+      </v-card>
+    </v-tab-item>
   </v-tabs-items>
   <slot
     name="itemForm"
@@ -110,7 +140,11 @@ export default {
     itemOverview: Object,
     yamlVersion: String,
     transformFunc: Function,
-    historyHeaders: Array
+    historyHeaders: Array,
+    cosmosVersion: {
+      type: String,
+      required: false
+    }
   },
   computed: {
     actions () {
@@ -263,6 +297,9 @@ export default {
     },
     downloadYamlContent () {
       exportLoader.downloadFile(this.yamlVersion, 'application/yaml', 'overview.yml')
+    },
+    downloadCosmosContent () {
+      exportLoader.downloadFile(this.cosmosVersion, 'application/yaml', 'COSMoS-overview.yml')
     }
   },
   mounted () {

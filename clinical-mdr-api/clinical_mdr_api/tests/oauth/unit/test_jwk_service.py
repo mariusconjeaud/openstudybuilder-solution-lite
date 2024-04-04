@@ -199,8 +199,8 @@ async def test_good_signing_key(jwk_service, jwk_good_key):
 async def test_wrong_signing_key(jwk_service, jwk_wrong_key):
     claims = mk_claims()
     token = mk_jwt(claims, jwk_wrong_key)
-    with pytest.raises(exceptions.ValidationException):
-        # Expected to raise ValidationException exception
+    with pytest.raises(exceptions.NotAuthenticatedException):
+        # Expected to raise NotAuthenticatedException exception
         await jwk_service.validate_jwt(token)
 
 

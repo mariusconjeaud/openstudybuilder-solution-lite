@@ -82,7 +82,7 @@ class ObjectiveRepositoryConcurrencyTest(unittest.TestCase):
 
         # Approve template
         with db.transaction:
-            objective_template_ar = self.template_repository.find_by_uid_2(
+            objective_template_ar = self.template_repository.find_by_uid(
                 self.template_uid, for_update=True
             )
             objective_template_ar.approve(author=self.user_initials)
@@ -130,7 +130,7 @@ class ObjectiveRepositoryConcurrencyTest(unittest.TestCase):
 
         # Approve template
         with db.transaction:
-            endpoint_template_ar = self.template_repository.find_by_uid_2(
+            endpoint_template_ar = self.template_repository.find_by_uid(
                 self.template_uid, for_update=True
             )
             endpoint_template_ar.approve(author=self.user_initials)
@@ -178,7 +178,7 @@ class ObjectiveRepositoryConcurrencyTest(unittest.TestCase):
 
         # Approve template
         with db.transaction:
-            timeframe_template_ar = self.template_repository.find_by_uid_2(
+            timeframe_template_ar = self.template_repository.find_by_uid(
                 self.template_uid, for_update=True
             )
             timeframe_template_ar.approve(author=self.user_initials)
@@ -224,7 +224,7 @@ class ObjectiveRepositoryConcurrencyTest(unittest.TestCase):
         #     str(message.exception))
 
     def get_and_inactivate_template(self):
-        template_ar = self.template_repository.find_by_uid_2(
+        template_ar = self.template_repository.find_by_uid(
             self.template_uid, for_update=True
         )
         template_ar.inactivate(author=self.user_initials)

@@ -1,5 +1,8 @@
+from fastapi import Query
+
 from clinical_mdr_api import config
 from clinical_mdr_api.models.error import ErrorResponse
+from clinical_mdr_api.models.validators import FLOAT_REGEX
 
 
 def study_section_description(desc: str):
@@ -35,6 +38,8 @@ def study_fields_audit_trail_section_description(desc: str):
 
     If no sections are specified, the whole audit trail is returned."""
 
+
+LIBRARY_NAME = "Library name"
 
 SORT_BY = """
 JSON dictionary of field names and boolean flags specifying the sort order. Supported values for sort order are:
@@ -136,5 +141,23 @@ by sending the `Accept` http request header with one of the following values:
   - `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`\n
 """
 
+STUDY_VALUE_VERSION_QUERY = Query(
+    None,
+    description="""If specified, study data with specified version is returned.
+
+    Only exact matches are considered. 
+
+    E.g. 1, 2, 2.1, ...""",
+    regex=FLOAT_REGEX,
+)
+
 ERROR_404 = {"model": ErrorResponse, "description": "Entity not found"}
 ERROR_500 = {"model": ErrorResponse, "description": "Internal Server Error"}
+
+
+SYNTAX_FILTERS = (
+    FILTERS
+    + """
+If any provided search term for a given field name is other than a string type, then equal operator will automatically be applied overriding any provided operator.
+"""
+)

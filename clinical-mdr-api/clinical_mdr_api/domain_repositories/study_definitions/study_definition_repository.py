@@ -2,13 +2,13 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any
 
-from neomodel import NodeMeta
+from neomodel import NodeMeta, db
 
 from clinical_mdr_api import exceptions
 from clinical_mdr_api.domain_repositories.generic_repository import (
     RepositoryClosureData,  # type: ignore
 )
-from clinical_mdr_api.domain_repositories.models.study import StudyValue
+from clinical_mdr_api.domain_repositories.models.study import StudyRoot, StudyValue
 from clinical_mdr_api.domains.study_definition_aggregates.root import (
     StudyDefinitionAR,
     StudyDefinitionSnapshot,
@@ -16,7 +16,10 @@ from clinical_mdr_api.domains.study_definition_aggregates.root import (
 from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import (
     StudyFieldAuditTrailEntryAR,
 )
-from clinical_mdr_api.models.study_selections.study import StudyPreferredTimeUnit
+from clinical_mdr_api.models.study_selections.study import (
+    StudyPreferredTimeUnit,
+    StudySubpartAuditTrail,
+)
 from clinical_mdr_api.models.utils import GenericFilteringReturn
 from clinical_mdr_api.repositories._utils import FilterOperator
 
@@ -137,6 +140,48 @@ class StudyDefinitionRepository(ABC):
 
         # and that's it we are done
         return result
+
+    @staticmethod
+    def disconnect_study_parent_parts(study_subpart_uid: str) -> StudyRoot | None:
+        """
+        Disconnects the Study Parent Part from the specified Study Subpart.
+
+        Args:
+            study_subpart_uid (str): The unique identifier (UID) of the Study Subpart.
+
+        Returns:
+            StudyRoot | None: The disconnected Study Subpart if found, else None.
+        """
+        study_subpart = StudyRoot.nodes.get_or_none(uid=study_subpart_uid)
+        if study_subpart:
+            study_subpart.study_parent_part.disconnect_all()
+        return study_subpart
+
+    @staticmethod
+    def connect_study_parent_part(
+        study_subpart: StudyRoot | str, study_parent_part: StudyRoot | str
+    ) -> tuple[StudyRoot | None, StudyRoot | None]:
+        """
+        Connects the Study Parent Part to the specified Study Subpart.
+
+        Args:
+            study_subpart (StudyRoot | str): The Study Subpart or its unique identifier (UID).
+            study_parent_part (StudyRoot | str): The Study Parent Part or its unique identifier (UID).
+
+        Returns:
+            tuple[StudyRoot | None, StudyRoot | None]: A tuple containing the connected Study Subpart
+            and Study Parent Part, or (None, None) if either is not found.
+        """
+        if isinstance(study_subpart, str):
+            study_subpart = StudyRoot.nodes.get_or_none(uid=study_subpart)
+
+        if isinstance(study_parent_part, str):
+            study_parent_part = StudyRoot.nodes.get_or_none(uid=study_parent_part)
+
+        if study_parent_part:
+            study_subpart.study_parent_part.connect(study_parent_part)
+
+        return study_subpart, study_parent_part
 
     @staticmethod
     def find_uid_by_study_number(study_number: int):
@@ -319,6 +364,17 @@ class StudyDefinitionRepository(ABC):
         total_count: bool = False,
     ) -> GenericFilteringReturn[StudyDefinitionSnapshot]:
         raise NotImplementedError
+
+    def get_occupied_study_subpart_ids(self, study_parent_part_uid):
+        return db.cypher_query(
+            """
+            MATCH (pr:StudyRoot {uid: $uid})-[:STUDY_SUBPART]->(sr:StudyRoot)-[:LATEST]->(sv:StudyValue)
+            WHERE NOT EXISTS((sv)<-[:BEFORE]-(:StudyAction:`Delete`))
+            RETURN sv.subpart_id
+            ORDER BY sv.subpart_id
+            """,
+            {"uid": study_parent_part_uid},
+        )
 
     def find_all_by_library_item_uid(
         self,
@@ -510,6 +566,22 @@ class StudyDefinitionRepository(ABC):
         return self._retrieve_fields_audit_trail(uid)
 
     @abstractmethod
+    def _retrieve_study_subpart_with_history(self, uid: str, is_subpart: bool = False):
+        """
+        Private method to retrieve an audit trail for a study's subparts by UID.
+        :return: A list of Study subpart audit trail objects.
+        """
+
+    def get_subpart_audit_trail_by_uid(
+        self, uid: str, is_subpart: bool = False
+    ) -> list[StudySubpartAuditTrail] | None:
+        """
+        Public method which is to retrieve the audit trail for a given study identified by UID.
+        :return: A list of retrieved data in a form StudyAuditTrailAR instances.
+        """
+        return self._retrieve_study_subpart_with_history(uid, is_subpart)
+
+    @abstractmethod
     def generate_uid(self) -> str:
         """
         A method that generates a new unique id
@@ -522,6 +594,8 @@ class StudyDefinitionRepository(ABC):
     def get_preferred_time_unit(
         self,
         study_uid: str,
+        for_protocol_soa: bool = False,
+        study_value_version: str | None = None,
     ) -> StudyPreferredTimeUnit:
         """
         A method that gets a StudyTimeField for the study preferred time unit. The preferred time unit is the unit definition
@@ -531,7 +605,7 @@ class StudyDefinitionRepository(ABC):
 
     @abstractmethod
     def post_preferred_time_unit(
-        self, study_uid: str, unit_definition_uid: str
+        self, study_uid: str, unit_definition_uid: str, for_protocol_soa: bool = False
     ) -> StudyPreferredTimeUnit:
         """
         A method that creates a StudyTimeField for the study preferred time unit. The preferred time unit is the unit definition
@@ -541,7 +615,7 @@ class StudyDefinitionRepository(ABC):
 
     @abstractmethod
     def edit_preferred_time_unit(
-        self, study_uid: str, unit_definition_uid: str
+        self, study_uid: str, unit_definition_uid: str, for_protocol_soa: bool = False
     ) -> StudyPreferredTimeUnit:
         """
         A method that edits a StudyTimeField for the study preferred time unit. The preferred time unit is the unit definition

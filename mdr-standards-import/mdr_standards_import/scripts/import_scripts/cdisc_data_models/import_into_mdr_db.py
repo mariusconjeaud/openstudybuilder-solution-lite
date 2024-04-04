@@ -1,8 +1,11 @@
 import time
+import os
+from typing import List
+import csv
 from mdr_standards_import.scripts.entities.cdisc_data_models.data_model_type import (
     DataModelType,
 )
-from mdr_standards_import.scripts.utils import parse_ig_name, sanitize_string
+from mdr_standards_import.scripts.utils import parse_ig_name, sanitize_string, load_env
 
 USER_INITIALS = None
 DATA_MODEL_ROOT_LABEL = "DataModelRoot"
@@ -45,6 +48,29 @@ MODEL_VERSION_REL_TYPE = "HAS_VERSION"
 CLASS_VERSION_REL_TYPE = "HAS_INSTANCE"
 VARIABLE_VERSION_REL_TYPE = "HAS_INSTANCE"
 SCENARIO_VERSION_REL_TYPE = "HAS_INSTANCE"
+
+VARIABLE_VALUE_LIST_MAPPINGS_FILE = load_env(
+    "VARIABLE_VALUE_LIST_MAPPINGS_FILE",
+    "cdisc_data/extra/variable_value_list_mappings.csv",
+)
+
+
+class ValueListMapping:
+    def __init__(
+        self,
+        variable_uid,
+        dataset_uid,
+        term_code_submission_value,
+        term_uid,
+        codelist_uid,
+        model_name,
+    ):
+        self.variable_uid = variable_uid
+        self.dataset_uid = dataset_uid
+        self.term_code_submission_value = term_code_submission_value
+        self.term_uid = term_uid
+        self.codelist_uid = codelist_uid
+        self.model_name = model_name
 
 
 def import_from_cdisc_db_into_mdr(
@@ -135,6 +161,19 @@ def import_from_cdisc_db_into_mdr(
                 print(f"==      Added variables:     {added_variables:6}")
                 print(f"==      Updated variables:   {updated_variables:6}")
                 print(f"==      Unchanged variables: {unchanged_variables:6}")
+
+                # This has to happen after the variables creation transaction has been committed
+                # Otherwise, new variables are not matched
+                if (
+                    version_data[0]["version"]["data_model_type"]
+                    == DataModelType.IMPLEMENTATION.value
+                ):
+                    print("==  * Linking dataset variables with variable classes.")
+                    session.write_transaction(
+                        link_variables_with_variables,
+                        version_data[0]["version"],
+                        variables_data,
+                    )
 
                 session.close()
 
@@ -686,6 +725,8 @@ def merge_variables(tx, version_data, variables_data):
         parent_href = variable_data.get("parent_href", None)
         parent_type = variable_data.get("parent_type", None)
 
+        value_list_mappings = parse_value_list_mapping_file()
+
         records = _get_variable_instances(
             tx,
             catalogue=version_data["catalogue"],
@@ -702,6 +743,7 @@ def merge_variables(tx, version_data, variables_data):
                     variable=variable,
                     parent_href=parent_href,
                     parent_type=parent_type,
+                    value_list_mappings=value_list_mappings,
                 )
                 nbr_updated += 1
             else:
@@ -721,6 +763,7 @@ def merge_variables(tx, version_data, variables_data):
                 variable=variable,
                 parent_href=parent_href,
                 parent_type=parent_type,
+                value_list_mappings=value_list_mappings,
             )
             nbr_new += 1
 
@@ -742,6 +785,40 @@ def merge_variables(tx, version_data, variables_data):
             )
 
     return nbr_new, nbr_updated, nbr_unchanged
+
+
+def parse_value_list_mapping_file() -> "dict[str, ValueListMapping]":
+    # Read the variable value list mappings CSV file
+    # And load the records into a dictionary of ValueListMapping objects
+    # Dictionary entry key should be sponsormodelname_datasetuid_value
+    value_list_mappings = {}
+
+    if os.path.isfile(VARIABLE_VALUE_LIST_MAPPINGS_FILE) is True:
+        with open(VARIABLE_VALUE_LIST_MAPPINGS_FILE, "r") as f:
+            csv_reader = csv.reader(f)
+
+            headers = next(csv_reader)
+
+            for row in csv_reader:
+                sponsor_model_name = row[headers.index("model_name")]
+                dataset_uid = row[headers.index("dataset_uid")]
+                variable_uid = row[headers.index("variable_uid")]
+                code_submission_value = row[headers.index("term_code_submission_value")]
+
+                key = f"{sponsor_model_name}_{dataset_uid}_{variable_uid}_{code_submission_value}"
+
+                # Create a ValueListMapping object and add it to the dictionary
+                # You would need to define the ValueListMapping class
+                value_list_mappings[key] = ValueListMapping(
+                    model_name=sponsor_model_name,
+                    dataset_uid=dataset_uid,
+                    term_code_submission_value=code_submission_value,
+                    term_uid=row[headers.index("term_uid")],
+                    variable_uid=variable_uid,
+                    codelist_uid=row[headers.index("codelist_uid")],
+                )
+
+    return value_list_mappings
 
 
 def create_initial_class_instance(tx, version_data, _class):
@@ -780,14 +857,15 @@ def create_initial_class_instance(tx, version_data, _class):
             WITH instance
             MATCH (dmv:DataModelVersion {{href: $version_href}})-[{version_to_model_rel_type}]->(model_value:{model_value_label})
             MERGE (dmv)-[contains_class:{version_to_class_rel_type}]->(instance)
+            SET contains_class.href=$class_data.href
             MERGE (model_value)-[has_class:{model_to_class_rel_type}]->(instance)
-            SET contains_class.href=$class_data.href, has_class.ordinal = $class_data.ordinal
+            ON CREATE SET has_class.ordinal = $class_data.ordinal
 
             WITH instance
             MATCH ()-[rel]->(prior_instance_node)<-[:{CLASS_VERSION_REL_TYPE}]-(prior_root_node)
             WHERE rel.href=$class_data.prior_version AND (rel:{VERSION_TO_CLASS_REL_TYPE} OR rel:{VERSION_TO_DATASET_REL_TYPE})
             CALL apoc.do.when($uid<>prior_root_node.uid,
-                'WITH $instance AS instance, $prior_instance_node AS prior_instance_node CREATE (instance)<-[rep:REPLACED_BY]-(prior_instance_node) SET rep.catalogue=$catalogue, rep.version_number=$prefixed_version_number RETURN rep',
+                'WITH $instance AS instance, $prior_instance_node AS prior_instance_node MERGE (instance)<-[rep:REPLACED_BY]-(prior_instance_node) SET rep.catalogue=$catalogue, rep.version_number=$prefixed_version_number RETURN rep',
                 '',
                 {{prior_instance_node: prior_instance_node, instance: instance, catalogue: $class_data.catalogue, prefixed_version_number: $prefixed_version_number}}
             )
@@ -839,14 +917,15 @@ def create_new_class_instance(tx, version_data, _class):
             WITH new_instance
             MATCH (dmv:DataModelVersion {{href: $version_href}})-[{version_to_model_rel_type}]->(model_value:{model_value_label})
             MERGE (dmv)-[contains_class:{version_to_class_rel_type}]->(new_instance)
-            CREATE (model_value)-[has_class:{model_to_class_rel_type}]->(new_instance)
-            SET contains_class.href=$class_data.href, has_class.ordinal = $class_data.ordinal
+            SET contains_class.href=$class_data.href
+            MERGE (model_value)-[has_class:{model_to_class_rel_type}]->(new_instance)
+            ON CREATE SET has_class.ordinal = $class_data.ordinal
 
             WITH new_instance
             MATCH ()-[rel]->(prior_instance_node)<-[:{CLASS_VERSION_REL_TYPE}]-(prior_root_node)
             WHERE rel.href=$class_data.prior_version AND (rel:{VERSION_TO_CLASS_REL_TYPE} OR rel:{VERSION_TO_DATASET_REL_TYPE})
             CALL apoc.do.when($uid<>prior_root_node.uid,
-                'WITH $new_instance AS new_instance, $prior_instance_node AS prior_instance_node CREATE (new_instance)<-[rep:REPLACED_BY]-(prior_instance_node) SET rep.catalogue=$catalogue, rep.version_number=$prefixed_version_number RETURN rep',
+                'WITH $new_instance AS new_instance, $prior_instance_node AS prior_instance_node MERGE (new_instance)<-[rep:REPLACED_BY]-(prior_instance_node) SET rep.catalogue=$catalogue, rep.version_number=$prefixed_version_number RETURN rep',
                 '',
                 {{prior_instance_node: prior_instance_node, new_instance: new_instance, catalogue: $class_data.catalogue, prefixed_version_number: $prefixed_version_number}}
             )
@@ -887,14 +966,15 @@ def use_existing_class_instance(tx, version_data, _class, reusable_instance_id):
             WHERE id(instance)=$reusable_instance_id
             MATCH (dmv:DataModelVersion {{href: $version_href}})-[{version_to_model_rel_type}]->(model_value:{model_value_label})
             MERGE (dmv)-[contains_class:{version_to_class_rel_type}]->(instance)
-            CREATE (model_value)-[has_class:{model_to_class_rel_type}]->(instance)
-            SET contains_class.href=$class_data.href, has_class.ordinal = $class_data.ordinal
+            SET contains_class.href=$class_data.href
+            MERGE (model_value)-[has_class:{model_to_class_rel_type}]->(instance)
+            ON CREATE SET has_class.ordinal = $class_data.ordinal
 
             WITH instance
             MATCH ()-[rel]->(prior_instance_node)<-[:{CLASS_VERSION_REL_TYPE}]-(prior_root_node)
             WHERE rel.href=$class_data.prior_version AND (rel:{VERSION_TO_CLASS_REL_TYPE} OR rel:{VERSION_TO_DATASET_REL_TYPE})
             CALL apoc.do.when($uid<>prior_root_node.uid,
-                'WITH $instance AS instance, $prior_instance_node AS prior_instance_node CREATE (instance)<-[rep:REPLACED_BY]-(prior_instance_node) SET rep.catalogue=$catalogue, rep.version_number=$prefixed_version_number RETURN rep',
+                'WITH $instance AS instance, $prior_instance_node AS prior_instance_node MERGE (instance)<-[rep:REPLACED_BY]-(prior_instance_node) SET rep.catalogue=$catalogue, rep.version_number=$prefixed_version_number RETURN rep',
                 '',
                 {{prior_instance_node: prior_instance_node, instance: instance, catalogue: $class_data.catalogue, prefixed_version_number: $prefixed_version_number}}
             )
@@ -1084,7 +1164,7 @@ def build_variable_instance_query(
         MATCH ()-[rel]->(prior_instance_node)<-[:{VARIABLE_VERSION_REL_TYPE}]-(prior_root_node)
         WHERE rel.href=$variable_data.prior_version AND (rel:{VERSION_TO_VARIABLE_CLASS_REL_TYPE} OR rel:{VERSION_TO_DATASET_VARIABLE_REL_TYPE})
         CALL apoc.do.when($uid<>prior_root_node.uid,
-            'WITH ${instance_node_variable_name} AS {instance_node_variable_name}, $prior_instance_node AS prior_instance_node CREATE ({instance_node_variable_name})<-[rep:REPLACED_BY]-(prior_instance_node) SET rep.catalogue=$catalogue, rep.version_number=$prefixed_version_number RETURN rep',
+            'WITH ${instance_node_variable_name} AS {instance_node_variable_name}, $prior_instance_node AS prior_instance_node MERGE ({instance_node_variable_name})<-[rep:REPLACED_BY]-(prior_instance_node) SET rep.catalogue=$catalogue, rep.version_number=$prefixed_version_number RETURN rep',
             '',
             {{prior_instance_node: prior_instance_node, {instance_node_variable_name}: {instance_node_variable_name}, catalogue: $variable_data.catalogue, prefixed_version_number: $prefixed_version_number}}
         )
@@ -1178,7 +1258,7 @@ def build_variable_instance_query(
 
 
 def create_initial_variable_instance(
-    tx, version_data, variable, parent_href, parent_type
+    tx, version_data, variable, parent_href, parent_type, value_list_mappings
 ):
     prefixed_version_number = _prettify_version_number(version_data["version_number"])
     variable_root_label = ""
@@ -1209,11 +1289,19 @@ def create_initial_variable_instance(
         user_initials=USER_INITIALS,
     )
 
-    if version_data["data_model_type"] == DataModelType.IMPLEMENTATION.value:
-        link_variable_with_variable(tx, version_data, variable, prefixed_version_number)
+    if "value_list" in variable:
+        link_variable_with_value_terms(
+            tx,
+            version_data=version_data,
+            variable=variable,
+            parent_href=parent_href,
+            value_list_mappings=value_list_mappings,
+        )
 
 
-def create_new_variable_instance(tx, version_data, variable, parent_href, parent_type):
+def create_new_variable_instance(
+    tx, version_data, variable, parent_href, parent_type, value_list_mappings
+):
     prefixed_version_number = _prettify_version_number(version_data["version_number"])
     variable_root_label = ""
     if version_data["data_model_type"] == DataModelType.FOUNDATIONAL.value:
@@ -1242,8 +1330,14 @@ def create_new_variable_instance(tx, version_data, variable, parent_href, parent
         user_initials=USER_INITIALS,
     )
 
-    if version_data["data_model_type"] == DataModelType.IMPLEMENTATION.value:
-        link_variable_with_variable(tx, version_data, variable, prefixed_version_number)
+    if "value_list" in variable:
+        link_variable_with_value_terms(
+            tx,
+            version_data=version_data,
+            variable=variable,
+            parent_href=parent_href,
+            value_list_mappings=value_list_mappings,
+        )
 
 
 def use_existing_variable_instance(
@@ -1273,9 +1367,6 @@ def use_existing_variable_instance(
         version_href=version_data["href"],
         parent_href=parent_href,
     )
-
-    if version_data["data_model_type"] == DataModelType.IMPLEMENTATION.value:
-        link_variable_with_variable(tx, version_data, variable, prefixed_version_number)
 
 
 def link_ig_with_data_model(tx, version_data):
@@ -1330,6 +1421,16 @@ def link_class_with_subclasses(tx, _class, subclasses, prefixed_version_number):
     )
 
 
+def link_variables_with_variables(tx, version_data, variables_data):
+    prefixed_version_number = _prettify_version_number(version_data["version_number"])
+    for variable_data in variables_data:
+        variable = variable_data.get("variable", None)
+        if variable:
+            link_variable_with_variable(
+                tx, version_data, variable, prefixed_version_number
+            )
+
+
 def link_variable_with_variable(tx, version_data, variable, prefixed_version_number):
     match = f"""
         UNWIND $classes_href AS class_href
@@ -1370,6 +1471,182 @@ def link_variable_with_variable(tx, version_data, variable, prefixed_version_num
             classes_href=variable["mapping_targets"],
             **common_params,
         )
+
+
+def terms_name_codelist_mapping(tx, term_name):
+    # This query gets all Terms with code_submission_value = _value
+    # It also gets the codelists these belong to
+    # And it only returns the most recent version of a term for each codelist
+    terms_data = tx.run(
+        """
+        MATCH (codelist_value:CTCodelistAttributesValue)<-[:LATEST]-(:CTCodelistAttributesRoot)<--(codelist_root:CTCodelistRoot)
+            -->(term_root:CTTermRoot)-->(:CTTermAttributesRoot)-[version_rel:HAS_VERSION]->(term:CTTermAttributesValue)
+        WHERE term.code_submission_value=$code_submission_value
+        WITH codelist_root, codelist_value, version_rel, term_root
+        ORDER BY codelist_root.uid, version_rel.start_date DESC
+        WITH codelist_root, codelist_value, collect(term_root)[0] AS terms
+        UNWIND terms AS term_root
+        RETURN DISTINCT term_root.uid AS term_uid, collect(DISTINCT {uid:codelist_root.uid, submission_value: codelist_value.submission_value}) AS codelists
+    """,
+        code_submission_value=term_name,
+    ).data()
+
+    return terms_data
+
+
+def link_variable_with_value_terms(
+    tx,
+    version_data: dict,
+    variable: dict,
+    parent_href: str,
+    value_list_mappings: "dict[str, ValueListMapping]",
+):
+    previous_codelist_uid = None
+    match_variable_clause = f"""
+        MATCH (dmv:DataModelVersion)-[rel:{VERSION_TO_DATASET_VARIABLE_REL_TYPE}]->(variable_instance:DatasetVariableInstance)
+        WHERE rel.href=$variable_href
+    """
+    create_relationship_clause = "MERGE (variable_instance)-[:REFERENCES_TERM]->(term)"
+    for _value in variable["value_list"]:
+        terms_data = terms_name_codelist_mapping(tx, _value)
+
+        # If there is only one CCode, then link the variable with it
+        if len(terms_data) == 1:
+            match_term = "MATCH (term: CTTermRoot {uid: $term_uid})"
+            query = " ".join(
+                [match_variable_clause, match_term, create_relationship_clause]
+            )
+            tx.run(
+                query,
+                term_uid=terms_data[0]["term_uid"],
+                variable_href=variable["href"],
+            )
+            # Store the codelist name in the list for the next case
+            if previous_codelist_uid is None:
+                previous_codelist_uid = terms_data[0]["codelists"][0]["uid"]
+
+        # Else, if other elements in the value_list had a single match, then use the term coming from the same codelist
+        else:
+            if previous_codelist_uid is not None:
+                # Hardcoding based on past data knowledge
+                if _value == "U":
+                    _value = "UNKNOWN"
+
+                    # Re-run the terms query for the replacement
+                    terms_data = terms_name_codelist_mapping(tx, _value)
+
+                # Link variable with terms
+                # Find the term which belongs to the same codelist as the previous hit
+                # For example, UNKNOWN in the STENRF codelist for the --STRTPT variables
+                term_uid = next(
+                    (
+                        term_data["term_uid"]
+                        for term_data in terms_data
+                        if previous_codelist_uid
+                        in [codelist["uid"] for codelist in term_data["codelists"]]
+                    ),
+                    None,
+                )
+
+                if term_uid is not None:
+                    match_term = "MATCH (term: CTTermRoot {uid: $term_uid})<--(:CTCodelistRoot{uid: $codelist_uid})"
+                    query = " ".join(
+                        [match_variable_clause, match_term, create_relationship_clause]
+                    )
+                    tx.run(
+                        query,
+                        variable_href=variable["href"],
+                        term_uid=term_uid,
+                        codelist_uid=previous_codelist_uid,
+                    )
+
+                    # Relationship created, go to next value in value_list
+                    continue
+
+            # If we reach here, it means there was more than one match for the value (or none)
+            # It also means the script could not figure out a codelist from other values in the value_list (if any)
+            # So, if one of the terms is in a codelist which submission_value is the same name as the variable uid, then use that term
+            if len(terms_data) > 0 and (
+                any(
+                    [
+                        variable["name"]
+                        in [
+                            codelist["submission_value"]
+                            for codelist in term_data["codelists"]
+                        ]
+                        for term_data in terms_data
+                    ]
+                )
+                or (
+                    variable["name"] == "DOMAIN"
+                    and any(
+                        [
+                            "SDOMAIN"
+                            in [
+                                codelist["submission_value"]
+                                for codelist in term_data["codelists"]
+                            ]
+                            for term_data in terms_data
+                        ]
+                    )
+                )
+            ):
+                term_uid = next(
+                    (
+                        term_data["term_uid"]
+                        for term_data in terms_data
+                        if variable["name"]
+                        in [
+                            codelist["submission_value"]
+                            for codelist in term_data["codelists"]
+                        ]
+                    ),
+                    None,
+                )
+
+                if term_uid is None and variable["name"] == "DOMAIN":
+                    term_uid = next(
+                        (
+                            term_data["term_uid"]
+                            for term_data in terms_data
+                            if "SDOMAIN"
+                            in [
+                                codelist["submission_value"]
+                                for codelist in term_data["codelists"]
+                            ]
+                        ),
+                        None,
+                    )
+
+                match_term = "MATCH (term: CTTermRoot {uid: $term_uid})"
+                query = " ".join(
+                    [match_variable_clause, match_term, create_relationship_clause]
+                )
+                tx.run(
+                    query,
+                    term_uid=term_uid,
+                    variable_href=variable["href"],
+                )
+
+            elif value_list_mappings:
+                # Finally, search the value list mappings coming from the file  for a match
+                value_list_mapping = value_list_mappings.get(
+                    f"{version_data['name']}_{parent_href.split('/')[-1]}_{variable['uid']}_{_value}",
+                    None,
+                )
+
+                if value_list_mapping is not None:
+                    # Create the relationship between DatasetVariable and CTTerm corresponding to the value
+                    match_term = "MATCH (term: CTTermRoot {uid: $term_uid})<--(:CTCodelistRoot{uid: $codelist_uid})"
+                    query = " ".join(
+                        [match_variable_clause, match_term, create_relationship_clause]
+                    )
+                    tx.run(
+                        query,
+                        variable_href=variable["href"],
+                        term_uid=value_list_mapping.term_uid,
+                        codelist_uid=value_list_mapping.codelist_uid,
+                    )
 
 
 def create_qualify_variable_relationships(tx, source_variable, prefixed_version_number):

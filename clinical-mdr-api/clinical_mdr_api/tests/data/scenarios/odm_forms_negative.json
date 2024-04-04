@@ -340,7 +340,7 @@
         }
     },
     {
-        "name": "Test cannot create an ODM Form connected to non-existing Scope",
+        "name": "Test cannot create an ODM Form connected to non-existent Scope",
         "request": {
             "headers": {},
             "method": "POST",
@@ -363,7 +363,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "ODM Form tried to connect to non existing Scope identified by uid (wrong_uid).",
+                "message": "ODM Form tried to connect to non-existent Scope identified by uid (wrong_uid).",
                 "time": "2022-03-07T12: 14: 18.116363",
                 "path": "http://testserver/concepts/odms/forms",
                 "method": "POST",
@@ -372,7 +372,7 @@
         }
     },
     {
-        "name": "Test cannot create an ODM Form connected to non-existing concepts",
+        "name": "Test cannot create an ODM Form connected to non-existent concepts",
         "request": {
             "headers": {},
             "method": "POST",
@@ -398,7 +398,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "ODM Form tried to connect to non existing concepts [('Concept Name: ODM Description', \"uids: {'wrong_uid'}\"), ('Concept Name: ODM Alias', \"uids: {'wrong_uid'}\")].",
+                "message": "ODM Form tried to connect to non-existent concepts [('Concept Name: ODM Description', \"uids: {'wrong_uid'}\"), ('Concept Name: ODM Alias', \"uids: {'wrong_uid'}\")].",
                 "time": "2022-03-07T12: 14: 18.116363",
                 "path": "http://testserver/concepts/odms/forms",
                 "method": "POST",
@@ -407,7 +407,7 @@
         }
     },
     {
-        "name": "Test getting error for retrieving non existing ODM Form",
+        "name": "Test getting error for retrieving non-existent ODM Form",
         "request": {
             "headers": {},
             "method": "GET",

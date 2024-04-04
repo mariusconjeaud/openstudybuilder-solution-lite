@@ -20,7 +20,9 @@ const mutations = {
     state.units.items.filter((item, pos) => {
       if (item.uid === unit.uid) {
         Vue.set(state.units, pos, unit)
+        return true
       }
+      return false
     })
   }
 }

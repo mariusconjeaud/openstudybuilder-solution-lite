@@ -90,13 +90,13 @@ class TestStudyObjectiveUpversion(unittest.TestCase):
         )
         self.tfr.save(self.ar)
 
-        self.ar: ObjectiveTemplateAR = self.tfr.find_by_uid_2(
+        self.ar: ObjectiveTemplateAR = self.tfr.find_by_uid(
             self.ar.uid, for_update=True
         )
         self.ar.approve(author="TEST")
         self.tfr.save(self.ar)
 
-        self.ar: ObjectiveTemplateAR = self.tfr.find_by_uid_2(
+        self.ar: ObjectiveTemplateAR = self.tfr.find_by_uid(
             self.ar.uid, for_update=True
         )
         self.ar.create_new_version(
@@ -106,7 +106,7 @@ class TestStudyObjectiveUpversion(unittest.TestCase):
         self.tfr.save(self.ar)
 
     def modify_objective_template(self):
-        self.ar: ObjectiveTemplateAR = self.tfr.find_by_uid_2(
+        self.ar: ObjectiveTemplateAR = self.tfr.find_by_uid(
             self.ar.uid, for_update=True
         )
         self.ar.create_new_version(

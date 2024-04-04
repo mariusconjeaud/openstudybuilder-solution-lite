@@ -69,7 +69,7 @@
         }
     },
     {
-        "name": "Test getting error for retrieving non existing ODM Vendor Namespace",
+        "name": "Test getting error for retrieving non-existent ODM Vendor Namespace",
         "request": {
             "headers": {},
             "method": "GET",
@@ -211,7 +211,7 @@
         }
     },
     {
-        "name": "Test cannot delete non-existing ODM Vendor Namespace",
+        "name": "Test cannot delete non-existent ODM Vendor Namespace",
         "request": {
             "headers": {},
             "method": "DELETE",

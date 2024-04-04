@@ -9,9 +9,6 @@ from clinical_mdr_api.models.syntax_instances.timeframe import (
     Timeframe,
     TimeframeVersion,
 )
-from clinical_mdr_api.models.utils import GenericFilteringReturn
-from clinical_mdr_api.repositories._utils import FilterOperator
-from clinical_mdr_api.services._utils import service_level_generic_filtering
 from clinical_mdr_api.services.syntax_instances.generic_syntax_instance_service import (
     GenericSyntaxInstanceService,
     _AggregateRootType,
@@ -29,31 +26,3 @@ class TimeframeService(GenericSyntaxInstanceService[TimeframeAR | _AggregateRoot
     template_repository_interface = TimeframeTemplateRepository
     version_class = TimeframeVersion
     template_uid_property = "timeframe_template_uid"
-    template_name_property = "timeframe_template"
-
-    def get_all(
-        self,
-        status: str | None = None,
-        return_study_count: bool = True,
-        sort_by: dict | None = None,
-        page_number: int = 1,
-        page_size: int = 0,
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
-        total_count: bool = False,
-    ) -> GenericFilteringReturn[Timeframe]:
-        all_items = super().get_all(status, return_study_count)
-
-        # The get_all method is only using neomodel, without Cypher query
-        # Therefore, the filtering will be done in this service layer
-        filtered_items = service_level_generic_filtering(
-            items=all_items,
-            filter_by=filter_by,
-            filter_operator=filter_operator,
-            sort_by=sort_by,
-            total_count=total_count,
-            page_number=page_number,
-            page_size=page_size,
-        )
-
-        return filtered_items

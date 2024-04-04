@@ -11,7 +11,8 @@ export const studySelectedNavigationGuard = {
     studyId () {
       const studyNumber = this.selectedStudy.current_metadata.identification_metadata.study_number
       return (studyNumber !== undefined && studyNumber !== null)
-        ? this.selectedStudy.current_metadata.identification_metadata.study_id : this.selectedStudy.current_metadata.identification_metadata.study_acronym
+        ? this.selectedStudy.current_metadata.identification_metadata.study_id
+        : this.selectedStudy.current_metadata.identification_metadata.study_acronym
     }
   },
 

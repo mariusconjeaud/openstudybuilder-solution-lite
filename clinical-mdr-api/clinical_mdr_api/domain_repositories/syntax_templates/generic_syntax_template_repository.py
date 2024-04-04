@@ -14,25 +14,19 @@ from clinical_mdr_api.config import (
     STUDY_VISIT_TIMEREF_NAME,
     STUDY_VISIT_TYPE_NAME,
     STUDY_WEEK_NAME,
+    WEEK_IN_STUDY_NAME,
 )
 from clinical_mdr_api.domain_repositories.generic_repository import EntityNotFoundError
 from clinical_mdr_api.domain_repositories.generic_syntax_repository import (
     GenericSyntaxRepository,
 )
-from clinical_mdr_api.domain_repositories.models.generic import Conjunction, VersionRoot
+from clinical_mdr_api.domain_repositories.models.generic import VersionRoot
 from clinical_mdr_api.domain_repositories.models.syntax import SyntaxTemplateValue
 from clinical_mdr_api.domain_repositories.models.template_parameter import (
     TemplateParameter,
 )
 from clinical_mdr_api.domains._utils import strip_html
-from clinical_mdr_api.domains.libraries.parameter_term import (
-    ComplexParameterTerm,
-    ParameterTermEntryVO,
-)
-from clinical_mdr_api.domains.syntax_templates.template import (
-    TemplateAggregateRootBase,
-    TemplateVO,
-)
+from clinical_mdr_api.domains.syntax_templates.template import TemplateVO
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryVO
 
 _AggregateRootType = TypeVar("_AggregateRootType")
@@ -111,39 +105,6 @@ class GenericSyntaxTemplateRepository(
         )
         return base_comparison
 
-    def patch_default_parameter_terms(
-        self,
-        versioned_object: _AggregateRootType,
-        parameters: list[ParameterTermEntryVO],
-        set_number: int | None = None,
-    ):
-        (
-            _,
-            template_value,
-            _,
-            _,
-        ) = versioned_object.repository_closure_data
-
-        # If set_number isn't provided, auto determine the set number
-        if set_number is None:
-            cypher_query = f"""MATCH (t)-[rel:{template_value.PARAMETERS_LABEL}]->()
-            WHERE elementId(t)=$element_id
-            RETURN coalesce(max(rel.set_number), 0) AS max_set_number
-            """
-            result, _ = db.cypher_query(
-                cypher_query, {"element_id": template_value.element_id}
-            )
-            set_number = result[0][0] + 1
-        else:
-            # If the template already has a default term set with this number, first disconnect the parameters
-            term_set = template_value.has_parameters.match(set_number=set_number).all()
-            for param in term_set:
-                self._db_remove_relationship(template_value.has_parameters, param)
-        # Then, create the set of parameters
-        self._create_default_parameter_term_set(
-            value=template_value, parameters=parameters, set_number=set_number
-        )
-
     def _maintain_parameters(
         self,
         versioned_object: _AggregateRootType,
@@ -177,65 +138,6 @@ class GenericSyntaxTemplateRepository(
                 raise EntityNotFoundError(
                     f"Cannot find parameter named {parameter_name}"
                 )
-
-        if (
-            hasattr(versioned_object.template_value, "default_parameter_terms")
-            and versioned_object.template_value.default_parameter_terms is not None
-        ):
-            # Then, create the relationships to the TemplateParameterTermValue nodes, as default values
-            value.has_parameters.disconnect_all()
-            value.has_conjunction.disconnect_all()
-
-            self._create_default_parameter_term_set(
-                value=value,
-                parameters=versioned_object.template_value.default_parameter_terms,
-            )
-
-    def _create_default_parameter_term_set(
-        self,
-        value: SyntaxTemplateValue,
-        parameters: list[ParameterTermEntryVO],
-        set_number: int | None = 0,
-    ) -> None:
-        for position, parameter_config in enumerate(parameters):
-            if isinstance(parameter_config, ComplexParameterTerm):
-                root_id = self._maintain_complex_parameter(parameter_config)
-                cypher_query = f"""
-                    MATCH (tv:SyntaxTemplateValue), (pt:TemplateParameterTermRoot)
-                    WHERE elementId(tv) = $value_id AND elementId(pt) = $root_id
-                    CREATE (tv)-[r:{value.PARAMETERS_LABEL} {{set_number: $set_number, position: $position, index: $index}}]->(pt)
-                    """
-                db.cypher_query(
-                    cypher_query,
-                    {
-                        "root_id": root_id,
-                        "set_number": set_number,
-                        "position": position,
-                        "index": 1,
-                        "value_id": value.element_id,
-                    },
-                )
-            else:
-                conjunction_string: str = parameter_config.conjunction
-                if len(conjunction_string) != 0:
-                    result = Conjunction.nodes.get_or_none(string=conjunction_string)
-                    if result is None:
-                        conjunction = Conjunction(string=conjunction_string)
-                        conjunction.save()
-                    else:
-                        conjunction = result
-                    value.has_conjunction.connect(
-                        conjunction,
-                        {"set_number": set_number, "position": position + 1},
-                    )
-                for index, value_config in enumerate(parameter_config.parameters):
-                    self._add_value_parameter_relation(
-                        value=value,
-                        parameter_uid=value_config.uid,
-                        set_number=set_number,
-                        position=position + 1,
-                        index=index + 1,
-                    )
 
     def _add_value_parameter_relation(
         self,
@@ -337,7 +239,7 @@ class GenericSyntaxTemplateRepository(
                         WITH pr
                         OPTIONAL MATCH (pr)-[rel:HAS_UNIT]->(un:UnitDefinitionRoot)-[:LATEST_FINAL]->(udv:UnitDefinitionValue)
                         WITH rel, udv, pr ORDER BY rel.index
-                        WITH collect(udv.name_sentence_case) as unit_names, pr
+                        WITH collect(udv.name) as unit_names, pr
                         OPTIONAL MATCH (pr)-[:HAS_CONJUNCTION]->(co:Conjunction) 
                         WITH unit_names, co
                         RETURN apoc.text.join(unit_names, " " + coalesce(co.string, "") + " ") AS unit
@@ -370,39 +272,6 @@ class GenericSyntaxTemplateRepository(
             ]
 
         return data
-
-    def get_default_parameter_terms(
-        self, template_uid: str
-    ) -> dict[int, list[ParameterTermEntryVO]]:
-        cypher_query = f"""
-        MATCH  (param:TemplateParameter)<-[u:USES_PARAMETER]-
-          (tr:{self.root_class.__label__})-[:LATEST]->(tv)
-        WHERE tr.uid=$root_uid
-        WITH tv, param.name as parameter, u.position as position
-        OPTIONAL MATCH (tv:SyntaxTemplateValue)-[rel:USES_DEFAULT_VALUE]->(tptr:TemplateParameterTermRoot)
-        WITH tv,
-            head([(tptr)-[:LATEST_FINAL]->(tpv) | tpv]) as tpv,
-            head([(tptr)<-[:HAS_PARAMETER_TERM]-(tp) | tp]) as tp,
-            rel as rel,
-            position,
-            parameter,
-            tptr as tptr
-        OPTIONAL MATCH (tpvv: ParameterTemplateValue)<-[:LATEST_FINAL]-(td: ParameterTemplateRoot)-[:HAS_COMPLEX_VALUE]->(tptr)
-        WHERE tpv iS NOT NULL AND tp is NOT NULL
-        
-        WITH DISTINCT coalesce(rel.set_number, 0) AS set_number, tv, position, parameter, collect(DISTINCT {{set_number: coalesce(rel.set_number, 0), position: rel.position, index: rel.index, parameter_name: tp.name, parameter_term: tpv.name, parameter_uid: tptr.uid,  definition: td.uid, template: tpvv.template_string }}) as data
-        OPTIONAL MATCH (tv)-[con_rel:HAS_CONJUNCTION]->(con:Conjunction)
-        WHERE con_rel.position=position AND con_rel.set_number=set_number
-        WITH position, parameter, data, coalesce(con.string, "") AS conjunction
-        RETURN DISTINCT position, parameter, [row in data where row.position = position | row] as parameterterms, conjunction
-        """
-
-        results, _ = db.cypher_query(cypher_query, params={"root_uid": template_uid})
-
-        default_parameter_terms = self._parse_parameter_terms(
-            instance_parameters=results
-        )
-        return default_parameter_terms
 
     def simple_concept_template(self, rel_type: str):
         query_to_subset = f"""
@@ -458,6 +327,10 @@ class GenericSyntaxTemplateRepository(
                 query_to_subset = self.simple_concept_template(
                     rel_type="HAS_STUDY_DURATION_WEEKS"
                 )
+            elif parameter["name"] == WEEK_IN_STUDY_NAME:
+                query_to_subset = self.simple_concept_template(
+                    rel_type="HAS_WEEK_IN_STUDY"
+                )
             elif parameter["name"] == STUDY_TIMEPOINT_NAME:
                 query_to_subset = self.simple_concept_template(rel_type="HAS_TIMEPOINT")
             if query_to_subset:
@@ -492,11 +365,6 @@ class GenericSyntaxTemplateRepository(
                     if item["name"].lower() in subset_list
                 ]
 
-    # TODO: find out if this can be removed - also from child classes.
-    @abc.abstractmethod
-    def check_exists_by_name_in_study(self, name: str, study_uid: str) -> bool:
-        raise NotImplementedError()
-
     def check_usage_count(self, uid: str) -> int:
         itm: VersionRoot = self.root_class.nodes.get(uid=uid)
         return len(itm.has_template.all())
@@ -507,15 +375,6 @@ class GenericSyntaxTemplateRepository(
         result = self._query_by_name_in_library(name, library, type_uid)
 
         return len(result) > 0 and len(result[0]) > 0
-
-    def get_by_name_in_library(
-        self, name: str, library: str, type_uid: str | None = None
-    ) -> TemplateAggregateRootBase | None:
-        result = self._query_by_name_in_library(name, library, type_uid)
-
-        if result and result[0]:
-            return self.find_by_uid_2(result[0][0])
-        return None
 
     def _query_by_name_in_library(self, name, library, type_uid):
         query = f"""

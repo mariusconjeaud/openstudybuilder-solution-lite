@@ -20,20 +20,20 @@
         }
     },
     {
-        "name": "Test get catalogue changes non existing catalogue passed",
+        "name": "Test get catalogue changes non-existent catalogue passed",
         "request": {
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "http://testserver/ct/catalogues/changes?catalogue_name=non_existing_catalogue&comparison_type=attributes&start_datetime=2020-03-27T00:00:00&end_datetime=2020-06-26T00:00:00"
+            "url": "http://testserver/ct/catalogues/changes?catalogue_name=non_existent_catalogue&comparison_type=attributes&start_datetime=2020-03-27T00:00:00&end_datetime=2020-06-26T00:00:00"
         },
         "response": {
             "code": 400,
             "headers": {},
             "result": {
-                "message": "There is no catalogue identified by provided catalogue name (non_existing_catalogue)",
+                "message": "There is no catalogue identified by provided catalogue name (non_existent_catalogue)",
                 "method": "GET",
-                "path": "http://testserver/ct/catalogues/changes?catalogue_name=non_existing_catalogue&comparison_type=attributes&start_datetime=2020-03-27T00:00:00&end_datetime=2020-06-26T00:00:00",
+                "path": "http://testserver/ct/catalogues/changes?catalogue_name=non_existent_catalogue&comparison_type=attributes&start_datetime=2020-03-27T00:00:00&end_datetime=2020-06-26T00:00:00",
                 "time": "2020-11-03T23:42:41.518146",
                 "type": "BusinessLogicException"
             }

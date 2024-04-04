@@ -16,6 +16,7 @@ from clinical_mdr_api.domain_repositories.models.concepts import (
     TimePointRoot,
     UnitDefinitionRoot,
     VisitNameRoot,
+    WeekInStudyRoot,
 )
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
     CTTermRoot,
@@ -125,6 +126,12 @@ class StudyVisit(StudySelection):
     has_study_duration_weeks = RelationshipTo(
         StudyDurationWeeksRoot,
         "HAS_STUDY_DURATION_WEEKS",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrOne,
+    )
+    has_week_in_study = RelationshipTo(
+        WeekInStudyRoot,
+        "HAS_WEEK_IN_STUDY",
         model=ClinicalMdrRel,
         cardinality=ZeroOrOne,
     )

@@ -25,6 +25,7 @@ from clinical_mdr_api.domain_repositories.models.odm import (
     OdmVendorAttributeRoot,
     OdmVendorElementRoot,
 )
+from clinical_mdr_api.domains._utils import ObjectStatus
 from clinical_mdr_api.domains.concepts.utils import RelationType
 from clinical_mdr_api.exceptions import BusinessLogicException
 from clinical_mdr_api.models.concepts.odms.odm_common_models import (
@@ -39,15 +40,6 @@ from clinical_mdr_api.repositories._utils import (
 
 
 class OdmGenericRepository(ConceptGenericRepository[_AggregateRootType], ABC):
-    def generic_match_clause(self, only_specific_status: list[str] | None = None):
-        if not only_specific_status:
-            return super().generic_match_clause()
-
-        return f"""
-        CYPHER runtime=slotted MATCH (concept_root:{self.root_class.__label__})-[:{'|'.join(only_specific_status)}]->
-        (concept_value:{self.value_class.__label__})
-        """
-
     def find_all(
         self,
         library: str | None = None,
@@ -58,7 +50,7 @@ class OdmGenericRepository(ConceptGenericRepository[_AggregateRootType], ABC):
         filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
         return_all_versions: bool = False,
-        only_specific_status: list[str] | None = None,
+        only_specific_status: str = ObjectStatus.LATEST.name,
         **kwargs,
     ) -> tuple[list[_AggregateRootType], int]:
         """

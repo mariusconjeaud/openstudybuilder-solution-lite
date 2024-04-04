@@ -1,16 +1,15 @@
 from dataclasses import dataclass
 from typing import Callable, Self
 
-from clinical_mdr_api.domains.controlled_terminologies.ct_term_attributes import (
-    CTTermAttributesAR,
-)
-from clinical_mdr_api.domains.controlled_terminologies.ct_term_name import CTTermNameAR
-from clinical_mdr_api.domains.dictionaries.dictionary_term import DictionaryTermAR
 from clinical_mdr_api.domains.libraries.object import ParametrizedTemplateVO
 from clinical_mdr_api.domains.syntax_pre_instances.pre_instance_ar import PreInstanceAR
 from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemMetadataVO,
     LibraryVO,
+)
+from clinical_mdr_api.models.controlled_terminologies.ct_term import (
+    SimpleCTTermNameAndAttributes,
+    SimpleTermModel,
 )
 
 
@@ -22,22 +21,22 @@ class CriteriaPreInstanceAR(PreInstanceAR):
 
     guidance_text: str | None = None
 
-    _indications: list[DictionaryTermAR] | None = None
+    _indications: list[SimpleTermModel] | None = None
 
-    _categories: list[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None
+    _categories: list[SimpleCTTermNameAndAttributes] | None = None
 
-    _subcategories: list[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None
+    _subcategories: list[SimpleCTTermNameAndAttributes] | None = None
 
     @property
-    def indications(self) -> list[DictionaryTermAR]:
+    def indications(self) -> list[SimpleTermModel]:
         return self._indications
 
     @property
-    def categories(self) -> list[tuple[CTTermNameAR, CTTermAttributesAR]]:
+    def categories(self) -> list[SimpleCTTermNameAndAttributes]:
         return self._categories
 
     @property
-    def sub_categories(self) -> list[tuple[CTTermNameAR, CTTermAttributesAR]]:
+    def sub_categories(self) -> list[SimpleCTTermNameAndAttributes]:
         return self._subcategories
 
     @classmethod
@@ -50,9 +49,9 @@ class CriteriaPreInstanceAR(PreInstanceAR):
         sequence_id: str,
         study_count: int = 0,
         guidance_text: str | None = None,
-        indications: list[DictionaryTermAR] | None = None,
-        categories: list[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None,
-        sub_categories: list[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None,
+        indications: list[SimpleTermModel] | None = None,
+        categories: list[SimpleCTTermNameAndAttributes] | None = None,
+        sub_categories: list[SimpleCTTermNameAndAttributes] | None = None,
     ) -> Self:
         return cls(
             _uid=uid,
@@ -78,9 +77,9 @@ class CriteriaPreInstanceAR(PreInstanceAR):
             lambda _: None
         ),
         guidance_text: str | None = None,
-        indications: list[DictionaryTermAR] | None = None,
-        categories: list[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None,
-        sub_categories: list[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None,
+        indications: list[SimpleTermModel] | None = None,
+        categories: list[SimpleCTTermNameAndAttributes] | None = None,
+        sub_categories: list[SimpleCTTermNameAndAttributes] | None = None,
     ) -> Self:
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(author=author)
 
@@ -99,3 +98,18 @@ class CriteriaPreInstanceAR(PreInstanceAR):
         ar._subcategories = sub_categories
 
         return ar
+
+    def edit_draft(
+        self,
+        author: str,
+        change_description: str,
+        template: ParametrizedTemplateVO,
+        guidance_text: str | None,
+    ):
+        """
+        Creates a new draft version for the object.
+        """
+        if self._template != template or self.guidance_text != guidance_text:
+            super()._edit_draft(change_description=change_description, author=author)
+            self._template = template
+            self.guidance_text = guidance_text

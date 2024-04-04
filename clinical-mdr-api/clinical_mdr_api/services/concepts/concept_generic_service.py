@@ -9,6 +9,7 @@ from clinical_mdr_api import exceptions
 from clinical_mdr_api.domain_repositories.concepts.concept_generic_repository import (
     ConceptGenericRepository,
 )
+from clinical_mdr_api.domains._utils import ObjectStatus
 from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemStatus,
     LibraryVO,
@@ -116,6 +117,20 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
                     getattr(reference_base_model, field_name),
                 )
 
+    @staticmethod
+    def fill_in_additional_fields(
+        concept_edit_input: BaseModel, current_ar: _AggregateRootType
+    ) -> None:
+        """
+        Subclasses should override this method to preserve field values which are not explicitly sent in the PATCH payload.
+        If a relevant field is not included the PATCH payload,
+        this method should populate `concept_edit_input` object with the existing value of that field.
+
+        This method deals only with fields that cannot be preserved
+        by the generic `_fill_missing_values_in_base_model_from_reference_base_model` method.
+        For example, it should handle all fields that represent links to other entities, e.g `dose_form_uids`.
+        """
+
     @property
     def repository(self) -> ConceptGenericRepository[_AggregateRootType]:
         assert self._repos is not None
@@ -154,7 +169,7 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
-        only_specific_status: list[str] | None = None,
+        only_specific_status: str = ObjectStatus.LATEST.name,
         **kwargs,
     ) -> GenericFilteringReturn[BaseModel]:
         return self.non_transactional_get_all_concepts(
@@ -178,7 +193,7 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
-        only_specific_status: list[str] | None = None,
+        only_specific_status: str = ObjectStatus.LATEST.name,
         **kwargs,
     ) -> GenericFilteringReturn[BaseModel]:
         self.enforce_library(library)
@@ -337,6 +352,7 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
                     item
                 ),
             )
+            self.fill_in_additional_fields(concept_edit_input, item)
             item = self._edit_aggregate(
                 item=item, concept_edit_input=concept_edit_input
             )

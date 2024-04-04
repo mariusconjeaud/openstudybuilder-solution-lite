@@ -17,7 +17,7 @@ class ExceptionCatchingThread(threading.Thread):
     def run(self):
         try:
             super().run()
-        # pylint:disable=broad-except
+        # pylint: disable=broad-except
         except BaseException as e:
             self.exc = e
 

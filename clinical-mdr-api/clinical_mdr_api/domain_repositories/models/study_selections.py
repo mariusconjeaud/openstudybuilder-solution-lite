@@ -12,6 +12,7 @@ from neomodel import (
 
 from clinical_mdr_api.domain_repositories.models.activities import (
     ActivityGroupValue,
+    ActivityInstanceValue,
     ActivitySubGroupValue,
     ActivityValue,
 )
@@ -45,6 +46,14 @@ from clinical_mdr_api.domain_repositories.models.syntax import (
     ObjectiveValue,
     TimeframeValue,
 )
+
+STUDY_VALUE_CLASS_NAME = ".study.StudyValue"
+STUDY_SOA_FOOTNOTE_CLASS_NAME = ".study.StudySoAFootnote"
+STUDY_ARM_CLASS_NAME = ".study_selections.StudyArm"
+STUDY_BRANCH_ARM_CLASS_NAME = ".study_selections.StudyBranchArm"
+STUDY_COHORT_CLASS_NAME = ".study_selections.StudyCohort"
+STUDY_EPOCH_CLASS_NAME = ".study_epoch.StudyEpoch"
+STUDY_ELEMENT_CLASS_NAME = ".study_selections.StudyElement"
 
 
 class AuditTrailMixin:
@@ -83,7 +92,7 @@ class StudyObjective(StudySelection):
         "StudyEndpoint", "STUDY_ENDPOINT_HAS_STUDY_OBJECTIVE", model=ClinicalMdrRel
     )
     study_value = RelationshipFrom(
-        ".study.StudyValue",
+        STUDY_VALUE_CLASS_NAME,
         "HAS_STUDY_OBJECTIVE",
         model=ClinicalMdrRel,
         cardinality=ZeroOrMore,
@@ -144,7 +153,7 @@ class StudyEndpoint(StudySelection):
         cardinality=ZeroOrMore,
     )
     study_value = RelationshipFrom(
-        ".study.StudyValue",
+        STUDY_VALUE_CLASS_NAME,
         "HAS_STUDY_ENDPOINT",
         model=ClinicalMdrRel,
         cardinality=ZeroOrMore,
@@ -199,7 +208,7 @@ class StudyCompound(StudySelection):
         model=ClinicalMdrRel,
     )
     study_value = RelationshipFrom(
-        ".study.StudyValue",
+        STUDY_VALUE_CLASS_NAME,
         "HAS_STUDY_COMPOUND",
         model=ClinicalMdrRel,
         cardinality=ZeroOrMore,
@@ -221,7 +230,7 @@ class StudyCriteria(StudySelection):
     )
     key_criteria = BooleanProperty(default=False)
     study_value = RelationshipFrom(
-        ".study.StudyValue",
+        STUDY_VALUE_CLASS_NAME,
         "HAS_STUDY_CRITERIA",
         model=ClinicalMdrRel,
         cardinality=ZeroOrMore,
@@ -246,7 +255,7 @@ class StudySoAGroup(StudySelectionMetadata):
         cardinality=ZeroOrMore,
     )
     study_soa_footnote_references_study_soa_group = RelationshipFrom(
-        ".study.StudySoAFootnote",
+        STUDY_SOA_FOOTNOTE_CLASS_NAME,
         "REFERENCES_STUDY_SOA_GROUP",
         cardinality=ZeroOrMore,
         model=ClinicalMdrRel,
@@ -261,7 +270,7 @@ class StudyActivitySubGroup(StudySelectionMetadata):
         ActivitySubGroupValue, "HAS_SELECTED_ACTIVITY_SUBGROUP", model=ClinicalMdrRel
     )
     study_soa_footnote_references_study_activity_subgroup = RelationshipFrom(
-        ".study.StudySoAFootnote",
+        STUDY_SOA_FOOTNOTE_CLASS_NAME,
         "REFERENCES_STUDY_ACTIVITY_SUBGROUP",
         cardinality=ZeroOrMore,
         model=ClinicalMdrRel,
@@ -276,7 +285,7 @@ class StudyActivityGroup(StudySelectionMetadata):
         ActivityGroupValue, "HAS_SELECTED_ACTIVITY_GROUP", model=ClinicalMdrRel
     )
     study_soa_footnote_references_study_activity_group = RelationshipFrom(
-        ".study.StudySoAFootnote",
+        STUDY_SOA_FOOTNOTE_CLASS_NAME,
         "REFERENCES_STUDY_ACTIVITY_GROUP",
         cardinality=ZeroOrMore,
         model=ClinicalMdrRel,
@@ -285,7 +294,7 @@ class StudyActivityGroup(StudySelectionMetadata):
 
 class StudyActivity(StudySelection):
     has_study_activity = RelationshipFrom(
-        ".study.StudyValue",
+        STUDY_VALUE_CLASS_NAME,
         "HAS_STUDY_ACTIVITY",
         cardinality=ZeroOrMore,
     )
@@ -313,6 +322,12 @@ class StudyActivity(StudySelection):
         model=ClinicalMdrRel,
         cardinality=ZeroOrOne,
     )
+    study_activity_has_study_activity_instance = RelationshipTo(
+        "StudyActivityInstance",
+        "STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_INSTANCE",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrMore,
+    )
     show_activity_group_in_protocol_flowchart = BooleanProperty(default=True)
     show_activity_subgroup_in_protocol_flowchart = BooleanProperty(default=True)
     show_activity_in_protocol_flowchart = BooleanProperty(default=False)
@@ -330,16 +345,43 @@ class StudyActivity(StudySelection):
         cardinality=ZeroOrMore,
     )
     study_soa_footnote_references_study_activity = RelationshipFrom(
-        ".study.StudySoAFootnote",
+        STUDY_SOA_FOOTNOTE_CLASS_NAME,
         "REFERENCES_STUDY_ACTIVITY",
         cardinality=ZeroOrMore,
         model=ClinicalMdrRel,
     )
 
 
+class StudyActivityInstance(StudySelection):
+    has_study_activity_instance = RelationshipFrom(
+        ".study.StudyValue",
+        "HAS_STUDY_ACTIVITY_INSTANCE",
+        cardinality=ZeroOrMore,
+    )
+    has_selected_activity_instance = RelationshipTo(
+        ActivityInstanceValue,
+        "HAS_SELECTED_ACTIVITY_INSTANCE",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrMore,
+    )
+    study_activity_has_study_activity_instance = RelationshipFrom(
+        StudyActivity,
+        "STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_INSTANCE",
+        model=ClinicalMdrRel,
+        cardinality=One,
+    )
+    study_activity_schedule = RelationshipTo(
+        "StudyActivitySchedule",
+        "STUDY_ACTIVITY_INSTANCE_HAS_SCHEDULE",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrMore,
+    )
+    show_activity_instance_in_protocol_flowchart = BooleanProperty(default=False)
+
+
 class StudyActivitySchedule(StudySelection):
     study_value = RelationshipFrom(
-        ".study.StudyValue",
+        STUDY_VALUE_CLASS_NAME,
         "HAS_STUDY_ACTIVITY_SCHEDULE",
         model=ClinicalMdrRel,
         cardinality=ZeroOrMore,
@@ -350,6 +392,12 @@ class StudyActivitySchedule(StudySelection):
         model=ClinicalMdrRel,
         cardinality=ZeroOrMore,
     )
+    study_activity_instance = RelationshipFrom(
+        StudyActivityInstance,
+        "STUDY_ACTIVITY_INSTANCE_HAS_SCHEDULE",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrMore,
+    )
     study_visit = RelationshipFrom(
         ".study_visit.StudyVisit",
         "STUDY_VISIT_HAS_SCHEDULE",
@@ -357,7 +405,7 @@ class StudyActivitySchedule(StudySelection):
         cardinality=ZeroOrMore,
     )
     study_soa_footnote_references_study_activity_schedule = RelationshipFrom(
-        ".study.StudySoAFootnote",
+        STUDY_SOA_FOOTNOTE_CLASS_NAME,
         "REFERENCES_STUDY_ACTIVITY_SCHEDULE",
         cardinality=ZeroOrMore,
         model=ClinicalMdrRel,
@@ -366,31 +414,31 @@ class StudyActivitySchedule(StudySelection):
 
 class StudyDesignCell(StudySelection):
     study_value = RelationshipFrom(
-        ".study.StudyValue",
+        STUDY_VALUE_CLASS_NAME,
         "HAS_STUDY_DESIGN_CELL",
         model=ClinicalMdrRel,
         cardinality=ZeroOrMore,
     )
     study_arm = RelationshipFrom(
-        ".study_selections.StudyArm",
+        STUDY_ARM_CLASS_NAME,
         "STUDY_ARM_HAS_DESIGN_CELL",
         model=ClinicalMdrRel,
         cardinality=ZeroOrMore,
     )
     study_branch_arm = RelationshipFrom(
-        ".study_selections.StudyBranchArm",
+        STUDY_BRANCH_ARM_CLASS_NAME,
         "STUDY_BRANCH_ARM_HAS_DESIGN_CELL",
         model=ClinicalMdrRel,
         cardinality=ZeroOrMore,
     )
     study_epoch = RelationshipFrom(
-        ".study_epoch.StudyEpoch",
+        STUDY_EPOCH_CLASS_NAME,
         "STUDY_EPOCH_HAS_DESIGN_CELL",
         model=ClinicalMdrRel,
         cardinality=ZeroOrMore,
     )
     study_element = RelationshipFrom(
-        ".study_selections.StudyElement",
+        STUDY_ELEMENT_CLASS_NAME,
         "STUDY_ELEMENT_HAS_DESIGN_CELL",
         model=ClinicalMdrRel,
         cardinality=ZeroOrMore,
@@ -409,7 +457,7 @@ class StudyArm(StudySelection):
     number_of_subjects = IntegerProperty()
 
     study_value = RelationshipFrom(
-        ".study.StudyValue",
+        STUDY_VALUE_CLASS_NAME,
         "HAS_STUDY_ARM",
         model=ClinicalMdrRel,
         cardinality=ZeroOrMore,
@@ -428,13 +476,13 @@ class StudyArm(StudySelection):
         cardinality=ZeroOrMore,
     )
     has_branch_arm = RelationshipTo(
-        ".study_selections.StudyBranchArm",
+        STUDY_BRANCH_ARM_CLASS_NAME,
         "STUDY_ARM_HAS_BRANCH_ARM",
         model=ClinicalMdrRel,
         cardinality=ZeroOrMore,
     )
     has_cohort = RelationshipTo(
-        ".study_selections.StudyCohort",
+        STUDY_COHORT_CLASS_NAME,
         "STUDY_ARM_HAS_COHORT",
         model=ClinicalMdrRel,
         cardinality=ZeroOrMore,
@@ -451,7 +499,7 @@ class StudyElement(StudySelection):
     end_rule = StringProperty()
     element_colour = StringProperty()
     study_value = RelationshipFrom(
-        ".study.StudyValue",
+        STUDY_VALUE_CLASS_NAME,
         "HAS_STUDY_ELEMENT",
         model=ClinicalMdrRel,
         cardinality=ZeroOrMore,
@@ -478,7 +526,7 @@ class StudyElement(StudySelection):
 
 class StudyActivityInstruction(StudySelection):
     study_value = RelationshipFrom(
-        ".study.StudyValue",
+        STUDY_VALUE_CLASS_NAME,
         "HAS_STUDY_ACTIVITY_INSTRUCTION",
         model=ClinicalMdrRel,
         cardinality=ZeroOrMore,
@@ -508,7 +556,7 @@ class StudyBranchArm(StudySelection):
     order = StringProperty()
 
     study_value = RelationshipFrom(
-        ".study.StudyValue",
+        STUDY_VALUE_CLASS_NAME,
         "HAS_STUDY_BRANCH_ARM",
         model=ClinicalMdrRel,
         cardinality=ZeroOrMore,
@@ -520,7 +568,7 @@ class StudyBranchArm(StudySelection):
         cardinality=ZeroOrMore,
     )
     has_cohort = RelationshipTo(
-        ".study_selections.StudyCohort",
+        STUDY_COHORT_CLASS_NAME,
         "STUDY_BRANCH_ARM_HAS_COHORT",
         model=ClinicalMdrRel,
         cardinality=ZeroOrMore,
@@ -542,7 +590,7 @@ class StudyCohort(StudySelection):
     number_of_subjects = IntegerProperty()
 
     study_value = RelationshipFrom(
-        ".study.StudyValue",
+        STUDY_VALUE_CLASS_NAME,
         "HAS_STUDY_COHORT",
         model=ClinicalMdrRel,
         cardinality=ZeroOrMore,
@@ -563,7 +611,7 @@ class StudyCohort(StudySelection):
 
 class StudyCompoundDosing(StudySelection):
     study_value = RelationshipFrom(
-        ".study.StudyValue",
+        STUDY_VALUE_CLASS_NAME,
         "HAS_STUDY_COMPOUND_DOSING",
         model=ClinicalMdrRel,
         cardinality=ZeroOrMore,
@@ -646,7 +694,7 @@ class StudySoAFootnote(StudySelection):
         model=ClinicalMdrRel,
     )
     study_value = RelationshipFrom(
-        ".study.StudyValue",
+        STUDY_VALUE_CLASS_NAME,
         "HAS_STUDY_FOOTNOTE",
         cardinality=ZeroOrMore,
         model=ClinicalMdrRel,

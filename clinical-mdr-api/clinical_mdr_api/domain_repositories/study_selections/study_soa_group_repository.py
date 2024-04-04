@@ -173,6 +173,8 @@ class StudySoAGroupRepository(StudySelectionActivityBaseRepository[StudySoAGroup
         return StudySoAGroup.get_next_free_uid_and_increment_counter()
 
     def close(self) -> None:
+        # Our repository guidelines state that repos should have a close method
+        # But nothing needs to be done in this one
         pass
 
     def get_all_study_soa_groups_for_study_activity(
@@ -185,14 +187,3 @@ class StudySoAGroupRepository(StudySelectionActivityBaseRepository[StudySoAGroup
             ).has(has_before=False)
         ).distinct()
         return study_soa_groups
-
-    def find_study_soa_group_in_a_study(
-        self, study_uid: str, soa_group_term_uid: str
-    ) -> StudySoAGroup:
-        study_soa_groups = to_relation_trees(
-            StudySoAGroup.nodes.filter(
-                has_soa_group_selection__has_study_activity__latest_value__uid=study_uid,
-                has_flowchart_group__uid=soa_group_term_uid,
-            ).has(has_before=False)
-        ).distinct()
-        return study_soa_groups[0]

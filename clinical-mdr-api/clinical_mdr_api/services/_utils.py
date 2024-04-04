@@ -16,15 +16,7 @@ from clinical_mdr_api.domains._utils import extract_parameters
 from clinical_mdr_api.domains.concepts.unit_definitions.unit_definition import (
     UnitDefinitionAR,
 )
-
-# noinspection PyProtectedMember
-from clinical_mdr_api.domains.simple_dictionaries._simple_dictionary_item_base import (
-    SimpleDictionaryItemBase,
-)
 from clinical_mdr_api.domains.study_selections.study_visit import StudyVisitVO
-from clinical_mdr_api.models.simple_dictionaries.simple_dictionary_item import (
-    SimpleDictionaryItem,
-)
 from clinical_mdr_api.models.syntax_templates.template_parameter import (
     ComplexTemplateParameter,
     TemplateParameter,
@@ -155,14 +147,6 @@ def calculate_diffs(result_list, version_object_class):
 def camel_to_snake(name: str) -> str:
     name = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", name)
     return re.sub("([a-z0-9])([A-Z])", r"\1_\2", name).lower()
-
-
-def json_model_from_simple_dictionary_item_ar(
-    item_ar: SimpleDictionaryItemBase,
-) -> SimpleDictionaryItem:
-    return SimpleDictionaryItem(
-        code=item_ar.code, name=item_ar.name, definition=item_ar.definition
-    )
 
 
 def fill_missing_values_in_base_model_from_reference_base_model(
@@ -536,9 +520,9 @@ def service_level_generic_filtering(
     # Do sorting
     for sort_key, sort_order in sort_by.items():
         filtered_items.sort(
-            key=lambda x, s=sort_key: elm
-            if (elm := extract_nested_key_value(x, s)) is not None
-            else "-1",
+            key=lambda x, s=sort_key: (
+                elm if (elm := extract_nested_key_value(x, s)) is not None else "-1"
+            ),
             reverse=not sort_order,
         )
     # Do count
@@ -736,6 +720,8 @@ def filter_aggregated_items(item, filter_key, filter_values, filter_operator):
     # In these cases, a list of values will be returned here
     # Filtering then becomes "if any of the values matches with the operator"
     if isinstance(_item_value_for_key, list):
+        if not filter_values:
+            return not _item_value_for_key
         for _val in _item_value_for_key:
             # Return true as soon as any value matches with the operator
             if apply_filter_operator(_val, filter_operator, filter_values):
@@ -765,6 +751,8 @@ def apply_filter_operator(
     if len(filter_values) > 0:
         if ComparisonOperator(operator) == ComparisonOperator.EQUALS:
             return value in filter_values
+        if ComparisonOperator(operator) == ComparisonOperator.NOT_EQUALS:
+            return value not in filter_values
         if ComparisonOperator(operator) == ComparisonOperator.CONTAINS:
             return any(str(_v).lower() in str(value).lower() for _v in filter_values)
         if ComparisonOperator(operator) == ComparisonOperator.GREATER_THAN:

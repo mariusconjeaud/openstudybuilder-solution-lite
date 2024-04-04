@@ -46,11 +46,15 @@
           "lock",
           "release"
         ],
+        "study_parent_part": null,
+        "study_subpart_uids": [],
         "current_metadata": {
           "identification_metadata": {
             "study_number": "007",
+            "subpart_id": null,
             "study_acronym": "Study-007",
             "project_number": "123",
+            "description": null,
             "project_name": "Project ABC",
             "clinical_programme_name": "CP",
             "study_id": "123-007",
@@ -64,7 +68,21 @@
               "eudract_id_null_value_code": null,
               "universal_trial_number_utn_null_value_code": null,
               "japanese_trial_registry_id_japic_null_value_code": null,
-              "investigational_new_drug_application_number_ind_null_value_code": null
+              "investigational_new_drug_application_number_ind_null_value_code": null,
+              "eu_trial_number": null,
+              "eu_trial_number_null_value_code": null,
+              "civ_id_sin_number": null,
+              "civ_id_sin_number_null_value_code": null,
+              "national_clinical_trial_number": null,
+              "national_clinical_trial_number_null_value_code": null,
+              "japanese_trial_registry_number_jrct": null,
+              "japanese_trial_registry_number_jrct_null_value_code": null,
+              "national_medical_products_administration_nmpa_number": null,
+              "national_medical_products_administration_nmpa_number_null_value_code": null,
+              "eudamed_srn_number": null,
+              "eudamed_srn_number_null_value_code": null,
+              "investigational_device_exemption_ide_number": null,
+              "investigational_device_exemption_ide_number_null_value_code": null
             }
           },
           "version_metadata": {
@@ -73,7 +91,8 @@
             "version_timestamp": "2021-04-06T13:51:58.468263",
             "version_author": null,
             "version_description": null
-          }
+          },
+          "study_description": null
         }
       },
       "save": {
@@ -108,11 +127,15 @@
           "lock",
           "release"
         ],
+        "study_parent_part": null,
+        "study_subpart_uids": [],
         "current_metadata": {
           "identification_metadata": {
             "study_number": "007",
+            "subpart_id": null,
             "study_acronym": "Study-007",
             "project_number": "123",
+            "description": null,
             "project_name": "Project ABC",
             "clinical_programme_name": "CP",
             "study_id": "123-007",
@@ -126,7 +149,21 @@
               "eudract_id_null_value_code": null,
               "universal_trial_number_utn_null_value_code": null,
               "japanese_trial_registry_id_japic_null_value_code": null,
-              "investigational_new_drug_application_number_ind_null_value_code": null
+              "investigational_new_drug_application_number_ind_null_value_code": null,
+              "eu_trial_number": null,
+              "eu_trial_number_null_value_code": null,
+              "civ_id_sin_number": null,
+              "civ_id_sin_number_null_value_code": null,
+              "national_clinical_trial_number": null,
+              "national_clinical_trial_number_null_value_code": null,
+              "japanese_trial_registry_number_jrct": null,
+              "japanese_trial_registry_number_jrct_null_value_code": null,
+              "national_medical_products_administration_nmpa_number": null,
+              "national_medical_products_administration_nmpa_number_null_value_code": null,
+              "eudamed_srn_number": null,
+              "eudamed_srn_number_null_value_code": null,
+              "investigational_device_exemption_ide_number": null,
+              "investigational_device_exemption_ide_number_null_value_code": null
             }
           },
           "version_metadata": {
@@ -135,7 +172,8 @@
             "version_timestamp": "2021-04-06T13:51:58.468263",
             "version_author": null,
             "version_description": null
-          }
+          },
+          "study_description": null
         }
       }
     }
@@ -167,11 +205,15 @@
           "lock",
           "release"
         ],
+        "study_parent_part": null,
+        "study_subpart_uids": [],
         "current_metadata": {
           "identification_metadata": {
             "study_number": "007",
+            "subpart_id": null,
             "study_acronym": "Study-007",
             "project_number": "123",
+            "description": null,
             "project_name": "Project ABC",
             "clinical_programme_name": "CP",
             "study_id": "123-007",
@@ -185,7 +227,21 @@
               "eudract_id_null_value_code": null,
               "universal_trial_number_utn_null_value_code": null,
               "japanese_trial_registry_id_japic_null_value_code": null,
-              "investigational_new_drug_application_number_ind_null_value_code": null
+              "investigational_new_drug_application_number_ind_null_value_code": null,
+              "eu_trial_number": null,
+              "eu_trial_number_null_value_code": null,
+              "civ_id_sin_number": null,
+              "civ_id_sin_number_null_value_code": null,
+              "national_clinical_trial_number": null,
+              "national_clinical_trial_number_null_value_code": null,
+              "japanese_trial_registry_number_jrct": null,
+              "japanese_trial_registry_number_jrct_null_value_code": null,
+              "national_medical_products_administration_nmpa_number": null,
+              "national_medical_products_administration_nmpa_number_null_value_code": null,
+              "eudamed_srn_number": null,
+              "eudamed_srn_number_null_value_code": null,
+              "investigational_device_exemption_ide_number": null,
+              "investigational_device_exemption_ide_number_null_value_code": null
             }
           },
           "version_metadata": {
@@ -194,7 +250,8 @@
             "version_timestamp": "2021-04-06T13:51:58.468263",
             "version_author": null,
             "version_description": null
-          }
+          },
+          "study_description": null
         }
       }
     }
@@ -226,11 +283,15 @@
           "lock",
           "release"
         ],
+        "study_parent_part": null,
+        "study_subpart_uids": [],
         "current_metadata": {
           "identification_metadata": {
             "study_number": "007",
+            "subpart_id": null,
             "study_acronym": "Study-007",
             "project_number": "123",
+            "description": null,
             "project_name": "Project ABC",
             "clinical_programme_name": "CP",
             "study_id": "123-007",
@@ -244,7 +305,21 @@
               "eudract_id_null_value_code": null,
               "universal_trial_number_utn_null_value_code": null,
               "japanese_trial_registry_id_japic_null_value_code": null,
-              "investigational_new_drug_application_number_ind_null_value_code": null
+              "investigational_new_drug_application_number_ind_null_value_code": null,
+              "eu_trial_number": null,
+              "eu_trial_number_null_value_code": null,
+              "civ_id_sin_number": null,
+              "civ_id_sin_number_null_value_code": null,
+              "national_clinical_trial_number": null,
+              "national_clinical_trial_number_null_value_code": null,
+              "japanese_trial_registry_number_jrct": null,
+              "japanese_trial_registry_number_jrct_null_value_code": null,
+              "national_medical_products_administration_nmpa_number": null,
+              "national_medical_products_administration_nmpa_number_null_value_code": null,
+              "eudamed_srn_number": null,
+              "eudamed_srn_number_null_value_code": null,
+              "investigational_device_exemption_ide_number": null,
+              "investigational_device_exemption_ide_number_null_value_code": null
             }
           },
           "version_metadata": {
@@ -253,7 +328,8 @@
             "version_timestamp": "2021-04-06T13:51:58.468263",
             "version_author": null,
             "version_description": null
-          }
+          },
+          "study_description": null
         }
       }
     }
@@ -310,11 +386,15 @@
           "lock",
           "release"
         ],
+        "study_parent_part": null,
+        "study_subpart_uids": [],
         "current_metadata": {
           "identification_metadata": {
             "study_number": "007",
+            "subpart_id": null,
             "study_acronym": "Study-007",
             "project_number": "456",
+            "description": null,
             "project_name": "Project DEF",
             "clinical_programme_name": "CP",
             "study_id": "456-007",
@@ -328,7 +408,21 @@
               "eudract_id_null_value_code": null,
               "universal_trial_number_utn_null_value_code": null,
               "japanese_trial_registry_id_japic_null_value_code": null,
-              "investigational_new_drug_application_number_ind_null_value_code": null
+              "investigational_new_drug_application_number_ind_null_value_code": null,
+              "eu_trial_number": null,
+              "eu_trial_number_null_value_code": null,
+              "civ_id_sin_number": null,
+              "civ_id_sin_number_null_value_code": null,
+              "national_clinical_trial_number": null,
+              "national_clinical_trial_number_null_value_code": null,
+              "japanese_trial_registry_number_jrct": null,
+              "japanese_trial_registry_number_jrct_null_value_code": null,
+              "national_medical_products_administration_nmpa_number": null,
+              "national_medical_products_administration_nmpa_number_null_value_code": null,
+              "eudamed_srn_number": null,
+              "eudamed_srn_number_null_value_code": null,
+              "investigational_device_exemption_ide_number": null,
+              "investigational_device_exemption_ide_number_null_value_code": null
             }
           },
           "version_metadata": {
@@ -337,7 +431,8 @@
             "version_timestamp": "2021-04-06T13:51:58.468263",
             "version_author": null,
             "version_description": null
-          }
+          },
+          "study_description": null
         }
       }
     }
@@ -400,11 +495,15 @@
           "lock",
           "release"
         ],
+        "study_parent_part": null,
+        "study_subpart_uids": [],
         "current_metadata": {
           "identification_metadata": {
             "study_number": "007",
+            "subpart_id": null,
             "study_acronym": "Study-007",
             "project_number": "456",
+            "description": null,
             "project_name": "Project DEF",
             "clinical_programme_name": "CP",
             "study_id": "456-007",
@@ -418,7 +517,21 @@
               "eudract_id_null_value_code": null,
               "universal_trial_number_utn_null_value_code": null,
               "japanese_trial_registry_id_japic_null_value_code": null,
-              "investigational_new_drug_application_number_ind_null_value_code": null
+              "investigational_new_drug_application_number_ind_null_value_code": null,
+              "eu_trial_number": null,
+              "eu_trial_number_null_value_code": null,
+              "civ_id_sin_number": null,
+              "civ_id_sin_number_null_value_code": null,
+              "national_clinical_trial_number": null,
+              "national_clinical_trial_number_null_value_code": null,
+              "japanese_trial_registry_number_jrct": null,
+              "japanese_trial_registry_number_jrct_null_value_code": null,
+              "national_medical_products_administration_nmpa_number": null,
+              "national_medical_products_administration_nmpa_number_null_value_code": null,
+              "eudamed_srn_number": null,
+              "eudamed_srn_number_null_value_code": null,
+              "investigational_device_exemption_ide_number": null,
+              "investigational_device_exemption_ide_number_null_value_code": null
             }
           },
           "version_metadata": {
@@ -427,7 +540,8 @@
             "version_timestamp": "2021-04-06T13:51:58.468263",
             "version_author": null,
             "version_description": null
-          }
+          },
+          "study_description": null
         }
       }
     }
@@ -459,11 +573,15 @@
           "lock",
           "release"
         ],
+        "study_parent_part": null,
+        "study_subpart_uids": [],
         "current_metadata": {
           "identification_metadata": {
             "study_number": "007",
+            "subpart_id": null,
             "study_acronym": "Study-007",
             "project_number": "456",
+            "description": null,
             "project_name": "Project DEF",
             "clinical_programme_name": "CP",
             "study_id": "456-007",
@@ -477,7 +595,21 @@
               "japanese_trial_registry_id_japic": null,
               "japanese_trial_registry_id_japic_null_value_code": null,
               "investigational_new_drug_application_number_ind": null,
-              "investigational_new_drug_application_number_ind_null_value_code": null
+              "investigational_new_drug_application_number_ind_null_value_code": null,
+              "eu_trial_number": null,
+              "eu_trial_number_null_value_code": null,
+              "civ_id_sin_number": null,
+              "civ_id_sin_number_null_value_code": null,
+              "national_clinical_trial_number": null,
+              "national_clinical_trial_number_null_value_code": null,
+              "japanese_trial_registry_number_jrct": null,
+              "japanese_trial_registry_number_jrct_null_value_code": null,
+              "national_medical_products_administration_nmpa_number": null,
+              "national_medical_products_administration_nmpa_number_null_value_code": null,
+              "eudamed_srn_number": null,
+              "eudamed_srn_number_null_value_code": null,
+              "investigational_device_exemption_ide_number": null,
+              "investigational_device_exemption_ide_number_null_value_code": null
             }
           },
           "version_metadata": {
@@ -486,7 +618,8 @@
             "version_timestamp": "2023-09-14T20:56:22.962488+00:00",
             "version_author": null,
             "version_description": null
-          }
+          },
+          "study_description": null
         }
       }
     }
@@ -551,11 +684,15 @@
           "lock",
           "release"
         ],
+        "study_parent_part": null,
+        "study_subpart_uids": [],
         "current_metadata": {
           "identification_metadata": {
             "study_number": "007",
+            "subpart_id": null,
             "study_acronym": "new acronym",
             "project_number": "456",
+            "description": null,
             "project_name": "Project DEF",
             "clinical_programme_name": "CP",
             "study_id": "456-007",
@@ -569,7 +706,21 @@
               "eudract_id_null_value_code": null,
               "universal_trial_number_utn_null_value_code": null,
               "japanese_trial_registry_id_japic_null_value_code": null,
-              "investigational_new_drug_application_number_ind_null_value_code": null
+              "investigational_new_drug_application_number_ind_null_value_code": null,
+              "eu_trial_number": null,
+              "eu_trial_number_null_value_code": null,
+              "civ_id_sin_number": null,
+              "civ_id_sin_number_null_value_code": null,
+              "national_clinical_trial_number": null,
+              "national_clinical_trial_number_null_value_code": null,
+              "japanese_trial_registry_number_jrct": null,
+              "japanese_trial_registry_number_jrct_null_value_code": null,
+              "national_medical_products_administration_nmpa_number": null,
+              "national_medical_products_administration_nmpa_number_null_value_code": null,
+              "eudamed_srn_number": null,
+              "eudamed_srn_number_null_value_code": null,
+              "investigational_device_exemption_ide_number": null,
+              "investigational_device_exemption_ide_number_null_value_code": null
             }
           },
           "version_metadata": {
@@ -578,7 +729,8 @@
             "version_timestamp": "2021-04-06T13:51:58.468263",
             "version_author": null,
             "version_description": null
-          }
+          },
+          "study_description": null
         }
       }
     }
@@ -937,6 +1089,23 @@
           "actions": [
             {
               "section": "Unknown",
+              "field": "soa_preferred_time_unit",
+              "before_value": null,
+              "after_value": {
+                "term_uid": "UnitDefinition_000003",
+                "name": null
+              },
+              "action": "Create"
+            }
+          ]
+        },
+        {
+          "study_uid": "Study_000001",
+          "user_initials": "TEST_USER",
+          "date": "2023-09-14T21:10:10.608381Z",
+          "actions": [
+            {
+              "section": "Unknown",
               "field": "preferred_time_unit",
               "before_value": null,
               "after_value": {
@@ -1165,11 +1334,15 @@
           "lock",
           "release"
         ],
+        "study_parent_part": null,
+        "study_subpart_uids": [],
         "current_metadata": {
           "identification_metadata": {
             "study_number": "1910",
+            "subpart_id": null,
             "study_acronym": null,
             "project_number": "123",
+            "description": null,
             "project_name": "Project ABC",
             "clinical_programme_name": "CP",
             "study_id": "123-1910",
@@ -1183,7 +1356,21 @@
               "eudract_id_null_value_code": null,
               "universal_trial_number_utn_null_value_code": null,
               "japanese_trial_registry_id_japic_null_value_code": null,
-              "investigational_new_drug_application_number_ind_null_value_code": null
+              "investigational_new_drug_application_number_ind_null_value_code": null,
+              "eu_trial_number": null,
+              "eu_trial_number_null_value_code": null,
+              "civ_id_sin_number": null,
+              "civ_id_sin_number_null_value_code": null,
+              "national_clinical_trial_number": null,
+              "national_clinical_trial_number_null_value_code": null,
+              "japanese_trial_registry_number_jrct": null,
+              "japanese_trial_registry_number_jrct_null_value_code": null,
+              "national_medical_products_administration_nmpa_number": null,
+              "national_medical_products_administration_nmpa_number_null_value_code": null,
+              "eudamed_srn_number": null,
+              "eudamed_srn_number_null_value_code": null,
+              "investigational_device_exemption_ide_number": null,
+              "investigational_device_exemption_ide_number_null_value_code": null
             }
           },
           "version_metadata": {
@@ -1192,7 +1379,8 @@
             "version_timestamp": "2021-04-06T13:51:58.468263",
             "version_author": null,
             "version_description": null
-          }
+          },
+          "study_description": null
         }
       }
     }
@@ -1217,11 +1405,15 @@
           "lock",
           "release"
         ],
+        "study_parent_part": null,
+        "study_subpart_uids": [],
         "current_metadata": {
           "identification_metadata": {
             "study_number": "1910",
+            "subpart_id": null,
             "study_acronym": null,
             "project_number": "123",
+            "description": null,
             "project_name": "Project ABC",
             "clinical_programme_name": "CP",
             "study_id": "123-1910",
@@ -1235,7 +1427,21 @@
               "eudract_id_null_value_code": null,
               "universal_trial_number_utn_null_value_code": null,
               "japanese_trial_registry_id_japic_null_value_code": null,
-              "investigational_new_drug_application_number_ind_null_value_code": null
+              "investigational_new_drug_application_number_ind_null_value_code": null,
+              "eu_trial_number": null,
+              "eu_trial_number_null_value_code": null,
+              "civ_id_sin_number": null,
+              "civ_id_sin_number_null_value_code": null,
+              "national_clinical_trial_number": null,
+              "national_clinical_trial_number_null_value_code": null,
+              "japanese_trial_registry_number_jrct": null,
+              "japanese_trial_registry_number_jrct_null_value_code": null,
+              "national_medical_products_administration_nmpa_number": null,
+              "national_medical_products_administration_nmpa_number_null_value_code": null,
+              "eudamed_srn_number": null,
+              "eudamed_srn_number_null_value_code": null,
+              "investigational_device_exemption_ide_number": null,
+              "investigational_device_exemption_ide_number_null_value_code": null
             }
           },
           "version_metadata": {
@@ -1296,11 +1502,15 @@
           "lock",
           "release"
         ],
+        "study_parent_part": null,
+        "study_subpart_uids": [],
         "current_metadata": {
           "identification_metadata": {
             "study_number": "1910",
+            "subpart_id": null,
             "study_acronym": null,
             "project_number": "123",
+            "description": null,
             "project_name": "Project ABC",
             "clinical_programme_name": "CP",
             "study_id": "123-1910",
@@ -1314,7 +1524,21 @@
               "eudract_id_null_value_code": null,
               "universal_trial_number_utn_null_value_code": null,
               "japanese_trial_registry_id_japic_null_value_code": null,
-              "investigational_new_drug_application_number_ind_null_value_code": null
+              "investigational_new_drug_application_number_ind_null_value_code": null,
+              "eu_trial_number": null,
+              "eu_trial_number_null_value_code": null,
+              "civ_id_sin_number": null,
+              "civ_id_sin_number_null_value_code": null,
+              "national_clinical_trial_number": null,
+              "national_clinical_trial_number_null_value_code": null,
+              "japanese_trial_registry_number_jrct": null,
+              "japanese_trial_registry_number_jrct_null_value_code": null,
+              "national_medical_products_administration_nmpa_number": null,
+              "national_medical_products_administration_nmpa_number_null_value_code": null,
+              "eudamed_srn_number": null,
+              "eudamed_srn_number_null_value_code": null,
+              "investigational_device_exemption_ide_number": null,
+              "investigational_device_exemption_ide_number_null_value_code": null
             }
           },
           "version_metadata": {
@@ -1393,11 +1617,15 @@
           "lock",
           "release"
         ],
+        "study_parent_part": null,
+        "study_subpart_uids": [],
         "current_metadata": {
           "identification_metadata": {
             "study_number": "1910",
+            "subpart_id": null,
             "study_acronym": null,
             "project_number": "123",
+            "description": null,
             "project_name": "Project ABC",
             "clinical_programme_name": "CP",
             "study_id": "123-1910",
@@ -1411,7 +1639,21 @@
               "eudract_id_null_value_code": null,
               "universal_trial_number_utn_null_value_code": null,
               "japanese_trial_registry_id_japic_null_value_code": null,
-              "investigational_new_drug_application_number_ind_null_value_code": null
+              "investigational_new_drug_application_number_ind_null_value_code": null,
+              "eu_trial_number": null,
+              "eu_trial_number_null_value_code": null,
+              "civ_id_sin_number": null,
+              "civ_id_sin_number_null_value_code": null,
+              "national_clinical_trial_number": null,
+              "national_clinical_trial_number_null_value_code": null,
+              "japanese_trial_registry_number_jrct": null,
+              "japanese_trial_registry_number_jrct_null_value_code": null,
+              "national_medical_products_administration_nmpa_number": null,
+              "national_medical_products_administration_nmpa_number_null_value_code": null,
+              "eudamed_srn_number": null,
+              "eudamed_srn_number_null_value_code": null,
+              "investigational_device_exemption_ide_number": null,
+              "investigational_device_exemption_ide_number_null_value_code": null
             }
           },
           "version_metadata": {

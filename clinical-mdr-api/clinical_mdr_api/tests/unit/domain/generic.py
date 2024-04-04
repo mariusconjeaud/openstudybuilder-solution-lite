@@ -47,7 +47,7 @@ class ClinicalMdrNode(StructuredNode):
     __abstract_node__ = True
 
     @classproperty
-    # pylint:disable=no-self-argument
+    # pylint: disable=no-self-argument
     def nodes(cls):
         """
         Returns a CustomNodeSet(NodeSet) object representing all nodes of the classes label
@@ -74,18 +74,6 @@ class ClinicalMdrNode(StructuredNode):
         defined_props = self.get_definition()
         props = vars(self)
         return {key: props[key] for key, value in defined_props.items()}
-
-    @classmethod
-    def strip_datadict(cls, datadict: dict):
-        internals = cls.get_definition()
-        return_dict = {}
-        for key, value in datadict.items():
-            if key.startswith("_"):
-                key = key[1:]
-            if key in internals:
-                return_dict[key] = value
-
-        return return_dict
 
 
 class ClinicalMdrNodeWithUID(ClinicalMdrNode):
@@ -204,25 +192,10 @@ class ClinicalMdrRel(StructuredRel):
             if isinstance(value, Property)
         }
 
-    def strip_datadict(self, datadict: dict):
-        internals = self.to_dict()
-        return_dict = {}
-        for key, value in datadict.items():
-            if key in internals:
-                return_dict[key] = value
-        return return_dict
-
 
 # pylint: disable=abstract-method
 class TemplateUsesParameterRelation(ClinicalMdrRel):
     position = IntegerProperty()
-
-
-# pylint: disable=abstract-method
-class ObjectUsesParameterRelation(ClinicalMdrRel):
-    position = IntegerProperty()
-    index = IntegerProperty()
-    set_number = IntegerProperty()
 
 
 # pylint: disable=abstract-method
@@ -381,13 +354,6 @@ class VersionRoot(ClinicalMdrNodeWithUID):
 
         counts, _ = db.cypher_query(cypher_query)
         return counts[0]
-
-
-class VersionObjectRoot(VersionRoot):
-    __abstract_node__ = True
-    TEMPLATE_REL_LABEL = "HAS_TIMEFRAME"
-
-    has_template = RelationshipFrom(VersionRoot, TEMPLATE_REL_LABEL)
 
 
 class Conjunction(ClinicalMdrNode):

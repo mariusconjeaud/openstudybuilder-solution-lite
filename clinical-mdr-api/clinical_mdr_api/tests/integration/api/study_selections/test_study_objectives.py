@@ -10,6 +10,7 @@ Tests for /studies/{uid}/study-objectives endpoints
 # which pylint interprets as unused arguments
 
 import logging
+from unittest import mock
 
 import pytest
 from fastapi.testclient import TestClient
@@ -175,6 +176,7 @@ def test_study_objective_with_objective_level_relationship(api_client):
     )
     res = response.json()
     assert response.status_code == 200
+    before_unlock["study_version"] = mock.ANY
     assert res["items"][0] == before_unlock
 
     # get specific study objective of a specific study version
@@ -230,4 +232,54 @@ def test_study_objective_with_objective_level_relationship(api_client):
 )
 def test_get_study_objectives_csv_xml_excel(api_client, export_format):
     url = f"/studies/{study.uid}/study-objectives"
-    TestUtils.verify_exported_data_format(api_client, export_format, url)
+    exported_data = TestUtils.verify_exported_data_format(
+        api_client, export_format, url
+    )
+    if export_format == "text/csv":
+        assert "study_version" in str(exported_data.read())
+        assert "LATEST" in str(exported_data.read())
+
+
+def test_update_library_items_of_relationship_to_value_nodes(api_client):
+    """
+    Test that the StudyObjective selection remains connected to the specific Value node even if the Value node is not latest anymore.
+
+    StudyObjective is connected to value nodes:
+    - ObjectiveValue
+    """
+    # get specific study objective
+    response = api_client.get(
+        f"/studies/{study.uid}/study-objectives/{study_objective_uid}",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    library_template_objective_uid = res["objective"]["objective_template"]["uid"]
+    initial_objective_name = res["objective"]["name"]
+
+    text_value_2_name = "2ndname"
+    # change objective name and approve the version
+    response = api_client.post(
+        f"/objective-templates/{library_template_objective_uid}/versions",
+        json={
+            "change_description": "test change",
+            "name": text_value_2_name,
+            "guidance_text": "don't know",
+        },
+    )
+    response = api_client.post(
+        f"/objective-templates/{library_template_objective_uid}/approvals?cascade=true"
+    )
+
+    # check that the Library item has been changed
+    response = api_client.get(f"/objective-templates/{library_template_objective_uid}")
+    res = response.json()
+    assert response.status_code == 200
+    assert res["name"] == text_value_2_name
+
+    # check that the StudySelection StudyObjective hasn't been updated
+    response = api_client.get(
+        f"/studies/{study.uid}/study-objectives/{study_objective_uid}",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["objective"]["name"] == initial_objective_name

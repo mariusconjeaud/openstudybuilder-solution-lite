@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from typing import Any, Callable, Self
 
 from pydantic import Field
@@ -49,13 +50,7 @@ from clinical_mdr_api.domains.study_selections.study_selection_objective import 
     StudySelectionObjectiveVO,
 )
 from clinical_mdr_api.domains.study_selections.study_visit import StudyVisitVO
-from clinical_mdr_api.models.study_selections.study import (
-    HighLevelStudyDesignJsonModel,
-    RegistryIdentifiersJsonModel,
-    StudyDescriptionJsonModel,
-    StudyInterventionJsonModel,
-    StudyPopulationJsonModel,
-)
+from clinical_mdr_api.models.study_selections.study import StudyDescriptionJsonModel
 from clinical_mdr_api.models.study_selections.study_epoch import StudyEpoch
 from clinical_mdr_api.models.syntax_instances.criteria import Criteria
 from clinical_mdr_api.models.syntax_instances.endpoint import Endpoint
@@ -120,91 +115,89 @@ def none_to_empty_str(obj):
     return obj
 
 
-class RegistryIdentifiersListingModel(RegistryIdentifiersJsonModel):
+class RegistryIdentifiersListingModel(BaseModel):
     class Config:
         title = "Registry identifiers model for listing"
-        description = "Registry identifiers model for listing."
+        description = "Registry identifiers model for listing supplying SDTM generation framework."
 
-    ct_gov_id_null_value_code: str | None = Field(None, nullable=True)
-    eudract_id_null_value_code: str | None = Field(None, nullable=True)
-    universal_trial_number_utn_null_value_code: str | None = Field(None, nullable=True)
-    japanese_trial_registry_id_japic_null_value_code: str | None = Field(
-        None, nullable=True
-    )
-    investigational_new_drug_application_number_ind_null_value_code: str | None = Field(
-        None, nullable=True
-    )
+    ct_gov: str
+    eudract: str
+    utn: str
+    japic: str
+    ind: str
+    eutn: str
+    civ: str
+    nctn: str
+    jrct: str
+    nmpa: str
+    esn: str
+    ide: str
 
     @classmethod
     def from_study_registry_identifiers_vo(
         cls,
         registry_identifiers_vo: RegistryIdentifiersVO,
-        find_term_by_uid: Callable[[str], str | None],
     ) -> Self | None:
         if registry_identifiers_vo is None:
             return None
         return cls(
-            ct_gov_id=none_to_empty_str(registry_identifiers_vo.ct_gov_id),
-            ct_gov_id_null_value_code=ct_term_uid_to_str(
-                registry_identifiers_vo.ct_gov_id_null_value_code, find_term_by_uid
-            ),
-            eudract_id=none_to_empty_str(registry_identifiers_vo.eudract_id),
-            eudract_id_null_value_code=ct_term_uid_to_str(
-                registry_identifiers_vo.eudract_id_null_value_code, find_term_by_uid
-            ),
-            universal_trial_number_utn=none_to_empty_str(
-                registry_identifiers_vo.universal_trial_number_utn
-            ),
-            universal_trial_number_utn_null_value_code=ct_term_uid_to_str(
-                registry_identifiers_vo.universal_trial_number_utn_null_value_code,
-                find_term_by_uid,
-            ),
-            japanese_trial_registry_id_japic=none_to_empty_str(
+            ct_gov=none_to_empty_str(registry_identifiers_vo.ct_gov_id),
+            eudract=none_to_empty_str(registry_identifiers_vo.eudract_id),
+            utn=none_to_empty_str(registry_identifiers_vo.universal_trial_number_utn),
+            japic=none_to_empty_str(
                 registry_identifiers_vo.japanese_trial_registry_id_japic
             ),
-            japanese_trial_registry_id_japic_null_value_code=ct_term_uid_to_str(
-                registry_identifiers_vo.japanese_trial_registry_id_japic_null_value_code,
-                find_term_by_uid,
-            ),
-            investigational_new_drug_application_number_ind=none_to_empty_str(
+            ind=none_to_empty_str(
                 registry_identifiers_vo.investigational_new_drug_application_number_ind
             ),
-            investigational_new_drug_application_number_ind_null_value_code=ct_term_uid_to_str(
-                registry_identifiers_vo.investigational_new_drug_application_number_ind_null_value_code,
-                find_term_by_uid,
+            eutn=none_to_empty_str(registry_identifiers_vo.eu_trial_number),
+            civ=none_to_empty_str(registry_identifiers_vo.civ_id_sin_number),
+            nctn=none_to_empty_str(
+                registry_identifiers_vo.national_clinical_trial_number
+            ),
+            jrct=none_to_empty_str(
+                registry_identifiers_vo.japanese_trial_registry_number_jrct
+            ),
+            nmpa=none_to_empty_str(
+                registry_identifiers_vo.national_medical_products_administration_nmpa_number
+            ),
+            esn=none_to_empty_str(registry_identifiers_vo.eudamed_srn_number),
+            ide=none_to_empty_str(
+                registry_identifiers_vo.investigational_device_exemption_ide_number
             ),
         )
 
 
-class StudyTypeListingModel(HighLevelStudyDesignJsonModel):
+class StudyTypeListingModel(BaseModel):
     class Config:
         title = "Study type model for listing"
-        description = "Study type model for listing"
+        description = (
+            "Study type model for listing supplying SDTM generation framework."
+        )
 
-    study_type_code: str | None = Field(None, nullable=True)
-    study_type_null_value_code: str | None = Field(None, nullable=True)
+    stype: str
+    stype_nf: str
 
-    trial_type_codes: list[SimpleListingCTModel] | None = Field(None, nullable=True)
-    trial_type_null_value_code: str | None = Field(None, nullable=True)
+    trial_type: list[SimpleListingCTModel] | None = Field(None, nullable=True)
+    trial_type_nf: str
 
-    trial_phase_code: str | None = Field(None, nullable=True)
-    trial_phase_null_value_code: str | None = Field(None, nullable=True)
+    phase: str
+    phase_nf: str
 
-    is_extension_trial: str | bool | None = Field(None, nullable=True)
-    is_extension_trial_null_value_code: str | None = Field(None, nullable=True)
+    extension: str | bool
+    extension_nf: str
 
-    is_adaptive_design: str | bool | None = Field(None, nullable=True)
-    is_adaptive_design_null_value_code: str | None = Field(None, nullable=True)
+    adaptive: str | bool
+    adaptive_nf: str
 
-    study_stop_rules_null_value_code: str | None = Field(None, nullable=True)
+    stop_rule: str
+    stop_rule_nf: str
 
-    confirmed_response_minimum_duration: str | None = Field(None, nullable=True)
-    confirmed_response_minimum_duration_null_value_code: str | None = Field(
-        None, nullable=True
-    )
+    confirmed_res_min_dur: str
+    confirmed_res_min_dur_nf: str
 
-    post_auth_indicator: str | None = Field(None, nullable=True)
-    post_auth_indicator_null_value_code: str | None = Field(None, nullable=True)
+    post_auth: str
+    post_auth_nf: str
 
     @classmethod
     def from_high_level_study_design_vo(
@@ -215,134 +208,110 @@ class StudyTypeListingModel(HighLevelStudyDesignJsonModel):
         if high_level_study_design_vo is None:
             return None
         return cls(
-            study_type_code=ct_term_uid_to_str(
+            stype=ct_term_uid_to_str(
                 ct_uid=high_level_study_design_vo.study_type_code,
                 find_term_by_uid=find_term_by_uid,
             ),
-            study_type_null_value_code=ct_term_uid_to_str(
+            stype_nf=ct_term_uid_to_str(
                 ct_uid=high_level_study_design_vo.study_type_null_value_code,
                 find_term_by_uid=find_term_by_uid,
             ),
-            trial_type_codes=[
+            trial_type=[
                 SimpleListingCTModel.from_ct_code(
                     ct_uid=trial_type_code, find_term_by_uid=find_term_by_uid
                 )
                 for trial_type_code in high_level_study_design_vo.trial_type_codes
             ],
-            trial_type_null_value_code=ct_term_uid_to_str(
+            trial_type_nf=ct_term_uid_to_str(
                 ct_uid=high_level_study_design_vo.trial_type_null_value_code,
                 find_term_by_uid=find_term_by_uid,
             ),
-            trial_phase_code=ct_term_uid_to_str(
+            phase=ct_term_uid_to_str(
                 ct_uid=high_level_study_design_vo.trial_phase_code,
                 find_term_by_uid=find_term_by_uid,
             ),
-            trial_phase_null_value_code=ct_term_uid_to_str(
+            phase_nf=ct_term_uid_to_str(
                 ct_uid=high_level_study_design_vo.trial_phase_null_value_code,
                 find_term_by_uid=find_term_by_uid,
             ),
-            is_extension_trial=none_to_empty_str(
-                high_level_study_design_vo.is_extension_trial
-            ),
-            is_extension_trial_null_value_code=ct_term_uid_to_str(
+            extension=none_to_empty_str(high_level_study_design_vo.is_extension_trial),
+            extension_nf=ct_term_uid_to_str(
                 ct_uid=high_level_study_design_vo.is_extension_trial_null_value_code,
                 find_term_by_uid=find_term_by_uid,
             ),
-            is_adaptive_design=none_to_empty_str(
-                high_level_study_design_vo.is_adaptive_design
-            ),
-            is_adaptive_design_null_value_code=ct_term_uid_to_str(
+            adaptive=none_to_empty_str(high_level_study_design_vo.is_adaptive_design),
+            adaptive_nf=ct_term_uid_to_str(
                 ct_uid=high_level_study_design_vo.is_adaptive_design_null_value_code,
                 find_term_by_uid=find_term_by_uid,
             ),
-            study_stop_rules=none_to_empty_str(
-                high_level_study_design_vo.study_stop_rules
-            ),
-            study_stop_rules_null_value_code=ct_term_uid_to_str(
+            stop_rule=none_to_empty_str(high_level_study_design_vo.study_stop_rules),
+            stop_rule_nf=ct_term_uid_to_str(
                 ct_uid=high_level_study_design_vo.study_stop_rules_null_value_code,
                 find_term_by_uid=find_term_by_uid,
             ),
-            confirmed_response_minimum_duration=none_to_empty_str(
+            confirmed_res_min_dur=none_to_empty_str(
                 high_level_study_design_vo.confirmed_response_minimum_duration
             ),
-            confirmed_response_minimum_duration_null_value_code=ct_term_uid_to_str(
+            confirmed_res_min_dur_nf=ct_term_uid_to_str(
                 ct_uid=high_level_study_design_vo.confirmed_response_minimum_duration_null_value_code,
                 find_term_by_uid=find_term_by_uid,
             ),
-            post_auth_indicator=none_to_empty_str(
-                high_level_study_design_vo.post_auth_indicator
-            ),
-            post_auth_indicator_null_value_code=ct_term_uid_to_str(
+            post_auth=none_to_empty_str(high_level_study_design_vo.post_auth_indicator),
+            post_auth_nf=ct_term_uid_to_str(
                 ct_uid=high_level_study_design_vo.post_auth_indicator_null_value_code,
                 find_term_by_uid=find_term_by_uid,
             ),
         )
 
 
-class StudyPopulationListingModel(StudyPopulationJsonModel):
+class StudyPopulationListingModel(BaseModel):
     class Config:
         title = "Study population model for listing"
-        description = "Study population model for listing"
+        description = (
+            "Study population model for listing supplying SDTM generation framework."
+        )
 
-    therapeutic_area_codes: list[SimpleListingCTModel] | None = Field(
-        None, nullable=True
-    )
-    therapeutic_area_null_value_code: str | None = Field(None, nullable=True)
+    therapy_area: list[SimpleListingCTModel] | None = Field(None, nullable=True)
+    therapy_area_nf: str
 
-    disease_condition_or_indication_codes: list[SimpleListingCTModel] | None = Field(
-        None, nullable=True
-    )
-    disease_condition_or_indication_null_value_code: str | None = Field(
-        None, nullable=True
-    )
+    indication: list[SimpleListingCTModel] | None = Field(None, nullable=True)
+    indication_nf: str
 
-    diagnosis_group_codes: list[SimpleListingCTModel] | None = Field(
-        None, nullable=True
-    )
-    diagnosis_group_null_value_code: str | None = Field(None, nullable=True)
+    diag_grp: list[SimpleListingCTModel] | None = Field(None, nullable=True)
+    diag_grp_nf: str
 
-    sex_of_participants_code: str | None = Field(None, nullable=True)
-    sex_of_participants_null_value_code: str | None = Field(None, nullable=True)
+    sex: str
+    sex_nf: str
 
-    rare_disease_indicator: str | bool | None = Field(None, nullable=True)
-    rare_disease_indicator_null_value_code: str | None = Field(None, nullable=True)
+    rare_dis: str | bool
+    rare_dis_nf: str
 
-    healthy_subject_indicator: str | bool | None = Field(None, nullable=True)
-    healthy_subject_indicator_null_value_code: str | None = Field(None, nullable=True)
+    healthy_subj: str | bool
+    healthy_subj_nf: str
 
-    planned_minimum_age_of_subjects: str | None = Field(None, nullable=True)
-    planned_minimum_age_of_subjects_null_value_code: str | None = Field(
-        None, nullable=True
-    )
+    min_age: str
+    min_age_nf: str
 
-    planned_maximum_age_of_subjects: str | None = Field(None, nullable=True)
-    planned_maximum_age_of_subjects_null_value_code: str | None = Field(
-        None, nullable=True
-    )
+    max_age: str
+    max_age_nf: str
 
-    stable_disease_minimum_duration: str | None = Field(None, nullable=True)
-    stable_disease_minimum_duration_null_value_code: str | None = Field(
-        None, nullable=True
-    )
+    stable_dis_min_dur: str
+    stable_dis_min_dur_nf: str
 
-    pediatric_study_indicator: str | bool | None = Field(None, nullable=True)
-    pediatric_study_indicator_null_value_code: str | None = Field(None, nullable=True)
+    pediatric: str | bool
+    pediatric_nf: str
 
-    pediatric_postmarket_study_indicator: str | bool | None = Field(None, nullable=True)
-    pediatric_postmarket_study_indicator_null_value_code: str | None = Field(
-        None, nullable=True
-    )
+    pediatric_postmarket: str | bool
+    pediatric_postmarket_nf: str
 
-    pediatric_investigation_plan_indicator: str | bool | None = Field(
-        None, nullable=True
-    )
-    pediatric_investigation_plan_indicator_null_value_code: str | None = Field(
-        None, nullable=True
-    )
+    pediatric_inv: str | bool
+    pediatric_inv_nf: str
 
-    relapse_criteria_null_value_code: str | None = Field(None, nullable=True)
+    relapse_criteria: str
+    relapse_criteria_nf: str
 
-    number_of_expected_subjects_null_value_code: str | None = Field(None, nullable=True)
+    plan_no_subject: int | None = Field(None, nullable=True)
+    plan_no_subject_nf: str
 
     @classmethod
     def from_study_population_vo(
@@ -354,152 +323,147 @@ class StudyPopulationListingModel(StudyPopulationJsonModel):
         if study_population_vo is None:
             return None
         return cls(
-            therapeutic_area_codes=[
-                SimpleListingCTModel(
+            therapy_area=[
+                SimpleListingCTModel.from_ct_code(
                     ct_uid=therapeutic_area_code,
                     find_term_by_uid=find_dictionary_term_by_uid,
                 )
                 for therapeutic_area_code in study_population_vo.therapeutic_area_codes
             ],
-            therapeutic_area_null_value_code=ct_term_uid_to_str(
+            therapy_area_nf=ct_term_uid_to_str(
                 ct_uid=study_population_vo.therapeutic_area_null_value_code,
                 find_term_by_uid=find_term_by_uid,
             ),
-            disease_condition_or_indication_codes=[
+            indication=[
                 SimpleListingCTModel.from_ct_code(
                     ct_uid=disease_or_indication_code,
                     find_term_by_uid=find_dictionary_term_by_uid,
                 )
                 for disease_or_indication_code in study_population_vo.disease_condition_or_indication_codes
             ],
-            disease_condition_or_indication_null_value_code=(
+            indication_nf=(
                 ct_term_uid_to_str(
                     ct_uid=study_population_vo.disease_condition_or_indication_null_value_code,
                     find_term_by_uid=find_term_by_uid,
                 )
             ),
-            diagnosis_group_codes=[
+            diag_grp=[
                 SimpleListingCTModel.from_ct_code(
                     ct_uid=diagnosis_group_code,
                     find_term_by_uid=find_dictionary_term_by_uid,
                 )
                 for diagnosis_group_code in study_population_vo.diagnosis_group_codes
             ],
-            diagnosis_group_null_value_code=ct_term_uid_to_str(
+            diag_grp_nf=ct_term_uid_to_str(
                 ct_uid=study_population_vo.diagnosis_group_null_value_code,
                 find_term_by_uid=find_term_by_uid,
             ),
-            sex_of_participants_code=ct_term_uid_to_str(
+            sex=ct_term_uid_to_str(
                 ct_uid=study_population_vo.sex_of_participants_code,
                 find_term_by_uid=find_term_by_uid,
             ),
-            sex_of_participants_null_value_code=ct_term_uid_to_str(
+            sex_nf=ct_term_uid_to_str(
                 ct_uid=study_population_vo.sex_of_participants_null_value_code,
                 find_term_by_uid=find_term_by_uid,
             ),
-            rare_disease_indicator=none_to_empty_str(
-                study_population_vo.rare_disease_indicator
-            ),
-            rare_disease_indicator_null_value_code=ct_term_uid_to_str(
+            rare_dis=none_to_empty_str(study_population_vo.rare_disease_indicator),
+            rare_dis_nf=ct_term_uid_to_str(
                 ct_uid=study_population_vo.rare_disease_indicator_null_value_code,
                 find_term_by_uid=find_term_by_uid,
             ),
-            healthy_subject_indicator=none_to_empty_str(
+            healthy_subj=none_to_empty_str(
                 study_population_vo.healthy_subject_indicator
             ),
-            healthy_subject_indicator_null_value_code=ct_term_uid_to_str(
+            healthy_subj_nf=ct_term_uid_to_str(
                 ct_uid=study_population_vo.healthy_subject_indicator_null_value_code,
                 find_term_by_uid=find_term_by_uid,
             ),
-            planned_minimum_age_of_subjects=none_to_empty_str(
+            min_age=none_to_empty_str(
                 study_population_vo.planned_minimum_age_of_subjects
             ),
-            planned_minimum_age_of_subjects_null_value_code=ct_term_uid_to_str(
+            min_age_nf=ct_term_uid_to_str(
                 ct_uid=study_population_vo.planned_minimum_age_of_subjects_null_value_code,
                 find_term_by_uid=find_term_by_uid,
             ),
-            planned_maximum_age_of_subjects=none_to_empty_str(
+            max_age=none_to_empty_str(
                 study_population_vo.planned_maximum_age_of_subjects
             ),
-            planned_maximum_age_of_subjects_null_value_code=ct_term_uid_to_str(
+            max_age_nf=ct_term_uid_to_str(
                 ct_uid=study_population_vo.planned_maximum_age_of_subjects_null_value_code,
                 find_term_by_uid=find_term_by_uid,
             ),
-            stable_disease_minimum_duration=none_to_empty_str(
+            stable_dis_min_dur=none_to_empty_str(
                 study_population_vo.stable_disease_minimum_duration
             ),
-            stable_disease_minimum_duration_null_value_code=ct_term_uid_to_str(
+            stable_dis_min_dur_nf=ct_term_uid_to_str(
                 ct_uid=study_population_vo.stable_disease_minimum_duration_null_value_code,
                 find_term_by_uid=find_term_by_uid,
             ),
-            pediatric_study_indicator=none_to_empty_str(
-                study_population_vo.pediatric_study_indicator
-            ),
-            pediatric_study_indicator_null_value_code=ct_term_uid_to_str(
+            pediatric=none_to_empty_str(study_population_vo.pediatric_study_indicator),
+            pediatric_nf=ct_term_uid_to_str(
                 ct_uid=study_population_vo.pediatric_study_indicator_null_value_code,
                 find_term_by_uid=find_term_by_uid,
             ),
-            pediatric_postmarket_study_indicator=none_to_empty_str(
+            pediatric_postmarket=none_to_empty_str(
                 study_population_vo.pediatric_postmarket_study_indicator
             ),
-            pediatric_postmarket_study_indicator_null_value_code=ct_term_uid_to_str(
+            pediatric_postmarket_nf=ct_term_uid_to_str(
                 ct_uid=study_population_vo.pediatric_postmarket_study_indicator_null_value_code,
                 find_term_by_uid=find_term_by_uid,
             ),
-            pediatric_investigation_plan_indicator=none_to_empty_str(
+            pediatric_inv=none_to_empty_str(
                 study_population_vo.pediatric_investigation_plan_indicator
             ),
-            pediatric_investigation_plan_indicator_null_value_code=ct_term_uid_to_str(
+            pediatric_inv_nf=ct_term_uid_to_str(
                 ct_uid=study_population_vo.pediatric_investigation_plan_indicator_null_value_code,
                 find_term_by_uid=find_term_by_uid,
             ),
             relapse_criteria=none_to_empty_str(study_population_vo.relapse_criteria),
-            relapse_criteria_null_value_code=ct_term_uid_to_str(
+            relapse_criteria_nf=ct_term_uid_to_str(
                 ct_uid=study_population_vo.relapse_criteria_null_value_code,
                 find_term_by_uid=find_term_by_uid,
             ),
-            number_of_expected_subjects=study_population_vo.number_of_expected_subjects,
-            number_of_expected_subjects_null_value_code=ct_term_uid_to_str(
+            plan_no_subject=study_population_vo.number_of_expected_subjects,
+            plan_no_subject_nf=ct_term_uid_to_str(
                 ct_uid=study_population_vo.number_of_expected_subjects_null_value_code,
                 find_term_by_uid=find_term_by_uid,
             ),
         )
 
 
-class StudyAttributesListingModel(StudyInterventionJsonModel):
+class StudyAttributesListingModel(BaseModel):
     class Config:
         title = "study attributes model for listing"
-        description = "Study attributes model for listing"
+        description = (
+            "Study attributes model for listing supplying SDTM generation framework."
+        )
 
-    intervention_type_code: str | None = Field(None, nullable=True)
-    intervention_type_null_value_code: str | None = Field(None, nullable=True)
+    intv_type: str
+    intv_type_nf: str
 
-    add_on_to_existing_treatments: str | bool | None = Field(None, nullable=True)
-    add_on_to_existing_treatments_null_value_code: str | None = Field(
-        None, nullable=True
-    )
+    add_on: str | bool
+    add_on_nf: str
 
-    control_type_code: str | None = Field(None, nullable=True)
-    control_type_null_value_code: str | None = Field(None, nullable=True)
+    control_type: str
+    control_type_nf: str
 
-    intervention_model_code: str | None = Field(None, nullable=True)
-    intervention_model_null_value_code: str | None = Field(None, nullable=True)
+    intv_model: str
+    intv_model_nf: str
 
-    is_trial_randomised: str | bool | None = Field(None, nullable=True)
-    is_trial_randomised_null_value_code: str | None = Field(None, nullable=True)
+    randomised: str | bool
+    randomised_nf: str
 
-    stratification_factor_null_value_code: str | None = Field(None, nullable=True)
+    strata: str
+    strata_nf: str
 
-    trial_blinding_schema_code: str | None = Field(None, nullable=True)
-    trial_blinding_schema_null_value_code: str | None = Field(None, nullable=True)
+    blinding: str
+    blinding_nf: str
 
-    planned_study_length: str | None = Field(None, nullable=True)
-    planned_study_length_null_value_code: str | None = Field(None, nullable=True)
+    planned_length: str
+    planned_length_nf: str
 
-    trial_intent_types_codes: list[SimpleListingCTModel] | None = Field(
-        None, nullable=True
-    )
-    trial_intent_types_null_value_code: str | None = Field(None, nullable=True)
+    study_intent: list[SimpleListingCTModel] | None = Field(None, nullable=True)
+    study_intent_nf: str
 
     @classmethod
     def from_study_intervention_vo(
@@ -510,73 +474,69 @@ class StudyAttributesListingModel(StudyInterventionJsonModel):
         if study_intervention_vo is None:
             return None
         return cls(
-            intervention_type_code=ct_term_uid_to_str(
+            intv_type=ct_term_uid_to_str(
                 ct_uid=study_intervention_vo.intervention_type_code,
                 find_term_by_uid=find_term_by_uid,
             ),
-            intervention_type_null_value_code=ct_term_uid_to_str(
+            intv_type_nf=ct_term_uid_to_str(
                 ct_uid=study_intervention_vo.intervention_type_null_value_code,
                 find_term_by_uid=find_term_by_uid,
             ),
-            add_on_to_existing_treatments=none_to_empty_str(
+            add_on=none_to_empty_str(
                 study_intervention_vo.add_on_to_existing_treatments
             ),
-            add_on_to_existing_treatments_null_value_code=ct_term_uid_to_str(
+            add_on_nf=ct_term_uid_to_str(
                 ct_uid=study_intervention_vo.add_on_to_existing_treatments_null_value_code,
                 find_term_by_uid=find_term_by_uid,
             ),
-            control_type_code=ct_term_uid_to_str(
+            control_type=ct_term_uid_to_str(
                 ct_uid=study_intervention_vo.control_type_code,
                 find_term_by_uid=find_term_by_uid,
             ),
-            control_type_null_value_code=ct_term_uid_to_str(
+            control_type_nf=ct_term_uid_to_str(
                 ct_uid=study_intervention_vo.control_type_null_value_code,
                 find_term_by_uid=find_term_by_uid,
             ),
-            intervention_model_code=ct_term_uid_to_str(
+            intv_model=ct_term_uid_to_str(
                 ct_uid=study_intervention_vo.intervention_model_code,
                 find_term_by_uid=find_term_by_uid,
             ),
-            intervention_model_null_value_code=ct_term_uid_to_str(
+            intv_model_nf=ct_term_uid_to_str(
                 ct_uid=study_intervention_vo.intervention_model_null_value_code,
                 find_term_by_uid=find_term_by_uid,
             ),
-            is_trial_randomised=none_to_empty_str(
-                study_intervention_vo.is_trial_randomised
-            ),
-            is_trial_randomised_null_value_code=ct_term_uid_to_str(
+            randomised=none_to_empty_str(study_intervention_vo.is_trial_randomised),
+            randomised_nf=ct_term_uid_to_str(
                 ct_uid=study_intervention_vo.is_trial_randomised_null_value_code,
                 find_term_by_uid=find_term_by_uid,
             ),
-            stratification_factor=none_to_empty_str(
-                study_intervention_vo.stratification_factor
-            ),
-            stratification_factor_null_value_code=ct_term_uid_to_str(
+            strata=none_to_empty_str(study_intervention_vo.stratification_factor),
+            strata_nf=ct_term_uid_to_str(
                 ct_uid=study_intervention_vo.stratification_factor_null_value_code,
                 find_term_by_uid=find_term_by_uid,
             ),
-            trial_blinding_schema_code=ct_term_uid_to_str(
+            blinding=ct_term_uid_to_str(
                 ct_uid=study_intervention_vo.trial_blinding_schema_code,
                 find_term_by_uid=find_term_by_uid,
             ),
-            trial_blinding_schema_null_value_code=ct_term_uid_to_str(
+            blinding_nf=ct_term_uid_to_str(
                 ct_uid=study_intervention_vo.trial_blinding_schema_null_value_code,
                 find_term_by_uid=find_term_by_uid,
             ),
-            planned_study_length=none_to_empty_str(
+            planned_length=none_to_empty_str(
                 study_intervention_vo.planned_study_length
             ),
-            planned_study_length_null_value_code=ct_term_uid_to_str(
+            planned_length_nf=ct_term_uid_to_str(
                 ct_uid=study_intervention_vo.planned_study_length_null_value_code,
                 find_term_by_uid=find_term_by_uid,
             ),
-            trial_intent_types_codes=[
+            study_intent=[
                 SimpleListingCTModel.from_ct_code(
                     ct_uid=trial_intent_type_code, find_term_by_uid=find_term_by_uid
                 )
                 for trial_intent_type_code in study_intervention_vo.trial_intent_types_codes
             ],
-            trial_intent_types_null_value_code=ct_term_uid_to_str(
+            study_intent_nf=ct_term_uid_to_str(
                 ct_uid=study_intervention_vo.trial_intent_type_null_value_code,
                 find_term_by_uid=find_term_by_uid,
             ),
@@ -588,8 +548,8 @@ class StudySelctionListingModel(BaseModel):
     name: str
     short_name: str
     code: str | None = Field(None, nullable=True)
-    number_of_subjects: int | None = Field(None, nullable=True)
-    description: str | None = Field(None, nullable=True)
+    no_subject: int | None = Field(None, nullable=True)
+    desc: str | None = Field(None, nullable=True)
 
 
 class StudyBranchArmListingModel(StudySelctionListingModel):
@@ -597,23 +557,28 @@ class StudyBranchArmListingModel(StudySelctionListingModel):
         title = "Study Branch Arm model for listing"
         description = "Study Branch Arm model for listing."
 
-    randomization_group: str | None
+    order: str
+    arm_uid: str
+    rand_grp: str | None
 
     @classmethod
     def from_study_selection_branch_arm_vo(
         cls,
         study_selection_branch_arm_vo: StudySelectionBranchArmVO,
+        order: int,
     ) -> Self | None:
         return cls(
             uid=study_selection_branch_arm_vo.study_selection_uid,
+            arm_uid=study_selection_branch_arm_vo.arm_root_uid,
+            order=order,
             name=none_to_empty_str(study_selection_branch_arm_vo.name),
             short_name=none_to_empty_str(study_selection_branch_arm_vo.short_name),
-            randomization_group=none_to_empty_str(
+            rand_grp=none_to_empty_str(
                 study_selection_branch_arm_vo.randomization_group
             ),
             code=none_to_empty_str(study_selection_branch_arm_vo.code),
-            number_of_subjects=study_selection_branch_arm_vo.number_of_subjects,
-            description=none_to_empty_str(study_selection_branch_arm_vo.description),
+            no_subject=study_selection_branch_arm_vo.number_of_subjects,
+            desc=none_to_empty_str(study_selection_branch_arm_vo.description),
         )
 
     @staticmethod
@@ -622,9 +587,15 @@ class StudyBranchArmListingModel(StudySelctionListingModel):
     ) -> list["StudyBranchArmListingModel"]:
         branch_arms = []
         for selection in study_selection_branch_arm_ar.study_branch_arms_selection:
+            selection_and_order = (
+                study_selection_branch_arm_ar.get_specific_object_selection(
+                    selection.study_selection_uid
+                )
+            )
             branch_arms.append(
                 StudyBranchArmListingModel.from_study_selection_branch_arm_vo(
-                    study_selection_branch_arm_vo=selection,
+                    study_selection_branch_arm_vo=selection_and_order[0],
+                    order=selection_and_order[1],
                 )
             )
         return branch_arms
@@ -635,56 +606,47 @@ class StudyArmListingModel(StudySelctionListingModel):
         title = "Study Arm model for listing"
         description = "Study Arm model for listing."
 
-    uid: str
-    randomization_group: str | None
-    arm_type: str
-    connected_branches: list[StudyBranchArmListingModel] | None = None
+    order: str
+    rand_grp: str | None
+    type: str
 
     @classmethod
     def from_study_selection_arm_vo(
         cls,
-        study_uid: str,
         study_selection_arm_vo: StudySelectionArmVO,
+        order: int,
         find_simple_term_arm_type_by_term_uid: Callable,
-        find_multiple_connected_branch_arm: Callable,
     ) -> Self | None:
         return cls(
             uid=study_selection_arm_vo.study_selection_uid,
-            arm_type=ct_term_uid_to_str(
+            type=ct_term_uid_to_str(
                 ct_uid=study_selection_arm_vo.arm_type_uid,
                 find_term_by_uid=find_simple_term_arm_type_by_term_uid,
             ),
+            order=order,
             name=none_to_empty_str(study_selection_arm_vo.name),
             short_name=none_to_empty_str(study_selection_arm_vo.short_name),
-            randomization_group=none_to_empty_str(
-                study_selection_arm_vo.randomization_group
-            ),
+            rand_grp=none_to_empty_str(study_selection_arm_vo.randomization_group),
             code=none_to_empty_str(study_selection_arm_vo.code),
-            number_of_subjects=study_selection_arm_vo.number_of_subjects,
-            description=none_to_empty_str(study_selection_arm_vo.description),
-            connected_branches=StudyBranchArmListingModel.from_study_selection_branch_arm_ar(
-                study_selection_branch_arm_ar=find_multiple_connected_branch_arm(
-                    study_uid=study_uid,
-                    study_arm_uid=study_selection_arm_vo.study_selection_uid,
-                ),
-            ),
+            no_subject=study_selection_arm_vo.number_of_subjects,
+            desc=none_to_empty_str(study_selection_arm_vo.description),
         )
 
     @staticmethod
     def from_study_selection_arm_ar(
-        study_uid: str,
         study_selection_arm_ar: StudySelectionArmAR,
         find_simple_term_arm_type_by_term_uid: Callable,
-        find_multiple_connected_branch_arm: Callable,
     ) -> list["StudyArmListingModel"]:
         arms = []
         for selection in study_selection_arm_ar.study_arms_selection:
+            selection_and_order = study_selection_arm_ar.get_specific_object_selection(
+                selection.study_selection_uid
+            )
             arms.append(
                 StudyArmListingModel.from_study_selection_arm_vo(
-                    study_uid=study_uid,
-                    study_selection_arm_vo=selection,
+                    study_selection_arm_vo=selection_and_order[0],
+                    order=selection_and_order[1],
                     find_simple_term_arm_type_by_term_uid=find_simple_term_arm_type_by_term_uid,
-                    find_multiple_connected_branch_arm=find_multiple_connected_branch_arm,
                 )
             )
         return arms
@@ -696,7 +658,7 @@ class StudyCohortListingModel(StudySelctionListingModel):
         description = "Study attributes model for listing"
 
     arm_uid: list[str] | None = Field(None, nullable=True)
-    branch_arm_uid: list[str] | None = Field(None, nullable=True)
+    branch_uid: list[str] | None = Field(None, nullable=True)
 
     @classmethod
     def from_study_selection_cohort_vo(
@@ -708,10 +670,10 @@ class StudyCohortListingModel(StudySelctionListingModel):
             name=none_to_empty_str(study_selection_cohort_vo.name),
             short_name=none_to_empty_str(study_selection_cohort_vo.short_name),
             code=none_to_empty_str(study_selection_cohort_vo.code),
-            number_of_subjects=study_selection_cohort_vo.number_of_subjects,
-            description=none_to_empty_str(study_selection_cohort_vo.description),
+            no_subject=study_selection_cohort_vo.number_of_subjects,
+            desc=none_to_empty_str(study_selection_cohort_vo.description),
             arm_uid=study_selection_cohort_vo.arm_root_uids,
-            branch_arm_uid=study_selection_cohort_vo.branch_arm_root_uids,
+            branch_uid=study_selection_cohort_vo.branch_arm_root_uids,
         )
 
     @staticmethod
@@ -730,6 +692,7 @@ class StudyCohortListingModel(StudySelctionListingModel):
 
 class StudyEpochListingModel(BaseModel):
     uid: str
+    order: int
     name: str
     type: str
     subtype: str
@@ -745,6 +708,7 @@ class StudyEpochListingModel(BaseModel):
     ) -> Self | None:
         return cls(
             uid=study_epoch.uid,
+            order=study_epoch.order,
             name=none_to_empty_str(study_epoch.epoch_name),
             type=ct_term_uid_to_str(
                 study_epoch.epoch_type, find_term_by_uid=find_term_by_uid
@@ -775,23 +739,26 @@ class StudyEpochListingModel(BaseModel):
 
 class StudyElementListingModel(BaseModel):
     uid: str
+    order: int
     name: str
     short_name: str
     type: str
     subtype: str
     start_rule: str | None = Field(None, nullable=True)
     end_rule: str | None = Field(None, nullable=True)
-    planned_duration: str | None = Field(None, nullable=True)
-    description: str | None = Field(None, nullable=True)
+    dur: str | None = Field(None, nullable=True)
+    desc: str | None = Field(None, nullable=True)
 
     @classmethod
     def from_study_element_vo(
         cls,
         study_element_vo: StudySelectionElementVO,
+        order: int,
         find_term_by_uid: Callable,
     ) -> Self | None:
         return cls(
             uid=study_element_vo.study_selection_uid,
+            order=order,
             name=none_to_empty_str(study_element_vo.name),
             short_name=none_to_empty_str(study_element_vo.short_name),
             type=ct_term_uid_to_str(
@@ -802,8 +769,8 @@ class StudyElementListingModel(BaseModel):
             ),
             start_rule=none_to_empty_str(study_element_vo.start_rule),
             end_rule=none_to_empty_str(study_element_vo.end_rule),
-            planned_duration=none_to_empty_str(study_element_vo.planned_duration),
-            description=none_to_empty_str(study_element_vo.description),
+            dur=none_to_empty_str(study_element_vo.planned_duration),
+            desc=none_to_empty_str(study_element_vo.description),
         )
 
     @staticmethod
@@ -812,10 +779,14 @@ class StudyElementListingModel(BaseModel):
         find_term_by_uid: Callable,
     ) -> list["StudyEpochListingModel"]:
         elements = []
-        for element in study_element_ar.study_elements_selection:
+        for selection in study_element_ar.study_elements_selection:
+            selection_and_order = study_element_ar.get_specific_object_selection(
+                selection.study_selection_uid
+            )
             elements.append(
                 StudyElementListingModel.from_study_element_vo(
-                    study_element_vo=element,
+                    study_element_vo=selection_and_order[0],
+                    order=selection_and_order[1],
                     find_term_by_uid=find_term_by_uid,
                 )
             )
@@ -824,7 +795,7 @@ class StudyElementListingModel(BaseModel):
 
 class StudyDesignMatrixListingModel(BaseModel):
     arm_uid: str | None
-    branch_arm_uid: str | None
+    branch_uid: str | None
     epoch_uid: str
     element_uid: str | None
 
@@ -859,15 +830,15 @@ class StudyVisitListingModel(BaseModel):
     epoch_name: str
     visit_type: str
     contact_model: str
-    unique_visit_number: str
+    visit_no: str
     name: str
     short_name: str
-    study_day_number: int | None = Field(None, nullable=True)
-    visit_window_min: int | None = Field(None, nullable=True)
-    visit_window_max: int | None = Field(None, nullable=True)
+    study_day: int | None = Field(None, nullable=True)
+    window_min: int | None = Field(None, nullable=True)
+    window_max: int | None = Field(None, nullable=True)
     window_unit: str | None = Field(None, nullable=True)
-    description: str | None = Field(None, nullable=True)
-    epoch_allocation: str | None = Field(None, nullable=True)
+    desc: str | None = Field(None, nullable=True)
+    epoch_alloc: str | None = Field(None, nullable=True)
     start_rule: str | None = Field(None, nullable=True)
     end_rule: str | None = Field(None, nullable=True)
 
@@ -881,19 +852,19 @@ class StudyVisitListingModel(BaseModel):
             epoch_name=study_visit_vo.epoch.epoch.value,
             visit_type=study_visit_vo.visit_type.value,
             contact_model=study_visit_vo.visit_contact_mode.value,
-            unique_visit_number=study_visit_vo.unique_visit_number,
+            visit_no=study_visit_vo.unique_visit_number,
             name=study_visit_vo.derive_visit_name(),
             short_name=study_visit_vo.visit_short_name,
-            study_day_number=study_visit_vo.study_day_number
+            study_day=study_visit_vo.study_day_number
             if study_visit_vo.study_day
             else None,
-            visit_window_min=study_visit_vo.visit_window_min,
-            visit_window_max=study_visit_vo.visit_window_max,
+            window_min=study_visit_vo.visit_window_min,
+            window_max=study_visit_vo.visit_window_max,
             window_unit=study_visit_vo.window_unit_object.name
             if study_visit_vo.window_unit_object
             else None,
-            description=study_visit_vo.description,
-            epoch_allocation=study_visit_vo.epoch_allocation.value
+            desc=study_visit_vo.description,
+            epoch_alloc=study_visit_vo.epoch_allocation.value
             if study_visit_vo.epoch_allocation
             else None,
             start_rule=study_visit_vo.start_rule,
@@ -1002,11 +973,11 @@ class StudyObjectiveListingModel(BaseModel):
 class StudyEndpointListingModel(BaseModel):
     uid: str
     type: str
-    sub_type: str | None
+    subtype: str | None
     text: str | None
-    connected_objective: str | None
+    objective_uid: str | None
     timeframe: str | None
-    endpoint_units: str | EndpointUnits | None
+    endpoint_unit: str | EndpointUnits | None
 
     @classmethod
     def from_study_endpoint_vo(
@@ -1022,20 +993,22 @@ class StudyEndpointListingModel(BaseModel):
                 ct_uid=study_endpoint_vo.endpoint_level_uid,
                 find_term_by_uid=find_term_by_uid,
             ),
+            subtype=ct_term_uid_to_str(
+                ct_uid=study_endpoint_vo.endpoint_sublevel_uid,
+                find_term_by_uid=find_term_by_uid,
+            ),
             text=none_to_empty_str(
                 Endpoint.from_endpoint_ar(
                     find_endpoint_by_uid(uid=study_endpoint_vo.endpoint_uid)
                 ).name_plain
             ),
-            connected_objective=none_to_empty_str(
-                study_endpoint_vo.study_objective_uid
-            ),
+            objective_uid=none_to_empty_str(study_endpoint_vo.study_objective_uid),
             timeframe=Timeframe.from_timeframe_ar(
                 find_timeframe_by_uid(uid=study_endpoint_vo.timeframe_uid)
             ).name_plain
             if study_endpoint_vo.timeframe_uid
             else "",
-            endpoint_units=EndpointUnits(
+            endpoint_unit=EndpointUnits(
                 units=tuple(
                     EndpointUnitItem(**u) for u in study_endpoint_vo.endpoint_units
                 ),
@@ -1068,33 +1041,39 @@ class StudyMetadataListingModel(BaseModel):
         title = "Study Metadata model for listing"
         description = "Study Metadata model for listing."
 
-    study_title: StudyDescriptionJsonModel | None = Field(None, nullable=True)
-    registry_identifiers: RegistryIdentifiersListingModel | None = Field(
-        None, nullable=True
-    )
+    api_ver: str
+    study_id: str
+    study_ver: str
+    specified_dt: str | None = Field(None, nullable=True)
+    request_dt: datetime
+    title: str
+    reg_id: RegistryIdentifiersListingModel | None = Field(None, nullable=True)
     study_type: StudyTypeListingModel | None = Field(None, nullable=True)
     study_attributes: StudyAttributesListingModel | None = Field(None, nullable=True)
     study_population: StudyPopulationListingModel | None = Field(None, nullable=True)
-    study_arms: list[StudyArmListingModel] | None = Field(None, nullable=True)
-    study_cohorts: list[StudyCohortListingModel] | None = Field(None, nullable=True)
-    study_epochs: list[StudyEpochListingModel] | None = Field(None, nullable=True)
-    study_elements: list[StudyElementListingModel] | None = Field(None, nullable=True)
-    study_design_matrix: list[StudyDesignMatrixListingModel] | None = Field(
+    arms: list[StudyArmListingModel] | None = Field(None, nullable=True)
+    branches: list[StudyBranchArmListingModel] | None = Field(None, nullable=True)
+    cohorts: list[StudyCohortListingModel] | None = Field(None, nullable=True)
+    epochs: list[StudyEpochListingModel] | None = Field(None, nullable=True)
+    elements: list[StudyElementListingModel] | None = Field(None, nullable=True)
+    design_matrix: list[StudyDesignMatrixListingModel] | None = Field(
         None, nullable=True
     )
-    study_visits: list[StudyVisitListingModel] | None = Field(None, nullable=True)
-    study_criterias: list[StudyCriteriaListingModel] | None = Field(None, nullable=True)
-    study_objectives: list[StudyObjectiveListingModel] | None = Field(
-        None, nullable=True
-    )
-    study_endpoints: list[StudyEndpointListingModel] | None = Field(None, nullable=True)
+    visits: list[StudyVisitListingModel] | None = Field(None, nullable=True)
+    criteria: list[StudyCriteriaListingModel] | None = Field(None, nullable=True)
+    objectives: list[StudyObjectiveListingModel] | None = Field(None, nullable=True)
+    endpoints: list[StudyEndpointListingModel] | None = Field(None, nullable=True)
 
     @classmethod
     def from_study_metadata_vo(
         cls,
-        study_uid: str,
+        api_ver: str,
+        study_id: str,
+        study_ver: str,
+        specified_dt: str,
         study_metadata_vo: StudyMetadataVO,
         study_selection_arm_ar: StudySelectionArmAR,
+        study_selection_branch_arm_ar: StudySelectionBranchArmAR,
         study_selection_cohort_ar: StudySelectionCohortAR,
         study_epochs: list[StudyEpoch],
         study_element_ar: StudySelectionElementAR,
@@ -1105,7 +1084,6 @@ class StudyMetadataListingModel(BaseModel):
         study_endpoint_ar: StudySelectionEndpointsAR,
         find_term_by_uid: Callable[[str], CTTermAttributesAR | None],
         find_dictionary_term_by_uid: Callable[[str], DictionaryTermAR | None],
-        find_multiple_connected_branch_arm: Callable,
         find_criteria_by_uid: Callable[[str], Criteria | None],
         find_objective_by_uid: Callable[[str], Objective | None],
         find_endpoint_by_uid: Callable[[str], Endpoint | None],
@@ -1114,12 +1092,16 @@ class StudyMetadataListingModel(BaseModel):
         if study_metadata_vo is None:
             return None
         return cls(
-            study_title=StudyDescriptionJsonModel.from_study_description_vo(
+            api_ver=api_ver,
+            study_id=study_id,
+            study_ver=study_ver,
+            specified_dt=specified_dt,
+            request_dt=datetime.now(timezone.utc),
+            title=StudyDescriptionJsonModel.from_study_description_vo(
                 study_description_vo=study_metadata_vo.study_description
-            ),
-            registry_identifiers=RegistryIdentifiersListingModel.from_study_registry_identifiers_vo(
+            ).study_title,
+            reg_id=RegistryIdentifiersListingModel.from_study_registry_identifiers_vo(
                 registry_identifiers_vo=study_metadata_vo.id_metadata.registry_identifiers,
-                find_term_by_uid=find_term_by_uid,
             ),
             study_type=StudyTypeListingModel.from_high_level_study_design_vo(
                 high_level_study_design_vo=study_metadata_vo.high_level_study_design,
@@ -1134,40 +1116,41 @@ class StudyMetadataListingModel(BaseModel):
                 find_term_by_uid=find_term_by_uid,
                 find_dictionary_term_by_uid=find_dictionary_term_by_uid,
             ),
-            study_arms=StudyArmListingModel.from_study_selection_arm_ar(
-                study_uid=study_uid,
+            arms=StudyArmListingModel.from_study_selection_arm_ar(
                 study_selection_arm_ar=study_selection_arm_ar,
                 find_simple_term_arm_type_by_term_uid=find_term_by_uid,
-                find_multiple_connected_branch_arm=find_multiple_connected_branch_arm,
             ),
-            study_cohorts=StudyCohortListingModel.from_study_selection_cohort_ar(
+            branches=StudyBranchArmListingModel.from_study_selection_branch_arm_ar(
+                study_selection_branch_arm_ar=study_selection_branch_arm_ar,
+            ),
+            cohorts=StudyCohortListingModel.from_study_selection_cohort_ar(
                 study_selection_cohort_ar=study_selection_cohort_ar,
             ),
-            study_epochs=StudyEpochListingModel.from_all_study_epochs(
+            epochs=StudyEpochListingModel.from_all_study_epochs(
                 all_study_epochs=study_epochs,
                 find_term_by_uid=find_term_by_uid,
             ),
-            study_elements=StudyElementListingModel.from_study_element_ar(
+            elements=StudyElementListingModel.from_study_element_ar(
                 study_element_ar=study_element_ar,
                 find_term_by_uid=find_term_by_uid,
             ),
-            study_design_matrix=StudyDesignMatrixListingModel.from_all_study_design_cells(
+            design_matrix=StudyDesignMatrixListingModel.from_all_study_design_cells(
                 all_design_cells=study_design_cells,
             ),
-            study_visits=StudyVisitListingModel.from_all_study_visits(
+            visits=StudyVisitListingModel.from_all_study_visits(
                 all_study_visits=study_visits,
             ),
-            study_criterias=StudyCriteriaListingModel.from_study_criteria_ar(
+            criteria=StudyCriteriaListingModel.from_study_criteria_ar(
                 study_criteria_ar=study_criteria_ar,
                 find_term_by_uid=find_term_by_uid,
                 find_criteria_by_uid=find_criteria_by_uid,
             ),
-            study_objectives=StudyObjectiveListingModel.from_study_objective_ar(
+            objectives=StudyObjectiveListingModel.from_study_objective_ar(
                 study_objective_ar=study_objective_ar,
                 find_term_by_uid=find_term_by_uid,
                 find_objective_by_uid=find_objective_by_uid,
             ),
-            study_endpoints=StudyEndpointListingModel.from_study_endpoint_ar(
+            endpoints=StudyEndpointListingModel.from_study_endpoint_ar(
                 study_endpoint_ar=study_endpoint_ar,
                 find_term_by_uid=find_term_by_uid,
                 find_endpoint_by_uid=find_endpoint_by_uid,

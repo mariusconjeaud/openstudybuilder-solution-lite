@@ -2,16 +2,6 @@ import re
 from dataclasses import dataclass
 from typing import Callable, Self
 
-from clinical_mdr_api.domains.concepts.activities.activity import ActivityAR
-from clinical_mdr_api.domains.concepts.activities.activity_group import ActivityGroupAR
-from clinical_mdr_api.domains.concepts.activities.activity_sub_group import (
-    ActivitySubGroupAR,
-)
-from clinical_mdr_api.domains.controlled_terminologies.ct_term_attributes import (
-    CTTermAttributesAR,
-)
-from clinical_mdr_api.domains.controlled_terminologies.ct_term_name import CTTermNameAR
-from clinical_mdr_api.domains.dictionaries.dictionary_term import DictionaryTermAR
 from clinical_mdr_api.domains.syntax_templates.template import (
     InstantiationCountsVO,
     TemplateAggregateRootBase,
@@ -21,6 +11,11 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemMetadataVO,
     LibraryVO,
 )
+from clinical_mdr_api.models.controlled_terminologies.ct_term import (
+    SimpleCTTermNameAndAttributes,
+    SimpleTermModel,
+)
+from clinical_mdr_api.models.generic_models import SimpleNameModel
 
 
 @dataclass
@@ -30,34 +25,34 @@ class FootnoteTemplateAR(TemplateAggregateRootBase):
     behavior. Inherits generic template versioning behaviors
     """
 
-    _type: tuple[CTTermNameAR, CTTermAttributesAR] = ()
+    _type: SimpleCTTermNameAndAttributes | None = None
 
-    _indications: list[DictionaryTermAR] | None = None
+    _indications: list[SimpleTermModel] | None = None
 
-    _activities: list[ActivityAR] | None = None
+    _activities: list[SimpleNameModel] | None = None
 
-    _activity_groups: list[ActivityGroupAR] | None = None
+    _activity_groups: list[SimpleNameModel] | None = None
 
-    _activity_subgroups: list[ActivitySubGroupAR] | None = None
+    _activity_subgroups: list[SimpleNameModel] | None = None
 
     @property
-    def type(self) -> tuple[CTTermNameAR, CTTermAttributesAR] | None:
+    def type(self) -> SimpleCTTermNameAndAttributes | None:
         return self._type
 
     @property
-    def indications(self) -> list[DictionaryTermAR]:
+    def indications(self) -> list[SimpleTermModel]:
         return self._indications
 
     @property
-    def activities(self) -> list[ActivityAR]:
+    def activities(self) -> list[SimpleNameModel]:
         return self._activities
 
     @property
-    def activity_groups(self) -> list[ActivityGroupAR]:
+    def activity_groups(self) -> list[SimpleNameModel]:
         return self._activity_groups
 
     @property
-    def activity_subgroups(self) -> list[ActivitySubGroupAR]:
+    def activity_subgroups(self) -> list[SimpleNameModel]:
         return self._activity_subgroups
 
     @classmethod
@@ -70,11 +65,11 @@ class FootnoteTemplateAR(TemplateAggregateRootBase):
         item_metadata: LibraryItemMetadataVO,
         study_count: int = 0,
         counts: InstantiationCountsVO | None = None,
-        footnote_type: tuple[CTTermNameAR, CTTermAttributesAR] | None = None,
-        indications: list[DictionaryTermAR] | None = None,
-        activities: list[ActivityAR] | None = None,
-        activity_groups: list[ActivityGroupAR] | None = None,
-        activity_subgroups: list[ActivitySubGroupAR] | None = None,
+        footnote_type: SimpleCTTermNameAndAttributes | None = None,
+        indications: list[SimpleTermModel] | None = None,
+        activities: list[SimpleNameModel] | None = None,
+        activity_groups: list[SimpleNameModel] | None = None,
+        activity_subgroups: list[SimpleNameModel] | None = None,
     ) -> Self:
         return cls(
             _uid=uid,
@@ -102,16 +97,16 @@ class FootnoteTemplateAR(TemplateAggregateRootBase):
         next_available_sequence_id_callback: Callable[
             [str, str | None, str | None, LibraryVO | None], str | None
         ] = (lambda uid, prefix, type_uid, library: None),
-        footnote_type: tuple[CTTermNameAR, CTTermAttributesAR] | None = None,
-        indications: list[DictionaryTermAR] | None = None,
-        activities: list[ActivityAR] | None = None,
-        activity_groups: list[ActivityGroupAR] | None = None,
-        activity_subgroups: list[ActivitySubGroupAR] | None = None,
+        footnote_type: SimpleCTTermNameAndAttributes | None = None,
+        indications: list[SimpleTermModel] | None = None,
+        activities: list[SimpleNameModel] | None = None,
+        activity_groups: list[SimpleNameModel] | None = None,
+        activity_subgroups: list[SimpleNameModel] | None = None,
     ) -> Self:
         footnote_type_name = re.sub(
             "footnote",
             "",
-            footnote_type[0].name,
+            footnote_type.name.sponsor_preferred_name,
             flags=re.IGNORECASE,
         )
 
@@ -125,7 +120,7 @@ class FootnoteTemplateAR(TemplateAggregateRootBase):
             uid=ar._uid,
             prefix="F"
             + "".join([char for char in footnote_type_name if char.isupper()]),
-            type_uid=footnote_type[0].uid,
+            type_uid=footnote_type.term_uid,
             library=library,
         )
         ar._type = footnote_type

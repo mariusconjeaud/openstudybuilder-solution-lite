@@ -14,11 +14,11 @@
     v-on="$listeners"
     :filters-modify-function="updateHeaderFilters"
     >
-    <template v-slot:item.name="{ item }">
-      <n-n-parameter-highlighter :name="item.name" :show-prefix-and-postfix="false" />
-    </template>
     <template v-slot:[`item.${type}_template.name`]="{ item }">
       <n-n-parameter-highlighter :name="item[`${type}_template`].name" default-color="orange" />
+    </template>
+    <template v-slot:item.name="{ item }">
+      <n-n-parameter-highlighter :name="item.name" :show-prefix-and-postfix="false" />
     </template>
     <template v-slot:item.start_date="{ item }">
       {{ item.start_date | date }}

@@ -1,8 +1,21 @@
 <template>
-<div class="template-readonly"
-     v-html="getFormatedParts()"
-     >
-</div>
+<v-tooltip top content-class="tooltip" v-if="tooltip && name.length > tooltipLength">
+  <template v-slot:activator="{ on }">
+    <span v-on="on">
+      <div class="template-readonly"
+          v-html="getShortVersion()"
+          />
+    </span>
+  </template>
+  <span>
+    <div class="template-readonly"
+        v-html="getFormatedParts()"
+        />
+  </span>
+</v-tooltip>
+<div v-else class="template-readonly"
+        v-html="getFormatedParts()"
+        />
 </template>
 
 <script>
@@ -37,6 +50,14 @@ export default {
     defaultColor: {
       type: String,
       default: 'green'
+    },
+    tooltip: {
+      type: Boolean,
+      default: true
+    },
+    tooltipLength: {
+      type: Number,
+      default: 200
     }
   },
   data: () => ({
@@ -107,6 +128,16 @@ export default {
         }
       })
       return result
+    },
+    getShortVersion () {
+      const long = this.getFormatedParts()
+      let short = ''
+      let length = 0
+      while (short.replace(/<\/?[^>]+(>|$)/g, '').length <= this.tooltipLength) {
+        short += long[length]
+        length++
+      }
+      return short + '<l>...'
     }
   }
 }
@@ -141,5 +172,11 @@ export default {
 .param-dropdown {
   width: 160px;
   display: inline-block;
+}
+.tooltip {
+  opacity: 0.95 !important;
+  background-color: lightgray !important;
+  color: black;
+  border: 1px solid #737373;
 }
 </style>

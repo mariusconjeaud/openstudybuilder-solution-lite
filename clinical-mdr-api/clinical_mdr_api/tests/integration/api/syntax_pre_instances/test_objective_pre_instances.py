@@ -89,21 +89,6 @@ def test_data():
     )
     ct_term_category = TestUtils.create_ct_term()
 
-    parameter_terms = [
-        MultiTemplateParameterTerm(
-            position=1,
-            conjunction="",
-            terms=[
-                IndexedTemplateParameterTerm(
-                    index=1,
-                    name=text_value_1.name,
-                    uid=text_value_1.uid,
-                    type="TextValue",
-                )
-            ],
-        )
-    ]
-
     def generate_parameter_terms():
         text_value = TestUtils.create_text_value()
         return [
@@ -126,7 +111,6 @@ def test_data():
         guidance_text="Default guidance text",
         study_uid=None,
         library_name="Sponsor",
-        default_parameter_terms=parameter_terms,
         indication_uids=[dictionary_term_indication.term_uid],
         category_uids=[ct_term_category.term_uid],
     )
@@ -138,7 +122,20 @@ def test_data():
             template_uid=objective_template.uid,
             library_name="Sponsor",
             is_confirmatory_testing=True,
-            parameter_terms=parameter_terms,
+            parameter_terms=[
+                MultiTemplateParameterTerm(
+                    position=1,
+                    conjunction="",
+                    terms=[
+                        IndexedTemplateParameterTerm(
+                            index=1,
+                            name=text_value_1.name,
+                            uid=text_value_1.uid,
+                            type="TextValue",
+                        )
+                    ],
+                )
+            ],
             indication_uids=[dictionary_term_indication.term_uid],
             category_uids=[ct_term_category.term_uid],
         )
@@ -283,14 +280,24 @@ def test_get_objective(api_client):
     )
     assert res["parameter_terms"][0]["terms"][0]["uid"] == text_value_1.uid
     assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
-    assert (
-        res["indications"][0]["dictionary_id"]
-        == dictionary_term_indication.dictionary_id
-    )
     assert res["indications"][0]["name"] == dictionary_term_indication.name
     assert res["categories"][0]["term_uid"] == ct_term_category.term_uid
-    assert res["categories"][0]["catalogue_name"] == ct_term_category.catalogue_name
-    assert res["categories"][0]["codelist_uid"] == ct_term_category.codelist_uid
+    assert (
+        res["categories"][0]["name"]["sponsor_preferred_name"]
+        == ct_term_category.sponsor_preferred_name
+    )
+    assert (
+        res["categories"][0]["name"]["sponsor_preferred_name_sentence_case"]
+        == ct_term_category.sponsor_preferred_name_sentence_case
+    )
+    assert (
+        res["categories"][0]["attributes"]["code_submission_value"]
+        == ct_term_category.code_submission_value
+    )
+    assert (
+        res["categories"][0]["attributes"]["nci_preferred_name"]
+        == ct_term_category.nci_preferred_name
+    )
     assert res["version"] == "1.0"
     assert res["status"] == "Final"
 
@@ -396,14 +403,24 @@ def test_get_versions_of_objective_pre_instance(api_client):
     assert res[0]["template_uid"] == objective_template.uid
     assert res[0]["template_name"] == objective_template.name
     assert res[0]["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
-    assert (
-        res[0]["indications"][0]["dictionary_id"]
-        == dictionary_term_indication.dictionary_id
-    )
     assert res[0]["indications"][0]["name"] == dictionary_term_indication.name
     assert res[0]["categories"][0]["term_uid"] == ct_term_category.term_uid
-    assert res[0]["categories"][0]["catalogue_name"] == ct_term_category.catalogue_name
-    assert res[0]["categories"][0]["codelist_uid"] == ct_term_category.codelist_uid
+    assert (
+        res[0]["categories"][0]["name"]["sponsor_preferred_name"]
+        == ct_term_category.sponsor_preferred_name
+    )
+    assert (
+        res[0]["categories"][0]["name"]["sponsor_preferred_name_sentence_case"]
+        == ct_term_category.sponsor_preferred_name_sentence_case
+    )
+    assert (
+        res[0]["categories"][0]["attributes"]["code_submission_value"]
+        == ct_term_category.code_submission_value
+    )
+    assert (
+        res[0]["categories"][0]["attributes"]["nci_preferred_name"]
+        == ct_term_category.nci_preferred_name
+    )
     assert res[0]["version"] == "1.0"
     assert res[0]["status"] == "Final"
     assert res[0]["possible_actions"] == ["inactivate", "new_version"]
@@ -412,14 +429,24 @@ def test_get_versions_of_objective_pre_instance(api_client):
     assert res[0]["template_uid"] == objective_template.uid
     assert res[0]["template_name"] == objective_template.name
     assert res[1]["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
-    assert (
-        res[1]["indications"][0]["dictionary_id"]
-        == dictionary_term_indication.dictionary_id
-    )
     assert res[1]["indications"][0]["name"] == dictionary_term_indication.name
     assert res[1]["categories"][0]["term_uid"] == ct_term_category.term_uid
-    assert res[1]["categories"][0]["catalogue_name"] == ct_term_category.catalogue_name
-    assert res[1]["categories"][0]["codelist_uid"] == ct_term_category.codelist_uid
+    assert (
+        res[1]["categories"][0]["name"]["sponsor_preferred_name"]
+        == ct_term_category.sponsor_preferred_name
+    )
+    assert (
+        res[1]["categories"][0]["name"]["sponsor_preferred_name_sentence_case"]
+        == ct_term_category.sponsor_preferred_name_sentence_case
+    )
+    assert (
+        res[1]["categories"][0]["attributes"]["code_submission_value"]
+        == ct_term_category.code_submission_value
+    )
+    assert (
+        res[1]["categories"][0]["attributes"]["nci_preferred_name"]
+        == ct_term_category.nci_preferred_name
+    )
     assert res[1]["version"] == "0.1"
     assert res[1]["status"] == "Draft"
     assert res[1]["possible_actions"] == ["approve", "delete", "edit"]
@@ -485,14 +512,24 @@ def test_create_new_version_of_objective_pre_instance(api_client):
     assert res["template_uid"] == objective_template.uid
     assert res["template_name"] == objective_template.name
     assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
-    assert (
-        res["indications"][0]["dictionary_id"]
-        == dictionary_term_indication.dictionary_id
-    )
     assert res["indications"][0]["name"] == dictionary_term_indication.name
     assert res["categories"][0]["term_uid"] == ct_term_category.term_uid
-    assert res["categories"][0]["catalogue_name"] == ct_term_category.catalogue_name
-    assert res["categories"][0]["codelist_uid"] == ct_term_category.codelist_uid
+    assert (
+        res["categories"][0]["name"]["sponsor_preferred_name"]
+        == ct_term_category.sponsor_preferred_name
+    )
+    assert (
+        res["categories"][0]["name"]["sponsor_preferred_name_sentence_case"]
+        == ct_term_category.sponsor_preferred_name_sentence_case
+    )
+    assert (
+        res["categories"][0]["attributes"]["code_submission_value"]
+        == ct_term_category.code_submission_value
+    )
+    assert (
+        res["categories"][0]["attributes"]["nci_preferred_name"]
+        == ct_term_category.nci_preferred_name
+    )
     assert res["version"] == "1.1"
     assert res["status"] == "Draft"
 
@@ -543,14 +580,24 @@ def test_update_objective_pre_instance(api_client):
     )
     assert res["parameter_terms"][0]["terms"][1]["uid"] == text_value_2.uid
     assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
-    assert (
-        res["indications"][0]["dictionary_id"]
-        == dictionary_term_indication.dictionary_id
-    )
     assert res["indications"][0]["name"] == dictionary_term_indication.name
     assert res["categories"][0]["term_uid"] == ct_term_category.term_uid
-    assert res["categories"][0]["catalogue_name"] == ct_term_category.catalogue_name
-    assert res["categories"][0]["codelist_uid"] == ct_term_category.codelist_uid
+    assert (
+        res["categories"][0]["name"]["sponsor_preferred_name"]
+        == ct_term_category.sponsor_preferred_name
+    )
+    assert (
+        res["categories"][0]["name"]["sponsor_preferred_name_sentence_case"]
+        == ct_term_category.sponsor_preferred_name_sentence_case
+    )
+    assert (
+        res["categories"][0]["attributes"]["code_submission_value"]
+        == ct_term_category.code_submission_value
+    )
+    assert (
+        res["categories"][0]["attributes"]["nci_preferred_name"]
+        == ct_term_category.nci_preferred_name
+    )
     assert res["version"] == "0.2"
     assert res["status"] == "Draft"
     assert set(list(res.keys())) == set(OBJECTIVE_PRE_INSTANCE_FIELDS_ALL)
@@ -588,20 +635,43 @@ def test_change_objective_pre_instance_indexings(api_client):
     assert res["name"] == f"Default name with [{text_value_1.name_sentence_case}]"
     assert res["is_confirmatory_testing"] is False
     assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
-    assert (
-        res["indications"][0]["dictionary_id"]
-        == dictionary_term_indication.dictionary_id
-    )
     assert res["indications"][0]["name"] == dictionary_term_indication.name
     assert res["indications"][1]["term_uid"] == indication.term_uid
-    assert res["indications"][1]["dictionary_id"] == indication.dictionary_id
     assert res["indications"][1]["name"] == indication.name
     assert res["categories"][0]["term_uid"] == ct_term_category.term_uid
-    assert res["categories"][0]["catalogue_name"] == ct_term_category.catalogue_name
-    assert res["categories"][0]["codelist_uid"] == ct_term_category.codelist_uid
+    assert (
+        res["categories"][0]["name"]["sponsor_preferred_name"]
+        == ct_term_category.sponsor_preferred_name
+    )
+    assert (
+        res["categories"][0]["name"]["sponsor_preferred_name_sentence_case"]
+        == ct_term_category.sponsor_preferred_name_sentence_case
+    )
+    assert (
+        res["categories"][0]["attributes"]["code_submission_value"]
+        == ct_term_category.code_submission_value
+    )
+    assert (
+        res["categories"][0]["attributes"]["nci_preferred_name"]
+        == ct_term_category.nci_preferred_name
+    )
     assert res["categories"][1]["term_uid"] == category.term_uid
-    assert res["categories"][1]["catalogue_name"] == category.catalogue_name
-    assert res["categories"][1]["codelist_uid"] == category.codelist_uid
+    assert (
+        res["categories"][1]["name"]["sponsor_preferred_name"]
+        == category.sponsor_preferred_name
+    )
+    assert (
+        res["categories"][1]["name"]["sponsor_preferred_name_sentence_case"]
+        == category.sponsor_preferred_name_sentence_case
+    )
+    assert (
+        res["categories"][1]["attributes"]["code_submission_value"]
+        == category.code_submission_value
+    )
+    assert (
+        res["categories"][1]["attributes"]["nci_preferred_name"]
+        == category.nci_preferred_name
+    )
     assert res["version"] == "1.0"
     assert res["status"] == "Final"
     assert set(list(res.keys())) == set(OBJECTIVE_PRE_INSTANCE_FIELDS_ALL)
@@ -627,14 +697,24 @@ def test_approve_objective_pre_instance(api_client):
     assert res["template_uid"] == objective_template.uid
     assert res["template_name"] == objective_template.name
     assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
-    assert (
-        res["indications"][0]["dictionary_id"]
-        == dictionary_term_indication.dictionary_id
-    )
     assert res["indications"][0]["name"] == dictionary_term_indication.name
     assert res["categories"][0]["term_uid"] == ct_term_category.term_uid
-    assert res["categories"][0]["catalogue_name"] == ct_term_category.catalogue_name
-    assert res["categories"][0]["codelist_uid"] == ct_term_category.codelist_uid
+    assert (
+        res["categories"][0]["name"]["sponsor_preferred_name"]
+        == ct_term_category.sponsor_preferred_name
+    )
+    assert (
+        res["categories"][0]["name"]["sponsor_preferred_name_sentence_case"]
+        == ct_term_category.sponsor_preferred_name_sentence_case
+    )
+    assert (
+        res["categories"][0]["attributes"]["code_submission_value"]
+        == ct_term_category.code_submission_value
+    )
+    assert (
+        res["categories"][0]["attributes"]["nci_preferred_name"]
+        == ct_term_category.nci_preferred_name
+    )
     assert res["version"] == "1.0"
     assert res["status"] == "Final"
 
@@ -648,14 +728,24 @@ def test_inactivate_objective_pre_instance(api_client):
     assert res["sequence_id"] == "O1P5"
     assert res["is_confirmatory_testing"] is True
     assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
-    assert (
-        res["indications"][0]["dictionary_id"]
-        == dictionary_term_indication.dictionary_id
-    )
     assert res["indications"][0]["name"] == dictionary_term_indication.name
     assert res["categories"][0]["term_uid"] == ct_term_category.term_uid
-    assert res["categories"][0]["catalogue_name"] == ct_term_category.catalogue_name
-    assert res["categories"][0]["codelist_uid"] == ct_term_category.codelist_uid
+    assert (
+        res["categories"][0]["name"]["sponsor_preferred_name"]
+        == ct_term_category.sponsor_preferred_name
+    )
+    assert (
+        res["categories"][0]["name"]["sponsor_preferred_name_sentence_case"]
+        == ct_term_category.sponsor_preferred_name_sentence_case
+    )
+    assert (
+        res["categories"][0]["attributes"]["code_submission_value"]
+        == ct_term_category.code_submission_value
+    )
+    assert (
+        res["categories"][0]["attributes"]["nci_preferred_name"]
+        == ct_term_category.nci_preferred_name
+    )
     assert res["version"] == "1.0"
     assert res["status"] == "Retired"
 
@@ -669,14 +759,24 @@ def test_reactivate_objective_pre_instance(api_client):
     assert res["sequence_id"] == "O1P5"
     assert res["is_confirmatory_testing"] is True
     assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
-    assert (
-        res["indications"][0]["dictionary_id"]
-        == dictionary_term_indication.dictionary_id
-    )
     assert res["indications"][0]["name"] == dictionary_term_indication.name
     assert res["categories"][0]["term_uid"] == ct_term_category.term_uid
-    assert res["categories"][0]["catalogue_name"] == ct_term_category.catalogue_name
-    assert res["categories"][0]["codelist_uid"] == ct_term_category.codelist_uid
+    assert (
+        res["categories"][0]["name"]["sponsor_preferred_name"]
+        == ct_term_category.sponsor_preferred_name
+    )
+    assert (
+        res["categories"][0]["name"]["sponsor_preferred_name_sentence_case"]
+        == ct_term_category.sponsor_preferred_name_sentence_case
+    )
+    assert (
+        res["categories"][0]["attributes"]["code_submission_value"]
+        == ct_term_category.code_submission_value
+    )
+    assert (
+        res["categories"][0]["attributes"]["nci_preferred_name"]
+        == ct_term_category.nci_preferred_name
+    )
     assert res["version"] == "1.0"
     assert res["status"] == "Final"
 
@@ -788,14 +888,24 @@ def test_create_pre_instance_objective_template(api_client):
     )
     assert res["parameter_terms"][0]["terms"] == data["parameter_terms"][0]["terms"]
     assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
-    assert (
-        res["indications"][0]["dictionary_id"]
-        == dictionary_term_indication.dictionary_id
-    )
     assert res["indications"][0]["name"] == dictionary_term_indication.name
     assert res["categories"][0]["term_uid"] == ct_term_category.term_uid
-    assert res["categories"][0]["catalogue_name"] == ct_term_category.catalogue_name
-    assert res["categories"][0]["codelist_uid"] == ct_term_category.codelist_uid
+    assert (
+        res["categories"][0]["name"]["sponsor_preferred_name"]
+        == ct_term_category.sponsor_preferred_name
+    )
+    assert (
+        res["categories"][0]["name"]["sponsor_preferred_name_sentence_case"]
+        == ct_term_category.sponsor_preferred_name_sentence_case
+    )
+    assert (
+        res["categories"][0]["attributes"]["code_submission_value"]
+        == ct_term_category.code_submission_value
+    )
+    assert (
+        res["categories"][0]["attributes"]["nci_preferred_name"]
+        == ct_term_category.nci_preferred_name
+    )
     assert res["version"] == "0.1"
     assert res["status"] == "Draft"
 
@@ -806,20 +916,6 @@ def test_objective_pre_instance_sequence_id_generation(api_client):
         guidance_text="Default guidance text",
         study_uid=None,
         library_name="Sponsor",
-        default_parameter_terms=[
-            MultiTemplateParameterTerm(
-                position=1,
-                conjunction="",
-                terms=[
-                    IndexedTemplateParameterTerm(
-                        index=1,
-                        name=text_value_1.name,
-                        uid=text_value_1.uid,
-                        type="TextValue",
-                    )
-                ],
-            )
-        ],
         indication_uids=[dictionary_term_indication.term_uid],
         category_uids=[ct_term_category.term_uid],
     )
@@ -865,13 +961,118 @@ def test_objective_pre_instance_sequence_id_generation(api_client):
     )
     assert res["parameter_terms"][0]["terms"] == data["parameter_terms"][0]["terms"]
     assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
-    assert (
-        res["indications"][0]["dictionary_id"]
-        == dictionary_term_indication.dictionary_id
-    )
     assert res["indications"][0]["name"] == dictionary_term_indication.name
     assert res["categories"][0]["term_uid"] == ct_term_category.term_uid
-    assert res["categories"][0]["catalogue_name"] == ct_term_category.catalogue_name
-    assert res["categories"][0]["codelist_uid"] == ct_term_category.codelist_uid
+    assert (
+        res["categories"][0]["name"]["sponsor_preferred_name"]
+        == ct_term_category.sponsor_preferred_name
+    )
+    assert (
+        res["categories"][0]["name"]["sponsor_preferred_name_sentence_case"]
+        == ct_term_category.sponsor_preferred_name_sentence_case
+    )
+    assert (
+        res["categories"][0]["attributes"]["code_submission_value"]
+        == ct_term_category.code_submission_value
+    )
+    assert (
+        res["categories"][0]["attributes"]["nci_preferred_name"]
+        == ct_term_category.nci_preferred_name
+    )
+    assert res["version"] == "0.1"
+    assert res["status"] == "Draft"
+
+
+def test_objective_pre_instance_template_parameter_rules(api_client):
+    template = TestUtils.create_objective_template(
+        name="[TextValue], [TextValue] parameters",
+        guidance_text="Default guidance text",
+        study_uid=None,
+        library_name="Sponsor",
+        indication_uids=[dictionary_term_indication.term_uid],
+        category_uids=[ct_term_category.term_uid],
+    )
+
+    data = {
+        "library_name": "Sponsor",
+        "parameter_terms": [
+            {
+                "position": 1,
+                "conjunction": "and",
+                "terms": [
+                    {
+                        "index": 1,
+                        "name": text_value_1.name_sentence_case,
+                        "uid": text_value_1.uid,
+                        "type": "TextValue",
+                    },
+                    {
+                        "index": 2,
+                        "name": text_value_2.name_sentence_case,
+                        "uid": text_value_2.uid,
+                        "type": "TextValue",
+                    },
+                ],
+            },
+            {
+                "position": 2,
+                "conjunction": "",
+                "terms": [],
+            },
+        ],
+        "is_confirmatory_testing": True,
+        "indication_uids": [dictionary_term_indication.term_uid],
+        "category_uids": [ct_term_category.term_uid],
+    }
+    response = api_client.post(
+        f"objective-templates/{template.uid}/pre-instances", json=data
+    )
+    res = response.json()
+    log.info("Created Objective Pre-Instance: %s", res)
+
+    assert response.status_code == 201
+    assert "PreInstance" in res["uid"]
+    assert res["sequence_id"] == "O3P1"
+    assert res["template_uid"] == template.uid
+    assert res["is_confirmatory_testing"] is True
+    assert (
+        res["name"]
+        == f"[{text_value_1.name_sentence_case.capitalize()} and {text_value_2.name_sentence_case}] parameters"
+    )
+    assert (
+        res["parameter_terms"][0]["position"] == data["parameter_terms"][0]["position"]
+    )
+    assert (
+        res["parameter_terms"][0]["conjunction"]
+        == data["parameter_terms"][0]["conjunction"]
+    )
+    assert res["parameter_terms"][0]["terms"] == data["parameter_terms"][0]["terms"]
+    assert (
+        res["parameter_terms"][1]["position"] == data["parameter_terms"][1]["position"]
+    )
+    assert (
+        res["parameter_terms"][1]["conjunction"]
+        == data["parameter_terms"][1]["conjunction"]
+    )
+    assert res["parameter_terms"][1]["terms"] == data["parameter_terms"][1]["terms"]
+    assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
+    assert res["indications"][0]["name"] == dictionary_term_indication.name
+    assert res["categories"][0]["term_uid"] == ct_term_category.term_uid
+    assert (
+        res["categories"][0]["name"]["sponsor_preferred_name"]
+        == ct_term_category.sponsor_preferred_name
+    )
+    assert (
+        res["categories"][0]["name"]["sponsor_preferred_name_sentence_case"]
+        == ct_term_category.sponsor_preferred_name_sentence_case
+    )
+    assert (
+        res["categories"][0]["attributes"]["code_submission_value"]
+        == ct_term_category.code_submission_value
+    )
+    assert (
+        res["categories"][0]["attributes"]["nci_preferred_name"]
+        == ct_term_category.nci_preferred_name
+    )
     assert res["version"] == "0.1"
     assert res["status"] == "Draft"

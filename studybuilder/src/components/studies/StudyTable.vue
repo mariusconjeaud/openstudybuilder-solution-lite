@@ -29,6 +29,9 @@
     <template v-slot:item.brand_name="{ item }">
       {{ getBrandName(item) }}
     </template>
+    <template v-slot:item.current_metadata.study_description.study_title="{ item }">
+      {{ item.study_parent_part ? item.study_parent_part.study_title : item.current_metadata.study_description.study_title }}
+    </template>
     <template v-slot:item.current_metadata.version_metadata.version_timestamp="{ item }">
       {{ item.current_metadata.version_metadata.version_timestamp | date }}
     </template>

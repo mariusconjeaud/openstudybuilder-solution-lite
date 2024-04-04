@@ -3,13 +3,63 @@ MATCH (p_aicr:ActivityInstanceClassRoot)-[:PARENT_CLASS]->(p_aicrpp:ActivityInst
 RETURN DISTINCT n.`name` as value,  n.`name` as display ORDER BY size(toString(value)) ASC LIMIT 20
 
 
-
-
 MATCH(g:ActivityGrouping)<-[R5:HAS_ACTIVITY]-(p_ai:ActivityInstanceValue),(g)-[R2:IN_SUBGROUP]->(sg:ActivityValidGroup)<-[R3:HAS_GROUP]-(p_asgrp:ActivitySubGroupValue),(sg)-[:IN_GROUP]->(p_agrp:ActivityGroupValue)
 MATCH (p_ai)-[R42:ACTIVITY_INSTANCE_CLASS]->(p_aicr:ActivityInstanceClassRoot)-[:LATEST]->(p_aicp:ActivityInstanceClassValue) where (:ActivityInstanceValue)-[:ACTIVITY_INSTANCE_CLASS]->(p_aicr:ActivityInstanceClassRoot)
 OPTIONAL MATCH (p_aicr:ActivityInstanceClassRoot)-[:PARENT_CLASS]->(p_aicrpp:ActivityInstanceClassRoot)-[:LATEST]->(p_aicpp:ActivityInstanceClassValue) where not (:ActivityInstanceClassRoot)-[:PARENT_CLASS]->(p_aicpp:ActivityInstanceClassRoot) and p_aicpp.name in [$a] 
 with p_aicpp.name as ActivityType where p_aicpp is not null
 return distinct p_aicpp.name as ActivityType
+
+///Histogram
+CALL apoc.case([not $neodash_activityinstanceclassvalue_name='' and $neodash_activityinstanceclassvalue_name_subtype='' and $neodash_activitygroupvalue_name='' and $neodash_activitysubgroupvalue_name='', 
+'MATCH(act:ActivityValue)-[R1:HAS_GROUPING]->(g:ActivityGrouping)-[R2:IN_SUBGROUP]->(sg:ActivityValidGroup)<-[R3:HAS_GROUP]-(asgrp:ActivitySubGroupValue),
+(sg)-[R4:IN_GROUP]->(agrp:ActivityGroupValue)
+MATCH(g:ActivityGrouping)<-[R5:HAS_ACTIVITY]-(ai:ActivityInstanceValue)
+MATCH (ai)-[R42:ACTIVITY_INSTANCE_CLASS]->(aicr:ActivityInstanceClassRoot)-[R43:LATEST]->(aic:ActivityInstanceClassValue)
+MATCH (aicr)-[R10:PARENT_CLASS]->(aicrp:ActivityInstanceClassRoot)-[R11:LATEST]->(aicp:ActivityInstanceClassValue) where aicp.name in [$a]
+return aic.name as Category,
+count(distinct act) as `Number of Activities` order by Category' , 
+not $neodash_activityinstanceclassvalue_name='' and not $neodash_activityinstanceclassvalue_name_subtype='' and $neodash_activitygroupvalue_name='' and $neodash_activitysubgroupvalue_name='', 
+'MATCH(act:ActivityValue)-[R1:HAS_GROUPING]->(g:ActivityGrouping)-[R2:IN_SUBGROUP]->(sg:ActivityValidGroup)<-[R3:HAS_GROUP]-(asgrp:ActivitySubGroupValue),
+(sg)-[R4:IN_GROUP]->(agrp:ActivityGroupValue)
+MATCH(g:ActivityGrouping)<-[R5:HAS_ACTIVITY]-(ai:ActivityInstanceValue)
+MATCH (ai)-[R42:ACTIVITY_INSTANCE_CLASS]->(aicr:ActivityInstanceClassRoot)-[R43:LATEST]->(aic:ActivityInstanceClassValue) where aic.name in [$b]
+MATCH (aicr)-[R10:PARENT_CLASS]->(aicrp:ActivityInstanceClassRoot)-[R11:LATEST]->(aicp:ActivityInstanceClassValue) where aicp.name in [$a]
+return agrp.name as Category,
+count(distinct act) as `Number of Activities` order by Category', 
+not $neodash_activityinstanceclassvalue_name='' and not $neodash_activityinstanceclassvalue_name_subtype='' and not $neodash_activitygroupvalue_name='' and $neodash_activitysubgroupvalue_name='', 
+'MATCH(act:ActivityValue)-[R1:HAS_GROUPING]->(g:ActivityGrouping)-[R2:IN_SUBGROUP]->(sg:ActivityValidGroup)<-[R3:HAS_GROUP]-(asgrp:ActivitySubGroupValue),
+(sg)-[R4:IN_GROUP]->(agrp:ActivityGroupValue) where agrp.name in [$c]
+MATCH(g:ActivityGrouping)<-[R5:HAS_ACTIVITY]-(ai:ActivityInstanceValue)
+MATCH (ai)-[R42:ACTIVITY_INSTANCE_CLASS]->(aicr:ActivityInstanceClassRoot)-[R43:LATEST]->(aic:ActivityInstanceClassValue) where aic.name in [$b]
+MATCH (aicr)-[R10:PARENT_CLASS]->(aicrp:ActivityInstanceClassRoot)-[R11:LATEST]->(aicp:ActivityInstanceClassValue) where aicp.name in [$a]
+return asgrp.name as Category,
+count(distinct act) as `Number of Activities Instances` order by Category',
+not $neodash_activityinstanceclassvalue_name='' and not $neodash_activityinstanceclassvalue_name_subtype='' and not $neodash_activitygroupvalue_name='' and not $neodash_activitysubgroupvalue_name='', 
+'MATCH(act:ActivityValue)-[R1:HAS_GROUPING]->(g:ActivityGrouping)-[R2:IN_SUBGROUP]->(sg:ActivityValidGroup)<-[R3:HAS_GROUP]-(asgrp:ActivitySubGroupValue),
+(sg)-[R4:IN_GROUP]->(agrp:ActivityGroupValue) where agrp.name in [$c] and asgrp.name in[$d]
+MATCH(g:ActivityGrouping)<-[R5:HAS_ACTIVITY]-(ai:ActivityInstanceValue)
+MATCH (ai)-[R42:ACTIVITY_INSTANCE_CLASS]->(aicr:ActivityInstanceClassRoot)-[R43:LATEST]->(aic:ActivityInstanceClassValue) where aic.name in [$b]
+MATCH (aicr)-[R10:PARENT_CLASS]->(aicrp:ActivityInstanceClassRoot)-[R11:LATEST]->(aicp:ActivityInstanceClassValue) where aicp.name in [$a]
+return act.name as Category,
+count(distinct ai) as `Number of Activities` order by Category'],
+'MATCH(act:ActivityValue)-[R1:HAS_GROUPING]->(g:ActivityGrouping)-[R2:IN_SUBGROUP]->(sg:ActivityValidGroup)<-[R3:HAS_GROUP]-(asgrp:ActivitySubGroupValue),
+(sg)-[R4:IN_GROUP]->(agrp:ActivityGroupValue) 
+MATCH(g:ActivityGrouping)<-[R5:HAS_ACTIVITY]-(ai:ActivityInstanceValue)
+MATCH (ai)-[R42:ACTIVITY_INSTANCE_CLASS]->(aicr:ActivityInstanceClassRoot)-[R43:LATEST]->(aic:ActivityInstanceClassValue) 
+MATCH (aicr)-[R10:PARENT_CLASS]->(aicrp:ActivityInstanceClassRoot)-[R11:LATEST]->(aicp:ActivityInstanceClassValue) 
+return aicp.name as Category,
+count(distinct act) as `Number of Activities` order by Category',
+{a:$neodash_activityinstanceclassvalue_name,
+b:$neodash_activityinstanceclassvalue_name_subtype,
+c:$neodash_activitygroupvalue_name, 
+d:$neodash_activitysubgroupvalue_name}) YIELD value 
+return value.Category as Category,
+value.`Number of Activities` as`Number of Activities/Instances` order by Category
+
+
+
+
+
 
 //List of activities
 CALL apoc.case([not $neodash_activityinstanceclassvalue_name='' and $neodash_activityinstanceclassvalue_name_subtype='' and $neodash_activitygroupvalue_name='' and $neodash_activitysubgroupvalue_name='', 

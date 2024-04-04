@@ -21,6 +21,7 @@ from clinical_mdr_api.domains.study_selections.study_selection_base import (
     StudySelectionBaseAR,
     StudySelectionBaseVO,
 )
+from clinical_mdr_api.repositories._utils import validate_max_skip_clause
 
 _AggregateRootType = TypeVar("_AggregateRootType")
 
@@ -124,7 +125,6 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
         study_value_version: str | None = None,
         **kwargs,
     ) -> tuple[_AggregateRootType]:
-        query = ""
         query_parameters = {}
         if study_uid:
             if study_value_version:
@@ -266,6 +266,10 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
             # remove the last item from old list, as there will no longer be any study activity with that high order
             if self.is_repository_based_on_ordered_selection():
                 selections_to_remove.append((len(closure_data), closure_data[-1]))
+            else:
+                for order, closure_item in enumerate(closure_data, start=1):
+                    if closure_item not in study_selection.study_objects_selection:
+                        selections_to_remove.append((order, closure_item))
 
         # loop through new data - start=1 as order starts at 1 not at 0 and find what needs to be removed and added
         for order, selection in enumerate(
@@ -401,4 +405,205 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
         return self._get_selection_with_history(study_uid=study_uid)
 
     def close(self) -> None:
+        # Our repository guidelines state that repos should have a close method
+        # But nothing needs to be done in this one
         pass
+
+    def get_detailed_soa_history(
+        self, study_uid: str, page_number: int, page_size: int, total_count: bool
+    ) -> tuple[list[dict], int]:
+        detailed_soa_audit_trail = """
+        CALL {
+        MATCH (sr:StudyRoot {uid: $study_uid})-[:AUDIT_TRAIL]->(:StudyAction)-[:BEFORE|AFTER]->(all_sa:StudyActivity)
+            -[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(study_soa_group:StudySoAGroup)-[:HAS_FLOWCHART_GROUP]->(fgr:CTTermRoot)
+            -[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(fgr_value:CTTermNameValue)
+        MATCH (study_soa_group:StudySoAGroup)<-[:AFTER]-(asa:StudyAction)
+        OPTIONAL MATCH (study_soa_group:StudySoAGroup)<-[:BEFORE]-(bsa:StudyAction)
+        WITH DISTINCT all_sa, fgr_value, asa, bsa
+        ORDER BY asa.date DESC
+        RETURN
+            all_sa.uid as sa_uid,
+            'visibility flag' AS object_type,
+            fgr_value.name + ' ' + coalesce(all_sa.show_soa_group_in_protocol_flowchart, false)  AS description,
+            asa.date AS start_date,
+            asa.user_initials AS user_initials,
+            labels(asa) AS change_type,
+            bsa.date AS end_date
+        UNION
+        MATCH (sr:StudyRoot {uid: $study_uid})-[:AUDIT_TRAIL]->(:StudyAction)-[:BEFORE|AFTER]->(all_sa:StudyActivity)
+            -[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]->(study_activity_group:StudyActivityGroup)
+            -[:HAS_SELECTED_ACTIVITY_GROUP]->(activity_group_value:ActivityGroupValue)
+        MATCH (all_sa:StudyActivity)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(study_soa_group:StudySoAGroup)
+            -[:HAS_FLOWCHART_GROUP]->(fgr:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(fgr_value:CTTermNameValue)
+        MATCH (study_activity_group:StudyActivityGroup)<-[:AFTER]-(asa:StudyAction)
+        OPTIONAL MATCH (study_activity_group:StudyActivityGroup)<-[:BEFORE]-(bsa:StudyAction)
+        WITH DISTINCT all_sa, fgr_value, activity_group_value, asa, bsa
+        ORDER BY asa.date DESC
+        RETURN DISTINCT
+            all_sa.uid as sa_uid,
+            'visibility flag' AS object_type,
+            fgr_value.name + '/' + activity_group_value.name + ' ' +  all_sa.show_activity_group_in_protocol_flowchart  AS description,
+            asa.date AS start_date,
+            asa.user_initials AS user_initials,
+            labels(asa) AS change_type,
+            bsa.date AS end_date
+        UNION
+        MATCH (sr:StudyRoot {uid: $study_uid})-[:AUDIT_TRAIL]->(:StudyAction)-[:BEFORE|AFTER]->(all_sa:StudyActivity)
+            -[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]->(study_activity_subgroup:StudyActivitySubGroup)
+            -[:HAS_SELECTED_ACTIVITY_SUBGROUP]->(activity_subgroup_value:ActivitySubGroupValue)
+        MATCH (all_sa:StudyActivity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]->(study_activity_group:StudyActivityGroup)
+            -[:HAS_SELECTED_ACTIVITY_GROUP]->(activity_group_value:ActivityGroupValue)
+        MATCH (all_sa:StudyActivity)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(study_soa_group:StudySoAGroup)
+            -[:HAS_FLOWCHART_GROUP]->(fgr:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(fgr_value:CTTermNameValue)
+        MATCH (study_activity_subgroup:StudyActivitySubGroup)<-[:AFTER]-(asa:StudyAction)
+        OPTIONAL MATCH (study_activity_subgroup:StudyActivitySubGroup)<-[:BEFORE]-(bsa:StudyAction)
+        WITH DISTINCT all_sa, fgr_value, activity_group_value, activity_subgroup_value, asa, bsa
+        ORDER BY asa.date DESC
+        RETURN DISTINCT
+            all_sa.uid as sa_uid,
+            'visibility flag' AS object_type,
+            fgr_value.name + '/' + activity_group_value.name+ '/' + activity_subgroup_value.name + ' ' +  all_sa.show_activity_subgroup_in_protocol_flowchart  AS description,
+            asa.date AS start_date,
+            asa.user_initials AS user_initials,
+            labels(asa) AS change_type,
+            bsa.date AS end_date
+
+        UNION
+        MATCH (sr:StudyRoot {uid: $study_uid})-[:AUDIT_TRAIL]->(:StudyAction)-[:BEFORE|AFTER]->(all_sa:StudyActivity)
+            -[:HAS_SELECTED_ACTIVITY]->(av:ActivityValue)
+
+        MATCH (all_sa:StudyActivity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]->(study_activity_subgroup:StudyActivitySubGroup)
+            -[:HAS_SELECTED_ACTIVITY_SUBGROUP]->(activity_subgroup_value:ActivitySubGroupValue)
+        MATCH (all_sa:StudyActivity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]->(study_activity_group:StudyActivityGroup)
+            -[:HAS_SELECTED_ACTIVITY_GROUP]->(activity_group_value:ActivityGroupValue)
+        MATCH (all_sa:StudyActivity)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(study_soa_group:StudySoAGroup)
+            -[:HAS_FLOWCHART_GROUP]->(fgr:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(fgr_value:CTTermNameValue)
+        MATCH (all_sa:StudyActivity)<-[:AFTER]-(asa:StudyAction)
+        OPTIONAL MATCH (all_sa:StudyActivity)<-[:BEFORE]-(bsa:StudyAction)
+        WITH DISTINCT all_sa, fgr_value, activity_group_value, activity_subgroup_value, av, asa, bsa
+        ORDER BY asa.date DESC
+        RETURN DISTINCT
+            all_sa.uid as sa_uid,
+            'visibility flag' AS object_type,
+            fgr_value.name + '/' + activity_group_value.name+ '/' + activity_subgroup_value.name+ '/' + av.name  + ' ' +  all_sa.show_activity_in_protocol_flowchart  AS description,
+            asa.date AS start_date,
+            asa.user_initials AS user_initials,
+            labels(asa) AS change_type,
+            bsa.date AS end_date
+
+        UNION
+        MATCH (sr:StudyRoot {uid: $study_uid})-[:AUDIT_TRAIL]->(:StudyAction)-[:BEFORE|AFTER]->(all_sa:StudyActivity)
+            -[:STUDY_ACTIVITY_HAS_SCHEDULE]->(sas:StudyActivitySchedule)<-[:STUDY_VISIT_HAS_SCHEDULE]-(visit:StudyVisit)
+        MATCH (all_sa:StudyActivity)-[:HAS_SELECTED_ACTIVITY]->(av:ActivityValue)
+        MATCH (sas:StudyActivitySchedule)<-[:AFTER]-(asa:StudyAction)
+        OPTIONAL MATCH (sas:StudyActivitySchedule)<-[:BEFORE]-(bsa:StudyAction)
+        WITH DISTINCT all_sa, visit, asa, bsa, av
+        ORDER BY asa.date DESC
+        RETURN DISTINCT
+            all_sa.uid as sa_uid,
+            'schedule' AS object_type,
+            av.name +" " +  coalesce(visit.short_visit_label,"") as description,
+            asa.date AS start_date,
+            asa.user_initials AS user_initials,
+            labels(asa) AS change_type,
+            bsa.date AS end_date
+        }
+        RETURN DISTINCT
+            sa_uid,
+            object_type,
+            description,
+            start_date,
+            user_initials,
+            change_type,
+            end_date
+        ORDER BY start_date DESC
+        """
+        total_count_query = """
+               PROFILE CALL {
+        MATCH (sr:StudyRoot {uid: $study_uid})-[:AUDIT_TRAIL]->(:StudyAction)-[:BEFORE|AFTER]->(all_sa:StudyActivity)
+            -[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(study_soa_group:StudySoAGroup)-[:HAS_FLOWCHART_GROUP]->(fgr:CTTermRoot)
+            -[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(fgr_value:CTTermNameValue)
+        MATCH (study_soa_group:StudySoAGroup)<-[:AFTER]-(asa:StudyAction)
+        RETURN count(distinct study_soa_group) as ct
+        UNION ALL
+        MATCH (sr:StudyRoot {uid: $study_uid})-[:AUDIT_TRAIL]->(:StudyAction)-[:BEFORE|AFTER]->(all_sa:StudyActivity)
+            -[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]->(study_activity_group:StudyActivityGroup)
+            -[:HAS_SELECTED_ACTIVITY_GROUP]->(activity_group_value:ActivityGroupValue)
+        MATCH (all_sa:StudyActivity)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(study_soa_group:StudySoAGroup)
+            -[:HAS_FLOWCHART_GROUP]->(fgr:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(fgr_value:CTTermNameValue)
+        MATCH (study_activity_group:StudyActivityGroup)<-[:AFTER]-(asa:StudyAction)
+        RETURN count(distinct study_activity_group) as ct
+        UNION ALL
+        MATCH (sr:StudyRoot {uid: $study_uid})-[:AUDIT_TRAIL]->(:StudyAction)-[:BEFORE|AFTER]->(all_sa:StudyActivity)
+            -[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]->(study_activity_subgroup:StudyActivitySubGroup)
+            -[:HAS_SELECTED_ACTIVITY_SUBGROUP]->(activity_subgroup_value:ActivitySubGroupValue)
+        MATCH (all_sa:StudyActivity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]->(study_activity_group:StudyActivityGroup)
+            -[:HAS_SELECTED_ACTIVITY_GROUP]->(activity_group_value:ActivityGroupValue)
+        MATCH (all_sa:StudyActivity)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(study_soa_group:StudySoAGroup)
+            -[:HAS_FLOWCHART_GROUP]->(fgr:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(fgr_value:CTTermNameValue)
+        MATCH (study_activity_subgroup:StudyActivitySubGroup)<-[:AFTER]-(asa:StudyAction)
+        RETURN count(distinct study_activity_subgroup) as ct
+        UNION ALL
+        MATCH (sr:StudyRoot {uid: $study_uid})-[:AUDIT_TRAIL]->(:StudyAction)-[:BEFORE|AFTER]->(all_sa:StudyActivity)
+            -[:HAS_SELECTED_ACTIVITY]->(av:ActivityValue)
+        MATCH (all_sa:StudyActivity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]->(study_activity_subgroup:StudyActivitySubGroup)
+            -[:HAS_SELECTED_ACTIVITY_SUBGROUP]->(activity_subgroup_value:ActivitySubGroupValue)
+        MATCH (all_sa:StudyActivity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]->(study_activity_group:StudyActivityGroup)
+            -[:HAS_SELECTED_ACTIVITY_GROUP]->(activity_group_value:ActivityGroupValue)
+        MATCH (all_sa:StudyActivity)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(study_soa_group:StudySoAGroup)
+            -[:HAS_FLOWCHART_GROUP]->(fgr:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(fgr_value:CTTermNameValue)
+        MATCH (all_sa:StudyActivity)<-[:AFTER]-(asa:StudyAction)
+        RETURN count(distinct all_sa) as ct
+        UNION ALL
+        MATCH (sr:StudyRoot {uid: $study_uid})-[:AUDIT_TRAIL]->(:StudyAction)-[:BEFORE|AFTER]->(all_sa:StudyActivity)
+            -[:STUDY_ACTIVITY_HAS_SCHEDULE]->(sas:StudyActivitySchedule)<-[:STUDY_VISIT_HAS_SCHEDULE]-(visit:StudyVisit)
+        MATCH (all_sa:StudyActivity)-[:HAS_SELECTED_ACTIVITY]->(av:ActivityValue)
+        MATCH (sas:StudyActivitySchedule)<-[:AFTER]-(asa:StudyAction)
+        RETURN count(distinct sas) as ct
+        }
+        return sum(ct)
+        """
+        detailed_soa_audit_trail += (
+            "SKIP $page_number * $page_size LIMIT $page_size" if page_size > 0 else ""
+        )
+        validate_max_skip_clause(page_number=page_number, page_size=page_size)
+
+        detailed_soa_audit_trail = db.cypher_query(
+            detailed_soa_audit_trail,
+            {
+                "study_uid": study_uid,
+                "page_number": page_number - 1,
+                "page_size": page_size,
+            },
+        )
+        result = []
+        for res in helpers.db_result_to_list(detailed_soa_audit_trail):
+            for action in res["change_type"]:
+                if "StudyAction" not in action:
+                    change_type = action
+            start_date = (
+                convert_to_datetime(value=res["start_date"])
+                if res["start_date"]
+                else None
+            )
+            end_date = (
+                convert_to_datetime(value=res["end_date"]) if res["end_date"] else None
+            )
+            res["change_type"] = change_type
+            res["end_date"] = end_date
+            res["start_date"] = start_date
+            result.append(res)
+        if total_count:
+            amount_of_detailed_soa_history_items, _ = db.cypher_query(
+                total_count_query,
+                {
+                    "study_uid": study_uid,
+                },
+            )
+        total_amount = (
+            amount_of_detailed_soa_history_items[0][0]
+            if total_count and len(amount_of_detailed_soa_history_items) > 0
+            else 0
+        )
+
+        return result, total_amount

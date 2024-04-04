@@ -43,6 +43,7 @@ FIXED_WEEK_PERIOD = 7
 
 XML_STYLESHEET_DIR_PATH = "xml_stylesheets/"
 
+REQUESTED_LIBRARY_NAME = "Requested"
 CT_UID_BOOLEAN_YES = "C49488_Y"
 CT_UID_BOOLEAN_NO = "C49487_N"
 STUDY_EPOCH_TYPE_NAME = "Epoch Type"
@@ -58,6 +59,7 @@ STUDY_DAY_NAME = "StudyDay"
 STUDY_DURATION_DAYS_NAME = "StudyDurationDays"
 STUDY_WEEK_NAME = "StudyWeek"
 STUDY_DURATION_WEEKS_NAME = "StudyDurationWeeks"
+WEEK_IN_STUDY_NAME = "WeekInStudy"
 STUDY_TIMEPOINT_NAME = "TimePoint"
 STUDY_VISIT_TIMEREF_NAME = "Time Point Reference"
 STUDY_ELEMENT_SUBTYPE_NAME = "Element Sub Type"
@@ -66,6 +68,7 @@ PREVIOUS_VISIT_NAME = "Previous Visit"
 ANCHOR_VISIT_IN_VISIT_GROUP = "Anchor visit in visit group"
 STUDY_ENDPOINT_TP_NAME = "StudyEndpoint"
 STUDY_FIELD_PREFERRED_TIME_UNIT_NAME = "preferred_time_unit"
+STUDY_FIELD_SOA_PREFERRED_TIME_UNIT_NAME = "soa_preferred_time_unit"
 
 STUDY_VISIT_SUBLABEL = "Visit Sub Label"
 STUDY_VISIT_CONTACT_MODE_NAME = "Visit Contact Mode"

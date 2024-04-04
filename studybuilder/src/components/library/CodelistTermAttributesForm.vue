@@ -12,8 +12,8 @@
           rules="required"
           >
           <v-text-field
-            v-model="form.nameSubmissionValue"
-            :label="$t('CodelistTermCreationForm.term_name')"
+            v-model="form.name_submission_value"
+            :label="$t('CodelistTermCreationForm.name_submission_value')"
             :error-messages="errors"
             clearable
             />
@@ -23,8 +23,8 @@
           rules="required"
           >
           <v-text-field
-            v-model="form.codeSubmissionValue"
-            :label="$t('CodelistTermCreationForm.submission_value')"
+            v-model="form.code_submission_value"
+            :label="$t('CodelistTermCreationForm.code_submission_value')"
             :error-messages="errors"
             clearable
             />
@@ -34,7 +34,7 @@
           rules="required"
           >
           <v-text-field
-            v-model="form.nciPreferredName"
+            v-model="form.nci_preferred_name"
             :label="$t('CodelistTermCreationForm.nci_pref_name')"
             :error-messages="errors"
             clearable
@@ -51,17 +51,6 @@
             clearable
             rows="1"
             auto-grow
-            />
-        </validation-provider>
-        <validation-provider
-          v-slot="{ errors }"
-          rules=""
-          >
-          <v-text-field
-            v-model="form.synonyms"
-            :label="$t('CodelistTermCreationForm.synonyms')"
-            :error-messages="errors"
-            clearable
             />
         </validation-provider>
         <validation-provider
@@ -118,11 +107,10 @@ export default {
     return {
       form: {},
       helpItems: [
-        'CodelistTermCreationForm.term_name',
-        'CodelistTermCreationForm.submission_value',
+        'CodelistTermCreationForm.name_submission_value',
+        'CodelistTermCreationForm.code_submission_value',
         'CodelistTermCreationForm.nci_pref_name',
-        'CodelistTermCreationForm.definition',
-        'CodelistTermCreationForm.synonyms'
+        'CodelistTermCreationForm.definition'
       ],
       working: false
     }
@@ -166,9 +154,9 @@ export default {
       handler (val) {
         if (val) {
           this.form = {
-            nameSubmissionValue: val.nameSubmissionValue,
-            codeSubmissionValue: val.codeSubmissionValue,
-            nciPreferredName: val.nciPreferredName,
+            name_submission_value: val.name_submission_value,
+            code_submission_value: val.code_submission_value,
+            nci_preferred_name: val.nci_preferred_name,
             definition: val.definition
           }
           this.$store.commit('form/SET_FORM', this.form)

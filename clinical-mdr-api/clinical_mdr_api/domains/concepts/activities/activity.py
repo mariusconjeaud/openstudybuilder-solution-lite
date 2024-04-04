@@ -27,9 +27,19 @@ class ActivityVO(ConceptVO):
 
     nci_concept_id: str | None
     activity_groupings: list[ActivityGroupingVO]
+
+    # ActivityRequest related
     request_rationale: str | None
     replaced_by_activity: str | None
+    requester_study_id: str | None
+    reason_for_rejecting: str | None
+    contact_person: str | None
+    is_request_final: bool = False
+    is_request_rejected: bool = False
+    # ActivityRequest related
+
     is_data_collected: bool = False
+    is_multiple_selection_allowed: bool = True
 
     @classmethod
     def from_repository_values(
@@ -41,8 +51,14 @@ class ActivityVO(ConceptVO):
         abbreviation: str | None,
         activity_groupings: list[ActivityGroupingVO],
         request_rationale: str | None,
+        is_request_final: bool = False,
         replaced_by_activity: str | None = None,
+        requester_study_id: str | None = None,
+        reason_for_rejecting: str | None = None,
+        contact_person: str | None = None,
+        is_request_rejected: bool = False,
         is_data_collected: bool = False,
+        is_multiple_selection_allowed: bool = True,
     ) -> Self:
         activity_vo = cls(
             nci_concept_id=nci_concept_id,
@@ -53,8 +69,14 @@ class ActivityVO(ConceptVO):
             is_template_parameter=True,
             activity_groupings=activity_groupings,
             request_rationale=request_rationale,
+            is_request_final=is_request_final,
+            requester_study_id=requester_study_id,
             replaced_by_activity=replaced_by_activity,
+            reason_for_rejecting=reason_for_rejecting,
+            contact_person=contact_person,
+            is_request_rejected=is_request_rejected,
             is_data_collected=is_data_collected,
+            is_multiple_selection_allowed=is_multiple_selection_allowed,
         )
 
         return activity_vo
@@ -76,12 +98,12 @@ class ActivityVO(ConceptVO):
         for activity_grouping in self.activity_groupings:
             if not activity_subgroup_exists(activity_grouping.activity_subgroup_uid):
                 raise BusinessLogicException(
-                    "Activity tried to connect to non existing concepts "
+                    "Activity tried to connect to non-existent or non-final concepts "
                     f"""[('Concept Name: Activity Subgroup', "uids: {{'{activity_grouping.activity_subgroup_uid}'}}")]."""
                 )
             if not activity_group_exists(activity_grouping.activity_group_uid):
                 raise BusinessLogicException(
-                    "Activity tried to connect to non existing concepts "
+                    "Activity tried to connect to non-existent or non-final concepts "
                     f"""[('Concept Name: Activity Group', "uids: {{'{activity_grouping.activity_group_uid}'}}")]."""
                 )
 

@@ -5,16 +5,62 @@
     <v-spacer/>
     <span class="text-center font-italic">{{ loadingMessage }}</span>
     <v-spacer/>
-    <div class="d-flex ml-4">
-      <v-btn
-        color="secondary"
-        @click="downloadDocx($event)"
-        class="ml-3"
-        :disabled="Boolean(loadingMessage)"
+    <v-switch
+      v-model="detailed"
+      :label="$t('ProtocolFlowchart.detailed')"
+      hide-details
+      class="mx-2 mr-6"
+      :disabled="Boolean(loadingMessage)"
+      />
+      |
+    <label class="v-label theme--light ml-6 mr-4">
+      {{ $t('ProtocolFlowchart.preferred_time_unit') }}
+    </label>
+    <v-radio-group
+      v-model="preferredTimeUnit"
+      row
+      hide-details
+      @change="updatePreferredTimeUnit"
+      :disabled="selectedStudyVersion !== null"
       >
-        {{ $t('_global.download_docx') }}
-      </v-btn>
-    </div>
+      <v-radio
+        :label="$t('ProtocolFlowchart.day')"
+        value="day"
+        ></v-radio>
+      <v-radio
+        :label="$t('ProtocolFlowchart.week')"
+        value="week"
+        ></v-radio>
+    </v-radio-group>
+    <v-menu rounded offset-y>
+      <template v-slot:activator="{ attrs, on }">
+        <v-btn
+          fab
+          small
+          color="nnGreen1"
+          class="ml-2 white--text"
+          v-bind="attrs"
+          v-on="on"
+          :title="$t('DataTableExportButton.export')"
+          >
+          <v-icon>mdi-download-outline</v-icon>
+        </v-btn>
+      </template>
+      <v-list>
+        <v-list-item
+          link
+          @click="downloadCSV"
+          >
+          <v-list-item-title>CSV</v-list-item-title>
+        </v-list-item>
+        <v-list-item
+          link
+          @click="downloadDocx"
+          >
+          <v-list-item-title>DOCX</v-list-item-title>
+        </v-list-item>
+      </v-list>
+    </v-menu>
   </div>
   <div class="mt-4" v-html="protocolFlowchart" id="protocolFlowchart"></div>
 </div>
@@ -24,6 +70,8 @@
 import study from '@/api/study'
 import exportLoader from '@/utils/exportLoader'
 import { mapGetters } from 'vuex'
+import units from '@/api/units'
+import unitConstants from '@/constants/units'
 
 export default {
   props: {
@@ -32,28 +80,60 @@ export default {
   computed: {
     ...mapGetters({
       selectedStudy: 'studiesGeneral/selectedStudy',
-      selectedStudyVersion: 'studiesGeneral/selectedStudyVersion'
+      selectedStudyVersion: 'studiesGeneral/selectedStudyVersion',
+      soaPreferredTimeUnit: 'studiesGeneral/soaPreferredTimeUnit'
     })
   },
   data () {
     return {
       protocolFlowchart: '',
-      loadingMessage: ''
+      loadingMessage: '',
+      detailed: false,
+      preferredTimeUnit: null,
+      preferredTimeUnits: []
     }
   },
   methods: {
+    async updatePreferredTimeUnit (value) {
+      for (const timeUnit of this.preferredTimeUnits) {
+        if (timeUnit.name === value) {
+          await this.$store.dispatch('studiesGeneral/setStudyPreferredTimeUnit', { timeUnitUid: timeUnit.uid, protocolSoa: true })
+          this.updateFlowchart()
+          break
+        }
+      }
+    },
     updateFlowchart () {
       this.loadingMessage = this.$t('ProtocolFlowchart.loading')
-      study.getStudyProtocolFlowchartHtml(this.selectedStudy.uid, this.selectedStudyVersion).then(resp => {
+      const params = {
+        detailed: this.detailed,
+        study_value_version: this.selectedStudyVersion
+      }
+      study.getStudyProtocolFlowchartHtml(this.selectedStudy.uid, params).then(resp => {
         this.protocolFlowchart = resp.data
       }).then(this.finally).catch(this.finally)
     },
     downloadDocx () {
       this.loadingMessage = this.$t('ProtocolFlowchart.downloading')
-      study.getStudyProtocolFlowchartDocx(this.selectedStudy.uid, this.selectedStudyVersion).then(response => {
+      const params = {
+        detailed: this.detailed,
+        study_value_version: this.selectedStudyVersion
+      }
+      study.getStudyProtocolFlowchartDocx(this.selectedStudy.uid, params).then(response => {
+        let filename = this.selectedStudy.current_metadata.identification_metadata.study_id
+        if (this.detailed) {
+          filename += ' detailed'
+        }
+        filename += ' flowchart.docx'
         exportLoader.downloadFile(response.data, response.headers['content-type'] ||
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document', `${this.selectedStudy.current_metadata.identification_metadata.study_id} flowchart.docx`)
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document', filename)
       }).then(this.finally).catch(this.finally)
+    },
+    downloadCSV () {
+      study.exportStudyProtocolSoa(this.selectedStudy.uid, this.selectedStudyVersion).then(response => {
+        const filename = this.selectedStudy.current_metadata.identification_metadata.study_id + ' flowchart.csv'
+        exportLoader.downloadFile(response.data, response.headers['content-type'], filename)
+      })
     },
     finally (error) {
       this.loadingMessage = ''
@@ -62,8 +142,20 @@ export default {
   },
   mounted () {
     this.updateFlowchart()
+    units.getBySubset(unitConstants.TIME_UNIT_SUBSET_STUDY_PREFERRED_TIME_UNIT).then(resp => {
+      this.preferredTimeUnits = resp.data.items
+    })
+    if (this.soaPreferredTimeUnit) {
+      this.preferredTimeUnit = this.soaPreferredTimeUnit.time_unit_name
+    }
   },
   watch: {
+    soaPreferredTimeUnit () {
+      this.preferredTimeUnit = this.soaPreferredTimeUnit.time_unit_name
+    },
+    detailed (newVal, oldVal) {
+      if (newVal !== oldVal) this.updateFlowchart()
+    },
     update (newVal, oldVal) {
       if (newVal !== oldVal) this.updateFlowchart()
     }

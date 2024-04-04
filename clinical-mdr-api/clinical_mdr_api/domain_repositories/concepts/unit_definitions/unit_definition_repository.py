@@ -23,6 +23,7 @@ from clinical_mdr_api.domain_repositories.models.generic import (
 from clinical_mdr_api.domain_repositories.models.template_parameter import (
     TemplateParameterTermRoot,
 )
+from clinical_mdr_api.domains._utils import ObjectStatus
 from clinical_mdr_api.domains.concepts.unit_definitions.unit_definition import (
     CTTerm,
     UnitDefinitionAR,
@@ -44,7 +45,9 @@ class UnitDefinitionRepository(ConceptGenericRepository[UnitDefinitionAR]):
     user: str
     return_model = UnitDefinitionModel
 
-    def specific_alias_clause(self) -> str:
+    def specific_alias_clause(
+        self, only_specific_status: str = ObjectStatus.LATEST.name
+    ) -> str:
         return """
         WITH *,
             concept_value.si_unit as si_unit,
@@ -360,15 +363,6 @@ class UnitDefinitionRepository(ConceptGenericRepository[UnitDefinitionAR]):
             RETURN or.uid
         """
         items, _ = db.cypher_query(cypher_query, {"legacy_code": legacy_code})
-
-        return len(items) > 0
-
-    def exists_by_unit_ct_uid(self, unit_ct_uid: str) -> bool:
-        cypher_query = f"""
-            MATCH (or:{self.root_class.__label__})-[:LATEST]->(ov:{self.value_class.__label__} {{unit_ct_uid: $unit_ct_uid}})
-            RETURN or.uid
-        """
-        items, _ = db.cypher_query(cypher_query, {"unit_ct_uid": unit_ct_uid})
 
         return len(items) > 0
 

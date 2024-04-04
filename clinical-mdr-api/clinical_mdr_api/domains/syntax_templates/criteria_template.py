@@ -2,11 +2,6 @@ import re
 from dataclasses import dataclass
 from typing import Callable, Self
 
-from clinical_mdr_api.domains.controlled_terminologies.ct_term_attributes import (
-    CTTermAttributesAR,
-)
-from clinical_mdr_api.domains.controlled_terminologies.ct_term_name import CTTermNameAR
-from clinical_mdr_api.domains.dictionaries.dictionary_term import DictionaryTermAR
 from clinical_mdr_api.domains.syntax_templates.template import (
     InstantiationCountsVO,
     TemplateAggregateRootBase,
@@ -15,6 +10,10 @@ from clinical_mdr_api.domains.syntax_templates.template import (
 from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemMetadataVO,
     LibraryVO,
+)
+from clinical_mdr_api.models.controlled_terminologies.ct_term import (
+    SimpleCTTermNameAndAttributes,
+    SimpleTermModel,
 )
 
 
@@ -25,28 +24,28 @@ class CriteriaTemplateAR(TemplateAggregateRootBase):
     behavior. Inherits generic template versioning behaviors
     """
 
-    _type: tuple[CTTermNameAR, CTTermAttributesAR] = ()
+    _type: SimpleCTTermNameAndAttributes = None
 
-    _indications: list[DictionaryTermAR] | None = None
+    _indications: list[SimpleTermModel] | None = None
 
-    _categories: list[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None
+    _categories: list[SimpleCTTermNameAndAttributes] | None = None
 
-    _subcategories: list[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None
+    _subcategories: list[SimpleCTTermNameAndAttributes] | None = None
 
     @property
-    def type(self) -> tuple[CTTermNameAR, CTTermAttributesAR]:
+    def type(self) -> SimpleCTTermNameAndAttributes | None:
         return self._type
 
     @property
-    def indications(self) -> list[DictionaryTermAR]:
+    def indications(self) -> list[SimpleTermModel]:
         return self._indications
 
     @property
-    def categories(self) -> list[tuple[CTTermNameAR, CTTermAttributesAR]]:
+    def categories(self) -> list[SimpleCTTermNameAndAttributes]:
         return self._categories
 
     @property
-    def sub_categories(self) -> list[tuple[CTTermNameAR, CTTermAttributesAR]]:
+    def sub_categories(self) -> list[SimpleCTTermNameAndAttributes]:
         return self._subcategories
 
     @classmethod
@@ -59,10 +58,10 @@ class CriteriaTemplateAR(TemplateAggregateRootBase):
         item_metadata: LibraryItemMetadataVO,
         study_count: int = 0,
         counts: InstantiationCountsVO | None = None,
-        criteria_type: tuple[CTTermNameAR, CTTermAttributesAR] | None = None,
-        indications: list[DictionaryTermAR] | None = None,
-        categories: list[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None,
-        sub_categories: list[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None,
+        criteria_type: SimpleCTTermNameAndAttributes | None = None,
+        indications: list[SimpleTermModel] | None = None,
+        categories: list[SimpleCTTermNameAndAttributes] | None = None,
+        sub_categories: list[SimpleCTTermNameAndAttributes] | None = None,
     ) -> Self:
         return cls(
             _uid=uid,
@@ -89,13 +88,16 @@ class CriteriaTemplateAR(TemplateAggregateRootBase):
         next_available_sequence_id_callback: Callable[
             [str, str | None, str | None, LibraryVO | None], str | None
         ] = (lambda uid, prefix, type_uid, library: None),
-        criteria_type: tuple[CTTermNameAR, CTTermAttributesAR] | None = None,
-        indications: list[DictionaryTermAR] | None = None,
-        categories: list[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None,
-        sub_categories: list[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None,
+        criteria_type: SimpleCTTermNameAndAttributes | None = None,
+        indications: list[SimpleTermModel] | None = None,
+        categories: list[SimpleCTTermNameAndAttributes] | None = None,
+        sub_categories: list[SimpleCTTermNameAndAttributes] | None = None,
     ) -> Self:
         criteria_type_name = re.sub(
-            "criteria", "", criteria_type[0].name, flags=re.IGNORECASE
+            "criteria",
+            "",
+            criteria_type.name.sponsor_preferred_name,
+            flags=re.IGNORECASE,
         ).title()
 
         ar: Self = super().from_input_values(
@@ -108,7 +110,7 @@ class CriteriaTemplateAR(TemplateAggregateRootBase):
             uid=ar._uid,
             prefix="C"
             + "".join([char for char in criteria_type_name if char.isupper()]),
-            type_uid=criteria_type[0].uid,
+            type_uid=criteria_type.term_uid,
             library=library,
         )
         ar._type = criteria_type

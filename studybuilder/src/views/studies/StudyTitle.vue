@@ -17,7 +17,7 @@
       @click.stop="showForm = true"
       :title="$t('StudyTitleView.edit_title')"
       :data-cy="$t('StudyTitleView.edit_title')"
-      :disabled="selectedStudyVersion !== null"
+      :disabled="selectedStudyVersion !== null || Boolean(selectedStudy.study_parent_part)"
       >
       <v-icon>
         mdi-pencil-outline
@@ -75,7 +75,13 @@ export default {
   },
   methods: {
     fetchStudyDescription () {
-      study.getStudyDescriptionMetadata(this.selectedStudy.uid, this.selectedStudyVersion).then(resp => {
+      let studyUid = ''
+      if (this.selectedStudy.study_parent_part) {
+        studyUid = this.selectedStudy.study_parent_part.uid
+      } else {
+        studyUid = this.selectedStudy.uid
+      }
+      study.getStudyDescriptionMetadata(studyUid, this.selectedStudyVersion).then(resp => {
         this.description = resp.data.current_metadata.study_description
       })
     }

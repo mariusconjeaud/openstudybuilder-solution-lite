@@ -1,6 +1,6 @@
 """Catalogue related fixtures"""
 
-# pylint:disable=unused-import,redefined-outer-name,unused-argument
+# pylint: disable=unused-import,redefined-outer-name,unused-argument
 
 import logging
 

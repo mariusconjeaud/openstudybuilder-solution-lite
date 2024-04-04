@@ -1,5 +1,3 @@
-from neomodel import db
-
 from clinical_mdr_api.domain_repositories.models.generic import (
     Library,
     VersionRelationship,
@@ -14,32 +12,28 @@ from clinical_mdr_api.domain_repositories.syntax_templates.generic_syntax_templa
 from clinical_mdr_api.domains.syntax_templates.footnote_template import (
     FootnoteTemplateAR,
 )
-from clinical_mdr_api.domains.syntax_templates.template import InstantiationCountsVO
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryVO
+from clinical_mdr_api.models.controlled_terminologies.ct_term import (
+    SimpleCTTermNameAndAttributes,
+    SimpleTermAttributes,
+    SimpleTermModel,
+    SimpleTermName,
+)
+from clinical_mdr_api.models.generic_models import SimpleNameModel
 
 
 class FootnoteTemplateRepository(GenericSyntaxTemplateRepository[FootnoteTemplateAR]):
     root_class = FootnoteTemplateRoot
     value_class = FootnoteTemplateValue
 
-    def check_exists_by_name_in_study(self, name: str, study_uid: str) -> bool:
-        query = """
-            MATCH (study_root:StudyRoot{uid:$study_uid})-[:LATEST]->(:StudyValue)-[:HAS_STUDY_FOOTNOTE]->(:StudyFootnote)-
-            [:HAS_SELECTED_FOOTNOTE]->(:FootnoteValue)<-[:LATEST]-(cr:FootnoteRoot)<-[:HAS_FOOTNOTE]-(:FootnoteTemplateRoot)-[:LATEST]->(ctv:FootnoteTemplateValue {name:$name})
-            RETURN cr
-            """
-        result, _ = db.cypher_query(query, {"study_uid": study_uid, "name": name})
-
-        return len(result) > 0 and len(result[0]) > 0
-
-    def _create_aggregate_root_instance_from_version_root_relationship_and_value(
+    def _create_ar(
         self,
         root: FootnoteTemplateRoot,
         library: Library,
         relationship: VersionRelationship,
         value: FootnoteTemplateValue,
         study_count: int = 0,
-        counts: InstantiationCountsVO | None = None,
+        **kwargs,
     ) -> FootnoteTemplateAR:
         return FootnoteTemplateAR.from_repository_values(
             uid=root.uid,
@@ -50,8 +44,68 @@ class FootnoteTemplateRepository(GenericSyntaxTemplateRepository[FootnoteTemplat
             ),
             item_metadata=self._library_item_metadata_vo_from_relation(relationship),
             template=self._get_template(value),
+            footnote_type=SimpleCTTermNameAndAttributes(
+                term_uid=kwargs["template_type"]["term_uid"],
+                name=SimpleTermName(
+                    sponsor_preferred_name=kwargs["template_type"]["name"],
+                    sponsor_preferred_name_sentence_case=kwargs["template_type"][
+                        "name_sentence_case"
+                    ],
+                ),
+                attributes=SimpleTermAttributes(
+                    code_submission_value=kwargs["template_type"][
+                        "code_submission_value"
+                    ],
+                    nci_preferred_name=kwargs["template_type"]["preferred_term"],
+                ),
+            ),
+            indications=sorted(
+                [
+                    SimpleTermModel(
+                        term_uid=indication["term_uid"], name=indication["name"]
+                    )
+                    for indication in kwargs["indications"]
+                    if indication["term_uid"]
+                ],
+                key=lambda x: x.term_uid,
+            ),
+            activities=sorted(
+                [
+                    SimpleNameModel(
+                        uid=activity["uid"],
+                        name=activity["name"],
+                        name_sentence_case=activity["name_sentence_case"],
+                    )
+                    for activity in kwargs["activities"]
+                    if activity["uid"]
+                ],
+                key=lambda x: x.uid,
+            ),
+            activity_groups=sorted(
+                [
+                    SimpleNameModel(
+                        uid=activity_group["uid"],
+                        name=activity_group["name"],
+                        name_sentence_case=activity_group["name_sentence_case"],
+                    )
+                    for activity_group in kwargs["activity_groups"]
+                    if activity_group["uid"]
+                ],
+                key=lambda x: x.uid,
+            ),
+            activity_subgroups=sorted(
+                [
+                    SimpleNameModel(
+                        uid=activity_subgroup["uid"],
+                        name=activity_subgroup["name"],
+                        name_sentence_case=activity_subgroup["name_sentence_case"],
+                    )
+                    for activity_subgroup in kwargs["activity_subgroups"]
+                    if activity_subgroup["uid"]
+                ],
+                key=lambda x: x.uid,
+            ),
             study_count=study_count,
-            counts=counts,
         )
 
     def _create(self, item: FootnoteTemplateAR) -> FootnoteTemplateAR:
@@ -64,22 +118,15 @@ class FootnoteTemplateRepository(GenericSyntaxTemplateRepository[FootnoteTemplat
         """
         root, item = super()._create(item)
 
-        if item.type and item.type[0]:
-            footnote_type = self._get_template_type(item.type[0].uid)
+        if item.type:
+            footnote_type = self._get_template_type(item.type.term_uid)
             root.has_type.connect(footnote_type)
-
         for indication in item.indications or []:
-            if indication:
-                root.has_indication.connect(self._get_indication(indication.uid))
+            root.has_indication.connect(self._get_indication(indication.term_uid))
         for activity in item.activities or []:
-            if activity:
-                root.has_activity.connect(self._get_activity(activity.uid))
+            root.has_activity.connect(self._get_activity(activity.uid))
         for group in item.activity_groups or []:
-            if group:
-                root.has_activity_group.connect(self._get_activity_group(group.uid))
+            root.has_activity_group.connect(self._get_activity_group(group.uid))
         for group in item.activity_subgroups or []:
-            if group:
-                root.has_activity_subgroup.connect(
-                    self._get_activity_subgroup(group.uid)
-                )
+            root.has_activity_subgroup.connect(self._get_activity_subgroup(group.uid))
         return item

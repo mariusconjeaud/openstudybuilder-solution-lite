@@ -28,7 +28,7 @@
           {{ $t('StudyBranchArms.arm_name') }}
         </v-col>
         <v-col cols="2">
-          <router-link :to="{ name: 'StudyArmOverview', params: { study_id: $route.params.study_id, id: branchArm.arm_root.arm_uid } }">
+          <router-link :to="{ name: 'StudyArmOverview', params: { study_id: $route.params.study_id, id: branchArm.arm_root.arm_uid, root_tab: $route.params.root_tab} }">
             {{ branchArm.arm_root.name }}
           </router-link>
         </v-col>
@@ -86,7 +86,7 @@ export default {
   },
   methods: {
     close () {
-      this.$router.push({ name: 'StudyStructure', params: { tab: 'branches' } })
+      this.$router.push({ name: 'StudyStructure', params: { tab: this.$route.params.root_tab } })
     }
   }
 }

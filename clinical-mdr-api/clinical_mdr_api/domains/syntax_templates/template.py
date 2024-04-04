@@ -1,14 +1,11 @@
 from dataclasses import dataclass
 from typing import AbstractSet, Callable, Self
 
-from deprecated.classic import deprecated
-
 from clinical_mdr_api.domains._utils import (
     extract_parameters,
     is_syntax_of_template_name_correct,
     strip_html,
 )
-from clinical_mdr_api.domains.libraries.parameter_term import ParameterTermEntryVO
 from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemAggregateRootBase,
     LibraryItemMetadataVO,
@@ -29,8 +26,6 @@ class TemplateVO:
     # template name value
     name: str
     name_plain: str | None = None
-    # Optional, default parameter terms
-    default_parameter_terms: list[ParameterTermEntryVO] | None = None
 
     # template guidance text
     guidance_text: str | None = None
@@ -50,7 +45,6 @@ class TemplateVO:
         cls,
         template_name: str,
         parameter_name_exists_callback: Callable[[str], bool],
-        default_parameter_terms: list[ParameterTermEntryVO] | None = None,
         guidance_text: str | None = None,
     ) -> Self:
         if not is_syntax_of_template_name_correct(template_name):
@@ -61,9 +55,6 @@ class TemplateVO:
             name=template_name,
             name_plain=strip_html(template_name),
             guidance_text=guidance_text,
-            default_parameter_terms=tuple(default_parameter_terms)
-            if default_parameter_terms
-            else None,
         )
         for parameter_name in result.parameter_names:
             if not parameter_name_exists_callback(parameter_name):
@@ -166,24 +157,6 @@ class TemplateAggregateRootBase(LibraryItemAggregateRootBase):
     @property
     def counts(self):
         return self._counts
-
-    @classmethod
-    @deprecated
-    def from_neomodel(
-        cls,
-        uid: str,
-        sequence_id: str,
-        template: TemplateVO,
-        library: LibraryVO,
-        item_metadata: LibraryItemMetadataVO,
-    ) -> Self:
-        return cls.from_repository_values(
-            uid=uid,
-            sequence_id=sequence_id,
-            template=template,
-            library=library,
-            item_metadata=item_metadata,
-        )
 
     @classmethod
     def from_repository_values(

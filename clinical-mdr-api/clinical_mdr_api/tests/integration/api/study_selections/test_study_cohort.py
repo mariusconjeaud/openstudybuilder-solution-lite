@@ -10,6 +10,7 @@ Tests for /studies/{uid}/study-cohorts endpoints
 # which pylint interprets as unused arguments
 
 import logging
+from unittest import mock
 
 import pytest
 from fastapi.testclient import TestClient
@@ -219,18 +220,31 @@ def test_study_cohort_study_value_version(api_client):
     assert response.status_code == 200
 
     # get all
+    for i, _ in enumerate(before_unlock_arms["items"]):
+        before_unlock_arms["items"][i]["study_version"] = mock.ANY
     assert (
         before_unlock_arms
         == api_client.get(
             f"/studies/{study.uid}/study-arms?study_value_version=2"
         ).json()
     )
+    for i, _ in enumerate(before_unlock_branch_arms):
+        before_unlock_branch_arms[i]["study_version"] = mock.ANY
     assert (
         before_unlock_branch_arms
         == api_client.get(
             f"/studies/{study.uid}/study-branch-arms?study_value_version=2"
         ).json()
     )
+    for i, _ in enumerate(before_unlock_cohorts["items"]):
+        before_unlock_cohorts["items"][i]["study_version"] = mock.ANY
+        if before_unlock_cohorts["items"][i]["branch_arm_roots"]:
+            for ith_branch, _ in enumerate(
+                before_unlock_cohorts["items"][i]["branch_arm_roots"]
+            ):
+                before_unlock_cohorts["items"][i]["branch_arm_roots"][ith_branch][
+                    "study_version"
+                ] = mock.ANY
     assert (
         before_unlock_cohorts
         == api_client.get(
@@ -251,4 +265,9 @@ def test_study_cohort_study_value_version(api_client):
 )
 def test_get_study_cohorts_csv_xml_excel(api_client, export_format):
     url = f"/studies/{study.uid}/study-cohorts"
-    TestUtils.verify_exported_data_format(api_client, export_format, url)
+    exported_data = TestUtils.verify_exported_data_format(
+        api_client, export_format, url
+    )
+    if export_format == "text/csv":
+        assert "study_version" in str(exported_data.read())
+        assert "LATEST" in str(exported_data.read())

@@ -52,4 +52,4 @@ class CriteriaTest(api.APITest):
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "criteria.json")]
 
     def ignored_fields(self):
-        return ["start_date", "end_date", "uid", "time"]
+        return ["start_date", "end_date", "uid", "time", "study_version"]

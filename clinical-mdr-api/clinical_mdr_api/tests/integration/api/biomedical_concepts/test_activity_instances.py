@@ -292,6 +292,7 @@ ACTIVITY_INSTANCES_FIELDS_ALL = [
     "is_default_selected_for_activity",
     "is_data_sharing",
     "is_legacy_usage",
+    "is_derived",
     "legacy_description",
     "activity_groupings",
     "activity_instance_class",
@@ -863,6 +864,7 @@ def test_post_activity_instance(api_client):
             "activity_instance_class_uid": activity_instance_classes[0].uid,
             "activity_items": [item_to_post],
             "is_required_for_activity": True,
+            "is_derived": True,
             "library_name": "Sponsor",
         },
     )
@@ -909,6 +911,7 @@ def test_post_activity_instance(api_client):
     assert res["is_default_selected_for_activity"] is False
     assert res["is_data_sharing"] is False
     assert res["is_legacy_usage"] is False
+    assert res["is_derived"] is True
     assert res["library_name"] == "Sponsor"
     assert res["version"] == "0.1"
     assert res["status"] == "Draft"
@@ -1029,6 +1032,7 @@ def verify_instance_overview_content(res: dict):
     assert res["activity_instance"]["is_default_selected_for_activity"] is False
     assert res["activity_instance"]["is_data_sharing"] is False
     assert res["activity_instance"]["is_legacy_usage"] is False
+    assert res["activity_instance"]["is_derived"] is False
     assert res["activity_instance"]["topic_code"] == "topic code XXX"
     assert res["activity_instance"]["library_name"] == LIBRARY_NAME
 
@@ -1091,6 +1095,23 @@ def test_activity_instance_overview_export_to_yaml(api_client):
     verify_instance_overview_content(res=res)
 
 
+def test_activity_instance_cosmos_overview(api_client):
+    url = f"/concepts/activities/activity-instances/{activity_instances_all[3].uid}/overview.cosmos"
+    response = api_client.get(url)
+
+    assert response.status_code == 200
+    assert "application/x-yaml" in response.headers["content-type"]
+
+    res = yaml.load(response.text, Loader=yaml.SafeLoader)
+
+    assert res["shortName"] == "name XXX"
+    assert res["conceptId"] == "C-XXX"
+    assert res["resultScales"] == [""]
+    assert len(res["categories"]) == 1
+    assert res["categories"][0] == "activity_subgroup"
+    assert len(res["dataElementConcepts"]) == 3
+
+
 def test_activity_overview(api_client):
     response = api_client.get(
         f"/concepts/activities/activities/{activities[1].uid}/overview",
@@ -1131,6 +1152,7 @@ def verify_activity_overview_content(res: dict):
     assert res["activity_instances"][0]["is_default_selected_for_activity"] is False
     assert res["activity_instances"][0]["is_data_sharing"] is False
     assert res["activity_instances"][0]["is_legacy_usage"] is False
+    assert res["activity_instances"][0]["is_derived"] is False
     assert res["activity_instances"][0]["topic_code"] == "topic code-AAA-0"
     assert res["activity_instances"][0]["library_name"] == LIBRARY_NAME
 

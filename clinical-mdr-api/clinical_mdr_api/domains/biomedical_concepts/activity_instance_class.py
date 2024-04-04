@@ -62,7 +62,7 @@ class ActivityInstanceClassVO:
             self.parent_uid
         ):
             raise exceptions.ValidationException(
-                f"ActivityInstanceClass tried to connect to non existing ActivityInstanceClass ({self.parent_uid})."
+                f"ActivityInstanceClass tried to connect to non-existent or non-final ActivityInstanceClass ({self.parent_uid})."
             )
 
 

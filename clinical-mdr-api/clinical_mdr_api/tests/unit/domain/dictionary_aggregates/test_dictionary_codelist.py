@@ -23,7 +23,7 @@ def create_random_dictionary_codelist_vo() -> DictionaryCodelistVO:
 
 
 def create_random_dictionary_codelist_ar(
-    # pylint:disable=unnecessary-lambda
+    # pylint: disable=unnecessary-lambda
     generate_uid_callback: Callable[[], str] = lambda: random_str(),
     library: str = "Library",
     is_editable: bool = True,

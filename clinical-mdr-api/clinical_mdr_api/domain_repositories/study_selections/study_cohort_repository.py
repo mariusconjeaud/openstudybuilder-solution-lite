@@ -521,4 +521,6 @@ class StudySelectionCohortRepository:
         return self._get_selection_with_history(study_uid=study_uid)
 
     def close(self) -> None:
+        # Our repository guidelines state that repos should have a close method
+        # But nothing needs to be done in this one
         pass

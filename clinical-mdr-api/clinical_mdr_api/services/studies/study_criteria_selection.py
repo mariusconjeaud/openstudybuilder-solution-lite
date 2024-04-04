@@ -39,7 +39,10 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
         self.author = author
 
     def _transform_all_to_response_model(
-        self, study_selection: StudySelectionCriteriaAR, no_brackets: bool
+        self,
+        study_selection: StudySelectionCriteriaAR,
+        no_brackets: bool,
+        study_value_version: str | None = None,
     ) -> list[models.StudySelectionCriteria]:
         result = []
         for selection in study_selection.study_criteria_selection:
@@ -55,6 +58,7 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
                         get_ct_term_criteria_type=self._find_by_uid_or_raise_not_found,
                         no_brackets=no_brackets,
                         find_project_by_study_uid=self._repos.project_repository.find_by_study_uid,
+                        study_value_version=study_value_version,
                     )
                 )
             else:
@@ -68,6 +72,7 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
                         get_criteria_template_by_uid_version_callback=self._transform_criteria_template_model,
                         get_ct_term_criteria_type=self._find_by_uid_or_raise_not_found,
                         find_project_by_study_uid=self._repos.project_repository.find_by_study_uid,
+                        study_value_version=study_value_version,
                     )
                 )
         return result
@@ -98,7 +103,7 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
                 selections = []
                 for template_input in selection_create_input:
                     # Get criteria template
-                    criteria_template = criteria_template_repo.find_by_uid_2(
+                    criteria_template = criteria_template_repo.find_by_uid(
                         uid=template_input.criteria_template_uid
                     )
                     if criteria_template is None:
@@ -211,7 +216,7 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
             criteria_uid = criteria_service.repository.find_uid_by_name(
                 name=criteria_ar.name
             )
-        criteria_ar = criteria_service.repository.find_by_uid_2(
+        criteria_ar = criteria_service.repository.find_by_uid(
             criteria_uid, for_update=True
         )
 
@@ -320,7 +325,7 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
                 study_uid=study_uid, for_update=True
             )
             criteria_repo = self._repos.criteria_repository
-            selected_criteria = criteria_repo.find_by_uid_2(
+            selected_criteria = criteria_repo.find_by_uid(
                 selection_create_input.criteria_uid, status=LibraryItemStatus.FINAL
             )
             if selected_criteria is None:
@@ -343,7 +348,7 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
             )
 
             if new_selection.syntax_object_uid is not None:
-                criteria_ar = self._repos.criteria_repository.find_by_uid_2(
+                criteria_ar = self._repos.criteria_repository.find_by_uid(
                     new_selection.syntax_object_uid, for_update=True
                 )
                 if criteria_ar is None:
@@ -652,7 +657,9 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
             # Unwind ARs
             selections = []
             parsed_selections = self._transform_all_to_response_model(
-                criteria_selection_ar, no_brackets=no_brackets
+                criteria_selection_ar,
+                no_brackets=no_brackets,
+                study_value_version=study_value_version,
             )
             for selection in parsed_selections:
                 selections.append(selection)
@@ -906,7 +913,7 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
         selection_ar, selection = self._get_specific_criteria_selection_by_uids(
             study_uid, study_selection_uid, for_update=True
         )
-        criteria_ar = self._repos.criteria_repository.find_by_uid_2(
+        criteria_ar = self._repos.criteria_repository.find_by_uid(
             selection.syntax_object_uid
         )
         if criteria_ar.item_metadata.status == LibraryItemStatus.DRAFT:
@@ -938,7 +945,7 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
         selection_ar, selection = self._get_specific_criteria_selection_by_uids(
             study_uid, study_selection_uid, for_update=True
         )
-        criteria_ar = self._repos.criteria_repository.find_by_uid_2(
+        criteria_ar = self._repos.criteria_repository.find_by_uid(
             selection.syntax_object_uid
         )
         if criteria_ar.item_metadata.status == LibraryItemStatus.DRAFT:

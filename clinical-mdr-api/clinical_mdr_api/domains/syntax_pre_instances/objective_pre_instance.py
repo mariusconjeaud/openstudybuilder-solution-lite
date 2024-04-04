@@ -1,16 +1,15 @@
 from dataclasses import dataclass
 from typing import Callable, Self
 
-from clinical_mdr_api.domains.controlled_terminologies.ct_term_attributes import (
-    CTTermAttributesAR,
-)
-from clinical_mdr_api.domains.controlled_terminologies.ct_term_name import CTTermNameAR
-from clinical_mdr_api.domains.dictionaries.dictionary_term import DictionaryTermAR
 from clinical_mdr_api.domains.libraries.object import ParametrizedTemplateVO
 from clinical_mdr_api.domains.syntax_pre_instances.pre_instance_ar import PreInstanceAR
 from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemMetadataVO,
     LibraryVO,
+)
+from clinical_mdr_api.models.controlled_terminologies.ct_term import (
+    SimpleCTTermNameAndAttributes,
+    SimpleTermModel,
 )
 
 
@@ -22,20 +21,20 @@ class ObjectivePreInstanceAR(PreInstanceAR):
 
     _is_confirmatory_testing: bool | None = None
 
-    _indications: list[DictionaryTermAR] | None = None
+    _indications: list[SimpleTermModel] | None = None
 
-    _categories: list[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None
+    _categories: list[SimpleCTTermNameAndAttributes] | None = None
 
     @property
     def is_confirmatory_testing(self) -> bool:
         return self._is_confirmatory_testing
 
     @property
-    def indications(self) -> list[DictionaryTermAR]:
+    def indications(self) -> list[SimpleTermModel]:
         return self._indications
 
     @property
-    def categories(self) -> list[tuple[CTTermNameAR, CTTermAttributesAR]]:
+    def categories(self) -> list[SimpleCTTermNameAndAttributes]:
         return self._categories
 
     @classmethod
@@ -48,8 +47,8 @@ class ObjectivePreInstanceAR(PreInstanceAR):
         sequence_id: str,
         study_count: int = 0,
         is_confirmatory_testing: bool | None = None,
-        indications: list[DictionaryTermAR] | None = None,
-        categories: list[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None,
+        indications: list[SimpleTermModel] | None = None,
+        categories: list[SimpleCTTermNameAndAttributes] | None = None,
     ) -> Self:
         return cls(
             _uid=uid,
@@ -74,8 +73,8 @@ class ObjectivePreInstanceAR(PreInstanceAR):
             lambda _: None
         ),
         is_confirmatory_testing: bool | None = None,
-        indications: list[DictionaryTermAR] | None = None,
-        categories: list[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None,
+        indications: list[SimpleTermModel] | None = None,
+        categories: list[SimpleCTTermNameAndAttributes] | None = None,
     ) -> Self:
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(author=author)
 

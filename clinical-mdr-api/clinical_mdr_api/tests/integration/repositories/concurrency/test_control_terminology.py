@@ -27,6 +27,7 @@ from clinical_mdr_api.domains.controlled_terminologies.ct_term_attributes import
     CTTermAttributesVO,
 )
 from clinical_mdr_api.domains.controlled_terminologies.ct_term_name import (
+    CTTermCodelistVO,
     CTTermNameAR,
     CTTermNameVO,
 )
@@ -175,7 +176,7 @@ class ControlTerminologyConcurrencyTest(unittest.TestCase):
         )
 
         ct_term_attributes_vo = CTTermAttributesVO.from_repository_values(
-            codelist_uid=self.codelist_uid,
+            codelists=[CTTermCodelistVO(codelist_uid=self.codelist_uid, order=1)],
             catalogue_name="SDTM CT",
             concept_id=None,
             code_submission_value="code_submission_value",
@@ -192,11 +193,10 @@ class ControlTerminologyConcurrencyTest(unittest.TestCase):
         )
 
         ct_term_name_vo = CTTermNameVO.from_repository_values(
-            codelist_uid=self.codelist_uid,
+            codelists=[CTTermCodelistVO(codelist_uid=self.codelist_uid, order=1)],
             catalogue_name="SDTM CT",
             name="term XYZ",
             name_sentence_case="term XYZ",
-            order=1,
         )
 
         ct_term_name_ar = CTTermNameAR.from_input_values(

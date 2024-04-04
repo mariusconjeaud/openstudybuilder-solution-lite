@@ -21,6 +21,9 @@ export default {
     }
     return repository.get(`${resource}/${source}/${uid}/overview`, options)
   },
+  getCOSMoSOverview (source, uid) {
+    return repository.get(`${resource}/${source}/${uid}/overview.cosmos`)
+  },
   getVersions (source, uid) {
     return repository.get(`${resource}/${source}/${uid}/versions`)
   },

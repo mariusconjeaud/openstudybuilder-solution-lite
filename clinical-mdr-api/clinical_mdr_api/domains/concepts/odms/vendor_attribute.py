@@ -61,7 +61,7 @@ class OdmVendorAttributeVO(ConceptVO):
 
             if not find_odm_vendor_namespace_callback(self.vendor_namespace_uid):
                 raise BusinessLogicException(
-                    "ODM Vendor Attribute tried to connect to non existing concepts "
+                    "ODM Vendor Attribute tried to connect to non-existent concepts "
                     f"[('Concept Name: ODM Vendor Namespace', 'uids: ({self.vendor_namespace_uid})')]."
                 )
 
@@ -73,7 +73,7 @@ class OdmVendorAttributeVO(ConceptVO):
 
             if not find_odm_vendor_element_callback(self.vendor_element_uid):
                 raise BusinessLogicException(
-                    "ODM Vendor Attribute tried to connect to non existing concepts "
+                    "ODM Vendor Attribute tried to connect to non-existent concepts "
                     f"[('Concept Name: ODM Vendor Element', 'uids: ({self.vendor_element_uid})')]."
                 )
 

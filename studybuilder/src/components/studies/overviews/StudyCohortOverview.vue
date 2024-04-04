@@ -61,7 +61,7 @@
             hide-default-footer
             >
             <template v-slot:item.name="{ item }">
-              <router-link :to="{ name: 'StudyArmOverview', params: { study_id: selectedStudy.uid, id: item.arm_uid } }">
+              <router-link :to="{ name: 'StudyArmOverview', params: { study_id: selectedStudy.uid, id: item.arm_uid, root_tab: $route.params.root_tab } }">
                 {{ item.name }}
               </router-link>
             </template>
@@ -82,12 +82,12 @@
             hide-default-footer
             >
             <template v-slot:item.name="{ item }">
-              <router-link :to="{ name: 'StudyBranchArmOverview', params: { study_id: selectedStudy.uid, id: item.branch_arm_uid } }">
+              <router-link :to="{ name: 'StudyBranchArmOverview', params: { study_id: selectedStudy.uid, id: item.branch_arm_uid, root_tab: $route.params.root_tab } }">
                 {{ item.name }}
               </router-link>
             </template>
             <template v-slot:item.arm_root.name="{ item }">
-              <router-link :to="{ name: 'StudyArmOverview', params: { study_id: selectedStudy.uid, id: item.arm_root.arm_uid } }">
+              <router-link :to="{ name: 'StudyArmOverview', params: { study_id: selectedStudy.uid, id: item.arm_root.arm_uid, root_tab: $route.params.root_tab } }">
                 {{ item.arm_root.name }}
               </router-link>
             </template>

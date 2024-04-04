@@ -1,3 +1,5 @@
+import datetime
+
 from clinical_mdr_api import exceptions
 from clinical_mdr_api.domain_repositories.concepts.activities.activity_instance_repository import (
     ActivityInstanceRepository,
@@ -23,6 +25,7 @@ from clinical_mdr_api.models.concepts.activities.activity_instance import (
     ActivityInstanceOverview,
     ActivityInstanceVersion,
 )
+from clinical_mdr_api.services.concepts import constants
 from clinical_mdr_api.services.concepts.concept_generic_service import (
     ConceptGenericService,
     _AggregateRootType,
@@ -81,6 +84,7 @@ class ActivityInstanceService(ConceptGenericService[ActivityInstanceAR]):
                 is_default_selected_for_activity=concept_input.is_default_selected_for_activity,
                 is_data_sharing=concept_input.is_data_sharing,
                 is_legacy_usage=concept_input.is_legacy_usage,
+                is_derived=concept_input.is_derived,
                 legacy_description=concept_input.legacy_description,
                 activity_groupings=[
                     ActivityInstanceGroupingVO(
@@ -187,6 +191,7 @@ class ActivityInstanceService(ConceptGenericService[ActivityInstanceAR]):
                 or item.concept_vo.is_data_sharing,
                 is_legacy_usage=concept_edit_input.is_legacy_usage
                 or item.concept_vo.is_legacy_usage,
+                is_derived=concept_edit_input.is_derived or item.concept_vo.is_derived,
                 legacy_description=concept_edit_input.legacy_description
                 or item.concept_vo.legacy_description,
                 activity_groupings=activity_groupings,
@@ -219,3 +224,47 @@ class ActivityInstanceService(ConceptGenericService[ActivityInstanceAR]):
             )
         )
         return ActivityInstanceOverview.from_repository_input(overview=overview)
+
+    def get_cosmos_activity_instance_overview(self, activity_instance_uid: str) -> str:
+        if not self.repository.exists_by("uid", activity_instance_uid, True):
+            raise NotFoundException(
+                f"Cannot find Activity instance with the following uid ({activity_instance_uid})"
+            )
+        data: dict = self.repository.get_cosmos_activity_instance_overview(
+            uid=activity_instance_uid
+        )
+        result: dict = {
+            "packageDate": datetime.date.today().isoformat(),
+            "packageType": "bc",
+            "conceptId": data["activity_instance_value"]["nci_concept_id"],
+            "ncitCode": data["activity_instance_value"]["nci_concept_id"],
+            "href": constants.COSM0S_BASE_ITEM_HREF.format(
+                data["activity_instance_value"]["nci_concept_id"]
+            ),
+            "categories": data["activity_subgroups"],
+            "shortName": data["activity_instance_value"]["name"],
+            "synonyms": data["activity_instance_value"]["abbreviation"],
+            "resultScales": [
+                constants.COSM0S_RESULT_SCALES_MAP.get(
+                    data["activity_instance_class_name"], ""
+                )
+            ],
+            "definition": data["activity_instance_value"]["definition"],
+            "dataElementConcepts": [],
+        }
+        for activity_item in data["activity_items"]:
+            result["dataElementConcepts"].append(
+                {
+                    "conceptId": activity_item["nci_concept_id"],
+                    "ncitCode": activity_item["nci_concept_id"],
+                    "href": constants.COSM0S_BASE_ITEM_HREF.format(
+                        activity_item["nci_concept_id"]
+                    ),
+                    "shortName": activity_item["name"],
+                    "dataType": constants.COSMOS_DEC_TYPES_MAP.get(
+                        activity_item["type"], activity_item["type"]
+                    ),
+                    "exampleSet": activity_item["example_set"],
+                }
+            )
+        return result

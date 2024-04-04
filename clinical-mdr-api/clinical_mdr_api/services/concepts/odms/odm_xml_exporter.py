@@ -68,7 +68,6 @@ class OdmXmlExporterService:
 
     XML_LANG = "xml:lang"
     OSB_VERSION = "osb:version"
-    OSB_LANG = "osb:lang"
     OSB_INSTRUCTION = "osb:instruction"
     OSB_SPONSOR_INSTRUCTION = "osb:sponsorInstruction"
     SDTM_MSG_COLOURS = ["#bfffff", "#ffff96", "#96ff96", "#ffbf9c"]
@@ -77,7 +76,7 @@ class OdmXmlExporterService:
         self,
         target_uid: str,
         target_type: TargetType,
-        status: list[ObjectStatus],
+        status: ObjectStatus,
         allowed_namespaces: list[str],
         pdf: bool | None,
         stylesheet: str | None,
@@ -90,7 +89,7 @@ class OdmXmlExporterService:
         Args:
             target_uid (str): The UID of the ODM element to generate XML for.
             target_type (TargetType): The type of the ODM element to generate XML for.
-            status (list[ObjectStatus]): A list of statuses of the ODM elements to generate XML for.
+            status (ObjectStatus): The status of the ODM elements to generate XML for.
             allowed_namespaces (list[str]): A list of allowed vendor namespace prefixes.
             pdf (bool | None): A flag indicating whether to generate a PDF.
             stylesheet (str | None): The name of the stylesheet to include as the XML stylesheet.
@@ -103,7 +102,7 @@ class OdmXmlExporterService:
         self.odm_data_extractor = OdmDataExtractor(
             target_uid,
             target_type,
-            [elm.name for elm in status],
+            status.name,
             unit_definition_service,
         )
         self.mapper_file = mapper_file
@@ -324,7 +323,7 @@ class OdmXmlExporterService:
                     _string=vendor_element.value,
                     **{
                         vendor_element_attribute.name: Attribute(
-                            # pylint:disable=line-too-long
+                            # pylint: disable=line-too-long
                             f"{self.odm_data_extractor.odm_vendor_elements[vendor_element_attribute.vendor_element_uid]['vendor_namespace']['prefix']}:{vendor_element_attribute.name}",
                             vendor_element_attribute.value,
                         )

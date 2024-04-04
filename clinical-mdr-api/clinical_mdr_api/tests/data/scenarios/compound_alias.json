@@ -61,6 +61,7 @@
                 "name": "7.5 [UnitDefinition_000001] for SDTM domain [sdtm_domain_uid1]",
                 "value": 7.5,
                 "unit_definition_uid": "UnitDefinition_000001",
+                "unit_label": "name_1",
                 "sdtm_domain_uid": "sdtm_domain_uid1",
                 "name_sentence_case": "7.5",
                 "definition": "lag_time_definition1",

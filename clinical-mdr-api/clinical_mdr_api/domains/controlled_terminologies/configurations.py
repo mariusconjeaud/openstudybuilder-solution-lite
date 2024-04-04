@@ -101,7 +101,6 @@ class CTConfigAR(VersioningActionMixin):
     )
 
     study_field_name: str | None = None
-    study_selection_rel_type: str | None = None
 
     def get_possible_actions(self) -> AbstractSet[ObjectAction]:
         raise NotImplementedError("Possible actions retrieval not implemented.")
@@ -128,9 +127,6 @@ class CTConfigAR(VersioningActionMixin):
     @property
     def is_deleted(self):
         return self._is_deleted
-
-    def set_uid(self, uid: str):
-        self._uid = uid
 
     def edit_draft(
         self,

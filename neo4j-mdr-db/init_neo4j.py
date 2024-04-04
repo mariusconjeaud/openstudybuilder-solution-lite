@@ -98,6 +98,8 @@ def pre_load_template_parameter_tree(tx: Transaction):
         MERGE (study_duration_days)-[:HAS_PARENT_PARAMETER]->(numeric_values)
         MERGE (study_duration_weeks:TemplateParameter {name:"StudyDurationWeeks"})
         MERGE (study_duration_weeks)-[:HAS_PARENT_PARAMETER]->(numeric_values)
+        MERGE (week_in_study:TemplateParameter {name:"WeekInStudy"})
+        MERGE (week_in_study)-[:HAS_PARENT_PARAMETER]->(numeric_values)
         MERGE (time_points:TemplateParameter {name:"TimePoint"})
         MERGE (time_points)-[:HAS_PARENT_PARAMETER]->(simple_concepts)
         MERGE (lag_time:TemplateParameter {name:"LagTime"})
@@ -137,7 +139,7 @@ def create_special_template_parameters(tx: Transaction):
     DELETE x
     WITH r
     MERGE (r)-[:LATEST]->(v:TemplateParameterValue{name: "NA"})
-    MERGE (r)-[:LATEST_FINAL{change_description: "Initial version", start_date: datetime(), end_date: datetime(), status: "Final", user_initials: "Import-procedure", version: "1.0"}]->(v)
+    MERGE (r)-[:LATEST_FINAL]->(v)
     MERGE (r)-[:HAS_VERSION{change_description: "Initial version", start_date: datetime(), end_date: datetime(), status: "Final", user_initials: "Import-procedure", version: "1.0"}]->(v)
     WITH r
     MATCH (n:TemplateParameter) 

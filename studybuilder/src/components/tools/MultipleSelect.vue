@@ -18,7 +18,7 @@
   >
   <template v-slot:selection="{index}" v-if="shorterPreview">
     <div v-if="index === 0">
-      <span>{{ value[0].name.length > 15 ? value[0].name.substring(0, 15).replace(/<\/?[^>]+(>|$)/g, '') + '...' : value[0].name.replace(/<\/?[^>]+(>|$)/g, '') }}</span>
+      <span>{{ value[0].name.length > 15 ? value[0].name.replace(/<\/?[^>]+(>)/g, '').substring(0, 15) + '...' : value[0].name.replace(/<\/?[^>]+(>)/g, '') }}</span>
     </div>
     <span
       v-if="index === 1"

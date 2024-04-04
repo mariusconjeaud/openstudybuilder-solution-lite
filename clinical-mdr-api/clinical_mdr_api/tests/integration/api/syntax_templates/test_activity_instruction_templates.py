@@ -110,20 +110,6 @@ def test_data():
             name="Default name with [TextValue]",
             guidance_text="Default guidance text",
             library_name="Sponsor",
-            default_parameter_terms=[
-                MultiTemplateParameterTerm(
-                    position=1,
-                    conjunction="",
-                    terms=[
-                        IndexedTemplateParameterTerm(
-                            index=1,
-                            name=text_value_1.name,
-                            uid=text_value_1.uid,
-                            type="TextValue",
-                        )
-                    ],
-                )
-            ],
             indication_uids=[dictionary_term_indication.term_uid],
             activity_uids=[activity.uid],
             activity_group_uids=[activity_group.uid],
@@ -135,7 +121,6 @@ def test_data():
             name="Default-AAA name with [TextValue]",
             guidance_text="Default-AAA guidance text",
             library_name="Sponsor",
-            default_parameter_terms=None,
             indication_uids=[dictionary_term_indication.term_uid],
             activity_uids=[activity.uid],
             activity_group_uids=[activity_group.uid],
@@ -147,7 +132,6 @@ def test_data():
             name="Default-BBB name with [TextValue]",
             guidance_text="Default-BBB guidance text",
             library_name="Sponsor",
-            default_parameter_terms=None,
             indication_uids=[dictionary_term_indication.term_uid],
             activity_uids=[activity.uid],
             activity_group_uids=[activity_group.uid],
@@ -160,7 +144,6 @@ def test_data():
             name="Default-XXX name with [TextValue]",
             guidance_text="Default-XXX guidance text",
             library_name="Sponsor",
-            default_parameter_terms=None,
             indication_uids=[dictionary_term_indication.term_uid],
             activity_uids=[activity.uid],
             activity_group_uids=[activity_group.uid],
@@ -173,7 +156,6 @@ def test_data():
             name="Default-YYY name with [TextValue]",
             guidance_text="Default-YYY guidance text",
             library_name="Sponsor",
-            default_parameter_terms=None,
             indication_uids=[dictionary_term_indication.term_uid],
             activity_uids=[activity.uid],
             activity_group_uids=[activity_group.uid],
@@ -187,7 +169,6 @@ def test_data():
                 name=f"Default-AAA-{index} name with [TextValue]",
                 guidance_text=f"Default-AAA-{index} guidance text",
                 library_name="Sponsor",
-                default_parameter_terms=None,
                 indication_uids=[dictionary_term_indication.term_uid],
                 activity_uids=[activity.uid],
                 activity_group_uids=[activity_group.uid],
@@ -199,7 +180,6 @@ def test_data():
                 name=f"Default-BBB-{index} name with [TextValue]",
                 guidance_text=f"Default-BBB-{index} guidance text",
                 library_name="Sponsor",
-                default_parameter_terms=None,
                 indication_uids=[dictionary_term_indication.term_uid],
                 activity_uids=[activity.uid],
                 activity_group_uids=[activity_group.uid],
@@ -211,7 +191,6 @@ def test_data():
                 name=f"Default-XXX-{index} name with [TextValue]",
                 guidance_text=f"Default-XXX-{index} guidance text",
                 library_name="Sponsor",
-                default_parameter_terms=None,
                 indication_uids=[dictionary_term_indication.term_uid],
                 activity_uids=[activity.uid],
                 activity_group_uids=[activity_group.uid],
@@ -223,7 +202,6 @@ def test_data():
                 name=f"Default-YYY-{index} name with [TextValue]",
                 guidance_text=f"Default-YYY-{index} guidance text",
                 library_name="Sponsor",
-                default_parameter_terms=None,
                 indication_uids=[dictionary_term_indication.term_uid],
                 activity_uids=[activity.uid],
                 activity_group_uids=[activity_group.uid],
@@ -250,7 +228,6 @@ ACTIVITY_INSTRUCTION_TEMPLATE_FIELDS_ALL = [
     "user_initials",
     "possible_actions",
     "parameters",
-    "default_parameter_terms",
     "library",
     "indications",
     "activities",
@@ -286,15 +263,21 @@ def test_get_activity_instruction_template(api_client):
     assert res["parameters"][0]["name"] == "TextValue"
     assert res["parameters"][0]["terms"] == []
     assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
-    assert (
-        res["indications"][0]["dictionary_id"]
-        == dictionary_term_indication.dictionary_id
-    )
     assert res["indications"][0]["name"] == dictionary_term_indication.name
+    assert res["activities"][0]["uid"] == activity.uid
+    assert res["activities"][0]["name"] == activity.name
+    assert res["activities"][0]["name_sentence_case"] == activity.name_sentence_case
     assert res["activity_groups"][0]["uid"] == activity_group.uid
     assert res["activity_groups"][0]["name"] == activity_group.name
+    assert (
+        res["activity_groups"][0]["name_sentence_case"]
+        == activity_group.name_sentence_case
+    )
     assert res["activity_subgroups"][0]["uid"] == activity_subgroup.uid
-    assert res["activity_subgroups"][0]["name"] == activity_subgroup.name
+    assert (
+        res["activity_subgroups"][0]["name_sentence_case"]
+        == activity_subgroup.name_sentence_case
+    )
     assert res["version"] == "1.0"
     assert res["status"] == "Final"
 
@@ -410,33 +393,41 @@ def test_get_versions_of_activity_instruction_template(api_client):
     assert res[0]["uid"] == activity_instruction_templates[1].uid
     assert res[0]["sequence_id"] == "AI2"
     assert res[0]["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
-    assert (
-        res[0]["indications"][0]["dictionary_id"]
-        == dictionary_term_indication.dictionary_id
-    )
     assert res[0]["indications"][0]["name"] == dictionary_term_indication.name
     assert res[0]["activities"][0]["uid"] == activity.uid
     assert res[0]["activities"][0]["name"] == activity.name
+    assert res[0]["activities"][0]["name_sentence_case"] == activity.name_sentence_case
     assert res[0]["activity_groups"][0]["uid"] == activity_group.uid
     assert res[0]["activity_groups"][0]["name"] == activity_group.name
+    assert (
+        res[0]["activity_groups"][0]["name_sentence_case"]
+        == activity_group.name_sentence_case
+    )
     assert res[0]["activity_subgroups"][0]["uid"] == activity_subgroup.uid
-    assert res[0]["activity_subgroups"][0]["name"] == activity_subgroup.name
+    assert (
+        res[0]["activity_subgroups"][0]["name_sentence_case"]
+        == activity_subgroup.name_sentence_case
+    )
     assert res[0]["version"] == "1.0"
     assert res[0]["status"] == "Final"
     assert res[1]["uid"] == activity_instruction_templates[1].uid
     assert res[1]["sequence_id"] == "AI2"
     assert res[1]["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
-    assert (
-        res[1]["indications"][0]["dictionary_id"]
-        == dictionary_term_indication.dictionary_id
-    )
     assert res[1]["indications"][0]["name"] == dictionary_term_indication.name
     assert res[1]["activities"][0]["uid"] == activity.uid
     assert res[1]["activities"][0]["name"] == activity.name
+    assert res[1]["activities"][0]["name_sentence_case"] == activity.name_sentence_case
     assert res[1]["activity_groups"][0]["uid"] == activity_group.uid
     assert res[1]["activity_groups"][0]["name"] == activity_group.name
+    assert (
+        res[1]["activity_groups"][0]["name_sentence_case"]
+        == activity_group.name_sentence_case
+    )
     assert res[1]["activity_subgroups"][0]["uid"] == activity_subgroup.uid
-    assert res[1]["activity_subgroups"][0]["name"] == activity_subgroup.name
+    assert (
+        res[1]["activity_subgroups"][0]["name_sentence_case"]
+        == activity_subgroup.name_sentence_case
+    )
     assert res[1]["version"] == "0.1"
     assert res[1]["status"] == "Draft"
 
@@ -451,17 +442,21 @@ def test_get_all_final_versions_of_activity_instruction_template(api_client):
     assert res[0]["uid"] == activity_instruction_templates[1].uid
     assert res[0]["sequence_id"] == "AI2"
     assert res[0]["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
-    assert (
-        res[0]["indications"][0]["dictionary_id"]
-        == dictionary_term_indication.dictionary_id
-    )
     assert res[0]["indications"][0]["name"] == dictionary_term_indication.name
     assert res[0]["activities"][0]["uid"] == activity.uid
     assert res[0]["activities"][0]["name"] == activity.name
+    assert res[0]["activities"][0]["name_sentence_case"] == activity.name_sentence_case
     assert res[0]["activity_groups"][0]["uid"] == activity_group.uid
     assert res[0]["activity_groups"][0]["name"] == activity_group.name
+    assert (
+        res[0]["activity_groups"][0]["name_sentence_case"]
+        == activity_group.name_sentence_case
+    )
     assert res[0]["activity_subgroups"][0]["uid"] == activity_subgroup.uid
-    assert res[0]["activity_subgroups"][0]["name"] == activity_subgroup.name
+    assert (
+        res[0]["activity_subgroups"][0]["name_sentence_case"]
+        == activity_subgroup.name_sentence_case
+    )
     assert res[0]["version"] == "1.0"
     assert res[0]["status"] == "Final"
 
@@ -585,7 +580,6 @@ def test_create_activity_instruction_template(api_client):
         "name": "default_name [TextValue]",
         "guidance_text": "default_guidance_text",
         "library_name": "Sponsor",
-        "default_parameter_terms": [],
         "indication_uids": [dictionary_term_indication.term_uid],
         "activity_uids": [activity.uid],
         "activity_group_uids": [activity_group.uid],
@@ -603,17 +597,21 @@ def test_create_activity_instruction_template(api_client):
     assert res["parameters"][0]["name"] == "TextValue"
     assert res["parameters"][0]["terms"] == []
     assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
-    assert (
-        res["indications"][0]["dictionary_id"]
-        == dictionary_term_indication.dictionary_id
-    )
     assert res["indications"][0]["name"] == dictionary_term_indication.name
     assert res["activities"][0]["uid"] == activity.uid
     assert res["activities"][0]["name"] == activity.name
+    assert res["activities"][0]["name_sentence_case"] == activity.name_sentence_case
     assert res["activity_groups"][0]["uid"] == activity_group.uid
     assert res["activity_groups"][0]["name"] == activity_group.name
+    assert (
+        res["activity_groups"][0]["name_sentence_case"]
+        == activity_group.name_sentence_case
+    )
     assert res["activity_subgroups"][0]["uid"] == activity_subgroup.uid
-    assert res["activity_subgroups"][0]["name"] == activity_subgroup.name
+    assert (
+        res["activity_subgroups"][0]["name_sentence_case"]
+        == activity_subgroup.name_sentence_case
+    )
     assert res["version"] == "0.1"
     assert res["status"] == "Draft"
     assert set(list(res.keys())) == set(ACTIVITY_INSTRUCTION_TEMPLATE_FIELDS_ALL)
@@ -639,17 +637,21 @@ def test_create_new_version_of_activity_instruction_template(api_client):
     assert res["name"] == "new test name"
     assert res["guidance_text"] == "new test guidance text"
     assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
-    assert (
-        res["indications"][0]["dictionary_id"]
-        == dictionary_term_indication.dictionary_id
-    )
     assert res["indications"][0]["name"] == dictionary_term_indication.name
     assert res["activities"][0]["uid"] == activity.uid
     assert res["activities"][0]["name"] == activity.name
+    assert res["activities"][0]["name_sentence_case"] == activity.name_sentence_case
     assert res["activity_groups"][0]["uid"] == activity_group.uid
     assert res["activity_groups"][0]["name"] == activity_group.name
+    assert (
+        res["activity_groups"][0]["name_sentence_case"]
+        == activity_group.name_sentence_case
+    )
     assert res["activity_subgroups"][0]["uid"] == activity_subgroup.uid
-    assert res["activity_subgroups"][0]["name"] == activity_subgroup.name
+    assert (
+        res["activity_subgroups"][0]["name_sentence_case"]
+        == activity_subgroup.name_sentence_case
+    )
     assert res["version"] == "1.1"
     assert res["status"] == "Draft"
     assert set(list(res.keys())) == set(ACTIVITY_INSTRUCTION_TEMPLATE_FIELDS_ALL)
@@ -668,139 +670,23 @@ def test_get_specific_version_of_activity_instruction_template(api_client):
     assert res["uid"] == activity_instruction_templates[4].uid
     assert res["sequence_id"] == "AI5"
     assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
-    assert (
-        res["indications"][0]["dictionary_id"]
-        == dictionary_term_indication.dictionary_id
-    )
     assert res["indications"][0]["name"] == dictionary_term_indication.name
     assert res["activities"][0]["uid"] == activity.uid
     assert res["activities"][0]["name"] == activity.name
+    assert res["activities"][0]["name_sentence_case"] == activity.name_sentence_case
     assert res["activity_groups"][0]["uid"] == activity_group.uid
     assert res["activity_groups"][0]["name"] == activity_group.name
+    assert (
+        res["activity_groups"][0]["name_sentence_case"]
+        == activity_group.name_sentence_case
+    )
     assert res["activity_subgroups"][0]["uid"] == activity_subgroup.uid
-    assert res["activity_subgroups"][0]["name"] == activity_subgroup.name
+    assert (
+        res["activity_subgroups"][0]["name_sentence_case"]
+        == activity_subgroup.name_sentence_case
+    )
     assert res["version"] == "1.1"
     assert res["status"] == "Draft"
-
-
-def test_create_activity_instruction_template_with_default_parameters(api_client):
-    data = {
-        "name": "test_name [TextValue]",
-        "guidance_text": "test_guidance_text",
-        "library_name": "Sponsor",
-        "default_parameter_terms": [
-            {
-                "position": 1,
-                "conjunction": "",
-                "terms": [
-                    {
-                        "index": 1,
-                        "name": text_value_1.name,
-                        "uid": text_value_1.uid,
-                        "type": "TextValue",
-                    }
-                ],
-            }
-        ],
-        "indication_uids": [dictionary_term_indication.term_uid],
-        "activity_group_uids": [activity_group.uid],
-        "activity_subgroup_uids": [activity_subgroup.uid],
-    }
-    response = api_client.post(URL, json=data)
-    res = response.json()
-    log.info(
-        "Created Activity Instruction Template with default parameter terms: %s", res
-    )
-
-    assert response.status_code == 201
-    assert res["uid"]
-    assert res["sequence_id"]
-    assert res["name"] == "test_name [TextValue]"
-    assert res["guidance_text"] == "test_guidance_text"
-    assert res["parameters"][0]["name"] == "TextValue"
-    assert res["parameters"][0]["terms"] == []
-    assert (
-        res["default_parameter_terms"]["0"][0]["terms"][0]["name"] == text_value_1.name
-    )
-    assert res["default_parameter_terms"]["0"][0]["terms"][0]["uid"] == text_value_1.uid
-    assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
-    assert (
-        res["indications"][0]["dictionary_id"]
-        == dictionary_term_indication.dictionary_id
-    )
-    assert res["indications"][0]["name"] == dictionary_term_indication.name
-    assert res["activity_groups"][0]["uid"] == activity_group.uid
-    assert res["activity_groups"][0]["name"] == activity_group.name
-    assert res["activity_subgroups"][0]["uid"] == activity_subgroup.uid
-    assert res["activity_subgroups"][0]["name"] == activity_subgroup.name
-    assert res["version"] == "0.1"
-    assert res["status"] == "Draft"
-    assert set(list(res.keys())) == set(ACTIVITY_INSTRUCTION_TEMPLATE_FIELDS_ALL)
-    for key in ACTIVITY_INSTRUCTION_TEMPLATE_FIELDS_NOT_NULL:
-        assert res[key] is not None
-
-
-def test_change_activity_instruction_template_parameters(api_client):
-    data = {
-        "set_number": 0,
-        "default_parameter_terms": [
-            {
-                "position": 1,
-                "conjunction": "and",
-                "terms": [
-                    {
-                        "index": 1,
-                        "name": text_value_1.name,
-                        "uid": text_value_1.uid,
-                        "type": "TextValue",
-                    },
-                    {
-                        "index": 2,
-                        "name": text_value_2.name,
-                        "uid": text_value_2.uid,
-                        "type": "TextValue",
-                    },
-                ],
-            }
-        ],
-    }
-    response = api_client.patch(
-        f"{URL}/{activity_instruction_templates[0].uid}/default-parameter-terms",
-        json=data,
-    )
-    res = response.json()
-    log.info("Changed Activity Instruction Template parameters: %s", res)
-
-    assert response.status_code == 200
-    assert res["uid"]
-    assert res["sequence_id"]
-    assert res["name"] == "Default name with [TextValue]"
-    assert res["guidance_text"] == "Default guidance text"
-    assert res["parameters"][0]["name"] == "TextValue"
-    assert res["parameters"][0]["terms"] == []
-    assert (
-        res["default_parameter_terms"]["0"][0]["terms"][0]["name"] == text_value_1.name
-    )
-    assert res["default_parameter_terms"]["0"][0]["terms"][0]["uid"] == text_value_1.uid
-    assert (
-        res["default_parameter_terms"]["0"][0]["terms"][1]["name"] == text_value_2.name
-    )
-    assert res["default_parameter_terms"]["0"][0]["terms"][1]["uid"] == text_value_2.uid
-    assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
-    assert (
-        res["indications"][0]["dictionary_id"]
-        == dictionary_term_indication.dictionary_id
-    )
-    assert res["indications"][0]["name"] == dictionary_term_indication.name
-    assert res["activity_groups"][0]["uid"] == activity_group.uid
-    assert res["activity_groups"][0]["name"] == activity_group.name
-    assert res["activity_subgroups"][0]["uid"] == activity_subgroup.uid
-    assert res["activity_subgroups"][0]["name"] == activity_subgroup.name
-    assert res["version"] == "1.0"
-    assert res["status"] == "Final"
-    assert set(list(res.keys())) == set(ACTIVITY_INSTRUCTION_TEMPLATE_FIELDS_ALL)
-    for key in ACTIVITY_INSTRUCTION_TEMPLATE_FIELDS_NOT_NULL:
-        assert res[key] is not None
 
 
 def test_change_activity_instruction_template_indexings(api_client):
@@ -837,26 +723,38 @@ def test_change_activity_instruction_template_indexings(api_client):
     assert res["name"] == "Default-AAA name with [TextValue]"
     assert res["guidance_text"] == "Default-AAA guidance text"
     assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
-    assert (
-        res["indications"][0]["dictionary_id"]
-        == dictionary_term_indication.dictionary_id
-    )
     assert res["indications"][0]["name"] == dictionary_term_indication.name
     assert res["indications"][1]["term_uid"] == _indication.term_uid
-    assert res["indications"][1]["dictionary_id"] == _indication.dictionary_id
     assert res["indications"][1]["name"] == _indication.name
     assert res["activities"][0]["uid"] == activity.uid
     assert res["activities"][0]["name"] == activity.name
+    assert res["activities"][0]["name_sentence_case"] == activity.name_sentence_case
     assert res["activities"][1]["uid"] == _activity.uid
     assert res["activities"][1]["name"] == _activity.name
+    assert res["activities"][1]["name_sentence_case"] == _activity.name_sentence_case
     assert res["activity_groups"][0]["uid"] == activity_group.uid
     assert res["activity_groups"][0]["name"] == activity_group.name
+    assert (
+        res["activity_groups"][0]["name_sentence_case"]
+        == activity_group.name_sentence_case
+    )
     assert res["activity_groups"][1]["uid"] == _activity_group.uid
     assert res["activity_groups"][1]["name"] == _activity_group.name
+    assert (
+        res["activity_groups"][1]["name_sentence_case"]
+        == _activity_group.name_sentence_case
+    )
     assert res["activity_subgroups"][0]["uid"] == activity_subgroup.uid
-    assert res["activity_subgroups"][0]["name"] == activity_subgroup.name
+    assert (
+        res["activity_subgroups"][0]["name_sentence_case"]
+        == activity_subgroup.name_sentence_case
+    )
     assert res["activity_subgroups"][1]["uid"] == _activity_subgroup.uid
     assert res["activity_subgroups"][1]["name"] == _activity_subgroup.name
+    assert (
+        res["activity_subgroups"][1]["name_sentence_case"]
+        == _activity_subgroup.name_sentence_case
+    )
 
     assert res["version"] == "1.0"
     assert res["status"] == "Final"
@@ -891,17 +789,21 @@ def test_approve_activity_instruction_template(api_client):
     assert res["name"] == "Default-XXX name with [TextValue]"
     assert res["guidance_text"] == "Default-XXX guidance text"
     assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
-    assert (
-        res["indications"][0]["dictionary_id"]
-        == dictionary_term_indication.dictionary_id
-    )
     assert res["indications"][0]["name"] == dictionary_term_indication.name
     assert res["activities"][0]["uid"] == activity.uid
     assert res["activities"][0]["name"] == activity.name
+    assert res["activities"][0]["name_sentence_case"] == activity.name_sentence_case
     assert res["activity_groups"][0]["uid"] == activity_group.uid
     assert res["activity_groups"][0]["name"] == activity_group.name
+    assert (
+        res["activity_groups"][0]["name_sentence_case"]
+        == activity_group.name_sentence_case
+    )
     assert res["activity_subgroups"][0]["uid"] == activity_subgroup.uid
-    assert res["activity_subgroups"][0]["name"] == activity_subgroup.name
+    assert (
+        res["activity_subgroups"][0]["name_sentence_case"]
+        == activity_subgroup.name_sentence_case
+    )
     assert res["version"] == "1.0"
     assert res["status"] == "Final"
 
@@ -955,17 +857,21 @@ def test_cascade_approve_activity_instruction_template(api_client):
     assert res["name"] == "cascade check [TextValue]"
     assert res["guidance_text"] == "Default-AAA-0 guidance text"
     assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
-    assert (
-        res["indications"][0]["dictionary_id"]
-        == dictionary_term_indication.dictionary_id
-    )
     assert res["indications"][0]["name"] == dictionary_term_indication.name
     assert res["activities"][0]["uid"] == activity.uid
     assert res["activities"][0]["name"] == activity.name
+    assert res["activities"][0]["name_sentence_case"] == activity.name_sentence_case
     assert res["activity_groups"][0]["uid"] == activity_group.uid
     assert res["activity_groups"][0]["name"] == activity_group.name
+    assert (
+        res["activity_groups"][0]["name_sentence_case"]
+        == activity_group.name_sentence_case
+    )
     assert res["activity_subgroups"][0]["uid"] == activity_subgroup.uid
-    assert res["activity_subgroups"][0]["name"] == activity_subgroup.name
+    assert (
+        res["activity_subgroups"][0]["name_sentence_case"]
+        == activity_subgroup.name_sentence_case
+    )
     assert res["version"] == "2.0"
     assert res["status"] == "Final"
 
@@ -990,17 +896,21 @@ def test_inactivate_activity_instruction_template(api_client):
     assert res["uid"] == activity_instruction_templates[5].uid
     assert res["sequence_id"] == "AI6"
     assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
-    assert (
-        res["indications"][0]["dictionary_id"]
-        == dictionary_term_indication.dictionary_id
-    )
     assert res["indications"][0]["name"] == dictionary_term_indication.name
     assert res["activities"][0]["uid"] == activity.uid
     assert res["activities"][0]["name"] == activity.name
+    assert res["activities"][0]["name_sentence_case"] == activity.name_sentence_case
     assert res["activity_groups"][0]["uid"] == activity_group.uid
     assert res["activity_groups"][0]["name"] == activity_group.name
+    assert (
+        res["activity_groups"][0]["name_sentence_case"]
+        == activity_group.name_sentence_case
+    )
     assert res["activity_subgroups"][0]["uid"] == activity_subgroup.uid
-    assert res["activity_subgroups"][0]["name"] == activity_subgroup.name
+    assert (
+        res["activity_subgroups"][0]["name_sentence_case"]
+        == activity_subgroup.name_sentence_case
+    )
     assert res["version"] == "2.0"
     assert res["status"] == "Retired"
 
@@ -1025,17 +935,21 @@ def test_reactivate_activity_instruction_template(api_client):
     assert res["uid"] == activity_instruction_templates[5].uid
     assert res["sequence_id"] == "AI6"
     assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
-    assert (
-        res["indications"][0]["dictionary_id"]
-        == dictionary_term_indication.dictionary_id
-    )
     assert res["indications"][0]["name"] == dictionary_term_indication.name
     assert res["activities"][0]["uid"] == activity.uid
     assert res["activities"][0]["name"] == activity.name
+    assert res["activities"][0]["name_sentence_case"] == activity.name_sentence_case
     assert res["activity_groups"][0]["uid"] == activity_group.uid
     assert res["activity_groups"][0]["name"] == activity_group.name
+    assert (
+        res["activity_groups"][0]["name_sentence_case"]
+        == activity_group.name_sentence_case
+    )
     assert res["activity_subgroups"][0]["uid"] == activity_subgroup.uid
-    assert res["activity_subgroups"][0]["name"] == activity_subgroup.name
+    assert (
+        res["activity_subgroups"][0]["name_sentence_case"]
+        == activity_subgroup.name_sentence_case
+    )
     assert res["version"] == "2.0"
     assert res["status"] == "Final"
 
@@ -1056,14 +970,13 @@ def test_activity_instruction_template_audit_trail(api_client):
     log.info("ActivityInstructionTemplate Audit Trail: %s", res)
 
     assert response.status_code == 200
-    assert res["total"] == 55
+    assert res["total"] == 54
     expected_uids = [
         "ActivityInstructionTemplate_000006",
         "ActivityInstructionTemplate_000006",
         "ActivityInstructionTemplate_000006",
         "ActivityInstructionTemplate_000006",
         "ActivityInstructionTemplate_000004",
-        "ActivityInstructionTemplate_000027",
         "ActivityInstructionTemplate_000005",
         "ActivityInstructionTemplate_000026",
         "ActivityInstructionTemplate_000025",
@@ -1124,7 +1037,6 @@ def test_activity_instruction_template_sequence_id_generation(api_client):
         "name": "user defined [TextValue]",
         "guidance_text": "user_defined_guidance_text",
         "library_name": lib["name"],
-        "default_parameter_terms": [],
         "indication_uids": [dictionary_term_indication.term_uid],
         "activity_uids": [activity.uid],
         "activity_group_uids": [activity_group.uid],
@@ -1142,17 +1054,21 @@ def test_activity_instruction_template_sequence_id_generation(api_client):
     assert res["parameters"][0]["name"] == "TextValue"
     assert res["parameters"][0]["terms"] == []
     assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
-    assert (
-        res["indications"][0]["dictionary_id"]
-        == dictionary_term_indication.dictionary_id
-    )
     assert res["indications"][0]["name"] == dictionary_term_indication.name
     assert res["activities"][0]["uid"] == activity.uid
     assert res["activities"][0]["name"] == activity.name
+    assert res["activities"][0]["name_sentence_case"] == activity.name_sentence_case
     assert res["activity_groups"][0]["uid"] == activity_group.uid
     assert res["activity_groups"][0]["name"] == activity_group.name
+    assert (
+        res["activity_groups"][0]["name_sentence_case"]
+        == activity_group.name_sentence_case
+    )
     assert res["activity_subgroups"][0]["uid"] == activity_subgroup.uid
-    assert res["activity_subgroups"][0]["name"] == activity_subgroup.name
+    assert (
+        res["activity_subgroups"][0]["name_sentence_case"]
+        == activity_subgroup.name_sentence_case
+    )
     assert res["version"] == "0.1"
     assert res["status"] == "Draft"
     assert set(list(res.keys())) == set(ACTIVITY_INSTRUCTION_TEMPLATE_FIELDS_ALL)
@@ -1165,7 +1081,6 @@ def test_cannot_create_activity_instruction_template_with_existing_name(api_clie
         "name": "Default name with [TextValue]",
         "guidance_text": "default_guidance_text",
         "library_name": "Sponsor",
-        "default_parameter_terms": [],
         "indication_uids": [dictionary_term_indication.term_uid],
         "activity_group_uids": [activity_group.uid],
         "activity_subgroup_uids": [activity_subgroup.uid],

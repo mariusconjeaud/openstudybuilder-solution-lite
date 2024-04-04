@@ -1,6 +1,7 @@
 from neomodel import db
 
 from clinical_mdr_api import exceptions
+from clinical_mdr_api.config import REQUESTED_LIBRARY_NAME
 from clinical_mdr_api.domain_repositories.concepts.concept_generic_repository import (
     ConceptGenericRepository,
 )
@@ -20,6 +21,7 @@ from clinical_mdr_api.domain_repositories.models.generic import (
     VersionRoot,
     VersionValue,
 )
+from clinical_mdr_api.domains._utils import ObjectStatus
 from clinical_mdr_api.domains.concepts.activities.activity import (
     ActivityAR,
     ActivityGroupingVO,
@@ -38,6 +40,7 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
     root_class = ActivityRoot
     value_class = ActivityValue
     return_model = Activity
+    filter_query_parameters = {}
 
     def _create_aggregate_root_instance_from_cypher_result(
         self, input_dict: dict
@@ -61,8 +64,16 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
                     for activity_grouping in input_dict.get("activity_groupings")
                 ],
                 request_rationale=input_dict.get("request_rationale"),
+                is_request_final=input_dict.get("is_request_final"),
+                requester_study_id=input_dict.get("requester_study_id"),
                 replaced_by_activity=input_dict.get("replaced_by_activity"),
+                reason_for_rejecting=input_dict.get("reason_for_rejecting"),
+                contact_person=input_dict.get("contact_person"),
+                is_request_rejected=input_dict.get("is_request_rejected"),
                 is_data_collected=input_dict.get("is_data_collected"),
+                is_multiple_selection_allowed=input_dict.get(
+                    "is_multiple_selection_allowed"
+                ),
             ),
             library=LibraryVO.from_input_values_2(
                 library_name=input_dict.get("library_name"),
@@ -105,6 +116,12 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
                         .uid,
                     }
                 )
+        requester_study_id = None
+        # We are only interested in the StudyId of the Activity Requests
+        if library.name == REQUESTED_LIBRARY_NAME:
+            if study_activity := value.has_selected_activity.single():
+                if activity := study_activity.has_study_activity.single():
+                    requester_study_id = activity.study_id_prefix
         return ActivityAR.from_repository_values(
             uid=root.uid,
             concept_vo=ActivityVO.from_repository_values(
@@ -123,12 +140,24 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
                     for activity_grouping in activity_groupings
                 ],
                 request_rationale=value.request_rationale,
+                is_request_final=value.is_request_final
+                if value.is_request_final
+                else False,
+                requester_study_id=requester_study_id,
                 replaced_by_activity=replaced_activity.uid
                 if replaced_activity
                 else None,
+                reason_for_rejecting=value.reason_for_rejecting,
+                contact_person=value.contact_person,
+                is_request_rejected=value.is_request_rejected
+                if value.is_request_rejected
+                else False,
                 is_data_collected=value.is_data_collected
                 if value.is_data_collected
                 else False,
+                is_multiple_selection_allowed=value.is_multiple_selection_allowed
+                if value.is_multiple_selection_allowed is not None
+                else True,
             ),
             library=LibraryVO.from_input_values_2(
                 library_name=library.name,
@@ -190,7 +219,14 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
     def _create_new_value_node(self, ar: ActivityAR) -> ActivityValue:
         value_node: ActivityValue = super()._create_new_value_node(ar=ar)
         value_node.request_rationale = ar.concept_vo.request_rationale
+        value_node.is_request_final = ar.concept_vo.is_request_final
+        value_node.reason_for_rejecting = ar.concept_vo.reason_for_rejecting
+        value_node.contact_person = ar.concept_vo.contact_person
+        value_node.is_request_rejected = ar.concept_vo.is_request_rejected
         value_node.is_data_collected = ar.concept_vo.is_data_collected
+        value_node.is_multiple_selection_allowed = (
+            ar.concept_vo.is_multiple_selection_allowed
+        )
         value_node.save()
         for activity_grouping in ar.concept_vo.activity_groupings:
             # create ActivityGrouping node
@@ -225,7 +261,13 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
         are_concept_properties_changed = super()._has_data_changed(ar=ar, value=value)
         are_props_changed = (
             ar.concept_vo.request_rationale != value.request_rationale
+            or ar.concept_vo.is_request_final != value.is_request_final
+            or ar.concept_vo.reason_for_rejecting != value.reason_for_rejecting
+            or ar.concept_vo.contact_person != value.contact_person
+            or ar.concept_vo.is_request_rejected != value.is_request_rejected
             or ar.concept_vo.is_data_collected != value.is_data_collected
+            or ar.concept_vo.is_multiple_selection_allowed
+            != value.is_multiple_selection_allowed
         )
 
         activity_subgroup_uids = []
@@ -256,38 +298,37 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
         )
         return are_concept_properties_changed or are_rels_changed or are_props_changed
 
-    def get_syntax_activities(
-        self, syntax_node: VersionRoot
-    ) -> list[ActivityAR] | None:
-        """
-        This method returns the activities for the provided syntax
-
-        :param syntax_node: Syntax Root node
-        :return list[ActivityAR] | None:
-        """
-        activity_nodes = syntax_node.has_activity.all()
-        if activity_nodes:
-            activities = []
-            for node in activity_nodes:
-                activity = self.find_by_uid_2(uid=node.uid)
-                activities.append(activity)
-            return activities
-        return None
-
-    def specific_alias_clause(self) -> str:
+    def specific_alias_clause(
+        self, only_specific_status: str = ObjectStatus.LATEST.name
+    ) -> str:
         # concept_value property comes from the main part of the query
-        # which is specified in the activity_generic_repository_impl
-        return """
+        # which is specified in the concept_generic_repository
+        activity_subgroup_names = self.filter_query_parameters.get(
+            "activity_subgroup_names"
+        )
+        activity_group_names = self.filter_query_parameters.get("activity_group_names")
+        return f"""
         WITH *,
             concept_value.request_rationale AS request_rationale,
+            coalesce(concept_value.is_request_final, false) AS is_request_final,
+            coalesce(concept_value.is_request_rejected, false) AS is_request_rejected,
+            concept_value.contact_person AS contact_person,
+            concept_value.reason_for_rejecting AS reason_for_rejecting,
+            head([(concept_value)<-[:HAS_SELECTED_ACTIVITY]->(:StudyActivity)<-[:HAS_STUDY_ACTIVITY]-(study_value:StudyValue) 
+                | study_value.study_id_prefix]) AS requester_study_id,
             coalesce(concept_value.is_data_collected, False) AS is_data_collected,
+            coalesce(concept_value.is_multiple_selection_allowed, True) AS is_multiple_selection_allowed,
             apoc.coll.toSet([(concept_value)-[:HAS_GROUPING]->(:ActivityGrouping)-[:IN_SUBGROUP]->(activity_valid_group:ActivityValidGroup)
-            <-[:HAS_GROUP]-(activity_subgroup_value)<-[:HAS_VERSION]-(activity_subgroup_root:ActivitySubGroupRoot)
-             | {
-                 activity_subgroup_uid:activity_subgroup_root.uid, 
-                 activity_group_uid: head([(activity_valid_group)-[:IN_GROUP]->(:ActivityGroupValue)
+            {'WHERE size([(activity_valid_group)<-[:HAS_GROUP]-(activity_subgroup_value) WHERE activity_subgroup_value.name in $activity_subgroup_names | activity_subgroup_value.name]) > 0 ' if activity_subgroup_names else ''}
+            {'AND' if activity_subgroup_names and activity_group_names else ''}
+            {'' if activity_subgroup_names and activity_group_names else 'WHERE' if not activity_subgroup_names and activity_group_names else ''}
+            {'size([(activity_valid_group)-[:IN_GROUP]-(activity_group_value) WHERE activity_group_value.name in $activity_group_names | activity_group_value.name]) > 0 ' if activity_group_names else ''}
+             | {{
+                 activity_subgroup_uid:head([(activity_valid_group)<-[:HAS_GROUP]-(activity_subgroup_value:ActivitySubGroupValue)
+                 <-[:HAS_VERSION]-(activity_subgroup_root:ActivitySubGroupRoot) | activity_subgroup_root.uid]), 
+                 activity_group_uid: head([(activity_valid_group)-[:IN_GROUP]-(activity_group_value:ActivityGroupValue)
                  <-[:HAS_VERSION]-(activity_group_root:ActivityGroupRoot) | activity_group_root.uid])
-             }]) AS activity_groupings,
+             }}]) AS activity_groupings,
             head([(concept_value)-[:REPLACED_BY_ACTIVITY]->(replacing_activity_root:ActivityRoot) | replacing_activity_root.uid]) AS replaced_by_activity
         """
 
@@ -346,6 +387,7 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
                 is_default_selected_for_activity:coalesce(activity_instance_value.is_default_selected_for_activity, false),
                 is_data_sharing:coalesce(activity_instance_value.is_data_sharing, false),
                 is_legacy_usage:coalesce(activity_instance_value.is_legacy_usage, false),
+                is_derived:coalesce(activity_instance_value.is_derived, false),
                 topic_code:activity_instance_value.topic_code,
                 activity_instance_class: activity_instance_class_value
             }]) AS activity_instances,
@@ -378,6 +420,62 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
             overview_dict[attribute_name] = overview_prop
         return overview_dict
 
+    def get_cosmos_activity_overview(self, uid: str) -> dict:
+        query = """
+        MATCH (activity_root:ActivityRoot {uid:$uid})-[:LATEST]->(activity_value:ActivityValue)
+        WITH DISTINCT activity_root,activity_value,
+            apoc.coll.toSet([(activity_value)-[:HAS_GROUPING]->(:ActivityGrouping)<-[:HAS_ACTIVITY]-
+            (activity_instance_value:ActivityInstanceValue)-[:ACTIVITY_INSTANCE_CLASS]->
+            (activity_instance_class_root:ActivityInstanceClassRoot)-[:LATEST]->(activity_instance_class_value:ActivityInstanceClassValue)
+            | {
+                name:activity_instance_value.name,
+                nci_concept_id:activity_instance_value.nci_concept_id,
+                abbreviation:activity_instance_value.abbreviation,
+                definition:activity_instance_value.definition,
+                activity_instance_class_name: activity_instance_class_value.name
+            }]) AS activity_instances,
+            [(activity_value)-[:HAS_GROUPING]->(:ActivityGrouping)-[:IN_SUBGROUP]->(activity_valid_group:ActivityValidGroup)
+            <-[:HAS_GROUP]-(activity_subgroup_value:ActivitySubGroupValue) | activity_subgroup_value.name] AS activity_subgroups
+        WITH activity_value,
+             activity_subgroups,
+             apoc.coll.sortMaps(activity_instances, '^name') as activity_instances
+        OPTIONAL MATCH (activity_value)-[:HAS_GROUPING]->(:ActivityGrouping)<-[:HAS_ACTIVITY]-
+              (activity_instance_value)-[:CONTAINS_ACTIVITY_ITEM]->
+              (activity_item:ActivityItem)<-[:HAS_ACTIVITY_ITEM]-(activity_item_class_root:ActivityItemClassRoot)-[:LATEST]->
+              (activity_item_class_value:ActivityItemClassValue)
+        OPTIONAL MATCH (activity_item)-[]->(CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]->(CTTermAttributesRoot)-[:LATEST]->(activity_item_term_attr_value)
+        OPTIONAL MATCH (activity_item)-[:HAS_UNIT_DEFINITION]->(:UnitDefinitionRoot)-[:LATEST]->(unit_def:UnitDefinitionValue)
+        WITH activity_value,
+             activity_item_class_value,
+             activity_instances,
+             activity_subgroups,
+             CASE WHEN size(collect(activity_item)) > 0 THEN
+               apoc.map.fromPairs([
+                 ['nci_concept_id', activity_item_class_value.nci_concept_id],
+                 ['name', activity_item_class_value.name],
+                 ['type', head([(activity_item_class_value)-[:HAS_DATA_TYPE]->(data_type_term_root)-[:HAS_ATTRIBUTES_ROOT]->(data_type_term_attr_root)-[:LATEST]->(data_type_term_attr_value) | data_type_term_attr_value.preferred_term])],
+                 ['example_set', collect(distinct(coalesce(activity_item_term_attr_value.code_submission_value, unit_def.name)))]
+               ]) ELSE null
+             END
+             AS activity_items
+        RETURN
+            activity_subgroups,
+            activity_value,
+            activity_instances,
+            collect(activity_items) AS activity_items
+        """
+        result_array, attribute_names = db.cypher_query(
+            query=query, params={"uid": uid}
+        )
+        if len(result_array) != 1:
+            raise exceptions.BusinessLogicException(
+                f"The overview query returned broken data: {result_array}"
+            )
+        return {
+            attribute_name: result_array[0][index]
+            for index, attribute_name in enumerate(attribute_names)
+        }
+
     def generic_match_clause_all_versions(self):
         return """
             MATCH (concept_root:ActivityRoot)-[version:HAS_VERSION]->(concept_value:ActivityValue)
@@ -386,3 +484,14 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
             WITH *
             MATCH (avg)-[:IN_GROUP]->(group_value:ActivityGroupValue)<-[:HAS_VERSION]-(group_root:ActivityGroupRoot)
         """
+
+    def is_multiple_selection_allowed_for_activity(self, activity_uid: str) -> bool:
+        query = """
+            MATCH (activity_root:ActivityRoot {uid: $activity_uid})-[:LATEST_FINAL]->(activity_value)
+            RETURN coalesce(activity_value.is_multiple_selection_allowed, true)
+            """
+        result, _ = db.cypher_query(query, {"activity_uid": activity_uid})
+        is_multiple_selection_allowed_for_activity = (
+            len(result) > 0 and len(result[0]) > 0
+        )
+        return is_multiple_selection_allowed_for_activity

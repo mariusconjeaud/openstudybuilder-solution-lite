@@ -11,17 +11,17 @@
             "url": "/studies/study_root/study-objectives"
         },
         "response": {
-            "code": 400,
+            "code": 404,
             "headers": {
                 "content-length": "336",
                 "content-type": "application/json"
             },
             "result": {
-                "message": "There is no approved objective identified by provided uid (Objective_000001_does_not_exists)",
-                "method": "POST",
+                "type": "NotFoundException",
+                "message": "No Syntax Template with UID (Objective_000001_does_not_exists) found in given status and version.",
+                "time": "2024-02-14T12:14:30.722911",
                 "path": "http://testserver/studies/study_root/study-objectives",
-                "time": "2020-11-03T23:42:41.518146",
-                "type": "BusinessLogicException"
+                "method": "POST"
             }
         }
     },
@@ -37,17 +37,17 @@
             "url": "/studies/study_root/study-objectives"
         },
         "response": {
-            "code": 400,
+            "code": 404,
             "headers": {
                 "content-length": "336",
                 "content-type": "application/json"
             },
             "result": {
-                "message": "There is no approved objective identified by provided uid (Objective_000005)",
+                "message": "No Syntax Template with UID (Objective_000005) found in given status and version.",
                 "method": "POST",
                 "path": "http://testserver/studies/study_root/study-objectives",
                 "time": "2020-11-03T23:42:41.518146",
-                "type": "BusinessLogicException"
+                "type": "NotFoundException"
             }
         }
     },

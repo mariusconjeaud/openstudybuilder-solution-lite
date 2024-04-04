@@ -99,21 +99,6 @@ def test_data():
     ct_term_category = TestUtils.create_ct_term()
     ct_term_subcategory = TestUtils.create_ct_term()
 
-    parameter_terms = [
-        MultiTemplateParameterTerm(
-            position=1,
-            conjunction="",
-            terms=[
-                IndexedTemplateParameterTerm(
-                    index=1,
-                    name=text_value_1.name,
-                    uid=text_value_1.uid,
-                    type="TextValue",
-                )
-            ],
-        )
-    ]
-
     def generate_parameter_terms():
         text_value = TestUtils.create_text_value()
         return [
@@ -137,7 +122,6 @@ def test_data():
         study_uid=None,
         type_uid=ct_term_inclusion.term_uid,
         library_name="Sponsor",
-        default_parameter_terms=parameter_terms,
         indication_uids=[dictionary_term_indication.term_uid],
         category_uids=[ct_term_category.term_uid],
         sub_category_uids=[ct_term_subcategory.term_uid],
@@ -149,7 +133,20 @@ def test_data():
         TestUtils.create_criteria(
             criteria_template_uid=criteria_template.uid,
             library_name="Sponsor",
-            parameter_terms=parameter_terms,
+            parameter_terms=[
+                MultiTemplateParameterTerm(
+                    position=1,
+                    conjunction="",
+                    terms=[
+                        IndexedTemplateParameterTerm(
+                            index=1,
+                            name=text_value_1.name,
+                            uid=text_value_1.uid,
+                            type="TextValue",
+                        )
+                    ],
+                )
+            ],
         )
     )
     criteria.append(
@@ -253,7 +250,7 @@ CRITERIA_FIELDS_NOT_NULL = [
 ]
 
 
-def test_get_criteria(api_client):
+def test_get_criterion(api_client):
     response = api_client.get(f"{URL}/{criteria[0].uid}")
     res = response.json()
 
@@ -279,7 +276,7 @@ def test_get_criteria(api_client):
     assert res["status"] == "Final"
 
 
-def test_get_criterias_pagination(api_client):
+def test_get_criteria_pagination(api_client):
     results_paginated: dict = {}
     sort_by = '{"uid": true}'
     for page_number in range(1, 4):
@@ -321,7 +318,7 @@ def test_get_criterias_pagination(api_client):
         pytest.param(10, 2, True, '{"name": true}', 10),
     ],
 )
-def test_get_criterias(
+def test_get_criteria(
     api_client, page_size, page_number, total_count, sort_by, expected_result_len
 ):
     url = URL
@@ -657,12 +654,8 @@ def test_criteria_audit_trail(api_client):
     log.info("Criteria Audit Trail: %s", res)
 
     assert response.status_code == 200
-    assert res["total"] == 50
+    assert res["total"] == 44
     expected_uids = [
-        "Criteria_000004",
-        "Criteria_000004",
-        "Criteria_000004",
-        "Criteria_000026",
         "Criteria_000025",
         "Criteria_000025",
         "Criteria_000024",
@@ -703,8 +696,6 @@ def test_criteria_audit_trail(api_client):
         "Criteria_000007",
         "Criteria_000006",
         "Criteria_000006",
-        "Criteria_000005",
-        "Criteria_000004",
         "Criteria_000002",
         "Criteria_000002",
         "Criteria_000001",
@@ -746,7 +737,7 @@ def test_change_parameter_numbers_of_criteria_after_approval(
         ),
     ],
 )
-def test_get_criterias_csv_xml_excel(api_client, export_format):
+def test_get_criteria_csv_xml_excel(api_client, export_format):
     TestUtils.verify_exported_data_format(api_client, export_format, URL)
 
 

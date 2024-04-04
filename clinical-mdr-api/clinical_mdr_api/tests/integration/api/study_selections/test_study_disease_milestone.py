@@ -10,6 +10,7 @@ Tests for /studies/{uid}/study-disease-milestones endpoints
 # which pylint interprets as unused arguments
 
 import logging
+from unittest import mock
 
 import pytest
 from fastapi.testclient import TestClient
@@ -134,6 +135,8 @@ def test_disease_milestone_modify_actions_on_locked_study(api_client):
     )
     res = response.json()
     assert response.status_code == 200
+    for i, _ in enumerate(old_res):
+        old_res[i]["study_version"] = mock.ANY
     assert old_res == res
 
     # test cannot delete
@@ -147,7 +150,7 @@ def test_disease_milestone_modify_actions_on_locked_study(api_client):
     )
 
 
-def test_get_compound_data_for_specific_study_version(api_client):
+def test_get_disease_milestone_data_for_specific_study_version(api_client):
     # get the study disease milestone for 1st locked: version 1, used for compare later
     res_old = api_client.get(
         f"/studies/{study.uid}/study-disease-milestones",
@@ -181,6 +184,8 @@ def test_get_compound_data_for_specific_study_version(api_client):
     res_v1 = api_client.get(
         f"/studies/{study.uid}/study-disease-milestones?study_value_version=1",
     ).json()
+    for i, _ in enumerate(res_old["items"]):
+        res_old["items"][i]["study_version"] = mock.ANY
     assert res_v1 == res_old
     assert res_v1 != res_new
 
@@ -197,4 +202,9 @@ def test_get_compound_data_for_specific_study_version(api_client):
 )
 def test_get_disease_milestones_csv_xml_excel(api_client, export_format):
     url = f"/studies/{study.uid}/study-disease-milestones"
-    TestUtils.verify_exported_data_format(api_client, export_format, url)
+    exported_data = TestUtils.verify_exported_data_format(
+        api_client, export_format, url
+    )
+    if export_format == "text/csv":
+        assert "study_version" in str(exported_data.read())
+        assert "LATEST" in str(exported_data.read())

@@ -74,7 +74,7 @@ class StudyDiseaseMilestoneOGM(BaseModel, StudyDiseaseMilestoneVO):
     )
 
     @validator("status", pre=True)
-    # pylint:disable=no-self-argument,unused-argument
+    # pylint: disable=no-self-argument,unused-argument
     def instantiate_study_status(cls, value, values):
         return StudyStatus[value]
 
@@ -154,6 +154,11 @@ class StudyDiseaseMilestone(StudyDiseaseMilestoneCreateInput):
         title="study_uid",
         description="Uid of the DiseaseMilestone Study",
     )
+    study_version: str | None = Field(
+        None,
+        title="study version or date information",
+        description="Study version number, if specified, otherwise None.",
+    )
     disease_milestone_type: str
     disease_milestone_type_named: str
     disease_milestone_type_definition: str
@@ -180,15 +185,6 @@ class StudyDiseaseMilestone(StudyDiseaseMilestoneCreateInput):
 
 class StudyDiseaseMilestoneVersion(StudyDiseaseMilestone):
     changes: dict
-
-
-class StudyDiseaseMilestoneTypes(BaseModel):
-    dm_type2: str = Field(
-        ...,
-        title="Disease Milestone Type",
-        description="Study DiseaseMilestone dm_type",
-    )
-    dm_type_name2: str
 
 
 class StudySelectionDiseaseMilestoneNewOrder(BaseModel):

@@ -12,11 +12,13 @@
       <validation-provider
         v-slot="{ errors }"
         rules="required"
+        data-cy="requestedform-activity-group-class"
         >
         <v-row>
           <v-col>
             <v-autocomplete
               :label="$t('ActivityForms.activity_group')"
+              data-cy="requestedform-activity-group-dropdown"
               :items="groups"
               v-model="form.activity_groupings[0].activity_group_uid"
               item-text="name"
@@ -31,11 +33,13 @@
       <validation-provider
         v-slot="{ errors }"
         rules="required"
+        data-cy="requestedform-activity-subgroup-class"
         >
         <v-row>
           <v-col>
             <v-autocomplete
               :label="$t('ActivityForms.activity_subgroup')"
+              data-cy="requestedform-activity-subgroup-dropdown"
               :items="filteredSubGroups"
               v-model="form.activity_groupings[0].activity_subgroup_uid"
               item-text="name"
@@ -51,11 +55,13 @@
       <validation-provider
         v-slot="{ errors }"
         rules="required"
+        data-cy="requestedform-activity-name-class"
         >
         <v-row>
           <v-col>
             <v-text-field
               :label="$t('ActivityForms.activity_name')"
+              data-cy="requestedform-activity-name-field"
               v-model="form.name"
               :error-messages="errors"
               dense
@@ -75,6 +81,7 @@
           <v-col>
             <v-text-field
               :label="$t('ActivityFormsRequested.abbreviation')"
+              data-cy="requestedform-abbreviation-field"
               v-model="form.abbreviation"
               :error-messages="errors"
               dense
@@ -90,6 +97,7 @@
           <v-col>
             <v-textarea
               :label="$t('ActivityFormsRequested.definition')"
+              data-cy="requestedform-definition-field"
               v-model="form.definition"
               :error-messages="errors"
               dense
@@ -103,11 +111,13 @@
       <validation-provider
         v-slot="{ errors }"
         rules="required"
+        data-cy="requestedform-rationale-for-request-class"
         >
         <v-row>
           <v-col>
             <v-textarea
               :label="$t('ActivityFormsRequested.rationale_for_request')"
+              data-cy="requestedform-rationale-for-request-field"
               v-model="form.request_rationale"
               :error-messages="errors"
               dense
@@ -127,6 +137,7 @@
             <label class="v-label">{{ $t('ActivityForms.reason_for_change') }}</label>
             <v-textarea
               v-model="form.change_description"
+              data-cy="requestedform-change-description-field"
               :error-messages="errors"
               dense
               clearable
@@ -165,8 +176,8 @@ export default {
     },
     title () {
       return (!_isEmpty(this.editedActivity))
-        ? this.$t('ActivityForms.edit_activity')
-        : this.$t('ActivityForms.add_activity')
+        ? this.$t('ActivityForms.edit_activity_request')
+        : this.$t('ActivityForms.add_activity_request')
     },
     filteredSubGroups () {
       if (!this.form.activity_groupings[0].activity_group_uid) {

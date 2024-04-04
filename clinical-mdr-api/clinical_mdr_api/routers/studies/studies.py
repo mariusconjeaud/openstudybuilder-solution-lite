@@ -7,6 +7,7 @@ from starlette.requests import Request
 
 from clinical_mdr_api import config, exceptions
 from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import (
+    StudyCompactComponentEnum,
     StudyComponentEnum,
     StudyCopyComponentEnum,
     StudyStatus,
@@ -22,6 +23,9 @@ from clinical_mdr_api.models.study_selections.study import (
     StudyPreferredTimeUnit,
     StudyPreferredTimeUnitInput,
     StudyProtocolTitle,
+    StudySubpartAuditTrail,
+    StudySubpartCreateInput,
+    StudySubpartReorderingInput,
 )
 from clinical_mdr_api.models.utils import CustomPage
 from clinical_mdr_api.oauth import get_current_user_id, rbac
@@ -82,6 +86,32 @@ Allowed parameters include : filter on fields, sort by field name with sort dire
 # pylint: disable=unused-argument
 def get_all(
     request: Request,  # request is actually required by the allow_exports decorator
+    include_sections: list[StudyCompactComponentEnum]
+    | None = Query(
+        None,
+        description="""Optionally specify a list of sections to include from the StudyDefinition.
+
+        Valid values are:
+
+        - identification_metadata
+        - version_metadata
+        - study_description
+
+        If no filters are specified, the default sections are returned.""",
+    ),
+    exclude_sections: list[StudyCompactComponentEnum]
+    | None = Query(
+        None,
+        description="""Optionally specify a list of sections to exclude from the StudyDefinition.
+
+        Valid values are:
+
+        - identification_metadata
+        - version_metadata
+        - study_description
+
+        If no filters are specified, the default sections are returned.""",
+    ),
     has_study_objective: bool
     | None = Query(
         default=None,
@@ -134,6 +164,8 @@ def get_all(
 ) -> CustomPage[CompactStudy]:
     study_service = StudyService(user=current_user_id)
     results = study_service.get_all(
+        include_sections=include_sections,
+        exclude_sections=exclude_sections,
         has_study_objective=has_study_objective,
         has_study_endpoint=has_study_endpoint,
         has_study_criteria=has_study_criteria,
@@ -363,13 +395,7 @@ def get(
         description="If specified, the last representation of the study in that status is returned (if existent)."
         "Valid values are: 'Released', 'Draft' or 'Locked'.",
     ),
-    study_value_version: str
-    | None = Query(
-        None,
-        description=r"If specified, study data with specified version is returned. "
-        r"Only exact matches are considered. "
-        r"E.g. 1, 2, 2.1, ...",
-    ),
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ):
     study_service = StudyService(user=current_user_id)
     study_definition = study_service.get_by_uid(
@@ -529,6 +555,34 @@ def get_fields_audit_trail(
     return study_fields_audit_trail
 
 
+@router.get(
+    "/{uid}/audit-trail",
+    dependencies=[rbac.STUDY_READ],
+    summary="Returns the audit trail for the subparts of a specific study definition identified by 'uid'.",
+    description="Actions on the study are grouped by date of edit. Optionally select which subset of fields should be reflected in the audit trail.",
+    response_model=list[StudySubpartAuditTrail],
+    status_code=200,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - The study with the specified 'uid'"
+            " wasn't found.",
+        },
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+def get_study_subpart_audit_trail(
+    uid: str = StudyUID,
+    is_subpart: bool = False,
+    current_user_id: str = Depends(get_current_user_id),
+):
+    study_service = StudyService(user=current_user_id)
+    study_subpart_audit_trail = study_service.get_subpart_audit_trail_by_uid(
+        uid=uid, is_subpart=is_subpart
+    )
+    return study_subpart_audit_trail
+
+
 @router.post(
     "",
     dependencies=[rbac.STUDY_WRITE],
@@ -551,7 +605,8 @@ request body with new unique uid generated and returned in response body.
     },
 )
 def create(
-    study_create_input: StudyCreateInput = Body(
+    study_create_input: StudySubpartCreateInput
+    | StudyCreateInput = Body(
         description="Related parameters of the objective that shall be created."
     ),
     current_user_id: str = Depends(get_current_user_id),
@@ -589,7 +644,7 @@ State after:
 def get_protocol_title(
     uid: str = StudyUID,
     current_user_id: str = Depends(get_current_user_id),
-    study_value_version: str | None = None,
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ):
     study_service = StudyService(user=current_user_id)
     return study_service.get_protocol_title(
@@ -666,11 +721,18 @@ def copy_simple_form_from_another_study(
 )
 def get_preferred_time_unit(
     uid: str = StudyUID,
+    for_protocol_soa: bool = Query(
+        False,
+        description="Whether the preferred time unit is associated with Protocol SoA or not.",
+    ),
     current_user_id: str = Depends(get_current_user_id),
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ):
     study_service = StudyService(user=current_user_id)
     return study_service.get_study_preferred_time_unit(
         study_uid=uid,
+        for_protocol_soa=for_protocol_soa,
+        study_value_version=study_value_version,
     )
 
 
@@ -694,9 +756,48 @@ def patch_preferred_time_unit(
     preferred_time_unit_input: StudyPreferredTimeUnitInput = Body(
         ..., description="Data needed to create a study preferred time unit"
     ),
+    for_protocol_soa: bool = Query(
+        False,
+        description="Whether the preferred time unit is associated with Protocol Soa or not.",
+    ),
     current_user_id: str = Depends(get_current_user_id),
 ):
     study_service = StudyService(user=current_user_id)
     return study_service.patch_study_preferred_time_unit(
-        study_uid=uid, unit_definition_uid=preferred_time_unit_input.unit_definition_uid
+        study_uid=uid,
+        unit_definition_uid=preferred_time_unit_input.unit_definition_uid,
+        for_protocol_soa=for_protocol_soa,
+    )
+
+
+@router.patch(
+    "/{uid}/order",
+    dependencies=[rbac.STUDY_WRITE],
+    summary="Reorder Study Subparts within a Study Parent Part",
+    description="",
+    response_model=list[Study],
+    status_code=200,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - The study with the specified 'uid'"
+            " wasn't found.",
+        },
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+def reorder_study_subparts(
+    uid: str = StudyUID,
+    study_subpart_reordering_input: StudySubpartReorderingInput
+    | None = Body(
+        None,
+        description="Specify the Study Subpart to be reordered. "
+        "If provided, the specified Study Subpart will be reordered; otherwise, any gaps in the order will be filled.",
+    ),
+    current_user_id: str = Depends(get_current_user_id),
+):
+    study_service = StudyService(user=current_user_id)
+    return study_service.reorder_study_subparts(
+        study_parent_part_uid=uid,
+        study_subpart_reordering_input=study_subpart_reordering_input,
     )

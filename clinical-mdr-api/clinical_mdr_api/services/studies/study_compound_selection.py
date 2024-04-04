@@ -31,7 +31,9 @@ class StudyCompoundSelectionService(
         self.author = author
 
     def _transform_all_to_response_model(
-        self, study_selection: StudySelectionCompoundsAR
+        self,
+        study_selection: StudySelectionCompoundsAR,
+        study_value_version: str | None = None,
     ) -> list[models.StudySelectionCompound]:
         result = []
         for order, selection in enumerate(
@@ -62,6 +64,7 @@ class StudyCompoundSelectionService(
                     find_project_by_study_uid=self._repos.project_repository.find_by_study_uid,
                     find_numeric_value_by_uid=self._repos.numeric_value_with_unit_repository.find_by_uid_2,
                     find_unit_by_uid=self._repos.unit_definition_repository.find_by_uid_2,
+                    study_value_version=study_value_version,
                 )
             )
         return result
@@ -271,7 +274,9 @@ class StudyCompoundSelectionService(
                 study_uid,
                 study_value_version,
             )
-            selection = self._transform_all_to_response_model(compound_selection_ar)
+            selection = self._transform_all_to_response_model(
+                compound_selection_ar, study_value_version=study_value_version
+            )
             # Do filtering, sorting, pagination and count
             selection = service_level_generic_filtering(
                 items=selection,

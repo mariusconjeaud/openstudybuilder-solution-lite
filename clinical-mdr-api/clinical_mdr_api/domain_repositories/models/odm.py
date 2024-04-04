@@ -222,7 +222,6 @@ class OdmFormRoot(ConceptRoot):
         "HAS_VENDOR_ELEMENT_ATTRIBUTE",
         model=OdmVendorNamespaceRelation,
     )
-    # TODO targets_data_model = RelationshipTo(DataModelRoot, "TARGETS_DATA_MODEL")
 
     has_version = RelationshipTo(OdmFormValue, "HAS_VERSION", model=VersionRelationship)
     has_latest_value = RelationshipTo(OdmFormValue, "LATEST", model=ClinicalMdrRel)
@@ -283,7 +282,6 @@ class OdmItemGroupRoot(ConceptRoot):
         "HAS_VENDOR_ELEMENT_ATTRIBUTE",
         model=OdmVendorNamespaceRelation,
     )
-    # TODO targets_data_model = RelationshipTo(DataModelRoot, "TARGETS_DATA_MODEL")
 
     has_version = RelationshipTo(
         OdmItemGroupValue, "HAS_VERSION", model=VersionRelationship

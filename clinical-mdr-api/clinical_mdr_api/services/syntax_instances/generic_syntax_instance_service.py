@@ -57,14 +57,12 @@ class GenericSyntaxInstanceService(GenericSyntaxService[_AggregateRootType], abc
     repository_interface - repository interface for selected object
     template_repository_interface - repository for template object that selected object is created from
     template_uid_property - name of template uid property from pydantic models supporting selected object
-    template_name_property - template name property that service is supposed to return with pydantic object
     """
 
     aggregate_class: type
     repository_interface: type
     template_repository_interface: type
     template_uid_property: str
-    template_name_property: str
     parametrized_template_vo_class: type = ParametrizedTemplateVO
     _allowed_parameters = None
 
@@ -123,9 +121,11 @@ class GenericSyntaxInstanceService(GenericSyntaxService[_AggregateRootType], abc
             author=self.user_initials,
             template=template_vo,
             library=library_vo,
-            generate_uid_callback=self.repository.generate_uid_callback
-            if generate_uid_callback is None
-            else generate_uid_callback,
+            generate_uid_callback=(
+                self.repository.generate_uid_callback
+                if generate_uid_callback is None
+                else generate_uid_callback
+            ),
             next_available_sequence_id_callback=next_available_sequence_id_callback,
         )
         return item
@@ -163,7 +163,7 @@ class GenericSyntaxInstanceService(GenericSyntaxService[_AggregateRootType], abc
         """
         Helper function getting template for given template uid.
         """
-        template_ar = self.template_repository.find_by_uid_2(
+        template_ar = self.template_repository.find_by_uid(
             template_uid, status=LibraryItemStatus.FINAL
         )
         return template_ar.template_value if template_ar is not None else None
@@ -179,7 +179,7 @@ class GenericSyntaxInstanceService(GenericSyntaxService[_AggregateRootType], abc
         Supports edit draft action
         """
         try:
-            item: ParametrizedTemplateARBase = self._find_by_uid_or_raise_not_found(
+            item: ParametrizedTemplateARBase = self.repository.find_by_uid(
                 uid, for_update=True
             )
             parameter_terms = self._create_parameter_entries(
@@ -221,7 +221,7 @@ class GenericSyntaxInstanceService(GenericSyntaxService[_AggregateRootType], abc
     ):
         try:
             parameter_repository = TemplateParameterRepository()
-            item = self._find_by_uid_or_raise_not_found(uid)
+            item = self.repository.find_by_uid(uid)
             parameters = self.template_repository.get_parameters_including_terms(
                 item.template_uid,
                 study_uid=study_uid,
@@ -294,7 +294,7 @@ class GenericSyntaxInstanceService(GenericSyntaxService[_AggregateRootType], abc
                         parameter_exists_callback=self._repos.parameter_repository.parameter_name_exists,
                         conjunction_exists_callback=lambda _: True,  # TODO: provide proper callback here
                         parameter_term_uid_exists_for_parameter_callback=(
-                            lambda p_name, v_uid, p_value: (
+                            lambda p_name, v_uid, _: (
                                 self._repos.parameter_repository.is_parameter_term_uid_valid_for_parameter_name(
                                     parameter_term_uid=v_uid,
                                     parameter_name=p_name,
@@ -321,14 +321,14 @@ class GenericSyntaxInstanceService(GenericSyntaxService[_AggregateRootType], abc
                         parameter_exists_callback=self._repos.parameter_repository.parameter_name_exists,
                         conjunction_exists_callback=lambda _: True,  # TODO: provide proper callback here
                         parameter_term_uid_exists_for_parameter_callback=(
-                            lambda p_name, v_uid, p_value: (
+                            lambda p_name, v_uid, _: (
                                 self._repos.parameter_repository.is_parameter_term_uid_valid_for_parameter_name(
                                     parameter_term_uid=v_uid,
                                     parameter_name=p_name,
                                 )
                             )
                         ),
-                        # pylint:disable=undefined-loop-variable
+                        # pylint: disable=undefined-loop-variable
                         parameter_name=item.type,
                         conjunction=parameter.conjunction,
                         parameters=uids,
@@ -356,16 +356,11 @@ class GenericSyntaxInstanceService(GenericSyntaxService[_AggregateRootType], abc
                 find_project_by_project_number=self._repos.project_repository.find_by_project_number,
                 find_clinical_programme_by_uid=self._repos.clinical_programme_repository.find_by_uid,
                 find_all_study_time_units=self._repos.unit_definition_repository.find_all,
+                find_study_parent_part_by_uid=self._repos.study_definition_repository.find_by_uid,
                 include_sections=include_sections,
                 exclude_sections=exclude_sections,
+                is_subpart=item.study_parent_part_uid is not None,
             )
             for item in studies
         ]
         return return_items
-
-    @db.transaction
-    def get_releases_referenced_by_any_study(self) -> list[BaseModel]:
-        items = self.repository.find_instances_referenced_by_any_study()
-        return [
-            self._transform_aggregate_root_to_pydantic_model(item) for item in items
-        ]

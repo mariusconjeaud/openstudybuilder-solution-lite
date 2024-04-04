@@ -98,7 +98,7 @@ class CTConfigPostInput(CTConfigBaseModel):
     configured_codelist_name: str | None
 
     @validator("*")
-    # pylint:disable=no-self-argument
+    # pylint: disable=no-self-argument
     def replace_empty_string_with_none(cls, field):
         if field == "":
             return None

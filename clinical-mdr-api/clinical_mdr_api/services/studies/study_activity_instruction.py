@@ -84,7 +84,7 @@ class StudyActivityInstructionService(StudySelectionMixin):
                 "study_activity__has_study_activity__latest_value__uid": study_uid,
             }
 
-        return [
+        study_activity_instructions_ogm: list[models.StudyActivityInstruction] = [
             models.StudyActivityInstruction.from_orm(sai_node)
             for sai_node in to_relation_trees(
                 StudyActivityInstructionNeoModel.nodes.fetch_relations(
@@ -95,6 +95,23 @@ class StudyActivityInstructionService(StudySelectionMixin):
                 ).filter(**filters)
             ).distinct()
         ]
+        study_activity_instruction_response_model = [
+            models.StudyActivityInstruction.from_vo(
+                StudyActivityInstructionVO(
+                    uid=i_study_activity_instruction_ogm.study_activity_instruction_uid,
+                    study_uid=study_uid,
+                    study_activity_uid=i_study_activity_instruction_ogm.study_activity_uid,
+                    activity_instruction_uid=i_study_activity_instruction_ogm.activity_instruction_uid,
+                    activity_instruction_name=i_study_activity_instruction_ogm.activity_instruction_name,
+                    start_date=i_study_activity_instruction_ogm.start_date,
+                    user_initials=i_study_activity_instruction_ogm.user_initials,
+                ),
+                study_value_version=study_value_version,
+            )
+            for i_study_activity_instruction_ogm in study_activity_instructions_ogm
+        ]
+
+        return study_activity_instruction_response_model
 
     def get_all_study_instructions_for_specific_study_activity(
         self, study_uid: str, study_activity_uid: str
@@ -127,7 +144,7 @@ class StudyActivityInstructionService(StudySelectionMixin):
             service.repository.save(activity_instruction_ar)
         else:
             uid = service.repository.find_uid_by_name(name=activity_instruction_ar.name)
-        activity_instruction_ar = service.repository.find_by_uid_2(uid, for_update=True)
+        activity_instruction_ar = service.repository.find_by_uid(uid, for_update=True)
 
         # if in draft status - approve
         if activity_instruction_ar.item_metadata.status == LibraryItemStatus.DRAFT:

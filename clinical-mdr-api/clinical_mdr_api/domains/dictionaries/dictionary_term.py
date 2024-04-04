@@ -55,7 +55,7 @@ class DictionaryTermVO:
         abbreviation: str | None,
         definition: str | None,
     ) -> Self:
-        dictionary_term_vo = cls(
+        return cls.from_repository_values(
             codelist_uid=codelist_uid,
             dictionary_id=dictionary_id,
             name=name,
@@ -63,8 +63,6 @@ class DictionaryTermVO:
             abbreviation=abbreviation,
             definition=definition,
         )
-
-        return dictionary_term_vo
 
     def validate(
         self,

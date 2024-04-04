@@ -15,6 +15,7 @@ from clinical_mdr_api.domain_repositories.models.odm import (
     OdmVendorNamespaceRoot,
     OdmVendorNamespaceValue,
 )
+from clinical_mdr_api.domains._utils import ObjectStatus
 from clinical_mdr_api.domains.concepts.odms.vendor_namespace import (
     OdmVendorNamespaceAR,
     OdmVendorNamespaceVO,
@@ -95,22 +96,19 @@ class VendorNamespaceRepository(OdmGenericRepository[OdmVendorNamespaceAR]):
         return odm_vendor_namespace_ar
 
     def specific_alias_clause(
-        self, only_specific_status: list[str] | None = None
+        self, only_specific_status: str = ObjectStatus.LATEST.name
     ) -> str:
-        if not only_specific_status:
-            only_specific_status = ["LATEST"]
-
         return f"""
         WITH *,
         concept_value.prefix AS prefix,
         concept_value.url AS url,
 
-        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmVendorNamespaceRoot)-[hve:HAS_VENDOR_ELEMENT]->(ver:OdmVendorElementRoot)-[:LATEST]->(vev:OdmVendorElementValue) | {{uid: ver.uid, name: vev.name, value: hve.value}}] AS vendor_elements,
-        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmVendorNamespaceRoot)-[hva:HAS_VENDOR_ATTRIBUTE]->(var:OdmVendorAttributeRoot)-[:LATEST]->(vav:OdmVendorAttributeValue) | {{uid: var.uid, name: vav.name, value: hva.value}}] AS vendor_attributes
+        [(concept_value)<-[:{only_specific_status}]-(:OdmVendorNamespaceRoot)-[hve:HAS_VENDOR_ELEMENT]->(ver:OdmVendorElementRoot)-[:LATEST]->(vev:OdmVendorElementValue) | {{uid: ver.uid, name: vev.name, value: hve.value}}] AS vendor_elements,
+        [(concept_value)<-[:{only_specific_status}]-(:OdmVendorNamespaceRoot)-[hva:HAS_VENDOR_ATTRIBUTE]->(var:OdmVendorAttributeRoot)-[:LATEST]->(vav:OdmVendorAttributeValue) | {{uid: var.uid, name: vav.name, value: hva.value}}] AS vendor_attributes
 
         WITH *,
-        [vendor_element in vendor_elements | vendor_element.uid] AS vendor_element_uids,
-        [vendor_attribute in vendor_attributes | vendor_attribute.uid] AS vendor_attribute_uids
+        apoc.coll.toSet([vendor_element in vendor_elements | vendor_element.uid]) AS vendor_element_uids,
+        apoc.coll.toSet([vendor_attribute in vendor_attributes | vendor_attribute.uid]) AS vendor_attribute_uids
         """
 
     def _create_new_value_node(

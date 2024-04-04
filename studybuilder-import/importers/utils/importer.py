@@ -1,22 +1,22 @@
 import logging
+import time
+from collections.abc import Callable
 from functools import wraps
 from typing import Dict
-from collections.abc import Callable
-import time
 
 import aiohttp
 import requests
 
-from .metrics import Metrics
-from .api_bindings import ApiBinding, CODELIST_NAME_MAP
-from ..functions.utils import create_logger, load_env
 from ..functions.caselessdict import CaselessDict
+from ..functions.utils import create_logger, load_env
+from .api_bindings import ApiBinding
+from .metrics import Metrics
 
 logger = logging.getLogger("legacy_mdr_migrations - utils")
 
 metrics = Metrics()
 
-API_HEADERS = {"Accept": "application/json"}
+API_HEADERS = {"Accept": "application/json", "User-Agent": "test"}
 
 # ---------------------------------------------------------------
 # Env loading
@@ -118,6 +118,10 @@ class BaseImporter:
         self.visit_type_codelist_name = "VisitType"
         self.element_subtype_codelist_name = "Element Sub Type"
 
+    def refresh_auth(self):
+        headers = self._authenticate(API_HEADERS)
+        self.api.update_headers(headers)
+
     @staticmethod
     def _authenticate(headers: Dict) -> Dict:
         """Authenticates with client secret flow and appends Authorization header the dict of API request headers"""
@@ -126,7 +130,12 @@ class BaseImporter:
 
         client_id = load_env("CLIENT_ID", "")
 
-        if client_id:
+        api_token = load_env("STUDYBUILDER_API_TOKEN", "")
+
+        if api_token:
+            headers["Authorization"] = f"Bearer {api_token}"
+
+        elif client_id:
             client_secret = load_env("CLIENT_SECRET")
             token_endpoint = load_env("TOKEN_ENDPOINT")
             scope = load_env("SCOPE")
@@ -252,9 +261,7 @@ class BaseImporter:
                 f"Failed to create new term name '{term_name}' with uid '{term_uid}', trying to link to already existing"
             )
             if concept_id and concept_id.lower() == "none":
-                self.log.error(
-                    f"Term '{term_name}' should not be linked, skipping"
-                )
+                self.log.error(f"Term '{term_name}' should not be linked, skipping")
                 return
             elif concept_id:
                 catalogue = data["body"]["catalogue_name"]
@@ -262,22 +269,30 @@ class BaseImporter:
                 self.log.info(
                     f"Looking up term with concept id '{concept_id}' with submission value '{submval}' in catalogue '{catalogue}'"
                 )
-                matching_terms = self.api.lookup_terms_from_concept_id(concept_id, catalogue_name=catalogue, code_submission_value=submval)
+                matching_terms = self.api.lookup_terms_from_concept_id(
+                    concept_id, catalogue_name=catalogue, code_submission_value=submval
+                )
                 if len(matching_terms) == 0:
                     self.log.warning(
                         f"Could not find term with concept id '{concept_id}' with submission value '{submval}' in catalogue '{catalogue}'"
                     )
-                    matching_terms = self.api.lookup_terms_from_concept_id(concept_id, code_submission_value=submval)
+                    matching_terms = self.api.lookup_terms_from_concept_id(
+                        concept_id, code_submission_value=submval
+                    )
                     if len(matching_terms) == 0:
                         self.log.warning(
                             f"Could not find term with concept id '{concept_id}' with submission value '{submval}' in any catalogue'"
                         )
-                        matching_terms = self.api.lookup_terms_from_concept_id(concept_id, catalogue_name=catalogue)
+                        matching_terms = self.api.lookup_terms_from_concept_id(
+                            concept_id, catalogue_name=catalogue
+                        )
                         if len(matching_terms) == 0:
                             self.log.warning(
                                 f"Could not find term with concept id '{concept_id}' with any submission value in catalogue '{catalogue}'"
                             )
-                            matching_terms = self.api.lookup_terms_from_concept_id(concept_id)
+                            matching_terms = self.api.lookup_terms_from_concept_id(
+                                concept_id
+                            )
                             if len(matching_terms) == 0:
                                 self.log.error(
                                     f"Could not find term with concept id '{concept_id}' with any submission value in any catalogue, skipping"
@@ -289,7 +304,12 @@ class BaseImporter:
                     f"Found term(s) with uid(s) {[t['term_uid'] for t in matching_terms]} for concept id '{concept_id}'"
                 )
                 codelist_uid = data["body"]["codelist_uid"]
-                if any([t["codelist_uid"] == codelist_uid for t in matching_terms]):
+                if any(
+                    [
+                        codelist_uid in [x["codelist_uid"] for x in t["codelists"]]
+                        for t in matching_terms
+                    ]
+                ):
                     self.log.info(
                         f"Term name '{term_name}' already exits in the codelist with uid {codelist_uid}, not adding again"
                     )

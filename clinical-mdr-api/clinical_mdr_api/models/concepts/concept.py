@@ -228,9 +228,17 @@ class NumericValueInput(SimpleConceptInput):
 
 class NumericValueWithUnit(NumericValue):
     unit_definition_uid: str
+    unit_label: str
 
     @classmethod
-    def from_concept_ar(cls, numeric_value: NumericValueWithUnitAR) -> Self:
+    def from_concept_ar(
+        cls,
+        numeric_value: NumericValueWithUnitAR,
+        find_unit_by_uid: Callable[[str], UnitDefinitionAR | None],
+    ) -> Self:
+        unit: UnitDefinitionAR = find_unit_by_uid(
+            numeric_value.concept_vo.unit_definition_uid
+        )
         return cls(
             uid=numeric_value.uid,
             library_name=Library.from_library_vo(numeric_value.library).name,
@@ -241,6 +249,7 @@ class NumericValueWithUnit(NumericValue):
             abbreviation=numeric_value.concept_vo.abbreviation,
             template_parameter=numeric_value.concept_vo.is_template_parameter,
             unit_definition_uid=numeric_value.concept_vo.unit_definition_uid,
+            unit_label=unit.concept_vo.name,
         )
 
 
@@ -284,7 +293,14 @@ class LagTime(NumericValueWithUnit):
     sdtm_domain_uid: str
 
     @classmethod
-    def from_concept_ar(cls, numeric_value: LagTimeAR) -> Self:
+    def from_concept_ar(
+        cls,
+        numeric_value: LagTimeAR,
+        find_unit_by_uid: Callable[[str], UnitDefinitionAR | None],
+    ) -> Self:
+        unit: UnitDefinitionAR = find_unit_by_uid(
+            numeric_value.concept_vo.unit_definition_uid
+        )
         return cls(
             uid=numeric_value.uid,
             library_name=Library.from_library_vo(numeric_value.library).name,
@@ -295,6 +311,7 @@ class LagTime(NumericValueWithUnit):
             abbreviation=numeric_value.concept_vo.abbreviation,
             template_parameter=numeric_value.concept_vo.is_template_parameter,
             unit_definition_uid=numeric_value.concept_vo.unit_definition_uid,
+            unit_label=unit.concept_vo.name,
             sdtm_domain_uid=numeric_value.concept_vo.sdtm_domain_uid,
         )
 

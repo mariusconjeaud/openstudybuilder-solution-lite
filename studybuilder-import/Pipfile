@@ -10,11 +10,13 @@ aiohttp = "~=3.8.3"
 [dev-packages]
 pylint = "~=2.15.0"
 black = "~=22.6.0"
+isort = "~=5.11.5"
 
 [requires]
 python_version = "3.11"
 
 [scripts]
+build-sbom = "pipelines/scripts/build-sbom.sh"
 import_all = "python -m run_import"
 config = "python -m importers.run_import_config"
 dictionaries = "python -m importers.run_import_dictionaries"
@@ -30,3 +32,11 @@ mockdatajson = "python -m importers.run_import_mockdatajson"
 e2e = "python -m importers.run_import_e2e"
 sponsormodels = "python -m importers.run_import_sponsormodels"
 validatedatafiles = "python -m test_datafiles_e2e_sync"
+
+format = """sh -c "
+    python -m isort . \
+    && python -m black . \
+"
+"""
+lint = "pylint studybuilder-import"
+

@@ -115,3 +115,6 @@ cdisc_data/
 .swp
 .idea/*
 .DS_STORE
+
+# WSL
+*:Zone.Identifier

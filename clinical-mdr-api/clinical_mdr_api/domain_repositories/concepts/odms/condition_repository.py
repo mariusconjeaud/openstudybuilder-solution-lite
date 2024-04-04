@@ -20,6 +20,7 @@ from clinical_mdr_api.domain_repositories.models.odm import (
     OdmDescriptionRoot,
     OdmFormalExpressionRoot,
 )
+from clinical_mdr_api.domains._utils import ObjectStatus
 from clinical_mdr_api.domains.concepts.concept_base import ConceptARBase
 from clinical_mdr_api.domains.concepts.odms.condition import (
     OdmConditionAR,
@@ -100,23 +101,20 @@ class ConditionRepository(OdmGenericRepository[OdmConditionAR]):
         return odm_condition_ar
 
     def specific_alias_clause(
-        self, only_specific_status: list[str] | None = None
+        self, only_specific_status: str = ObjectStatus.LATEST.name
     ) -> str:
-        if not only_specific_status:
-            only_specific_status = ["LATEST"]
-
         return f"""
         WITH *,
         concept_value.oid AS oid,
 
-        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmConditionRoot)-[:HAS_FORMAL_EXPRESSION]->(fer:OdmFormalExpressionRoot)-[:LATEST]->(fev:OdmFormalExpressionValue) | {{uid: fer.uid, context: fev.context, expression: fev.expression}}] AS formal_expressions,
-        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmConditionRoot)-[:HAS_DESCRIPTION]->(dr:OdmDescriptionRoot)-[:LATEST]->(dv:OdmDescriptionValue) | {{uid: dr.uid, name: dv.name, language: dv.language, description: dv.description, instruction: dv.instruction}}] AS descriptions,
-        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmConditionRoot)-[:HAS_ALIAS]->(ar:OdmAliasRoot)-[:LATEST]->(av:OdmAliasValue) | {{uid: ar.uid, name: av.name, context: av.context}}] AS aliases
+        [(concept_value)<-[:{only_specific_status}]-(:OdmConditionRoot)-[:HAS_FORMAL_EXPRESSION]->(fer:OdmFormalExpressionRoot)-[:LATEST]->(fev:OdmFormalExpressionValue) | {{uid: fer.uid, context: fev.context, expression: fev.expression}}] AS formal_expressions,
+        [(concept_value)<-[:{only_specific_status}]-(:OdmConditionRoot)-[:HAS_DESCRIPTION]->(dr:OdmDescriptionRoot)-[:LATEST]->(dv:OdmDescriptionValue) | {{uid: dr.uid, name: dv.name, language: dv.language, description: dv.description, instruction: dv.instruction}}] AS descriptions,
+        [(concept_value)<-[:{only_specific_status}]-(:OdmConditionRoot)-[:HAS_ALIAS]->(ar:OdmAliasRoot)-[:LATEST]->(av:OdmAliasValue) | {{uid: ar.uid, name: av.name, context: av.context}}] AS aliases
 
         WITH *,
-        [formal_expression in formal_expressions | formal_expression.uid] AS formal_expression_uids,
-        [description in descriptions | description.uid] AS description_uids,
-        [alias in aliases | alias.uid] AS alias_uids
+        apoc.coll.toSet([formal_expression in formal_expressions | formal_expression.uid]) AS formal_expression_uids,
+        apoc.coll.toSet([description in descriptions | description.uid]) AS description_uids,
+        apoc.coll.toSet([alias in aliases | alias.uid]) AS alias_uids
         """
 
     def _get_or_create_value(

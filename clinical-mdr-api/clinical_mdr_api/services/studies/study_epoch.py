@@ -11,6 +11,7 @@ from clinical_mdr_api.domains.controlled_terminologies.ct_term_attributes import
     CTTermAttributesVO,
 )
 from clinical_mdr_api.domains.controlled_terminologies.ct_term_name import (
+    CTTermCodelistVO,
     CTTermNameAR,
     CTTermNameVO,
 )
@@ -43,7 +44,10 @@ from clinical_mdr_api.models.study_selections.study_epoch import (
     StudyEpochTypes,
     StudyEpochVersion,
 )
-from clinical_mdr_api.models.utils import GenericFilteringReturn
+from clinical_mdr_api.models.utils import (
+    GenericFilteringReturn,
+    get_latest_on_datetime_str,
+)
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._meta_repository import MetaRepository
 from clinical_mdr_api.services._utils import (
@@ -82,7 +86,6 @@ class StudyEpochService:
         self.study_visit_epoch_allocation = self.repo.fetch_ctlist(
             settings.STUDY_VISIT_EPOCH_ALLOCATION_NAME
         )
-
         StudyEpochType.clear()
         for uid, name in self.study_epoch_types.items():
             if uid not in StudyEpochType:
@@ -117,11 +120,17 @@ class StudyEpochService:
         self._allowed_configs = self._get_allowed_configs()
 
     def _transform_all_to_response_model(
-        self, epoch: StudyEpochVO, study_visit_count: int
+        self,
+        epoch: StudyEpochVO,
+        study_visit_count: int,
+        study_value_version: str | None = None,
     ) -> StudyEpoch:
         return StudyEpoch(
             uid=epoch.uid,
             study_uid=epoch.study_uid,
+            study_version=study_value_version
+            if study_value_version
+            else get_latest_on_datetime_str(),
             order=epoch.order,
             description=epoch.description,
             start_rule=epoch.start_rule,
@@ -235,7 +244,9 @@ class StudyEpochService:
 
             all_items = [
                 self._transform_all_to_response_model(
-                    epoch, study_visit_count=len(visits[epoch.uid])
+                    epoch,
+                    study_visit_count=len(visits[epoch.uid]),
+                    study_value_version=study_value_version,
                 )
                 for epoch in study_epochs
             ]
@@ -379,7 +390,11 @@ class StudyEpochService:
                 ct_term_attributes_ar = CTTermAttributesAR.from_input_values(
                     author=self.author,
                     ct_term_attributes_vo=CTTermAttributesVO.from_input_values(
-                        codelist_uid=STUDY_EPOCH_EPOCH_UID,
+                        codelists=[
+                            CTTermCodelistVO(
+                                codelist_uid=STUDY_EPOCH_EPOCH_UID, order=None
+                            )
+                        ],
                         catalogue_name=epoch_subtype_term.ct_term_vo.catalogue_name,
                         code_submission_value=f"{epoch_subtype_term.ct_term_vo.code_submission_value} {str(epoch_order)}",
                         name_submission_value=name_subm_value,
@@ -401,11 +416,10 @@ class StudyEpochService:
                 ct_term_name_ar = CTTermNameAR.from_input_values(
                     generate_uid_callback=lambda: ct_term_attributes_ar.uid,
                     ct_term_name_vo=CTTermNameVO.from_repository_values(
-                        codelist_uid=ct_term_attributes_ar.ct_term_vo.codelist_uid,
+                        codelists=ct_term_attributes_ar.ct_term_vo.codelists,
                         catalogue_name=ct_term_attributes_ar.ct_term_vo.catalogue_name,
                         name=epoch_name,
                         name_sentence_case=epoch_name.lower(),
-                        order=None,
                     ),
                     library=library,
                     author=self.author,

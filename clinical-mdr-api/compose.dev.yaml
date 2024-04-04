@@ -8,10 +8,12 @@ services:
     build:
       args:
         TARGET: ${BUILD_TARGET:-dev}
+        UID: ${UID:-1000}
     environment:
       NEO4J_DSN: "${NEO4J_DSN:-bolt://neo4j:changeme1234@database:7687}/mdrdb"
       UVICORN_ROOT_PATH: ""
       UVICORN_RELOAD: "true"
+      EXPIRED_ACCESS_TOKEN: "${EXPIRED_ACCESS_TOKEN:-}"
     ports:
       - "${BIND_ADDRESS:-127.0.0.1}:${API_PORT:-8000}:8000"
       - "127.0.0.1:5678:5678"
@@ -20,6 +22,12 @@ services:
         source: ./
         target: /app
 
+  database:
+    extends:
+      file: compose.yaml
+      service: database
+    profiles:
+      - database
 
 networks:
   default:

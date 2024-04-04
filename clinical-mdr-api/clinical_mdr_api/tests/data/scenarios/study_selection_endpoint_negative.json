@@ -11,17 +11,17 @@
             "url": "/studies/study_root/study-endpoints"
         },
         "response": {
-            "code": 400,
+            "code": 404,
             "headers": {
                 "content-length": "336",
                 "content-type": "application/json"
             },
             "result": {
-                "message": "There is no approved endpoint identified by provided uid (Endpoint_000001_does_not_exists)",
-                "method": "POST",
+                "type": "NotFoundException",
+                "message": "No Syntax Template with UID (Endpoint_000001_does_not_exists) found in given status and version.",
+                "time": "2024-02-14T12:14:59.020275",
                 "path": "http://testserver/studies/study_root/study-endpoints",
-                "time": "2020-11-03T23:42:41.518146",
-                "type": "BusinessLogicException"
+                "method": "POST"
             }
         }
     },

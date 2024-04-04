@@ -292,7 +292,11 @@ export default {
   },
   mounted () {
     this.$store.dispatch('studiesGeneral/fetchUnits')
-    this.fetchEpochs()
+  },
+  watch: {
+    options () {
+      this.fetchEpochs()
+    }
   }
 }
 </script>

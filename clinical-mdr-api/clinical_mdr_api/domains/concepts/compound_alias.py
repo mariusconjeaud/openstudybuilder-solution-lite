@@ -73,7 +73,7 @@ class CompoundAliasVO(ConceptVO):
 
         if not compound_exists_callback(self.compound_uid):
             raise exceptions.ValidationException(
-                f"{type(self).__name__} tried to connect to non existing compound identified by uid ({self.compound_uid})"
+                f"{type(self).__name__} tried to connect to non-existent compound identified by uid ({self.compound_uid})"
             )
 
         if self.is_preferred_synonym:

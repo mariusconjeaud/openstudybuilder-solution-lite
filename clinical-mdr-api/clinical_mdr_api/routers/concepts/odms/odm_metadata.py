@@ -45,7 +45,7 @@ If `parent` is empty or `*` is given then the mapping will apply to all occurren
 
 @router.post(
     "/xmls/export",
-    dependencies=[rbac.LIBRARY_WRITE],
+    dependencies=[rbac.LIBRARY_READ],
     summary="Export ODM XML",
     description="",
     status_code=200,
@@ -57,9 +57,7 @@ If `parent` is empty or `*` is given then the mapping will apply to all occurren
 def get_odm_document(
     target_uid: str,
     target_type: TargetType,
-    status: list[ObjectStatus] = Query(
-        [ObjectStatus.LATEST_FINAL, ObjectStatus.LATEST_RETIRED]
-    ),
+    status: ObjectStatus = Query(ObjectStatus.LATEST_FINAL),
     allowed_namespaces: list[str] = Query(
         [],
         description="Names of the Vendor Namespaces to export. If not specified, all Vendor Namespaces available will be exported.",
@@ -103,7 +101,7 @@ def get_odm_document(
 
 @router.post(
     "/csvs/export",
-    dependencies=[rbac.LIBRARY_WRITE],
+    dependencies=[rbac.LIBRARY_READ],
     summary="Export ODM CSV",
     description="",
     status_code=200,

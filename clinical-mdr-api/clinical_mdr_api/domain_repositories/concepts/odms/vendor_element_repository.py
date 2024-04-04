@@ -19,6 +19,7 @@ from clinical_mdr_api.domain_repositories.models.odm import (
     OdmVendorElementValue,
     OdmVendorNamespaceRoot,
 )
+from clinical_mdr_api.domains._utils import ObjectStatus
 from clinical_mdr_api.domains.concepts.concept_base import ConceptARBase
 from clinical_mdr_api.domains.concepts.odms.vendor_element import (
     OdmVendorElementAR,
@@ -48,13 +49,12 @@ class VendorElementRepository(OdmGenericRepository[OdmVendorElementAR]):
         value: VersionValue,
         **_kwargs,
     ) -> OdmVendorElementAR:
+        vendor_namespace = root.belongs_to_vendor_namespace.get_or_none()
         return OdmVendorElementAR.from_repository_values(
             uid=root.uid,
             concept_vo=OdmVendorElementVO.from_repository_values(
                 name=value.name,
-                vendor_namespace_uid=vendor_namespace.uid
-                if (vendor_namespace := root.belongs_to_vendor_namespace.get_or_none())
-                else None,
+                vendor_namespace_uid=vendor_namespace.uid if vendor_namespace else None,
                 vendor_attribute_uids=[
                     vendor_attribute.uid
                     for vendor_attribute in root.has_vendor_attribute.all()
@@ -98,20 +98,17 @@ class VendorElementRepository(OdmGenericRepository[OdmVendorElementAR]):
         return odm_vendor_element_ar
 
     def specific_alias_clause(
-        self, only_specific_status: list[str] | None = None
+        self, only_specific_status: str = ObjectStatus.LATEST.name
     ) -> str:
-        if not only_specific_status:
-            only_specific_status = ["LATEST"]
-
         return f"""
         WITH *,
 
-        head([(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmVendorElementRoot)<-[:HAS_VENDOR_ELEMENT]-(vnr:OdmVendorNamespaceRoot)-[:LATEST]->(vnv:OdmVendorNamespaceValue) | {{uid: vnr.uid, name: vnv.name, prefix: vnv.prefix, url: vnv.url}}]) AS vendor_namespace,
-        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmVendorElementRoot)-[:HAS_VENDOR_ATTRIBUTE]->(var:OdmVendorAttributeRoot)-[:LATEST]->(vav:OdmVendorAttributeValue) | {{uid: var.uid, name: vav.name}}] AS vendor_attributes
+        head([(concept_value)<-[:{only_specific_status}]-(:OdmVendorElementRoot)<-[:HAS_VENDOR_ELEMENT]-(vnr:OdmVendorNamespaceRoot)-[:LATEST]->(vnv:OdmVendorNamespaceValue) | {{uid: vnr.uid, name: vnv.name, prefix: vnv.prefix, url: vnv.url}}]) AS vendor_namespace,
+        [(concept_value)<-[:{only_specific_status}]-(:OdmVendorElementRoot)-[:HAS_VENDOR_ATTRIBUTE]->(var:OdmVendorAttributeRoot)-[:LATEST]->(vav:OdmVendorAttributeValue) | {{uid: var.uid, name: vav.name}}] AS vendor_attributes
 
         WITH *,
         vendor_namespace.uid AS vendor_namespace_uid,
-        [vendor_attribute in vendor_attributes | vendor_attribute.uid] AS vendor_attribute_uids
+        apoc.coll.toSet([vendor_attribute in vendor_attributes | vendor_attribute.uid]) AS vendor_attribute_uids
         """
 
     def _get_or_create_value(

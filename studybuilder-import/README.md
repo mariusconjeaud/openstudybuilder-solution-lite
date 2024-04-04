@@ -311,6 +311,8 @@ MDR_MIGRATION_RENUMBER_DUMMY_STUDY=True
 
 #  Authentication
 
+## OAuth 2
+
 Supports [OAuth 2.0 client credentials flow with shared secret](https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-oauth2-client-creds-grant-flow#first-case-access-token-request-with-a-shared-secret).
 Credentials can be configured by setting all the following environment variables.
 If *CLIENT_ID* is set, the authentication routine is activated.
@@ -332,6 +334,16 @@ SCOPE="api://aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/.default"
 
 Authentication is done once per migration script session, fetching an access token which is then included in each
 request as the *Authorization* header.
+
+## Manually provided token
+
+Instead of using the OAuth 2 flow, it is possible to provide a Bearer token to be used.
+This method is used if a token is given in the `STUDYBUILDER_API_TOKEN` environment variable.
+```shell
+STUDYBUILDER_API_TOKEN=ABCDEFGH123456... (typically 1000+ characters) 
+```
+
+The environment variables for the OAuth 2 flow are ignored if `STUDYBUILDER_API_TOKEN` is provided.
 
 # Sample data and scripts
 
@@ -476,8 +488,12 @@ After this, run the `codelistterms2` Pipenv command:
 $ pipenv run codelistterms2
 ```
 This imports all sponsor codelists.
-This command also imports more than needed, but also finishes rather quickly
-and won't cause any troubles with the codelists that were already imported since before.
+It is possible to limit what codelists are imported
+by giving a comma-separated list of codelist names.
+Enclose the list in quites, and add no spaces around the comma:
+```sh
+$ pipenv run codelistterms2 "Unit Subset,Footnote Type"
+```
 
 ## Updating the included demo study data
 

@@ -8,6 +8,7 @@ from clinical_mdr_api.domains.controlled_terminologies.ct_term_attributes import
     CTTermAttributesVO,
 )
 from clinical_mdr_api.domains.controlled_terminologies.ct_term_name import (
+    CTTermCodelistVO,
     CTTermNameAR,
     CTTermNameVO,
 )
@@ -88,7 +89,11 @@ class CTTermService:
         ct_term_attributes_ar = CTTermAttributesAR.from_input_values(
             author=self.user_initials,
             ct_term_attributes_vo=CTTermAttributesVO.from_input_values(
-                codelist_uid=term_input.codelist_uid,
+                codelists=[
+                    CTTermCodelistVO(
+                        codelist_uid=term_input.codelist_uid, order=term_input.order
+                    )
+                ],
                 catalogue_name=term_input.catalogue_name,
                 code_submission_value=term_input.code_submission_value,
                 name_submission_value=term_input.name_submission_value,
@@ -110,11 +115,14 @@ class CTTermService:
         ct_term_name_ar = CTTermNameAR.from_input_values(
             author=self.user_initials,
             ct_term_name_vo=CTTermNameVO.from_input_values(
-                codelist_uid=term_input.codelist_uid,
+                codelists=[
+                    CTTermCodelistVO(
+                        codelist_uid=term_input.codelist_uid, order=term_input.order
+                    )
+                ],
                 catalogue_name=term_input.catalogue_name,
                 name=term_input.sponsor_preferred_name,
                 name_sentence_case=term_input.sponsor_preferred_name_sentence_case,
-                order=term_input.order,
                 codelist_exists_callback=self._repos.ct_codelist_attribute_repository.codelist_exists,
                 catalogue_exists_callback=self._repos.ct_catalogue_repository.catalogue_exists,
             ),

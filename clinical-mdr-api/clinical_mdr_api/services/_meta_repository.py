@@ -13,6 +13,9 @@ from clinical_mdr_api.domain_repositories.clinical_programmes.clinical_programme
 from clinical_mdr_api.domain_repositories.comments.comments_repository import (
     CommentsRepository,
 )
+from clinical_mdr_api.domain_repositories.concepts.active_substance_repository import (
+    ActiveSubstanceRepository,
+)
 from clinical_mdr_api.domain_repositories.concepts.activities.activity_group_repository import (
     ActivityGroupRepository,
 )
@@ -67,6 +70,9 @@ from clinical_mdr_api.domain_repositories.concepts.odms.vendor_element_repositor
 from clinical_mdr_api.domain_repositories.concepts.odms.vendor_namespace_repository import (
     VendorNamespaceRepository,
 )
+from clinical_mdr_api.domain_repositories.concepts.pharmaceutical_product_repository import (
+    PharmaceuticalProductRepository,
+)
 from clinical_mdr_api.domain_repositories.concepts.simple_concepts.lag_time_repository import (
     LagTimeRepository,
 )
@@ -96,6 +102,9 @@ from clinical_mdr_api.domain_repositories.concepts.simple_concepts.time_point_re
 )
 from clinical_mdr_api.domain_repositories.concepts.simple_concepts.visit_name_repository import (
     VisitNameRepository,
+)
+from clinical_mdr_api.domain_repositories.concepts.simple_concepts.week_in_study_repository import (
+    WeekInStudyRepository,
 )
 from clinical_mdr_api.domain_repositories.concepts.unit_definitions.unit_definition_repository import (
     UnitDefinitionRepository,
@@ -142,11 +151,6 @@ from clinical_mdr_api.domain_repositories.libraries.library_repository import (
 from clinical_mdr_api.domain_repositories.projects.project_repository import (
     ProjectRepository,
 )
-
-# noinspection PyProtectedMember
-from clinical_mdr_api.domain_repositories.simple_dictionaries._simple_terminology_item_repository import (
-    SimpleTerminologyItemRepository,
-)
 from clinical_mdr_api.domain_repositories.standard_data_models.data_model_ig_repository import (
     DataModelIGRepository,
 )
@@ -169,6 +173,9 @@ from clinical_mdr_api.domain_repositories.study_definitions.study_title.study_ti
 )
 from clinical_mdr_api.domain_repositories.study_selections.study_activity_group_repository import (
     StudySelectionActivityGroupRepository,
+)
+from clinical_mdr_api.domain_repositories.study_selections.study_activity_instance_repository import (
+    StudySelectionActivityInstanceRepository,
 )
 from clinical_mdr_api.domain_repositories.study_selections.study_activity_instruction_repository import (
     StudyActivityInstructionRepository,
@@ -280,7 +287,7 @@ from clinical_mdr_api.domain_repositories.syntax_templates.timeframe_template_re
 )
 
 
-# pylint:disable=too-many-public-methods
+# pylint: disable=too-many-public-methods
 class MetaRepository:
     """
     Utility class to provide repository instances and simplify lifecycle management (close) for them.
@@ -369,6 +376,14 @@ class MetaRepository:
         return CompoundAliasRepository()
 
     @property
+    def active_substance_repository(self) -> ActiveSubstanceRepository:
+        return ActiveSubstanceRepository()
+
+    @property
+    def pharmaceutical_product_repository(self) -> PharmaceuticalProductRepository:
+        return PharmaceuticalProductRepository()
+
+    @property
     def activity_repository(self) -> ActivityRepository:
         return ActivityRepository()
 
@@ -415,6 +430,10 @@ class MetaRepository:
     @property
     def study_duration_weeks_repository(self) -> StudyDurationWeeksRepository:
         return StudyDurationWeeksRepository()
+
+    @property
+    def week_in_study_repository(self) -> WeekInStudyRepository:
+        return WeekInStudyRepository()
 
     @property
     def time_point_repository(self) -> TimePointRepository:
@@ -617,10 +636,6 @@ class MetaRepository:
         return ClinicalProgrammeRepository()
 
     @property
-    def simple_terminology_item_repository(self) -> SimpleTerminologyItemRepository:
-        return SimpleTerminologyItemRepository()
-
-    @property
     def study_objective_repository(self) -> StudySelectionObjectiveRepository:
         return StudySelectionObjectiveRepository()
 
@@ -639,6 +654,12 @@ class MetaRepository:
     @property
     def study_criteria_repository(self) -> StudySelectionCriteriaRepository:
         return StudySelectionCriteriaRepository()
+
+    @property
+    def study_activity_instance_repository(
+        self,
+    ) -> StudySelectionActivityInstanceRepository:
+        return StudySelectionActivityInstanceRepository()
 
     @property
     def study_activity_repository(

@@ -4,7 +4,10 @@ from neomodel import db
 
 from clinical_mdr_api import exceptions
 from clinical_mdr_api.domain_repositories._utils import helpers
-from clinical_mdr_api.domain_repositories.models._utils import convert_to_datetime
+from clinical_mdr_api.domain_repositories.models._utils import (
+    convert_to_datetime,
+    to_relation_trees,
+)
 from clinical_mdr_api.domain_repositories.models.study import StudyValue
 from clinical_mdr_api.domain_repositories.models.study_selections import (
     StudyActivity,
@@ -20,7 +23,8 @@ from clinical_mdr_api.domains.study_selections.study_activity_schedule import (
 class SelectionHistory(base.SelectionHistory):
     """Class for selection history items."""
 
-    study_activity_uid: str
+    study_activity_uid: str | None
+    study_activity_instance_uid: str | None
     study_visit_uid: str
 
 
@@ -41,16 +45,32 @@ class StudyActivityScheduleRepository(base.StudySelectionRepository):
     ) -> StudyActivityScheduleVO:
         study_action = selection.has_after.all()[0]
         study_activity = selection.study_activity.single()
+        study_activity_instance = selection.study_activity_instance.single()
+        study_activity_instance_name = None
+        if study_activity_instance:
+            activity_instance = (
+                study_activity_instance.has_selected_activity_instance.get_or_none()
+            )
+            if activity_instance:
+                study_activity_instance_name = activity_instance.name
+
         study_visit = selection.study_visit.single()
-        study_activity_name = study_activity.has_selected_activity.single().name
         study_visit_name = (
             study_visit.has_visit_name.single().has_latest_value.single().name
         )
         return StudyActivityScheduleVO(
             uid=selection.uid,
             study_uid=study_uid,
-            study_activity_uid=study_activity.uid,
-            study_activity_name=study_activity_name,
+            study_activity_uid=study_activity.uid if study_activity else None,
+            study_activity_name=study_activity.has_selected_activity.get().name
+            if study_activity
+            else None,
+            study_activity_instance_uid=study_activity_instance.uid
+            if study_activity_instance
+            else None,
+            study_activity_instance_name=study_activity_instance_name
+            if study_activity_instance
+            else None,
             study_visit_uid=study_visit.uid,
             study_visit_name=study_visit_name,
             start_date=study_action.date,
@@ -63,13 +83,46 @@ class StudyActivityScheduleRepository(base.StudySelectionRepository):
         selection_vo: StudyActivityScheduleVO,
         author: str,
     ) -> StudyActivityScheduleVO:
-        study_activity_node = study_value_node.has_study_activity.get_or_none(
-            uid=selection_vo.study_activity_uid
-        )
-        if study_activity_node is None:
-            raise exceptions.NotFoundException(
-                f"The study activity with uid {selection_vo.study_activity_uid} was not found"
+        # Detach previous node from study
+        if selection_vo.uid is not None:
+            self._remove_old_selection_if_exists(selection_vo.study_uid, selection_vo)
+        # If this is a new selection we want to check if any other similar Schedule exists
+        else:
+            if self.find_schedule_for_study_visit_and_study_activity(
+                study_uid=selection_vo.study_uid,
+                study_activity_uid=selection_vo.study_activity_uid,
+                study_visit_uid=selection_vo.study_visit_uid,
+            ):
+                raise exceptions.BusinessLogicException(
+                    f"There already exist a schedule for the same Activity and Visit in the following Study ({selection_vo.study_uid})"
+                )
+
+        # Create new node
+        schedule = StudyActivitySchedule(uid=selection_vo.uid)
+        schedule.save()
+
+        if selection_vo.study_activity_uid:
+            study_activity_node = study_value_node.has_study_activity.get_or_none(
+                uid=selection_vo.study_activity_uid
             )
+            if study_activity_node is None:
+                raise exceptions.NotFoundException(
+                    f"The study activity with uid {selection_vo.study_activity_uid} was not found"
+                )
+            schedule.study_activity.connect(study_activity_node)
+
+        if selection_vo.study_activity_instance_uid:
+            study_activity_instance_node = (
+                study_value_node.has_study_activity_instance.get_or_none(
+                    uid=selection_vo.study_activity_instance_uid
+                )
+            )
+            if study_activity_instance_node is None:
+                raise exceptions.NotFoundException(
+                    f"The study activity instance with uid {selection_vo.study_activity_instance_uid} was not found"
+                )
+            schedule.study_activity_instance.connect(study_activity_instance_node)
+
         study_visit_node = study_value_node.has_study_visit.get_or_none(
             uid=selection_vo.study_visit_uid
         )
@@ -78,20 +131,23 @@ class StudyActivityScheduleRepository(base.StudySelectionRepository):
                 f"The study visit with uid {selection_vo.study_visit_uid} was not found"
             )
 
-        # Detach previous node from study
-        if selection_vo.uid is not None:
-            self._remove_old_selection_if_exists(selection_vo.study_uid, selection_vo)
-
-        # Create new node
-        schedule = StudyActivitySchedule(uid=selection_vo.uid)
-        schedule.save()
-
         # Create relations
-        schedule.study_activity.connect(study_activity_node)
         schedule.study_visit.connect(study_visit_node)
         study_value_node.has_study_activity_schedule.connect(schedule)
 
         return schedule
+
+    def find_schedule_for_study_visit_and_study_activity(
+        self, study_uid: str, study_activity_uid: str, study_visit_uid: str
+    ) -> list[StudyActivitySchedule]:
+        study_activity_schedules = to_relation_trees(
+            StudyActivitySchedule.nodes.filter(
+                study_value__latest_value__uid=study_uid,
+                study_activity__uid=study_activity_uid,
+                study_visit__uid=study_visit_uid,
+            ).has(has_before=False)
+        ).distinct()
+        return study_activity_schedules
 
     def _remove_old_selection_if_exists(
         self, study_uid: str, schedule: StudyActivityScheduleVO
@@ -145,16 +201,18 @@ class StudyActivityScheduleRepository(base.StudySelectionRepository):
         specific_schedules_audit_trail = db.cypher_query(
             cypher
             + """
-            MATCH (all_sas)<-[:STUDY_ACTIVITY_HAS_SCHEDULE]-(sa:StudyActivity)
             MATCH (all_sas)<-[:STUDY_VISIT_HAS_SCHEDULE]-(svi:StudyVisit)
             MATCH (all_sas)<-[:AFTER]-(asa:StudyAction)
+            OPTIONAL MATCH (all_sas)<-[:STUDY_ACTIVITY_HAS_SCHEDULE]-(sa:StudyActivity)
+            OPTIONAL MATCH (all_sas)<-[:STUDY_ACTIVITY_INSTANCE_HAS_SCHEDULE]-(sa_instance:StudyActivityInstance)
             OPTIONAL MATCH (all_sas)<-[:BEFORE]-(bsa:StudyAction)
-            WITH all_sas, sa, svi, asa, bsa
+            WITH all_sas, sa, sa_instance, svi, asa, bsa
             ORDER BY all_sas.uid, asa.date DESC
             RETURN
                 all_sas.uid AS uid,
                 svi.uid AS study_visit_uid,
                 sa.uid AS study_activity_uid,
+                sa_instance.uid AS study_activity_instance_uid,
                 labels(asa) AS change_type,
                 asa.date AS start_date,
                 bsa.date AS end_date,
@@ -175,6 +233,7 @@ class StudyActivityScheduleRepository(base.StudySelectionRepository):
                     study_uid=study_uid,
                     study_selection_uid=res["uid"],
                     study_activity_uid=res["study_activity_uid"],
+                    study_activity_instance_uid=res["study_activity_instance_uid"],
                     study_visit_uid=res["study_visit_uid"],
                     user_initials=res["user_initials"],
                     change_type=change_type,
@@ -185,4 +244,6 @@ class StudyActivityScheduleRepository(base.StudySelectionRepository):
         return result
 
     def close(self) -> None:
+        # Our repository guidelines state that repos should have a close method
+        # But nothing needs to be done in this one
         pass

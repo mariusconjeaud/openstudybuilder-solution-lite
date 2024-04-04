@@ -4,6 +4,9 @@ from typing import Callable, Iterable, Self
 
 from pydantic import Field, root_validator
 
+from clinical_mdr_api.domain_repositories.study_selections.study_activity_instance_repository import (
+    SelectionHistory as StudyActivityInstanceSelectionHistory,
+)
 from clinical_mdr_api.domain_repositories.study_selections.study_activity_repository import (
     SelectionHistory as StudyActivitySelectionHistory,
 )
@@ -52,6 +55,10 @@ from clinical_mdr_api.domains.study_selections.study_design_cell import (
 from clinical_mdr_api.domains.study_selections.study_selection_activity import (
     StudySelectionActivityAR,
 )
+from clinical_mdr_api.domains.study_selections.study_selection_activity_instance import (
+    StudyActivityInstanceState,
+    StudySelectionActivityInstanceAR,
+)
 from clinical_mdr_api.domains.study_selections.study_selection_arm import (
     StudySelectionArmVO,
 )
@@ -81,6 +88,9 @@ from clinical_mdr_api.domains.study_selections.study_selection_objective import 
     StudySelectionObjectivesAR,
 )
 from clinical_mdr_api.models.concepts.activities.activity import Activity
+from clinical_mdr_api.models.concepts.activities.activity_instance import (
+    ActivityInstance,
+)
 from clinical_mdr_api.models.concepts.compound import Compound
 from clinical_mdr_api.models.concepts.compound_alias import CompoundAlias
 from clinical_mdr_api.models.concepts.concept import SimpleNumericValueWithUnit
@@ -112,10 +122,11 @@ from clinical_mdr_api.models.syntax_templates.objective_template import (
 from clinical_mdr_api.models.syntax_templates.template_parameter_multi_select_input import (
     TemplateParameterMultiSelectInput,
 )
-from clinical_mdr_api.models.utils import BaseModel
+from clinical_mdr_api.models.utils import BaseModel, get_latest_on_datetime_str
 
 STUDY_UID_DESC = "The uid of the study"
 STUDY_ACTIVITY_UID_DESC = "uid for the study activity"
+STUDY_ACTIVITY_INSTANCE_UID_DESC = "uid for the study activity instance"
 STUDY_ARM_UID_DESC = "the uid of the related study arm"
 STUDY_EPOCH_UID_DESC = "the uid of the related study epoch"
 STUDY_ELEMENT_UID_DESC = "the uid of the related study element"
@@ -131,6 +142,9 @@ START_DATE_DESC = (
     "The format is ISO 8601 in UTC±0, e.g.: '2020-10-31T16:00:00+00:00' for October 31, 2020 at 6pm in UTC+2 timezone."
 )
 USER_INITIALS_DESC = "User initials for the version"
+
+AFTER_DATE_QUALIFIER = "has_after.date"
+AFTER_USER_QUALIFIER = "has_after.user_initials"
 
 STUDY_UID_FIELD = Field(
     ...,
@@ -176,6 +190,11 @@ SHOW_SOA_GROUP_IN_PROTOCOL_FLOWCHART_FIELD = Field(
     title="show_soa_group_in_protocol_flowchart",
     description="show soa group in protocol flow chart",
 )
+SHOW_ACTIVITY_INSTANCE_IN_PROTOCOL_FLOWCHART_FIELD = Field(
+    False,
+    title="show_activity_instance_in_protocol_flowchart",
+    description="show activity instance in operational flow chart",
+)
 
 
 class StudySelection(BaseModel):
@@ -183,6 +202,12 @@ class StudySelection(BaseModel):
         ...,
         title="study_uid",
         description=STUDY_UID_DESC,
+    )
+
+    study_version: str | None = Field(
+        None,
+        title="study version or date information",
+        description="Study version number, if specified, otherwise None.",
     )
 
     order: int = Field(
@@ -341,6 +366,7 @@ class StudySelectionObjective(StudySelectionObjectiveCore):
         ],
         find_project_by_study_uid: Callable,
         accepted_version: bool = False,
+        study_value_version: str | None = None,
     ) -> "StudySelectionObjective":
         study_uid = study_selection_objective_ar.study_uid
 
@@ -375,6 +401,11 @@ class StudySelectionObjective(StudySelectionObjectiveCore):
             order=order,
             accepted_version=accepted_version,
             study_uid=study_uid,
+            study_version=(
+                study_value_version
+                if study_value_version
+                else get_latest_on_datetime_str()
+            ),
             start_date=single_study_selection.start_date,
             objective_template=selected_objective_template,
             user_initials=single_study_selection.user_initials,
@@ -450,6 +481,11 @@ class StudySelectionObjective(StudySelectionObjectiveCore):
             order=order,
             accepted_version=accepted_version,
             study_uid=study_uid,
+            study_version=(
+                study_value_version
+                if study_value_version
+                else get_latest_on_datetime_str()
+            ),
             objective_level=objective_level,
             start_date=single_study_selection.start_date,
             latest_objective=latest_objective,
@@ -775,6 +811,11 @@ class StudySelectionEndpoint(StudySelection):
         return StudySelectionEndpoint(
             study_objective=study_obj_model,
             study_uid=study_uid,
+            study_version=(
+                study_value_version
+                if study_value_version
+                else get_latest_on_datetime_str()
+            ),
             order=order,
             accepted_version=accepted_version,
             study_endpoint_uid=study_selection.study_selection_uid,
@@ -978,11 +1019,17 @@ class StudySelectionCompound(StudySelection):
         find_project_by_study_uid: Callable,
         find_unit_by_uid: Callable[[str], UnitDefinitionAR | None],
         find_numeric_value_by_uid: Callable[[str], NumericValueWithUnitAR | None],
+        study_value_version: str | None = None,
     ):
         project = find_project_by_study_uid(study_uid)
         return cls(
             order=order,
             study_uid=study_uid,
+            study_version=(
+                study_value_version
+                if study_value_version
+                else get_latest_on_datetime_str()
+            ),
             study_compound_uid=selection.study_selection_uid,
             compound=compound_model,
             compound_alias=compound_alias_model,
@@ -1385,6 +1432,7 @@ class StudySelectionCriteria(StudySelectionCriteriaCore):
         get_ct_term_criteria_type: Callable[[str], CTTermName],
         find_project_by_study_uid: Callable,
         accepted_version: bool = False,
+        study_value_version: str | None = None,
     ) -> Self:
         study_uid = study_selection_criteria_ar.study_uid
 
@@ -1427,6 +1475,11 @@ class StudySelectionCriteria(StudySelectionCriteriaCore):
             order=criteria_type_order,
             accepted_version=accepted_version,
             study_uid=study_uid,
+            study_version=(
+                study_value_version
+                if study_value_version
+                else get_latest_on_datetime_str()
+            ),
             start_date=single_study_selection.start_date,
             criteria_template=selected_criteria_template,
             user_initials=single_study_selection.user_initials,
@@ -1447,6 +1500,7 @@ class StudySelectionCriteria(StudySelectionCriteriaCore):
         find_project_by_study_uid: Callable,
         no_brackets: bool = False,
         accepted_version: bool = False,
+        study_value_version: str | None = None,
     ) -> Self:
         study_uid = study_selection_criteria_ar.study_uid
 
@@ -1490,6 +1544,11 @@ class StudySelectionCriteria(StudySelectionCriteriaCore):
             order=criteria_type_order,
             accepted_version=accepted_version,
             study_uid=study_uid,
+            study_version=(
+                study_value_version
+                if study_value_version
+                else get_latest_on_datetime_str()
+            ),
             start_date=single_study_selection.start_date,
             latest_criteria=latest_criteria,
             criteria=selected_criteria,
@@ -1554,6 +1613,30 @@ class StudySelectionCriteriaKeyCriteria(BaseModel):
 #
 # Study Activity
 #
+class DetailedSoAHistory(BaseModel):
+    object_type: str = Field(
+        ...,
+    )
+    description: str = Field(
+        ...,
+    )
+    action: str = CHANGE_TYPE_FIELD
+    user_initials: str = USER_INITIALS_DESC
+    start_date: datetime = START_DATE_DESC
+    end_date: datetime | None = END_DATE_FIELD
+
+    @classmethod
+    def from_history(cls, detailed_soa_history_item: dict):
+        return cls(
+            object_type=detailed_soa_history_item.get("object_type"),
+            description=detailed_soa_history_item.get("description"),
+            action=detailed_soa_history_item.get("change_type"),
+            user_initials=detailed_soa_history_item.get("user_initials"),
+            start_date=detailed_soa_history_item.get("start_date"),
+            end_date=detailed_soa_history_item.get("end_date"),
+        )
+
+
 class SimpleStudyActivitySubGroup(BaseModel):
     study_activity_subgroup_uid: str | None = Field(
         None,
@@ -1623,13 +1706,13 @@ class StudySelectionActivityCore(StudySelection):
         ...,
         title="start_date",
         description=START_DATE_DESC,
-        source="has_after.date",
+        source=AFTER_DATE_QUALIFIER,
     )
     user_initials: str | None = Field(
         ...,
         title="user_initials",
         description=USER_INITIALS_DESC,
-        source="has_after.user_initials",
+        source=AFTER_USER_QUALIFIER,
     )
     end_date: datetime | None = END_DATE_FIELD
     status: str | None = STATUS_FIELD
@@ -1725,6 +1808,7 @@ class StudySelectionActivity(StudySelectionActivityCore):
         get_activity_by_uid_version_callback: Callable[[str], Activity],
         get_ct_term_flowchart_group: Callable[[str], CTTermName],
         accepted_version: bool = False,
+        study_value_version: str | None = None,
     ) -> Self:
         study_activity_selection = study_selection_activity_ar.study_objects_selection
         study_uid = study_selection_activity_ar.study_uid
@@ -1792,6 +1876,11 @@ class StudySelectionActivity(StudySelectionActivityCore):
             show_soa_group_in_protocol_flowchart=single_study_selection.show_soa_group_in_protocol_flowchart,
             accepted_version=accepted_version,
             study_uid=study_uid,
+            study_version=(
+                study_value_version
+                if study_value_version
+                else get_latest_on_datetime_str()
+            ),
             start_date=single_study_selection.start_date,
             user_initials=single_study_selection.user_initials,
         )
@@ -1831,12 +1920,23 @@ class StudySelectionActivityInput(BaseModel):
     )
 
 
-class StudySelectionActivityRequestUpdate(StudySelectionActivityInput):
-    replaced_activity_uid: str = Field(
-        ...,
-        title="replaced_activity_uid",
-        description="The uid of the Activity that replaced Activity Request",
+class StudySelectionActivityRequestEditInput(StudySelectionActivityInput):
+    soa_group_term_uid: str | None = Field(
+        None,
+        title="soa_group_term_uid",
+        description="flowchart CT term uid",
     )
+    activity_group_uid: str | None = Field(None, title="activity_group_uid")
+    activity_subgroup_uid: str | None = Field(None, title="activity_subgroup_uid")
+    activity_uid: str | None = Field(
+        None, title="activity_uid", description="activity uid"
+    )
+    activity_name: str | None = Field(
+        None, title="activity_name", description="activity_name uid"
+    )
+    request_rationale: str | None = None
+    is_data_collected: bool | None = None
+    is_request_final: bool | None = None
 
 
 class StudySelectionActivityNewOrder(BaseModel):
@@ -1866,7 +1966,11 @@ class StudySelectionActivityBatchDeleteInput(BaseModel):
 
 class StudySelectionActivityBatchInput(BaseModel):
     method: str = METHOD_FIELD
-    content: StudySelectionActivityBatchUpdateInput | StudySelectionActivityCreateInput | StudySelectionActivityBatchDeleteInput
+    content: (
+        StudySelectionActivityBatchUpdateInput
+        | StudySelectionActivityCreateInput
+        | StudySelectionActivityBatchDeleteInput
+    )
 
 
 class StudySelectionActivityBatchOutput(BaseModel):
@@ -1875,15 +1979,252 @@ class StudySelectionActivityBatchOutput(BaseModel):
 
 
 #
+# Study Activity Instance
+#
+class StudySelectionActivityInstance(StudySelection):
+    show_activity_instance_in_protocol_flowchart: bool = (
+        SHOW_ACTIVITY_INSTANCE_IN_PROTOCOL_FLOWCHART_FIELD
+    )
+    study_activity_instance_uid: str | None = Field(
+        ...,
+        title="study_activity_instance_uid",
+        description=STUDY_ACTIVITY_INSTANCE_UID_DESC,
+    )
+    study_activity_uid: str | None = Field(
+        ...,
+        title="study_activity_uid",
+        description=STUDY_ACTIVITY_UID_DESC,
+    )
+    study_version: str | None = Field(
+        None,
+        title="study version or date information",
+        description="Study version number, if specified, otherwise None.",
+    )
+    activity: Activity
+    activity_instance: ActivityInstance | None
+    start_date: datetime | None = Field(
+        ...,
+        title="start_date",
+        description=START_DATE_DESC,
+    )
+    user_initials: str | None = Field(
+        ...,
+        title="user_initials",
+        description=USER_INITIALS_DESC,
+    )
+    end_date: datetime | None = END_DATE_FIELD
+    status: str | None = STATUS_FIELD
+    change_type: str | None = CHANGE_TYPE_FIELD
+    latest_activity: Activity | None = Field(
+        None,
+        title="latest_activity",
+        description="Latest version of activity selected for study.",
+        nullable=True,
+    )
+    latest_activity_instance: ActivityInstance | None = Field(
+        None,
+        title="latest_activity_instance",
+        description="Latest version of activity instace selected for study.",
+        nullable=True,
+    )
+    state: StudyActivityInstanceState
+    study_activity_subgroup: SimpleStudyActivitySubGroup | None
+    study_activity_group: SimpleStudyActivityGroup | None
+    study_soa_group: SimpleStudySoAGroup | None
+
+    @classmethod
+    def _get_state_out_of_activity_and_activity_instance(
+        cls, activity: Activity, activity_instance: ActivityInstance
+    ) -> StudyActivityInstanceState:
+        if activity.is_data_collected:
+            if activity_instance:
+                if activity_instance.is_required_for_activity:
+                    return StudyActivityInstanceState.REQUIRED
+                if activity_instance.is_default_selected_for_activity:
+                    return StudyActivityInstanceState.DEFAULTED
+                return StudyActivityInstanceState.NOT_REQUIRED
+            return StudyActivityInstanceState.MISSING_SELECTION
+        return StudyActivityInstanceState.NOT_REQUIRED
+
+    @classmethod
+    def from_study_selection_history(
+        cls,
+        study_selection_history: StudyActivityInstanceSelectionHistory,
+        study_uid: str,
+        get_activity_by_uid_version_callback: Callable[[str, str], Activity],
+        get_activity_instance_by_uid_version_callback: Callable[
+            [str, str], ActivityInstance
+        ],
+    ) -> Self:
+        activity = get_activity_by_uid_version_callback(
+            study_selection_history.activity_uid,
+            study_selection_history.activity_version,
+        )
+        activity_instance = get_activity_instance_by_uid_version_callback(
+            study_selection_history.activity_instance_uid,
+            study_selection_history.activity_instance_version,
+        )
+        return cls(
+            study_uid=study_uid,
+            study_activity_instance_uid=study_selection_history.study_selection_uid,
+            study_activity_uid=study_selection_history.study_activity_uid,
+            order=study_selection_history.order,
+            show_activity_instance_in_protocol_flowchart=study_selection_history.show_activity_instance_in_protocol_flowchart,
+            start_date=study_selection_history.start_date,
+            activity=activity,
+            activity_instance=activity_instance,
+            end_date=study_selection_history.end_date,
+            change_type=study_selection_history.change_type,
+            user_initials=study_selection_history.user_initials,
+            state=cls._get_state_out_of_activity_and_activity_instance(
+                activity=activity, activity_instance=activity_instance
+            ),
+        )
+
+    @classmethod
+    def from_study_selection_activity_instance_ar_and_order(
+        cls,
+        study_selection_activity_instance_ar: StudySelectionActivityInstanceAR,
+        get_activity_by_uid_callback: Callable[[str], Activity],
+        get_activity_by_uid_version_callback: Callable[[str, str], Activity],
+        activity_instance_order: int,
+        get_activity_instance_by_uid_callback: Callable[[str], ActivityInstance],
+        get_activity_instance_by_uid_version_callback: Callable[
+            [str, str], ActivityInstance
+        ],
+    ) -> Self:
+        study_activity_instance_selection = (
+            study_selection_activity_instance_ar.study_objects_selection
+        )
+        study_uid = study_selection_activity_instance_ar.study_uid
+        single_study_selection = study_activity_instance_selection[
+            activity_instance_order - 1
+        ]
+        study_activity_instance_uid = single_study_selection.study_selection_uid
+        activity_uid = single_study_selection.activity_uid
+        activity_instance_uid = single_study_selection.activity_instance_uid
+
+        assert activity_uid is not None
+        latest_activity = get_activity_by_uid_callback(activity_uid)
+        if (
+            latest_activity
+            and latest_activity.version == single_study_selection.activity_version
+        ):
+            selected_activity = latest_activity
+            latest_activity = None
+        else:
+            selected_activity = get_activity_by_uid_version_callback(
+                activity_uid, single_study_selection.activity_version
+            )
+
+        if activity_instance_uid:
+            latest_activity_instance = get_activity_instance_by_uid_callback(
+                activity_instance_uid
+            )
+            if (
+                latest_activity_instance
+                and latest_activity_instance.version
+                == single_study_selection.activity_instance_version
+            ):
+                selected_activity_instance = latest_activity_instance
+                latest_activity_instance = None
+            else:
+                selected_activity_instance = (
+                    get_activity_instance_by_uid_version_callback(
+                        activity_instance_uid,
+                        single_study_selection.activity_instance_version,
+                    )
+                )
+        else:
+            selected_activity_instance = None
+            latest_activity_instance = None
+        return cls(
+            study_activity_instance_uid=study_activity_instance_uid,
+            study_activity_uid=single_study_selection.study_activity_uid,
+            activity=selected_activity,
+            latest_activity=latest_activity,
+            activity_instance=selected_activity_instance,
+            latest_activity_instance=latest_activity_instance,
+            order=activity_instance_order,
+            show_activity_instance_in_protocol_flowchart=single_study_selection.show_activity_instance_in_protocol_flowchart,
+            study_uid=study_uid,
+            start_date=single_study_selection.start_date,
+            user_initials=single_study_selection.user_initials,
+            state=cls._get_state_out_of_activity_and_activity_instance(
+                activity=selected_activity, activity_instance=selected_activity_instance
+            ),
+            study_activity_subgroup=(
+                SimpleStudyActivitySubGroup(
+                    study_activity_subgroup_uid=single_study_selection.study_activity_subgroup_uid,
+                    activity_subgroup_uid=single_study_selection.activity_subgroup_uid,
+                    activity_subgroup_name=single_study_selection.activity_subgroup_name,
+                )
+                if single_study_selection.study_activity_subgroup_uid
+                else None
+            ),
+            study_activity_group=(
+                SimpleStudyActivityGroup(
+                    study_activity_group_uid=single_study_selection.study_activity_group_uid,
+                    activity_group_uid=single_study_selection.activity_group_uid,
+                    activity_group_name=single_study_selection.activity_group_name,
+                )
+                if single_study_selection.study_activity_group_uid
+                else None
+            ),
+            study_soa_group=(
+                SimpleStudySoAGroup(
+                    study_soa_group_uid=single_study_selection.study_soa_group_uid,
+                    soa_group_term_uid=single_study_selection.soa_group_term_uid,
+                    soa_group_name=single_study_selection.soa_group_term_name,
+                )
+                if single_study_selection.study_soa_group_uid
+                else None
+            ),
+        )
+
+
+class StudySelectionActivityInstanceCreateInput(BaseModel):
+    activity_instance_uid: str | None = Field(
+        None,
+        title="activity_instance_uid",
+        description="uid of the activity instance",
+    )
+    study_activity_uid: str = Field(
+        ..., title="study_activity_uid", description="study_activity uid"
+    )
+    show_activity_instance_in_protocol_flowchart: bool = (
+        SHOW_ACTIVITY_INSTANCE_IN_PROTOCOL_FLOWCHART_FIELD
+    )
+
+
+class StudySelectionActivityInstanceEditInput(BaseModel):
+    activity_instance_uid: str | None = Field(
+        None,
+        title="activity_instance_uid",
+        description="uid of the activity instance",
+    )
+    study_activity_uid: str | None = Field(
+        None, title="study_activity_uid", description="study_activity uid"
+    )
+    show_activity_instance_in_protocol_flowchart: bool = (
+        SHOW_ACTIVITY_INSTANCE_IN_PROTOCOL_FLOWCHART_FIELD
+    )
+
+
+#
 # Study Activity Schedule
 #
-
-
 class StudyActivitySchedule(BaseModel):
     class Config:
         orm_mode = True
 
     study_uid: str = STUDY_UID_FIELD
+
+    study_version: str | None = Field(
+        None,
+        title="study version or date information",
+        description="Study version number, if specified, otherwise None",
+    )
 
     study_activity_schedule_uid: str | None = Field(
         ...,
@@ -1892,18 +2233,30 @@ class StudyActivitySchedule(BaseModel):
         source="uid",
     )
 
-    study_activity_uid: str = Field(
+    study_activity_uid: str | None = Field(
+        None,
         title="study_activity_uid",
         description="The related study activity UID",
         source="study_activity.uid",
     )
-
     study_activity_name: str | None = Field(
+        None,
         title="study_activity_name",
         description="The related study activity name",
         source="study_activity.has_selected_activity.name",
     )
-
+    study_activity_instance_uid: str | None = Field(
+        None,
+        title="study_activity_instance_uid",
+        description="The related study activity instance UID",
+        source="study_activity_instance.uid",
+    )
+    study_activity_instance_name: str | None = Field(
+        None,
+        title="study_activity_instance_name",
+        description="The related study activity instance name",
+        source="study_activity_instance.has_selected_activity_instance.name",
+    )
     study_visit_uid: str = Field(
         title="study_visit_uid",
         description="The related study visit UID",
@@ -1919,26 +2272,37 @@ class StudyActivitySchedule(BaseModel):
         ...,
         title="start_date",
         description=START_DATE_DESC,
-        source="has_after.date",
+        source=AFTER_DATE_QUALIFIER,
     )
 
     user_initials: str | None = Field(
         None,
         title="user_initials",
         description=USER_INITIALS_DESC,
-        source="has_after.user_initials",
+        source=AFTER_USER_QUALIFIER,
         nullable=True,
     )
 
     end_date: datetime | None = END_DATE_FIELD
 
     @classmethod
-    def from_vo(cls, schedule_vo: StudyActivityScheduleVO) -> Self:
+    def from_vo(
+        cls,
+        schedule_vo: StudyActivityScheduleVO,
+        study_value_version: str | None = None,
+    ) -> Self:
         return cls(
             study_activity_schedule_uid=schedule_vo.uid,
             study_uid=schedule_vo.study_uid,
+            study_version=(
+                study_value_version
+                if study_value_version
+                else get_latest_on_datetime_str()
+            ),
             study_activity_uid=schedule_vo.study_activity_uid,
             study_activity_name=schedule_vo.study_activity_name,
+            study_activity_instance_uid=schedule_vo.study_activity_instance_uid,
+            study_activity_instance_name=schedule_vo.study_activity_instance_name,
             study_visit_uid=schedule_vo.study_visit_uid,
             study_visit_name=schedule_vo.study_visit_name,
             start_date=schedule_vo.start_date,
@@ -1958,13 +2322,16 @@ class StudyActivityScheduleHistory(BaseModel):
         title="study_activity_schedule_uid",
         description="uid for the study activity schedule",
     )
-
-    study_activity_uid: str = Field(
-        ...,
+    study_activity_uid: str | None = Field(
+        None,
         title="study_activity_uid",
         description=STUDY_ACTIVITY_UID_DESC,
     )
-
+    study_activity_instance_uid: str | None = Field(
+        None,
+        title="study_activity_instance_uid",
+        description=STUDY_ACTIVITY_INSTANCE_UID_DESC,
+    )
     study_visit_uid: str = Field(
         ...,
         title="study_visit_uid",
@@ -1977,8 +2344,13 @@ class StudyActivityScheduleHistory(BaseModel):
 
 
 class StudyActivityScheduleCreateInput(BaseModel):
-    study_activity_uid: str = Field(
-        ..., title="study_activity_uid", description="The related study activity uid"
+    study_activity_uid: str | None = Field(
+        None, title="study_activity_uid", description="The related study activity uid"
+    )
+    study_activity_instance_uid: str = Field(
+        None,
+        title="study_activity_instance_uid",
+        description="The related study activity instance uid",
     )
 
     study_visit_uid: str = Field(
@@ -2010,6 +2382,12 @@ class StudyDesignCell(BaseModel):
         orm_mode = True
 
     study_uid: str = STUDY_UID_FIELD
+
+    study_version: str | None = Field(
+        None,
+        title="study version or date information",
+        description="Study version number, if specified, otherwise None",
+    )
 
     design_cell_uid: str | None = Field(
         None,
@@ -2090,14 +2468,14 @@ class StudyDesignCell(BaseModel):
         ...,
         title="start_date",
         description=START_DATE_DESC,
-        source="has_after.date",
+        source=AFTER_DATE_QUALIFIER,
     )
 
     user_initials: str | None = Field(
         None,
         title="user_initials",
         description=USER_INITIALS_DESC,
-        source="has_after.user_initials",
+        source=AFTER_USER_QUALIFIER,
         nullable=True,
     )
 
@@ -2108,10 +2486,19 @@ class StudyDesignCell(BaseModel):
     )
 
     @classmethod
-    def from_vo(cls, design_cell_vo: StudyDesignCellVO) -> Self:
+    def from_vo(
+        cls,
+        design_cell_vo: StudyDesignCellVO,
+        study_value_version: str | None = None,
+    ) -> Self:
         return cls(
             design_cell_uid=design_cell_vo.uid,
             study_uid=design_cell_vo.study_uid,
+            study_version=(
+                study_value_version
+                if study_value_version
+                else get_latest_on_datetime_str()
+            ),
             study_arm_uid=design_cell_vo.study_arm_uid,
             study_arm_name=design_cell_vo.study_arm_name,
             study_branch_arm_uid=design_cell_vo.study_branch_arm_uid,
@@ -2246,7 +2633,11 @@ class StudyDesignCellDeleteInput(BaseModel):
 
 class StudyDesignCellBatchInput(BaseModel):
     method: str = METHOD_FIELD
-    content: StudyDesignCellCreateInput | StudyDesignCellDeleteInput | StudyDesignCellEditInput
+    content: (
+        StudyDesignCellCreateInput
+        | StudyDesignCellDeleteInput
+        | StudyDesignCellEditInput
+    )
 
 
 class StudyDesignCellBatchOutput(BaseModel):
@@ -2553,6 +2944,11 @@ class StudySelectionArmWithConnectedBranchArms(StudySelectionArm):
             arm_uid=selection.study_selection_uid,
             name=selection.name,
             short_name=selection.short_name,
+            study_version=(
+                study_value_version
+                if study_value_version
+                else get_latest_on_datetime_str()
+            ),
             code=selection.code,
             description=selection.description,
             arm_colour=selection.arm_colour,
@@ -2661,6 +3057,16 @@ class StudyActivityInstruction(BaseModel):
 
     study_uid: str = STUDY_UID_FIELD
 
+    study_version: str | None = Field(
+        None,
+        title="study version or date information",
+        description="Study version number, if specified, otherwise None",
+    )
+    study_version: str | None = Field(
+        None,
+        title="study version or date information",
+        description="Study version number, if specified, otherwise None.",
+    )
     study_activity_uid: str | None = Field(
         ...,
         title="study_activity_uid",
@@ -2684,23 +3090,32 @@ class StudyActivityInstruction(BaseModel):
         ...,
         title="start_date",
         description=START_DATE_DESC,
-        source="has_after.date",
+        source=AFTER_DATE_QUALIFIER,
     )
 
     user_initials: str | None = Field(
         ...,
         title="user_initials",
         description=USER_INITIALS_DESC,
-        source="has_after.user_initials",
+        source=AFTER_USER_QUALIFIER,
     )
 
     end_date: datetime | None = END_DATE_FIELD
 
     @classmethod
-    def from_vo(cls, instruction_vo: StudyActivityInstructionVO) -> Self:
+    def from_vo(
+        cls,
+        instruction_vo: StudyActivityInstructionVO,
+        study_value_version: str | None = None,
+    ) -> Self:
         return cls(
             study_activity_instruction_uid=instruction_vo.uid,
             study_uid=instruction_vo.study_uid,
+            study_version=(
+                study_value_version
+                if study_value_version
+                else get_latest_on_datetime_str()
+            ),
             study_activity_uid=instruction_vo.study_activity_uid,
             activity_instruction_name=instruction_vo.activity_instruction_name,
             activity_instruction_uid=instruction_vo.activity_instruction_uid,
@@ -2862,6 +3277,7 @@ class StudySelectionElement(StudySelection):
         find_simple_term_element_by_term_uid: Callable[[str], CTTermName],
         get_term_element_type_by_element_subtype: Callable[[str], CTTermName],
         find_all_study_time_units: Callable[[str], Iterable[UnitDefinitionAR]],
+        study_value_version: str | None = None,
     ) -> Self:
         element_subtype = find_simple_term_element_by_term_uid(
             selection.element_subtype_uid
@@ -2875,6 +3291,11 @@ class StudySelectionElement(StudySelection):
         )
         return cls(
             study_uid=study_uid,
+            study_version=(
+                study_value_version
+                if study_value_version
+                else get_latest_on_datetime_str()
+            ),
             element_uid=selection.study_selection_uid,
             name=selection.name,
             short_name=selection.short_name,
@@ -3086,6 +3507,11 @@ class StudySelectionBranchArm(StudySelectionBranchArmWithoutStudyArm):
     ):
         return cls(
             study_uid=study_uid,
+            study_version=(
+                study_value_version
+                if study_value_version
+                else get_latest_on_datetime_str()
+            ),
             branch_arm_uid=selection.study_selection_uid,
             name=selection.name,
             short_name=selection.short_name,
@@ -3370,6 +3796,11 @@ class StudySelectionCohort(StudySelectionCohortWithoutArmBranArmRoots):
 
         return cls(
             study_uid=study_uid,
+            study_version=(
+                study_value_version
+                if study_value_version
+                else get_latest_on_datetime_str()
+            ),
             cohort_uid=selection.study_selection_uid,
             name=selection.name,
             short_name=selection.short_name,
@@ -3569,11 +4000,17 @@ class StudyCompoundDosing(StudySelection):
         find_simple_term_model_name_by_term_uid: Callable,
         find_unit_by_uid: Callable[[str], UnitDefinitionAR | None],
         find_numeric_value_by_uid: Callable[[str], NumericValueWithUnitAR | None],
+        study_value_version: str | None = None,
     ) -> Self:
         return cls(
             order=order,
             study_compound_dosing_uid=compound_dosing_vo.study_selection_uid,
             study_uid=compound_dosing_vo.study_uid,
+            study_version=(
+                study_value_version
+                if study_value_version
+                else get_latest_on_datetime_str()
+            ),
             study_compound=study_compound_model,
             study_element=study_element_model,
             dose_value=SimpleNumericValueWithUnit.from_concept_uid(

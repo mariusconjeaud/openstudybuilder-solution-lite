@@ -1,8 +1,7 @@
-from fastapi import Body, Depends, Query, Response, status
+from fastapi import Body, Depends, Response, status
 
 from clinical_mdr_api import models
 from clinical_mdr_api.models.error import ErrorResponse
-from clinical_mdr_api.models.validators import FLOAT_REGEX
 from clinical_mdr_api.oauth import get_current_user_id, rbac
 from clinical_mdr_api.routers import _generic_descriptions
 from clinical_mdr_api.routers import study_router as router
@@ -29,12 +28,7 @@ from clinical_mdr_api.services.studies.study_activity_schedule import (
 )
 def get_all_selected_activities(
     uid: str = utils.studyUID,
-    study_value_version: str
-    | None = Query(
-        None,
-        description="StudyValueVersion to extract the StudySelections",
-        regex=FLOAT_REGEX,
-    ),
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
     current_user_id: str = Depends(get_current_user_id),
 ) -> list[models.StudyActivitySchedule]:
     service = StudyActivityScheduleService(author=current_user_id)

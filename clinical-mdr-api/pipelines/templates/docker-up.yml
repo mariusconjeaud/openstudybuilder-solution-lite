@@ -3,57 +3,42 @@ parameters:
 
   - name: SERVICE_CONN
     type: string
-    default: IaCAgent-ClinicalMDR-DEV
   - name: OAUTH_ENABLED
     type: string
     default: False
   - name: OAUTH_API_APP_ID
     type: string
+    default:
   - name: OAUTH_API_APP_SECRET
     type: string
+    default:
   - name: OAUTH_METADATA_URL
     type: string
+    default:
   - name: MS_GRAPH_GROUPS_QUERY
     type: string
+    default:
   - name: MS_GRAPH_INTEGRATION_ENABLED
     type: string
+    default:
+  - name: start_api
+    type: boolean
+    default: true
 
 steps:
 
-  - script: |
-      set -ex
-      
-      # Ensure none of the current composed services are running
-      docker compose down --volumes
-  
-      # Remove all unused local volumes, which are not referenced by any containers.
-      docker volume prune -f
-    displayName: "Reset docker environment"
+  - template: docker-config.yml
+    parameters:
+      SERVICE_CONN: ${{parameters.SERVICE_CONN}}
 
-  - task: AzureCLI@2
-    displayName: Log in to container registry
-    inputs:
-      azureSubscription: ${{parameters.SERVICE_CONN}}
-      scriptType: bash
-      scriptLocation: inlineScript
-      inlineScript: >-
-        az acr login -n '$(azmd.acrname)'
-
-  - script: |
-      set -ex
-      docker compose build --progress=plain api \
-        --build-arg BUILD_TARGET=prod \
-        --build-arg PYTHON_IMAGE='$(azmd.acrname).azurecr.io/novo-python-3-11-3-slim:latest' \
-        --build-arg BUILD_NUMBER='$(Build.BuildNumber)' \
-        --build-arg BUILD_BRANCH='$(Build.SourceBranchName)' \
-        --build-arg BUILD_COMMIT='$(Build.SourceVersion)'
-    displayName: "Build api docker image"
-
-  - script: |
-      set -ex
+  - script: >-
       docker compose up --detach --renew-anon-volumes --wait database
+    displayName: "Start Database service"
+
+  - script: >-
       docker compose up --detach --wait api
-    displayName: "Start docker services"
+    condition: ${{parameters.start_api}}
+    displayName: "Start API service"
     env:
       OAUTH_ENABLED: "${{parameters.OAUTH_ENABLED}}"
       OAUTH_API_APP_ID: "${{parameters.OAUTH_API_APP_ID}}"
@@ -61,3 +46,8 @@ steps:
       OAUTH_METADATA_URL: "${{parameters.OAUTH_METADATA_URL}}"
       MS_GRAPH_GROUPS_QUERY: "${{parameters.MS_GRAPH_GROUPS_QUERY}}"
       MS_GRAPH_INTEGRATION_ENABLED: "${{parameters.MS_GRAPH_INTEGRATION_ENABLED}}"
+
+  - script: >-
+      docker compose logs --no-color
+    condition: always()
+    displayName: "Docker container logs"

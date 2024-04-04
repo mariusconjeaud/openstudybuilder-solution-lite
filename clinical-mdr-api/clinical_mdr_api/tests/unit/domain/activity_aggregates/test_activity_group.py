@@ -25,7 +25,7 @@ def create_random_activity_group_vo() -> ActivityGroupVO:
 
 
 def create_random_activity_group_ar(
-    # pylint:disable=unnecessary-lambda
+    # pylint: disable=unnecessary-lambda
     generate_uid_callback: Callable[[], str] = lambda: random_str(),
     library: str = "Library",
     is_editable: bool = True,

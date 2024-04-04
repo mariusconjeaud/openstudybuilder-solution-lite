@@ -104,8 +104,8 @@ class TimeframeNegativeTest(api.APITest):
             )
 
             timeframes = TimeframeRepository()
-            data = timeframes.find_all()
-            self.assertListEqual(data, [])
+            data = list(timeframes.get_all())
+            self.assertListEqual(data, [[], 0])
 
         check_timeframes_empty()
 

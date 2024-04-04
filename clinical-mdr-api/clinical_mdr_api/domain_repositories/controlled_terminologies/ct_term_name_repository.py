@@ -10,7 +10,6 @@ from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_term_gener
     CTTermGenericRepository,
 )
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
-    CodelistTermRelationship,
     CTTermNameRoot,
     CTTermNameValue,
     CTTermRoot,
@@ -25,6 +24,7 @@ from clinical_mdr_api.domain_repositories.models.template_parameter import (
     TemplateParameterTermRoot,
 )
 from clinical_mdr_api.domains.controlled_terminologies.ct_term_name import (
+    CTTermCodelistVO,
     CTTermNameAR,
     CTTermNameVO,
 )
@@ -32,7 +32,6 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemMetadataVO,
     LibraryVO,
 )
-from clinical_mdr_api.exceptions import BusinessLogicException
 
 
 class CTTermNameRepository(CTTermGenericRepository[CTTermNameAR]):
@@ -65,29 +64,25 @@ class CTTermNameRepository(CTTermGenericRepository[CTTermNameAR]):
     ) -> CTTermNameAR:
         ct_term_root_node = root.has_root.single()
         ct_codelist_root_node = ct_term_root_node.has_term.single()
-        if ct_codelist_root_node is None:
+        if not ct_codelist_root_node:
             ct_codelist_root_node = ct_term_root_node.had_term.single()
-            if ct_codelist_root_node is None:
-                raise BusinessLogicException(
-                    f"The term  with name '{value.name}' has no current or retired version."
+
+        codelists: list[CTTermCodelistVO] = []
+
+        for codelist_root in ct_term_root_node.has_term.all():
+            codelists.append(
+                CTTermCodelistVO(
+                    codelist_uid=codelist_root.uid,
+                    order=codelist_root.has_term.relationship(ct_term_root_node).order,
                 )
-        has_term_relationship: CodelistTermRelationship = (
-            ct_codelist_root_node.has_term.relationship(ct_term_root_node)
-        )
-        had_term_relationship: CodelistTermRelationship | None = None
-        if has_term_relationship is None:
-            had_term_relationship: CodelistTermRelationship = (
-                ct_codelist_root_node.had_term.relationship(ct_term_root_node)
             )
+
         return CTTermNameAR.from_repository_values(
             uid=ct_term_root_node.uid,
             ct_term_name_vo=CTTermNameVO.from_repository_values(
-                codelist_uid=ct_codelist_root_node.uid,
+                codelists=codelists,
                 name=value.name,
                 name_sentence_case=value.name_sentence_case,
-                order=has_term_relationship.order
-                if has_term_relationship
-                else had_term_relationship.order,
                 catalogue_name=ct_codelist_root_node.has_codelist.single().name,
             ),
             library=LibraryVO.from_input_values_2(
@@ -174,48 +169,39 @@ class CTTermNameRepository(CTTermGenericRepository[CTTermNameAR]):
         """
 
         maintain_order_query = """
-        MATCH (codelist_root:CTCodelistRoot {uid: $codelist_uid})-[has_term:HAS_TERM]->
-            (term_root:CTTermRoot {uid:$term_uid})
-        CALL apoc.do.case([
-        
-            // CTTermRoot was just created and order is not set yet  
-            has_term.order IS NULL,
-            'SET has_term.order = $order',
-            
-            // order was changed, HAS_TERM relationship has to be updated
-            has_term.order <> $order,
-            'CREATE (codelist_root)-[had_term:HAD_TERM]->(term_root)
-            SET had_term.start_date=has_term.start_date
-            SET had_term.end_date=datetime()
-            SET had_term.user_initials=$user_initials
-            SET had_term.order=has_term.order
-            DELETE has_term
-            CREATE (codelist_root)-[new_has_term:HAS_TERM]->(term_root)
-            SET new_has_term.start_date=datetime()
-            SET new_has_term.end_date=NULL
-            SET new_has_term.user_initials=$user_initials
-            SET new_has_term.order=$order'
-        ], 
-        '',
-        {
-            has_term: has_term, 
-            order: $order,
-            codelist_root: codelist_root,
-            term_root: term_root,
-            user_initials: $user_initials
-        })
-        YIELD value
-        RETURN value            
-        """
-        db.cypher_query(
-            maintain_order_query,
+            MATCH (codelist_root:CTCodelistRoot {uid: $codelist_uid})-[has_term:HAS_TERM]->
+                (term_root:CTTermRoot {uid:$term_uid})
+            CALL apoc.do.case([
+
+                // CTTermRoot was just created and order is not set yet  
+                has_term.order IS NULL,
+                'SET has_term.order = $order',
+
+                // order was changed, HAS_TERM relationship has to be updated
+                has_term.order <> $order,
+                'CREATE (codelist_root)-[had_term:HAD_TERM]->(term_root)
+                SET had_term.start_date=has_term.start_date
+                SET had_term.end_date=datetime()
+                SET had_term.user_initials=$user_initials
+                SET had_term.order=has_term.order
+                DELETE has_term
+                CREATE (codelist_root)-[new_has_term:HAS_TERM]->(term_root)
+                SET new_has_term.start_date=datetime()
+                SET new_has_term.end_date=NULL
+                SET new_has_term.user_initials=$user_initials
+                SET new_has_term.order=$order'
+            ], 
+            '',
             {
-                "codelist_uid": versioned_object.ct_term_vo.codelist_uid,
-                "term_uid": versioned_object.uid,
-                "order": versioned_object.ct_term_vo.order,
-                "user_initials": versioned_object.item_metadata.user_initials,
-            },
-        )
+                has_term: has_term, 
+                order: $order,
+                codelist_root: codelist_root,
+                term_root: term_root,
+                user_initials: $user_initials
+            })
+            YIELD value
+            RETURN value            
+        """
 
         maintain_template_parameter_query = """
             MATCH (codelist_root:CTCodelistRoot {uid: $codelist_uid})-[:HAS_NAME_ROOT]->()-[:LATEST]->
@@ -226,13 +212,28 @@ class CTTermNameRepository(CTTermGenericRepository[CTTermNameAR]):
             SET term_ver_root:TemplateParameterTermRoot
             SET term_ver_value:TemplateParameterTermValue
         """
-        db.cypher_query(
-            maintain_template_parameter_query,
-            {
-                "codelist_uid": versioned_object.ct_term_vo.codelist_uid,
-                "term_uid": versioned_object.uid,
-            },
-        )
+
+        if len(versioned_object.ct_term_vo.codelists) > 0:
+            db.cypher_query(
+                maintain_order_query,
+                {
+                    "codelist_uid": versioned_object.ct_term_vo.codelists[
+                        0
+                    ].codelist_uid,
+                    "term_uid": versioned_object.uid,
+                    "order": versioned_object.ct_term_vo.codelists[0].order,
+                    "user_initials": versioned_object.item_metadata.user_initials,
+                },
+            )
+            db.cypher_query(
+                maintain_template_parameter_query,
+                {
+                    "codelist_uid": versioned_object.ct_term_vo.codelists[
+                        0
+                    ].codelist_uid,
+                    "term_uid": versioned_object.uid,
+                },
+            )
         TemplateParameterTermRoot.generate_node_uids_if_not_present()
 
     def is_repository_related_to_attributes(self) -> bool:

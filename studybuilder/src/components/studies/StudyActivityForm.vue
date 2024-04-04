@@ -120,7 +120,7 @@
             <v-btn
               icon
               :color="getCopyButtonColor(item)"
-              :disabled="isStudyActivitySelected(item)"
+              :disabled="isStudyActivitySelected(item) || isActivityRequested(item)"
               data-cy="copy-activity"
               @click="selectStudyActivity(item)"
               :title="$t('StudyActivityForm.copy_activity')">
@@ -170,7 +170,7 @@
           :server-items-length="activitiesTotal"
           has-api
           @filter="getActivities"
-          :initial-filters="{ status: ['Final'] }"
+          :initial-filters="initialFilters"
           column-data-resource="concepts/activities/activities"
           :filters-modify-function="modifyFilters"
           >
@@ -178,7 +178,7 @@
             <v-btn
               icon
               :color="getCopyButtonColor(item)"
-              :disabled="isActivitySelected(item) || isActivityNotFinal(item)"
+              :disabled="isActivitySelected(item) || isActivityNotFinal(item) || isActivityRequested(item)"
               data-cy="copy-activity"
               @click="selectActivity(item)"
               :title="$t('StudyActivityForm.copy_activity')">
@@ -206,27 +206,39 @@
       <validation-observer ref="observer">
         <v-row>
           <v-col cols="5">
-            <v-autocomplete
-              :label="$t('ActivityForms.activity_group')"
-              data-cy="activity-group"
-              :items="groups"
-              v-model="form.activity_groupings[0].activity_group_uid"
-              item-text="name"
-              item-value="uid"
-              dense
-              clearable
-              />
-            <v-autocomplete
-              :label="$t('ActivityForms.activity_subgroup')"
-              data-cy="activity-subgroup"
-              :items="filteredSubGroups"
-              v-model="form.activity_groupings[0].activity_subgroup_uid"
-              item-text="name"
-              item-value="uid"
-              dense
-              clearable
-              :disabled="form.activity_groupings[0].activity_group_uid ? false : true"
-              />
+            <validation-provider
+              v-slot="{ errors }"
+              rules="required"
+              >
+              <v-autocomplete
+                :label="$t('ActivityForms.activity_group')"
+                data-cy="activity-group"
+                :items="groups"
+                v-model="form.activity_groupings[0].activity_group_uid"
+                item-text="name"
+                item-value="uid"
+                dense
+                clearable
+                :error-messages="errors"
+                />
+            </validation-provider>
+            <validation-provider
+              v-slot="{ errors }"
+              rules="required"
+              >
+              <v-autocomplete
+                :label="$t('ActivityForms.activity_subgroup')"
+                data-cy="activity-subgroup"
+                :items="filteredSubGroups"
+                v-model="form.activity_groupings[0].activity_subgroup_uid"
+                item-text="name"
+                item-value="uid"
+                dense
+                clearable
+                :disabled="form.activity_groupings[0].activity_group_uid ? false : true"
+                :error-messages="errors"
+                />
+              </validation-provider>
             <validation-provider
               v-slot="{ errors }"
               rules="required"
@@ -256,10 +268,11 @@
                 :error-messages="errors"
                 />
             </validation-provider>
-            <v-switch
-              :label="$t('ActivityFormsRequested.data_collection')"
+            <v-checkbox
+              :label="$t('ActivityForms.is_data_collected')"
               v-model="form.is_data_collected"
-              />
+              >
+            </v-checkbox>
           </v-col>
           <v-col cols="7">
             <v-data-table
@@ -273,7 +286,7 @@
                 <v-btn
                   icon
                   :color="getCopyButtonColor(item)"
-                  :disabled="isActivitySelected(item) || isActivityNotFinal(item)"
+                  :disabled="isActivitySelected(item) || isActivityNotFinal(item) || isActivityRequested(item)"
                   data-cy="copy-activity"
                   @click="selectActivityFromPlaceholder(item)"
                   :title="$t('StudyActivityForm.copy_activity')">
@@ -388,11 +401,12 @@ export default {
       form: {
         name: '',
         activity_groupings: [{}],
-        is_data_collected: false
+        is_data_collected: true
       },
       groups: [],
       subgroups: [],
-      resetLoading: 0
+      resetLoading: 0,
+      initialFilters: { status: [statuses.FINAL], library_name: [libConstants.LIBRARY_SPONSOR] }
     }
   },
   methods: {
@@ -695,6 +709,9 @@ export default {
     isActivityNotFinal (activity) {
       return activity.status !== statuses.FINAL
     },
+    isActivityRequested (activity) {
+      return activity.library_name === libConstants.LIBRARY_REQUESTED
+    },
     isStudyActivitySelected (studyActivity) {
       let selected = this.selectedActivities.find(item => item.activity.uid === studyActivity.activity.uid)
       if (!selected && this.studyActivities.length) {
@@ -733,8 +750,7 @@ export default {
         this.resetLoading += 1
         return
       }
-      for (let cpt = 0; cpt < this.selectedActivities.length; cpt++) {
-        const item = this.selectedActivities[cpt]
+      for (const item of this.selectedActivities) {
         let payload
         if (this.creationMode === 'selectFromLibrary' || this.creationMode === 'createPlaceholder') {
           payload = {
@@ -760,10 +776,10 @@ export default {
       this.close()
     },
     getGroups () {
-      activities.get({ page_size: 0 }, 'activity-groups').then(resp => {
+      activities.get({ page_size: 0, filters: { status: { v: ['Final'], op: 'co' } } }, 'activity-groups').then(resp => {
         this.groups = resp.data.items
       })
-      activities.get({ page_size: 0 }, 'activity-sub-groups').then(resp => {
+      activities.get({ page_size: 0, filters: { status: { v: ['Final'], op: 'co' } } }, 'activity-sub-groups').then(resp => {
         this.subGroups = resp.data.items
       })
     }

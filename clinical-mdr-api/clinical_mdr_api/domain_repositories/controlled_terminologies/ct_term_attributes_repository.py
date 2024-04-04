@@ -27,6 +27,7 @@ from clinical_mdr_api.domain_repositories.models.generic import (
 from clinical_mdr_api.domains.controlled_terminologies.ct_term_attributes import (
     CTTermAttributesAR,
     CTTermAttributesVO,
+    CTTermCodelistVO,
 )
 from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemMetadataVO,
@@ -41,8 +42,11 @@ class CTTermAttributesRepository(CTTermGenericRepository[CTTermAttributesAR]):
     relationship_from_root = "has_attributes_root"
 
     def term_specific_exists_by_name(self, term_name: str) -> bool:
+        # We allow duplicates under the condition that the conflicting term is retired
         query = """
             MATCH (term_ver_root:CTTermAttributesRoot)-[:LATEST]->(term_ver_value:CTTermAttributesValue {name_submission_value: $term_name})
+            OPTIONAL MATCH (term_ver_root)-[retired:HAS_VERSION {status: 'Retired'}]-(term_ver_value)
+            WITH * WHERE NOT (retired IS NOT NULL AND retired.end_date IS NULL)
             RETURN term_ver_value
             """
         result, _ = db.cypher_query(query, {"term_name": term_name})
@@ -51,9 +55,12 @@ class CTTermAttributesRepository(CTTermGenericRepository[CTTermAttributesAR]):
     def term_attributes_exists_by_code_submission_value(
         self, term_code_submission_value: str
     ) -> bool:
+        # We allow duplicates under the condition that the conflicting term is retired
         query = """
             MATCH (term_ver_root:CTTermAttributesRoot)-[:LATEST]->
                 (term_ver_value:CTTermAttributesValue {code_submission_value: $term_code_submission_value})
+            OPTIONAL MATCH (term_ver_root)-[retired:HAS_VERSION {status: 'Retired'}]-(term_ver_value)
+            WITH * WHERE NOT (retired IS NOT NULL AND retired.end_date IS NULL)
             RETURN term_ver_value
             """
         result, _ = db.cypher_query(
@@ -78,10 +85,22 @@ class CTTermAttributesRepository(CTTermGenericRepository[CTTermAttributesAR]):
     ) -> CTTermAttributesAR:
         ct_term_root_node = root.has_root.single()
         ct_codelist_root_node = ct_term_root_node.has_term.single()
+        if not ct_codelist_root_node:
+            ct_codelist_root_node = ct_term_root_node.had_term.single()
+
+        codelists: list[CTTermCodelistVO] = []
+        for codelist_root in ct_term_root_node.has_term.all():
+            codelists.append(
+                CTTermCodelistVO(
+                    codelist_uid=codelist_root.uid,
+                    order=codelist_root.has_term.relationship(ct_term_root_node).order,
+                )
+            )
+
         return CTTermAttributesAR.from_repository_values(
             uid=ct_term_root_node.uid,
             ct_term_attributes_vo=CTTermAttributesVO.from_repository_values(
-                codelist_uid=ct_codelist_root_node.uid,
+                codelists=codelists,
                 concept_id=value.concept_id,
                 code_submission_value=value.code_submission_value,
                 name_submission_value=value.name_submission_value,
@@ -173,7 +192,7 @@ class CTTermAttributesRepository(CTTermGenericRepository[CTTermAttributesAR]):
         ct_term_root_node.has_library.connect(library)
 
         ct_codelist_root_node = CTCodelistRoot.nodes.get_or_none(
-            uid=item.ct_term_vo.codelist_uid
+            uid=item.ct_term_vo.codelists[0].codelist_uid
         )
         ct_term_root_node.has_term.connect(
             ct_codelist_root_node,
@@ -190,7 +209,7 @@ class CTTermAttributesRepository(CTTermGenericRepository[CTTermAttributesAR]):
                 "Term '"
                 + item.uid
                 + "' cannot be added to '"
-                + item.ct_term_vo.codelist_uid
+                + item.ct_term_vo.codelists[0].codelist_uid
                 + "' as the codelist is in a draft state."
             )
 
@@ -204,6 +223,8 @@ class CTTermAttributesRepository(CTTermGenericRepository[CTTermAttributesAR]):
         root: VersionRoot,
         value: VersionValue,
     ) -> None:
+        # This method from parent repo is not needed for this repo
+        # So we use pass to skip implementation
         pass
 
     def is_repository_related_to_attributes(self) -> bool:

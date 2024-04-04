@@ -3,6 +3,7 @@ import unittest
 from clinical_mdr_api.domains.controlled_terminologies.ct_term_attributes import (
     CTTermAttributesAR,
     CTTermAttributesVO,
+    CTTermCodelistVO,
 )
 from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemStatus,
@@ -15,7 +16,7 @@ def create_random_ct_term_attributes_vo(
     codelist_uid: str = random_str(),
 ) -> CTTermAttributesVO:
     random_ct_term_attributes_vo = CTTermAttributesVO.from_repository_values(
-        codelist_uid=codelist_uid,
+        codelists=[CTTermCodelistVO(codelist_uid=codelist_uid, order=1)],
         catalogue_name=random_str(),
         concept_id=random_opt_str(),
         code_submission_value=random_opt_str(),
@@ -30,7 +31,7 @@ def create_random_ct_term_attributes_ar(
     codelist_uid: str = random_str(), library: str = "Library", is_editable: bool = True
 ) -> CTTermAttributesAR:
     random_ct_term_attributes_ar = CTTermAttributesAR.from_input_values(
-        # pylint:disable=unnecessary-lambda
+        # pylint: disable=unnecessary-lambda
         generate_uid_callback=lambda: random_str(),
         ct_term_attributes_vo=create_random_ct_term_attributes_vo(
             codelist_uid=codelist_uid
@@ -116,7 +117,7 @@ class TestCTTermAttributesAR(unittest.TestCase):
         self.assertEqual(ct_term_attributes_ar.item_metadata.user_initials, "TODO")
         self.assertEqual(ct_term_attributes_ar.item_metadata.change_description, "Test")
         self.assertEqual(
-            ct_term_attributes_ar.ct_term_vo.codelist_uid, ct_term_vo.codelist_uid
+            ct_term_attributes_ar.ct_term_vo.codelists, ct_term_vo.codelists
         )
         self.assertEqual(
             ct_term_attributes_ar.ct_term_vo.code_submission_value,

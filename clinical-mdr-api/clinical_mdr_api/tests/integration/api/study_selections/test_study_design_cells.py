@@ -10,6 +10,7 @@ Tests for /studies/{uid}/study-design-cells endpoints
 # which pylint interprets as unused arguments
 
 import logging
+from unittest import mock
 
 import pytest
 from fastapi.testclient import TestClient
@@ -391,45 +392,61 @@ def test_study_desing_cell_with_study_epoch_relationship(api_client):
     )
     res = response.json()
     assert response.status_code == 200
+    for i, _ in enumerate(before_unlock):
+        before_unlock[i]["study_version"] = mock.ANY
     assert res == before_unlock
 
     # get all
+    for i, _ in enumerate(before_unlock_arms["items"]):
+        before_unlock_arms["items"][i]["study_version"] = mock.ANY
     assert (
         before_unlock_arms
         == api_client.get(
             f"/studies/{study.uid}/study-arms?study_value_version=2"
         ).json()
     )
+    for i, _ in enumerate(before_unlock_branch_arms):
+        before_unlock_branch_arms[i]["study_version"] = mock.ANY
     assert (
         before_unlock_branch_arms
         == api_client.get(
             f"/studies/{study.uid}/study-branch-arms?study_value_version=2"
         ).json()
     )
+    for i, _ in enumerate(before_unlock_elements["items"]):
+        before_unlock_elements["items"][i]["study_version"] = mock.ANY
     assert (
         before_unlock_elements
         == api_client.get(
             f"/studies/{study.uid}/study-elements?study_value_version=2"
         ).json()
     )
+    for i, _ in enumerate(before_unlock_epochs["items"]):
+        before_unlock_epochs["items"][i]["study_version"] = mock.ANY
     assert (
         before_unlock_epochs
         == api_client.get(
             f"/studies/{study.uid}/study-epochs?study_value_version=2"
         ).json()
     )
+    for i, _ in enumerate(before_unlock_design_cell_by_arm):
+        before_unlock_design_cell_by_arm[i]["study_version"] = mock.ANY
     assert (
         before_unlock_design_cell_by_arm
         == api_client.get(
             f"/studies/{study.uid}/study-design-cells/arm/{study_arm.arm_uid}?study_value_version=2"
         ).json()
     )
+    for i, _ in enumerate(before_unlock_design_cell_by_branch_arm):
+        before_unlock_design_cell_by_branch_arm[i]["study_version"] = mock.ANY
     assert (
         before_unlock_design_cell_by_branch_arm
         == api_client.get(
             f"/studies/{study.uid}/study-design-cells/branch-arm/{study_branch_arm.branch_arm_uid}?study_value_version=2"
         ).json()
     )
+    for i, _ in enumerate(before_unlock_design_cell_by_epoch):
+        before_unlock_design_cell_by_epoch[i]["study_version"] = mock.ANY
     assert (
         before_unlock_design_cell_by_epoch
         == api_client.get(

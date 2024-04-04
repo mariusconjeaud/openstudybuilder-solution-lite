@@ -23,6 +23,7 @@ from clinical_mdr_api.domain_repositories.models.concepts import (
     TimePointRoot,
     UnitDefinitionRoot,
     VisitNameRoot,
+    WeekInStudyRoot,
 )
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
     CTTermRoot,
@@ -222,6 +223,12 @@ class StudyVisitRepository:
             ).has_latest_value.get()
         else:
             study_duration_weeks = None
+        if study_visit_ogm_input.week_in_study:
+            week_in_study = WeekInStudyRoot.nodes.get(
+                uid=study_visit_ogm_input.week_in_study.uid
+            ).has_latest_value.get()
+        else:
+            week_in_study = None
         visit_name = VisitNameRoot.nodes.get(
             uid=study_visit_ogm_input.visit_name_sc.uid
         ).has_latest_value.get()
@@ -255,6 +262,12 @@ class StudyVisitRepository:
                 value=int(study_duration_weeks.value),
             )
             if study_visit_ogm_input.study_duration_weeks
+            else None,
+            week_in_study=NumericValue(
+                uid=study_visit_ogm_input.week_in_study.uid,
+                value=int(week_in_study.value),
+            )
+            if study_visit_ogm_input.week_in_study
             else None,
             visit_name_sc=TextValue(
                 uid=study_visit_ogm_input.visit_name_sc.uid, name=visit_name.name
@@ -299,6 +312,7 @@ class StudyVisitRepository:
             study_duration_days=study_visit_vo.study_duration_days,
             study_week=study_visit_vo.study_week,
             study_duration_weeks=study_visit_vo.study_duration_weeks,
+            week_in_study=study_visit_vo.week_in_study,
             visit_name_sc=study_visit_vo.visit_name_sc,
             time_unit_object=study_visit_vo.time_unit_object,
             window_unit_object=study_visit_vo.window_unit_object,
@@ -362,6 +376,7 @@ class StudyVisitRepository:
                     "has_study_duration_days__has_latest_value",
                     "has_study_week__has_latest_value",
                     "has_study_duration_weeks__has_latest_value",
+                    "has_week_in_study__has_latest_value",
                     "has_epoch_allocation",
                 )
                 .filter(**filters)
@@ -405,6 +420,7 @@ class StudyVisitRepository:
                 "has_study_duration_days__has_latest_value",
                 "has_study_week__has_latest_value",
                 "has_study_duration_weeks__has_latest_value",
+                "has_week_in_study__has_latest_value",
                 "has_epoch_allocation",
             )
             .filter(**filters)
@@ -450,6 +466,7 @@ class StudyVisitRepository:
                         "has_study_duration_days__has_latest_value",
                         "has_study_week__has_latest_value",
                         "has_study_duration_weeks__has_latest_value",
+                        "has_week_in_study__has_latest_value",
                         "has_epoch_allocation",
                         "has_before",
                     )
@@ -483,6 +500,7 @@ class StudyVisitRepository:
                     "has_study_duration_days__has_latest_value",
                     "has_study_week__has_latest_value",
                     "has_study_duration_weeks__has_latest_value",
+                    "has_week_in_study__has_latest_value",
                     "has_epoch_allocation",
                     "has_before",
                 )
@@ -604,6 +622,9 @@ class StudyVisitRepository:
                 uid=study_visit.study_duration_weeks.uid
             )
             new_visit.has_study_duration_weeks.connect(study_duration_weeks)
+        if study_visit.week_in_study:
+            week_in_study = WeekInStudyRoot.nodes.get(uid=study_visit.week_in_study.uid)
+            new_visit.has_week_in_study.connect(week_in_study)
 
         visit_name_text_value = VisitNameRoot.nodes.get(
             uid=study_visit.visit_name_sc.uid

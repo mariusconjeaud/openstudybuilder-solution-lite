@@ -132,11 +132,11 @@ class TestStudyService(unittest.TestCase):
         )
         project_repository_property_mock.find_by_project_number.return_value = create_random_project(
             clinical_programme_uid=random_str(),
-            # pylint:disable=unnecessary-lambda
+            # pylint: disable=unnecessary-lambda
             generate_uid_callback=lambda: random_str(),
         )
         clinical_programme_repository_property_mock.find_by_uid.return_value = (
-            # pylint:disable=unnecessary-lambda
+            # pylint: disable=unnecessary-lambda
             create_random_clinical_programme(generate_uid_callback=lambda: random_str())
         )
 
@@ -378,11 +378,11 @@ class TestStudyService(unittest.TestCase):
         # when
         project_repository_property_mock.find_by_project_number.return_value = create_random_project(
             clinical_programme_uid=random_str(),
-            # pylint:disable=unnecessary-lambda
+            # pylint: disable=unnecessary-lambda
             generate_uid_callback=lambda: random_str(),
         )
         clinical_programme_repository_property_mock.find_by_uid.return_value = (
-            # pylint:disable=unnecessary-lambda
+            # pylint: disable=unnecessary-lambda
             create_random_clinical_programme(generate_uid_callback=lambda: random_str())
         )
         ct_term_name_repository_property_mock.find_by_uid.return_value = (
@@ -521,24 +521,24 @@ class TestStudyService(unittest.TestCase):
         study_definition_repository_property_mock.return_value = test_repo
         project_repository_property_mock.find_by_project_number.return_value = create_random_project(
             clinical_programme_uid=random_str(),
-            # pylint:disable=unnecessary-lambda
+            # pylint: disable=unnecessary-lambda
             generate_uid_callback=lambda: random_str(),
         )
         clinical_programme_repository_property_mock.find_by_uid.return_value = (
-            # pylint:disable=unnecessary-lambda
+            # pylint: disable=unnecessary-lambda
             create_random_clinical_programme(generate_uid_callback=lambda: random_str())
         )
         unit_definition_repository_property_mock.final_concept_exists.return_value = (
             True
         )
-        study_create_input = StudyCreateInput(study_acronym="ACRONYM")
+        study_create_input = StudyCreateInput(
+            study_acronym="ACRONYM", project_number="something"
+        )
         study_service = StudyService(user="PIWQ")
-        study_service.post_study_preferred_time_unit = (
-            lambda study_uid, unit_definition_uid: StudyPreferredTimeUnit(
-                study_uid=study_uid,
-                time_unit_uid="time_unit_uid",
-                time_unit_name="time_unit_name",
-            )
+        study_service.post_study_preferred_time_unit = lambda study_uid, unit_definition_uid, for_protocol_soa=False: StudyPreferredTimeUnit(
+            study_uid=study_uid,
+            time_unit_uid="time_unit_uid",
+            time_unit_name="time_unit_name",
         )
 
         # when
@@ -601,11 +601,11 @@ class TestStudyService(unittest.TestCase):
         # when
         project_repository_property_mock.find_by_project_number.return_value = create_random_project(
             clinical_programme_uid=random_str(),
-            # pylint:disable=unnecessary-lambda
+            # pylint: disable=unnecessary-lambda
             generate_uid_callback=lambda: random_str(),
         )
         clinical_programme_repository_property_mock.find_by_uid.return_value = (
-            # pylint:disable=unnecessary-lambda
+            # pylint: disable=unnecessary-lambda
             create_random_clinical_programme(generate_uid_callback=lambda: random_str())
         )
         study_service = StudyService(user="PIWQ")
@@ -653,6 +653,8 @@ class TestStudyService(unittest.TestCase):
                     project_number=None,
                     study_acronym=f"ACRONYM-{num}",
                     study_number=None,
+                    subpart_id=None,
+                    description=None,
                     registry_identifiers=RegistryIdentifiersVO.from_input_values(
                         ct_gov_id=None,
                         eudract_id=None,
@@ -661,9 +663,23 @@ class TestStudyService(unittest.TestCase):
                         investigational_new_drug_application_number_ind=None,
                         ct_gov_id_null_value_code=None,
                         eudract_id_null_value_code=None,
+                        eu_trial_number=None,
+                        civ_id_sin_number=None,
+                        national_clinical_trial_number=None,
+                        japanese_trial_registry_number_jrct=None,
+                        national_medical_products_administration_nmpa_number=None,
+                        eudamed_srn_number=None,
+                        investigational_device_exemption_ide_number=None,
                         universal_trial_number_utn_null_value_code=None,
                         japanese_trial_registry_id_japic_null_value_code=None,
                         investigational_new_drug_application_number_ind_null_value_code=None,
+                        eu_trial_number_null_value_code=None,
+                        civ_id_sin_number_null_value_code=None,
+                        national_clinical_trial_number_null_value_code=None,
+                        japanese_trial_registry_number_jrct_null_value_code=None,
+                        national_medical_products_administration_nmpa_number_null_value_code=None,
+                        eudamed_srn_number_null_value_code=None,
+                        investigational_device_exemption_ide_number_null_value_code=None,
                     ),
                 ),
                 study_title_exists_callback=(lambda _, study_number: False),
@@ -681,11 +697,11 @@ class TestStudyService(unittest.TestCase):
         # when
         project_repository_property_mock.find_by_project_number.return_value = create_random_project(
             clinical_programme_uid=random_str(),
-            # pylint:disable=unnecessary-lambda
+            # pylint: disable=unnecessary-lambda
             generate_uid_callback=lambda: random_str(),
         )
         clinical_programme_repository_property_mock.find_by_uid.return_value = (
-            # pylint:disable=unnecessary-lambda
+            # pylint: disable=unnecessary-lambda
             create_random_clinical_programme(generate_uid_callback=lambda: random_str())
         )
         study_service = StudyService(user="PIWQ")
@@ -787,11 +803,11 @@ class TestStudyService(unittest.TestCase):
 
         project_repository_property_mock.find_by_project_number.return_value = create_random_project(
             clinical_programme_uid=random_str(),
-            # pylint:disable=unnecessary-lambda
+            # pylint: disable=unnecessary-lambda
             generate_uid_callback=lambda: random_str(),
         )
         clinical_programme_repository_property_mock.find_by_uid.return_value = (
-            # pylint:disable=unnecessary-lambda
+            # pylint: disable=unnecessary-lambda
             create_random_clinical_programme(generate_uid_callback=lambda: random_str())
         )
 
@@ -802,17 +818,33 @@ class TestStudyService(unittest.TestCase):
                 project_number=None,
                 study_acronym="ACRONYM",
                 study_number=None,
+                subpart_id=None,
+                description=None,
                 registry_identifiers=RegistryIdentifiersVO.from_input_values(
                     ct_gov_id=None,
                     eudract_id=None,
                     universal_trial_number_utn=None,
                     japanese_trial_registry_id_japic=None,
                     investigational_new_drug_application_number_ind=None,
+                    eu_trial_number=None,
+                    civ_id_sin_number=None,
+                    national_clinical_trial_number=None,
+                    japanese_trial_registry_number_jrct=None,
+                    national_medical_products_administration_nmpa_number=None,
+                    eudamed_srn_number=None,
+                    investigational_device_exemption_ide_number=None,
                     ct_gov_id_null_value_code=None,
                     eudract_id_null_value_code=None,
                     universal_trial_number_utn_null_value_code=None,
                     japanese_trial_registry_id_japic_null_value_code=None,
                     investigational_new_drug_application_number_ind_null_value_code=None,
+                    eu_trial_number_null_value_code=None,
+                    civ_id_sin_number_null_value_code=None,
+                    national_clinical_trial_number_null_value_code=None,
+                    japanese_trial_registry_number_jrct_null_value_code=None,
+                    national_medical_products_administration_nmpa_number_null_value_code=None,
+                    eudamed_srn_number_null_value_code=None,
+                    investigational_device_exemption_ide_number_null_value_code=None,
                 ),
             ),
             initial_high_level_study_design=HighLevelStudyDesignVO.from_input_values(
@@ -908,11 +940,11 @@ class TestStudyService(unittest.TestCase):
 
         project_repository_property_mock.find_by_project_number.return_value = create_random_project(
             clinical_programme_uid=random_str(),
-            # pylint:disable=unnecessary-lambda
+            # pylint: disable=unnecessary-lambda
             generate_uid_callback=lambda: random_str(),
         )
         clinical_programme_repository_property_mock.find_by_uid.return_value = (
-            # pylint:disable=unnecessary-lambda
+            # pylint: disable=unnecessary-lambda
             create_random_clinical_programme(generate_uid_callback=lambda: random_str())
         )
 
@@ -923,17 +955,33 @@ class TestStudyService(unittest.TestCase):
                 project_number=None,
                 study_acronym="ACRONYM",
                 study_number=None,
+                subpart_id=None,
+                description=None,
                 registry_identifiers=RegistryIdentifiersVO.from_input_values(
                     ct_gov_id=None,
                     eudract_id=None,
                     universal_trial_number_utn=None,
                     japanese_trial_registry_id_japic=None,
                     investigational_new_drug_application_number_ind=None,
+                    eu_trial_number=None,
+                    civ_id_sin_number=None,
+                    national_clinical_trial_number=None,
+                    japanese_trial_registry_number_jrct=None,
+                    national_medical_products_administration_nmpa_number=None,
+                    eudamed_srn_number=None,
+                    investigational_device_exemption_ide_number=None,
                     ct_gov_id_null_value_code=None,
                     eudract_id_null_value_code=None,
                     universal_trial_number_utn_null_value_code=None,
                     japanese_trial_registry_id_japic_null_value_code=None,
                     investigational_new_drug_application_number_ind_null_value_code=None,
+                    eu_trial_number_null_value_code=None,
+                    civ_id_sin_number_null_value_code=None,
+                    national_clinical_trial_number_null_value_code=None,
+                    japanese_trial_registry_number_jrct_null_value_code=None,
+                    national_medical_products_administration_nmpa_number_null_value_code=None,
+                    eudamed_srn_number_null_value_code=None,
+                    investigational_device_exemption_ide_number_null_value_code=None,
                 ),
             ),
             study_title_exists_callback=(lambda _, study_number: False),
@@ -1024,10 +1072,67 @@ class TestStudyService(unittest.TestCase):
                 sample_study_definition.current_metadata.id_metadata.registry_identifiers.universal_trial_number_utn_null_value_code,
             )
             self.assertEqual(
-                # pylint:disable=line-too-long
+                # pylint: disable=line-too-long
                 study_definition_ar.current_metadata.id_metadata.registry_identifiers.investigational_new_drug_application_number_ind_null_value_code,
-                # pylint:disable=line-too-long
+                # pylint: disable=line-too-long
                 sample_study_definition.current_metadata.id_metadata.registry_identifiers.investigational_new_drug_application_number_ind_null_value_code,
+            )
+            self.assertEqual(
+                study_definition_ar.current_metadata.id_metadata.registry_identifiers.eu_trial_number,
+                sample_study_definition.current_metadata.id_metadata.registry_identifiers.eu_trial_number,
+            )
+            self.assertEqual(
+                study_definition_ar.current_metadata.id_metadata.registry_identifiers.civ_id_sin_number,
+                sample_study_definition.current_metadata.id_metadata.registry_identifiers.civ_id_sin_number,
+            )
+            self.assertEqual(
+                study_definition_ar.current_metadata.id_metadata.registry_identifiers.national_clinical_trial_number,
+                sample_study_definition.current_metadata.id_metadata.registry_identifiers.national_clinical_trial_number,
+            )
+            self.assertEqual(
+                study_definition_ar.current_metadata.id_metadata.registry_identifiers.japanese_trial_registry_number_jrct,
+                sample_study_definition.current_metadata.id_metadata.registry_identifiers.japanese_trial_registry_number_jrct,
+            )
+            self.assertEqual(
+                study_definition_ar.current_metadata.id_metadata.registry_identifiers.national_medical_products_administration_nmpa_number,
+                sample_study_definition.current_metadata.id_metadata.registry_identifiers.national_medical_products_administration_nmpa_number,
+            )
+            self.assertEqual(
+                study_definition_ar.current_metadata.id_metadata.registry_identifiers.eudamed_srn_number,
+                sample_study_definition.current_metadata.id_metadata.registry_identifiers.eudamed_srn_number,
+            )
+            self.assertEqual(
+                study_definition_ar.current_metadata.id_metadata.registry_identifiers.investigational_device_exemption_ide_number,
+                sample_study_definition.current_metadata.id_metadata.registry_identifiers.investigational_device_exemption_ide_number,
+            )
+            self.assertEqual(
+                study_definition_ar.current_metadata.id_metadata.registry_identifiers.eu_trial_number_null_value_code,
+                sample_study_definition.current_metadata.id_metadata.registry_identifiers.eu_trial_number_null_value_code,
+            )
+            self.assertEqual(
+                study_definition_ar.current_metadata.id_metadata.registry_identifiers.civ_id_sin_number_null_value_code,
+                sample_study_definition.current_metadata.id_metadata.registry_identifiers.civ_id_sin_number_null_value_code,
+            )
+            self.assertEqual(
+                study_definition_ar.current_metadata.id_metadata.registry_identifiers.national_clinical_trial_number_null_value_code,
+                sample_study_definition.current_metadata.id_metadata.registry_identifiers.national_clinical_trial_number_null_value_code,
+            )
+            self.assertEqual(
+                study_definition_ar.current_metadata.id_metadata.registry_identifiers.japanese_trial_registry_number_jrct_null_value_code,
+                sample_study_definition.current_metadata.id_metadata.registry_identifiers.japanese_trial_registry_number_jrct_null_value_code,
+            )
+            self.assertEqual(
+                # pylint: disable=line-too-long
+                study_definition_ar.current_metadata.id_metadata.registry_identifiers.national_medical_products_administration_nmpa_number_null_value_code,
+                sample_study_definition.current_metadata.id_metadata.registry_identifiers.national_medical_products_administration_nmpa_number_null_value_code,
+            )
+            self.assertEqual(
+                study_definition_ar.current_metadata.id_metadata.registry_identifiers.eudamed_srn_number_null_value_code,
+                sample_study_definition.current_metadata.id_metadata.registry_identifiers.eudamed_srn_number_null_value_code,
+            )
+            self.assertEqual(
+                study_definition_ar.current_metadata.id_metadata.registry_identifiers.investigational_device_exemption_ide_number_null_value_code,
+                sample_study_definition.current_metadata.id_metadata.registry_identifiers.investigational_device_exemption_ide_number_null_value_code,
             )
             self.assertEqual(
                 study_definition_ar.current_metadata.id_metadata.project_number,
@@ -1051,11 +1156,11 @@ class TestStudyService(unittest.TestCase):
 
         project_repository_property_mock.find_by_project_number.return_value = create_random_project(
             clinical_programme_uid=random_str(),
-            # pylint:disable=unnecessary-lambda
+            # pylint: disable=unnecessary-lambda
             generate_uid_callback=lambda: random_str(),
         )
         clinical_programme_repository_property_mock.find_by_uid.return_value = (
-            # pylint:disable=unnecessary-lambda
+            # pylint: disable=unnecessary-lambda
             create_random_clinical_programme(generate_uid_callback=lambda: random_str())
         )
 
@@ -1066,17 +1171,33 @@ class TestStudyService(unittest.TestCase):
                 project_number=None,
                 study_acronym="ACRONYM",
                 study_number=None,
+                subpart_id=None,
+                description=None,
                 registry_identifiers=RegistryIdentifiersVO.from_input_values(
                     ct_gov_id=None,
                     eudract_id=None,
                     universal_trial_number_utn=None,
                     japanese_trial_registry_id_japic=None,
                     investigational_new_drug_application_number_ind=None,
+                    eu_trial_number=None,
+                    civ_id_sin_number=None,
+                    national_clinical_trial_number=None,
+                    japanese_trial_registry_number_jrct=None,
+                    national_medical_products_administration_nmpa_number=None,
+                    eudamed_srn_number=None,
+                    investigational_device_exemption_ide_number=None,
                     ct_gov_id_null_value_code=None,
                     eudract_id_null_value_code=None,
                     universal_trial_number_utn_null_value_code=None,
                     japanese_trial_registry_id_japic_null_value_code=None,
                     investigational_new_drug_application_number_ind_null_value_code=None,
+                    eu_trial_number_null_value_code=None,
+                    civ_id_sin_number_null_value_code=None,
+                    national_clinical_trial_number_null_value_code=None,
+                    japanese_trial_registry_number_jrct_null_value_code=None,
+                    national_medical_products_administration_nmpa_number_null_value_code=None,
+                    eudamed_srn_number_null_value_code=None,
+                    investigational_device_exemption_ide_number_null_value_code=None,
                 ),
             ),
             study_title_exists_callback=(lambda _, study_number: False),
@@ -1184,10 +1305,71 @@ class TestStudyService(unittest.TestCase):
                 sample_study_definition.current_metadata.id_metadata.registry_identifiers.universal_trial_number_utn_null_value_code,
             )
             self.assertEqual(
-                # pylint:disable=line-too-long
+                # pylint: disable=line-too-long
                 study_definition_ar.current_metadata.id_metadata.registry_identifiers.investigational_new_drug_application_number_ind_null_value_code,
-                # pylint:disable=line-too-long
+                # pylint: disable=line-too-long
                 sample_study_definition.current_metadata.id_metadata.registry_identifiers.investigational_new_drug_application_number_ind_null_value_code,
+            )
+            self.assertEqual(
+                study_definition_ar.current_metadata.id_metadata.registry_identifiers.eu_trial_number,
+                sample_study_definition.current_metadata.id_metadata.registry_identifiers.eu_trial_number,
+            )
+            self.assertEqual(
+                study_definition_ar.current_metadata.id_metadata.registry_identifiers.civ_id_sin_number,
+                sample_study_definition.current_metadata.id_metadata.registry_identifiers.civ_id_sin_number,
+            )
+            self.assertEqual(
+                study_definition_ar.current_metadata.id_metadata.registry_identifiers.national_clinical_trial_number,
+                sample_study_definition.current_metadata.id_metadata.registry_identifiers.national_clinical_trial_number,
+            )
+            self.assertEqual(
+                study_definition_ar.current_metadata.id_metadata.registry_identifiers.japanese_trial_registry_number_jrct,
+                sample_study_definition.current_metadata.id_metadata.registry_identifiers.japanese_trial_registry_number_jrct,
+            )
+            self.assertEqual(
+                study_definition_ar.current_metadata.id_metadata.registry_identifiers.national_medical_products_administration_nmpa_number,
+                sample_study_definition.current_metadata.id_metadata.registry_identifiers.national_medical_products_administration_nmpa_number,
+            )
+            self.assertEqual(
+                study_definition_ar.current_metadata.id_metadata.registry_identifiers.eudamed_srn_number,
+                sample_study_definition.current_metadata.id_metadata.registry_identifiers.eudamed_srn_number,
+            )
+            self.assertEqual(
+                study_definition_ar.current_metadata.id_metadata.registry_identifiers.investigational_device_exemption_ide_number,
+                sample_study_definition.current_metadata.id_metadata.registry_identifiers.investigational_device_exemption_ide_number,
+            )
+            self.assertEqual(
+                study_definition_ar.current_metadata.id_metadata.registry_identifiers.eu_trial_number_null_value_code,
+                sample_study_definition.current_metadata.id_metadata.registry_identifiers.eu_trial_number_null_value_code,
+            )
+            self.assertEqual(
+                study_definition_ar.current_metadata.id_metadata.registry_identifiers.civ_id_sin_number_null_value_code,
+                sample_study_definition.current_metadata.id_metadata.registry_identifiers.civ_id_sin_number_null_value_code,
+            )
+            self.assertEqual(
+                study_definition_ar.current_metadata.id_metadata.registry_identifiers.national_clinical_trial_number_null_value_code,
+                sample_study_definition.current_metadata.id_metadata.registry_identifiers.national_clinical_trial_number_null_value_code,
+            )
+            self.assertEqual(
+                study_definition_ar.current_metadata.id_metadata.registry_identifiers.japanese_trial_registry_number_jrct_null_value_code,
+                sample_study_definition.current_metadata.id_metadata.registry_identifiers.japanese_trial_registry_number_jrct_null_value_code,
+            )
+            self.assertEqual(
+                # pylint: disable=line-too-long
+                study_definition_ar.current_metadata.id_metadata.registry_identifiers.national_medical_products_administration_nmpa_number_null_value_code,
+                sample_study_definition.current_metadata.id_metadata.registry_identifiers.national_medical_products_administration_nmpa_number_null_value_code,
+            )
+            self.assertEqual(
+                study_definition_ar.current_metadata.id_metadata.registry_identifiers.eudamed_srn_number_null_value_code,
+                sample_study_definition.current_metadata.id_metadata.registry_identifiers.eudamed_srn_number_null_value_code,
+            )
+            self.assertEqual(
+                study_definition_ar.current_metadata.id_metadata.registry_identifiers.investigational_device_exemption_ide_number_null_value_code,
+                sample_study_definition.current_metadata.id_metadata.registry_identifiers.investigational_device_exemption_ide_number_null_value_code,
+            )
+            self.assertEqual(
+                study_definition_ar.current_metadata.id_metadata.project_number,
+                sample_study_definition.current_metadata.id_metadata.project_number,
             )
             self.assertEqual(
                 study_definition_ar.current_metadata.id_metadata.project_number,
@@ -1219,17 +1401,33 @@ class TestStudyService(unittest.TestCase):
                 project_number=None,
                 study_acronym="ACRONYM",
                 study_number=None,
+                subpart_id=None,
+                description=None,
                 registry_identifiers=RegistryIdentifiersVO.from_input_values(
                     ct_gov_id=ct_gov_id,
                     eudract_id=None,
                     universal_trial_number_utn=None,
                     japanese_trial_registry_id_japic=None,
                     investigational_new_drug_application_number_ind=None,
+                    eu_trial_number=None,
+                    civ_id_sin_number=None,
+                    national_clinical_trial_number=None,
+                    japanese_trial_registry_number_jrct=None,
+                    national_medical_products_administration_nmpa_number=None,
+                    eudamed_srn_number=None,
+                    investigational_device_exemption_ide_number=None,
                     ct_gov_id_null_value_code=None,
                     eudract_id_null_value_code=None,
                     universal_trial_number_utn_null_value_code=None,
                     japanese_trial_registry_id_japic_null_value_code=None,
                     investigational_new_drug_application_number_ind_null_value_code=None,
+                    eu_trial_number_null_value_code=None,
+                    civ_id_sin_number_null_value_code=None,
+                    national_clinical_trial_number_null_value_code=None,
+                    japanese_trial_registry_number_jrct_null_value_code=None,
+                    national_medical_products_administration_nmpa_number_null_value_code=None,
+                    eudamed_srn_number_null_value_code=None,
+                    investigational_device_exemption_ide_number_null_value_code=None,
                 ),
             ),
             study_title_exists_callback=(lambda _, study_number: False),
@@ -1275,11 +1473,11 @@ class TestStudyService(unittest.TestCase):
         study_definition_repository_property_mock.return_value = test_repo
         project_repository_property_mock.find_by_project_number.return_value = create_random_project(
             clinical_programme_uid=random_str(),
-            # pylint:disable=unnecessary-lambda
+            # pylint: disable=unnecessary-lambda
             generate_uid_callback=lambda: random_str(),
         )
         clinical_programme_repository_property_mock.find_by_uid.return_value = (
-            # pylint:disable=unnecessary-lambda
+            # pylint: disable=unnecessary-lambda
             create_random_clinical_programme(generate_uid_callback=lambda: random_str())
         )
 
@@ -1359,17 +1557,33 @@ class TestStudyService(unittest.TestCase):
                 project_number=None,
                 study_acronym="ACRONYM",
                 study_number=None,
+                subpart_id=None,
+                description=None,
                 registry_identifiers=RegistryIdentifiersVO.from_input_values(
                     ct_gov_id=ct_gov_id,
                     eudract_id=None,
                     universal_trial_number_utn=None,
                     japanese_trial_registry_id_japic=None,
                     investigational_new_drug_application_number_ind=None,
+                    eu_trial_number=None,
+                    civ_id_sin_number=None,
+                    national_clinical_trial_number=None,
+                    japanese_trial_registry_number_jrct=None,
+                    national_medical_products_administration_nmpa_number=None,
+                    eudamed_srn_number=None,
+                    investigational_device_exemption_ide_number=None,
                     ct_gov_id_null_value_code=None,
                     eudract_id_null_value_code=None,
                     universal_trial_number_utn_null_value_code=None,
                     japanese_trial_registry_id_japic_null_value_code=None,
                     investigational_new_drug_application_number_ind_null_value_code=None,
+                    eu_trial_number_null_value_code=None,
+                    civ_id_sin_number_null_value_code=None,
+                    national_clinical_trial_number_null_value_code=None,
+                    japanese_trial_registry_number_jrct_null_value_code=None,
+                    national_medical_products_administration_nmpa_number_null_value_code=None,
+                    eudamed_srn_number_null_value_code=None,
+                    investigational_device_exemption_ide_number_null_value_code=None,
                 ),
             ),
             study_title_exists_callback=(lambda _, study_number: False),
@@ -1413,11 +1627,11 @@ class TestStudyService(unittest.TestCase):
         study_definition_repository_property_mock.return_value = test_repo
         project_repository_property_mock.find_by_project_number.return_value = create_random_project(
             clinical_programme_uid=random_str(),
-            # pylint:disable=unnecessary-lambda
+            # pylint: disable=unnecessary-lambda
             generate_uid_callback=lambda: random_str(),
         )
         clinical_programme_repository_property_mock.find_by_uid.return_value = (
-            # pylint:disable=unnecessary-lambda
+            # pylint: disable=unnecessary-lambda
             create_random_clinical_programme(generate_uid_callback=lambda: random_str())
         )
 
@@ -1499,17 +1713,33 @@ class TestStudyService(unittest.TestCase):
                 project_number=None,
                 study_acronym="ACRONYM",
                 study_number=None,
+                subpart_id=None,
+                description=None,
                 registry_identifiers=RegistryIdentifiersVO.from_input_values(
                     ct_gov_id=None,
                     eudract_id=None,
                     universal_trial_number_utn=None,
                     japanese_trial_registry_id_japic=None,
                     investigational_new_drug_application_number_ind=None,
+                    eu_trial_number=None,
+                    civ_id_sin_number=None,
+                    national_clinical_trial_number=None,
+                    japanese_trial_registry_number_jrct=None,
+                    national_medical_products_administration_nmpa_number=None,
+                    eudamed_srn_number=None,
+                    investigational_device_exemption_ide_number=None,
                     ct_gov_id_null_value_code=None,
                     eudract_id_null_value_code=None,
                     universal_trial_number_utn_null_value_code=None,
                     japanese_trial_registry_id_japic_null_value_code=None,
                     investigational_new_drug_application_number_ind_null_value_code=None,
+                    eu_trial_number_null_value_code=None,
+                    civ_id_sin_number_null_value_code=None,
+                    national_clinical_trial_number_null_value_code=None,
+                    japanese_trial_registry_number_jrct_null_value_code=None,
+                    national_medical_products_administration_nmpa_number_null_value_code=None,
+                    eudamed_srn_number_null_value_code=None,
+                    investigational_device_exemption_ide_number_null_value_code=None,
                 ),
             ),
             study_title_exists_callback=(lambda _, study_number: False),
@@ -1542,11 +1772,11 @@ class TestStudyService(unittest.TestCase):
         study_title_repository_mock.return_value = study_title_test_repo
         project_repository_property_mock.find_by_project_number.return_value = create_random_project(
             clinical_programme_uid=random_str(),
-            # pylint:disable=unnecessary-lambda
+            # pylint: disable=unnecessary-lambda
             generate_uid_callback=lambda: random_str(),
         )
         clinical_programme_repository_property_mock.find_by_uid.return_value = (
-            # pylint:disable=unnecessary-lambda
+            # pylint: disable=unnecessary-lambda
             create_random_clinical_programme(generate_uid_callback=lambda: random_str())
         )
 

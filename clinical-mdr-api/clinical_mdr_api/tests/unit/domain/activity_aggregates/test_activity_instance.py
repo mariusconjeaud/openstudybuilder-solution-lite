@@ -43,6 +43,7 @@ def create_random_activity_instance_vo() -> ActivityInstanceVO:
         is_default_selected_for_activity=True,
         is_data_sharing=True,
         is_legacy_usage=True,
+        is_derived=False,
         legacy_description=random_str(),
         activity_groupings=[
             create_random_activity_instance_grouping_vo(),
@@ -67,7 +68,7 @@ def create_random_activity_instance_vo() -> ActivityInstanceVO:
 
 
 def create_random_activity_instance_ar(
-    # pylint:disable=unnecessary-lambda
+    # pylint: disable=unnecessary-lambda
     generate_uid_callback: Callable[[], str] = lambda: random_str(),
     library: str = "Library",
     is_editable: bool = True,
@@ -202,6 +203,7 @@ class TestActivityInstanceNegative(unittest.TestCase):
                     is_default_selected_for_activity=True,
                     is_data_sharing=True,
                     is_legacy_usage=True,
+                    is_derived=False,
                     legacy_description=random_str(),
                     activity_groupings=[
                         create_random_activity_instance_grouping_vo(),

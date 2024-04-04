@@ -9,7 +9,10 @@ Tests for /studies endpoints
 # pytest fixture functions have other fixture functions as arguments,
 # which pylint interprets as unused arguments
 
+import json
 import logging
+import random
+from string import ascii_lowercase
 
 import pytest
 from fastapi.testclient import TestClient
@@ -76,12 +79,14 @@ def test_get_study_by_uid(api_client):
     assert response.status_code == 200
     res = response.json()
     assert res["uid"] == study.uid
+    assert res["study_parent_part"] is None
+    assert res["study_subpart_uids"] == []
     assert res["current_metadata"]["identification_metadata"] is not None
     assert res["current_metadata"]["version_metadata"] is not None
     assert res["current_metadata"].get("high_level_study_design") is None
     assert res["current_metadata"].get("study_population") is None
     assert res["current_metadata"].get("study_intervention") is None
-    assert res["current_metadata"].get("study_description") is None
+    assert res["current_metadata"].get("study_description") is not None
 
     response = api_client.get(
         f"/studies/{study.uid}",
@@ -93,18 +98,20 @@ def test_get_study_by_uid(api_client):
     assert response.status_code == 200
     res = response.json()
     assert res["uid"] == study.uid
+    assert res["study_parent_part"] is None
+    assert res["study_subpart_uids"] == []
     assert res["current_metadata"].get("identification_metadata") is None
     assert res["current_metadata"]["version_metadata"] is not None
     assert res["current_metadata"].get("high_level_study_design") is not None
     assert res["current_metadata"].get("study_population") is None
     assert res["current_metadata"].get("study_intervention") is not None
-    assert res["current_metadata"].get("study_description") is None
+    assert res["current_metadata"].get("study_description") is not None
 
     response = api_client.get(
         f"/studies/{study.uid}",
         params={
-            "include_sections": ["not existing section"],
-            "exclude_sections": ["not existing section"],
+            "include_sections": ["non-existent section"],
+            "exclude_sections": ["non-existent section"],
         },
     )
     assert response.status_code == 422
@@ -149,10 +156,10 @@ def test_get_study_fields_audit_trail(api_client):
             # included in any Study sections
             assert action["section"] in ["study_description", "Unknown"]
 
-    # Study-fields audit trail with not existing section sent
+    # Study-fields audit trail with non-existent section sent
     response = api_client.get(
         f"/studies/{created_study.uid}/fields-audit-trail",
-        params={"exclude_sections": ["not existing section"]},
+        params={"exclude_sections": ["non-existent section"]},
     )
     assert response.status_code == 422
 
@@ -198,7 +205,7 @@ def test_study_listing(api_client):
         assert "identification_metadata" in metadata
         assert "version_metadata" in metadata
         # Check that no unwanted field is present
-        assert "study_description" not in metadata
+        assert "study_description" in metadata
         assert "high_level_study_design" not in metadata
         assert "study_population" not in metadata
         assert "study_intervention" not in metadata
@@ -384,7 +391,7 @@ def test_edit_time_units(api_client):
     assert response.status_code == 400
     assert (
         res["message"]
-        == f"The preferred_time_unit for the following study ({study.uid}) is already ({day_unit_definition.uid})"
+        == f"The Preferred Time Unit for the following study ({study.uid}) is already ({day_unit_definition.uid})"
     )
 
     response = api_client.patch(
@@ -627,3 +634,671 @@ def test_get_protocol_title_for_specific_version(api_client):
     ).json()
     assert res_v1 == res_old
     assert res_v1 != res_new
+
+
+def test_create_study_subpart(api_client):
+    response = api_client.post(
+        "/studies",
+        json={
+            "study_acronym": "something",
+            "description": "desc",
+            "study_parent_part_uid": study.uid,
+        },
+    )
+    assert response.status_code == 201
+    post_res = response.json()
+    assert post_res["uid"]
+    assert post_res["study_parent_part"] == {
+        "uid": "Study_000002",
+        "study_number": study.current_metadata.identification_metadata.study_number,
+        "study_acronym": "new acronym",
+        "project_number": "123",
+        "description": study.current_metadata.identification_metadata.description,
+        "study_id": study.current_metadata.identification_metadata.study_id,
+        "study_title": None,
+        "registry_identifiers": {
+            "ct_gov_id": None,
+            "ct_gov_id_null_value_code": None,
+            "eudract_id": None,
+            "eudract_id_null_value_code": None,
+            "investigational_new_drug_application_number_ind": None,
+            "investigational_new_drug_application_number_ind_null_value_code": None,
+            "japanese_trial_registry_id_japic": None,
+            "japanese_trial_registry_id_japic_null_value_code": None,
+            "universal_trial_number_utn": None,
+            "universal_trial_number_utn_null_value_code": None,
+            "eu_trial_number": None,
+            "eu_trial_number_null_value_code": None,
+            "civ_id_sin_number": None,
+            "civ_id_sin_number_null_value_code": None,
+            "national_clinical_trial_number": None,
+            "national_clinical_trial_number_null_value_code": None,
+            "japanese_trial_registry_number_jrct": None,
+            "japanese_trial_registry_number_jrct_null_value_code": None,
+            "national_medical_products_administration_nmpa_number": None,
+            "national_medical_products_administration_nmpa_number_null_value_code": None,
+            "eudamed_srn_number": None,
+            "eudamed_srn_number_null_value_code": None,
+            "investigational_device_exemption_ide_number": None,
+            "investigational_device_exemption_ide_number_null_value_code": None,
+        },
+    }
+    assert post_res["study_subpart_uids"] == []
+    assert post_res["current_metadata"].get("identification_metadata") == {
+        "study_number": None,
+        "subpart_id": "a",
+        "study_acronym": "something",
+        "project_number": "123",
+        "project_name": "Project ABC",
+        "description": "desc",
+        "clinical_programme_name": "CP",
+        "study_id": f"{study.current_metadata.identification_metadata.study_id}-a",
+        "registry_identifiers": None,
+    }
+    assert post_res["current_metadata"]["version_metadata"]["study_status"] == "DRAFT"
+    assert post_res["current_metadata"]["version_metadata"]["version_number"] is None
+    assert post_res["current_metadata"]["version_metadata"]["version_author"] is None
+    assert (
+        post_res["current_metadata"]["version_metadata"]["version_description"] is None
+    )
+
+    # Check get response of study subpart
+    response = api_client.get(f"/studies/{post_res['uid']}")
+    assert response.status_code == 200
+    get_res = response.json()
+    assert get_res["uid"] == post_res["uid"]
+    assert get_res["study_parent_part"] == {
+        "uid": "Study_000002",
+        "study_number": study.current_metadata.identification_metadata.study_number,
+        "study_acronym": "new acronym",
+        "project_number": "123",
+        "description": study.current_metadata.identification_metadata.description,
+        "study_id": study.current_metadata.identification_metadata.study_id,
+        "study_title": None,
+        "registry_identifiers": {
+            "ct_gov_id": None,
+            "ct_gov_id_null_value_code": None,
+            "eudract_id": None,
+            "eudract_id_null_value_code": None,
+            "investigational_new_drug_application_number_ind": None,
+            "investigational_new_drug_application_number_ind_null_value_code": None,
+            "japanese_trial_registry_id_japic": None,
+            "japanese_trial_registry_id_japic_null_value_code": None,
+            "universal_trial_number_utn": None,
+            "universal_trial_number_utn_null_value_code": None,
+            "eu_trial_number": None,
+            "eu_trial_number_null_value_code": None,
+            "civ_id_sin_number": None,
+            "civ_id_sin_number_null_value_code": None,
+            "national_clinical_trial_number": None,
+            "national_clinical_trial_number_null_value_code": None,
+            "japanese_trial_registry_number_jrct": None,
+            "japanese_trial_registry_number_jrct_null_value_code": None,
+            "national_medical_products_administration_nmpa_number": None,
+            "national_medical_products_administration_nmpa_number_null_value_code": None,
+            "eudamed_srn_number": None,
+            "eudamed_srn_number_null_value_code": None,
+            "investigational_device_exemption_ide_number": None,
+            "investigational_device_exemption_ide_number_null_value_code": None,
+        },
+    }
+    assert get_res["study_subpart_uids"] == []
+    assert get_res["current_metadata"].get("identification_metadata") == {
+        "study_number": None,
+        "subpart_id": "a",
+        "study_acronym": "something",
+        "project_number": "123",
+        "project_name": "Project ABC",
+        "description": "desc",
+        "clinical_programme_name": "CP",
+        "study_id": f"{study.current_metadata.identification_metadata.study_id}-a",
+        "registry_identifiers": None,
+    }
+    assert get_res["current_metadata"]["version_metadata"]["study_status"] == "DRAFT"
+    assert get_res["current_metadata"]["version_metadata"]["version_number"] is None
+    assert (
+        get_res["current_metadata"]["version_metadata"]["version_author"]
+        == "unknown-user"
+    )
+    assert (
+        get_res["current_metadata"]["version_metadata"]["version_description"] is None
+    )
+
+    # Check get response of study parent part
+    response = api_client.get(f"/studies/{study.uid}")
+    assert response.status_code == 200
+    get_res = response.json()
+    assert get_res["uid"] == study.uid
+    assert get_res["study_parent_part"] is None
+    assert get_res["study_subpart_uids"] == [post_res["uid"]]
+    assert get_res["current_metadata"]["identification_metadata"] is not None
+    assert get_res["current_metadata"]["version_metadata"] is not None
+    assert get_res["current_metadata"].get("high_level_study_design") is None
+    assert get_res["current_metadata"].get("study_population") is None
+    assert get_res["current_metadata"].get("study_intervention") is None
+    assert get_res["current_metadata"].get("study_description") is not None
+
+
+def test_use_an_already_existing_study_as_a_study_subpart(api_client):
+    parent_study = TestUtils.create_study()
+    new_study = TestUtils.create_study()
+    response = api_client.patch(
+        f"/studies/{new_study.uid}",
+        json={
+            "study_parent_part_uid": parent_study.uid,
+            "current_metadata": {"identification_metadata": {}},
+        },
+    )
+    assert response.status_code == 200
+    post_res = response.json()
+    assert post_res["uid"]
+    assert post_res["study_parent_part"] == {
+        "uid": parent_study.uid,
+        "study_number": parent_study.current_metadata.identification_metadata.study_number,
+        "study_acronym": parent_study.current_metadata.identification_metadata.study_acronym,
+        "project_number": "123",
+        "description": parent_study.current_metadata.identification_metadata.description,
+        "study_id": parent_study.current_metadata.identification_metadata.study_id,
+        "study_title": None,
+        "registry_identifiers": {
+            "ct_gov_id": None,
+            "ct_gov_id_null_value_code": None,
+            "eudract_id": None,
+            "eudract_id_null_value_code": None,
+            "investigational_new_drug_application_number_ind": None,
+            "investigational_new_drug_application_number_ind_null_value_code": None,
+            "japanese_trial_registry_id_japic": None,
+            "japanese_trial_registry_id_japic_null_value_code": None,
+            "universal_trial_number_utn": None,
+            "universal_trial_number_utn_null_value_code": None,
+            "eu_trial_number": None,
+            "eu_trial_number_null_value_code": None,
+            "civ_id_sin_number": None,
+            "civ_id_sin_number_null_value_code": None,
+            "national_clinical_trial_number": None,
+            "national_clinical_trial_number_null_value_code": None,
+            "japanese_trial_registry_number_jrct": None,
+            "japanese_trial_registry_number_jrct_null_value_code": None,
+            "national_medical_products_administration_nmpa_number": None,
+            "national_medical_products_administration_nmpa_number_null_value_code": None,
+            "eudamed_srn_number": None,
+            "eudamed_srn_number_null_value_code": None,
+            "investigational_device_exemption_ide_number": None,
+            "investigational_device_exemption_ide_number_null_value_code": None,
+        },
+    }
+    assert post_res["study_subpart_uids"] == []
+    assert post_res["current_metadata"].get("identification_metadata") == {
+        "study_number": None,
+        "subpart_id": "a",
+        "study_acronym": new_study.current_metadata.identification_metadata.study_acronym,
+        "project_number": "123",
+        "project_name": new_study.current_metadata.identification_metadata.project_name,
+        "description": new_study.current_metadata.identification_metadata.description,
+        "clinical_programme_name": "CP",
+        "study_id": f"{parent_study.current_metadata.identification_metadata.study_id}-a",
+        "registry_identifiers": None,
+    }
+    assert post_res["current_metadata"]["version_metadata"]["study_status"] == "DRAFT"
+    assert post_res["current_metadata"]["version_metadata"]["version_number"] is None
+    assert post_res["current_metadata"]["version_metadata"]["version_author"] is None
+    assert (
+        post_res["current_metadata"]["version_metadata"]["version_description"] is None
+    )
+
+    # Check get response of study parent part
+    response = api_client.get(f"/studies/{parent_study.uid}")
+    assert response.status_code == 200
+    get_res = response.json()
+    assert get_res["uid"] == parent_study.uid
+    assert get_res["study_parent_part"] is None
+    assert get_res["study_subpart_uids"] == [post_res["uid"]]
+    assert get_res["current_metadata"]["identification_metadata"] is not None
+    assert get_res["current_metadata"]["version_metadata"] is not None
+    assert get_res["current_metadata"].get("high_level_study_design") is None
+    assert get_res["current_metadata"].get("study_population") is None
+    assert get_res["current_metadata"].get("study_intervention") is None
+    assert get_res["current_metadata"].get("study_description") is not None
+
+
+def test_cascade_of_study_parent_part(api_client):
+    def _check_study_subparts_status(status: str):
+        response = api_client.get(
+            "/studies",
+            params={
+                "filters": json.dumps(
+                    {
+                        "study_parent_part.uid": {
+                            "v": [f"{parent_study.uid}"],
+                            "op": "eq",
+                        }
+                    }
+                ),
+                "page_size": 0,
+            },
+        )
+        assert response.status_code == 200
+        res = response.json()
+        for item in res["items"]:
+            assert (
+                item["current_metadata"]["version_metadata"]["study_status"] == status
+            )
+
+    parent_study = TestUtils.create_study()
+    for _ in range(10):
+        TestUtils.create_study(study_parent_part_uid=parent_study.uid)
+
+    response = api_client.patch(
+        f"/studies/{parent_study.uid}",
+        json={"current_metadata": {"study_description": {"study_title": "new title"}}},
+    )
+    assert response.status_code == 200
+
+    response = api_client.post(
+        f"/studies/{parent_study.uid}/locks",
+        json={"change_description": "Locked"},
+    )
+    assert response.status_code == 201
+    res = response.json()
+    assert res["current_metadata"]["version_metadata"]["study_status"] == "LOCKED"
+    _check_study_subparts_status("LOCKED")
+
+    response = api_client.delete(f"/studies/{parent_study.uid}/locks")
+    assert response.status_code == 200
+    res = response.json()
+    assert res["current_metadata"]["version_metadata"]["study_status"] == "DRAFT"
+    _check_study_subparts_status("DRAFT")
+
+    response = api_client.post(
+        f"/studies/{parent_study.uid}/release",
+        json={"change_description": "Released"},
+    )
+    assert response.status_code == 201
+    res = response.json()
+    assert res["current_metadata"]["version_metadata"]["study_status"] == "DRAFT"
+    _check_study_subparts_status("DRAFT")
+
+
+def test_reordering_study_subparts(api_client):
+    parent_study = TestUtils.create_study()
+    new_studies = [
+        TestUtils.create_study(study_parent_part_uid=parent_study.uid)
+        for _ in range(10)
+    ]
+
+    response = api_client.patch(
+        f"/studies/{parent_study.uid}/order",
+        json={
+            "uid": new_studies[2].uid,
+            "subpart_id": "a",
+        },
+    )
+    assert response.status_code == 200
+    res = response.json()
+    assert res[0]["current_metadata"]["identification_metadata"]["subpart_id"] == "b"
+    assert res[1]["current_metadata"]["identification_metadata"]["subpart_id"] == "c"
+    assert res[2]["current_metadata"]["identification_metadata"]["subpart_id"] == "a"
+    assert res[3]["current_metadata"]["identification_metadata"]["subpart_id"] == "d"
+    assert res[4]["current_metadata"]["identification_metadata"]["subpart_id"] == "e"
+    assert res[5]["current_metadata"]["identification_metadata"]["subpart_id"] == "f"
+    assert res[6]["current_metadata"]["identification_metadata"]["subpart_id"] == "g"
+    assert res[7]["current_metadata"]["identification_metadata"]["subpart_id"] == "h"
+    assert res[8]["current_metadata"]["identification_metadata"]["subpart_id"] == "i"
+    assert res[9]["current_metadata"]["identification_metadata"]["subpart_id"] == "j"
+    new_studies[0].current_metadata.identification_metadata.subpart_id = "b"
+    new_studies[1].current_metadata.identification_metadata.subpart_id = "c"
+    new_studies[2].current_metadata.identification_metadata.subpart_id = "a"
+    new_studies[3].current_metadata.identification_metadata.subpart_id = "d"
+    new_studies[4].current_metadata.identification_metadata.subpart_id = "e"
+    new_studies[5].current_metadata.identification_metadata.subpart_id = "f"
+    new_studies[6].current_metadata.identification_metadata.subpart_id = "g"
+    new_studies[7].current_metadata.identification_metadata.subpart_id = "h"
+    new_studies[8].current_metadata.identification_metadata.subpart_id = "i"
+    new_studies[9].current_metadata.identification_metadata.subpart_id = "j"
+
+    response = api_client.patch(
+        f"/studies/{parent_study.uid}/order",
+        json={
+            "uid": new_studies[5].uid,
+            "subpart_id": "d",
+        },
+    )
+    assert response.status_code == 200
+    res = response.json()
+    assert res[0]["current_metadata"]["identification_metadata"]["subpart_id"] == "b"
+    assert res[1]["current_metadata"]["identification_metadata"]["subpart_id"] == "c"
+    assert res[2]["current_metadata"]["identification_metadata"]["subpart_id"] == "a"
+    assert res[3]["current_metadata"]["identification_metadata"]["subpart_id"] == "e"
+    assert res[4]["current_metadata"]["identification_metadata"]["subpart_id"] == "f"
+    assert res[5]["current_metadata"]["identification_metadata"]["subpart_id"] == "d"
+    assert res[6]["current_metadata"]["identification_metadata"]["subpart_id"] == "g"
+    assert res[7]["current_metadata"]["identification_metadata"]["subpart_id"] == "h"
+    assert res[8]["current_metadata"]["identification_metadata"]["subpart_id"] == "i"
+    assert res[9]["current_metadata"]["identification_metadata"]["subpart_id"] == "j"
+    new_studies[0].current_metadata.identification_metadata.subpart_id = "b"
+    new_studies[1].current_metadata.identification_metadata.subpart_id = "c"
+    new_studies[2].current_metadata.identification_metadata.subpart_id = "a"
+    new_studies[3].current_metadata.identification_metadata.subpart_id = "e"
+    new_studies[4].current_metadata.identification_metadata.subpart_id = "f"
+    new_studies[5].current_metadata.identification_metadata.subpart_id = "d"
+    new_studies[6].current_metadata.identification_metadata.subpart_id = "g"
+    new_studies[7].current_metadata.identification_metadata.subpart_id = "h"
+    new_studies[8].current_metadata.identification_metadata.subpart_id = "i"
+    new_studies[9].current_metadata.identification_metadata.subpart_id = "j"
+
+    response = api_client.patch(
+        f"/studies/{parent_study.uid}/order",
+        json={
+            "uid": new_studies[9].uid,
+            "subpart_id": "a",
+        },
+    )
+    assert response.status_code == 200
+    res = response.json()
+    assert res[0]["current_metadata"]["identification_metadata"]["subpart_id"] == "c"
+    assert res[1]["current_metadata"]["identification_metadata"]["subpart_id"] == "d"
+    assert res[2]["current_metadata"]["identification_metadata"]["subpart_id"] == "b"
+    assert res[3]["current_metadata"]["identification_metadata"]["subpart_id"] == "f"
+    assert res[4]["current_metadata"]["identification_metadata"]["subpart_id"] == "g"
+    assert res[5]["current_metadata"]["identification_metadata"]["subpart_id"] == "e"
+    assert res[6]["current_metadata"]["identification_metadata"]["subpart_id"] == "h"
+    assert res[7]["current_metadata"]["identification_metadata"]["subpart_id"] == "i"
+    assert res[8]["current_metadata"]["identification_metadata"]["subpart_id"] == "j"
+    assert res[9]["current_metadata"]["identification_metadata"]["subpart_id"] == "a"
+    new_studies[0].current_metadata.identification_metadata.subpart_id = "c"
+    new_studies[1].current_metadata.identification_metadata.subpart_id = "d"
+    new_studies[2].current_metadata.identification_metadata.subpart_id = "b"
+    new_studies[3].current_metadata.identification_metadata.subpart_id = "f"
+    new_studies[4].current_metadata.identification_metadata.subpart_id = "g"
+    new_studies[5].current_metadata.identification_metadata.subpart_id = "e"
+    new_studies[6].current_metadata.identification_metadata.subpart_id = "h"
+    new_studies[7].current_metadata.identification_metadata.subpart_id = "i"
+    new_studies[8].current_metadata.identification_metadata.subpart_id = "j"
+    new_studies[9].current_metadata.identification_metadata.subpart_id = "a"
+
+    response = api_client.patch(
+        f"/studies/{parent_study.uid}/order",
+        json={
+            "uid": new_studies[9].uid,
+            "subpart_id": "j",
+        },
+    )
+    assert response.status_code == 200
+    res = response.json()
+    assert res[0]["current_metadata"]["identification_metadata"]["subpart_id"] == "b"
+    assert res[1]["current_metadata"]["identification_metadata"]["subpart_id"] == "c"
+    assert res[2]["current_metadata"]["identification_metadata"]["subpart_id"] == "a"
+    assert res[3]["current_metadata"]["identification_metadata"]["subpart_id"] == "e"
+    assert res[4]["current_metadata"]["identification_metadata"]["subpart_id"] == "f"
+    assert res[5]["current_metadata"]["identification_metadata"]["subpart_id"] == "d"
+    assert res[6]["current_metadata"]["identification_metadata"]["subpart_id"] == "g"
+    assert res[7]["current_metadata"]["identification_metadata"]["subpart_id"] == "h"
+    assert res[8]["current_metadata"]["identification_metadata"]["subpart_id"] == "i"
+    assert res[9]["current_metadata"]["identification_metadata"]["subpart_id"] == "j"
+    new_studies[0].current_metadata.identification_metadata.subpart_id = "b"
+    new_studies[1].current_metadata.identification_metadata.subpart_id = "c"
+    new_studies[2].current_metadata.identification_metadata.subpart_id = "a"
+    new_studies[3].current_metadata.identification_metadata.subpart_id = "e"
+    new_studies[4].current_metadata.identification_metadata.subpart_id = "f"
+    new_studies[5].current_metadata.identification_metadata.subpart_id = "d"
+    new_studies[6].current_metadata.identification_metadata.subpart_id = "g"
+    new_studies[7].current_metadata.identification_metadata.subpart_id = "h"
+    new_studies[8].current_metadata.identification_metadata.subpart_id = "i"
+    new_studies[9].current_metadata.identification_metadata.subpart_id = "j"
+
+
+def test_auto_reordering_after_deleting_a_study_subpart(api_client):
+    parent_study = TestUtils.create_study()
+    new_studies = [
+        TestUtils.create_study(study_parent_part_uid=parent_study.uid)
+        for _ in range(10)
+    ]
+
+    uids_of_random_study_subparts_to_delete = {
+        random_study.uid
+        for random_study in random.choices(new_studies, k=random.randint(0, 7))
+    }
+    for (
+        uid_of_random_study_subpart_to_delete
+    ) in uids_of_random_study_subparts_to_delete:
+        response = api_client.delete(
+            f"/studies/{uid_of_random_study_subpart_to_delete}"
+        )
+        assert response.status_code == 204
+
+    response = api_client.get(
+        "/studies",
+        params={
+            "filters": json.dumps(
+                {
+                    "study_parent_part.uid": {
+                        "v": [f"{parent_study.uid}"],
+                        "op": "eq",
+                    }
+                }
+            ),
+            "page_size": 0,
+        },
+    )
+    assert response.status_code == 200
+    res = response.json()
+
+    letters = ascii_lowercase[: 10 - len(uids_of_random_study_subparts_to_delete)]
+    idx = 0
+    for item in res["items"]:
+        if item["uid"] not in uids_of_random_study_subparts_to_delete:
+            assert (
+                item["current_metadata"]["identification_metadata"]["subpart_id"]
+                == letters[idx]
+            )
+            idx += 1
+
+    study_uids = [item["uid"] for item in res["items"]]
+    assert all(
+        uid_of_random_study_subpart_to_delete not in study_uids
+        for uid_of_random_study_subpart_to_delete in uids_of_random_study_subparts_to_delete
+    )
+
+
+def test_get_audit_trail_of_all_study_subparts_of_study(api_client):
+    response = api_client.get("/studies/Study_000025/audit-trail")
+    assert response.status_code == 200
+    res = response.json()
+    assert len(res) == 36
+
+
+def test_get_audit_trail_of_study_subpart(api_client):
+    response = api_client.get("/studies/Study_000030/audit-trail?is_subpart=true")
+    assert response.status_code == 200
+    res = response.json()
+    assert len(res) == 4
+
+
+def test_cannot_use_a_study_parent_part_as_study_subpart(api_client):
+    response = api_client.patch(
+        f"/studies/{study.uid}",
+        json={
+            "study_parent_part_uid": "Study_000001",
+            "current_metadata": {"identification_metadata": {}},
+        },
+    )
+    assert response.status_code == 400
+    res = response.json()
+
+    assert res["type"] == "BusinessLogicException"
+    assert (
+        res["message"]
+        == f"Cannot use Study Parent Part with UID ({study.uid}) as a Study Subpart."
+    )
+
+
+def test_cannot_use_a_study_subpart_as_study_parent_part(api_client):
+    subpart = TestUtils.create_study(study_parent_part_uid=study.uid)
+    local_study = TestUtils.create_study()
+    response = api_client.patch(
+        f"/studies/{local_study.uid}",
+        json={
+            "study_parent_part_uid": subpart.uid,
+            "current_metadata": {"identification_metadata": {}},
+        },
+    )
+    assert response.status_code == 400
+    res = response.json()
+
+    assert res["type"] == "BusinessLogicException"
+    assert (
+        res["message"]
+        == f"Provided study_parent_part_uid ({subpart.uid}) is a Study Subpart UID."
+    )
+
+
+def test_cannot_make_a_study_a_subpart_of_itself(api_client):
+    response = api_client.patch(
+        f"/studies/{study.uid}",
+        json={
+            "study_parent_part_uid": study.uid,
+            "current_metadata": {"identification_metadata": {}},
+        },
+    )
+    assert response.status_code == 400
+    res = response.json()
+
+    assert res["type"] == "BusinessLogicException"
+    assert res["message"] == "A Study cannot be a Study Parent Part for itself."
+
+
+def test_cannot_reorder_study_subpart_of_another_study_parent_part(api_client):
+    response = api_client.patch(
+        f"/studies/{study.uid}/order",
+        json={
+            "uid": "Study_000006",
+            "subpart_id": "a",
+        },
+    )
+    assert response.status_code == 400
+    res = response.json()
+
+    assert res["type"] == "BusinessLogicException"
+    assert (
+        res["message"]
+        == f"Study Subparts identified by Study_000006 don't belong to the Study Parent Part identified by ({study.uid})."
+    )
+
+
+def test_cannot_delete_study_parent_part(api_client):
+    response = api_client.delete(f"/studies/{study.uid}")
+    assert response.status_code == 400
+    res = response.json()
+
+    assert res["type"] == "BusinessLogicException"
+    assert (
+        res["message"]
+        == f"Study {study.uid}: cannot delete a Study having Study Subparts: ['Study_000047', 'Study_000011']."
+    )
+
+
+def test_cannot_change_study_title_of_subpart(api_client):
+    subpart = TestUtils.create_study(study_parent_part_uid=study.uid)
+    response = api_client.patch(
+        f"/studies/{subpart.uid}",
+        json={
+            "study_parent_part_uid": "Study_000002",
+            "current_metadata": {
+                "study_description": {
+                    "title": "new title",
+                }
+            },
+        },
+    )
+    assert response.status_code == 400
+    res = response.json()
+
+    assert res["type"] == "BusinessLogicException"
+    assert res["message"] == "Cannot add or edit Study Description of Study Subparts."
+
+
+def test_cannot_change_registry_identifiers_of_subpart(api_client):
+    subpart = TestUtils.create_study(study_parent_part_uid=study.uid)
+    response = api_client.patch(
+        f"/studies/{subpart.uid}",
+        json={
+            "study_parent_part_uid": "Study_000002",
+            "current_metadata": {
+                "identification_metadata": {
+                    "registry_identifiers": {"eudract_id": "eudract_id, updated"}
+                }
+            },
+        },
+    )
+    assert response.status_code == 400
+    res = response.json()
+
+    assert res["type"] == "BusinessLogicException"
+    assert res["message"] == "Cannot edit Registry Identifiers of Study Subparts."
+
+
+def test_cannot_change_project_of_subpart(api_client):
+    new_project = TestUtils.create_project(
+        name="New Project",
+        project_number="abcd",
+        clinical_programme_uid="ClinicalProgramme_000001",
+    )
+    response = api_client.patch(
+        "/studies/Study_000011",
+        json={
+            "study_parent_part_uid": "Study_000002",
+            "current_metadata": {
+                "identification_metadata": {
+                    "project_number": new_project.project_number,
+                }
+            },
+        },
+    )
+    assert response.status_code == 400
+    res = response.json()
+
+    assert res["type"] == "BusinessLogicException"
+    assert (
+        res["message"]
+        == "Project of Study Subparts cannot be changed independently from its Study Parent Part."
+    )
+
+
+def test_cannot_lock_study_subpart(api_client):
+    response = api_client.post(
+        "/studies/Study_000011/locks", json={"change_description": "Lock"}
+    )
+    assert response.status_code == 400
+    res = response.json()
+
+    assert res["type"] == "BusinessLogicException"
+    assert (
+        res["message"]
+        == "Study Subparts cannot be locked independently from its Study Parent Part with uid (Study_000002)."
+    )
+
+
+def test_cannot_unlock_study_subpart(api_client):
+    response = api_client.delete("/studies/Study_000011/locks")
+    assert response.status_code == 400
+    res = response.json()
+
+    assert res["type"] == "BusinessLogicException"
+    assert (
+        res["message"]
+        == "Study Subparts cannot be unlocked independently from its Study Parent Part with uid (Study_000002)."
+    )
+
+
+def test_cannot_release_study_subpart(api_client):
+    response = api_client.post(
+        "/studies/Study_000011/release", json={"change_description": "Lock"}
+    )
+    assert response.status_code == 400
+    res = response.json()
+
+    assert res["type"] == "BusinessLogicException"
+    assert (
+        res["message"]
+        == "Study Subparts cannot be released independently from its Study Parent Part with uid (Study_000002)."
+    )

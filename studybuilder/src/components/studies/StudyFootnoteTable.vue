@@ -268,6 +268,10 @@ export default {
   watch: {
     options () {
       this.fetchFootnotes()
+    },
+    '$route.params.editFootnote' (value) {
+      this.editStudyFootnote(value)
+      this.$route.params.editFootnote = null
     }
   }
 }

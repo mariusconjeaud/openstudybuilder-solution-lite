@@ -107,7 +107,7 @@ export default {
         { text: this.$t('_global.name'), value: 'name' },
         { text: this.$t('UnitTable.master_unit'), value: 'master_unit' },
         { text: this.$t('UnitTable.display_unit'), value: 'display_unit' },
-        { text: this.$t('UnitTable.unit_subsets'), value: 'unit_subsets' },
+        { text: this.$t('UnitTable.unit_subsets'), value: 'unit_subsets', filteringName: 'unit_subsets.name' },
         { text: this.$t('UnitTable.ucum_unit'), value: 'ucum.name' },
         { text: this.$t('UnitTable.ct_units'), value: 'ct_units', filteringName: 'ct_units.name', width: '10%' },
         { text: this.$t('UnitTable.convertible_unit'), value: 'convertible_unit' },

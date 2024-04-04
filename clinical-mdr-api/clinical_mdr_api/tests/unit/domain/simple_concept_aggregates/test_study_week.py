@@ -23,7 +23,7 @@ def create_random_study_week_vo() -> StudyWeekVO:
 
 
 def create_random_study_week_ar(
-    # pylint:disable=unnecessary-lambda
+    # pylint: disable=unnecessary-lambda
     generate_uid_callback: Callable[[], str] = lambda: random_str(),
     library: str = "Library",
     is_editable: bool = True,

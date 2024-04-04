@@ -37,13 +37,13 @@ class TestProjectRepository(unittest.TestCase):
     def tear_down_class(cls) -> None:
         wipe_clinical_programme_repository()
 
-    def test__project_number_exist__non_existing_pr__returns_false(self):
+    def test__project_number_exist__non_existent_pr__returns_false(self):
         # given
-        non_existing_project_number = f"this-uid-for-sure-does-not-exists-especially-after-adding-this-{random_str()}"
+        non_existent_project_number = f"this-uid-for-sure-does-not-exists-especially-after-adding-this-{random_str()}"
         repo = ProjectRepository()
 
         # when
-        result = repo.project_number_exists(non_existing_project_number)
+        result = repo.project_number_exists(non_existent_project_number)
         repo.close()
 
         # then
@@ -65,13 +65,13 @@ class TestProjectRepository(unittest.TestCase):
         # then
         self.assertTrue(result)
 
-    def test__find_by_uid__non_existing_uid__returns_none(self):
+    def test__find_by_uid__non_existent_uid__returns_none(self):
         # given
-        non_existing_uid = f"this-uid-for-sure-does-not-exists-especially-after-adding-this-{random_str()}"
+        non_existent_uid = f"this-uid-for-sure-does-not-exists-especially-after-adding-this-{random_str()}"
         repo = ProjectRepository()
 
         # when
-        result = repo.find_by_uid(non_existing_uid)
+        result = repo.find_by_uid(non_existent_uid)
         repo.close()
 
         # then
@@ -148,7 +148,7 @@ class TestProjectRepository(unittest.TestCase):
             with self.subTest():
                 self.assertEqual(db_projects[test_project.uid], test_project)
 
-    def test__find_all__non_existing_projects__returns_empty_seq(self):
+    def test__find_all__non_existent_projects__returns_empty_seq(self):
         # given
         repo = ProjectRepository()
 

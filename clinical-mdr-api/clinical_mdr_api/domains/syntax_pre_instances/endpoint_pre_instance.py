@@ -1,16 +1,15 @@
 from dataclasses import dataclass
 from typing import Callable, Self
 
-from clinical_mdr_api.domains.controlled_terminologies.ct_term_attributes import (
-    CTTermAttributesAR,
-)
-from clinical_mdr_api.domains.controlled_terminologies.ct_term_name import CTTermNameAR
-from clinical_mdr_api.domains.dictionaries.dictionary_term import DictionaryTermAR
 from clinical_mdr_api.domains.libraries.object import ParametrizedTemplateVO
 from clinical_mdr_api.domains.syntax_pre_instances.pre_instance_ar import PreInstanceAR
 from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemMetadataVO,
     LibraryVO,
+)
+from clinical_mdr_api.models.controlled_terminologies.ct_term import (
+    SimpleCTTermNameAndAttributes,
+    SimpleTermModel,
 )
 
 
@@ -20,22 +19,22 @@ class EndpointPreInstanceAR(PreInstanceAR):
     Implementation of EndpointPreInstanceAR. Solely based on Parametrized Template.
     """
 
-    _indications: list[DictionaryTermAR] | None = None
+    _indications: SimpleTermModel | None = None
 
-    _categories: list[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None
+    _categories: list[SimpleCTTermNameAndAttributes] | None = None
 
-    _subcategories: list[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None
+    _subcategories: list[SimpleCTTermNameAndAttributes] | None = None
 
     @property
-    def indications(self) -> list[DictionaryTermAR]:
+    def indications(self) -> SimpleTermModel:
         return self._indications
 
     @property
-    def categories(self) -> list[tuple[CTTermNameAR, CTTermAttributesAR]]:
+    def categories(self) -> list[SimpleCTTermNameAndAttributes]:
         return self._categories
 
     @property
-    def sub_categories(self) -> list[tuple[CTTermNameAR, CTTermAttributesAR]]:
+    def sub_categories(self) -> list[SimpleCTTermNameAndAttributes]:
         return self._subcategories
 
     @classmethod
@@ -47,9 +46,9 @@ class EndpointPreInstanceAR(PreInstanceAR):
         item_metadata: LibraryItemMetadataVO,
         sequence_id: str,
         study_count: int = 0,
-        indications: list[DictionaryTermAR] | None = None,
-        categories: list[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None,
-        sub_categories: list[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None,
+        indications: SimpleTermModel | None = None,
+        categories: list[SimpleCTTermNameAndAttributes] | None = None,
+        sub_categories: list[SimpleCTTermNameAndAttributes] | None = None,
     ) -> Self:
         return cls(
             _uid=uid,
@@ -73,9 +72,9 @@ class EndpointPreInstanceAR(PreInstanceAR):
         next_available_sequence_id_callback: Callable[[str], str | None] = (
             lambda _: None
         ),
-        indications: list[DictionaryTermAR] | None = None,
-        categories: list[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None,
-        sub_categories: list[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None,
+        indications: SimpleTermModel | None = None,
+        categories: list[SimpleCTTermNameAndAttributes] | None = None,
+        sub_categories: list[SimpleCTTermNameAndAttributes] | None = None,
     ) -> Self:
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(author=author)
 

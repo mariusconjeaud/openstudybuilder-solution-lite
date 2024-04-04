@@ -3,6 +3,9 @@
 from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
 from clinical_mdr_api.models.concepts.activities.activity import Activity
+from clinical_mdr_api.models.concepts.activities.activity_instance import (
+    ActivityInstance,
+)
 from clinical_mdr_api.models.concepts.compound import Compound
 from clinical_mdr_api.models.concepts.compound_alias import CompoundAlias
 from clinical_mdr_api.models.controlled_terminologies.ct_term import (
@@ -26,11 +29,11 @@ from clinical_mdr_api.models.syntax_templates.objective_template import (
 class StudySelectionMixin:
     def _transform_latest_endpoint_model(self, endpoint_uid: str) -> Endpoint:
         endpoint_repo = self._repos.endpoint_repository
-        endpoint = endpoint_repo.find_by_uid_2(
+        endpoint = endpoint_repo.find_by_uid(
             uid=endpoint_uid, status=LibraryItemStatus.FINAL
         )
         if endpoint is None:
-            endpoint = endpoint_repo.find_by_uid_2(
+            endpoint = endpoint_repo.find_by_uid(
                 uid=endpoint_uid, status=LibraryItemStatus.RETIRED
             )
         return Endpoint.from_endpoint_ar(endpoint)
@@ -39,7 +42,7 @@ class StudySelectionMixin:
         self, endpoint_uid: str, objective_version: str
     ) -> Endpoint:
         endpoint_repo = self._repos.endpoint_repository
-        endpoint = endpoint_repo.find_by_uid_2(
+        endpoint = endpoint_repo.find_by_uid(
             uid=endpoint_uid, version=objective_version
         )
         return Endpoint.from_endpoint_ar(endpoint)
@@ -48,11 +51,11 @@ class StudySelectionMixin:
         self, endpoint_template_uid: str
     ) -> EndpointTemplate:
         endpoint_template_repo = self._repos.endpoint_template_repository
-        endpoint_template = endpoint_template_repo.find_by_uid_2(
+        endpoint_template = endpoint_template_repo.find_by_uid(
             uid=endpoint_template_uid, status=LibraryItemStatus.FINAL
         )
         if endpoint_template is None:
-            endpoint_template = endpoint_template_repo.find_by_uid_2(
+            endpoint_template = endpoint_template_repo.find_by_uid(
                 uid=endpoint_template_uid, status=LibraryItemStatus.RETIRED
             )
         return EndpointTemplate.from_endpoint_template_ar(endpoint_template)
@@ -61,21 +64,21 @@ class StudySelectionMixin:
         self, endpoint_template_uid: str, endpoint_template_version: str
     ) -> EndpointTemplate:
         endpoint_template_repo = self._repos.endpoint_template_repository
-        endpoint_template = endpoint_template_repo.find_by_uid_2(
+        endpoint_template = endpoint_template_repo.find_by_uid(
             uid=endpoint_template_uid, version=endpoint_template_version
         )
         return EndpointTemplate.from_endpoint_template_ar(endpoint_template)
 
     def _transform_latest_objective_model(self, objective_uid: str) -> Objective:
         objective_repo = self._repos.objective_repository
-        objective = objective_repo.find_by_uid_2(uid=objective_uid)
+        objective = objective_repo.find_by_uid(uid=objective_uid)
         return Objective.from_objective_ar(objective)
 
     def _transform_objective_model(
         self, objective_uid: str, objective_version: str
     ) -> Objective:
         objective_repo = self._repos.objective_repository
-        objective = objective_repo.find_by_uid_2(
+        objective = objective_repo.find_by_uid(
             uid=objective_uid, version=objective_version
         )
         return Objective.from_objective_ar(objective)
@@ -84,11 +87,11 @@ class StudySelectionMixin:
         self, objective_template_uid: str
     ) -> ObjectiveTemplate:
         objective_template_repo = self._repos.objective_template_repository
-        objective_template = objective_template_repo.find_by_uid_2(
+        objective_template = objective_template_repo.find_by_uid(
             uid=objective_template_uid, status=LibraryItemStatus.FINAL
         )
         if objective_template is None:
-            objective_template = objective_template_repo.find_by_uid_2(
+            objective_template = objective_template_repo.find_by_uid(
                 uid=objective_template_uid, status=LibraryItemStatus.RETIRED
             )
         return ObjectiveTemplate.from_objective_template_ar(objective_template)
@@ -97,18 +100,18 @@ class StudySelectionMixin:
         self, objective_template_uid: str, objective_template_version: str
     ) -> ObjectiveTemplate:
         objective_template_repo = self._repos.objective_template_repository
-        objective_template = objective_template_repo.find_by_uid_2(
+        objective_template = objective_template_repo.find_by_uid(
             uid=objective_template_uid, version=objective_template_version
         )
         return ObjectiveTemplate.from_objective_template_ar(objective_template)
 
     def _transform_latest_timeframe_model(self, timeframe_uid: str) -> Timeframe:
         timeframe_repo = self._repos.timeframe_repository
-        timeframe = timeframe_repo.find_by_uid_2(
+        timeframe = timeframe_repo.find_by_uid(
             uid=timeframe_uid, status=LibraryItemStatus.FINAL
         )
         if timeframe is None:
-            timeframe = timeframe_repo.find_by_uid_2(
+            timeframe = timeframe_repo.find_by_uid(
                 uid=timeframe_uid, status=LibraryItemStatus.RETIRED
             )
         return Timeframe.from_timeframe_ar(timeframe)
@@ -117,7 +120,7 @@ class StudySelectionMixin:
         self, timeframe_uid: str, timeframe_version: str
     ) -> Timeframe:
         timeframe_repo = self._repos.timeframe_repository
-        timeframe = timeframe_repo.find_by_uid_2(
+        timeframe = timeframe_repo.find_by_uid(
             uid=timeframe_uid, version=timeframe_version
         )
         return Timeframe.from_timeframe_ar(timeframe)
@@ -126,11 +129,11 @@ class StudySelectionMixin:
         self, criteria_template_uid: str
     ) -> CriteriaTemplate:
         criteria_template_repo = self._repos.criteria_template_repository
-        criteria_template = criteria_template_repo.find_by_uid_2(
+        criteria_template = criteria_template_repo.find_by_uid(
             uid=criteria_template_uid, status=LibraryItemStatus.FINAL
         )
         if criteria_template is None:
-            criteria_template = criteria_template_repo.find_by_uid_2(
+            criteria_template = criteria_template_repo.find_by_uid(
                 uid=criteria_template_uid, status=LibraryItemStatus.RETIRED
             )
         return CriteriaTemplate.from_criteria_template_ar(criteria_template)
@@ -139,18 +142,18 @@ class StudySelectionMixin:
         self, criteria_template_uid: str, criteria_template_version: str
     ) -> CriteriaTemplate:
         criteria_template_repo = self._repos.criteria_template_repository
-        criteria_template = criteria_template_repo.find_by_uid_2(
+        criteria_template = criteria_template_repo.find_by_uid(
             uid=criteria_template_uid, version=criteria_template_version
         )
         return CriteriaTemplate.from_criteria_template_ar(criteria_template)
 
     def _transform_latest_criteria_model(self, criteria_uid: str) -> Criteria:
         criteria_repo = self._repos.criteria_repository
-        criteria = criteria_repo.find_by_uid_2(
+        criteria = criteria_repo.find_by_uid(
             uid=criteria_uid, status=LibraryItemStatus.FINAL
         )
         if criteria is None:
-            criteria = criteria_repo.find_by_uid_2(
+            criteria = criteria_repo.find_by_uid(
                 uid=criteria_uid, status=LibraryItemStatus.RETIRED
             )
         return Criteria.from_criteria_ar(
@@ -161,9 +164,7 @@ class StudySelectionMixin:
         self, criteria_uid: str, criteria_version: str
     ) -> Criteria:
         criteria_repo = self._repos.criteria_repository
-        criteria = criteria_repo.find_by_uid_2(
-            uid=criteria_uid, version=criteria_version
-        )
+        criteria = criteria_repo.find_by_uid(uid=criteria_uid, version=criteria_version)
         return Criteria.from_criteria_ar(
             criteria,
         )
@@ -184,6 +185,33 @@ class StudySelectionMixin:
             activity_ar=self._repos.activity_repository.find_by_uid_2(
                 activity_uid, version=activity_version
             ),
+            find_activity_subgroup_by_uid=self._repos.activity_subgroup_repository.find_by_uid_2,
+            find_activity_group_by_uid=self._repos.activity_group_repository.find_by_uid_2,
+        )
+
+    def _transform_latest_activity_instance_model(
+        self, activity_instance_uid: str
+    ) -> ActivityInstance:
+        """Finds the activity instance with a given UID."""
+
+        return ActivityInstance.from_activity_ar(
+            activity_ar=self._repos.activity_instance_repository.find_by_uid_2(
+                activity_instance_uid
+            ),
+            find_activity_hierarchy_by_uid=self._repos.activity_repository.find_by_uid_2,
+            find_activity_subgroup_by_uid=self._repos.activity_subgroup_repository.find_by_uid_2,
+            find_activity_group_by_uid=self._repos.activity_group_repository.find_by_uid_2,
+        )
+
+    def _transform_activity_instance_model(
+        self, activity_instance_uid: str, activity_instance_version: str
+    ) -> ActivityInstance:
+        """Finds the activity instance with given UID and version."""
+        return ActivityInstance.from_activity_ar(
+            activity_ar=self._repos.activity_instance_repository.find_by_uid_2(
+                activity_instance_uid, version=activity_instance_version
+            ),
+            find_activity_hierarchy_by_uid=self._repos.activity_repository.find_by_uid_2,
             find_activity_subgroup_by_uid=self._repos.activity_subgroup_repository.find_by_uid_2,
             find_activity_group_by_uid=self._repos.activity_group_repository.find_by_uid_2,
         )
@@ -535,6 +563,37 @@ class StudySelectionMixin:
                 if selection is None:
                     raise exceptions.NotFoundException(
                         f"Could not find study soa group with uid {study_selection_uid}"
+                    )
+                return selection_aggregate, selection, order
+            except ValueError as value_error:
+                raise exceptions.NotFoundException(value_error.args[0])
+        finally:
+            repos.close()
+
+    def _get_specific_activity_instance_selection_by_uids(
+        self,
+        study_uid: str,
+        study_selection_uid: str,
+        for_update: bool = False,
+        study_value_version: str | None = None,
+    ):
+        repos = self._repos
+        try:
+            selection_aggregate = (
+                repos.study_activity_instance_repository.find_by_study(
+                    study_uid,
+                    for_update=for_update,
+                    study_value_version=study_value_version,
+                )
+            )
+            try:
+                assert selection_aggregate is not None
+                selection, order = selection_aggregate.get_specific_object_selection(
+                    study_selection_uid
+                )
+                if selection is None:
+                    raise exceptions.NotFoundException(
+                        f"Could not find study activity instance with uid {study_selection_uid}"
                     )
                 return selection_aggregate, selection, order
             except ValueError as value_error:

@@ -20,6 +20,7 @@ from clinical_mdr_api.domain_repositories.models.odm import (
     OdmMethodRoot,
     OdmMethodValue,
 )
+from clinical_mdr_api.domains._utils import ObjectStatus
 from clinical_mdr_api.domains.concepts.concept_base import ConceptARBase
 from clinical_mdr_api.domains.concepts.odms.method import OdmMethodAR, OdmMethodVO
 from clinical_mdr_api.domains.versioned_object_aggregate import (
@@ -99,24 +100,21 @@ class MethodRepository(OdmGenericRepository[OdmMethodAR]):
         return odm_method_ar
 
     def specific_alias_clause(
-        self, only_specific_status: list[str] | None = None
+        self, only_specific_status: str = ObjectStatus.LATEST.name
     ) -> str:
-        if not only_specific_status:
-            only_specific_status = ["LATEST"]
-
         return f"""
         WITH *,
         concept_value.oid AS oid,
         concept_value.method_type AS method_type,
 
-        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmMethodRoot)-[:HAS_FORMAL_EXPRESSION]->(fer:OdmFormalExpressionRoot)-[:LATEST]->(fev:OdmFormalExpressionValue) | {{uid: fer.uid, context: fev.context, expression: fev.expression}}] AS formal_expressions,
-        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmMethodRoot)-[:HAS_DESCRIPTION]->(dr:OdmDescriptionRoot)-[:LATEST]->(dv:OdmDescriptionValue) | {{uid: dr.uid, name: dv.name, language: dv.language, description: dv.description, instruction: dv.instruction}}] AS descriptions,
-        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmMethodRoot)-[:HAS_ALIAS]->(ar:OdmAliasRoot)-[:LATEST]->(av:OdmAliasValue) | {{uid: ar.uid, name: av.name, context: av.context}}] AS aliases
+        [(concept_value)<-[:{only_specific_status}]-(:OdmMethodRoot)-[:HAS_FORMAL_EXPRESSION]->(fer:OdmFormalExpressionRoot)-[:LATEST]->(fev:OdmFormalExpressionValue) | {{uid: fer.uid, context: fev.context, expression: fev.expression}}] AS formal_expressions,
+        [(concept_value)<-[:{only_specific_status}]-(:OdmMethodRoot)-[:HAS_DESCRIPTION]->(dr:OdmDescriptionRoot)-[:LATEST]->(dv:OdmDescriptionValue) | {{uid: dr.uid, name: dv.name, language: dv.language, description: dv.description, instruction: dv.instruction}}] AS descriptions,
+        [(concept_value)<-[:{only_specific_status}]-(:OdmMethodRoot)-[:HAS_ALIAS]->(ar:OdmAliasRoot)-[:LATEST]->(av:OdmAliasValue) | {{uid: ar.uid, name: av.name, context: av.context}}] AS aliases
 
         WITH *,
-        [formal_expression in formal_expressions | formal_expression.uid] AS formal_expression_uids,
-        [description in descriptions | description.uid] AS description_uids,
-        [alias in aliases | alias.uid] AS alias_uids
+        apoc.coll.toSet([formal_expression in formal_expressions | formal_expression.uid]) AS formal_expression_uids,
+        apoc.coll.toSet([description in descriptions | description.uid]) AS description_uids,
+        apoc.coll.toSet([alias in aliases | alias.uid]) AS alias_uids
         """
 
     def _get_or_create_value(

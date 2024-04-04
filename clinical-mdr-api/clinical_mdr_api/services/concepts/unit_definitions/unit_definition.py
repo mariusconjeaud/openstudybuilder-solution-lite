@@ -29,6 +29,8 @@ from clinical_mdr_api.services.concepts.concept_generic_service import (
     ConceptGenericService,
 )
 
+NOT_FOUND_EXCEPTION = "Resource not found."
+
 
 def _get_current_user_id(current_user_id: str = Depends(get_current_user_id)) -> str:
     return current_user_id
@@ -138,7 +140,7 @@ class UnitDefinitionService:
             at_specific_date=at_specified_datetime,
         )
         if unit_definition_ar is None:
-            raise NotFoundException("Resource not found.")
+            raise NotFoundException(NOT_FOUND_EXCEPTION)
         return UnitDefinitionModel.from_unit_definition_ar(
             unit_definition_ar,
             find_term_by_uid=self._repos.ct_term_name_repository.find_by_uid,
@@ -149,7 +151,7 @@ class UnitDefinitionService:
     def get_versions(self, uid: str) -> list[UnitDefinitionModel]:
         versions = self._repos.unit_definition_repository.get_all_versions_2(uid)
         if not versions:
-            raise NotFoundException("Resource not found.")
+            raise NotFoundException(NOT_FOUND_EXCEPTION)
         return [
             UnitDefinitionModel.from_unit_definition_ar(
                 unit_def_ar,
@@ -190,7 +192,7 @@ class UnitDefinitionService:
             uid, for_update=True
         )
         if unit_definition_ar is None:
-            raise NotFoundException("Resource not found.")
+            raise NotFoundException(NOT_FOUND_EXCEPTION)
         try:
             new_unit_dimension_value = (
                 self._patch_input_to_new_unit_definition_value_vo(
@@ -227,7 +229,7 @@ class UnitDefinitionService:
             uid, for_update=True
         )
         if unit_definition_ar is None:
-            raise NotFoundException("Resource not found.")
+            raise NotFoundException(NOT_FOUND_EXCEPTION)
         try:
             unit_definition_ar.soft_delete()
         except VersioningException as err:
@@ -265,7 +267,7 @@ class UnitDefinitionService:
             uid, for_update=True
         )
         if unit_definition_ar is None:
-            raise NotFoundException("Resource not found.")
+            raise NotFoundException(NOT_FOUND_EXCEPTION)
         try:
             workflow_ar_method(unit_definition_ar)
         except VersioningException as err:

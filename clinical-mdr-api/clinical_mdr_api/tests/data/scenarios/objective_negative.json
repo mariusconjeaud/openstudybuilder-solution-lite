@@ -4,7 +4,7 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "library_name": "non existent library",
+                "library_name": "non-existent library",
                 "name": "Test objective",
                 "objective_template_uid": "{otuid}",
                 "parameter_terms": []
@@ -18,7 +18,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "The library with the name='non existent library' could not be found.",
+                "message": "The library with the name='non-existent library' could not be found.",
                 "time": "2020-11-10T01:51:17.884429",
                 "path": "http://testserver/objectives",
                 "method": "POST",
@@ -39,17 +39,17 @@
             "url": "/objectives"
         },
         "response": {
-            "code": 400,
+            "code": 404,
             "headers": {
                 "content-length": "192",
                 "content-type": "application/json"
             },
             "result": {
-                "message": "The template with uid 'wrong-uid' was not found. Make sure that there is a latest 'Final' version.",
+                "message": "No Syntax Template with UID (wrong-uid) found in given status and version.",
                 "time": "2020-11-10T01:52:30.985556",
                 "path": "http://testserver/objectives",
                 "method": "POST",
-                "type": "ValidationException"
+                "type": "NotFoundException"
             }
         }
     },
@@ -66,17 +66,17 @@
             "url": "/objectives"
         },
         "response": {
-            "code": 400,
+            "code": 404,
             "headers": {
                 "content-length": "192",
                 "content-type": "application/json"
             },
             "result": {
-                "message": "The template with uid '{otuidna}' was not found. Make sure that there is a latest 'Final' version.",
+                "message": "No Syntax Template with UID ({otuidna}) found in given status and version.",
                 "time": "2020-11-10T01:52:30.985556",
                 "path": "http://testserver/objectives",
                 "method": "POST",
-                "type": "ValidationException"
+                "type": "NotFoundException"
             }
         }
     }

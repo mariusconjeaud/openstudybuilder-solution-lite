@@ -27,6 +27,7 @@ from clinical_mdr_api.domains.controlled_terminologies.ct_term_attributes import
     CTTermAttributesVO,
 )
 from clinical_mdr_api.domains.controlled_terminologies.ct_term_name import (
+    CTTermCodelistVO,
     CTTermNameAR,
     CTTermNameVO,
 )
@@ -128,17 +129,33 @@ class StudySelectionsConcurrencyTests(unittest.TestCase):
                     project_number="456",
                     study_acronym="STUDY_ACR",
                     study_number="123",
+                    subpart_id=None,
+                    description="123description",
                     registry_identifiers=RegistryIdentifiersVO.from_input_values(
                         ct_gov_id="CT_GOV_ID",
                         eudract_id="EUDRACT_ID",
                         universal_trial_number_utn="UTN",
                         japanese_trial_registry_id_japic="JAPIC",
                         investigational_new_drug_application_number_ind="IND",
+                        eu_trial_number="ETN",
+                        civ_id_sin_number="CISN",
+                        national_clinical_trial_number="NCTN",
+                        japanese_trial_registry_number_jrct="JRCT",
+                        national_medical_products_administration_nmpa_number="NMPA",
+                        eudamed_srn_number="ESN",
+                        investigational_device_exemption_ide_number="IDE",
                         ct_gov_id_null_value_code=None,
                         eudract_id_null_value_code=None,
                         universal_trial_number_utn_null_value_code=None,
                         japanese_trial_registry_id_japic_null_value_code=None,
                         investigational_new_drug_application_number_ind_null_value_code=None,
+                        eu_trial_number_null_value_code=None,
+                        civ_id_sin_number_null_value_code=None,
+                        national_clinical_trial_number_null_value_code=None,
+                        japanese_trial_registry_number_jrct_null_value_code=None,
+                        national_medical_products_administration_nmpa_number_null_value_code=None,
+                        eudamed_srn_number_null_value_code=None,
+                        investigational_device_exemption_ide_number_null_value_code=None,
                     ),
                 ),
                 project_exists_callback=(lambda _: True),
@@ -193,7 +210,7 @@ class StudySelectionsConcurrencyTests(unittest.TestCase):
             )
 
             ct_term_attributes_vo = CTTermAttributesVO.from_repository_values(
-                codelist_uid=codelist_uid,
+                codelists=[CTTermCodelistVO(codelist_uid=codelist_uid, order=1)],
                 catalogue_name="SDTM CT",
                 concept_id=None,
                 code_submission_value="code_submission_value",
@@ -217,11 +234,10 @@ class StudySelectionsConcurrencyTests(unittest.TestCase):
             self.ct_term_attributes_repository.save(ct_term_attributes_ar)
         with db.transaction:
             ct_term_name_vo = CTTermNameVO.from_repository_values(
-                codelist_uid=codelist_uid,
+                codelists=[CTTermCodelistVO(codelist_uid=codelist_uid, order=1)],
                 catalogue_name="SDTM CT",
                 name="StudyTitle",
                 name_sentence_case="study_title",
-                order=1,
             )
 
             self.ct_term_name_ar = CTTermNameAR.from_input_values(
@@ -263,7 +279,7 @@ class StudySelectionsConcurrencyTests(unittest.TestCase):
             self.template_repository.save(objective_template_ar)
         # Approve template
         with db.transaction:
-            objective_template_ar = self.template_repository.find_by_uid_2(
+            objective_template_ar = self.template_repository.find_by_uid(
                 self.template_uid, for_update=True
             )
             objective_template_ar.approve(author=self.user_initials)
@@ -334,7 +350,6 @@ class StudySelectionsConcurrencyTests(unittest.TestCase):
             study_uid="Study_000001", for_update=True
         )
         objective_repo = self.objective_repository
-        objective_repo.find_by_uid_2("Objective_000001", status=LibraryItemStatus.FINAL)
         self._repos.ct_term_name_repository.term_specific_order_by_uid(
             uid="term_root_final"
         )
@@ -348,7 +363,7 @@ class StudySelectionsConcurrencyTests(unittest.TestCase):
             study_selection_uid="StudyObjective_000001",
         )
         if new_selection.objective_uid is not None:
-            objective_ar = objective_repo.find_by_uid_2(
+            objective_ar = objective_repo.find_by_uid(
                 new_selection.objective_uid, for_update=True
             )
             # if in draft status - approve

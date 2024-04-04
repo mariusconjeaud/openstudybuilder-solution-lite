@@ -12,4 +12,5 @@ requests = "~=2.31.0"
 python_version = "3.11"
 
 [scripts]
-build-sbom = "pipeline/scripts/build-sbom.sh"
+build-sbom = "pipelines/scripts/build-sbom.sh"
+export = "python -m export"

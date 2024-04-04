@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from functools import cached_property
 from types import MappingProxyType
 
-# pylint:disable=wrong-import-order # disagreement between isort and pylint
+# pylint: disable=wrong-import-order # disagreement between isort and pylint
 import ctrxml
 from xsdata.formats.dataclass.serializers import XmlSerializer
 from xsdata.formats.dataclass.serializers.config import SerializerConfig
@@ -22,7 +22,6 @@ from clinical_mdr_api.models import (
     StudyVisit,
 )
 from clinical_mdr_api.models.study_selections.study import (
-    HighLevelStudyDesignJsonModel,
     StudyDescriptionJsonModel,
     StudyIdentificationMetadataJsonModel,
     StudyInterventionJsonModel,
@@ -118,12 +117,6 @@ class ODMBuilder:
         if self.study_metadata.version_metadata is None:
             raise BusinessLogicException("Missing study version metadata")
         return self.study_metadata.version_metadata
-
-    @property
-    def study_design_high(self) -> HighLevelStudyDesignJsonModel:
-        if self.study_metadata.high_level_study_design is None:
-            raise BusinessLogicException("Missing study design (high level)")
-        return self.study_metadata.high_level_study_design
 
     @property
     def study_description(self) -> StudyDescriptionJsonModel:

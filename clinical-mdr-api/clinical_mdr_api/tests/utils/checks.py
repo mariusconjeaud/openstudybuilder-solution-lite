@@ -7,7 +7,7 @@ MARKDOWN_TEXT_CONTENT_TYPE = "text/markdown"
 
 def assert_response_status_code(response: httpx.Response, status: int | list[int]):
     """Assert request.Response status code"""
-    # pylint:disable=unused-variable
+    # pylint: disable=unused-variable
     __tracebackhide__ = True
 
     if isinstance(status, int):
@@ -23,7 +23,7 @@ def assert_response_content_type(
     response: httpx.Response, content_type: str | None = JSON_CONTENT_TYPE
 ):
     """Assert request.Response content type is (application/json by default)"""
-    # pylint:disable=unused-variable
+    # pylint: disable=unused-variable
     __tracebackhide__ = True
 
     content_type_header = response.headers.get("content-type")

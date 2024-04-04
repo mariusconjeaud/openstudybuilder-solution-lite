@@ -5,7 +5,7 @@ name = "pypi"
 
 [packages]
 requests = "~=2.27"
-neo4j = "~=4.4"
+neo4j = "~=5.13"
 pytest = "~=6.2"
 
 [dev-packages]
@@ -25,3 +25,4 @@ download_ct_json_data_from_cdisc_api = "python -m mdr_standards_import.scripts.d
 download_data_models_json_data_from_cdisc_api = "python -m mdr_standards_import.scripts.dev_scripts.cdisc_data_models.download_json_data_from_cdisc_api"
 bulk_import = "python -m mdr_standards_import.scripts.dev_scripts.bulk_import"
 test = "pytest"
+build-sbom = "pipelines/scripts/build-sbom.sh"

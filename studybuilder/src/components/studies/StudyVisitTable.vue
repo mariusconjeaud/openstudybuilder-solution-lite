@@ -67,6 +67,7 @@
         row
         hide-details
         @change="updatePreferredTimeUnit"
+        :disabled="!checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
         >
         <v-radio
           :label="$t('_global.day')"
@@ -521,6 +522,7 @@ export default {
         { text: this.$t('StudyVisitForm.visit_stop_rule'), value: 'end_rule' },
         { text: this.$t('StudyVisitForm.study_day_label'), value: 'study_day_label' },
         { text: this.$t('StudyVisitForm.study_week_label'), value: 'study_week_label' },
+        { text: this.$t('StudyVisitForm.week_in_study'), value: 'week_in_study_label' },
         { text: this.$t('_global.modified'), value: 'start_date' },
         { text: this.$t('StudyVisitForm.modified_user'), value: 'user_initials' }
       ],
@@ -550,6 +552,7 @@ export default {
         { text: this.$t('StudyVisitForm.visit_stop_rule'), value: 'end_rule' },
         { text: this.$t('StudyVisitForm.study_day_label'), value: 'study_day_label' },
         { text: this.$t('StudyVisitForm.study_week_label'), value: 'study_week_label' },
+        { text: this.$t('StudyVisitForm.week_in_study'), value: 'week_in_study_label' },
         { text: this.$t('_global.modified'), value: 'start_date' },
         { text: this.$t('StudyVisitForm.modified_user'), value: 'user_initials' }
       ],
@@ -922,7 +925,7 @@ export default {
     updatePreferredTimeUnit (value) {
       for (const timeUnit of this.preferredTimeUnits) {
         if (timeUnit.name === value) {
-          this.$store.dispatch('studiesGeneral/setStudyPreferredTimeUnit', timeUnit.uid)
+          this.$store.dispatch('studiesGeneral/setStudyPreferredTimeUnit', { timeUnitUid: timeUnit.uid })
           this.fetchStudyVisits()
           break
         }
@@ -970,6 +973,9 @@ export default {
     }
   },
   watch: {
+    options () {
+      this.fetchStudyVisits()
+    },
     studyVisits () {
       this.buildChart()
     }

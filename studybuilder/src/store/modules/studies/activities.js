@@ -36,7 +36,9 @@ const mutations = {
     state.studyActivities.filter((item, pos) => {
       if (item.study_activity_uid === studyActivity.study_activity_uid) {
         Vue.set(state.studyActivities, pos, studyActivity)
+        return true
       }
+      return false
     })
   }
 }

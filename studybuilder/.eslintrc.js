@@ -14,12 +14,9 @@ module.exports = {
     'no-console': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
     'no-debugger': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
     // Rules disabled for now
-    'array-callback-return': 'off',
-    'multiline-ternary': 'off',
     'vue/valid-v-slot': ['error', {
       allowModifiers: true
     }],
-    'vue/multi-word-component-names': 'off',
     // We should take care of this one ASAP...
     'vue/no-mutating-props': 'off'
   },

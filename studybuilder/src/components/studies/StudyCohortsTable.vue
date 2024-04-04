@@ -73,18 +73,18 @@
       </draggable>
     </template>
     <template v-slot:item.name="{ item }">
-      <router-link :to="{ name: 'StudyCohortOverview', params: { study_id: selectedStudy.uid, id: item.cohort_uid } }">
+      <router-link :to="{ name: 'StudyCohortOverview', params: { study_id: selectedStudy.uid, id: item.cohort_uid, root_tab: 'cohorts' } }">
         {{ item.name }}
       </router-link>
     </template>
     <template v-slot:item.arm_roots="{ item }">
-      <router-link v-for="arm of item.arm_roots" v-bind:key="arm.arm_uid" :to="{ name: 'StudyArmOverview', params: { study_id: selectedStudy.uid, id: arm.arm_uid } }">
+      <router-link v-for="arm of item.arm_roots" v-bind:key="arm.arm_uid" :to="{ name: 'StudyArmOverview', params: { study_id: selectedStudy.uid, id: arm.arm_uid, root_tab: 'cohorts' } }">
         {{ arm.name }}
       </router-link>
     </template>
     <template v-slot:item.branch_arm_roots="{ item }">
       <div v-if="item.branch_arm_roots">
-        <router-link v-for="branch of item.branch_arm_roots" v-bind:key="branch.branch_arm_uid" :to="{ name: 'StudyBranchArmOverview', params: { study_id: selectedStudy.uid, id: branch.branch_arm_uid } }">
+        <router-link v-for="branch of item.branch_arm_roots" v-bind:key="branch.branch_arm_uid" :to="{ name: 'StudyBranchArmOverview', params: { study_id: selectedStudy.uid, id: branch.branch_arm_uid, root_tab: 'cohorts' } }">
           {{ branch.name }}
         </router-link>
       </div>

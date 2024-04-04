@@ -53,15 +53,17 @@ class StudySoAFootnoteService:
         self,
         study_soa_footnote_vo: StudySoAFootnoteVO,
         find_footnote_by_uid: Callable[[str], FootnoteAR | None] | None = None,
+        study_value_version: str | None = None,
     ) -> StudySoAFootnote:
         return StudySoAFootnote.from_study_soa_footnote_vo(
             study_soa_footnote_vo=study_soa_footnote_vo,
-            find_footnote_by_uid=self._repos.footnote_repository.find_by_uid_2
-            if not find_footnote_by_uid
-            else find_footnote_by_uid,
-            find_footnote_template_by_uid=self._repos.footnote_template_repository.find_by_uid_2,
-            find_activity_group_by_uid=self._repos.activity_group_repository.find_by_uid_2,
-            find_activity_subgroup_by_uid=self._repos.activity_subgroup_repository.find_by_uid_2,
+            find_footnote_by_uid=(
+                self._repos.footnote_repository.find_by_uid
+                if not find_footnote_by_uid
+                else find_footnote_by_uid
+            ),
+            find_footnote_template_by_uid=self._repos.footnote_template_repository.find_by_uid,
+            study_value_version=study_value_version,
         )
 
     def _transform_vo_to_pydantic_history_model(
@@ -69,10 +71,8 @@ class StudySoAFootnoteService:
     ) -> StudySoAFootnote:
         return StudySoAFootnoteHistory.from_study_soa_footnote_vo_history(
             study_soa_footnote_vo=study_soa_footnote_vo,
-            find_footnote_by_uid=self._repos.footnote_repository.find_by_uid_2,
-            find_footnote_template_by_uid=self._repos.footnote_template_repository.find_by_uid_2,
-            find_activity_group_by_uid=self._repos.activity_group_repository.find_by_uid_2,
-            find_activity_subgroup_by_uid=self._repos.activity_subgroup_repository.find_by_uid_2,
+            find_footnote_by_uid=self._repos.footnote_repository.find_by_uid,
+            find_footnote_template_by_uid=self._repos.footnote_template_repository.find_by_uid,
         )
 
     def get_all(
@@ -121,7 +121,9 @@ class StudySoAFootnoteService:
             study_uid=study_uid, study_value_version=study_value_version
         )
         items = [
-            self._transform_vo_to_pydantic_model(study_soa_footnote_vo=item)
+            self._transform_vo_to_pydantic_model(
+                study_soa_footnote_vo=item, study_value_version=study_value_version
+            )
             for item in items
         ]
         filtered_items = service_level_generic_filtering(
@@ -249,9 +251,9 @@ class StudySoAFootnoteService:
                 for ref_item in referenced_items
             ],
             footnote_number=footnote_number,
-            generate_uid_callback=self.repository.generate_soa_footnote_uid
-            if not uid
-            else lambda: uid,
+            generate_uid_callback=(
+                self.repository.generate_soa_footnote_uid if not uid else lambda: uid
+            ),
             status=StudyStatus.DRAFT,
             author=self.author,
         )
@@ -266,7 +268,7 @@ class StudySoAFootnoteService:
     def create_with_underlying_footnote(
         self, study_uid: str, footnote_input: StudySoAFootnoteCreateFootnoteInput
     ) -> StudySoAFootnote:
-        footnote_template = self._repos.footnote_template_repository.find_by_uid_2(
+        footnote_template = self._repos.footnote_template_repository.find_by_uid(
             uid=footnote_input.footnote_data.footnote_template_uid
         )
         if footnote_template is None:
@@ -317,7 +319,7 @@ class StudySoAFootnoteService:
                     raise NotFoundException(
                         f"Could not find node with label FootnoteValue and name {footnote_ar.name}"
                     )
-            footnote_ar = footnote_service.repository.find_by_uid_2(
+            footnote_ar = footnote_service.repository.find_by_uid(
                 footnote_uid, for_update=True
             )
             soa_footnote = self.manage_create(
@@ -363,8 +365,9 @@ class StudySoAFootnoteService:
     def create(
         self,
         study_uid: str,
-        footnote_input: StudySoAFootnoteCreateInput
-        | StudySoAFootnoteCreateFootnoteInput,
+        footnote_input: (
+            StudySoAFootnoteCreateInput | StudySoAFootnoteCreateFootnoteInput
+        ),
         create_footnote: bool,
     ) -> StudySoAFootnote:
         if create_footnote:
@@ -421,7 +424,7 @@ class StudySoAFootnoteService:
             )
         if footnote_uid:
             footnote_service = FootnoteService()
-            footnote_ar = footnote_service.repository.find_by_uid_2(footnote_uid)
+            footnote_ar = footnote_service.repository.find_by_uid(footnote_uid)
             for soa_footnote in all_soa_footnotes:
                 if (
                     soa_footnote.footnote_uid
@@ -478,9 +481,11 @@ class StudySoAFootnoteService:
             study_uid=study_uid,
             footnote_uid=footnote_uid,
             footnote_template_uid=footnote_template_uid,
-            referenced_items=footnote_edit_input.referenced_items
-            if footnote_edit_input.referenced_items is not None
-            else soa_footnote.referenced_items,
+            referenced_items=(
+                footnote_edit_input.referenced_items
+                if footnote_edit_input.referenced_items is not None
+                else soa_footnote.referenced_items
+            ),
             footnote_number=footnote_number,
             uid=study_soa_footnote_uid,
         )

@@ -87,7 +87,7 @@ class NotAuthenticatedException(MDRApiBaseException):
 
     def __init__(self, msg: str, security_scopes: SecurityScopes | None = None):
         super().__init__(msg)
-        if security_scopes.scopes:
+        if security_scopes and security_scopes.scopes:
             self.headers[
                 "WWW-Authenticate"
             ] = f'Bearer scope="{security_scopes.scope_str}"'

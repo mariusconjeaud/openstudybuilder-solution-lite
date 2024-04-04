@@ -68,7 +68,7 @@ class CTCodelistGenericService(Generic[_AggregateRootType], abc.ABC):
 
         all_ct_codelists = self.repository.find_all(
             catalogue_name=catalogue_name,
-            library=library,
+            library_name=library,
             package=package,
             total_count=total_count,
             sort_by=sort_by,

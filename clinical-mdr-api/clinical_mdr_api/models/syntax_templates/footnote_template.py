@@ -1,31 +1,19 @@
 from datetime import datetime
-from typing import Callable, Self
+from typing import Self
 
 from pydantic import Field
 
-from clinical_mdr_api.domains.concepts.activities.activity_group import ActivityGroupAR
-from clinical_mdr_api.domains.concepts.activities.activity_sub_group import (
-    ActivitySubGroupAR,
-)
 from clinical_mdr_api.domains.syntax_templates.footnote_template import (
     FootnoteTemplateAR,
 )
-from clinical_mdr_api.models.concepts.activities.activity import Activity
-from clinical_mdr_api.models.concepts.activities.activity_group import ActivityGroup
-from clinical_mdr_api.models.concepts.activities.activity_sub_group import (
-    ActivitySubGroup,
-)
 from clinical_mdr_api.models.controlled_terminologies.ct_term import (
-    CTTermNameAndAttributes,
+    SimpleCTTermNameAndAttributes,
+    SimpleTermModel,
 )
-from clinical_mdr_api.models.dictionaries.dictionary_term import DictionaryTerm
+from clinical_mdr_api.models.generic_models import SimpleNameModel
 from clinical_mdr_api.models.libraries.library import ItemCounts, Library
 from clinical_mdr_api.models.syntax_templates.template_parameter import (
     TemplateParameter,
-)
-from clinical_mdr_api.models.syntax_templates.template_parameter_term import (
-    IndexedTemplateParameterTerm,
-    MultiTemplateParameterTerm,
 )
 from clinical_mdr_api.models.utils import BaseModel
 
@@ -101,11 +89,6 @@ class FootnoteTemplate(FootnoteTemplateNameUid):
         [],
         description="Those parameters that are used by the footnote template.",
     )
-    default_parameter_terms: dict[int, list[MultiTemplateParameterTerm]] | None = Field(
-        None,
-        description="""Holds the default terms for the parameters that are used
-        within the template. The terms are ordered as they occur in the template's name.""",
-    )
     library: Library | None = Field(
         None,
         description="The library to which the footnote template belongs.",
@@ -113,24 +96,24 @@ class FootnoteTemplate(FootnoteTemplateNameUid):
     )
 
     # Template indexings
-    type: CTTermNameAndAttributes | None = Field(
+    type: SimpleCTTermNameAndAttributes | None = Field(
         None,
         description="The footnote type.",
         nullable=True,
     )
-    indications: list[DictionaryTerm] = Field(
+    indications: list[SimpleTermModel] = Field(
         [],
         description="The study indications, conditions, diseases or disorders in scope for the template.",
     )
-    activities: list[Activity] = Field(
+    activities: list[SimpleNameModel] = Field(
         [],
         description="The activities in scope for the template",
     )
-    activity_groups: list[ActivityGroup] = Field(
+    activity_groups: list[SimpleNameModel] = Field(
         [],
         description="The activity groups in scope for the template",
     )
-    activity_subgroups: list[ActivitySubGroup] = Field(
+    activity_subgroups: list[SimpleNameModel] = Field(
         [],
         description="The activity sub groups in scope for the template",
     )
@@ -141,39 +124,8 @@ class FootnoteTemplate(FootnoteTemplateNameUid):
 
     @classmethod
     def from_footnote_template_ar(
-        cls,
-        footnote_template_ar: FootnoteTemplateAR,
-        find_activity_subgroup_by_uid: Callable[[str], ActivitySubGroupAR | None],
-        find_activity_group_by_uid: Callable[[str], ActivityGroupAR | None],
+        cls, footnote_template_ar: FootnoteTemplateAR
     ) -> Self:
-        default_parameter_terms: dict[int, list[MultiTemplateParameterTerm]] = {}
-        if footnote_template_ar.template_value.default_parameter_terms is not None:
-            for (
-                set_number,
-                term_set,
-            ) in footnote_template_ar.template_value.default_parameter_terms.items():
-                term_list = []
-                for position, parameter in enumerate(term_set):
-                    terms: list[IndexedTemplateParameterTerm] = [
-                        IndexedTemplateParameterTerm(
-                            index=index + 1,
-                            uid=parameter_term.uid,
-                            name=parameter_term.value,
-                            type=parameter.parameter_name,
-                        )
-                        for index, parameter_term in enumerate(parameter.parameters)
-                    ]
-
-                    term_list.append(
-                        MultiTemplateParameterTerm(
-                            conjunction=parameter.conjunction,
-                            position=position + 1,
-                            terms=terms,
-                        )
-                    )
-
-                default_parameter_terms[set_number] = term_list
-
         return cls(
             uid=footnote_template_ar.uid,
             sequence_id=footnote_template_ar.sequence_id,
@@ -189,43 +141,16 @@ class FootnoteTemplate(FootnoteTemplateNameUid):
                 [_.value for _ in footnote_template_ar.get_possible_actions()]
             ),
             library=Library.from_library_vo(footnote_template_ar.library),
-            type=CTTermNameAndAttributes.from_ct_term_ars(*footnote_template_ar.type)
-            if footnote_template_ar.type
-            else None,
-            indications=[
-                DictionaryTerm.from_dictionary_term_ar(indication)
-                for indication in footnote_template_ar.indications
-            ]
-            if footnote_template_ar.indications
-            else [],
-            activities=[
-                Activity.from_activity_ar(
-                    activity,
-                    find_activity_subgroup_by_uid,
-                    find_activity_group_by_uid,
-                )
-                for activity in footnote_template_ar.activities
-            ]
-            if footnote_template_ar.activities
-            else [],
-            activity_groups=[
-                ActivityGroup.from_activity_ar(group)
-                for group in footnote_template_ar.activity_groups
-            ]
-            if footnote_template_ar.activity_groups
-            else [],
-            activity_subgroups=[
-                ActivitySubGroup.from_activity_ar(group, find_activity_group_by_uid)
-                for group in footnote_template_ar.activity_subgroups
-            ]
-            if footnote_template_ar.activity_subgroups
-            else [],
+            type=footnote_template_ar.type,
+            indications=footnote_template_ar.indications,
+            activities=footnote_template_ar.activities,
+            activity_groups=footnote_template_ar.activity_groups,
+            activity_subgroups=footnote_template_ar.activity_subgroups,
             study_count=footnote_template_ar.study_count,
             parameters=[
                 TemplateParameter(name=_)
                 for _ in footnote_template_ar.template_value.parameter_names
             ],
-            default_parameter_terms=default_parameter_terms,
         )
 
 
@@ -236,16 +161,9 @@ class FootnoteTemplateWithCount(FootnoteTemplate):
 
     @classmethod
     def from_footnote_template_ar(
-        cls,
-        footnote_template_ar: FootnoteTemplateAR,
-        find_activity_subgroup_by_uid: Callable[[str], ActivitySubGroupAR | None],
-        find_activity_group_by_uid: Callable[[str], ActivityGroupAR | None],
+        cls, footnote_template_ar: FootnoteTemplateAR
     ) -> Self:
-        footnote_template = super().from_footnote_template_ar(
-            footnote_template_ar,
-            find_activity_subgroup_by_uid,
-            find_activity_group_by_uid,
-        )
+        footnote_template = super().from_footnote_template_ar(footnote_template_ar)
         if footnote_template_ar.counts is not None:
             footnote_template.counts = ItemCounts(
                 draft=footnote_template_ar.counts.count_draft,
@@ -289,12 +207,6 @@ class FootnoteTemplateCreateInput(FootnoteTemplateNameInput):
         description="If specified: The name of the library to which the footnote template will be linked. The following rules apply: \n"
         "* The library needs to be present, it will not be created with this request. The *[GET] /libraries* endpoint can help. And \n"
         "* The library needs to allow the creation: The 'is_editable' property of the library needs to be true.",
-    )
-    default_parameter_terms: list[MultiTemplateParameterTerm] | None = Field(
-        None,
-        description="""Holds the parameter terms to be used as default for this
-        template. The terms are ordered as they occur in the template name. \n"""
-        "These default parameter terms will be created as set#0.",
     )
     type_uid: str = Field(
         ...,

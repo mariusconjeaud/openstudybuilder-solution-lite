@@ -40,8 +40,9 @@ Service = ActivityInstructionPreInstanceService
     {
         "defaults": [
             "library=library.name",
-            "activity_instruction_template=template_name",
             "uid",
+            "sequence_id",
+            "activity_instruction_template=template_name",
             "name",
             "indications",
             "activities",
@@ -86,7 +87,7 @@ def activity_instruction_pre_instances(
     filters: Json
     | None = Query(
         None,
-        description=_generic_descriptions.FILTERS,
+        description=_generic_descriptions.SYNTAX_FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
@@ -141,7 +142,7 @@ def get_distinct_values_for_header(
     filters: Json
     | None = Query(
         None,
-        description=_generic_descriptions.FILTERS,
+        description=_generic_descriptions.SYNTAX_FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
@@ -184,8 +185,11 @@ def retrieve_audit_trail(
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
     current_user_id: str = Depends(get_current_user_id),
 ):
-    results = Service(current_user_id).retrieve_audit_trail(
-        page_number=page_number, page_size=page_size, total_count=total_count
+    results = Service(current_user_id).get_all(
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
+        for_audit_trail=True,
     )
 
     return CustomPage.create(

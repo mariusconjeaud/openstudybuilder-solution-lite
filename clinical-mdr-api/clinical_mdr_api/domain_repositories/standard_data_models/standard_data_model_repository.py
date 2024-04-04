@@ -137,9 +137,7 @@ class StandardDataModelRepository(ABC):
         return items
 
     def create_query_filter_statement(
-        # pylint: disable=unused-argument
         self,
-        **kwargs,
     ) -> tuple[str, dict]:
         filter_parameters = []
         filter_query_parameters = {}

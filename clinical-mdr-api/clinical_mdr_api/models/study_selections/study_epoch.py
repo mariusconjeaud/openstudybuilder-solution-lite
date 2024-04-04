@@ -11,6 +11,7 @@ class StudyEpochCreateInput(BaseModel):
         title="study_uid",
         description="The uid of the study",
     )
+
     start_rule: str | None = Field(
         None, title="Start Description", description="Study Epoch Start description"
     )
@@ -66,6 +67,11 @@ class StudyEpochOGM(BaseModel):
         title="Uid",
         description="Uid of the study",
         source="has_after.audit_trail.uid",
+    )
+    study_version: str | None = Field(
+        None,
+        title="study version or date information",
+        description="Study version number, if specified, otherwise None.",
     )
     epoch: str = Field(
         ...,
@@ -171,6 +177,11 @@ class StudyEpoch(StudyEpochCreateInput):
         ...,
         title="Uid",
         description="Uid of the Epoch",
+    )
+    study_version: str | None = Field(
+        None,
+        title="study version or date information",
+        description="Study version number, if specified, otherwise None.",
     )
     epoch_name: str = Field(
         ..., title="Study epoch name", description="Name of the epoch based on CT term"

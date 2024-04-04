@@ -111,7 +111,7 @@
             <v-text-field
               data-cy="term-name"
               v-model="form.name_submission_value"
-              :label="$t('CodelistTermCreationForm.term_name')"
+              :label="$t('CodelistTermCreationForm.name_submission_value')"
               :error-messages="errors"
               dense
               clearable
@@ -128,7 +128,7 @@
             <v-text-field
               data-cy="term-submission-value"
               v-model="form.code_submission_value"
-              :label="$t('CodelistTermCreationForm.submission_value')"
+              :label="$t('CodelistTermCreationForm.code_submission_value')"
               :error-messages="errors"
               dense
               clearable
@@ -172,23 +172,6 @@
           </v-col>
         </v-row>
       </validation-provider>
-      <validation-provider
-        v-slot="{ errors }"
-        rules=""
-        >
-        <v-row>
-          <v-col>
-            <v-text-field
-              data-cy="term-synonyms"
-              v-model="form.synonyms"
-              :label="$t('CodelistTermCreationForm.synonyms')"
-              :error-messages="errors"
-              dense
-              clearable
-              />
-          </v-col>
-        </v-row>
-      </validation-provider>
     </validation-observer>
   </template>
 </stepper-form>
@@ -223,11 +206,10 @@ export default {
       helpItems: [
         'CodelistTermCreationForm.sponsor_pref_name',
         'CodelistTermCreationForm.sponsor_sentence_case_name',
-        'CodelistTermCreationForm.term_name',
-        'CodelistTermCreationForm.submission_value',
+        'CodelistTermCreationForm.name_submission_value',
+        'CodelistTermCreationForm.code_submission_value',
         'CodelistTermCreationForm.nci_pref_name',
-        'CodelistTermCreationForm.definition',
-        'CodelistTermCreationForm.synonyms'
+        'CodelistTermCreationForm.definition'
       ],
       selection: [],
       search: '',

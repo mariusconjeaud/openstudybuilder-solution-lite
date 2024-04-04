@@ -7,12 +7,6 @@ from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import 
     StudyStatus,
 )
 
-
-@dataclass
-class StudyDiseaseMilestoneAllowedConfig:
-    dm_type2: str
-
-
 TypeNameDefinition = namedtuple("TypeNameDefinition", ["named", "definition"])
 
 

@@ -15,6 +15,7 @@
           <v-col>
             <v-autocomplete
               :label="$t('ActivityForms.activity_group')"
+              data-cy="handlerequestform-activity-group-dropdown"
               :items="groups"
               v-model="activity.activity_groupings[0].activity_group_uid"
               item-text="name"
@@ -28,6 +29,7 @@
           <v-col>
             <v-autocomplete
               :label="$t('ActivityForms.activity_subgroup')"
+              data-cy="handlerequestform-activity-subgroup-dropdown"
               :items="subGroups"
               v-model="activity.activity_groupings[0].activity_subgroup_uid"
               item-text="name"
@@ -41,6 +43,7 @@
           <v-col>
             <v-text-field
               :label="$t('ActivityForms.activity_name')"
+              data-cy="handlerequestform-activity-name-field"
               v-model="activity.name"
               dense
               clearable
@@ -52,6 +55,7 @@
           <v-col>
             <v-text-field
               :label="$t('ActivityFormsRequested.abbreviation')"
+              data-cy="handlerequestform-abbreviation-field"
               v-model="activity.abbreviation"
               dense
               clearable
@@ -63,6 +67,7 @@
           <v-col>
             <v-textarea
               :label="$t('ActivityFormsRequested.definition')"
+              data-cy="handlerequestform-definition-field"
               v-model="activity.definition"
               dense
               clearable
@@ -76,6 +81,7 @@
           <v-col>
             <v-textarea
               :label="$t('ActivityFormsRequested.rationale_for_request')"
+              data-cy="handlerequestform-rationale-for-request-field"
               v-model="activity.request_rationale"
               dense
               clearable
@@ -97,6 +103,7 @@
               >
               <v-autocomplete
                 :label="$t('ActivityForms.activity_group')"
+                data-cy="sponsorform-activity-group-dropdown"
                 :items="groups"
                 v-model="form.activity_groupings[0].activity_group_uid"
                 item-text="name"
@@ -113,6 +120,7 @@
               >
               <v-autocomplete
                 :label="$t('ActivityForms.activity_subgroup')"
+                data-cy="sponsorform-activity-subgroup-dropdown"
                 :items="filteredSubGroups"
                 v-model="subgroup"
                 item-text="name"
@@ -130,6 +138,7 @@
               >
               <v-text-field
                 :label="$t('ActivityForms.activity_name')"
+                data-cy="sponsorform-activity-name-field"
                 v-model="form.name"
                 dense
                 clearable
@@ -145,6 +154,7 @@
               <v-col>
                 <v-text-field
                   :label="$t('ActivityForms.nci_concept_id')"
+                  data-cy="sponsorform-nciconceptid-field"
                   v-model="form.nci_concept_id"
                   dense
                   clearable
@@ -153,6 +163,7 @@
             </v-row>
             <v-text-field
               :label="$t('ActivityFormsRequested.abbreviation')"
+              data-cy="sponsorform-abbreviation-field"
               v-model="form.abbreviation"
               dense
               clearable
@@ -163,6 +174,7 @@
               >
               <v-textarea
                 :label="$t('ActivityFormsRequested.definition')"
+                data-cy="sponsorform-definition-field"
                 v-model="form.definition"
                 dense
                 clearable
@@ -177,6 +189,7 @@
               >
               <v-textarea
                 :label="$t('ActivityFormsRequested.rationale_for_request')"
+                data-cy="sponsorform-rationale-for-request-field"
                 v-model="form.request_rationale"
                 dense
                 clearable
@@ -189,6 +202,7 @@
                 <v-col>
                   <v-checkbox
                     :label="$t('ActivityForms.is_data_collected')"
+                    data-cy="sponsorform-datacollected-checkbox"
                     v-model="form.is_data_collected">
                   </v-checkbox>
                 </v-col>
@@ -204,6 +218,7 @@
             <div class="text-h5 mb-8">{{ $t('ActivityFormsRequested.requested_activity') }}</div>
             <v-text-field
               :label="$t('ActivityForms.activity_group')"
+              data-cy="confirmation-request-group-field"
               v-model="activity.activity_groupings[0].activity_group_name"
               dense
               readonly
@@ -211,6 +226,7 @@
               />
             <v-text-field
               :label="$t('ActivityForms.activity_subgroup')"
+              data-cy="confirmation-request-subgroup-field"
               v-model="activity.activity_groupings[0].activity_subgroup_name"
               dense
               readonly
@@ -218,6 +234,7 @@
               />
             <v-text-field
               :label="$t('ActivityForms.activity_name')"
+              data-cy="confirmation-request-activity-name-field"
               v-model="activity.name"
               dense
               readonly
@@ -227,6 +244,7 @@
             <div class="text-h5 mb-8">{{ $t('ActivityFormsRequested.new_sponsor_concept')  }}</div>
             <v-text-field
               :label="$t('ActivityForms.activity_group')"
+              data-cy="confirmation-sponsor-group-field"
               v-model="form.activity_groupings[0].activity_group_name"
               dense
               readonly
@@ -234,6 +252,7 @@
               />
             <v-text-field
               :label="$t('ActivityForms.activity_subgroup')"
+              data-cy="confirmation-sponsor-subgroup-field"
               v-model="subgroup.name"
               dense
               readonly
@@ -241,6 +260,7 @@
               />
             <v-text-field
               :label="$t('ActivityForms.activity_name')"
+              data-cy="confirmation-sponsor-activity-name-field"
               v-model="form.name"
               dense
               readonly

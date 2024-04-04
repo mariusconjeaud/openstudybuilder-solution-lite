@@ -24,6 +24,7 @@ from clinical_mdr_api.domain_repositories.models.generic import (
 from clinical_mdr_api.domain_repositories.models.template_parameter import (
     TemplateParameterTermRoot,
 )
+from clinical_mdr_api.domains._utils import ObjectStatus
 from clinical_mdr_api.domains.concepts.concept_base import ConceptARBase
 from clinical_mdr_api.repositories._utils import (
     ComparisonOperator,
@@ -38,6 +39,7 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
     root_class = type
     value_class = type
     return_model = type
+    filter_query_parameters = {}
 
     @abstractmethod
     def _create_aggregate_root_instance_from_cypher_result(
@@ -57,7 +59,9 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
         raise NotImplementedError
 
     @abstractmethod
-    def specific_alias_clause(self) -> str:
+    def specific_alias_clause(
+        self, only_specific_status: str = ObjectStatus.LATEST.name
+    ) -> str:
         """
         Methods is overridden in the ConceptGenericRepository subclasses
         and it contains matches and traversals specific for domain object represented by subclass repository.
@@ -89,10 +93,12 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
     def generate_uid(self) -> str:
         return self.root_class.get_next_free_uid_and_increment_counter()
 
-    def generic_match_clause(self):
+    def generic_match_clause(
+        self, only_specific_status: str = ObjectStatus.LATEST.name
+    ):
         concept_label = self.root_class.__label__
         concept_value_label = self.value_class.__label__
-        return f"""CYPHER runtime=slotted MATCH (concept_root:{concept_label})-[:LATEST]->(concept_value:{concept_value_label})"""
+        return f"""CYPHER runtime=slotted MATCH (concept_root:{concept_label})-[:{only_specific_status}]->(concept_value:{concept_value_label})"""
 
     def generic_alias_clause(self):
         return """
@@ -235,6 +241,7 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
         filter_statements, filter_query_parameters = self.create_query_filter_statement(
             library=library, **kwargs
         )
+        self.filter_query_parameters = filter_query_parameters
         match_clause += filter_statements
 
         alias_clause = (
@@ -396,22 +403,6 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
             RETURN concept_root
             """
         result, _ = db.cypher_query(query, {"uid": uid})
-        return len(result) > 0 and len(result[0]) > 0
-
-    def final_concept_exists_by_name(self, name: str) -> bool:
-        query = f"""
-            MATCH (concept_root:{self.root_class.__label__})-[:LATEST_FINAL]->(concept_value:{self.value_class.__label__}{{name: $name}})
-            RETURN concept_root
-            """
-        result, _ = db.cypher_query(query, {"name": name})
-        return len(result) > 0 and len(result[0]) > 0
-
-    def latest_concept_exists_by_name(self, name: str) -> bool:
-        query = f"""
-            MATCH (concept_root:{self.root_class.__label__})-[:LATEST]->(concept_value:{self.value_class.__label__}{{name: $name}})
-            RETURN concept_root
-            """
-        result, _ = db.cypher_query(query, {"name": name})
         return len(result) > 0 and len(result[0]) > 0
 
     def latest_concept_in_library_exists_by_name(

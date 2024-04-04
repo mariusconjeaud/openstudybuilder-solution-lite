@@ -1,6 +1,6 @@
 [
     {
-        "name": "Test get all codelists from non existing catalogue",
+        "name": "Test get all codelists from non-existent catalogue",
         "request": {
             "headers": {},
             "method": "GET",

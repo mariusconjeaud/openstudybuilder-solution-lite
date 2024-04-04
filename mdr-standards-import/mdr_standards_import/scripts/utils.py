@@ -6,6 +6,7 @@ from os import path
 from mdr_standards_import.scripts.entities.cdisc_data_models.data_model_type import (
     DataModelType,
 )
+from typing import Optional
 
 CDISC_DIR = environ.get("CDISC_DATA_DIR", "cdisc_data/packages")
 
@@ -303,6 +304,7 @@ def extract_list_from_json_recursive(json, keys):
                 for _val in extract_list_from_json_recursive(el, keys):
                     yield _val
 
+
 # Make sure we don't inlcude any characters that are reserved in urls
 # Reserved: ! * ' ( ) ; : @ & = + $ , / ? % # [ ]
 # Use double underscores to reduce the risk of collisions
@@ -335,7 +337,7 @@ REPLACEMENTS = [
     ("#", "__hash__"),
     ("!", "__exclamation__"),
     ("@", "__ampersat__"),
-    (",", "__comma__")
+    (",", "__comma__"),
 ]
 
 
@@ -349,3 +351,15 @@ def sanitize_string(value):
 def make_uid_from_concept_and_submval(concept_id, submval):
     clean_submval = sanitize_string(submval)
     return f"{concept_id}_{clean_submval}"
+
+
+def load_env(key: str, default: Optional[str] = None):
+    value = environ.get(key)
+    if value is None and default is None:
+        print("%s is not set and no default was provided", key)
+        raise EnvironmentError("Failed because {} is not set.".format(key))
+    if value is not None:
+        return value
+    else:
+        print("%s is not set, using default value: %s", key, value)
+        return default

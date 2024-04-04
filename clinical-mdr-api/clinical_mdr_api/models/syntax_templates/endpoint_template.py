@@ -7,16 +7,12 @@ from clinical_mdr_api.domains.syntax_templates.endpoint_template import (
     EndpointTemplateAR,
 )
 from clinical_mdr_api.models.controlled_terminologies.ct_term import (
-    CTTermNameAndAttributes,
+    SimpleCTTermNameAndAttributes,
+    SimpleTermModel,
 )
-from clinical_mdr_api.models.dictionaries.dictionary_term import DictionaryTerm
 from clinical_mdr_api.models.libraries.library import ItemCounts, Library
 from clinical_mdr_api.models.syntax_templates.template_parameter import (
     TemplateParameter,
-)
-from clinical_mdr_api.models.syntax_templates.template_parameter_term import (
-    IndexedTemplateParameterTerm,
-    MultiTemplateParameterTerm,
 )
 from clinical_mdr_api.models.utils import BaseModel
 
@@ -90,12 +86,6 @@ class EndpointTemplate(EndpointTemplateNameUid):
     parameters: list[TemplateParameter] = Field(
         [], description="Those parameters that are used by the endpoint template."
     )
-    default_parameter_terms: dict[int, list[MultiTemplateParameterTerm]] | None = Field(
-        None,
-        description="""Holds the default terms for the parameters that are used
-        within the template. The terms are ordered as they occur in the template's name.""",
-        nullable=True,
-    )
     library: Library | None = Field(
         None,
         description="The library to which the endpoint template belongs.",
@@ -103,14 +93,14 @@ class EndpointTemplate(EndpointTemplateNameUid):
     )
 
     # Template indexings
-    indications: list[DictionaryTerm] = Field(
+    indications: list[SimpleTermModel] = Field(
         [],
         description="The study indications, conditions, diseases or disorders in scope for the template.",
     )
-    categories: list[CTTermNameAndAttributes] = Field(
+    categories: list[SimpleCTTermNameAndAttributes] = Field(
         [], description="A list of categories the template belongs to."
     )
-    sub_categories: list[CTTermNameAndAttributes] = Field(
+    sub_categories: list[SimpleCTTermNameAndAttributes] = Field(
         [], description="A list of sub-categories the template belongs to."
     )
 
@@ -120,33 +110,6 @@ class EndpointTemplate(EndpointTemplateNameUid):
     def from_endpoint_template_ar(
         cls, endpoint_template_ar: EndpointTemplateAR
     ) -> Self:
-        default_parameter_terms: dict[int, list[MultiTemplateParameterTerm]] = {}
-        if endpoint_template_ar.template_value.default_parameter_terms is not None:
-            for (
-                set_number,
-                term_set,
-            ) in endpoint_template_ar.template_value.default_parameter_terms.items():
-                term_list = []
-                for position, parameter in enumerate(term_set):
-                    terms: list[IndexedTemplateParameterTerm] = [
-                        IndexedTemplateParameterTerm(
-                            index=index + 1,
-                            uid=parameter_term.uid,
-                            name=parameter_term.value,
-                            type=parameter.parameter_name,
-                        )
-                        for index, parameter_term in enumerate(parameter.parameters)
-                    ]
-
-                    term_list.append(
-                        MultiTemplateParameterTerm(
-                            conjunction=parameter.conjunction,
-                            position=position + 1,
-                            terms=terms,
-                        )
-                    )
-                default_parameter_terms[set_number] = term_list
-
         return cls(
             uid=endpoint_template_ar.uid,
             sequence_id=endpoint_template_ar.sequence_id,
@@ -163,30 +126,14 @@ class EndpointTemplate(EndpointTemplateNameUid):
                 [_.value for _ in endpoint_template_ar.get_possible_actions()]
             ),
             library=Library.from_library_vo(endpoint_template_ar.library),
-            indications=[
-                DictionaryTerm.from_dictionary_term_ar(indication)
-                for indication in endpoint_template_ar.indications
-            ]
-            if endpoint_template_ar.indications
-            else [],
-            categories=[
-                CTTermNameAndAttributes.from_ct_term_ars(*category)
-                for category in endpoint_template_ar.categories
-            ]
-            if endpoint_template_ar.categories
-            else [],
-            sub_categories=[
-                CTTermNameAndAttributes.from_ct_term_ars(*category)
-                for category in endpoint_template_ar.sub_categories
-            ]
-            if endpoint_template_ar.sub_categories
-            else [],
+            indications=endpoint_template_ar.indications,
+            categories=endpoint_template_ar.categories,
+            sub_categories=endpoint_template_ar.sub_categories,
             study_count=endpoint_template_ar.study_count,
             parameters=[
                 TemplateParameter(name=_)
                 for _ in endpoint_template_ar.template_value.parameter_names
             ],
-            default_parameter_terms=default_parameter_terms,
         )
 
 
@@ -242,10 +189,6 @@ class EndpointTemplateCreateInput(EndpointTemplateNameInput):
         description="If specified: The name of the library to which the endpoint template will be linked. The following rules apply: \n"
         "* The library needs to be present, it will not be created with this request. The *[GET] /libraries* endpoint can help. And \n"
         "* The library needs to allow the creation: The 'is_editable' property of the library needs to be true.",
-    )
-    default_parameter_terms: list[MultiTemplateParameterTerm] | None = Field(
-        None,
-        description="Holds the parameter terms to be used as default for this template. The terms are ordered as they occur in the template name.",
     )
     indication_uids: list[str] | None = Field(
         None,

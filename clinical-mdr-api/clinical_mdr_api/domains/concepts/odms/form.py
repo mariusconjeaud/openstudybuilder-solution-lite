@@ -95,7 +95,7 @@ class OdmFormVO(ConceptVO):
 
         if self.scope_uid is not None and not find_term_callback(self.scope_uid):
             raise BusinessLogicException(
-                f"ODM Form tried to connect to non existing Scope identified by uid ({self.scope_uid})."
+                f"ODM Form tried to connect to non-existent Scope identified by uid ({self.scope_uid})."
             )
 
 

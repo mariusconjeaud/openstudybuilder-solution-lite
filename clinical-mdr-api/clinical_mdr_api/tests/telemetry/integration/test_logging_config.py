@@ -7,10 +7,6 @@ import yaml
 from clinical_mdr_api.tests.telemetry.config import LOG_CONFIG, if_logging_configured
 
 
-def num_items(request):
-    return request.session.items
-
-
 @if_logging_configured
 @pytest.mark.forked  # Without this marker, it would break Pytest
 def test_logging_config():

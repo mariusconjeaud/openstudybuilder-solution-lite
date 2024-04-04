@@ -363,4 +363,6 @@ class StudySelectionActivityRepository(
         return StudyActivity.get_next_free_uid_and_increment_counter()
 
     def close(self) -> None:
+        # Our repository guidelines state that repos should have a close method
+        # But nothing needs to be done in this one
         pass

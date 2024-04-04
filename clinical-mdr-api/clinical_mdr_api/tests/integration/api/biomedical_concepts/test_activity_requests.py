@@ -8,8 +8,9 @@ from functools import reduce
 import pytest
 from fastapi.testclient import TestClient
 
+from clinical_mdr_api.config import REQUESTED_LIBRARY_NAME
 from clinical_mdr_api.main import app
-from clinical_mdr_api.models import Activity
+from clinical_mdr_api.models import Activity, CTTerm
 from clinical_mdr_api.models.concepts.activities.activity_group import ActivityGroup
 from clinical_mdr_api.models.concepts.activities.activity_sub_group import (
     ActivitySubGroup,
@@ -39,6 +40,7 @@ activity_requests_all: list[Activity]
 activity_subgroup: ActivitySubGroup
 activity_group: ActivityGroup
 study_uid: str
+biomarkers_flowchart: CTTerm
 
 
 @pytest.fixture(scope="module")
@@ -55,7 +57,20 @@ def test_data():
     inject_and_clear_db(db_name)
     global study_uid
     study_uid = inject_base_data().uid
-    TestUtils.create_library(name="Requested", is_editable=True)
+    TestUtils.create_library(name=REQUESTED_LIBRARY_NAME, is_editable=True)
+
+    catalogue_name = TestUtils.create_ct_catalogue()
+    flowchart_codelist = TestUtils.create_ct_codelist(
+        sponsor_preferred_name="Flowchart Group",
+        catalogue_name=catalogue_name,
+        extensible=True,
+        approve=True,
+    )
+    global biomarkers_flowchart
+    biomarkers_flowchart = TestUtils.create_ct_term(
+        sponsor_preferred_name="Biomarkers",
+        codelist_uid=flowchart_codelist.codelist_uid,
+    )
 
     global activity_group
     activity_group = TestUtils.create_activity_group(name="activity_group")
@@ -66,36 +81,35 @@ def test_data():
     )
 
     global activity_requests_all
-    requested_library_name = "Requested"
     # Create some activity requests
     activity_requests_all = [
         TestUtils.create_activity(
             name="name A",
             request_rationale="New activity request rationale",
             approve=False,
-            library_name=requested_library_name,
+            library_name=REQUESTED_LIBRARY_NAME,
         ),
         TestUtils.create_activity(
             name="name-AAA",
             approve=False,
-            library_name=requested_library_name,
+            library_name=REQUESTED_LIBRARY_NAME,
         ),
         TestUtils.create_activity(
             name="name-BBB",
             approve=False,
-            library_name=requested_library_name,
+            library_name=REQUESTED_LIBRARY_NAME,
         ),
         TestUtils.create_activity(
             name="name XXX",
             definition="def-XXX",
             approve=False,
-            library_name=requested_library_name,
+            library_name=REQUESTED_LIBRARY_NAME,
         ),
         TestUtils.create_activity(
             name="name YYY",
             definition="def-YYY",
             approve=False,
-            library_name=requested_library_name,
+            library_name=REQUESTED_LIBRARY_NAME,
         ),
     ]
 
@@ -104,14 +118,14 @@ def test_data():
             TestUtils.create_activity(
                 name=f"name-AAA-{index}",
                 approve=False,
-                library_name=requested_library_name,
+                library_name=REQUESTED_LIBRARY_NAME,
             )
         )
         activity_requests_all.append(
             TestUtils.create_activity(
                 name=f"name-BBB-{index}",
                 approve=False,
-                library_name=requested_library_name,
+                library_name=REQUESTED_LIBRARY_NAME,
             )
         )
         activity_requests_all.append(
@@ -119,7 +133,7 @@ def test_data():
                 name=f"name-XXX-{index}",
                 definition=f"def-XXX-{index}",
                 approve=False,
-                library_name=requested_library_name,
+                library_name=REQUESTED_LIBRARY_NAME,
             )
         )
         activity_requests_all.append(
@@ -127,7 +141,7 @@ def test_data():
                 name=f"name-YYY-{index}",
                 definition=f"def-YYY-{index}",
                 approve=True,
-                library_name=requested_library_name,
+                library_name=REQUESTED_LIBRARY_NAME,
             )
         )
 
@@ -145,8 +159,14 @@ ACTIVITY_REQUEST_FIELDS_ALL = [
     "abbreviation",
     "activity_groupings",
     "request_rationale",
+    "is_request_final",
+    "is_request_rejected",
+    "contact_person",
+    "reason_for_rejecting",
+    "requester_study_id",
     "replaced_by_activity",
     "is_data_collected",
+    "is_multiple_selection_allowed",
     "library_name",
     "start_date",
     "end_date",
@@ -178,7 +198,7 @@ def test_get_activity_request(api_client):
 
     assert res["uid"] == activity_requests_all[0].uid
     assert res["name"] == "name A"
-    assert res["library_name"] == "Requested"
+    assert res["library_name"] == REQUESTED_LIBRARY_NAME
     assert res["definition"] is None
     assert res["version"] == "0.1"
     assert res["status"] == "Draft"
@@ -329,7 +349,7 @@ def test_filtering_wildcard(
         pytest.param(
             '{"library_name": {"v": ["Requested"]}}',
             "library_name",
-            "Requested",
+            REQUESTED_LIBRARY_NAME,
         ),
     ],
 )
@@ -360,7 +380,7 @@ def test_edit_activity_request(api_client):
         name="Activity Request name",
         request_rationale="New activity request rationale",
         approve=False,
-        library_name="Requested",
+        library_name=REQUESTED_LIBRARY_NAME,
     )
     response = api_client.patch(
         f"/concepts/activities/activities/{activity_request.uid}",
@@ -372,7 +392,7 @@ def test_edit_activity_request(api_client):
     res = response.json()
     assert response.status_code == 200
     assert res["name"] == "new name"
-    assert res["library_name"] == "Requested"
+    assert res["library_name"] == REQUESTED_LIBRARY_NAME
     assert res["definition"] is None
     assert res["version"] == "0.2"
     assert res["status"] == "Draft"
@@ -386,7 +406,7 @@ def test_post_activity_request(api_client):
         json={
             "name": "New Activity Request Name",
             "name_sentence_case": "new activity request name",
-            "library_name": "Requested",
+            "library_name": REQUESTED_LIBRARY_NAME,
             "request_rationale": "Activity request rationale",
             "is_data_collected": True,
         },
@@ -395,7 +415,7 @@ def test_post_activity_request(api_client):
     res = response.json()
     assert res["name"] == "New Activity Request Name"
     assert res["name_sentence_case"] == "new activity request name"
-    assert res["library_name"] == "Requested"
+    assert res["library_name"] == REQUESTED_LIBRARY_NAME
     assert res["definition"] is None
     assert res["version"] == "0.1"
     assert res["status"] == "Draft"
@@ -483,7 +503,7 @@ def test_post_sponsor_activity_from_activity_request(api_client):
     assert response.status_code == 200
     res = response.json()
     assert res["name"] == "name A"
-    assert res["library_name"] == "Requested"
+    assert res["library_name"] == REQUESTED_LIBRARY_NAME
     assert res["version"] == "1.0"
     assert res["status"] == "Retired"
     assert res["possible_actions"] == ["reactivate"]
@@ -497,17 +517,7 @@ def test_update_activity_request_to_sponsor_in_study_activity(api_client):
     # Create things needed for Study Activity
     activity_request = TestUtils.create_activity(
         name="activity request for study activity purpose",
-    )
-    catalogue_name = TestUtils.create_ct_catalogue()
-    flowchart_codelist = TestUtils.create_ct_codelist(
-        sponsor_preferred_name="Flowchart Group",
-        catalogue_name=catalogue_name,
-        extensible=True,
-        approve=True,
-    )
-    biomarkers_flowchart = TestUtils.create_ct_term(
-        sponsor_preferred_name="Biomarkers",
-        codelist_uid=flowchart_codelist.codelist_uid,
+        library_name=REQUESTED_LIBRARY_NAME,
     )
     study_activity = create_study_activity(
         study_uid=study_uid,
@@ -565,3 +575,130 @@ def test_update_activity_request_to_sponsor_in_study_activity(api_client):
         == "New Sponsor Activity from Activity Request used in Study Activity"
     )
     assert res["activity"]["library_name"] == "Sponsor"
+
+
+def test_edit_study_activity_request(api_client):
+    clinical_programme = TestUtils.create_clinical_programme(name="SoA CP")
+    project_for_test = TestUtils.create_project(
+        name="Project for SoA",
+        project_number="1234",
+        description="Base project",
+        clinical_programme_uid=clinical_programme.uid,
+    )
+    study_for_test = TestUtils.create_study(
+        project_number=project_for_test.project_number
+    )
+    # Create things needed for Study Activity
+    activity_request = TestUtils.create_activity(
+        name="activity request for study activity edit",
+        request_rationale="Some rationale",
+        library_name=REQUESTED_LIBRARY_NAME,
+    )
+    study_activity = create_study_activity(
+        study_uid=study_for_test.uid,
+        activity_uid=activity_request.uid,
+        activity_subgroup_uid=None,
+        activity_group_uid=None,
+        soa_group_term_uid=biomarkers_flowchart.term_uid,
+    )
+    response = api_client.get(
+        f"/studies/{study_for_test.uid}/study-activities/{study_activity.study_activity_uid}",
+    )
+    assert response.status_code == 200
+    res = response.json()
+    assert res["activity"]["request_rationale"] == "Some rationale"
+    assert res["activity"]["is_request_final"] is False
+    assert res["activity"]["is_data_collected"] is False
+
+    general_activity_group = TestUtils.create_activity_group(name="General")
+    general_activity_subgroup = TestUtils.create_activity_subgroup(
+        name="General subgroup", activity_groups=[general_activity_group.uid]
+    )
+    # Replace activity request to the replacing sponsor activity in the Study Activity
+    response = api_client.patch(
+        f"/studies/{study_for_test.uid}/study-activity-requests/{study_activity.study_activity_uid}",
+        json={
+            "activity_subgroup_uid": general_activity_subgroup.uid,
+            "activity_group_uid": general_activity_group.uid,
+        },
+    )
+    assert response.status_code == 200
+
+    # Confirm that requested activity was successfully replaced by sponsor activity in Study Activity
+    response = api_client.get(
+        f"/studies/{study_for_test.uid}/study-activities/{study_activity.study_activity_uid}",
+    )
+    assert response.status_code == 200
+    res = response.json()
+    assert res["activity"]["uid"] == activity_request.uid
+    assert res["activity"]["version"] == "1.0"
+    assert (
+        res["study_activity_subgroup"]["activity_subgroup_uid"]
+        == general_activity_subgroup.uid
+    )
+    assert (
+        res["study_activity_group"]["activity_group_uid"] == general_activity_group.uid
+    )
+
+    response = api_client.patch(
+        f"/studies/{study_for_test.uid}/study-activity-requests/{study_activity.study_activity_uid}",
+        json={
+            "request_rationale": "New rationale",
+            "activity_name": "New request name",
+            "is_request_final": True,
+            "is_data_collected": True,
+        },
+    )
+    assert response.status_code == 200
+
+    # Confirm that requested activity was successfully replaced by sponsor activity in Study Activity
+    response = api_client.get(
+        f"/studies/{study_for_test.uid}/study-activities/{study_activity.study_activity_uid}",
+    )
+    assert response.status_code == 200
+    res = response.json()
+    assert res["activity"]["uid"] == activity_request.uid
+    assert res["activity"]["version"] == "2.0"
+    assert res["activity"]["request_rationale"] == "New rationale"
+    assert res["activity"]["name"] == "New request name"
+    assert res["activity"]["is_request_final"] is True
+    assert res["activity"]["is_data_collected"] is True
+
+
+def test_reject_activity_request(api_client):
+    # Create things needed for Study Activity
+    activity_request = TestUtils.create_activity(
+        name="activity request for rejection test",
+        request_rationale="Some rationale",
+        library_name=REQUESTED_LIBRARY_NAME,
+    )
+    create_study_activity(
+        study_uid=study_uid,
+        activity_uid=activity_request.uid,
+        activity_subgroup_uid=None,
+        activity_group_uid=None,
+        soa_group_term_uid=biomarkers_flowchart.term_uid,
+    )
+    reason_for_rejecting = "Some rejection reason"
+    contact_person = "person to contact about rejecting"
+    response = api_client.patch(
+        f"/concepts/activities/activities/{activity_request.uid}/activity-request-rejections",
+        json={
+            "contact_person": contact_person,
+            "reason_for_rejecting": reason_for_rejecting,
+        },
+    )
+    assert response.status_code == 200
+    res = response.json()
+    assert res["status"] == "Retired"
+    assert res["contact_person"] == contact_person
+    assert res["reason_for_rejecting"] == reason_for_rejecting
+    assert res["is_request_rejected"] is True
+
+    response = api_client.get(f"/concepts/activities/activities/{activity_request.uid}")
+    assert response.status_code == 200
+    res = response.json()
+    assert res["status"] == "Retired"
+    assert res["contact_person"] == contact_person
+    assert res["reason_for_rejecting"] == reason_for_rejecting
+    assert res["is_request_rejected"] is True

@@ -14,6 +14,7 @@
           v-slot="{ errors }"
           rules="required"
           v-if="subgroup"
+          data-cy="groupform-subgroup-class"
           >
           <v-row>
             <v-col>
@@ -21,6 +22,7 @@
                 v-model="form.activity_groups"
                 :items="groups"
                 :label="$t('ActivityForms.groups')"
+                data-cy="groupform-activity-group-dropdown"
                 item-text="name"
                 item-value="uid"
                 dense
@@ -34,12 +36,14 @@
         <validation-provider
           v-slot="{ errors }"
           rules="required"
+          data-cy="groupform-activity-group-class"
           >
           <v-row>
             <v-col>
               <v-text-field
                 v-model="form.name"
                 :label="subgroup ? $t('ActivityForms.subgroup_name') : $t('ActivityForms.group_name')"
+                data-cy="groupform-activity-group-field"
                 :error-messages="errors"
                 />
             </v-col>
@@ -54,18 +58,21 @@
             <v-text-field
               v-model="form.abbreviation"
               :label="$t('ActivityForms.abbreviation')"
+              data-cy="groupform-abbreviation-field"
               />
           </v-col>
         </v-row>
         <validation-provider
           v-slot="{ errors }"
           rules="required"
+          data-cy="groupform-definition-class"
           >
           <v-row>
             <v-col>
               <v-textarea
                 v-model="form.definition"
                 :label="$t('ActivityForms.definition')"
+                data-cy="groupform-definition-field"
                 :error-messages="errors"
                 auto-grow
                 rows="1"
@@ -83,6 +90,7 @@
               <v-textarea
                 v-model="form.change_description"
                 :label="$t('ActivityForms.change_description')"
+                data-cy="groupform-change-description-field"
                 :error-messages="errors"
                 auto-grow
                 rows="1"

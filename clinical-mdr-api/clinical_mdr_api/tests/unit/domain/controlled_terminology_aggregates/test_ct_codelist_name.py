@@ -20,7 +20,7 @@ def create_random_ct_codelist_name_vo(catalogue: str = "Catalogue") -> CTCodelis
 
 
 def create_random_ct_codelist_name_ar(
-    # pylint:disable=unnecessary-lambda
+    # pylint: disable=unnecessary-lambda
     generate_uid_callback: Callable[[], str] = lambda: random_str(),
     library: str = "Library",
     is_editable: bool = True,

@@ -1,5 +1,5 @@
-from typing import Optional, Sequence, Any
 import logging
+from typing import Any, Optional, Sequence
 
 logger = logging.getLogger("legacy_mdr_migrations")
 # ---------------------------------------------------------------
@@ -68,6 +68,13 @@ def find_term_by_name(term_name: str, all_terms: Sequence[dict]) -> Optional[str
                 term_uid = term["term_uid"]
                 break
     return term_uid
+
+
+def find_term_by_concept_id(term_id: str, all_terms: Sequence[dict]) -> Optional[str]:
+    for term in all_terms:
+        if term["attributes"]["concept_id"] == term_id:
+            return term["term_uid"]
+    return None
 
 
 def update_uid_list_dict(key: str, dictionary: dict, value_to_add: Any):

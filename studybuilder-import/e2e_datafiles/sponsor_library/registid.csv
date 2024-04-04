@@ -5,3 +5,10 @@ REGISTID,Universal Trial Number (UTN),universal trial number (utn),UNIVERSALTRIA
 REGISTID,Japanese Trial Registry ID (JAPIC),japanese trial registry id (japic),JAPANTRIALREGISTRYID,Sponsor terminology for Registry Identifier (PMDA),4,,Japanese Trial Registry ID (JAPIC)
 REGISTID,Investigational New Drug Application (IND) Number,investigational new drug application (ind) number,INVESTIGATIONALNEWDRUGAPPLICATION,Sponsor terminology for Registry Identifier (FDA),5,,Investigational New Drug Application (IND) Number
 REGISTID,WHO ID,who id,WHOID,Sponsor terminology for Registry Identifier (WHO),6,,WHO ID
+REGISTID,EU Trial Number,eu trial number,EUTRIALNUMBER,Sponsor terminology for Registry Identifier (EMA),7,,EU Trial Number
+REGISTID,CIV-ID/SIN Number,civ-id/sin number,CIVIDSINNUM,Sponsor terminology for Registry Identifier (EMA),8,,CIV-ID/SIN Number
+REGISTID,National Clinical Trial Number,national clinical trial number,NCTID,Sponsor terminology for Registry Identifier (FDA),9,,National Clinical Trial Number
+REGISTID,Japanese Trial Registry Number (jRCT),japanese trial registry number (jrct),JAPANTRIALREGISTRYNUMBER,Sponsor terminology for Registry Identifier (PMDA),10,,Japanese Trial Registry Number (jRCT)
+REGISTID,National Medical Products Administration (NMPA) Number,national medical products administration (nmpa) number,NMPANUMBER,Sponsor terminology for Registry Identifier (NMPA),11,,National Medical Products Administration (NMPA) Number
+REGISTID,EUDAMED SRN Number,eudamed srn number,EUDAMEDSRN,Sponsor terminology for Registry Identifier (EMA),12,,EUDAMED SRN Number
+REGISTID,Investigational Device Exemption (IDE) Number,investigational device exemption (ide) number,IDENUMBER,Sponsor terminology for Registry Identifier (FDA),13,,Investigational Device Exemption (IDE) Number

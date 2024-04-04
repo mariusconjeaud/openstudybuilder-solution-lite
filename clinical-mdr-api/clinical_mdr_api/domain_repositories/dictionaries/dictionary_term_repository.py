@@ -200,6 +200,7 @@ class DictionaryTermGenericRepository(
         page_number: int = 1,
         page_size: int = 0,
         total_count: bool = False,
+        **_kwargs,
     ) -> tuple[list[DictionaryTermAR], int]:
         """
         Method runs a cypher query to fetch all needed data to create objects of type AggregateRootType.
@@ -311,24 +312,6 @@ class DictionaryTermGenericRepository(
             else []
         )
 
-    def get_syntax_indications(
-        self, syntax_node: VersionRoot
-    ) -> list[DictionaryTermAR] | None:
-        """
-        This method returns the indications for the provided syntax
-
-        :param syntax_node: Syntax Root node
-        :return list[DictionaryTermAR] | None:
-        """
-        indication_nodes = syntax_node.has_indication.all()
-        if indication_nodes:
-            indications = []
-            for node in indication_nodes:
-                indication = self.find_by_uid(term_uid=node.uid)
-                indications.append(indication)
-            return indications
-        return None
-
     def find_by_uid(
         self, term_uid: str, for_update: bool | None = False
     ) -> DictionaryTermAR:
@@ -401,9 +384,6 @@ class DictionaryTermGenericRepository(
         self._maintain_parameters(item, root, value)
 
         return item
-
-    def _new_version_necessary(self, ar: DictionaryTermAR, value: VersionValue) -> bool:
-        return self._has_data_changed(ar, value)
 
     def _get_or_create_value(
         self, root: DictionaryTermRoot, ar: DictionaryTermAR

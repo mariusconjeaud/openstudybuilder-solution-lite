@@ -166,7 +166,7 @@ class CTConfigService:
             all_codelists: list[
                 CTCodelistNameAR
             ] = self._repos.ct_codelist_name_repository.find_all(
-                library="Sponsor"
+                library_name="Sponsor"
             ).items
             for codelist in all_codelists:
                 if codelist.ct_codelist_vo.name == post_input.configured_codelist_name:

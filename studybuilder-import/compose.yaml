@@ -8,13 +8,17 @@ services:
         UID: "${UID:-1000}"
       context: ./
       dockerfile: Dockerfile
-    entrypoint: ["/bin/sh", "-cx"]
-    command: ["pipenv run import_all"]
+    command: pipenv run import_all
     env_file: .env.import
+    environment:
+      API_BASE_URL:  http://localhost:8000
     network_mode: host
-    user: "${UID:-1000}:${GID:-1000}"
     volumes:
       - type: bind
-        source: ./
-        target: /app
+        source: ./e2e_datafiles
+        target: /app/e2e_datafiles
+        read_only: true
+      - type: bind
+        source: ./datafiles
+        target: /app/datafiles
         read_only: true

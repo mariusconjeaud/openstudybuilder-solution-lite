@@ -65,6 +65,7 @@
          "result": {
             "study_uid": "study_root",
             "order": 1,
+                  "study_version": null, 
             "study_activity_uid": "StudyActivity_000001",
             "study_activity_subgroup": {
                "study_activity_subgroup_uid": "StudyActivitySubGroup_000001",
@@ -112,7 +113,13 @@
                   }
                ],
                "request_rationale": null,
+               "is_request_final": false,
+               "is_request_rejected": false,
+               "contact_person": null,
+               "reason_for_rejecting": null,
+               "requester_study_id": null,
                "is_data_collected": false,
+               "is_multiple_selection_allowed": true,
                "replaced_by_activity": null
             },
             "start_date": "2021-10-06T14:39:31.561994",
@@ -144,6 +151,7 @@
                {
                   "study_uid": "study_root",
                   "order": 1,
+                  "study_version": null, 
                   "study_activity_uid": "StudyActivity_000001",
                   "study_activity_subgroup": {
                      "study_activity_subgroup_uid": "StudyActivitySubGroup_000001",
@@ -191,7 +199,13 @@
                         }
                      ],
                      "request_rationale": null,
+                     "is_request_final": false,
+                     "is_request_rejected": false,
+                     "contact_person": null,
+                     "reason_for_rejecting": null,
+                     "requester_study_id": null,
                      "is_data_collected": false,
+                     "is_multiple_selection_allowed": true,
                      "replaced_by_activity": null
                   },
                   "start_date": "2021-10-06T14:39:31.561994",
@@ -228,6 +242,7 @@
                {
                   "study_uid": "study_root",
                   "order": 1,
+                  "study_version": null, 
                   "study_activity_uid": "StudyActivity_000001",
                   "study_activity_subgroup": {
                      "study_activity_subgroup_uid": "StudyActivitySubGroup_000001",
@@ -275,7 +290,13 @@
                         }
                      ],
                      "request_rationale": null,
+                     "is_request_final": false,
+                     "is_request_rejected": false,
+                     "contact_person": null,
+                     "reason_for_rejecting": null,
+                     "requester_study_id": null,
                      "is_data_collected": false,
+                     "is_multiple_selection_allowed": true,
                      "replaced_by_activity": null
                   },
                   "start_date": "2021-10-06T14:39:31.561994",
@@ -309,6 +330,7 @@
                {
                   "study_uid": "study_root",
                   "order": 1,
+                  "study_version": null, 
                   "study_activity_uid": "StudyActivity_000001",
                   "study_activity_subgroup": {
                      "study_activity_subgroup_uid": "StudyActivitySubGroup_000001",
@@ -356,7 +378,13 @@
                         }
                      ],
                      "request_rationale": null,
+                     "is_request_final": false,
+                     "is_request_rejected": false,
+                     "contact_person": null,
+                     "reason_for_rejecting": null,
+                     "requester_study_id": null,
                      "is_data_collected": false,
+                     "is_multiple_selection_allowed": true,
                      "replaced_by_activity": null
                   },
                   "start_date": "2021-10-06T14:39:31.561994",
@@ -390,6 +418,7 @@
                {
                   "study_uid": "study_root",
                   "order": 1,
+                  "study_version": null, 
                   "study_activity_uid": "StudyActivity_000001",
                   "study_activity_subgroup": {
                      "study_activity_subgroup_uid": "StudyActivitySubGroup_000001",
@@ -437,7 +466,13 @@
                         }
                      ],
                      "request_rationale": null,
+                     "is_request_final": false,
+                     "is_request_rejected": false,
+                     "contact_person": null,
+                     "reason_for_rejecting": null,
+                     "requester_study_id": null,
                      "is_data_collected": false,
+                     "is_multiple_selection_allowed": true,
                      "replaced_by_activity": null
                   },
                   "start_date": "2021-10-06T14:39:31.561994",
@@ -471,6 +506,7 @@
                {
                   "study_uid": "study_root",
                   "order": 1,
+                  "study_version": null, 
                   "study_activity_uid": "StudyActivity_000001",
                   "study_activity_subgroup": {
                      "study_activity_subgroup_uid": "StudyActivitySubGroup_000001",
@@ -518,7 +554,13 @@
                         }
                      ],
                      "request_rationale": null,
+                     "is_request_final": false,
+                     "is_request_rejected": false,
+                     "contact_person": null,
+                     "reason_for_rejecting": null,
+                     "requester_study_id": null,
                      "is_data_collected": false,
+                     "is_multiple_selection_allowed": true,
                      "replaced_by_activity": null
                   },
                   "start_date": "2021-10-06T14:39:31.561994",
@@ -549,6 +591,7 @@
          "result": {
             "study_uid": "study_root",
             "order": 1,
+                  "study_version": null, 
             "study_activity_uid": "StudyActivity_000001",
             "study_activity_subgroup": {
                "study_activity_subgroup_uid": "StudyActivitySubGroup_000001",
@@ -596,7 +639,13 @@
                   }
                ],
                "request_rationale": null,
+               "is_request_final": false,
+               "is_request_rejected": false,
+               "contact_person": null,
+               "reason_for_rejecting": null,
+               "requester_study_id": null,
                "is_data_collected": false,
+               "is_multiple_selection_allowed": true,
                "replaced_by_activity": null
             },
             "start_date": "2021-10-06T14:39:31.561994",
@@ -667,7 +716,13 @@
                      }
                   ],
                   "request_rationale": null,
+                  "is_request_final": false,
+                  "is_request_rejected": false,
+                  "contact_person": null,
+                  "reason_for_rejecting": null,
+                  "requester_study_id": null,
                   "is_data_collected": false,
+                  "is_multiple_selection_allowed": true,
                   "replaced_by_activity": null
                },
                "show_activity_group_in_protocol_flowchart": true,
@@ -725,7 +780,13 @@
                      }
                   ],
                   "request_rationale": null,
+                  "is_request_final": false,
+                  "is_request_rejected": false,
+                  "contact_person": null,
+                  "reason_for_rejecting": null,
+                  "requester_study_id": null,
                   "is_data_collected": false,
+                  "is_multiple_selection_allowed": true,
                   "replaced_by_activity": null
                },
                "show_activity_group_in_protocol_flowchart": true,
@@ -762,6 +823,7 @@
          "result": {
             "study_uid": "study_root",
             "order": 2,
+                  "study_version": null, 
             "study_activity_uid": "StudyActivity_000002",
             "study_activity_subgroup": {
                "study_activity_subgroup_uid": "StudyActivitySubGroup_000002",
@@ -809,7 +871,13 @@
                   }
                ],
                "request_rationale": null,
+               "is_request_final": false,
+               "is_request_rejected": false,
+               "contact_person": null,
+               "reason_for_rejecting": null,
+               "requester_study_id": null,
                "is_data_collected": false,
+               "is_multiple_selection_allowed": true,
                "replaced_by_activity": null
             },
             "start_date": "2021-10-06T14:39:31.561994",
@@ -836,6 +904,7 @@
          "result": {
             "study_uid": "study_root",
             "order": 1,
+                  "study_version": null, 
             "study_activity_uid": "StudyActivity_000001",
             "study_activity_subgroup": {
                "study_activity_subgroup_uid": "StudyActivitySubGroup_000001",
@@ -883,7 +952,13 @@
                   }
                ],
                "request_rationale": null,
+               "is_request_final": false,
+               "is_request_rejected": false,
+               "contact_person": null,
+               "reason_for_rejecting": null,
+               "requester_study_id": null,
                "is_data_collected": false,
+               "is_multiple_selection_allowed": true,
                "replaced_by_activity": null
             },
             "start_date": "2021-10-06T14:39:31.561994",
@@ -912,6 +987,7 @@
          "result": {
             "study_uid": "study_root",
             "order": 2,
+                  "study_version": null, 
             "study_activity_uid": "StudyActivity_000001",
             "study_activity_subgroup": {
                "study_activity_subgroup_uid": "StudyActivitySubGroup_000001",
@@ -959,7 +1035,13 @@
                   }
                ],
                "request_rationale": null,
+               "is_request_final": false,
+               "is_request_rejected": false,
+               "contact_person": null,
+               "reason_for_rejecting": null,
+               "requester_study_id": null,
                "is_data_collected": false,
+               "is_multiple_selection_allowed": true,
                "replaced_by_activity": null
             },
             "start_date": "2021-10-06T14:39:31.561994",

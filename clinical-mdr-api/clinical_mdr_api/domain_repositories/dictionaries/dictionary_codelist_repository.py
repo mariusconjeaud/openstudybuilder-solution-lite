@@ -192,13 +192,14 @@ class DictionaryCodelistGenericRepository(
 
     def find_all(
         self,
-        library: DictionaryType | None = None,
+        library_name: DictionaryType | None = None,
         sort_by: dict | None = None,
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
         page_number: int = 1,
         page_size: int = 0,
         total_count: bool = False,
+        **_kwargs,
     ) -> tuple[list[DictionaryCodelistAR], int]:
         """
         Method runs a cypher query to fetch all needed data to create objects of type AggregateRootType.
@@ -207,7 +208,7 @@ class DictionaryCodelistGenericRepository(
         It uses cypher instead of neomodel as neomodel approach triggered some performance issues, because it is needed
         to traverse many relationships to fetch all needed data and each traversal is separate database call when using
         neomodel.
-        :param library:
+        :param library_name:
         :param sort_by:
         :param page_number:
         :param page_size:
@@ -216,7 +217,7 @@ class DictionaryCodelistGenericRepository(
         :param total_count:
         :return GenericFilteringReturn[DictionaryCodelistAR]:
         """
-        match_clause = self.generic_match_clause(dictionary_type=library)
+        match_clause = self.generic_match_clause(dictionary_type=library_name)
 
         alias_clause = self.generic_alias_clause()
         query = CypherQueryBuilder(

@@ -4,7 +4,9 @@ def path_join(*parts, separator="/"):
     else:
         result = parts[0]
         for p in parts[1:]:
-            nbr_separators = int(result.endswith(separator)) + int(p.startswith(separator))
+            nbr_separators = int(result.endswith(separator)) + int(
+                p.startswith(separator)
+            )
             if nbr_separators == 0:
                 result = result + separator + p
             elif nbr_separators == 1:
@@ -12,4 +14,3 @@ def path_join(*parts, separator="/"):
             else:
                 result = result + p[1:]
     return result
-

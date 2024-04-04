@@ -10,7 +10,6 @@ from clinical_mdr_api.domain_repositories.library_item_repository import (
 from clinical_mdr_api.domain_repositories.models._utils import (
     LATEST_VERSION_ORDER_BY,
     CustomNodeSet,
-    to_relation_trees,
 )
 from clinical_mdr_api.domain_repositories.models.generic import (
     Library,
@@ -66,30 +65,6 @@ class SponsorModelRepository(
             ]
         )
         return name
-
-    def _find_latest_version_number(self, ig_uid: str) -> int:
-        data_model_ig_root = DataModelIGRoot.nodes.get_or_none(uid=ig_uid)
-        if data_model_ig_root is None:
-            raise BusinessLogicException(
-                f"The target Implementation Guide {ig_uid} does not exist in the database."
-            )
-
-        latest_sponsor_model = to_relation_trees(
-            DataModelIGRoot.nodes.filter(uid=ig_uid)
-            .fetch_relations("has_latest_sponsor_model_value")
-            .fetch_optional_single_relation_of_type(
-                {
-                    "has_sponsor_model_version": (
-                        "latest_version",
-                        LATEST_VERSION_ORDER_BY,
-                    ),
-                }
-            )
-        )
-        if latest_sponsor_model is None or not latest_sponsor_model:
-            return 0
-
-        return int(SponsorModel.from_orm(latest_sponsor_model[0]).version)
 
     def _has_data_changed(self, ar: SponsorModelAR, value: SponsorModelValue) -> bool:
         return ar.sponsor_model_vo.name != value.name
@@ -161,15 +136,6 @@ class SponsorModelRepository(
         for itm in root.has_sponsor_model_version.all():
             if not self._has_data_changed(ar, itm):
                 return itm
-        latest_draft = root.latest_sponsor_model_draft.get_or_none()
-        if latest_draft and not self._has_data_changed(ar, latest_draft):
-            return latest_draft
-        latest_final = root.latest_sponsor_model_final.get_or_none()
-        if latest_final and not self._has_data_changed(ar, latest_final):
-            return latest_final
-        latest_retired = root.latest_sponsor_model_retired.get_or_none()
-        if latest_retired and not self._has_data_changed(ar, latest_retired):
-            return latest_retired
 
         new_value = SponsorModelValue(
             name=ar.sponsor_model_vo.name,
@@ -218,4 +184,6 @@ class SponsorModelRepository(
         root: DataModelIGRoot,
         value: SponsorModelValue,
     ) -> None:
+        # This method from parent repo is not needed for this repo
+        # So we use pass to skip implementation
         pass

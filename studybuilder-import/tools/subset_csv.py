@@ -18,7 +18,7 @@ with open(fname1, encoding="utf-8", errors="ignore") as textfile:
 
 with open(fname2, encoding="utf-8", errors="ignore") as infile:
 
-    with open(fname2+".new.csv", 'w') as outfile:
+    with open(fname2 + ".new.csv", "w") as outfile:
         writer = csv.writer(outfile)
         rows = csv.reader(infile, delimiter=",")
         headers = next(rows)

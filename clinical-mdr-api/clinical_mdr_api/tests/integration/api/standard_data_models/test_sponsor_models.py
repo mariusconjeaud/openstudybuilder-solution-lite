@@ -158,9 +158,9 @@ def test_post_dataset_class(api_client):
     assert response.status_code == 201
     assert res["uid"] == common_params["dataset_class_uid"]
 
-    # Making another POST request to create a dataset class with a nonexistent sponsor model
+    # Making another POST request to create a dataset class with a non-existent sponsor model
     params2 = common_params.copy()
-    params2["sponsor_model_name"] = "nonexistent_sponsor_model"
+    params2["sponsor_model_name"] = "non_existent_sponsor_model"
     response = api_client.post(
         url,
         json=params2,
@@ -170,7 +170,7 @@ def test_post_dataset_class(api_client):
     res = response.json()
     assert (
         res["message"]
-        == "The given Sponsor Model version nonexistent_sponsor_model does not exist in the database."
+        == "The given Sponsor Model version non_existent_sponsor_model does not exist in the database."
     )
 
     # Making another POST request to create a dataset class with a dataset class which does not exist in CDISC
@@ -221,9 +221,9 @@ def test_post_variable_class(api_client):
     assert res["uid"] == common_params["variable_class_uid"]
     assert res["order"] == common_params["order"]
 
-    # Making another POST request to create a variable class with a nonexistent sponsor model
+    # Making another POST request to create a variable class with a non-existent sponsor model
     params2 = common_params.copy()
-    params2["sponsor_model_name"] = "nonexistent_sponsor_model"
+    params2["sponsor_model_name"] = "non_existent_sponsor_model"
     response = api_client.post(
         url,
         json=params2,
@@ -288,9 +288,9 @@ def test_post_dataset(api_client):
     assert res["uid"] == common_params["dataset_uid"]
     assert res["enrich_build_order"] == common_params["enrich_build_order"]
 
-    # Making another POST request to create a dataset with a nonexistent sponsor model
+    # Making another POST request to create a dataset with a non-existent sponsor model
     params2 = common_params.copy()
-    params2["sponsor_model_name"] = "nonexistent_sponsor_model"
+    params2["sponsor_model_name"] = "non_existent_sponsor_model"
     response = api_client.post(
         url,
         json=params2,
@@ -300,7 +300,7 @@ def test_post_dataset(api_client):
     res = response.json()
     assert (
         res["message"]
-        == "The given Sponsor Model version nonexistent_sponsor_model does not exist in the database."
+        == "The given Sponsor Model version non_existent_sponsor_model does not exist in the database."
     )
 
     # Making another POST request to create a dataset with a dataset that does not exist in CDISC
@@ -351,9 +351,9 @@ def test_post_dataset_variable(api_client):
     assert res["uid"] == common_params["dataset_variable_uid"]
     assert res["order"] == common_params["order"]
 
-    # Making another POST request to create a dataset variable with a nonexistent sponsor model
+    # Making another POST request to create a dataset variable with a non-existent sponsor model
     params2 = common_params.copy()
-    params2["sponsor_model_name"] = "nonexistent_sponsor_model"
+    params2["sponsor_model_name"] = "non_existent_sponsor_model"
     response = api_client.post(
         url,
         json=params2,

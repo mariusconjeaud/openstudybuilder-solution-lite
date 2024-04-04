@@ -11,7 +11,6 @@ from clinical_mdr_api import config
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.study_selections import study_epoch
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.models.validators import FLOAT_REGEX
 from clinical_mdr_api.oauth import get_current_user_id, rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
@@ -83,6 +82,8 @@ Possible errors:
             "end_rule",
             "modified_date",
             "user_initials",
+            "study_uid",
+            "study_version",
         ],
         "formats": [
             "text/csv",
@@ -115,14 +116,9 @@ def get_all(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    study_value_version: str
-    | None = Query(
-        None,
-        description="StudyValueVersion to extract the StudySelections",
-        regex=FLOAT_REGEX,
-    ),
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
     current_user_id: str = Depends(get_current_user_id),
-) -> CustomPage[clinical_mdr_api.models.study_selections.study_visit.StudyVisit]:
+) -> CustomPage[clinical_mdr_api.models.StudyVisit]:
     service = StudyVisitService(current_user_id)
     results = service.get_all_visits(
         study_uid=uid,
@@ -170,12 +166,7 @@ def get_distinct_values_for_header(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
-    study_value_version: str
-    | None = Query(
-        None,
-        description="StudyValueVersion to extract the StudySelections",
-        regex=FLOAT_REGEX,
-    ),
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ):
     return StudyVisitService(current_user_id).get_distinct_values_for_header(
         study_uid=uid,
@@ -578,12 +569,7 @@ def get_study_visit(
     uid: str = studyUID,
     study_visit_uid: str = study_visit_uid_description,
     current_user_id: str = Depends(get_current_user_id),
-    study_value_version: str
-    | None = Query(
-        None,
-        description="StudyValueVersion to extract the StudySelections",
-        regex=FLOAT_REGEX,
-    ),
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> clinical_mdr_api.models.study_selections.study_visit.StudyVisit:
     service = StudyVisitService(current_user_id)
     return service.find_by_uid(

@@ -108,20 +108,6 @@ def test_data():
             name="Default name with [TextValue]",
             study_uid=None,
             library_name="Sponsor",
-            default_parameter_terms=[
-                MultiTemplateParameterTerm(
-                    position=1,
-                    conjunction="",
-                    terms=[
-                        IndexedTemplateParameterTerm(
-                            index=1,
-                            name=text_value_1.name,
-                            uid=text_value_1.uid,
-                            type="TextValue",
-                        )
-                    ],
-                )
-            ],
             type_uid=ct_term_schedule_of_activities.term_uid,
             indication_uids=[dictionary_term_indication.term_uid],
             activity_uids=[activity.uid],
@@ -134,7 +120,6 @@ def test_data():
             name="Default-AAA name with [TextValue]",
             study_uid=None,
             library_name="Sponsor",
-            default_parameter_terms=None,
             type_uid=ct_term_schedule_of_activities.term_uid,
             indication_uids=[dictionary_term_indication.term_uid],
             activity_uids=[activity.uid],
@@ -147,7 +132,6 @@ def test_data():
             name="Default-BBB name with [TextValue]",
             study_uid=None,
             library_name="Sponsor",
-            default_parameter_terms=None,
             type_uid=ct_term_schedule_of_activities.term_uid,
             indication_uids=[dictionary_term_indication.term_uid],
             activity_uids=[activity.uid],
@@ -161,7 +145,6 @@ def test_data():
             name="Default-XXX name with [TextValue]",
             study_uid=None,
             library_name="Sponsor",
-            default_parameter_terms=None,
             type_uid=ct_term_schedule_of_activities.term_uid,
             indication_uids=[dictionary_term_indication.term_uid],
             activity_uids=[activity.uid],
@@ -175,7 +158,6 @@ def test_data():
             name="Default-YYY name with [TextValue]",
             study_uid=None,
             library_name="Sponsor",
-            default_parameter_terms=None,
             type_uid=ct_term_schedule_of_activities.term_uid,
             indication_uids=[dictionary_term_indication.term_uid],
             activity_uids=[activity.uid],
@@ -190,7 +172,6 @@ def test_data():
                 name=f"Default-AAA-{index} name with [TextValue]",
                 study_uid=None,
                 library_name="Sponsor",
-                default_parameter_terms=None,
                 type_uid=ct_term_schedule_of_activities.term_uid,
                 indication_uids=[dictionary_term_indication.term_uid],
                 activity_uids=[activity.uid],
@@ -203,7 +184,6 @@ def test_data():
                 name=f"Default-BBB-{index} name with [TextValue]",
                 study_uid=None,
                 library_name="Sponsor",
-                default_parameter_terms=None,
                 type_uid=ct_term_schedule_of_activities.term_uid,
                 indication_uids=[dictionary_term_indication.term_uid],
                 activity_uids=[activity.uid],
@@ -216,7 +196,6 @@ def test_data():
                 name=f"Default-XXX-{index} name with [TextValue]",
                 study_uid=None,
                 library_name="Sponsor",
-                default_parameter_terms=None,
                 type_uid=ct_term_schedule_of_activities.term_uid,
                 indication_uids=[dictionary_term_indication.term_uid],
                 activity_uids=[activity.uid],
@@ -229,7 +208,6 @@ def test_data():
                 name=f"Default-YYY-{index} name with [TextValue]",
                 study_uid=None,
                 library_name="Sponsor",
-                default_parameter_terms=None,
                 type_uid=ct_term_schedule_of_activities.term_uid,
                 indication_uids=[dictionary_term_indication.term_uid],
                 activity_uids=[activity.uid],
@@ -256,7 +234,6 @@ FOOTNOTE_TEMPLATE_FIELDS_ALL = [
     "user_initials",
     "possible_actions",
     "parameters",
-    "default_parameter_terms",
     "library",
     "type",
     "indications",
@@ -292,23 +269,39 @@ def test_get_footnote_template(api_client):
     assert res["parameters"][0]["name"] == "TextValue"
     assert res["parameters"][0]["terms"] == []
     assert res["type"]["term_uid"] == ct_term_schedule_of_activities.term_uid
-    assert res["type"]["codelist_uid"] == ct_term_schedule_of_activities.codelist_uid
     assert (
-        res["type"]["catalogue_name"] == ct_term_schedule_of_activities.catalogue_name
+        res["type"]["name"]["sponsor_preferred_name"]
+        == ct_term_schedule_of_activities.sponsor_preferred_name
     )
-    assert res["type"]["codelist_uid"] == ct_term_schedule_of_activities.codelist_uid
+    assert (
+        res["type"]["name"]["sponsor_preferred_name_sentence_case"]
+        == ct_term_schedule_of_activities.sponsor_preferred_name_sentence_case
+    )
+    assert (
+        res["type"]["attributes"]["code_submission_value"]
+        == ct_term_schedule_of_activities.code_submission_value
+    )
+    assert (
+        res["type"]["attributes"]["nci_preferred_name"]
+        == ct_term_schedule_of_activities.nci_preferred_name
+    )
     assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
-    assert (
-        res["indications"][0]["dictionary_id"]
-        == dictionary_term_indication.dictionary_id
-    )
     assert res["indications"][0]["name"] == dictionary_term_indication.name
     assert res["activities"][0]["uid"] == activity.uid
     assert res["activities"][0]["name"] == activity.name
+    assert res["activities"][0]["name_sentence_case"] == activity.name_sentence_case
     assert res["activity_groups"][0]["uid"] == activity_group.uid
     assert res["activity_groups"][0]["name"] == activity_group.name
+    assert (
+        res["activity_groups"][0]["name_sentence_case"]
+        == activity_group.name_sentence_case
+    )
     assert res["activity_subgroups"][0]["uid"] == activity_subgroup.uid
     assert res["activity_subgroups"][0]["name"] == activity_subgroup.name
+    assert (
+        res["activity_subgroups"][0]["name_sentence_case"]
+        == activity_subgroup.name_sentence_case
+    )
     assert res["version"] == "1.0"
     assert res["status"] == "Final"
 
@@ -422,37 +415,77 @@ def test_get_versions_of_footnote_template(api_client):
     assert res[0]["uid"] == footnote_templates[1].uid
     assert res[0]["sequence_id"] == "FSA2"
     assert res[0]["type"]["term_uid"] == ct_term_schedule_of_activities.term_uid
-    assert res[0]["type"]["codelist_uid"] == ct_term_schedule_of_activities.codelist_uid
-    assert res[0]["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
     assert (
-        res[0]["indications"][0]["dictionary_id"]
-        == dictionary_term_indication.dictionary_id
+        res[0]["type"]["name"]["sponsor_preferred_name"]
+        == ct_term_schedule_of_activities.sponsor_preferred_name
     )
+    assert (
+        res[0]["type"]["name"]["sponsor_preferred_name_sentence_case"]
+        == ct_term_schedule_of_activities.sponsor_preferred_name_sentence_case
+    )
+    assert (
+        res[0]["type"]["attributes"]["code_submission_value"]
+        == ct_term_schedule_of_activities.code_submission_value
+    )
+    assert (
+        res[0]["type"]["attributes"]["nci_preferred_name"]
+        == ct_term_schedule_of_activities.nci_preferred_name
+    )
+    assert res[0]["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
     assert res[0]["indications"][0]["name"] == dictionary_term_indication.name
     assert res[0]["activities"][0]["uid"] == activity.uid
     assert res[0]["activities"][0]["name"] == activity.name
+    assert res[0]["activities"][0]["name_sentence_case"] == activity.name_sentence_case
     assert res[0]["activity_groups"][0]["uid"] == activity_group.uid
     assert res[0]["activity_groups"][0]["name"] == activity_group.name
+    assert (
+        res[0]["activity_groups"][0]["name_sentence_case"]
+        == activity_group.name_sentence_case
+    )
     assert res[0]["activity_subgroups"][0]["uid"] == activity_subgroup.uid
     assert res[0]["activity_subgroups"][0]["name"] == activity_subgroup.name
+    assert (
+        res[0]["activity_subgroups"][0]["name_sentence_case"]
+        == activity_subgroup.name_sentence_case
+    )
     assert res[0]["version"] == "1.0"
     assert res[0]["status"] == "Final"
     assert res[1]["uid"] == footnote_templates[1].uid
     assert res[1]["sequence_id"] == "FSA2"
     assert res[1]["type"]["term_uid"] == ct_term_schedule_of_activities.term_uid
-    assert res[1]["type"]["codelist_uid"] == ct_term_schedule_of_activities.codelist_uid
-    assert res[1]["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
     assert (
-        res[1]["indications"][0]["dictionary_id"]
-        == dictionary_term_indication.dictionary_id
+        res[1]["type"]["name"]["sponsor_preferred_name"]
+        == ct_term_schedule_of_activities.sponsor_preferred_name
     )
+    assert (
+        res[1]["type"]["name"]["sponsor_preferred_name_sentence_case"]
+        == ct_term_schedule_of_activities.sponsor_preferred_name_sentence_case
+    )
+    assert (
+        res[1]["type"]["attributes"]["code_submission_value"]
+        == ct_term_schedule_of_activities.code_submission_value
+    )
+    assert (
+        res[1]["type"]["attributes"]["nci_preferred_name"]
+        == ct_term_schedule_of_activities.nci_preferred_name
+    )
+    assert res[1]["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
     assert res[1]["indications"][0]["name"] == dictionary_term_indication.name
     assert res[1]["activities"][0]["uid"] == activity.uid
     assert res[1]["activities"][0]["name"] == activity.name
+    assert res[1]["activities"][0]["name_sentence_case"] == activity.name_sentence_case
     assert res[1]["activity_groups"][0]["uid"] == activity_group.uid
     assert res[1]["activity_groups"][0]["name"] == activity_group.name
+    assert (
+        res[1]["activity_groups"][0]["name_sentence_case"]
+        == activity_group.name_sentence_case
+    )
     assert res[1]["activity_subgroups"][0]["uid"] == activity_subgroup.uid
     assert res[1]["activity_subgroups"][0]["name"] == activity_subgroup.name
+    assert (
+        res[1]["activity_subgroups"][0]["name_sentence_case"]
+        == activity_subgroup.name_sentence_case
+    )
     assert res[1]["version"] == "0.1"
     assert res[1]["status"] == "Draft"
 
@@ -467,19 +500,39 @@ def test_get_all_final_versions_of_footnote_template(api_client):
     assert res[0]["uid"] == footnote_templates[1].uid
     assert res[0]["sequence_id"] == "FSA2"
     assert res[0]["type"]["term_uid"] == ct_term_schedule_of_activities.term_uid
-    assert res[0]["type"]["codelist_uid"] == ct_term_schedule_of_activities.codelist_uid
-    assert res[0]["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
     assert (
-        res[0]["indications"][0]["dictionary_id"]
-        == dictionary_term_indication.dictionary_id
+        res[0]["type"]["name"]["sponsor_preferred_name"]
+        == ct_term_schedule_of_activities.sponsor_preferred_name
     )
+    assert (
+        res[0]["type"]["name"]["sponsor_preferred_name_sentence_case"]
+        == ct_term_schedule_of_activities.sponsor_preferred_name_sentence_case
+    )
+    assert (
+        res[0]["type"]["attributes"]["code_submission_value"]
+        == ct_term_schedule_of_activities.code_submission_value
+    )
+    assert (
+        res[0]["type"]["attributes"]["nci_preferred_name"]
+        == ct_term_schedule_of_activities.nci_preferred_name
+    )
+    assert res[0]["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
     assert res[0]["indications"][0]["name"] == dictionary_term_indication.name
     assert res[0]["activities"][0]["uid"] == activity.uid
     assert res[0]["activities"][0]["name"] == activity.name
+    assert res[0]["activities"][0]["name_sentence_case"] == activity.name_sentence_case
     assert res[0]["activity_groups"][0]["uid"] == activity_group.uid
     assert res[0]["activity_groups"][0]["name"] == activity_group.name
+    assert (
+        res[0]["activity_groups"][0]["name_sentence_case"]
+        == activity_group.name_sentence_case
+    )
     assert res[0]["activity_subgroups"][0]["uid"] == activity_subgroup.uid
     assert res[0]["activity_subgroups"][0]["name"] == activity_subgroup.name
+    assert (
+        res[0]["activity_subgroups"][0]["name_sentence_case"]
+        == activity_subgroup.name_sentence_case
+    )
     assert res[0]["version"] == "1.0"
     assert res[0]["status"] == "Final"
 
@@ -584,7 +637,6 @@ def test_create_footnote_template(api_client):
     data = {
         "name": "default_name [TextValue]",
         "library_name": "Sponsor",
-        "default_parameter_terms": [],
         "type_uid": ct_term_schedule_of_activities.term_uid,
         "indication_uids": [dictionary_term_indication.term_uid],
         "activity_uids": [activity.uid],
@@ -602,23 +654,39 @@ def test_create_footnote_template(api_client):
     assert res["parameters"][0]["name"] == "TextValue"
     assert res["parameters"][0]["terms"] == []
     assert res["type"]["term_uid"] == ct_term_schedule_of_activities.term_uid
-    assert res["type"]["codelist_uid"] == ct_term_schedule_of_activities.codelist_uid
     assert (
-        res["type"]["catalogue_name"] == ct_term_schedule_of_activities.catalogue_name
+        res["type"]["name"]["sponsor_preferred_name"]
+        == ct_term_schedule_of_activities.sponsor_preferred_name
     )
-    assert res["type"]["codelist_uid"] == ct_term_schedule_of_activities.codelist_uid
+    assert (
+        res["type"]["name"]["sponsor_preferred_name_sentence_case"]
+        == ct_term_schedule_of_activities.sponsor_preferred_name_sentence_case
+    )
+    assert (
+        res["type"]["attributes"]["code_submission_value"]
+        == ct_term_schedule_of_activities.code_submission_value
+    )
+    assert (
+        res["type"]["attributes"]["nci_preferred_name"]
+        == ct_term_schedule_of_activities.nci_preferred_name
+    )
     assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
-    assert (
-        res["indications"][0]["dictionary_id"]
-        == dictionary_term_indication.dictionary_id
-    )
     assert res["indications"][0]["name"] == dictionary_term_indication.name
     assert res["activities"][0]["uid"] == activity.uid
     assert res["activities"][0]["name"] == activity.name
+    assert res["activities"][0]["name_sentence_case"] == activity.name_sentence_case
     assert res["activity_groups"][0]["uid"] == activity_group.uid
     assert res["activity_groups"][0]["name"] == activity_group.name
+    assert (
+        res["activity_groups"][0]["name_sentence_case"]
+        == activity_group.name_sentence_case
+    )
     assert res["activity_subgroups"][0]["uid"] == activity_subgroup.uid
     assert res["activity_subgroups"][0]["name"] == activity_subgroup.name
+    assert (
+        res["activity_subgroups"][0]["name_sentence_case"]
+        == activity_subgroup.name_sentence_case
+    )
     assert res["version"] == "0.1"
     assert res["status"] == "Draft"
     assert set(list(res.keys())) == set(FOOTNOTE_TEMPLATE_FIELDS_ALL)
@@ -639,18 +707,40 @@ def test_create_new_version_of_footnote_template(api_client):
     assert res["uid"]
     assert res["sequence_id"]
     assert res["name"] == "new test name"
-    assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
+    assert res["type"]["term_uid"] == ct_term_schedule_of_activities.term_uid
     assert (
-        res["indications"][0]["dictionary_id"]
-        == dictionary_term_indication.dictionary_id
+        res["type"]["name"]["sponsor_preferred_name"]
+        == ct_term_schedule_of_activities.sponsor_preferred_name
     )
+    assert (
+        res["type"]["name"]["sponsor_preferred_name_sentence_case"]
+        == ct_term_schedule_of_activities.sponsor_preferred_name_sentence_case
+    )
+    assert (
+        res["type"]["attributes"]["code_submission_value"]
+        == ct_term_schedule_of_activities.code_submission_value
+    )
+    assert (
+        res["type"]["attributes"]["nci_preferred_name"]
+        == ct_term_schedule_of_activities.nci_preferred_name
+    )
+    assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
     assert res["indications"][0]["name"] == dictionary_term_indication.name
     assert res["activities"][0]["uid"] == activity.uid
     assert res["activities"][0]["name"] == activity.name
+    assert res["activities"][0]["name_sentence_case"] == activity.name_sentence_case
     assert res["activity_groups"][0]["uid"] == activity_group.uid
     assert res["activity_groups"][0]["name"] == activity_group.name
+    assert (
+        res["activity_groups"][0]["name_sentence_case"]
+        == activity_group.name_sentence_case
+    )
     assert res["activity_subgroups"][0]["uid"] == activity_subgroup.uid
     assert res["activity_subgroups"][0]["name"] == activity_subgroup.name
+    assert (
+        res["activity_subgroups"][0]["name_sentence_case"]
+        == activity_subgroup.name_sentence_case
+    )
     assert res["version"] == "1.1"
     assert res["status"] == "Draft"
     assert set(list(res.keys())) == set(FOOTNOTE_TEMPLATE_FIELDS_ALL)
@@ -667,142 +757,41 @@ def test_get_specific_version_of_footnote_template(api_client):
     assert res["uid"] == footnote_templates[4].uid
     assert res["sequence_id"] == "FSA5"
     assert res["type"]["term_uid"] == ct_term_schedule_of_activities.term_uid
-    assert res["type"]["codelist_uid"] == ct_term_schedule_of_activities.codelist_uid
-    assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
     assert (
-        res["indications"][0]["dictionary_id"]
-        == dictionary_term_indication.dictionary_id
+        res["type"]["name"]["sponsor_preferred_name"]
+        == ct_term_schedule_of_activities.sponsor_preferred_name
     )
+    assert (
+        res["type"]["name"]["sponsor_preferred_name_sentence_case"]
+        == ct_term_schedule_of_activities.sponsor_preferred_name_sentence_case
+    )
+    assert (
+        res["type"]["attributes"]["code_submission_value"]
+        == ct_term_schedule_of_activities.code_submission_value
+    )
+    assert (
+        res["type"]["attributes"]["nci_preferred_name"]
+        == ct_term_schedule_of_activities.nci_preferred_name
+    )
+    assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
     assert res["indications"][0]["name"] == dictionary_term_indication.name
     assert res["activities"][0]["uid"] == activity.uid
     assert res["activities"][0]["name"] == activity.name
+    assert res["activities"][0]["name_sentence_case"] == activity.name_sentence_case
     assert res["activity_groups"][0]["uid"] == activity_group.uid
     assert res["activity_groups"][0]["name"] == activity_group.name
+    assert (
+        res["activity_groups"][0]["name_sentence_case"]
+        == activity_group.name_sentence_case
+    )
     assert res["activity_subgroups"][0]["uid"] == activity_subgroup.uid
     assert res["activity_subgroups"][0]["name"] == activity_subgroup.name
+    assert (
+        res["activity_subgroups"][0]["name_sentence_case"]
+        == activity_subgroup.name_sentence_case
+    )
     assert res["version"] == "1.1"
     assert res["status"] == "Draft"
-
-
-def test_create_footnote_template_with_default_parameters(api_client):
-    data = {
-        "name": "test_name [TextValue]",
-        "library_name": "Sponsor",
-        "default_parameter_terms": [
-            {
-                "position": 1,
-                "conjunction": "",
-                "terms": [
-                    {
-                        "index": 1,
-                        "name": text_value_1.name,
-                        "uid": text_value_1.uid,
-                        "type": "TextValue",
-                    }
-                ],
-            }
-        ],
-        "type_uid": ct_term_schedule_of_activities.term_uid,
-        "indication_uids": [dictionary_term_indication.term_uid],
-        "activity_uids": [activity.uid],
-        "activity_group_uids": [activity_group.uid],
-        "activity_subgroup_uids": [activity_subgroup.uid],
-    }
-    response = api_client.post(URL, json=data)
-    res = response.json()
-    log.info("Created Footnote Template with default parameter terms: %s", res)
-
-    assert response.status_code == 201
-    assert res["uid"]
-    assert res["sequence_id"]
-    assert res["name"] == "test_name [TextValue]"
-    assert res["parameters"][0]["name"] == "TextValue"
-    assert res["parameters"][0]["terms"] == []
-    assert (
-        res["default_parameter_terms"]["0"][0]["terms"][0]["name"] == text_value_1.name
-    )
-    assert res["default_parameter_terms"]["0"][0]["terms"][0]["uid"] == text_value_1.uid
-    assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
-    assert (
-        res["indications"][0]["dictionary_id"]
-        == dictionary_term_indication.dictionary_id
-    )
-    assert res["indications"][0]["name"] == dictionary_term_indication.name
-    assert res["activities"][0]["uid"] == activity.uid
-    assert res["activities"][0]["name"] == activity.name
-    assert res["activity_groups"][0]["uid"] == activity_group.uid
-    assert res["activity_groups"][0]["name"] == activity_group.name
-    assert res["activity_subgroups"][0]["uid"] == activity_subgroup.uid
-    assert res["activity_subgroups"][0]["name"] == activity_subgroup.name
-    assert res["version"] == "0.1"
-    assert res["status"] == "Draft"
-    assert set(list(res.keys())) == set(FOOTNOTE_TEMPLATE_FIELDS_ALL)
-    for key in FOOTNOTE_TEMPLATE_FIELDS_NOT_NULL:
-        assert res[key] is not None
-
-
-def test_change_footnote_template_parameters(api_client):
-    data = {
-        "set_number": 0,
-        "default_parameter_terms": [
-            {
-                "position": 1,
-                "conjunction": "and",
-                "terms": [
-                    {
-                        "index": 1,
-                        "name": text_value_1.name,
-                        "uid": text_value_1.uid,
-                        "type": "TextValue",
-                    },
-                    {
-                        "index": 2,
-                        "name": text_value_2.name,
-                        "uid": text_value_2.uid,
-                        "type": "TextValue",
-                    },
-                ],
-            }
-        ],
-    }
-    response = api_client.patch(
-        f"{URL}/{footnote_templates[0].uid}/default-parameter-terms",
-        json=data,
-    )
-    res = response.json()
-    log.info("Changed Footnote Template parameters: %s", res)
-
-    assert response.status_code == 200
-    assert res["uid"]
-    assert res["sequence_id"]
-    assert res["name"] == "Default name with [TextValue]"
-    assert res["parameters"][0]["name"] == "TextValue"
-    assert res["parameters"][0]["terms"] == []
-    assert (
-        res["default_parameter_terms"]["0"][0]["terms"][0]["name"] == text_value_1.name
-    )
-    assert res["default_parameter_terms"]["0"][0]["terms"][0]["uid"] == text_value_1.uid
-    assert (
-        res["default_parameter_terms"]["0"][0]["terms"][1]["name"] == text_value_2.name
-    )
-    assert res["default_parameter_terms"]["0"][0]["terms"][1]["uid"] == text_value_2.uid
-    assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
-    assert (
-        res["indications"][0]["dictionary_id"]
-        == dictionary_term_indication.dictionary_id
-    )
-    assert res["indications"][0]["name"] == dictionary_term_indication.name
-    assert res["activities"][0]["uid"] == activity.uid
-    assert res["activities"][0]["name"] == activity.name
-    assert res["activity_groups"][0]["uid"] == activity_group.uid
-    assert res["activity_groups"][0]["name"] == activity_group.name
-    assert res["activity_subgroups"][0]["uid"] == activity_subgroup.uid
-    assert res["activity_subgroups"][0]["name"] == activity_subgroup.name
-    assert res["version"] == "1.0"
-    assert res["status"] == "Final"
-    assert set(list(res.keys())) == set(FOOTNOTE_TEMPLATE_FIELDS_ALL)
-    for key in FOOTNOTE_TEMPLATE_FIELDS_NOT_NULL:
-        assert res[key] is not None
 
 
 def test_change_footnote_template_indexings(api_client):
@@ -838,27 +827,57 @@ def test_change_footnote_template_indexings(api_client):
     assert res["uid"]
     assert res["sequence_id"]
     assert res["name"] == "Default-AAA name with [TextValue]"
-    assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
+    assert res["type"]["term_uid"] == ct_term_schedule_of_activities.term_uid
     assert (
-        res["indications"][0]["dictionary_id"]
-        == dictionary_term_indication.dictionary_id
+        res["type"]["name"]["sponsor_preferred_name"]
+        == ct_term_schedule_of_activities.sponsor_preferred_name
     )
+    assert (
+        res["type"]["name"]["sponsor_preferred_name_sentence_case"]
+        == ct_term_schedule_of_activities.sponsor_preferred_name_sentence_case
+    )
+    assert (
+        res["type"]["attributes"]["code_submission_value"]
+        == ct_term_schedule_of_activities.code_submission_value
+    )
+    assert (
+        res["type"]["attributes"]["nci_preferred_name"]
+        == ct_term_schedule_of_activities.nci_preferred_name
+    )
+    assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
     assert res["indications"][0]["name"] == dictionary_term_indication.name
     assert res["indications"][1]["term_uid"] == _indication.term_uid
-    assert res["indications"][1]["dictionary_id"] == _indication.dictionary_id
     assert res["indications"][1]["name"] == _indication.name
     assert res["activities"][0]["uid"] == activity.uid
     assert res["activities"][0]["name"] == activity.name
+    assert res["activities"][0]["name_sentence_case"] == activity.name_sentence_case
     assert res["activities"][1]["uid"] == _activity.uid
     assert res["activities"][1]["name"] == _activity.name
+    assert res["activities"][1]["name_sentence_case"] == _activity.name_sentence_case
     assert res["activity_groups"][0]["uid"] == activity_group.uid
     assert res["activity_groups"][0]["name"] == activity_group.name
+    assert (
+        res["activity_groups"][0]["name_sentence_case"]
+        == activity_group.name_sentence_case
+    )
     assert res["activity_groups"][1]["uid"] == _activity_group.uid
     assert res["activity_groups"][1]["name"] == _activity_group.name
+    assert (
+        res["activity_groups"][1]["name_sentence_case"]
+        == _activity_group.name_sentence_case
+    )
     assert res["activity_subgroups"][0]["uid"] == activity_subgroup.uid
     assert res["activity_subgroups"][0]["name"] == activity_subgroup.name
+    assert (
+        res["activity_subgroups"][0]["name_sentence_case"]
+        == activity_subgroup.name_sentence_case
+    )
     assert res["activity_subgroups"][1]["uid"] == _activity_subgroup.uid
     assert res["activity_subgroups"][1]["name"] == _activity_subgroup.name
+    assert (
+        res["activity_subgroups"][1]["name_sentence_case"]
+        == _activity_subgroup.name_sentence_case
+    )
     assert res["version"] == "1.0"
     assert res["status"] == "Final"
     assert set(list(res.keys())) == set(FOOTNOTE_TEMPLATE_FIELDS_ALL)
@@ -881,21 +900,41 @@ def test_approve_footnote_template(api_client):
     assert response.status_code == 201
     assert res["uid"] == footnote_templates[3].uid
     assert res["sequence_id"] == "FSA4"
-    assert res["type"]["term_uid"] == ct_term_schedule_of_activities.term_uid
-    assert res["type"]["codelist_uid"] == ct_term_schedule_of_activities.codelist_uid
     assert res["name"] == "Default-XXX name with [TextValue]"
-    assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
+    assert res["type"]["term_uid"] == ct_term_schedule_of_activities.term_uid
     assert (
-        res["indications"][0]["dictionary_id"]
-        == dictionary_term_indication.dictionary_id
+        res["type"]["name"]["sponsor_preferred_name"]
+        == ct_term_schedule_of_activities.sponsor_preferred_name
     )
+    assert (
+        res["type"]["name"]["sponsor_preferred_name_sentence_case"]
+        == ct_term_schedule_of_activities.sponsor_preferred_name_sentence_case
+    )
+    assert (
+        res["type"]["attributes"]["code_submission_value"]
+        == ct_term_schedule_of_activities.code_submission_value
+    )
+    assert (
+        res["type"]["attributes"]["nci_preferred_name"]
+        == ct_term_schedule_of_activities.nci_preferred_name
+    )
+    assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
     assert res["indications"][0]["name"] == dictionary_term_indication.name
     assert res["activities"][0]["uid"] == activity.uid
     assert res["activities"][0]["name"] == activity.name
+    assert res["activities"][0]["name_sentence_case"] == activity.name_sentence_case
     assert res["activity_groups"][0]["uid"] == activity_group.uid
     assert res["activity_groups"][0]["name"] == activity_group.name
+    assert (
+        res["activity_groups"][0]["name_sentence_case"]
+        == activity_group.name_sentence_case
+    )
     assert res["activity_subgroups"][0]["uid"] == activity_subgroup.uid
     assert res["activity_subgroups"][0]["name"] == activity_subgroup.name
+    assert (
+        res["activity_subgroups"][0]["name_sentence_case"]
+        == activity_subgroup.name_sentence_case
+    )
     assert res["version"] == "1.0"
     assert res["status"] == "Final"
 
@@ -949,18 +988,40 @@ def test_cascade_approve_footnote_template(api_client):
     assert res["uid"] == footnote_templates[5].uid
     assert res["sequence_id"] == "FSA6"
     assert res["name"] == "cascade check [TextValue]"
-    assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
+    assert res["type"]["term_uid"] == ct_term_schedule_of_activities.term_uid
     assert (
-        res["indications"][0]["dictionary_id"]
-        == dictionary_term_indication.dictionary_id
+        res["type"]["name"]["sponsor_preferred_name"]
+        == ct_term_schedule_of_activities.sponsor_preferred_name
     )
+    assert (
+        res["type"]["name"]["sponsor_preferred_name_sentence_case"]
+        == ct_term_schedule_of_activities.sponsor_preferred_name_sentence_case
+    )
+    assert (
+        res["type"]["attributes"]["code_submission_value"]
+        == ct_term_schedule_of_activities.code_submission_value
+    )
+    assert (
+        res["type"]["attributes"]["nci_preferred_name"]
+        == ct_term_schedule_of_activities.nci_preferred_name
+    )
+    assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
     assert res["indications"][0]["name"] == dictionary_term_indication.name
     assert res["activities"][0]["uid"] == activity.uid
     assert res["activities"][0]["name"] == activity.name
+    assert res["activities"][0]["name_sentence_case"] == activity.name_sentence_case
     assert res["activity_groups"][0]["uid"] == activity_group.uid
     assert res["activity_groups"][0]["name"] == activity_group.name
+    assert (
+        res["activity_groups"][0]["name_sentence_case"]
+        == activity_group.name_sentence_case
+    )
     assert res["activity_subgroups"][0]["uid"] == activity_subgroup.uid
     assert res["activity_subgroups"][0]["name"] == activity_subgroup.name
+    assert (
+        res["activity_subgroups"][0]["name_sentence_case"]
+        == activity_subgroup.name_sentence_case
+    )
     assert res["version"] == "2.0"
     assert res["status"] == "Final"
 
@@ -989,19 +1050,39 @@ def test_inactivate_footnote_template(api_client):
     assert res["uid"] == footnote_templates[5].uid
     assert res["sequence_id"] == "FSA6"
     assert res["type"]["term_uid"] == ct_term_schedule_of_activities.term_uid
-    assert res["type"]["codelist_uid"] == ct_term_schedule_of_activities.codelist_uid
-    assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
     assert (
-        res["indications"][0]["dictionary_id"]
-        == dictionary_term_indication.dictionary_id
+        res["type"]["name"]["sponsor_preferred_name"]
+        == ct_term_schedule_of_activities.sponsor_preferred_name
     )
+    assert (
+        res["type"]["name"]["sponsor_preferred_name_sentence_case"]
+        == ct_term_schedule_of_activities.sponsor_preferred_name_sentence_case
+    )
+    assert (
+        res["type"]["attributes"]["code_submission_value"]
+        == ct_term_schedule_of_activities.code_submission_value
+    )
+    assert (
+        res["type"]["attributes"]["nci_preferred_name"]
+        == ct_term_schedule_of_activities.nci_preferred_name
+    )
+    assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
     assert res["indications"][0]["name"] == dictionary_term_indication.name
     assert res["activities"][0]["uid"] == activity.uid
     assert res["activities"][0]["name"] == activity.name
+    assert res["activities"][0]["name_sentence_case"] == activity.name_sentence_case
     assert res["activity_groups"][0]["uid"] == activity_group.uid
     assert res["activity_groups"][0]["name"] == activity_group.name
+    assert (
+        res["activity_groups"][0]["name_sentence_case"]
+        == activity_group.name_sentence_case
+    )
     assert res["activity_subgroups"][0]["uid"] == activity_subgroup.uid
     assert res["activity_subgroups"][0]["name"] == activity_subgroup.name
+    assert (
+        res["activity_subgroups"][0]["name_sentence_case"]
+        == activity_subgroup.name_sentence_case
+    )
     assert res["version"] == "2.0"
     assert res["status"] == "Retired"
 
@@ -1022,19 +1103,39 @@ def test_reactivate_footnote_template(api_client):
     assert res["uid"] == footnote_templates[5].uid
     assert res["sequence_id"] == "FSA6"
     assert res["type"]["term_uid"] == ct_term_schedule_of_activities.term_uid
-    assert res["type"]["codelist_uid"] == ct_term_schedule_of_activities.codelist_uid
-    assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
     assert (
-        res["indications"][0]["dictionary_id"]
-        == dictionary_term_indication.dictionary_id
+        res["type"]["name"]["sponsor_preferred_name"]
+        == ct_term_schedule_of_activities.sponsor_preferred_name
     )
+    assert (
+        res["type"]["name"]["sponsor_preferred_name_sentence_case"]
+        == ct_term_schedule_of_activities.sponsor_preferred_name_sentence_case
+    )
+    assert (
+        res["type"]["attributes"]["code_submission_value"]
+        == ct_term_schedule_of_activities.code_submission_value
+    )
+    assert (
+        res["type"]["attributes"]["nci_preferred_name"]
+        == ct_term_schedule_of_activities.nci_preferred_name
+    )
+    assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
     assert res["indications"][0]["name"] == dictionary_term_indication.name
     assert res["activities"][0]["uid"] == activity.uid
     assert res["activities"][0]["name"] == activity.name
+    assert res["activities"][0]["name_sentence_case"] == activity.name_sentence_case
     assert res["activity_groups"][0]["uid"] == activity_group.uid
     assert res["activity_groups"][0]["name"] == activity_group.name
+    assert (
+        res["activity_groups"][0]["name_sentence_case"]
+        == activity_group.name_sentence_case
+    )
     assert res["activity_subgroups"][0]["uid"] == activity_subgroup.uid
     assert res["activity_subgroups"][0]["name"] == activity_subgroup.name
+    assert (
+        res["activity_subgroups"][0]["name_sentence_case"]
+        == activity_subgroup.name_sentence_case
+    )
     assert res["version"] == "2.0"
     assert res["status"] == "Final"
 
@@ -1053,14 +1154,13 @@ def test_footnote_template_audit_trail(api_client):
     log.info("FootnoteTemplate Audit Trail: %s", res)
 
     assert response.status_code == 200
-    assert res["total"] == 55
+    assert res["total"] == 54
     expected_uids = [
         "FootnoteTemplate_000006",
         "FootnoteTemplate_000006",
         "FootnoteTemplate_000006",
         "FootnoteTemplate_000006",
         "FootnoteTemplate_000004",
-        "FootnoteTemplate_000027",
         "FootnoteTemplate_000005",
         "FootnoteTemplate_000026",
         "FootnoteTemplate_000025",
@@ -1121,7 +1221,6 @@ def test_footnote_template_sequence_id_generation(api_client):
     data = {
         "name": "user defined [TextValue]",
         "library_name": lib["name"],
-        "default_parameter_terms": [],
         "type_uid": ct_term.term_uid,
         "indication_uids": [dictionary_term_indication.term_uid],
         "activity_uids": [activity.uid],
@@ -1139,21 +1238,35 @@ def test_footnote_template_sequence_id_generation(api_client):
     assert res["parameters"][0]["name"] == "TextValue"
     assert res["parameters"][0]["terms"] == []
     assert res["type"]["term_uid"] == ct_term.term_uid
-    assert res["type"]["codelist_uid"] == ct_term.codelist_uid
-    assert res["type"]["catalogue_name"] == ct_term.catalogue_name
-    assert res["type"]["codelist_uid"] == ct_term.codelist_uid
-    assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
     assert (
-        res["indications"][0]["dictionary_id"]
-        == dictionary_term_indication.dictionary_id
+        res["type"]["name"]["sponsor_preferred_name"] == ct_term.sponsor_preferred_name
     )
+    assert (
+        res["type"]["name"]["sponsor_preferred_name_sentence_case"]
+        == ct_term.sponsor_preferred_name_sentence_case
+    )
+    assert (
+        res["type"]["attributes"]["code_submission_value"]
+        == ct_term.code_submission_value
+    )
+    assert res["type"]["attributes"]["nci_preferred_name"] == ct_term.nci_preferred_name
+    assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
     assert res["indications"][0]["name"] == dictionary_term_indication.name
     assert res["activities"][0]["uid"] == activity.uid
     assert res["activities"][0]["name"] == activity.name
+    assert res["activities"][0]["name_sentence_case"] == activity.name_sentence_case
     assert res["activity_groups"][0]["uid"] == activity_group.uid
     assert res["activity_groups"][0]["name"] == activity_group.name
+    assert (
+        res["activity_groups"][0]["name_sentence_case"]
+        == activity_group.name_sentence_case
+    )
     assert res["activity_subgroups"][0]["uid"] == activity_subgroup.uid
     assert res["activity_subgroups"][0]["name"] == activity_subgroup.name
+    assert (
+        res["activity_subgroups"][0]["name_sentence_case"]
+        == activity_subgroup.name_sentence_case
+    )
     assert res["version"] == "0.1"
     assert res["status"] == "Draft"
     assert set(list(res.keys())) == set(FOOTNOTE_TEMPLATE_FIELDS_ALL)
@@ -1165,7 +1278,6 @@ def test_cannot_create_footnote_template_with_existing_name(api_client):
     data = {
         "name": "Default name with [TextValue]",
         "library_name": "Sponsor",
-        "default_parameter_terms": [],
         "type_uid": ct_term_schedule_of_activities.term_uid,
         "indication_uids": [dictionary_term_indication.term_uid],
         "activity_group_uids": [activity_group.uid],

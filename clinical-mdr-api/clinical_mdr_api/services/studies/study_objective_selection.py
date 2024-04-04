@@ -77,7 +77,10 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
         )
 
     def _transform_all_to_response_model(
-        self, study_selection: StudySelectionObjectivesAR, no_brackets: bool
+        self,
+        study_selection: StudySelectionObjectivesAR,
+        no_brackets: bool,
+        study_value_version: str | None = None,
     ) -> list[models.StudySelectionObjective]:
         result = []
         for order, selection in enumerate(
@@ -97,6 +100,7 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
                         ),
                         no_brackets=no_brackets,
                         find_project_by_study_uid=self._repos.project_repository.find_by_study_uid,
+                        study_value_version=study_value_version,
                     )
                 )
             else:
@@ -108,6 +112,7 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
                         get_objective_template_by_uid_callback=self._transform_latest_objective_template_model,
                         get_objective_template_by_uid_version_callback=self._transform_objective_template_model,
                         find_project_by_study_uid=self._repos.project_repository.find_by_study_uid,
+                        study_value_version=study_value_version,
                     )
                 )
         return result
@@ -120,7 +125,7 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
             study_uid, study_selection_uid, for_update=True
         )
         objective_uid = selection.objective_uid
-        objective_ar = self._repos.objective_repository.find_by_uid_2(objective_uid)
+        objective_ar = self._repos.objective_repository.find_by_uid(objective_uid)
         if objective_ar.item_metadata.status == LibraryItemStatus.DRAFT:
             objective_ar.approve(self.author)
             self._repos.objective_repository.save(objective_ar)
@@ -153,7 +158,7 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
             study_uid, study_selection_uid, for_update=True
         )
         objective_uid = selection.objective_uid
-        objective_ar = self._repos.objective_repository.find_by_uid_2(objective_uid)
+        objective_ar = self._repos.objective_repository.find_by_uid(objective_uid)
         if objective_ar.item_metadata.status == LibraryItemStatus.DRAFT:
             objective_ar.approve(self.author)
             self._repos.objective_repository.save(objective_ar)
@@ -191,7 +196,7 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
                 study_uid=study_uid, for_update=True
             )
             objective_repo = repos.objective_repository
-            selected_objective: ObjectiveAR = objective_repo.find_by_uid_2(
+            selected_objective: ObjectiveAR = objective_repo.find_by_uid(
                 selection_create_input.objective_uid, status=LibraryItemStatus.FINAL
             )
             if selected_objective is None:
@@ -221,7 +226,7 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
             # Check the state of the objective, if latest version is in draft then we approve it, if retired then we throw a error
             objective_repo = self._repos.objective_repository
             if new_selection.objective_uid is not None:
-                objective_ar = objective_repo.find_by_uid_2(
+                objective_ar = objective_repo.find_by_uid(
                     new_selection.objective_uid, for_update=True
                 )
                 if objective_ar is None:
@@ -296,7 +301,7 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
                     raise NotFoundException(
                         f"Could not find node with label ObjectiveRoot and name {objective_ar.name}"
                     )
-            objective_ar = objective_service.repository.find_by_uid_2(
+            objective_ar = objective_service.repository.find_by_uid(
                 objective_uid, for_update=True
             )
             # getting selection aggregate
@@ -402,7 +407,7 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
                 selections = []
                 for template_input in selection_create_input:
                     # Get objective template
-                    objective_template = objective_template_repo.find_by_uid_2(
+                    objective_template = objective_template_repo.find_by_uid(
                         uid=template_input.objective_template_uid
                     )
                     if objective_template is None:
@@ -676,7 +681,9 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
 
             selections = []
             parsed_selections = self._transform_all_to_response_model(
-                objective_selection_ar, no_brackets=no_brackets
+                objective_selection_ar,
+                no_brackets=no_brackets,
+                study_value_version=study_value_version,
             )
             for selection in parsed_selections:
                 selections.append(selection)
@@ -872,7 +879,7 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
         else:
             objective_level_order = None
 
-        requested_objective = self._repos.objective_repository.find_by_uid_2(
+        requested_objective = self._repos.objective_repository.find_by_uid(
             request_study_objective.objective_uid
         )
 
@@ -935,7 +942,7 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
                 selection_update_input.objective_uid
                 and selection_update_input.objective_uid != current_vo.objective_uid
             ):
-                objective_ar = objective_repo.find_by_uid_2(
+                objective_ar = objective_repo.find_by_uid(
                     updated_selection.objective_uid, for_update=True
                 )
                 # if in draft status - approve

@@ -40,7 +40,7 @@
       }
    },
    {
-      "name": "Test POST non existing numeric value",
+      "name": "Test POST non-existent numeric value",
       "request": {
          "headers": {},
          "method": "POST",
@@ -48,7 +48,7 @@
             "name_sentence_case": "time_point_name_sentence_case1",
             "definition": "time_point_definition1",
             "library_name": "Sponsor",
-            "numeric_value_uid": "NumericValue_NON_EXISTING",
+            "numeric_value_uid": "NumericValue_NON_EXISTENT",
             "unit_definition_uid": "UnitDefinition_000001",
             "time_reference_uid": "term_root_final"
          },
@@ -57,7 +57,7 @@
       "response": {
          "code": 400,
          "result": {
-            "message": "TimePointVO tried to connect to non existing numeric value identified by uid (NumericValue_NON_EXISTING)",
+            "message": "TimePointVO tried to connect to non-existent numeric value identified by uid (NumericValue_NON_EXISTENT)",
             "method": "POST",
             "path": "http://testserver/concepts/time-points",
             "time": "2020-11-10T01:51:17.884429",
@@ -66,7 +66,7 @@
       }
    },
    {
-      "name": "Test POST non existing unit definition",
+      "name": "Test POST non-existent unit definition",
       "request": {
          "headers": {},
          "method": "POST",
@@ -75,7 +75,7 @@
             "definition": "time_point_definition1",
             "library_name": "Sponsor",
             "numeric_value_uid": "NumericValue_000001",
-            "unit_definition_uid": "UnitDefinition_NON_EXISTING",
+            "unit_definition_uid": "UnitDefinition_NON_EXISTENT",
             "time_reference_uid": "term_root_final"
          },
          "url": "/concepts/time-points"
@@ -83,7 +83,7 @@
       "response": {
          "code": 400,
          "result": {
-            "message": "TimePointVO tried to connect to non existing unit definition identified by uid (UnitDefinition_NON_EXISTING)",
+            "message": "TimePointVO tried to connect to non-existent unit definition identified by uid (UnitDefinition_NON_EXISTENT)",
             "method": "POST",
             "path": "http://testserver/concepts/time-points",
             "time": "2020-11-10T01:51:17.884429",
@@ -92,7 +92,7 @@
       }
    },
    {
-      "name": "Test POST non existing time reference",
+      "name": "Test POST non-existent time reference",
       "request": {
          "headers": {},
          "method": "POST",
@@ -102,14 +102,14 @@
             "library_name": "Sponsor",
             "numeric_value_uid": "NumericValue_000001",
             "unit_definition_uid": "UnitDefinition_000001",
-            "time_reference_uid": "TimeReference_NON_EXISTING"
+            "time_reference_uid": "TimeReference_NON_EXISTENT"
          },
          "url": "/concepts/time-points"
       },
       "response": {
          "code": 400,
          "result": {
-            "message": "TimePointVO tried to connect to non existing CTTermRoot identified by uid (TimeReference_NON_EXISTING)",
+            "message": "TimePointVO tried to connect to non-existent CTTermRoot identified by uid (TimeReference_NON_EXISTENT)",
             "method": "POST",
             "path": "http://testserver/concepts/time-points",
             "time": "2020-11-10T01:51:17.884429",

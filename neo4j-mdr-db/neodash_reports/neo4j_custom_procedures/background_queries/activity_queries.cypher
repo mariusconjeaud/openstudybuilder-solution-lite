@@ -128,7 +128,7 @@ apoc.create.vRelationship(unit_ct,"HAS",{type:"logical"},unit_cl) END as r14
 RETURN g,sg,p_agrp,p_asgrp,p_act,ai,aic,aicp,aicpp,aitm1,aitmc1,r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,r11,r12,r13,r14,R3,R4,R5,R6,ct2,unit_ct,role,dtype,unit_cl,cl
 
 
-//activityInstance as cosmos concept
+//Activity as cosmos concept
 MATCH(p_act:ActivityValue)-[R1:HAS_GROUPING]->(g:ActivityGrouping)-[R2:IN_SUBGROUP]->(sg:ActivityValidGroup)<-[R3:HAS_GROUP]-(p_asgrp:ActivitySubGroupValue),
 (sg)-[R4:IN_GROUP]->(p_agrp:ActivityGroupValue) where p_act.name=$neodash_cosmos_activity
 MATCH(g:ActivityGrouping)<-[R5:HAS_ACTIVITY]-(p_ai:ActivityInstanceValue)-[R6:CONTAINS_ACTIVITY_ITEM]->(p_aitm1:ActivityItem)
@@ -269,6 +269,151 @@ apoc.map.fromPairs([
                             ]) as activity
         return distinct activity
 
+//Activity as cosmos SDTM specialisation
+MATCH(p_act:ActivityValue)-[R1:HAS_GROUPING]->(g:ActivityGrouping)-[R2:IN_SUBGROUP]->(sg:ActivityValidGroup)<-[R3:HAS_GROUP]-(p_asgrp:ActivitySubGroupValue),
+(sg)-[R4:IN_GROUP]->(p_agrp:ActivityGroupValue) where p_act.name ='Systolic Blood Pressure'
+MATCH(g:ActivityGrouping)<-[R5:HAS_ACTIVITY]-(p_ai:ActivityInstanceValue)-[R6:CONTAINS_ACTIVITY_ITEM]->(p_aitm1:ActivityItem),(p_ai)<-[:LATEST]-(x)
+MATCH (p_ai)-[R42:ACTIVITY_INSTANCE_CLASS]->(p_aicr:ActivityInstanceClassRoot)-[R43:LATEST]->(p_aic:ActivityInstanceClassValue)
+OPTIONAL MATCH(p_aitm1)<-[R8:HAS_ACTIVITY_ITEM]-(p_aitmc1r:ActivityItemClassRoot)-[R9:LATEST]->(p_aitmc1:ActivityItemClassValue)
+OPTIONAL MATCH (p_aicr)-[R10:PARENT_CLASS]->(p_aicrp:ActivityInstanceClassRoot)-[R11:LATEST]->(p_aicp:ActivityInstanceClassValue)
+OPTIONAL MATCH (p_aicrp)-[R12:PARENT_CLASS]->(p_aicrpp:ActivityInstanceClassRoot)-[R13:LATEST]->(p_aicpp:ActivityInstanceClassValue)
+OPTIONAL MATCH(p_aitmc1r)<-[R14:HAS_ITEM_CLASS]-(p_aicr)
+OPTIONAL MATCH(p_aitmc1r)<-[R15:HAS_ITEM_CLASS]-(p_aicrp)
+OPTIONAL MATCH(p_aitmc1r)<-[R16:HAS_ITEM_CLASS]-(p_aicrpp) 
+OPTIONAL MATCH (p_aitm1)-[R17]->(p_ct2cd:CTTermRoot)-[R18:HAS_NAME_ROOT]->(ct2cdr:CTTermNameRoot)-[R19:LATEST]->(p_ct2_sponsor), (p_ct2cd)-[R20:HAS_ATTRIBUTES_ROOT]->(ct2att:CTTermAttributesRoot)-[R21:LATEST]->(p_ct2_cdisc)
+OPTIONAL MATCH (p_aitm1)-[:HAS_UNIT_DEFINITION]->(p_unitdefr:UnitDefinitionRoot)-[R22:LATEST]->(p_unitdef:UnitDefinitionValue)
+OPTIONAL MATCH(p_ct2cd)<-[R23:HAS_TERM]-(clr:CTCodelistRoot)-[R24:HAS_ATTRIBUTES_ROOT]->(clatt:CTCodelistAttributesRoot),(clr)-[R25:HAS_NAME_ROOT]->(clattr:CTCodelistNameRoot)-[R26:LATEST]-(p_cl_sponsor),(clatt)-[R27:LATEST]->(p_cl_cdisc:CTCodelistAttributesValue),(pc:CTPackageCodelist) where ((p_cl_cdisc)<-[:CONTAINS_ATTRIBUTES]-(pc) and pc.uid CONTAINS "SDTM") or NOT ((p_cl_cdisc)<-[:CONTAINS_ATTRIBUTES]-())
+OPTIONAL MATCH (p_unitdef:UnitDefinitionValue)-[R28:HAS_CT_DIMENSION]-(unit_term:CTTermRoot)<-[R29:HAS_TERM]-(cl_root)-[R30:HAS_ATTRIBUTES_ROOT]->(clattr2)-[R31:LATEST]->(unit_cld)
+OPTIONAL MATCH(p_aitmc1)-[R32:HAS_ROLE]->(p_role_r:CTTermRoot),(p_role_r)-[R33:HAS_NAME_ROOT]->(ctnr_role)-[R34:LATEST]->(p_role_val), (p_role_r)-[R35:HAS_ATTRIBUTES_ROOT]->(ctattr)-[R36:LATEST]->(p_role_attr_val)
+OPTIONAL MATCH(p_aitmc1)-[R37:HAS_DATA_TYPE]->(p_dtype_r),(p_dtype_r)-[R38:HAS_NAME_ROOT]->(ctnr_dtype)-[R39:LATEST]->(p_dtype_val), (p_dtype_r)-[R40:HAS_ATTRIBUTES_ROOT]->(ctattr_dtype)-[R41:LATEST]->(p_dtype_attr_val)
+WITH distinct g,sg,p_agrp,p_asgrp,p_act,p_ai,p_aicr,p_aic,p_aitm1,p_aitmc1r,p_aitmc1,p_aicrp,p_aicp,p_aicrpp,p_aicpp,p_ct2cd,ct2cdr,p_ct2_sponsor,ct2att,p_ct2_cdisc,p_unitdefr,p_unitdef,clr,clatt,clattr,p_cl_sponsor,p_cl_cdisc,unit_term,cl_root,clattr2,unit_cld,p_role_r,ctattr,ctnr_role, p_role_val, p_role_attr_val,p_dtype_r,p_dtype_val, ctnr_dtype,p_dtype_attr_val,ctattr_dtype,R1,R2, R3, R4, R5, R6, R8, R9, R10, R11, R12, R13, R14, R15, R16, R17, R18, R19, R20, R21, R22, R23, R24, R25, R26, R27, R28, R29, R30, R31, R32, R33, R34, R35, R36, R37, R38, R39, R40, R41,R42,R43
+MATCH (p_ai:ActivityInstanceValue)-[:CONTAINS_ACTIVITY_ITEM]->(p_aitm1_dom:ActivityItem)<-[:HAS_ACTIVITY_ITEM]-(:ActivityItemClassRoot)-[:MAPS_VARIABLE_CLASS]->(:VariableClass{uid:'DOMAIN'})-[:HAS_INSTANCE]->(:VariableClassInstance)<-[:IMPLEMENTS_VARIABLE{version_number:'3.2'}]-(:DatasetVariableInstance)<-[:HAS_DATASET_VARIABLE{version_number:'3.2'}]-(:DatasetInstance)<-[:HAS_INSTANCE]-(p_ds:Dataset),(p_aitm1_dom:ActivityItem)-[x]->(y:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(p_ct2_sponsor_dom), (y)-[:HAS_ATTRIBUTES_ROOT]->(:CTTermAttributesRoot)-[:LATEST]->(p_ct2_cdisc_dom)  where p_ds.uid=p_ct2_cdisc_dom.code_submission_value OPTIONAL MATCH(p_aitmc1r)-[R44:MAPS_VARIABLE_CLASS]->(p_varcl:VariableClass)-[R45:HAS_INSTANCE]->(p_varcli:VariableClassInstance)
+,(p_varcli)<-[R46:IMPLEMENTS_VARIABLE{version_number:'3.2'}]-(var:DatasetVariableInstance)<-[R47:HAS_DATASET_VARIABLE{version_number:'3.2'}]-(p_dsi:DatasetInstance)<-[R48:HAS_INSTANCE]-(p_ds:Dataset)<-[R49:HAS_DATASET]-(p_dmcat:DataModelCatalogue)-[R50:CONTAINS_VERSION]->(p_dmig:DataModelVersion),(p_dsi)<-[R51:HAS_DATASET]-(p_dmigv:DataModelIGValue)<-[R52:CONTAINS_DATA_MODEL_IG]-(p_dmig),(p_dmcat)-[:HAS_DATASET_VARIABLE]->(dsv:DatasetVariable)-[:HAS_INSTANCE]->(var) where p_dmigv.version_number='3.2' 
+with p_ai,p_aitmc1,p_dmigv,p_ds, p_varcl,dsv,var,p_role_val,p_dtype_val,clr,p_cl_cdisc,p_cl_sponsor,p_ct2cd,p_ct2_cdisc, p_ct2_sponsor where not p_aitmc1.name in ['unit_dimension','domain']
+with p_aitmc1,p_dmigv, p_ds, p_varcl,dsv,var,p_role_val,p_dtype_val,clr,p_cl_cdisc,p_cl_sponsor,p_ct2cd,p_ct2_cdisc, p_ct2_sponsor,
+CASE when p_ct2cd is not NULL THEN
+CASE WHEN var.role='Topic' THEN
+apoc.map.fromPairs([
+  ['code',p_ct2cd.concept_id],
+  ['submission_value',coalesce(p_ct2_cdisc.code_submission_value,toUpper(p_ct2_sponsor.name))],
+  ['shortName',p_ct2_cdisc.preferred_term]
+  ]) 
+  ELSE
+  CASE WHEN p_varcl.uid="--TEST" THEN
+  apoc.map.fromPairs([
+  ['code',p_ct2cd.concept_id],
+  ['submission_value',coalesce(p_ct2_cdisc.preferred_term,toUpper(p_ct2_sponsor.name))]
+  ]) 
+  ELSE
+  apoc.map.fromPairs([
+  ['code',p_ct2cd.concept_id],
+  ['submission_value',coalesce(p_ct2_cdisc.code_submission_value,toUpper(p_ct2_sponsor.name))]
+  ]) END
+  END END as val_list
+  WITH p_aitmc1,p_dmigv, p_ds, p_varcl,dsv,var,p_role_val,p_dtype_val,clr,p_cl_cdisc,p_cl_sponsor,collect(distinct val_list) as terms
+  WITH p_aitmc1,p_dmigv, p_ds,p_varcl,dsv,var,p_role_val,p_dtype_val,clr, p_cl_cdisc,p_cl_sponsor,terms,
+  CASE WHEN var.role='Topic' THEN apoc.text.join([p_ds.uid,dsv.uid],'.') END as source,
+      CASE WHEN clr is not NULL THEN
+apoc.map.fromPairs([['conceptId',clr.uid],
+                   ['href','https://ncithesaurus.nci.nih.gov/ncitbrowser/ConceptReport.jsp?dictionary=NCI_Thesaurus&ns=ncit&code='+clr.uid],                  ['submissionValue',coalesce(p_cl_cdisc.submission_value,toUpper(p_cl_sponsor.name))]
+                   ]) END as cdlist,
+CASE WHEN size(terms)=1 THEN
+apoc.map.fromPairs([
+                   ['conceptId',terms[0]['code']],
+                   ['value',terms[0]['submission_value']]
+                   ]) 
+END as assignedTerms,
+CASE WHEN size(terms)>1 THEN [ v in terms | v['submission_value']] END as valueList,
+CASE when p_aitmc1.data_collection='Yes' THEN 'Collected' ELSE 'Not Collected' END as collected
+WITH p_aitmc1,p_dmigv, p_ds,p_varcl,dsv,var,p_role_val,p_dtype_val,assignedTerms, valueList,cdlist,source,terms,
+CASE WHEN assignedTerms is not null THEN
+        CASE WHEN var.role='Topic' and dsv.uid=cdlist['submissionValue'] THEN
+          apoc.map.fromPairs( [
+                                ['name', dsv.uid],
+                                ['isNonStandard',false],
+                                ['role',var.role],
+                                ['dataType', var.simple_datatype],
+                                ['codelist',cdlist],
+                                ['AssignedTerm',assignedTerms],
+                                ['originType', collected],
+                                ['mandatoryVariable', p_aitmc1.mandatory],
+                                ['mandatoryValue', p_aitmc1.mandatory]
+                                ]) 
+        ELSE
+        CASE WHEN p_varcl.uid='--TEST' and dsv.uid=cdlist['submissionValue'] THEN
+            apoc.map.fromPairs( [
+                                ['name', dsv.uid],
+                                ['isNonStandard',false],
+                                ['role',var.role],
+                                ['dataType', var.simple_datatype],
+                                ['codelist',cdlist],
+                                ['AssignedTerm',assignedTerms],
+                                ['originType', collected],
+                                ['mandatoryVariable', p_aitmc1.mandatory],
+                                ['mandatoryValue', p_aitmc1.mandatory]
+                                ]) 
+        ELSE  
+            CASE WHEN not p_varcl.uid contains 'TEST'  THEN 
+               apoc.map.fromPairs( [
+                                ['name', dsv.uid],
+                                ['dataElementConceptId',p_aitmc1.nci_concept_id],
+                                ['isNonStandard',false],
+                                ['role',var.role],
+                                ['dataType', var.simple_datatype],
+                                ['codelist',cdlist],
+                                ['AssignedTerm',assignedTerms],
+                                ['originType', collected],
+                                ['mandatoryVariable', p_aitmc1.mandatory],
+                                ['mandatoryValue', p_aitmc1.mandatory]
+                                ]) END
+        END END
+    ELSE
+        CASE WHEN valueList is not null THEN 
+            apoc.map.fromPairs( [
+            ['name', dsv.uid],
+            ['dataElementConceptId',p_aitmc1.nci_concept_id],
+            ['isNonStandard',false],
+            ['codelist',cdlist],
+            ['valueList', valueList],
+            ['subsetCodelist',p_dtype_val.name],
+            ['role',var.role],
+            ['originType', collected],
+            ['mandatoryVariable', p_aitmc1.mandatory],
+            ['mandatoryValue', p_aitmc1.mandatory]
+            ]) 
+        ELSE   
+            apoc.map.fromPairs( [
+            ['name', dsv.uid],
+            ['dataElementConceptId',p_aitmc1.nci_concept_id],
+            ['isNonStandard',false],
+            ['role',var.role],
+            ['dataType', var.simple_datatype],
+            ['codelist',cdlist],
+            ['valueList', valueList],
+            ['subsetCodelist',p_dtype_val.name],
+            ['originType', collected],
+            ['mandatoryVariable', p_aitmc1.mandatory],
+            ['mandatoryValue', p_aitmc1.mandatory]
+            ]) 
+END
+    END as dataElement,
+CASE WHEN var.role='Topic' THEN assignedTerms['conceptId'] END as biomedicalConceptId,
+CASE WHEN var.role='Topic' THEN assignedTerms['value'] END as datasetSpecializationId,
+CASE WHEN var.role='Topic' THEN [ v in terms | v['shortName']][0] END as shortName  
+WITH apoc.coll.toSet(collect(shortName))[0] as shortName,p_dmigv, p_ds,apoc.coll.toSet(collect(source))[0] as source,apoc.coll.toSet(collect(biomedicalConceptId))[0] as biomedicalConceptId, apoc.coll.toSet(collect(datasetSpecializationId))[0] as datasetSpecializationId , collect(distinct dataElement) as vars
+WITH shortName,p_dmigv, p_ds,source,datasetSpecializationId,biomedicalConceptId,vars, 
+apoc.map.fromPairs([ 
+                    ['packageType','sdtm'],
+                    ['datasetSpecializationId',datasetSpecializationId],
+                    ['domain',p_ds.uid],
+                    ['shortName',shortName],
+                    ['source',source],
+                    ['sdtmigStartVersion',p_dmigv.version_number],
+                    ['sdtmigEndVersion',null],
+                    ['biomedicalConceptId',biomedicalConceptId],
+                    ['variables',vars]
+                    ]) as activity
+return  activity
 
 //Activity mapped to SDTM
 MATCH(p_act:ActivityValue)-[R1:HAS_GROUPING]->(g:ActivityGrouping)-[R2:IN_SUBGROUP]->(sg:ActivityValidGroup)<-[R3:HAS_GROUP]-(p_asgrp:ActivitySubGroupValue),
@@ -314,16 +459,16 @@ OPTIONAL MATCH (p_unitdef:UnitDefinitionValue)-[R28:HAS_CT_DIMENSION]-(unit_term
 OPTIONAL MATCH(p_aitmc1)-[R32:HAS_ROLE]->(p_role_r:CTTermRoot), (p_role_r)-[R33:HAS_NAME_ROOT]->(ctnr_role)-[R34:LATEST]->(p_role_val), (p_role_r)-[R35:HAS_ATTRIBUTES_ROOT]->(ctattr)-[R36:LATEST]->(p_role_attr_val)
 OPTIONAL MATCH(p_aitmc1)-[R37:HAS_DATA_TYPE]->(p_dtype_r),  (p_dtype_r)-[R38:HAS_NAME_ROOT]->(ctnr_dtype)-[R39:LATEST]->(p_dtype_val), (p_dtype_r)-[R40:HAS_ATTRIBUTES_ROOT]->(ctattr_dtype)-[R41:LATEST]->(p_dtype_attr_val)
 WITH distinct g,sg,p_agrp,p_asgrp,p_act,p_ai,p_aicr,p_aic,p_aitm1,p_aitmc1r,p_aitmc1,p_aicrp,p_aicp,p_aicrpp,p_aicpp,p_ct2cd,ct2cdr,p_ct2_sponsor,ct2att,p_ct2_cdisc,p_unitdefr,p_unitdef,clr,clatt,clattr,p_cl_sponsor,p_cl_cdisc,unit_term,cl_root,clattr2,unit_cld,p_role_r,ctattr,ctnr_role, p_role_val, p_role_attr_val,p_dtype_r,p_dtype_val, ctnr_dtype,p_dtype_attr_val,ctattr_dtype,R1,R2, R3, R4, R5, R6, R8, R9, R10, R11, R12, R13, R14, R15, R16, R17, R18, R19, R20, R21, R22, R23, R24, R25, R26, R27, R28, R29, R30, R31, R32, R33, R34, R35, R36, R37, R38, R39, R40, R41,R42,R43
-MATCH (p_ai:ActivityInstanceValue)-[:CONTAINS_ACTIVITY_ITEM]->(p_aitm1_dom:ActivityItem)<-[:HAS_ACTIVITY_ITEM]-(:ActivityItemClassRoot)-[:MAPS_VARIABLE_CLASS]->(:VariableClass{uid:'DOMAIN'})-[:HAS_INSTANCE]->(:VariableClassInstance)<-[:IMPLEMENTS_VARIABLE{version_number:$neodash_sdtmversion}]-(:DatasetVariableInstance)<-[:HAS_DATASET_VARIABLE{version_number:$neodash_sdtmversion}]-(:DatasetInstance)<-[:HAS_INSTANCE]-(p_ds:Dataset),(p_aitm1_dom:ActivityItem)-[x]->(y:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(p_ct2_sponsor_dom), (y)-[:HAS_ATTRIBUTES_ROOT]->(:CTTermAttributesRoot)-[:LATEST]->(p_ct2_cdisc_dom)  where p_ds.uid=p_ct2_cdisc_dom.code_submission_value OPTIONAL MATCH(p_aitmc1r)-[R44:MAPS_VARIABLE_CLASS]->(p_varcl:VariableClass)-[R45:HAS_INSTANCE]->(p_varcli:VariableClassInstance)
-,(p_varcli)<-[R46:IMPLEMENTS_VARIABLE{version_number:$neodash_sdtmversion}]-(p_dci:DatasetVariableInstance)<-[R47:HAS_DATASET_VARIABLE{version_number:$neodash_sdtmversion}]-(p_dsi:DatasetInstance)<-[R48:HAS_INSTANCE]-(p_ds:Dataset)<-[R49:HAS_DATASET]-(p_dmcat:DataModelCatalogue)-[R50:CONTAINS_VERSION]->(p_dmig:DataModelVersion),(p_dsi)<-[R51:HAS_DATASET]-(p_dmigv:DataModelIGValue)<-[R52:CONTAINS_DATA_MODEL_IG]-(p_dmig) where p_dmigv.version_number=$neodash_sdtmversion 
-WITH distinct
-p_act.name as Activity,
-p_ai.name as `Activity Instance`,
-p_aitmc1.name as `Activity Item Class`,
-p_varcl.uid as `Variable Class`,
-p_dci.label as `SDTMIG Variable`,
-p_dsi.label as `SDTMIG Dataset`,
-p_aitmc1.order as item_order
-return Activity,`Activity Instance`,`Activity Item Class`,`Variable Class`,`SDTMIG Variable`,`SDTMIG Dataset` order by `Activity Instance`, item_order
+MATCH (p_ai:ActivityInstanceValue)-[:CONTAINS_ACTIVITY_ITEM]->(p_aitm1_dom:ActivityItem)<-[:HAS_ACTIVITY_ITEM]-(:ActivityItemClassRoot)-[:MAPS_VARIABLE_CLASS]->(:VariableClass{uid:'DOMAIN'})-[:HAS_INSTANCE]->(:VariableClassInstance)<-[:IMPLEMENTS_VARIABLE{version_number:$neodash_sdtmversion}]-(:DatasetVariableInstance)<-[:HAS_DATASET_VARIABLE{version_number:$neodash_sdtmversion}]-(:DatasetInstance)<-[:HAS_INSTANCE]-(p_ds:Dataset) 
+MATCH(p_aitm1_dom:ActivityItem)-[x]->(y:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(p_ct2_sponsor_dom), (y)-[:HAS_ATTRIBUTES_ROOT]->(:CTTermAttributesRoot)-[:LATEST]->(p_ct2_cdisc_dom)  where p_ds.uid=p_ct2_cdisc_dom.code_submission_value 
+OPTIONAL MATCH(p_aitmc1r)-[R44:MAPS_VARIABLE_CLASS]->(p_varcl:VariableClass)-[R45:HAS_INSTANCE]->(p_varcli:VariableClassInstance)
+,(p_varcli)<-[R46:IMPLEMENTS_VARIABLE{version_number:$neodash_sdtmversion}]-(p_dci:DatasetVariableInstance)<-[R47:HAS_DATASET_VARIABLE{version_number:$neodash_sdtmversion}]-(p_dsi:DatasetInstance)<-[R48:HAS_INSTANCE]-(p_ds:Dataset)<-[R49:HAS_DATASET]-(p_dmcat:DataModelCatalogue)-[R50:CONTAINS_VERSION]->(p_dmig:DataModelVersion),(p_dsi)<-[R51:HAS_DATASET]-(p_dmigv:DataModelIGValue)<-[R52:CONTAINS_DATA_MODEL_IG]-(p_dmig) where p_dmigv.version_number=$neodash_sdtmversion
+match(p_varcl)-[R53:HAS_INSTANCE]->(s_varcli:SponsorModelVariableClassInstance)<-[R54:HAS_VARIABLE_CLASS]-(:SponsorModelDatasetClassInstance)<-[R55:HAS_INSTANCE]-(ds_class:DatasetClass)MATCH(p_aitm1_dom:ActivityItem)-[x]->(y:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(p_ct2_sponsor_dom), (y)-[:HAS_ATTRIBUTES_ROOT]->(:CTTermAttributesRoot)-[:LATEST]->(p_ct2_cdisc_dom)  where p_ds.uid=p_ct2_cdisc_dom.code_submission_value 
+OPTIONAL MATCH(p_aitmc1r)-[R44:MAPS_VARIABLE_CLASS]->(p_varcl:VariableClass)-[R45:HAS_INSTANCE]->(p_varcli:VariableClassInstance)
+,(p_varcli)<-[R46:IMPLEMENTS_VARIABLE{version_number:$neodash_sdtmversion}]-(p_dci:DatasetVariableInstance)<-[R47:HAS_DATASET_VARIABLE{version_number:$neodash_sdtmversion}]-(p_dsi:DatasetInstance)<-[R48:HAS_INSTANCE]-(p_ds:Dataset)<-[R49:HAS_DATASET]-(p_dmcat:DataModelCatalogue)-[R50:CONTAINS_VERSION]->(p_dmig:DataModelVersion),(p_dci)-[:HAS_INSTANCE]->(dsv:DatasetVariable),(p_dsi)<-[R51:HAS_DATASET]-(p_dmigv:DataModelIGValue)<-[R52:CONTAINS_DATA_MODEL_IG]-(p_dmig) where p_dmigv.version_number=$neodash_sdtmversion
+optional match(p_dmigv)<-[:EXTENDS_VERSION]-(s_modl_val:SponsorModelValue)-[:HAS_DATASET]->(s_ds:SponsorModelDatasetInstance)<-[:HAS_INSTANCE]-(p_ds:Dataset)-[:HAS_INSTANCE]->(p_dsi)
+Optional match(s_ds)-[:HAS_DATASET_VARIABLE]->(s_sdv:SponsorModelDatasetVariableInstance)<-[:HAS_INSTANCE]-(dsv)
+
+
 
 

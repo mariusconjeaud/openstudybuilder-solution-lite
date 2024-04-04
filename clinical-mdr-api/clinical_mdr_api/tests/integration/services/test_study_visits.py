@@ -87,6 +87,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         self.assertEqual(preview.order, 1)
         self.assertEqual(preview.visit_number, 1)
         self.assertEqual(preview.unique_visit_number, 100)
+        self.assertEqual(preview.study_duration_weeks_label, "0 weeks")
+        self.assertEqual(preview.week_in_study_label, "Week 0")
 
         create_visit_with_update(
             study_epoch_uid=self.epoch1.uid,
@@ -133,6 +135,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         self.assertEqual(preview.order, 4)
         self.assertEqual(preview.visit_number, 4)
         self.assertEqual(preview.unique_visit_number, 400)
+        self.assertEqual(preview.study_duration_weeks_label, "2 weeks")
+        self.assertEqual(preview.week_in_study_label, "Week 2")
 
         version3 = create_visit_with_update(
             study_epoch_uid=self.epoch1.uid,
@@ -145,6 +149,8 @@ class TestStudyVisitManagement(unittest.TestCase):
             visit_subclass="SINGLE_VISIT",
         )
         self.assertEqual(version3.unique_visit_number, preview.unique_visit_number)
+        self.assertEqual(version3.study_duration_weeks_label, "2 weeks")
+        self.assertEqual(version3.week_in_study_label, "Week 2")
         version4 = create_visit_with_update(
             study_epoch_uid=self.epoch2.uid,
             visit_type_uid="VisitType_0002",
@@ -184,6 +190,9 @@ class TestStudyVisitManagement(unittest.TestCase):
         self.assertEqual(v3new.min_visit_window_value, -1)
         self.assertEqual(v3new.max_visit_window_value, 1)
 
+        self.assertEqual(v3new.study_duration_weeks_label, "2 weeks")
+        self.assertEqual(v3new.week_in_study_label, "Week 2")
+
         v5new: StudyVisit = visit_service.find_by_uid(
             study_uid=self.study.uid, uid=version4.uid
         )
@@ -191,6 +200,9 @@ class TestStudyVisitManagement(unittest.TestCase):
         self.assertEqual(v5new.visit_number, 5)
         print("V%sub", v5new)
         self.assertEqual(v5new.unique_visit_number, 500)
+
+        self.assertEqual(v5new.study_duration_weeks_label, "4 weeks")
+        self.assertEqual(v5new.week_in_study_label, "Week 4")
 
         v6new: StudyVisit = visit_service.find_by_uid(
             study_uid=self.study.uid, uid=version5.uid
@@ -204,8 +216,13 @@ class TestStudyVisitManagement(unittest.TestCase):
         self.assertEqual(len(references), 2)
         visit: StudyVisit = references[0]
         self.assertEqual(visit.visit_type_name, "BASELINE")
+        self.assertEqual(visit.study_duration_weeks_label, "0 weeks")
+        self.assertEqual(visit.week_in_study_label, "Week 0")
+
         visit: StudyVisit = references[1]
         self.assertEqual(visit.visit_type_name, "BASELINE2")
+        self.assertEqual(visit.study_duration_weeks_label, "4 weeks")
+        self.assertEqual(visit.week_in_study_label, "Week 4")
 
         inputs = {
             "study_epoch_uid": self.epoch2.uid,
@@ -222,6 +239,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         preview = preview_visit_with_update(self.study.uid, **inputs)
         print("PREVIEW", preview)
         self.assertEqual(preview.unique_visit_number, 520)
+        self.assertEqual(preview.study_duration_weeks_label, "10 weeks")
+        self.assertEqual(preview.week_in_study_label, "Week 10")
 
         epoch_service: StudyEpochService = StudyEpochService()
         epochs = epoch_service.get_all_epochs(self.study.uid).items
@@ -343,6 +362,8 @@ class TestStudyVisitManagement(unittest.TestCase):
             visit_after_create.epoch_allocation_uid,
             input_values["epoch_allocation_uid"],
         )
+        self.assertEqual(visit_after_create.study_duration_weeks_label, "0 weeks")
+        self.assertEqual(visit_after_create.week_in_study_label, "Week 0")
 
     def test__edit_visit_successfully_handled(self):
         visit_service = StudyVisitService()
@@ -430,6 +451,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         self.assertEqual(
             visit_after_update.epoch_allocation_uid, edit_input["epoch_allocation_uid"]
         )
+        self.assertEqual(visit_after_update.study_duration_weeks_label, "1 weeks")
+        self.assertEqual(visit_after_update.week_in_study_label, "Week 1")
 
     def test__version_visits(self):
         visit_service = StudyVisitService()
@@ -513,6 +536,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         self.assertEqual(
             visit_after_update.epoch_allocation_uid, edit_input["epoch_allocation_uid"]
         )
+        self.assertEqual(visit_after_update.study_duration_weeks_label, "1 weeks")
+        self.assertEqual(visit_after_update.week_in_study_label, "Week 1")
 
         visit_service.audit_trail(
             visit_uid=visit.uid,
@@ -564,6 +589,10 @@ class TestStudyVisitManagement(unittest.TestCase):
         self.assertEqual(current_visit_2.changes, {})
         self.assertEqual(current_visit.change_type, "Edit")
         self.assertEqual(previous_visit.change_type, "Create")
+        self.assertEqual(current_visit.study_duration_weeks_label, "1 weeks")
+        self.assertEqual(current_visit.week_in_study_label, "Week 1")
+        self.assertEqual(previous_visit.study_duration_weeks_label, "0 weeks")
+        self.assertEqual(previous_visit.week_in_study_label, "Week 0")
 
     def test__create_subvisits_uvn__reordered_successfully(self):
         visit_service = StudyVisitService()
@@ -1696,3 +1725,22 @@ class TestStudyVisitManagement(unittest.TestCase):
             study_uid=self.study.uid
         )
         self.assertEqual(all_available_consecutive_groups, set())
+
+    def test_get_anchor_visit_for_special_visit(self):
+        visit_service: StudyVisitService = StudyVisitService()
+        for idx in range(0, 10):
+            create_visit_with_update(
+                study_epoch_uid=self.epoch1.uid,
+                visit_type_uid="VisitType_0002",
+                time_reference_uid="VisitSubType_0005",
+                time_value=idx,
+                time_unit_uid=self.day_uid,
+                is_global_anchor_visit=False,
+                visit_class="SINGLE_VISIT",
+                visit_subclass="SINGLE_VISIT",
+            )
+        all_anchor_visits_for_special_visit = (
+            visit_service.get_anchor_for_special_visit(study_uid=self.study.uid)
+        )
+        for idx, anchor_visit in enumerate(all_anchor_visits_for_special_visit, 1):
+            assert anchor_visit.visit_name == f"Visit {idx}"

@@ -10,6 +10,7 @@
     :item-uid="$route.params.id"
     :item-overview="activityInstanceOverview"
     :yaml-version="activityInstanceYAML"
+    :cosmos-version="activityInstanceCOSMoS"
     @refresh="fetchOverview"
     @closePage="closePage"
     />
@@ -31,6 +32,7 @@ export default {
     return {
       activityInstanceOverview: null,
       activityInstanceYAML: null,
+      activityInstanceCOSMoS: null,
       helpItems: [
         'ActivityInstanceOverview.cosmos_yaml',
         'ActivityInstanceOverview.class',
@@ -65,6 +67,9 @@ export default {
       })
       activities.getObjectOverview('activity-instances', this.$route.params.id, 'yaml').then(resp => {
         this.activityInstanceYAML = resp.data
+      })
+      activities.getCOSMoSOverview('activity-instances', this.$route.params.id).then(resp => {
+        this.activityInstanceCOSMoS = resp.data
       })
     },
     closePage () {

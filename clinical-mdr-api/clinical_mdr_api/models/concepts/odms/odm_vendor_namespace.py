@@ -75,10 +75,10 @@ class OdmVendorNamespacePostInput(ConceptPostInput):
 
     @validator("prefix")
     @classmethod
-    def prefix_may_only_contain_letters(cls, v):
-        if re.search("[^a-zA-Z]", v):
+    def prefix_may_only_contain_letters(cls, value):
+        if re.search("[^a-zA-Z]", value):
             raise ValueError("may only contain letters")
-        return v
+        return value
 
 
 class OdmVendorNamespacePatchInput(ConceptPatchInput):

@@ -215,12 +215,3 @@ class CTCatalogue(ClinicalMdrNode):
     contains_catalogue = RelationshipFrom(
         Library, "CONTAINS_CATALOGUE", model=ClinicalMdrRel
     )
-
-
-# TODO Placeholders for study fields, to delete after CT endpoints are available
-class CTTermLabel(ClinicalMdrNode):
-    name = StringProperty(unique_index=True)
-
-
-class NullValueReason(CTTermLabel):
-    pass

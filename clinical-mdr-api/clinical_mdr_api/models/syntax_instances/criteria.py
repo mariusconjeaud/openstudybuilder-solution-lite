@@ -1,14 +1,15 @@
 from datetime import datetime
-from typing import Any, Callable, Self
+from typing import Self
 
 from pydantic.fields import Field
 
-from clinical_mdr_api.domain_repositories.models.syntax import CriteriaTemplateRoot
 from clinical_mdr_api.domains.syntax_instances.criteria import CriteriaAR
+from clinical_mdr_api.models.controlled_terminologies.ct_term import (
+    SimpleCTTermNameAndAttributes,
+)
 from clinical_mdr_api.models.libraries.library import Library
 from clinical_mdr_api.models.syntax_templates.criteria_template import (
     CriteriaTemplateNameUidLibrary,
-    CTTermNameAndAttributes,
 )
 from clinical_mdr_api.models.syntax_templates.template_parameter_multi_select_input import (
     TemplateParameterMultiSelectInput,
@@ -24,7 +25,7 @@ from clinical_mdr_api.models.utils import (
 
 
 class CriteriaTemplateWithType(CriteriaTemplateNameUidLibrary):
-    type: CTTermNameAndAttributes
+    type: SimpleCTTermNameAndAttributes | None
 
 
 class Criteria(BaseModel):
@@ -110,13 +111,7 @@ class CriteriaWithType(Criteria):
     criteria_template: CriteriaTemplateWithType | None
 
     @classmethod
-    def from_criteria_ar(
-        cls,
-        criteria_ar: CriteriaAR,
-        syntax_template_node: CriteriaTemplateRoot,
-        get_criteria_type_name: Callable[[str], Any],
-        get_criteria_type_attributes: Callable[[str], Any],
-    ) -> Self:
+    def from_criteria_ar(cls, criteria_ar: CriteriaAR) -> Self:
         parameter_terms: list[MultiTemplateParameterTerm] = []
         for position, parameter in enumerate(criteria_ar.get_parameters()):
             terms: list[IndexedTemplateParameterTerm] = []
@@ -156,16 +151,11 @@ class CriteriaWithType(Criteria):
             ),
             criteria_template=CriteriaTemplateWithType(
                 name=criteria_ar.template_name,
-                name_plain=criteria_ar.name_plain,
+                name_plain=criteria_ar.template_name_plain,
                 uid=criteria_ar.template_uid,
                 sequence_id=criteria_ar.template_sequence_id,
                 guidance_text=criteria_ar.guidance_text,
-                type=CTTermNameAndAttributes.from_ct_term_ars(
-                    ct_term_name_ar=get_criteria_type_name(syntax_template_node),
-                    ct_term_attributes_ar=get_criteria_type_attributes(
-                        syntax_template_node
-                    ),
-                ),
+                type=criteria_ar._template.template_type,
                 library_name=criteria_ar.template_library_name,
             ),
             library=Library.from_library_vo(criteria_ar.library),

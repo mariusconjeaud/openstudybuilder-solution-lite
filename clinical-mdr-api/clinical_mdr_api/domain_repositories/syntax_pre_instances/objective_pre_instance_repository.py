@@ -14,6 +14,12 @@ from clinical_mdr_api.domains.syntax_pre_instances.objective_pre_instance import
     ObjectivePreInstanceAR,
 )
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryVO
+from clinical_mdr_api.models.controlled_terminologies.ct_term import (
+    SimpleCTTermNameAndAttributes,
+    SimpleTermAttributes,
+    SimpleTermModel,
+    SimpleTermName,
+)
 
 
 class ObjectivePreInstanceRepository(
@@ -23,14 +29,14 @@ class ObjectivePreInstanceRepository(
     value_class = ObjectivePreInstanceValue
     template_class = ObjectiveTemplateRoot
 
-    def _create_aggregate_root_instance_from_version_root_relationship_and_value(
+    def _create_ar(
         self,
         root: ObjectivePreInstanceRoot,
         library: Library,
         relationship: VersionRelationship,
         value: ObjectivePreInstanceValue,
         study_count: int = 0,
-        **_kwargs,
+        **kwargs,
     ):
         return ObjectivePreInstanceAR.from_repository_values(
             uid=root.uid,
@@ -40,8 +46,38 @@ class ObjectivePreInstanceRepository(
                 is_library_editable_callback=(lambda _: library.is_editable),
             ),
             item_metadata=self._library_item_metadata_vo_from_relation(relationship),
-            template=self._get_template(root, value, relationship.start_date),
+            template=self.get_template_vo(root, value, kwargs["instance_template"]),
             is_confirmatory_testing=root.is_confirmatory_testing,
+            indications=sorted(
+                [
+                    SimpleTermModel(
+                        term_uid=indication["term_uid"], name=indication["name"]
+                    )
+                    for indication in kwargs["indications"]
+                    if indication["term_uid"]
+                ],
+                key=lambda x: x.term_uid,
+            ),
+            categories=sorted(
+                [
+                    SimpleCTTermNameAndAttributes(
+                        term_uid=category["term_uid"],
+                        name=SimpleTermName(
+                            sponsor_preferred_name=category["name"],
+                            sponsor_preferred_name_sentence_case=category[
+                                "name_sentence_case"
+                            ],
+                        ),
+                        attributes=SimpleTermAttributes(
+                            code_submission_value=category["code_submission_value"],
+                            nci_preferred_name=category["preferred_term"],
+                        ),
+                    )
+                    for category in kwargs["categories"]
+                    if category["term_uid"]
+                ],
+                key=lambda x: x.term_uid,
+            ),
             study_count=study_count,
         )
 
@@ -58,10 +94,8 @@ class ObjectivePreInstanceRepository(
         self._db_save_node(root)
 
         for indication in item.indications or []:
-            if indication:
-                root.has_indication.connect(self._get_indication(indication.uid))
+            root.has_indication.connect(self._get_indication(indication.term_uid))
         for category in item.categories or []:
-            if category and category[0]:
-                root.has_category.connect(self._get_category(category[0].uid))
+            root.has_category.connect(self._get_category(category.term_uid))
 
         return item

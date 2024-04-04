@@ -59,6 +59,7 @@
                 "content-type": "application/json"
             },
             "result": {
+                "study_version": null, 
                 "study_objective_uid": "StudyObjective_000001",
                 "order": 1,
                 "project_number": null,
@@ -68,10 +69,14 @@
                 "objective_level": {
                     "term_uid": "term_root_final",
                     "catalogue_name": "SDTM CT",
-                    "codelist_uid": "editable_cr",
+                    "codelists": [
+                        {
+                            "codelist_uid": "editable_cr",
+                            "order": 1
+                        }
+                    ],
                     "sponsor_preferred_name": "term_value_name1",
                     "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
-                    "order": 1,
                     "library_name": "Sponsor",
                     "start_date": "2021-05-06T04:26:04.068000",
                     "end_date": null,
@@ -138,6 +143,7 @@
             "result": {
                 "items": [
                     {
+                        "study_version": null, 
                         "study_objective_uid": "StudyObjective_000001",
                         "order": 1,
                         "project_number": "123",
@@ -147,10 +153,14 @@
                         "objective_level": {
                             "term_uid": "term_root_final",
                             "catalogue_name": "SDTM CT",
-                            "codelist_uid": "editable_cr",
+                            "codelists": [
+                                {
+                                    "codelist_uid": "editable_cr",
+                                    "order": 1
+                                }
+                            ],
                             "sponsor_preferred_name": "term_value_name1",
                             "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
-                            "order": 1,
                             "library_name": "Sponsor",
                             "start_date": "2021-05-06T04:26:04.068000",
                             "end_date": null,
@@ -220,6 +230,7 @@
                 "size": 10,
                 "items": [
                     {
+                        "study_version": null, 
                         "study_objective_uid": "StudyObjective_000001",
                         "order": 1,
                         "project_number": "123",
@@ -229,10 +240,14 @@
                         "objective_level": {
                             "term_uid": "term_root_final",
                             "catalogue_name": "SDTM CT",
-                            "codelist_uid": "editable_cr",
+                            "codelists": [
+                                {
+                                    "codelist_uid": "editable_cr",
+                                    "order": 1
+                                }
+                            ],
                             "sponsor_preferred_name": "term_value_name1",
                             "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
-                            "order": 1,
                             "library_name": "Sponsor",
                             "start_date": "2021-05-06T04:26:04.068000",
                             "end_date": null,
@@ -298,6 +313,7 @@
                 "content-type": "application/json"
             },
             "result": {
+                        "study_version": null, 
                 "study_objective_uid": "StudyObjective_000002",
                 "order": 2,
                 "project_number": null,
@@ -359,6 +375,7 @@
             "result": {
                 "items": [
                     {
+                        "study_version": null, 
                         "study_objective_uid": "StudyObjective_000001",
                         "order": 1,
                         "project_number": "123",
@@ -368,10 +385,14 @@
                         "objective_level": {
                             "term_uid": "term_root_final",
                             "catalogue_name": "SDTM CT",
-                            "codelist_uid": "editable_cr",
+                            "codelists": [
+                                {
+                                    "codelist_uid": "editable_cr",
+                                    "order": 1
+                                }
+                            ],
                             "sponsor_preferred_name": "term_value_name1",
                             "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
-                            "order": 1,
                             "library_name": "Sponsor",
                             "start_date": "2021-05-06T04:26:04.068000",
                             "end_date": null,
@@ -417,6 +438,7 @@
                         "endpoint_count": 0
                     },
                     {
+                        "study_version": null, 
                         "study_objective_uid": "StudyObjective_000002",
                         "order": 2,
                         "project_number": "123",
@@ -476,6 +498,7 @@
                 "content-type": "application/json"
             },
             "result": {
+                        "study_version": null, 
                 "study_objective_uid": "StudyObjective_000002",
                 "order": 2,
                 "project_number": null,
@@ -534,6 +557,7 @@
                 "content-type": "application/json"
             },
             "result": {
+                        "study_version": null, 
                 "study_objective_uid": "StudyObjective_000002",
                 "order": 1,
                 "project_number": null,
@@ -592,6 +616,7 @@
                 "content-type": "application/json"
             },
             "result": {
+                        "study_version": null, 
                 "study_objective_uid": "StudyObjective_000002",
                 "order": 2,
                 "project_number": null,
@@ -655,10 +680,14 @@
                     "objective_level": {
                         "term_uid": "term_root_final",
                         "catalogue_name": "SDTM CT",
-                        "codelist_uid": "editable_cr",
+                        "codelists": [
+                            {
+                                "codelist_uid": "editable_cr",
+                                "order": 1
+                            }
+                        ],
                         "sponsor_preferred_name": "term_value_name1",
                         "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
-                        "order": 1,
                         "library_name": "Sponsor",
                         "start_date": "2021-05-06T05:43:56.074000",
                         "end_date": null,
@@ -711,10 +740,14 @@
                     "objective_level": {
                         "term_uid": "term_root_final",
                         "catalogue_name": "SDTM CT",
-                        "codelist_uid": "editable_cr",
+                        "codelists": [
+                            {
+                                "codelist_uid": "editable_cr",
+                                "order": 1
+                            }
+                        ],
                         "sponsor_preferred_name": "term_value_name1",
                         "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
-                        "order": 1,
                         "library_name": "Sponsor",
                         "start_date": "2021-05-06T05:43:56.074000",
                         "end_date": null,
@@ -1026,6 +1059,7 @@
                 "content-type": "application/json"
             },
             "result": {
+                "study_version": null, 
                 "study_objective_uid": "StudyObjective_000002",
                 "accepted_version": false,
                 "order": 2,
@@ -1090,6 +1124,7 @@
                 "content-type": "application/json"
             },
             "result": {
+                "study_version": null,
                 "study_objective_uid": "preview",
                 "accepted_version": false,
                 "order": 3,
@@ -1157,6 +1192,7 @@
                 "content-type": "application/json"
             },
             "result": {
+                "study_version": null, 
                 "study_objective_uid": "StudyObjective_000003",
                 "accepted_version": false,
                 "order": 3,
@@ -1166,10 +1202,14 @@
                 "objective_level": {
                     "term_uid": "term_root_final",
                     "catalogue_name": "SDTM CT",
-                    "codelist_uid": "editable_cr",
+                    "codelists": [
+                        {
+                            "codelist_uid": "editable_cr",
+                            "order": 1
+                        }
+                    ],
                     "sponsor_preferred_name": "term_value_name1",
                     "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
-                    "order": 1,
                     "library_name": "Sponsor",
                     "start_date": "2021-05-06T05:52:12.208000",
                     "end_date": null,

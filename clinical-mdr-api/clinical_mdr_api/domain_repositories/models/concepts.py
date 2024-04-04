@@ -210,6 +210,26 @@ class StudyDurationWeeksRoot(NumericValueRoot):
     )
 
 
+class WeekInStudyValue(NumericValue):
+    pass
+
+
+class WeekInStudyRoot(NumericValueRoot):
+    has_version = RelationshipTo(
+        WeekInStudyValue, "HAS_VERSION", model=VersionRelationship
+    )
+    has_latest_value = RelationshipTo(WeekInStudyValue, "LATEST", model=ClinicalMdrRel)
+    latest_draft = RelationshipTo(
+        WeekInStudyValue, "LATEST_DRAFT", model=ClinicalMdrRel
+    )
+    latest_final = RelationshipTo(
+        WeekInStudyValue, "LATEST_FINAL", model=ClinicalMdrRel
+    )
+    latest_retired = RelationshipTo(
+        WeekInStudyValue, "LATEST_RETIRED", model=ClinicalMdrRel
+    )
+
+
 class TimePointValue(SimpleConceptValue):
     has_value = RelationshipTo(
         NumericValueRoot, "HAS_VALUE", cardinality=One, model=ClinicalMdrRel

@@ -1,8 +1,7 @@
-from fastapi import Body, Depends, Query, Response, status
+from fastapi import Body, Depends, Response, status
 
 from clinical_mdr_api import models
 from clinical_mdr_api.models.error import ErrorResponse
-from clinical_mdr_api.models.validators import FLOAT_REGEX
 from clinical_mdr_api.oauth import get_current_user_id, rbac
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.routers import study_router as router
@@ -28,12 +27,7 @@ from clinical_mdr_api.services.studies.study_design_cell import StudyDesignCellS
 def get_all_design_cells(
     uid: str = utils.studyUID,
     current_user_id: str = Depends(get_current_user_id),
-    study_value_version: str
-    | None = Query(
-        None,
-        description="StudyValueVersion to extract the StudySelections",
-        regex=FLOAT_REGEX,
-    ),
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> list[models.StudyDesignCell]:
     service = StudyDesignCellService(author=current_user_id)
     cells = service.get_all_design_cells(
@@ -266,12 +260,7 @@ def get_all_selected_desing_cells_connected_arm(
     uid: str,
     arm_uid: str,
     current_user_id: str = Depends(get_current_user_id),
-    study_value_version: str
-    | None = Query(
-        None,
-        description="StudyValueVersion to extract the StudySelections",
-        regex=FLOAT_REGEX,
-    ),
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> list[models.StudyDesignCell]:
     service = StudyDesignCellService(author=current_user_id)
     return service.get_all_selection_within_arm(
@@ -317,12 +306,7 @@ def get_all_selected_desing_cells_connected_branch_arm(
     uid: str,
     branch_arm_uid: str,
     current_user_id: str = Depends(get_current_user_id),
-    study_value_version: str
-    | None = Query(
-        None,
-        description="StudyValueVersion to extract the StudySelections",
-        regex=FLOAT_REGEX,
-    ),
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> list[models.StudyDesignCell]:
     service = StudyDesignCellService(author=current_user_id)
     return service.get_all_selection_within_branch_arm(
@@ -366,12 +350,7 @@ def get_all_selected_desing_cells_connected_epoch(
     uid: str,
     epoch_uid: str,
     current_user_id: str = Depends(get_current_user_id),
-    study_value_version: str
-    | None = Query(
-        None,
-        description="StudyValueVersion to extract the StudySelections",
-        regex=FLOAT_REGEX,
-    ),
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> list[models.StudyDesignCell]:
     service = StudyDesignCellService(author=current_user_id)
     return service.get_all_selection_within_epoch(

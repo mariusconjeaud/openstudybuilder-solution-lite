@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import AbstractSet, Callable, Self
 
 from clinical_mdr_api import exceptions
-from clinical_mdr_api.domains._utils import normalize_string
+from clinical_mdr_api.domains._utils import are_floats_equal, normalize_string
 from clinical_mdr_api.domains.concepts.concept_base import ConceptARBase, ConceptVO
 from clinical_mdr_api.domains.controlled_terminologies.ct_term_name import CTTermNameAR
 from clinical_mdr_api.domains.versioned_object_aggregate import (
@@ -28,8 +28,6 @@ class UnitDefinitionValueVO(ConceptVO):
     unit_subsets: list[CTTerm]
     ucum_uid: str | None
     unit_dimension_uid: str | None
-    # TODO temporary solution to not break performance
-    # Fix when matching optional relationships in the extended neomodel will be ready
     ucum_name: str | None
     unit_dimension_name: str | None
     convertible_unit: bool
@@ -78,7 +76,10 @@ class UnitDefinitionValueVO(ConceptVO):
                 "conversion factor to master if specified cannot be NaN value."
             )
 
-        if master_unit and conversion_factor_to_master != 1.0:
+        if master_unit and (
+            conversion_factor_to_master is None
+            or not are_floats_equal(conversion_factor_to_master, 1.0)
+        ):
             raise exceptions.ValidationException(
                 f"conversion factor to master must be 1.0 for master unit (provided value: {conversion_factor_to_master})"
             )
@@ -172,7 +173,7 @@ class UnitDefinitionValueVO(ConceptVO):
     ) -> Self:
         return cls(
             name=name,
-            name_sentence_case=name.lower(),
+            name_sentence_case=None,
             abbreviation=None,
             definition=definition,
             is_template_parameter=is_template_parameter,
