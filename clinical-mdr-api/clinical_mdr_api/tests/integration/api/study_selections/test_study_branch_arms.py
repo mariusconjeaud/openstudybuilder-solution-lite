@@ -10,6 +10,7 @@ Tests for /studies/{uid}/study-branch-arms endpoints
 # which pylint interprets as unused arguments
 
 import logging
+from unittest import mock
 
 import pytest
 from fastapi.testclient import TestClient
@@ -175,12 +176,16 @@ def test_study_branch_arm_study_versions(api_client):
     assert response.status_code == 200
 
     # get all
+    for i, _ in enumerate(before_unlock_arms["items"]):
+        before_unlock_arms["items"][i]["study_version"] = mock.ANY
     assert (
         before_unlock_arms
         == api_client.get(
             f"/studies/{study.uid}/study-arms?study_value_version=1"
         ).json()
     )
+    for i, _ in enumerate(before_unlock_branch_arms):
+        before_unlock_branch_arms[i]["study_version"] = mock.ANY
     assert (
         before_unlock_branch_arms
         == api_client.get(
@@ -201,4 +206,9 @@ def test_study_branch_arm_study_versions(api_client):
 )
 def test_get_study_branch_arms_csv_xml_excel(api_client, export_format):
     url = f"/studies/{study.uid}/study-branch-arms"
-    TestUtils.verify_exported_data_format(api_client, export_format, url)
+    exported_data = TestUtils.verify_exported_data_format(
+        api_client, export_format, url
+    )
+    if export_format == "text/csv":
+        assert "study_version" in str(exported_data.read())
+        assert "LATEST" in str(exported_data.read())

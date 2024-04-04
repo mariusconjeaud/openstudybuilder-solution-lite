@@ -1,6 +1,6 @@
 <template>
 <v-app>
-  <topbar @backToRoot="navigateToRoot" :hide-app-bar-nav-icon="layoutTemplate === 'empty'" />
+  <top-bar @backToRoot="navigateToRoot" :hide-app-bar-nav-icon="layoutTemplate === 'empty'" />
 
   <template v-if="layoutTemplate === 'empty'">
     <v-main class="primary white--text">
@@ -15,7 +15,7 @@
   </template>
 
   <template v-else>
-    <sidebar />
+    <side-bar />
 
     <v-main>
       <v-container class="" fluid>
@@ -68,15 +68,15 @@
 <script>
 import { mapGetters } from 'vuex'
 import { bus } from '@/main'
-import Sidebar from './components/layout/Sidebar'
-import Topbar from './components/layout/Topbar'
+import SideBar from './components/layout/SideBar'
+import TopBar from './components/layout/TopBar'
 
 export default {
   name: 'App',
 
   components: {
-    Sidebar,
-    Topbar
+    SideBar,
+    TopBar
   },
 
   /**

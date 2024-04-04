@@ -7,9 +7,9 @@ from clinical_mdr_api.domains.syntax_pre_instances.criteria_pre_instance import 
     CriteriaPreInstanceAR,
 )
 from clinical_mdr_api.models.controlled_terminologies.ct_term import (
-    CTTermNameAndAttributes,
+    SimpleCTTermNameAndAttributes,
+    SimpleTermModel,
 )
-from clinical_mdr_api.models.dictionaries.dictionary_term import DictionaryTerm
 from clinical_mdr_api.models.libraries.library import Library
 from clinical_mdr_api.models.syntax_pre_instances.generic_pre_instance import (
     PreInstanceInput,
@@ -43,14 +43,14 @@ class CriteriaPreInstance(BaseModel):
         [],
         description="Holds the parameter terms that are used within the criteria. The terms are ordered as they occur in the criteria name.",
     )
-    indications: list[DictionaryTerm] = Field(
+    indications: list[SimpleTermModel] = Field(
         [],
         description="The study indications, conditions, diseases or disorders in scope for the pre-instance.",
     )
-    categories: list[CTTermNameAndAttributes] = Field(
+    categories: list[SimpleCTTermNameAndAttributes] = Field(
         [], description="A list of categories the pre-instance belongs to."
     )
-    sub_categories: list[CTTermNameAndAttributes] = Field(
+    sub_categories: list[SimpleCTTermNameAndAttributes] = Field(
         [], description="A list of sub-categories the pre-instance belongs to."
     )
     library: Library | None = Field(None, nullable=True)
@@ -92,9 +92,11 @@ class CriteriaPreInstance(BaseModel):
                 criteria_pre_instance_ar.name_plain,
                 criteria_pre_instance_ar.template_name_plain,
             ),
-            guidance_text=criteria_pre_instance_ar._template.guidance_text
-            if criteria_pre_instance_ar.guidance_text is None
-            else criteria_pre_instance_ar.guidance_text,
+            guidance_text=(
+                criteria_pre_instance_ar._template.guidance_text
+                if criteria_pre_instance_ar.guidance_text is None
+                else criteria_pre_instance_ar.guidance_text
+            ),
             start_date=criteria_pre_instance_ar.item_metadata.start_date,
             end_date=criteria_pre_instance_ar.item_metadata.end_date,
             status=criteria_pre_instance_ar.item_metadata.status.value,
@@ -103,33 +105,9 @@ class CriteriaPreInstance(BaseModel):
             user_initials=criteria_pre_instance_ar.item_metadata.user_initials,
             library=Library.from_library_vo(criteria_pre_instance_ar.library),
             parameter_terms=parameter_terms,
-            indications=sorted(
-                [
-                    DictionaryTerm.from_dictionary_term_ar(indication)
-                    for indication in criteria_pre_instance_ar.indications
-                ],
-                key=lambda item: item.term_uid,
-            )
-            if criteria_pre_instance_ar.indications
-            else [],
-            categories=sorted(
-                [
-                    CTTermNameAndAttributes.from_ct_term_ars(*category)
-                    for category in criteria_pre_instance_ar.categories
-                ],
-                key=lambda item: item.term_uid,
-            )
-            if criteria_pre_instance_ar.categories
-            else [],
-            sub_categories=sorted(
-                [
-                    CTTermNameAndAttributes.from_ct_term_ars(*category)
-                    for category in criteria_pre_instance_ar.sub_categories
-                ],
-                key=lambda item: item.term_uid,
-            )
-            if criteria_pre_instance_ar.sub_categories
-            else [],
+            indications=criteria_pre_instance_ar.indications,
+            categories=criteria_pre_instance_ar.categories,
+            sub_categories=criteria_pre_instance_ar.sub_categories,
             possible_actions=sorted(
                 {_.value for _ in criteria_pre_instance_ar.get_possible_actions()}
             ),
@@ -160,9 +138,7 @@ class CriteriaPreInstanceCreateInput(PreInstanceInput):
 class CriteriaPreInstanceEditInput(PreInstanceInput):
     guidance_text: str | None = Field(
         None,
-        description="This field accepts a string value or None. If None is provided, the value of this property will not be altered. "
-        "This means that if the value is inherited from the parent template, it will remain inherited. "
-        "Similarly, if the value is set to some specific string, then it will remain the same and not become None.",
+        description="Guidance text or None. If None is provided then the value will be inherited from the parent template.",
         nullable=True,
     )
     change_description: str = Field(

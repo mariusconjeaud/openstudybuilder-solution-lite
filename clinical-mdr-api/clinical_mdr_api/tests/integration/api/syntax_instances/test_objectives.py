@@ -98,21 +98,6 @@ def test_data():
     )
     ct_term_category = TestUtils.create_ct_term()
 
-    parameter_terms = [
-        MultiTemplateParameterTerm(
-            position=1,
-            conjunction="",
-            terms=[
-                IndexedTemplateParameterTerm(
-                    index=1,
-                    name=text_value_1.name,
-                    uid=text_value_1.uid,
-                    type="TextValue",
-                )
-            ],
-        )
-    ]
-
     def generate_parameter_terms():
         text_value = TestUtils.create_text_value()
         return [
@@ -135,7 +120,6 @@ def test_data():
         guidance_text="Default guidance text",
         study_uid=None,
         library_name="Sponsor",
-        default_parameter_terms=parameter_terms,
         indication_uids=[dictionary_term_indication.term_uid],
         category_uids=[ct_term_category.term_uid],
     )
@@ -146,7 +130,20 @@ def test_data():
         TestUtils.create_objective(
             objective_template_uid=objective_template.uid,
             library_name="Sponsor",
-            parameter_terms=parameter_terms,
+            parameter_terms=[
+                MultiTemplateParameterTerm(
+                    position=1,
+                    conjunction="",
+                    terms=[
+                        IndexedTemplateParameterTerm(
+                            index=1,
+                            name=text_value_1.name,
+                            uid=text_value_1.uid,
+                            type="TextValue",
+                        )
+                    ],
+                )
+            ],
         )
     )
     objectives.append(
@@ -649,12 +646,8 @@ def test_objective_audit_trail(api_client):
     log.info("Objective Audit Trail: %s", res)
 
     assert response.status_code == 200
-    assert res["total"] == 50
+    assert res["total"] == 44
     expected_uids = [
-        "Objective_000004",
-        "Objective_000004",
-        "Objective_000004",
-        "Objective_000026",
         "Objective_000025",
         "Objective_000025",
         "Objective_000024",
@@ -695,8 +688,6 @@ def test_objective_audit_trail(api_client):
         "Objective_000007",
         "Objective_000006",
         "Objective_000006",
-        "Objective_000005",
-        "Objective_000004",
         "Objective_000002",
         "Objective_000002",
         "Objective_000001",

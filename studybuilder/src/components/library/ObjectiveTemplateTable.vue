@@ -12,6 +12,7 @@
   fullscreen-form
   :prepare-duplicate-payload-func="prepareDuplicatePayload"
   @refresh="refreshTable"
+  :default-filters="defaultFilters"
   >
   <template v-slot:editform="{ closeForm, selectedObject, preInstanceMode }">
     <objective-template-pre-instance-form
@@ -99,13 +100,15 @@ export default {
           width: '5%'
         },
         { text: this.$t('_global.sequence_number'), value: 'sequence_id' },
-        { text: this.$t('_global.indications'), value: 'indications.name' },
-        { text: this.$t('ObjectiveTemplateTable.objective_cat'), value: 'categories.name.sponsor_preferred_name' },
-        { text: this.$t('ObjectiveTemplateTable.confirmatory_testing'), value: 'is_confirmatory_testing' },
         { text: this.$t('_global.parent_template'), value: 'name', width: '30%', filteringName: 'name_plain' },
         { text: this.$t('_global.modified'), value: 'start_date' },
         { text: this.$t('_global.status'), value: 'status' },
         { text: this.$t('_global.version'), value: 'version' }
+      ],
+      defaultFilters: [
+        { text: this.$t('_global.indications'), value: 'indications.name' },
+        { text: this.$t('ObjectiveTemplateTable.objective_cat'), value: 'categories.name.sponsor_preferred_name' },
+        { text: this.$t('ObjectiveTemplateTable.confirmatory_testing'), value: 'is_confirmatory_testing' }
       ],
       historyExcludedHeaders: [
         'indications.name',

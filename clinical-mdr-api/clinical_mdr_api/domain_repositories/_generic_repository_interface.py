@@ -8,7 +8,6 @@ _AggregateRootType = TypeVar("_AggregateRootType")
 
 
 class GenericRepository(Generic[_AggregateRootType], abc.ABC):
-
     """
     Generic repository class with definition of necessary actions that
     library versioned objects repository have to support
@@ -52,12 +51,6 @@ class GenericRepository(Generic[_AggregateRootType], abc.ABC):
     @abc.abstractmethod
     def get_all_versions_2(
         self, uid: str, return_study_count: bool = False
-    ) -> Iterable[_AggregateRootType]:
-        raise NotImplementedError()
-
-    @abc.abstractmethod
-    def find_releases(
-        self, uid: str, return_study_count: bool = True
     ) -> Iterable[_AggregateRootType]:
         raise NotImplementedError()
 

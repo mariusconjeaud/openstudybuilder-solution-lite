@@ -113,11 +113,6 @@ apoc.map.fromValues([
 END AS diff
 """
 
-TERM_RETURN_CLAUSE = """
-WITH collect(diff) as items_diffs, added_items, removed_items
-RETURN added_items, removed_items, items_diffs
-"""
-
 COMPARISON_PART = """
 // From pattern comprehensions we get list of maps, where each map represents data for specific codelist or term.
 // The following section merge list of maps coming from pattern comprehensions into one map.

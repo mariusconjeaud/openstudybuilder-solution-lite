@@ -1,16 +1,16 @@
+import asyncio
+import inspect
+import json
+import logging
+import sys
+import time
+from typing import Sequence
+
+import aiohttp
+import requests
+
 from .metrics import Metrics
 from .path_join import path_join
-import requests
-import aiohttp
-import asyncio
-from os import environ
-from typing import Optional, Sequence, Any
-import logging
-from .aiohttp_trace import request_tracer
-import sys
-import json
-import time
-import inspect
 
 # CDISC codelists
 CODELIST_STUDY_TYPE = "Study Type"
@@ -49,6 +49,7 @@ CODELIST_CRITERIA_CATEGORY = "Criteria Category"
 CODELIST_CRITERIA_SUBCATEGORY = "Criteria Sub Category"
 CODELIST_CRITERIA_TYPE = "Criteria Type"
 CODELIST_ENDPOINT_CATEGORY = "Endpoint Category"
+CODELIST_FOOTNOTE_TYPE = "Footnote Type"
 CODELIST_OBJECTIVE_LEVEL = "Objective Level"
 CODELIST_ENDPOINT_LEVEL = "Endpoint Level"
 CODELIST_ENDPOINT_SUBLEVEL = "Endpoint Sub Level"
@@ -79,9 +80,13 @@ UNIT_SUBSET_STUDY_TIME = "Study Time"
 UNIT_SUBSET_TIME = "Time Unit"
 UNIT_SUBSET_STRENGTH = "Strength Unit"
 UNIT_SUBSET_STUDY_PREFERRED_TIME_UNIT = "Study Preferred Time Unit"
+UNIT_SUBSET_ENDPOINT_UNIT = "Endpoint Unit"
+
+SLEEP_BEFORE_APPROVE = 0.05
 
 def status_ok(status):
     return 200 <= status < 300
+
 
 def get_error_message(response):
     if "message" in response:
@@ -90,6 +95,7 @@ def get_error_message(response):
         return str(response["detail"])
     else:
         return str(response)
+
 
 # ---------------------------------------------------------------
 # Api bindings
@@ -113,6 +119,9 @@ class ApiBinding:
         # execute the check if called methods is not db-schema-migration repository
         if "db-schema-migration" not in inspect.currentframe().f_code.co_filename:
             self.check_for_ct_packages()
+
+    def update_headers(self, api_headers):
+        self.api_headers = api_headers
 
     # ---------------------------------------------------------------
     # Verify connection to api (and database)
@@ -177,7 +186,10 @@ class ApiBinding:
         if simple_path is None:
             simple_path = path
         response = requests.post(
-            path_join(self.api_base_url, path), headers=self.api_headers, json=body, params=params
+            path_join(self.api_base_url, path),
+            headers=self.api_headers,
+            json=body,
+            params=params,
         )
         if response.ok:
             self.metrics.icrement(simple_path + "--POST")
@@ -382,7 +394,9 @@ class ApiBinding:
     def create_library(self, object):
         self.metrics.icrement("/libraries")
         response = requests.post(
-            path_join(self.api_base_url, "libraries"), headers=self.api_headers, json=object
+            path_join(self.api_base_url, "libraries"),
+            headers=self.api_headers,
+            json=object,
         )
         response.raise_for_status()
 
@@ -417,27 +431,26 @@ class ApiBinding:
         return result["items"]
 
     # Get terms from a catalogue that have a given concept id
-    def lookup_terms_from_concept_id(self, concept_id: str, catalogue_name=None, code_submission_value=None):
-        filters_dict = {
-            "concept_id":{ 
-                "v": [concept_id],
-                "op": "eq"
-            }
-        }
+    def lookup_terms_from_concept_id(
+        self, concept_id: str, catalogue_name=None, code_submission_value=None
+    ):
+        filters_dict = {"concept_id": {"v": [concept_id], "op": "eq"}}
         if catalogue_name:
-            filters_dict["catalogue_name"] = { 
-                "v": [catalogue_name],
-                "op": "eq"
-            }
+            filters_dict["catalogue_name"] = {"v": [catalogue_name], "op": "eq"}
         if code_submission_value:
-            filters_dict["code_submission_value"] = { 
+            filters_dict["code_submission_value"] = {
                 "v": [code_submission_value],
-                "op": "eq"
+                "op": "eq",
             }
-        filters = json.dumps( filters_dict)
+        filters = json.dumps(filters_dict)
         response = requests.get(
             self.api_base_url + "/ct/terms/attributes",
-            params={"library": "CDISC", "page_number": 1, "page_size": 0, "filters": filters},
+            params={
+                "library": "CDISC",
+                "page_number": 1,
+                "page_size": 0,
+                "filters": filters,
+            },
             headers=self.api_headers,
         )
         response.raise_for_status()
@@ -447,7 +460,9 @@ class ApiBinding:
     # Get all dictionary mapping all codelist names to a uid
     def get_code_lists_uids(self):
         response = requests.get(
-            path_join(self.api_base_url, "ct/codelists/names?page_number=1&page_size=0"),
+            path_join(
+                self.api_base_url, "ct/codelists/names?page_number=1&page_size=0"
+            ),
             headers=self.api_headers,
         )
         response.raise_for_status()
@@ -585,7 +600,9 @@ class ApiBinding:
         result = response.json()
         temp_dict = {}
         for res in result["items"]:
-            temp_dict[res["current_metadata"]["identification_metadata"]["study_id"]] = res
+            temp_dict[
+                res["current_metadata"]["identification_metadata"]["study_id"]
+            ] = res
         return temp_dict
 
     def simple_approve(self, path: str):
@@ -642,7 +659,12 @@ class ApiBinding:
             path_join(self.api_base_url, path), json={}, headers=self.api_headers
         ) as response:
             status = response.status
-            result = await response.json()
+            try:
+                result = await response.json()
+            except aiohttp.ContentTypeError:
+                textresult = await response.text()
+                result = {}
+                self.log.error(f"Failed to post to '{path}', status: {status}, message: {textresult}")
             return status, result
 
     async def patch_to_api_async(
@@ -652,7 +674,12 @@ class ApiBinding:
             path_join(self.api_base_url, path), json=body, headers=self.api_headers
         ) as response:
             status = response.status
-            result = await response.json()
+            try:
+                result = await response.json()
+            except aiohttp.ContentTypeError:
+                textresult = await response.text()
+                result = {}
+                self.log.error(f"Failed to patch to '{path}', status: {status}, message: {textresult}")
             return status, result
 
     # This gives reasonable waiting for lock on atomic incrementing of identifiers
@@ -664,27 +691,44 @@ class ApiBinding:
                 path_join(self.api_base_url, url), json=body, headers=self.api_headers
             ) as response:
                 status = response.status
-                result = await response.json()
+                try:
+                    result = await response.json()
+                except aiohttp.ContentTypeError:
+                    textresult = await response.text()
+                    result = {}
+                    self.log.error(f"Failed to post to '{url}', status: {status}, message: {textresult}")
                 return status, result
 
     async def approve_async(self, url: str, session: aiohttp.ClientSession):
         async with session.post(
-            path_join(self.api_base_url, url), headers=self.api_headers
+            path_join(self.api_base_url, url), json={}, headers=self.api_headers
         ) as response:
             status = response.status
-            result = await response.json()
+            if response.ok:
+                result = await response.json()
+            else:
+                error_result = response.json()
+                self.log.warning(f"Failed to approve {url}, status: {status}, message: {get_error_message(error_result)}")
+                result = {}
             return status, result
 
     async def approve_item_async(
         self, uid: str, url: str, session: aiohttp.ClientSession
     ):
+        url = path_join(self.api_base_url, url, uid, "approvals")
         async with session.post(
-            path_join(self.api_base_url, url, uid, "approvals"),
+            url,
+            json={},
             headers=self.api_headers,
         ) as response:
             status = response.status
-            result = await response.json()
-            if status != 201:
+            if response.ok:
+                result = await response.json()
+            else:
+                error_result = await response.json()
+                self.log.warning(f"Failed to approve '{uid}', status: {status}, message: {get_error_message(error_result)}")
+                result = {}
+            if not response.ok:
                 self.metrics.icrement(url + "--ApproveError")
             else:
                 self.metrics.icrement(url + "--Approve")
@@ -697,7 +741,7 @@ class ApiBinding:
         status, response = await self.post_to_api_async(
             url=data["path"], body=data["body"], session=session
         )
-        if status>=400:
+        if status >= 400:
             if "message" in response:
                 errormsg = response["message"]
             else:
@@ -710,12 +754,14 @@ class ApiBinding:
             else:
                 name = str(data["body"])
 
-            self.log.error(f"Failed to post '{name}' to '{data['path']}', error: {errormsg}")
+            self.log.error(
+                f"Failed to post '{name}' to '{data['path']}', error: {errormsg}"
+            )
             return
         uid = response.get("uid")
         if approve == True and uid != None:
             # Sleeping to avoid errors when running locally (with limited resources for the db).
-            time.sleep(0.05)
+            time.sleep(SLEEP_BEFORE_APPROVE)
             self.log.info(f"Approve item with uid '{uid}'")
             status, result = await self.approve_item_async(
                 uid=uid, url=data["approve_path"], session=session
@@ -732,8 +778,14 @@ class ApiBinding:
             path=data["new_path"], session=session
         )
         if not status_ok(status):
-            self.log.error(f"Failed to create new version: {get_error_message(response)}")
-            return
+            error_msg = get_error_message(response)
+            if "New draft version can be created only for FINAL versions" in error_msg:
+                self.log.warning(
+                    "Failed to create new version, item is already in DRAFT"
+                )
+            else:
+                self.log.error(f"Failed to create new version: {error_msg}")
+                return
         status, response = await self.patch_to_api_async(
             path=data["patch_path"], body=data["body"], session=session
         )
@@ -743,13 +795,14 @@ class ApiBinding:
         uid = response.get("uid")
         if approve and uid is not None:
             # Sleeping to avoid errors when running locally (with limited resources for the db).
-            time.sleep(0.05)
+            time.sleep(SLEEP_BEFORE_APPROVE)
             status, reponse = await self.approve_item_async(
                 uid=response.get("uid"), url=data["approve_path"], session=session
             )
             if not status_ok(status):
-                self.log.error(f"Failed to approve the new version: {get_error_message(response)}")
+                self.log.error(
+                    f"Failed to approve the new version of: {uid}"
+                )
             return response
         elif approve:
             self.log.error("No uid returned, unable to approve the new version")
-

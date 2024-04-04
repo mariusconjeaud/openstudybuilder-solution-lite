@@ -44,8 +44,6 @@ The 'name' of an timeframe template may contain parameters, that can - and usual
 
 Parameters are referenced by simple strings in square brackets [] that match existing parameters defined in the MDR repository.
 
-See the *[GET] /parameter-templates/* endpoint for available terms.
-
 The timeframe template will be linked to those parameters defined in the 'name' property.
 
 You may use an arbitrary number of parameters and you may use the same parameter multiple times within the same timeframe template 'name'.
@@ -89,6 +87,7 @@ name='MORE TESTING of the superiority in the efficacy of [Intervention] with [Ac
         "defaults": [
             "library=library.name",
             "uid",
+            "sequence_id",
             "name_plain",
             "name",
             "start_date",
@@ -132,7 +131,7 @@ def get_timeframe_templates(
     filters: Json
     | None = Query(
         None,
-        description=_generic_descriptions.FILTERS,
+        description=_generic_descriptions.SYNTAX_FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
@@ -189,7 +188,7 @@ def get_distinct_values_for_header(
     filters: Json
     | None = Query(
         None,
-        description=_generic_descriptions.FILTERS,
+        description=_generic_descriptions.SYNTAX_FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
@@ -232,8 +231,11 @@ def retrieve_audit_trail(
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
     current_user_id: str = Depends(get_current_user_id),
 ):
-    results = Service(current_user_id).retrieve_audit_trail(
-        page_number=page_number, page_size=page_size, total_count=total_count
+    results = Service(current_user_id).get_all(
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
+        for_audit_trail=True,
     )
 
     return CustomPage.create(
@@ -259,15 +261,9 @@ def retrieve_audit_trail(
 )
 def get_timeframe_template(
     uid: str = TimeframeTemplateUID,
-    return_instantiation_counts: bool
-    | None = Query(
-        None, description="if specified counts data will be returned along object"
-    ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> TimeframeTemplate:
-    return Service(current_user_id).get_by_uid(
-        uid, return_instantiation_counts=bool(return_instantiation_counts)
-    )
+    return Service(current_user_id).get_by_uid(uid)
 
 
 @router.get(

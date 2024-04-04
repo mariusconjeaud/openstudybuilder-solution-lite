@@ -108,6 +108,11 @@
         :badge="actionsMenuBadge(item)"
         />
     </template>
+    <template v-slot:item.activity.name="{ item }">
+      <router-link :to="{ name: 'StudyActivityOverview', params: { study_id: selectedStudy.uid, id: item.study_activity_uid } }">
+        {{ item.activity.name }}
+      </router-link>
+    </template>
     <template v-slot:item.activity.is_data_collected="{ item }">
       {{ item.activity.is_data_collected | yesno }}
     </template>

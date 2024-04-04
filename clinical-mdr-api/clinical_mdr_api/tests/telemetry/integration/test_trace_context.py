@@ -55,7 +55,7 @@ def test_build_valid_traceresponse_header(app_client):
 
 
 def assert_traceresponse_syntax(traceresponse):
-    # pylint:disable=unused-variable
+    # pylint: disable=unused-variable
     __tracebackhide__ = True  # Tell Pytest to hide the body of this function from tracebacks (it's an assertion helper)
 
     assert TRACE_CONTEXT_ID_RE.match(

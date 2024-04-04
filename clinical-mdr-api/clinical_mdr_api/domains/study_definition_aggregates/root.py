@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from decimal import Decimal
-from typing import AbstractSet, Any, Callable, MutableSequence, Self
+from typing import Any, Callable, MutableSequence, Self
 
 from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains.study_definition_aggregates._utils import (
@@ -40,6 +40,7 @@ class StudyDefinitionSnapshot:
             (version 1 goes first)
     """
 
+    # pylint: disable=too-many-instance-attributes
     @dataclass
     class StudyMetadataSnapshot:
         """
@@ -47,9 +48,11 @@ class StudyDefinitionSnapshot:
         """
 
         study_number: str | None = None
+        subpart_id: str | None = None
         study_acronym: str | None = None
         study_id_prefix: str | None = None
         project_number: str | None = None
+        description: str | None = None
         ct_gov_id: str | None = None
         ct_gov_id_null_value_code: str | None = None
         eudract_id: str | None = None
@@ -62,6 +65,22 @@ class StudyDefinitionSnapshot:
         investigational_new_drug_application_number_ind_null_value_code: str | None = (
             None
         )
+        eu_trial_number: str | None = None
+        eu_trial_number_null_value_code: str | None = None
+        civ_id_sin_number: str | None = None
+        civ_id_sin_number_null_value_code: str | None = None
+        national_clinical_trial_number: str | None = None
+        national_clinical_trial_number_null_value_code: str | None = None
+        japanese_trial_registry_number_jrct: str | None = None
+        japanese_trial_registry_number_jrct_null_value_code: str | None = None
+        national_medical_products_administration_nmpa_number: str | None = None
+        national_medical_products_administration_nmpa_number_null_value_code: str | None = (
+            None
+        )
+        eudamed_srn_number: str | None = None
+        eudamed_srn_number_null_value_code: str | None = None
+        investigational_device_exemption_ide_number: str | None = None
+        investigational_device_exemption_ide_number_null_value_code: str | None = None
         version_timestamp: datetime | None = None
         version_author: str | None = None
         version_description: str | None = None
@@ -156,6 +175,8 @@ class StudyDefinitionSnapshot:
         study_short_title: str | None = None
 
     uid: str | None  # = None
+    study_parent_part_uid: str | None
+    study_subpart_uids: list[str]
     current_metadata: StudyMetadataSnapshot | None  # = None
     draft_metadata: StudyMetadataSnapshot | None  # = None
     released_metadata: StudyMetadataSnapshot | None  # = None
@@ -245,6 +266,8 @@ _DEF_INITIAL_STUDY_DESCRIPTION = StudyDescriptionVO(
 @dataclass
 class StudyDefinitionAR:
     _uid: str
+    study_parent_part_uid: str | None
+    study_subpart_uids: list[str]
     _draft_metadata: StudyMetadataVO | None
     _released_metadata: StudyMetadataVO | None
 
@@ -257,18 +280,23 @@ class StudyDefinitionAR:
     def uid(self) -> str:
         return self._uid
 
-    def get_possible_actions(self) -> AbstractSet[StudyAction]:
+    def get_possible_actions(self):
         """
-        Returns list of possible actions
+        Returns set of possible actions
         """
         if self.study_status == StudyStatus.DRAFT and not self.latest_locked_metadata:
+            if self.study_parent_part_uid:
+                return {StudyAction.DELETE}
             return {StudyAction.LOCK, StudyAction.RELEASE, StudyAction.DELETE}
-        if self.study_status in [StudyStatus.DRAFT, StudyStatus.RELEASED]:
+        if (
+            self.study_status in [StudyStatus.DRAFT, StudyStatus.RELEASED]
+            and not self.study_parent_part_uid
+        ):
             return {StudyAction.LOCK, StudyAction.RELEASE}
-        if self.study_status == StudyStatus.LOCKED:
+        if self.study_status == StudyStatus.LOCKED and not self.study_parent_part_uid:
             return {StudyAction.UNLOCK}
         if self.study_status == StudyStatus.DELETED:
-            return {}
+            return set()
         return frozenset()
 
     @property
@@ -368,6 +396,9 @@ class StudyDefinitionAR:
             [str], bool
         ] = default_failure_callback_for_variable("study_short_title"),
         author: str | None = None,
+        is_subpart: bool = False,
+        previous_is_subpart: bool = False,
+        updatable_subpart: bool = False,
     ) -> None:
         self._can_edit_metadata(raise_error=True)
 
@@ -393,6 +424,8 @@ class StudyDefinitionAR:
             if (
                 self.current_metadata.id_metadata.study_number
                 != new_id_metadata.study_number
+                and not self.study_parent_part_uid
+                and not previous_is_subpart
             ):
                 raise BusinessLogicException(
                     f"The study number for a study {self.uid} can't be changed."
@@ -404,7 +437,9 @@ class StudyDefinitionAR:
                     _study_id_prefix=new_id_metadata.project_number,  # here comes the substitution
                     project_number=new_id_metadata.project_number,
                     study_number=new_id_metadata.study_number,
+                    subpart_id=new_id_metadata.subpart_id,
                     study_acronym=new_id_metadata.study_acronym,
+                    description=new_id_metadata.description,
                     registry_identifiers=RegistryIdentifiersVO(
                         ct_gov_id=new_id_metadata.registry_identifiers.ct_gov_id,
                         ct_gov_id_null_value_code=new_id_metadata.registry_identifiers.ct_gov_id_null_value_code,
@@ -421,6 +456,30 @@ class StudyDefinitionAR:
                         ),
                         investigational_new_drug_application_number_ind_null_value_code=(
                             new_id_metadata.registry_identifiers.investigational_new_drug_application_number_ind_null_value_code
+                        ),
+                        eu_trial_number=new_id_metadata.registry_identifiers.eu_trial_number,
+                        eu_trial_number_null_value_code=new_id_metadata.registry_identifiers.eu_trial_number_null_value_code,
+                        civ_id_sin_number=new_id_metadata.registry_identifiers.civ_id_sin_number,
+                        civ_id_sin_number_null_value_code=new_id_metadata.registry_identifiers.civ_id_sin_number_null_value_code,
+                        national_clinical_trial_number=new_id_metadata.registry_identifiers.national_clinical_trial_number,
+                        national_clinical_trial_number_null_value_code=(
+                            new_id_metadata.registry_identifiers.national_clinical_trial_number_null_value_code
+                        ),
+                        japanese_trial_registry_number_jrct=new_id_metadata.registry_identifiers.japanese_trial_registry_number_jrct,
+                        japanese_trial_registry_number_jrct_null_value_code=(
+                            new_id_metadata.registry_identifiers.japanese_trial_registry_number_jrct_null_value_code
+                        ),
+                        national_medical_products_administration_nmpa_number=(
+                            new_id_metadata.registry_identifiers.national_medical_products_administration_nmpa_number
+                        ),
+                        national_medical_products_administration_nmpa_number_null_value_code=(
+                            new_id_metadata.registry_identifiers.national_medical_products_administration_nmpa_number_null_value_code
+                        ),
+                        eudamed_srn_number=new_id_metadata.registry_identifiers.eudamed_srn_number,
+                        eudamed_srn_number_null_value_code=new_id_metadata.registry_identifiers.eudamed_srn_number_null_value_code,
+                        investigational_device_exemption_ide_number=new_id_metadata.registry_identifiers.investigational_device_exemption_ide_number,
+                        investigational_device_exemption_ide_number_null_value_code=(
+                            new_id_metadata.registry_identifiers.investigational_device_exemption_ide_number_null_value_code
                         ),
                     ),
                 )
@@ -430,7 +489,9 @@ class StudyDefinitionAR:
                     _study_id_prefix=self.current_metadata.id_metadata.study_id_prefix,  # here comes the substitution
                     project_number=new_id_metadata.project_number,
                     study_number=self.current_metadata.id_metadata.study_number,
+                    subpart_id=new_id_metadata.subpart_id,
                     study_acronym=new_id_metadata.study_acronym,
+                    description=new_id_metadata.description,
                     registry_identifiers=RegistryIdentifiersVO(
                         ct_gov_id=new_id_metadata.registry_identifiers.ct_gov_id,
                         ct_gov_id_null_value_code=new_id_metadata.registry_identifiers.ct_gov_id_null_value_code,
@@ -448,13 +509,40 @@ class StudyDefinitionAR:
                         investigational_new_drug_application_number_ind_null_value_code=(
                             new_id_metadata.registry_identifiers.investigational_new_drug_application_number_ind_null_value_code
                         ),
+                        eu_trial_number=new_id_metadata.registry_identifiers.eu_trial_number,
+                        eu_trial_number_null_value_code=new_id_metadata.registry_identifiers.eu_trial_number_null_value_code,
+                        civ_id_sin_number=new_id_metadata.registry_identifiers.civ_id_sin_number,
+                        civ_id_sin_number_null_value_code=new_id_metadata.registry_identifiers.civ_id_sin_number_null_value_code,
+                        national_clinical_trial_number=new_id_metadata.registry_identifiers.national_clinical_trial_number,
+                        national_clinical_trial_number_null_value_code=(
+                            new_id_metadata.registry_identifiers.national_clinical_trial_number_null_value_code
+                        ),
+                        japanese_trial_registry_number_jrct=new_id_metadata.registry_identifiers.japanese_trial_registry_number_jrct,
+                        japanese_trial_registry_number_jrct_null_value_code=(
+                            new_id_metadata.registry_identifiers.japanese_trial_registry_number_jrct_null_value_code
+                        ),
+                        national_medical_products_administration_nmpa_number=(
+                            new_id_metadata.registry_identifiers.national_medical_products_administration_nmpa_number
+                        ),
+                        national_medical_products_administration_nmpa_number_null_value_code=(
+                            new_id_metadata.registry_identifiers.national_medical_products_administration_nmpa_number_null_value_code
+                        ),
+                        eudamed_srn_number=new_id_metadata.registry_identifiers.eudamed_srn_number,
+                        eudamed_srn_number_null_value_code=new_id_metadata.registry_identifiers.eudamed_srn_number_null_value_code,
+                        investigational_device_exemption_ide_number=new_id_metadata.registry_identifiers.investigational_device_exemption_ide_number,
+                        investigational_device_exemption_ide_number_null_value_code=(
+                            new_id_metadata.registry_identifiers.investigational_device_exemption_ide_number_null_value_code
+                        ),
                     ),
                 )
 
             assert new_id_metadata is not None  # making linter happy
             if new_id_metadata != self.current_metadata.id_metadata:
                 new_id_metadata.validate(
-                    project_exists_callback=project_exists_callback
+                    project_exists_callback=project_exists_callback,
+                    is_subpart=is_subpart,
+                    updatable_subpart=updatable_subpart,
+                    previous_project_number=self.current_metadata.id_metadata.project_number,
                 )
                 self._draft_metadata = StudyMetadataVO(
                     id_metadata=new_id_metadata,
@@ -605,7 +693,7 @@ class StudyDefinitionAR:
                 f"Study {self.uid}: not in DRAFT state - lock not allowed."
             )
 
-        if (
+        if not self.study_parent_part_uid and (
             current_metadata.id_metadata.study_number is None
             or current_metadata.study_description.study_title is None
         ):
@@ -669,16 +757,14 @@ class StudyDefinitionAR:
             study_description=current_metadata.study_description,
         )
 
-    def _check_deleted(self) -> None:
-        if self._deleted:
-            raise exceptions.ValidationException(
-                f"Study {self._uid}: no operations allowed on deleted study."
-            )
-
     def mark_deleted(self) -> None:
         if self.latest_locked_metadata is not None:
             raise exceptions.ValidationException(
                 f"Study {self.uid}: cannot delete a StudyDefinition having some locked versions."
+            )
+        if self.study_subpart_uids:
+            raise exceptions.BusinessLogicException(
+                f"Study {self.uid}: cannot delete a Study having Study Subparts: {self.study_subpart_uids}."
             )
         self._deleted = True
 
@@ -795,6 +881,8 @@ class StudyDefinitionAR:
             study_status = self.current_metadata.ver_metadata.study_status.value
         return StudyDefinitionSnapshot(
             uid=self._uid,
+            study_parent_part_uid=self.study_parent_part_uid,
+            study_subpart_uids=self.study_subpart_uids,
             deleted=deleted,
             released_metadata=released_metadata,
             locked_metadata_versions=locked_metadata_versions,
@@ -834,8 +922,10 @@ class StudyDefinitionAR:
                 if value_object_name == "id_metadata":
                     id_metadata = StudyIdentificationMetadataVO(
                         study_number=study_metadata_snapshot.study_number,
+                        subpart_id=study_metadata_snapshot.subpart_id,
                         project_number=study_metadata_snapshot.project_number,
                         study_acronym=study_metadata_snapshot.study_acronym,
+                        description=study_metadata_snapshot.description,
                         _study_id_prefix=study_metadata_snapshot.study_id_prefix,
                         registry_identifiers=RegistryIdentifiersVO(
                             ct_gov_id=study_metadata_snapshot.ct_gov_id,
@@ -851,6 +941,30 @@ class StudyDefinitionAR:
                             investigational_new_drug_application_number_ind=study_metadata_snapshot.investigational_new_drug_application_number_ind,
                             investigational_new_drug_application_number_ind_null_value_code=(
                                 study_metadata_snapshot.investigational_new_drug_application_number_ind_null_value_code
+                            ),
+                            eu_trial_number=study_metadata_snapshot.eu_trial_number,
+                            eu_trial_number_null_value_code=study_metadata_snapshot.eu_trial_number_null_value_code,
+                            civ_id_sin_number=study_metadata_snapshot.civ_id_sin_number,
+                            civ_id_sin_number_null_value_code=study_metadata_snapshot.civ_id_sin_number_null_value_code,
+                            national_clinical_trial_number=study_metadata_snapshot.national_clinical_trial_number,
+                            national_clinical_trial_number_null_value_code=(
+                                study_metadata_snapshot.national_clinical_trial_number_null_value_code
+                            ),
+                            japanese_trial_registry_number_jrct=study_metadata_snapshot.japanese_trial_registry_number_jrct,
+                            japanese_trial_registry_number_jrct_null_value_code=(
+                                study_metadata_snapshot.japanese_trial_registry_number_jrct_null_value_code
+                            ),
+                            national_medical_products_administration_nmpa_number=(
+                                study_metadata_snapshot.national_medical_products_administration_nmpa_number
+                            ),
+                            national_medical_products_administration_nmpa_number_null_value_code=(
+                                study_metadata_snapshot.national_medical_products_administration_nmpa_number_null_value_code
+                            ),
+                            eudamed_srn_number=study_metadata_snapshot.eudamed_srn_number,
+                            eudamed_srn_number_null_value_code=study_metadata_snapshot.eudamed_srn_number_null_value_code,
+                            investigational_device_exemption_ide_number=study_metadata_snapshot.investigational_device_exemption_ide_number,
+                            investigational_device_exemption_ide_number_null_value_code=(
+                                study_metadata_snapshot.investigational_device_exemption_ide_number_null_value_code
                             ),
                         ),
                     )
@@ -917,6 +1031,8 @@ class StudyDefinitionAR:
 
         return StudyDefinitionAR(
             _uid=uid,
+            study_parent_part_uid=study_snapshot.study_parent_part_uid,
+            study_subpart_uids=study_snapshot.study_subpart_uids,
             _draft_metadata=draft_metadata,
             _released_metadata=released_metadata,
             _locked_metadata_versions=locked_metadata_versions,
@@ -985,6 +1101,7 @@ class StudyDefinitionAR:
             [str], bool
         ] = default_failure_callback_for_variable("study_short_title"),
         author: str | None = None,
+        is_subpart: bool = False,
     ) -> Self:
         """
         A factory supporting user story concerned with brand new study creation with some initial information
@@ -1052,7 +1169,9 @@ class StudyDefinitionAR:
         initial_id_metadata = StudyIdentificationMetadataVO(
             project_number=initial_id_metadata.project_number,
             study_number=initial_id_metadata.study_number,
+            subpart_id=initial_id_metadata.subpart_id,
             study_acronym=initial_id_metadata.study_acronym,
+            description=initial_id_metadata.description,
             registry_identifiers=RegistryIdentifiersVO(
                 ct_gov_id=initial_id_metadata.registry_identifiers.ct_gov_id,
                 ct_gov_id_null_value_code=initial_id_metadata.registry_identifiers.ct_gov_id_null_value_code,
@@ -1069,6 +1188,30 @@ class StudyDefinitionAR:
                 ),
                 investigational_new_drug_application_number_ind_null_value_code=(
                     initial_id_metadata.registry_identifiers.investigational_new_drug_application_number_ind_null_value_code
+                ),
+                eu_trial_number=initial_id_metadata.registry_identifiers.eu_trial_number,
+                eu_trial_number_null_value_code=initial_id_metadata.registry_identifiers.eu_trial_number_null_value_code,
+                civ_id_sin_number=initial_id_metadata.registry_identifiers.civ_id_sin_number,
+                civ_id_sin_number_null_value_code=initial_id_metadata.registry_identifiers.civ_id_sin_number_null_value_code,
+                national_clinical_trial_number=initial_id_metadata.registry_identifiers.national_clinical_trial_number,
+                national_clinical_trial_number_null_value_code=(
+                    initial_id_metadata.registry_identifiers.national_clinical_trial_number_null_value_code
+                ),
+                japanese_trial_registry_number_jrct=initial_id_metadata.registry_identifiers.japanese_trial_registry_number_jrct,
+                japanese_trial_registry_number_jrct_null_value_code=(
+                    initial_id_metadata.registry_identifiers.japanese_trial_registry_number_jrct_null_value_code
+                ),
+                national_medical_products_administration_nmpa_number=(
+                    initial_id_metadata.registry_identifiers.national_medical_products_administration_nmpa_number
+                ),
+                national_medical_products_administration_nmpa_number_null_value_code=(
+                    initial_id_metadata.registry_identifiers.national_medical_products_administration_nmpa_number_null_value_code
+                ),
+                eudamed_srn_number=initial_id_metadata.registry_identifiers.eudamed_srn_number,
+                eudamed_srn_number_null_value_code=initial_id_metadata.registry_identifiers.eudamed_srn_number_null_value_code,
+                investigational_device_exemption_ide_number=initial_id_metadata.registry_identifiers.investigational_device_exemption_ide_number,
+                investigational_device_exemption_ide_number_null_value_code=(
+                    initial_id_metadata.registry_identifiers.investigational_device_exemption_ide_number_null_value_code
                 ),
             ),
             _study_id_prefix=initial_id_metadata.project_number,
@@ -1106,6 +1249,7 @@ class StudyDefinitionAR:
             trial_blinding_schema_exists_callback=trial_blinding_schema_exists_callback,
             study_title_exists_callback=study_title_exists_callback,
             study_short_title_exists_callback=study_short_title_exists_callback,
+            is_subpart=is_subpart,
         )
 
         # seems all relevant business rules are ok. Now get the uid (using callback)
@@ -1115,6 +1259,8 @@ class StudyDefinitionAR:
         # and lets return an instance
         return StudyDefinitionAR(
             _uid=uid,
+            study_parent_part_uid=None,
+            study_subpart_uids=[],
             _draft_metadata=initial_study_metadata,
             _released_metadata=None,
             _locked_metadata_versions=[],

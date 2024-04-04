@@ -42,7 +42,9 @@ class StudyElementSelectionService(
         self.author = author
 
     def _transform_all_to_response_model(
-        self, study_selection: StudySelectionElementAR
+        self,
+        study_selection: StudySelectionElementAR,
+        study_value_version: str | None = None,
     ) -> list[models.StudySelectionElement]:
         result = []
         # go over each VO study element selection object
@@ -54,6 +56,7 @@ class StudyElementSelectionService(
                     selection,
                     order=order,
                     study_uid=study_selection.study_uid,
+                    study_value_version=study_value_version,
                 )
             )
         return result
@@ -63,6 +66,7 @@ class StudyElementSelectionService(
         study_selection: StudySelectionElementVO,
         order: int,
         study_uid: str,
+        study_value_version: str | None = None,
     ) -> models.StudySelectionElement:
         repos = self._repos
         return models.StudySelectionElement.from_study_selection_element_ar_and_order(
@@ -72,6 +76,7 @@ class StudyElementSelectionService(
             find_simple_term_element_by_term_uid=self._find_by_uid_or_raise_not_found,
             get_term_element_type_by_element_subtype=repos.study_element_repository.get_element_type_term_uid_by_element_subtype_term_uid,
             find_all_study_time_units=self._repos.unit_definition_repository.find_all,
+            study_value_version=study_value_version,
         )
 
     def _transform_each_history_to_response_model(
@@ -232,7 +237,9 @@ class StudyElementSelectionService(
                 study_uid, study_value_version=study_value_version
             )
             filtered_items = service_level_generic_filtering(
-                items=self._transform_all_to_response_model(element_selection_ar),
+                items=self._transform_all_to_response_model(
+                    element_selection_ar, study_value_version=study_value_version
+                ),
                 filter_by=filter_by,
                 filter_operator=filter_operator,
                 sort_by=sort_by,

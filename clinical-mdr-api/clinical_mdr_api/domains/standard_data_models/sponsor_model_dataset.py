@@ -33,8 +33,8 @@ class SponsorModelDatasetVO:
     include_in_raw: bool
     gen_raw_seqno_flag: bool
     enrich_build_order: int
-    keys: list[str]
-    sort_keys: list[str]
+    keys: list[str] | None
+    sort_keys: list[str] | None
     label: str
     state: str
     extended_domain: str
@@ -50,8 +50,8 @@ class SponsorModelDatasetVO:
         xml_title: str,
         structure: str,
         purpose: str,
-        keys: list[str],
-        sort_keys: list[str],
+        keys: list[str] | None,
+        sort_keys: list[str] | None,
         source_ig: str,
         comment: str,
         ig_comment: str,

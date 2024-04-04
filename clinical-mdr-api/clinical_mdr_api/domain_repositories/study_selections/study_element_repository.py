@@ -316,21 +316,6 @@ class StudySelectionElementRepository:
         )
         return len(sdc_node) > 0
 
-    def validate_delete_init(
-        self, study_uid: str, closure: StudySelectionElementAR
-    ) -> None:
-        # make validations
-        assert closure is not None
-
-        # getting the latest study value node
-        study_root_node = StudyRoot.nodes.get(uid=study_uid)
-        latest_study_value_node = study_root_node.latest_value.single()
-
-        if study_root_node.latest_locked.get_or_none() == latest_study_value_node:
-            raise VersioningException(
-                "You cannot add or reorder a study selection when the study is in a locked state."
-            )
-
     def save(self, study_selection: StudySelectionElementAR, author: str) -> None:
         """
         Persist the set of selected study amrs from the aggregate to the database
@@ -601,4 +586,6 @@ class StudySelectionElementRepository:
         return self._get_selection_with_history(study_uid=study_uid)
 
     def close(self) -> None:
+        # Our repository guidelines state that repos should have a close method
+        # But nothing needs to be done in this one
         pass

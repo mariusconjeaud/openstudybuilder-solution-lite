@@ -134,7 +134,8 @@
         "access_groups": "Access Groups:",
         "operator": "Operator",
         "download_docx": "Download DOCX",
-        "audit_trail": "Audit trail"
+        "audit_trail": "Audit trail",
+        "remove": "Remove"
     },
     "_errors": {
         "exclusive_select": "Field and Null Flavor can't be selected at the same time.",
@@ -375,7 +376,8 @@
             "submission_value": "Provide a unique submission value. If a duplicate exists then the application will use it instead",
             "nci_pref_name": "Provide if applicable a preferred NCI name",
             "definition": "Provide a complete definition of the term",
-            "synonyms": "Provide if applicable one or more synonym(s), separated by a ';'. If those synonyms already exist in the database, they will be linked"
+            "synonyms": "Provide if applicable one or more synonym(s), separated by a ';'. If those synonyms already exist in the database, they will be linked",
+            "order": "Order of term in the codelist"
         },
         "DictionaryTermForm": {
             "dictionary_id": "Add an ID of the dictionary term. Ensure that the ID follows the nomenclature for the dictionary. Example UNII for Insulin Detemir (levemir) is 4FT78T86XV, MED-RT for Insulin analogue is N0000175453, and SNOMED ID for Diabetes Mellitus is 73211009.",
@@ -833,6 +835,17 @@
         "StudyFootnoteForm": {
             "general": "Footnotes are additional information pertaining to elements of the SoA. For instruction related to Activities, The Activity Instruction tab should be used.",
             "creation_mode_label": "Select the type of method for creating a footnote: use a standard, from an existing study, or make one form scratch."
+        },
+        "ProjectForm": {
+            "general": "Add a new project to a clinical programme.",
+            "name": "Name for the new project, example: 'Demo Project'.",
+            "project_number": "Project number for the new project, example: 'AB1234'.",
+            "description": "Description of the project, example: 'Project for demonstration purposes'.",
+            "clinical_programme": "Clinical programme that the project belongs to."
+        },
+        "ClinicalProgrammeForm": {
+            "general": "Add a new clinical programme.",
+            "name": "Name for the new clinical programme."
         }
     },
     "Topbar": {
@@ -861,7 +874,10 @@
         "template_collections_description": "Find relevant template collections for project templates, shared templates and supporting templates.",
         "data_exchange_standards_description": "See the complete master model for the following CDISC data exchange standards: CDASH, SDTM and ADaM.",
         "list_description": "Find listings of all codes list and terms for controlled terminology, dictionaries, concepts as well as the data exchange standards, in both new and legacy format.",
-        "process_overview_description": "Find schematic overviews of the activities covered under the Library. You can use these to navigate to the relevant pages to enter or look up information."
+        "process_overview_description": "Find schematic overviews of the activities covered under the Library. You can use these to navigate to the relevant pages to enter or look up information.",
+        "projects": "View or create projects.",
+        "clinical_programmes": "View or create clinical programmes.",
+        "administrative_definitions": "View or create administrative definitions."
     },
     "Studies": {
         "description_top_before": "Under ",
@@ -966,7 +982,10 @@
             "sdtm_std_dmw": "SDTM Standards (DMW)",
             "adam_std_cst": "ADaM Standards (CST)",
             "adam_std_new": "ADaM Standards (New)",
-            "process_overview": "Process Overview"
+            "process_overview": "Process Overview",
+            "clinical_programmes": "Clinical Programmes",
+            "projects": "Projects",
+            "administrative_definitions": "Admin Definitions"
         },
         "study": {
             "about": "About Studies",
@@ -1324,10 +1343,6 @@
     },
     "ObjectivesView": {
         "title": "Objective instantiations"
-    },
-    "404View": {
-        "title": "Sorry, this page does not exist.",
-        "back_home": "Return to Home page"
     },
     "UnderConstruction": {
         "title": "Under Construction",
@@ -1740,6 +1755,7 @@
         "title": "Study Compounds"
     },
     "StudyCompoundTable": {
+        "study_compound": "Study Compound",
         "compound": "Compound",
         "sponsor_compound": "Sponsor Compound",
         "is_name_inn": "Is INN",
@@ -1932,7 +1948,7 @@
         "requested_activity": "Requested Activity",
         "new_sponsor_concept": "New Sponsor Activity Concept",
         "new_concept_warning": "New Activity Concept must be approved before available for selection, and this will retire the replacing Activity Concept",
-        "data_collection": "Data collection relevance"
+        "data_collection": "Data collection"
     },
     "ActivityForms": {
         "activity_subgroup": "Activity subgroup",
@@ -1983,7 +1999,9 @@
         "grouping_selection_info": "You need to choose at least one Activity Grouping",
         "name_sentence_case": "Sentence case name",
         "select_class": "Select class",
-        "nci_concept_id": "NCI Concept ID"
+        "nci_concept_id": "NCI Concept ID",
+        "add_activity_request": "Add activity request",
+        "edit_activity_request": "Edit activity request"
     },
     "ClinicalMetadataView": {
         "title": "General Clinical Metadata",
@@ -2030,7 +2048,7 @@
         "title": "Study",
         "tab1_title": "Study Core Attributes",
         "tab2_title": "Study Status",
-        "tab3_title": "Study Sub-parts",
+        "tab3_title": "Study Subparts",
         "tab4_title": "Protocol Version"
     },
     "StudyIdentificationSummary": {
@@ -2112,8 +2130,8 @@
         "sponsor_title": "For the code list sponsor values",
         "ct_identifiers": "CT identifiers",
         "selected_values": "Selected values",
-        "sponsor_pref_name": "Sponsor Preferred Name",
-        "tpl_parameter": "Template Parameter",
+        "sponsor_pref_name": "Sponsor preferred name",
+        "tpl_parameter": "Template parameter",
         "new_version": "Create new sponsor values version",
         "new_version_success": "New version of sponsor values created",
         "history": "Open history",
@@ -2190,12 +2208,13 @@
         "history_label_attributes": "CT values history for term [{term}]"
     },
     "CodelistTermDetail": {
+        "attributes_title": "Term attributes values",
         "add_term": "Add term",
         "term_detail": "Term Detail",
         "concept_id": "Concept ID",
-        "sponsor_title": "For the term sponsor values",
-        "term_name": "Name submission value",
-        "submission_value": "Code submission value",
+        "sponsor_title": "Term sponsor values",
+        "name_submission_value": "Name submission value",
+        "code_submission_value": "Code submission value",
         "nci_pref_name": "NCI preferred name",
         "synonyms": "Synonyms",
         "edit_names": "Edit term names",
@@ -2203,22 +2222,22 @@
         "new_names_version_success": "New version of names created",
         "approve_names": "Change status to Final",
         "approve_names_success": "Term names are now in Final state",
-        "inactivate_names": "Inactivate those term names",
+        "inactivate_names": "Inactivate term names",
         "inactivate_names_success": "Term names inactivated",
-        "reactivate_names": "Reactivate those term names",
+        "reactivate_names": "Reactivate term names",
         "reactivate_names_success": "Term names reactivated",
-        "delete_names": "Delete those term names",
+        "delete_names": "Delete term names",
         "delete_names_success": "Term names deleted",
         "edit_attributes": "Edit term attributes",
         "new_attributes_version": "Create a new version of attributes",
         "new_attributes_version_success": "New version of attributes created",
         "approve_attributes": "Change status to Final",
         "approve_attributes_success": "Term attributes are now in Final state",
-        "inactivate_attributes": "Inactivate those term attributes",
+        "inactivate_attributes": "Inactivate term attributes",
         "inactivate_attributes_success": "Term attributes inactivated",
-        "reactivate_attributes": "Reactivate those term attributes",
+        "reactivate_attributes": "Reactivate term attributes",
         "reactivate_attributes_success": "Term attributes reactivated",
-        "delete_attributes": "Delete those term attributes",
+        "delete_attributes": "Delete term attributes",
         "delete_attributes_success": "Term attributes deleted",
         "sentence_case_name": "Sentence case name",
         "order": "Order"
@@ -2232,8 +2251,8 @@
         "sponsor_pref_name": "Sponsor preferred name",
         "sponsor_sentence_case_name": "Sponsor sentence case name",
         "create_term_attributes": "Manage term attribute values",
-        "term_name": "Term name",
-        "submission_value": "Submission value",
+        "name_submission_value": "Name submission value",
+        "code_submission_value": "Code submission value",
         "nci_pref_name": "NCI preferred name",
         "definition": "Definition",
         "synonyms": "Synonym(s)",
@@ -2682,6 +2701,7 @@
         "modified_user": "Modified by",
         "study_duration_days": "Study duration days",
         "study_duration_weeks": "Study duration weeks",
+        "week_in_study": "Week in Study",
         "change_description": "Reason",
         "visit_short_name": "Visit short name",
         "visit_name": "Visit name",
@@ -3013,10 +3033,14 @@
         "tab6_title": "Activity Instructions"
     },
     "ProtocolFlowchart": {
+        "detailed": "Detailed SoA",
         "title": "Protocol SoA",
         "update_flowchart": "Update SoA",
-        "downloading": "Download in progress...",
-        "loading": "Protocol SoA is reloading..."
+        "downloading": "Downloading SoA...",
+        "loading": "Reloading SoA...",
+        "day": "Day",
+        "week": "Week",
+        "preferred_time_unit": "Preferred time unit:"
     },
     "ProtocolInterventionsTable": {
         "title": "Protocol Interventions",
@@ -3036,6 +3060,7 @@
         "update_success": "Study activity updated"
     },
     "StudyActivity": {
+        "study_activity": "Study activity",
         "activity_group": "Activity group",
         "activity_sub_group": "Activity subgroup",
         "activity": "Activity",
@@ -3051,7 +3076,8 @@
         "hide_flowchart_groups": "Hide SoA groups",
         "edit_dialog_title": "Edit",
         "download_docx": "Download DOCX",
-        "instructions": "Instructions"
+        "instructions": "Instructions",
+        "other_groupings": "Other activity groupings"
     },
     "StudyActivityForm": {
         "add_title": "Add study activities",
@@ -3102,13 +3128,15 @@
         "study_epochs": "Study Epochs",
         "study_visits": "Study Visits",
         "batch_edit_no_selection": "Select the items (rows) in scope for Batch Editing.",
-        "hide_flowchart_groups": "Hide SoA groups",
+        "show_flowchart_groups": "Show SoA groups",
         "edit_dialog_title": "Do you want to edit",
         "table_caption": "SoA table",
         "confirm_group_deletion": "Collapsible visit group {group} will be deleted",
         "soa_footnotes": "SoA footnotes",
         "activity_instructions": "Activity Instructions",
-        "batch_edit_warning": "Batch-editing will overwrite existing choices. Only activities expected to have same schedule should be batch-edited together. Do you want to continue?"
+        "batch_edit_warning": "Batch-editing will overwrite existing choices. Only activities expected to have same schedule should be batch-edited together. Do you want to continue?",
+        "history_object_type": "Object type",
+        "history_title": "Detailed SoA history for study [{study}]"
     },
     "StudyActivityInstructionTable": {
         "activities": "Activities",
@@ -3157,7 +3185,7 @@
         "study_arm_history_title": "History for study arm [{armUid}]"
     },
     "StudyArmsForm": {
-        "study_arm":"Study Arm",
+        "study_arm": "Study Arm",
         "connected_branches": "Connected Branches",
         "add_arm": "Add study arm",
         "edit_arm": "Edit study arm",
@@ -3574,7 +3602,7 @@
         "form": "Form",
         "item_group": "Item Group",
         "item": "Item",
-        "include_draft": "Include Draft Elements",
+        "element_status": "ODM Element Status",
         "export": "Export ",
         "format": "Format"
     },
@@ -3644,7 +3672,7 @@
     },
     "CollapsibleVisitGroupForm": {
         "title": "Add collapsible visit group",
-        "warning": "Automatic creation of a new collapsible visit group failed because selected visits differ in some say. You can still force creation by selecting a visit to act as a template to overwrite the other ones.",
+        "warning": "Automatic creation of a new collapsible visit group failed because selected visits differ in some way. You can still force creation by selecting a visit to act as a template to overwrite the other ones.",
         "visit_template": "Select a template",
         "creation_success": "Collapsible visit group created"
     },
@@ -3901,5 +3929,52 @@
         "reply_and_reactivate_button": "Reply & reactivate",
         "reply_add_placeholder": "Write a reply...",
         "reply_delete_approve": "Are you sure you want to delete this reply?"
+    },
+    "ClinicalProgrammes": {
+        "name": "Name",
+        "add_success": "Clinical programme added"
+    },
+    "ClinicalProgrammeForm": {
+        "title": "Add clinical programme",
+        "name": "Name"
+    },
+    "Projects": {
+        "name": "Name",
+        "project_number": "Project number",
+        "description": "Description",
+        "clinical_programme": "Clinical programme",
+        "add_success": "Project added"
+    },
+    "ProjectForm": {
+        "title": "Add project",
+        "name": "Name",
+        "project_number": "Project number",
+        "description": "Description",
+        "clinical_programme": "Clinical programme"
+    },
+    "StudySubparts": {
+        "study_id": "Study ID",
+        "study_acronym": "Study acronym",
+        "subpart_id": "Subpart ID",
+        "subpart_acronym": "Subpart acronym",
+        "substudy_removed": "Study subpart removed",
+        "nested_subparts_warning": "This study [{subpartStudyId}] is a subpart study of [{parentStudyId}] and it is not possible to add nested study subparts.",
+        "add_existing-subpart": "Add existing study as study subpart",
+        "create_new_subpart": "Create new study to be study subpart",
+        "selected_substudy": "Selected substudy",
+        "available_studies": "Available studies to link as substudy",
+        "subpart_attrs": "Study subpart attributes",
+        "derived_subpart_id": "Derived study subpart ID",
+        "study_subpart_acronym": "Study subpart acronym",
+        "select_method": "Select method",
+        "select_study_subpart": "Select study subpart",
+        "define_subpart": "Define subpart",
+        "create_subpart": "Create study subpart",
+        "select_study_warning": "You need to select a study to link as substudy",
+        "subpart_created": "Study subpart created",
+        "add_subpart": "Add study subpart",
+        "edit_subpart": "Edit study subpart",
+        "add_existing": "Add existing study as study subpart",
+        "create_new": "Create new study to be study subpart"
     }
 }

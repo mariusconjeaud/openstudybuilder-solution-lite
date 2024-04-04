@@ -9,8 +9,6 @@ from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import 
     StudyStatus,
 )
 
-DURATION_DIVIDER = 3600 * 24
-
 
 class StudyVisitType(Enum):
     pass
@@ -48,18 +46,6 @@ class TimeUnit:
     name: str
     conversion_factor_to_master: float
     from_timedelta: Callable
-
-
-@dataclass
-class DurationVO:
-    timedelta: datetime.timedelta
-    preferred_unit: TimeUnit
-
-
-@dataclass
-class TimeAnchor:
-    anchor_type: StudyVisitType
-    duration: DurationVO
 
 
 @dataclass
@@ -111,6 +97,7 @@ class StudyVisitVO:
     study_duration_days: NumericValue | None = None
     study_week: NumericValue | None = None
     study_duration_weeks: NumericValue | None = None
+    week_in_study: NumericValue | None = None
 
     visit_name_sc: TextValue | None = None
 
@@ -236,12 +223,16 @@ class StudyVisitVO:
     def study_day_number(self):
         if self.study_day:
             return self.study_day.value
+        if self.visit_class == VisitClass.SPECIAL_VISIT and self.subvisit_anchor:
+            return self.subvisit_anchor.study_day_number
         return None
 
     @property
     def study_week_number(self):
         if self.study_week:
             return self.study_week.value
+        if self.visit_class == VisitClass.SPECIAL_VISIT and self.subvisit_anchor:
+            return self.subvisit_anchor.study_week_number
         return None
 
     def derive_study_day_number(self, relative_duration=False) -> int | None:
@@ -277,6 +268,9 @@ class StudyVisitVO:
             return None
         return derived_study_week_number - 1
 
+    def derive_week_in_study_number(self) -> int | None:
+        return self.derive_study_duration_weeks_number()
+
     @property
     def study_week_label(self):
         return f"Week {self.study_week.value}"
@@ -284,6 +278,10 @@ class StudyVisitVO:
     @property
     def study_duration_weeks_label(self):
         return f"{self.study_duration_weeks.value} weeks"
+
+    @property
+    def week_in_study_label(self):
+        return f"Week {self.week_in_study.value}"
 
     @property
     def study_day_label(self):
@@ -312,9 +310,6 @@ class StudyVisitVO:
         if self.status == StudyStatus.DRAFT:
             return ["edit", "delete", "lock"]
         return None
-
-    def get_absolute_days(self):
-        return self.get_absolute_duration() / DURATION_DIVIDER
 
     def get_absolute_duration(self) -> int | None:
         # Special visit doesn't have a timing but we want to place it
@@ -349,25 +344,23 @@ class StudyVisitVO:
             self.get_absolute_duration()
             / self.time_unit_object.conversion_factor_to_master
         )
-        if _dur is not None:
-            _dur += 1  # value for baseline visit.
-            _min = int(
-                self.window_unit_object.from_timedelta(
-                    self.window_unit_object, self.visit_window_min
-                )
-                / self.window_unit_object.conversion_factor_to_master
+        _dur += 1  # value for baseline visit.
+        _min = int(
+            self.window_unit_object.from_timedelta(
+                self.window_unit_object, self.visit_window_min
             )
-            _min = _dur + _min
+            / self.window_unit_object.conversion_factor_to_master
+        )
+        _min = _dur + _min
 
-            _max = int(
-                self.window_unit_object.from_timedelta(
-                    self.window_unit_object, self.visit_window_max
-                )
-                / self.window_unit_object.conversion_factor_to_master
+        _max = int(
+            self.window_unit_object.from_timedelta(
+                self.window_unit_object, self.visit_window_max
             )
-            _max = _dur + _max
-            return (int(_min), int(_max))
-        return None
+            / self.window_unit_object.conversion_factor_to_master
+        )
+        _max = _dur + _max
+        return (int(_min), int(_max))
 
     def delete(self):
         self.is_deleted = True

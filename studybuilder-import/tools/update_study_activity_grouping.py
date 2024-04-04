@@ -1,10 +1,12 @@
+import csv
 import json
 import sys
-import csv
 
 if len(sys.argv) < 4:
     print("Too few arguments! Example, update study activities for Study_999999:")
-    print("python tools/update_study_activity_grouping.py datafiles/sponsor_library/activity/activity_instance.csv datafiles/mockup/exported/concepts.activities.activities.json datafiles/mockup/exported/studies.Study_999999.study-activities.json")
+    print(
+        "python tools/update_study_activity_grouping.py datafiles/sponsor_library/activity/activity_instance.csv datafiles/mockup/exported/concepts.activities.activities.json datafiles/mockup/exported/studies.Study_999999.study-activities.json"
+    )
     sys.exit()
 
 # Load activity data from csv
@@ -39,7 +41,7 @@ with open(fname) as activities:
 # Load activity data from json
 fname = sys.argv[2]
 with open(fname) as f:
-     raw1 = f.read()
+    raw1 = f.read()
 
 json_activities = json.loads(raw1)
 for item in json_activities:
@@ -51,7 +53,7 @@ for item in json_activities:
 
 studyact_fname = sys.argv[3]
 with open(studyact_fname) as f:
-     raw2 = f.read()
+    raw2 = f.read()
 
 study_activities = json.loads(raw2)
 
@@ -76,11 +78,11 @@ for item in study_activities:
 
     item["study_activity_subgroup"] = {
         "study_activity_subgroup_uid": "not used by import",
-        "activity_subgroup_uid": groupings[0]["activity_subgroup_uid"]
+        "activity_subgroup_uid": groupings[0]["activity_subgroup_uid"],
     }
     item["study_activity_group"] = {
         "study_activity_group_uid": "not used by import",
-        "activity_group_uid": groupings[0]["activity_group_uid"]
+        "activity_group_uid": groupings[0]["activity_group_uid"],
     }
 
 updated_json = json.dumps(study_activities, indent=2)
@@ -90,5 +92,3 @@ reply = input().lower()
 if reply == "y":
     with open(studyact_fname, "w") as f:
         f.write(updated_json)
-   
-

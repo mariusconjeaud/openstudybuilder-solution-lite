@@ -367,6 +367,7 @@ export default {
       this.$refs.stepper.reset()
       this.selectedStudyObjectives = []
       this.selectedStudies = []
+      this.selectedTemplates = []
       this.apiEndpoint = this.preInstanceApi
       this.$emit('close')
     },

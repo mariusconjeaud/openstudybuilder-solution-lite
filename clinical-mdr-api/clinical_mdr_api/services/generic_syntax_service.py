@@ -1,5 +1,4 @@
 import abc
-from datetime import datetime
 from typing import Generic, TypeVar
 
 from neomodel import db
@@ -8,15 +7,9 @@ from pydantic import BaseModel
 from clinical_mdr_api.domain_repositories._generic_repository_interface import (
     GenericRepository,
 )
-from clinical_mdr_api.domain_repositories.models.generic import VersionRoot
 from clinical_mdr_api.domain_repositories.study_definitions.study_definition_repository import (
     StudyDefinitionRepository,
 )
-from clinical_mdr_api.domains.controlled_terminologies.ct_term_attributes import (
-    CTTermAttributesAR,
-)
-from clinical_mdr_api.domains.controlled_terminologies.ct_term_name import CTTermNameAR
-from clinical_mdr_api.domains.dictionaries.dictionary_term import DictionaryTermAR
 from clinical_mdr_api.domains.syntax_templates.template import TemplateVO
 from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemStatus,
@@ -28,17 +21,16 @@ from clinical_mdr_api.exceptions import (
     NotFoundException,
 )
 from clinical_mdr_api.models.controlled_terminologies.ct_term import (
-    CTTermNameAndAttributes,
+    SimpleCTTermNameAndAttributes,
+    SimpleTermAttributes,
+    SimpleTermModel,
+    SimpleTermName,
 )
-from clinical_mdr_api.models.dictionaries.dictionary_term import DictionaryTerm
+from clinical_mdr_api.models.generic_models import SimpleNameModel
 from clinical_mdr_api.models.utils import GenericFilteringReturn
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._meta_repository import MetaRepository
-from clinical_mdr_api.services._utils import (
-    calculate_diffs,
-    raise_404_if_none,
-    service_level_generic_header_filtering,
-)
+from clinical_mdr_api.services._utils import calculate_diffs, raise_404_if_none
 
 _AggregateRootType = TypeVar("_AggregateRootType")
 
@@ -63,7 +55,6 @@ class GenericSyntaxService(Generic[_AggregateRootType], abc.ABC):
     repository_interface: type
     _repos: MetaRepository
     user_initials: str | None
-    root_node_class: type
 
     def __init__(self, user: str | None = None):
         self.user_initials = user if user is not None else "TODO Initials"
@@ -84,20 +75,15 @@ class GenericSyntaxService(Generic[_AggregateRootType], abc.ABC):
     def get_by_uid(
         self,
         uid: str,
-        at_specified_datetime: datetime | None = None,
         status: str | None = None,
         version: str | None = None,
-        return_instantiation_counts: bool = False,
         return_study_count: bool | None = True,
     ) -> BaseModel:
-        item = self._find_by_uid_or_raise_not_found(
+        item = self.repository.find_by_uid(
             uid,
             status=LibraryItemStatus(status) if status is not None else None,
             version=version,
-            for_update=False,
-            at_specific_date=at_specified_datetime,
             return_study_count=return_study_count,
-            return_instantiation_counts=return_instantiation_counts,
         )
         return self._transform_aggregate_root_to_pydantic_model(item)
 
@@ -105,7 +91,7 @@ class GenericSyntaxService(Generic[_AggregateRootType], abc.ABC):
     def get_specific_version(
         self, uid: str, version: str, return_study_count: bool | None = True
     ) -> BaseModel:
-        item = self._find_by_uid_or_raise_not_found(
+        item = self.repository.find_by_uid(
             uid, return_study_count=return_study_count, version=version
         )
         return self._transform_aggregate_root_to_pydantic_model(item)
@@ -115,20 +101,16 @@ class GenericSyntaxService(Generic[_AggregateRootType], abc.ABC):
         uid: str,
         *,
         version: str | None = None,
-        at_specific_date: datetime | None = None,
         status: LibraryItemStatus | None = None,
         for_update: bool = False,
-        return_instantiation_counts: bool = False,
         return_study_count: bool | None = True,
     ) -> _AggregateRootType:
-        item = self.repository.find_by_uid_2(
+        item = self.repository.find_by_uid(
             uid,
             for_update=for_update,
-            at_specific_date=at_specific_date,
             version=version,
             status=status,
             return_study_count=return_study_count,
-            return_instantiation_counts=return_instantiation_counts,
         )
         if item is None:
             raise NotFoundException(
@@ -155,19 +137,36 @@ class GenericSyntaxService(Generic[_AggregateRootType], abc.ABC):
 
     @db.transaction
     def get_all(
-        self, status: str | None = None, return_study_count: bool | None = True
-    ) -> list[BaseModel]:
-        if status is not None:
-            all_items = self.repository.find_all(
-                status=LibraryItemStatus(status), return_study_count=return_study_count
-            )
-        else:
-            all_items = self.repository.find_all(return_study_count=return_study_count)
+        self,
+        status: str | None = None,
+        return_study_count: bool | None = True,
+        sort_by: dict | None = None,
+        page_number: int = 1,
+        page_size: int = 0,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.OR,
+        total_count: bool = False,
+        for_audit_trail: bool = False,
+    ) -> GenericFilteringReturn[BaseModel]:
+        all_items, total_count = self.repository.get_all(
+            status=LibraryItemStatus(status) if status else None,
+            return_study_count=return_study_count,
+            sort_by=sort_by,
+            page_number=page_number,
+            page_size=page_size,
+            filter_by=filter_by,
+            filter_operator=filter_operator,
+            total_count=total_count,
+            for_audit_trail=for_audit_trail,
+        )
 
-        # Transform the items into the model expected by pydantic
-        return [
-            self._transform_aggregate_root_to_pydantic_model(item) for item in all_items
-        ]
+        return GenericFilteringReturn.create(
+            items=[
+                self._transform_aggregate_root_to_pydantic_model(item)
+                for item in all_items
+            ],
+            total=total_count,
+        )
 
     def get_distinct_values_for_header(
         self,
@@ -178,19 +177,14 @@ class GenericSyntaxService(Generic[_AggregateRootType], abc.ABC):
         filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
     ):
-        all_items = self.get_all(status=status, return_study_count=False)
-
-        # Do filtering, sorting, pagination and count
-        header_values = service_level_generic_header_filtering(
-            items=all_items.items,
+        return self.repository.get_headers(
             field_name=field_name,
             search_string=search_string,
+            status=LibraryItemStatus(status) if status else None,
             filter_by=filter_by,
             filter_operator=filter_operator,
             result_count=result_count,
         )
-        # Return values for field_name
-        return header_values
 
     def _parameter_name_exists(self, parameter_name: str) -> bool:
         return self._repos.parameter_repository.parameter_name_exists(parameter_name)
@@ -198,7 +192,7 @@ class GenericSyntaxService(Generic[_AggregateRootType], abc.ABC):
     @db.transaction
     def approve(self, uid: str) -> BaseModel:
         try:
-            item = self._find_by_uid_or_raise_not_found(uid, for_update=True)
+            item = self.repository.find_by_uid(uid, for_update=True)
             uses = self.repository.check_usage_count(uid)
             if uses > 0:
                 raise ConflictErrorException(
@@ -218,7 +212,7 @@ class GenericSyntaxService(Generic[_AggregateRootType], abc.ABC):
                 template_name=template.name,
                 parameter_name_exists_callback=self._parameter_name_exists,
             )
-            item = self._find_by_uid_or_raise_not_found(uid, for_update=True)
+            item = self.repository.find_by_uid(uid, for_update=True)
 
             item.create_new_version(
                 author=self.user_initials,
@@ -232,7 +226,7 @@ class GenericSyntaxService(Generic[_AggregateRootType], abc.ABC):
 
     @db.transaction
     def inactivate_final(self, uid: str) -> BaseModel:
-        item = self._find_by_uid_or_raise_not_found(uid, for_update=True)
+        item = self.repository.find_by_uid(uid, for_update=True)
 
         try:
             item.inactivate(author=self.user_initials)
@@ -244,7 +238,7 @@ class GenericSyntaxService(Generic[_AggregateRootType], abc.ABC):
 
     @db.transaction
     def reactivate_retired(self, uid: str) -> BaseModel:
-        item = self._find_by_uid_or_raise_not_found(uid, for_update=True)
+        item = self.repository.find_by_uid(uid, for_update=True)
 
         try:
             item.reactivate(author=self.user_initials)
@@ -259,8 +253,8 @@ class GenericSyntaxService(Generic[_AggregateRootType], abc.ABC):
         self, uid: str, return_study_count: bool | None = True
     ) -> list[BaseModel]:
         if self.version_class is not None:
-            all_versions = self.repository.get_all_versions_2(
-                uid, return_study_count=return_study_count
+            all_versions = self.repository.find_by_uid(
+                uid=uid, return_study_count=return_study_count, for_audit_trail=True
             )
             versions = [
                 self._transform_aggregate_root_to_pydantic_model(_).dict()
@@ -275,8 +269,11 @@ class GenericSyntaxService(Generic[_AggregateRootType], abc.ABC):
     def get_releases(
         self, uid: str, return_study_count: bool | None = True
     ) -> list[BaseModel]:
-        releases = self.repository.find_releases(
-            uid=uid, return_study_count=return_study_count
+        releases = self.repository.find_by_uid(
+            uid=uid,
+            return_study_count=return_study_count,
+            status=LibraryItemStatus.FINAL,
+            for_audit_trail=True,
         )
         return [
             self._transform_aggregate_root_to_pydantic_model(item) for item in releases
@@ -285,99 +282,61 @@ class GenericSyntaxService(Generic[_AggregateRootType], abc.ABC):
     @db.transaction
     def soft_delete(self, uid: str) -> None:
         try:
-            item = self._find_by_uid_or_raise_not_found(uid, for_update=True)
+            item = self.repository.find_by_uid(uid, for_update=True)
             item.soft_delete()
             self.repository.save(item)
         except VersioningException as e:
             raise BusinessLogicException(e.msg) from e
 
-    def _set_default_parameter_terms(self, item: BaseModel) -> BaseModel:
-        """
-        This method fetches and sets the default parameter terms for a template.
-        This method can be template-specific and must be implemented in the template service.
-        """
-        raise NotImplementedError(
-            "Default parameter terms handler is not implemented for this service."
-        )
-
-    def _set_indexings(self, item: BaseModel, syntax_node: VersionRoot) -> None:
-        """
-        This method fetches and sets the indexing properties to a template.
-        """
-        if not hasattr(item, "uid"):
-            return
-
-        # Get indications
-        indications = (
-            self._repos.dictionary_term_generic_repository.get_syntax_indications(
-                syntax_node
-            )
-        )
-        if indications and hasattr(item, "indications"):
-            item.indications = sorted(
-                [
-                    DictionaryTerm.from_dictionary_term_ar(indication)
-                    for indication in indications
-                ],
-                key=lambda x: x.term_uid,
-            )
-        # Get categories
-        category_names = self._repos.ct_term_name_repository.get_syntax_categories(
-            syntax_node
-        )
-        category_attributes = (
-            self._repos.ct_term_attributes_repository.get_syntax_categories(syntax_node)
-        )
-        if category_names and category_attributes and hasattr(item, "categories"):
-            item.categories = sorted(
-                [
-                    CTTermNameAndAttributes.from_ct_term_ars(
-                        ct_term_name_ar=category_name,
-                        ct_term_attributes_ar=category_attribute,
-                    )
-                    for category_name, category_attribute in zip(
-                        category_names, category_attributes
-                    )
-                ],
-                key=lambda x: x.term_uid,
-            )
-        # Get sub_categories
-        sub_category_names = (
-            self._repos.ct_term_name_repository.get_syntax_subcategories(syntax_node)
-        )
-        sub_category_attributes = (
-            self._repos.ct_term_attributes_repository.get_syntax_subcategories(
-                syntax_node
-            )
-        )
-        if (
-            sub_category_names
-            and sub_category_attributes
-            and hasattr(item, "sub_categories")
-        ):
-            item.sub_categories = sorted(
-                [
-                    CTTermNameAndAttributes.from_ct_term_ars(
-                        ct_term_name_ar=category_name,
-                        ct_term_attributes_ar=category_attribute,
-                    )
-                    for category_name, category_attribute in zip(
-                        sub_category_names, sub_category_attributes
-                    )
-                ],
-                key=lambda x: x.term_uid,
-            )
-
     def _get_indexings(
         self, template: BaseModel
     ) -> tuple[
-        list[DictionaryTermAR],
-        list[tuple[CTTermNameAR, CTTermAttributesAR]],
-        list[tuple[CTTermNameAR, CTTermAttributesAR]],
+        list[SimpleTermModel],
+        list[SimpleCTTermNameAndAttributes],
+        list[SimpleCTTermNameAndAttributes],
+        list[SimpleNameModel],
+        list[SimpleNameModel],
+        list[SimpleNameModel],
+        SimpleCTTermNameAndAttributes | None,
     ]:
-        indications: list[DictionaryTermAR] = []
-        categories: list[tuple[CTTermNameAR, CTTermAttributesAR]] = []
-        sub_categories: list[tuple[CTTermNameAR, CTTermAttributesAR]] = []
+        indications: list[SimpleTermModel] = []
+        categories: list[SimpleCTTermNameAndAttributes] = []
+        sub_categories: list[SimpleCTTermNameAndAttributes] = []
+        activities: list[SimpleNameModel] = []
+        activity_groups: list[SimpleNameModel] = []
+        activity_subgroups: list[SimpleNameModel] = []
+        template_type: SimpleCTTermNameAndAttributes | None = None
+
+        template_type_term_uid = getattr(template, "type_uid", None)
+
+        if template_type_term_uid is not None:
+            template_type_name = self._repos.ct_term_name_repository.find_by_uid(
+                term_uid=template_type_term_uid
+            )
+            raise_404_if_none(
+                template_type_name,
+                f"Template type with uid '{template_type_term_uid}' does not exist.",
+            )
+            template_type_attributes = (
+                self._repos.ct_term_attributes_repository.find_by_uid(
+                    term_uid=template_type_term_uid
+                )
+            )
+            raise_404_if_none(
+                template_type_attributes,
+                f"Template type with uid '{template_type_term_uid}' does not exist.",
+            )
+            template_type = SimpleCTTermNameAndAttributes(
+                term_uid=template_type_term_uid,
+                name=SimpleTermName(
+                    sponsor_preferred_name=template_type_name.name,
+                    sponsor_preferred_name_sentence_case=template_type_name.ct_term_vo.name_sentence_case,
+                ),
+                attributes=SimpleTermAttributes(
+                    code_submission_value=template_type_attributes.ct_term_vo.code_submission_value,
+                    nci_preferred_name=template_type_attributes.ct_term_vo.preferred_term,
+                ),
+            )
 
         if (
             getattr(template, "indication_uids", None)
@@ -391,7 +350,9 @@ class GenericSyntaxService(Generic[_AggregateRootType], abc.ABC):
                     indication,
                     f"Indication with uid '{uid}' does not exist.",
                 )
-                indications.append(indication)
+                indications.append(
+                    SimpleTermModel(term_uid=indication.uid, name=indication.name)
+                )
 
         if getattr(template, "category_uids", None) and len(template.category_uids) > 0:
             for uid in template.category_uids:
@@ -405,36 +366,119 @@ class GenericSyntaxService(Generic[_AggregateRootType], abc.ABC):
                     category_name,
                     f"Category with uid '{uid}' does not exist.",
                 )
-                category = (category_name, category_attributes)
-                categories.append(category)
+
+                categories.append(
+                    SimpleCTTermNameAndAttributes(
+                        term_uid=uid,
+                        name=SimpleTermName(
+                            sponsor_preferred_name=category_name.name,
+                            sponsor_preferred_name_sentence_case=category_name.ct_term_vo.name_sentence_case,
+                        ),
+                        attributes=SimpleTermAttributes(
+                            code_submission_value=category_attributes.ct_term_vo.code_submission_value,
+                            nci_preferred_name=category_attributes.ct_term_vo.preferred_term,
+                        ),
+                    )
+                )
 
         if (
             getattr(template, "sub_category_uids", None)
             and len(template.sub_category_uids) > 0
         ):
             for uid in template.sub_category_uids:
-                category_name = self._repos.ct_term_name_repository.find_by_uid(
+                subcategory_name = self._repos.ct_term_name_repository.find_by_uid(
                     term_uid=uid
                 )
-                category_attributes = (
+                subcategory_attributes = (
                     self._repos.ct_term_attributes_repository.find_by_uid(term_uid=uid)
                 )
                 raise_404_if_none(
-                    category_name,
+                    subcategory_name,
                     f"Subcategory with uid '{uid}' does not exist.",
                 )
-                category = (category_name, category_attributes)
-                sub_categories.append(category)
+                sub_categories.append(
+                    SimpleCTTermNameAndAttributes(
+                        term_uid=uid,
+                        name=SimpleTermName(
+                            sponsor_preferred_name=subcategory_name.name,
+                            sponsor_preferred_name_sentence_case=subcategory_name.ct_term_vo.name_sentence_case,
+                        ),
+                        attributes=SimpleTermAttributes(
+                            code_submission_value=subcategory_attributes.ct_term_vo.code_submission_value,
+                            nci_preferred_name=subcategory_attributes.ct_term_vo.preferred_term,
+                        ),
+                    )
+                )
 
-        return indications, categories, sub_categories
+        if getattr(template, "activity_uids", None) and len(template.activity_uids) > 0:
+            for uid in template.activity_uids:
+                activity = self._repos.activity_repository.find_by_uid_2(uid=uid)
+                raise_404_if_none(
+                    activity,
+                    f"Activity with uid '{uid}' does not exist.",
+                )
+                activities.append(
+                    SimpleNameModel(
+                        uid=activity.uid,
+                        name=activity.name,
+                        name_sentence_case=activity.concept_vo.name_sentence_case,
+                    )
+                )
+
+        if (
+            getattr(template, "activity_group_uids", None)
+            and len(template.activity_group_uids) > 0
+        ):
+            for uid in template.activity_group_uids:
+                activity_group = self._repos.activity_group_repository.find_by_uid_2(
+                    uid=uid
+                )
+                raise_404_if_none(
+                    activity_group,
+                    f"Activity group with uid '{uid}' does not exist.",
+                )
+                activity_groups.append(
+                    SimpleNameModel(
+                        uid=activity_group.uid,
+                        name=activity_group.name,
+                        name_sentence_case=activity_group.concept_vo.name_sentence_case,
+                    )
+                )
+
+        if (
+            getattr(template, "activity_subgroup_uids", None)
+            and len(template.activity_subgroup_uids) > 0
+        ):
+            for uid in template.activity_subgroup_uids:
+                activity_subgroup = (
+                    self._repos.activity_subgroup_repository.find_by_uid_2(uid=uid)
+                )
+                raise_404_if_none(
+                    activity_subgroup,
+                    f"Activity subgroup with uid '{uid}' does not exist.",
+                )
+                activity_subgroups.append(
+                    SimpleNameModel(
+                        uid=activity_subgroup.uid,
+                        name=activity_subgroup.name,
+                        name_sentence_case=activity_subgroup.concept_vo.name_sentence_case,
+                    )
+                )
+
+        return (
+            indications,
+            categories,
+            sub_categories,
+            activities,
+            activity_groups,
+            activity_subgroups,
+            template_type,
+        )
 
     @db.transaction
     def patch_indexings(self, uid: str, indexings: BaseModel) -> BaseModel:
-        template_object = self.repository.find_by_uid_2(uid)
-        raise_404_if_none(
-            template_object,
-            f"Template with uid '{uid}' does not exist.",
-        )
+        self.repository.find_by_uid(uid)
+
         try:
             if getattr(indexings, "indication_uids", None):
                 self.repository.patch_indications(uid, indexings.indication_uids)

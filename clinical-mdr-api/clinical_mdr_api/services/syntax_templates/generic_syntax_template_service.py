@@ -11,11 +11,6 @@ from clinical_mdr_api.domain_repositories.syntax_instances.generic_syntax_instan
 from clinical_mdr_api.domain_repositories.template_parameters.complex_parameter import (
     ComplexTemplateParameterRepository,
 )
-from clinical_mdr_api.domains._utils import extract_parameters
-from clinical_mdr_api.domains.libraries.parameter_term import (
-    ParameterTermEntryVO,
-    SimpleParameterTermVO,
-)
 from clinical_mdr_api.domains.syntax_templates.template import (
     TemplateAggregateRootBase,
     TemplateVO,
@@ -26,12 +21,6 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
     VersioningException,
 )
 from clinical_mdr_api.exceptions import BusinessLogicException, NotFoundException
-from clinical_mdr_api.models.syntax_templates.template_parameter_multi_select_input import (
-    TemplateParameterMultiSelectInput,
-)
-from clinical_mdr_api.models.syntax_templates.template_parameter_term import (
-    MultiTemplateParameterTerm,
-)
 from clinical_mdr_api.services._utils import (
     fill_missing_values_in_base_model_from_reference_base_model,
     is_library_editable,
@@ -78,12 +67,15 @@ class GenericSyntaxTemplateService(GenericSyntaxService[_AggregateRootType], abc
         try:
             # Transaction that is performing initial save
             with db.transaction:
-                if existing_template := self.repository.get_by_name_in_library(
-                    name=template.name,
-                    library=template.library_name,
-                    type_uid=getattr(template, "type_uid", None),
-                ):
-                    if existing_template.library.name == "User Defined":
+                filter_by = {
+                    "name": {"v": [template.name]},
+                    "library.name": {"v": [template.library_name]},
+                }
+                if type_uid := getattr(template, "type_uid", None):
+                    filter_by |= {"type.term_uid": {"v": [type_uid]}}
+
+                if existing_template := self.repository.get_all(filter_by=filter_by)[0]:
+                    if existing_template[0].library.name == "User Defined":
                         return self._transform_aggregate_root_to_pydantic_model(
                             existing_template
                         )
@@ -105,17 +97,12 @@ class GenericSyntaxTemplateService(GenericSyntaxService[_AggregateRootType], abc
         except VersioningException as e:
             raise BusinessLogicException(e.msg) from e
 
-    def _create_template_vo(
-        self,
-        template: BaseModel,
-        default_parameter_terms: list[ParameterTermEntryVO] | None = None,
-    ) -> tuple[TemplateVO, LibraryVO]:
+    def _create_template_vo(self, template: BaseModel) -> tuple[TemplateVO, LibraryVO]:
         # Create TemplateVO
         template_vo = TemplateVO.from_input_values_2(
             template_name=template.name,
             guidance_text=getattr(template, "guidance_text", None),
             parameter_name_exists_callback=self._parameter_name_exists,
-            default_parameter_terms=default_parameter_terms,
         )
 
         # Fetch library
@@ -126,93 +113,10 @@ class GenericSyntaxTemplateService(GenericSyntaxService[_AggregateRootType], abc
 
         return template_vo, library_vo
 
-    def patch_default_parameter_terms(
-        self,
-        uid: str,
-        set_number: int,
-        default_parameter_terms: list[MultiTemplateParameterTerm],
-    ) -> BaseModel:
-        # Get template AR and use it to parse the default parameter terms
-        template = self._find_by_uid_or_raise_not_found(uid, for_update=True)
-        parsed_default_parameter_terms = self._create_default_parameter_entries(
-            template_name=template.name,
-            default_parameter_terms=default_parameter_terms,
-        )
-
-        # Patch the set of default parameter terms
-        self.repository.patch_default_parameter_terms(
-            versioned_object=template,
-            parameters=parsed_default_parameter_terms,
-            set_number=set_number,
-        )
-
-        # Finally, get the complete template object and return it
-        return self.get_by_uid(uid)
-
-    def _create_default_parameter_entries(
-        self,
-        template_name: str,
-        default_parameter_terms: list[MultiTemplateParameterTerm] | None,
-    ) -> list[ParameterTermEntryVO]:
-        """
-        Creates list of Parameter Term Entries that is used in aggregate. These contain:
-        parameter name, conjunctions, uids, and terms of parameters
-        """
-        parameter_terms = []
-        # TODO : Replace the loop on allowed parameters for a loop on the template.parameters
-        # Or a loop on parameters where a default term is provided
-        parameters = extract_parameters(template_name)
-        for i, allowed_parameter in enumerate(parameters):
-            uids = []
-            conjunction = ""
-            parameter_name = ""
-
-            # Find default term for parameter using the "position" property
-            parameter: TemplateParameterMultiSelectInput | None = None
-            if default_parameter_terms is not None and len(default_parameter_terms) > 0:
-                parameter = next(
-                    filter(
-                        lambda param, i=i: param.position - 1 == i,
-                        default_parameter_terms,
-                    ),
-                    None,
-                )
-
-            if parameter is None:
-                # If we have an empty parameter term selection, send an empty list with default type for the allowed parameters.
-                parameter_name = allowed_parameter
-            else:
-                # Else, iterate over the provided terms, store them and their type dynamically.
-                for item in parameter.terms:
-                    simple_parameter_term_vo = SimpleParameterTermVO.from_input_values(
-                        value=item.name, uid=item.uid
-                    )
-                    uids.append(simple_parameter_term_vo)
-                parameter_name = parameter.terms[0].type
-                conjunction = parameter.conjunction
-
-            pve = ParameterTermEntryVO.from_input_values(
-                parameter_exists_callback=self._repos.parameter_repository.parameter_name_exists,
-                conjunction_exists_callback=lambda _: True,  # TODO: provide proper callback here
-                parameter_term_uid_exists_for_parameter_callback=(
-                    lambda p_name, v_uid, p_value: (
-                        self._repos.parameter_repository.is_parameter_term_uid_valid_for_parameter_name(
-                            parameter_term_uid=v_uid,
-                            parameter_name=p_name,
-                        )
-                    )
-                ),
-                parameter_name=parameter_name,
-                conjunction=conjunction,
-                parameters=uids,
-            )
-            parameter_terms.append(pve)
-        return parameter_terms
-
     @db.transaction
     def create_new_version(self, uid: str, template: BaseModel) -> BaseModel:
         try:
-            item = self._find_by_uid_or_raise_not_found(uid, for_update=True)
+            item = self.repository.find_by_uid(uid=uid, for_update=True)
 
             # fill the missing from the inputs
             fill_missing_values_in_base_model_from_reference_base_model(
@@ -241,7 +145,7 @@ class GenericSyntaxTemplateService(GenericSyntaxService[_AggregateRootType], abc
     @db.transaction
     def approve_cascade(self, uid: str) -> BaseModel:
         try:
-            item = self._find_by_uid_or_raise_not_found(uid, for_update=True)
+            item = self.repository.find_by_uid(uid, for_update=True)
             item.approve(author=self.user_initials)
             self.repository.save(item)
 
@@ -249,7 +153,7 @@ class GenericSyntaxTemplateService(GenericSyntaxService[_AggregateRootType], abc
                 self.instance_repository.find_instance_uids_by_template_uid(uid)
             )
             for related_instance_uid in related_instance_uids:
-                related_instance = self.instance_repository.find_by_uid_2(
+                related_instance = self.instance_repository.find_by_uid(
                     related_instance_uid, for_update=True
                 )
                 if related_instance:
@@ -267,7 +171,7 @@ class GenericSyntaxTemplateService(GenericSyntaxService[_AggregateRootType], abc
                     )
                 )
                 for related_pre_instance_uid in related_pre_instance_uids:
-                    related_pre_instance = self.pre_instance_repository.find_by_uid_2(
+                    related_pre_instance = self.pre_instance_repository.find_by_uid(
                         related_pre_instance_uid, for_update=True
                     )
                     if related_pre_instance:
@@ -284,7 +188,7 @@ class GenericSyntaxTemplateService(GenericSyntaxService[_AggregateRootType], abc
 
     @db.transaction
     def inactivate_final(self, uid: str) -> BaseModel:
-        item = self._find_by_uid_or_raise_not_found(uid, for_update=True)
+        item = self.repository.find_by_uid(uid, for_update=True)
 
         try:
             item.inactivate(author=self.user_initials)
@@ -296,7 +200,7 @@ class GenericSyntaxTemplateService(GenericSyntaxService[_AggregateRootType], abc
                     )
                 )
                 for related_pre_instance_uid in related_pre_instance_uids:
-                    related_pre_instance = self.pre_instance_repository.find_by_uid_2(
+                    related_pre_instance = self.pre_instance_repository.find_by_uid(
                         related_pre_instance_uid, for_update=True
                     )
                     if (
@@ -324,7 +228,7 @@ class GenericSyntaxTemplateService(GenericSyntaxService[_AggregateRootType], abc
 
     @db.transaction
     def reactivate_retired(self, uid: str) -> BaseModel:
-        item = self._find_by_uid_or_raise_not_found(uid, for_update=True)
+        item = self.repository.find_by_uid(uid, for_update=True)
 
         try:
             item.reactivate(author=self.user_initials)
@@ -337,7 +241,7 @@ class GenericSyntaxTemplateService(GenericSyntaxService[_AggregateRootType], abc
                     )
                 )
                 for related_pre_instance_uid in related_pre_instance_uids:
-                    related_pre_instance = self.pre_instance_repository.find_by_uid_2(
+                    related_pre_instance = self.pre_instance_repository.find_by_uid(
                         related_pre_instance_uid, for_update=True
                     )
                     if (
@@ -361,7 +265,7 @@ class GenericSyntaxTemplateService(GenericSyntaxService[_AggregateRootType], abc
                 parameter_name_exists_callback=self._parameter_name_exists,
             )
 
-            item = self._find_by_uid_or_raise_not_found(
+            item = self.repository.find_by_uid(
                 uid, for_update=True, return_study_count=True
             )
 

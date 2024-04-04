@@ -112,7 +112,7 @@ class StudySelectionBaseAR:
         self._study_objects_selection = tuple(updated_selection)
 
     # pylint: disable=unused-argument
-    # TODO: Set audit trail using user_initials!?
+    # TODO: Check why user_initials is not used
     def set_new_order_for_selection(
         self, study_selection_uid: str, new_order: int, user_initials: str
     ):
@@ -182,7 +182,7 @@ class StudySelectionBaseAR:
     def validate(self):
         objects = []
         for selection in self.study_objects_selection:
-            object_name = getattr(selection, self._object_name_field)
+            object_name = getattr(selection, self._object_name_field, None)
             if object_name and object_name in objects:
                 raise exceptions.ValidationException(
                     f"There is already a study selection to that {self._object_type} ({object_name})"

@@ -91,6 +91,7 @@ class ActivityInstance(ActivityBase):
             is_default_selected_for_activity=activity_ar.concept_vo.is_default_selected_for_activity,
             is_data_sharing=activity_ar.concept_vo.is_data_sharing,
             is_legacy_usage=activity_ar.concept_vo.is_legacy_usage,
+            is_derived=activity_ar.concept_vo.is_derived,
             nci_concept_id=activity_ar.concept_vo.nci_concept_id,
             legacy_description=activity_ar.concept_vo.legacy_description,
             activity_groupings=[
@@ -141,6 +142,7 @@ class ActivityInstance(ActivityBase):
     is_default_selected_for_activity: bool = Field(False)
     is_data_sharing: bool = Field(False)
     is_legacy_usage: bool = Field(False)
+    is_derived: bool = Field(False)
     legacy_description: str | None = Field(
         None,
         title="legacy_description",
@@ -205,6 +207,7 @@ class ActivityInstanceCreateInput(ConceptInput):
     is_default_selected_for_activity: bool = Field(False)
     is_data_sharing: bool = Field(False)
     is_legacy_usage: bool = Field(False)
+    is_derived: bool = Field(False)
     legacy_description: str | None = Field(
         None,
         title="legacy_description",
@@ -258,6 +261,7 @@ class ActivityInstanceEditInput(ConceptInput):
     is_default_selected_for_activity: bool = Field(False)
     is_data_sharing: bool = Field(False)
     is_legacy_usage: bool = Field(False)
+    is_derived: bool = Field(False)
     legacy_description: str | None = Field(
         None,
         title="legacy_description",
@@ -321,6 +325,12 @@ class SimpleActivity(BaseModel):
         False,
         title="Boolean flag indicating whether data is collected for this activity",
         description="Boolean flag indicating whether data is collected for this activity",
+        nullable=False,
+    )
+    is_multiple_selection_allowed: bool = Field(
+        True,
+        title="Boolean flag indicating whether multiple selections are allowed for this activity",
+        description="Boolean flag indicating whether multiple selections are allowed for this activity",
         nullable=False,
     )
     library_name: str | None = Field(
@@ -403,6 +413,9 @@ class ActivityInstanceOverview(BaseModel):
                         is_data_collected=activity_grouping.get("activity_value").get(
                             "is_data_collected", False
                         ),
+                        is_multiple_selection_allowed=activity_grouping.get(
+                            "activity_value"
+                        ).get("is_multiple_selection_allowed", True),
                         library_name=activity_grouping.get("activity_library_name"),
                     ),
                     activity_group=SimpleActivityGroup(
@@ -449,6 +462,9 @@ class ActivityInstanceOverview(BaseModel):
                 ),
                 is_legacy_usage=overview.get("activity_instance_value").get(
                     "is_legacy_usage", False
+                ),
+                is_derived=overview.get("activity_instance_value").get(
+                    "is_derived", False
                 ),
                 topic_code=overview.get("activity_instance_value").get("topic_code"),
                 library_name=overview.get("instance_library_name"),

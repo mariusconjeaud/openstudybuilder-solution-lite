@@ -10,7 +10,7 @@ from clinical_mdr_api.domains.study_selections import study_selection_base
 @dataclass(frozen=True)
 class StudySoAGroupVO(study_selection_base.StudySelectionBaseVO):
     """
-    The StudySelectionActivityVO acts as the value object for a
+    The StudySoAGroupVO acts as the value object for a
     single selection between a study and an activity
     """
 

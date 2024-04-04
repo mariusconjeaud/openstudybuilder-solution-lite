@@ -71,13 +71,13 @@
           <v-data-table
             class="elevation-0"
             :headers="branchesHeaders"
-            :items="arm.arm_connected_branch_arms"
+            :items="arm.arm_connected_branch_arms ? arm.arm_connected_branch_arms : []"
             item-key="branch_arm_uid"
             light
             hide-default-footer
             >
             <template v-slot:item.name="{ item }">
-              <router-link :to="{ name: 'StudyBranchArmOverview', params: { study_id: selectedStudy.uid, id: item.branch_arm_uid } }">
+              <router-link :to="{ name: 'StudyBranchArmOverview', params: { study_id: selectedStudy.uid, id: item.branch_arm_uid, root_tab: $route.params.root_tab } }">
                 {{ item.name }}
               </router-link>
             </template>
@@ -119,7 +119,7 @@ export default {
   },
   methods: {
     close () {
-      this.$router.push({ name: 'StudyStructure', params: { tab: 'arms' } })
+      this.$router.push({ name: 'StudyStructure', params: { tab: this.$route.params.root_tab } })
     }
   }
 }

@@ -52,22 +52,32 @@ class StudyComponentEnum(str, Enum):
     STUDY_DESCRIPTION = "study_description"
 
 
-_STUDY_NUMBER_PATTERN = re.compile("[0-9]{1,4}")
+class StudyCompactComponentEnum(str, Enum):
+    IDENTIFICATION_METADATA = "identification_metadata"
+    VERSION_METADATA = "version_metadata"
+    STUDY_DESCRIPTION = "study_description"
+
+
+_STUDY_NUMBER_PATTERN = re.compile(r"\d{1,4}")
 
 
 @dataclass_with_default_init(frozen=True)
 class StudyIdentificationMetadataVO:
     project_number: str | None
     study_number: str | None
+    subpart_id: str | None
     study_acronym: str | None
     study_id_prefix: str | None
-    registry_identifiers: RegistryIdentifiersVO
+    description: str | None
+    registry_identifiers: RegistryIdentifiersVO | None
 
     def __init__(
         self,
         project_number: str | None,
         study_number: str | None,
+        subpart_id: str | None,
         study_acronym: str | None,
+        description: str | None,
         registry_identifiers: RegistryIdentifiersVO,
         _study_id_prefix: str | None = None
         # we denote this param with underscore, for "internal" use
@@ -77,8 +87,10 @@ class StudyIdentificationMetadataVO:
             self,
             project_number=normalize_string(project_number),
             study_number=normalize_string(study_number),
+            subpart_id=normalize_string(subpart_id),
             study_acronym=normalize_string(study_acronym),
             study_id_prefix=normalize_string(_study_id_prefix),
+            description=normalize_string(description),
             registry_identifiers=registry_identifiers,
         )
 
@@ -87,13 +99,17 @@ class StudyIdentificationMetadataVO:
         cls,
         project_number: str | None,
         study_number: str | None,
+        subpart_id: str | None,
         study_acronym: str | None,
-        registry_identifiers: RegistryIdentifiersVO,
+        description: str | None,
+        registry_identifiers: RegistryIdentifiersVO | None,
     ) -> Self:
         return cls(
             study_number=study_number,
+            subpart_id=subpart_id,
             study_acronym=study_acronym,
             project_number=project_number,
+            description=description,
             registry_identifiers=registry_identifiers,
         )
 
@@ -108,6 +124,9 @@ class StudyIdentificationMetadataVO:
         project_exists_callback: Callable[[str], bool] = (lambda _: True),
         study_number_exists_callback: Callable[[str], bool] = (lambda _: False),
         null_value_exists_callback: Callable[[str], bool] = (lambda _: True),
+        is_subpart: bool = False,
+        updatable_subpart: bool = False,
+        previous_project_number: str | None = None,
     ) -> None:
         """
         Raises exceptions.ValidationException if values do not comply with relevant business rules.
@@ -118,6 +137,17 @@ class StudyIdentificationMetadataVO:
         :param study_number_exists_callback: checks whether given study_number already exist in the database
 
         """
+
+        if (
+            previous_project_number
+            and is_subpart
+            and not updatable_subpart
+            and self.project_number != previous_project_number
+        ):
+            raise exceptions.BusinessLogicException(
+                "Project of Study Subparts cannot be changed independently from its Study Parent Part."
+            )
+
         self.registry_identifiers.validate(
             null_value_exists_callback=null_value_exists_callback
         )
@@ -127,8 +157,10 @@ class StudyIdentificationMetadataVO:
                 "Either study number or study acronym must be given in study metadata."
             )
 
-        if self.study_number is not None and not _STUDY_NUMBER_PATTERN.fullmatch(
-            self.study_number
+        if (
+            not is_subpart
+            and self.study_number is not None
+            and not _STUDY_NUMBER_PATTERN.fullmatch(self.study_number)
         ):
             raise exceptions.ValidationException(
                 f"Provided study number can only be up to 4 digits string ({self.study_number})."
@@ -142,8 +174,10 @@ class StudyIdentificationMetadataVO:
             raise exceptions.ValidationException(
                 f"There is no project identified by provided project_number ({self.project_number})"
             )
-        if self.study_number is not None and study_number_exists_callback(
-            self.study_number
+        if (
+            not is_subpart
+            and self.study_number is not None
+            and study_number_exists_callback(self.study_number)
         ):
             raise BusinessLogicException(
                 f"The following study number already exists in the database ({self.study_number})"
@@ -172,8 +206,10 @@ class StudyIdentificationMetadataVO:
         *,
         project_number: str | None = field(),
         study_number: str | None = field(),
+        subpart_id: str | None = field(),
         study_acronym: str | None = field(),
         study_id_prefix: str | None = field(),
+        description: str | None = field(),
         registry_identifiers: RegistryIdentifiersVO | None = field(),
     ) -> Self:
         """
@@ -189,7 +225,9 @@ class StudyIdentificationMetadataVO:
         return StudyIdentificationMetadataVO(
             project_number=helper(project_number, self.project_number),
             study_number=helper(study_number, self.study_number),
+            subpart_id=helper(subpart_id, self.subpart_id),
             study_acronym=helper(study_acronym, self.study_acronym),
+            description=helper(description, self.description),
             registry_identifiers=helper(
                 registry_identifiers, self.registry_identifiers
             ),
@@ -324,7 +362,6 @@ class HighLevelStudyDesignVO:
         """
 
         # pylint: disable=unused-argument
-        # TODO: Investigate which of the callbacks should actually be used!
 
         def validate_value_and_associated_null_value_valid(
             value: Any,
@@ -392,20 +429,20 @@ class HighLevelStudyDesignVO:
             self.trial_phase_code
         ):
             raise exceptions.ValidationException(
-                f"Non-existing trial phase code provided ({self.trial_phase_code})"
+                f"Non-existent trial phase code provided ({self.trial_phase_code})"
             )
 
         if self.study_type_code is not None and not study_type_exists_callback(
             self.study_type_code
         ):
             raise exceptions.ValidationException(
-                f"Non-existing study type code provided ({self.study_type_code})"
+                f"Non-existent study type code provided ({self.study_type_code})"
             )
 
         for trial_type_code in self.trial_type_codes:
             if not trial_type_exists_callback(trial_type_code):
                 raise exceptions.ValidationException(
-                    f"Non-existing trial type code provided ({trial_type_code})"
+                    f"Non-existent trial type code provided ({trial_type_code})"
                 )
 
     def is_valid(
@@ -1476,6 +1513,7 @@ class StudyMetadataVO:
         study_short_title_exists_callback: Callable[[str], bool] = (
             lambda _, study_number: False
         ),
+        is_subpart: bool = False,
     ) -> None:
         """
         Raises exceptions.ValidationException if values do not comply with relevant business rules. As a parameters takes
@@ -1485,6 +1523,7 @@ class StudyMetadataVO:
         self.id_metadata.validate(
             project_exists_callback=project_exists_callback,
             study_number_exists_callback=study_number_exists_callback,
+            is_subpart=is_subpart,
         )
         self.ver_metadata.validate()
         self.study_description.validate(

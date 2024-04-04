@@ -20,6 +20,7 @@ PARAMETER_DEFAULTS = defaultdict(
         "study_uid": "98765432106",
         "version": "0.98765432107",
         "field_name": "uid",
+        "repeating": "false",
     },
 )
 

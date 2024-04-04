@@ -5,10 +5,10 @@
 # Container Scanning customization: https://docs.gitlab.com/ee/user/application_security/container_scanning/#customizing-the-container-scanning-settings
 # Note that environment variables can be set in several places
 # See https://docs.gitlab.com/ee/ci/variables/#cicd-variable-precedence
-image: docker:latest
+image: docker:24.0.6
 
 services:
-  - docker:dind
+  - docker:24.0.6-dind
 
 stages:
 - test

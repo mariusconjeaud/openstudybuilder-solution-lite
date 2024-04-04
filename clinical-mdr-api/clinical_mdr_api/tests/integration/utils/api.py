@@ -289,6 +289,7 @@ class APITest(TestCase):
                 print(f"\n\n============ {path} ===============")
                 index = 0
                 for item in scenario:
+                    print(item)
                     self.current_scenario_item_index = index
                     self.current_scenario_item = item
                     index = index + 1

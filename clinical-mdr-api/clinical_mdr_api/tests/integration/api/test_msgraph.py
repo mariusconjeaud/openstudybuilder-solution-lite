@@ -1,4 +1,4 @@
-# pylint:disable=unused-import,redefined-outer-name,unused-argument
+# pylint: disable=unused-import,redefined-outer-name,unused-argument
 
 import pytest
 
@@ -81,7 +81,7 @@ def test_get_users_when_service_disabled(
 
 
 def _assert_users_match_expected(payload, expected_users):
-    # pylint:disable=unused-variable
+    # pylint: disable=unused-variable
     __tracebackhide__ = True
 
     assert isinstance(payload, list)
@@ -99,7 +99,7 @@ def _assert_users_match_expected(payload, expected_users):
 
 
 def assert_users_well_ordered(payload):
-    # pylint:disable=unused-variable
+    # pylint: disable=unused-variable
     __tracebackhide__ = True
 
     display_names = [u.get("display_name") for u in payload]

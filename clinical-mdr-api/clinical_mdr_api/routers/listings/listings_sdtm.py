@@ -19,7 +19,7 @@ router = APIRouter()
     "/studies/{study_uid}/sdtm/tv",
     dependencies=[rbac.STUDY_READ],
     summary="SDTM TV domain listing",
-    response_model=CustomPage[models.listings.listings_sdtm.StudyVisitListing],
+    response_model=CustomPage[models.StudyVisitListing],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -74,6 +74,7 @@ def get_tv(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ):
     service = ListingsService()
     all_items = service.list_tv(
@@ -84,6 +85,7 @@ def get_tv(
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
         sort_by=sort_by,
+        study_value_version=study_value_version,
     )
 
     return CustomPage.create(
@@ -154,6 +156,7 @@ def get_ta(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ):
     service = ListingsService()
     all_items = service.list_ta(
@@ -164,6 +167,7 @@ def get_ta(
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
         sort_by=sort_by,
+        study_value_version=study_value_version,
     )
 
     return CustomPage.create(
@@ -178,7 +182,7 @@ def get_ta(
     "/studies/{study_uid}/sdtm/ti",
     dependencies=[rbac.STUDY_READ],
     summary="SDTM TI domain listing",
-    response_model=CustomPage[models.listings.listings_sdtm.StudyCriterionListing],
+    response_model=CustomPage[models.StudyCriterionListing],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -232,6 +236,7 @@ def get_ti(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ):
     service = ListingsService()
     all_items = service.list_ti(
@@ -242,6 +247,7 @@ def get_ti(
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
         sort_by=sort_by,
+        study_value_version=study_value_version,
     )
 
     return CustomPage.create(
@@ -256,7 +262,7 @@ def get_ti(
     "/studies/{study_uid}/sdtm/ts",
     dependencies=[rbac.STUDY_READ],
     summary="SDTM TS domain listing",
-    response_model=CustomPage[models.listings.listings_sdtm.StudySummaryListing],
+    response_model=CustomPage[models.StudySummaryListing],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -311,6 +317,7 @@ def get_ts(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ):
     service = ListingsService()
     all_items = service.list_ts(
@@ -321,6 +328,7 @@ def get_ts(
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
         sort_by=sort_by,
+        study_value_version=study_value_version,
     )
 
     return CustomPage.create(
@@ -388,6 +396,7 @@ def get_te(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ):
     service = ListingsService()
     all_items = service.list_te(
@@ -398,6 +407,7 @@ def get_te(
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
         sort_by=sort_by,
+        study_value_version=study_value_version,
     )
 
     return CustomPage.create(
@@ -463,6 +473,7 @@ def get_tdm(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ):
     service = ListingsService()
     all_items = service.list_tdm(
@@ -473,6 +484,7 @@ def get_tdm(
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
         sort_by=sort_by,
+        study_value_version=study_value_version,
     )
 
     return CustomPage.create(

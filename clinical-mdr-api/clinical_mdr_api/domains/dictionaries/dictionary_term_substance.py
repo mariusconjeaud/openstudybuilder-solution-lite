@@ -49,7 +49,7 @@ class DictionaryTermSubstanceVO(DictionaryTermVO):
         definition: str | None,
         pclass_uid: str | None,
     ) -> Self:
-        dictionary_term_vo = cls(
+        return cls.from_repository_values(
             codelist_uid=codelist_uid,
             dictionary_id=dictionary_id,
             name=name,
@@ -58,8 +58,6 @@ class DictionaryTermSubstanceVO(DictionaryTermVO):
             definition=definition,
             pclass_uid=pclass_uid,
         )
-
-        return dictionary_term_vo
 
 
 class DictionaryTermSubstanceAR(DictionaryTermAR):

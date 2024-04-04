@@ -453,7 +453,7 @@
         }
     },
     {
-        "name": "Test cannot create an ODM Item Group connected to non-existing concepts",
+        "name": "Test cannot create an ODM Item Group connected to non-existent concepts",
         "request": {
             "headers": {},
             "method": "POST",
@@ -484,7 +484,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "ODM Item Group tried to connect to non existing concepts [('Concept Name: ODM Description', \"uids: {'wrong_uid'}\"), ('Concept Name: ODM Alias', \"uids: {'wrong_uid'}\")].",
+                "message": "ODM Item Group tried to connect to non-existent concepts [('Concept Name: ODM Description', \"uids: {'wrong_uid'}\"), ('Concept Name: ODM Alias', \"uids: {'wrong_uid'}\")].",
                 "time": "2022-03-07T12: 14: 18.116363",
                 "path": "http://testserver/concepts/odms/item-groups",
                 "method": "POST",
@@ -493,7 +493,7 @@
         }
     },
     {
-        "name": "Test cannot create an ODM Item Group connected to non-existing SDTM Domain",
+        "name": "Test cannot create an ODM Item Group connected to non-existent SDTM Domain",
         "request": {
             "headers": {},
             "method": "POST",
@@ -522,7 +522,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "ODM Item Group tried to connect to non existing SDTM Domain identified by uid (wrong_uid).",
+                "message": "ODM Item Group tried to connect to non-existent SDTM Domain identified by uid (wrong_uid).",
                 "time": "2022-03-07T12: 14: 18.116363",
                 "path": "http://testserver/concepts/odms/item-groups",
                 "method": "POST",
@@ -531,7 +531,7 @@
         }
     },
     {
-        "name": "Test getting error for retrieving non existing ODM Item Group",
+        "name": "Test getting error for retrieving non-existent ODM Item Group",
         "request": {
             "headers": {},
             "method": "GET",

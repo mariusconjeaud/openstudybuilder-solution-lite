@@ -1,27 +1,26 @@
-from .utils.metrics import Metrics
 import asyncio
-import aiohttp
-from os import environ
 import csv
 import json
-from typing import Optional, Sequence, Any
-from .utils.aiohttp_trace import request_tracer
 
+import aiohttp
+
+from .functions.parsers import map_boolean, parse_float, parse_to_int
 from .functions.utils import create_logger, load_env
-from .utils.importer import BaseImporter, open_file, open_file_async
-from .functions.parsers import map_boolean, parse_float
 from .utils.api_bindings import (
+    CODELIST_NAME_MAP,
+    CODELIST_UNIT,
     CODELIST_UNIT_DIMENSION,
     CODELIST_UNIT_SUBSET,
     UNIT_SUBSET_AGE,
     UNIT_SUBSET_DOSE,
-    UNIT_SUBSET_STUDY_TIME,
-    UNIT_SUBSET_TIME,
     UNIT_SUBSET_STRENGTH,
     UNIT_SUBSET_STUDY_PREFERRED_TIME_UNIT,
-    CODELIST_UNIT,
-    CODELIST_NAME_MAP,
+    UNIT_SUBSET_STUDY_TIME,
+    UNIT_SUBSET_TIME,
+    UNIT_SUBSET_ENDPOINT_UNIT,
 )
+from .utils.importer import BaseImporter, open_file, open_file_async
+from .utils.metrics import Metrics
 
 logger = create_logger("legacy_mdr_migrations")
 
@@ -55,7 +54,7 @@ class Units(BaseImporter):
         self.init_legacy_map(MDR_MIGRATION_SPONSOR_CODELIST_DEFINITIONS)
 
     def fetch_ct_units_terms(self):
-        params={"codelist_uid": CODELIST_NAME_MAP[CODELIST_UNIT]}
+        params = {"codelist_uid": CODELIST_NAME_MAP[CODELIST_UNIT]}
         items = self.api.get_all_from_api("/ct/terms/attributes", params=params)
         if items is None:
             items = []
@@ -64,10 +63,12 @@ class Units(BaseImporter):
 
     def lookup_ct_unit_uid(self, units, concept_id, submval):
         for unit in units:
-            if unit["concept_id"] == concept_id and unit["code_submission_value"] == submval:
+            if (
+                unit["concept_id"] == concept_id
+                and unit["code_submission_value"] == submval
+            ):
                 return unit["term_uid"]
         return None
-
 
     @open_file()
     def init_legacy_map(self, csvfile):
@@ -188,12 +189,16 @@ class Units(BaseImporter):
         readCSV = csv.reader(csvfile, delimiter=",")
         headers = next(readCSV)
         api_tasks = []
+        existing_units = self.api.get_all_from_api("/concepts/unit-definitions")
+        existing_units_by_uid = {v["uid"]: v for v in existing_units}
         existing_rows = self.api.get_all_identifiers(
-            self.api.get_all_from_api("/concepts/unit-definitions"),
+            existing_units,
             identifier="name",
             value="uid",
         )
-        ucum_codelists = self.api.get_all_from_api("/dictionaries/codelists", params={"library":"UCUM"})
+        ucum_codelists = self.api.get_all_from_api(
+            "/dictionaries/codelists", params={"library": "UCUM"}
+        )
         all_ucum_terms = {}
         for ucum_codelist in ucum_codelists:
             all_ucum_terms.update(
@@ -227,7 +232,10 @@ class Units(BaseImporter):
         study_time_subset_uid = all_unit_subset_terms[UNIT_SUBSET_STUDY_TIME]
         time_unit_subset_uid = all_unit_subset_terms[UNIT_SUBSET_TIME]
         strength_unit_subset_uid = all_unit_subset_terms[UNIT_SUBSET_STRENGTH]
-        study_preferred_unit_subset_uid = all_unit_subset_terms[UNIT_SUBSET_STUDY_PREFERRED_TIME_UNIT]
+        endpoint_unit_subset_uid = all_unit_subset_terms[UNIT_SUBSET_ENDPOINT_UNIT]
+        study_preferred_unit_subset_uid = all_unit_subset_terms[
+            UNIT_SUBSET_STUDY_PREFERRED_TIME_UNIT
+        ]
         for row in readCSV:
             name = row[headers.index("UNIT")]
 
@@ -241,19 +249,35 @@ class Units(BaseImporter):
             # Link to CDISC units
             if row[headers.index("CT_CD")] != "":
                 if row[headers.index("CT_SUBMVAL")] not in ("", "0"):
-                    ct_unit_uid = self.lookup_ct_unit_uid(all_ct_units, row[headers.index("CT_CD")], row[headers.index("CT_SUBMVAL")])
+                    ct_unit_uid = self.lookup_ct_unit_uid(
+                        all_ct_units,
+                        row[headers.index("CT_CD")],
+                        row[headers.index("CT_SUBMVAL")],
+                    )
                     if ct_unit_uid is not None:
-                        self.log.info(f"Linking concept '{row[headers.index('CT_CD')]}' with submission value '{row[headers.index('CT_SUBMVAL')]}' to uid '{ct_unit_uid}'")
+                        self.log.info(
+                            f"Linking concept '{row[headers.index('CT_CD')]}' with submission value '{row[headers.index('CT_SUBMVAL')]}' to uid '{ct_unit_uid}'"
+                        )
                         ct_units.append(ct_unit_uid)
                     else:
-                        self.log.warning(f"Cannot find uid for concept '{row[headers.index('CT_CD')]}' with submission value '{row[headers.index('CT_SUBMVAL')]}'")
+                        self.log.warning(
+                            f"Cannot find uid for concept '{row[headers.index('CT_CD')]}' with submission value '{row[headers.index('CT_SUBMVAL')]}'"
+                        )
                 if row[headers.index("CT_SUBMVAL_2")] not in ("", "0"):
-                    ct_unit_uid = self.lookup_ct_unit_uid(all_ct_units, row[headers.index("CT_CD")], row[headers.index("CT_SUBMVAL_2")])
+                    ct_unit_uid = self.lookup_ct_unit_uid(
+                        all_ct_units,
+                        row[headers.index("CT_CD")],
+                        row[headers.index("CT_SUBMVAL_2")],
+                    )
                     if ct_unit_uid is not None:
-                        self.log.info(f"Linking concept '{row[headers.index('CT_CD')]}' with submission value '{row[headers.index('CT_SUBMVAL_2')]}' to uid '{ct_unit_uid}'")
+                        self.log.info(
+                            f"Linking concept '{row[headers.index('CT_CD')]}' with submission value '{row[headers.index('CT_SUBMVAL_2')]}' to uid '{ct_unit_uid}'"
+                        )
                         ct_units.append(ct_unit_uid)
                     else:
-                        self.log.warning(f"Cannot find uid for concept '{row[headers.index('CT_CD')]}' with submission value '{row[headers.index('CT_SUBMVAL_2')]}'")
+                        self.log.warning(
+                            f"Cannot find uid for concept '{row[headers.index('CT_CD')]}' with submission value '{row[headers.index('CT_SUBMVAL_2')]}'"
+                        )
             # Link to sponsor defined units
             if row[headers.index("SPDEF_SUBMVAL")] != "":
                 submval = row[headers.index("SPDEF_SUBMVAL")]
@@ -281,6 +305,8 @@ class Units(BaseImporter):
                 unit_subsets.append(strength_unit_subset_uid)
             if row[headers.index("STUDY_PREFERRED_TIME_UNIT")] == "Y":
                 unit_subsets.append(study_preferred_unit_subset_uid)
+            if row[headers.index("ENDPOINT_UNITS_SUBSET")] == "Y":
+                unit_subsets.append(endpoint_unit_subset_uid)
 
             # Mark as template parameter if part of any subset
             # template_parameter = len(unit_subsets) > 0
@@ -313,18 +339,30 @@ class Units(BaseImporter):
                     ),
                     "unit_dimension": unit_dimension_uid,
                     "definition": row[headers.index("description")],
-                    "order": row[headers.index("CD_VAL_SORT_SEQ")],
+                    "order": parse_to_int(row[headers.index("CD_VAL_SORT_SEQ")]),
                     "ucum": ucum_uid,
                     "comment": row[headers.index("Comment")],
                     "template_parameter": template_parameter,
                 },
             }
-            if existing_rows.get(name):
-                self.log.info(
-                    f"Skipping existing unit '{name}' with ct codes: {ct_units}"
-                )
-            elif row[headers.index("Migrate Y/N")] not in ("Y", "y"):
+            if row[headers.index("Migrate Y/N")] not in ("Y", "y"):
                 self.log.info(f"Unit '{name}' is not marked for migration, skipping")
+            elif existing_rows.get(name):
+                equal = self.are_units_equal(data["body"], existing_units_by_uid.get(existing_rows.get(name)))
+                if equal:
+                    self.log.info(
+                        f"Skipping existing unit '{name}' with ct codes: {ct_units}"
+                    )
+                else:
+                    self.log.info(
+                        f"Updating unit '{name}'"
+                    )
+                    data["body"]["change_description"] = "Migration modification"
+                    data["patch_path"] = f"/concepts/unit-definitions/{existing_rows.get(name)}"
+                    data["new_path"] = f"/concepts/unit-definitions/{existing_rows.get(name)}/versions"
+                    api_tasks.append(
+                        self.api.new_version_patch_then_approve(data=data, session=session, approve=True)
+                    )
             else:
                 self.log.info(
                     f"Adding unit '{name}' with ct codes: {ct_units}, part of subsets: {unit_subsets}"
@@ -334,6 +372,61 @@ class Units(BaseImporter):
                 )
 
         await asyncio.gather(*api_tasks)
+
+    def are_units_equal(self, new, existing):
+        simple_fields = [
+            "name",
+            "convertible_unit",
+            "display_unit",
+            "master_unit",
+            "si_unit",
+            "us_conventional_unit",
+            "legacy_code",
+            "molecular_weight_conv_expon",
+            "conversion_factor_to_master",
+            "definition",
+            "order",
+            "comment",
+            "template_parameter"
+        ]
+        for field in simple_fields:
+            if new.get(field) != existing.get(field):
+                self.log.info(f"Field {field} is different, new: {new.get(field)}, old: {existing.get(field)}")
+                return False
+        new_unit_subset = self.make_set_of_optional_list(new["unit_subsets"])
+        existing_unit_subset = self.make_set_of_term_uids(existing["unit_subsets"])
+        if new_unit_subset != existing_unit_subset:
+            self.log.info(f"Unit subsets are different, new: {new_unit_subset}, old: {existing_unit_subset}")
+            return False
+        new_ct_units = self.make_set_of_optional_list(new["ct_units"])
+        existing_ct_units = self.make_set_of_term_uids(existing["ct_units"])
+        if new_ct_units != existing_ct_units:
+            self.log.info(f"CT units are different, new: {new_ct_units}, old: {existing_ct_units}")
+            return False
+        existing_ucum = existing["ucum"]
+        if existing_ucum is not None:
+            existing_ucum = existing_ucum["term_uid"]
+        if new["ucum"] != existing_ucum:
+            self.log.info(f"UCUM is different, new: {new['ucum']}, old: {existing_ucum}")
+            return False
+        existing_dimension = existing["unit_dimension"]
+        if existing_dimension is not None:
+            existing_dimension = existing_dimension["term_uid"]
+        if new["unit_dimension"] != existing_dimension:
+            self.log.info(f"Unit dimension is different, new: {new['unit_dimension']}, old: {existing_dimension}")
+            return False
+        return True
+
+    def make_set_of_term_uids(self, items):
+        if items is None:
+            return set()
+        return set(item["term_uid"] for item in items)
+
+    def make_set_of_optional_list(self, items):
+        if items is None:
+            return set()
+        return set(items)
+
 
     @open_file_async()
     async def handle_sponsor_units(self, csvfile, session):

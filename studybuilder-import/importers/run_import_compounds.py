@@ -1,20 +1,21 @@
-from .utils.importer import BaseImporter, open_file
-from .utils.api_bindings import CODELIST_NAME_MAP, \
-    CODELIST_ROUTE_OF_ADMINISTRATION, \
-    CODELIST_DOSAGE_FORM, \
-    CODELIST_DELIVERY_DEVICE, \
-    CODELIST_COMPOUND_DISPENSED_IN, \
-    CODELIST_SDTM_DOMAIN_ABBREVIATION
-
-from .utils.metrics import Metrics
 import csv
+import json
+
 from .functions.parsers import map_boolean
 from .functions.utils import load_env
-from .utils.api_bindings import UNIT_SUBSET_AGE, \
-    UNIT_SUBSET_DOSE, \
-    UNIT_SUBSET_STRENGTH
-
-import json
+from .utils.api_bindings import (
+    CODELIST_COMPOUND_DISPENSED_IN,
+    CODELIST_DELIVERY_DEVICE,
+    CODELIST_DOSAGE_FORM,
+    CODELIST_NAME_MAP,
+    CODELIST_ROUTE_OF_ADMINISTRATION,
+    CODELIST_SDTM_DOMAIN_ABBREVIATION,
+    UNIT_SUBSET_AGE,
+    UNIT_SUBSET_DOSE,
+    UNIT_SUBSET_STRENGTH,
+)
+from .utils.importer import BaseImporter, open_file
+from .utils.metrics import Metrics
 
 # ---------------------------------------------------------------
 # Env loading
@@ -28,8 +29,12 @@ compounds = lambda row, headers, dose_values, strength_values, half_life_value, 
     "path": "/concepts/compounds",
     "uid": "<uid>",
     "body": {
-        "nnc_short_number": row[headers.index("NNC_SHORT")] if row[headers.index("NNC_SHORT")] != "" else None,
-        "nnc_long_number": row[headers.index("NNC_LONG")] if row[headers.index("NNC_LONG")] != "" else None,
+        "nnc_short_number": row[headers.index("NNC_SHORT")]
+        if row[headers.index("NNC_SHORT")] != ""
+        else None,
+        "nnc_long_number": row[headers.index("NNC_LONG")]
+        if row[headers.index("NNC_LONG")] != ""
+        else None,
         "change_description": "Creating Compound",
         "name": f"{row[headers.index('NAME')]}",
         "name_sentence_case": f"{row[headers.index('NAME')]}".lower(),
@@ -43,7 +48,9 @@ compounds = lambda row, headers, dose_values, strength_values, half_life_value, 
         "library_name": "Sponsor",
         "is_sponsor_compound": True,
         "is_name_inn": True,
-        "analyte_number": row[headers.index("ANALYTE")] if row[headers.index("ANALYTE")] != "" else None,
+        "analyte_number": row[headers.index("ANALYTE")]
+        if row[headers.index("ANALYTE")] != ""
+        else None,
         "route_of_administration_uids": [val["term_uid"] for val in admin_routes],
         "dosage_form_uids": [val["term_uid"] for val in dosage_forms],
     },
@@ -59,7 +66,7 @@ compound_alias = lambda uid, compound_data: {
         "library_name": compound_data["library_name"],
         "compound_uid": uid,
         "is_preferred_synonym": True,
-    }
+    },
 }
 
 # Not used yet:
@@ -97,17 +104,23 @@ class Compounds(BaseImporter):
     def __init__(self, api=None, metrics_inst=None, cache=None):
         super().__init__(api=api, metrics_inst=metrics_inst, cache=cache)
         self.dose_units = self.api.get_all_identifiers(
-            self.api.get_all_from_api(f"/concepts/unit-definitions?subset={UNIT_SUBSET_DOSE}"),
+            self.api.get_all_from_api(
+                f"/concepts/unit-definitions?subset={UNIT_SUBSET_DOSE}"
+            ),
             identifier="name",
             value="uid",
         )
         self.age_units = self.api.get_all_identifiers(
-            self.api.get_all_from_api(f"/concepts/unit-definitions?subset={UNIT_SUBSET_AGE}"),
+            self.api.get_all_from_api(
+                f"/concepts/unit-definitions?subset={UNIT_SUBSET_AGE}"
+            ),
             identifier="name",
             value="uid",
         )
         self.strength_units = self.api.get_all_identifiers(
-            self.api.get_all_from_api(f"/concepts/unit-definitions?subset={UNIT_SUBSET_STRENGTH}"),
+            self.api.get_all_from_api(
+                f"/concepts/unit-definitions?subset={UNIT_SUBSET_STRENGTH}"
+            ),
             identifier="name",
             value="uid",
         )
@@ -123,7 +136,9 @@ class Compounds(BaseImporter):
                 if unit not in available_units:
                     unit = unit.lower()
                     if unit not in available_units:
-                        self.log.warning(f"Unit '{unit}' not found, skipping value {val}")
+                        self.log.warning(
+                            f"Unit '{unit}' not found, skipping value {val}"
+                        )
                         continue
             self.log.info(f"Adding numeric value {val} with unit '{unit}'")
             val = self.api.post_to_api(numeric_value(val, available_units[unit]))
@@ -154,7 +169,9 @@ class Compounds(BaseImporter):
         # TODO this is a dummy value, get this from the data instead
         lag_times = self.add_lag_times([7], ["days"], ["C49562_AE"])
 
-        unii_codelists = self.api.get_all_from_api("/dictionaries/codelists", params={"library":"UNII"})
+        unii_codelists = self.api.get_all_from_api(
+            "/dictionaries/codelists", params={"library": "UNII"}
+        )
 
         all_unii_terms = {}
         for unii_codelist in unii_codelists:
@@ -192,9 +209,7 @@ class Compounds(BaseImporter):
                 for val, unit in zip(dose_val.split("|"), dose_unit.split("|")):
                     vals.append(float(val))
                     units.append(unit)
-                dose_values = self.add_numeric_values(
-                    vals, units, self.dose_units
-                )
+                dose_values = self.add_numeric_values(vals, units, self.dose_units)
             strength_val = row[headers.index("STRENGTH")]
             strength_unit = row[headers.index("STRENGTH_U")]
             strength_values = []
@@ -251,7 +266,7 @@ class Compounds(BaseImporter):
                 dispensed_in,
                 lag_times,
                 admin_routes,
-                dosage_forms
+                dosage_forms,
             )
             if row[headers.index("unii_substance_cd")] != "":
                 unii_terms = row[headers.index("unii_substance_cd")]
@@ -263,12 +278,16 @@ class Compounds(BaseImporter):
                     data["body"]["substance_terms_uids"] = term_uids
             if row[headers.index("SPONSOR_YN")] != "":
                 try:
-                    data["body"]["is_sponsor_compound"] = map_boolean(row[headers.index("SPONSOR_YN")], raise_exception=True)
+                    data["body"]["is_sponsor_compound"] = map_boolean(
+                        row[headers.index("SPONSOR_YN")], raise_exception=True
+                    )
                 except ValueError:
                     pass
             if row[headers.index("INN_YN")] != "":
                 try:
-                    data["body"]["is_name_inn"] = map_boolean(row[headers.index("INN_YN")], raise_exception=True)
+                    data["body"]["is_name_inn"] = map_boolean(
+                        row[headers.index("INN_YN")], raise_exception=True
+                    )
                 except ValueError:
                     pass
             # print("--- compound to post")

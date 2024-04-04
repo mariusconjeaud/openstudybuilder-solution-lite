@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Path
+from fastapi import APIRouter, Path, Query
 
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.listings.listings_study import StudyMetadataListingModel
@@ -34,7 +34,16 @@ router = APIRouter()
 def get_study_metadata(
     study_number: str = Path(
         None, description="Return study title for specific study number"
-    )
+    ),
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
+    datetime: str
+    | None = Query(
+        None,
+        description=r"If specified, study data with latest released version of specified datetime is returned. "
+        r"format in YYYY-MM-DDThh:mm:ssZ. ",
+    ),
 ):
     study_metadata_listing_service = StudyMetadataListingService()
-    return study_metadata_listing_service.get_study_metadata(study_number)
+    return study_metadata_listing_service.get_study_metadata(
+        study_number, study_value_version, datetime
+    )

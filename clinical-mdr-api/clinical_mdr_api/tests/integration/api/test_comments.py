@@ -262,7 +262,7 @@ def test_get_comment_threads_pagination(api_client):
         pytest.param(10, 2, "/Topic/1", None, "ACTIVE", 0, 5),
         pytest.param(10, 1, None, None, "ACTIVE", 10, 25),
         pytest.param(10, 1, None, None, "RESOLVED", 0, 0),
-        pytest.param(10, 1, "/Topic/non-existing", None, None, 0, 0),
+        pytest.param(10, 1, "/Topic/non-existent", None, None, 0, 0),
     ],
 )
 def test_get_comment_threads(

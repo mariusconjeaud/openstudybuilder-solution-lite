@@ -35,7 +35,7 @@ class CTTermAttributesService(CTTermGenericService[CTTermAttributesAR]):
                 author=self.user_initials,
                 change_description=term_input.change_description,
                 ct_term_vo=CTTermAttributesVO.from_input_values(
-                    codelist_uid=item.ct_term_vo.codelist_uid,
+                    codelists=item.ct_term_vo.codelists,
                     catalogue_name=item.ct_term_vo.catalogue_name,
                     code_submission_value=self.get_input_or_previous_property(
                         term_input.code_submission_value,

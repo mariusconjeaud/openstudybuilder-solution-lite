@@ -10,6 +10,7 @@ Tests for /studies/{uid}/study-endpoints endpoints
 # which pylint interprets as unused arguments
 
 import logging
+from unittest import mock
 
 import pytest
 from fastapi.testclient import TestClient
@@ -160,6 +161,8 @@ def test_study_endpoint_modify_actions_on_locked_study(api_client):
     )
     res = response.json()
     assert response.status_code == 200
+    for i, _ in enumerate(old_res):
+        old_res[i]["study_objective"]["study_version"] = mock.ANY
     assert old_res == res
 
     # test cannot delete
@@ -227,9 +230,13 @@ def test_study_endpoint_with_study_objective_relationship(api_client):
     )
     res = response.json()
     assert response.status_code == 200
+    before_unlock["study_version"] = mock.ANY
+    before_unlock["study_objective"]["study_version"] = mock.ANY
     assert res["items"][0] == before_unlock
 
     # get all
+    for i, _ in enumerate(before_unlock_objectives["items"]):
+        before_unlock_objectives["items"][i]["study_version"] = mock.ANY
     assert (
         before_unlock_objectives
         == api_client.get(
@@ -298,4 +305,108 @@ def test_study_value_version_validation(api_client):
 )
 def test_get_study_endpoints_csv_xml_excel(api_client, export_format):
     url = f"/studies/{study.uid}/study-endpoints"
-    TestUtils.verify_exported_data_format(api_client, export_format, url)
+    exported_data = TestUtils.verify_exported_data_format(
+        api_client, export_format, url
+    )
+    if export_format == "text/csv":
+        assert "study_version" in str(exported_data.read())
+        assert "LATEST" in str(exported_data.read())
+
+
+def test_update_endpoint_library_items_of_relationship_to_value_nodes(api_client):
+    """
+    Test that the StudyEndpoint selection remains connected to the specific Value node even if the Value node is not latest anymore.
+
+    StudyEndpoint is connected to value nodes:
+    - EndpointTemplate
+    """
+    # get specific study endpoint
+    response = api_client.get(
+        f"/studies/{study.uid}/study-endpoints/{endpoint_uid}",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    library_template_endpoint_uid = res["endpoint"]["endpoint_template"]["uid"]
+    initial_endpoint_name = res["endpoint"]["name"]
+
+    text_value_2_name = "2ndname"
+    # change endpoint name and approve the version
+    response = api_client.post(
+        f"/endpoint-templates/{library_template_endpoint_uid}/versions",
+        json={
+            "change_description": "test change",
+            "name": text_value_2_name,
+            "guidance_text": "don't know",
+        },
+    )
+    response = api_client.post(
+        f"/endpoint-templates/{library_template_endpoint_uid}/approvals?cascade=true"
+    )
+
+    # check that the Library item has been changed
+    response = api_client.get(f"/endpoint-templates/{library_template_endpoint_uid}")
+    res = response.json()
+    assert response.status_code == 200
+    assert res["name"] == text_value_2_name
+
+    # check that the StudySelection StudyEndpoint hasn't been updated
+    response = api_client.get(
+        f"/studies/{study.uid}/study-endpoints/{endpoint_uid}",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["endpoint"]["name"] == initial_endpoint_name
+
+
+def test_update_timeframe_library_items_of_relationship_to_value_nodes(api_client):
+    """
+    Test that the StudyEndpoint selection remains connected to the specific Value node even if the Value node is not latest anymore.
+
+    StudyEndpoint is connected to value nodes:
+    - TimeframeTemplate
+    """
+
+    # timeframes
+    response = api_client.patch(
+        f"/studies/{study.uid}/study-endpoints/{endpoint_uid}",
+        json={
+            "timeframe_uid": "Timeframe_000001",
+            "study_objective_uid": study_objective_uid1,
+        },
+    )
+    res = response.json()
+    assert response.status_code == 200
+    library_template_timeframe_uid = res["timeframe"]["timeframe_template"]["uid"]
+    initial_timeframe_name = res["timeframe"]["timeframe_template"]["name"]
+
+    text_value_2_name = "2ndname"
+    # change endpoint name and approve the version
+    response = api_client.post(
+        f"/timeframe-templates/{library_template_timeframe_uid}/versions",
+        json={"change_description": "test change", "name": text_value_2_name},
+    )
+    # change endpoint name and approve the version
+    response = api_client.patch(
+        f"/timeframe-templates/{library_template_timeframe_uid}",
+        json={
+            "name": text_value_2_name,
+            "library": {"name": "Sponsor", "is_editable": True},
+            "change_description": "Work in Progress",
+        },
+    )
+    response = api_client.post(
+        f"/timeframe-templates/{library_template_timeframe_uid}/approvals?cascade=true"
+    )
+    # check that the Library item has been changed
+    response = api_client.get(f"/timeframe-templates/{library_template_timeframe_uid}")
+    res = response.json()
+    assert response.status_code == 200
+    assert res["name"] == text_value_2_name
+
+    # check that the StudySelection StudyEndpoint hasn't been updated
+    response = api_client.get(
+        f"/studies/{study.uid}/study-endpoints/{endpoint_uid}",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["timeframe"]["name"] == initial_timeframe_name

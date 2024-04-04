@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable, Iterable
+from typing import Callable
 
 from clinical_mdr_api import exceptions
 
@@ -52,11 +52,3 @@ def call_default_init(obj, *args, **kwargs) -> None:
     Convenience function to call __default_init__ avoiding static type checking issues.
     """
     getattr(obj, "__default_init__")(*args, **kwargs)
-
-
-def make_frozenset(iterable: Iterable | None) -> frozenset:
-    if iterable is None:
-        return frozenset()
-    if isinstance(iterable, frozenset):
-        return iterable
-    return frozenset(iterable)

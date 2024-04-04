@@ -28,11 +28,9 @@ def wipe_study_definition_repository() -> None:
         db.cypher_query("MATCH (:StudyValue)-[vr]-(:StudyBooleanField) DELETE vr")
         db.cypher_query("MATCH (:StudyValue)-[vr]-(:StudyArrayField) DELETE vr")
         db.cypher_query("MATCH (:StudyProjectField)-[vr]-(:Project) DELETE vr")
-        db.cypher_query("MATCH (:StudyField)-[vr]-(:CTTermLabel) DELETE vr")
         db.cypher_query("MATCH (sr:StudyRoot) DELETE sr")
         db.cypher_query("MATCH (sv:StudyValue) DELETE sv")
         db.cypher_query("MATCH (sf:StudyField) DELETE sf")
-        db.cypher_query("MATCH (ct:CTTermLabel) DELETE ct")
 
 
 def wipe_project_repository() -> None:

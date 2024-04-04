@@ -76,16 +76,16 @@ class ActivityItemClassVO:
             )
         if not ct_term_exists(self.role_uid):
             raise exceptions.ValidationException(
-                f"ActivityItemClass tried to connect to non existing CTTermRoot for Role ({self.role_uid})."
+                f"ActivityItemClass tried to connect to non-existent or non-final CTTermRoot for Role ({self.role_uid})."
             )
         if not ct_term_exists(self.data_type_uid):
             raise exceptions.ValidationException(
-                f"ActivityItemClass tried to connect to non existing CTTermRoot for Data type ({self.data_type_uid})."
+                f"ActivityItemClass tried to connect to non-existent or non-final CTTermRoot for Data type ({self.data_type_uid})."
             )
         for activity_instance_class_uid in self.activity_instance_class_uids:
             if not activity_instance_class_exists(activity_instance_class_uid):
                 raise exceptions.ValidationException(
-                    f"ActivityItemClass tried to connect to non existing ActivityInstanceClass ({activity_instance_class_uid})."
+                    f"ActivityItemClass tried to connect to non-existent or non-final ActivityInstanceClass ({activity_instance_class_uid})."
                 )
 
 

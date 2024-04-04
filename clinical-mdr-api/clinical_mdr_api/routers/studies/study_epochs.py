@@ -7,7 +7,6 @@ from clinical_mdr_api import config
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.study_selections import study_epoch
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.models.validators import FLOAT_REGEX
 from clinical_mdr_api.oauth import get_current_user_id, rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
@@ -24,6 +23,7 @@ study_epoch_uid_description = Path(
 study_visit_uid_description = Path(
     None, description="The unique id of the study visit."
 )
+
 
 """
     API endpoints to study epochs
@@ -75,6 +75,8 @@ Possible errors:
             "description",
             "study_visit_count",
             "color_hash",
+            "study_uid",
+            "study_version",
         ],
         "formats": [
             "text/csv",
@@ -107,12 +109,7 @@ def get_all(
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
     uid: str = studyUID,
-    study_value_version: str
-    | None = Query(
-        None,
-        description="StudyValueVersion to extract the StudySelections",
-        regex=FLOAT_REGEX,
-    ),
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
     current_user_id: str = Depends(get_current_user_id),
 ) -> CustomPage[study_epoch.StudyEpoch]:
     service = StudyEpochService(current_user_id)
@@ -166,12 +163,7 @@ def get_distinct_values_for_header(
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
     uid: str = studyUID,
-    study_value_version: str
-    | None = Query(
-        None,
-        description="StudyValueVersion to extract the StudySelections",
-        regex=FLOAT_REGEX,
-    ),
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
     current_user_id: str = Depends(get_current_user_id),
 ):
     service = StudyEpochService(author=current_user_id)
@@ -224,12 +216,7 @@ Possible errors:
 def get_study_epoch(
     uid: str = studyUID,
     study_epoch_uid: str = study_epoch_uid_description,
-    study_value_version: str
-    | None = Query(
-        None,
-        description="StudyValueVersion to extract the StudySelections",
-        regex=FLOAT_REGEX,
-    ),
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
     current_user_id: str = Depends(get_current_user_id),
 ) -> study_epoch.StudyEpoch:
     service = StudyEpochService(current_user_id)

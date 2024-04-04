@@ -19,7 +19,10 @@ from clinical_mdr_api.models.study_selections.study_disease_milestone import (
     StudyDiseaseMilestoneEditInput,
     StudyDiseaseMilestoneVersion,
 )
-from clinical_mdr_api.models.utils import GenericFilteringReturn
+from clinical_mdr_api.models.utils import (
+    GenericFilteringReturn,
+    get_latest_on_datetime_str,
+)
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._meta_repository import MetaRepository
 from clinical_mdr_api.services._utils import (
@@ -52,10 +55,14 @@ class StudyDiseaseMilestoneService:
     def _transform_all_to_response_model(
         self,
         disease_milestone: StudyDiseaseMilestoneVO,
+        study_value_version: str | None = None,
     ) -> StudyDiseaseMilestone:
         return StudyDiseaseMilestone(
             uid=disease_milestone.uid,
             study_uid=disease_milestone.study_uid,
+            study_version=study_value_version
+            if study_value_version
+            else get_latest_on_datetime_str(),
             order=disease_milestone.order,
             status=disease_milestone.status.value,
             start_date=disease_milestone.start_date.strftime(settings.DATE_TIME_FORMAT),
@@ -116,7 +123,9 @@ class StudyDiseaseMilestoneService:
         )
 
         all_items = [
-            self._transform_all_to_response_model(disease_milestone)
+            self._transform_all_to_response_model(
+                disease_milestone, study_value_version=study_value_version
+            )
             for disease_milestone in items
         ]
 

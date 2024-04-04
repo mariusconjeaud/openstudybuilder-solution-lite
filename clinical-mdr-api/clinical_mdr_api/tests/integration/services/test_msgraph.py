@@ -9,7 +9,7 @@ from clinical_mdr_api import exceptions
 from clinical_mdr_api.models.integrations.msgraph import GraphGroup, GraphUser
 from clinical_mdr_api.services.integrations import msgraph
 
-# pylint:disable=redefined-outer-name
+# pylint: disable=redefined-outer-name
 
 
 GROUP_URL_RE = re.compile("/groups/([0-9a-f-]+)/members")
@@ -203,7 +203,7 @@ class MockMsGraphApiClient:
     _page_limit = 3
 
     @staticmethod
-    # pylint:disable=unused-argument
+    # pylint: disable=unused-argument
     async def request(method: str, url: str, token: dict, **kwargs) -> MockResponse:
         if not (token and token.get("expires_at")):
             return MockResponse(
@@ -324,7 +324,7 @@ async def test_msgraph_fetch_groups(mocked_msgraph_service):
 
 
 def _assert_groups_match_expected(payload, expected_groups):
-    # pylint:disable=unused-variable
+    # pylint: disable=unused-variable
     __tracebackhide__ = True
 
     assert isinstance(payload, list)
@@ -384,7 +384,7 @@ async def test_search_all_group_direct_member_users(
 
 
 def _assert_users_match_expected(payload, expected_users):
-    # pylint:disable=unused-variable
+    # pylint: disable=unused-variable
     __tracebackhide__ = True
 
     assert isinstance(payload, list)
@@ -402,7 +402,7 @@ def _assert_users_match_expected(payload, expected_users):
 
 
 def _assert_users_well_ordered(payload):
-    # pylint:disable=unused-variable
+    # pylint: disable=unused-variable
     __tracebackhide__ = True
 
     display_names = [u.display_name for u in payload]

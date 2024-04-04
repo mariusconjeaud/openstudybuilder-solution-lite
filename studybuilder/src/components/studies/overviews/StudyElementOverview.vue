@@ -92,7 +92,11 @@ export default {
   },
   methods: {
     close () {
-      this.$router.push({ name: 'StudyStructure', params: { tab: 'elements' } })
+      if (this.$route.params.root_tab) {
+        this.$router.push({ name: 'StudyStructure', params: { tab: this.$route.params.root_tab } })
+      } else {
+        this.$router.go(-1)
+      }
     }
   }
 }

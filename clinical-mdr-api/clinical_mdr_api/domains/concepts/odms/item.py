@@ -129,7 +129,7 @@ class OdmItemVO(ConceptVO):
             self.codelist_uid
         ):
             raise BusinessLogicException(
-                f"ODM Item tried to connect to non existing Codelist identified by uid ({self.codelist_uid})."
+                f"ODM Item tried to connect to non-existent Codelist identified by uid ({self.codelist_uid})."
             )
 
         if self.term_uids:

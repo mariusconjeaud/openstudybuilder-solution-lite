@@ -106,31 +106,31 @@ class ConceptVO:
             on_root: (bool, optional) A boolean flag indicating whether to perform the concept existence check on the root object. Defaults to True.
 
         Returns:
-            None: This method does not return a value directly, but it raises an exception if non-existing concept values are found.
+            None: This method does not return a value directly, but it raises an exception if non-existent concept values are found.
 
         Raises:
             BusinessLogicException: If any of the provided concept values do not exist based on the concept data list, an exception is raised with
-            a message indicating the object name, concept name, property name, and the non-existing concept values.
+            a message indicating the object name, concept name, property name, and the non-existent concept values.
         """
         errors = []
 
         for values, concept_name, callback in concept_data_list:
-            non_existing_values = set()
+            non_existent_values = set()
             for value in values:
                 if not callback(property_name, value, on_root):
-                    non_existing_values.add(value)
+                    non_existent_values.add(value)
 
-            if non_existing_values:
+            if non_existent_values:
                 errors.append(
                     (
                         f"Concept Name: {concept_name}",
-                        f"{property_name}s: {non_existing_values}",
+                        f"{property_name}s: {non_existent_values}",
                     )
                 )
 
         if errors:
             raise BusinessLogicException(
-                f"{object_name} tried to connect to non existing concepts {errors}."
+                f"{object_name} tried to connect to non-existent concepts {errors}."
             )
 
     def validate_name_sentence_case(self):

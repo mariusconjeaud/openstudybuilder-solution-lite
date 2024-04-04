@@ -82,7 +82,7 @@ class ObjectiveRepositoryConcurrencyTest(unittest.TestCase):
             self.template_repository.save(objective_template_ar)
         # Approve template
         with db.transaction:
-            objective_template_ar = self.template_repository.find_by_uid_2(
+            objective_template_ar = self.template_repository.find_by_uid(
                 self.template_uid, for_update=True
             )
             objective_template_ar.approve(author=self.user_initials)
@@ -218,48 +218,22 @@ class ObjectiveRepositoryConcurrencyTest(unittest.TestCase):
     # Helper functions to be used by the locking validator:
 
     def approve_object_without_save(self):
-        object_ar = self.object_repository.find_by_uid_2(
-            self.object_uid, for_update=True
-        )
+        object_ar = self.object_repository.find_by_uid(self.object_uid, for_update=True)
         object_ar.approve(author=self.user_initials, change_description="APPROVED!")
         self.object_ar = object_ar
 
     def approve_object_with_save(self):
-        object_ar = self.object_repository.find_by_uid_2(
-            self.object_uid, for_update=True
-        )
+        object_ar = self.object_repository.find_by_uid(self.object_uid, for_update=True)
         object_ar.approve(author=self.user_initials, change_description="APPROVED!")
         self.object_repository.save(object_ar)
 
-    def soft_delete_object_without_save(self):
-        object_ar = self.object_repository.find_by_uid_2(
-            self.object_uid, for_update=True
-        )
-        object_ar.soft_delete()
-        self.object_ar = object_ar
-
     def soft_delete_object_with_save(self):
-        object_ar = self.object_repository.find_by_uid_2(
-            self.object_uid, for_update=True
-        )
+        object_ar = self.object_repository.find_by_uid(self.object_uid, for_update=True)
         object_ar.soft_delete()
         self.object_repository.save(object_ar)
 
-    def edit_object_without_save(self):
-        object_ar = self.object_repository.find_by_uid_2(
-            self.object_uid, for_update=True
-        )
-        object_ar.edit_draft(
-            author=self.user_initials,
-            change_description="Edited",
-            template=self.parameterized_template_vo_to_edit,
-        )
-        self.object_ar = object_ar
-
     def edit_object_with_save(self):
-        object_ar = self.object_repository.find_by_uid_2(
-            self.object_uid, for_update=True
-        )
+        object_ar = self.object_repository.find_by_uid(self.object_uid, for_update=True)
         object_ar.edit_draft(
             author=self.user_initials,
             change_description="Edited",
@@ -268,54 +242,42 @@ class ObjectiveRepositoryConcurrencyTest(unittest.TestCase):
         self.object_repository.save(self.object_ar)
 
     def inactivate_object_without_save(self):
-        object_ar = self.object_repository.find_by_uid_2(
-            self.object_uid, for_update=True
-        )
+        object_ar = self.object_repository.find_by_uid(self.object_uid, for_update=True)
         object_ar.inactivate(
             author=self.user_initials, change_description="Inactivated"
         )
         self.object_ar = object_ar
 
     def inactivate_object_with_save(self):
-        object_ar = self.object_repository.find_by_uid_2(
-            self.object_uid, for_update=True
-        )
+        object_ar = self.object_repository.find_by_uid(self.object_uid, for_update=True)
         object_ar.inactivate(
             author=self.user_initials, change_description="Inactivated"
         )
         self.object_repository.save(self.object_ar)
 
     def new_version_without_save(self):
-        object_ar = self.object_repository.find_by_uid_2(
-            self.object_uid, for_update=True
-        )
+        object_ar = self.object_repository.find_by_uid(self.object_uid, for_update=True)
         object_ar._create_new_version(
             author=self.user_initials, change_description="New Draft"
         )
         self.object_ar = object_ar
 
     def new_version_with_save(self):
-        object_ar = self.object_repository.find_by_uid_2(
-            self.object_uid, for_update=True
-        )
+        object_ar = self.object_repository.find_by_uid(self.object_uid, for_update=True)
         object_ar._create_new_version(
             author=self.user_initials, change_description="New Draft"
         )
         self.object_repository.save(self.object_ar)
 
     def reactivate_object_without_save(self):
-        object_ar = self.object_repository.find_by_uid_2(
-            self.object_uid, for_update=True
-        )
+        object_ar = self.object_repository.find_by_uid(self.object_uid, for_update=True)
         object_ar.reactivate(
             author=self.user_initials, change_description="Reactivated"
         )
         self.object_ar = object_ar
 
     def reactivate_object_with_save(self):
-        object_ar = self.object_repository.find_by_uid_2(
-            self.object_uid, for_update=True
-        )
+        object_ar = self.object_repository.find_by_uid(self.object_uid, for_update=True)
         object_ar.reactivate(
             author=self.user_initials, change_description="Reactivated"
         )

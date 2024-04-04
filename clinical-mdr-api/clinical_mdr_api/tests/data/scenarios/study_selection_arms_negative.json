@@ -1,5 +1,4 @@
 [
-  
   {
     "name": "Test adding selection",
     "request": {
@@ -38,12 +37,16 @@
         "arm_type": {
           "term_uid": "term_root_final",
           "catalogue_name": "SDTM CT",
-          "codelist_uid": "ct_codelist_root1",
+          "codelists": [
+            {
+              "codelist_uid": "ct_codelist_root1",
+              "order": null
+            }
+          ],
           "sponsor_preferred_name": "term_value_name1",
           "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
           "library_name": "Sponsor",
           "start_date": "2020-06-26T00:00:00",
-          "order": null,
           "end_date": null,
           "status": "Final",
           "version": "1.0",
@@ -103,12 +106,16 @@
         "arm_type": {
           "term_uid": "term_root_final",
           "catalogue_name": "SDTM CT",
-          "codelist_uid": "ct_codelist_root1",
+          "codelists": [
+            {
+              "codelist_uid": "ct_codelist_root1",
+              "order": null
+            }
+          ],
           "sponsor_preferred_name": "term_value_name1",
           "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
           "library_name": "Sponsor",
           "start_date": "2020-06-26T00:00:00",
-          "order": null,
           "end_date": null,
           "status": "Final",
           "version": "1.0",
@@ -142,12 +149,12 @@
     },
     "response": {
       "code": 400,
-            "result": {
-                "message": "Value \"Arm_Name_1\" in field Arm name is not unique for the study",
-                "method": "POST",
-                "path": "http://testserver/studies/study_root/study-arms",
-                "time": "2020-11-10T01:51:17.884429"
-            }
+      "result": {
+        "message": "Value \"Arm_Name_1\" in field Arm name is not unique for the study",
+        "method": "POST",
+        "path": "http://testserver/studies/study_root/study-arms",
+        "time": "2020-11-10T01:51:17.884429"
+      }
     }
   },
   {
@@ -183,12 +190,16 @@
         "arm_type": {
           "term_uid": "term_root_final_non_edit",
           "catalogue_name": "SDTM CT",
-          "codelist_uid": "non_editable_cr",
+          "codelists": [
+            {
+              "codelist_uid": "non_editable_cr",
+              "order": 3
+            }
+          ],
           "sponsor_preferred_name": "term_value_name3",
           "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
           "library_name": "CDISC",
           "start_date": "2020-06-26T00:00:00",
-          "order": 3,
           "end_date": null,
           "status": "Final",
           "version": "1.0",
@@ -199,7 +210,7 @@
             "new_version"
           ]
         },
-        "arm_connected_branch_arms":null,
+        "arm_connected_branch_arms": null,
         "description": "desc...",
         "arm_colour": "arm_colour...",
         "number_of_subjects": 1,
@@ -237,10 +248,14 @@
           "arm_type": {
             "term_uid": "term_root_final_non_edit",
             "catalogue_name": "SDTM CT",
-            "codelist_uid": "non_editable_cr",
+            "codelists": [
+              {
+                "codelist_uid": "non_editable_cr",
+                "order": 3
+              }
+            ],
             "sponsor_preferred_name": "term_value_name3",
             "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
-            "order": 3,
             "library_name": "CDISC",
             "start_date": "2022-06-27T15:48:26.528000",
             "end_date": null,
@@ -274,10 +289,14 @@
           "arm_type": {
             "term_uid": "term_root_final",
             "catalogue_name": "SDTM CT",
-            "codelist_uid": "ct_codelist_root_endpoint",
+            "codelists": [
+              {
+                "codelist_uid": "ct_codelist_root_endpoint",
+                "order": 1
+              }
+            ],
             "sponsor_preferred_name": "term_value_name1",
             "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
-            "order": 1,
             "library_name": "Sponsor",
             "start_date": "2022-06-27T15:48:26.528000",
             "end_date": null,
@@ -330,10 +349,14 @@
         "arm_type": {
           "term_uid": "term_root_final",
           "catalogue_name": "SDTM CT",
-          "codelist_uid": "ct_codelist_root_endpoint",
+          "codelists": [
+            {
+              "codelist_uid": "ct_codelist_root_endpoint",
+              "order": 1
+            }
+          ],
           "sponsor_preferred_name": "term_value_name1",
           "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
-          "order": 1,
           "library_name": "Sponsor",
           "start_date": "2022-06-27T16:25:53.590000",
           "end_date": null,
@@ -352,7 +375,8 @@
         "status": null,
         "change_type": null,
         "accepted_version": null,
-        "arm_connected_branch_arms": null}
+        "arm_connected_branch_arms": null
+      }
     }
   },
   {
@@ -367,13 +391,12 @@
     },
     "response": {
       "code": 400,
-            "result": {
-                "message": "Value \"Randomization_Group_2\" in field Arm code is not unique for the study",
-                "method": "PATCH",
-                "path": "http://testserver/studies/study_root/study-arms/StudyArm_000001",
-                "time": "2020-11-10T01:51:17.884429"
-            }
+      "result": {
+        "message": "Value \"Randomization_Group_2\" in field Arm code is not unique for the study",
+        "method": "PATCH",
+        "path": "http://testserver/studies/study_root/study-arms/StudyArm_000001",
+        "time": "2020-11-10T01:51:17.884429"
+      }
     }
   }
-
 ]

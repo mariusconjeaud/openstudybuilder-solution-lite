@@ -2,6 +2,9 @@ from dataclasses import dataclass
 from typing import AbstractSet, Callable, Self
 
 from clinical_mdr_api import exceptions
+from clinical_mdr_api.domains.controlled_terminologies.ct_term_name import (
+    CTTermCodelistVO,
+)
 from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemAggregateRootBase,
     LibraryItemMetadataVO,
@@ -17,7 +20,7 @@ class CTTermAttributesVO:
     The CTTermAttributesVO acts as the value object for a single CTTerm attribute
     """
 
-    codelist_uid: str
+    codelists: list[CTTermCodelistVO] | None
     catalogue_name: str
     concept_id: str | None
     code_submission_value: str | None
@@ -28,7 +31,7 @@ class CTTermAttributesVO:
     @classmethod
     def from_repository_values(
         cls,
-        codelist_uid: str,
+        codelists: list[CTTermCodelistVO],
         catalogue_name: str,
         concept_id: str | None,
         code_submission_value: str | None,
@@ -37,7 +40,7 @@ class CTTermAttributesVO:
         definition: str | None,
     ) -> Self:
         ct_term_attributes_vo = cls(
-            codelist_uid=codelist_uid,
+            codelists=codelists,
             catalogue_name=catalogue_name,
             concept_id=concept_id,
             code_submission_value=code_submission_value,
@@ -50,7 +53,7 @@ class CTTermAttributesVO:
     @classmethod
     def from_input_values(
         cls,
-        codelist_uid: str,
+        codelists: list[CTTermCodelistVO],
         catalogue_name: str,
         code_submission_value: str | None,
         name_submission_value: str | None,
@@ -63,10 +66,11 @@ class CTTermAttributesVO:
             [str], bool
         ] = lambda _: False,
     ) -> Self:
-        if not codelist_exists_callback(codelist_uid):
-            raise exceptions.ValidationException(
-                f"There is no codelist identified by provided codelist uid ({codelist_uid})"
-            )
+        for codelist in codelists:
+            if not codelist_exists_callback(codelist.codelist_uid):
+                raise exceptions.ValidationException(
+                    f"There is no codelist identified by provided codelist uid ({codelist.codelist_uid})"
+                )
         if not catalogue_exists_callback(catalogue_name):
             raise exceptions.ValidationException(
                 f"There is no catalogue identified by provided catalogue name ({catalogue_name})"
@@ -81,7 +85,7 @@ class CTTermAttributesVO:
             )
 
         ct_term_attribute_vo = cls(
-            codelist_uid=codelist_uid,
+            codelists=codelists,
             catalogue_name=catalogue_name,
             concept_id=None,
             code_submission_value=code_submission_value,

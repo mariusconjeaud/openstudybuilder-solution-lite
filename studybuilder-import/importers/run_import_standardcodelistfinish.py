@@ -1,12 +1,8 @@
-from .utils.metrics import Metrics
-from os import environ
 import csv
-from typing import Optional, Sequence, Any
-from .utils.aiohttp_trace import request_tracer
 
 from .functions.utils import create_logger, load_env
-from .utils.importer import BaseImporter, open_file, open_file_async
-from .functions.parsers import map_boolean, parse_float
+from .utils.importer import BaseImporter, open_file
+from .utils.metrics import Metrics
 
 logger = create_logger("legacy_mdr_migrations")
 

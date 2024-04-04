@@ -1,15 +1,13 @@
-from .utils.metrics import Metrics
 import asyncio
-import aiohttp
-from os import environ
 import csv
-from typing import Optional, Sequence, Any
-from .utils.aiohttp_trace import request_tracer
+import sys
+
+import aiohttp
 
 from .functions.utils import create_logger, load_env
-from .utils.importer import BaseImporter, open_file, open_file_async
-from .functions.parsers import map_boolean, parse_float
-from .utils.api_bindings import CODELIST_EPOCH_TYPE, CODELIST_ELEMENT_TYPE
+from .utils.api_bindings import CODELIST_ELEMENT_TYPE, CODELIST_EPOCH_TYPE
+from .utils.importer import BaseImporter, open_file_async
+from .utils.metrics import Metrics
 
 logger = create_logger("legacy_mdr_migrations")
 
@@ -56,18 +54,25 @@ MDR_MIGRATION_FREQUENCY = load_env("MDR_MIGRATION_FREQUENCY")
 MDR_MIGRATION_TRIAL_TYPE = load_env("MDR_MIGRATION_TRIAL_TYPE")
 MDR_MIGRATION_DATA_COLLECTION_MODE = load_env("MDR_MIGRATION_DATA_COLLECTION_MODE")
 MDR_MIGRATION_CONFIRMATORY_PURPOSE = load_env("MDR_MIGRATION_CONFIRMATORY_PURPOSE")
-MDR_MIGRATION_NONCONFIRMATORY_PURPOSE = load_env("MDR_MIGRATION_NONCONFIRMATORY_PURPOSE")
+MDR_MIGRATION_NONCONFIRMATORY_PURPOSE = load_env(
+    "MDR_MIGRATION_NONCONFIRMATORY_PURPOSE"
+)
 MDR_MIGRATION_TRIAL_BLINDING_SCHEMA = load_env("MDR_MIGRATION_TRIAL_BLINDING_SCHEMA")
 MDR_MIGRATION_ROLE = load_env("MDR_MIGRATION_ROLE")
 MDR_MIGRATION_DISEASE_MILESTONE = load_env("MDR_MIGRATION_DISEASE_MILESTONE")
 MDR_MIGRATION_REGISTID = load_env("MDR_MIGRATION_REGISTID")
 MDR_MIGRATION_FINDING_CATEGORIES = load_env("MDR_MIGRATION_FINDING_CATEGORIES")
 MDR_MIGRATION_EVENT_CATEGORIES = load_env("MDR_MIGRATION_EVENT_CATEGORIES")
-MDR_MIGRATION_INTERVENTION_CATEGORIES = load_env("MDR_MIGRATION_INTERVENTION_CATEGORIES")
+MDR_MIGRATION_INTERVENTION_CATEGORIES = load_env(
+    "MDR_MIGRATION_INTERVENTION_CATEGORIES"
+)
 MDR_MIGRATION_FINDING_SUBCATEGORIES = load_env("MDR_MIGRATION_FINDING_SUBCATEGORIES")
 MDR_MIGRATION_EVENT_SUBCATEGORIES = load_env("MDR_MIGRATION_EVENT_SUBCATEGORIES")
-MDR_MIGRATION_INTERVENTION_SUBCATEGORIES = load_env("MDR_MIGRATION_INTERVENTION_SUBCATEGORIES")
+MDR_MIGRATION_INTERVENTION_SUBCATEGORIES = load_env(
+    "MDR_MIGRATION_INTERVENTION_SUBCATEGORIES"
+)
 MDR_MIGRATION_FOOTNOTE_TYPE = load_env("MDR_MIGRATION_FOOTNOTE_TYPE")
+
 
 # Import terms to standard codelists in sponsor library
 class StandardCodelistTerms2(BaseImporter):
@@ -75,18 +80,19 @@ class StandardCodelistTerms2(BaseImporter):
 
     def __init__(self, api=None, metrics_inst=None, cache=None):
         super().__init__(api=api, metrics_inst=metrics_inst, cache=cache)
+        self.limit_to_codelists = None
+
+    def limit_codelists(self, codelists):
+        self.limit_to_codelists = codelists
 
     @open_file_async()
     async def migrate_term(self, csvfile, codelist_name, code_lists_uids, session):
+        if self.limit_to_codelists and codelist_name not in self.limit_to_codelists:
+            self.log.info(f"Skipping codelist '{codelist_name}'")
+            return
         self.ensure_cache()
         readCSV = csv.DictReader(csvfile, delimiter=",")
         api_tasks = []
-
-        existing_rows = self.api.get_all_identifiers(
-            self.api.get_all_from_api(f"/ct/terms/names?codelist_name={codelist_name}"),
-            identifier="sponsor_preferred_name",
-            value="codelist_uid",
-        )
 
         if codelist_name == self.visit_type_codelist_name:
             all_epoch_type_code_subm_values = self.api.get_all_identifiers(
@@ -413,7 +419,6 @@ class StandardCodelistTerms2(BaseImporter):
                 session=session,
             )
 
-
     def run(self):
         self.log.info("Migrating sponsor terms")
         loop = asyncio.get_event_loop()
@@ -421,12 +426,19 @@ class StandardCodelistTerms2(BaseImporter):
         self.log.info("Done migrating sponsor terms")
 
 
-def main():
+def main(codelists=[]):
     metr = Metrics()
     migrator = StandardCodelistTerms2(metrics_inst=metr)
+    if codelists:
+        migrator.limit_codelists(codelists)
     migrator.run()
     metr.print()
 
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) > 1:
+        codelist_arg = sys.argv[1]
+        codelists = codelist_arg.split(",")
+    else:
+        codelists = []
+    main(codelists=codelists)

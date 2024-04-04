@@ -240,7 +240,7 @@ An environment variable with empty string value is considered unset by clinical-
 `OAUTH_RBAC_ENABLED=false`
 : Role-based Access Control can be disabled with a false value like value is `false`, `0` or `off` (case-insensitive).
 
-`OAUTH_METADATA_URL='https://login.microsoftonline.com/YOUR_TENANT_ID/v2.0/.well-known/openid-configuration'`
+`OAUTH_METADATA_URL='https://login.microsoftonline.com/YOUR_TENANT_ID/v2.0/.well-known/openid-configuration?appid=YOUR_APPLICATION_ID'`
 : URL to the OpenID Connect metadata document. The OAuth and JWK library is automatically configured by this 
   document. clinical-mdr-api nees to be able to fetch this resource in case of a restricted network environment.
   The built-in Swagger UI is also configured automatically.  
@@ -277,7 +277,7 @@ to the service, (and also from the `.env` file in the same folder as the compose
 `OAUTH_ENABLED: "true",`
 : Should be a string of `true`, `on`, `1`, `yes
 
-`OAUTH_METADATA_URL: 'https://login.microsoftonline.com/YOUR_TENANT_ID/v2.0/.well-known/openid-configuration'`
+`OAUTH_METADATA_URL: 'https://login.microsoftonline.com/YOUR_TENANT_ID/v2.0/.well-known/openid-configuration?appid=YOUR_APPLICATION_ID'`
 : URL to the OpenID Connect metadata document. 
 
 `OAUTH_API_APP_ID: "YOUR_APPLICATION_ID",`

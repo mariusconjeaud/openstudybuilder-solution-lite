@@ -5,9 +5,11 @@ from pydantic.fields import Field
 
 from clinical_mdr_api.domain_repositories.models.syntax import FootnoteTemplateRoot
 from clinical_mdr_api.domains.syntax_instances.footnote import FootnoteAR
+from clinical_mdr_api.models.controlled_terminologies.ct_term import (
+    CTTermNameAndAttributes,
+)
 from clinical_mdr_api.models.libraries.library import Library
 from clinical_mdr_api.models.syntax_templates.footnote_template import (
-    CTTermNameAndAttributes,
     FootnoteTemplateNameUidLibrary,
 )
 from clinical_mdr_api.models.syntax_templates.template_parameter_multi_select_input import (

@@ -24,7 +24,10 @@ from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import 
     StudyStatus,
 )
 from clinical_mdr_api.exceptions import MDRApiBaseException
-from clinical_mdr_api.models.study_selections.study import StudyPreferredTimeUnit
+from clinical_mdr_api.models.study_selections.study import (
+    StudyPreferredTimeUnit,
+    StudySubpartAuditTrail,
+)
 from clinical_mdr_api.models.utils import GenericFilteringReturn
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._utils import service_level_generic_filtering
@@ -137,16 +140,21 @@ class StudyDefinitionRepositoryFake(StudyDefinitionRepository):
     ) -> bool:
         return True
 
-    def get_preferred_time_unit(self, study_uid: str) -> StudyPreferredTimeUnit:
+    def get_preferred_time_unit(
+        self,
+        study_uid: str,
+        for_protocol_soa: bool = False,
+        study_value_version: str | None = None,
+    ) -> StudyPreferredTimeUnit:
         return NotImplementedError()
 
     def post_preferred_time_unit(
-        self, study_uid: str, unit_definition_uid: str
+        self, study_uid: str, unit_definition_uid: str, for_protocol_soa: bool = False
     ) -> StudyPreferredTimeUnit:
         return NotImplementedError
 
     def edit_preferred_time_unit(
-        self, study_uid: str, unit_definition_uid: str
+        self, study_uid: str, unit_definition_uid: str, for_protocol_soa: bool = False
     ) -> StudyPreferredTimeUnit:
         return NotImplementedError()
 
@@ -225,6 +233,11 @@ class StudyDefinitionRepositoryFake(StudyDefinitionRepository):
     ) -> list[StudyFieldAuditTrailEntryAR] | None:
         raise NotImplementedError("Study fields audit trail is not yet mocked.")
 
+    def _retrieve_study_subpart_with_history(
+        self, uid: str, is_subpart: bool = False
+    ) -> list[StudySubpartAuditTrail] | None:
+        raise NotImplementedError("Study Subpart audit trail is not yet mocked.")
+
 
 def _random_study_number() -> str:
     choice = [str(_) for _ in range(0, 10)]
@@ -253,18 +266,34 @@ class TestStudyDefinitionsRepositoryBase(unittest.TestCase):
     def make_random_study_edit(study: StudyDefinitionAR):
         new_id_metadata = StudyIdentificationMetadataVO.from_input_values(
             study_number=study.current_metadata.id_metadata.study_number,
+            subpart_id=None,
             study_acronym=random_str(),
+            description=random_str(),
             registry_identifiers=RegistryIdentifiersVO.from_input_values(
                 ct_gov_id=random_str(),
                 eudract_id=random_str(),
                 universal_trial_number_utn=random_str(),
                 japanese_trial_registry_id_japic=random_str(),
                 investigational_new_drug_application_number_ind=random_str(),
+                eu_trial_number=random_str(),
+                civ_id_sin_number=random_str(),
+                national_clinical_trial_number=random_str(),
+                japanese_trial_registry_number_jrct=random_str(),
+                national_medical_products_administration_nmpa_number=random_str(),
+                eudamed_srn_number=random_str(),
+                investigational_device_exemption_ide_number=random_str(),
                 ct_gov_id_null_value_code=None,
                 eudract_id_null_value_code=None,
                 universal_trial_number_utn_null_value_code=None,
                 japanese_trial_registry_id_japic_null_value_code=None,
                 investigational_new_drug_application_number_ind_null_value_code=None,
+                eu_trial_number_null_value_code=None,
+                civ_id_sin_number_null_value_code=None,
+                national_clinical_trial_number_null_value_code=None,
+                japanese_trial_registry_number_jrct_null_value_code=None,
+                national_medical_products_administration_nmpa_number_null_value_code=None,
+                eudamed_srn_number_null_value_code=None,
+                investigational_device_exemption_ide_number_null_value_code=None,
             ),
             project_number=random_str(),
         )
@@ -276,23 +305,39 @@ class TestStudyDefinitionsRepositoryBase(unittest.TestCase):
     def create_random_study() -> StudyDefinitionAR:
         new_id_metadata = StudyIdentificationMetadataVO.from_input_values(
             study_number=_random_study_number(),
+            subpart_id=None,
             study_acronym=random_str(),
+            description=random_str(),
             registry_identifiers=RegistryIdentifiersVO.from_input_values(
                 ct_gov_id=random_str(),
                 eudract_id=random_str(),
                 universal_trial_number_utn=random_str(),
                 japanese_trial_registry_id_japic=random_str(),
                 investigational_new_drug_application_number_ind=random_str(),
+                eu_trial_number=random_str(),
+                civ_id_sin_number=random_str(),
+                national_clinical_trial_number=random_str(),
+                japanese_trial_registry_number_jrct=random_str(),
+                national_medical_products_administration_nmpa_number=random_str(),
+                eudamed_srn_number=random_str(),
+                investigational_device_exemption_ide_number=random_str(),
                 ct_gov_id_null_value_code=None,
                 eudract_id_null_value_code=None,
                 universal_trial_number_utn_null_value_code=None,
                 japanese_trial_registry_id_japic_null_value_code=None,
                 investigational_new_drug_application_number_ind_null_value_code=None,
+                eu_trial_number_null_value_code=None,
+                civ_id_sin_number_null_value_code=None,
+                national_clinical_trial_number_null_value_code=None,
+                japanese_trial_registry_number_jrct_null_value_code=None,
+                national_medical_products_administration_nmpa_number_null_value_code=None,
+                eudamed_srn_number_null_value_code=None,
+                investigational_device_exemption_ide_number_null_value_code=None,
             ),
             project_number=random_str(),
         )
         return StudyDefinitionAR.from_initial_values(
-            # pylint:disable=unnecessary-lambda
+            # pylint: disable=unnecessary-lambda
             generate_uid_callback=lambda: random_str(),
             initial_id_metadata=new_id_metadata,
             project_exists_callback=(lambda _: True),

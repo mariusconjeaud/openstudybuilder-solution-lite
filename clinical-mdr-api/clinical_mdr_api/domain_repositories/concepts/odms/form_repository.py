@@ -21,6 +21,7 @@ from clinical_mdr_api.domain_repositories.models.odm import (
     OdmFormValue,
     OdmStudyEventRoot,
 )
+from clinical_mdr_api.domains._utils import ObjectStatus
 from clinical_mdr_api.domains.concepts.concept_base import ConceptARBase
 from clinical_mdr_api.domains.concepts.odms.form import (
     OdmFormAR,
@@ -48,6 +49,7 @@ class FormRepository(OdmGenericRepository[OdmFormAR]):
         value: VersionValue,
         **_kwargs,
     ) -> OdmFormAR:
+        scope = root.has_scope.get_or_none()
         return OdmFormAR.from_repository_values(
             uid=root.uid,
             concept_vo=OdmFormVO.from_repository_values(
@@ -55,9 +57,7 @@ class FormRepository(OdmGenericRepository[OdmFormAR]):
                 name=value.name,
                 sdtm_version=value.sdtm_version,
                 repeating=value.repeating,
-                scope_uid=scope.uid
-                if (scope := root.has_scope.get_or_none())
-                else None,
+                scope_uid=scope.uid if scope else None,
                 description_uids=[
                     description.uid for description in root.has_description.all()
                 ],
@@ -131,34 +131,31 @@ class FormRepository(OdmGenericRepository[OdmFormAR]):
         return odm_form_ar
 
     def specific_alias_clause(
-        self, only_specific_status: list[str] | None = None
+        self, only_specific_status: str = ObjectStatus.LATEST.name
     ) -> str:
-        if not only_specific_status:
-            only_specific_status = ["LATEST"]
-
         return f"""
         WITH *,
         concept_value.oid AS oid,
         toString(concept_value.repeating) AS repeating,
         concept_value.sdtm_version AS sdtm_version,
 
-        head([(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmFormRoot)-[:HAS_SCOPE]->(tr:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]->(:CTTermAttributesRoot)-[:LATEST]->(tav:CTTermAttributesValue) | tr.uid]) AS scope_uid,
-        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmFormRoot)-[:HAS_DESCRIPTION]->(dr:OdmDescriptionRoot)-[:LATEST]->(dv:OdmDescriptionValue) | {{uid: dr.uid, name: dv.name, language: dv.language, description: dv.description, instruction: dv.instruction}}] AS descriptions,
-        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmFormRoot)-[:HAS_ALIAS]->(ar:OdmAliasRoot)-[:LATEST]->(av:OdmAliasValue) | {{uid: ar.uid, name: av.name, context: av.context}}] AS aliases,
-        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmFormRoot)-[:HAS_ACTIVITY_GROUP]->(agr:ActivityGroupRoot)-[:LATEST]->(agv:ActivityGroupValue) | {{uid: agr.uid, name: agv.name}}] AS activity_groups,
-        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmFormRoot)-[igref:ITEM_GROUP_REF]->(igr:OdmItemGroupRoot)-[:LATEST]->(igv:OdmItemGroupValue) | {{uid: igr.uid, name: igv.name, order: igref.order, mandatory: igref.mandatory}}] AS item_groups,
-        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmFormRoot)-[hve:HAS_VENDOR_ELEMENT]->(ver:OdmVendorElementRoot)-[:LATEST]->(vev:OdmVendorElementValue) | {{uid: ver.uid, name: vev.name, value: hve.value}}] AS vendor_elements,
-        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmFormRoot)-[hva:HAS_VENDOR_ATTRIBUTE]->(var:OdmVendorAttributeRoot)-[:LATEST]->(vav:OdmVendorAttributeValue) | {{uid: var.uid, name: vav.name, value: hva.value}}] AS vendor_attributes,
-        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmFormRoot)-[hvea:HAS_VENDOR_ELEMENT_ATTRIBUTE]->(var:OdmVendorAttributeRoot)-[:LATEST]->(vav:OdmVendorAttributeValue) | {{uid: var.uid, name: vav.name, value: hvea.value}}] AS vendor_element_attributes
+        head([(concept_value)<-[:{only_specific_status}]-(:OdmFormRoot)-[:HAS_SCOPE]->(tr:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]->(:CTTermAttributesRoot)-[:LATEST]->(tav:CTTermAttributesValue) | tr.uid]) AS scope_uid,
+        [(concept_value)<-[:{only_specific_status}]-(:OdmFormRoot)-[:HAS_DESCRIPTION]->(dr:OdmDescriptionRoot)-[:LATEST]->(dv:OdmDescriptionValue) | {{uid: dr.uid, name: dv.name, language: dv.language, description: dv.description, instruction: dv.instruction}}] AS descriptions,
+        [(concept_value)<-[:{only_specific_status}]-(:OdmFormRoot)-[:HAS_ALIAS]->(ar:OdmAliasRoot)-[:LATEST]->(av:OdmAliasValue) | {{uid: ar.uid, name: av.name, context: av.context}}] AS aliases,
+        [(concept_value)<-[:{only_specific_status}]-(:OdmFormRoot)-[:HAS_ACTIVITY_GROUP]->(agr:ActivityGroupRoot)-[:LATEST]->(agv:ActivityGroupValue) | {{uid: agr.uid, name: agv.name}}] AS activity_groups,
+        [(concept_value)<-[:{only_specific_status}]-(:OdmFormRoot)-[igref:ITEM_GROUP_REF]->(igr:OdmItemGroupRoot)-[:LATEST]->(igv:OdmItemGroupValue) | {{uid: igr.uid, name: igv.name, order: igref.order, mandatory: igref.mandatory}}] AS item_groups,
+        [(concept_value)<-[:{only_specific_status}]-(:OdmFormRoot)-[hve:HAS_VENDOR_ELEMENT]->(ver:OdmVendorElementRoot)-[:LATEST]->(vev:OdmVendorElementValue) | {{uid: ver.uid, name: vev.name, value: hve.value}}] AS vendor_elements,
+        [(concept_value)<-[:{only_specific_status}]-(:OdmFormRoot)-[hva:HAS_VENDOR_ATTRIBUTE]->(var:OdmVendorAttributeRoot)-[:LATEST]->(vav:OdmVendorAttributeValue) | {{uid: var.uid, name: vav.name, value: hva.value}}] AS vendor_attributes,
+        [(concept_value)<-[:{only_specific_status}]-(:OdmFormRoot)-[hvea:HAS_VENDOR_ELEMENT_ATTRIBUTE]->(var:OdmVendorAttributeRoot)-[:LATEST]->(vav:OdmVendorAttributeValue) | {{uid: var.uid, name: vav.name, value: hvea.value}}] AS vendor_element_attributes
 
         WITH *,
-        [description in descriptions | description.uid] AS description_uids,
-        [alias in aliases | alias.uid] AS alias_uids,
-        [activity_group in activity_groups | activity_group.uid] AS activity_group_uids,
-        [item_group in item_groups | item_group.uid] AS item_group_uids,
-        [vendor_element in vendor_elements | vendor_element.uid] AS vendor_element_uids,
-        [vendor_attribute in vendor_attributes | vendor_attribute.uid] AS vendor_attribute_uids,
-        [vendor_element_attribute in vendor_element_attributes | vendor_element_attribute.uid] AS vendor_element_attribute_uids
+        apoc.coll.toSet([description in descriptions | description.uid]) AS description_uids,
+        apoc.coll.toSet([alias in aliases | alias.uid]) AS alias_uids,
+        apoc.coll.toSet([activity_group in activity_groups | activity_group.uid]) AS activity_group_uids,
+        apoc.coll.toSet([item_group in item_groups | item_group.uid]) AS item_group_uids,
+        apoc.coll.toSet([vendor_element in vendor_elements | vendor_element.uid]) AS vendor_element_uids,
+        apoc.coll.toSet([vendor_attribute in vendor_attributes | vendor_attribute.uid]) AS vendor_attribute_uids,
+        apoc.coll.toSet([vendor_element_attribute in vendor_element_attributes | vendor_element_attribute.uid]) AS vendor_element_attribute_uids
         """
 
     def _get_or_create_value(

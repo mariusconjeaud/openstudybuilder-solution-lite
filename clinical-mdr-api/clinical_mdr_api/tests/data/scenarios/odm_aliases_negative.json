@@ -205,7 +205,7 @@
         }
     },
     {
-        "name": "Test cannot delete non-existing ODM Alias",
+        "name": "Test cannot delete non-existent ODM Alias",
         "request": {
             "headers": {},
             "method": "DELETE",

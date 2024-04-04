@@ -219,16 +219,20 @@ from clinical_mdr_api.models.study_selections.study_selection import (
     StudySelectionCriteriaCore,
     StudySelectionCriteriaNewOrder,
     StudySelectionCriteriaKeyCriteria,
+    DetailedSoAHistory,
     StudySelectionActivity,
     StudySelectionActivityCore,
     StudySelectionActivityCreateInput,
     StudySelectionActivityInput,
-    StudySelectionActivityRequestUpdate,
     StudySelectionActivityNewOrder,
     StudySelectionActivityBatchInput,
     StudySelectionActivityBatchUpdateInput,
     StudySelectionActivityBatchDeleteInput,
     StudySelectionActivityBatchOutput,
+    StudySelectionActivityInstance,
+    StudySelectionActivityInstanceCreateInput,
+    StudySelectionActivityInstanceEditInput,
+    StudySelectionActivityRequestEditInput,
     StudyActivitySchedule,
     StudyActivityScheduleCreateInput,
     StudyActivityScheduleHistory,
@@ -281,6 +285,8 @@ from clinical_mdr_api.models.listings.listings_sdtm import (
     StudyElementListing,
     StudyDiseaseMilestoneListing,
     StudyArmListing,
+    StudySummaryListing,
+    StudyCriterionListing,
 )
 from clinical_mdr_api.models.listings.listings_study import StudyMetadataListingModel
 from clinical_mdr_api.models.listings.listings import (
@@ -367,6 +373,10 @@ from clinical_mdr_api.models.dictionaries.dictionary_term import (
 
 from clinical_mdr_api.models.concepts.compound import Compound
 from clinical_mdr_api.models.concepts.compound_alias import CompoundAlias
+from clinical_mdr_api.models.concepts.active_substance import ActiveSubstance
+from clinical_mdr_api.models.concepts.pharmaceutical_product import (
+    PharmaceuticalProduct,
+)
 from clinical_mdr_api.models.concepts.concept import (
     TextValue,
     TextValueInput,
@@ -401,16 +411,20 @@ __all__ = [
     "StudySelectionCriteriaCore",
     "StudySelectionCriteriaNewOrder",
     "StudySelectionCriteriaKeyCriteria",
+    "DetailedSoAHistory",
     "StudySelectionActivity",
     "StudySelectionActivityCore",
     "StudySelectionActivityCreateInput",
     "StudySelectionActivityInput",
-    "StudySelectionActivityRequestUpdate",
     "StudySelectionActivityNewOrder",
     "StudySelectionActivityBatchInput",
     "StudySelectionActivityBatchUpdateInput",
     "StudySelectionActivityBatchDeleteInput",
     "StudySelectionActivityBatchOutput",
+    "StudySelectionActivityInstance",
+    "StudySelectionActivityInstanceCreateInput",
+    "StudySelectionActivityInstanceEditInput",
+    "StudySelectionActivityRequestEditInput",
     "StudyActivitySchedule",
     "StudyActivityScheduleCreateInput",
     "StudyActivityScheduleHistory",
@@ -652,6 +666,8 @@ __all__ = [
     "StudySelectionCohortVersion",
     "Compound",
     "CompoundAlias",
+    "ActiveSubstance",
+    "PharmaceuticalProduct",
     "TextValue",
     "TextValueInput",
     "TimePoint",

@@ -66,7 +66,7 @@
           {{ $t('ActivityForms.nci_concept_id') }}
         </v-col>
         <v-col cols="10">
-          {{ itemOverview.activity_instance.nci_concept_id }}
+          <n-c-i-concept-link :conceptId="itemOverview.activity_instance.nci_concept_id" />
         </v-col>
       </v-row>
       <v-row>
@@ -212,19 +212,23 @@
 import ActivitiesInstantiationsForm from '@/components/library/ActivitiesInstantiationsForm'
 import BaseActivityOverview from './BaseActivityOverview'
 import StatusChip from '@/components/tools/StatusChip'
+import NCIConceptLink from '@/components//tools/NCIConceptLink'
 
 export default {
   components: {
     ActivitiesInstantiationsForm,
     BaseActivityOverview,
-    StatusChip
+    StatusChip,
+    NCIConceptLink
   },
   data () {
     return {
       historyHeaders: [
         { text: this.$t('_global.library'), value: 'library_name' },
         { text: this.$t('ActivityTable.type'), value: 'activity_instance_class.name' },
-        { text: this.$t('ActivityTable.activity'), value: 'activities.name', externalFilterSource: 'concepts/activities/activities$name' },
+        { text: this.$t('ActivityTable.activity'), value: 'activity.name', externalFilterSource: 'concepts/activities/activities$name' },
+        { text: this.$t('ActivityTable.activity_group'), value: 'activity_group.name', externalFilterSource: 'concepts/activities/activity-groups$name' },
+        { text: this.$t('ActivityTable.activity_subgroup'), value: 'activity_subgroup.name', externalFilterSource: 'concepts/activities/activity-sub-groups$name' },
         { text: this.$t('ActivityTable.instance'), value: 'name' },
         { text: this.$t('_global.definition'), value: 'definition' },
         { text: this.$t('ActivityTable.topic_code'), value: 'topic_code' },
@@ -264,11 +268,19 @@ export default {
     },
     transformItem (item) {
       if (item.activity_groupings.length > 0) {
-        item.activities = [item.activity_groupings[0].activity]
-        item.activity_group = item.activity_groupings[0].activity_group
-        item.activity_subgroup = item.activity_groupings[0].activity_subgroup
+        const groups = []
+        const subgroups = []
+        item.activity = { name: item.activity_groupings[0].activity.name }
+        for (const grouping of item.activity_groupings) {
+          groups.push(grouping.activity_group.name)
+          subgroups.push(grouping.activity_subgroup.name)
+        }
+        item.activity_group = { name: groups }
+        item.activity_subgroup = { name: subgroups }
       } else {
-        item.activities = []
+        item.activity_group = { name: [] }
+        item.activity_subgroup = { name: [] }
+        item.activity = { name: '' }
       }
       item.item_key = item.uid
     }

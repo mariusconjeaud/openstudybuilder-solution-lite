@@ -18,6 +18,9 @@ from fastapi.testclient import TestClient
 
 from clinical_mdr_api import models
 from clinical_mdr_api.main import app
+from clinical_mdr_api.models.study_selections.study_selection import (
+    StudySelectionEndpointInput,
+)
 from clinical_mdr_api.models.syntax_instances.timeframe import Timeframe
 from clinical_mdr_api.models.syntax_templates.template_parameter_term import (
     IndexedTemplateParameterTerm,
@@ -25,6 +28,9 @@ from clinical_mdr_api.models.syntax_templates.template_parameter_term import (
 )
 from clinical_mdr_api.models.syntax_templates.timeframe_template import (
     TimeframeTemplate,
+)
+from clinical_mdr_api.services.studies.study_endpoint_selection import (
+    StudyEndpointSelectionService,
 )
 from clinical_mdr_api.tests.integration.utils.api import (
     drop_db,
@@ -74,6 +80,7 @@ def test_data():
 
     # Create Template Parameter
     TestUtils.create_template_parameter("TextValue")
+    TestUtils.create_template_parameter("StudyEndpoint")
 
     text_value_1 = TestUtils.create_text_value()
     text_value_2 = TestUtils.create_text_value()
@@ -91,21 +98,6 @@ def test_data():
         library_name=indications_library_name,
     )
     ct_term_category = TestUtils.create_ct_term()
-
-    parameter_terms = [
-        MultiTemplateParameterTerm(
-            position=1,
-            conjunction="",
-            terms=[
-                IndexedTemplateParameterTerm(
-                    index=1,
-                    name=text_value_1.name,
-                    uid=text_value_1.uid,
-                    type="TextValue",
-                )
-            ],
-        )
-    ]
 
     def generate_parameter_terms():
         text_value = TestUtils.create_text_value()
@@ -136,7 +128,20 @@ def test_data():
         TestUtils.create_timeframe(
             timeframe_template_uid=timeframe_template.uid,
             library_name="Sponsor",
-            parameter_terms=parameter_terms,
+            parameter_terms=[
+                MultiTemplateParameterTerm(
+                    position=1,
+                    conjunction="",
+                    terms=[
+                        IndexedTemplateParameterTerm(
+                            index=1,
+                            name=text_value_1.name,
+                            uid=text_value_1.uid,
+                            type="TextValue",
+                        )
+                    ],
+                )
+            ],
         )
     )
     timeframes.append(
@@ -201,12 +206,24 @@ def test_data():
             )
         )
 
+    endpoint = TestUtils.create_endpoint(library_name="Sponsor")
+
+    study_endpoint_selection_service = StudyEndpointSelectionService(author="test")
+    for timeframe in timeframes:
+        if timeframe.status == "Final":
+            study_endpoint_selection_service.make_selection(
+                study_uid="Study_000001",
+                selection_create_input=StudySelectionEndpointInput(
+                    endpoint_uid=endpoint.uid, timeframe_uid=timeframe.uid
+                ),
+            )
+
     yield
 
     drop_db(URL + ".api")
 
 
-OBJECTIVE_FIELDS_ALL = [
+TIMEFRAME_FIELDS_ALL = [
     "name",
     "name_plain",
     "uid",
@@ -223,7 +240,7 @@ OBJECTIVE_FIELDS_ALL = [
     "study_count",
 ]
 
-OBJECTIVE_FIELDS_NOT_NULL = [
+TIMEFRAME_FIELDS_NOT_NULL = [
     "uid",
     "name",
     "timeframe_template",
@@ -237,9 +254,9 @@ def test_get_timeframe(api_client):
     assert response.status_code == 200
 
     # Check fields included in the response
-    fields_all_set = set(OBJECTIVE_FIELDS_ALL)
+    fields_all_set = set(TIMEFRAME_FIELDS_ALL)
     assert set(list(res.keys())) == fields_all_set
-    for key in OBJECTIVE_FIELDS_NOT_NULL:
+    for key in TIMEFRAME_FIELDS_NOT_NULL:
         assert res[key] is not None
 
     assert res["uid"] == timeframes[0].uid
@@ -280,7 +297,9 @@ def test_get_timeframes_pagination(api_client):
     results_all_in_one_page = list(map(lambda x: x["uid"], res_all["items"]))
     log.info("All rows in one page: %s", results_all_in_one_page)
     assert len(results_all_in_one_page) == len(results_paginated_merged)
-    assert len(timeframes) == len(results_paginated_merged)
+    assert len(
+        [timeframe for timeframe in timeframes if timeframe.status == "Final"]
+    ) == len(results_paginated_merged)
 
 
 @pytest.mark.parametrize(
@@ -290,7 +309,7 @@ def test_get_timeframes_pagination(api_client):
         pytest.param(3, 1, True, None, 3),
         pytest.param(3, 2, True, None, 3),
         pytest.param(10, 2, True, None, 10),
-        pytest.param(10, 3, True, None, 5),
+        pytest.param(10, 3, True, None, 2),
         pytest.param(10, 1, True, '{"name": false}', 10),
         pytest.param(10, 2, True, '{"name": true}', 10),
     ],
@@ -321,13 +340,17 @@ def test_get_timeframes(
     # Check fields included in the response
     assert list(res.keys()) == ["items", "total", "page", "size"]
     assert len(res["items"]) == expected_result_len
-    assert res["total"] == (len(timeframes) if total_count else 0)
+    assert res["total"] == (
+        len([timeframe for timeframe in timeframes if timeframe.status == "Final"])
+        if total_count
+        else 0
+    )
     assert res["page"] == (page_number if page_number else 1)
     assert res["size"] == (page_size if page_size else 10)
 
     for item in res["items"]:
-        assert set(list(item.keys())) == set(OBJECTIVE_FIELDS_ALL)
-        for key in OBJECTIVE_FIELDS_NOT_NULL:
+        assert set(list(item.keys())) == set(TIMEFRAME_FIELDS_ALL)
+        for key in TIMEFRAME_FIELDS_NOT_NULL:
             assert item[key] is not None
 
     if sort_by:
@@ -439,7 +462,7 @@ def test_headers(api_client, field_name):
     expected_result = []
     for timeframe in timeframes:
         value = getattr(timeframe, field_name)
-        if value:
+        if value and timeframe.status == "Final":
             expected_result.append(value)
     log.info("Expected result is %s", expected_result)
     log.info("Returned %s", res)
@@ -487,8 +510,8 @@ def test_create_timeframe(api_client):
     assert res["parameter_terms"][0]["terms"][0]["type"] == "TextValue"
     assert res["version"] == "0.1"
     assert res["status"] == "Draft"
-    assert set(list(res.keys())) == set(OBJECTIVE_FIELDS_ALL)
-    for key in OBJECTIVE_FIELDS_NOT_NULL:
+    assert set(list(res.keys())) == set(TIMEFRAME_FIELDS_ALL)
+    for key in TIMEFRAME_FIELDS_NOT_NULL:
         assert res[key] is not None
 
 
@@ -526,8 +549,8 @@ def test_update_timeframe(api_client):
     assert res["parameter_terms"][0]["terms"][0]["type"] == "TextValue"
     assert res["version"] == "0.2"
     assert res["status"] == "Draft"
-    assert set(list(res.keys())) == set(OBJECTIVE_FIELDS_ALL)
-    for key in OBJECTIVE_FIELDS_NOT_NULL:
+    assert set(list(res.keys())) == set(TIMEFRAME_FIELDS_ALL)
+    for key in TIMEFRAME_FIELDS_NOT_NULL:
         assert res[key] is not None
 
 
@@ -604,8 +627,8 @@ def test_preview_timeframe(api_client):
     assert res["parameter_terms"][0]["terms"][0]["type"] == "TextValue"
     assert res["version"] == "0.1"
     assert res["status"] == "Draft"
-    assert set(list(res.keys())) == set(OBJECTIVE_FIELDS_ALL)
-    for key in OBJECTIVE_FIELDS_NOT_NULL:
+    assert set(list(res.keys())) == set(TIMEFRAME_FIELDS_ALL)
+    for key in TIMEFRAME_FIELDS_NOT_NULL:
         assert res[key] is not None
 
 
@@ -615,12 +638,8 @@ def test_timeframe_audit_trail(api_client):
     log.info("Timeframe Audit Trail: %s", res)
 
     assert response.status_code == 200
-    assert res["total"] == 50
+    assert res["total"] == 44
     expected_uids = [
-        "Timeframe_000004",
-        "Timeframe_000004",
-        "Timeframe_000004",
-        "Timeframe_000026",
         "Timeframe_000025",
         "Timeframe_000025",
         "Timeframe_000024",
@@ -661,8 +680,6 @@ def test_timeframe_audit_trail(api_client):
         "Timeframe_000007",
         "Timeframe_000006",
         "Timeframe_000006",
-        "Timeframe_000005",
-        "Timeframe_000004",
         "Timeframe_000002",
         "Timeframe_000002",
         "Timeframe_000001",

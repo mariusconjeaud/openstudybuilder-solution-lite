@@ -180,7 +180,7 @@ class TestCTTermRepository(unittest.TestCase):
                                         codelist_uid=codelist_uid,
                                         term_uid=term_attributes.uid,
                                         author="TODO author",
-                                        order=term_names.ct_term_vo.order,
+                                        order=term_names.ct_term_vo.codelists[0].order,
                                     )
                                     all_terms_for_codelist[codelist_uid].append(
                                         term_attributes.uid
@@ -267,10 +267,12 @@ class TestCTTermRepository(unittest.TestCase):
                 for term_names, term_attributes in all_term_in_db_aggregated_res:
                     if filter_tuple[0] is not None:
                         self.assertEqual(
-                            term_attributes.ct_term_vo.codelist_uid, filter_tuple[0]
+                            term_attributes.ct_term_vo.codelists[0].codelist_uid,
+                            filter_tuple[0],
                         )
                         self.assertEqual(
-                            term_names.ct_term_vo.codelist_uid, filter_tuple[0]
+                            term_names.ct_term_vo.codelists[0].codelist_uid,
+                            filter_tuple[0],
                         )
                         all_filters_results.append(
                             set(all_terms_for_codelist[filter_tuple[0]])
@@ -278,13 +280,13 @@ class TestCTTermRepository(unittest.TestCase):
                     if filter_tuple[1] is not None:
                         self.assertEqual(
                             codelist_uid_to_name_dict[
-                                term_attributes.ct_term_vo.codelist_uid
+                                term_attributes.ct_term_vo.codelists[0].codelist_uid
                             ],
                             filter_tuple[1],
                         )
                         self.assertEqual(
                             codelist_uid_to_name_dict[
-                                term_names.ct_term_vo.codelist_uid
+                                term_names.ct_term_vo.codelists[0].codelist_uid
                             ],
                             filter_tuple[1],
                         )
@@ -349,11 +351,11 @@ class TestCTTermRepository(unittest.TestCase):
                 # the tuples of (term_uid, codelist_uid) are compared, as we allow multiple same term_uid unless if they
                 # come from different codelists
                 attributes_uids = [
-                    (attributes.uid, attributes.ct_term_vo.codelist_uid)
+                    (attributes.uid, attributes.ct_term_vo.codelists[0].codelist_uid)
                     for _, attributes in all_term_in_db_aggregated_res
                 ]
                 names_uids = [
-                    (names.uid, names.ct_term_vo.codelist_uid)
+                    (names.uid, names.ct_term_vo.codelists[0].codelist_uid)
                     for names, _ in all_term_in_db_aggregated_res
                 ]
                 self.assertEqual(

@@ -13,7 +13,7 @@
     >
     <template v-slot:actions="">
       <v-btn
-        v-if="selectedStudy.current_metadata.version_metadata.study_status === 'DRAFT'"
+        v-if="selectedStudy.current_metadata.version_metadata.study_status === 'DRAFT' && !selectedStudyVersion"
         fab
         small
         color="red"
@@ -25,7 +25,7 @@
         <v-icon>mdi-lock-outline</v-icon>
       </v-btn>
       <v-btn
-        v-if="selectedStudy.current_metadata.version_metadata.study_status === 'DRAFT'"
+        v-if="selectedStudy.current_metadata.version_metadata.study_status === 'DRAFT' && !selectedStudyVersion"
         fab
         small
         color="info"
@@ -38,7 +38,7 @@
         <v-icon>mdi-share-variant</v-icon>
       </v-btn>
       <v-btn
-        v-if="selectedStudy.current_metadata.version_metadata.study_status === 'LOCKED'"
+        v-if="selectedStudy.current_metadata.version_metadata.study_status === 'LOCKED' && selectedStudyVersion === latestStudyVersion"
         fab
         small
         color="green"
@@ -128,7 +128,8 @@ export default {
           iconColor: 'primary',
           click: this.selectStudyVersion
         }
-      ]
+      ],
+      latestStudyVersion: ''
     }
   },
   methods: {
@@ -152,6 +153,12 @@ export default {
       api.getStudySnapshotHistory(this.selectedStudy.uid, params).then(resp => {
         this.items = resp.data.items
         this.total = resp.data.total
+      })
+      this.getLatestStudyVersion()
+    },
+    getLatestStudyVersion () {
+      api.getStudy(this.selectedStudy.uid).then(resp => {
+        this.latestStudyVersion = resp.data.current_metadata.version_metadata.version_number
       })
     },
     releaseStudy () {

@@ -9,6 +9,9 @@ from clinical_mdr_api.domains.controlled_terminologies.ct_term_name import CTTer
 from clinical_mdr_api.models.controlled_terminologies.ct_term_attributes import (
     CTTermAttributes,
 )
+from clinical_mdr_api.models.controlled_terminologies.ct_term_codelist import (
+    CTTermCodelist,
+)
 from clinical_mdr_api.models.controlled_terminologies.ct_term_name import CTTermName
 from clinical_mdr_api.models.libraries.library import Library
 from clinical_mdr_api.models.utils import BaseModel
@@ -22,7 +25,13 @@ class CTTerm(BaseModel):
         return cls(
             term_uid=ct_term_attributes_ar.uid,
             catalogue_name=ct_term_attributes_ar.ct_term_vo.catalogue_name,
-            codelist_uid=ct_term_attributes_ar.ct_term_vo.codelist_uid,
+            codelists=[
+                CTTermCodelist(
+                    codelist_uid=x.codelist_uid,
+                    order=x.order,
+                )
+                for x in ct_term_name_ar.ct_term_vo.codelists
+            ],
             concept_id=ct_term_attributes_ar.ct_term_vo.concept_id,
             code_submission_value=ct_term_attributes_ar.ct_term_vo.code_submission_value,
             name_submission_value=ct_term_attributes_ar.ct_term_vo.name_submission_value,
@@ -31,7 +40,6 @@ class CTTerm(BaseModel):
             library_name=Library.from_library_vo(ct_term_attributes_ar.library).name,
             sponsor_preferred_name=ct_term_name_ar.ct_term_vo.name,
             sponsor_preferred_name_sentence_case=ct_term_name_ar.ct_term_vo.name_sentence_case,
-            order=ct_term_name_ar.ct_term_vo.order,
             possible_actions=sorted(
                 [_.value for _ in ct_term_attributes_ar.get_possible_actions()]
             ),
@@ -49,11 +57,12 @@ class CTTerm(BaseModel):
         description="",
     )
 
-    codelist_uid: str = Field(
-        ...,
-        title="codelist_uid",
+    codelists: list[CTTermCodelist] = Field(
+        [],
+        title="codelists",
         description="",
     )
+
     concept_id: str | None = Field(
         None, title="concept_id", description="", nullable=True
     )
@@ -90,8 +99,6 @@ class CTTerm(BaseModel):
         title="sponsor_preferred_name_sentence_case",
         description="",
     )
-
-    order: int | None = Field(999999, title="order", description="", nullable=True)
 
     library_name: str
     possible_actions: list[str] = Field(
@@ -170,21 +177,29 @@ class CTTermNameAndAttributes(BaseModel):
         term_name_and_attributes = cls(
             term_uid=ct_term_attributes_ar.uid,
             catalogue_name=ct_term_attributes_ar.ct_term_vo.catalogue_name,
-            codelist_uid=ct_term_attributes_ar.ct_term_vo.codelist_uid,
-            library_name=Library.from_library_vo(ct_term_attributes_ar.library).name
-            if ct_term_attributes_ar.library
-            else None,
+            library_name=(
+                Library.from_library_vo(ct_term_attributes_ar.library).name
+                if ct_term_attributes_ar.library
+                else None
+            ),
             name=CTTermName.from_ct_term_ar_without_common_term_fields(ct_term_name_ar),
             attributes=CTTermAttributes.from_ct_term_ar_without_common_term_fields(
                 ct_term_attributes_ar
             ),
         )
+        term_name_and_attributes.codelists = [
+            CTTermCodelist(
+                codelist_uid=x.codelist_uid,
+                order=x.order,
+            )
+            for x in ct_term_name_ar.ct_term_vo.codelists
+        ]
 
         return term_name_and_attributes
 
     term_uid: str = Field(
         ...,
-        title="codelist_uid",
+        title="term_uid",
         description="",
     )
     catalogue_name: str = Field(
@@ -192,9 +207,9 @@ class CTTermNameAndAttributes(BaseModel):
         title="catalogue_name",
         description="",
     )
-    codelist_uid: str = Field(
-        ...,
-        title="codelist_uid",
+    codelists: list[CTTermCodelist] = Field(
+        [],
+        title="codelists",
         description="",
     )
 
@@ -293,4 +308,36 @@ class SimpleDictionaryTermModel(SimpleTermModel):
         title="dictionary_id",
         description="Id if item in the external dictionary",
         nullable=True,
+    )
+
+
+class SimpleTermName(BaseModel):
+    sponsor_preferred_name: str = Field(
+        ..., title="sponsor_preferred_name", description=""
+    )
+    sponsor_preferred_name_sentence_case: str = Field(
+        ..., title="sponsor_preferred_name_sentence_case", description=""
+    )
+
+
+class SimpleTermAttributes(BaseModel):
+    code_submission_value: str | None = Field(
+        None, title="code_submission_value", description="", nullable=True
+    )
+    nci_preferred_name: str | None = Field(
+        None, title="nci_preferred_name", description="", nullable=True
+    )
+
+
+class SimpleCTTermNameAndAttributes(BaseModel):
+    term_uid: str = Field(..., title="term_uid", description="")
+    name: SimpleTermName = Field(
+        ...,
+        title="SimpleTermName",
+        description="",
+    )
+    attributes: SimpleTermAttributes = Field(
+        ...,
+        title="SimpleTermAttributes",
+        description="",
     )

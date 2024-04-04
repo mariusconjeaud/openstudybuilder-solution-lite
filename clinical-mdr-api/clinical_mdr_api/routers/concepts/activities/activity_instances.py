@@ -17,6 +17,7 @@ from clinical_mdr_api.models.utils import CustomPage
 from clinical_mdr_api.oauth import get_current_user_id, rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
+from clinical_mdr_api.routers.responses import YAMLResponse
 from clinical_mdr_api.services.concepts.activities.activity_instance_service import (
     ActivityInstanceService,
 )
@@ -371,6 +372,46 @@ def get_activity_instance_overview(
     activity_instance_service = ActivityInstanceService(user=current_user_id)
     return activity_instance_service.get_activity_instance_overview(
         activity_instance_uid=uid
+    )
+
+
+@router.get(
+    "/{uid}/overview.cosmos",
+    dependencies=[rbac.LIBRARY_READ],
+    summary="Get a COSMoS compatible representation of a specific activity instance",
+    description="""
+Returns detailed description about activity instance, including information about:
+ - Activity subgroups
+ - Activity groups
+ - Activity instance
+ - Activity instance class
+
+State before:
+ - an activity instance with uid must exist.
+
+State after:
+ - No change
+
+Possible errors:
+ - Invalid uid.
+ """,
+    responses={
+        200: {"content": {"application/x-yaml": {}}},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+# pylint: disable=unused-argument
+def get_cosmos_activity_instance_overview(
+    request: Request,  # request is actually required by the allow_exports decorator
+    uid: str = ActivityInstanceUID,
+    current_user_id: str = Depends(get_current_user_id),
+):
+    activity_instance_service = ActivityInstanceService(user=current_user_id)
+    return YAMLResponse(
+        activity_instance_service.get_cosmos_activity_instance_overview(
+            activity_instance_uid=uid
+        )
     )
 
 

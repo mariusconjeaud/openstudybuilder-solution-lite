@@ -15,6 +15,7 @@
   :export-data-url-params="columnDataParameters"
   double-breadcrumb
   :prepare-duplicate-payload-func="prepareDuplicatePayload"
+  :default-filters="defaultFilters"
   >
   <template v-slot:editform="{ closeForm, selectedObject, preInstanceMode }">
     <footnote-template-pre-instance-form
@@ -123,14 +124,16 @@ export default {
           width: '5%'
         },
         { text: this.$t('_global.sequence_number'), value: 'sequence_id' },
-        { text: this.$t('FootnoteTemplateTable.indications'), value: 'indications.name' },
-        { text: this.$t('ActivityTemplateTable.activity_group'), value: 'activity_groups' },
-        { text: this.$t('ActivityTemplateTable.activity_subgroup'), value: 'activity_subgroups' },
-        { text: this.$t('ActivityTemplateTable.activity_name'), value: 'activities' },
         { text: this.$t('_global.parent_template'), value: 'name', width: '30%', filteringName: 'name_plain' },
         { text: this.$t('_global.modified'), value: 'start_date' },
         { text: this.$t('_global.status'), value: 'status' },
         { text: this.$t('_global.version'), value: 'version' }
+      ],
+      defaultFilters: [
+        { text: this.$t('FootnoteTemplateTable.indications'), value: 'indications.name' },
+        { text: this.$t('ActivityTemplateTable.activity_group'), value: 'activity_groups' },
+        { text: this.$t('ActivityTemplateTable.activity_subgroup'), value: 'activity_subgroups' },
+        { text: this.$t('ActivityTemplateTable.activity_name'), value: 'activities' }
       ],
       historyExcludedHeaders: [
         'indications.name',

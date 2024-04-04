@@ -11,8 +11,8 @@ from clinical_mdr_api.routers.clinical_programmes.clinical_programmes import (
     router as clinical_programmes_router,
 )
 from clinical_mdr_api.routers.comments.comments import router as comments_router
-from clinical_mdr_api.routers.complex_template_parameter_templates import (
-    router as complex_template_parameter_router,
+from clinical_mdr_api.routers.concepts.active_substances import (
+    router as active_substances_router,
 )
 from clinical_mdr_api.routers.concepts.activities.activities import (
     router as activities_router,
@@ -71,6 +71,9 @@ from clinical_mdr_api.routers.concepts.odms.odm_vendor_elements import (
 )
 from clinical_mdr_api.routers.concepts.odms.odm_vendor_namespaces import (
     router as odm_vendor_namespace_router,
+)
+from clinical_mdr_api.routers.concepts.pharmaceutical_products import (
+    router as pharmaceutical_products_router,
 )
 from clinical_mdr_api.routers.concepts.text_values import router as text_values_router
 from clinical_mdr_api.routers.concepts.unit_definitions.unit_definitions import (
@@ -259,6 +262,8 @@ from clinical_mdr_api.routers.template_parameters import (
 
 __all__ = [
     "activities_router",
+    "active_substances_router",
+    "pharmaceutical_products_router",
     "odm_study_events_router",
     "odm_forms_router",
     "odm_item_groups_router",
@@ -340,7 +345,6 @@ __all__ = [
     "adam_listing_router",
     "study_listing_router",
     "unit_definition_router",
-    "complex_template_parameter_router",
     "configuration_router",
     "study_design_figure",
     "study_interventions_router",

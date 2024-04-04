@@ -1,6 +1,10 @@
 import time
 import re
-from mdr_standards_import.scripts.utils import are_lists_equal, get_sentence_case_string, REPLACEMENTS
+from mdr_standards_import.scripts.utils import (
+    are_lists_equal,
+    get_sentence_case_string,
+    REPLACEMENTS,
+)
 
 
 USER_INITIALS = None
@@ -58,7 +62,12 @@ def get_packages(tx, effective_date):
 
 
 def get_codelists(tx, effective_date):
-    replace_chars = "\n".join([f'WITH replace(submval, "{old}", "{new}") AS submval' for old, new in REPLACEMENTS])
+    replace_chars = "\n".join(
+        [
+            f'WITH replace(submval, "{old}", "{new}") AS submval'
+            for old, new in REPLACEMENTS
+        ]
+    )
     query_str1 = """
         MATCH (:Import{effective_date: date($effective_date)})
             -[:INCLUDES]->(package)-[:CONTAINS]->(codelist)
@@ -91,11 +100,9 @@ def get_codelists(tx, effective_date):
             packages
         """
     full_query = query_str1 + replace_chars + query_str2
-    result = tx.run(
-        full_query,
-        effective_date=effective_date
-    )
+    result = tx.run(full_query, effective_date=effective_date)
     return result.data()
+
 
 def merge_codelist_version_independent_data(tx, codelist_data):
     tx.run(
@@ -111,7 +118,8 @@ def merge_codelist_version_independent_data(tx, codelist_data):
         user_initials=USER_INITIALS,
     )
 
-def merge_codelist_packages_version_independent_data(tx, codelist_data):
+
+def merge_codelist_packages_version_independent_data(tx, codelist_data, effective_date):
     tx.run(
         """
         WITH $codelist_data as data
@@ -122,14 +130,19 @@ def merge_codelist_packages_version_independent_data(tx, codelist_data):
         FOREACH (package IN data.packages |
             MERGE (ct_package:CTPackage{uid: package.name})
             MERGE (catalogue:CTCatalogue{name: package.catalogue_name})
-            MERGE (catalogue)-[:HAS_CODELIST]->(cl_root)
+            MERGE (catalogue)-[has_codelist:HAS_CODELIST]->(cl_root)
+            ON CREATE SET
+                has_codelist.start_date=datetime($start_date),
+                has_codelist.user_initials=$user_initials
             MERGE (package_codelist:CTPackageCodelist{uid: package.name + '_' + data.codelist.concept_id})
             MERGE (ct_package)-[:CONTAINS_CODELIST]->(package_codelist)
         )
         """,
         codelist_data=codelist_data,
+        start_date=effective_date,
         user_initials=USER_INITIALS,
     )
+
 
 def merge_codelist_terms_version_independent_data(tx, codelist_data):
     tx.run(
@@ -156,6 +169,7 @@ def merge_codelist_terms_version_independent_data(tx, codelist_data):
         user_initials=USER_INITIALS,
     )
 
+
 def update_has_term_and_had_term_relationships(tx, codelists_data, effective_date):
     nbr_added_terms = 0
     nbr_removed_terms = 0
@@ -173,7 +187,8 @@ def update_has_term_and_had_term_relationships(tx, codelists_data, effective_dat
             WHERE ht.start_date <= datetime($effective_date)
             RETURN DISTINCT term_root.uid AS uid, ht.start_date as start_date
             """,
-            codelist_uid=codelist["concept_id"], effective_date=effective_date
+            codelist_uid=codelist["concept_id"],
+            effective_date=effective_date,
         )
         matching_active_term_uids = list(result.value())
 
@@ -183,12 +198,15 @@ def update_has_term_and_had_term_relationships(tx, codelists_data, effective_dat
             WHERE ht.start_date <= datetime($effective_date) AND ht.end_date > datetime($effective_date)
             RETURN DISTINCT term_root.uid AS uid
             """,
-            codelist_uid=codelist["concept_id"], effective_date=effective_date
+            codelist_uid=codelist["concept_id"],
+            effective_date=effective_date,
         )
         retired_term_uids = list(result.value())
 
         term_uids_to_deactivate = [
-            term_uid for term_uid in matching_active_term_uids if term_uid not in codelist_term_uids and term_uid not in retired_term_uids
+            term_uid
+            for term_uid in matching_active_term_uids
+            if term_uid not in codelist_term_uids and term_uid not in retired_term_uids
         ]
 
         nbr_removed_terms += len(term_uids_to_deactivate)
@@ -210,7 +228,10 @@ def update_has_term_and_had_term_relationships(tx, codelists_data, effective_dat
         )
 
         term_uids_to_add = [
-            term_uid for term_uid in codelist_term_uids if term_uid not in matching_active_term_uids and term_uid not in retired_term_uids
+            term_uid
+            for term_uid in codelist_term_uids
+            if term_uid not in matching_active_term_uids
+            and term_uid not in retired_term_uids
         ]
         nbr_added_terms += len(term_uids_to_add)
         tx.run(
@@ -229,9 +250,14 @@ def update_has_term_and_had_term_relationships(tx, codelists_data, effective_dat
             new_term_uids=term_uids_to_add,
             user_initials=USER_INITIALS,
         )
-        nbr_unchanged_terms += len(codelist_term_uids) - len(term_uids_to_add) - len(term_uids_to_deactivate)
+        nbr_unchanged_terms += (
+            len(codelist_term_uids)
+            - len(term_uids_to_add)
+            - len(term_uids_to_deactivate)
+        )
     # delete_contains_term_relationships(tx)
     return nbr_added_terms, nbr_removed_terms, nbr_unchanged_terms
+
 
 def delete_contains_term_relationships(tx):
     result = tx.run(
@@ -275,14 +301,17 @@ def merge_catalogues_and_packages(tx, packages_data, effective_date):
     )
 
 
-def retire_codelists(tx, packages_data):
+def retire_codelists(tx, packages_data, effective_date):
     for package_data in packages_data:
         package = package_data.get("package")
         codelist_concept_ids = [
             codelist.get("concept_id") for codelist in package_data.get("codelists", [])
         ]
         removed_codelist_concept_ids = delete_has_codelist_relationships(
-            tx, package.get("catalogue_name"), codelist_concept_ids
+            tx,
+            package.get("catalogue_name"),
+            codelist_concept_ids,
+            effective_date=effective_date,
         )
         print(
             f"==    - Removed the following codelists from the catalogue='{package.get('catalogue_name')}': {removed_codelist_concept_ids}"
@@ -301,17 +330,24 @@ def retire_codelists(tx, packages_data):
 
 
 def delete_has_codelist_relationships(
-    tx, catalogue_name, existing_codelist_concept_ids
+    tx, catalogue_name, existing_codelist_concept_ids, effective_date
 ):
     result = tx.run(
         """
         MATCH (catalogue:CTCatalogue{name: $catalogue_name})-[has_codelist:HAS_CODELIST]->(codelist_root)
         WHERE NOT codelist_root.uid IN $codelist_concept_ids
+        MERGE (catalogue)-[had_codelist:HAD_CODELIST]->(codelist_root)
+        ON CREATE SET 
+            had_codelist.start_date=has_codelist.start_date,
+            had_codelist.end_date=datetime($effective_date),
+            had_codelist.user_initials=$user_initials
         DELETE has_codelist
         RETURN collect(codelist_root.uid) AS codelist_concept_ids_that_have_been_removed
         """,
         catalogue_name=catalogue_name,
         codelist_concept_ids=existing_codelist_concept_ids,
+        effective_date=effective_date,
+        user_initials=USER_INITIALS,
     ).single()
 
     return result.get("codelist_concept_ids_that_have_been_removed", [])
@@ -462,18 +498,16 @@ def retire_term_name_value(tx, term_uid, effective_date, reason):
 
 
 def _are_attribute_values_equal(a, b):
-    result = (a.get("name", None) == b.get("name", None)
-        and a.get("submission_value", None)
-        == b.get("submission_value", None)
-        and a.get("preferred_term", None)
-         == b.get("preferred_term", None)
+    result = (
+        a.get("name", None) == b.get("name", None)
+        and a.get("submission_value", None) == b.get("submission_value", None)
+        and a.get("preferred_term", None) == b.get("preferred_term", None)
         and a.get("definition", None) == b.get("definition", None)
         and a.get("extensible", None) == b.get("extensible", None)
-        and are_lists_equal(
-            a.get("synonyms", None), b.get("synonyms", None)
-        )
+        and are_lists_equal(a.get("synonyms", None), b.get("synonyms", None))
     )
     return result
+
 
 def _fetch_all_codelists(tx, concept_ids, effective_date):
     query = """
@@ -487,9 +521,8 @@ def _fetch_all_codelists(tx, concept_ids, effective_date):
     codelists = {}
     for codelist in result:
         codelists[codelist["cid"]] = codelist
-    #print(f"got {len(codelists)} codelists")
+    # print(f"got {len(codelists)} codelists")
     return codelists
-
 
 
 def update_attributes(tx, codelists_data, effective_date):
@@ -524,15 +557,17 @@ def update_attributes(tx, codelists_data, effective_date):
 
             if value_for_date is not None:
                 if _are_attribute_values_equal(value_for_date, codelist):
-                    #print(f"Codelist {codelist['concept_id']} already has a version for {effective_date}, skipping")
+                    # print(f"Codelist {codelist['concept_id']} already has a version for {effective_date}, skipping")
                     unchanged_codelists += 1
                 else:
                     print(codelist)
                     print(value_for_date)
-                    raise RuntimeError(f"Oh my god! Codelist {codelist['concept_id']} already has a version for {effective_date} but the definition has changed!")
+                    raise RuntimeError(
+                        f"Oh my god! Codelist {codelist['concept_id']} already has a version for {effective_date} but the definition has changed!"
+                    )
 
             elif not _are_attribute_values_equal(value, codelist):
-                #if codelist["concept_id"] == "C100133":
+                # if codelist["concept_id"] == "C100133":
                 #    print("create_new_version_codelist_attributes_value", effective_date, codelist, packages)
                 create_new_version_codelist_attributes_value(
                     tx, effective_date, codelist, packages
@@ -542,7 +577,9 @@ def update_attributes(tx, codelists_data, effective_date):
                 use_existing_codelist_attributes_value(tx, codelist, packages)
                 unchanged_codelists += 1
 
-        new_t, upd_t, unch_t = merge_term_values(tx, codelist, effective_date, terms_data)
+        new_t, upd_t, unch_t = merge_term_values(
+            tx, codelist, effective_date, terms_data
+        )
         new_terms += new_t
         updated_terms += upd_t
         unchanged_terms += unch_t
@@ -675,22 +712,19 @@ def use_existing_codelist_attributes_value(tx, codelist, packages):
         packages=packages,
     )
 
+
 def _are_term_attribute_values_equal(a, b):
     result = (
-        a.get("code_submission_value", None)
-        == b.get("code_submission_value", None)
-        and a.get("name_submission_value", None)
-        == b.get("name_submission_value", None)
-        and a.get("preferred_term", None)
-        == b.get("preferred_term", None)
+        a.get("code_submission_value", None) == b.get("code_submission_value", None)
+        and a.get("name_submission_value", None) == b.get("name_submission_value", None)
+        and a.get("preferred_term", None) == b.get("preferred_term", None)
         and a.get("definition", None) == b.get("definition", None)
-        and are_lists_equal(
-            a.get("synonyms", None), b.get("synonyms", None)
-        )
+        and are_lists_equal(a.get("synonyms", None), b.get("synonyms", None))
         and a.get("concept_id", None) == b.get("concept_id", None)
     )
     return result
-        
+
+
 def _fetch_all_terms(tx, term_uids, effective_date):
     query = """
         MATCH (root:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]->(attr_root)-[:LATEST]->(t_attributes_value)
@@ -703,8 +737,9 @@ def _fetch_all_terms(tx, term_uids, effective_date):
     terms = {}
     for term in result:
         terms[term["uid"]] = term
-    #print(f"got {len(terms)} terms")
+    # print(f"got {len(terms)} terms")
     return terms
+
 
 def merge_term_values(tx, codelist, effective_date_string, terms_data):
     new_terms = 0
@@ -739,7 +774,9 @@ def merge_term_values(tx, codelist, effective_date_string, terms_data):
                 else:
                     print(term)
                     print(value_for_date)
-                    raise RuntimeError(f"Oh my god! Term {term['concept_id']} already has a version for {effective_date_string} but the definition has changed!")
+                    raise RuntimeError(
+                        f"Oh my god! Term {term['concept_id']} already has a version for {effective_date_string} but the definition has changed!"
+                    )
 
             elif not _are_term_attribute_values_equal(value, term):
                 create_new_version_term_attributes_value(
@@ -750,6 +787,7 @@ def merge_term_values(tx, codelist, effective_date_string, terms_data):
                 use_existing_term_attributes_value(tx, term, packages)
                 unchanged_terms += 1
     return new_terms, updated_terms, unchanged_terms
+
 
 def create_initial_term_attributes_value(tx, effective_date_string, term, packages):
     tx.run(
@@ -1221,7 +1259,6 @@ def sponsor_specific_parse_term_name(codelist, term):
         # - PK Units of Measure - Weight g, C128684
         # - PK Units of Measure - Weight kg, C128683
 
-
         # Use code submission value as name
         newname = term["code_submission_value"]
 
@@ -1285,7 +1322,7 @@ def import_from_cdisc_db_into_mdr(
         # write to the clinical MDR db
 
         # print("==  * Retiring codelists.")
-        # session.write_transaction(retire_codelists, packages_data)
+        # session.write_transaction(retire_codelists, packages_data, effective_date)
 
         print("==  * Merging structure nodes and relationships.")
         session.write_transaction(
@@ -1303,8 +1340,7 @@ def import_from_cdisc_db_into_mdr(
                 data,
             )
             session.write_transaction(
-                merge_codelist_packages_version_independent_data,
-                data,
+                merge_codelist_packages_version_independent_data, data, effective_date
             )
             session.write_transaction(
                 merge_codelist_terms_version_independent_data,
@@ -1324,7 +1360,9 @@ def import_from_cdisc_db_into_mdr(
 
     with mdr_neo4j_driver.session(database=mdr_db_name) as session:
         print("==  * Updating attributes.")
-        summary = session.write_transaction(update_attributes, codelists_data, effective_date)
+        summary = session.write_transaction(
+            update_attributes, codelists_data, effective_date
+        )
         print(f"==      New codelists:       {summary['new_codelists']:6}")
         print(f"==      Updated codelists:   {summary['updated_codelists']:6}")
         print(f"==      Unchanged codelists: {summary['unchanged_codelists']:6}")

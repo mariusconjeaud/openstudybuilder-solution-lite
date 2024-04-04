@@ -57,8 +57,8 @@
         />
     </v-radio-group>
     <v-switch
-      v-model="hideFlowchartGroups"
-      :label="$t('DetailedFlowchart.hide_flowchart_groups')"
+      v-model="showFlowchartGroups"
+      :label="$t('DetailedFlowchart.show_flowchart_groups')"
       hide-details
       class="ml-2"
       :loading="soaGroupsUpdate"
@@ -71,7 +71,7 @@
         small
         class="mr-2"
         :title="$t('GroupStudyVisits.title')"
-        v-show="selectedVisits.length > 1"
+        v-show="multipleConsecutiveVisitsSelected()"
         @click="groupSelectedVisits()"
         :disabled="footnoteMode || !checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
         >
@@ -161,6 +161,45 @@
           mdi-pencil-box-multiple-outline
         </v-icon>
       </v-btn>
+      <v-menu rounded offset-y>
+        <template v-slot:activator="{ attrs, on }">
+          <v-btn
+            fab
+            small
+            color="nnGreen1"
+            class="ml-2 white--text"
+            v-bind="attrs"
+            v-on="on"
+            :title="$t('DataTableExportButton.export')"
+            >
+            <v-icon>mdi-download-outline</v-icon>
+          </v-btn>
+        </template>
+        <v-list>
+          <v-list-item
+            link
+            @click="downloadCSV"
+            >
+            <v-list-item-title>CSV</v-list-item-title>
+          </v-list-item>
+          <v-list-item
+            link
+            @click="downloadDOCX"
+            >
+            <v-list-item-title>DOCX</v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-menu>
+      <v-btn
+        class="mr-2"
+        color="secondary"
+        fab
+        small
+        :title="$t('NNTableTooltips.history')"
+        @click="openHistory"
+        >
+        <v-icon>mdi-history</v-icon>
+      </v-btn>
     </template>
   </div>
   <div ref="tableContainer" class="sticky-header" :style="`height: ${tableHeight}px`">
@@ -171,32 +210,32 @@
         </th>
         <th width="25%" rowspan="4" scope="col">{{ $t('DetailedFlowchart.activities') }}</th>
         <th width="10%" scope="col">{{ $t('DetailedFlowchart.study_epoch') }}</th>
-        <template v-if="groupedVisits.length">
-          <th v-for="(sv, index) in groupedVisits" :key="`epoch-${index}`" class="text-vertical" scope="col">
+        <template v-if="soaContent">
+          <th v-for="(cell, index) in soaEpochRow" :key="`epoch-${index}`" class="text-vertical" scope="col">
             <v-badge
               color="secondary--text"
-              :content="getEpochName(sv, index) !== '' ? getElementFootnotes(sv.study_epoch_uid) : ''"
+              :content="cell.footnotes && cell.refs.length ? getElementFootnotes(cell.refs[0].uid) : ''"
               class="mt-3"
             >
-              {{ getEpochName(sv, index) }}
+              {{ cell.text }}
             </v-badge>
             <v-btn
-              v-if="footnoteMode && getEpochName(sv, index) !== '' && !checkIfElementHasFootnote(sv.study_epoch_uid)"
+              v-if="footnoteMode && cell.text !== '' && cell.refs.length && !checkIfElementHasFootnote(cell.refs[0].uid)"
               x-small
               icon
               class="mx-0 px-0"
               color="primary"
-              @click="addElementForFootnote(sv.study_epoch_uid, 'StudyEpoch')">
+              @click="cell.refs.length && addElementForFootnote(cell.refs[0].uid, 'StudyEpoch')">
               <v-icon x-small>
                 mdi-plus
               </v-icon>
             </v-btn>
             <v-btn
-              v-else-if="footnoteMode && getEpochName(sv, index) !== '' && checkIfElementHasFootnote(sv.study_epoch_uid)"
+              v-else-if="footnoteMode && cell.text !== '' && cell.refs.length && checkIfElementHasFootnote(cell.refs[0].uid)"
               x-small
               icon
               class="mx-0 px-0"
-              @click="removeElementForFootnote(sv.study_epoch_uid)"
+              @click="cell.refs.length && removeElementForFootnote(cell.refs[0].uid)"
               color="red">
               <v-icon x-small>
                 mdi-close
@@ -210,42 +249,41 @@
       </tr>
       <tr>
         <th :style="`top: ${firstHeaderHeight}px`" scope="col">{{ $t('DetailedFlowchart.visit_short_name') }}</th>
-        <template v-if="groupedVisits.length">
-          <th v-for="(sv, index) in groupedVisits" :key="`shortName-${index}`" :style="`top: ${firstHeaderHeight}px`" scope="col">
+        <template v-if="soaContent">
+          <th v-for="(cell, index) in soaVisitRow" :key="`shortName-${index}`" :style="`top: ${firstHeaderHeight}px`" scope="col">
             <div class="d-flex align-center">
               <v-badge
                 color="secondary--text"
-                :content="getElementFootnotes(sv.visitsUids ? sv.visitsUids : sv.uid)"
+                :content="cell.refs.length ? getElementFootnotes(cell.refs[0].uid) : ''"
                 class="visitFootnote"
               >
-                {{ sv.visit_short_name }}
+                {{ cell.text }}
               </v-badge>
               <v-btn
-                v-if="footnoteMode && !checkIfElementHasFootnote(sv.visitsUids ? sv.visitsUids : sv.uid)"
+                v-if="footnoteMode && cell.refs.length && !checkIfElementHasFootnote(cell.refs[0].uid)"
                 x-small
                 icon
                 class="mx-0 px-0"
-                @click="addElementForFootnote(sv.visitsUids ? sv.visitsUids : sv.uid, 'StudyVisit')">
+                @click="cell.refs.length && addElementForFootnote(cell.refs[0].uid, 'StudyVisit')">
                 <v-icon x-small>
                   mdi-plus
                 </v-icon>
               </v-btn>
               <v-btn
-                v-else-if="footnoteMode && checkIfElementHasFootnote(sv.visitsUids ? sv.visitsUids : sv.uid)"
+                v-else-if="footnoteMode && cell.refs.length && checkIfElementHasFootnote(cell.refs[0].uid)"
                 x-small
                 icon
                 class="mx-0 px-0"
-                @click="removeElementForFootnote(sv.visitsUids ? sv.visitsUids : sv.uid)"
+                @click="cell.refs.length && removeElementForFootnote(cell.refs[0].uid)"
                 color="red">
                 <v-icon x-small>
                   mdi-close
                 </v-icon>
               </v-btn>
               <v-checkbox
-                v-if="!sv.isGroup && !footnoteMode"
-                v-model="selectedVisits"
-                :value="sv"
-                :value-comparator="compareVisits"
+                v-if="cell.refs.length === 1 && !footnoteMode"
+                v-model="selectedVisitIndexes"
+                :value="index"
                 hide-details
                 small
                 multiple
@@ -257,7 +295,7 @@
                 color="error"
                 x-small
                 :title="$t('GroupStudyVisits.delete_title')"
-                @click="deleteVisitGroup(sv.uid)"
+                @click="deleteVisitGroup(cell.text)"
                 :disabled="footnoteMode || !checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
                 >
                 <v-icon>mdi-delete-outline</v-icon>
@@ -271,9 +309,9 @@
       </tr>
       <tr>
         <th :style="`top: ${thirdHeaderRowTop}px`" scope="col">{{ timingHeaderTitle }}</th>
-        <template v-if="groupedVisits.length">
-          <th v-for="(sv, index) in groupedVisits" :key="`week-${index}`" :style="`top: ${thirdHeaderRowTop}px`" scope="col">
-            {{ getVisitTiming(sv) }}
+        <template v-if="soaContent">
+          <th v-for="(cell, index) in soaDayRow" :key="`week-${index}`" :style="`top: ${thirdHeaderRowTop}px`" scope="col">
+            {{ cell.text }}
           </th>
         </template>
         <template v-else>
@@ -282,14 +320,9 @@
       </tr>
       <tr>
         <th :style="`top: ${fourthHeaderRowTop}px`" scope="col">{{ $t('DetailedFlowchart.visit_window') }}</th>
-        <template v-if="groupedVisits.length">
-          <th v-for="(sv, index) in groupedVisits" :key="`window-${index}`" :style="`top: ${fourthHeaderRowTop}px`" scope="col">
-            <template v-if="sv.min_visit_window_value !== sv.max_visit_window_value">
-              {{ sv.min_visit_window_value }}/+{{ sv.max_visit_window_value }}
-            </template>
-            <template v-else>
-              &plusmn;{{ sv.max_visit_window_value }}
-            </template>
+        <template v-if="soaContent">
+          <th v-for="(cell, index) in soaWindowRow" :key="`window-${index}`" :style="`top: ${fourthHeaderRowTop}px`" scope="col">
+            {{ cell.text }}
           </th>
         </template>
         <template v-else>
@@ -298,282 +331,119 @@
       </tr>
     </thead>
     <tbody>
-      <template v-for="(groups, flowchartGroup, flGroupIndex) in sortedStudyActivities">
-        <tr v-if="!hideFlowchartGroups" :key="flowchartGroup" class="flowchart text-uppercase">
+      <template v-for="(row, index) in soaRows">
+        <tr v-if="showSoaRow(index, row)" :class="getSoaRowClasses(row)" :key="`row-${index}`">
           <td>
             <v-btn
-              v-if="!readOnly"
+              v-if="!readOnly && getSoaRowType(row) !== 'activity'"
               icon
-              @click="toggleRowState(`flgroup-${flGroupIndex}`)"
+              @click="toggleRowState(`row-${index}`)"
               >
-              <v-icon>{{ getDisplayButtonIcon(`flgroup-${flGroupIndex}`) }}</v-icon>
+              <v-icon>{{ getDisplayButtonIcon(`row-${index}`) }}</v-icon>
             </v-btn>
           </td>
-          <td class="text-strong">
-            <v-badge
-              color="secondary--text"
-              :content="getElementFootnotes(Object.values(Object.values(sortedStudyActivities[flowchartGroup])[0])[0][0].study_soa_group.study_soa_group_uid)"
-            >
-              {{ flowchartGroup }}
-            </v-badge>
-            <v-btn
-              v-if="footnoteMode && !checkIfElementHasFootnote(Object.values(Object.values(sortedStudyActivities[flowchartGroup])[0])[0][0].study_soa_group.study_soa_group_uid)"
-              x-small
-              icon
-              class="mx-0 px-0"
-              @click="addSoAGroupForFootnote(flowchartGroup)">
-              <v-icon x-small>
-                mdi-plus
-              </v-icon>
-            </v-btn>
-            <v-btn
-              v-else-if="footnoteMode && checkIfElementHasFootnote(Object.values(Object.values(sortedStudyActivities[flowchartGroup])[0])[0][0].study_soa_group.study_soa_group_uid)"
-              x-small
-              icon
-              class="mx-0 px-0"
-              @click="removeSoAGroupForFootnote(flowchartGroup)"
-              color="red">
-              <v-icon x-small>
-                mdi-close
-              </v-icon>
-            </v-btn>
-          </td>
-          <td>
-            <v-btn
-              v-if="!readOnly"
-              icon
-              @click="() => toggleSoaGroupDisplay(flowchartGroup)"
-              :title="$t('DetailedFlowchart.toggle_soa_group_display')"
-              :disabled="footnoteMode"
-              >
-              <v-icon v-if="getFlGroupDisplayState(flowchartGroup)" color="success">mdi-eye-outline</v-icon>
-              <v-icon v-else>mdi-eye-off-outline</v-icon>
-            </v-btn>
-          </td>
-          <td :colspan="groupedVisits.length + 1"></td>
-        </tr>
-        <template v-for="(subgroups, group, groupIndex) in groups">
-          <template v-if="rowsDisplayState[`flgroup-${flGroupIndex}`] || hideFlowchartGroups">
-            <tr :key="`${flowchartGroup}-${group}`" class="group">
-              <td>
-                <v-btn
-                  v-if="!readOnly"
-                  icon
-                  @click="toggleRowState(`group-${flGroupIndex}-${groupIndex}`)"
-                  >
-                  <v-icon>{{ getDisplayButtonIcon(`group-${flGroupIndex}-${groupIndex}`) }}</v-icon>
-                </v-btn>
-              </td>
-              <td class="text-strong">
-                <v-badge
-                  color="secondary--text"
-                  :content="getElementFootnotes(Object.values(sortedStudyActivities[flowchartGroup][group])[0][0].study_activity_group.study_activity_group_uid)"
+          <td :class="getSoaFirstCellClasses(row.cells[0])">
+            <div class="d-flex align-center">
+              <v-checkbox
+                v-if="!readOnly && !footnoteMode && getSoaRowType(row) === 'activity'"
+                hide-details
+                @change="value => toggleActivitySelection(row, value)"
+                :value="studyActivitySelection.findIndex(cell => cell.refs.length && cell.refs[0].uid === row.cells[0].refs[0].uid) !== -1"
+                :disabled="!checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
+                />
+              <v-checkbox
+                v-if="!readOnly && !footnoteMode && getSoaRowType(row) === 'subGroup'"
+                @change="value => toggleSubgroupActivitiesSelection(row, value)"
+                on-icon="mdi-checkbox-multiple-marked-outline"
+                off-icon="mdi-checkbox-multiple-blank-outline"
+                hide-details
+                :disabled="!checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
+                />
+              <v-badge
+                color="secondary--text"
+                :content="row.cells[0].refs.length ? getElementFootnotes(row.cells[0].refs[0].uid) : ''"
                 >
-                  {{ group }}
-                </v-badge>
+                {{ row.cells[0].text }}
+              </v-badge>
               <v-btn
-                v-if="footnoteMode && !checkIfElementHasFootnote(Object.values(sortedStudyActivities[flowchartGroup][group])[0][0].study_activity_group.study_activity_group_uid)"
+                v-if="footnoteMode && row.cells[0].refs.length && !checkIfElementHasFootnote(row.cells[0].refs[0].uid)"
                 x-small
                 icon
                 class="mx-0 px-0"
-                @click="addGroupForFootnote(flowchartGroup, group)">
+                @click="row.cells[0].refs.length && addElementForFootnote(row.cells[0].refs[0].uid, row.cells[0].refs[0].type)">
                 <v-icon x-small>
                   mdi-plus
                 </v-icon>
               </v-btn>
               <v-btn
-                v-else-if="footnoteMode && checkIfElementHasFootnote(Object.values(sortedStudyActivities[flowchartGroup][group])[0][0].study_activity_group.study_activity_group_uid)"
+                v-else-if="footnoteMode && row.cells[0].refs.length && checkIfElementHasFootnote(row.cells[0].refs[0].uid)"
                 x-small
                 icon
                 class="mx-0 px-0"
-                @click="removeGroupForFootnote(flowchartGroup, group)"
+                @click="row.cells[0].refs.length && removeElementForFootnote(row.cells[0].refs[0].uid)"
                 color="red">
                 <v-icon x-small>
                   mdi-close
                 </v-icon>
               </v-btn>
-              </td>
-              <td>
-                <v-btn
-                  v-if="!readOnly"
-                  icon
-                  @click="value => toggleActivityGroupFlowchartDisplay(flowchartGroup, group)"
-                  :title="$t('DetailedFlowchart.toggle_group_display')"
-                  :disabled="footnoteMode || !checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
-                  >
-                  <v-icon v-if="getGroupDisplayState(flowchartGroup, group)" color="success">mdi-eye-outline</v-icon>
-                  <v-icon v-else>mdi-eye-off-outline</v-icon>
-                </v-btn>
-              </td>
-              <td :colspan="groupedVisits.length + 1"></td>
-            </tr>
-            <template v-for="(studyActivities, subgroup, subgroupIndex) in subgroups">
-              <template v-if="rowsDisplayState[`group-${flGroupIndex}-${groupIndex}`]">
-                <tr :key="`${flowchartGroup}-${group}-${subgroup}`">
-                  <td>
-                    <v-btn
-                      v-if="!readOnly"
-                      icon
-                      @click="toggleRowState(`subgroup-${flGroupIndex}-${groupIndex}-${subgroupIndex}`)"
-                      >
-                      <v-icon>{{ getDisplayButtonIcon(`subgroup-${flGroupIndex}-${groupIndex}-${subgroupIndex}`) }}</v-icon>
-                    </v-btn>
-                  </td>
-                  <td class="subgroup">
-                    <div class="d-flex align-center">
-                      <v-checkbox
-                        v-if="!readOnly && !footnoteMode"
-                        :key="`cb-subgroup-${flowchartGroup}-${group}-${subgroup}-${update}`"
-                        @change="value => toggleSubgroupActivitiesSelection(flowchartGroup, group, subgroup, value)"
-                        on-icon="mdi-checkbox-multiple-marked-outline"
-                        off-icon="mdi-checkbox-multiple-blank-outline"
-                        hide-details
-                        :disabled="!checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
-                        />
-                      <v-badge
-                        color="secondary--text"
-                        :content="getElementFootnotes(sortedStudyActivities[flowchartGroup][group][subgroup][0].study_activity_subgroup.study_activity_subgroup_uid)"
-                      >
-                        {{ subgroup }}
-                      </v-badge>
-                      <v-btn
-                        v-if="footnoteMode && !checkIfElementHasFootnote(sortedStudyActivities[flowchartGroup][group][subgroup][0].study_activity_subgroup.study_activity_subgroup_uid)"
-                        x-small
-                        icon
-                        class="mx-0 px-0"
-                        @click="addSubgroupForFootnote(flowchartGroup, group, subgroup)">
-                        <v-icon x-small>
-                          mdi-plus
-                        </v-icon>
-                      </v-btn>
-                      <v-btn
-                        v-else-if="footnoteMode && checkIfElementHasFootnote(sortedStudyActivities[flowchartGroup][group][subgroup][0].study_activity_subgroup.study_activity_subgroup_uid)"
-                        x-small
-                        icon
-                        class="mx-0 px-0"
-                        @click="removeSubgroupForFootnote(flowchartGroup, group, subgroup)"
-                        color="red">
-                        <v-icon x-small>
-                          mdi-close
-                        </v-icon>
-                      </v-btn>
-                    </div>
-                  </td>
-                  <td>
-                    <v-btn
-                      v-if="!readOnly"
-                      icon
-                      @click="value => toggleActivitySubgroupFlowchartDisplay(flowchartGroup, group, subgroup)"
-                      :title="$t('DetailedFlowchart.toggle_subgroup_display')"
-                      :disabled="footnoteMode || !checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
-                      >
-                      <v-icon v-if="getSubgroupDisplayState(flowchartGroup, group, subgroup)" color="success">mdi-eye-outline</v-icon>
-                      <v-icon v-else>mdi-eye-off-outline</v-icon>
-                    </v-btn>
-                  </td>
-                  <td :colspan="groupedVisits.length + 1"></td>
-                </tr>
-                <template v-if="rowsDisplayState[`subgroup-${flGroupIndex}-${groupIndex}-${subgroupIndex}`]">
-                  <tr v-for="studyActivity in studyActivities" :key="studyActivity.study_activity_uid">
-                    <td></td>
-                    <td class="activity">
-                      <div class="d-flex align-center">
-                        <v-checkbox
-                          v-if="!readOnly && !footnoteMode"
-                          hide-details
-                          @change="value => toggleActivitySelection(studyActivity, value)"
-                          :value="studyActivitySelection.findIndex(item => item.study_activity_uid === studyActivity.study_activity_uid) !== -1"
-                          :disabled="!checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
-                          />
-                        <v-badge
-                          color="secondary--text"
-                          :content="getElementFootnotes(studyActivity.study_activity_uid)"
-                        >
-                          {{ studyActivity.activity.name }}
-                        </v-badge>
-                        <v-btn
-                          v-if="footnoteMode && !checkIfElementHasFootnote(studyActivity.study_activity_uid)"
-                          x-small
-                          icon
-                          class="mx-0 px-0"
-                          @click="addElementForFootnote(studyActivity.study_activity_uid, 'StudyActivity')">
-                          <v-icon x-small>
-                            mdi-plus
-                          </v-icon>
-                        </v-btn>
-                        <v-btn
-                          v-else-if="footnoteMode && checkIfElementHasFootnote(studyActivity.study_activity_uid)"
-                          x-small
-                          icon
-                          class="mx-0 px-0"
-                          @click="removeElementForFootnote(studyActivity.study_activity_uid)"
-                          color="red">
-                          <v-icon x-small>
-                            mdi-close
-                          </v-icon>
-                        </v-btn>
-                      </div>
-                    </td>
-                    <td>
-                      <v-btn
-                        v-if="!readOnly"
-                        icon
-                        @click="toggleActivityFlowchartDisplay(studyActivity, !studyActivity.show_activity_in_protocol_flowchart)"
-                        :title="$t('DetailedFlowchart.toggle_activity_display')"
-                        :disabled="footnoteMode || !checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
-                        >
-                        <v-icon v-if="studyActivity.show_activity_in_protocol_flowchart" color="success">mdi-eye-outline</v-icon>
-                        <v-icon v-else>mdi-eye-off-outline</v-icon>
-                      </v-btn>
-                    </td>
-                    <td v-for="visit in groupedVisits" :key="`${studyActivity.study_activity_uid}-${visit.uid}`">
-                      <v-row>
-                        <v-badge
-                          color="secondary--text"
-                          :content="getElementFootnotes(currentSelectionMatrix[studyActivity.study_activity_uid][visit.uid] ? currentSelectionMatrix[studyActivity.study_activity_uid][visit.uid].uid : '')"
-                          overlap
-                        >
-                          <v-checkbox
-                            v-if="!readOnly && currentSelectionMatrix[studyActivity.study_activity_uid][visit.uid]"
-                            v-model="currentSelectionMatrix[studyActivity.study_activity_uid][visit.uid].value"
-                            color="success"
-                            @change="value => updateSchedule(value, studyActivity.study_activity_uid, visit)"
-                            :disabled="isCheckboxDisabled(studyActivity.study_activity_uid, visit.uid) || footnoteMode || !checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
-                            hide-details
-                            on-icon="mdi-checkbox-marked-circle-outline"
-                            off-icon="mdi-checkbox-blank-circle-outline"
-                            class="mx-0 px-0"
-                            />
-                          </v-badge>
-                        <v-btn
-                          v-if="footnoteMode && currentSelectionMatrix[studyActivity.study_activity_uid][visit.uid].uid && !checkIfElementHasFootnote(currentSelectionMatrix[studyActivity.study_activity_uid][visit.uid].uid)"
-                          x-small
-                          icon
-                          class="mx-0 px-0"
-                          @click="addScheduleForFootnote(studyActivity.study_activity_uid, visit)">
-                          <v-icon x-small>
-                            mdi-plus
-                          </v-icon>
-                        </v-btn>
-                        <v-btn
-                          v-if="footnoteMode && currentSelectionMatrix[studyActivity.study_activity_uid][visit.uid].uid && checkIfElementHasFootnote(currentSelectionMatrix[studyActivity.study_activity_uid][visit.uid].uid)"
-                          x-small
-                          icon
-                          class="mx-0 px-0"
-                          @click="removeElementForFootnote(currentSelectionMatrix[studyActivity.study_activity_uid][visit.uid].uid)"
-                          color="red">
-                          <v-icon x-small>
-                            mdi-close
-                          </v-icon>
-                        </v-btn>
-                      </v-row>
-                    </td>
-                  </tr>
-                </template>
-              </template>
-            </template>
-          </template>
-        </template>
+            </div>
+          </td>
+          <td>
+            <v-btn
+              v-if="!readOnly"
+              icon
+              @click="toggleLevelDisplay(row)"
+              :title="$t('DetailedFlowchart.toggle_soa_group_display')"
+              :disabled="footnoteMode || !checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
+              >
+              <v-icon v-if="getLevelDisplayState(row)" color="success">mdi-eye-outline</v-icon>
+              <v-icon v-else>mdi-eye-off-outline</v-icon>
+            </v-btn>
+          </td>
+          <td v-if="getSoaRowType(row) !== 'activity'" :colspan="row.cells.length - 1"></td>
+          <td v-else v-for="(visitCell, visitIndex) in soaVisitRow" :key="`row-${index}-cell-${visitIndex}`">
+            <v-row>
+              <v-badge
+                color="secondary--text"
+                :content="row.cells[visitIndex + 1].refs.length ? getElementFootnotes(row.cells[visitIndex + 1].refs[0].uid) : ''"
+                overlap
+                >
+                <v-checkbox
+                  v-if="!readOnly && row.cells[0].refs.length && visitCell.refs.length && currentSelectionMatrix[row.cells[0].refs[0].uid][visitCell.refs[0].uid]"
+                  v-model="currentSelectionMatrix[row.cells[0].refs[0].uid][visitCell.refs[0].uid].value"
+                  color="success"
+                  @change="value => row.cells[0].refs.length && updateSchedule(value, row.cells[0].refs[0].uid, visitCell)"
+                  :disabled="row.cells[0].refs.length && visitCell.refs.length && isCheckboxDisabled(row.cells[0].refs[0].uid, visitCell.refs[0].uid) || footnoteMode || !checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
+                  hide-details
+                  on-icon="mdi-checkbox-marked-circle-outline"
+                  off-icon="mdi-checkbox-blank-circle-outline"
+                  class="mx-0 px-0"
+                  />
+              </v-badge>
+              <v-btn
+                v-if="footnoteMode && row.cells[0].refs.length && visitCell.refs.length && row.cells[visitIndex + 1].refs.length && currentSelectionMatrix[row.cells[0].refs[0].uid][visitCell.refs[0].uid].uid && !checkIfElementHasFootnote(row.cells[visitIndex + 1].refs[0].uid)"
+                x-small
+                icon
+                class="mx-0 px-0"
+                @click="row.cells[visitIndex + 1].refs.length && addElementForFootnote(row.cells[visitIndex + 1].refs[0].uid, row.cells[visitIndex + 1].refs[0].type)">
+                <v-icon x-small>
+                  mdi-plus
+                </v-icon>
+              </v-btn>
+              <v-btn
+                v-if="footnoteMode && row.cells[0].refs.length && visitCell.refs.length && row.cells[visitIndex + 1].refs.length && currentSelectionMatrix[row.cells[0].refs[0].uid][visitCell.refs[0].uid].uid && checkIfElementHasFootnote(row.cells[visitIndex + 1].refs[0].uid)"
+                x-small
+                icon
+                class="mx-0 px-0"
+                @click="row.cells[visitIndex + 1].refs.length && removeElementForFootnote(row.cells[visitIndex + 1].refs[0].uid)"
+                color="red">
+                <v-icon x-small>
+                  mdi-close
+                </v-icon>
+              </v-btn>
+            </v-row>
+          </td>
+        </tr>
       </template>
     </tbody>
   </table>
@@ -619,9 +489,9 @@
   </v-expansion-panels>
   <study-activity-schedule-batch-edit-form
     :open="showBatchEditForm"
-    :selection="studyActivitySelection"
+    :selection="formattedStudyActivitySelection"
     :current-selection-matrix="currentSelectionMatrix"
-    @updated="getStudyActivitySchedules"
+    @updated="() => loadSoaContent(true)"
     @close="showBatchEditForm = false"
     />
   <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
@@ -644,6 +514,23 @@
     @updated="fetchFootnotes"
     @enableFootnoteMode="enableFootnoteMode"
     />
+  <v-dialog
+    v-model="showHistory"
+    @keydown.esc="closeHistory"
+    :max-width="globalHistoryDialogMaxWidth"
+    :fullscreen="globalHistoryDialogFullscreen"
+    persistent
+    >
+    <history-table
+      :headers="historyHeaders"
+      :items="historyItems"
+      :items-total="historyItemsTotal"
+      @close="closeHistory"
+      :title="historyTitle"
+      change-field="action"
+      @refresh="options => getHistoryData(options)"
+      />
+  </v-dialog>
 </div>
 </template>
 
@@ -651,13 +538,13 @@
 import { bus } from '@/main'
 import CollapsibleVisitGroupForm from './CollapsibleVisitGroupForm'
 import ConfirmDialog from '@/components/tools/ConfirmDialog'
+import exportLoader from '@/utils/exportLoader'
+import HistoryTable from '@/components/tools/HistoryTable'
 import { mapGetters } from 'vuex'
 import study from '@/api/study'
 import StudyActivityScheduleBatchEditForm from './StudyActivityScheduleBatchEditForm'
 import studyConstants from '@/constants/study.js'
 import studyEpochs from '@/api/studyEpochs'
-import terms from '@/api/controlledTerminology/terms'
-import visitConstants from '@/constants/visits'
 import NNParameterHighlighter from '@/components/tools/NNParameterHighlighter'
 import StudyFootnoteEditForm from '@/components/studies/StudyFootnoteEditForm'
 import dataFormating from '@/utils/dataFormating'
@@ -669,6 +556,7 @@ export default {
   components: {
     CollapsibleVisitGroupForm,
     ConfirmDialog,
+    HistoryTable,
     StudyActivityScheduleBatchEditForm,
     NNParameterHighlighter,
     StudyFootnoteEditForm
@@ -683,84 +571,74 @@ export default {
   },
   computed: {
     ...mapGetters({
-      sortedStudyActivities: 'studyActivities/sortedStudyActivities',
       selectedStudy: 'studiesGeneral/selectedStudy',
       selectedStudyVersion: 'studiesGeneral/selectedStudyVersion',
       studyPreferredTimeUnit: 'studiesGeneral/studyPreferredTimeUnit',
       studyFootnotes: 'studyFootnotes/studyFootnotes'
     }),
+    soaEpochRow () {
+      if (this.soaContent) {
+        return this.soaContent.rows[0].cells.slice(1)
+      }
+      return []
+    },
+    soaVisitRow () {
+      if (this.soaContent) {
+        return this.soaContent.rows[1].cells.slice(1)
+      }
+      return []
+    },
+    soaDayRow () {
+      if (this.soaContent) {
+        return this.soaContent.rows[2].cells.slice(1)
+      }
+      return []
+    },
+    soaWindowRow () {
+      if (this.soaContent) {
+        return this.soaContent.rows[3].cells.slice(1)
+      }
+      return []
+    },
+    soaRows () {
+      if (this.soaContent) {
+        return this.soaContent.rows.slice(4)
+      }
+      return []
+    },
     thirdHeaderRowTop () {
       return this.initialFirstHeaderHeight + this.firstHeaderHeight
     },
     fourthHeaderRowTop () {
       return this.firstHeaderHeight + (this.initialFirstHeaderHeight * 2)
     },
-    groupedVisits () {
-      const result = []
-      let currentGroup = null
-      let firstVisit = null
-      let previousVisit = null
-
-      function createFakeVisit () {
-        const fakeVisit = {
-          visit_short_name: `${firstVisit.visit_short_name}-${previousVisit.visit_short_name}`,
-          epoch_uid: firstVisit.epoch_uid,
-          study_day_number: `${firstVisit.study_day_number}-${previousVisit.study_day_number}`,
-          study_week_number: `${firstVisit.study_week_number}-${previousVisit.study_week_number}`,
-          min_visit_window_value: firstVisit.min_visit_window_value,
-          max_visit_window_value: firstVisit.max_visit_window_value,
-          consecutive_visit_group: firstVisit.consecutive_visit_group,
-          uid: firstVisit.consecutive_visit_group,
-          isGroup: true,
-          visitsUids: [firstVisit.uid, previousVisit.uid],
-          study_epoch_uid: firstVisit.study_epoch_uid
-        }
-        result.push(fakeVisit)
-      }
-
-      for (const visit of this.studyVisits) {
-        if (visit.study_epoch_name === visitConstants.EPOCH_BASIC) {
-          continue
-        }
-        if (visit.consecutive_visit_group) {
-          if (visit.consecutive_visit_group !== currentGroup) {
-            if (currentGroup) {
-              createFakeVisit()
-            }
-            firstVisit = visit
-            currentGroup = visit.consecutive_visit_group
-          }
-        } else {
-          if (currentGroup) {
-            createFakeVisit()
-          }
-          currentGroup = null
-          result.push(visit)
-        }
-        previousVisit = visit
-      }
-      if (currentGroup) {
-        createFakeVisit()
-      }
-      return result
+    formattedStudyActivitySelection () {
+      return this.studyActivitySelection.map(cell => {
+        return { study_activity_uid: cell.refs?.[0]?.uid, activity: { name: cell.text } }
+      })
     },
     timingHeaderTitle () {
       if (!this.studyPreferredTimeUnit || this.studyPreferredTimeUnit.time_unit_name === studyConstants.STUDY_TIME_UNIT_WEEK) {
         return this.$t('_global.week')
       }
       return this.$t('_global.day')
+    },
+    historyTitle () {
+      return this.$t('DetailedFlowchart.history_title', { study: this.selectedStudy.uid })
+    },
+    selectedVisits () {
+      return this.selectedVisitIndexes.map(cell => this.soaVisitRow[cell])
     }
   },
   data () {
     return {
       currentSelectionMatrix: {},
       expandAllRows: false,
-      hideFlowchartGroups: false,
+      showFlowchartGroups: false,
       rowsDisplayState: {},
-      epochs: [],
       initialFirstHeaderHeight: 0,
       firstHeaderHeight: 0,
-      selectedVisits: [],
+      selectedVisitIndexes: [],
       showBatchEditForm: false,
       showCollapsibleGroupForm: false,
       showEditForm: false,
@@ -776,11 +654,122 @@ export default {
       },
       selectedFootnote: null,
       showFootnoteEditForm: false,
+      showHistory: false,
       footnoteUpdateLoading: false,
-      soaGroupsUpdate: false
+      soaGroupsUpdate: false,
+      historyHeaders: [
+        { text: this.$t('DetailedFlowchart.history_object_type'), value: 'object_type' },
+        { text: this.$t('_global.description'), value: 'description' },
+        { text: this.$t('_global.modified_by'), value: 'user_initials' }
+      ],
+      historyItems: [],
+      historyItemsTotal: 0,
+      soaContent: null
     }
   },
   methods: {
+    showSoaRow (index, row) {
+      let key = `row-${index}`
+      let result = true
+      while (true) {
+        if (this.rowsDisplayState[key].parent !== undefined && this.rowsDisplayState[key].parent !== null) {
+          const parentIndex = this.rowsDisplayState[key].parent
+          key = `row-${parentIndex}`
+          if (this.rowsDisplayState[key]) {
+            // We want to check if parent is an soaGroup or not (not parent === soaGroup)
+            const parentHasParent = this.rowsDisplayState[key].parent !== undefined && this.rowsDisplayState[key].parent !== null
+            if ((this.showFlowchartGroups || (!this.showFlowchartGroups && parentHasParent)) && !this.rowsDisplayState[key].value) {
+              result = false
+              break
+            }
+          } else {
+            console.log(`Warning: key ${key} not found in displayState!!`)
+          }
+          continue
+        }
+        break
+      }
+      if (row.cells && row.cells.length) {
+        if (row.cells[0].style === 'soaGroup') {
+          return this.showFlowchartGroups
+        }
+        if (row.cells[0].style === 'group') {
+          return !this.showFlowchartGroups || result
+        }
+      }
+      return result
+    },
+    getSoaRowType (row) {
+      return row.cells[0].style
+    },
+    getSoaRowClasses (row) {
+      if (row.cells && row.cells.length) {
+        if (row.cells[0].style === 'soaGroup') {
+          return 'flowchart text-uppercase'
+        }
+        if (row.cells[0].style === 'group') {
+          return 'group'
+        }
+      }
+      return ''
+    },
+    getSoaFirstCellClasses (cell) {
+      if (cell.style === 'soaGroup' || cell.style === 'group') {
+        return 'text-strong'
+      }
+      if (cell.style === 'subGroup') {
+        return 'subgroup'
+      }
+      return 'activity'
+    },
+    getStudyActivitiesForSoaGroup (soaGroupUid) {
+      let groupFound = false
+      const result = []
+      for (const row of this.soaRows) {
+        if (row.cells[0].style === 'soaGroup' && row.cells[0].refs?.[0]?.uid === soaGroupUid) {
+          groupFound = true
+        } else if (groupFound) {
+          if (row.cells[0].style === 'activity') {
+            result.push(row.cells[0])
+          } else if (row.cells[0].style === 'soaGroup') {
+            break
+          }
+        }
+      }
+      return result
+    },
+    getStudyActivitiesForGroup (groupUid) {
+      let groupFound = false
+      const result = []
+      for (const row of this.soaRows) {
+        if (row.cells[0].style === 'group' && row.cells[0].refs?.[0]?.uid === groupUid) {
+          groupFound = true
+        } else if (groupFound) {
+          if (row.cells[0].style === 'activity') {
+            result.push(row.cells[0])
+          } else if (row.cells[0].style === 'group') {
+            break
+          }
+        }
+      }
+      return result
+    },
+    getStudyActivitiesForSubgroup (subgroupUid) {
+      let subgroupFound = false
+      const result = []
+      for (const row of this.soaRows) {
+        if (row.cells[0].style === 'subGroup' && row.cells[0].refs?.[0]?.uid === subgroupUid) {
+          subgroupFound = true
+        } else if (subgroupFound) {
+          if (row.cells[0].style === 'activity') {
+            result.push(row.cells[0])
+          } else {
+            break
+          }
+        }
+      }
+      return result
+    },
     getElementFootnotes (uid) {
       let footnotesLetters = ''
       this.studyFootnotes.forEach(footnote => {
@@ -800,6 +789,10 @@ export default {
       this.footnoteMode = true
     },
     disableFootnoteMode () {
+      if (this.$route.params.footnote) {
+        this.$router.push({ name: 'StudyActivities', params: { tab: 'footnotes' } })
+        this.$route.params.footnote = null
+      }
       this.activeFootnote = {}
       this.elementsForFootnote.referenced_items = []
       this.footnoteMode = false
@@ -812,27 +805,6 @@ export default {
         })
       } else {
         this.elementsForFootnote.referenced_items.push({ item_uid: uid, item_type: type })
-      }
-    },
-    addSubgroupForFootnote (flgroup, group, subgroup) {
-      this.sortedStudyActivities[flgroup][group][subgroup].forEach(activity => {
-        this.elementsForFootnote.referenced_items.push({ item_uid: activity.study_activity_subgroup.study_activity_subgroup_uid, item_type: 'StudyActivitySubGroup' })
-      })
-    },
-    addGroupForFootnote (flgroup, group) {
-      for (const key in this.sortedStudyActivities[flgroup][group]) {
-        this.sortedStudyActivities[flgroup][group][key].forEach(activity => {
-          this.elementsForFootnote.referenced_items.push({ item_uid: activity.study_activity_group.study_activity_group_uid, item_type: 'StudyActivityGroup' })
-        })
-      }
-    },
-    addSoAGroupForFootnote (flgroup) {
-      for (const group in this.sortedStudyActivities[flgroup]) {
-        for (const key in this.sortedStudyActivities[flgroup][group]) {
-          this.sortedStudyActivities[flgroup][group][key].forEach(activity => {
-            this.elementsForFootnote.referenced_items.push({ item_uid: activity.study_soa_group.study_soa_group_uid, item_type: 'StudySoAGroup' })
-          })
-        }
       }
     },
     removeFootnote (uid) {
@@ -848,37 +820,6 @@ export default {
         })
       } else {
         this.removeFootnote(uid)
-      }
-    },
-    removeSubgroupForFootnote (flgroup, group, subgroup) {
-      this.sortedStudyActivities[flgroup][group][subgroup].forEach(activity => {
-        this.removeFootnote(activity.study_activity_subgroup.study_activity_subgroup_uid)
-      })
-    },
-    removeGroupForFootnote (flgroup, group) {
-      for (const key in this.sortedStudyActivities[flgroup][group]) {
-        this.sortedStudyActivities[flgroup][group][key].forEach(activity => {
-          this.removeFootnote(activity.study_activity_group.study_activity_group_uid)
-        })
-      }
-    },
-    removeSoAGroupForFootnote (flgroup) {
-      for (const group in this.sortedStudyActivities[flgroup]) {
-        for (const key in this.sortedStudyActivities[flgroup][group]) {
-          this.sortedStudyActivities[flgroup][group][key].forEach(activity => {
-            this.removeFootnote(activity.study_soa_group.study_soa_group_uid)
-          })
-        }
-      }
-    },
-    addScheduleForFootnote (studyActivityUid, studyVisit) {
-      const scheduleUid = this.currentSelectionMatrix[studyActivityUid][studyVisit.uid].uid
-      if (typeof scheduleUid !== 'string') {
-        scheduleUid.forEach(uid => {
-          this.elementsForFootnote.referenced_items.push({ item_uid: uid, item_type: 'StudyActivitySchedule' })
-        })
-      } else {
-        this.elementsForFootnote.referenced_items.push({ item_uid: scheduleUid, item_type: 'StudyActivitySchedule' })
       }
     },
     saveElementsForFootnote () {
@@ -914,21 +855,12 @@ export default {
       }
       this.$store.dispatch('studyFootnotes/fetchStudyFootnotes', params)
     },
-    getEpochName (studyVisit, index) {
-      if (this.epochs.length) {
-        if (index === 0 || this.studyVisits[index].epoch_uid !== this.studyVisits[index - 1].epoch_uid) {
-          const epoch = this.epochs.find(item => item.term_uid === studyVisit.epoch_uid)
-          return epoch.sponsor_preferred_name
-        }
-      }
-      return ''
-    },
     isCheckboxDisabled (studyActivityUid, studyVisitUid) {
       const state = this.currentSelectionMatrix[studyActivityUid][studyVisitUid]
       return this.readOnly || (state.value && !state.uid) || (!state.value && state.uid !== null)
     },
     getCurrentDisplayValue (rowKey) {
-      const currentValue = this.rowsDisplayState[rowKey]
+      const currentValue = this.rowsDisplayState[rowKey].value
       if (currentValue === undefined) {
         return false
       }
@@ -937,136 +869,87 @@ export default {
     getDisplayButtonIcon (rowKey) {
       return (this.getCurrentDisplayValue(rowKey)) ? 'mdi-chevron-down' : 'mdi-chevron-right'
     },
-    getFlGroupDisplayState (flgroup) {
-      for (const group of Object.keys(this.sortedStudyActivities[flgroup])) {
-        for (const items of Object.values(this.sortedStudyActivities[flgroup][group])) {
-          for (const item of items) {
-            if (item.show_soa_group_in_protocol_flowchart) {
-              return true
-            }
-          }
-        }
-      }
-      return false
-    },
-    getGroupDisplayState (flgroup, group) {
-      for (const items of Object.values(this.sortedStudyActivities[flgroup][group])) {
-        for (const item of items) {
-          if (item.show_activity_group_in_protocol_flowchart) {
-            return true
-          }
-        }
-      }
-      return false
-    },
-    getSubgroupDisplayState (flgroup, group, subgroup) {
-      for (const item of this.sortedStudyActivities[flgroup][group][subgroup]) {
-        if (item.show_activity_subgroup_in_protocol_flowchart) {
-          return true
-        }
-      }
-      return false
+    getLevelDisplayState (row) {
+      return !row.hide
     },
     toggleRowState (rowKey) {
       const currentValue = this.getCurrentDisplayValue(rowKey)
-      this.$set(this.rowsDisplayState, rowKey, !currentValue)
+      this.$set(this.rowsDisplayState[rowKey], 'value', !currentValue)
     },
     toggleAllRowState (value) {
-      let flgroupIndex = 0
-      for (const flgroup in this.sortedStudyActivities) {
-        let groupIndex = 0
-        this.$set(this.rowsDisplayState, `flgroup-${flgroupIndex}`, value)
-        for (const group in this.sortedStudyActivities[flgroup]) {
-          let subgroupIndex = 0
-          this.$set(this.rowsDisplayState, `group-${flgroupIndex}-${groupIndex}`, value)
-          for (const subgroup in this.sortedStudyActivities[flgroup][group]) { // eslint-disable-line no-unused-vars
-            this.$set(this.rowsDisplayState, `subgroup-${flgroupIndex}-${groupIndex}-${subgroupIndex}`, value)
-            subgroupIndex += 1
-          }
-          groupIndex += 1
-        }
-        flgroupIndex += 1
+      for (const key in this.rowsDisplayState) {
+        this.$set(this.rowsDisplayState[key], 'value', value)
       }
     },
-    toggleActivitySelection (studyActivity, value) {
+    toggleActivitySelection (row, value) {
+      const activityCell = row.cells[0]
       if (value) {
-        this.studyActivitySelection.push(studyActivity)
+        this.studyActivitySelection.push(activityCell)
       } else {
         for (let i = 0; i < this.studyActivitySelection.length; i++) {
-          if (this.studyActivitySelection[i].study_activity_uid === studyActivity.study_activity_uid) {
+          if (this.studyActivitySelection[i].refs?.[0]?.uid === activityCell.refs?.[0]?.uid) {
             this.studyActivitySelection.splice(i, 1)
             break
           }
         }
       }
     },
-    updateStudyActivity (studyActivity, data) {
-      study.updateStudyActivity(this.selectedStudy.uid, studyActivity.study_activity_uid, data).then(resp => {
-        const fgroup = studyActivity.study_soa_group.soa_group_name
-        const group = (studyActivity.study_activity_group)
-          ? studyActivity.study_activity_group.activity_group_name : '(not selected)'
-        const subgroup = (studyActivity.study_activity_subgroup)
-          ? studyActivity.study_activity_subgroup.activity_subgroup_name : '(not selected)'
-        this.sortedStudyActivities[fgroup][group][subgroup].filter((item, index) => {
-          this.$store.commit('studyActivities/UPDATE_STUDY_ACTIVITY', resp.data)
-        })
-      })
+    async updateStudyActivity (studyActivityCell, data) {
+      await study.updateStudyActivity(this.selectedStudy.uid, studyActivityCell.refs?.[0]?.uid, data)
     },
-    /*
-    ** Toggle group display in protocol flowchart.
-    ** We need to store this information on each study activity...
-    */
-    toggleActivityGroupFlowchartDisplay (flgroup, group) {
-      for (const items of Object.values(this.sortedStudyActivities[flgroup][group])) {
-        if (items.length) {
-          items.forEach(studyActivity => {
-            const data = {
-              show_activity_group_in_protocol_flowchart: !studyActivity.show_activity_group_in_protocol_flowchart
+    async toggleLevelDisplay (row) {
+      const firstCell = row.cells[0]
+      let activityCells
+      let field
+
+      if (firstCell.style === 'activity') {
+        activityCells = [firstCell]
+        field = 'show_activity_in_protocol_flowchart'
+      } else if (firstCell.style === 'subGroup') {
+        activityCells = this.getStudyActivitiesForSubgroup(firstCell.refs?.[0]?.uid)
+        field = 'show_activity_subgroup_in_protocol_flowchart'
+      } else if (firstCell.style === 'group') {
+        activityCells = this.getStudyActivitiesForGroup(firstCell.refs?.[0]?.uid)
+        field = 'show_activity_group_in_protocol_flowchart'
+      } else if (firstCell.style === 'soaGroup') {
+        activityCells = this.getStudyActivitiesForSoaGroup(firstCell.refs?.[0]?.uid)
+        field = 'show_soa_group_in_protocol_flowchart'
+      }
+      const payload = []
+      for (const cell of activityCells) {
+        const operation = {
+          method: 'PATCH',
+          content: {
+            study_activity_uid: cell.refs?.[0]?.uid,
+            content: {
             }
-            this.updateStudyActivity(studyActivity, data)
-          })
+          }
         }
+        operation.content.content[field] = row.hide
+        payload.push(operation)
       }
+      await study.studyActivityBatchOperations(this.selectedStudy.uid, payload)
+      row.hide = !row.hide
     },
-    /*
-    ** Toggle subgroup display in protocol flowchart.
-    ** We need to store this information on each study activity...
-    */
-    toggleActivitySubgroupFlowchartDisplay (flgroup, group, subgroup) {
-      this.sortedStudyActivities[flgroup][group][subgroup].forEach(studyActivity => {
-        const data = {
-          show_activity_subgroup_in_protocol_flowchart: !studyActivity.show_activity_subgroup_in_protocol_flowchart
-        }
-        this.updateStudyActivity(studyActivity, data)
-      })
-    },
-    toggleActivityFlowchartDisplay (studyActivity) {
-      const data = {
-        show_activity_in_protocol_flowchart: !studyActivity.show_activity_in_protocol_flowchart
-      }
-      this.updateStudyActivity(studyActivity, data)
-    },
-    updateGroupedSchedule (value, studyActivityUid, studyVisit) {
+    updateGroupedSchedule (value, studyActivityUid, studyVisitCell) {
       if (value) {
         const data = []
-        for (const iterator of this.studyVisits) {
-          if (iterator.consecutive_visit_group === studyVisit.consecutive_visit_group) {
-            data.push({
-              method: 'POST',
-              content: {
-                study_activity_uid: studyActivityUid,
-                study_visit_uid: iterator.uid
-              }
-            })
-          }
+        for (const visitRef of studyVisitCell.refs.length ? studyVisitCell.refs : []) {
+          data.push({
+            method: 'POST',
+            content: {
+              study_activity_uid: studyActivityUid,
+              study_visit_uid: visitRef.uid
+            }
+          })
         }
         study.studyActivityScheduleBatchOperations(this.selectedStudy.uid, data).then(resp => {
           const scheduleUids = resp.data.map(item => item.content.study_activity_schedule_uid)
-          this.currentSelectionMatrix[studyActivityUid][studyVisit.uid].uid = scheduleUids
+          this.currentSelectionMatrix[studyActivityUid][studyVisitCell.refs?.[0]?.uid].uid = scheduleUids
         })
       } else {
         const data = []
-        for (const scheduleUid of this.currentSelectionMatrix[studyActivityUid][studyVisit.uid].uid) {
+        for (const scheduleUid of this.currentSelectionMatrix[studyActivityUid][studyVisitCell.refs?.[0]?.uid].uid) {
           data.push({
             method: 'DELETE',
             content: {
@@ -1074,28 +957,28 @@ export default {
             }
           })
         }
-        study.studyActivityScheduleBatchOperations(this.selectedStudy.uid, data).then(resp => {
-          this.currentSelectionMatrix[studyActivityUid][studyVisit.uid].uid = null
+        study.studyActivityScheduleBatchOperations(this.selectedStudy.uid, data).then(() => {
+          this.currentSelectionMatrix[studyActivityUid][studyVisitCell.refs?.[0]?.uid].uid = null
         })
       }
     },
-    updateSchedule (value, studyActivityUid, studyVisit) {
-      if (studyVisit.isGroup) {
-        this.updateGroupedSchedule(value, studyActivityUid, studyVisit)
+    updateSchedule (value, studyActivityUid, studyVisitCell) {
+      if (studyVisitCell.refs?.length > 1) {
+        this.updateGroupedSchedule(value, studyActivityUid, studyVisitCell)
         return
       }
       if (value) {
         const data = {
           study_activity_uid: studyActivityUid,
-          study_visit_uid: studyVisit.uid
+          study_visit_uid: studyVisitCell.refs?.[0]?.uid
         }
         study.createStudyActivitySchedule(this.selectedStudy.uid, data).then(resp => {
-          this.currentSelectionMatrix[studyActivityUid][studyVisit.uid].uid = resp.data.study_activity_schedule_uid
+          this.currentSelectionMatrix[studyActivityUid][studyVisitCell.refs?.[0]?.uid].uid = resp.data.study_activity_schedule_uid
         })
       } else {
-        const scheduleUid = this.currentSelectionMatrix[studyActivityUid][studyVisit.uid].uid
-        study.deleteStudyActivitySchedule(this.selectedStudy.uid, scheduleUid).then(resp => {
-          this.currentSelectionMatrix[studyActivityUid][studyVisit.uid].uid = null
+        const scheduleUid = this.currentSelectionMatrix[studyActivityUid][studyVisitCell.refs?.[0]?.uid].uid
+        study.deleteStudyActivitySchedule(this.selectedStudy.uid, scheduleUid).then(() => {
+          this.currentSelectionMatrix[studyActivityUid][studyVisitCell.refs?.[0]?.uid].uid = null
         })
       }
     },
@@ -1117,11 +1000,11 @@ export default {
         return
       }
       const data = []
-      for (const item of this.studyActivitySelection) {
+      for (const cell of this.studyActivitySelection) {
         data.push({
           method: 'PATCH',
           content: {
-            study_activity_uid: item.study_activity_uid,
+            study_activity_uid: cell.refs?.[0]?.uid,
             content: {
               show_activity_in_protocol_flowchart: value
             }
@@ -1133,62 +1016,19 @@ export default {
           type: 'success',
           msg: this.$t('DetailedFlowchart.update_success')
         })
-        this.studyActivitySelection.forEach(item => {
-          this.$set(item, 'show_activity_in_protocol_flowchart', value)
-        })
+        this.loadSoaContent(true)
       })
     },
-    toggleSubgroupActivitiesSelection (flgroup, group, subgroup, value) {
+    toggleSubgroupActivitiesSelection (subgroupRow, value) {
+      const activityCells = this.getStudyActivitiesForSubgroup(subgroupRow.cells[0].refs?.[0]?.uid)
       if (value) {
-        this.studyActivitySelection = this.studyActivitySelection.concat(this.sortedStudyActivities[flgroup][group][subgroup])
+        this.studyActivitySelection = this.studyActivitySelection.concat(activityCells)
       } else {
-        for (const studyActivity of this.sortedStudyActivities[flgroup][group][subgroup]) {
-          const index = this.studyActivitySelection.findIndex(item => item.study_activity_uid === studyActivity.study_activity_uid)
+        for (const activityCell of activityCells) {
+          const index = this.studyActivitySelection.findIndex(cell => cell.refs?.[0]?.uid === activityCell.refs?.[0]?.uid)
           this.studyActivitySelection.splice(index, 1)
         }
       }
-    },
-    getStudyActivitySchedules () {
-      const params = {
-        study_value_version: this.selectedStudyVersion
-      }
-      study.getStudyActivitySchedules(this.selectedStudy.uid, params).then(resp => {
-        this.groupedVisits.forEach(visit => {
-          Object.keys(this.currentSelectionMatrix).forEach(studyActivity => {
-            this.$set(this.currentSelectionMatrix[studyActivity], visit.uid, { value: false, uid: null })
-          })
-        })
-        resp.data.forEach(schedule => {
-          const visit = this.studyVisits.find(item => item.uid === schedule.study_visit_uid)
-          if (!visit) {
-            return
-          }
-          if (!visit.consecutive_visit_group) {
-            if (this.currentSelectionMatrix[schedule.study_activity_uid]) {
-              this.$set(
-                this.currentSelectionMatrix[schedule.study_activity_uid],
-                visit.uid,
-                { value: true, uid: schedule.study_activity_schedule_uid }
-              )
-            } else {
-              console.log(`ERROR: found missing activity in current matrix -> ${schedule.study_activity_uid}`)
-            }
-          } else {
-            const visitUid = visit.consecutive_visit_group
-            if (!this.currentSelectionMatrix[schedule.study_activity_uid][visitUid].uid) {
-              this.$set(
-                this.currentSelectionMatrix[schedule.study_activity_uid],
-                visitUid,
-                { value: true, uid: [schedule.study_activity_schedule_uid] }
-              )
-            } else {
-              this.currentSelectionMatrix[schedule.study_activity_uid][visitUid].uid.push(
-                schedule.study_activity_schedule_uid
-              )
-            }
-          }
-        })
-      })
     },
     async redirectTo (value) {
       this.showEditForm = false
@@ -1198,26 +1038,65 @@ export default {
         this.$router.push({ name: 'StudyStructure', params: { tab: value } })
       }
     },
-    async loadActivities () {
-      this.studyActivitySelection = []
-      const resp = await this.$store.dispatch('studyActivities/fetchStudyActivities', { studyUid: this.selectedStudy.uid, study_value_version: this.selectedStudyVersion })
-      this.studyActivities = resp.data.items
-      for (const studyActivity of this.studyActivities) {
-        this.$set(this.currentSelectionMatrix, studyActivity.study_activity_uid, {})
+    async loadSoaContent (keepDisplayState) {
+      const resp = await study.getStudyProtocolFlowchart(this.selectedStudy.uid, this.selectedStudyVersion)
+      let currentSoaGroup
+      let currentGroup
+      let currentSubGroup
+
+      this.soaContent = resp.data
+
+      this.soaContent.rows.forEach(row => row.cells.forEach(cell => { if (!cell.refs) { cell.refs = [] } }))
+
+      if (!keepDisplayState) {
+        this.rowsDisplayState = {}
+        this.expandAllRows = false
       }
-      studyEpochs.getStudyVisits(this.selectedStudy.uid, { page_size: 0, study_value_version: this.selectedStudyVersion }).then(resp => {
-        this.studyVisits = resp.data.items
-        this.getStudyActivitySchedules()
-      })
+      for (const [index, row] of this.soaRows.entries()) {
+        const key = `row-${index}`
+        if (row.cells && row.cells.length) {
+          if (row.cells[0].style === 'soaGroup') {
+            this.$set(this.rowsDisplayState, key, { value: false })
+            currentGroup = null
+            currentSubGroup = null
+            currentSoaGroup = index
+          } else if (row.cells[0].style === 'group') {
+            if (!keepDisplayState) {
+              this.$set(this.rowsDisplayState, key, { value: false, parent: currentSoaGroup })
+            }
+            currentSubGroup = null
+            currentGroup = index
+          } else if (row.cells[0].style === 'subGroup') {
+            if (!keepDisplayState) {
+              this.$set(this.rowsDisplayState, key, { value: false, parent: currentGroup })
+            }
+            currentSubGroup = index
+          } else if (row.cells[0].style === 'activity') {
+            const scheduleCells = row.cells.slice(1)
+            if (!keepDisplayState) {
+              this.$set(this.rowsDisplayState, key, { value: false, parent: currentSubGroup })
+            }
+            this.$set(this.currentSelectionMatrix, row.cells[0].refs?.[0]?.uid, {})
+            for (const [visitIndex, cell] of this.soaVisitRow.entries()) {
+              let props = { value: false, uid: null }
+              if ((scheduleCells[visitIndex].refs.length)) {
+                if (cell.refs.length === 1) {
+                  props = { value: true, uid: scheduleCells[visitIndex].refs?.[0]?.uid }
+                } else if (scheduleCells[visitIndex].refs) {
+                  props = { value: true, uid: scheduleCells[visitIndex].refs.map(ref => ref.uid) }
+                }
+              }
+              this.$set(this.currentSelectionMatrix[row.cells[0].refs?.[0]?.uid], cell.refs?.[0]?.uid, props)
+            }
+          }
+        }
+      }
     },
     onResize () {
       this.tableHeight = window.innerHeight - this.$refs.tableContainer.getBoundingClientRect().y - 60
     },
-    compareVisits (a, b) {
-      return a.uid === b.uid
-    },
     groupSelectedVisits () {
-      const visitUids = this.selectedVisits.map(item => item.uid)
+      const visitUids = this.selectedVisitIndexes.map(cell => this.soaVisitRow[cell].refs?.[0]?.uid)
       studyEpochs.createCollapsibleVisitGroup(this.selectedStudy.uid, visitUids).then(() => {
         this.collapsibleVisitGroupCreated()
       }).catch(err => {
@@ -1231,8 +1110,8 @@ export default {
     },
     collapsibleVisitGroupCreated () {
       bus.$emit('notification', { msg: this.$t('CollapsibleVisitGroupForm.creation_success') })
-      this.loadActivities()
-      this.selectedVisits = []
+      this.loadSoaContent(true)
+      this.selectedVisitIndexes = []
     },
     async deleteVisitGroup (groupName) {
       const message = this.$t('DetailedFlowchart.confirm_group_deletion', { group: groupName })
@@ -1241,52 +1120,63 @@ export default {
         return
       }
       await studyEpochs.deleteCollapsibleVisitGroup(this.selectedStudy.uid, groupName)
-      this.loadActivities()
+      this.loadSoaContent(true)
     },
-    getVisitTiming (studyVisit) {
-      if (!this.studyPreferredTimeUnit || this.studyPreferredTimeUnit.time_unit_name === 'week') {
-        return studyVisit.study_week_number
+    async getHistoryData (options) {
+      const params = {
+        total_count: true
       }
-      return studyVisit.study_day_number
+      if (options) {
+        params.page_number = options.page ? options.page : 1
+        params.page_size = options.itemsPerPage ? options.itemsPerPage : 10
+      }
+      const resp = await study.getStudySoAHistory(this.selectedStudy.uid, params)
+      this.historyItems = resp.data.items
+      this.historyItemsTotal = resp.data.total
     },
-    toggleSoaGroupDisplay (soaGroupName) {
-      const payload = []
-      for (const group in this.sortedStudyActivities[soaGroupName]) {
-        for (const subGroup in this.sortedStudyActivities[soaGroupName][group]) {
-          for (const studyActivity of this.sortedStudyActivities[soaGroupName][group][subGroup]) {
-            payload.push({
-              method: 'PATCH',
-              content: {
-                study_activity_uid: studyActivity.study_activity_uid,
-                content: {
-                  show_soa_group_in_protocol_flowchart: !studyActivity.show_soa_group_in_protocol_flowchart
-                }
-              }
-            })
-          }
-        }
-      }
-      study.studyActivityBatchOperations(this.selectedStudy.uid, payload).then(() => {
-        this.loadActivities()
+    async openHistory () {
+      await this.getHistoryData()
+      this.showHistory = true
+    },
+    closeHistory () {
+      this.showHistory = false
+    },
+    downloadCSV () {
+      study.exportStudyDetailedSoa(this.selectedStudy.uid, this.selectedStudyVersion).then(response => {
+        const filename = this.selectedStudy.current_metadata.identification_metadata.study_id + ' detailed SoA.csv'
+        exportLoader.downloadFile(response.data, response.headers['content-type'], filename)
       })
+    },
+    downloadDOCX () {
+      study.getStudyProtocolFlowchartDocx(this.selectedStudy.uid, this.selectedStudyVersion, true).then(response => {
+        const filename = this.selectedStudy.current_metadata.identification_metadata.study_id + ' detailed SoA.docx'
+        exportLoader.downloadFile(response.data, response.headers['content-type'], filename)
+      })
+    },
+    multipleConsecutiveVisitsSelected () {
+      // Check if more than one visit is selected,
+      // and that they are in consecutive order without gaps.
+      if (this.selectedVisitIndexes.length > 1) {
+        const minIndex = this.selectedVisitIndexes.reduce((a, b) => Math.min(a, b))
+        const maxIndex = this.selectedVisitIndexes.reduce((a, b) => Math.max(a, b))
+        return (this.selectedVisitIndexes.length - 1) === (maxIndex - minIndex)
+      }
+      return false
     }
   },
   mounted () {
-    terms.getByCodelist('epochs').then(resp => {
-      this.epochs = resp.data.items
-    })
-    this.loadActivities()
+    this.loadSoaContent()
     this.onResize()
     this.fetchFootnotes()
-    if (this.redirectFootnote && !_isEmpty(this.redirectFootnote)) {
-      this.enableFootnoteMode(this.redirectFootnote)
+    if (this.$route.params.footnote && !_isEmpty(this.$route.params.footnote)) {
+      this.enableFootnoteMode(this.$route.params.footnote)
     }
   },
   watch: {
     update () {
-      this.loadActivities()
+      this.loadSoaContent()
     },
-    redirectFootnote (value) {
+    '$route.params.footnote' (value) {
       if (value && !_isEmpty(value)) {
         this.enableFootnoteMode(value)
       }

@@ -27,10 +27,12 @@
                 "term_uid": "C15602_PHASE III TRIAL"
             },
             "trial_phase_null_value_code": null,
-            "trial_types_codes": [{
-                "name": "Efficacy",
-                "term_uid": "C49666_EFFICACY"
-            }],
+            "trial_types_codes": [
+                {
+                    "name": "Efficacy",
+                    "term_uid": "C49666_EFFICACY"
+                }
+            ],
             "trial_types_null_value_code": null
         },
         "identification_metadata": {
@@ -47,7 +49,21 @@
                 "japanese_trial_registry_id_japic": "987654321",
                 "japanese_trial_registry_id_japic_null_value_code": null,
                 "universal_trial_number_utn": "123456789",
-                "universal_trial_number_utn_null_value_code": null
+                "universal_trial_number_utn_null_value_code": null,
+                "eu_trial_number": null,
+                "eu_trial_number_null_value_code": null,
+                "civ_id_sin_number": null,
+                "civ_id_sin_number_null_value_code": null,
+                "national_clinical_trial_number_null_value_code": null,
+                "national_clinical_trial_number": null,
+                "japanese_trial_registry_number_jrct_null_value_code": null,
+                "japanese_trial_registry_number_jrct": null,
+                "national_medical_products_administration_nmpa_number_null_value_code": null,
+                "national_medical_products_administration_nmpa_number": null,
+                "eudamed_srn_number_null_value_code": null,
+                "eudamed_srn_number": null,
+                "investigational_device_exemption_ide_number": null,
+                "investigational_device_exemption_ide_number_null_value_code": null
             },
             "study_acronym": "Acronym for the study",
             "study_id": "CDISC DEV-1234",
@@ -92,22 +108,28 @@
                 "term_uid": "C15228_DOUBLE BLIND"
             },
             "trial_blinding_schema_null_value_code": null,
-            "trial_intent_types_codes": [{
-                "name": "Cure",
-                "term_uid": "C49654_CURE"
-            }],
+            "trial_intent_types_codes": [
+                {
+                    "name": "Cure",
+                    "term_uid": "C49654_CURE"
+                }
+            ],
             "trial_intent_types_null_value_code": null
         },
         "study_population": {
-            "diagnosis_groups_codes": [{
-                "name": "Heart failure",
-                "term_uid": "DictionaryTerm_000015"
-            }],
+            "diagnosis_groups_codes": [
+                {
+                    "name": "Heart failure",
+                    "term_uid": "DictionaryTerm_000015"
+                }
+            ],
             "diagnosis_groups_null_value_code": null,
-            "disease_conditions_or_indications_codes": [{
-                "name": "Heart failure",
-                "term_uid": "DictionaryTerm_000015"
-            }],
+            "disease_conditions_or_indications_codes": [
+                {
+                    "name": "Heart failure",
+                    "term_uid": "DictionaryTerm_000015"
+                }
+            ],
             "disease_conditions_or_indications_null_value_code": null,
             "healthy_subject_indicator": false,
             "healthy_subject_indicator_null_value_code": null,
@@ -150,10 +172,12 @@
                 "duration_value": 1
             },
             "stable_disease_minimum_duration_null_value_code": null,
-            "therapeutic_area_codes": [{
-                "name": "Heart failure",
-                "term_uid": "DictionaryTerm_000015"
-            }],
+            "therapeutic_area_codes": [
+                {
+                    "name": "Heart failure",
+                    "term_uid": "DictionaryTerm_000015"
+                }
+            ],
             "therapeutic_areas_null_value_code": null
         }
     },

@@ -33,6 +33,7 @@ class ActivityInstanceVO(ConceptVO):
     is_default_selected_for_activity: bool
     is_data_sharing: bool
     is_legacy_usage: bool
+    is_derived: bool
     legacy_description: str | None
     activity_groupings: list[ActivityInstanceGroupingVO]
     activity_instance_class_uid: str
@@ -53,6 +54,7 @@ class ActivityInstanceVO(ConceptVO):
         is_default_selected_for_activity: bool,
         is_data_sharing: bool,
         is_legacy_usage: bool,
+        is_derived: bool,
         legacy_description: str | None,
         activity_groupings: list[ActivityInstanceGroupingVO],
         activity_instance_class_uid: str,
@@ -74,6 +76,7 @@ class ActivityInstanceVO(ConceptVO):
             is_default_selected_for_activity=is_default_selected_for_activity,
             is_data_sharing=is_data_sharing,
             is_legacy_usage=is_legacy_usage,
+            is_derived=is_derived,
             legacy_description=legacy_description,
             activity_groupings=activity_groupings
             if activity_groupings is not None
@@ -108,17 +111,17 @@ class ActivityInstanceVO(ConceptVO):
                 activity_grouping.activity_uid
             ):
                 raise exceptions.ValidationException(
-                    f"{type(self).__name__} tried to connect to non existing Activity identified by uid "
+                    f"{type(self).__name__} tried to connect to non-existent or non-final Activity identified by uid "
                     f"({activity_grouping.activity_uid})"
                 )
             if not activity_subgroup_exists(activity_grouping.activity_subgroup_uid):
                 raise exceptions.ValidationException(
-                    f"{type(self).__name__} tried to connect to non existing Activity Sub Group identified by uid "
+                    f"{type(self).__name__} tried to connect to non-existent or non-final Activity Sub Group identified by uid "
                     f"({activity_grouping.activity_subgroup_uid})"
                 )
             if not activity_group_exists(activity_grouping.activity_group_uid):
                 raise exceptions.ValidationException(
-                    f"{type(self).__name__} tried to connect to non existing Activity Group identified by uid "
+                    f"{type(self).__name__} tried to connect to non-existent or non-final Activity Group identified by uid "
                     f"({activity_grouping.activity_group_uid})"
                 )
         for activity_item in self.activity_items:
@@ -126,19 +129,19 @@ class ActivityInstanceVO(ConceptVO):
                 activity_item.activity_item_class_uid
             ):
                 raise exceptions.ValidationException(
-                    f"{type(self).__name__} tried to connect to non existing Activity Item Class "
+                    f"{type(self).__name__} tried to connect to non-existent or non-final Activity Item Class "
                     f"identified by uid ({activity_item.activity_item_class_uid})"
                 )
             for ct_term in activity_item.ct_terms:
                 if not ct_term_exists_by_uid_callback(ct_term.uid):
                     raise exceptions.ValidationException(
-                        f"{type(self).__name__} tried to connect to non existing CT Term "
+                        f"{type(self).__name__} tried to connect to non-existent or non-final CT Term "
                         f"identified by uid ({ct_term.uid})"
                     )
             for unit in activity_item.unit_definitions:
                 if not unit_definition_exists_by_uid_callback(unit.uid):
                     raise exceptions.ValidationException(
-                        f"{type(self).__name__} tried to connect to non existing Unit Definition "
+                        f"{type(self).__name__} tried to connect to non-existent or non-final Unit Definition "
                         f"identified by uid ({unit.uid})"
                     )
 

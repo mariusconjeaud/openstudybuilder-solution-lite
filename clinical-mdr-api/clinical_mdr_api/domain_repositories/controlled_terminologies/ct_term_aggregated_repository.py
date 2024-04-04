@@ -28,10 +28,10 @@ from clinical_mdr_api.repositories._utils import (
 
 class CTTermAggregatedRepository:
     generic_alias_clause = """
-        DISTINCT term_root, term_attributes_root, term_attributes_value, term_name_root, term_name_value, codelist_root, has_term
-        ORDER BY has_term.order, term_name_value.name
+        DISTINCT term_root, term_attributes_root, term_attributes_value, term_name_root, term_name_value, codelist_root, rel_term
+        ORDER BY rel_term.order, term_name_value.name
         WITH DISTINCT term_root, term_attributes_root, term_attributes_value, term_name_root, term_name_value, 
-        codelist_root, has_term,
+        codelist_root, rel_term,
         head([(catalogue:CTCatalogue)-[:HAS_CODELIST]->(codelist_root) | catalogue]) AS catalogue,
         head([(lib)-[:CONTAINS_TERM]->(term_root) | lib]) AS library
         CALL {
@@ -65,7 +65,7 @@ class CTTermAggregatedRepository:
             catalogue.name AS catalogue_name,
             term_attributes_value AS value_node_attributes,
             term_name_value AS value_node_name,
-            has_term.order AS order,
+            rel_term.order AS order,
             library.name AS library_name,
             library.is_editable AS is_library_editable,
             {
@@ -144,7 +144,7 @@ class CTTermAggregatedRepository:
         match_clause, filter_query_parameters = self._generate_generic_match_clause(
             codelist_uid=codelist_uid,
             codelist_name=codelist_name,
-            library=library,
+            library_name=library,
             package=package,
         )
 
@@ -220,7 +220,7 @@ class CTTermAggregatedRepository:
         match_clause, filter_query_parameters = self._generate_generic_match_clause(
             codelist_uid=codelist_uid,
             codelist_name=codelist_name,
-            library=library,
+            library_name=library,
             package=package,
         )
 
@@ -264,7 +264,7 @@ class CTTermAggregatedRepository:
         self,
         codelist_uid: str | None = None,
         codelist_name: str | None = None,
-        library: str | None = None,
+        library_name: str | None = None,
         package: str | None = None,
     ) -> tuple[str, dict]:
         if package:
@@ -280,18 +280,22 @@ class CTTermAggregatedRepository:
             """
 
         filter_query_parameters = {}
-        if library or package:
+        if library_name or package:
             # Build specific filtering for package and library
             # This is separate from generic filtering as the list of filters is predefined
             # We can therefore do this filtering in an efficient way in the Cypher MATCH clause
             filter_statements, filter_query_parameters = create_term_filter_statement(
-                library=library, package=package
+                library_name=library_name, package=package
             )
             match_clause += filter_statements
 
-        match_clause += (
-            " MATCH (codelist_root:CTCodelistRoot)-[has_term:HAS_TERM]->(term_root) "
-        )
+        if not package:
+            match_clause += " MATCH (codelist_root:CTCodelistRoot)-[rel_term:HAS_TERM]->(term_root) "
+        else:
+            # We are listing terms for a specific package, we need to include HAD_TERM relationships also.
+            # If not, we would only get terms that are also in the latest version of the package,
+            # not those that were in the past.
+            match_clause += " MATCH (codelist_root:CTCodelistRoot)-[rel_term:HAS_TERM|HAD_TERM]->(term_root) "
 
         if codelist_uid or codelist_name:
             # Build spefic filtering for codelist
@@ -339,4 +343,6 @@ class CTTermAggregatedRepository:
         return result[0][0] if len(result) > 0 else 0.0
 
     def close(self) -> None:
+        # Our repository guidelines state that repos should have a close method
+        # But nothing needs to be done in this one
         pass

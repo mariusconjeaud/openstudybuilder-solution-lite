@@ -31,7 +31,9 @@ class StudySoAFootnoteVOHistory:
     uid: str
     study_uid: str
     footnote_uid: str | None
+    footnote_version: str | None
     footnote_template_uid: str | None
+    footnote_template_version: str | None
     referenced_items: list[ReferencedItemVO]
     footnote_number: int
     start_date: datetime
@@ -47,7 +49,9 @@ class StudySoAFootnoteVO:
     uid: str
     study_uid: str
     footnote_uid: str | None
+    footnote_version: str | None
     footnote_template_uid: str | None
+    footnote_template_version: str | None
     referenced_items: list[ReferencedItemVO]
     footnote_number: int
     modified: datetime | None = None
@@ -72,7 +76,9 @@ class StudySoAFootnoteVO:
             uid=generate_uid_callback(),
             study_uid=study_uid,
             footnote_uid=footnote_uid,
+            footnote_version=None,
             footnote_template_uid=footnote_template_uid,
+            footnote_template_version=None,
             footnote_number=footnote_number,
             referenced_items=referenced_items,
             author=author,
@@ -93,12 +99,16 @@ class StudySoAFootnoteVO:
         modified: datetime,
         author: str,
         status: StudyStatus,
+        footnote_version: str = None,
+        footnote_template_version: str = None,
     ) -> Self:
         footnote_ar = cls(
             uid=uid,
             study_uid=study_uid,
             footnote_uid=footnote_uid,
+            footnote_version=footnote_version,
             footnote_template_uid=footnote_template_uid,
+            footnote_template_version=footnote_template_version,
             footnote_number=footnote_number,
             referenced_items=referenced_items,
             modified=modified,

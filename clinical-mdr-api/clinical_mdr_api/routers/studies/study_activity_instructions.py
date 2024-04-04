@@ -4,7 +4,6 @@ from pydantic.types import Json
 from clinical_mdr_api import config, models
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.models.validators import FLOAT_REGEX
 from clinical_mdr_api.oauth import get_current_user_id, rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions
@@ -83,12 +82,7 @@ def get_all_activity_instructions_for_all_studies(
 )
 def get_all_selected_instructions(
     uid: str = utils.studyUID,
-    study_value_version: str
-    | None = Query(
-        None,
-        description="StudyValueVersion to extract the StudySelections",
-        regex=FLOAT_REGEX,
-    ),
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
     current_user_id: str = Depends(get_current_user_id),
 ) -> list[models.StudyActivityInstruction]:
     service = StudyActivityInstructionService(author=current_user_id)

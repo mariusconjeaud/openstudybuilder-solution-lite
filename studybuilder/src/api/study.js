@@ -8,11 +8,12 @@ export default {
     const params = {
       ...options
     }
-    return repository.get(`${resource}`, { params })
+    return repository.get(`${resource}?include_sections=${constants.DESCRIPTION_METADATA}`, { params })
   },
   projects_all () {
+    const params = { page_size: 0 }
     const url = '/projects'
-    return repository.get(url)
+    return repository.get(url, { params })
   },
   getAll () {
     const url = `/${resource}`
@@ -40,11 +41,30 @@ export default {
   unlockStudy (studyUid) {
     return repository.delete(`${resource}/${studyUid}/locks`)
   },
-  getStudyPreferredTimeUnit (studyUid) {
-    return repository.get(`${resource}/${studyUid}/time-units`, { ignoreErrors: true })
+  updateStudy (studyUid, data) {
+    return repository.patch(`${resource}/${studyUid}`, data)
   },
-  updateStudyPreferredTimeUnit (studyUid, data) {
-    return repository.patch(`${resource}/${studyUid}/time-units`, data)
+  reorderStudySubpart (studyUid, data) {
+    return repository.patch(`${resource}/${studyUid}/order`, data)
+  },
+  getStudyPreferredTimeUnit (studyUid, studyVersion) {
+    const params = {
+      ignoreErrors: true,
+      for_protocol_soa: false,
+      study_value_version: studyVersion
+    }
+    return repository.get(`${resource}/${studyUid}/time-units`, { params })
+  },
+  getSoAPreferredTimeUnit (studyUid, studyVersion) {
+    const params = {
+      ignoreErrors: true,
+      for_protocol_soa: true,
+      study_value_version: studyVersion
+    }
+    return repository.get(`${resource}/${studyUid}/time-units`, { params })
+  },
+  updateStudyPreferredTimeUnit (studyUid, data, protocolSoa) {
+    return repository.patch(`${resource}/${studyUid}/time-units?for_protocol_soa=${Boolean(protocolSoa)}`, data)
   },
   getStudyProtocolTitle (studyUid, studyVersion) {
     const params = {
@@ -193,6 +213,9 @@ export default {
   getStudyCompounds (studyUid, params) {
     return repository.get(`studies/${studyUid}/study-compounds`, { params })
   },
+  getStudyCompound (studyUid, studyCompoundUid) {
+    return repository.get(`studies/${studyUid}/study-compounds/${studyCompoundUid}`)
+  },
   getStudyCompoundsAuditTrail (studyUid) {
     return repository.get(`studies/${studyUid}/study-compounds/audit-trail`)
   },
@@ -233,14 +256,17 @@ export default {
   getAllStudyActivities (params) {
     return repository.get('study-activities', { params })
   },
+  getStudyActivity (studyUid, activityUid) {
+    return repository.get(`studies/${studyUid}/study-activities/${activityUid}`)
+  },
   getStudyActivities (studyUid, params) {
     return repository.get(`studies/${studyUid}/study-activities`, { params })
   },
   createStudyActivity (studyUid, data) {
     return repository.post(`studies/${studyUid}/study-activities`, data)
   },
-  updateStudyActivity (studyUid, studyActivityUid, data) {
-    return repository.patch(`studies/${studyUid}/study-activities/${studyActivityUid}`, data)
+  async updateStudyActivity (studyUid, studyActivityUid, data) {
+    return await repository.patch(`studies/${studyUid}/study-activities/${studyActivityUid}`, data)
   },
   deleteStudyActivity (studyUid, studyActivityUid) {
     return repository.delete(`studies/${studyUid}/study-activities/${studyActivityUid}`)
@@ -386,18 +412,34 @@ export default {
     }
     return repository.patch(`${resource}/${studyUid}`, payload)
   },
-  getStudyProtocolFlowchartHtml (studyUid, studyVersion) {
+  getStudySoAHistory (studyUid, params) {
+    return repository.get(`${resource}/${studyUid}/detailed-soa-history`, { params })
+  },
+  getStudyProtocolFlowchart (studyUid, studyVersion) {
     const params = {
       study_value_version: studyVersion
     }
+    return repository.get(`${resource}/${studyUid}/flowchart`, { params })
+  },
+  getStudyProtocolFlowchartHtml (studyUid, params) {
     return repository.get(`${resource}/${studyUid}/flowchart.html`, { params })
   },
-  getStudyProtocolFlowchartDocx (studyUid, studyVersion) {
+  getStudyProtocolFlowchartDocx (studyUid, params) {
+    return repository.get(`${resource}/${studyUid}/flowchart.docx`, { responseType: 'arraybuffer', params })
+  },
+  exportStudyDetailedSoa (studyUid, studyVersion) {
+    const headers = { Accept: 'text/csv' }
     const params = {
-      study_value_version: studyVersion,
-      responseType: 'arraybuffer'
+      study_value_version: studyVersion
     }
-    return repository.get(`${resource}/${studyUid}/flowchart.docx`, { params })
+    return repository.get(`${resource}/${studyUid}/detailed-soa-exports`, { params, headers, responseType: 'blob' })
+  },
+  exportStudyProtocolSoa (studyUid, studyVersion) {
+    const headers = { Accept: 'text/csv' }
+    const params = {
+      study_value_version: studyVersion
+    }
+    return repository.get(`${resource}/${studyUid}/protocol-soa-exports`, { params, headers, responseType: 'blob' })
   },
   getStudyProtocolInterventionsTableHtml (studyUid) {
     return repository.get(`${resource}/${studyUid}/interventions.html`)
@@ -444,6 +486,9 @@ export default {
   },
   getAllStudyFootnotes (params) {
     return repository.get('study-soa-footnotes', { params })
+  },
+  getStudyFootnote (studyUid, uid) {
+    return repository.get(`studies/${studyUid}/study-soa-footnotes/${uid}`)
   },
   getStudyFootnotes (studyUid, params) {
     return repository.get(`studies/${studyUid}/study-soa-footnotes`, { params })

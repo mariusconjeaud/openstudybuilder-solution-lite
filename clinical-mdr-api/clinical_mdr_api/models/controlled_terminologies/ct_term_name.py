@@ -4,6 +4,9 @@ from typing import Self
 from pydantic import Field
 
 from clinical_mdr_api.domains.controlled_terminologies.ct_term_name import CTTermNameAR
+from clinical_mdr_api.models.controlled_terminologies.ct_term_codelist import (
+    CTTermCodelist,
+)
 from clinical_mdr_api.models.libraries.library import Library
 from clinical_mdr_api.models.utils import BaseModel
 
@@ -14,10 +17,15 @@ class CTTermName(BaseModel):
         return cls(
             term_uid=ct_term_name_ar.uid,
             catalogue_name=ct_term_name_ar.ct_term_vo.catalogue_name,
-            codelist_uid=ct_term_name_ar.ct_term_vo.codelist_uid,
+            codelists=[
+                CTTermCodelist(
+                    codelist_uid=x.codelist_uid,
+                    order=x.order,
+                )
+                for x in ct_term_name_ar.ct_term_vo.codelists
+            ],
             sponsor_preferred_name=ct_term_name_ar.ct_term_vo.name,
             sponsor_preferred_name_sentence_case=ct_term_name_ar.ct_term_vo.name_sentence_case,
-            order=ct_term_name_ar.ct_term_vo.order,
             library_name=Library.from_library_vo(ct_term_name_ar.library).name,
             possible_actions=sorted(
                 [_.value for _ in ct_term_name_ar.get_possible_actions()]
@@ -37,7 +45,13 @@ class CTTermName(BaseModel):
         return cls(
             sponsor_preferred_name=ct_term_name_ar.ct_term_vo.name,
             sponsor_preferred_name_sentence_case=ct_term_name_ar.ct_term_vo.name_sentence_case,
-            order=ct_term_name_ar.ct_term_vo.order,
+            codelists=[
+                CTTermCodelist(
+                    codelist_uid=x.codelist_uid,
+                    order=x.order,
+                )
+                for x in ct_term_name_ar.ct_term_vo.codelists
+            ],
             possible_actions=sorted(
                 [_.value for _ in ct_term_name_ar.get_possible_actions()]
             ),
@@ -63,11 +77,10 @@ class CTTermName(BaseModel):
         nullable=True,
     )
 
-    codelist_uid: str | None = Field(
-        None,
-        title="codelist_uid",
+    codelists: list[CTTermCodelist] = Field(
+        [],
+        title="codelists",
         description="",
-        nullable=True,
     )
 
     sponsor_preferred_name: str = Field(
@@ -80,13 +93,6 @@ class CTTermName(BaseModel):
         ...,
         title="sponsor_preferred_name_sentence_case",
         description="",
-    )
-
-    order: int | None = Field(
-        999999,
-        title="order",
-        description="",
-        nullable=True,
     )
 
     library_name: str | None = Field(None, nullable=True)

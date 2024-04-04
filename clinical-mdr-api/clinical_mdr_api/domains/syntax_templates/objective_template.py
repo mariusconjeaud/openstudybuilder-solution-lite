@@ -1,11 +1,6 @@
 from dataclasses import dataclass
 from typing import Callable, Self
 
-from clinical_mdr_api.domains.controlled_terminologies.ct_term_attributes import (
-    CTTermAttributesAR,
-)
-from clinical_mdr_api.domains.controlled_terminologies.ct_term_name import CTTermNameAR
-from clinical_mdr_api.domains.dictionaries.dictionary_term import DictionaryTermAR
 from clinical_mdr_api.domains.syntax_templates.template import (
     InstantiationCountsVO,
     TemplateAggregateRootBase,
@@ -14,6 +9,10 @@ from clinical_mdr_api.domains.syntax_templates.template import (
 from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemMetadataVO,
     LibraryVO,
+)
+from clinical_mdr_api.models.controlled_terminologies.ct_term import (
+    SimpleCTTermNameAndAttributes,
+    SimpleTermModel,
 )
 
 
@@ -26,20 +25,20 @@ class ObjectiveTemplateAR(TemplateAggregateRootBase):
 
     _is_confirmatory_testing: bool | None = None
 
-    _indications: list[DictionaryTermAR] | None = None
+    _indications: list[SimpleTermModel] | None = None
 
-    _categories: list[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None
+    _categories: list[SimpleCTTermNameAndAttributes] | None = None
 
     @property
     def is_confirmatory_testing(self) -> bool:
         return self._is_confirmatory_testing
 
     @property
-    def indications(self) -> list[DictionaryTermAR]:
+    def indications(self) -> list[SimpleTermModel]:
         return self._indications
 
     @property
-    def categories(self) -> list[tuple[CTTermNameAR, CTTermAttributesAR]]:
+    def categories(self) -> list[SimpleCTTermNameAndAttributes]:
         return self._categories
 
     @classmethod
@@ -53,8 +52,8 @@ class ObjectiveTemplateAR(TemplateAggregateRootBase):
         study_count: int = 0,
         counts: InstantiationCountsVO | None = None,
         is_confirmatory_testing: bool | None = None,
-        indications: list[DictionaryTermAR] | None = None,
-        categories: list[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None,
+        indications: list[SimpleTermModel] | None = None,
+        categories: list[SimpleCTTermNameAndAttributes] | None = None,
     ) -> Self:
         return cls(
             _uid=uid,
@@ -81,8 +80,8 @@ class ObjectiveTemplateAR(TemplateAggregateRootBase):
             [str, LibraryVO | None], str | None
         ] = lambda uid, library: None,
         is_confirmatory_testing: bool | None = None,
-        indications: list[DictionaryTermAR] | None = None,
-        categories: list[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None,
+        indications: list[SimpleTermModel] | None = None,
+        categories: list[SimpleCTTermNameAndAttributes] | None = None,
     ) -> Self:
         ar: Self = super().from_input_values(
             author=author,

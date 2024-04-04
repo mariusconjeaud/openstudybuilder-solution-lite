@@ -62,6 +62,7 @@ def camel_case_data(datadict):
         return_value[snake_to_camel(key)] = sanitize_value(value)
     return return_value
 
+
 def create_logger(name):
     loglevel = environ.get("LOG_LEVEL", "INFO")
     numeric_level = getattr(logging, loglevel.upper(), None)

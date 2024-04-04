@@ -40,9 +40,11 @@
               <validation-provider
                 v-slot="{ errors }"
                 rules="required"
+                data-cy="activityform-activity-group-class"
                 >
                 <v-autocomplete
                   :label="$t('ActivityForms.activity_group')"
+                  data-cy="activityform-activity-group-dropdown"
                   :items="groups"
                   v-model="form.activity_groupings[index].activity_group_uid"
                   item-text="name"
@@ -55,9 +57,11 @@
               <validation-provider
                 v-slot="{ errors }"
                 rules="required"
+                data-cy="activityform-activity-subgroup-class"
                 >
                 <v-autocomplete
                   :label="$t('ActivityForms.activity_subgroup')"
+                  data-cy="activityform-activity-subgroup-dropdown"
                   :items="filteredSubGroups(index)"
                   v-model="form.activity_groupings[index].activity_subgroup_uid"
                   item-text="name"
@@ -87,11 +91,13 @@
       <validation-provider
         v-slot="{ errors }"
         rules="required"
+        data-cy="activityform-activity-name-class"
         >
         <v-row>
           <v-col>
             <v-text-field
               :label="$t('ActivityForms.activity_name')"
+              data-cy="activityform-activity-name-field"
               v-model="form.name"
               :error-messages="errors"
               dense
@@ -108,6 +114,7 @@
         <v-col>
           <v-text-field
             :label="$t('ActivityForms.nci_concept_id')"
+            data-cy="activityform-nci-concept-id-field"
             v-model="form.nci_concept_id"
             :error-messages="errors"
             dense
@@ -119,6 +126,7 @@
         <v-col>
           <v-checkbox
             :label="$t('ActivityForms.is_data_collected')"
+            data-cy="activityform-datacollection-checkbox"
             v-model="form.is_data_collected">
           </v-checkbox>
         </v-col>
@@ -130,6 +138,7 @@
           <v-col>
             <v-text-field
               :label="$t('ActivityForms.abbreviation')"
+              data-cy="activityform-abbreviation-field"
               v-model="form.abbreviation"
               :error-messages="errors"
               dense
@@ -141,11 +150,13 @@
       <validation-provider
         v-slot="{ errors }"
         rules="required"
+        data-cy="activityform-definition-class"
         >
         <v-row>
           <v-col>
             <v-textarea
               :label="$t('ActivityForms.definition')"
+              data-cy="activityform-definition-field"
               v-model="form.definition"
               :error-messages="errors"
               dense

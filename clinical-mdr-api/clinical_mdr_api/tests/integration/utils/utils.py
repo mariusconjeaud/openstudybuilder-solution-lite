@@ -1,4 +1,4 @@
-# pylint:disable=broad-except
+# pylint: disable=broad-except
 # pylint: disable=too-many-arguments
 # pylint: disable=too-many-public-methods
 # pylint: disable=dangerous-default-value
@@ -39,6 +39,10 @@ from clinical_mdr_api.models.biomedical_concepts.activity_item_class import (
     ActivityItemClass,
     ActivityItemClassCreateInput,
 )
+from clinical_mdr_api.models.concepts.active_substance import (
+    ActiveSubstance,
+    ActiveSubstanceCreateInput,
+)
 from clinical_mdr_api.models.concepts.activities.activity import ActivityGrouping
 from clinical_mdr_api.models.concepts.activities.activity_group import (
     ActivityGroup,
@@ -59,6 +63,10 @@ from clinical_mdr_api.models.concepts.compound_alias import (
     CompoundAliasCreateInput,
 )
 from clinical_mdr_api.models.concepts.concept import TextValue, TextValueInput
+from clinical_mdr_api.models.concepts.pharmaceutical_product import (
+    PharmaceuticalProduct,
+    PharmaceuticalProductCreateInput,
+)
 from clinical_mdr_api.models.controlled_terminologies.configuration import (
     CTConfigPostInput,
 )
@@ -113,6 +121,7 @@ from clinical_mdr_api.models.study_selections.study import (
     StudyDescriptionJsonModel,
     StudyMetadataJsonModel,
     StudyPatchRequestJsonModel,
+    StudySubpartCreateInput,
 )
 from clinical_mdr_api.models.study_selections.study_disease_milestone import (
     StudyDiseaseMilestone,
@@ -236,6 +245,9 @@ from clinical_mdr_api.services.clinical_programmes.clinical_programme import (
     create as create_clinical_programme,
 )
 from clinical_mdr_api.services.comments.comments import CommmentsService
+from clinical_mdr_api.services.concepts.active_substances_service import (
+    ActiveSubstanceService,
+)
 from clinical_mdr_api.services.concepts.activities.activity_group_service import (
     ActivityGroupService,
 )
@@ -252,6 +264,9 @@ from clinical_mdr_api.services.concepts.compound_alias_service import (
     CompoundAliasService,
 )
 from clinical_mdr_api.services.concepts.compound_service import CompoundService
+from clinical_mdr_api.services.concepts.pharmaceutical_products_service import (
+    PharmaceuticalProductService,
+)
 from clinical_mdr_api.services.concepts.simple_concepts.lag_time import LagTimeService
 from clinical_mdr_api.services.concepts.simple_concepts.numeric_value_with_unit import (
     NumericValueWithUnitService,
@@ -404,7 +419,6 @@ AUTHOR = "test"
 STUDY_UID = "study_root"
 PROJECT_NUMBER = "123"
 LIBRARY_NAME = "Sponsor"
-REQUESTED_LIBRARY_NAME = "Requested"
 CDISC_LIBRARY_NAME = "CDISC"
 CT_CATALOGUE_NAME = "SDTM CT"
 CT_CODELIST_NAME = "CT Codelist"
@@ -493,6 +507,7 @@ class TestUtils:
             == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         ):
             TestUtils.assert_valid_excel(response.content)
+        return response
 
     @classmethod
     def random_str(cls, max_length: int, prefix: str = ""):
@@ -551,7 +566,6 @@ class TestUtils:
         guidance_text: str | None = None,
         study_uid: str | None = None,
         library_name: str | None = LIBRARY_NAME,
-        default_parameter_terms: list[MultiTemplateParameterTerm] | None = None,
         indication_uids: list[str] | None = None,
         is_confirmatory_testing: bool | None = False,
         category_uids: list[str] | None = None,
@@ -563,7 +577,6 @@ class TestUtils:
             guidance_text=guidance_text,
             study_uid=study_uid,
             library_name=library_name,
-            default_parameter_terms=default_parameter_terms,
             indication_uids=indication_uids,
             is_confirmatory_testing=is_confirmatory_testing,
             category_uids=category_uids,
@@ -581,7 +594,6 @@ class TestUtils:
         guidance_text: str | None = None,
         study_uid: str | None = None,
         library_name: str | None = LIBRARY_NAME,
-        default_parameter_terms: list[MultiTemplateParameterTerm] | None = None,
         indication_uids: list[str] | None = None,
         is_confirmatory_testing: bool | None = False,
         category_uids: list[str] | None = None,
@@ -594,7 +606,6 @@ class TestUtils:
             guidance_text=guidance_text,
             study_uid=study_uid,
             library_name=library_name,
-            default_parameter_terms=default_parameter_terms,
             indication_uids=indication_uids,
             is_confirmatory_testing=is_confirmatory_testing,
             category_uids=category_uids,
@@ -612,7 +623,6 @@ class TestUtils:
         name: str | None = None,
         guidance_text: str | None = None,
         library_name: str | None = LIBRARY_NAME,
-        default_parameter_terms: list[MultiTemplateParameterTerm] | None = None,
         indication_uids: list[str] | None = None,
         activity_uids: list[str] | None = None,
         activity_group_uids: list[str] | None = None,
@@ -625,7 +635,6 @@ class TestUtils:
                 name=cls.random_if_none(name, prefix="ct-"),
                 guidance_text=cls.random_if_none(guidance_text),
                 library_name=library_name,
-                default_parameter_terms=default_parameter_terms,
                 indication_uids=indication_uids,
                 activity_uids=activity_uids,
                 activity_group_uids=activity_group_uids,
@@ -645,7 +654,6 @@ class TestUtils:
         guidance_text: str | None = None,
         study_uid: str | None = None,
         library_name: str | None = LIBRARY_NAME,
-        default_parameter_terms: list[MultiTemplateParameterTerm] | None = None,
         type_uid: str | None = None,
         indication_uids: list[str] | None = None,
         category_uids: list[str] | None = None,
@@ -658,7 +666,6 @@ class TestUtils:
             guidance_text=cls.random_if_none(guidance_text),
             study_uid=study_uid,
             library_name=library_name,
-            default_parameter_terms=default_parameter_terms,
             type_uid=type_uid,
             indication_uids=indication_uids,
             category_uids=category_uids,
@@ -676,7 +683,6 @@ class TestUtils:
         name: str | None = None,
         study_uid: str | None = None,
         library_name: str | None = LIBRARY_NAME,
-        default_parameter_terms: list[MultiTemplateParameterTerm] | None = None,
         type_uid: str | None = None,
         indication_uids: list[str] | None = None,
         activity_uids: list[str] | None = None,
@@ -689,7 +695,6 @@ class TestUtils:
             name=cls.random_if_none(name, prefix="ct-"),
             study_uid=study_uid,
             library_name=library_name,
-            default_parameter_terms=default_parameter_terms,
             type_uid=type_uid,
             indication_uids=indication_uids,
             activity_uids=activity_uids,
@@ -739,7 +744,6 @@ class TestUtils:
                     name="test name",
                     guidance_text="guidance text",
                     library_name="Sponsor",
-                    default_parameter_terms=[],
                     indication_uids=[],
                     activity_uids=[],
                     activity_group_uids=[],
@@ -772,7 +776,6 @@ class TestUtils:
                 name="test name",
                 study_uid=None,
                 library_name="Sponsor",
-                default_parameter_terms=[],
                 type_uid=cls.create_ct_term(
                     sponsor_preferred_name="INCLUSION FOOTNOTE"
                 ).term_uid,
@@ -808,7 +811,6 @@ class TestUtils:
                 guidance_text="guidance text",
                 study_uid=None,
                 library_name="Sponsor",
-                default_parameter_terms=[],
                 indication_uids=[],
                 category_uids=[],
                 sub_category_uids=[],
@@ -837,13 +839,15 @@ class TestUtils:
         parameter_terms: list[MultiTemplateParameterTerm] | None = None,
         approve: bool = True,
     ) -> Endpoint:
+        if not parameter_terms:
+            parameter_terms = []
+
         if not endpoint_template_uid:
             endpoint_template_uid = cls.create_endpoint_template(
                 name="test name",
                 guidance_text="guidance text",
                 study_uid=None,
                 library_name="Sponsor",
-                default_parameter_terms=[],
                 indication_uids=[],
                 category_uids=[],
                 sub_category_uids=[],
@@ -875,7 +879,6 @@ class TestUtils:
                 guidance_text="guidance text",
                 study_uid=None,
                 library_name="Sponsor",
-                default_parameter_terms=[],
                 indication_uids=[],
                 category_uids=[],
             ).uid
@@ -941,7 +944,6 @@ class TestUtils:
                 name="name",
                 guidance_text="guidance text",
                 library_name="Sponsor",
-                default_parameter_terms=[],
                 indication_uids=[],
                 activity_uids=[],
                 activity_group_uids=[activity_group_uid],
@@ -990,7 +992,6 @@ class TestUtils:
                 guidance_text="guidance text",
                 study_uid=None,
                 library_name="Sponsor",
-                default_parameter_terms=[],
                 indication_uids=[],
                 category_uids=[],
                 sub_category_uids=[],
@@ -1028,7 +1029,6 @@ class TestUtils:
                 guidance_text="guidance text",
                 study_uid=None,
                 library_name="Sponsor",
-                default_parameter_terms=[],
                 indication_uids=[],
                 category_uids=[],
             ).uid
@@ -1068,7 +1068,6 @@ class TestUtils:
                 name="name",
                 study_uid=None,
                 library_name="Sponsor",
-                default_parameter_terms=[],
                 indication_uids=[],
                 activity_uids=[],
                 activity_group_uids=[activity_group_uid],
@@ -1112,7 +1111,6 @@ class TestUtils:
                 guidance_text="guidance text",
                 study_uid=None,
                 library_name="Sponsor",
-                default_parameter_terms=[],
                 indication_uids=[],
                 category_uids=[],
             ).uid
@@ -1183,17 +1181,17 @@ class TestUtils:
             dose_values_uids=dose_values_uids if dose_values_uids else [],
             lag_times_uids=lag_times_uids if lag_times_uids else [],
             strength_values_uids=strength_values_uids if strength_values_uids else [],
-            delivery_devices_uids=delivery_devices_uids
-            if delivery_devices_uids
-            else [],
+            delivery_devices_uids=(
+                delivery_devices_uids if delivery_devices_uids else []
+            ),
             dispensers_uids=dispensers_uids if dispensers_uids else [],
             projects_uids=projects_uids if projects_uids else [],
             brands_uids=brands_uids if brands_uids else [],
             dose_frequency_uids=dose_frequency_uids if dose_frequency_uids else [],
             dosage_form_uids=dosage_form_uids if dosage_form_uids else [],
-            route_of_administration_uids=route_of_administration_uids
-            if route_of_administration_uids
-            else [],
+            route_of_administration_uids=(
+                route_of_administration_uids if route_of_administration_uids else []
+            ),
             half_life_uid=half_life_uid if half_life_uid else None,
         )
 
@@ -1223,13 +1221,67 @@ class TestUtils:
             definition=cls.random_if_none(definition, prefix="definition-"),
             abbreviation=cls.random_if_none(abbreviation, prefix="abbreviation-"),
             library_name=library_name,
-            is_preferred_synonym=is_preferred_synonym
-            if is_preferred_synonym
-            else False,
+            is_preferred_synonym=(
+                is_preferred_synonym if is_preferred_synonym else False
+            ),
             compound_uid=compound_uid if compound_uid else None,
         )
 
         result: CompoundAlias = service.create(payload)
+        if approve:
+            service.approve(result.uid)
+        return result
+
+    @classmethod
+    def create_active_substance(
+        cls,
+        prodex_id=None,
+        analyte_number=None,
+        short_number=None,
+        long_number=None,
+        inn=None,
+        library_name=LIBRARY_NAME,
+        unii_term_uid=None,
+        approve: bool = False,
+    ) -> ActiveSubstance:
+        service = ActiveSubstanceService()
+        payload: ActiveSubstanceCreateInput = ActiveSubstanceCreateInput(
+            prodex_id=cls.random_if_none(prodex_id, prefix="prodex-id-"),
+            analyte_number=cls.random_if_none(analyte_number, prefix="analyte-"),
+            short_number=cls.random_if_none(short_number, prefix="short-number-"),
+            long_number=cls.random_if_none(long_number, prefix="long-number-"),
+            inn=cls.random_if_none(inn, prefix="inn-"),
+            library_name=library_name,
+            unii_term_uid=unii_term_uid if unii_term_uid else None,
+        )
+
+        result: ActiveSubstance = service.create(payload)
+        if approve:
+            service.approve(result.uid)
+        return result
+
+    @classmethod
+    def create_pharmaceutical_product(
+        cls,
+        prodex_id=None,
+        library_name=LIBRARY_NAME,
+        dosage_form_uids=None,
+        route_of_administration_uids=None,
+        formulations=None,
+        approve: bool = False,
+    ) -> PharmaceuticalProduct:
+        service = PharmaceuticalProductService()
+        payload: PharmaceuticalProductCreateInput = PharmaceuticalProductCreateInput(
+            prodex_id=cls.random_if_none(prodex_id, prefix="prodex-id-"),
+            library_name=library_name,
+            dosage_form_uids=dosage_form_uids if dosage_form_uids else [],
+            route_of_administration_uids=route_of_administration_uids
+            if route_of_administration_uids
+            else [],
+            formulations=formulations if formulations else [],
+        )
+
+        result: PharmaceuticalProduct = service.create(payload)
         if approve:
             service.approve(result.uid)
         return result
@@ -1247,6 +1299,7 @@ class TestUtils:
         is_default_selected_for_activity: bool | None = False,
         is_data_sharing: bool | None = False,
         is_legacy_usage: bool | None = False,
+        is_derived: bool | None = False,
         legacy_description: bool | None = None,
         activities: list[Any] | None = None,
         activity_subgroups: list[Any] | None = None,
@@ -1254,7 +1307,7 @@ class TestUtils:
         activity_items: list[Any] | None = None,
         library_name: str | None = LIBRARY_NAME,
         approve: bool = True,
-    ) -> ActivityInstanceClass:
+    ) -> ActivityInstance:
         service = ActivityInstanceService()
         groupings = []
         for activity_uid, activity_subgroup_uid, activity_group_uid in zip(
@@ -1277,6 +1330,7 @@ class TestUtils:
                 is_default_selected_for_activity=is_default_selected_for_activity,
                 is_data_sharing=is_data_sharing,
                 is_legacy_usage=is_legacy_usage,
+                is_derived=is_derived,
                 legacy_description=legacy_description,
                 activity_groupings=groupings,
                 activity_instance_class_uid=activity_instance_class_uid,
@@ -1362,7 +1416,9 @@ class TestUtils:
         activity_subgroups: list[str] | None = None,
         activity_groups: list[str] | None = None,
         request_rationale: str | None = None,
+        is_request_final: bool = False,
         is_data_collected: bool | None = False,
+        is_multiple_selection_allowed: bool | None = True,
         library_name: str | None = LIBRARY_NAME,
         approve: bool = True,
     ) -> Activity:
@@ -1388,7 +1444,9 @@ class TestUtils:
             abbreviation=abbreviation,
             activity_groupings=groupings,
             request_rationale=request_rationale,
+            is_request_final=is_request_final,
             is_data_collected=is_data_collected,
+            is_multiple_selection_allowed=is_multiple_selection_allowed,
             library_name=library_name,
         )
         result: Activity = service.create(concept_input=activity_create_input)
@@ -1456,13 +1514,15 @@ class TestUtils:
     def create_study_activity_schedule(
         cls,
         study_uid: str,
-        study_activity_uid: str,
         study_visit_uid: str,
+        study_activity_uid: str | None = None,
+        study_activity_instance_uid: str | None = None,
     ) -> StudyActivitySchedule:
         service = StudyActivityScheduleService(author="test")
         study_activity_schedule: StudyActivityScheduleCreateInput = (
             StudyActivityScheduleCreateInput(
                 study_activity_uid=study_activity_uid,
+                study_activity_instance_uid=study_activity_instance_uid,
                 study_visit_uid=study_visit_uid,
             )
         )
@@ -1677,9 +1737,9 @@ class TestUtils:
             device_uid=device_uid if device_uid else None,
             dispensed_in_uid=dispensed_in_uid if dispensed_in_uid else None,
             dosage_form_uid=dosage_form_uid if dosage_form_uid else None,
-            route_of_administration_uid=route_of_administration_uid
-            if route_of_administration_uid
-            else None,
+            route_of_administration_uid=(
+                route_of_administration_uid if route_of_administration_uid else None
+            ),
             strength_value_uid=strength_value_uid if strength_value_uid else None,
         )
 
@@ -1829,13 +1889,23 @@ class TestUtils:
         number: str | None = None,
         acronym: str | None = None,
         project_number: str | None = PROJECT_NUMBER,
+        description: str | None = None,
+        study_parent_part_uid: str | None = None,
     ) -> Study:
         service = StudyService()
-        payload = StudyCreateInput(
-            study_number=cls.random_if_none(number, max_length=4),
-            study_acronym=cls.random_if_none(acronym, prefix="st-"),
-            project_number=project_number,
-        )
+        if not study_parent_part_uid:
+            payload = StudyCreateInput(
+                study_number=cls.random_if_none(number, max_length=4),
+                study_acronym=cls.random_if_none(acronym, prefix="st-"),
+                project_number=project_number,
+                description=cls.random_if_none(description),
+            )
+        else:
+            payload = StudySubpartCreateInput(
+                study_acronym=cls.random_if_none(acronym, prefix="st-"),
+                description=cls.random_if_none(description),
+                study_parent_part_uid=study_parent_part_uid,
+            )
         return service.create(payload)
 
     @classmethod
@@ -1974,9 +2044,9 @@ class TestUtils:
             codelist_uid=codelist_uid,
             dictionary_id=cls.random_if_none(dictionary_id, prefix="dict-"),
             name=target_name,
-            name_sentence_case=name_sentence_case
-            if name_sentence_case
-            else target_name,
+            name_sentence_case=(
+                name_sentence_case if name_sentence_case else target_name
+            ),
             abbreviation=cls.random_if_none(abbreviation, prefix="abbr-"),
             definition=cls.random_if_none(definition, prefix="definition-"),
             library_name=library_name,

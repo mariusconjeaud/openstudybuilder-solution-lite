@@ -60,7 +60,7 @@
       </draggable>
     </template>
     <template v-slot:item.name="{ item }">
-      <router-link :to="{ name: 'StudyArmOverview', params: { study_id: selectedStudy.uid, id: item.arm_uid } }">
+      <router-link :to="{ name: 'StudyArmOverview', params: { study_id: selectedStudy.uid, id: item.arm_uid, root_tab: 'arms' } }">
         {{ item.name }}
       </router-link>
     </template>

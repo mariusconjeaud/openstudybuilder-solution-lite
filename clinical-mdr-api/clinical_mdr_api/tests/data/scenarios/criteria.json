@@ -43,6 +43,7 @@
          },
          "result": {
             "study_uid": "Study_000001",
+            "study_version": null,
             "key_criteria": false,
             "order": 1,
             "project_number": "123",
@@ -51,10 +52,14 @@
             "criteria_type": {
                "term_uid": "C25532",
                "catalogue_name": "SDTM CT",
-               "codelist_uid": "CTCodelist_000001",
+               "codelists": [
+                  {
+                     "codelist_uid": "CTCodelist_000001",
+                     "order": null
+                  }
+               ],
                "sponsor_preferred_name": "INCLUSION CRITERIA",
                "sponsor_preferred_name_sentence_case": "Inclusion Criteria",
-               "order": null,
                "library_name": "CDISC",
                "start_date": "2021-10-26T11:40:24.812000",
                "end_date": null,
@@ -140,48 +145,13 @@
                      "library_name": "Test library",
                      "type": {
                         "term_uid": "C25532",
-                        "catalogue_name": "SDTM CT",
-                        "codelist_uid": "CTCodelist_000001",
-                        "library_name": "CDISC",
                         "name": {
-                           "term_uid": null,
-                           "catalogue_name": null,
-                           "codelist_uid": null,
-                           "library_name": null,
                            "sponsor_preferred_name": "INCLUSION CRITERIA",
-                           "sponsor_preferred_name_sentence_case": "Inclusion Criteria",
-                           "order": null,
-                           "start_date": "2023-01-30T15:19:49.827000+00:00",
-                           "end_date": null,
-                           "status": "Final",
-                           "version": "1.0",
-                           "change_description": "Approved version",
-                           "user_initials": "TODO initials",
-                           "possible_actions": [
-                              "inactivate",
-                              "new_version"
-                           ]
+                           "sponsor_preferred_name_sentence_case": "Inclusion Criteria"
                         },
                         "attributes": {
-                           "term_uid": null,
-                           "catalogue_name": null,
-                           "codelist_uid": null,
-                           "library_name": null,
-                           "concept_id": null,
                            "code_submission_value": "Inclusion Criteria",
-                           "name_submission_value": null,
-                           "nci_preferred_name": "Inclusion Criteria",
-                           "definition": "Inclusion Criteria",
-                           "start_date": "2023-01-30T15:19:49.827000+00:00",
-                           "end_date": null,
-                           "status": "Final",
-                           "version": "1.0",
-                           "change_description": "Approved version",
-                           "user_initials": "TODO initials",
-                           "possible_actions": [
-                              "inactivate",
-                              "new_version"
-                           ]
+                           "nci_preferred_name": "Inclusion Criteria"
                         }
                      }
                   },
@@ -221,6 +191,7 @@
          },
          "result": {
             "study_uid": "Study_000001",
+            "study_version": null,
             "key_criteria": false,
             "order": 2,
             "project_number": "123",
@@ -229,10 +200,14 @@
             "criteria_type": {
                "term_uid": "C25532",
                "catalogue_name": "SDTM CT",
-               "codelist_uid": "CTCodelist_000001",
+               "codelists": [
+                  {
+                     "codelist_uid": "CTCodelist_000001",
+                     "order": null
+                  }
+               ],
                "sponsor_preferred_name": "INCLUSION CRITERIA",
                "sponsor_preferred_name_sentence_case": "Inclusion Criteria",
-               "order": null,
                "library_name": "CDISC",
                "start_date": "2021-10-26T11:40:24.812000",
                "end_date": null,
@@ -318,48 +293,13 @@
                      "library_name": "Test library",
                      "type": {
                         "term_uid": "C25532",
-                        "catalogue_name": "SDTM CT",
-                        "codelist_uid": "CTCodelist_000001",
-                        "library_name": "CDISC",
                         "name": {
-                           "term_uid": null,
-                           "catalogue_name": null,
-                           "codelist_uid": null,
-                           "library_name": null,
                            "sponsor_preferred_name": "INCLUSION CRITERIA",
-                           "sponsor_preferred_name_sentence_case": "Inclusion Criteria",
-                           "order": null,
-                           "start_date": "2023-01-30T15:19:49.827000+00:00",
-                           "end_date": null,
-                           "status": "Final",
-                           "version": "1.0",
-                           "change_description": "Approved version",
-                           "user_initials": "TODO initials",
-                           "possible_actions": [
-                              "inactivate",
-                              "new_version"
-                           ]
+                           "sponsor_preferred_name_sentence_case": "Inclusion Criteria"
                         },
                         "attributes": {
-                           "term_uid": null,
-                           "catalogue_name": null,
-                           "codelist_uid": null,
-                           "library_name": null,
-                           "concept_id": null,
                            "code_submission_value": "Inclusion Criteria",
-                           "name_submission_value": null,
-                           "nci_preferred_name": "Inclusion Criteria",
-                           "definition": "Inclusion Criteria",
-                           "start_date": "2023-01-30T15:19:49.827000+00:00",
-                           "end_date": null,
-                           "status": "Final",
-                           "version": "1.0",
-                           "change_description": "Approved version",
-                           "user_initials": "TODO initials",
-                           "possible_actions": [
-                              "inactivate",
-                              "new_version"
-                           ]
+                           "nci_preferred_name": "Inclusion Criteria"
                         }
                      }
                   },
@@ -413,48 +353,13 @@
                "library_name": "Test library",
                "type": {
                   "term_uid": "C25532",
-                  "catalogue_name": "SDTM CT",
-                  "codelist_uid": "CTCodelist_000001",
-                  "library_name": "CDISC",
                   "name": {
-                     "term_uid": null,
-                     "catalogue_name": null,
-                     "codelist_uid": null,
-                     "library_name": null,
                      "sponsor_preferred_name": "INCLUSION CRITERIA",
-                     "sponsor_preferred_name_sentence_case": "Inclusion Criteria",
-                     "order": null,
-                     "start_date": "2023-01-30T15:19:49.827000+00:00",
-                     "end_date": null,
-                     "status": "Final",
-                     "version": "1.0",
-                     "change_description": "Approved version",
-                     "user_initials": "TODO initials",
-                     "possible_actions": [
-                        "inactivate",
-                        "new_version"
-                     ]
+                     "sponsor_preferred_name_sentence_case": "Inclusion Criteria"
                   },
                   "attributes": {
-                     "term_uid": null,
-                     "catalogue_name": null,
-                     "codelist_uid": null,
-                     "library_name": null,
-                     "concept_id": null,
                      "code_submission_value": "Inclusion Criteria",
-                     "name_submission_value": null,
-                     "nci_preferred_name": "Inclusion Criteria",
-                     "definition": "Inclusion Criteria",
-                     "start_date": "2023-01-30T15:19:49.827000+00:00",
-                     "end_date": null,
-                     "status": "Final",
-                     "version": "1.0",
-                     "change_description": "Approved version",
-                     "user_initials": "TODO initials",
-                     "possible_actions": [
-                        "inactivate",
-                        "new_version"
-                     ]
+                     "nci_preferred_name": "Inclusion Criteria"
                   }
                }
             },
@@ -504,48 +409,13 @@
                   "library_name": "Test library",
                   "type": {
                      "term_uid": "C25532",
-                     "catalogue_name": "SDTM CT",
-                     "codelist_uid": "CTCodelist_000001",
-                     "library_name": "CDISC",
                      "name": {
-                        "term_uid": null,
-                        "catalogue_name": null,
-                        "codelist_uid": null,
-                        "library_name": null,
                         "sponsor_preferred_name": "INCLUSION CRITERIA",
-                        "sponsor_preferred_name_sentence_case": "Inclusion Criteria",
-                        "order": null,
-                        "start_date": "2023-01-30T15:19:49.827000+00:00",
-                        "end_date": null,
-                        "status": "Final",
-                        "version": "1.0",
-                        "change_description": "Approved version",
-                        "user_initials": "TODO initials",
-                        "possible_actions": [
-                           "inactivate",
-                           "new_version"
-                        ]
+                        "sponsor_preferred_name_sentence_case": "Inclusion Criteria"
                      },
                      "attributes": {
-                        "term_uid": null,
-                        "catalogue_name": null,
-                        "codelist_uid": null,
-                        "library_name": null,
-                        "concept_id": null,
                         "code_submission_value": "Inclusion Criteria",
-                        "name_submission_value": null,
-                        "nci_preferred_name": "Inclusion Criteria",
-                        "definition": "Inclusion Criteria",
-                        "start_date": "2023-01-30T15:19:49.827000+00:00",
-                        "end_date": null,
-                        "status": "Final",
-                        "version": "1.0",
-                        "change_description": "Approved version",
-                        "user_initials": "TODO initials",
-                        "possible_actions": [
-                           "inactivate",
-                           "new_version"
-                        ]
+                        "nci_preferred_name": "Inclusion Criteria"
                      }
                   }
                },
@@ -596,48 +466,13 @@
                   "library_name": "Test library",
                   "type": {
                      "term_uid": "C25532",
-                     "catalogue_name": "SDTM CT",
-                     "codelist_uid": "CTCodelist_000001",
-                     "library_name": "CDISC",
                      "name": {
-                        "term_uid": null,
-                        "catalogue_name": null,
-                        "codelist_uid": null,
-                        "library_name": null,
                         "sponsor_preferred_name": "INCLUSION CRITERIA",
-                        "sponsor_preferred_name_sentence_case": "Inclusion Criteria",
-                        "order": null,
-                        "start_date": "2023-01-30T15:19:49.827000+00:00",
-                        "end_date": null,
-                        "status": "Final",
-                        "version": "1.0",
-                        "change_description": "Approved version",
-                        "user_initials": "TODO initials",
-                        "possible_actions": [
-                           "inactivate",
-                           "new_version"
-                        ]
+                        "sponsor_preferred_name_sentence_case": "Inclusion Criteria"
                      },
                      "attributes": {
-                        "term_uid": null,
-                        "catalogue_name": null,
-                        "codelist_uid": null,
-                        "library_name": null,
-                        "concept_id": null,
                         "code_submission_value": "Inclusion Criteria",
-                        "name_submission_value": null,
-                        "nci_preferred_name": "Inclusion Criteria",
-                        "definition": "Inclusion Criteria",
-                        "start_date": "2023-01-30T15:19:49.827000+00:00",
-                        "end_date": null,
-                        "status": "Final",
-                        "version": "1.0",
-                        "change_description": "Approved version",
-                        "user_initials": "TODO initials",
-                        "possible_actions": [
-                           "inactivate",
-                           "new_version"
-                        ]
+                        "nci_preferred_name": "Inclusion Criteria"
                      }
                   }
                },
@@ -674,6 +509,8 @@
                   "lock",
                   "release"
                ],
+               "study_parent_part": null,
+               "study_subpart_uids": null,
                "current_metadata": {
                   "identification_metadata": null,
                   "version_metadata": null,

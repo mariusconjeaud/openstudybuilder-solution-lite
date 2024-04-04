@@ -26,7 +26,7 @@ Service = CommmentsService
         500: _generic_descriptions.ERROR_500,
     },
 )
-# pylint:disable=redefined-outer-name
+# pylint: disable=redefined-outer-name
 def get_comment_topics(
     topic_path: str
     | None = Query(
@@ -72,7 +72,7 @@ def get_comment_topics(
         500: _generic_descriptions.ERROR_500,
     },
 )
-# pylint:disable=redefined-outer-name
+# pylint: disable=redefined-outer-name
 def get_comment_threads(
     topic_path: str
     | None = Query(
@@ -243,7 +243,7 @@ def get_comment_thread_replies(
         500: _generic_descriptions.ERROR_500,
     },
 )
-# pylint:disable=unused-argument
+# pylint: disable=unused-argument
 def get_comment_thread_reply(
     thread_uid: str = CommentThreadUID,
     reply_uid: str = CommentReplyUID,
@@ -264,7 +264,7 @@ def get_comment_thread_reply(
         500: _generic_descriptions.ERROR_500,
     },
 )
-# pylint:disable=unused-argument
+# pylint: disable=unused-argument
 def edit_comment_thread_reply(
     thread_uid: str = CommentThreadUID,
     reply_uid: str = CommentReplyUID,
@@ -287,7 +287,7 @@ def edit_comment_thread_reply(
         500: _generic_descriptions.ERROR_500,
     },
 )
-# pylint:disable=unused-argument
+# pylint: disable=unused-argument
 def delete_comment_reply(
     thread_uid: str = CommentThreadUID,
     reply_uid: str = CommentReplyUID,

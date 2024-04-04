@@ -170,3 +170,76 @@ def test_codelist_filtering_on_terms(api_client):
 
     assert len(res["items"]) == 1
     assert res["items"][0]["codelist_uid"] == "C66737"
+
+
+def test_retire_unused_term(api_client):
+    # create a new codelist
+    codelist = TestUtils.create_ct_codelist(
+        name="RetireCodelist",
+        sponsor_preferred_name="RetireCodelist",
+        extensible=True,
+        approve=True,
+    )
+    # add two new terms
+    term_to_remove_and_retire = TestUtils.create_ct_term(
+        sponsor_preferred_name="term_to_remove_and_retire",
+        codelist_uid=codelist.codelist_uid,
+    )
+    term_to_retire = TestUtils.create_ct_term(
+        sponsor_preferred_name="term_to_retire", codelist_uid=codelist.codelist_uid
+    )
+
+    # fetch the term to be removed, ensure it's part of only the expected codelist
+    response = api_client.get(
+        f"ct/terms/{term_to_remove_and_retire.term_uid}/attributes"
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert len(res["codelists"]) == 1
+    assert res["codelists"][0]["codelist_uid"] == codelist.codelist_uid
+
+    # remove the term from the codelist
+    response = api_client.delete(
+        f"/ct/codelists/{codelist.codelist_uid}/terms/{term_to_remove_and_retire.term_uid}"
+    )
+    assert response.status_code == 201
+
+    # fetch the removed term, ensure it's not part of any codelist
+    response = api_client.get(
+        f"ct/terms/{term_to_remove_and_retire.term_uid}/attributes"
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert len(res["codelists"]) == 0
+
+    # fetch the codelist terms and check that there is only one term
+    response = api_client.get("ct/terms?codelist_name=RetireCodelist")
+    res = response.json()
+    assert response.status_code == 200
+    assert len(res["items"]) == 1
+
+    # retire the removed term attributes and names
+    response = api_client.delete(
+        f"/ct/terms/{term_to_remove_and_retire.term_uid}/attributes/activations"
+    )
+    assert response.status_code == 200
+    response = api_client.delete(
+        f"/ct/terms/{term_to_remove_and_retire.term_uid}/names/activations"
+    )
+    assert response.status_code == 200
+
+    # retire the remaining term attributes and names
+    response = api_client.delete(
+        f"/ct/terms/{term_to_retire.term_uid}/attributes/activations"
+    )
+    assert response.status_code == 200
+    response = api_client.delete(
+        f"/ct/terms/{term_to_retire.term_uid}/names/activations"
+    )
+    assert response.status_code == 200
+
+    # fetch codelist terms and check that there is still one term
+    response = api_client.get("ct/terms?codelist_name=RetireCodelist")
+    res = response.json()
+    assert response.status_code == 200
+    assert len(res["items"]) == 1

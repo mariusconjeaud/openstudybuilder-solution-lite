@@ -1,5 +1,5 @@
 import csv
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from enum import Enum
 
 from clinical_mdr_api import exceptions
@@ -154,17 +154,6 @@ def from_database():
         item = StudyFieldConfigurationEntry(**data)
         dataset.append(item)
     return dataset
-
-
-def to_file(filename, data):
-    with open(filename, "w", encoding="UTF-8") as file:
-        dict_writer = csv.DictWriter(file, fieldnames)
-        dict_writer.writeheader()
-        item: StudyFieldConfigurationEntry
-        for item in data:
-            datadict = asdict(item)
-            datadict["study_field_name"] = item.study_field_data_type.name
-            dict_writer.writerow(datadict)
 
 
 class FieldConfiguration:

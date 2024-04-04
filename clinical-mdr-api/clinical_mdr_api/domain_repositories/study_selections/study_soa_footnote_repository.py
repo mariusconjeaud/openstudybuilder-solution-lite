@@ -45,9 +45,6 @@ class StudySoAFootnoteRepository:
     def with_query(self):
         return """
             WITH DISTINCT sr, sf, sa,
-            head([(sf)-[:HAS_SELECTED_FOOTNOTE]->(footnote_value:FootnoteValue)<-[:HAS_VERSION]-(footnote_root:FootnoteRoot) | footnote_root.uid]) AS footnote_uid,
-            head([(sf)-[:HAS_SELECTED_FOOTNOTE_TEMPLATE]->(footnote_template_value:FootnoteTemplateValue)
-            <-[:HAS_VERSION]-(footnote_template_root:FootnoteTemplateRoot) | footnote_template_root.uid]) AS footnote_template_uid,
             [(sf)-[:REFERENCES_STUDY_ACTIVITY]->(study_activity:StudyActivity)<-[:HAS_STUDY_ACTIVITY]-(sv) | 
                 {
                     uid:study_activity.uid, 
@@ -89,12 +86,30 @@ class StudySoAFootnoteRepository:
                         | activity_value.name + ' ' + study_visit.short_visit_label])
                 }] AS referenced_study_activity_schedules,
             head([(sf)<-[:BEFORE]-(before_action:StudyAction) | before_action.date]) AS end_date
+            CALL {
+                WITH sf
+                OPTIONAL MATCH (sf)-[:HAS_SELECTED_FOOTNOTE]->(:FootnoteValue)<-[ver:HAS_VERSION]-(fr:FootnoteRoot)
+                WHERE ver.status = "Final"
+                RETURN {uid:fr.uid, version: ver.version} as footnote
+                ORDER BY ver.start_date DESC
+                LIMIT 1
+            }
+            CALL{
+                WITH sf
+                OPTIONAL MATCH (sf)-[:HAS_SELECTED_FOOTNOTE_TEMPLATE]->(:FootnoteTemplateValue)<-[ver:HAS_VERSION]-(ftv:FootnoteTemplateRoot)
+                WHERE ver.status = "Final"
+                RETURN {uid:ftv.uid, version: ver.version} as footnote_template
+                ORDER BY ver.start_date DESC
+                LIMIT 1
+            }
             RETURN DISTINCT
                 sr.uid AS study_uid,
                 sf.uid AS uid,
                 sf.footnote_number AS footnote_number,
-                footnote_uid,
-                footnote_template_uid,
+                footnote.uid as footnote_uid, 
+                footnote.version as footnote_version,
+                footnote_template.uid as footnote_template_uid, 
+                footnote_template.version as footnote_template_version,
                 sa.date AS modified_date,
                 end_date,
                 sa.user_initials AS user_initials,
@@ -194,7 +209,9 @@ class StudySoAFootnoteRepository:
         selection_vo = StudySoAFootnoteVO.from_repository_values(
             study_uid=selection.get("study_uid"),
             footnote_uid=selection.get("footnote_uid"),
+            footnote_version=selection.get("footnote_version"),
             footnote_template_uid=selection.get("footnote_template_uid"),
+            footnote_template_version=selection.get("footnote_template_version"),
             referenced_items=referenced_items,
             footnote_number=selection.get("footnote_number"),
             uid=selection.get("uid"),
@@ -215,7 +232,9 @@ class StudySoAFootnoteRepository:
         selection_vo = StudySoAFootnoteVOHistory(
             study_uid=selection.get("study_uid"),
             footnote_uid=selection.get("footnote_uid"),
+            footnote_version=selection.get("footnote_version"),
             footnote_template_uid=selection.get("footnote_template_uid"),
+            footnote_template_version=selection.get("footnote_template_version"),
             referenced_items=referenced_items,
             footnote_number=selection.get("footnote_number"),
             uid=selection.get("uid"),

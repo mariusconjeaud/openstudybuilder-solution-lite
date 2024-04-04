@@ -4,11 +4,13 @@
     <validation-provider
       v-slot="{ errors }"
       :rules="`required|sameAs:${name}`"
+      data-cy="sentence-case-name-class"
       >
       <v-row>
         <v-col>
           <v-text-field
             :label="$t('ActivityForms.name_sentence_case')"
+            data-cy="sentence-case-name-field"
             v-model="sentenceCaseName"
             :error-messages="errors"
             dense

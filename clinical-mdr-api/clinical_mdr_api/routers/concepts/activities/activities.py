@@ -12,12 +12,14 @@ from clinical_mdr_api.models.concepts.activities.activity import (
     ActivityEditInput,
     ActivityFromRequestInput,
     ActivityOverview,
+    ActivityRequestRejectInput,
 )
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import CustomPage
 from clinical_mdr_api.oauth import get_current_user_id, rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
+from clinical_mdr_api.routers.responses import YAMLResponse
 from clinical_mdr_api.services.concepts.activities.activity_service import (
     ActivityService,
 )
@@ -408,6 +410,43 @@ def get_activity_overview(
 
 
 @router.get(
+    "/activities/{uid}/overview.cosmos",
+    dependencies=[rbac.LIBRARY_READ],
+    summary="Get a COSMoS compatible representation of a specific activity",
+    description="""
+Returns detailed description about activity, including information about:
+ - Activity
+ - Activity subgroups
+ - Activity groups
+ - Activity instance
+ - Activity instance class
+
+State before:
+ - an activity with uid must exist.
+
+State after:
+ - No change
+
+Possible errors:
+ - Invalid uid.
+ """,
+    responses={
+        200: {"content": {"application/x-yaml": {}}},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+# pylint: disable=unused-argument
+def get_cosmos_activity_overview(
+    request: Request,  # request is actually required by the allow_exports decorator
+    uid: str = ActivityUID,
+    current_user_id: str = Depends(get_current_user_id),
+):
+    activity_service = ActivityService(user=current_user_id)
+    return YAMLResponse(activity_service.get_cosmos_activity_overview(activity_uid=uid))
+
+
+@router.get(
     "/activities/{uid}/versions",
     dependencies=[rbac.LIBRARY_READ],
     summary="List version history for activities",
@@ -536,6 +575,51 @@ def create_sponsor_activity_from_activity_request(
     activity_service = ActivityService(user=current_user_id)
     return activity_service.replace_requested_activity_with_sponsor(
         sponsor_activity_input=activity_create_input
+    )
+
+
+@router.patch(
+    "/activities/{uid}/activity-request-rejections",
+    dependencies=[rbac.LIBRARY_WRITE],
+    summary="Reject and retire an Activity Request",
+    description="""
+State before:
+ - uid must exist and activity must exist in status Final.
+ - The activity must belongs to a library that allows deleting (the 'is_editable' property of the library needs to be true).
+
+Business logic:
+ - The ActivityRequest is edited with the rejection arguments.
+
+State after:
+ - After successful rejection, the Activity Request is edited with rejection arguments and set to be retired.
+
+Possible errors:
+ - Non existing ActivityRequest specified or specified ActivityRequest is not in Final state..
+""",
+    response_model=Activity,
+    response_model_exclude_unset=True,
+    status_code=200,
+    responses={
+        200: {"description": "Created - The activity was successfully edited."},
+        400: {
+            "model": ErrorResponse,
+            "description": "Forbidden - Reasons include e.g.: \n"
+            "- The activity does not exist.\n"
+            "- The activity is not in final state.\n",
+        },
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+def reject_activity_request(
+    uid: str = ActivityUID,
+    activity_request_rejection_input: ActivityRequestRejectInput = Body(description=""),
+    current_user_id: str = Depends(get_current_user_id),
+):
+    activity_service = ActivityService(user=current_user_id)
+    return activity_service.reject_activity_request(
+        activity_request_uid=uid,
+        activity_request_rejection_input=activity_request_rejection_input,
     )
 
 

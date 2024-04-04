@@ -1,4 +1,5 @@
 import unittest
+from datetime import datetime, timezone
 
 from clinical_mdr_api.config import STUDY_ENDPOINT_TP_NAME
 from clinical_mdr_api.models import study_selections
@@ -6,6 +7,7 @@ from clinical_mdr_api.models.listings.listings_study import (
     RegistryIdentifiersListingModel,
     StudyArmListingModel,
     StudyAttributesListingModel,
+    StudyBranchArmListingModel,
     StudyCohortListingModel,
     StudyCriteriaListingModel,
     StudyDesignMatrixListingModel,
@@ -302,15 +304,25 @@ class TestStudyListing(unittest.TestCase):
             study_objective_uid=study_objective.study_objective_uid,
         )
 
+        # lock study
+        study_service.lock(uid=cls.study_uid, change_description="locking it")
+        study_service.unlock(uid=cls.study_uid)
+
     def test_study_metadata_listing(self):
         self.maxDiff = None  # pylint: disable=invalid-name
         study_listing_service = StudyMetadataListingService()
-        output = study_listing_service.get_study_metadata(self.study_number)
+        output = study_listing_service.get_study_metadata(
+            self.study_number, datetime="2099-12-30"
+        )
         expected_output = StudyMetadataListingModel(
-            study_title=generate_description_json_model(),
-            registry_identifiers=RegistryIdentifiersListingModel.from_study_registry_identifiers_vo(
+            api_ver="TBA",
+            study_id="123-123",
+            study_ver="1",
+            request_dt=datetime.now(timezone.utc),
+            specified_dt="2099-12-30",
+            title=generate_description_json_model().study_title,
+            reg_id=RegistryIdentifiersListingModel.from_study_registry_identifiers_vo(
                 registry_identifiers_json_model_to_vo(),
-                find_term_by_uid=study_listing_service.ct_attr_repo.find_by_uid,
             ),
             study_type=StudyTypeListingModel.from_high_level_study_design_vo(
                 high_level_study_design_json_model_to_vo(),
@@ -325,20 +337,23 @@ class TestStudyListing(unittest.TestCase):
                 find_term_by_uid=study_listing_service.ct_attr_repo.find_by_uid,
                 find_dictionary_term_by_uid=study_listing_service.dict_term_repo.find_by_uid,
             ),
-            study_arms=StudyArmListingModel.from_study_selection_arm_ar(
-                study_uid=self.study_uid,
+            arms=StudyArmListingModel.from_study_selection_arm_ar(
                 study_selection_arm_ar=study_listing_service.arm_repo.find_by_study(
                     study_uid=self.study_uid
                 ),
                 find_simple_term_arm_type_by_term_uid=study_listing_service.ct_attr_repo.find_by_uid,
-                find_multiple_connected_branch_arm=study_listing_service.branch_arm_repo.find_by_arm,
             ),
-            study_cohorts=StudyCohortListingModel.from_study_selection_cohort_ar(
+            branches=StudyBranchArmListingModel.from_study_selection_branch_arm_ar(
+                study_selection_branch_arm_ar=study_listing_service.branch_arm_repo.find_by_study(
+                    study_uid=self.study_uid
+                ),
+            ),
+            cohorts=StudyCohortListingModel.from_study_selection_cohort_ar(
                 study_selection_cohort_ar=study_listing_service.cohort_repo.find_by_study(
                     study_uid=self.study_uid,
                 ),
             ),
-            study_epochs=StudyEpochListingModel.from_all_study_epochs(
+            epochs=StudyEpochListingModel.from_all_study_epochs(
                 all_study_epochs=StudyEpochService()
                 .get_all_epochs(
                     study_uid=self.study_uid,
@@ -346,57 +361,76 @@ class TestStudyListing(unittest.TestCase):
                 .items,
                 find_term_by_uid=study_listing_service.ct_attr_repo.find_by_uid,
             ),
-            study_elements=StudyElementListingModel.from_study_element_ar(
+            elements=StudyElementListingModel.from_study_element_ar(
                 study_element_ar=study_listing_service.element_repo.find_by_study(
                     study_uid=self.study_uid,
                 ),
                 find_term_by_uid=study_listing_service.ct_attr_repo.find_by_uid,
             ),
-            study_design_matrix=StudyDesignMatrixListingModel.from_all_study_design_cells(
+            design_matrix=StudyDesignMatrixListingModel.from_all_study_design_cells(
                 all_design_cells=study_listing_service.design_cell_repo.find_all_design_cells_by_study(
                     study_uid=self.study_uid,
                 ),
             ),
-            study_visits=StudyVisitListingModel.from_all_study_visits(
+            visits=StudyVisitListingModel.from_all_study_visits(
                 all_study_visits=study_listing_service.get_all_visits(
                     study_uid=self.study_uid,
                 )
             ),
-            study_criterias=StudyCriteriaListingModel.from_study_criteria_ar(
+            criteria=StudyCriteriaListingModel.from_study_criteria_ar(
                 study_criteria_ar=study_listing_service.study_criteria_repo.find_by_study(
                     study_uid=self.study_uid,
                 ),
                 find_term_by_uid=study_listing_service.ct_attr_repo.find_by_uid,
-                find_criteria_by_uid=study_listing_service.criteria_repo.find_by_uid_2,
+                find_criteria_by_uid=study_listing_service.criteria_repo.find_by_uid,
             ),
-            study_objectives=StudyObjectiveListingModel.from_study_objective_ar(
+            objectives=StudyObjectiveListingModel.from_study_objective_ar(
                 study_objective_ar=study_listing_service.study_objective_repo.find_by_study(
                     study_uid=self.study_uid,
                 ),
                 find_term_by_uid=study_listing_service.ct_attr_repo.find_by_uid,
-                find_objective_by_uid=study_listing_service.objective_repo.find_by_uid_2,
+                find_objective_by_uid=study_listing_service.objective_repo.find_by_uid,
             ),
-            study_endpoints=StudyEndpointListingModel.from_study_endpoint_ar(
+            endpoints=StudyEndpointListingModel.from_study_endpoint_ar(
                 study_endpoint_ar=study_listing_service.study_endpoint_repo.find_by_study(
                     study_uid=self.study_uid,
                 ),
                 find_term_by_uid=study_listing_service.ct_attr_repo.find_by_uid,
-                find_endpoint_by_uid=study_listing_service.endpoint_repo.find_by_uid_2,
-                find_timeframe_by_uid=study_listing_service.timeframe_repo.find_by_uid_2,
+                find_endpoint_by_uid=study_listing_service.endpoint_repo.find_by_uid,
+                find_timeframe_by_uid=study_listing_service.timeframe_repo.find_by_uid,
             ),
         )
+        print("****************************************************")
+        print("output:")
+        print(output)
+        print("****************************************************")
+        print("expected output:")
+        print(expected_output)
+        print("****************************************************")
+
+        # Check api version
+        self.assertEqual(output.api_ver, expected_output.api_ver)
+
+        # Check full study ID
+        self.assertEqual(output.study_id, expected_output.study_id)
+
+        # Check study version
+        self.assertEqual(output.study_ver, expected_output.study_ver)
+
+        # Check specified datetime
+        self.assertEqual(output.specified_dt, expected_output.specified_dt)
 
         # Check study title
-        self.assertEqual(output.study_title, expected_output.study_title)
+        self.assertEqual(output.title, expected_output.title)
 
         # Check study identifiers
         self.assertEqual(
-            output.registry_identifiers,
-            expected_output.registry_identifiers,
+            output.reg_id,
+            expected_output.reg_id,
         )
         self.assertCountEqual(
-            output.registry_identifiers,
-            expected_output.registry_identifiers,
+            output.reg_id,
+            expected_output.reg_id,
         )
 
         # Check study type
@@ -412,41 +446,41 @@ class TestStudyListing(unittest.TestCase):
         self.assertEqual(output.study_population, expected_output.study_population)
 
         # Check study arms
-        self.assertCountEqual(output.study_arms, expected_output.study_arms)
-        self.assertEqual(output.study_arms, expected_output.study_arms)
+        self.assertCountEqual(output.arms, expected_output.arms)
+        self.assertEqual(output.arms, expected_output.arms)
+
+        # Check study branches
+        self.assertCountEqual(output.branches, expected_output.branches)
+        self.assertEqual(output.branches, expected_output.branches)
 
         # Check study cohorts
-        self.assertCountEqual(output.study_cohorts, expected_output.study_cohorts)
-        self.assertEqual(output.study_cohorts, expected_output.study_cohorts)
+        self.assertCountEqual(output.cohorts, expected_output.cohorts)
+        self.assertEqual(output.cohorts, expected_output.cohorts)
 
         # Check study epochs
-        self.assertCountEqual(output.study_epochs, expected_output.study_epochs)
-        self.assertEqual(output.study_epochs, expected_output.study_epochs)
+        self.assertCountEqual(output.epochs, expected_output.epochs)
+        self.assertEqual(output.epochs, expected_output.epochs)
 
         # Check study elements
-        self.assertCountEqual(output.study_elements, expected_output.study_elements)
-        self.assertEqual(output.study_elements, expected_output.study_elements)
+        self.assertCountEqual(output.elements, expected_output.elements)
+        self.assertEqual(output.elements, expected_output.elements)
 
         # Check study design matrix
-        self.assertCountEqual(
-            output.study_design_matrix, expected_output.study_design_matrix
-        )
-        self.assertEqual(
-            output.study_design_matrix, expected_output.study_design_matrix
-        )
+        self.assertCountEqual(output.design_matrix, expected_output.design_matrix)
+        self.assertEqual(output.design_matrix, expected_output.design_matrix)
 
         # Check study visits
-        self.assertCountEqual(output.study_visits, expected_output.study_visits)
-        self.assertEqual(output.study_visits, expected_output.study_visits)
+        self.assertCountEqual(output.visits, expected_output.visits)
+        self.assertEqual(output.visits, expected_output.visits)
 
-        # Check study criterias
-        self.assertCountEqual(output.study_criterias, expected_output.study_criterias)
-        self.assertEqual(output.study_criterias, expected_output.study_criterias)
+        # Check study criteria
+        self.assertCountEqual(output.criteria, expected_output.criteria)
+        self.assertEqual(output.criteria, expected_output.criteria)
 
-        # Check study criterias
-        self.assertCountEqual(output.study_objectives, expected_output.study_objectives)
-        self.assertEqual(output.study_objectives, expected_output.study_objectives)
+        # Check study objectives
+        self.assertCountEqual(output.objectives, expected_output.objectives)
+        self.assertEqual(output.objectives, expected_output.objectives)
 
-        # Check study criterias
-        self.assertCountEqual(output.study_endpoints, expected_output.study_endpoints)
-        self.assertEqual(output.study_endpoints, expected_output.study_endpoints)
+        # Check study endpoints
+        self.assertCountEqual(output.endpoints, expected_output.endpoints)
+        self.assertEqual(output.endpoints, expected_output.endpoints)

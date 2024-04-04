@@ -1,7 +1,10 @@
 """Utility functions"""
 import copy
+import logging
 
 from deepdiff import DeepDiff
+
+log = logging.getLogger(__name__)
 
 
 def compare_versions(version1: str, version2: str) -> int:
@@ -76,14 +79,14 @@ def increment_api_version_if_needed(api_spec_new: dict, api_spec_old: dict) -> d
 
     if diff:
         # Increment version (patch number) of the new API specification if needed
-        print("Changes to API specification detected")
+        log.info("Changes to API specification detected")
         old_version = api_spec_old["info"]["version"]
         new_version = api_spec_new["info"]["version"]
 
         if compare_versions(new_version, old_version) < 1:
             api_spec_final["info"]["version"] = increment_version_number(old_version)
-            print(
-                f'Auto-incremented API version to {api_spec_final["info"]["version"]}'
+            log.info(
+                "Auto-incremented API version to %s", api_spec_final["info"]["version"]
             )
 
     return api_spec_final

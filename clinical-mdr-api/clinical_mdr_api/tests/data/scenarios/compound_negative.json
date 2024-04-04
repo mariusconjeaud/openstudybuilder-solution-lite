@@ -226,13 +226,13 @@
       }
    },
    {
-      "name": "Test PATCH non existing dose frequency",
+      "name": "Test PATCH non-existent dose frequency",
       "request": {
          "headers": {},
          "method": "PATCH",
          "request": {
             "dose_frequency_uids": [
-               "dose_frequency_non_existing_uid"
+               "dose_frequency_non_existent_uid"
             ],
             "change_description": "Changing compound"
          },
@@ -241,7 +241,7 @@
       "response": {
          "code": 400,
          "result": {
-            "message": "CompoundVO tried to connect to non existing dose frequency identified by uid (dose_frequency_non_existing_uid)",
+            "message": "CompoundVO tried to connect to non-existent or non-final dose frequency identified by uid (dose_frequency_non_existent_uid)",
             "method": "PATCH",
             "path": "http://testserver/concepts/compounds/Compound_000001",
             "time": "2020-11-10T01:51:17.884429",
@@ -250,13 +250,13 @@
       }
    },
    {
-      "name": "Test PATCH non existing dose value",
+      "name": "Test PATCH non-existent dose value",
       "request": {
          "headers": {},
          "method": "PATCH",
          "request": {
             "dose_values_uids": [
-               "dose_value_non_existing_uid"
+               "dose_value_non_existent_uid"
             ],
             "change_description": "Changing compound"
          },
@@ -265,7 +265,7 @@
       "response": {
          "code": 400,
          "result": {
-            "message": "CompoundVO tried to connect to non existing dose value identified by uid (dose_value_non_existing_uid)",
+            "message": "CompoundVO tried to connect to non-existent dose value identified by uid (dose_value_non_existent_uid)",
             "method": "PATCH",
             "path": "http://testserver/concepts/compounds/Compound_000001",
             "time": "2020-11-10T01:51:17.884429",
@@ -274,13 +274,13 @@
       }
    },
    {
-      "name": "Test PATCH non existing strength value",
+      "name": "Test PATCH non-existent strength value",
       "request": {
          "headers": {},
          "method": "PATCH",
          "request": {
             "strength_values_uids": [
-               "non_existing_uid"
+               "non_existent_uid"
             ],
             "change_description": "Changing compound"
          },
@@ -289,7 +289,7 @@
       "response": {
          "code": 400,
          "result": {
-            "message": "CompoundVO tried to connect to non existing strength value identified by uid (non_existing_uid)",
+            "message": "CompoundVO tried to connect to non-existent strength value identified by uid (non_existent_uid)",
             "method": "PATCH",
             "path": "http://testserver/concepts/compounds/Compound_000001",
             "time": "2020-11-10T01:51:17.884429",
@@ -298,13 +298,13 @@
       }
    },
    {
-      "name": "Test PATCH non existing dosage form",
+      "name": "Test PATCH non-existent dosage form",
       "request": {
          "headers": {},
          "method": "PATCH",
          "request": {
             "dosage_form_uids": [
-               "dosage_form_non_existing_uid"
+               "dosage_form_non_existent_uid"
             ],
             "change_description": "Changing compound"
          },
@@ -313,7 +313,7 @@
       "response": {
          "code": 400,
          "result": {
-            "message": "CompoundVO tried to connect to non existing dosage form identified by uid (dosage_form_non_existing_uid)",
+            "message": "CompoundVO tried to connect to non-existent or non-final dosage form identified by uid (dosage_form_non_existent_uid)",
             "method": "PATCH",
             "path": "http://testserver/concepts/compounds/Compound_000001",
             "time": "2020-11-10T01:51:17.884429",
@@ -322,13 +322,13 @@
       }
    },
    {
-      "name": "Test PATCH non existing route of administration",
+      "name": "Test PATCH non-existent route of administration",
       "request": {
          "headers": {},
          "method": "PATCH",
          "request": {
             "route_of_administration_uids": [
-               "route_of_administration_non_existing_uid"
+               "route_of_administration_non_existent_uid"
             ],
             "change_description": "Changing compound"
          },
@@ -337,7 +337,7 @@
       "response": {
          "code": 400,
          "result": {
-            "message": "CompoundVO tried to connect to non existing route of administration identified by uid (route_of_administration_non_existing_uid)",
+            "message": "CompoundVO tried to connect to non-existent or non-final route of administration identified by uid (route_of_administration_non_existent_uid)",
             "method": "PATCH",
             "path": "http://testserver/concepts/compounds/Compound_000001",
             "time": "2020-11-10T01:51:17.884429",
@@ -346,13 +346,13 @@
       }
    },
    {
-      "name": "Test PATCH non existing substance",
+      "name": "Test PATCH non-existent substance",
       "request": {
          "headers": {},
          "method": "PATCH",
          "request": {
             "substance_terms_uids": [
-               "unii_non_existing_uid"
+               "unii_non_existent_uid"
             ],
             "change_description": "Changing compound"
          },
@@ -361,7 +361,7 @@
       "response": {
          "code": 400,
          "result": {
-            "message": "CompoundVO tried to connect to non existing substance identified by uid (unii_non_existing_uid)",
+            "message": "CompoundVO tried to connect to non-existent substance identified by uid (unii_non_existent_uid)",
             "method": "PATCH",
             "path": "http://testserver/concepts/compounds/Compound_000001",
             "time": "2020-11-10T01:51:17.884429",
@@ -370,13 +370,13 @@
       }
    },
    {
-      "name": "Test PATCH non existing delivery device",
+      "name": "Test PATCH non-existent delivery device",
       "request": {
          "headers": {},
          "method": "PATCH",
          "request": {
             "delivery_devices_uids": [
-               "non_existing_uid"
+               "non_existent_uid"
             ],
             "change_description": "Changing compound"
          },
@@ -385,7 +385,7 @@
       "response": {
          "code": 400,
          "result": {
-            "message": "CompoundVO tried to connect to non existing delivery device identified by uid (non_existing_uid)",
+            "message": "CompoundVO tried to connect to non-existent or non-final delivery device identified by uid (non_existent_uid)",
             "method": "PATCH",
             "path": "http://testserver/concepts/compounds/Compound_000001",
             "time": "2020-11-10T01:51:17.884429",
@@ -394,13 +394,13 @@
       }
    },
    {
-      "name": "Test PATCH non existing dispenser",
+      "name": "Test PATCH non-existent dispenser",
       "request": {
          "headers": {},
          "method": "PATCH",
          "request": {
             "dispensers_uids": [
-               "non_existing_uid"
+               "non_existent_uid"
             ],
             "change_description": "Changing compound"
          },
@@ -409,7 +409,7 @@
       "response": {
          "code": 400,
          "result": {
-            "message": "CompoundVO tried to connect to non existing dispenser identified by uid (non_existing_uid)",
+            "message": "CompoundVO tried to connect to non-existent or non-final dispenser identified by uid (non_existent_uid)",
             "method": "PATCH",
             "path": "http://testserver/concepts/compounds/Compound_000001",
             "time": "2020-11-10T01:51:17.884429",
@@ -418,13 +418,13 @@
       }
    },
    {
-      "name": "Test PATCH non existing project",
+      "name": "Test PATCH non-existent project",
       "request": {
          "headers": {},
          "method": "PATCH",
          "request": {
             "projects_uids": [
-               "non_existing_uid"
+               "non_existent_uid"
             ],
             "change_description": "Changing compound"
          },
@@ -433,7 +433,7 @@
       "response": {
          "code": 400,
          "result": {
-            "message": "CompoundVO tried to connect to non existing project identified by uid (non_existing_uid)",
+            "message": "CompoundVO tried to connect to non-existent project identified by uid (non_existent_uid)",
             "method": "PATCH",
             "path": "http://testserver/concepts/compounds/Compound_000001",
             "time": "2020-11-10T01:51:17.884429",
@@ -442,13 +442,13 @@
       }
    },
    {
-      "name": "Test PATCH non existing brand",
+      "name": "Test PATCH non-existent brand",
       "request": {
          "headers": {},
          "method": "PATCH",
          "request": {
             "brands_uids": [
-               "non_existing_uid"
+               "non_existent_uid"
             ],
             "change_description": "Changing compound"
          },
@@ -457,7 +457,7 @@
       "response": {
          "code": 400,
          "result": {
-            "message": "CompoundVO tried to connect to non existing brand identified by uid (non_existing_uid)",
+            "message": "CompoundVO tried to connect to non-existent brand identified by uid (non_existent_uid)",
             "method": "PATCH",
             "path": "http://testserver/concepts/compounds/Compound_000001",
             "time": "2020-11-10T01:51:17.884429",
@@ -466,13 +466,13 @@
       }
    },
    {
-      "name": "Test PATCH non existing lag-time",
+      "name": "Test PATCH non-existent lag-time",
       "request": {
          "headers": {},
          "method": "PATCH",
          "request": {
             "lag_times_uids": [
-               "non_existing_uid"
+               "non_existent_uid"
             ],
             "change_description": "Changing compound"
          },
@@ -481,7 +481,7 @@
       "response": {
          "code": 400,
          "result": {
-            "message": "CompoundVO tried to connect to non existing lag-time identified by uid (non_existing_uid)",
+            "message": "CompoundVO tried to connect to non-existent lag-time identified by uid (non_existent_uid)",
             "method": "PATCH",
             "path": "http://testserver/concepts/compounds/Compound_000001",
             "time": "2020-11-10T01:51:17.884429",

@@ -131,7 +131,7 @@ export default {
         { text: '', value: 'actions', width: '5%' },
         { text: this.$t('_global.library'), value: 'library_name' },
         { text: this.$t('CodelistTermsView.sponsor_name'), value: 'name.sponsor_preferred_name' },
-        { text: this.$t('_global.order'), value: 'name.order' },
+        { text: this.$t('_global.order'), value: '_order' },
         { text: this.$t('CodelistTermsView.name_status'), value: 'name.status' },
         { text: this.$t('CodelistTermsView.name_date'), value: 'name.start_date' },
         { text: this.$t('CtCatalogueTable.concept_id'), value: '_concept_id' },
@@ -183,6 +183,7 @@ export default {
           } else {
             term._concept_id = term.attributes.concept_id
           }
+          term._order = this.getTermOrderInCodelist(term, this.codelistUid)
         }
       })
     },
@@ -226,19 +227,21 @@ export default {
         { text: this.$t('_global.version'), value: 'version' }
       ]
       const resp = await controlledTerminology.getCodelistTermNamesVersions(this.selectedTerm.term_uid)
-      this.historyItems = resp.data
+      this.historyItems = resp.data.map(item => {
+        item.order = this.getTermOrderInCodelist(item, this.codelistUid)
+        return item
+      })
       this.showHistory = true
     },
     async openCTValuesHistory (term) {
       this.selectedTerm = term
       this.historyType = 'termAttributes'
       this.historyHeaders = [
-        { text: this.$t('CodelistTermDetail.concept_id'), value: 'concept_id' },
-        { text: this.$t('CodelistTermDetail.term_name'), value: 'name_submission_value' },
-        { text: this.$t('CodelistTermDetail.submission_value'), value: 'code_submission_value' },
+        { text: this.$t('CodelistTermDetail.concept_id'), value: 'term_uid' },
+        { text: this.$t('CodelistTermDetail.name_submission_value'), value: 'name_submission_value' },
+        { text: this.$t('CodelistTermDetail.code_submission_value'), value: 'code_submission_value' },
         { text: this.$t('CodeListDetail.nci_pref_name'), value: 'nci_preferred_name' },
         { text: this.$t('_global.definition'), value: 'definition' },
-        { text: this.$t('CodelistTermDetail.synonyms'), value: 'synonyms' },
         { text: this.$t('_global.status'), value: 'status' },
         { text: this.$t('_global.version'), value: 'version' }
       ]

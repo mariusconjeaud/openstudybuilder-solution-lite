@@ -4,10 +4,6 @@ from docx.enum.style import WD_STYLE_TYPE
 from yattag.doc import Doc
 
 from clinical_mdr_api.oauth import get_current_user_id
-from clinical_mdr_api.services._meta_repository import MetaRepository
-from clinical_mdr_api.services.concepts.unit_definitions.unit_definition import (
-    UnitDefinitionService,
-)
 from clinical_mdr_api.services.studies.study import StudyService
 from clinical_mdr_api.services.studies.study_endpoint_selection import (
     StudyEndpointSelectionService,
@@ -43,15 +39,9 @@ class StudyObjectivesService:
 
     def __init__(self, user_id: str) -> None:
         self._current_user_id = user_id
-        self._epoch_terms = None
         self._study_endpoint_selection_service = StudyEndpointSelectionService(
             author=self._current_user_id
         )
-        self._meta_repository = MetaRepository(user=user_id)
-        self._unit_definition_service = UnitDefinitionService(
-            user_id=self._current_user_id, meta_repository=self._meta_repository
-        )
-        self._units = None
 
     def _get_all_selection(
         self,
@@ -127,7 +117,6 @@ class StudyObjectivesService:
             node[1].setdefault(
                 study_selection_endpoint.study_endpoint_uid, study_selection_endpoint
             )
-
         return root
 
     @staticmethod
@@ -178,7 +167,10 @@ class StudyObjectivesService:
 
                     with tag("tbody"):
                         for objective_level, objectives, endpoints in sorted(
-                            tree.values(), key=lambda o: o[0].order
+                            tree.values(),
+                            key=lambda o: o[0].codelists[0].order
+                            if o[0].codelists
+                            else 0,
                         ):
                             with tag("tr"):
                                 with tag("td"):
@@ -194,7 +186,10 @@ class StudyObjectivesService:
 
                                 with tag("td"):
                                     for endpoint_level, study_endpoints in sorted(
-                                        endpoints.values(), key=lambda e: e[0].order
+                                        endpoints.values(),
+                                        key=lambda e: e[0].codelists[0].order
+                                        if e[0].codelists
+                                        else 0,
                                     ):
                                         line(
                                             "p",
@@ -231,7 +226,10 @@ class StudyObjectivesService:
 
                     with tag("tbody"):
                         for objective_level, study_objectives in sorted(
-                            tree.values(), key=lambda o: o[0].order
+                            tree.values(),
+                            key=lambda o: o[0].codelists[0].order
+                            if o[0].codelists
+                            else 0,
                         ):
                             with tag("tr"):
                                 line(
@@ -246,22 +244,39 @@ class StudyObjectivesService:
                             for study_objective, endpoint_levels in sorted(
                                 study_objectives.values(), key=lambda o: o[0].order
                             ):
+                                amount_of_se_in_different_levels = len(endpoint_levels)
+                                for endpoint_level in endpoint_levels.values():
+                                    _, study_endpoints = endpoint_level
+                                    amount_of_se_in_different_levels += len(
+                                        study_endpoints
+                                    )
                                 for epl_idx, epl_ste in enumerate(
                                     sorted(
                                         endpoint_levels.values(),
-                                        key=lambda o: o[0].order,
+                                        key=lambda o: o[0].codelists[0].order
+                                        if o[0].codelists
+                                        else 0,
                                     )
                                 ):
                                     endpoint_level, study_endpoints = epl_ste
-
                                     if epl_idx == 0:
                                         with tag("tr"):
                                             with tag(
                                                 "td",
                                                 klass="objective",
-                                                rowspan=(len(study_endpoints) + 1),
+                                                rowspan=(
+                                                    amount_of_se_in_different_levels
+                                                ),
                                             ):
                                                 doc.asis(study_objective.objective.name)
+                                            line(
+                                                "th",
+                                                endpoint_level.sponsor_preferred_name,
+                                                klass="endpoint-level",
+                                                colspan=3,
+                                            )
+                                    else:
+                                        with tag("tr"):
                                             line(
                                                 "th",
                                                 endpoint_level.sponsor_preferred_name,
@@ -307,7 +322,8 @@ class StudyObjectivesService:
         docx.repeat_table_header(row)
 
         for objective_level, objectives, endpoints in sorted(
-            tree.values(), key=lambda o: o[0].order
+            tree.values(),
+            key=lambda o: o[0].codelists[0].order if o[0].codelists else 0,
         ):
             row = table.add_row()
 
@@ -326,7 +342,8 @@ class StudyObjectivesService:
 
             cell = row.cells[1]
             for endpoint_level, study_endpoints in sorted(
-                endpoints.values(), key=lambda e: e[0].order
+                endpoints.values(),
+                key=lambda e: e[0].codelists[0].order if e[0].codelists else 0,
             ):
                 cell.add_paragraph(
                     f"{endpoint_level.sponsor_preferred_name}:",
@@ -365,7 +382,8 @@ class StudyObjectivesService:
         docx.repeat_table_header(row)
 
         for objective_level, study_objectives in sorted(
-            tree.values(), key=lambda o: o[0].order
+            tree.values(),
+            key=lambda o: o[0].codelists[0].order if o[0].codelists else 0,
         ):
             row = table.add_row()
             num_rows += 1
@@ -397,7 +415,10 @@ class StudyObjectivesService:
                     docx.delete_paragraph(row.cells[0].paragraphs[0])
 
                 for epl_idx, epl_ste in enumerate(
-                    sorted(endpoint_levels.values(), key=lambda o: o[0].order)
+                    sorted(
+                        endpoint_levels.values(),
+                        key=lambda o: o[0].codelists[0].order if o[0].codelists else 0,
+                    )
                 ):
                     endpoint_level, study_endpoints = epl_ste
 

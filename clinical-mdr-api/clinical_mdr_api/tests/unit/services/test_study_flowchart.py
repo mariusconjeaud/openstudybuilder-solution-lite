@@ -1,7 +1,11 @@
+# pylint: disable=too-many-lines
+
 import datetime
+from copy import deepcopy
 
 import pytest
 
+from clinical_mdr_api import config
 from clinical_mdr_api.domains.study_selections.study_soa_footnote import SoAItemType
 from clinical_mdr_api.models import (
     Activity,
@@ -66,17 +70,146 @@ def test_get_flowchart_item_uid_coordinates(study_flowchart_service):
     assert coordinates == COORDINATES
 
 
+def test_group_visits(study_flowchart_service):
+    visits = study_flowchart_service._get_study_visits()
+    grouped_visits = study_flowchart_service._group_visits(visits)
+
+    count_visits = 0
+    for study_epoch_uid, epoch_grouping in grouped_visits.items():
+        assert isinstance(study_epoch_uid, str)
+        assert isinstance(epoch_grouping, dict)
+
+        for visit_group_id, visit_group in epoch_grouping.items():
+            assert isinstance(visit_group_id, str)
+            assert isinstance(visit_group, list)
+
+            for visit in visit_group:
+                count_visits += 1
+
+                assert isinstance(visit, StudyVisit)
+                assert study_epoch_uid == visit.study_epoch_uid
+
+                if len(visit_group) == 1:
+                    assert visit_group_id == visit.uid
+                else:
+                    assert visit_group_id == visit.consecutive_visit_group
+
+    assert count_visits == len(visits)
+
+
+def test_mk_simple_footnotes(study_flowchart_service):
+    footnotes: list[StudySoAFootnote] = study_flowchart_service._get_study_footnotes()
+    (
+        footnote_symbols_by_ref_uid,
+        simple_footnotes_by_symbol,
+    ) = study_flowchart_service._mk_simple_footnotes(footnotes)
+
+    assert simple_footnotes_by_symbol == EXPECTED_SOA_TABLE.footnotes
+
+    footnotes_uid_to_symbol_mapping = {
+        simple_footnote.uid: symbol
+        for symbol, simple_footnote in simple_footnotes_by_symbol.items()
+    }
+
+    count_references = 0
+    for soa_footnote in footnotes:
+        assert soa_footnote.footnote.uid in footnotes_uid_to_symbol_mapping
+        symbol = footnotes_uid_to_symbol_mapping[soa_footnote.footnote.uid]
+        for ref in soa_footnote.referenced_items:
+            assert ref.item_uid in footnote_symbols_by_ref_uid
+            assert symbol in footnote_symbols_by_ref_uid[ref.item_uid]
+            count_references += 1
+
+    assert count_references == sum(
+        len(symbols) for symbols in footnote_symbols_by_ref_uid.values()
+    )
+
+
+@pytest.mark.parametrize("time_unit", ["day", "week"])
+def test_get_header_rows(study_flowchart_service, time_unit):
+    visits = [
+        visit
+        for visit in study_flowchart_service._get_study_visits()
+        if visit.show_visit and visit.study_epoch_name != config.BASIC_EPOCH_NAME
+    ]
+    grouped_visits = study_flowchart_service._group_visits(visits)
+
+    header_rows = study_flowchart_service._get_header_rows(
+        grouped_visits, time_unit=time_unit, footnote_symbols_by_ref_uid={}
+    )
+
+    visits = [
+        visit_group[0]
+        for epoch_grouping in grouped_visits.values()
+        for visit_group in epoch_grouping.values()
+    ]
+
+    assert len(header_rows) == 4
+
+    for _r, row in enumerate(header_rows):
+        assert row.hide is False
+
+        if _r == 0:
+            assert (
+                len([cell.span for cell in row.cells if cell.span > 0])
+                == len(grouped_visits) + 1
+            ), "Epoch count mismatch"
+        else:
+            assert (
+                sum(cell.span for cell in row.cells)
+                == sum(len(epoch_group) for epoch_group in grouped_visits.values()) + 1
+            ), "Visit row count mismatch"
+
+        if _r == 1:
+            for _c, cell in enumerate(row.cells[1:]):
+                visit = visits[_c]
+                assert (
+                    cell.text == visit.consecutive_visit_group or visit.visit_short_name
+                ), "Error in visit name"
+
+        if _r == 2:
+            for _c, cell in enumerate(row.cells[1:]):
+                visit = visits[_c]
+                if not visit.consecutive_visit_group:
+                    expected = (
+                        visit.study_day_number
+                        if time_unit == "day"
+                        else visit.study_week_number
+                    )
+                    assert cell.text == f"{expected:d}", "Error in day/week number"
+
+
 def test_get_flowchart_table(study_flowchart_service):
-    table = study_flowchart_service.get_flowchart_table(study_uid="", time_unit="days")
+    table = study_flowchart_service.get_flowchart_table(study_uid="", time_unit="day")
 
-    assert table.num_header_rows == TABLE.num_header_rows
-    assert table.num_header_cols == TABLE.num_header_cols
-    assert table.title == TABLE.title
-    assert table.footnotes == TABLE.footnotes
-    assert len(table.rows) == len(TABLE.rows)
+    assert table.num_header_rows == EXPECTED_SOA_TABLE.num_header_rows
+    assert table.num_header_cols == EXPECTED_SOA_TABLE.num_header_cols
+    assert table.title == EXPECTED_SOA_TABLE.title
+    assert table.footnotes == EXPECTED_SOA_TABLE.footnotes
 
-    for i, row in enumerate(table.rows):
-        assert row.dict() == TABLE.rows[i].dict()
+    assert table.dict() == EXPECTED_SOA_TABLE.dict()
+
+
+def test_propagate_hidden_rows():
+    table = deepcopy(EXPECTED_SOA_TABLE)
+    StudyFlowchartService.propagate_hidden_rows(table)
+    assert table.dict() == EXPECTED_PROTOCOL_SOA_TABLE
+
+
+def test_show_hidden_rows():
+    table = deepcopy(EXPECTED_SOA_TABLE)
+    StudyFlowchartService.show_hidden_rows(table)
+
+    assert table.num_header_rows == EXPECTED_SOA_TABLE.num_header_rows
+    assert table.num_header_cols == EXPECTED_SOA_TABLE.num_header_cols
+    assert table.title == EXPECTED_SOA_TABLE.title
+    assert table.footnotes == EXPECTED_SOA_TABLE.footnotes
+    assert len(table.rows) == len(EXPECTED_SOA_TABLE.rows)
+
+    row: TableRow
+    for row, expected_row in zip(table.rows, EXPECTED_SOA_TABLE.rows):
+        assert row.cells == expected_row.cells
+        assert row.hide is False
 
 
 STUDY_VISITS = [
@@ -122,6 +255,7 @@ STUDY_VISITS = [
         study_day_label="Day -14",
         study_week_number=-2,
         study_duration_weeks_label="-3 weeks",
+        week_in_study_label="Week -3",
         study_week_label="Week -2",
         visit_number=1,
         visit_subnumber=0,
@@ -183,6 +317,7 @@ STUDY_VISITS = [
         study_day_label="Day -3",
         study_week_number=1,
         study_duration_weeks_label="0 weeks",
+        week_in_study_label="Week 0",
         study_week_label="Week 1",
         visit_number=2,
         visit_subnumber=0,
@@ -244,6 +379,7 @@ STUDY_VISITS = [
         study_day_label="Day -2",
         study_week_number=1,
         study_duration_weeks_label="0 weeks",
+        week_in_study_label="Week 0",
         study_week_label="Week 1",
         visit_number=3,
         visit_subnumber=0,
@@ -305,6 +441,7 @@ STUDY_VISITS = [
         study_day_label="Day -1",
         study_week_number=1,
         study_duration_weeks_label="0 weeks",
+        week_in_study_label="Week 0",
         study_week_label="Week 1",
         visit_number=4,
         visit_subnumber=0,
@@ -366,6 +503,7 @@ STUDY_VISITS = [
         study_day_label="Day 1",
         study_week_number=1,
         study_duration_weeks_label="0 weeks",
+        week_in_study_label="Week 0",
         study_week_label="Week 1",
         visit_number=5,
         visit_subnumber=0,
@@ -427,6 +565,7 @@ STUDY_VISITS = [
         study_day_label="Day 3",
         study_week_number=1,
         study_duration_weeks_label="0 weeks",
+        week_in_study_label="Week 0",
         study_week_label="Week 1",
         visit_number=6,
         visit_subnumber=0,
@@ -488,6 +627,7 @@ STUDY_VISITS = [
         study_day_label="Day 5",
         study_week_number=1,
         study_duration_weeks_label="0 weeks",
+        week_in_study_label="Week 0",
         study_week_label="Week 1",
         visit_number=7,
         visit_subnumber=0,
@@ -549,6 +689,7 @@ STUDY_VISITS = [
         study_day_label="Day 15",
         study_week_number=3,
         study_duration_weeks_label="2 weeks",
+        week_in_study_label="Week 2",
         study_week_label="Week 3",
         visit_number=8,
         visit_subnumber=0,
@@ -610,6 +751,7 @@ STUDY_VISITS = [
         study_day_label="Day 17",
         study_week_number=3,
         study_duration_weeks_label="2 weeks",
+        week_in_study_label="Week 2",
         study_week_label="Week 3",
         visit_number=9,
         visit_subnumber=0,
@@ -671,6 +813,7 @@ STUDY_VISITS = [
         study_day_label="Day 19",
         study_week_number=3,
         study_duration_weeks_label="2 weeks",
+        week_in_study_label="Week 2",
         study_week_label="Week 3",
         visit_number=10,
         visit_subnumber=0,
@@ -732,6 +875,7 @@ STUDY_VISITS = [
         study_day_label="Day 22",
         study_week_number=4,
         study_duration_weeks_label="3 weeks",
+        week_in_study_label="Week 3",
         study_week_label="Week 4",
         visit_number=11,
         visit_subnumber=0,
@@ -793,6 +937,7 @@ STUDY_VISITS = [
         study_day_label=None,
         study_week_number=None,
         study_duration_weeks_label=None,
+        week_in_study_label=None,
         study_week_label=None,
         visit_number=29500,
         visit_subnumber=0,
@@ -854,6 +999,7 @@ STUDY_VISITS = [
         study_day_label=None,
         study_week_number=None,
         study_duration_weeks_label=None,
+        week_in_study_label=None,
         study_week_label=None,
         visit_number=29999,
         visit_subnumber=0,
@@ -2561,15 +2707,15 @@ FOOTNOTES = [
     ),
 ]
 
-TABLE = TableWithFootnotes(
+EXPECTED_SOA_TABLE = TableWithFootnotes(
     rows=[
         TableRow(
             cells=[
                 TableCell(
-                    text="Procedure",
+                    text="",
                     span=1,
                     style="header1",
-                    ref=None,
+                    refs=[],
                     footnotes=None,
                     vertical=None,
                 ),
@@ -2577,7 +2723,7 @@ TABLE = TableWithFootnotes(
                     text="Screening",
                     span=1,
                     style="header1",
-                    ref=Ref(type="StudyEpoch", uid="StudyEpoch_000004"),
+                    refs=[Ref(type="StudyEpoch", uid="StudyEpoch_000004")],
                     footnotes=["a"],
                     vertical=True,
                 ),
@@ -2585,18 +2731,18 @@ TABLE = TableWithFootnotes(
                     text="Run-in",
                     span=2,
                     style="header1",
-                    ref=Ref(type="StudyEpoch", uid="StudyEpoch_000005"),
+                    refs=[Ref(type="StudyEpoch", uid="StudyEpoch_000005")],
                     footnotes=None,
                     vertical=True,
                 ),
                 TableCell(
-                    text="", span=0, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=0, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
                     text="Treatment 1",
                     span=1,
                     style="header1",
-                    ref=Ref(type="StudyEpoch", uid="StudyEpoch_000006"),
+                    refs=[Ref(type="StudyEpoch", uid="StudyEpoch_000006")],
                     footnotes=None,
                     vertical=True,
                 ),
@@ -2604,21 +2750,21 @@ TABLE = TableWithFootnotes(
                     text="Treatment 2",
                     span=3,
                     style="header1",
-                    ref=Ref(type="StudyEpoch", uid="StudyEpoch_000007"),
+                    refs=[Ref(type="StudyEpoch", uid="StudyEpoch_000007")],
                     footnotes=None,
                     vertical=True,
                 ),
                 TableCell(
-                    text="", span=0, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=0, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=0, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=0, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
                     text="Follow-up",
                     span=1,
                     style="header1",
-                    ref=Ref(type="StudyEpoch", uid="StudyEpoch_000008"),
+                    refs=[Ref(type="StudyEpoch", uid="StudyEpoch_000008")],
                     footnotes=None,
                     vertical=True,
                 ),
@@ -2631,7 +2777,7 @@ TABLE = TableWithFootnotes(
                     text="Visit short name",
                     span=1,
                     style="header2",
-                    ref=None,
+                    refs=[],
                     footnotes=None,
                     vertical=None,
                 ),
@@ -2639,7 +2785,7 @@ TABLE = TableWithFootnotes(
                     text="V1",
                     span=1,
                     style="header2",
-                    ref=Ref(type="StudyVisit", uid="StudyVisit_000012"),
+                    refs=[Ref(type="StudyVisit", uid="StudyVisit_000012")],
                     footnotes=["b"],
                     vertical=None,
                 ),
@@ -2647,7 +2793,7 @@ TABLE = TableWithFootnotes(
                     text="V2",
                     span=1,
                     style="header2",
-                    ref=Ref(type="StudyVisit", uid="StudyVisit_000013"),
+                    refs=[Ref(type="StudyVisit", uid="StudyVisit_000013")],
                     footnotes=None,
                     vertical=None,
                 ),
@@ -2655,7 +2801,7 @@ TABLE = TableWithFootnotes(
                     text="V4",
                     span=1,
                     style="header2",
-                    ref=Ref(type="StudyVisit", uid="StudyVisit_000015"),
+                    refs=[Ref(type="StudyVisit", uid="StudyVisit_000015")],
                     footnotes=["a"],
                     vertical=None,
                 ),
@@ -2663,7 +2809,11 @@ TABLE = TableWithFootnotes(
                     text="V5-V7",
                     span=1,
                     style="header2",
-                    ref=Ref(type="StudyVisit", uid="StudyVisit_000016"),
+                    refs=[
+                        Ref(type="StudyVisit", uid="StudyVisit_000016"),
+                        Ref(type="StudyVisit", uid="StudyVisit_000017"),
+                        Ref(type="StudyVisit", uid="StudyVisit_000018"),
+                    ],
                     footnotes=None,
                     vertical=None,
                 ),
@@ -2671,7 +2821,7 @@ TABLE = TableWithFootnotes(
                     text="V8",
                     span=1,
                     style="header2",
-                    ref=Ref(type="StudyVisit", uid="StudyVisit_000019"),
+                    refs=[Ref(type="StudyVisit", uid="StudyVisit_000019")],
                     footnotes=None,
                     vertical=None,
                 ),
@@ -2679,7 +2829,7 @@ TABLE = TableWithFootnotes(
                     text="V9",
                     span=1,
                     style="header2",
-                    ref=Ref(type="StudyVisit", uid="StudyVisit_000020"),
+                    refs=[Ref(type="StudyVisit", uid="StudyVisit_000020")],
                     footnotes=None,
                     vertical=None,
                 ),
@@ -2687,7 +2837,7 @@ TABLE = TableWithFootnotes(
                     text="V10",
                     span=1,
                     style="header2",
-                    ref=Ref(type="StudyVisit", uid="StudyVisit_000021"),
+                    refs=[Ref(type="StudyVisit", uid="StudyVisit_000021")],
                     footnotes=None,
                     vertical=None,
                 ),
@@ -2695,7 +2845,7 @@ TABLE = TableWithFootnotes(
                     text="V11",
                     span=1,
                     style="header2",
-                    ref=Ref(type="StudyVisit", uid="StudyVisit_000022"),
+                    refs=[Ref(type="StudyVisit", uid="StudyVisit_000022")],
                     footnotes=None,
                     vertical=None,
                 ),
@@ -2708,7 +2858,7 @@ TABLE = TableWithFootnotes(
                     text="Study day",
                     span=1,
                     style="header3",
-                    ref=None,
+                    refs=[],
                     footnotes=None,
                     vertical=None,
                 ),
@@ -2716,7 +2866,7 @@ TABLE = TableWithFootnotes(
                     text="-14",
                     span=1,
                     style="header3",
-                    ref=None,
+                    refs=[],
                     footnotes=None,
                     vertical=None,
                 ),
@@ -2724,7 +2874,7 @@ TABLE = TableWithFootnotes(
                     text="-3",
                     span=1,
                     style="header3",
-                    ref=None,
+                    refs=[],
                     footnotes=None,
                     vertical=None,
                 ),
@@ -2732,7 +2882,7 @@ TABLE = TableWithFootnotes(
                     text="-1",
                     span=1,
                     style="header3",
-                    ref=None,
+                    refs=[],
                     footnotes=None,
                     vertical=None,
                 ),
@@ -2740,7 +2890,7 @@ TABLE = TableWithFootnotes(
                     text="1-5",
                     span=1,
                     style="header3",
-                    ref=None,
+                    refs=[],
                     footnotes=None,
                     vertical=None,
                 ),
@@ -2748,7 +2898,7 @@ TABLE = TableWithFootnotes(
                     text="15",
                     span=1,
                     style="header3",
-                    ref=None,
+                    refs=[],
                     footnotes=None,
                     vertical=None,
                 ),
@@ -2756,7 +2906,7 @@ TABLE = TableWithFootnotes(
                     text="17",
                     span=1,
                     style="header3",
-                    ref=None,
+                    refs=[],
                     footnotes=None,
                     vertical=None,
                 ),
@@ -2764,7 +2914,7 @@ TABLE = TableWithFootnotes(
                     text="19",
                     span=1,
                     style="header3",
-                    ref=None,
+                    refs=[],
                     footnotes=None,
                     vertical=None,
                 ),
@@ -2772,7 +2922,7 @@ TABLE = TableWithFootnotes(
                     text="22",
                     span=1,
                     style="header3",
-                    ref=None,
+                    refs=[],
                     footnotes=None,
                     vertical=None,
                 ),
@@ -2785,7 +2935,7 @@ TABLE = TableWithFootnotes(
                     text="Visit window (days)",
                     span=1,
                     style="header4",
-                    ref=None,
+                    refs=[],
                     footnotes=None,
                     vertical=None,
                 ),
@@ -2793,7 +2943,7 @@ TABLE = TableWithFootnotes(
                     text="±0",
                     span=1,
                     style="header4",
-                    ref=None,
+                    refs=[],
                     footnotes=None,
                     vertical=None,
                 ),
@@ -2801,7 +2951,7 @@ TABLE = TableWithFootnotes(
                     text="±0",
                     span=1,
                     style="header4",
-                    ref=None,
+                    refs=[],
                     footnotes=None,
                     vertical=None,
                 ),
@@ -2809,7 +2959,7 @@ TABLE = TableWithFootnotes(
                     text="±0",
                     span=1,
                     style="header4",
-                    ref=None,
+                    refs=[],
                     footnotes=None,
                     vertical=None,
                 ),
@@ -2817,7 +2967,7 @@ TABLE = TableWithFootnotes(
                     text="±0",
                     span=1,
                     style="header4",
-                    ref=None,
+                    refs=[],
                     footnotes=None,
                     vertical=None,
                 ),
@@ -2825,7 +2975,7 @@ TABLE = TableWithFootnotes(
                     text="±0",
                     span=1,
                     style="header4",
-                    ref=None,
+                    refs=[],
                     footnotes=None,
                     vertical=None,
                 ),
@@ -2833,7 +2983,7 @@ TABLE = TableWithFootnotes(
                     text="±0",
                     span=1,
                     style="header4",
-                    ref=None,
+                    refs=[],
                     footnotes=None,
                     vertical=None,
                 ),
@@ -2841,7 +2991,7 @@ TABLE = TableWithFootnotes(
                     text="±0",
                     span=1,
                     style="header4",
-                    ref=None,
+                    refs=[],
                     footnotes=None,
                     vertical=None,
                 ),
@@ -2849,7 +2999,7 @@ TABLE = TableWithFootnotes(
                     text="±0",
                     span=1,
                     style="header4",
-                    ref=None,
+                    refs=[],
                     footnotes=None,
                     vertical=None,
                 ),
@@ -2862,33 +3012,33 @@ TABLE = TableWithFootnotes(
                     text="SUBJECT RELATED INFORMATION",
                     span=1,
                     style="soaGroup",
-                    ref=Ref(type="CTTermName", uid="StudySoAGroup_000033"),
+                    refs=[Ref(type="StudySoAGroup", uid="StudySoAGroup_000033")],
                     footnotes=None,
                     vertical=None,
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
             ],
             hide=False,
@@ -2899,33 +3049,35 @@ TABLE = TableWithFootnotes(
                     text="Informed Consent and Demography",
                     span=1,
                     style="group",
-                    ref=Ref(type="StudyActivityGroup", uid="StudyActivityGroup_000033"),
+                    refs=[
+                        Ref(type="StudyActivityGroup", uid="StudyActivityGroup_000033")
+                    ],
                     footnotes=None,
                     vertical=None,
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
             ],
             hide=False,
@@ -2936,55 +3088,38 @@ TABLE = TableWithFootnotes(
                     text="Informed Consent and Demography",
                     span=1,
                     style="subGroup",
-                    ref=Ref(
-                        type="StudyActivitySubGroup", uid="StudyActivitySubGroup_000033"
-                    ),
+                    refs=[
+                        Ref(
+                            type="StudyActivitySubGroup",
+                            uid="StudyActivitySubGroup_000033",
+                        )
+                    ],
                     footnotes=None,
                     vertical=None,
                 ),
                 TableCell(
-                    text="X",
-                    span=1,
-                    style=None,
-                    ref=None,
-                    footnotes=None,
-                    vertical=None,
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="X",
-                    span=1,
-                    style=None,
-                    ref=None,
-                    footnotes=None,
-                    vertical=None,
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="X",
-                    span=1,
-                    style=None,
-                    ref=None,
-                    footnotes=None,
-                    vertical=None,
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="X",
-                    span=1,
-                    style=None,
-                    ref=None,
-                    footnotes=None,
-                    vertical=None,
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
             ],
             hide=False,
@@ -2995,7 +3130,7 @@ TABLE = TableWithFootnotes(
                     text="Informed Consent Obtained",
                     span=1,
                     style="activity",
-                    ref=Ref(type="StudyActivity", uid="StudyActivity_000033"),
+                    refs=[Ref(type="StudyActivity", uid="StudyActivity_000033")],
                     footnotes=None,
                     vertical=None,
                 ),
@@ -3003,46 +3138,55 @@ TABLE = TableWithFootnotes(
                     text="X",
                     span=1,
                     style="activitySchedule",
-                    ref=Ref(
-                        type="StudyActivitySchedule", uid="StudyActivitySchedule_000167"
-                    ),
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000167",
+                        )
+                    ],
                     footnotes=None,
                     vertical=None,
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
                     text="X",
                     span=1,
                     style="activitySchedule",
-                    ref=Ref(
-                        type="StudyActivitySchedule", uid="StudyActivitySchedule_000222"
-                    ),
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000222",
+                        )
+                    ],
                     footnotes=None,
                     vertical=None,
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
                     text="X",
                     span=1,
                     style="activitySchedule",
-                    ref=Ref(
-                        type="StudyActivitySchedule", uid="StudyActivitySchedule_000237"
-                    ),
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000237",
+                        )
+                    ],
                     footnotes=None,
                     vertical=None,
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
             ],
             hide=False,
@@ -3053,7 +3197,7 @@ TABLE = TableWithFootnotes(
                     text="Date of Birth",
                     span=1,
                     style="activity",
-                    ref=Ref(type="StudyActivity", uid="StudyActivity_000041"),
+                    refs=[Ref(type="StudyActivity", uid="StudyActivity_000041")],
                     footnotes=None,
                     vertical=None,
                 ),
@@ -3061,9 +3205,12 @@ TABLE = TableWithFootnotes(
                     text="X",
                     span=1,
                     style="activitySchedule",
-                    ref=Ref(
-                        type="StudyActivitySchedule", uid="StudyActivitySchedule_000140"
-                    ),
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000140",
+                        )
+                    ],
                     footnotes=None,
                     vertical=None,
                 ),
@@ -3071,9 +3218,12 @@ TABLE = TableWithFootnotes(
                     text="X",
                     span=1,
                     style="activitySchedule",
-                    ref=Ref(
-                        type="StudyActivitySchedule", uid="StudyActivitySchedule_000146"
-                    ),
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000146",
+                        )
+                    ],
                     footnotes=None,
                     vertical=None,
                 ),
@@ -3081,9 +3231,12 @@ TABLE = TableWithFootnotes(
                     text="X",
                     span=1,
                     style="activitySchedule",
-                    ref=Ref(
-                        type="StudyActivitySchedule", uid="StudyActivitySchedule_000186"
-                    ),
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000186",
+                        )
+                    ],
                     footnotes=None,
                     vertical=None,
                 ),
@@ -3091,23 +3244,26 @@ TABLE = TableWithFootnotes(
                     text="X",
                     span=1,
                     style="activitySchedule",
-                    ref=Ref(
-                        type="StudyActivitySchedule", uid="StudyActivitySchedule_000184"
-                    ),
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000184",
+                        )
+                    ],
                     footnotes=None,
                     vertical=None,
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
             ],
             hide=True,
@@ -3118,33 +3274,35 @@ TABLE = TableWithFootnotes(
                     text="Eligibility Criteria",
                     span=1,
                     style="group",
-                    ref=Ref(type="StudyActivityGroup", uid="StudyActivityGroup_000034"),
+                    refs=[
+                        Ref(type="StudyActivityGroup", uid="StudyActivityGroup_000034")
+                    ],
                     footnotes=None,
                     vertical=None,
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
             ],
             hide=True,
@@ -3155,35 +3313,38 @@ TABLE = TableWithFootnotes(
                     text="Eligibility Criteria",
                     span=1,
                     style="subGroup",
-                    ref=Ref(
-                        type="StudyActivitySubGroup", uid="StudyActivitySubGroup_000034"
-                    ),
+                    refs=[
+                        Ref(
+                            type="StudyActivitySubGroup",
+                            uid="StudyActivitySubGroup_000034",
+                        )
+                    ],
                     footnotes=None,
                     vertical=None,
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
             ],
             hide=True,
@@ -3194,7 +3355,7 @@ TABLE = TableWithFootnotes(
                     text="Eligibility Criteria Met",
                     span=1,
                     style="activity",
-                    ref=Ref(type="StudyActivity", uid="StudyActivity_000034"),
+                    refs=[Ref(type="StudyActivity", uid="StudyActivity_000034")],
                     footnotes=None,
                     vertical=None,
                 ),
@@ -3202,32 +3363,35 @@ TABLE = TableWithFootnotes(
                     text="X",
                     span=1,
                     style="activitySchedule",
-                    ref=Ref(
-                        type="StudyActivitySchedule", uid="StudyActivitySchedule_000168"
-                    ),
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000168",
+                        )
+                    ],
                     footnotes=None,
                     vertical=None,
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
             ],
             hide=False,
@@ -3238,48 +3402,35 @@ TABLE = TableWithFootnotes(
                     text="Medical History/Concomitant Illness",
                     span=1,
                     style="group",
-                    ref=Ref(type="StudyActivityGroup", uid="StudyActivityGroup_000035"),
+                    refs=[
+                        Ref(type="StudyActivityGroup", uid="StudyActivityGroup_000035")
+                    ],
                     footnotes=None,
                     vertical=None,
                 ),
                 TableCell(
-                    text="X",
-                    span=1,
-                    style=None,
-                    ref=None,
-                    footnotes=None,
-                    vertical=None,
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="X",
-                    span=1,
-                    style=None,
-                    ref=None,
-                    footnotes=None,
-                    vertical=None,
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="X",
-                    span=1,
-                    style=None,
-                    ref=None,
-                    footnotes=None,
-                    vertical=None,
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
             ],
             hide=False,
@@ -3290,35 +3441,38 @@ TABLE = TableWithFootnotes(
                     text="Medical History/Concomitant Illness",
                     span=1,
                     style="subGroup",
-                    ref=Ref(
-                        type="StudyActivitySubGroup", uid="StudyActivitySubGroup_000035"
-                    ),
+                    refs=[
+                        Ref(
+                            type="StudyActivitySubGroup",
+                            uid="StudyActivitySubGroup_000035",
+                        )
+                    ],
                     footnotes=None,
                     vertical=None,
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
             ],
             hide=True,
@@ -3329,7 +3483,7 @@ TABLE = TableWithFootnotes(
                     text="Medical History/Concomitant Illness",
                     span=1,
                     style="activity",
-                    ref=Ref(type="StudyActivity", uid="StudyActivity_000035"),
+                    refs=[Ref(type="StudyActivity", uid="StudyActivity_000035")],
                     footnotes=None,
                     vertical=None,
                 ),
@@ -3337,9 +3491,12 @@ TABLE = TableWithFootnotes(
                     text="X",
                     span=1,
                     style="activitySchedule",
-                    ref=Ref(
-                        type="StudyActivitySchedule", uid="StudyActivitySchedule_000217"
-                    ),
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000217",
+                        )
+                    ],
                     footnotes=None,
                     vertical=None,
                 ),
@@ -3347,34 +3504,40 @@ TABLE = TableWithFootnotes(
                     text="X",
                     span=1,
                     style="activitySchedule",
-                    ref=Ref(
-                        type="StudyActivitySchedule", uid="StudyActivitySchedule_000218"
-                    ),
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000218",
+                        )
+                    ],
                     footnotes=None,
                     vertical=None,
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
                     text="X",
                     span=1,
                     style="activitySchedule",
-                    ref=Ref(
-                        type="StudyActivitySchedule", uid="StudyActivitySchedule_000219"
-                    ),
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000219",
+                        )
+                    ],
                     footnotes=None,
                     vertical=None,
                 ),
@@ -3387,33 +3550,35 @@ TABLE = TableWithFootnotes(
                     text="Body Measurements",
                     span=1,
                     style="group",
-                    ref=Ref(type="StudyActivityGroup", uid="StudyActivityGroup_000036"),
+                    refs=[
+                        Ref(type="StudyActivityGroup", uid="StudyActivityGroup_000036")
+                    ],
                     footnotes=None,
                     vertical=None,
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
             ],
             hide=True,
@@ -3424,65 +3589,38 @@ TABLE = TableWithFootnotes(
                     text="Body Measurements",
                     span=1,
                     style="subGroup",
-                    ref=Ref(
-                        type="StudyActivitySubGroup", uid="StudyActivitySubGroup_000036"
-                    ),
+                    refs=[
+                        Ref(
+                            type="StudyActivitySubGroup",
+                            uid="StudyActivitySubGroup_000036",
+                        )
+                    ],
                     footnotes=["b"],
                     vertical=None,
                 ),
                 TableCell(
-                    text="X",
-                    span=1,
-                    style=None,
-                    ref=None,
-                    footnotes=None,
-                    vertical=None,
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="X",
-                    span=1,
-                    style=None,
-                    ref=None,
-                    footnotes=None,
-                    vertical=None,
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="X",
-                    span=1,
-                    style=None,
-                    ref=None,
-                    footnotes=None,
-                    vertical=None,
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="X",
-                    span=1,
-                    style=None,
-                    ref=None,
-                    footnotes=None,
-                    vertical=None,
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="X",
-                    span=1,
-                    style=None,
-                    ref=None,
-                    footnotes=None,
-                    vertical=None,
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="X",
-                    span=1,
-                    style=None,
-                    ref=None,
-                    footnotes=None,
-                    vertical=None,
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
             ],
             hide=False,
@@ -3493,7 +3631,7 @@ TABLE = TableWithFootnotes(
                     text="Height",
                     span=1,
                     style="activity",
-                    ref=Ref(type="StudyActivity", uid="StudyActivity_000036"),
+                    refs=[Ref(type="StudyActivity", uid="StudyActivity_000036")],
                     footnotes=None,
                     vertical=None,
                 ),
@@ -3501,39 +3639,45 @@ TABLE = TableWithFootnotes(
                     text="X",
                     span=1,
                     style="activitySchedule",
-                    ref=Ref(
-                        type="StudyActivitySchedule", uid="StudyActivitySchedule_000169"
-                    ),
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000169",
+                        )
+                    ],
                     footnotes=None,
                     vertical=None,
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
                     text="X",
                     span=1,
                     style="activitySchedule",
-                    ref=Ref(
-                        type="StudyActivitySchedule", uid="StudyActivitySchedule_000221"
-                    ),
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000221",
+                        )
+                    ],
                     footnotes=["d"],
                     vertical=None,
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
             ],
             hide=True,
@@ -3544,7 +3688,7 @@ TABLE = TableWithFootnotes(
                     text="Weight",
                     span=1,
                     style="activity",
-                    ref=Ref(type="StudyActivity", uid="StudyActivity_000037"),
+                    refs=[Ref(type="StudyActivity", uid="StudyActivity_000037")],
                     footnotes=None,
                     vertical=None,
                 ),
@@ -3552,9 +3696,12 @@ TABLE = TableWithFootnotes(
                     text="X",
                     span=1,
                     style="activitySchedule",
-                    ref=Ref(
-                        type="StudyActivitySchedule", uid="StudyActivitySchedule_000170"
-                    ),
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000170",
+                        )
+                    ],
                     footnotes=None,
                     vertical=None,
                 ),
@@ -3562,22 +3709,28 @@ TABLE = TableWithFootnotes(
                     text="X",
                     span=1,
                     style="activitySchedule",
-                    ref=Ref(
-                        type="StudyActivitySchedule", uid="StudyActivitySchedule_000175"
-                    ),
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000175",
+                        )
+                    ],
                     footnotes=["c"],
                     vertical=None,
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
                     text="X",
                     span=1,
                     style="activitySchedule",
-                    ref=Ref(
-                        type="StudyActivitySchedule", uid="StudyActivitySchedule_000176"
-                    ),
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000176",
+                        )
+                    ],
                     footnotes=["c", "d"],
                     vertical=None,
                 ),
@@ -3585,25 +3738,31 @@ TABLE = TableWithFootnotes(
                     text="X",
                     span=1,
                     style="activitySchedule",
-                    ref=Ref(
-                        type="StudyActivitySchedule", uid="StudyActivitySchedule_000143"
-                    ),
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000143",
+                        )
+                    ],
                     footnotes=None,
                     vertical=None,
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
                     text="X",
                     span=1,
                     style="activitySchedule",
-                    ref=Ref(
-                        type="StudyActivitySchedule", uid="StudyActivitySchedule_000144"
-                    ),
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000144",
+                        )
+                    ],
                     footnotes=["b"],
                     vertical=None,
                 ),
@@ -3616,48 +3775,35 @@ TABLE = TableWithFootnotes(
                     text="Laboratory Assessments",
                     span=1,
                     style="group",
-                    ref=Ref(type="StudyActivityGroup", uid="StudyActivityGroup_000038"),
+                    refs=[
+                        Ref(type="StudyActivityGroup", uid="StudyActivityGroup_000038")
+                    ],
                     footnotes=["b"],
                     vertical=None,
                 ),
                 TableCell(
-                    text="X",
-                    span=1,
-                    style=None,
-                    ref=None,
-                    footnotes=None,
-                    vertical=None,
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="X",
-                    span=1,
-                    style=None,
-                    ref=None,
-                    footnotes=None,
-                    vertical=None,
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="X",
-                    span=1,
-                    style=None,
-                    ref=None,
-                    footnotes=None,
-                    vertical=None,
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
             ],
             hide=False,
@@ -3668,35 +3814,38 @@ TABLE = TableWithFootnotes(
                     text="Haematology",
                     span=1,
                     style="subGroup",
-                    ref=Ref(
-                        type="StudyActivitySubGroup", uid="StudyActivitySubGroup_000038"
-                    ),
+                    refs=[
+                        Ref(
+                            type="StudyActivitySubGroup",
+                            uid="StudyActivitySubGroup_000038",
+                        )
+                    ],
                     footnotes=["b", "d"],
                     vertical=None,
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
             ],
             hide=True,
@@ -3707,7 +3856,7 @@ TABLE = TableWithFootnotes(
                     text="Erythrocytes",
                     span=1,
                     style="activity",
-                    ref=Ref(type="StudyActivity", uid="StudyActivity_000038"),
+                    refs=[Ref(type="StudyActivity", uid="StudyActivity_000038")],
                     footnotes=["b"],
                     vertical=None,
                 ),
@@ -3715,44 +3864,53 @@ TABLE = TableWithFootnotes(
                     text="X",
                     span=1,
                     style="activitySchedule",
-                    ref=Ref(
-                        type="StudyActivitySchedule", uid="StudyActivitySchedule_000173"
-                    ),
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000173",
+                        )
+                    ],
                     footnotes=None,
                     vertical=None,
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
                     text="X",
                     span=1,
                     style="activitySchedule",
-                    ref=Ref(
-                        type="StudyActivitySchedule", uid="StudyActivitySchedule_000166"
-                    ),
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000166",
+                        )
+                    ],
                     footnotes=None,
                     vertical=None,
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
                     text="X",
                     span=1,
                     style="activitySchedule",
-                    ref=Ref(
-                        type="StudyActivitySchedule", uid="StudyActivitySchedule_000165"
-                    ),
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000165",
+                        )
+                    ],
                     footnotes=None,
                     vertical=None,
                 ),
@@ -3765,33 +3923,35 @@ TABLE = TableWithFootnotes(
                     text="Vital Signs",
                     span=1,
                     style="group",
-                    ref=Ref(type="StudyActivityGroup", uid="StudyActivityGroup_000039"),
+                    refs=[
+                        Ref(type="StudyActivityGroup", uid="StudyActivityGroup_000039")
+                    ],
                     footnotes=None,
                     vertical=None,
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
             ],
             hide=False,
@@ -3802,70 +3962,38 @@ TABLE = TableWithFootnotes(
                     text="Vital Signs",
                     span=1,
                     style="subGroup",
-                    ref=Ref(
-                        type="StudyActivitySubGroup", uid="StudyActivitySubGroup_000039"
-                    ),
+                    refs=[
+                        Ref(
+                            type="StudyActivitySubGroup",
+                            uid="StudyActivitySubGroup_000039",
+                        )
+                    ],
                     footnotes=None,
                     vertical=None,
                 ),
                 TableCell(
-                    text="X",
-                    span=1,
-                    style=None,
-                    ref=None,
-                    footnotes=None,
-                    vertical=None,
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="X",
-                    span=1,
-                    style=None,
-                    ref=None,
-                    footnotes=None,
-                    vertical=None,
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="X",
-                    span=1,
-                    style=None,
-                    ref=None,
-                    footnotes=None,
-                    vertical=None,
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="X",
-                    span=1,
-                    style=None,
-                    ref=None,
-                    footnotes=None,
-                    vertical=None,
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="X",
-                    span=1,
-                    style=None,
-                    ref=None,
-                    footnotes=None,
-                    vertical=None,
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="X",
-                    span=1,
-                    style=None,
-                    ref=None,
-                    footnotes=None,
-                    vertical=None,
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="X",
-                    span=1,
-                    style=None,
-                    ref=None,
-                    footnotes=None,
-                    vertical=None,
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
             ],
             hide=False,
@@ -3876,7 +4004,7 @@ TABLE = TableWithFootnotes(
                     text="Systolic Blood Pressure",
                     span=1,
                     style="activity",
-                    ref=Ref(type="StudyActivity", uid="StudyActivity_000039"),
+                    refs=[Ref(type="StudyActivity", uid="StudyActivity_000039")],
                     footnotes=["b", "d"],
                     vertical=None,
                 ),
@@ -3884,9 +4012,12 @@ TABLE = TableWithFootnotes(
                     text="X",
                     span=1,
                     style="activitySchedule",
-                    ref=Ref(
-                        type="StudyActivitySchedule", uid="StudyActivitySchedule_000137"
-                    ),
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000137",
+                        )
+                    ],
                     footnotes=["c"],
                     vertical=None,
                 ),
@@ -3894,9 +4025,12 @@ TABLE = TableWithFootnotes(
                     text="X",
                     span=1,
                     style="activitySchedule",
-                    ref=Ref(
-                        type="StudyActivitySchedule", uid="StudyActivitySchedule_000145"
-                    ),
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000145",
+                        )
+                    ],
                     footnotes=["d"],
                     vertical=None,
                 ),
@@ -3904,9 +4038,12 @@ TABLE = TableWithFootnotes(
                     text="X",
                     span=1,
                     style="activitySchedule",
-                    ref=Ref(
-                        type="StudyActivitySchedule", uid="StudyActivitySchedule_000187"
-                    ),
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000187",
+                        )
+                    ],
                     footnotes=None,
                     vertical=None,
                 ),
@@ -3914,28 +4051,34 @@ TABLE = TableWithFootnotes(
                     text="X",
                     span=1,
                     style="activitySchedule",
-                    ref=Ref(
-                        type="StudyActivitySchedule", uid="StudyActivitySchedule_000151"
-                    ),
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000151",
+                        )
+                    ],
                     footnotes=None,
                     vertical=None,
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
                     text="X",
                     span=1,
                     style="activitySchedule",
-                    ref=Ref(
-                        type="StudyActivitySchedule", uid="StudyActivitySchedule_000163"
-                    ),
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000163",
+                        )
+                    ],
                     footnotes=None,
                     vertical=None,
                 ),
@@ -3948,7 +4091,7 @@ TABLE = TableWithFootnotes(
                     text="Diastolic Blood Pressure",
                     span=1,
                     style="activity",
-                    ref=Ref(type="StudyActivity", uid="StudyActivity_000040"),
+                    refs=[Ref(type="StudyActivity", uid="StudyActivity_000040")],
                     footnotes=None,
                     vertical=None,
                 ),
@@ -3956,25 +4099,541 @@ TABLE = TableWithFootnotes(
                     text="X",
                     span=1,
                     style="activitySchedule",
-                    ref=Ref(
-                        type="StudyActivitySchedule", uid="StudyActivitySchedule_000227"
-                    ),
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000227",
+                        )
+                    ],
                     footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style="activitySchedule",
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000229",
+                        )
+                    ],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style="activitySchedule",
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000232",
+                        )
+                    ],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style="activitySchedule",
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000235",
+                        )
+                    ],
+                    footnotes=["d"],
                     vertical=None,
                 ),
                 TableCell(
                     text="", span=1, style=None, ref=None, footnotes=None, vertical=None
                 ),
+            ],
+            hide=True,
+        ),
+    ],
+    footnotes={
+        "a": SimpleFootnote(
+            uid="Footnote_000011",
+            text_html="<p>A lovestruck Romeo sing the streets of serenade</p>",
+            text_plain="A lovestruck Romeo sing the streets of serenade",
+        ),
+        "b": SimpleFootnote(
+            uid="Footnote_000012",
+            text_html="<p>Laying everybody low with the love song that he made</p>",
+            text_plain="Laying everybody low with the love song that he made",
+        ),
+        "c": SimpleFootnote(
+            uid="Footnote_000013",
+            text_html="<p>Finds a convenient streetlight, steps out of the shade</p>",
+            text_plain="Finds a convenient streetlight, steps out of the shade",
+        ),
+        "d": SimpleFootnote(
+            uid="Footnote_000008",
+            text_html='<p>Says something like "You and me babe, how about it?"</p>',
+            text_plain='Says something like "You and me babe, how about it?"',
+        ),
+    },
+    num_header_rows=4,
+    num_header_cols=1,
+    title="Protocol Flowchart",
+)
+
+EXPECTED_PROTOCOL_SOA_TABLE = TableWithFootnotes(
+    rows=[
+        TableRow(
+            cells=[
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="",
+                    span=1,
+                    style="header1",
+                    refs=[],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="Screening",
+                    span=1,
+                    style="header1",
+                    refs=[Ref(type="StudyEpoch", uid="StudyEpoch_000004")],
+                    footnotes=["a"],
+                    vertical=True,
+                ),
+                TableCell(
+                    text="Run-in",
+                    span=2,
+                    style="header1",
+                    refs=[Ref(type="StudyEpoch", uid="StudyEpoch_000005")],
+                    footnotes=None,
+                    vertical=True,
+                ),
+                TableCell(
+                    text="", span=0, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="Treatment 1",
+                    span=1,
+                    style="header1",
+                    refs=[Ref(type="StudyEpoch", uid="StudyEpoch_000006")],
+                    footnotes=None,
+                    vertical=True,
+                ),
+                TableCell(
+                    text="Treatment 2",
+                    span=3,
+                    style="header1",
+                    refs=[Ref(type="StudyEpoch", uid="StudyEpoch_000007")],
+                    footnotes=None,
+                    vertical=True,
+                ),
+                TableCell(
+                    text="", span=0, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=0, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="Follow-up",
+                    span=1,
+                    style="header1",
+                    refs=[Ref(type="StudyEpoch", uid="StudyEpoch_000008")],
+                    footnotes=None,
+                    vertical=True,
+                ),
+            ],
+            hide=False,
+        ),
+        TableRow(
+            cells=[
+                TableCell(
+                    text="Visit short name",
+                    span=1,
+                    style="header2",
+                    refs=[],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="V1",
+                    span=1,
+                    style="header2",
+                    refs=[Ref(type="StudyVisit", uid="StudyVisit_000012")],
+                    footnotes=["b"],
+                    vertical=None,
+                ),
+                TableCell(
+                    text="V2",
+                    span=1,
+                    style="header2",
+                    refs=[Ref(type="StudyVisit", uid="StudyVisit_000013")],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="V4",
+                    span=1,
+                    style="header2",
+                    refs=[Ref(type="StudyVisit", uid="StudyVisit_000015")],
+                    footnotes=["a"],
+                    vertical=None,
+                ),
+                TableCell(
+                    text="V5-V7",
+                    span=1,
+                    style="header2",
+                    refs=[
+                        Ref(type="StudyVisit", uid="StudyVisit_000016"),
+                        Ref(type="StudyVisit", uid="StudyVisit_000017"),
+                        Ref(type="StudyVisit", uid="StudyVisit_000018"),
+                    ],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="V8",
+                    span=1,
+                    style="header2",
+                    refs=[Ref(type="StudyVisit", uid="StudyVisit_000019")],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="V9",
+                    span=1,
+                    style="header2",
+                    refs=[Ref(type="StudyVisit", uid="StudyVisit_000020")],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="V10",
+                    span=1,
+                    style="header2",
+                    refs=[Ref(type="StudyVisit", uid="StudyVisit_000021")],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="V11",
+                    span=1,
+                    style="header2",
+                    refs=[Ref(type="StudyVisit", uid="StudyVisit_000022")],
+                    footnotes=None,
+                    vertical=None,
+                ),
+            ],
+            hide=False,
+        ),
+        TableRow(
+            cells=[
+                TableCell(
+                    text="Study day",
+                    span=1,
+                    style="header3",
+                    refs=[],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="-14",
+                    span=1,
+                    style="header3",
+                    refs=[],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="-3",
+                    span=1,
+                    style="header3",
+                    refs=[],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="-1",
+                    span=1,
+                    style="header3",
+                    refs=[],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="1-5",
+                    span=1,
+                    style="header3",
+                    refs=[],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="15",
+                    span=1,
+                    style="header3",
+                    refs=[],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="17",
+                    span=1,
+                    style="header3",
+                    refs=[],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="19",
+                    span=1,
+                    style="header3",
+                    refs=[],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="22",
+                    span=1,
+                    style="header3",
+                    refs=[],
+                    footnotes=None,
+                    vertical=None,
+                ),
+            ],
+            hide=False,
+        ),
+        TableRow(
+            cells=[
+                TableCell(
+                    text="Visit window (days)",
+                    span=1,
+                    style="header4",
+                    refs=[],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="±0",
+                    span=1,
+                    style="header4",
+                    refs=[],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="±0",
+                    span=1,
+                    style="header4",
+                    refs=[],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="±0",
+                    span=1,
+                    style="header4",
+                    refs=[],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="±0",
+                    span=1,
+                    style="header4",
+                    refs=[],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="±0",
+                    span=1,
+                    style="header4",
+                    refs=[],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="±0",
+                    span=1,
+                    style="header4",
+                    refs=[],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="±0",
+                    span=1,
+                    style="header4",
+                    refs=[],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="±0",
+                    span=1,
+                    style="header4",
+                    refs=[],
+                    footnotes=None,
+                    vertical=None,
+                ),
+            ],
+            hide=False,
+        ),
+        TableRow(
+            cells=[
+                TableCell(
+                    text="SUBJECT RELATED INFORMATION",
+                    span=1,
+                    style="soaGroup",
+                    refs=[Ref(type="StudySoAGroup", uid="StudySoAGroup_000033")],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+            ],
+            hide=False,
+        ),
+        TableRow(
+            cells=[
+                TableCell(
+                    text="Informed Consent and Demography",
+                    span=1,
+                    style="group",
+                    refs=[
+                        Ref(type="StudyActivityGroup", uid="StudyActivityGroup_000033")
+                    ],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+            ],
+            hide=False,
+        ),
+        TableRow(
+            cells=[
+                TableCell(
+                    text="Informed Consent and Demography",
+                    span=1,
+                    style="subGroup",
+                    refs=[
+                        Ref(
+                            type="StudyActivitySubGroup",
+                            uid="StudyActivitySubGroup_000033",
+                        )
+                    ],
+                    footnotes=None,
+                    vertical=None,
                 ),
                 TableCell(
                     text="X",
                     span=1,
-                    style="activitySchedule",
-                    ref=Ref(
-                        type="StudyActivitySchedule", uid="StudyActivitySchedule_000229"
-                    ),
+                    style=None,
+                    refs=[],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style=None,
+                    refs=[],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style=None,
+                    refs=[],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style=None,
+                    refs=[],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+            ],
+            hide=False,
+        ),
+        TableRow(
+            cells=[
+                TableCell(
+                    text="Informed Consent Obtained",
+                    span=1,
+                    style="activity",
+                    refs=[Ref(type="StudyActivity", uid="StudyActivity_000033")],
                     footnotes=None,
                     vertical=None,
                 ),
@@ -3982,22 +4641,1116 @@ TABLE = TableWithFootnotes(
                     text="X",
                     span=1,
                     style="activitySchedule",
-                    ref=Ref(
-                        type="StudyActivitySchedule", uid="StudyActivitySchedule_000232"
-                    ),
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000167",
+                        )
+                    ],
                     footnotes=None,
                     vertical=None,
                 ),
                 TableCell(
-                    text="", span=1, style=None, ref=None, footnotes=None, vertical=None
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
                 ),
                 TableCell(
                     text="X",
                     span=1,
                     style="activitySchedule",
-                    ref=Ref(
-                        type="StudyActivitySchedule", uid="StudyActivitySchedule_000235"
-                    ),
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000222",
+                        )
+                    ],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style="activitySchedule",
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000237",
+                        )
+                    ],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+            ],
+            hide=False,
+        ),
+        TableRow(
+            cells=[
+                TableCell(
+                    text="Date of Birth",
+                    span=1,
+                    style="activity",
+                    refs=[Ref(type="StudyActivity", uid="StudyActivity_000041")],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style="activitySchedule",
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000140",
+                        )
+                    ],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style="activitySchedule",
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000146",
+                        )
+                    ],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style="activitySchedule",
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000186",
+                        )
+                    ],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style="activitySchedule",
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000184",
+                        )
+                    ],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+            ],
+            hide=True,
+        ),
+        TableRow(
+            cells=[
+                TableCell(
+                    text="Eligibility Criteria",
+                    span=1,
+                    style="group",
+                    refs=[
+                        Ref(type="StudyActivityGroup", uid="StudyActivityGroup_000034")
+                    ],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+            ],
+            hide=True,
+        ),
+        TableRow(
+            cells=[
+                TableCell(
+                    text="Eligibility Criteria",
+                    span=1,
+                    style="subGroup",
+                    refs=[
+                        Ref(
+                            type="StudyActivitySubGroup",
+                            uid="StudyActivitySubGroup_000034",
+                        )
+                    ],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+            ],
+            hide=True,
+        ),
+        TableRow(
+            cells=[
+                TableCell(
+                    text="Eligibility Criteria Met",
+                    span=1,
+                    style="activity",
+                    refs=[Ref(type="StudyActivity", uid="StudyActivity_000034")],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style="activitySchedule",
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000168",
+                        )
+                    ],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+            ],
+            hide=False,
+        ),
+        TableRow(
+            cells=[
+                TableCell(
+                    text="Medical History/Concomitant Illness",
+                    span=1,
+                    style="group",
+                    refs=[
+                        Ref(type="StudyActivityGroup", uid="StudyActivityGroup_000035")
+                    ],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style=None,
+                    refs=[],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style=None,
+                    refs=[],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style=None,
+                    refs=[],
+                    footnotes=None,
+                    vertical=None,
+                ),
+            ],
+            hide=False,
+        ),
+        TableRow(
+            cells=[
+                TableCell(
+                    text="Medical History/Concomitant Illness",
+                    span=1,
+                    style="subGroup",
+                    refs=[
+                        Ref(
+                            type="StudyActivitySubGroup",
+                            uid="StudyActivitySubGroup_000035",
+                        )
+                    ],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+            ],
+            hide=True,
+        ),
+        TableRow(
+            cells=[
+                TableCell(
+                    text="Medical History/Concomitant Illness",
+                    span=1,
+                    style="activity",
+                    refs=[Ref(type="StudyActivity", uid="StudyActivity_000035")],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style="activitySchedule",
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000217",
+                        )
+                    ],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style="activitySchedule",
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000218",
+                        )
+                    ],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style="activitySchedule",
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000219",
+                        )
+                    ],
+                    footnotes=None,
+                    vertical=None,
+                ),
+            ],
+            hide=True,
+        ),
+        TableRow(
+            cells=[
+                TableCell(
+                    text="Body Measurements",
+                    span=1,
+                    style="group",
+                    refs=[
+                        Ref(type="StudyActivityGroup", uid="StudyActivityGroup_000036")
+                    ],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+            ],
+            hide=True,
+        ),
+        TableRow(
+            cells=[
+                TableCell(
+                    text="Body Measurements",
+                    span=1,
+                    style="subGroup",
+                    refs=[
+                        Ref(
+                            type="StudyActivitySubGroup",
+                            uid="StudyActivitySubGroup_000036",
+                        )
+                    ],
+                    footnotes=["b"],
+                    vertical=None,
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style=None,
+                    refs=[],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style=None,
+                    refs=[],
+                    footnotes=["c"],
+                    vertical=None,
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style=None,
+                    refs=[],
+                    footnotes=["c", "d"],
+                    vertical=None,
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style=None,
+                    refs=[],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style=None,
+                    refs=[],
+                    footnotes=["d"],
+                    vertical=None,
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style=None,
+                    refs=[],
+                    footnotes=["b"],
+                    vertical=None,
+                ),
+            ],
+            hide=False,
+        ),
+        TableRow(
+            cells=[
+                TableCell(
+                    text="Height",
+                    span=1,
+                    style="activity",
+                    refs=[Ref(type="StudyActivity", uid="StudyActivity_000036")],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style="activitySchedule",
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000169",
+                        )
+                    ],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style="activitySchedule",
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000221",
+                        )
+                    ],
+                    footnotes=["d"],
+                    vertical=None,
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+            ],
+            hide=True,
+        ),
+        TableRow(
+            cells=[
+                TableCell(
+                    text="Weight",
+                    span=1,
+                    style="activity",
+                    refs=[Ref(type="StudyActivity", uid="StudyActivity_000037")],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style="activitySchedule",
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000170",
+                        )
+                    ],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style="activitySchedule",
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000175",
+                        )
+                    ],
+                    footnotes=["c"],
+                    vertical=None,
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style="activitySchedule",
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000176",
+                        )
+                    ],
+                    footnotes=["c", "d"],
+                    vertical=None,
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style="activitySchedule",
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000143",
+                        )
+                    ],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style="activitySchedule",
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000144",
+                        )
+                    ],
+                    footnotes=["b"],
+                    vertical=None,
+                ),
+            ],
+            hide=True,
+        ),
+        TableRow(
+            cells=[
+                TableCell(
+                    text="Laboratory Assessments",
+                    span=1,
+                    style="group",
+                    refs=[
+                        Ref(type="StudyActivityGroup", uid="StudyActivityGroup_000038")
+                    ],
+                    footnotes=["b"],
+                    vertical=None,
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style=None,
+                    refs=[],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style=None,
+                    refs=[],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style=None,
+                    refs=[],
+                    footnotes=None,
+                    vertical=None,
+                ),
+            ],
+            hide=False,
+        ),
+        TableRow(
+            cells=[
+                TableCell(
+                    text="Haematology",
+                    span=1,
+                    style="subGroup",
+                    refs=[
+                        Ref(
+                            type="StudyActivitySubGroup",
+                            uid="StudyActivitySubGroup_000038",
+                        )
+                    ],
+                    footnotes=["b", "d"],
+                    vertical=None,
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+            ],
+            hide=True,
+        ),
+        TableRow(
+            cells=[
+                TableCell(
+                    text="Erythrocytes",
+                    span=1,
+                    style="activity",
+                    refs=[Ref(type="StudyActivity", uid="StudyActivity_000038")],
+                    footnotes=["b"],
+                    vertical=None,
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style="activitySchedule",
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000173",
+                        )
+                    ],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style="activitySchedule",
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000166",
+                        )
+                    ],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style="activitySchedule",
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000165",
+                        )
+                    ],
+                    footnotes=None,
+                    vertical=None,
+                ),
+            ],
+            hide=True,
+        ),
+        TableRow(
+            cells=[
+                TableCell(
+                    text="Vital Signs",
+                    span=1,
+                    style="group",
+                    refs=[
+                        Ref(type="StudyActivityGroup", uid="StudyActivityGroup_000039")
+                    ],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+            ],
+            hide=False,
+        ),
+        TableRow(
+            cells=[
+                TableCell(
+                    text="Vital Signs",
+                    span=1,
+                    style="subGroup",
+                    refs=[
+                        Ref(
+                            type="StudyActivitySubGroup",
+                            uid="StudyActivitySubGroup_000039",
+                        )
+                    ],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style=None,
+                    refs=[],
+                    footnotes=["c"],
+                    vertical=None,
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style=None,
+                    refs=[],
+                    footnotes=["d"],
+                    vertical=None,
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style=None,
+                    refs=[],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style=None,
+                    refs=[],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style=None,
+                    refs=[],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style=None,
+                    refs=[],
+                    footnotes=["d"],
+                    vertical=None,
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style=None,
+                    refs=[],
+                    footnotes=None,
+                    vertical=None,
+                ),
+            ],
+            hide=False,
+        ),
+        TableRow(
+            cells=[
+                TableCell(
+                    text="Systolic Blood Pressure",
+                    span=1,
+                    style="activity",
+                    refs=[Ref(type="StudyActivity", uid="StudyActivity_000039")],
+                    footnotes=["b", "d"],
+                    vertical=None,
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style="activitySchedule",
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000137",
+                        )
+                    ],
+                    footnotes=["c"],
+                    vertical=None,
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style="activitySchedule",
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000145",
+                        )
+                    ],
+                    footnotes=["d"],
+                    vertical=None,
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style="activitySchedule",
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000187",
+                        )
+                    ],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style="activitySchedule",
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000151",
+                        )
+                    ],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style="activitySchedule",
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000163",
+                        )
+                    ],
+                    footnotes=None,
+                    vertical=None,
+                ),
+            ],
+            hide=True,
+        ),
+        TableRow(
+            cells=[
+                TableCell(
+                    text="Diastolic Blood Pressure",
+                    span=1,
+                    style="activity",
+                    refs=[Ref(type="StudyActivity", uid="StudyActivity_000040")],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style="activitySchedule",
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000227",
+                        )
+                    ],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style="activitySchedule",
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000229",
+                        )
+                    ],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style="activitySchedule",
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000232",
+                        )
+                    ],
+                    footnotes=None,
+                    vertical=None,
+                ),
+                TableCell(
+                    text="", span=1, style=None, refs=[], footnotes=None, vertical=None
+                ),
+                TableCell(
+                    text="X",
+                    span=1,
+                    style="activitySchedule",
+                    refs=[
+                        Ref(
+                            type="StudyActivitySchedule",
+                            uid="StudyActivitySchedule_000235",
+                        )
+                    ],
                     footnotes=["d"],
                     vertical=None,
                 ),

@@ -217,6 +217,28 @@ const state = {
           ]
         },
         {
+          id: 'admin_defs_tile',
+          title: i18n.t('Sidebar.library.administrative_definitions'),
+          icon: 'mdi-police-badge-outline',
+          description: i18n.t('Library.administrative_definitions'),
+          children: [
+            {
+              id: 'clinical_programmes',
+              title: i18n.t('Sidebar.library.clinical_programmes'),
+              icon: 'mdi-archive-outline',
+              url: { name: 'ClinicalProgrammes' },
+              description: i18n.t('Library.clinical_programmes')
+            },
+            {
+              id: 'projects',
+              title: i18n.t('Sidebar.library.projects'),
+              icon: 'mdi-clipboard-outline',
+              url: { name: 'Projects' },
+              description: i18n.t('Library.projects')
+            }
+          ]
+        },
+        {
           id: 'list_tile',
           title: i18n.t('Sidebar.library.list'),
           icon: 'mdi-format-list-bulleted-square',
@@ -449,7 +471,8 @@ const state = {
             },
             {
               title: i18n.t('Sidebar.study.analysis_study_metadata_new'),
-              url: { name: 'AnalysisStudyMetadataNew' }
+              url: { name: 'AnalysisStudyMetadataNew', params: { study_id: studyId } },
+              studyRequired: true
             }
           ]
         }

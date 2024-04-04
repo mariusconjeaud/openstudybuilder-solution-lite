@@ -19,6 +19,9 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryVO,
     ObjectAction,
 )
+from clinical_mdr_api.models.controlled_terminologies.ct_term import (
+    SimpleCTTermNameAndAttributes,
+)
 
 
 @dataclass(frozen=True)
@@ -33,6 +36,7 @@ class ParametrizedTemplateVO:
     template_sequence_id: str | None
     guidance_text: str | None
     parameter_terms: list[ParameterTermEntryVO]
+    template_type: SimpleCTTermNameAndAttributes | None = None
     library_name: str | None = None
 
     @classmethod
@@ -174,6 +178,7 @@ class ParametrizedTemplateVO:
             "[] or [": "[",
             "] []": "]",
             "[] [": "[",
+            "] with [],": "]",
             "[]": "",
             "()": "",
             "(,)": "",
@@ -239,7 +244,7 @@ class ParametrizedTemplateARBase(LibraryItemAggregateRootBase):
 
     """
 
-    CASCADING_UPDATE_LABEL = "Cascading update triggered by template update uid: '{}'"  # TODO: put reference with uid
+    CASCADING_UPDATE_LABEL = "Cascading update triggered by template update uid: '{}'"
     # inheritance from class with default values
 
     _template: ParametrizedTemplateVO
@@ -280,7 +285,7 @@ class ParametrizedTemplateARBase(LibraryItemAggregateRootBase):
         **kwargs,
     ) -> Self:
         # noinspection PyArgumentList
-        # pylint:disable=no-value-for-parameter
+        # pylint: disable=no-value-for-parameter
         return cls(
             _uid=uid,
             _sequence_id=sequence_id,

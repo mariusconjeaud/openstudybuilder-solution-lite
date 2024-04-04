@@ -18,6 +18,7 @@
         :url-prefix="urlPrefix"
         :object-type="objectType"
         :history-excluded-headers="historyExcludedHeaders"
+        :default-filters="defaultFilters"
         >
         <template v-for="(_, slot) of $scopedSlots" v-slot:[slot]="scope">
           <slot :name="slot" v-bind="scope" />
@@ -37,6 +38,7 @@
         :export-object-label="preInstanceExportLabel"
         :object-type="objectType"
         :history-excluded-headers="historyExcludedHeaders"
+        :default-filters="defaultFilters"
         >
         <template v-for="(_, slot) of $scopedSlots" v-slot:[slot]="scope">
           <slot :name="slot" v-bind="scope" />
@@ -98,6 +100,10 @@ export default Vue.extend({
       default: ''
     },
     historyExcludedHeaders: {
+      type: Array,
+      required: false
+    },
+    defaultFilters: {
       type: Array,
       required: false
     }

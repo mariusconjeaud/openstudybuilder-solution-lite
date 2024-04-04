@@ -1,10 +1,4 @@
-from neomodel import (
-    BooleanProperty,
-    RelationshipFrom,
-    RelationshipTo,
-    StringProperty,
-    db,
-)
+from neomodel import RelationshipFrom, RelationshipTo, StringProperty, db
 
 from clinical_mdr_api.domain_repositories.models.generic import (
     ClinicalMdrNode,
@@ -27,7 +21,6 @@ class TemplateParameter(ClinicalMdrNode):
 
 class TemplateParameterTermValue(VersionValue):
     name = StringProperty()
-    is_active_template_parameter = BooleanProperty()
 
 
 class TemplateParameterTermRoot(VersionRoot):

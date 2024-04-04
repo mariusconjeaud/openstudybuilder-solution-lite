@@ -1,14 +1,15 @@
-from .utils.importer import BaseImporter, open_file, open_file_async
-from .utils.path_join import path_join
-from .utils.metrics import Metrics
 import asyncio
-import aiohttp
 import csv
 import time
-from typing import Optional, Sequence, Any
 
-from .functions.parsers import map_boolean, find_term_by_name
+import aiohttp
+
+from .functions.parsers import find_term_by_concept_id, find_term_by_name, map_boolean
 from .functions.utils import load_env
+from .run_import_standardcodelistterms2 import StandardCodelistTerms2
+from .utils.importer import BaseImporter, open_file, open_file_async
+from .utils.metrics import Metrics
+from .utils.path_join import path_join
 
 # ---------------------------------------------------------------
 # Env loading
@@ -16,6 +17,7 @@ from .functions.utils import load_env
 #
 SAMPLE = load_env("MDR_MIGRATION_SAMPLE", default="False") == "True"
 API_BASE_URL = load_env("API_BASE_URL")
+MDR_MIGRATION_SPONSOR_EPOCH = load_env("MDR_MIGRATION_SPONSOR_EPOCH")
 MDR_MIGRATION_EPOCH = load_env("MDR_MIGRATION_EPOCH")
 MDR_MIGRATION_EPOCH_SUB_TYPE = load_env("MDR_MIGRATION_EPOCH_SUB_TYPE")
 MDR_MIGRATION_SPONSOR_CODELIST_DEFINITIONS = load_env(
@@ -28,24 +30,22 @@ MDR_MIGRATION_EPOCH_TYPE = load_env("MDR_MIGRATION_EPOCH_TYPE")
 MDR_MIGRATION_CODELIST_PARAMETER_SET = load_env("MDR_MIGRATION_CODELIST_PARAMETER_SET")
 
 
-epoch_sub_type = {
-    "EPOCH_SUB_TYPE": lambda row, headers: {
-        "path": "/ct/terms",
-        "codelist": "GEN_EPOCH_SUB_TYPE",
-        "body": {
-            "catalogue_name": "SDTM CT",
-            "code_submission_value": row[headers.index("GEN_EPOCH_SUB_TYPE_CD")],
-            "name_submission_value": row[headers.index("GEN_EPOCH_SUB_TYPE_CD")],
-            "nci_preferred_name": "UNK",
-            "definition": "",
-            "sponsor_preferred_name": row[headers.index("GEN_EPOCH_SUB_TYPE")],
-            "sponsor_preferred_name_sentence_case": row[
-                headers.index("GEN_EPOCH_SUB_TYPE")
-            ].lower(),
-            "order": row[headers.index("CD_VAL_SORT_SEQ")],
-            "library_name": "Sponsor",
-        },
-    }
+epoch_sub_type = lambda row, headers: {
+    "path": "/ct/terms",
+    "codelist": "GEN_EPOCH_SUB_TYPE",
+    "body": {
+        "catalogue_name": "SDTM CT",
+        "code_submission_value": row[headers.index("GEN_EPOCH_SUB_TYPE_CD")],
+        "name_submission_value": row[headers.index("GEN_EPOCH_SUB_TYPE_CD")],
+        "nci_preferred_name": "UNK",
+        "definition": "",
+        "sponsor_preferred_name": row[headers.index("GEN_EPOCH_SUB_TYPE")],
+        "sponsor_preferred_name_sentence_case": row[
+            headers.index("GEN_EPOCH_SUB_TYPE")
+        ].lower(),
+        "order": row[headers.index("CD_VAL_SORT_SEQ")],
+        "library_name": "Sponsor",
+    },
 }
 
 epoch = {
@@ -172,13 +172,13 @@ class StandardCodelistTerms1(BaseImporter):
         readCSV = csv.reader(csvfile, delimiter=",")
         headers = next(readCSV)
         parent_type_terms = self.api.get_terms_for_codelist_name("Epoch Type")
+        all_epoch_terms = self.api.get_terms_for_codelist_name("Epoch")
         for row in readCSV:
             parent_term_uid = find_term_by_name(
                 row[headers.index("GEN_EPOCH_TYPE")], parent_type_terms
             )
 
-            _class = "EPOCH_SUB_TYPE"
-            data = epoch_sub_type[_class](row, headers)
+            data = epoch_sub_type(row, headers)
             if (
                 row[headers.index("CD_LIST_ID")]
                 not in self.sponsor_codelist_legacy_name_map
@@ -205,13 +205,34 @@ class StandardCodelistTerms1(BaseImporter):
             # connect cdisc epoch sub type term with a sponsor epoch sub type term
             if row[headers.index("CT_CD")].startswith("C") and parent_term_uid:
                 reused_item = True
-                term_uid = f"{row[headers.index('CT_CD')]}_{row[headers.index('GEN_EPOCH_SUB_TYPE_CD')]}"
+                term_uid = find_term_by_concept_id(
+                    row[headers.index("CT_CD")], all_epoch_terms
+                )
+                self.log.info(
+                    f"Epoch subtype '{row[headers.index('GEN_EPOCH_SUB_TYPE')]}' links to existing Epoch term '{term_uid}'"
+                )
+            elif (
+                find_term_by_name(
+                    row[headers.index("GEN_EPOCH_SUB_TYPE_CD")], all_epoch_terms
+                )
+                is not None
+            ):
+                reused_item = True
+                term_uid = find_term_by_name(
+                    row[headers.index("GEN_EPOCH_SUB_TYPE_CD")], all_epoch_terms
+                )
+                self.log.info(
+                    f"Epoch subtype '{row[headers.index('GEN_EPOCH_SUB_TYPE')]}' links to existing Epoch term '{term_uid}'"
+                )
             else:
                 res = self.api.post_to_api(data)
                 subtype = row[headers.index("GEN_EPOCH_SUB_TYPE")]
                 subtype_code = row[headers.index("GEN_EPOCH_SUB_TYPE_CD")]
                 if res is not None:
                     term_uid = res["term_uid"]
+                    self.log.info(
+                        f"Epoch subtype '{row[headers.index('GEN_EPOCH_SUB_TYPE')]}' links to new term '{term_uid}'"
+                    )
                     self.cache.added_terms[subtype] = res
                     # Approve Names
                     self.api.simple_approve2(
@@ -238,6 +259,10 @@ class StandardCodelistTerms1(BaseImporter):
                     elif subtype in self.cache.all_term_name_values:
                         term_uid = self.cache.all_term_name_values[subtype]["term_uid"]
                     reused_item = True
+                    if term_uid:
+                        self.log.info(
+                            f"Epoch subtype '{row[headers.index('GEN_EPOCH_SUB_TYPE')]}' links to existing term '{term_uid}'"
+                        )
 
             if term_uid and parent_term_uid:
                 self.api.post_to_api(
@@ -282,6 +307,7 @@ class StandardCodelistTerms1(BaseImporter):
         readCSV = csv.reader(csvfile, delimiter=",")
         headers = next(readCSV)
         parent_sub_type_terms = self.api.get_terms_for_codelist_name("Epoch Sub Type")
+        all_epoch_terms = self.api.get_terms_for_codelist_name("Epoch")
         for row in readCSV:
             parent_term_uid = find_term_by_name(
                 row[headers.index("GEN_EPOCH_SUB_TYPE")], parent_sub_type_terms
@@ -290,11 +316,15 @@ class StandardCodelistTerms1(BaseImporter):
             _class = "EPOCH"
             data = epoch[_class](row, headers)
             data["body"]["codelist_uid"] = "C99079"
-            term_uid = (
-                f"{row[headers.index('CT_CD')]}_{row[headers.index('GEN_EPOCH_CD')]}"
-            )
 
+            # Look up the uid of the Epoch term in the Epoch codelist
+            term_uid = find_term_by_name(
+                row[headers.index("GEN_EPOCH_CD")], all_epoch_terms
+            )
             if term_uid and parent_term_uid:
+                self.log.info(
+                    f"Adding epoch {row[headers.index('GEN_EPOCH_LB')]} with term: {term_uid}, parent: {parent_term_uid}"
+                )
                 self.api.post_to_api(
                     {
                         "path": f"/ct/terms/{term_uid}/parents?parent_uid={parent_term_uid}&relationship_type=subtype",
@@ -326,6 +356,10 @@ class StandardCodelistTerms1(BaseImporter):
                 # Approve Names
                 self.api.simple_approve2(
                     "/ct/terms", f"/{term_uid}/names/approvals", label="Names"
+                )
+            else:
+                self.log.warning(
+                    f"Epoch term for epoch {row[headers.index('GEN_EPOCH_LB')]} not found, skipping"
                 )
 
     @open_file()
@@ -480,7 +514,7 @@ class StandardCodelistTerms1(BaseImporter):
             data = {
                 "codelist": row[headers.index("CD_LIST_ID")],
                 "term_name": row[headers.index("CD_VAL_LB")],
-                "term_uid": row[headers.index("CT_CD")],
+                "concept_id": row[headers.index("CT_CD")],
                 "body": {
                     "catalogue_name": "SDTM CT",
                     "codelist_uid": codelist_uid,
@@ -500,7 +534,7 @@ class StandardCodelistTerms1(BaseImporter):
             self.log.info(
                 f"Adding epoch type '{data['term_name']}' to codelist '{data['codelist']}'"
             )
-            api_tasks.append(self.process_epoc_type(data=data, session=session))
+            api_tasks.append(self.process_epoch_type(data=data, session=session))
         await asyncio.gather(*api_tasks)
 
     @open_file_async()
@@ -654,12 +688,16 @@ class StandardCodelistTerms1(BaseImporter):
             self.metrics.icrement("/ct/codelists/-NamesApprove")
         return result
 
-    async def process_epoc_type(self, data: dict, session: aiohttp.ClientSession):
+    async def process_epoch_type(self, data: dict, session: aiohttp.ClientSession):
         self.ensure_cache()
         term_name = data["term_name"]
-        # if term_uid starts with C it means that we should take existing CDISC term and add it to the Epoch Type codelist
-        if data["term_uid"].startswith("C"):
-            term_uid = f"{data['term_uid']}_{data['body']['code_submission_value']}"
+        # if concept_id starts with C it means that we should take existing CDISC term
+        # and add it to the Epoch Type codelist
+        if data["concept_id"].startswith("C"):
+            # TODO we should not assume that the uid follows this pattern exactly,
+            # better to look it up by concept_id from the Epoch codelist.
+            # Could there be relevant terms in any other codelist?
+            term_uid = f"{data['concept_id']}_{data['body']['code_submission_value']}"
             codelist_uid = data["body"]["codelist_uid"]
             status, result = await self.api.post_to_api_async(
                 url=f"/ct/codelists/{codelist_uid}/terms",
@@ -702,9 +740,24 @@ class StandardCodelistTerms1(BaseImporter):
                 MDR_MIGRATION_CODELIST_PARAMETER_SET, session
             )
 
-            # we have to get all codelists when sponsor one will be migrated
-            # otherwise sponsor defined terms won't know to which codelist they should connect
+            # We need to import the sponsor defined epochs before we can import epoch types and subtypes.
+            # We can use the mechanisms from StandardCodelistTerms2 to do this.
+            await self.handle_sponsor_defined_epochs(session)
+
+            # epoch type codelist
             await self.handle_epoch_type(MDR_MIGRATION_EPOCH_TYPE, session)
+
+    async def handle_sponsor_defined_epochs(self, session):
+        term_importer = StandardCodelistTerms2(
+            metrics_inst=self.metrics, cache=self.cache
+        )
+        code_lists_uids = self.api.get_code_lists_uids()
+        await term_importer.migrate_term(
+            MDR_MIGRATION_SPONSOR_EPOCH,
+            codelist_name="Epoch",
+            code_lists_uids=code_lists_uids,
+            session=session,
+        )
 
     def run(self):
         self.log.info("Importing standard codelists")

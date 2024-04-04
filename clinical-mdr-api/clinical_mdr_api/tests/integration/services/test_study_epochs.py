@@ -208,13 +208,13 @@ class TestStudyEpochManagement(unittest.TestCase):
         epoch_subtype_name = "Epoch Subtype"
         create_study_epoch(epoch_subtype_uid=epoch_subtype_uid)
         epochs = epoch_service.get_all_epochs(self.study.uid).items
+
         self.assertEqual(len(epochs), 1)
         self.assertEqual(epochs[0].epoch_name, epoch_subtype_name)
 
         create_study_epoch(epoch_subtype_uid=epoch_subtype_uid)
         create_study_epoch(epoch_subtype_uid=epoch_subtype_uid)
         create_study_epoch(epoch_subtype_uid=epoch_subtype_uid)
-
         epochs = epoch_service.get_all_epochs(self.study.uid).items
         self.assertEqual(len(epochs), 4)
         self.assertEqual(epochs[0].epoch_name, epoch_subtype_name + " 1")

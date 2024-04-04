@@ -462,16 +462,6 @@ class StudySelectionCriteriaRepository:
                 latest_criteria_template_value_node
             )
 
-    def study_criteria_exists(self, study_criteria_uid: str) -> bool:
-        """
-        Simple function checking whether a study criteria exist for a uid
-        :return: boolean value
-        """
-        study_criteria_node = StudyCriteria.nodes.get_or_none(uid=study_criteria_uid)
-        if study_criteria_node is None:
-            return False
-        return True
-
     def generate_uid(self) -> str:
         return StudyCriteria.get_next_free_uid_and_increment_counter()
 
@@ -595,30 +585,7 @@ class StudySelectionCriteriaRepository:
             criteria_type_uid=criteria_type_uid,
         )
 
-    def _is_selected_object_instance(
-        self, study_uid: str, study_selection_uid: str
-    ) -> bool:
-        """Method to return if the selected object is an instance or a template
-
-        Args:
-            study_uid (str) : UID of the study
-            study_selection_uid (str): UID of the study selection
-
-        Returns:
-            bool: True if the selected object is an instance, False if it is a template
-        """
-        query = """
-        MATCH (:StudyRoot { uid: $study_uid})-[:LATEST]->(:StudyValue)-[HAS_STUDY_CRITERIA]->(sc:StudyCriteria{uid:$study_selection_uid})
-        WITH CASE WHEN EXISTS((sc)-[:HAS_SELECTED_CRITERIA_TEMPLATE]->()) THEN false ELSE true END AS is_instance
-        RETURN is_instance
-        """
-        query_parameters = {
-            "study_uid": study_uid,
-            "study_selection_uid": study_selection_uid,
-        }
-
-        result_array, _ = db.cypher_query(query, query_parameters)
-        return result_array[0][0]
-
     def close(self) -> None:
+        # Our repository guidelines state that repos should have a close method
+        # But nothing needs to be done in this one
         pass

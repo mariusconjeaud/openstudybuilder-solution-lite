@@ -1,11 +1,11 @@
 [
     {
-        "name": "Test get all terms from non existing codelist",
+        "name": "Test get all terms from non-existent codelist",
         "request": {
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "/ct/terms/attributes?codelist_uid=non_existing_codelist"
+            "url": "/ct/terms/attributes?codelist_uid=non_existent_codelist"
         },
         "response": {
             "code": 400,
@@ -14,9 +14,9 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "There is no CTCodelistRoot identified by provided codelist uid (non_existing_codelist)",
+                "message": "There is no CTCodelistRoot identified by provided codelist uid (non_existent_codelist)",
                 "method": "GET",
-                "path": "http://testserver/ct/terms/attributes?codelist_uid=non_existing_codelist",
+                "path": "http://testserver/ct/terms/attributes?codelist_uid=non_existent_codelist",
                 "time": "2020-11-03T23:42:41.518146",
                 "type": "BusinessLogicException"
             }
@@ -249,7 +249,12 @@
             "result": {
                 "term_uid": "term_root_final",
                 "catalogue_name": "SDTM CT",
-                "codelist_uid": "editable_cr",
+                "codelists": [
+                    {
+                        "codelist_uid": "editable_cr",
+                        "order": 1
+                    }
+                ],
                 "concept_id": null,
                 "code_submission_value": "code_submission_value1",
                 "name_submission_value": "name_submission_value1",
@@ -257,7 +262,6 @@
                 "definition": "definition",
                 "sponsor_preferred_name": "term_value_name1",
                 "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
-                "order": 1,
                 "library_name": "Sponsor",
                 "possible_actions": [
                     "inactivate",

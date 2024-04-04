@@ -44,7 +44,7 @@ def create_random_numeric_value_vo(unit_definition) -> NumericValueWithUnitVO:
 
 def create_random_numeric_value_ar(
     unit_definition,
-    # pylint:disable=unnecessary-lambda
+    # pylint: disable=unnecessary-lambda
     generate_uid_callback: Callable[[], str] = lambda: random_str(),
     library: str = "Library",
     is_editable: bool = True,

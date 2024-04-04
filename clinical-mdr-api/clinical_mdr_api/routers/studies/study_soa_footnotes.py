@@ -13,7 +13,6 @@ from clinical_mdr_api.models.study_selections.study_soa_footnote import (
     StudySoAFootnoteVersion,
 )
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.models.validators import FLOAT_REGEX
 from clinical_mdr_api.oauth import get_current_user_id, rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
@@ -106,12 +105,7 @@ def get_all_study_soa_footnotes(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    study_value_version: str
-    | None = Query(
-        None,
-        description="StudyValueVersion to extract the StudySelections",
-        regex=FLOAT_REGEX,
-    ),
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
     current_user_id: str = Depends(get_current_user_id),
 ) -> CustomPage[StudySoAFootnote]:
     service = StudySoAFootnoteService(author=current_user_id)
@@ -164,12 +158,7 @@ def get_distinct_values_for_header(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
-    study_value_version: str
-    | None = Query(
-        None,
-        description="StudyValueVersion to extract the StudySelections",
-        regex=FLOAT_REGEX,
-    ),
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ):
     service = StudySoAFootnoteService(author=current_user_id)
     return service.get_distinct_values_for_header(
@@ -244,12 +233,7 @@ def get_study_soa_footnote(
     uid: str = utils.studyUID,
     study_soa_footnote_uid: str = utils.study_soa_footnote_uid,
     current_user_id: str = Depends(get_current_user_id),
-    study_value_version: str
-    | None = Query(
-        None,
-        description="StudyValueVersion to extract the StudySelections",
-        regex=FLOAT_REGEX,
-    ),
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> StudySoAFootnote:
     service = StudySoAFootnoteService(author=current_user_id)
     return service.get_by_uid(

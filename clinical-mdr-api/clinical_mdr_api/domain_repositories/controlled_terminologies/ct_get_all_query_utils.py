@@ -15,6 +15,7 @@ from clinical_mdr_api.domains.controlled_terminologies.ct_term_attributes import
     CTTermAttributesVO,
 )
 from clinical_mdr_api.domains.controlled_terminologies.ct_term_name import (
+    CTTermCodelistVO,
     CTTermNameAR,
     CTTermNameVO,
 )
@@ -48,7 +49,7 @@ codelist_root_level_properties = ["catalogue_name", "codelist_uid", "library_nam
 def create_term_filter_statement(
     codelist_uid: str | None = None,
     codelist_name: str | None = None,
-    library: str | None = None,
+    library_name: str | None = None,
     package: str | None = None,
 ) -> tuple[str, dict]:
     """
@@ -56,7 +57,7 @@ def create_term_filter_statement(
 
     :param codelist_uid:
     :param codelist_name:
-    :param library:
+    :param library_name:
     :param package:
     :return str:
     """
@@ -74,11 +75,11 @@ def create_term_filter_statement(
                 """
         filter_parameters.append(filter_by_codelist_name)
         filter_query_parameters["codelist_name"] = codelist_name
-    if library:
+    if library_name:
         filter_by_library_name = """
                 head([(library:Library)-[:CONTAINS_TERM]->(term_root) | library.name])=$library_name"""
         filter_parameters.append(filter_by_library_name)
-        filter_query_parameters["library_name"] = library
+        filter_query_parameters["library_name"] = library_name
     if package:
         filter_by_package = """
                 package.name=$package_name"""
@@ -108,16 +109,21 @@ def create_term_name_aggregate_instances_from_cypher_result(
     rel_data = term_dict[f"rel_data{specific_suffix}"]
     major, minor = rel_data.get("version").split(".")
 
+    codelists = [
+        CTTermCodelistVO(
+            codelist_uid=term_dict.get("codelist_uid"), order=term_dict.get("order")
+        )
+    ]
+
     library_name = term_dict.get("library_name")
     term_name_ar = CTTermNameAR.from_repository_values(
         uid=term_dict.get("term_uid"),
         ct_term_name_vo=CTTermNameVO.from_repository_values(
-            codelist_uid=term_dict.get("codelist_uid"),
+            codelists=codelists,
             name=term_dict.get(f"value_node{specific_suffix}").get("name"),
             name_sentence_case=term_dict.get(f"value_node{specific_suffix}").get(
                 "name_sentence_case"
             ),
-            order=term_dict.get("order"),
             catalogue_name=term_dict.get("catalogue_name"),
         ),
         library=LibraryVO.from_input_values_2(
@@ -160,10 +166,17 @@ def create_term_attributes_aggregate_instances_from_cypher_result(
     major, minor = rel_data.get("version").split(".")
 
     library_name = term_dict.get("library_name")
+
+    codelists = [
+        CTTermCodelistVO(
+            codelist_uid=term_dict.get("codelist_uid"), order=term_dict.get("order")
+        )
+    ]
+
     term_attributes_ar = CTTermAttributesAR.from_repository_values(
         uid=term_dict.get("term_uid"),
         ct_term_attributes_vo=CTTermAttributesVO.from_repository_values(
-            codelist_uid=term_dict.get("codelist_uid"),
+            codelists=codelists,
             concept_id=term_dict.get(f"value_node{specific_suffix}").get("concept_id"),
             code_submission_value=term_dict.get(f"value_node{specific_suffix}").get(
                 "code_submission_value"
@@ -211,28 +224,28 @@ def format_term_filter_sort_keys(key: str, prefix: str | None = None) -> str:
     if key in term_root_level_properties:
         return key
     # Possibly nested properties
-    # name property
-    if key == "sponsor_preferred_name":
-        return f"value_node_{prefix}.name" if prefix else "value_node.name"
+    # No renaming necessary, just remove sponsor_preferred_ prefix
+    if key in [
+        "sponsor_preferred_name",
+        "sponsor_preferred_name_sentence_case",
+        "code_submission_value",
+        "name_submission_value",
+        "definition",
+        "concept_id",
+    ]:
+        parsed_key = key.replace("sponsor_preferred_", "")
+        return (
+            f"value_node_{prefix}.{parsed_key}"
+            if prefix
+            else f"value_node.{parsed_key}"
+        )
+    # Some renaming necessary
     if key == "nci_preferred_name":
         return (
             f"value_node_{prefix}.preferred_term"
             if prefix
             else "value_node.preferred_term"
         )
-    if key == "sponsor_preferred_name_sentence_case":
-        return (
-            f"value_node_{prefix}.name_sentence_case"
-            if prefix
-            else "value_node.name_sentence_case"
-        )
-    if key in [
-        "code_submission_value",
-        "name_submission_value",
-        "definition",
-        "concept_id",
-    ]:
-        return f"value_node_{prefix}.{key}" if prefix else f"value_node.{key}"
     # Property coming from relationship
     if key in [
         "start_date",
@@ -254,6 +267,25 @@ def format_term_filter_sort_keys(key: str, prefix: str | None = None) -> str:
     return key
 
 
+def _parse_target_model_items(
+    is_aggregated: bool, target_model: BaseModel
+) -> list[str]:
+    output = []
+    prefix = None
+    if is_aggregated:
+        prefix = "name" if target_model == CTTermName else "attributes"
+    for attribute, attr_desc in target_model.__fields__.items():
+        # Wildcard filtering only searches in properties of type string
+        if (
+            attr_desc.type_ is str
+            and attribute not in ["possible_actions"]
+            and not attr_desc.field_info.extra.get("remove_from_wildcard", False)
+        ):
+            output.append(format_term_filter_sort_keys(attribute, prefix))
+
+    return output
+
+
 def list_term_wildcard_properties(
     is_aggregated: bool = True, target_model: BaseModel | None = None
 ) -> list[str]:
@@ -270,37 +302,13 @@ def list_term_wildcard_properties(
         property_list += list_term_wildcard_properties(True, CTTermName)
         property_list += list_term_wildcard_properties(True, CTTermAttributes)
     else:
-        if is_aggregated:
-            prefix = "name" if target_model == CTTermName else "attributes"
-            for attribute, attr_desc in target_model.__fields__.items():
-                # Wildcard filtering only searches in properties of type string
-                if (
-                    attr_desc.type_ is str
-                    and attribute not in ["possible_actions"]
-                    and not attr_desc.field_info.extra.get(
-                        "remove_from_wildcard", False
-                    )
-                ):
-                    property_list.append(
-                        format_term_filter_sort_keys(attribute, prefix)
-                    )
-        else:
-            for attribute, attr_desc in target_model.__fields__.items():
-                # Wildcard filtering only searches in properties of type string
-                if (
-                    attr_desc.type_ is str
-                    and attribute not in ["possible_actions"]
-                    and not attr_desc.field_info.extra.get(
-                        "remove_from_wildcard", False
-                    )
-                ):
-                    property_list.append(format_term_filter_sort_keys(attribute))
+        property_list += _parse_target_model_items(is_aggregated, target_model)
     return list(set(property_list))
 
 
 def create_codelist_filter_statement(
     catalogue_name: str | None = None,
-    library: str | None = None,
+    library_name: str | None = None,
     package: str | None = None,
 ) -> tuple[str, dict]:
     """
@@ -322,11 +330,11 @@ def create_codelist_filter_statement(
         filter_by_package_name = "package.name=$package_name"
         filter_parameters.append(filter_by_package_name)
         filter_query_parameters["package_name"] = package
-    if library:
+    if library_name:
         filter_by_library_name = """
         head([(library:Library)-[:CONTAINS_CODELIST]->(codelist_root) | library.name])=$library_name"""
         filter_parameters.append(filter_by_library_name)
-        filter_query_parameters["library_name"] = library
+        filter_query_parameters["library_name"] = library_name
     filter_statements = " AND ".join(filter_parameters)
     filter_statements = (
         "WHERE " + filter_statements if len(filter_statements) > 0 else ""
@@ -480,6 +488,22 @@ def format_codelist_filter_sort_keys(key: str, prefix: str | None = None) -> str
     return key
 
 
+def _parse_target_model_items_codelist(is_aggregated: bool, target_model: BaseModel):
+    output = []
+    prefix = None
+    if is_aggregated:
+        prefix = "name" if target_model == CTCodelistName else "attributes"
+    for attribute, attr_desc in target_model.__fields__.items():
+        # Wildcard filtering only searches in properties of type string
+        if (
+            attr_desc.type_ is str
+            and attribute not in ["possible_actions"]
+            and not attr_desc.field_info.extra.get("remove_from_wildcard", False)
+        ):
+            output.append(format_codelist_filter_sort_keys(attribute, prefix))
+    return output
+
+
 def list_codelist_wildcard_properties(
     is_aggregated: bool = True, target_model: BaseModel | None = None
 ) -> list[str]:
@@ -496,31 +520,5 @@ def list_codelist_wildcard_properties(
         property_list += list_codelist_wildcard_properties(True, CTCodelistName)
         property_list += list_codelist_wildcard_properties(True, CTCodelistAttributes)
     else:
-        if is_aggregated:
-            prefix = "name" if target_model == CTCodelistName else "attributes"
-            for attribute, attr_desc in target_model.__fields__.items():
-                # Wildcard filtering only searches in properties of type string
-                if (
-                    attr_desc.type_ is str
-                    and attribute not in ["possible_actions"]
-                    # remove fields that shouldn't be included in wildcard filter
-                    and not attr_desc.field_info.extra.get(
-                        "remove_from_wildcard", False
-                    )
-                ):
-                    property_list.append(
-                        format_codelist_filter_sort_keys(attribute, prefix)
-                    )
-        else:
-            for attribute, attr_desc in target_model.__fields__.items():
-                # Wildcard filtering only searches in properties of type string
-                if (
-                    attr_desc.type_ is str
-                    and attribute not in ["possible_actions"]
-                    # remove fields that shouldn't be included in wildcard filter
-                    and not attr_desc.field_info.extra.get(
-                        "remove_from_wildcard", False
-                    )
-                ):
-                    property_list.append(format_codelist_filter_sort_keys(attribute))
+        property_list += _parse_target_model_items_codelist(is_aggregated, target_model)
     return list(set(property_list))

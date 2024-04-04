@@ -86,3 +86,6 @@ CDISC: A general indicator of the body fat an individual is carrying based upon 
 "Sponsor","SDTM CT","UNIT_DIMENSION","ARBITRARINESS","Arbitrariness","Y","Y","A","Dimension for arbitrary units
 ","101"
 "Sponsor","SDTM CT","UNIT_DIMENSION","ACIDITY","Acidity","Y","Y","A","Measure measure of the acidity or basicity of a solution","101"
+"Sponsor","SDTM CT","UNIT_DIMENSION","ENDPOINT UNITS","Endpoint Units","Y","Y","A","A unit dimension to hold units for the unit column in the endpoint table. Units in this dimension are not necesarily real units and don´t have linkage to CT or conversion logic defined.","101"
+"Sponsor","SDTM CT","UNIT_DIMENSION","AREA PER TIME","Area per Time","Y","Y","A","A unit dimension to hold units of area divided by time.","201"
+"Sponsor","SDTM CT","UNIT_DIMENSION","DOSE UNIT","Dose Unit","Y","Y","A","A unit dimension to hold dose units","202"

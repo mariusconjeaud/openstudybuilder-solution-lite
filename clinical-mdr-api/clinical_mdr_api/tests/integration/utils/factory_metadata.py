@@ -50,6 +50,20 @@ def generate_registry_identifiers_json_model() -> RegistryIdentifiersJsonModel:
         japanese_trial_registry_id_japic_null_value_code=None,
         investigational_new_drug_application_number_ind="some ind id",
         investigational_new_drug_application_number_ind_null_value_code=None,
+        eu_trial_number="some etn",
+        eu_trial_number_null_value_code=None,
+        civ_id_sin_number="some cisn",
+        civ_id_sin_number_null_value_code=None,
+        national_clinical_trial_number="some nctn",
+        national_clinical_trial_number_null_value_code=None,
+        japanese_trial_registry_number_jrct="some jrct",
+        japanese_trial_registry_number_jrct_null_value_code=None,
+        national_medical_products_administration_nmpa_number="some nmpa",
+        national_medical_products_administration_nmpa_number_null_value_code=None,
+        eudamed_srn_number="some esn",
+        eudamed_srn_number_null_value_code=None,
+        investigational_device_exemption_ide_number="some ide",
+        investigational_device_exemption_ide_number_null_value_code=None,
     )
 
 
@@ -171,6 +185,22 @@ def registry_identifiers_json_model_to_vo(
         japanese_trial_registry_id_japic_null_value_code=json_model.japanese_trial_registry_id_japic_null_value_code,
         investigational_new_drug_application_number_ind=json_model.investigational_new_drug_application_number_ind,
         investigational_new_drug_application_number_ind_null_value_code=json_model.investigational_new_drug_application_number_ind_null_value_code,
+        eu_trial_number=json_model.eu_trial_number,
+        eu_trial_number_null_value_code=json_model.eu_trial_number_null_value_code,
+        civ_id_sin_number=json_model.civ_id_sin_number,
+        civ_id_sin_number_null_value_code=json_model.civ_id_sin_number_null_value_code,
+        national_clinical_trial_number=json_model.national_clinical_trial_number,
+        national_clinical_trial_number_null_value_code=json_model.national_clinical_trial_number_null_value_code,
+        japanese_trial_registry_number_jrct=json_model.japanese_trial_registry_number_jrct,
+        japanese_trial_registry_number_jrct_null_value_code=json_model.japanese_trial_registry_number_jrct_null_value_code,
+        national_medical_products_administration_nmpa_number=json_model.national_medical_products_administration_nmpa_number,
+        national_medical_products_administration_nmpa_number_null_value_code=(
+            json_model.national_medical_products_administration_nmpa_number_null_value_code
+        ),
+        eudamed_srn_number=json_model.eudamed_srn_number,
+        eudamed_srn_number_null_value_code=json_model.eudamed_srn_number_null_value_code,
+        investigational_device_exemption_ide_number=json_model.investigational_device_exemption_ide_number,
+        investigational_device_exemption_ide_number_null_value_code=json_model.investigational_device_exemption_ide_number_null_value_code,
     )
 
 

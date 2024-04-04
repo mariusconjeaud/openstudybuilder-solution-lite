@@ -22,6 +22,7 @@ from clinical_mdr_api.domain_repositories.models.odm import (
     OdmVendorElementRoot,
     OdmVendorNamespaceRoot,
 )
+from clinical_mdr_api.domains._utils import ObjectStatus
 from clinical_mdr_api.domains.concepts.concept_base import ConceptARBase
 from clinical_mdr_api.domains.concepts.odms.vendor_attribute import (
     OdmVendorAttributeAR,
@@ -52,6 +53,8 @@ class VendorAttributeRepository(OdmGenericRepository[OdmVendorAttributeAR]):
         value: VersionValue,
         **_kwargs,
     ) -> OdmVendorAttributeAR:
+        vendor_namespace = root.belongs_to_vendor_namespace.get_or_none()
+        vendor_element = root.belongs_to_vendor_element.get_or_none()
         return OdmVendorAttributeAR.from_repository_values(
             uid=root.uid,
             concept_vo=OdmVendorAttributeVO.from_repository_values(
@@ -59,12 +62,8 @@ class VendorAttributeRepository(OdmGenericRepository[OdmVendorAttributeAR]):
                 compatible_types=value.compatible_types,
                 data_type=value.data_type,
                 value_regex=value.value_regex,
-                vendor_namespace_uid=vendor_namespace.uid
-                if (vendor_namespace := root.belongs_to_vendor_namespace.get_or_none())
-                else None,
-                vendor_element_uid=vendor_element.uid
-                if (vendor_element := root.belongs_to_vendor_element.get_or_none())
-                else None,
+                vendor_namespace_uid=vendor_namespace.uid if vendor_namespace else None,
+                vendor_element_uid=vendor_element.uid if vendor_element else None,
             ),
             library=LibraryVO.from_input_values_2(
                 library_name=library.name,
@@ -107,19 +106,16 @@ class VendorAttributeRepository(OdmGenericRepository[OdmVendorAttributeAR]):
         return odm_form_ar
 
     def specific_alias_clause(
-        self, only_specific_status: list[str] | None = None
+        self, only_specific_status: str = ObjectStatus.LATEST.name
     ) -> str:
-        if not only_specific_status:
-            only_specific_status = ["LATEST"]
-
         return f"""
         WITH *,
         concept_value.compatible_types AS compatible_types,
         concept_value.data_type AS data_type,
         concept_value.value_regex AS value_regex,
 
-        head([(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmVendorAttributeRoot)<-[:HAS_VENDOR_ATTRIBUTE]-(vnr:OdmVendorNamespaceRoot)-[:LATEST]->(vnv:OdmVendorNamespaceValue) | {{uid: vnr.uid, name: vnv.name, prefix: vnv.prefix, url: vnv.url}}]) AS vendor_namespace,
-        head([(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmVendorAttributeRoot)<-[:HAS_VENDOR_ATTRIBUTE]-(xtr:OdmVendorElementRoot)-[:LATEST]->(xtv:OdmVendorElementValue) | {{uid: xtr.uid, name: xtv.name}}]) AS vendor_element
+        head([(concept_value)<-[:{only_specific_status}]-(:OdmVendorAttributeRoot)<-[:HAS_VENDOR_ATTRIBUTE]-(vnr:OdmVendorNamespaceRoot)-[:LATEST]->(vnv:OdmVendorNamespaceValue) | {{uid: vnr.uid, name: vnv.name, prefix: vnv.prefix, url: vnv.url}}]) AS vendor_namespace,
+        head([(concept_value)<-[:{only_specific_status}]-(:OdmVendorAttributeRoot)<-[:HAS_VENDOR_ATTRIBUTE]-(xtr:OdmVendorElementRoot)-[:LATEST]->(xtv:OdmVendorElementValue) | {{uid: xtr.uid, name: xtv.name}}]) AS vendor_element
 
 
         WITH *,

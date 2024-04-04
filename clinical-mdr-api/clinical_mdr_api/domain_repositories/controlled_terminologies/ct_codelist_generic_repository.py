@@ -134,7 +134,7 @@ class CTCodelistGenericRepository(
     def find_all(
         self,
         catalogue_name: str | None = None,
-        library: str | None = None,
+        library_name: str | None = None,
         package: str | None = None,
         sort_by: dict | None = None,
         page_number: int = 1,
@@ -142,6 +142,7 @@ class CTCodelistGenericRepository(
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
+        **_kwargs,
     ) -> GenericFilteringReturn[_AggregateRootType]:
         """
         Method runs a cypher query to fetch all needed data to create objects of type AggregateRootType.
@@ -151,7 +152,7 @@ class CTCodelistGenericRepository(
         to traverse many relationships to fetch all needed data and each traversal is separate database call when using
         neomodel.
         :param catalogue_name:
-        :param library:
+        :param library_name:
         :param package:
         :param sort_by:
         :param page_number:
@@ -171,7 +172,7 @@ class CTCodelistGenericRepository(
         # This is separate from generic filtering as the list of filters is predefined
         # We can therefore do this filtering in an efficient way in the Cypher MATCH clause
         filter_statements, filter_query_parameters = create_codelist_filter_statement(
-            catalogue_name=catalogue_name, library=library, package=package
+            catalogue_name=catalogue_name, library_name=library_name, package=package
         )
         match_clause = self._generate_generic_match_clause(package=package)
         match_clause += filter_statements
@@ -241,7 +242,7 @@ class CTCodelistGenericRepository(
         # This is separate from generic filtering as the list of filters is predefined
         # We can therefore do this filtering in an efficient way in the Cypher MATCH clause
         filter_statements, filter_query_parameters = create_codelist_filter_statement(
-            catalogue_name=catalogue_name, library=library, package=package
+            catalogue_name=catalogue_name, library_name=library, package=package
         )
         match_clause = self._generate_generic_match_clause(package=package)
         match_clause += filter_statements
@@ -353,7 +354,7 @@ class CTCodelistGenericRepository(
                 itm.__WRITE_LOCK__ = None
                 itm.save()
 
-        # pylint:disable=unnecessary-dunder-call
+        # pylint: disable=unnecessary-dunder-call
         ct_codelist_name_root_node = ct_codelist_root.__getattribute__(
             self.relationship_from_root
         ).single()
@@ -374,7 +375,7 @@ class CTCodelistGenericRepository(
             uid=codelist_uid
         )
         if ct_codelist_root is not None:
-            # pylint:disable=unnecessary-dunder-call
+            # pylint: disable=unnecessary-dunder-call
             ct_codelist_name_root_node = ct_codelist_root.__getattribute__(
                 self.relationship_from_root
             ).single()

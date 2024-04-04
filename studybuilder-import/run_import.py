@@ -1,18 +1,17 @@
-from importers.utils.metrics import Metrics
-
-from importers.run_import_dictionaries import Dictionaries
-from importers.run_import_config import Configuration
-from importers.run_import_standardcodelistterms1 import StandardCodelistTerms1
-from importers.run_import_standardcodelistterms2 import StandardCodelistTerms2
 from importers.run_import_activities import Activities
-from importers.run_import_unitdefinitions import Units
-from importers.run_import_standardcodelistfinish import StandardCodelistFinish
 from importers.run_import_compounds import Compounds
+from importers.run_import_config import Configuration
 from importers.run_import_crfs import Crfs
+from importers.run_import_dictionaries import Dictionaries
+from importers.run_import_e2e import MockdataJsonE2E
 from importers.run_import_mockdata import Mockdata
 from importers.run_import_mockdatajson import MockdataJson
 from importers.run_import_sponsormodels import SponsorModels
-from importers.run_import_e2e import MockdataJsonE2E
+from importers.run_import_standardcodelistfinish import StandardCodelistFinish
+from importers.run_import_standardcodelistterms1 import StandardCodelistTerms1
+from importers.run_import_standardcodelistterms2 import StandardCodelistTerms2
+from importers.run_import_unitdefinitions import Units
+from importers.utils.metrics import Metrics
 
 
 def main():

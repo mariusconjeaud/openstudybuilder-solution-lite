@@ -51,6 +51,10 @@ from clinical_mdr_api.domains.concepts.simple_concepts.visit_name import (
     VisitNameAR,
     VisitNameVO,
 )
+from clinical_mdr_api.domains.concepts.simple_concepts.week_in_study import (
+    WeekInStudyAR,
+    WeekInStudyVO,
+)
 from clinical_mdr_api.domains.concepts.unit_definitions.unit_definition import (
     UnitDefinitionAR,
 )
@@ -92,7 +96,10 @@ from clinical_mdr_api.models.study_selections.study_visit import (
     StudyVisitEditInput,
     StudyVisitVersion,
 )
-from clinical_mdr_api.models.utils import GenericFilteringReturn
+from clinical_mdr_api.models.utils import (
+    GenericFilteringReturn,
+    get_latest_on_datetime_str,
+)
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._meta_repository import MetaRepository
 from clinical_mdr_api.services._utils import (
@@ -200,12 +207,18 @@ class StudyVisitService:
         return resp
 
     def _transform_all_to_response_model(
-        self, visit: StudyVisitVO, study_activity_count: int | None = None
+        self,
+        visit: StudyVisitVO,
+        study_activity_count: int | None = None,
+        study_value_version: str | None = None,
     ) -> StudyVisit:
         timepoint = visit.timepoint
         return StudyVisit(
             uid=visit.uid,
             study_uid=visit.study_uid,
+            study_version=study_value_version
+            if study_value_version
+            else get_latest_on_datetime_str(),
             study_epoch_uid=visit.epoch_uid,
             study_epoch_name=visit.epoch.epoch.value,
             epoch_uid=visit.epoch.epoch.name,
@@ -234,6 +247,9 @@ class StudyVisitService:
             study_week_label=visit.study_week_label if visit.study_week else None,
             study_duration_weeks_label=visit.study_duration_weeks_label
             if visit.study_duration_weeks
+            else None,
+            week_in_study_label=visit.week_in_study_label
+            if visit.week_in_study
             else None,
             visit_number=visit.visit_number,
             visit_subnumber=visit.visit_subnumber,
@@ -359,10 +375,13 @@ class StudyVisitService:
                 has_study_visit__latest_value__uid=study_uid,
             )
         )
-        return [
-            SimpleStudyVisit.from_orm(anchor_visit)
-            for anchor_visit in anchor_visits_for_special_visit
-        ]
+        return sorted(
+            [
+                SimpleStudyVisit.from_orm(anchor_visit)
+                for anchor_visit in anchor_visits_for_special_visit
+            ],
+            key=lambda visit: int(visit.visit_name.split()[1]),
+        )
 
     def get_all_visits(
         self,
@@ -384,6 +403,7 @@ class StudyVisitService:
                 study_activity_count=self.repo.count_activities(
                     visit_uid=visit.uid, study_value_version=study_value_version
                 ),
+                study_value_version=study_value_version,
             )
             for visit in visits
         ]
@@ -727,6 +747,10 @@ class StudyVisitService:
             aggregate_class = StudyDurationWeeksAR
             value_object_class = StudyDurationWeeksVO
             repository_class = self._repos.study_duration_weeks_repository
+        elif numeric_value_type == NumericValueType.WEEK_IN_STUDY:
+            aggregate_class = WeekInStudyAR
+            value_object_class = WeekInStudyVO
+            repository_class = self._repos.week_in_study_repository
         else:
             raise exceptions.ValidationException(
                 f"Unknown numeric value type to create {numeric_value_type.value}"
@@ -741,8 +765,8 @@ class StudyVisitService:
                 is_template_parameter=True,
             ),
             library=self._get_sponsor_library_vo(),
-            generate_uid_callback=self._repos.numeric_value_repository.generate_uid,
-            find_uid_by_name_callback=self._repos.numeric_value_repository.find_uid_by_name,
+            generate_uid_callback=repository_class.generate_uid,
+            find_uid_by_name_callback=repository_class.find_uid_by_name,
         )
         repository_class.save(numeric_ar)
         numeric_value_object = NumericValue(
@@ -920,6 +944,10 @@ class StudyVisitService:
                     numeric_value_type=NumericValueType.STUDY_DURATION_WEEKS,
                 )
             )
+            study_visit_vo.week_in_study = self._create_numeric_value_simple_concept(
+                value=study_visit_vo.derive_week_in_study_number(),
+                numeric_value_type=NumericValueType.WEEK_IN_STUDY,
+            )
         return study_visit_vo
 
     def synchronize_visit_numbers(
@@ -1017,6 +1045,7 @@ class StudyVisitService:
         update_dict["study_day"] = updated_visit.study_day
         update_dict["study_duration_days"] = updated_visit.study_duration_days
         update_dict["study_duration_weeks"] = updated_visit.study_duration_weeks
+        update_dict["week_in_study"] = updated_visit.week_in_study
         update_dict["study_week"] = updated_visit.study_week
         update_dict["visit_name_sc"] = updated_visit.visit_name_sc
 

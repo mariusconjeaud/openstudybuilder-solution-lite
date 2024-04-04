@@ -71,7 +71,7 @@ class CTTermGenericService(Generic[_AggregateRootType], abc.ABC):
         all_ct_terms = self.repository.find_all(
             codelist_uid=codelist_uid,
             codelist_name=codelist_name,
-            library=library,
+            library_name=library,
             package=package,
             total_count=total_count,
             sort_by=sort_by,

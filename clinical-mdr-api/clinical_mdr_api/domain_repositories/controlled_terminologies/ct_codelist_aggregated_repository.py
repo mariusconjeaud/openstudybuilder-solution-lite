@@ -145,7 +145,7 @@ class CTCodelistAggregatedRepository:
         # This is separate from generic filtering as the list of filters is predefined
         # We can therefore do this filtering in an efficient way in the Cypher MATCH clause
         filter_statements, filter_query_parameters = create_codelist_filter_statement(
-            catalogue_name=catalogue_name, library=library, package=package
+            catalogue_name=catalogue_name, library_name=library, package=package
         )
         match_clause = self._generate_generic_match_clause(
             package=package, term_filter=term_filter
@@ -222,7 +222,7 @@ class CTCodelistAggregatedRepository:
         # This is separate from generic filtering as the list of filters is predefined
         # We can therefore do this filtering in an efficient way in the Cypher MATCH clause
         filter_statements, filter_query_parameters = create_codelist_filter_statement(
-            catalogue_name=catalogue_name, library=library, package=package
+            catalogue_name=catalogue_name, library_name=library, package=package
         )
         match_clause = self._generate_generic_match_clause(package=package)
         match_clause += filter_statements
@@ -332,4 +332,6 @@ class CTCodelistAggregatedRepository:
         return result[0][0] if len(result) > 0 else 0.0
 
     def close(self) -> None:
+        # Our repository guidelines state that repos should have a close method
+        # But nothing needs to be done in this one
         pass

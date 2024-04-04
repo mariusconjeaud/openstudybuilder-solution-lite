@@ -18,8 +18,6 @@ from clinical_mdr_api.domain_repositories.models.study_audit_trail import (
     Edit,
 )
 from clinical_mdr_api.domain_repositories.models.study_epoch import StudyEpoch
-
-# from clinical_mdr_api.domain_repositories.models.study_visit import StudyVisit
 from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import (
     StudyStatus,
 )

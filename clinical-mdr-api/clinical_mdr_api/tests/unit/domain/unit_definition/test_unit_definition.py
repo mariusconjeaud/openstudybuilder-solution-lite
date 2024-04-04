@@ -479,7 +479,7 @@ def test__unit_definition_value_vo__from_input__existing_unit_ct_id__success(
     order=integers(0, 20),
     comment=one_of(none(), text()),
 )
-def test__unit_definition_value_vo__from_input__non_existing_unit_ct_id__failure(
+def test__unit_definition_value_vo__from_input__non_existent_unit_ct_id__failure(
     name: str,
     ct_units: list,
     unit_subsets: list,

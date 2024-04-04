@@ -58,7 +58,7 @@
           {{ $t('ActivityForms.nci_concept_id') }}
         </v-col>
         <v-col cols="10">
-          {{ itemOverview.activity.nci_concept_id }}
+          <n-c-i-concept-link :conceptId="itemOverview.activity.nci_concept_id" />
         </v-col>
       </v-row>
       <v-row>
@@ -137,12 +137,14 @@
 import ActivitiesForm from '@/components/library/ActivitiesForm'
 import BaseActivityOverview from './BaseActivityOverview'
 import StatusChip from '@/components/tools/StatusChip'
+import NCIConceptLink from '@/components//tools/NCIConceptLink'
 
 export default {
   components: {
     ActivitiesForm,
     BaseActivityOverview,
-    StatusChip
+    StatusChip,
+    NCIConceptLink
   },
   data () {
     return {
@@ -173,8 +175,8 @@ export default {
         item.activity_subgroup = { name: subgroups }
         item.item_key = item.uid
       } else {
-        item.activity_group = { name: '' }
-        item.activity_subgroup = { name: '' }
+        item.activity_group = { name: [] }
+        item.activity_subgroup = { name: [] }
         item.item_key = item.uid
       }
     }

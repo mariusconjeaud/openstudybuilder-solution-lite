@@ -9,6 +9,8 @@ Tests for /studies/{uid}/study-visits endpoints
 # pytest fixture functions have other fixture functions as arguments,
 # which pylint interprets as unused arguments
 
+from unittest import mock
+
 import pytest
 from fastapi.testclient import TestClient
 from neomodel import db
@@ -173,6 +175,8 @@ def test_visit_modify_actions_on_locked_study(api_client):
     )
     res = response.json()
     assert response.status_code == 200
+    for i, _ in enumerate(old_res):
+        old_res[i]["study_version"] = mock.ANY
     assert old_res == res
 
     # test cannot delete
@@ -239,6 +243,7 @@ def test_study_visit_versioning(api_client):
     )
     res = response.json()
     assert response.status_code == 200
+    before_unlock["study_version"] = mock.ANY
     assert res["items"][0] == before_unlock
 
     # get specific study visit of a specific study version
@@ -293,4 +298,9 @@ def test_study_visit_versioning(api_client):
 )
 def test_get_study_visits_csv_xml_excel(api_client, export_format):
     url = f"/studies/{study.uid}/study-visits"
-    TestUtils.verify_exported_data_format(api_client, export_format, url)
+    exported_data = TestUtils.verify_exported_data_format(
+        api_client, export_format, url
+    )
+    if export_format == "text/csv":
+        assert "study_version" in str(exported_data.read())
+        assert "LATEST" in str(exported_data.read())

@@ -122,8 +122,9 @@ services:
       - standaloneHost=localhost
       - standalonePort=5002
       - standaloneDatabase=mdrdb
-      - standaloneDashboardName=My dashboard
-      - standaloneDashboardDatabase=neo4j
+      - standaloneAllowLoad=true
+      - standaloneDashboardName=StudyBuilder Activity Library Dashboard
+      - standaloneDashboardDatabase=mdrdb
       - standaloneUsername=neo4j
       - standalonePassword=${NEO4J_PASSWORD:-changeme1234}
 

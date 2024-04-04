@@ -32,7 +32,7 @@ Notes:
 - To enable authentication, update the following variables according to your auth configuration (the values below are random-generated examples).
   ```shell
   OAUTH_ENABLED=True
-  OAUTH_METADATA_URL='https://login.microsoftonline.com/bd70d9d2-5ba8-4bb8-8ca5-55fdaf0c76d1/v2.0/.well-known/openid-configuration'
+  OAUTH_METADATA_URL='https://login.microsoftonline.com/bd70d9d2-5ba8-4bb8-8ca5-55fdaf0c76d1/v2.0/.well-known/openid-configuration?appid=0b4bb293-433f-44d3-b992-8c95ad1665b9'
   OAUTH_API_APP_ID='0b4bb293-433f-44d3-b992-8c95ad1665b9'
   
   # required for MS Graph API integration only, which will be used by a future feature #
@@ -118,25 +118,12 @@ All in all, you should be able to start the API by performing these steps:
 
 ## Running Schemathesis checks
 - In order to run schemathesis checks on a subset of endpoints and/or http methods, 
-you can specify parameters for the desired http methods (`-M`) and endpoint names (`-E`) inside the `Pipfile`.
+you can specify parameters for the desired http methods (`-M`) and endpoint names (`-E`)
 
   For example, this will only test `GET` and `POST` endpoints whose name starts with `/concepts/numeric-values-with-unit`:
 
   ```
-  schemathesis = """sh -c "
-      st run \
-          --checks=all \
-          --base-url=http://localhost:8000 \
-          -M GET \
-          -M POST \
-          -E ^/concepts/numeric-values-with-unit \
-          --hypothesis-max-examples=10 \
-          --junit-xml=schemathesis_report.xml \
-          --report=schemathesis_report.tgz \
-          --show-errors-tracebacks \
-          openapi.json
-  "
-  """
+  pipenv run schemathesis -M GET -M POST -E ^/concepts/numeric-values-with-unit
   ```
 
 ## Authentication setup

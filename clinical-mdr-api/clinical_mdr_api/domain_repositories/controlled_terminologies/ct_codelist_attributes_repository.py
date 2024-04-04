@@ -235,6 +235,8 @@ class CTCodelistAttributesRepository(
         root: VersionRoot,
         value: VersionValue,
     ) -> None:
+        # This method from parent repo is not needed for this repo
+        # So we use pass to skip implementation
         pass
 
     def is_repository_related_to_attributes(self) -> bool:

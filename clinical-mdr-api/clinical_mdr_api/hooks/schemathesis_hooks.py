@@ -3,7 +3,6 @@ import os
 import schemathesis
 
 STUDY_UID = os.getenv("SCHEMATHESIS_STUDY_UID", "0")
-STUDY_NUMBER = os.getenv("SCHEMATHESIS_STUDY_NUMBER", "0")
 
 
 def is_in_range(val):

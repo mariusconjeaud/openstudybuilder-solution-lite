@@ -14,6 +14,7 @@ from clinical_mdr_api.domain_repositories.models.generic import (
     VersionRoot,
     VersionValue,
 )
+from clinical_mdr_api.domains._utils import ObjectStatus
 from clinical_mdr_api.domains.concepts.activities.activity_sub_group import (
     ActivitySubGroupAR,
     ActivitySubGroupVO,
@@ -98,7 +99,9 @@ class ActivitySubGroupRepository(ConceptGenericRepository[ActivitySubGroupAR]):
     def specific_header_match_clause(self) -> str | None:
         return "MATCH (concept_value)-[:HAS_GROUP]->()<-[:IN_SUBGROUP]-()<-[:HAS_GROUPING]-()"
 
-    def specific_alias_clause(self) -> str:
+    def specific_alias_clause(
+        self, only_specific_status: str = ObjectStatus.LATEST.name
+    ) -> str:
         # concept_value property comes from the main part of the query
         # which is specified in the activity_generic_repository_impl
         return """
@@ -192,24 +195,6 @@ class ActivitySubGroupRepository(ConceptGenericRepository[ActivitySubGroupAR]):
         )
 
         return are_concept_properties_changed or are_rels_changed
-
-    def get_syntax_activity_subgroups(
-        self, syntax_node: VersionRoot
-    ) -> list[ActivitySubGroupAR] | None:
-        """
-        This method returns the activity sub groups for the provided syntax
-
-        :param syntax_node: Syntax Root node
-        :return list[ActivitySubGroupAR] | None:
-        """
-        activity_subgroup_nodes = syntax_node.has_activity_subgroup.all()
-        if activity_subgroup_nodes:
-            groups = []
-            for node in activity_subgroup_nodes:
-                group = self.find_by_uid_2(uid=node.uid)
-                groups.append(group)
-            return groups
-        return None
 
     def generic_match_clause_all_versions(self):
         return """

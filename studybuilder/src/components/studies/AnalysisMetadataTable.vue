@@ -13,7 +13,7 @@
   :column-data-resource="exportDataUrl"
   >
   <template v-for="(_, slot) of $scopedSlots" v-slot:[slot]="scope">
-    <slot :name="slot" v-bind="scope" v-bind:showSelectBoxes="showSelectBoxes" />
+    <slot :name="slot" v-bind="scope" />
   </template>
 </n-n-table>
 </template>
@@ -34,7 +34,8 @@ export default {
   },
   computed: {
     ...mapGetters({
-      selectedStudy: 'studiesGeneral/selectedStudy'
+      selectedStudy: 'studiesGeneral/selectedStudy',
+      selectedStudyVersion: 'studiesGeneral/selectedStudyVersion'
     }),
     exportDataUrl () {
       return `listings/studies/${this.selectedStudy.uid}/adam/${this.type}`
@@ -54,6 +55,7 @@ export default {
     fetchData (filters, sort, filtersUpdated) {
       const params = filteringParameters.prepareParameters(
         this.options, filters, sort, filtersUpdated)
+      params.study_value_version = this.selectedStudyVersion
       listings.getAllAdam(this.selectedStudy.uid, this.type, params).then(resp => {
         this.items = resp.data.items
         this.total = resp.data.total

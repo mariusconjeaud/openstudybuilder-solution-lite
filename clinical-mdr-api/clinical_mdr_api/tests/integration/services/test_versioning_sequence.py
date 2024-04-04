@@ -5,7 +5,7 @@ from pydantic import BaseModel
 import clinical_mdr_api.models.syntax_templates.objective_template as models
 import clinical_mdr_api.services.libraries.libraries as library_service
 import clinical_mdr_api.services.syntax_templates.objective_templates as service
-from clinical_mdr_api.exceptions import BusinessLogicException
+from clinical_mdr_api.exceptions import BusinessLogicException, NotFoundException
 from clinical_mdr_api.services._meta_repository import MetaRepository
 from clinical_mdr_api.tests.integration.utils.api import inject_and_clear_db
 from clinical_mdr_api.tests.integration.utils.data_library import (
@@ -159,7 +159,12 @@ class TestSoftDelete(TestCase):
     def test_softdelete(self):
         service.ObjectiveTemplateService().soft_delete(self.objective_template["uid"])
         repos = MetaRepository()
-        item = repos.objective_template_repository.find_by_uid_2(
-            self.objective_template["uid"]
+
+        with self.assertRaises(NotFoundException) as message:
+            repos.objective_template_repository.find_by_uid(
+                self.objective_template["uid"]
+            )
+        self.assertEqual(
+            "No Syntax Template with UID (ObjectiveTemplate_000001) found in given status and version.",
+            str(message.exception),
         )
-        self.assertIsNone(item)

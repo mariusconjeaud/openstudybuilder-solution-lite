@@ -72,10 +72,6 @@ class UnitDefinitionRepositoryFakeBase(UnitDefinitionRepository):
         self.verified_unit_ct_uids = set()
         self.saved_item = None
 
-    def exists_by_unit_ct_uid(self, unit_ct_uid: str) -> bool:
-        self.verified_unit_ct_uids.add(unit_ct_uid)
-        return False
-
     def exists_by_legacy_code(self, legacy_code: str) -> bool:
         self.verified_legacy_codes.add(legacy_code)
         return False
@@ -103,11 +99,6 @@ class UnitDefinitionRepositoryFakeBase(UnitDefinitionRepository):
         total_count: bool = False,
         **kwargs,
     ) -> tuple[list[Any], int]:
-        raise AssertionError("Call not expected")
-
-    def find_releases(
-        self, uid: str, return_study_count: bool | None = True
-    ) -> Iterable[UnitDefinitionAR]:
         raise AssertionError("Call not expected")
 
     def find_by_uid_2(
@@ -291,7 +282,7 @@ def test__unit_definition__get_by_uid__existing__result(
     UnitDefinitionService.__module__ + ".MetaRepository.unit_definition_repository",
     new_callable=PropertyMock,
 )
-def test__unit_definition__get_by_uid__non_existing__result(
+def test__unit_definition__get_by_uid__non_existent__result(
     unit_definition_repository_property_mock: PropertyMock,
     a_uid: str,
     a_version: str | None,
@@ -387,7 +378,7 @@ def test__unit_definition__get_versions__existing_uid__result(
     UnitDefinitionService.__module__ + ".MetaRepository.unit_definition_repository",
     new_callable=PropertyMock,
 )
-def test__unit_definition__get_versions__non_existing_uid__result(
+def test__unit_definition__get_versions__non_existent_uid__result(
     unit_definition_repository_property_mock: PropertyMock, a_uid: str
 ):
     # given

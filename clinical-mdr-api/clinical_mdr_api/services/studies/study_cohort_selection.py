@@ -221,7 +221,10 @@ class StudyCohortSelectionService(StudySelectionMixin):
             repos.close()
 
     def _get_specific_arm_selection(
-        self, study_uid: str, study_selection_uid: str, study_value_version: str
+        self,
+        study_uid: str,
+        study_selection_uid: str,
+        study_value_version: str | None = None,
     ) -> models.StudySelectionArm:
         (
             _,

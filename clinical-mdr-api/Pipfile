@@ -39,7 +39,7 @@ cachetools = "~=5.3.1"
 
 [dev-packages]
 pytest = "~=7.1.2"
-pytest-bdd = "~=6.0.1"
+pytest-bdd = "~=7.0.0"
 pytest-cov = "~=3.0.0"
 pylint = "~=2.17.0"
 flake8 = "~=5.0.4"
@@ -65,10 +65,10 @@ prod = "uvicorn --host=0.0.0.0 --port=8000 --limit-concurrency=120 --workers=4 -
 test = "pytest -s"
 dist = "python setup.py bdist_wheel"
 package = "pip wheel -r requirements.txt -w dist"
-testunit = "pytest -s --cov-report html:coverage_unit_tests --cov-report xml:coverage.xml --cov-append --cov=clinical_mdr_api  --junitxml=unit_report.xml clinical_mdr_api/tests/unit/"
-testint = "pytest -s -n 4 --dist loadfile --cov-report html:coverage_integration_tests --cov-report xml:coverage.xml --cov-append --cov=clinical_mdr_api --junitxml=int_report.xml clinical_mdr_api/tests/integration"
-testauth = "pytest -s --cov-report html:coverage_auth_tests --cov-report xml:coverage.xml --cov-append --cov=clinical_mdr_api --junitxml=auth_report.xml clinical_mdr_api/tests/oauth/"
-test-telemetry = "pytest -s --cov-report html:coverage_telemetry_tests --cov-report xml:coverage.xml --cov-append --cov=clinical_mdr_api --junitxml=telemetry_report.xml clinical_mdr_api/tests/telemetry/"
+testunit = "pytest -s --cov-report html:reports/coverage-unit --cov-report xml:reports/coverage.xml --cov-append --cov=clinical_mdr_api  --junitxml=reports/unit_report.xml clinical_mdr_api/tests/unit/"
+testint = "pytest -s -n 4 --dist loadfile --cov-report html:reports/coverage-int --cov-report xml:reports/coverage.xml --cov-append --cov=clinical_mdr_api --junitxml=reports/int_report.xml clinical_mdr_api/tests/integration"
+testauth = "pytest -s --cov-report html:reports/coverage-auth --cov-report xml:reports/coverage.xml --cov-append --cov=clinical_mdr_api --junitxml=reports/auth_report.xml clinical_mdr_api/tests/oauth/"
+test-telemetry = "pytest -s --cov-report html:reports/coverage-telemetry --cov-report xml:reports/coverage.xml --cov-append --cov=clinical_mdr_api --junitxml=reports/telemetry_report.xml clinical_mdr_api/tests/telemetry/"
 lint = "pylint clinical_mdr_api"
 black = "python -m black clinical_mdr_api"
 isort = "python -m isort clinical_mdr_api"
@@ -78,20 +78,21 @@ format = """sh -c "
 "
 """
 openapi = "python generate_openapi_json.py"
-schemathesis = """sh -c "
-    st --pre-run=clinical_mdr_api.hooks.schemathesis_hooks run \
-        --checks=all \
-        --base-url=http://localhost:8000 \
-        --request-timeout=30000 \
-        --hypothesis-max-examples=10 \
-        --hypothesis-verbosity=normal \
-        --hypothesis-deadline=None \
-        --hypothesis-suppress-health-check=too_slow,filter_too_much,data_too_large \
-        --junit-xml=schemathesis_report.xml \
-        --report=schemathesis_report.tgz \
-        --show-errors-tracebacks \
+schemathesis = """
+    schemathesis
+        --pre-run=clinical_mdr_api.hooks.schemathesis_hooks
+        run
+        --checks=all
+        --base-url=http://localhost:8000
+        --request-timeout=30000
+        --hypothesis-max-examples=10
+        --hypothesis-verbosity=normal
+        --hypothesis-deadline=None
+        --hypothesis-suppress-health-check=too_slow,filter_too_much,data_too_large
+        --junit-xml=reports/schemathesis_report.xml
+        --report=reports/schemathesis_report.tgz
+        --show-errors-tracebacks
         openapi.json
-"
 """
 build-sbom = "pipelines/scripts/build-sbom.sh"
-schemathesis-help = "st run --help"
+schemathesis-help = "schemathesis run --help"

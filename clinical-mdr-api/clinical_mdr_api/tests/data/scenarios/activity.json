@@ -21,7 +21,8 @@
                   "activity_group_uid": "activity_group_root3"
                }
             ],
-            "is_data_collected": true
+            "is_data_collected": true,
+            "is_multiple_selection_allowed": false
          },
          "url": "/concepts/activities/activities"
       },
@@ -51,6 +52,7 @@
                }
             ],
             "is_data_collected": true,
+            "is_multiple_selection_allowed": false,
             "start_date": "2021-03-18T11:54:20.898Z",
             "end_date": null,
             "status": "Draft",
@@ -63,6 +65,11 @@
                "edit"
             ],
             "request_rationale": null,
+            "is_request_final": false,
+            "is_request_rejected": false,
+            "contact_person": null,
+            "reason_for_rejecting": null,
+            "requester_study_id": null,
             "replaced_by_activity": null
          }
       }
@@ -97,6 +104,7 @@
                      }
                   ],
                   "is_data_collected": false,
+                  "is_multiple_selection_allowed": true,
                   "start_date": "2021-03-18T11:54:20.898Z",
                   "end_date": null,
                   "status": "Final",
@@ -108,6 +116,11 @@
                      "new_version"
                   ],
                   "request_rationale": null,
+                  "is_request_final": false,
+                  "is_request_rejected": false,
+                  "contact_person": null,
+                  "reason_for_rejecting": null,
+                  "requester_study_id": null,
                   "replaced_by_activity": null
                },
                {
@@ -127,6 +140,7 @@
                      }
                   ],
                   "is_data_collected": false,
+                  "is_multiple_selection_allowed": true,
                   "start_date": "2021-03-18T11:54:20.898Z",
                   "end_date": null,
                   "status": "Draft",
@@ -139,6 +153,11 @@
                      "edit"
                   ],
                   "request_rationale": null,
+                  "is_request_final": false,
+                  "is_request_rejected": false,
+                  "contact_person": null,
+                  "reason_for_rejecting": null,
+                  "requester_study_id": null,
                   "replaced_by_activity": null
                },
                {
@@ -158,6 +177,7 @@
                      }
                   ],
                   "is_data_collected": false,
+                  "is_multiple_selection_allowed": true,
                   "start_date": "2021-03-18T11:54:20.898Z",
                   "end_date": null,
                   "status": "Final",
@@ -169,6 +189,11 @@
                      "new_version"
                   ],
                   "request_rationale": null,
+                  "is_request_final": false,
+                  "is_request_rejected": false,
+                  "contact_person": null,
+                  "reason_for_rejecting": null,
+                  "requester_study_id": null,
                   "replaced_by_activity": null
                },
                {
@@ -194,6 +219,7 @@
                      }
                   ],
                   "is_data_collected": true,
+                  "is_multiple_selection_allowed": false,
                   "start_date": "2021-03-18T11:54:20.898Z",
                   "end_date": null,
                   "status": "Draft",
@@ -206,6 +232,11 @@
                      "edit"
                   ],
                   "request_rationale": null,
+                  "is_request_final": false,
+                  "is_request_rejected": false,
+                  "contact_person": null,
+                  "reason_for_rejecting": null,
+                  "requester_study_id": null,
                   "replaced_by_activity": null
                }
             ],
@@ -245,6 +276,7 @@
                      }
                   ],
                   "is_data_collected": false,
+                  "is_multiple_selection_allowed": true,
                   "start_date": "2021-03-18T11:54:20.898Z",
                   "end_date": null,
                   "status": "Draft",
@@ -257,6 +289,11 @@
                      "edit"
                   ],
                   "request_rationale": null,
+                  "is_request_final": false,
+                  "is_request_rejected": false,
+                  "contact_person": null,
+                  "reason_for_rejecting": null,
+                  "requester_study_id": null,
                   "replaced_by_activity": null
                }
             ],
@@ -296,6 +333,7 @@
                      }
                   ],
                   "is_data_collected": false,
+                  "is_multiple_selection_allowed": true,
                   "start_date": "2021-03-18T11:54:20.898Z",
                   "end_date": null,
                   "status": "Draft",
@@ -308,6 +346,11 @@
                      "edit"
                   ],
                   "request_rationale": null,
+                  "is_request_final": false,
+                  "is_request_rejected": false,
+                  "contact_person": null,
+                  "reason_for_rejecting": null,
+                  "requester_study_id": null,
                   "replaced_by_activity": null
                }
             ],
@@ -347,6 +390,7 @@
                      }
                   ],
                   "is_data_collected": false,
+                  "is_multiple_selection_allowed": true,
                   "start_date": "2021-03-18T11:54:20.898Z",
                   "end_date": null,
                   "status": "Draft",
@@ -359,6 +403,11 @@
                      "edit"
                   ],
                   "request_rationale": null,
+                  "is_request_final": false,
+                  "is_request_rejected": false,
+                  "contact_person": null,
+                  "reason_for_rejecting": null,
+                  "requester_study_id": null,
                   "replaced_by_activity": null
                }
             ],
@@ -398,6 +447,7 @@
                      }
                   ],
                   "is_data_collected": false,
+                  "is_multiple_selection_allowed": true,
                   "start_date": "2021-03-18T11:54:20.898Z",
                   "end_date": null,
                   "status": "Draft",
@@ -410,6 +460,11 @@
                      "edit"
                   ],
                   "request_rationale": null,
+                  "is_request_final": false,
+                  "is_request_rejected": false,
+                  "contact_person": null,
+                  "reason_for_rejecting": null,
+                  "requester_study_id": null,
                   "replaced_by_activity": null
                }
             ],
@@ -453,6 +508,7 @@
                }
             ],
             "is_data_collected": true,
+            "is_multiple_selection_allowed": false,
             "start_date": "2021-03-18T11:54:20.898Z",
             "end_date": null,
             "status": "Final",
@@ -464,6 +520,11 @@
                "new_version"
             ],
             "request_rationale": null,
+            "is_request_final": false,
+            "is_request_rejected": false,
+            "contact_person": null,
+            "reason_for_rejecting": null,
+            "requester_study_id": null,
             "replaced_by_activity": null
          }
       }
@@ -502,6 +563,7 @@
                }
             ],
             "is_data_collected": true,
+            "is_multiple_selection_allowed": false,
             "start_date": "2021-03-18T11:54:20.898Z",
             "end_date": null,
             "status": "Draft",
@@ -513,6 +575,11 @@
                "edit"
             ],
             "request_rationale": null,
+            "is_request_final": false,
+            "is_request_rejected": false,
+            "contact_person": null,
+            "reason_for_rejecting": null,
+            "requester_study_id": null,
             "replaced_by_activity": null
          }
       }
@@ -545,6 +612,7 @@
                }
             ],
             "is_data_collected": false,
+            "is_multiple_selection_allowed": true,
             "start_date": "2021-03-18T11:54:20.898Z",
             "end_date": null,
             "status": "Retired",
@@ -555,6 +623,11 @@
                "reactivate"
             ],
             "request_rationale": null,
+            "is_request_final": false,
+            "is_request_rejected": false,
+            "contact_person": null,
+            "reason_for_rejecting": null,
+            "requester_study_id": null,
             "replaced_by_activity": null
          }
       }
@@ -587,6 +660,7 @@
                }
             ],
             "is_data_collected": false,
+            "is_multiple_selection_allowed": true,
             "start_date": "2021-03-18T11:54:20.898Z",
             "end_date": null,
             "status": "Final",
@@ -598,6 +672,11 @@
                "new_version"
             ],
             "request_rationale": null,
+            "is_request_final": false,
+            "is_request_rejected": false,
+            "contact_person": null,
+            "reason_for_rejecting": null,
+            "requester_study_id": null,
             "replaced_by_activity": null
          }
       }

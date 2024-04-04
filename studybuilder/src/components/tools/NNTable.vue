@@ -225,12 +225,13 @@
             </v-row>
           </template>
           <template v-for="(header, index) in shownColumns" v-slot:[`item.${header.value}`]="{ item }">
-            <v-tooltip top :key="index">
+            <v-tooltip top :key="index" v-if="getValueByColumn(item, header.value) && getValueByColumn(item, header.value).length > 60">
               <template v-slot:activator="{ on }">
-                <span v-on="on">{{ (getValueByColumn(item, header.value) && getValueByColumn(item, header.value).length > 35) ? getValueByColumn(item, header.value).substring(0, 35) + '...' : getValueByColumn(item, header.value) }}</span>
+                <span v-on="on">{{ getValueByColumn(item, header.value).substring(0, 60) + '...' }}</span>
               </template>
               <span>{{ getValueByColumn(item, header.value) }}</span>
             </v-tooltip>
+            <div :key="index" v-else>{{ getValueByColumn(item, header.value) }}</div>
           </template>
           <template v-for="(_, slot) of $scopedSlots" v-slot:[slot]="scope">
             <slot :name="slot" v-bind="scope" v-bind:showSelectBoxes="showSelectBoxes" />
@@ -470,6 +471,10 @@ export default {
     extraItemClass: {
       type: Function,
       required: false
+    },
+    loadingWatcher: {
+      type: Boolean,
+      required: false
     }
   },
   computed: {
@@ -540,19 +545,25 @@ export default {
       const map = JSON.parse(this.filteringParams.apiParams)
       for (const key in map) {
         if (key !== '*') {
-          this.itemsToFilter.push(this.shownColumns.find(column => column.value === key))
+          const newItem = this.shownColumns.find(column => column.value === key)
+          if (newItem !== undefined && !this.itemsToFilter.find(item => item.text === newItem.text)) {
+            this.itemsToFilter.push(newItem)
+          }
         } else {
           this.search = map[key][0]
         }
       }
       this.selectedColumnData = map
-      this.$emit('filter', this.filteringParams.filters, true, true)
+      if (this.initialFilters === undefined) {
+        this.$emit('filter', this.filteringParams.filters, true, true)
+      }
     }
     if (this.initialFilters !== undefined) {
       this.selectedColumnData = this.initialFilters
       const filters = {}
       for (const key in this.initialFilters) {
         filters[key] = { v: this.initialFilters[key] }
+        this.apiParams.set(key, this.initialFilters[key])
       }
       this.filters = JSON.stringify(filters)
       this.$emit('filter', this.filters, true, true)
@@ -615,7 +626,7 @@ export default {
         {
           label: this.$t('NNTable.add_to_filter'),
           click: this.addToFilter,
-          available: true
+          available: Boolean(!this.disableFiltering)
         },
         {
           label: this.$t('NNTable.hide_column'),
@@ -753,7 +764,7 @@ export default {
             this.apiParams.delete(elem[0])
           }
         }
-        const newFilters = JSON.stringify(Object.fromEntries(this.apiParams)).replaceAll(':[', ' :{ "v": [').replaceAll(']}', ']}}').replaceAll('],', ']},')
+        const newFilters = JSON.stringify(Object.fromEntries(this.apiParams)).replaceAll(':[', ':{"v":[').replaceAll(']}', ']}}').replaceAll('],', ']},')
         const filtersUpdated = (this.filters && newFilters !== this.filters)
         this.filters = newFilters
         let index = this.filters.indexOf('start_date')
@@ -800,6 +811,9 @@ export default {
     }
   },
   watch: {
+    loadingWatcher (value) {
+      this.loading = value
+    },
     headers (value) {
       this.shownColumns = value
     },

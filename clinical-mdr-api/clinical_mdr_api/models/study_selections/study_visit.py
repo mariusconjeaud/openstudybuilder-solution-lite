@@ -88,9 +88,9 @@ class TimeUnit(BaseModel):
     from_timedelta: Callable | None = Field(None, exclude_from_orm=True)
 
     @validator("from_timedelta", always=True)
-    # pylint:disable=no-self-argument,unused-argument
+    # pylint: disable=no-self-argument,unused-argument
     def validate_time_unit_obj(cls, value, values):
-        if values.get("conversion_factor_to_master"):
+        if values.get("conversion_factor_to_master") is not None:
             return lambda u, x: u.conversion_factor_to_master * x
         return None
 
@@ -112,7 +112,7 @@ class WindowTimeUnit(BaseModel):
     from_timedelta: Callable | None = Field(None, exclude_from_orm=True)
 
     @validator("from_timedelta", always=True)
-    # pylint:disable=no-self-argument,unused-argument
+    # pylint: disable=no-self-argument,unused-argument
     def validate_time_unit_obj(cls, value, values):
         if values.get("conversion_factor_to_master"):
             return lambda u, x: u.conversion_factor_to_master * x
@@ -141,7 +141,7 @@ class TimePoint(BaseModel):
     )
 
     @validator("visit_timereference", pre=True)
-    # pylint:disable=no-self-argument,unused-argument
+    # pylint: disable=no-self-argument,unused-argument
     def instantiate_visit_timereference(cls, value, values):
         if value:
             return StudyVisitTimeReference[value]
@@ -227,6 +227,24 @@ class StudyDurationWeeks(BaseModel):
     )
 
 
+class WeekInStudy(BaseModel):
+    class Config:
+        orm_mode = True
+
+    uid: str | None = Field(
+        None,
+        title="Week in study uid",
+        description="The uid of week in study",
+        source="has_week_in_study.uid",
+    )
+    value: int | None = Field(
+        None,
+        title="Week in study value",
+        description="The value of the week in study",
+        source="has_week_in_study.has_latest_value.value",
+    )
+
+
 class VisitName(BaseModel):
     class Config:
         orm_mode = True
@@ -269,7 +287,7 @@ class StudyEpochSimpleOGM(BaseModel):
     )
 
     @validator("epoch", pre=True)
-    # pylint:disable=no-self-argument,unused-argument
+    # pylint: disable=no-self-argument,unused-argument
     def instantiate_epoch(cls, value, values):
         return StudyEpochEpoch[value]
 
@@ -344,7 +362,7 @@ class StudyVisitOGM(BaseModel, StudyVisitVO):
     )
 
     @validator("visit_contact_mode", pre=True)
-    # pylint:disable=no-self-argument,unused-argument
+    # pylint: disable=no-self-argument,unused-argument
     def instantiate_visit_contact_mode(cls, value, values):
         return StudyVisitContactMode[value]
 
@@ -357,7 +375,7 @@ class StudyVisitOGM(BaseModel, StudyVisitVO):
     )
 
     @validator("epoch_allocation", pre=True)
-    # pylint:disable=no-self-argument,unused-argument
+    # pylint: disable=no-self-argument,unused-argument
     def instantiate_epoch_allocation(cls, value, values):
         if value:
             return StudyVisitEpochAllocation[value]
@@ -371,7 +389,7 @@ class StudyVisitOGM(BaseModel, StudyVisitVO):
     )
 
     @validator("visit_type", pre=True)
-    # pylint:disable=no-self-argument,unused-argument
+    # pylint: disable=no-self-argument,unused-argument
     def instantiate_visit_type(cls, value, values):
         return StudyVisitType[value]
 
@@ -393,7 +411,7 @@ class StudyVisitOGM(BaseModel, StudyVisitVO):
     )
 
     @validator("status", pre=True)
-    # pylint:disable=no-self-argument,unused-argument
+    # pylint: disable=no-self-argument,unused-argument
     def instantiate_study_status(cls, value, values):
         return StudyStatus[value]
 
@@ -402,7 +420,7 @@ class StudyVisitOGM(BaseModel, StudyVisitVO):
     )
 
     @validator("visit_class", pre=True)
-    # pylint:disable=no-self-argument
+    # pylint: disable=no-self-argument
     def instantiate_visit_class(cls, value):
         return VisitClass[value]
 
@@ -415,7 +433,7 @@ class StudyVisitOGM(BaseModel, StudyVisitVO):
     )
 
     @validator("visit_subclass", pre=True)
-    # pylint:disable=no-self-argument
+    # pylint: disable=no-self-argument
     def instantiate_visit_subclass(cls, value):
         if value:
             return VisitSubclass[value]
@@ -433,6 +451,7 @@ class StudyVisitOGM(BaseModel, StudyVisitVO):
     study_week: StudyWeek | None = Field(None, nullable=True)
     study_duration_days: StudyDurationDays | None = Field(None, nullable=True)
     study_duration_weeks: StudyDurationWeeks | None = Field(None, nullable=True)
+    week_in_study: WeekInStudy | None = Field(None, nullable=True)
     visit_name_sc: VisitName = Field(...)
 
     legacy_visit_id: str | None = Field(
@@ -485,7 +504,7 @@ class StudyVisitOGM(BaseModel, StudyVisitVO):
     day_unit_object: TimeUnit = Field(...)
 
     @validator("day_unit_object", pre=True, always=True)
-    # pylint:disable=no-self-argument,unused-argument
+    # pylint: disable=no-self-argument,unused-argument
     def validate_day_unit_obj(cls, value, values):
         return TimeUnit(
             name=DAY_UNIT_NAME,
@@ -496,7 +515,7 @@ class StudyVisitOGM(BaseModel, StudyVisitVO):
     week_unit_object: TimeUnit = Field(...)
 
     @validator("week_unit_object", pre=True, always=True)
-    # pylint:disable=no-self-argument,unused-argument
+    # pylint: disable=no-self-argument,unused-argument
     def validate_week_unit_obj(cls, value, values):
         return TimeUnit(
             name=WEEK_UNIT_NAME,
@@ -565,6 +584,11 @@ class StudyVisit(StudyVisitEditInput):
         orm_mode = True
 
     study_uid: str
+    study_version: str | None = Field(
+        None,
+        title="study version or date information",
+        description="Study version number, if specified, otherwise None.",
+    )
     study_epoch_name: str
     # study_epoch_name can be calculated from uid
     epoch_uid: str = Field(
@@ -596,6 +620,7 @@ class StudyVisit(StudyVisitEditInput):
     study_week_number: int | None
     study_duration_weeks_label: str | None
     study_week_label: str | None
+    week_in_study_label: str | None
 
     visit_number: int = Field(alias="visit_number")
     visit_subnumber: int

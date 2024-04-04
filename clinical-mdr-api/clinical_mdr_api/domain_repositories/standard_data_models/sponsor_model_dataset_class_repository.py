@@ -63,13 +63,28 @@ class SponsorModelDatasetClassRepository(
         if root is None:
             root = DatasetClass(uid=item.uid).save()
 
-        _ = self._get_or_create_instance(root=root, ar=item)
+        instance = self._get_or_create_instance(root=root, ar=item)
+
+        # Connect with SponsorModelValue node
+        parent_node = SponsorModelValue.nodes.get_or_none(
+            name=item.sponsor_model_dataset_class_vo.sponsor_model_name
+        )
+        if parent_node:
+            instance.has_dataset_class.connect(parent_node)
+        else:
+            raise BusinessLogicException(
+                f"The given Sponsor Model version {item.sponsor_model_dataset_class_vo.sponsor_model_name} does not exist in the database."
+            )
 
         return item
 
     def _get_or_create_instance(
         self, root: DatasetClass, ar: SponsorModelDatasetClassAR
     ) -> SponsorModelDatasetClassInstance:
+        for itm in root.has_sponsor_model_instance.all():
+            if not self._has_data_changed(ar, itm):
+                return itm
+
         new_instance = SponsorModelDatasetClassInstance(
             is_basic_std=ar.sponsor_model_dataset_class_vo.is_basic_std,
             xml_path=ar.sponsor_model_dataset_class_vo.xml_path,
@@ -83,17 +98,6 @@ class SponsorModelDatasetClassRepository(
 
         # Connect with root
         root.has_sponsor_model_instance.connect(new_instance)
-
-        # Create relations
-        # Connect with SponsorModelValue node
-        parent_node = SponsorModelValue.nodes.get_or_none(
-            name=ar.sponsor_model_dataset_class_vo.sponsor_model_name
-        )
-        if parent_node is None:
-            raise BusinessLogicException(
-                f"The given Sponsor Model version {ar.sponsor_model_dataset_class_vo.sponsor_model_name} does not exist in the database."
-            )
-        new_instance.has_dataset_class.connect(parent_node)
 
         return new_instance
 
@@ -136,4 +140,6 @@ class SponsorModelDatasetClassRepository(
         root: DatasetClass,
         value: SponsorModelDatasetClassInstance,
     ) -> None:
+        # This method from parent repo is not needed for this repo
+        # So we use pass to skip implementation
         pass

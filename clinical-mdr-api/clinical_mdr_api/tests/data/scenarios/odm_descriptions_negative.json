@@ -175,7 +175,7 @@
         }
     },
     {
-        "name": "Test cannot delete non-existing ODM Description",
+        "name": "Test cannot delete non-existent ODM Description",
         "request": {
             "headers": {},
             "method": "DELETE",

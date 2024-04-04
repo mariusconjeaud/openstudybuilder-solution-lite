@@ -14,9 +14,6 @@ from clinical_mdr_api.models.syntax_templates.endpoint_template import (
     EndpointTemplateNameInput,
     EndpointTemplateWithCount,
 )
-from clinical_mdr_api.models.syntax_templates.template_parameter_term import (
-    MultiTemplateParameterTerm,
-)
 from clinical_mdr_api.models.utils import CustomPage
 from clinical_mdr_api.oauth import get_current_user_id, rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
@@ -105,6 +102,7 @@ Allowed parameters include : filter on fields, sort by field name with sort dire
         "defaults": [
             "library=library.name",
             "uid",
+            "sequence_id",
             "name_plain",
             "name",
             "indications=indications.name",
@@ -151,7 +149,7 @@ def get_endpoint_templates(
     filters: Json
     | None = Query(
         None,
-        description=_generic_descriptions.FILTERS,
+        description=_generic_descriptions.SYNTAX_FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
@@ -209,7 +207,7 @@ def get_distinct_values_for_header(
     filters: Json
     | None = Query(
         None,
-        description=_generic_descriptions.FILTERS,
+        description=_generic_descriptions.SYNTAX_FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
@@ -252,8 +250,11 @@ def retrieve_audit_trail(
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
     current_user_id: str = Depends(get_current_user_id),
 ):
-    results = Service(current_user_id).retrieve_audit_trail(
-        page_number=page_number, page_size=page_size, total_count=total_count
+    results = Service(current_user_id).get_all(
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
+        for_audit_trail=True,
     )
 
     return CustomPage.create(
@@ -278,15 +279,9 @@ def retrieve_audit_trail(
     },
 )
 def get_endpoint_template(
-    uid: str = EndpointTemplateUID,
-    return_instantiation_counts: bool = Query(
-        False, description="if specified counts data will be returned along object"
-    ),
-    current_user_id: str = Depends(get_current_user_id),
+    uid: str = EndpointTemplateUID, current_user_id: str = Depends(get_current_user_id)
 ):
-    return Service(current_user_id).get_by_uid(
-        uid=uid, return_instantiation_counts=bool(return_instantiation_counts)
-    )
+    return Service(current_user_id).get_by_uid(uid=uid)
 
 
 @router.get(
@@ -404,8 +399,7 @@ def get_endpoint_template_version(
     ),
     current_user_id: str = Depends(get_current_user_id),
 ):
-    asa = Service(current_user_id).get_specific_version(uid=uid, version=version)
-    return asa
+    return Service(current_user_id).get_specific_version(uid=uid, version=version)
 
 
 @router.get(
@@ -548,60 +542,6 @@ def patch_indexings(
     current_user_id: str = Depends(get_current_user_id),
 ) -> models.EndpointTemplate:
     return Service(current_user_id).patch_indexings(uid=uid, indexings=indexings)
-
-
-@router.patch(
-    "/{uid}/default-parameter-terms",
-    dependencies=[rbac.LIBRARY_WRITE],
-    summary="Edit the default parameter terms of the endpoint template identified by 'uid'.",
-    description="""This request is only valid if the endpoint template
-* is in 'Draft' status and
-* belongs to a library that allows editing (the 'is_editable' property of the library needs to be true). 
-
-If the request succeeds:
-* The 'version' property will be increased automatically by +0.1.
-* The status will remain in 'Draft'.
-
-This endpoint can be used to either :
-* Create a new set of default parameter terms
-* Edit an existing set of default parameter terms
-
-""",
-    response_model=models.EndpointTemplate,
-    status_code=200,
-    responses={
-        200: {"description": "OK."},
-        400: {
-            "model": ErrorResponse,
-            "description": "Forbidden - Reasons include e.g.: \n"
-            "- The endpoint template is not in draft status.\n"
-            "- The endpoint template name is not valid.\n"
-            "- The library does not allow to edit draft versions.",
-        },
-        404: {
-            "model": ErrorResponse,
-            "description": "Not Found - The endpoint template with the specified 'uid' could not be found.",
-        },
-        500: _generic_descriptions.ERROR_500,
-    },
-)
-def patch_default_parameter_terms(
-    uid: str = EndpointTemplateUID,
-    set_number: int
-    | None = Body(
-        description="Optionally, the set number of the default parameter terms to be patched. If not set, a new set will be created.",
-    ),
-    default_parameter_terms: list[MultiTemplateParameterTerm] = Body(
-        description="The set of default parameter terms.\n"
-        "If empty and an existing set_number is passed, the set will be deleted.",
-    ),
-    current_user_id: str = Depends(get_current_user_id),
-) -> models.EndpointTemplate:
-    return Service(current_user_id).patch_default_parameter_terms(
-        uid=uid,
-        set_number=set_number,
-        default_parameter_terms=default_parameter_terms,
-    )
 
 
 @router.post(

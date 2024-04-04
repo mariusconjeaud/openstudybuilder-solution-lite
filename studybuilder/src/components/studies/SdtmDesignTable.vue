@@ -24,7 +24,8 @@ export default {
   },
   computed: {
     ...mapGetters({
-      selectedStudy: 'studiesGeneral/selectedStudy'
+      selectedStudy: 'studiesGeneral/selectedStudy',
+      selectedStudyVersion: 'studiesGeneral/selectedStudyVersion'
     }),
     exportDataUrl () {
       return `listings/studies/${this.selectedStudy.uid}/sdtm/${this.type.toLowerCase()}`
@@ -113,6 +114,7 @@ export default {
         page_size: this.options.itemsPerPage,
         total_count: true
       }
+      params.study_value_version = this.selectedStudyVersion
       if (this.type === 'TV') {
         params.sort_by = { VISITNUM: true }
       }

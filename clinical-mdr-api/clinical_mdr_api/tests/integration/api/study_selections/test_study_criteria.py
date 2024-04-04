@@ -10,6 +10,7 @@ Tests for /studies/{uid}/study-criteria endpoints
 import copy
 import json
 import logging
+from unittest import mock
 
 import pytest
 from deepdiff import DeepDiff
@@ -122,10 +123,14 @@ def test_data():
     inclusion_type_output = {
         "term_uid": ct_term_inclusion_criteria.term_uid,
         "catalogue_name": ct_term_inclusion_criteria.catalogue_name,
-        "codelist_uid": ct_term_inclusion_criteria.codelist_uid,
+        "codelists": [
+            {
+                "codelist_uid": ct_term_inclusion_criteria.codelists[0].codelist_uid,
+                "order": None,
+            }
+        ],
         "sponsor_preferred_name": ct_term_inclusion_criteria.sponsor_preferred_name,
         "sponsor_preferred_name_sentence_case": ct_term_inclusion_criteria.sponsor_preferred_name_sentence_case,
-        "order": None,
         "library_name": ct_term_inclusion_criteria.library_name,
         "status": "Final",
         "version": "1.0",
@@ -135,10 +140,14 @@ def test_data():
     exclusion_type_output = {
         "term_uid": ct_term_exclusion_criteria.term_uid,
         "catalogue_name": ct_term_exclusion_criteria.catalogue_name,
-        "codelist_uid": ct_term_exclusion_criteria.codelist_uid,
+        "codelists": [
+            {
+                "codelist_uid": ct_term_exclusion_criteria.codelists[0].codelist_uid,
+                "order": None,
+            }
+        ],
         "sponsor_preferred_name": ct_term_exclusion_criteria.sponsor_preferred_name,
         "sponsor_preferred_name_sentence_case": ct_term_exclusion_criteria.sponsor_preferred_name_sentence_case,
-        "order": None,
         "library_name": ct_term_exclusion_criteria.library_name,
         "status": "Final",
         "version": "1.0",
@@ -200,6 +209,7 @@ def test_data():
         "criteria": {},
         "latest_criteria": None,
         "accepted_version": False,
+        "study_version": None,
     }
 
 
@@ -209,6 +219,7 @@ ROOT_IGNORED_FIELDS = {
     "root['user_initials']",
     "root['project_number']",
     "root['project_name']",
+    "root['study_version']",
 }
 CRITERIA_IGNORED_FIELDS = {
     "root['criteria']['start_date']",
@@ -226,7 +237,6 @@ CRITERIA_TEMPLATE_IGNORED_FIELDS = {
     "root['criteria_template']['user_initials']",
     "root['criteria_template']['type']",
     "root['criteria_template']['library']",
-    "root['criteria_template']['default_parameter_terms']",
     "root['criteria_template']['possible_actions']",
     "root['criteria_template']['status']",
     "root['criteria_template']['version']",
@@ -662,7 +672,7 @@ def test_crud_study_criteria(api_client):
 def test_errors(api_client):
     """Test that we get the expected errors when doing something wrong
 
-    * Test that we get a 404 when we reference a non existent template in these endpoints :
+    * Test that we get a 404 when we reference a non-existent template in these endpoints :
     ** Preview
     ** Create
     ** Batch select
@@ -710,7 +720,7 @@ def test_errors(api_client):
     assert response.status_code == 404
     assert (
         res["message"]
-        == f"Syntax Template with uid {dummy_template_uid} does not exist"
+        == f"No Syntax Template with UID ({dummy_template_uid}) found in given status and version."
     )
 
 
@@ -835,6 +845,7 @@ def test_study_criteria_with_key_criteria(api_client):
     )
     res = response.json()
     assert response.status_code == 200
+    before_unlock["study_version"] = mock.ANY
     assert (
         next(
             (
@@ -921,4 +932,54 @@ def test_study_criteria_with_key_criteria(api_client):
 )
 def test_get_study_criteria_csv_xml_excel(api_client, export_format):
     url = f"/studies/{study.uid}/study-criteria"
-    TestUtils.verify_exported_data_format(api_client, export_format, url)
+    exported_data = TestUtils.verify_exported_data_format(
+        api_client, export_format, url
+    )
+    if export_format == "text/csv":
+        assert "study_version" in str(exported_data.read())
+        assert "LATEST" in str(exported_data.read())
+
+
+def test_update_library_items_of_relationship_to_value_nodes(api_client):
+    """
+    Test that the StudyCriteria selection remains connected to the specific Value node even if the Value node is not latest anymore.
+
+    StudyCriteriais connected to value nodes:
+    - CriteriaTemplate
+    """
+    # get specific study criteria
+    response = api_client.get(
+        f"/studies/{study.uid}/study-criteria/{study_criteria_uid}",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    library_template_criteria_uid = res["criteria"]["criteria_template"]["uid"]
+    initial_criteria_name = res["criteria"]["name"]
+
+    text_value_2_name = "2ndname"
+    # change criteria name and approve the version
+    response = api_client.post(
+        f"/criteria-templates/{library_template_criteria_uid}/versions",
+        json={
+            "change_description": "test change",
+            "name": text_value_2_name,
+            "guidance_text": "don't know",
+        },
+    )
+    response = api_client.post(
+        f"/criteria-templates/{library_template_criteria_uid}/approvals?cascade=true"
+    )
+
+    # check that the Library item has been changed
+    response = api_client.get(f"/criteria-templates/{library_template_criteria_uid}")
+    res = response.json()
+    assert response.status_code == 200
+    assert res["name"] == text_value_2_name
+
+    # check that the StudySelection StudyCriteria hasn't been updated
+    response = api_client.get(
+        f"/studies/{study.uid}/study-criteria/{study_criteria_uid}",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["criteria"]["name"] == initial_criteria_name

@@ -73,3 +73,10 @@ loggers:
     # Logs opening of HTTPS connections (as DEBUG), which is also triggered by Azure log exporter on delivery,
     # that would lead to an endless stream of log messages, if left on DEBUG level.
     level: INFO
+
+  # opencensus messages only to console to prevent infinite recursion if transport queue is full and emits an error msg.
+  opencensus:
+    level: INFO
+    handlers:
+      - console
+    propagate: false

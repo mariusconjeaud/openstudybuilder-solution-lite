@@ -1,18 +1,18 @@
 [
     {
-        "name": "Test GET all activity sub group not existing Library passed",
+        "name": "Test GET all activity sub group non-existent Library passed",
         "request": {
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "/concepts/activities/activity-groups?library=not_existing"
+            "url": "/concepts/activities/activity-groups?library=non-existent"
         },
         "response": {
             "code": 400,
             "result": {
-                "message": "There is no library identified by provided library name (not_existing)",
+                "message": "There is no library identified by provided library name (non-existent)",
                 "method": "GET",
-                "path": "http://testserver/concepts/activities/activity-groups?library=not_existing",
+                "path": "http://testserver/concepts/activities/activity-groups?library=non-existent",
                 "time": "2020-11-10T01:51:17.884429",
                 "type": "BusinessLogicException"
             }

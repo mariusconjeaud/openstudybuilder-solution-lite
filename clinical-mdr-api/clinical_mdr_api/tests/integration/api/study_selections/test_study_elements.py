@@ -10,6 +10,7 @@ Tests for /studies/{uid}/study-elements endpoints
 # which pylint interprets as unused arguments
 
 import logging
+from unittest import mock
 
 import pytest
 from fastapi.testclient import TestClient
@@ -194,6 +195,7 @@ def test_study_element_with_study_element_subtype_relationship(api_client):
     )
     res = response.json()
     assert response.status_code == 200
+    before_unlock["study_version"] = mock.ANY
     assert res["items"][0] == before_unlock
 
     # get specific study element of a specific study version
@@ -202,6 +204,7 @@ def test_study_element_with_study_element_subtype_relationship(api_client):
     )
     res = response.json()
     assert response.status_code == 200
+    before_unlock["study_version"] = mock.ANY
     assert res == before_unlock
 
     # get study element headers of specific study version
@@ -249,4 +252,9 @@ def test_study_element_with_study_element_subtype_relationship(api_client):
 )
 def test_get_study_elements_csv_xml_excel(api_client, export_format):
     url = f"/studies/{study.uid}/study-elements"
-    TestUtils.verify_exported_data_format(api_client, export_format, url)
+    exported_data = TestUtils.verify_exported_data_format(
+        api_client, export_format, url
+    )
+    if export_format == "text/csv":
+        assert "study_version" in str(exported_data.read())
+        assert "LATEST" in str(exported_data.read())

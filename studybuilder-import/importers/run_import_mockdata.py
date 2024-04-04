@@ -1,15 +1,10 @@
-from .utils.metrics import Metrics
-from os import environ
-import os
 import csv
-from typing import Optional, Sequence, Any
 import re
-from .utils.aiohttp_trace import request_tracer
-import json
 
-from .functions.utils import load_env
 from .functions.parsers import map_boolean
+from .functions.utils import load_env
 from .utils.importer import BaseImporter, open_file
+from .utils.metrics import Metrics
 
 metrics = Metrics()
 
@@ -402,7 +397,10 @@ class Mockdata(BaseImporter):
             else:
                 objective_uid = objective["uid"]
             objective_level = row[headers.index("objective_level")]
-            body = {"objective_uid": objective_uid, "objective_level_uid": objective_level}
+            body = {
+                "objective_uid": objective_uid,
+                "objective_level_uid": objective_level,
+            }
             self.log.info(
                 f"Add study objective '{objective_name}' for study id '{study_id}'"
             )
@@ -455,12 +453,12 @@ class Mockdata(BaseImporter):
     def update_data(
         self, patch, study_data
     ):  # smarter solution for this when I know more about the data to patch
-        study_data["current_metadata"]["identification_metadata"]["registry_identifiers"][
-            "ct_gov_id"
-        ] = patch["ct_gov_id"]
-        study_data["current_metadata"]["identification_metadata"]["registry_identifiers"][
-            "eudract_id"
-        ] = patch["eudract_id"]
+        study_data["current_metadata"]["identification_metadata"][
+            "registry_identifiers"
+        ]["ct_gov_id"] = patch["ct_gov_id"]
+        study_data["current_metadata"]["identification_metadata"][
+            "registry_identifiers"
+        ]["eudract_id"] = patch["eudract_id"]
 
     @open_file()
     def handle_study(self, csvfile):
@@ -470,7 +468,9 @@ class Mockdata(BaseImporter):
         all_studies = self.api.get_all_identifiers(
             self.api.get_all_from_api("/studies"), "current_metadata"
         )
-        all_studies = [study["identification_metadata"]["study_number"] for study in all_studies]
+        all_studies = [
+            study["identification_metadata"]["study_number"] for study in all_studies
+        ]
         for row in readCSV:
             # only for not empty rows
             if row:

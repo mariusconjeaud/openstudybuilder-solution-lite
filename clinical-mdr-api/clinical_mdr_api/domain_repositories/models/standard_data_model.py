@@ -138,7 +138,6 @@ class SponsorModelDatasetClassInstance(VersionValue):
         SponsorModelValue,
         "HAS_DATASET_CLASS",
         model=HasDatasetClassRel,
-        cardinality=One,
     )
 
 
@@ -208,7 +207,7 @@ class SponsorModelDatasetInstance(VersionValue):
 
     is_instance_of = RelationshipFrom("Dataset", "HAS_INSTANCE", model=ClinicalMdrRel)
     has_dataset = RelationshipFrom(
-        SponsorModelValue, "HAS_DATASET", model=HasDatasetRel, cardinality=One
+        SponsorModelValue, "HAS_DATASET", model=HasDatasetRel
     )
     has_key = RelationshipTo(
         "DatasetVariable",

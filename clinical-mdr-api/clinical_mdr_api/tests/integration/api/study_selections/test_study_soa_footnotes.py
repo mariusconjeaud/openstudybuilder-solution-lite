@@ -4,6 +4,7 @@ Tests for /studies/{uid}/study-soa-footnotes endpoints
 import json
 import logging
 from functools import reduce
+from unittest import mock
 
 import pytest
 from fastapi.testclient import TestClient
@@ -145,21 +146,6 @@ def test_data():
         library_name=indications_library_name,
     )
 
-    parameter_terms = [
-        MultiTemplateParameterTerm(
-            position=1,
-            conjunction="",
-            terms=[
-                IndexedTemplateParameterTerm(
-                    index=1,
-                    name=text_value_1.name,
-                    uid=text_value_1.uid,
-                    type="TextValue",
-                )
-            ],
-        )
-    ]
-
     def generate_parameter_terms():
         text_value = TestUtils.create_text_value()
         return [
@@ -184,7 +170,6 @@ def test_data():
             study_uid=None,
             type_uid=ct_term_schedule_of_activities.term_uid,
             library_name="Sponsor",
-            default_parameter_terms=parameter_terms,
             indication_uids=[dictionary_term_indication.term_uid],
             activity_uids=[activity.uid],
             activity_group_uids=[activity_group.uid],
@@ -197,7 +182,6 @@ def test_data():
             study_uid=None,
             type_uid=ct_term_schedule_of_activities.term_uid,
             library_name="Sponsor",
-            default_parameter_terms=parameter_terms,
             indication_uids=[dictionary_term_indication.term_uid],
             activity_uids=[activity.uid],
             activity_group_uids=[activity_group.uid],
@@ -210,7 +194,20 @@ def test_data():
         TestUtils.create_footnote(
             footnote_template_uid=footnote_templates[0].uid,
             library_name="Sponsor",
-            parameter_terms=parameter_terms,
+            parameter_terms=[
+                MultiTemplateParameterTerm(
+                    position=1,
+                    conjunction="",
+                    terms=[
+                        IndexedTemplateParameterTerm(
+                            index=1,
+                            name=text_value_1.name,
+                            uid=text_value_1.uid,
+                            type="TextValue",
+                        )
+                    ],
+                )
+            ],
         )
     )
     footnotes.append(
@@ -346,6 +343,7 @@ STUDY_FOOTNOTE_FIELDS_ALL = [
     "footnote_template",
     "referenced_items",
     "modified",
+    "study_version",
 ]
 
 STUDY_FOOTNOTE_FIELDS_NOT_NULL = [
@@ -1194,6 +1192,7 @@ def test_modify_actions_on_locked_study(api_client):
     )
     res = response.json()
     assert response.status_code == 200
+    before_unlock["study_version"] = mock.ANY
     assert res["items"][2] == before_unlock
 
     # get specific study soa footnote of a specific study version
@@ -1226,6 +1225,7 @@ def test_modify_actions_on_locked_study(api_client):
     )
     res = response.json()
     assert response.status_code == 200
+    before_unlock_visit["study_version"] = mock.ANY
     assert res == before_unlock_visit
 
     response = api_client.get(
@@ -1233,6 +1233,7 @@ def test_modify_actions_on_locked_study(api_client):
     )
     res = response.json()
     assert response.status_code == 200
+    before_unlock_epoch["study_version"] = mock.ANY
     assert res == before_unlock_epoch
 
     response = api_client.get(
@@ -1240,6 +1241,7 @@ def test_modify_actions_on_locked_study(api_client):
     )
     res = response.json()
     assert response.status_code == 200
+    before_unlock_activity["study_version"] = mock.ANY
     assert res == before_unlock_activity
 
     response = api_client.get(
@@ -1247,6 +1249,8 @@ def test_modify_actions_on_locked_study(api_client):
     )
     res = response.json()
     assert response.status_code == 200
+    for i, _ in enumerate(before_unlock_activity_schedule):
+        before_unlock_activity_schedule[i]["study_version"] = mock.ANY
     assert res == before_unlock_activity_schedule
 
     # get all study soa footnotes
@@ -1276,3 +1280,49 @@ def test_modify_actions_on_locked_study(api_client):
     res = response.json()
     assert response.status_code == 200
     assert res == ["Epoch Subtype", "V1", "Body Measurements", "General"]
+
+
+def test_update_footnote_library_items_of_relationship_to_value_nodes(api_client):
+    """
+    Test that the StudySoAFootnote selection remains connected to the specific Value node even if the Value node is not latest anymore.
+
+    StudySoAFootnote is connected to value nodes:
+    - FootnoteTemplate
+    """
+    study_soa_footnote_uid = "StudySoAFootnote_000008"
+    # get specific study soa footnote
+    response = api_client.get(
+        f"/studies/{study.uid}/study-soa-footnotes/{study_soa_footnote_uid}",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    library_template_footnote_uid = res["footnote"]["footnote_template"]["uid"]
+    initial_footnote_name = res["footnote"]["footnote_template"]["name"]
+
+    text_value_2_name = "2ndname"
+    # change footnote name and approve the version
+    response = api_client.post(
+        f"/footnote-templates/{library_template_footnote_uid}/versions",
+        json={
+            "change_description": "test change",
+            "name": text_value_2_name,
+            "guidance_text": "don't know",
+        },
+    )
+    response = api_client.post(
+        f"/footnote-templates/{library_template_footnote_uid}/approvals?cascade=true"
+    )
+
+    # check that the Library item has been changed
+    response = api_client.get(f"/footnote-templates/{library_template_footnote_uid}")
+    res = response.json()
+    assert response.status_code == 200
+    assert res["name"] == text_value_2_name
+
+    # check that the StudySelection StudySoAFootnote hasn't been updated
+    response = api_client.get(
+        f"/studies/{study.uid}/study-soa-footnotes/{study_soa_footnote_uid}",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["footnote"]["footnote_template"]["name"] == initial_footnote_name

@@ -355,7 +355,7 @@ class FilterDictElement(BaseModel):
     )
 
     @validator("op", pre=True)
-    # pylint:disable=no-self-argument
+    # pylint: disable=no-self-argument
     def _is_op_supported(cls, val):
         try:
             return ComparisonOperator(val)
@@ -374,7 +374,7 @@ class FilterDict(BaseModel):
     )
 
     @validator("elements", pre=True)
-    # pylint:disable=no-self-argument
+    # pylint: disable=no-self-argument
     def _none_as_empty_dict(cls, val):
         if val is None:
             return {}

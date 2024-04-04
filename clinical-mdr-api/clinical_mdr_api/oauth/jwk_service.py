@@ -72,7 +72,7 @@ class JWKService(KeySet):
             return self.keys[kid]
         except KeyError as exc:
             # KeySet interface
-            raise exceptions.ValidationException(f"Unknown key id: {kid!s}") from exc
+            raise UnknownKeyError(f"Unknown key id: {kid!s}") from exc
 
     async def fetch_jwk_set(self) -> Mapping[str, Key]:
         log.debug("Fetching JWKs: %s", self.jwks_uri)
@@ -130,7 +130,7 @@ class JWKService(KeySet):
         return False
 
     async def _fetch_json(self, url: str) -> Any:
-        # pylint:disable=protected-access
+        # pylint: disable=protected-access
         resp = await self._http_client.request("GET", url)
         resp.raise_for_status()
         return resp.json()
@@ -146,14 +146,19 @@ class JWKService(KeySet):
                 claims_options=self.claims_options,
             )
 
-        except ValueError as exc:
+        except UnknownKeyError as exc:
             # Re-fetch the list of keys if key-id was not found in local key-set
             if not await self.refresh_jwk_set():
-                # Keys were not fetched again, withing cooldown seconds, so no need to retry signature validation
-                raise exc
+                # Keys were not re-fetched within the cooldown period, so no need to retry decoding
+                raise exceptions.NotAuthenticatedException(exc.args[0]) from exc
 
+            # retry decoding of JWT
             claims = jwt.decode(token, key=self, claims_options=self.claims_options)
 
         claims.validate(leeway=self.leeway)
 
         return claims
+
+
+class UnknownKeyError(ValueError):
+    pass

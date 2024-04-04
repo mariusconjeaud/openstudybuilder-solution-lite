@@ -112,7 +112,3 @@ class CTCodelistNameInput(BaseModel):
 
 class CTCodelistNameEditInput(CTCodelistNameInput):
     change_description: str = Field(None, title="change_description", description="")
-
-
-class CTCodelistNameCreateInput(CTCodelistNameInput):
-    codelist_uid: str = Field(None, title="change_description", description="")

@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import Any
 
 from fastapi import APIRouter, Body, Depends, Path, Query, Request, Response
@@ -91,7 +90,7 @@ def get_all(
     filters: Json
     | None = Query(
         None,
-        description=_generic_descriptions.FILTERS,
+        description=_generic_descriptions.SYNTAX_FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
@@ -151,7 +150,7 @@ def get_distinct_values_for_header(
     filters: Json
     | None = Query(
         None,
-        description=_generic_descriptions.FILTERS,
+        description=_generic_descriptions.SYNTAX_FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
@@ -191,8 +190,11 @@ def retrieve_audit_trail(
     total_count: bool = Query(False, description=_generic_descriptions.TOTAL_COUNT),
     current_user_id: str = Depends(get_current_user_id),
 ):
-    results = Service(current_user_id).retrieve_audit_trail(
-        page_number=page_number, page_size=page_size, total_count=total_count
+    results = Service(current_user_id).get_all(
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
+        for_audit_trail=True,
     )
 
     return CustomPage.create(
@@ -218,13 +220,6 @@ def retrieve_audit_trail(
 )
 def get(
     uid: str = ActivityInstructionUID,
-    at_specified_date_time: datetime
-    | None = Query(
-        None,
-        description="If specified, the latest/newest representation of the objective at this point in time is returned.\n"
-        "The point in time needs to be specified in ISO 8601 format including the timezone, e.g.: "
-        "'2020-10-31T16:00:00+02:00' for October 31, 2020 at 4pm in UTC+2 timezone. ",
-    ),
     status: LibraryItemStatus
     | None = Query(
         None,
@@ -245,12 +240,7 @@ def get(
     ),
     current_user_id: str = Depends(get_current_user_id),
 ):
-    return Service(current_user_id).get_by_uid(
-        uid=uid,
-        version=version,
-        status=status,
-        at_specified_datetime=at_specified_date_time,
-    )
+    return Service(current_user_id).get_by_uid(uid=uid, version=version, status=status)
 
 
 @router.get(

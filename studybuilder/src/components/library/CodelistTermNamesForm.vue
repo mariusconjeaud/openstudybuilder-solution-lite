@@ -88,7 +88,7 @@ import controlledTerminology from '@/api/controlledTerminology'
 import HelpButtonWithPanels from '@/components/tools/HelpButtonWithPanels'
 
 export default {
-  props: ['value'],
+  props: ['value', 'codelistUid'],
   components: {
     HelpButtonWithPanels
   },
@@ -120,7 +120,7 @@ export default {
       try {
         let resp = await controlledTerminology.updateCodelistTermNames(this.value.term_uid, this.form)
         const orderData = {
-          codelist_uid: this.value.codelist_uid,
+          codelist_uid: this.codelistUid,
           new_order: this.form.order
         }
         resp = await controlledTerminology.updateCodelistTermOrder(this.value.term_uid, orderData)
@@ -140,7 +140,7 @@ export default {
           this.form = {
             sponsor_preferred_name: val.sponsor_preferred_name,
             sponsor_preferred_name_sentence_case: val.sponsor_preferred_name_sentence_case,
-            order: val.order
+            order: this.getTermOrderInCodelist(val, this.codelistUid)
           }
         }
       },

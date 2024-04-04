@@ -514,7 +514,7 @@
         }
     },
     {
-        "name": "Test cannot create an ODM Item connected to non-existing concepts",
+        "name": "Test cannot create an ODM Item connected to non-existent concepts",
         "request": {
             "headers": {},
             "method": "POST",
@@ -553,7 +553,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "ODM Item tried to connect to non existing concepts [('Concept Name: ODM Description', \"uids: {'wrong_uid'}\"), ('Concept Name: ODM Alias', \"uids: {'wrong_uid'}\"), ('Concept Name: Unit Definition', \"uids: {'wrong_uid'}\")].",
+                "message": "ODM Item tried to connect to non-existent concepts [('Concept Name: ODM Description', \"uids: {'wrong_uid'}\"), ('Concept Name: ODM Alias', \"uids: {'wrong_uid'}\"), ('Concept Name: Unit Definition', \"uids: {'wrong_uid'}\")].",
                 "time": "2022-03-07T12: 14: 18.116363",
                 "path": "http://testserver/concepts/odms/items",
                 "method": "POST",
@@ -562,7 +562,7 @@
         }
     },
     {
-        "name": "Test cannot create an ODM Item connected to non-existing Codelist",
+        "name": "Test cannot create an ODM Item connected to non-existent Codelist",
         "request": {
             "headers": {},
             "method": "POST",
@@ -593,7 +593,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "ODM Item tried to connect to non existing Codelist identified by uid (wrong_uid).",
+                "message": "ODM Item tried to connect to non-existent Codelist identified by uid (wrong_uid).",
                 "time": "2022-03-07T12: 14: 18.116363",
                 "path": "http://testserver/concepts/odms/items",
                 "method": "POST",
@@ -690,7 +690,7 @@
         }
     },
     {
-        "name": "Test getting error for retrieving non existing ODM Item",
+        "name": "Test getting error for retrieving non-existent ODM Item",
         "request": {
             "headers": {},
             "method": "GET",

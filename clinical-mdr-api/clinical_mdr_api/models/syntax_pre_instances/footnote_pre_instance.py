@@ -1,21 +1,13 @@
 from datetime import datetime
-from typing import Callable, Self
+from typing import Self
 
 from pydantic import Field
 
-from clinical_mdr_api.domains.concepts.activities.activity_group import ActivityGroupAR
-from clinical_mdr_api.domains.concepts.activities.activity_sub_group import (
-    ActivitySubGroupAR,
-)
 from clinical_mdr_api.domains.syntax_pre_instances.footnote_pre_instance import (
     FootnotePreInstanceAR,
 )
-from clinical_mdr_api.models.concepts.activities.activity import Activity
-from clinical_mdr_api.models.concepts.activities.activity_group import ActivityGroup
-from clinical_mdr_api.models.concepts.activities.activity_sub_group import (
-    ActivitySubGroup,
-)
-from clinical_mdr_api.models.dictionaries.dictionary_term import DictionaryTerm
+from clinical_mdr_api.models.controlled_terminologies.ct_term import SimpleTermModel
+from clinical_mdr_api.models.generic_models import SimpleNameModel
 from clinical_mdr_api.models.libraries.library import Library
 from clinical_mdr_api.models.syntax_pre_instances.generic_pre_instance import (
     PreInstanceInput,
@@ -48,17 +40,17 @@ class FootnotePreInstance(BaseModel):
         [],
         description="Holds the parameter terms that are used within the footnote. The terms are ordered as they occur in the footnote name.",
     )
-    indications: list[DictionaryTerm] = Field(
+    indications: list[SimpleTermModel] = Field(
         [],
         description="The study indications, conditions, diseases or disorders in scope for the pre-instance.",
     )
-    activities: list[Activity] = Field(
+    activities: list[SimpleNameModel] = Field(
         [], description="The activities in scope for the pre-instance"
     )
-    activity_groups: list[ActivityGroup] = Field(
+    activity_groups: list[SimpleNameModel] = Field(
         [], description="The activity groups in scope for the pre-instance"
     )
-    activity_subgroups: list[ActivitySubGroup] = Field(
+    activity_subgroups: list[SimpleNameModel] = Field(
         [], description="The activity sub groups in scope for the pre-instance"
     )
     library: Library | None = Field(None, nullable=True)
@@ -66,10 +58,7 @@ class FootnotePreInstance(BaseModel):
 
     @classmethod
     def from_footnote_pre_instance_ar(
-        cls,
-        footnote_pre_instance_ar: FootnotePreInstanceAR,
-        find_activity_subgroup_by_uid: Callable[[str], ActivitySubGroupAR] | None,
-        find_activity_group_by_uid: Callable[[str], ActivityGroupAR] | None,
+        cls, footnote_pre_instance_ar: FootnotePreInstanceAR
     ) -> Self:
         parameter_terms: list[MultiTemplateParameterTerm] = []
         for position, parameter in enumerate(footnote_pre_instance_ar.get_parameters()):
@@ -111,46 +100,10 @@ class FootnotePreInstance(BaseModel):
             user_initials=footnote_pre_instance_ar.item_metadata.user_initials,
             library=Library.from_library_vo(footnote_pre_instance_ar.library),
             parameter_terms=parameter_terms,
-            indications=sorted(
-                [
-                    DictionaryTerm.from_dictionary_term_ar(indication)
-                    for indication in footnote_pre_instance_ar.indications
-                ],
-                key=lambda item: item.term_uid,
-            )
-            if footnote_pre_instance_ar.indications
-            else [],
-            activities=sorted(
-                [
-                    Activity.from_activity_ar(
-                        activity,
-                        find_activity_subgroup_by_uid,
-                        find_activity_group_by_uid,
-                    )
-                    for activity in footnote_pre_instance_ar.activities
-                ],
-                key=lambda item: item.uid,
-            )
-            if footnote_pre_instance_ar.activities
-            else [],
-            activity_groups=sorted(
-                [
-                    ActivityGroup.from_activity_ar(group)
-                    for group in footnote_pre_instance_ar.activity_groups
-                ],
-                key=lambda item: item.uid,
-            )
-            if footnote_pre_instance_ar.activity_groups
-            else [],
-            activity_subgroups=sorted(
-                [
-                    ActivitySubGroup.from_activity_ar(group, find_activity_group_by_uid)
-                    for group in footnote_pre_instance_ar.activity_subgroups
-                ],
-                key=lambda item: item.uid,
-            )
-            if footnote_pre_instance_ar.activity_subgroups
-            else [],
+            indications=footnote_pre_instance_ar.indications,
+            activities=footnote_pre_instance_ar.activities,
+            activity_groups=footnote_pre_instance_ar.activity_groups,
+            activity_subgroups=footnote_pre_instance_ar.activity_subgroups,
             possible_actions=sorted(
                 {_.value for _ in footnote_pre_instance_ar.get_possible_actions()}
             ),

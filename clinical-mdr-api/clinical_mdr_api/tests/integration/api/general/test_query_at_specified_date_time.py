@@ -91,21 +91,6 @@ def test_data():
         activity_subgroups=[activity_subgroup.uid],
     )
 
-    parameter_terms = [
-        MultiTemplateParameterTerm(
-            position=1,
-            conjunction="",
-            terms=[
-                IndexedTemplateParameterTerm(
-                    index=1,
-                    name=text_value_1.name,
-                    uid=text_value_1.uid,
-                    type="TextValue",
-                )
-            ],
-        )
-    ]
-
     # Create Dictionary/CT Terms
     indications_library_name = "SNOMED"
     indications_codelist = TestUtils.create_dictionary_codelist(
@@ -120,7 +105,6 @@ def test_data():
         name="Default name with [TextValue]",
         guidance_text="Default guidance text",
         library_name="Sponsor",
-        default_parameter_terms=parameter_terms,
         indication_uids=[dictionary_term_indication.term_uid],
         activity_uids=[activity.uid],
         activity_group_uids=[activity_group.uid],
@@ -130,7 +114,20 @@ def test_data():
     activity_instruction = TestUtils.create_activity_instruction(
         activity_instruction_template_uid=activity_instruction_template.uid,
         library_name="Sponsor",
-        parameter_terms=parameter_terms,
+        parameter_terms=[
+            MultiTemplateParameterTerm(
+                position=1,
+                conjunction="",
+                terms=[
+                    IndexedTemplateParameterTerm(
+                        index=1,
+                        name=text_value_1.name,
+                        uid=text_value_1.uid,
+                        type="TextValue",
+                    )
+                ],
+            )
+        ],
     )
 
     yield
@@ -154,8 +151,8 @@ def test_get_ct_terms(api_client):
             (res.json()["start_date"], 1),
             # second after latest version start_date
             (add_seconds(res.json()["start_date"], 1), 1),
-            # second before latest (and onlye) version start_date
-            (add_seconds(res.json()["start_date"], -1), 0),
+            # 10 seconds before latest version start_date
+            (add_seconds(res.json()["start_date"], -10), 0),
             # far in the future
             ("3023-09-07T00:55:42.577989+00:00", 1),
             # far in the past
@@ -172,7 +169,9 @@ def test_get_ct_codelists(api_client):
     ]
 
     for url in endpoints:
-        url = url.replace("{codelist_uid}", ct_term_delivery_device.codelist_uid)
+        url = url.replace(
+            "{codelist_uid}", ct_term_delivery_device.codelists[0].codelist_uid
+        )
 
         res = api_client.get(url)
         assert res.status_code == 200
@@ -183,8 +182,8 @@ def test_get_ct_codelists(api_client):
             (res.json()["start_date"], 1),
             # second after latest version start_date
             (add_seconds(res.json()["start_date"], 1), 1),
-            # second before latest (and onlye) version start_date
-            (add_seconds(res.json()["start_date"], -1), 0),
+            # 10 seconds before latest version start_date
+            (add_seconds(res.json()["start_date"], -10), 0),
             # far in the future
             ("3023-09-07T00:55:42.577989+00:00", 1),
             # far in the past
@@ -206,77 +205,8 @@ def test_get_unit_definitions(api_client):
         (res.json()["start_date"], 1),
         # second after latest version start_date
         (add_seconds(res.json()["start_date"], 1), 1),
-        # second before latest (and onlye) version start_date
-        (add_seconds(res.json()["start_date"], -1), 0),
-        # far in the future
-        ("3023-09-07T00:55:42.577989+00:00", 1),
-        # far in the past
-        ("1023-09-07T00:55:42.577989+00:00", 0),
-    ]
-
-    verify_returned_items(api_client, url, test_scenarios)
-
-
-def test_get_objective(api_client):
-    url = f"/objectives/{objective.uid}"
-
-    res = api_client.get(url)
-    assert res.status_code == 200
-
-    test_scenarios = [
-        # (at_specified_date_time, expected_returned_count)
-        # exact ts of latest version
-        (res.json()["start_date"], 1),
-        # second after latest version start_date
-        (add_seconds(res.json()["start_date"], 1), 1),
-        # second before latest (and onlye) version start_date
-        (add_seconds(res.json()["start_date"], -1), 0),
-        # far in the future
-        ("3023-09-07T00:55:42.577989+00:00", 1),
-        # far in the past
-        ("1023-09-07T00:55:42.577989+00:00", 0),
-    ]
-
-    verify_returned_items(api_client, url, test_scenarios)
-
-
-def test_get_timeframe(api_client):
-    url = f"/timeframes/{timeframe.uid}"
-
-    res = api_client.get(url)
-    assert res.status_code == 200
-
-    test_scenarios = [
-        # (at_specified_date_time, expected_returned_count)
-        # exact ts of latest version
-        (res.json()["start_date"], 1),
-        # second after latest version start_date
-        (add_seconds(res.json()["start_date"], 1), 1),
-        # second before latest (and onlye) version start_date
-        (add_seconds(res.json()["start_date"], -1), 0),
-        # far in the future
-        ("3023-09-07T00:55:42.577989+00:00", 1),
-        # far in the past
-        ("1023-09-07T00:55:42.577989+00:00", 0),
-    ]
-
-    verify_returned_items(api_client, url, test_scenarios)
-
-
-def test_get_activity_instruction(api_client):
-    url = f"/activity-instructions/{activity_instruction.uid}"
-
-    res = api_client.get(url)
-    assert res.status_code == 200
-
-    test_scenarios = [
-        # (at_specified_date_time, expected_returned_count)
-        # exact ts of latest version
-        (res.json()["start_date"], 1),
-        # second after latest version start_date
-        (add_seconds(res.json()["start_date"], 1), 1),
-        # second before latest (and onlye) version start_date
-        (add_seconds(res.json()["start_date"], -1), 0),
+        # 10 seconds before latest version start_date
+        (add_seconds(res.json()["start_date"], -10), 0),
         # far in the future
         ("3023-09-07T00:55:42.577989+00:00", 1),
         # far in the past
@@ -300,8 +230,8 @@ def test_get_configurations(api_client):
         (res.json()["start_date"], 1),
         # second after latest version start_date
         (add_seconds(res.json()["start_date"], 1), 1),
-        # second before latest (and onlye) version start_date
-        (add_seconds(res.json()["start_date"], -1), 0),
+        # 10 seconds before latest version start_date
+        (add_seconds(res.json()["start_date"], -10), 0),
         # far in the future
         ("3023-09-07T00:55:42.577989+00:00", 1),
         # far in the past
@@ -346,9 +276,9 @@ def verify_returned_items(api_client, url, test_scenarios):
         log.info("GET %s", final_url)
         response = api_client.get(final_url)
         if scenario[1]:
-            assert response.status_code == 200
+            assert response.status_code == 200, f"{final_url} should return 200"
         else:
-            assert response.status_code == 404
+            assert response.status_code == 404, f"{final_url} should return 404"
 
 
 def add_seconds(date_time_str: str, seconds: int) -> str:

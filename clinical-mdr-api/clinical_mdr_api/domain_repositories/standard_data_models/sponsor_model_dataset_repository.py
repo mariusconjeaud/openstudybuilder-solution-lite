@@ -76,13 +76,31 @@ class SponsorModelDatasetRepository(
         if root is None:
             root = Dataset(uid=item.uid).save()
 
-        _ = self._get_or_create_instance(root=root, ar=item)
+        instance = self._get_or_create_instance(root=root, ar=item)
+
+        # Connect with SponsorModelValue node
+        parent_node = SponsorModelValue.nodes.get_or_none(
+            name=item.sponsor_model_dataset_vo.sponsor_model_name
+        )
+        if parent_node:
+            instance.has_dataset.connect(
+                parent_node,
+                {"ordinal": item.sponsor_model_dataset_vo.enrich_build_order},
+            )
+        else:
+            raise BusinessLogicException(
+                f"The given Sponsor Model version {item.sponsor_model_dataset_vo.sponsor_model_name} does not exist in the database."
+            )
 
         return item
 
     def _get_or_create_instance(
         self, root: Dataset, ar: SponsorModelDatasetAR
     ) -> SponsorModelDatasetInstance:
+        for itm in root.has_sponsor_model_instance.all():
+            if not self._has_data_changed(ar, itm):
+                return itm
+
         new_instance = SponsorModelDatasetInstance(
             is_basic_std=ar.sponsor_model_dataset_vo.is_basic_std,
             xml_path=ar.sponsor_model_dataset_vo.xml_path,
@@ -124,18 +142,6 @@ class SponsorModelDatasetRepository(
             for index, key in enumerate(ar.sponsor_model_dataset_vo.sort_keys):
                 if key in sort_keys_dict:
                     new_instance.has_sort_key.connect(keys_dict[key], {"order": index})
-
-        # Connect with SponsorModelValue node
-        parent_node = SponsorModelValue.nodes.get_or_none(
-            name=ar.sponsor_model_dataset_vo.sponsor_model_name
-        )
-        if parent_node is None:
-            raise BusinessLogicException(
-                f"The given Sponsor Model version {ar.sponsor_model_dataset_vo.sponsor_model_name} does not exist in the database."
-            )
-        new_instance.has_dataset.connect(
-            parent_node, {"ordinal": ar.sponsor_model_dataset_vo.enrich_build_order}
-        )
 
         return new_instance
 
@@ -194,4 +200,6 @@ class SponsorModelDatasetRepository(
         root: Dataset,
         value: SponsorModelDatasetInstance,
     ) -> None:
+        # This method from parent repo is not needed for this repo
+        # So we use pass to skip implementation
         pass

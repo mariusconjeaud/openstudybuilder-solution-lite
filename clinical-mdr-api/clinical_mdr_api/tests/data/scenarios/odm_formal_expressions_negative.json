@@ -37,7 +37,7 @@
         }
     },
     {
-        "name": "Test getting error for retrieving non existing ODM Formal Expression",
+        "name": "Test getting error for retrieving non-existent ODM Formal Expression",
         "request": {
             "headers": {},
             "method": "GET",
@@ -193,7 +193,7 @@
         }
     },
     {
-        "name": "Test cannot delete non-existing ODM Formal Expression",
+        "name": "Test cannot delete non-existent ODM Formal Expression",
         "request": {
             "headers": {},
             "method": "DELETE",

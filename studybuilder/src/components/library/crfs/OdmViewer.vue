@@ -2,21 +2,22 @@
   <div>
     <v-app-bar flat color="#e5e5e5" class="mt-2" style="height: 60px">
       <v-row class="mt-2" v-if="doc === ''">
-        <v-col cols="3">
+        <v-col cols="2">
           <v-select v-model="params.target_type" :items="types" @change="setElements()"
             :label="$t('OdmViewer.odm_element_type')" dense clearable item-text="name" item-value="value" class="mt-2">
           </v-select>
         </v-col>
-        <v-col cols="3">
+        <v-col cols="2">
           <v-select :items="elements" :label="$t('OdmViewer.odm_element_name')" v-model="params.target_uid" dense
             clearable class="mt-2" item-text="name" item-value="uid">
           </v-select>
         </v-col>
-        <v-col cols="1">
-          <v-checkbox v-model="draft" :label="$t('OdmViewer.include_draft')">
-          </v-checkbox>
+        <v-col cols="2">
+          <v-select :items="element_statuses" :label="$t('OdmViewer.element_status')" v-model="element_status" :default="element_statuses[0]" dense
+           class="mt-2">
+          </v-select>
         </v-col>
-        <v-col cols="5">
+        <v-col cols="6">
           <v-row>
             <v-radio-group v-model="params.stylesheet" :label="$t('OdmViewer.stylesheet')" row class="mt-7">
               <v-radio :label="$t('OdmViewer.blank')" value="blank" />
@@ -74,6 +75,12 @@ export default {
   },
   data () {
     return {
+      element_statuses: [
+        statuses.LATEST,
+        statuses.FINAL,
+        statuses.DRAFT,
+        statuses.RETIRED
+      ],
       elements: [],
       uri: '',
       xml: '',
@@ -94,7 +101,7 @@ export default {
         { name: this.$t('OdmViewer.item_group'), value: 'item_group' },
         { name: this.$t('OdmViewer.item'), value: 'item' }
       ],
-      draft: true,
+      element_status: statuses.LATEST,
       url: ''
     }
   },
@@ -114,32 +121,29 @@ export default {
       switch (this.params.target_type) {
         case 'study_event':
           crfs.get('study-events').then((resp) => {
-            this.elements = resp.data.items.filter(this.checkIfDraft)
+            this.elements = resp.data.items
           })
           return
         case 'form':
           crfs.get('forms').then((resp) => {
-            this.elements = resp.data.items.filter(this.checkIfDraft)
+            this.elements = resp.data.items
           })
           return
         case 'item_group':
           crfs.get('item-groups').then((resp) => {
-            this.elements = resp.data.items.filter(this.checkIfDraft)
+            this.elements = resp.data.items
           })
           return
         case 'item':
           crfs.get('items').then((resp) => {
-            this.elements = resp.data.items.filter(this.checkIfDraft)
+            this.elements = resp.data.items
           })
       }
-    },
-    checkIfDraft (item) {
-      return this.draft ? (item.status === statuses.FINAL || item.status === statuses.DRAFT) : item.status === statuses.FINAL
     },
     async loadXml () {
       this.doc = ''
       this.loading = true
-      this.params.status = this.draft ? 'final&status=draft' : 'final'
+      this.params.status = this.element_status.toLowerCase()
       crfs.getXml(this.params).then(resp => {
         const parser = new DOMParser()
         this.xml = parser.parseFromString(resp.data, 'application/xml')
@@ -197,9 +201,6 @@ export default {
     },
     elementProp () {
       this.automaticLoad()
-    },
-    draft () {
-      this.setElements()
     }
   }
 }

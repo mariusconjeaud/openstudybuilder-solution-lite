@@ -24,6 +24,11 @@ from clinical_mdr_api.domains.libraries.parameter_term import (
 )
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
 from clinical_mdr_api.exceptions import NotFoundException
+from clinical_mdr_api.models.controlled_terminologies.ct_term import (
+    SimpleCTTermNameAndAttributes,
+    SimpleTermAttributes,
+    SimpleTermName,
+)
 
 _AggregateRootType = TypeVar("_AggregateRootType")
 
@@ -158,7 +163,7 @@ class GenericSyntaxInstanceRepository(
         values: Iterable[VersionValue] = self.value_class.nodes.filter(name=name)
         if len(values) > 0:
             root_uid = values[0].get_root_uid_by_latest()
-            item: _AggregateRootType = self.find_by_uid_2(uid=root_uid)
+            item: _AggregateRootType = self.find_by_uid(uid=root_uid)
             return item
         raise NotFoundException(
             "Not Found - The object with the specified 'name' wasn't found."
@@ -169,7 +174,7 @@ class GenericSyntaxInstanceRepository(
         # syntax instance root and TemplateParameterTermRoot to value to value.
         if self.is_pre_instance(root):
             cypher_query = f"""
-        MATCH (param:TemplateParameter)<-[u:USES_PARAMETER]-(:SyntaxTemplateRoot)<-[:CREATED_FROM]-(pre_instance_root:{root.__label__})-[:LATEST_DRAFT|LATEST_FINAL|LATEST_RETIRED|HAS_VERSION]->(pre_instance_value:{value.__label__})
+        MATCH (param:TemplateParameter)<-[u:USES_PARAMETER]-(:SyntaxTemplateRoot)<-[:CREATED_FROM]-(pre_instance_root:{root.__label__})-[:LATEST]->(pre_instance_value:{value.__label__})
         WHERE pre_instance_root.uid=$root_uid AND pre_instance_value.name=$value_name
         WITH pre_instance_value, param.name as parameter, u.position as position
         OPTIONAL MATCH (pre_instance_value)-[rel:USES_VALUE]->(tptv:TemplateParameterTermValue)<-[:HAS_VERSION]-(tptr:TemplateParameterTermRoot)
@@ -181,7 +186,7 @@ class GenericSyntaxInstanceRepository(
         WITH tptr
         OPTIONAL MATCH (tptr)-[rel:HAS_UNIT]->(un:UnitDefinitionRoot)-[:LATEST_FINAL]->(udv:UnitDefinitionValue)
         WITH rel, udv, tptr ORDER BY rel.index
-        WITH collect(udv.name_sentence_case) as unit_names, tptr
+        WITH collect(udv.name) as unit_names, tptr
         OPTIONAL MATCH (tptr)-[:HAS_CONJUNCTION]->(co:Conjunction)
         WITH unit_names, co
         RETURN apoc.text.join(unit_names, ' ' + coalesce(co.string, '') + ' ') AS unit
@@ -218,7 +223,7 @@ class GenericSyntaxInstanceRepository(
             cypher_query = f"""
         MATCH  (param:TemplateParameter)<-[u:USES_PARAMETER]-
               (:SyntaxTemplateRoot)-[:HAS_OBJECTIVE|HAS_ENDPOINT|HAS_TIMEFRAME|HAS_CRITERIA|HAS_FOOTNOTE|HAS_ACTIVITY_INSTRUCTION]->
-              (vt:{root.__label__})-[:LATEST_DRAFT|LATEST_FINAL|LATEST_RETIRED|HAS_VERSION]->
+              (vt:{root.__label__})-[:LATEST]->
               (vv:{value.__label__})
         WHERE vt.uid=$root_uid AND vv.name=$value_name
         WITH vv, param.name as parameter, u.position as position
@@ -232,7 +237,7 @@ class GenericSyntaxInstanceRepository(
                 WITH tptr
                 OPTIONAL MATCH (tptr)-[rel:HAS_UNIT]->(un:UnitDefinitionRoot)-[:LATEST_FINAL]->(udv:UnitDefinitionValue)
                 WITH rel, udv, tptr ORDER BY rel.index
-                WITH collect(udv.name_sentence_case) as unit_names, tptr
+                WITH collect(udv.name) as unit_names, tptr
                 OPTIONAL MATCH (tptr)-[:HAS_CONJUNCTION]->(co:Conjunction) 
                 WITH unit_names, co
                 RETURN apoc.text.join(unit_names, ' ' + coalesce(co.string, '') + ' ') AS unit
@@ -281,6 +286,33 @@ class GenericSyntaxInstanceRepository(
         )
         return simple_parameter_term_vo
 
+    def get_template_vo(self, root, value, template):
+        return ParametrizedTemplateVO(
+            template_name=template["template_name"],
+            template_uid=template["template_uid"],
+            template_sequence_id=template["template_sequence_id"],
+            guidance_text=template["template_guidance_text"],
+            parameter_terms=self._get_template_parameters(root, value),
+            library_name=template["template_library_name"],
+            template_type=(
+                SimpleCTTermNameAndAttributes(
+                    term_uid=template["term_uid"],
+                    name=SimpleTermName(
+                        sponsor_preferred_name=template["name"],
+                        sponsor_preferred_name_sentence_case=template[
+                            "name_sentence_case"
+                        ],
+                    ),
+                    attributes=SimpleTermAttributes(
+                        code_submission_value=template["code_submission_value"],
+                        nci_preferred_name=template["preferred_term"],
+                    ),
+                )
+                if template["term_uid"]
+                else None
+            ),
+        )
+
     def _get_template(
         self, root: VersionRoot, value: VersionValue, date_before: datetime
     ) -> ParametrizedTemplateVO:
@@ -315,19 +347,6 @@ class GenericSyntaxInstanceRepository(
 
     def check_usage_count(self, _: str) -> bool:
         return False
-
-    def find_instances_referenced_by_any_study(self) -> Iterable[_AggregateRootType]:
-        aggregates = []
-        items = self.root_class.nodes.order_by("-uid")
-
-        for item in items:
-            # Find releases for given root node
-            aggregates += self._find_releases(item, True)
-
-        # Filter out aggregates that don't have studies referencing them
-        aggregates_with_study = [agg for agg in aggregates if agg.study_count > 0]
-
-        return aggregates_with_study
 
     def is_pre_instance(self, obj):
         return "PreInstance" in obj.__class__.__name__

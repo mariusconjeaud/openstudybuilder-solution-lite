@@ -80,14 +80,14 @@ class TestStudyDefinitionRepository(unittest.TestCase):
         TestUtils.create_study_ct_data_map(codelist_uid=codelist.codelist_uid)
         TestUtils.create_study_fields_configuration()
 
-    def test__find_by_uid__non_existing_uid__returns_none(self):
+    def test__find_by_uid__non_existent_uid__returns_none(self):
         with db.transaction:
             # given
-            non_existing_uid = f"this-uid-for-sure-does-not-exists-especially-after-adding-this-{random_str()}"
+            non_existent_uid = f"this-uid-for-sure-does-not-exists-especially-after-adding-this-{random_str()}"
             repository = StudyDefinitionRepositoryImpl(f"{current_function_name()}")
 
             # when
-            result = repository.find_by_uid(non_existing_uid)
+            result = repository.find_by_uid(non_existent_uid)
             repository.close()
 
             # then

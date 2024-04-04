@@ -45,6 +45,41 @@ study_patch = {
                     "term_uid": "string",
                     "name": "string",
                 },
+                "eu_trial_number": "string",
+                "eu_trial_number_null_value_code": {
+                    "term_uid": "string",
+                    "name": "string",
+                },
+                "civ_id_sin_number": "string",
+                "civ_id_sin_number_null_value_code": {
+                    "term_uid": "string",
+                    "name": "string",
+                },
+                "national_clinical_trial_number": "string",
+                "national_clinical_trial_number_null_value_code": {
+                    "term_uid": "string",
+                    "name": "string",
+                },
+                "japanese_trial_registry_number_jrct": "string",
+                "japanese_trial_registry_number_jrct_null_value_code": {
+                    "term_uid": "string",
+                    "name": "string",
+                },
+                "national_medical_products_administration_nmpa_number": "string",
+                "national_medical_products_administration_nmpa_number_null_value_code": {
+                    "term_uid": "string",
+                    "name": "string",
+                },
+                "eudamed_srn_number": "string",
+                "eudamed_srn_number_null_value_code": {
+                    "term_uid": "string",
+                    "name": "string",
+                },
+                "investigational_device_exemption_ide_number": "string",
+                "investigational_device_exemption_ide_number_null_value_code": {
+                    "term_uid": "string",
+                    "name": "string",
+                },
             },
         },
         "version_metadata": {
@@ -352,6 +387,22 @@ objective_template = {
     "category_uids": ["string"],
 }
 
+objective_preinstance = {
+    "parameter_terms": [
+        {
+            "terms": [
+                {"uid": "string", "name": "string", "type": "string", "index": 0}
+            ],
+            "value": 0,
+            "conjunction": "string",
+        }
+    ],
+    "library_name": "string",
+    "is_confirmatory_testing": True,
+    "indication_uids": ["string"],
+    "category_uids": ["string"],
+}
+
 criteria_template = {
     "name": "string",
     "guidance_text": "string",
@@ -367,6 +418,22 @@ criteria_template = {
         }
     ],
     "type_uid": "string",
+    "indication_uids": ["string"],
+    "category_uids": ["string"],
+    "sub_category_uids": ["string"],
+}
+
+criteria_preinstance = {
+    "parameter_terms": [
+        {
+            "terms": [
+                {"uid": "string", "name": "string", "type": "string", "index": 0}
+            ],
+            "value": 0,
+            "conjunction": "string",
+        }
+    ],
+    "library_name": "string",
     "indication_uids": ["string"],
     "category_uids": ["string"],
     "sub_category_uids": ["string"],
@@ -397,6 +464,59 @@ endpoint_template = {
     "sub_category_uids": ["string"],
 }
 
+endpoint_preinstance = {
+    "parameter_terms": [
+        {
+            "terms": [
+                {"uid": "string", "name": "string", "type": "string", "index": 0}
+            ],
+            "value": 0,
+            "conjunction": "string",
+        }
+    ],
+    "library_name": "string",
+    "indication_uids": ["string"],
+    "category_uids": ["string"],
+    "sub_category_uids": ["string"],
+}
+
+footnote_template = {
+    "name": "string",
+    "study_uid": "string",
+    "library_name": "string",
+    "default_parameter_terms": [
+        {
+            "position": 0,
+            "conjunction": "string",
+            "terms": [
+                {"uid": "string", "name": "string", "type": "string", "index": 0}
+            ],
+        }
+    ],
+    "type_uid": "string",
+    "indication_uids": ["string"],
+    "activity_uids": ["string"],
+    "activity_group_uids": ["string"],
+    "activity_subgroup_uids": ["string"],
+}
+
+footnote_preinstance = {
+    "parameter_terms": [
+        {
+            "terms": [
+                {"uid": "string", "name": "string", "type": "string", "index": 0}
+            ],
+            "value": 0,
+            "conjunction": "string",
+        }
+    ],
+    "library_name": "string",
+    "indication_uids": ["string"],
+    "activity_uids": ["string"],
+    "activity_group_uids": ["string"],
+    "activity_subgroup_uids": ["string"],
+}
+
 activity_instruction_template = {
     "name": "string",
     "guidance_text": "string",
@@ -410,6 +530,23 @@ activity_instruction_template = {
             ],
         }
     ],
+    "indication_uids": ["string"],
+    "activity_uids": ["string"],
+    "activity_group_uids": ["string"],
+    "activity_subgroup_uids": ["string"],
+}
+
+activity_instruction_preinstance = {
+    "parameter_terms": [
+        {
+            "terms": [
+                {"uid": "string", "name": "string", "type": "string", "index": 0}
+            ],
+            "value": 0,
+            "conjunction": "string",
+        }
+    ],
+    "library_name": "string",
     "indication_uids": ["string"],
     "activity_uids": ["string"],
     "activity_group_uids": ["string"],
@@ -672,10 +809,7 @@ activity = {
     "abbreviation": "string",
     "library_name": "string",
     "activity_groupings": [
-        {
-            "activity_group_uid": "string",
-            "activity_subgroup_uid": "string"
-        }
+        {"activity_group_uid": "string", "activity_subgroup_uid": "string"}
     ],
 }
 

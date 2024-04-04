@@ -15,6 +15,7 @@ from clinical_mdr_api.domain_repositories.models.odm import (
     OdmStudyEventRoot,
     OdmStudyEventValue,
 )
+from clinical_mdr_api.domains._utils import ObjectStatus
 from clinical_mdr_api.domains.concepts.odms.study_event import (
     OdmStudyEventAR,
     OdmStudyEventVO,
@@ -93,11 +94,8 @@ class StudyEventRepository(OdmGenericRepository[OdmStudyEventAR]):
         return odm_form_ar
 
     def specific_alias_clause(
-        self, only_specific_status: list[str] | None = None
+        self, only_specific_status: str = ObjectStatus.LATEST.name
     ) -> str:
-        if not only_specific_status:
-            only_specific_status = ["LATEST"]
-
         return f"""
         WITH *,
         concept_value.oid AS oid,
@@ -106,10 +104,10 @@ class StudyEventRepository(OdmGenericRepository[OdmStudyEventAR]):
         concept_value.description AS description,
         concept_value.display_in_tree AS display_in_tree,
 
-        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmStudyEventRoot)-[fref:FORM_REF]->(fr:OdmFormRoot)-[:LATEST]->(fv:OdmFormValue) | {{uid: fr.uid, name: fv.name, order: fref.order, mandatory: fref.mandatory, collection_exception_condition_oid: fref.collection_exception_condition_oid}}] AS forms
+        [(concept_value)<-[:{only_specific_status}]-(:OdmStudyEventRoot)-[fref:FORM_REF]->(fr:OdmFormRoot)-[:LATEST]->(fv:OdmFormValue) | {{uid: fr.uid, name: fv.name, order: fref.order, mandatory: fref.mandatory, collection_exception_condition_oid: fref.collection_exception_condition_oid}}] AS forms
         
         WITH *,
-        [form in forms | form.uid] AS form_uids
+        apoc.coll.toSet([form in forms | form.uid]) AS form_uids
         """
 
     def _create_new_value_node(self, ar: OdmStudyEventAR) -> OdmStudyEventValue:

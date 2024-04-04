@@ -44,7 +44,9 @@ const mutations = {
     state.studyCompounds.filter((item, pos) => {
       if (item.study_compound_uid === studyCompound.study_compound_uid) {
         Vue.set(state.studyCompounds, pos, studyCompound)
+        return true
       }
+      return false
     })
   },
   REMOVE_STUDY_COMPOUND (state, studyCompoundUid) {
@@ -62,7 +64,9 @@ const mutations = {
     state.studyCompoundDosings.filter((item, pos) => {
       if (item.study_compound_dosing_uid === studyCompoundDosing.study_compound_dosing_uid) {
         Vue.set(state.studyCompoundDosings, pos, studyCompoundDosing)
+        return true
       }
+      return false
     })
   },
   REMOVE_STUDY_COMPOUND_DOSING (state, studyCompoundDosingUid) {

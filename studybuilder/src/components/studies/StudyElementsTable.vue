@@ -13,6 +13,7 @@
     @filter="getStudyElements"
     :history-data-fetcher="fetchElementsHistory"
     :history-title="$t('StudyElements.global_history_title')"
+    :server-items-length="total"
     >
     <template v-slot:afterSwitches>
       <div :title="$t('NNTableTooltips.reorder_content')">
@@ -59,7 +60,7 @@
       </draggable>
     </template>
     <template v-slot:item.name="{ item }">
-      <router-link :to="{ name: 'StudyElementOverview', params: { study_id: selectedStudy.uid, id: item.element_uid } }">
+      <router-link :to="{ name: 'StudyElementOverview', params: { study_id: selectedStudy.uid, id: item.element_uid, root_tab: 'elements' } }">
         {{ item.name }}
       </router-link>
     </template>
@@ -280,11 +281,15 @@ export default {
     }
   },
   mounted () {
-    this.getStudyElements()
     this.$store.dispatch('studiesGeneral/fetchUnits')
     terms.getByCodelist('elementTypes').then(resp => {
       this.elementTypes = resp.data.items
     })
+  },
+  watch: {
+    options () {
+      this.getStudyElements()
+    }
   }
 }
 </script>

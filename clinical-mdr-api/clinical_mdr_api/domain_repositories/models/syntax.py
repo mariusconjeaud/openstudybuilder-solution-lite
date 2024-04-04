@@ -44,13 +44,6 @@ class UsesParameterRelation(ClinicalMdrRel):
 
 
 # pylint: disable=abstract-method
-class UsesDefaultValueRelation(ClinicalMdrRel):
-    position = IntegerProperty()
-    index = IntegerProperty()
-    set_number = IntegerProperty()
-
-
-# pylint: disable=abstract-method
 class UsesValueRelation(ClinicalMdrRel):
     position = IntegerProperty()
     index = IntegerProperty()
@@ -61,19 +54,10 @@ class UsesValueRelation(ClinicalMdrRel):
 ##### Syntax Template #####
 ###########################
 class SyntaxTemplateValue(VersionValue):
-    PARAMETERS_LABEL = "USES_DEFAULT_VALUE"
-
     name = StringProperty()
     name_plain = StringProperty()
     guidance_text = StringProperty()
 
-    # uses_default_value
-    has_parameters = RelationshipTo(
-        TemplateParameterTermRoot,
-        PARAMETERS_LABEL,
-        cardinality=ZeroOrMore,
-        model=UsesDefaultValueRelation,
-    )
     has_conjunction = RelationshipTo(
         Conjunction,
         "HAS_CONJUNCTION",
@@ -105,9 +89,6 @@ class SyntaxTemplateRoot(VersionRoot):
 
     has_pre_instance = RelationshipFrom("SyntaxPreInstanceRoot", "CREATED_FROM")
     has_indication = RelationshipTo(DictionaryTermRoot, "HAS_INDICATION")
-    has_study_phase = RelationshipTo(
-        CTTermRoot, "HAS_STUDY_PHASE", cardinality=ZeroOrMore
-    )
     # uses_parameter
     has_parameters = RelationshipTo(
         TemplateParameter,
@@ -285,6 +266,7 @@ class SyntaxPreInstanceValue(VersionValue):
 
     name = StringProperty()
     name_plain = StringProperty()
+    guidance_text = StringProperty()
 
     # uses_value
     has_parameters = RelationshipTo(
@@ -306,11 +288,6 @@ class SyntaxPreInstanceRoot(VersionRoot):
 
     sequence_id = StringProperty()
 
-    has_study_phase = RelationshipTo(
-        CTTermRoot, "HAS_STUDY_PHASE", cardinality=ZeroOrMore
-    )
-    has_category = RelationshipTo(CTTermRoot, "HAS_CATEGORY")
-    has_subcategory = RelationshipTo(CTTermRoot, "HAS_SUBCATEGORY")
     has_indication = RelationshipTo(DictionaryTermRoot, "HAS_INDICATION")
 
     created_from = RelationshipTo("SyntaxTemplateRoot", "CREATED_FROM")
@@ -333,14 +310,13 @@ class SyntaxPreInstanceRoot(VersionRoot):
 
 
 class CriteriaPreInstanceValue(SyntaxPreInstanceValue):
-    guidance_text = StringProperty()
-
     def get_study_count(self):
         ...
 
 
 class CriteriaPreInstanceRoot(SyntaxPreInstanceRoot):
-    ...
+    has_category = RelationshipTo(CTTermRoot, "HAS_CATEGORY")
+    has_subcategory = RelationshipTo(CTTermRoot, "HAS_SUBCATEGORY")
 
 
 class FootnotePreInstanceValue(SyntaxPreInstanceValue):
@@ -362,7 +338,8 @@ class EndpointPreInstanceValue(SyntaxPreInstanceValue):
 
 
 class EndpointPreInstanceRoot(SyntaxPreInstanceRoot):
-    ...
+    has_category = RelationshipTo(CTTermRoot, "HAS_CATEGORY")
+    has_subcategory = RelationshipTo(CTTermRoot, "HAS_SUBCATEGORY")
 
 
 class ObjectivePreInstanceValue(SyntaxPreInstanceValue):
@@ -372,6 +349,7 @@ class ObjectivePreInstanceValue(SyntaxPreInstanceValue):
 
 class ObjectivePreInstanceRoot(SyntaxPreInstanceRoot):
     is_confirmatory_testing = BooleanProperty()
+    has_category = RelationshipTo(CTTermRoot, "HAS_CATEGORY")
 
 
 class ActivityInstructionPreInstanceValue(SyntaxPreInstanceValue):

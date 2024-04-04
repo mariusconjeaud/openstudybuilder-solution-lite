@@ -2,6 +2,7 @@ import unittest
 from typing import Callable
 
 from clinical_mdr_api.domains.controlled_terminologies.ct_term_name import (
+    CTTermCodelistVO,
     CTTermNameAR,
     CTTermNameVO,
 )
@@ -14,17 +15,16 @@ from clinical_mdr_api.tests.unit.domain.utils import random_str
 
 def create_random_ct_term_name_vo(codelist_uid: str = random_str()) -> CTTermNameVO:
     random_ct_term_name_vo = CTTermNameVO.from_repository_values(
-        codelist_uid=codelist_uid,
+        codelists=[CTTermCodelistVO(codelist_uid=codelist_uid, order=1)],
         catalogue_name=random_str(),
         name=random_str(),
         name_sentence_case=random_str(),
-        order=1,
     )
     return random_ct_term_name_vo
 
 
 def create_random_ct_term_name_ar(
-    # pylint:disable=unnecessary-lambda
+    # pylint: disable=unnecessary-lambda
     generate_uid_callback: Callable[[], str] = lambda: random_str(),
     codelist_uid: str = random_str(),
     library: str = "Library",
@@ -102,7 +102,12 @@ class TestCTTermNameAR(unittest.TestCase):
         self.assertEqual(ct_term_name_ar.item_metadata.user_initials, "TODO")
         self.assertEqual(ct_term_name_ar.item_metadata.change_description, "Test")
         self.assertEqual(
-            ct_term_name_ar.ct_term_vo.codelist_uid, ct_term_vo.codelist_uid
+            ct_term_name_ar.ct_term_vo.codelists[0].codelist_uid,
+            ct_term_vo.codelists[0].codelist_uid,
+        )
+        self.assertEqual(
+            ct_term_name_ar.ct_term_vo.codelists[0].order,
+            ct_term_vo.codelists[0].order,
         )
         self.assertEqual(ct_term_name_ar.name, ct_term_vo.name)
         self.assertEqual(

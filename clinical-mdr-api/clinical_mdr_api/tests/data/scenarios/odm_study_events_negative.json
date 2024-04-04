@@ -75,7 +75,7 @@
         }
     },
     {
-        "name": "Test getting error for retrieving non existing ODM Study Event",
+        "name": "Test getting error for retrieving non-existent ODM Study Event",
         "request": {
             "headers": {},
             "method": "GET",

@@ -12,6 +12,7 @@ from clinical_mdr_api.domain_repositories.models.generic import (
     VersionRoot,
     VersionValue,
 )
+from clinical_mdr_api.domains._utils import ObjectStatus
 from clinical_mdr_api.domains.concepts.activities.activity_group import (
     ActivityGroupAR,
     ActivityGroupVO,
@@ -119,7 +120,9 @@ class ActivityGroupRepository(ConceptGenericRepository[ActivityGroupAR]):
             )
         return filter_statements_to_return, filter_query_parameters
 
-    def specific_alias_clause(self) -> str:
+    def specific_alias_clause(
+        self, only_specific_status: str = ObjectStatus.LATEST.name
+    ) -> str:
         # concept_value property comes from the main part of the query
         # which is specified in the activity_generic_repository_impl
         return """
@@ -137,24 +140,6 @@ class ActivityGroupRepository(ConceptGenericRepository[ActivityGroupAR]):
         value_node = super()._create_new_value_node(ar=ar)
         value_node.save()
         return value_node
-
-    def get_syntax_activity_groups(
-        self, syntax_node: VersionRoot
-    ) -> list[ActivityGroupAR] | None:
-        """
-        This method returns the activity groups for the provided syntax
-
-        :param syntax_node: Syntax Root node
-        :return list[ActivityGroupAR]:
-        """
-        activity_group_nodes = syntax_node.has_activity_group.all()
-        if activity_group_nodes:
-            groups = []
-            for node in activity_group_nodes:
-                group = self.find_by_uid_2(uid=node.uid)
-                groups.append(group)
-            return groups
-        return None
 
     def generic_match_clause_all_versions(self):
         return """

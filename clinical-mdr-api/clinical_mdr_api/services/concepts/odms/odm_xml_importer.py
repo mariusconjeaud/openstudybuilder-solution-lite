@@ -688,11 +688,11 @@ class OdmXmlImporterService:
 
         rs_names = {item.name for item in rs}
 
-        non_existing_measurement_unit_oids = measurement_unit_oids - rs_names
+        non_existent_measurement_unit_oids = measurement_unit_oids - rs_names
 
-        if non_existing_measurement_unit_oids:
+        if non_existent_measurement_unit_oids:
             raise exceptions.BusinessLogicException(
-                f"MeasurementUnits identified by following OIDs {non_existing_measurement_unit_oids} don't match any Unit Definition."
+                f"MeasurementUnits identified by following OIDs {non_existent_measurement_unit_oids} don't match any Unit Definition."
             )
 
         self.db_unit_definitions = [

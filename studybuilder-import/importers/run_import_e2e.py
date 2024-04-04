@@ -1,11 +1,11 @@
-from .utils.metrics import Metrics
-import os
 import json
+import os
 
 from .functions.utils import load_env
-from .utils.path_join import path_join
-from .utils.importer import open_file
 from .run_import_mockdatajson import MockdataJson
+from .utils.importer import open_file
+from .utils.metrics import Metrics
+from .utils.path_join import path_join
 
 metrics = Metrics()
 
@@ -16,7 +16,9 @@ metrics = Metrics()
 MDR_MIGRATION_STUDY_VERSIONS = (
     load_env("MDR_MIGRATION_STUDY_VERSIONS", default="False").lower() == "true"
 )
-MDR_MIGRATION_VERSIONED_STUDY_PATH = load_env("MDR_MIGRATION_VERSIONED_STUDY_PATH", default="")
+MDR_MIGRATION_VERSIONED_STUDY_PATH = load_env(
+    "MDR_MIGRATION_VERSIONED_STUDY_PATH", default=""
+)
 
 
 class MockdataJsonE2E(MockdataJson):
@@ -125,7 +127,9 @@ class MockdataJsonE2E(MockdataJson):
         elif not MDR_MIGRATION_STUDY_VERSIONS:
             self.log.info("Import is disabled by env MDR_MIGRATION_STUDY_VERSIONS")
         elif not MDR_MIGRATION_VERSIONED_STUDY_PATH:
-            self.log.info("Import skipped because env MDR_MIGRATION_VERSIONED_STUDY_PATH is not set")
+            self.log.info(
+                "Import skipped because env MDR_MIGRATION_VERSIONED_STUDY_PATH is not set"
+            )
         self.log.info("Done migrating versioned study for E2E")
 
 

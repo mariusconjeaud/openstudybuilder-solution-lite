@@ -133,7 +133,7 @@ class ActivityItemClass(VersionProperties):
     )
 
     @validator("possible_actions", pre=True, always=True)
-    # pylint:disable=no-self-argument,unused-argument
+    # pylint: disable=no-self-argument,unused-argument
     def validate_possible_actions(cls, value, values):
         if values["status"] == LibraryItemStatus.DRAFT.value and values[
             "version"

@@ -22,6 +22,7 @@ from clinical_mdr_api.domains.controlled_terminologies.ct_term_attributes import
     CTTermAttributesVO,
 )
 from clinical_mdr_api.domains.controlled_terminologies.ct_term_name import (
+    CTTermCodelistVO,
     CTTermNameAR,
     CTTermNameVO,
 )
@@ -70,7 +71,7 @@ def create_codelist(name, uid, catalogue, library):
         author="TODO Initials",
     )
     CTCodelistAttributesRepository().save(ct_codelist_attributes_ar)
-    item = CTCodelistAttributesService().approve(uid)
+    CTCodelistAttributesService().approve(uid)
     ct_codelist_name_vo = CTCodelistNameVO.from_repository_values(
         catalogue_name=catalogue, name=name, is_template_parameter=False
     )
@@ -105,7 +106,7 @@ def create_ct_term(
     ct_term_attributes_ar = CTTermAttributesAR.from_input_values(
         author="TOOD",
         ct_term_attributes_vo=CTTermAttributesVO.from_input_values(
-            codelist_uid=codelist,
+            codelists=[CTTermCodelistVO(codelist_uid=codelist, order=order)],
             catalogue_name=catalogue_name,
             code_submission_value=code_submission_value,
             name_submission_value=name_submission_value,
@@ -124,11 +125,10 @@ def create_ct_term(
 
     CTTermAttributesService().approve(uid)
     term_vo = CTTermNameVO.from_repository_values(
-        codelist_uid=codelist,
+        codelists=[CTTermCodelistVO(codelist_uid=codelist, order=order)],
         catalogue_name=catalogue_name,
         name=name,
         name_sentence_case=name.capitalize(),
-        order=order,
     )
     ct_term = CTTermNameAR.from_input_values(
         generate_uid_callback=lambda: uid,

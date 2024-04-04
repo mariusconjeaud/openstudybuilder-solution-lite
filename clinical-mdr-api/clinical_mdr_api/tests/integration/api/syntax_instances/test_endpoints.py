@@ -100,21 +100,6 @@ def test_data():
     ct_term_category = TestUtils.create_ct_term()
     ct_term_subcategory = TestUtils.create_ct_term()
 
-    parameter_terms = [
-        MultiTemplateParameterTerm(
-            position=1,
-            conjunction="",
-            terms=[
-                IndexedTemplateParameterTerm(
-                    index=1,
-                    name=text_value_1.name,
-                    uid=text_value_1.uid,
-                    type="TextValue",
-                )
-            ],
-        )
-    ]
-
     def generate_parameter_terms():
         text_value = TestUtils.create_text_value()
         return [
@@ -137,7 +122,6 @@ def test_data():
         guidance_text="Default guidance text",
         study_uid=None,
         library_name="Sponsor",
-        default_parameter_terms=parameter_terms,
         indication_uids=[dictionary_term_indication.term_uid],
         category_uids=[ct_term_category.term_uid],
         sub_category_uids=[ct_term_subcategory.term_uid],
@@ -149,7 +133,20 @@ def test_data():
         TestUtils.create_endpoint(
             endpoint_template_uid=endpoint_template.uid,
             library_name="Sponsor",
-            parameter_terms=parameter_terms,
+            parameter_terms=[
+                MultiTemplateParameterTerm(
+                    position=1,
+                    conjunction="",
+                    terms=[
+                        IndexedTemplateParameterTerm(
+                            index=1,
+                            name=text_value_1.name,
+                            uid=text_value_1.uid,
+                            type="TextValue",
+                        )
+                    ],
+                )
+            ],
         )
     )
     endpoints.append(
@@ -653,12 +650,8 @@ def test_endpoint_audit_trail(api_client):
     log.info("Endpoint Audit Trail: %s", res)
 
     assert response.status_code == 200
-    assert res["total"] == 50
+    assert res["total"] == 44
     expected_uids = [
-        "Endpoint_000004",
-        "Endpoint_000004",
-        "Endpoint_000004",
-        "Endpoint_000026",
         "Endpoint_000025",
         "Endpoint_000025",
         "Endpoint_000024",
@@ -699,8 +692,6 @@ def test_endpoint_audit_trail(api_client):
         "Endpoint_000007",
         "Endpoint_000006",
         "Endpoint_000006",
-        "Endpoint_000005",
-        "Endpoint_000004",
         "Endpoint_000002",
         "Endpoint_000002",
         "Endpoint_000001",

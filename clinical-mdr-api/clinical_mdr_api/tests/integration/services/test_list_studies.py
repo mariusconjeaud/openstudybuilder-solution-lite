@@ -125,6 +125,7 @@ class TestListStudies(unittest.TestCase):
             -[relt:LATEST_FINAL]->(adtv:ActivityInstructionTemplateValue:SyntaxTemplateValue
               {name : "activity_description_1", name_plain : "activity_description_1"})
             MERGE (lib)-[:CONTAINS_SYNTAX_TEMPLATE]->(adt)
+            MERGE (adt)-[:LATEST]->(adtv)
             MERGE (adt)-[hv:HAS_VERSION]->(adtv)
             set hv.change_description="Approved version"
             set hv.start_date= datetime()

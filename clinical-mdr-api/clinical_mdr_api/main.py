@@ -50,7 +50,9 @@ middlewares = [
 
 # Azure Application Insights integration for tracing
 if config.APPINSIGHTS_CONNECTION:
-    _EXPORTER = AzureExporter(connection_string=config.APPINSIGHTS_CONNECTION)
+    _EXPORTER = AzureExporter(
+        connection_string=config.APPINSIGHTS_CONNECTION, enable_local_storage=False
+    )
 else:
     _EXPORTER = None
 
@@ -331,6 +333,14 @@ app.include_router(
 )
 app.include_router(routers.compounds_router, prefix="/concepts", tags=["Compounds"])
 app.include_router(
+    routers.active_substances_router, prefix="/concepts", tags=["Active Substances"]
+)
+app.include_router(
+    routers.pharmaceutical_products_router,
+    prefix="/concepts",
+    tags=["Pharmaceutical Products"],
+)
+app.include_router(
     routers.compound_aliases_router, prefix="/concepts", tags=["Compound Aliases"]
 )
 app.include_router(
@@ -403,11 +413,6 @@ app.include_router(
     routers.unit_definition_router,
     prefix="/concepts/unit-definitions",
     tags=["Unit Definitions"],
-)
-app.include_router(
-    routers.complex_template_parameter_router,
-    prefix="/parameter-templates",
-    tags=["Parameter Templates"],
 )
 app.include_router(
     routers.metadata_router, prefix="/listings", tags=["Listing Metadata"]

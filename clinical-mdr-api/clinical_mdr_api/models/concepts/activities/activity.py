@@ -81,7 +81,7 @@ class ActivityBase(Concept):
     )
 
     @validator("possible_actions", pre=True, always=True)
-    # pylint:disable=no-self-argument,unused-argument
+    # pylint: disable=no-self-argument,unused-argument
     def validate_possible_actions(cls, value, values):
         if values["status"] == LibraryItemStatus.DRAFT.value and values[
             "version"
@@ -153,10 +153,18 @@ class Activity(ActivityBase):
                 [_.value for _ in activity_ar.get_possible_actions()]
             ),
             request_rationale=activity_ar.concept_vo.request_rationale,
+            is_request_final=activity_ar.concept_vo.is_request_final,
+            is_request_rejected=activity_ar.concept_vo.is_request_rejected,
+            reason_for_rejecting=activity_ar.concept_vo.reason_for_rejecting,
+            contact_person=activity_ar.concept_vo.contact_person,
+            requester_study_id=activity_ar.concept_vo.requester_study_id,
             replaced_by_activity=activity_ar.concept_vo.replaced_by_activity,
             is_data_collected=activity_ar.concept_vo.is_data_collected
             if activity_ar.concept_vo.is_data_collected
             else False,
+            is_multiple_selection_allowed=activity_ar.concept_vo.is_multiple_selection_allowed
+            if activity_ar.concept_vo.is_multiple_selection_allowed is not None
+            else True,
         )
 
     activity_groupings: list[ActivityGroupingHierarchySimpleModel] = Field(
@@ -168,6 +176,38 @@ class Activity(ActivityBase):
         None,
         title="The rationale of the activity request",
         description="The rationale of the activity request",
+        nullable=True,
+        remove_from_wildcard=True,
+    )
+    is_request_final: bool = Field(
+        False,
+        title="The flag indicating if activity request is finalized",
+        description="The flag indicating if activity request is finalized",
+        nullable=False,
+        remove_from_wildcard=True,
+    )
+    is_request_rejected: bool = Field(
+        False,
+        title="The flag indicating if activity request is rejected",
+        nullable=False,
+        remove_from_wildcard=True,
+    )
+    contact_person: str | None = Field(
+        None,
+        title="The person to contact with about rejection",
+        nullable=True,
+        remove_from_wildcard=True,
+    )
+    reason_for_rejecting: str | None = Field(
+        None,
+        title="The reason why request was rejected",
+        nullable=True,
+        remove_from_wildcard=True,
+    )
+    requester_study_id: str | None = Field(
+        None,
+        title="The study_id of the Study which requested an Activity request",
+        description="The study_id of the Study which requested an Activity request",
         nullable=True,
         remove_from_wildcard=True,
     )
@@ -184,26 +224,11 @@ class Activity(ActivityBase):
         description="Boolean flag indicating whether data is collected for this activity",
         nullable=False,
     )
-
-
-class ActivityORM(Activity):
-    class Config:
-        orm_mode = True
-
-    activity_groupings: list[ActivityGroupingHierarchySimpleModel] = Field(...)
-    request_rationale: str | None = Field(
-        None,
-        title="The rationale of the activity request",
-        description="The rationale of the activity request",
-        source="has_latest_value.request_rationale",
-        nullable=True,
-    )
-    replaced_by_activity: str | None = Field(
-        None,
-        title="The uid of the replacing Activity",
-        description="The uid of the replacing Activity",
-        source="has_latest_value.replaced_by_activity.uid",
-        nullable=True,
+    is_multiple_selection_allowed: bool = Field(
+        True,
+        title="Boolean flag indicating whether multiple selections are allowed for this activity",
+        description="Boolean flag indicating whether multiple selections are allowed for this activity",
+        nullable=False,
     )
 
 
@@ -229,7 +254,9 @@ class ActivityInput(ActivityCommonInput):
     nci_concept_id: str | None = None
     activity_groupings: list[ActivityGrouping] | None = None
     request_rationale: str | None = None
+    is_request_final: bool = False
     is_data_collected: bool = False
+    is_multiple_selection_allowed: bool = True
 
 
 class ActivityEditInput(ActivityInput):
@@ -238,6 +265,11 @@ class ActivityEditInput(ActivityInput):
 
 class ActivityCreateInput(ActivityInput):
     library_name: str
+
+
+class ActivityRequestRejectInput(BaseModel):
+    contact_person: str
+    reason_for_rejecting: str
 
 
 class ActivityFromRequestInput(ActivityInput):
@@ -291,6 +323,12 @@ class SimpleActivity(BaseModel):
         description="Boolean flag indicating whether data is collected for this activity",
         nullable=False,
     )
+    is_multiple_selection_allowed: bool = Field(
+        True,
+        title="Boolean flag indicating whether multiple selections are allowed for this activity",
+        description="Boolean flag indicating whether multiple selections are allowed for this activity",
+        nullable=False,
+    )
     library_name: str | None = Field(
         None,
         title="library_name",
@@ -333,6 +371,7 @@ class SimpleActivityInstance(BaseModel):
     )
     is_data_sharing: bool = Field(False, title="is_data_sharing", description="")
     is_legacy_usage: bool = Field(False, title="is_legacy_usage", description="")
+    is_derived: bool = Field(False, title="is_derived", description="")
     topic_code: str | None = Field(None, title="name", description="")
     library_name: str = Field(..., title="name", description="")
     activity_instance_class: SimpleActivityInstanceClass = Field(...)
@@ -356,6 +395,9 @@ class ActivityOverview(BaseModel):
                 abbreviation=overview.get("activity_value").get("abbreviation"),
                 is_data_collected=overview.get("activity_value").get(
                     "is_data_collected", False
+                ),
+                is_multiple_selection_allowed=overview.get("activity_value").get(
+                    "is_multiple_selection_allowed", True
                 ),
                 library_name=overview.get("activity_library_name"),
             ),
@@ -395,6 +437,7 @@ class ActivityOverview(BaseModel):
                     ),
                     is_data_sharing=activity_instance.get("is_data_sharing", False),
                     is_legacy_usage=activity_instance.get("is_legacy_usage", False),
+                    is_derived=activity_instance.get("is_derived", False),
                     topic_code=activity_instance.get("topic_code"),
                     library_name=activity_instance.get(
                         "activity_instance_library_name"

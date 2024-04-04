@@ -1,5 +1,3 @@
-from typing import cast
-
 from neomodel import db
 
 from clinical_mdr_api.domain_repositories.models.generic import (
@@ -23,29 +21,24 @@ class FootnoteRepository(GenericSyntaxInstanceRepository[FootnoteAR]):
     value_class = FootnoteValue
     template_class = FootnoteTemplateRoot
 
-    def _create_aggregate_root_instance_from_version_root_relationship_and_value(
+    def _create_ar(
         self,
         root: FootnoteRoot,
         library: Library,
         relationship: VersionRelationship,
         value: FootnoteValue,
         study_count: int = 0,
-        **_kwargs,
+        **kwargs,
     ) -> FootnoteAR:
-        return cast(
-            FootnoteAR,
-            FootnoteAR.from_repository_values(
-                uid=root.uid,
-                library=LibraryVO.from_input_values_2(
-                    library_name=library.name,
-                    is_library_editable_callback=(lambda _: library.is_editable),
-                ),
-                item_metadata=self._library_item_metadata_vo_from_relation(
-                    relationship
-                ),
-                template=self._get_template(root, value, relationship.start_date),
-                study_count=study_count,
+        return FootnoteAR.from_repository_values(
+            uid=root.uid,
+            library=LibraryVO.from_input_values_2(
+                library_name=library.name,
+                is_library_editable_callback=(lambda _: library.is_editable),
             ),
+            item_metadata=self._library_item_metadata_vo_from_relation(relationship),
+            template=self.get_template_vo(root, value, kwargs["instance_template"]),
+            study_count=study_count,
         )
 
     def check_exists_by_name_for_type(self, name: str, footnote_type_uid: str) -> bool:

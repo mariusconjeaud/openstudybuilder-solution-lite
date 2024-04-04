@@ -12,8 +12,9 @@ from clinical_mdr_api.domain_repositories.syntax_templates.generic_syntax_templa
 from clinical_mdr_api.domains.syntax_templates.activity_instruction_template import (
     ActivityInstructionTemplateAR,
 )
-from clinical_mdr_api.domains.syntax_templates.template import InstantiationCountsVO
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryVO
+from clinical_mdr_api.models.controlled_terminologies.ct_term import SimpleTermModel
+from clinical_mdr_api.models.generic_models import SimpleNameModel
 
 
 class ActivityInstructionTemplateRepository(
@@ -22,17 +23,14 @@ class ActivityInstructionTemplateRepository(
     root_class = ActivityInstructionTemplateRoot
     value_class = ActivityInstructionTemplateValue
 
-    def check_exists_by_name_in_study(self, name: str, study_uid: str) -> bool:
-        raise NotImplementedError()
-
-    def _create_aggregate_root_instance_from_version_root_relationship_and_value(
+    def _create_ar(
         self,
         root: ActivityInstructionTemplateRoot,
         library: Library,
         relationship: VersionRelationship,
         value: ActivityInstructionTemplateValue,
         study_count: int = 0,
-        counts: InstantiationCountsVO | None = None,
+        **kwargs,
     ) -> ActivityInstructionTemplateAR:
         return ActivityInstructionTemplateAR.from_repository_values(
             uid=root.uid,
@@ -43,8 +41,53 @@ class ActivityInstructionTemplateRepository(
             ),
             item_metadata=self._library_item_metadata_vo_from_relation(relationship),
             template=self._get_template(value),
+            indications=sorted(
+                [
+                    SimpleTermModel(
+                        term_uid=indication["term_uid"], name=indication["name"]
+                    )
+                    for indication in kwargs["indications"]
+                    if indication["term_uid"]
+                ],
+                key=lambda x: x.term_uid,
+            ),
+            activities=sorted(
+                [
+                    SimpleNameModel(
+                        uid=activity["uid"],
+                        name=activity["name"],
+                        name_sentence_case=activity["name_sentence_case"],
+                    )
+                    for activity in kwargs["activities"]
+                    if activity["uid"]
+                ],
+                key=lambda x: x.uid,
+            ),
+            activity_groups=sorted(
+                [
+                    SimpleNameModel(
+                        uid=activity_group["uid"],
+                        name=activity_group["name"],
+                        name_sentence_case=activity_group["name_sentence_case"],
+                    )
+                    for activity_group in kwargs["activity_groups"]
+                    if activity_group["uid"]
+                ],
+                key=lambda x: x.uid,
+            ),
+            activity_subgroups=sorted(
+                [
+                    SimpleNameModel(
+                        uid=activity_subgroup["uid"],
+                        name=activity_subgroup["name"],
+                        name_sentence_case=activity_subgroup["name_sentence_case"],
+                    )
+                    for activity_subgroup in kwargs["activity_subgroups"]
+                    if activity_subgroup["uid"]
+                ],
+                key=lambda x: x.uid,
+            ),
             study_count=study_count,
-            counts=counts,
         )
 
     def _create(
@@ -58,23 +101,13 @@ class ActivityInstructionTemplateRepository(
         """
         root, item = super()._create(item)
 
-        if item.indications:
-            for indication in item.indications:
-                if indication:
-                    root.has_indication.connect(self._get_indication(indication.uid))
-        if item.activities:
-            for activity in item.activities:
-                if activity:
-                    root.has_activity.connect(self._get_activity(activity.uid))
-        if item.activity_groups:
-            for group in item.activity_groups:
-                if group:
-                    root.has_activity_group.connect(self._get_activity_group(group.uid))
-        if item.activity_subgroups:
-            for group in item.activity_subgroups:
-                if group:
-                    root.has_activity_subgroup.connect(
-                        self._get_activity_subgroup(group.uid)
-                    )
+        for indication in item.indications or []:
+            root.has_indication.connect(self._get_indication(indication.term_uid))
+        for activity in item.activities or []:
+            root.has_activity.connect(self._get_activity(activity.uid))
+        for group in item.activity_groups or []:
+            root.has_activity_group.connect(self._get_activity_group(group.uid))
+        for group in item.activity_subgroups or []:
+            root.has_activity_subgroup.connect(self._get_activity_subgroup(group.uid))
 
         return item

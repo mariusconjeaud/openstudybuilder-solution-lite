@@ -27,7 +27,6 @@ from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
 from clinical_mdr_api.domain_repositories.models.generic import (
     Library,
     VersionRelationship,
-    VersionRoot,
 )
 from clinical_mdr_api.domain_repositories.models.syntax import SyntaxTemplateRoot
 from clinical_mdr_api.domains.controlled_terminologies.utils import TermParentType
@@ -50,9 +49,9 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
     #    maxsize=config.CACHE_MAX_SIZE, ttl=config.CACHE_TTL
     # )
     generic_alias_clause = """
-        DISTINCT term_root, term_ver_root, term_ver_value, codelist_root, has_term
-        ORDER BY has_term.order, term_ver_value.name
-        WITH DISTINCT codelist_root, has_term, term_root, term_ver_root, term_ver_value,
+        DISTINCT term_root, term_ver_root, term_ver_value, codelist_root, rel_term
+        ORDER BY rel_term.order, term_ver_value.name
+        WITH DISTINCT codelist_root, rel_term, term_root, term_ver_root, term_ver_value,
         head([(catalogue)-[:HAS_CODELIST]->(codelist_root) | catalogue]) AS catalogue,
         head([(lib)-[:CONTAINS_TERM]->(term_root) | lib]) AS library
         CALL {
@@ -72,7 +71,7 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
             codelist_root.uid AS codelist_uid,
             catalogue.name AS catalogue_name,
             term_ver_value AS value_node,
-            has_term.order AS order,
+            rel_term.order AS order,
             library.name AS library_name,
             library.is_editable AS is_library_editable,
             {
@@ -106,8 +105,8 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
         :return:
         """
         query = """
-            MATCH (term_ver_root:CTTermRoot {uid: $uid})<-[has_term:HAS_TERM]-(codelist_root:CTCodelistRoot)
-            RETURN has_term.order as order
+            MATCH (term_ver_root:CTTermRoot {uid: $uid})<-[rel_term:HAS_TERM]-(codelist_root:CTCodelistRoot)
+            RETURN rel_term.order as order
             """
         result, _ = db.cypher_query(query, {"uid": uid})
         if len(result) > 0 and len(result[0]) > 0:
@@ -173,7 +172,7 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
         self,
         codelist_uid: str | None = None,
         codelist_name: str | None = None,
-        library: str | None = None,
+        library_name: str | None = None,
         package: str | None = None,
         sort_by: dict | None = None,
         page_number: int = 1,
@@ -181,6 +180,7 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
+        **_kwargs,
     ) -> GenericFilteringReturn[_AggregateRootType]:
         """
         Method runs a cypher query to fetch all needed data to create objects of type AggregateRootType.
@@ -191,7 +191,7 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
         neomodel.
         :param codelist_uid:
         :param codelist_name:
-        :param library:
+        :param library_name:
         :param package:
         :param sort_by:
         :param page_number:
@@ -210,7 +210,7 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
         match_clause, filter_query_parameters = self._generate_generic_match_clause(
             codelist_uid=codelist_uid,
             codelist_name=codelist_name,
-            library=library,
+            library_name=library_name,
             package=package,
         )
 
@@ -279,7 +279,7 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
         match_clause, filter_query_parameters = self._generate_generic_match_clause(
             codelist_uid=codelist_uid,
             codelist_name=codelist_name,
-            library=library,
+            library_name=library,
             package=package,
         )
 
@@ -350,44 +350,6 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
         type_node = syntax_node.has_type.single()
         return self.find_by_uid(term_uid=type_node.uid)
 
-    def get_syntax_categories(
-        self, syntax_node: VersionRoot
-    ) -> list[_AggregateRootType] | None:
-        """
-        This method returns the categories for the provided syntax.
-
-        :param syntax_node: Syntax Root node
-        :return list[_AggregateRootType] | None:
-        """
-        category_nodes = syntax_node.has_category.all()
-        if category_nodes:
-            categories = []
-            for node in category_nodes:
-                category = self.find_by_uid(term_uid=node.uid)
-                categories.append(category)
-            categories.sort(key=lambda c: c.uid)
-            return categories
-        return None
-
-    def get_syntax_subcategories(
-        self, syntax_node: VersionRoot
-    ) -> list[_AggregateRootType] | None:
-        """
-        This method returns the sub_categories for the provided syntax.
-
-        :param syntax_node: Syntax Root node
-        :return list[_AggregateRootType] | None:
-        """
-        sub_category_nodes = syntax_node.has_subcategory.all()
-        if sub_category_nodes:
-            sub_categories = []
-            for node in sub_category_nodes:
-                category = self.find_by_uid(term_uid=node.uid)
-                sub_categories.append(category)
-            sub_categories.sort(key=lambda c: c.uid)
-            return sub_categories
-        return None
-
     def hashkey_ct_term(
         self,
         term_uid: str,
@@ -427,7 +389,7 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
         ct_term_root: CTTermRoot = CTTermRoot.nodes.get_or_none(uid=term_uid)
         if ct_term_root is None:
             return None
-        # pylint:disable=unnecessary-dunder-call
+        # pylint: disable=unnecessary-dunder-call
         ct_term_version_root_node = ct_term_root.__getattribute__(
             self.relationship_from_root
         ).single()
@@ -444,7 +406,7 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
     def get_all_versions(self, term_uid: str) -> Iterable[_AggregateRootType] | None:
         ct_term_root: CTTermRoot = CTTermRoot.nodes.get_or_none(uid=term_uid)
         if ct_term_root is not None:
-            # pylint:disable=unnecessary-dunder-call
+            # pylint: disable=unnecessary-dunder-call
             ct_term_ver_root_node = ct_term_root.__getattribute__(
                 self.relationship_from_root
             ).single()
@@ -565,7 +527,7 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
         self,
         codelist_uid: str | None = None,
         codelist_name: str | None = None,
-        library: str | None = None,
+        library_name: str | None = None,
         package: str | None = None,
     ) -> tuple[str, dict]:
         if package:
@@ -586,18 +548,22 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
             """
 
         filter_query_parameters = {}
-        if library or package:
+        if library_name or package:
             # Build specific filtering for package and library
             # This is separate from generic filtering as the list of filters is predefined
             # We can therefore do this filtering in an efficient way in the Cypher MATCH clause
             filter_statements, filter_query_parameters = create_term_filter_statement(
-                library=library, package=package
+                library_name=library_name, package=package
             )
             match_clause += filter_statements
 
-        match_clause += (
-            " MATCH (codelist_root:CTCodelistRoot)-[has_term:HAS_TERM]->(term_root) "
-        )
+        if not package:
+            match_clause += " MATCH (codelist_root:CTCodelistRoot)-[rel_term:HAS_TERM]->(term_root) "
+        else:
+            # We are listing terms for a specific package, we need to include HAD_TERM relationships also.
+            # If not, we would only get terms that are also in the latest version of the package,
+            # not those that were in the past.
+            match_clause += " MATCH (codelist_root:CTCodelistRoot)-[rel_term:HAS_TERM|HAD_TERM]->(term_root) "
 
         if codelist_uid or codelist_name:
             # Build spefic filtering for codelist

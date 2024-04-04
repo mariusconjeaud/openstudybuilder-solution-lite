@@ -8,11 +8,13 @@ from pydantic.types import Json
 from clinical_mdr_api import config, models
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import CustomPage, GenericFilteringReturn
-from clinical_mdr_api.models.validators import FLOAT_REGEX
 from clinical_mdr_api.oauth import get_current_user_id, rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.studies.study import StudyService
+from clinical_mdr_api.services.studies.study_activity_instance_selection import (
+    StudyActivityInstanceSelectionService,
+)
 from clinical_mdr_api.services.studies.study_activity_selection import (
     StudyActivitySelectionService,
 )
@@ -184,7 +186,7 @@ def get_distinct_objective_values_for_header(
 @decorators.allow_exports(
     {
         "defaults": [
-            "uid",
+            "study_objective_uid",
             "order",
             "objective_level=objective_level.sponsor_preferred_name",
             "name_plain=objective.name_plain",
@@ -193,6 +195,8 @@ def get_distinct_objective_values_for_header(
             "endpoint_count",
             "start_date",
             "user_initials",
+            "study_uid",
+            "study_version",
         ],
         "formats": [
             "text/csv",
@@ -230,13 +234,8 @@ def get_all_selected_objectives(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    study_value_version: str
-    | None = Query(
-        None,
-        description="StudyValueVersion to extract the StudySelections",
-        regex=FLOAT_REGEX,
-    ),
-):
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
+) -> GenericFilteringReturn[models.StudySelectionObjective]:
     service = StudyObjectiveSelectionService(author=current_user_id)
     return service.get_all_selection(
         study_uid=uid,
@@ -282,12 +281,7 @@ def get_distinct_values_for_header(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
-    study_value_version: str
-    | None = Query(
-        None,
-        description="StudyValueVersion to extract the StudySelections",
-        regex=FLOAT_REGEX,
-    ),
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
     current_user_id: str = Depends(get_current_user_id),
 ):
     service = StudyObjectiveSelectionService(author=current_user_id)
@@ -351,12 +345,7 @@ def get_all_objectives_audit_trail(
 def get_selected_objective(
     uid: str = studyUID,
     study_objective_uid: str = study_selection_uid,
-    study_value_version: str
-    | None = Query(
-        None,
-        description="StudyValueVersion to extract the StudySelections",
-        regex=FLOAT_REGEX,
-    ),
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
     current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionObjective:
     service = StudyObjectiveSelectionService(author=current_user_id)
@@ -799,7 +788,7 @@ State after:
 @decorators.allow_exports(
     {
         "defaults": [
-            "uid",
+            "study_endpoint_uid",
             "order",
             "name_plain=endpoint.name_plain",
             "name=endpoint.name",
@@ -808,6 +797,8 @@ State after:
             "timeframe=timeframe.name",
             "objective=study_objective",
             "start_date",
+            "study_uid",
+            "study_version",
         ],
         "formats": [
             "text/csv",
@@ -845,13 +836,8 @@ def get_all_selected_endpoints(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    study_value_version: str
-    | None = Query(
-        None,
-        description="StudyValueVersion to extract the StudySelections",
-        regex=FLOAT_REGEX,
-    ),
-):
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
+) -> GenericFilteringReturn[models.StudySelectionEndpoint]:
     service = StudyEndpointSelectionService(author=current_user_id)
     return service.get_all_selection(
         study_uid=uid,
@@ -897,12 +883,7 @@ def get_distinct_study_endpoint_values_for_header(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
-    study_value_version: str
-    | None = Query(
-        None,
-        description="StudyValueVersion to extract the StudySelections",
-        regex=FLOAT_REGEX,
-    ),
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
     current_user_id: str = Depends(get_current_user_id),
 ):
     service = StudyEndpointSelectionService(author=current_user_id)
@@ -995,12 +976,7 @@ State after:
 def get_selected_endpoint(
     uid: str = studyUID,
     study_endpoint_uid: str = study_selection_uid,
-    study_value_version: str
-    | None = Query(
-        None,
-        description="StudyValueVersion to extract the StudySelections",
-        regex=FLOAT_REGEX,
-    ),
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
     current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionEndpoint:
     service = StudyEndpointSelectionService(author=current_user_id)
@@ -1347,12 +1323,7 @@ def patch_update_endpoint_selection(
 )
 def get_all_selected_objectives_and_endpoints_standard_docx(
     uid: str = studyUID,
-    study_value_version: str
-    | None = Query(
-        None,
-        description="StudyValueVersion to extract the StudySelections",
-        regex=FLOAT_REGEX,
-    ),
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
     current_user_id: str = Depends(get_current_user_id),
 ) -> StreamingResponse:
     StudyService().check_if_study_exists(uid)
@@ -1530,7 +1501,7 @@ State after:
 @decorators.allow_exports(
     {
         "defaults": [
-            "uid",
+            "uid=study_compound_uid",
             "compound=compound.name",
             "pharma_class=compound.p_class_concept",
             "substance_names=compound.unii_substance_name",
@@ -1543,6 +1514,8 @@ State after:
             "formulation=formulation",
             "other=other_info",
             "reason_for_missing=reason_for_missing_null_value_code",
+            "study_uid",
+            "study_version",
         ],
         "formats": [
             "text/csv",
@@ -1556,7 +1529,7 @@ State after:
 def get_all_selected_compounds(
     request: Request,  # request is actually required by the allow_exports decorator
     uid: str = studyUID,
-    study_value_version: str | None = None,
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
     current_user_id: str = Depends(get_current_user_id),
     filters: Json
     | None = Query(
@@ -1576,7 +1549,7 @@ def get_all_selected_compounds(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-):
+) -> GenericFilteringReturn[models.StudySelectionCompound]:
     service = StudyCompoundSelectionService(author=current_user_id)
     return service.get_all_selection(
         study_uid=uid,
@@ -1607,7 +1580,7 @@ def get_all_selected_compounds(
 )
 def get_distinct_compounds_values_for_header(
     uid: str = studyUID,
-    study_value_version: str | None = None,
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
     project_name: str | None = PROJECT_NAME,
     project_number: str | None = PROJECT_NUMBER,
     field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
@@ -2294,13 +2267,15 @@ List selected study with the following information:
 @decorators.allow_exports(
     {
         "defaults": [
-            "uid",
+            "study_criteria_uid",
             "name_plain=criteria.name_plain",
             "name=criteria.name",
             "guidance_text=criteria.criteria_template.guidance_text",
             "key_criteria",
             "start_date",
             "user_initials",
+            "study_uid",
+            "study_version",
         ],
         "formats": [
             "text/csv",
@@ -2339,12 +2314,7 @@ def get_all_selected_criteria(
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
     current_user_id: str = Depends(get_current_user_id),
-    study_value_version: str
-    | None = Query(
-        None,
-        description="StudyValueVersion to extract the StudySelections",
-        regex=FLOAT_REGEX,
-    ),
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> CustomPage[models.StudySelectionCriteria]:
     service = StudyCriteriaSelectionService(author=current_user_id)
     all_items = service.get_all_selection(
@@ -2397,12 +2367,7 @@ def get_distinct_study_criteria_values_for_header(
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
     uid: str = studyUID,
-    study_value_version: str
-    | None = Query(
-        None,
-        description="StudyValueVersion to extract the StudySelections",
-        regex=FLOAT_REGEX,
-    ),
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
     current_user_id: str = Depends(get_current_user_id),
 ):
     service = StudyCriteriaSelectionService(author=current_user_id)
@@ -2525,12 +2490,7 @@ def get_all_criteria_audit_trail(
 def get_selected_criteria(
     uid: str = studyUID,
     study_criteria_uid: str = study_selection_uid,
-    study_value_version: str
-    | None = Query(
-        None,
-        description="StudyValueVersion to extract the StudySelections",
-        regex=FLOAT_REGEX,
-    ),
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
     current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionCriteria:
     service = StudyCriteriaSelectionService(author=current_user_id)
@@ -2985,6 +2945,429 @@ def patch_criteria_accept_version(
 
 
 #
+# API endpoints to study activity instances
+
+
+@router.get(
+    "/study-activity-instances",
+    dependencies=[rbac.STUDY_READ],
+    summary="Returns all study activity instances currently selected",
+    response_model=CustomPage[models.StudySelectionActivityInstance],
+    response_model_exclude_unset=True,
+    status_code=200,
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+def get_all_selected_activity_instances_for_all_studies(
+    project_name: str | None = PROJECT_NAME,
+    project_number: str | None = PROJECT_NUMBER,
+    activity_names: list[str]
+    | None = Query(
+        None, description="A list of activity names to use as a specific filter"
+    ),
+    activity_subgroup_names: list[str]
+    | None = Query(
+        None,
+        description="A list of activity sub group names to use as a specific filter",
+    ),
+    activity_group_names: list[str]
+    | None = Query(
+        None, description="A list of activity group names to use as a specific filter"
+    ),
+    activity_instance_names: list[str]
+    | None = Query(
+        None,
+        description="A list of activity instance names to use as a specific filter",
+    ),
+    sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
+    page_number: int
+    | None = Query(1, ge=1, description=_generic_descriptions.PAGE_NUMBER),
+    page_size: int
+    | None = Query(
+        config.DEFAULT_PAGE_SIZE,
+        ge=0,
+        le=config.MAX_PAGE_SIZE,
+        description=_generic_descriptions.PAGE_SIZE,
+    ),
+    filters: Json
+    | None = Query(
+        None,
+        description=_generic_descriptions.FILTERS,
+        example=_generic_descriptions.FILTERS_EXAMPLE,
+    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    total_count: bool
+    | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
+    current_user_id: str = Depends(get_current_user_id),
+) -> CustomPage[models.StudySelectionActivityInstance]:
+    service = StudyActivityInstanceSelectionService(author=current_user_id)
+    all_selections = service.get_all_selections_for_all_studies(
+        project_name=project_name,
+        project_number=project_number,
+        activity_names=activity_names,
+        activity_subgroup_names=activity_subgroup_names,
+        activity_group_names=activity_group_names,
+        activity_instance_names=activity_instance_names,
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
+        filter_by=filters,
+        filter_operator=FilterOperator.from_str(operator),
+        sort_by=sort_by,
+    )
+    return CustomPage.create(
+        items=all_selections.items,
+        total=all_selections.total,
+        page=page_number,
+        size=page_size,
+    )
+
+
+@router.get(
+    "/studies/{uid}/study-activity-instances",
+    dependencies=[rbac.STUDY_READ],
+    summary="Returns all study activity instances currently selected",
+    description=_generic_descriptions.DATA_EXPORTS_HEADER,
+    response_model=CustomPage[models.StudySelectionActivityInstance],
+    response_model_exclude_unset=True,
+    status_code=200,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - there is no study with the given uid.",
+        },
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+@decorators.allow_exports(
+    {
+        "defaults": [
+            "study_uid",
+            "order",
+            "soa_group=study_soa_group.soa_group_name",
+            "activity_group=study_activity_group.activity_group_name",
+            "activity_subgroup=study_activity_subgroup.activity_subgroup_name",
+            "activity=activity.name",
+            "data_collection=activity.is_data_collected",
+            "instance=activity_instance.name",
+            "topic_code=activity_instance.topic_code",
+            "state",
+            "param_code=activity_instance.adam_param_code",
+            "activity_concept_id=activity.uid",
+            "activity_instance_concept_id=activity_instance.uid",
+            "required=activity_instance.is_required_for_activity",
+            "default=activity_instance.is_default_selected_for_activity",
+            "multiple_selection=activity.is_multiple_selection_allowed",
+            "legacy=activity_instance.is_legacy_usage",
+            "instance_class=activity_instance.activity_instance_class.name",
+            "activity_items=activity_instance.activity_items",
+            "modified=start_date",
+            "modified_by=user_initials",
+        ],
+        "formats": [
+            "text/csv",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "text/xml",
+            "application/json",
+        ],
+    }
+)
+# pylint: disable=unused-argument
+def get_all_selected_activity_instances(
+    request: Request,  # request is actually required by the allow_exports decorator
+    activity_names: list[str]
+    | None = Query(
+        None, description="A list of activity names to use as a specific filter"
+    ),
+    activity_subgroup_names: list[str]
+    | None = Query(
+        None,
+        description="A list of activity sub group names to use as a specific filter",
+    ),
+    activity_group_names: list[str]
+    | None = Query(
+        None, description="A list of activity group names to use as a specific filter"
+    ),
+    activity_instance_names: list[str]
+    | None = Query(
+        None,
+        description="A list of activity instance names to use as a specific filter",
+    ),
+    sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
+    page_number: int
+    | None = Query(1, ge=1, description=_generic_descriptions.PAGE_NUMBER),
+    page_size: int
+    | None = Query(
+        config.DEFAULT_PAGE_SIZE,
+        ge=0,
+        le=config.MAX_PAGE_SIZE,
+        description=_generic_descriptions.PAGE_SIZE,
+    ),
+    filters: Json
+    | None = Query(
+        None,
+        description=_generic_descriptions.FILTERS,
+        example=_generic_descriptions.FILTERS_EXAMPLE,
+    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    total_count: bool
+    | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
+    uid: str = studyUID,
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
+    current_user_id: str = Depends(get_current_user_id),
+) -> CustomPage[models.StudySelectionActivityInstance]:
+    service = StudyActivityInstanceSelectionService(author=current_user_id)
+    all_items = service.get_all_selection(
+        study_uid=uid,
+        activity_names=activity_names,
+        activity_subgroup_names=activity_subgroup_names,
+        activity_group_names=activity_group_names,
+        activity_instance_names=activity_instance_names,
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
+        filter_by=filters,
+        filter_operator=FilterOperator.from_str(operator),
+        sort_by=sort_by,
+        study_value_version=study_value_version,
+    )
+    return CustomPage.create(
+        items=all_items.items,
+        total=all_items.total,
+        page=page_number,
+        size=page_size,
+    )
+
+
+@router.get(
+    "/studies/{uid}/study-activity-instances/headers",
+    dependencies=[rbac.STUDY_READ],
+    summary="Returns possible values from the database for a given header",
+    description="""Allowed parameters include : field name for which to get possible
+    values, search string to provide filtering for the field name, additional filters to apply on other fields""",
+    response_model=list[Any],
+    status_code=200,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - Invalid field name specified",
+        },
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+def get_distinct_study_activity_instances_values_for_header(
+    field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
+    search_string: str
+    | None = Query("", description=_generic_descriptions.HEADER_SEARCH_STRING),
+    filters: Json
+    | None = Query(
+        None,
+        description=_generic_descriptions.FILTERS,
+        example=_generic_descriptions.FILTERS_EXAMPLE,
+    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    result_count: int
+    | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
+    uid: str = studyUID,
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
+    current_user_id: str = Depends(get_current_user_id),
+):
+    service = StudyActivityInstanceSelectionService(author=current_user_id)
+    return service.get_distinct_values_for_header(
+        study_uid=uid,
+        field_name=field_name,
+        search_string=search_string,
+        filter_by=filters,
+        filter_operator=FilterOperator.from_str(operator),
+        result_count=result_count,
+        study_value_version=study_value_version,
+    )
+
+
+@router.delete(
+    "/studies/{uid}/study-activity-instances/{study_activity_instance_uid}",
+    dependencies=[rbac.STUDY_WRITE],
+    summary="Delete a study activity instance",
+    response_model=None,
+    status_code=204,
+    responses={
+        204: {"description": "No Content - The selection was successfully deleted."},
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - there exist no selection of the activity instance and the study provided.",
+        },
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+@decorators.validate_if_study_is_not_locked("uid")
+def delete_study_activity_instance(
+    uid: str = studyUID,
+    study_activity_instance_uid: str = study_selection_uid,
+    current_user_id: str = Depends(get_current_user_id),
+):
+    service = StudyActivityInstanceSelectionService(author=current_user_id)
+    service.delete_selection(
+        study_uid=uid, study_selection_uid=study_activity_instance_uid
+    )
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.post(
+    "/studies/{uid}/study-activity-instances",
+    dependencies=[rbac.STUDY_WRITE],
+    summary="Creating a study activity instance selection based on the input data",
+    response_model=models.StudySelectionActivityInstance,
+    response_model_exclude_unset=True,
+    status_code=201,
+    responses={
+        400: {
+            "model": ErrorResponse,
+            "description": "Forbidden - There already exists a selection of the activity",
+        },
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - Study or activity is not found with the passed 'uid'.",
+        },
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+@decorators.validate_if_study_is_not_locked("uid")
+def post_new_activity_instance_selection(
+    uid: str = studyUID,
+    selection: models.StudySelectionActivityInstanceCreateInput = Body(
+        description="Related parameters of the selection that shall be created."
+    ),
+    current_user_id: str = Depends(get_current_user_id),
+) -> models.StudySelectionActivityInstance:
+    service = StudyActivityInstanceSelectionService(author=current_user_id)
+    return service.make_selection(study_uid=uid, selection_create_input=selection)
+
+
+@router.patch(
+    "/studies/{uid}/study-activity-instances/{study_activity_instance_uid}",
+    dependencies=[rbac.STUDY_WRITE],
+    summary="Edit a study activity instance",
+    description="""
+State before:
+ - Study must exist and be in status draft
+Business logic:
+State after:
+ - Added new entry in the audit trail for the update of the study-activity-instance.""",
+    response_model=models.StudySelectionActivityInstance,
+    response_model_exclude_unset=True,
+    status_code=200,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - There exist no selection between the study and activity instance.",
+        },
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+@decorators.validate_if_study_is_not_locked("uid")
+def patch_update_study_activity_instance(
+    uid: str = studyUID,
+    study_activity_instance_uid: str = study_selection_uid,
+    selection: models.StudySelectionActivityInstanceEditInput = Body(
+        description="Related parameters of the selection that shall be updated."
+    ),
+    current_user_id: str = Depends(get_current_user_id),
+) -> models.StudySelectionActivity:
+    service = StudyActivityInstanceSelectionService(author=current_user_id)
+    return service.patch_selection(
+        study_uid=uid,
+        study_selection_uid=study_activity_instance_uid,
+        selection_update_input=selection,
+    )
+
+
+@router.get(
+    "/studies/{uid}/study-activity-instances/audit-trail",
+    dependencies=[rbac.STUDY_READ],
+    summary="List full audit trail related to all StudyActivityInstances in scope of a single Study.",
+    description="""
+The following values should be returned for all study activity instances:
+- date_time
+- user_initials
+- action
+- activity
+- activity instances
+- state
+- order
+    """,
+    response_model=list[models.StudySelectionActivityInstance],
+    response_model_exclude_unset=True,
+    status_code=200,
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+def get_all_study_activity_instance_audit_trail(
+    uid: str = studyUID, current_user_id: str = Depends(get_current_user_id)
+) -> list[models.StudySelectionActivityInstance]:
+    service = StudyActivityInstanceSelectionService(author=current_user_id)
+    return service.get_all_selection_audit_trail(study_uid=uid)
+
+
+@router.get(
+    "/studies/{uid}/study-activity-instances/{study_activity_instance_uid}",
+    dependencies=[rbac.STUDY_READ],
+    summary="Returns specific study activity instance",
+    response_model=models.StudySelectionActivityInstance,
+    response_model_exclude_unset=True,
+    status_code=200,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - there exists no selection of the activity instance for the study provided.",
+        },
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+def get_selected_activity_instance(
+    uid: str = studyUID,
+    study_activity_instance_uid: str = study_selection_uid,
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
+    current_user_id: str = Depends(get_current_user_id),
+) -> models.StudySelectionActivity:
+    service = StudyActivityInstanceSelectionService(author=current_user_id)
+    return service.get_specific_selection(
+        study_uid=uid,
+        study_selection_uid=study_activity_instance_uid,
+        study_value_version=study_value_version,
+    )
+
+
+@router.get(
+    "/studies/{uid}/study-activity-instances/{study_activity_instance_uid}/audit-trail",
+    dependencies=[rbac.STUDY_READ],
+    summary="List audit trail related to a specific StudyActivityInstance.",
+    response_model=list[models.StudySelectionActivityInstance],
+    response_model_exclude_unset=True,
+    status_code=200,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - there exist no selection of the activity instance for the study provided.",
+        },
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+def get_specific_study_activity_instance_audit_trail(
+    uid: str = studyUID,
+    study_activity_instance_uid: str = study_selection_uid,
+    current_user_id: str = Depends(get_current_user_id),
+) -> models.StudySelectionActivityInstance:
+    service = StudyActivityInstanceSelectionService(author=current_user_id)
+    return service.get_specific_selection_audit_trail(
+        study_uid=uid, study_selection_uid=study_activity_instance_uid
+    )
+
+
+#
 # API endpoints to study activity
 
 
@@ -3080,12 +3463,14 @@ def get_all_selected_activities_for_all_studies(
         "defaults": [
             "uid=study_activity_uid",
             "order",
-            "flowchart_group=flowchart_group.sponsor_preferred_name",
-            "activity_group=activity.activity_group.name",
-            "activity_subgroup=activity.activity_subgroup.name",
+            "soa_group=study_soa_group.soa_group_name",
+            "activity_group=study_activity_group.activity_group_name",
+            "activity_subgroup=study_activity_subgroup.activity_subgroup_name",
             "name=activity.name",
             "start_date",
             "user_initials",
+            "study_uid",
+            "study_version",
         ],
         "formats": [
             "text/csv",
@@ -3131,12 +3516,7 @@ def get_all_selected_activities(
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
     uid: str = studyUID,
-    study_value_version: str
-    | None = Query(
-        None,
-        description="StudyValueVersion to extract the StudySelections",
-        regex=FLOAT_REGEX,
-    ),
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
     current_user_id: str = Depends(get_current_user_id),
 ) -> CustomPage[models.StudySelectionActivity]:
     service = StudyActivitySelectionService(author=current_user_id)
@@ -3153,7 +3533,6 @@ def get_all_selected_activities(
         sort_by=sort_by,
         study_value_version=study_value_version,
     )
-
     return CustomPage.create(
         items=all_items.items,
         total=all_items.total,
@@ -3192,12 +3571,7 @@ def get_distinct_activity_values_for_header(
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
     uid: str = studyUID,
-    study_value_version: str
-    | None = Query(
-        None,
-        description="StudyValueVersion to extract the StudySelections",
-        regex=FLOAT_REGEX,
-    ),
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
     current_user_id: str = Depends(get_current_user_id),
 ):
     service = StudyActivitySelectionService(author=current_user_id)
@@ -3257,12 +3631,7 @@ def get_all_activity_audit_trail(
 def get_selected_activity(
     uid: str = studyUID,
     study_activity_uid: str = study_selection_uid,
-    study_value_version: str
-    | None = Query(
-        None,
-        description="StudyValueVersion to extract the StudySelections",
-        regex=FLOAT_REGEX,
-    ),
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
     current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionActivity:
     service = StudyActivitySelectionService(author=current_user_id)
@@ -3364,6 +3733,44 @@ def patch_update_activity_selection(
     return service.patch_selection(
         study_uid=uid,
         study_selection_uid=study_activity_uid,
+        selection_update_input=selection,
+    )
+
+
+@router.patch(
+    "/studies/{uid}/study-activity-requests/{study_activity_request_uid}",
+    dependencies=[rbac.STUDY_WRITE],
+    summary="Edit a study activity request",
+    description="""
+State before:
+ - Study must exist and be in status draft
+Business logic:
+State after:
+ - Added new entry in the audit trail for the update of the study-activity.""",
+    response_model=models.StudySelectionActivity,
+    response_model_exclude_unset=True,
+    status_code=200,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - There exist no selection between the study and activity.",
+        },
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+@decorators.validate_if_study_is_not_locked("uid")
+def patch_update_activity_selection_request(
+    uid: str = studyUID,
+    study_activity_request_uid: str = study_selection_uid,
+    selection: models.StudySelectionActivityRequestEditInput = Body(
+        description="Related parameters of the selection that shall be updated."
+    ),
+    current_user_id: str = Depends(get_current_user_id),
+) -> models.StudySelectionActivity:
+    service = StudyActivitySelectionService(author=current_user_id)
+    return service.patch_selection(
+        study_uid=uid,
+        study_selection_uid=study_activity_request_uid,
         selection_update_input=selection,
     )
 
@@ -3518,7 +3925,9 @@ Possible errors:
 @decorators.allow_exports(
     {
         "defaults": [
-            "uid",
+            "study_uid",
+            "study_version",
+            "arm_uid",
             "type=arm_type.sponsor_preferred_name",
             "name",
             "code",
@@ -3560,12 +3969,7 @@ def get_all_selected_arms(
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
     uid: str = studyUID,
     current_user_id: str = Depends(get_current_user_id),
-    study_value_version: str
-    | None = Query(
-        None,
-        description="StudyValueVersion to extract the StudySelections",
-        regex=FLOAT_REGEX,
-    ),
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> CustomPage[models.StudySelectionArmWithConnectedBranchArms]:
     service = StudyArmSelectionService(author=current_user_id)
     all_items = service.get_all_selection(
@@ -3821,12 +4225,7 @@ def get_selected_arm(
     uid: str = studyUID,
     study_arm_uid: str = study_selection_uid,
     current_user_id: str = Depends(get_current_user_id),
-    study_value_version: str
-    | None = Query(
-        None,
-        description="StudyValueVersion to extract the StudySelections",
-        regex=FLOAT_REGEX,
-    ),
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> models.StudySelectionArmWithConnectedBranchArms:
     service = StudyArmSelectionService(author=current_user_id)
     return service.get_specific_selection(
@@ -3964,6 +4363,9 @@ Possible errors:
             "planned_duration",
             "start_date",
             "user_initials",
+            "element_uid",
+            "study_uid",
+            "study_version",
         ],
         "formats": [
             "text/csv",
@@ -3996,12 +4398,7 @@ def get_all_selected_elements(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    study_value_version: str
-    | None = Query(
-        None,
-        description="StudyValueVersion to extract the StudySelections",
-        regex=FLOAT_REGEX,
-    ),
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
     current_user_id: str = Depends(get_current_user_id),
 ) -> CustomPage[models.StudySelectionElement]:
     service = StudyElementSelectionService(author=current_user_id)
@@ -4054,12 +4451,7 @@ def get_distinct_element_values_for_header(
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
     uid: str = studyUID,
-    study_value_version: str
-    | None = Query(
-        None,
-        description="StudyValueVersion to extract the StudySelections",
-        regex=FLOAT_REGEX,
-    ),
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
     current_user_id: str = Depends(get_current_user_id),
 ):
     service = StudyElementSelectionService(author=current_user_id)
@@ -4093,12 +4485,7 @@ def get_selected_element(
     uid: str = studyUID,
     study_element_uid: str = study_selection_uid,
     current_user_id: str = Depends(get_current_user_id),
-    study_value_version: str
-    | None = Query(
-        None,
-        description="StudyValueVersion to extract the StudySelections",
-        regex=FLOAT_REGEX,
-    ),
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> models.StudySelectionElement:
     service = StudyElementSelectionService(author=current_user_id)
     return service.get_specific_selection(
@@ -4337,7 +4724,7 @@ Possible errors:
 @decorators.allow_exports(
     {
         "defaults": [
-            "uid",
+            "branch_arm_uid",
             "arm_name=arm_root.name",
             "branch_arm_name=name",
             "branch_arm_short_name=short_name",
@@ -4347,6 +4734,8 @@ Possible errors:
             "description",
             "start_date",
             "user_initials",
+            "study_uid",
+            "study_version",
         ],
         "formats": [
             "text/csv",
@@ -4361,12 +4750,7 @@ def get_all_selected_branch_arms(
     request: Request,  # request is actually required by the allow_exports decorator
     uid: str = studyUID,
     current_user_id: str = Depends(get_current_user_id),
-    study_value_version: str
-    | None = Query(
-        None,
-        description="StudyValueVersion to extract the StudySelections",
-        regex=FLOAT_REGEX,
-    ),
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> list[models.StudySelectionBranchArm]:
     service = StudyBranchArmSelectionService(author=current_user_id)
     return service.get_all_selection(
@@ -4393,12 +4777,7 @@ def get_selected_branch_arm(
     uid: str = studyUID,
     study_branch_arm_uid: str = study_selection_uid,
     current_user_id: str = Depends(get_current_user_id),
-    study_value_version: str
-    | None = Query(
-        None,
-        description="StudyValueVersion to extract the StudySelections",
-        regex=FLOAT_REGEX,
-    ),
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> models.StudySelectionBranchArm:
     service = StudyBranchArmSelectionService(author=current_user_id)
     return service.get_specific_selection(
@@ -4583,12 +4962,7 @@ def get_all_selected_branch_arms_within_arm(
     uid: str,
     arm_uid: str,
     current_user_id: str = Depends(get_current_user_id),
-    study_value_version: str
-    | None = Query(
-        None,
-        description="StudyValueVersion to extract the StudySelections",
-        regex=FLOAT_REGEX,
-    ),
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> list[models.StudySelectionBranchArm]:
     service = StudyBranchArmSelectionService(author=current_user_id)
     return service.get_all_selection_within_arm(
@@ -4675,6 +5049,8 @@ Possible errors:
             "description",
             "start_date",
             "user_initials",
+            "study_uid",
+            "study_version",
         ],
         "formats": [
             "text/csv",
@@ -4713,12 +5089,7 @@ def get_all_selected_cohorts(
         description="The unique id of the study arm for which specified study cohorts should be returned",
     ),
     uid: str = studyUID,
-    study_value_version: str
-    | None = Query(
-        None,
-        description="StudyValueVersion to extract the StudySelections",
-        regex=FLOAT_REGEX,
-    ),
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> CustomPage[models.StudySelectionCohort]:
     service = StudyCohortSelectionService(author=current_user_id)
 
@@ -4760,12 +5131,7 @@ def get_selected_cohort(
     uid: str = studyUID,
     study_cohort_uid: str = study_selection_uid,
     current_user_id: str = Depends(get_current_user_id),
-    study_value_version: str
-    | None = Query(
-        None,
-        description="StudyValueVersion to extract the StudySelections",
-        regex=FLOAT_REGEX,
-    ),
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> models.StudySelectionCohort:
     service = StudyCohortSelectionService(author=current_user_id)
     return service.get_specific_selection(

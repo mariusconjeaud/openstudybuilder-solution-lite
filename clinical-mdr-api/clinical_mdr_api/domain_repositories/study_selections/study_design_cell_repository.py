@@ -31,6 +31,10 @@ from clinical_mdr_api.domains.study_selections.study_design_cell import (
     StudyDesignCellVO,
 )
 
+STUDY_VALUE_VERSION_QUALIFIER = "study_value__has_version|version"
+STUDY_VALUE_UID_QUALIFIER = "study_value__has_version__uid"
+STUDY_VALUE_LATEST_UID_QUALIFIER = "study_value__latest_value__uid"
+
 
 @dataclass
 class StudyDesignCellHistory:
@@ -100,11 +104,11 @@ class StudyDesignCellRepository:
     ) -> list[StudyDesignCellVO]:
         if study_value_version:
             filters = {
-                "study_value__has_version|version": study_value_version,
-                "study_value__has_version__uid": study_uid,
+                STUDY_VALUE_VERSION_QUALIFIER: study_value_version,
+                STUDY_VALUE_UID_QUALIFIER: study_uid,
             }
         else:
-            filters = {"study_value__latest_value__uid": study_uid}
+            filters = {STUDY_VALUE_LATEST_UID_QUALIFIER: study_uid}
         all_design_cells = [
             self._from_repository_values(
                 study_uid=study_uid,
@@ -473,15 +477,15 @@ class StudyDesignCellRepository:
     ):
         if study_value_version:
             filters = {
-                "study_value__has_version|version": study_value_version,
-                "study_value__has_version__uid": study_uid,
+                STUDY_VALUE_VERSION_QUALIFIER: study_value_version,
+                STUDY_VALUE_UID_QUALIFIER: study_uid,
                 "study_branch_arm__uid": study_branch_arm_uid,
                 "study_branch_arm__study_value__has_version|version": study_value_version,
                 "study_branch_arm__study_value__has_version__uid": study_uid,
             }
         else:
             filters = {
-                "study_value__latest_value__uid": study_uid,
+                STUDY_VALUE_LATEST_UID_QUALIFIER: study_uid,
                 "study_branch_arm__uid": study_branch_arm_uid,
                 "study_branch_arm__study_value__latest_value__uid": study_uid,
             }
@@ -508,15 +512,15 @@ class StudyDesignCellRepository:
     ):
         if study_value_version:
             filters = {
-                "study_value__has_version|version": study_value_version,
-                "study_value__has_version__uid": study_uid,
+                STUDY_VALUE_VERSION_QUALIFIER: study_value_version,
+                STUDY_VALUE_UID_QUALIFIER: study_uid,
                 "study_epoch__uid": study_epoch_uid,
                 "study_epoch__study_value__has_version|version": study_value_version,
                 "study_epoch__study_value__has_version__uid": study_uid,
             }
         else:
             filters = {
-                "study_value__latest_value__uid": study_uid,
+                STUDY_VALUE_LATEST_UID_QUALIFIER: study_uid,
                 "study_epoch__uid": study_epoch_uid,
                 "study_epoch__study_value__latest_value__uid": study_uid,
             }
@@ -542,15 +546,15 @@ class StudyDesignCellRepository:
     ):
         if study_value_version:
             filters = {
-                "study_value__has_version|version": study_value_version,
-                "study_value__has_version__uid": study_uid,
+                STUDY_VALUE_VERSION_QUALIFIER: study_value_version,
+                STUDY_VALUE_UID_QUALIFIER: study_uid,
                 "study_arm__uid": study_arm_uid,
                 "study_arm__study_value__has_version|version": study_value_version,
                 "study_arm__study_value__has_version__uid": study_uid,
             }
         else:
             filters = {
-                "study_value__latest_value__uid": study_uid,
+                STUDY_VALUE_LATEST_UID_QUALIFIER: study_uid,
                 "study_arm__uid": study_arm_uid,
                 "study_arm__study_value__latest_value__uid": study_uid,
             }
@@ -576,15 +580,15 @@ class StudyDesignCellRepository:
     ):
         if study_value_version:
             filters = {
-                "study_value__has_version|version": study_value_version,
-                "study_value__has_version__uid": study_uid,
+                STUDY_VALUE_VERSION_QUALIFIER: study_value_version,
+                STUDY_VALUE_UID_QUALIFIER: study_uid,
                 "study_element__uid": study_element_uid,
                 "study_element__study_value__has_version|version": study_value_version,
                 "study_element__study_value__has_version__uid": study_uid,
             }
         else:
             filters = {
-                "study_value__latest_value__uid": study_uid,
+                STUDY_VALUE_LATEST_UID_QUALIFIER: study_uid,
                 "study_element__uid": study_element_uid,
                 "study_element__study_value__latest_value__uid": study_uid,
             }

@@ -21,11 +21,12 @@ class SDTMListingsService:
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
-    ) -> GenericFilteringReturn[models.listings.listings_sdtm.StudyVisitListing]:
-        data = self._query_service.get_tv(study_uid=study_uid)
-        result = list(
-            map(models.listings.listings_sdtm.StudyVisitListing.from_query, data)
+        study_value_version: str | None = None,
+    ) -> GenericFilteringReturn[models.StudyVisitListing]:
+        data = self._query_service.get_tv(
+            study_uid=study_uid, study_value_version=study_value_version
         )
+        result = list(map(models.StudyVisitListing.from_query, data))
 
         filtered_items = service_level_generic_filtering(
             items=result,
@@ -49,8 +50,11 @@ class SDTMListingsService:
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
+        study_value_version: str | None = None,
     ) -> GenericFilteringReturn[models.StudyArmListing]:
-        data = self._query_service.get_ta(study_uid=study_uid)
+        data = self._query_service.get_ta(
+            study_uid=study_uid, study_value_version=study_value_version
+        )
         result = list(map(models.StudyArmListing.from_query, data))
 
         filtered_items = service_level_generic_filtering(
@@ -75,11 +79,12 @@ class SDTMListingsService:
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
-    ) -> GenericFilteringReturn[models.listings.listings_sdtm.StudyCriterionListing]:
-        data = self._query_service.get_ti(study_uid=study_uid)
-        result = list(
-            map(models.listings.listings_sdtm.StudyCriterionListing.from_query, data)
+        study_value_version: str | None = None,
+    ) -> GenericFilteringReturn[models.StudyCriterionListing]:
+        data = self._query_service.get_ti(
+            study_uid=study_uid, study_value_version=study_value_version
         )
+        result = list(map(models.StudyCriterionListing.from_query, data))
 
         filtered_items = service_level_generic_filtering(
             items=result,
@@ -103,11 +108,12 @@ class SDTMListingsService:
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
-    ) -> GenericFilteringReturn[models.listings.listings_sdtm.StudySummaryListing]:
-        data = self._query_service.get_ts(study_uid=study_uid)
-        result = list(
-            map(models.listings.listings_sdtm.StudySummaryListing.from_query, data)
+        study_value_version: str | None = None,
+    ) -> GenericFilteringReturn[models.StudySummaryListing]:
+        data = self._query_service.get_ts(
+            study_uid=study_uid, study_value_version=study_value_version
         )
+        result = list(map(models.StudySummaryListing.from_query, data))
 
         filtered_items = service_level_generic_filtering(
             items=result,
@@ -131,8 +137,11 @@ class SDTMListingsService:
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
+        study_value_version: str | None = None,
     ) -> GenericFilteringReturn[models.StudyElementListing]:
-        data = self._query_service.get_te(study_uid=study_uid)
+        data = self._query_service.get_te(
+            study_uid=study_uid, study_value_version=study_value_version
+        )
         result = list(map(models.StudyElementListing.from_query, data))
 
         filtered_items = service_level_generic_filtering(
@@ -157,8 +166,11 @@ class SDTMListingsService:
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
+        study_value_version: str | None = None,
     ) -> GenericFilteringReturn[models.StudyDiseaseMilestoneListing]:
-        data = self._query_service.get_tdm(study_uid=study_uid)
+        data = self._query_service.get_tdm(
+            study_uid=study_uid, study_value_version=study_value_version
+        )
         result = list(map(models.StudyDiseaseMilestoneListing.from_query, data))
 
         filtered_items = service_level_generic_filtering(

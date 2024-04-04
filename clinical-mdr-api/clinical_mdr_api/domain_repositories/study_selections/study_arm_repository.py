@@ -80,19 +80,6 @@ class StudySelectionArmRepository:
         )
         return len(sdc_node) > 0
 
-    def arm_specific_has_connected_cohorts(self, study_uid: str, arm_uid: str) -> bool:
-        """
-        Returns True if StudyArm with specified uid has connected at least one StudyCohorts.
-        :return:
-        """
-
-        sdc_node = to_relation_trees(
-            StudyArm.nodes.fetch_relations("has_cohort", "has_after").filter(
-                study_value__latest_value__uid=study_uid, uid=arm_uid
-            )
-        )
-        return len(sdc_node) > 0
-
     def arm_specific_has_connected_branch_arms(
         self, study_uid: str, arm_uid: str
     ) -> bool:
@@ -269,21 +256,6 @@ class StudySelectionArmRepository:
                 return Edit()
             return Create()
         return Delete()
-
-    def validate_delete_init(
-        self, study_uid: str, closure: StudySelectionArmAR
-    ) -> None:
-        # make validations
-        assert closure is not None
-
-        # getting the latest study value node
-        study_root_node = StudyRoot.nodes.get(uid=study_uid)
-        latest_study_value_node = study_root_node.latest_value.single()
-
-        if study_root_node.latest_locked.get_or_none() == latest_study_value_node:
-            raise VersioningException(
-                "You cannot add or reorder a study selection when the study is in a locked state."
-            )
 
     def save(self, study_selection: StudySelectionArmAR, author: str) -> None:
         """
@@ -574,4 +546,6 @@ class StudySelectionArmRepository:
         return self._get_selection_with_history(study_uid=study_uid)
 
     def close(self) -> None:
+        # Our repository guidelines state that repos should have a close method
+        # But nothing needs to be done in this one
         pass

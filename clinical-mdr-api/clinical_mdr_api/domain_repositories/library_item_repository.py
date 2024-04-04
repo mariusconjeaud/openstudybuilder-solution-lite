@@ -15,7 +15,7 @@ from neomodel import (
 )
 from neomodel.exceptions import DoesNotExist
 
-from clinical_mdr_api import config, exceptions
+from clinical_mdr_api import config
 from clinical_mdr_api.domain_repositories._generic_repository_interface import (
     GenericRepository,
 )
@@ -45,6 +45,7 @@ from clinical_mdr_api.repositories._utils import (
 
 _AggregateRootType = TypeVar("_AggregateRootType", bound=LibraryItemAggregateRootBase)
 RETRIEVED_READ_ONLY_MARK = object()
+MATCH_NODE_BY_ID = "MATCH (node) WHERE elementId(node)=$id RETURN node"
 
 
 class LibraryItemRepositoryImplBase(
@@ -146,7 +147,7 @@ class LibraryItemRepositoryImplBase(
             itm = self.root_class.nodes.get_or_none(uid=uid)
         else:
             result, _ = db.cypher_query(
-                "MATCH (node) WHERE elementId(node)=$id RETURN node",
+                MATCH_NODE_BY_ID,
                 {"id": uid},
                 resolve_objects=True,
             )
@@ -183,8 +184,6 @@ class LibraryItemRepositoryImplBase(
 
         if hasattr(ar, "name_plain"):
             additional_props["name_plain"] = convert_to_plain(ar.name)
-        if hasattr(ar, "guidance_text"):
-            additional_props["guidance_text"] = ar.guidance_text
 
         new_value = self.value_class(name=ar.name, **additional_props)
         self._db_save_node(new_value)
@@ -625,7 +624,7 @@ class LibraryItemRepositoryImplBase(
         else:
             # ControlledTerminology version root items don't contain uid - then we have to get object by it's id
             result, _ = db.cypher_query(
-                "MATCH (node) WHERE elementId(node)=$id RETURN node",
+                MATCH_NODE_BY_ID,
                 {"id": uid},
                 resolve_objects=True,
             )
@@ -669,75 +668,6 @@ class LibraryItemRepositoryImplBase(
             for _ in result:
                 _.repository_closure_data = RETRIEVED_READ_ONLY_MARK
         return result
-
-    def find_releases(
-        self, uid: str, return_study_count: bool | None = True
-    ) -> Iterable[_AggregateRootType]:
-        """
-        Get releases implementation - gets all releases for library object identified by 'uid'
-        """
-        root: VersionRoot | None = self.root_class.nodes.get_or_none(uid=uid)
-
-        if not root:
-            raise exceptions.NotFoundException(
-                f"Not Found - The template with the specified 'uid' wasn't found: {uid}"
-            )
-        return self._find_releases(root, return_study_count)
-
-    def _find_releases(
-        self, root: VersionRoot, return_study_count: bool | None = True
-    ) -> Iterable[_AggregateRootType]:
-        """
-        Get all releases for provided version root node
-        """
-        library: Library = root.has_library.get()
-        releases: list[VersionValue] = []
-        (
-            has_version_rel,
-            _,
-            _,
-            latest_final_rel,
-            _,
-        ) = self._get_version_relation_keys(root)
-
-        final_versions = has_version_rel.match(
-            status=LibraryItemStatus.FINAL.value
-        ).all()
-        releases += final_versions
-        latest_final = latest_final_rel.get_or_none()
-        if latest_final is not None:
-            releases.append(latest_final)
-
-        deduped_releases = []
-        for release in releases:
-            id_list = [_v.element_id for _v in deduped_releases]
-            if release.element_id not in id_list:
-                deduped_releases.append(release)
-
-        aggregates = []
-        for release in deduped_releases:
-            latest_version = next(
-                filter(
-                    lambda v: v.status == LibraryItemStatus.FINAL.value,
-                    has_version_rel.all_relationships(release),
-                ),
-                None,
-            )
-            relationship: VersionRelationship = latest_version
-
-            ar = self._create_aggregate_root_instance_based_on_return_counts(
-                library=library,
-                root=root,
-                value=release,
-                relationship=relationship,
-                return_instantiation_counts=False,
-                return_study_count=return_study_count,
-            )
-
-            ar.repository_closure_data = RETRIEVED_READ_ONLY_MARK
-            aggregates.append(ar)
-
-        return aggregates
 
     def hashkey_library_item(
         self,
@@ -974,7 +904,7 @@ class LibraryItemRepositoryImplBase(
                 library = None
         else:
             result, _ = db.cypher_query(
-                "MATCH (node) WHERE elementId(node)=$id RETURN node",
+                MATCH_NODE_BY_ID,
                 {"id": uid},
                 resolve_objects=True,
             )
@@ -1118,6 +1048,8 @@ class LibraryItemRepositoryImplBase(
         return False
 
     def close(self) -> None:
+        # Our repository guidelines state that repos should have a close method
+        # But nothing needs to be done in this one
         pass
 
     def _get_uid_or_none(self, node):

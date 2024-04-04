@@ -263,7 +263,7 @@ def do_request_with_token(
     is_json,
     content_type,
 ) -> httpx.Response:
-    headers = {"Authorization": f"Bearer {token}", "User-Agent": "test"}
+    headers = {"Authorization": f"Bearer {token}"}
     if content_type:
         headers["Content-Type"] = content_type
 
@@ -360,7 +360,7 @@ def _mk_schema_example_payload(schema, openapi_schemas):
                         _mk_schema_example_payload(schem_, openapi_schemas)
                     )
             else:
-                payload[name] = _schema_default_value(schem)
+                payload[name] = _schema_default_value(schem, name)
 
     if is_array:
         payload = [payload]
@@ -369,7 +369,7 @@ def _mk_schema_example_payload(schema, openapi_schemas):
 
 
 # pylint: disable=too-many-return-statements
-def _schema_default_value(schema):
+def _schema_default_value(schema, name=None):
     if "default" in schema:
         return schema["default"]
 
@@ -379,6 +379,8 @@ def _schema_default_value(schema):
         frmt = schema.get("format")
 
         if frmt is None:
+            if name in PARAMETER_DEFAULTS:
+                return PARAMETER_DEFAULTS[name]
             return typ
         if frmt == "date":
             return datetime.date.today().isoformat()
@@ -407,7 +409,8 @@ def _schema_default_value(schema):
 def _prepare_http_request(openapi_schema, path, method):
     # Look up schema for endpoint
     schema = openapi_schema["paths"].get(path, {}).get(method.lower())
-    parameters = schema and schema.get("parameters") or []
+    assert schema, f"Not in schema, endpoint does not exist? {method} {path}"
+    parameters = schema.get("parameters") or []
 
     # Fake required path and query parameters, and required request payload
     path_parameters = _mk_required_parameters(parameters, where="path")
@@ -426,7 +429,7 @@ def _assert_insufficient_roles_error(
     required_roles, roles_in_token, response: httpx.Response
 ):
     """Asserts error response because of insufficient roles"""
-    # pylint:disable=unused-variable
+    # pylint: disable=unused-variable
     __tracebackhide__ = True
 
     assert response.status_code == 403, (

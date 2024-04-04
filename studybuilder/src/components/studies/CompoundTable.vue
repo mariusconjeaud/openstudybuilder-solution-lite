@@ -32,6 +32,11 @@
     <template v-slot:item.actions="{ item }">
       <actions-menu :actions="actions" :item="item" />
     </template>
+    <template v-slot:item.compound.name="{ item }">
+      <router-link :to="{ name: 'StudyCompoundOverview', params: { study_id: selectedStudy.uid, id: item.study_compound_uid } }">
+        {{ item.compound.name }}
+      </router-link>
+    </template>
   </n-n-table>
   <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
   <v-dialog

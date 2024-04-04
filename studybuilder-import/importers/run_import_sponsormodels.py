@@ -1,11 +1,14 @@
 import asyncio
-from collections import defaultdict
 import csv
+import json
+import os
+from collections import defaultdict
+
 import aiohttp
-from .utils.importer import BaseImporter, open_file_async
-from .utils.metrics import Metrics
 
 from .functions.utils import load_env
+from .utils.importer import BaseImporter, open_file_async
+from .utils.metrics import Metrics
 
 # ---------------------------------------------------------------
 # Env loading
@@ -16,6 +19,9 @@ API_BASE_URL = load_env("API_BASE_URL")
 
 MDR_MIGRATION_ACTIVITY_INSTANCE_CLASS_MODEL_RELS = load_env(
     "MDR_MIGRATION_ACTIVITY_INSTANCE_CLASS_MODEL_RELS"
+)
+MDR_MIGRATION_SPONSOR_MODEL_DIRECTORY = load_env(
+    "MDR_MIGRATION_SPONSOR_MODEL_DIRECTORY"
 )
 MDR_MIGRATION_SPONSOR_MODEL_DATASET_CLASSES = load_env(
     "MDR_MIGRATION_SPONSOR_MODEL_DATASET_CLASSES"
@@ -42,19 +48,11 @@ ACTIVITY_ITEM_CLASSES_PATH = "/activity-item-classes"
 class SponsorModels(BaseImporter):
     logging_name = "sponsor_models"
 
-    _common_body_params = {
-        "sponsor_model_name": "sdtmig_mastermodel_3.2_NN15",
-        "sponsor_model_version_number": "15",
-    }
-
-    _model_body_params = {
-        "ig_uid": "SDTMIG",
-        "ig_version_number": "3.2",
-        "version_number": "15",
-    }
-
     def __init__(self, api=None, metrics_inst=None, cache=None):
         super().__init__(api=api, metrics_inst=metrics_inst, cache=cache)
+
+        self._common_body_params = {}
+        self._model_body_params = {}
 
     def parse_bool(self, cell):
         if cell is None:
@@ -275,9 +273,11 @@ class SponsorModels(BaseImporter):
                     "role": row[headers.index("role")],
                     "term": row[headers.index("term")],
                     "algorithm": row[headers.index("algorithm")],
-                    "qualifiers": row[headers.index("qualifiers")].split(" ")
-                    if row[headers.index("qualifiers")]
-                    else None,
+                    "qualifiers": (
+                        row[headers.index("qualifiers")].split(" ")
+                        if row[headers.index("qualifiers")]
+                        else None
+                    ),
                     "comment": row[headers.index("comment")],
                     "ig_comment": row[headers.index("IGcomment")],
                     "map_var_flag": self.parse_bool(row[headers.index("map_var_flag")]),
@@ -330,12 +330,16 @@ class SponsorModels(BaseImporter):
                         "xml_title": row[headers.index("XmlTitle")],
                         "structure": row[headers.index("Structure")],
                         "purpose": row[headers.index("Purpose")],
-                        "keys": row[headers.index("Keys")].split(" ")
-                        if row[headers.index("Keys")]
-                        else None,
-                        "sort_keys": row[headers.index("SortKeys")]
-                        if row[headers.index("SortKeys")]
-                        else None,
+                        "keys": (
+                            row[headers.index("Keys")].split(" ")
+                            if row[headers.index("Keys")]
+                            else None
+                        ),
+                        "sort_keys": (
+                            row[headers.index("SortKeys")]
+                            if row[headers.index("SortKeys")]
+                            else None
+                        ),
                         "state": row[headers.index("State")],
                         "source_ig": row[headers.index("Standardref")],
                         "comment": row[headers.index("comment")],
@@ -353,9 +357,11 @@ class SponsorModels(BaseImporter):
                             row[headers.index("gen_raw_seqno_flag")]
                         ),
                         "extended_domain": row[headers.index("extended_domain")],
-                        "enrich_build_order": row[headers.index("enrich_build_order")]
-                        if row[headers.index("enrich_build_order")]
-                        else 0,
+                        "enrich_build_order": (
+                            row[headers.index("enrich_build_order")]
+                            if row[headers.index("enrich_build_order")]
+                            else 0
+                        ),
                         **self._common_body_params,
                     },
                 }
@@ -399,9 +405,11 @@ class SponsorModels(BaseImporter):
                     "role": row[headers.index("role")],
                     "term": row[headers.index("term")],
                     "algorithm": row[headers.index("algorithm")],
-                    "qualifiers": row[headers.index("qualifiers")].split(" ")
-                    if row[headers.index("qualifiers")]
-                    else None,
+                    "qualifiers": (
+                        row[headers.index("qualifiers")].split(" ")
+                        if row[headers.index("qualifiers")]
+                        else None
+                    ),
                     "comment": row[headers.index("comment")],
                     "ig_comment": row[headers.index("IGcomment")],
                     "map_var_flag": self.parse_bool(row[headers.index("map_var_flag")]),
@@ -418,9 +426,11 @@ class SponsorModels(BaseImporter):
                     "value_lvl_ct_codelist_id_col": row[
                         headers.index("value_lvl_ct_cdlist_id_col")
                     ],
-                    "enrich_build_order": row[headers.index("enrich_build_order")]
-                    if row[headers.index("enrich_build_order")]
-                    else 0,
+                    "enrich_build_order": (
+                        row[headers.index("enrich_build_order")]
+                        if row[headers.index("enrich_build_order")]
+                        else 0
+                    ),
                     "enrich_rule": row[headers.index("enrich_rule")],
                     "xml_codelist_values": self.parse_bool(
                         row[headers.index("xmlcodelistvalues")]
@@ -448,24 +458,72 @@ class SponsorModels(BaseImporter):
                 MDR_MIGRATION_ACTIVITY_INSTANCE_CLASS_MODEL_RELS,
                 session,
             )
-            await self.handle_activity_item_class_relations(
-                MDR_MIGRATION_SPONSOR_MODEL_VARIABLE_CLASSES,
-                session,
-            )
-            continue_import = await self.handle_sponsor_model(session)
-            if continue_import:
-                await self.handle_dataset_classes(
-                    MDR_MIGRATION_SPONSOR_MODEL_DATASET_CLASSES, session
-                )
-                await self.handle_variable_classes(
-                    MDR_MIGRATION_SPONSOR_MODEL_VARIABLE_CLASSES, session
-                )
-                await self.handle_datasets(
-                    MDR_MIGRATION_SPONSOR_MODEL_DATASETS, session
-                )
-                await self.handle_dataset_variables(
-                    MDR_MIGRATION_SPONSOR_MODEL_DATASET_VARIABLES, session
-                )
+
+            # For each subfolder in the sponsor models folder, import the corresponding sponsor model
+            for root, dirs, _ in os.walk(MDR_MIGRATION_SPONSOR_MODEL_DIRECTORY):
+                dirs.sort()
+                for dir_name in dirs:
+                    sponsor_model_path = os.path.join(root, dir_name)
+
+                    # Open file model_info.json in directory
+                    with open(os.path.join(sponsor_model_path, "model_info.json")) as f:
+                        model_info = json.load(f)
+                        if "exclude" in model_info and model_info["exclude"]:
+                            self.log.info(
+                                f"Skipping sponsor model '{model_info['sponsor_model_name']}'"
+                            )
+                            continue
+                        self._common_body_params = {
+                            "sponsor_model_name": model_info["sponsor_model_name"],
+                            "sponsor_model_version_number": model_info[
+                                "sponsor_model_version_number"
+                            ],
+                        }
+
+                        self._model_body_params = {
+                            "ig_uid": model_info["ig_uid"],
+                            "ig_version_number": model_info["ig_version_number"],
+                            "version_number": model_info[
+                                "sponsor_model_version_number"
+                            ],
+                        }
+
+                    continue_import = await self.handle_sponsor_model(session)
+                    if continue_import:
+                        await self.handle_activity_item_class_relations(
+                            os.path.join(
+                                sponsor_model_path,
+                                MDR_MIGRATION_SPONSOR_MODEL_VARIABLE_CLASSES,
+                            ),
+                            session,
+                        )
+                        await self.handle_dataset_classes(
+                            os.path.join(
+                                sponsor_model_path,
+                                MDR_MIGRATION_SPONSOR_MODEL_DATASET_CLASSES,
+                            ),
+                            session,
+                        )
+                        await self.handle_variable_classes(
+                            os.path.join(
+                                sponsor_model_path,
+                                MDR_MIGRATION_SPONSOR_MODEL_VARIABLE_CLASSES,
+                            ),
+                            session,
+                        )
+                        await self.handle_datasets(
+                            os.path.join(
+                                sponsor_model_path, MDR_MIGRATION_SPONSOR_MODEL_DATASETS
+                            ),
+                            session,
+                        )
+                        await self.handle_dataset_variables(
+                            os.path.join(
+                                sponsor_model_path,
+                                MDR_MIGRATION_SPONSOR_MODEL_DATASET_VARIABLES,
+                            ),
+                            session,
+                        )
 
     def run(self):
         self.log.info("Importing sponsor models")

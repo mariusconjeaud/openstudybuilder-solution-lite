@@ -114,7 +114,7 @@
         }
     },
     {
-        "name": "Test getting error for retrieving non existing ODM Vendor Attribute",
+        "name": "Test getting error for retrieving non-existent ODM Vendor Attribute",
         "request": {
             "headers": {},
             "method": "GET",

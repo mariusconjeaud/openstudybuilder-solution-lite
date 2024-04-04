@@ -108,7 +108,7 @@ class OdmItemGroupVO(ConceptVO):
         for sdtm_domain_uid in self.sdtm_domain_uids:
             if not find_term_callback(sdtm_domain_uid):
                 raise BusinessLogicException(
-                    f"ODM Item Group tried to connect to non existing SDTM Domain identified by uid ({sdtm_domain_uid})."
+                    f"ODM Item Group tried to connect to non-existent SDTM Domain identified by uid ({sdtm_domain_uid})."
                 )
 
 

@@ -24,7 +24,12 @@
             "result": {
                 "term_uid": "random",
                 "catalogue_name": "SDTM CT",
-                "codelist_uid": "editable_cr",
+                "codelists": [
+                    {
+                        "codelist_uid": "editable_cr",
+                        "order": 7
+                    }
+                ],
                 "concept_id": null,
                 "code_submission_value": "code_submission_value",
                 "name_submission_value": "name_submission_value",
@@ -32,7 +37,6 @@
                 "definition": "definition",
                 "sponsor_preferred_name": "string",
                 "sponsor_preferred_name_sentence_case": "string",
-                "order": 7,
                 "library_name": "Sponsor",
                 "possible_actions": [
                     "approve",
@@ -62,7 +66,12 @@
             "result": {
                 "term_uid": "term_root_draft",
                 "catalogue_name": "SDTM CT",
-                "codelist_uid": "editable_cr",
+                "codelists": [
+                    {
+                        "codelist_uid": "editable_cr",
+                        "order": 2
+                    }
+                ],
                 "concept_id": null,
                 "code_submission_value": "code_submission_valuePATCHED",
                 "name_submission_value": "name_submission_valuePATCHED",
@@ -97,7 +106,12 @@
             "result": {
                 "term_uid": "term_root_draft",
                 "catalogue_name": "SDTM CT",
-                "codelist_uid": "editable_cr",
+                "codelists": [
+                    {
+                        "codelist_uid": "editable_cr",
+                        "order": 2
+                    }
+                ],
                 "concept_id": null,
                 "code_submission_value": "code_submission_valuePATCHED",
                 "name_submission_value": "name_submission_valuePATCHED",
@@ -131,7 +145,12 @@
             "result": {
                 "term_uid": "term_root_draft",
                 "catalogue_name": "SDTM CT",
-                "codelist_uid": "editable_cr",
+                "codelists": [
+                    {
+                        "codelist_uid": "editable_cr",
+                        "order": 2
+                    }
+                ],
                 "concept_id": null,
                 "code_submission_value": "code_submission_valuePATCHED",
                 "name_submission_value": "name_submission_valuePATCHED",
@@ -164,7 +183,12 @@
             "result": {
                 "term_uid": "term_root_draft",
                 "catalogue_name": "SDTM CT",
-                "codelist_uid": "editable_cr",
+                "codelists": [
+                    {
+                        "codelist_uid": "editable_cr",
+                        "order": 2
+                    }
+                ],
                 "concept_id": null,
                 "code_submission_value": "code_submission_valuePATCHED",
                 "name_submission_value": "name_submission_valuePATCHED",
@@ -198,7 +222,12 @@
             "result": {
                 "term_uid": "term_root_draft",
                 "catalogue_name": "SDTM CT",
-                "codelist_uid": "editable_cr",
+                "codelists": [
+                    {
+                        "codelist_uid": "editable_cr",
+                        "order": 2
+                    }
+                ],
                 "concept_id": null,
                 "code_submission_value": "code_submission_valuePATCHED",
                 "name_submission_value": "name_submission_valuePATCHED",
@@ -231,7 +260,12 @@
             "result": {
                 "term_uid": "term_root_final",
                 "catalogue_name": "SDTM CT",
-                "codelist_uid": "editable_cr",
+                "codelists": [
+                    {
+                        "codelist_uid": "editable_cr",
+                        "order": 1
+                    }
+                ],
                 "concept_id": null,
                 "code_submission_value": "code_submission_value1",
                 "name_submission_value": "name_submission_value1",
@@ -239,7 +273,6 @@
                 "definition": "definition",
                 "sponsor_preferred_name": "term_value_name1",
                 "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
-                "order": 1,
                 "library_name": "Sponsor",
                 "possible_actions": [
                     "inactivate",
@@ -261,7 +294,12 @@
             "result": {
                 "term_uid": "term_root_final",
                 "catalogue_name": "SDTM CT",
-                "codelist_uid": "editable_cr",
+                "codelists": [
+                    {
+                        "codelist_uid": "editable_cr",
+                        "order": 1
+                    }
+                ],
                 "concept_id": null,
                 "code_submission_value": "code_submission_value1",
                 "name_submission_value": "name_submission_value1",
@@ -269,7 +307,6 @@
                 "definition": "definition",
                 "sponsor_preferred_name": "term_value_name1",
                 "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
-                "order": 1,
                 "library_name": "Sponsor",
                 "possible_actions": [
                     "inactivate",
@@ -291,7 +328,12 @@
             "result": {
                 "term_uid": "term_root_final",
                 "catalogue_name": "SDTM CT",
-                "codelist_uid": "editable_cr",
+                "codelists": [
+                    {
+                        "codelist_uid": "editable_cr",
+                        "order": 1
+                    }
+                ],
                 "concept_id": null,
                 "code_submission_value": "code_submission_value1",
                 "name_submission_value": "name_submission_value1",
@@ -299,7 +341,6 @@
                 "definition": "definition",
                 "sponsor_preferred_name": "term_value_name1",
                 "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
-                "order": 1,
                 "library_name": "Sponsor",
                 "possible_actions": [
                     "inactivate",

@@ -54,8 +54,6 @@ class SponsorModelDatasetVariableRepository(
         return (
             ar.sponsor_model_dataset_variable_vo.is_basic_std != value.is_basic_std
             or ar.sponsor_model_dataset_variable_vo.label != value.label
-            # TODO : Get order from relationship because there are re-used instances with only order changing
-            # or ar.sponsor_model_dataset_variable_vo.order != value.order
             or ar.sponsor_model_dataset_variable_vo.variable_type != value.variable_type
             or ar.sponsor_model_dataset_variable_vo.length != value.length
             or ar.sponsor_model_dataset_variable_vo.display_format
@@ -165,7 +163,7 @@ class SponsorModelDatasetVariableRepository(
             value_lvl_ct_codelist_id_col=ar.sponsor_model_dataset_variable_vo.value_lvl_ct_codelist_id_col,
             enrich_build_order=ar.sponsor_model_dataset_variable_vo.enrich_build_order,
             enrich_rule=ar.sponsor_model_dataset_variable_vo.enrich_rule,
-            xml_codelistvalues=ar.sponsor_model_dataset_variable_vo.xml_codelist_values,
+            xml_codelist_values=ar.sponsor_model_dataset_variable_vo.xml_codelist_values,
         )
         self._db_save_node(new_instance)
 
@@ -256,4 +254,5 @@ class SponsorModelDatasetVariableRepository(
         root: DatasetVariable,
         value: SponsorModelDatasetVariableInstance,
     ) -> None:
+        # This method is not needed for this repo, so we use pass to skip implementation
         pass

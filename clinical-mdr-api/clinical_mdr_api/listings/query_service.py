@@ -13,6 +13,14 @@ from clinical_mdr_api.repositories._utils import (
     FilterOperator,
 )
 
+MATCH_SPECIFIC_STUDY_VERSION = """
+    MATCH (sr:StudyRoot {uid: $study_uid})-[l:HAS_VERSION{status:'RELEASED', version:$study_value_version}]->(sv:StudyValue)
+"""
+
+MATCH_LATEST_STUDY = """
+    MATCH (sr:StudyRoot {uid: $study_uid})-[:LATEST]->(sv:StudyValue)
+"""
+
 
 class QueryService:
     """class holding the queries for the listing endpoints."""
@@ -404,9 +412,19 @@ class QueryService:
 
         return GenericFilteringReturn.create(items=result, total=total)
 
-    def get_tv(self, study_uid) -> list[Any]:
-        query = """
-        MATCH (sr:StudyRoot {uid: $study_uid})-[:LATEST]->(sv:StudyValue)-[:HAS_STUDY_VISIT]->(v:StudyVisit)
+    def get_tv(
+        self,
+        study_uid,
+        study_value_version: str | None = None,
+    ) -> list[Any]:
+        if study_value_version:
+            query = MATCH_SPECIFIC_STUDY_VERSION
+        else:
+            query = MATCH_LATEST_STUDY
+        query = (
+            query
+            + """
+        MATCH (sv)-[:HAS_STUDY_VISIT]->(v:StudyVisit)
         OPTIONAL MATCH  (v)-->(nr:VisitNameRoot)-[:LATEST]->(nv:VisitNameValue),
                         (v)-->(dr:StudyDayRoot)-[:LATEST]->(dv:StudyDayValue)
         RETURN toUpper(sv.study_id_prefix + '-' + sv.study_number) AS STUDYID,
@@ -419,10 +437,14 @@ class QueryService:
             toUpper(v.start_rule) AS TVSTRL,
             toUpper(v.end_rule) AS TVENRL
         ORDER BY v.unique_visit_number;
-
         """
+        )
         result_array = db.cypher_query(
-            query=query, params={"study_uid": str(study_uid)}
+            query=query,
+            params={
+                "study_uid": str(study_uid),
+                "study_value_version": str(study_value_version),
+            },
         )
 
         return helpers.db_result_to_list(result_array)
@@ -433,9 +455,9 @@ class QueryService:
         study_value_version: str | None = None,
     ) -> list[Any]:
         if study_value_version:
-            query = "MATCH (sr:StudyRoot {uid: $study_uid})-[l:HAS_VERSION{status:'RELEASED', version:$study_value_version}]->(sv:StudyValue) "
+            query = MATCH_SPECIFIC_STUDY_VERSION
         else:
-            query = "MATCH (sr:StudyRoot {uid: $study_uid})-[:LATEST]->(sv:StudyValue)"
+            query = MATCH_LATEST_STUDY
         query = (
             query
             + """
@@ -555,12 +577,23 @@ class QueryService:
 
         return helpers.db_result_to_list(result_array)
 
-    def get_ta(self, study_uid) -> list[Any]:
-        query = """
+    def get_ta(
+        self,
+        study_uid,
+        study_value_version: str | None = None,
+    ) -> list[Any]:
+        if study_value_version:
+            query = MATCH_SPECIFIC_STUDY_VERSION
+        else:
+            query = MATCH_LATEST_STUDY
+        query = (
+            query
+            + """
+        MATCH (sv)-[:HAS_STUDY_ELEMENT]->(se:StudyElement)
         CALL 
             {
-            MATCH (sr:StudyRoot {uid: $study_uid})-[:LATEST]->(sv:StudyValue)-[:HAS_STUDY_ELEMENT]->(se:StudyElement),
-            (se)-[:STUDY_ELEMENT_HAS_DESIGN_CELL]-(sd:StudyDesignCell)-[:HAS_STUDY_DESIGN_CELL]-(sv),
+            WITH sv, se
+            MATCH (se)-[:STUDY_ELEMENT_HAS_DESIGN_CELL]-(sd:StudyDesignCell)-[:HAS_STUDY_DESIGN_CELL]-(sv),
             (sd)-[:STUDY_EPOCH_HAS_DESIGN_CELL]-(sep:StudyEpoch)-[:HAS_STUDY_EPOCH]-(sv),
             (sv) -[:HAS_STUDY_ARM] -(sar:StudyArm)-[:STUDY_ARM_HAS_DESIGN_CELL]-(sd)
             OPTIONAL MATCH (sv) -[:HAS_STUDY_BRANCH_ARM]-(sba:StudyBranchArm)-[:STUDY_BRANCH_ARM_HAS_DESIGN_CELL] -(sd)
@@ -580,8 +613,8 @@ class QueryService:
                 sba.name AS TABRANCH
                 ORDER BY sar.order, sep.order
             union all
-            MATCH (sr:StudyRoot {uid: $study_uid})-[:LATEST]->(sv:StudyValue)-[:HAS_STUDY_ELEMENT]->(se:StudyElement),
-            (se)-[:STUDY_ELEMENT_HAS_DESIGN_CELL]-(sd:StudyDesignCell)-[:HAS_STUDY_DESIGN_CELL]-(sv),
+            WITH sv, se
+            MATCH (se)-[:STUDY_ELEMENT_HAS_DESIGN_CELL]-(sd:StudyDesignCell)-[:HAS_STUDY_DESIGN_CELL]-(sv),
             (sd)-[:STUDY_EPOCH_HAS_DESIGN_CELL]-(sep:StudyEpoch)-[:HAS_STUDY_EPOCH]-(sv),
             (sv) -[:HAS_STUDY_BRANCH_ARM]-(sba:StudyBranchArm)-[:STUDY_BRANCH_ARM_HAS_DESIGN_CELL] -(sd),
             (sba)-[:STUDY_ARM_HAS_BRANCH_ARM]-(sar:StudyArm)-[:HAS_STUDY_ARM]-(sv)
@@ -616,15 +649,30 @@ class QueryService:
 
 
         """
+        )
         result_array = db.cypher_query(
-            query=query, params={"study_uid": str(study_uid)}
+            query=query,
+            params={
+                "study_uid": str(study_uid),
+                "study_value_version": str(study_value_version),
+            },
         )
 
         return helpers.db_result_to_list(result_array)
 
-    def get_ti(self, study_uid) -> list[Any]:
-        query = """
-        MATCH (sr:StudyRoot {uid: $study_uid})-[:LATEST]->(sv:StudyValue)-->(sc:StudyCriteria)
+    def get_ti(
+        self,
+        study_uid,
+        study_value_version: str | None = None,
+    ) -> list[Any]:
+        if study_value_version:
+            query = MATCH_SPECIFIC_STUDY_VERSION
+        else:
+            query = MATCH_LATEST_STUDY
+        query = (
+            query
+            + """
+        MATCH (sv)-->(sc:StudyCriteria)
         MATCH (sc)-->(cv:CriteriaValue)<-[:LATEST]-(cr:CriteriaRoot)<--(ctr:CriteriaTemplateRoot)-->(i:CTTermRoot)-->(atr:CTTermAttributesRoot)-[:LATEST]->(atv:CTTermAttributesValue)
         WHERE atv.concept_id = 'C25532' or atv.concept_id = 'C25370'
         RETURN  toUpper(sv.study_id_prefix) + '-' + toUpper(sv.study_number) AS STUDYID,
@@ -637,16 +685,33 @@ class QueryService:
                 '' AS TIVERS
         ORDER BY IETESTCD;
         """
+        )
         result_array = db.cypher_query(
-            query=query, params={"study_uid": str(study_uid)}
+            query=query,
+            params={
+                "study_uid": str(study_uid),
+                "study_value_version": str(study_value_version),
+            },
         )
 
         return helpers.db_result_to_list(result_array)
 
-    def get_ts(self, study_uid) -> list[Any]:
-        query = """
+    def get_ts(
+        self,
+        study_uid,
+        study_value_version: str | None = None,
+    ) -> list[Any]:
+        if study_value_version:
+            query = MATCH_SPECIFIC_STUDY_VERSION
+        else:
+            query = MATCH_LATEST_STUDY
+        query = (
+            query
+            + """
+        WITH sr, sv
         CALL {
-        MATCH (sr:StudyRoot {uid: $study_uid})-[:LATEST]->(sv:StudyValue)-->(sf:StudyField)
+        WITH sr, sv
+        MATCH (sv)-->(sf:StudyField)
         OPTIONAL MATCH  (sf)-->(ctr:CTTermRoot)-->(ctar:CTTermAttributesRoot)-[:LATEST_FINAL]->(ctav:CTTermAttributesValue)<--(:CTPackageTerm)<--(:CTPackageCodelist)<--(ctp:CTPackage)
         OPTIONAL MATCH (sf)-->(dtr:DictionaryTermRoot)-->(dtv:DictionaryTermValue)
         OPTIONAL MATCH (sf)-[:HAS_REASON_FOR_NULL_VALUE]->(ct_null:CTTermRoot{uid:"C48660_Not Applicable"})
@@ -662,6 +727,13 @@ class QueryService:
             WHEN 'universal_trial_number_utn' THEN 'C98714_REGID'
             WHEN 'investigational_new_drug_application_number_ind' THEN 'C98714_REGID'
             WHEN 'japanese_trial_registry_id_japic' THEN 'C98714_REGID'
+            WHEN 'eu_trial_number' THEN 'C98714_REGID'
+            WHEN 'civ_id_sin_number' THEN 'C98714_REGID'
+            WHEN 'national_clinical_trial_number' THEN 'C98714_REGID'
+            WHEN 'japanese_trial_registry_number_jrct' THEN 'C98714_REGID'
+            WHEN 'national_medical_products_administration_nmpa_number' THEN 'C98714_REGID'
+            WHEN 'eudamed_srn_number' THEN 'C98714_REGID'
+            WHEN 'investigational_device_exemption_ide_number' THEN 'C98714_REGID'
             WHEN 'confirmed_response_minimum_duration' THEN 'C98715_CRMDUR'
             WHEN 'is_adaptive_design' THEN 'C146995_ADAPT'
             WHEN 'study_stop_rules' THEN 'C49698_STOPRULE'
@@ -697,6 +769,13 @@ class QueryService:
             WHEN sf.field_name='universal_trial_number_utn' THEN 'UTN'
             WHEN sf.field_name='investigational_new_drug_application_number_ind' THEN 'IND'
             WHEN sf.field_name='japanese_trial_registry_id_japic' THEN 'JAPIC'
+            WHEN sf.field_name='eu_trial_number' THEN 'ETN'
+            WHEN sf.field_name='civ_id_sin_number' THEN 'CISN'
+            WHEN sf.field_name='national_clinical_trial_number' THEN 'NCTN'
+            WHEN sf.field_name='japanese_trial_registry_number_jrct' THEN 'JRCT'
+            WHEN sf.field_name='national_medical_products_administration_nmpa_number' THEN 'NMPA'
+            WHEN sf.field_name='eudamed_srn_number' THEN 'ESN'
+            WHEN sf.field_name='investigational_device_exemption_ide_number' THEN 'IDE'
             WHEN sf:StudyTimeField
                 THEN 'Not Controlled TimeField'
             WHEN sf:StudyIntField
@@ -734,12 +813,13 @@ class QueryService:
         WHEN controlled_by = 'Not Controlled TimeField' THEN 'ISO8601'
         WHEN controlled_by = 'CDISC' AND ct_null IS NULL  THEN 'CDISC'
         WHEN controlled_by = 'Dictionary' THEN head([(library:Library)-[:CONTAINS_DICTIONARY_TERM]->(dtr) | library.name])
-        WHEN controlled_by IN ['EUDRACT', 'ClinicalTrials.gov', 'UTN', 'IND', 'JAPIC'] THEN controlled_by
+        WHEN controlled_by IN ['EUDRACT', 'ClinicalTrials.gov', 'UTN', 'IND', 'JAPIC', 'ETN', 'CISN', 'NCTN', 'JRCT', 'NMPA', 'ESN', 'IDE'] THEN controlled_by
         ELSE ''
         END AS TSVCDREF,
         '' AS TSVCDVER
         UNION
-        MATCH (sr:StudyRoot {uid:$study_uid})-[:LATEST]->(sv:StudyValue)-[:HAS_STUDY_OBJECTIVE]->(so:StudyObjective)-[:HAS_OBJECTIVE_LEVEL]->(objlv)-->(octar:CTTermAttributesRoot)-[:LATEST_FINAL]->(octav:CTTermAttributesValue)
+        WITH sr, sv
+        MATCH (sv)-[:HAS_STUDY_OBJECTIVE]->(so:StudyObjective)-[:HAS_OBJECTIVE_LEVEL]->(objlv)-->(octar:CTTermAttributesRoot)-[:LATEST_FINAL]->(octav:CTTermAttributesValue)
         MATCH (so)-[:HAS_SELECTED_OBJECTIVE]->(obj)
         RETURN
         sv.study_id_prefix+'-'+sv.study_number AS STUDYID,
@@ -753,7 +833,8 @@ class QueryService:
         '' AS TSVCDREF,
         '' AS TSVCDVER
         UNION
-        MATCH (sr:StudyRoot {uid: $study_uid})-[:LATEST]->(sv:StudyValue)-[:HAS_STUDY_ENDPOINT]->(send)-[:HAS_ENDPOINT_LEVEL]->(endplv)-->(ectar:CTTermAttributesRoot)-[:LATEST_FINAL]->(ectav:CTTermAttributesValue) 
+        WITH sr, sv
+        MATCH (sv)-[:HAS_STUDY_ENDPOINT]->(send)-[:HAS_ENDPOINT_LEVEL]->(endplv)-->(ectar:CTTermAttributesRoot)-[:LATEST_FINAL]->(ectav:CTTermAttributesValue) 
         MATCH (send)-[:HAS_SELECTED_TIMEFRAME]->(tf:TimeframeValue)
         MATCH (send)-[:HAS_SELECTED_ENDPOINT]->(endp:EndpointValue)
         RETURN
@@ -768,7 +849,8 @@ class QueryService:
         '' AS TSVCDREF,
         '' AS TSVCDVER
         UNION 
-        MATCH (sr:StudyRoot {uid: $study_uid})-[:LATEST]->(sv:StudyValue)-[:HAS_STUDY_COHORT]->(sch:StudyCohort)
+        WITH sr, sv
+        MATCH (sv)-[:HAS_STUDY_COHORT]->(sch:StudyCohort)
         MATCH (tr:CTTermRoot {uid:'C126063_NCOHORT'})-->(tar:CTTermAttributesRoot)-[:LATEST_FINAL]->(tav:CTTermAttributesValue)
         RETURN 
             sv.study_id_prefix+'-'+sv.study_number AS STUDYID,
@@ -782,31 +864,34 @@ class QueryService:
             '' AS TSVCDREF,
             '' AS TSVCDVER
         UNION
+        WITH sr, sv
         CALL 
             {
-            MATCH (sr:StudyRoot {uid: $study_uid})-[:LATEST]->(sv:StudyValue),
-            (sv)-[:HAS_STUDY_ELEMENT]->(se:StudyElement),
-            (se)-[:STUDY_ELEMENT_HAS_DESIGN_CELL]-(sd:StudyDesignCell)-[:HAS_STUDY_DESIGN_CELL]-(sv),
-            (sd)-[:STUDY_EPOCH_HAS_DESIGN_CELL]-(sep:StudyEpoch)-[:HAS_STUDY_EPOCH]-(sv),
-            (sv) -[:HAS_STUDY_ARM] -(sar:StudyArm)-[:STUDY_ARM_HAS_DESIGN_CELL]-(sd)
-            OPTIONAL MATCH (sv) -[:HAS_STUDY_BRANCH_ARM]-(sba:StudyBranchArm)-[:STUDY_BRANCH_ARM_HAS_DESIGN_CELL] -(sd)
+            WITH sr, sv
+            WITH sr as inner_sr, sv as innver_sv
+            MATCH (innver_sv)-[:HAS_STUDY_ELEMENT]->(se:StudyElement),
+            (se)-[:STUDY_ELEMENT_HAS_DESIGN_CELL]-(sd:StudyDesignCell)-[:HAS_STUDY_DESIGN_CELL]-(innver_sv),
+            (sd)-[:STUDY_EPOCH_HAS_DESIGN_CELL]-(sep:StudyEpoch)-[:HAS_STUDY_EPOCH]-(innver_sv),
+            (innver_sv) -[:HAS_STUDY_ARM] -(sar:StudyArm)-[:STUDY_ARM_HAS_DESIGN_CELL]-(sd)
+            OPTIONAL MATCH (innver_sv) -[:HAS_STUDY_BRANCH_ARM]-(sba:StudyBranchArm)-[:STUDY_BRANCH_ARM_HAS_DESIGN_CELL] -(sd)
             OPTIONAL MATCH (sep) - [:HAS_EPOCH] - (:CTTermRoot) - [:HAS_NAME_ROOT] - (:CTTermNameRoot) -[:LATEST]- (sep_term:CTTermNameValue)
             MATCH (tr:CTTermRoot {uid:'C98771_NARMS'})-->(tar:CTTermAttributesRoot)-[:LATEST_FINAL]->(tav:CTTermAttributesValue)
-            RETURN distinct sr,sv, sar,sba, tav
+            RETURN distinct inner_sr,innver_sv, sar,sba, tav
             union all
-            MATCH (sr:StudyRoot {uid: $study_uid})-[:LATEST]->(sv:StudyValue),
-            (sv)-[:HAS_STUDY_ELEMENT]->(se:StudyElement),
-            (se)-[:STUDY_ELEMENT_HAS_DESIGN_CELL]-(sd:StudyDesignCell)-[:HAS_STUDY_DESIGN_CELL]-(sv),
-            (sd)-[:STUDY_EPOCH_HAS_DESIGN_CELL]-(sep:StudyEpoch)-[:HAS_STUDY_EPOCH]-(sv),
-            (sv) -[:HAS_STUDY_BRANCH_ARM]-(sba:StudyBranchArm)-[:STUDY_BRANCH_ARM_HAS_DESIGN_CELL] -(sd),
-            (sba)-[:STUDY_ARM_HAS_BRANCH_ARM]-(sar:StudyArm)-[:HAS_STUDY_ARM]-(sv)
+            WITH sr, sv
+            WITH sr as inner_sr, sv as innver_sv
+            MATCH (innver_sv)-[:HAS_STUDY_ELEMENT]->(se:StudyElement),
+            (se)-[:STUDY_ELEMENT_HAS_DESIGN_CELL]-(sd:StudyDesignCell)-[:HAS_STUDY_DESIGN_CELL]-(innver_sv),
+            (sd)-[:STUDY_EPOCH_HAS_DESIGN_CELL]-(sep:StudyEpoch)-[:HAS_STUDY_EPOCH]-(innver_sv),
+            (innver_sv) -[:HAS_STUDY_BRANCH_ARM]-(sba:StudyBranchArm)-[:STUDY_BRANCH_ARM_HAS_DESIGN_CELL] -(sd),
+            (sba)-[:STUDY_ARM_HAS_BRANCH_ARM]-(sar:StudyArm)-[:HAS_STUDY_ARM]-(innver_sv)
             OPTIONAL MATCH (sep) - [:HAS_EPOCH] - (:CTTermRoot) - [:HAS_NAME_ROOT] - (:CTTermNameRoot) -[:LATEST]- (sep_term:CTTermNameValue)
             MATCH (tr:CTTermRoot {uid:'C98771_NARMS'})-->(tar:CTTermAttributesRoot)-[:LATEST_FINAL]->(tav:CTTermAttributesValue)
-            RETURN distinct sr,sv, sar,sba, tav
+            RETURN distinct inner_sr,innver_sv, sar,sba, tav
             }
-        with   tav, sr, sv, count(*) as counter 
+        with   tav, inner_sr, innver_sv, count(*) as counter 
         return 
-            sv.study_id_prefix+'-'+sv.study_number AS STUDYID,
+            innver_sv.study_id_prefix+'-'+innver_sv.study_number AS STUDYID,
             'TS' AS DOMAIN,
             tav.code_submission_value AS TSPARMCD,
             tav.name_submission_value AS TSPARM,
@@ -817,7 +902,8 @@ class QueryService:
             '' AS TSVCDREF,
             '' AS TSVCDVER
         UNION
-            MATCH (sr:StudyRoot {uid: $study_uid})-[:LATEST]->(sv:StudyValue)-[:HAS_STUDY_COMPOUND]->(sc:StudyCompound)-[:HAS_TYPE_OF_TREATMENT]->(cttr:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]->(ctar:CTTermAttributesRoot)-[:LATEST_FINAL]->(ctav:CTTermAttributesValue)
+            WITH sr, sv
+            MATCH (sv)-[:HAS_STUDY_COMPOUND]->(sc:StudyCompound)-[:HAS_TYPE_OF_TREATMENT]->(cttr:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]->(ctar:CTTermAttributesRoot)-[:LATEST_FINAL]->(ctav:CTTermAttributesValue)
             MATCH (sc)-[:HAS_SELECTED_COMPOUND]->(cav:CompoundAliasValue)-[:IS_COMPOUND]->(cr:CompoundRoot)-[:LATEST_FINAL]->(cv:CompoundValue)-[:HAS_UNII_VALUE]->(uniir:UNIITermRoot)-[:LATEST_FINAL]->(uniiv:UNIITermValue)
             MATCH (uniir)<-[:CONTAINS_DICTIONARY_TERM]-(lib:Library)
             with sv,uniiv,lib,ctav
@@ -845,8 +931,9 @@ class QueryService:
                 lib.name as TSVCDREF,
                 '' AS TSVCDVER
         UNION 
+            WITH sr, sv
             MATCH (ctav:CTTermAttributesValue {code_submission_value:'INVESTIGATIONAL PRODUCT TYPE OF TREATMENT'})
-            match (sr:StudyRoot {uid: $study_uid})-[:LATEST]->(sv:StudyValue)-[:HAS_STUDY_COMPOUND]->(sc:StudyCompound)-[:HAS_TYPE_OF_TREATMENT]->(cttr:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]->(ctar:CTTermAttributesRoot)-[:LATEST_FINAL]->(ctav)
+            match (sv)-[:HAS_STUDY_COMPOUND]->(sc:StudyCompound)-[:HAS_TYPE_OF_TREATMENT]->(cttr:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]->(ctar:CTTermAttributesRoot)-[:LATEST_FINAL]->(ctav)
             match (sc)-[:HAS_SELECTED_COMPOUND]->(cav:CompoundAliasValue)
             match (cav)-[:IS_COMPOUND]->(cr:CompoundRoot)-[:LATEST_FINAL]->(cv:CompoundValue)-[:HAS_UNII_VALUE]->(uniir:UNIITermRoot)-[:LATEST_FINAL]->(uniiv:UNIITermValue)-[:HAS_PCLASS]->(pclass_root:DictionaryTermRoot)-[:LATEST_FINAL]->(medrt:DictionaryTermValue)
             match (pclass_root)<-[:CONTAINS_DICTIONARY_TERM]-(lib:Library)
@@ -862,7 +949,8 @@ class QueryService:
                 lib.name as TSVCDREF,
                 '' AS TSVCDVER
         UNION
-            match (:CTTermRoot{uid : 'C49488_Y'})-[:HAS_TYPE]-(sf:StudyField{ field_name : 'is_trial_randomised'})-[:HAS_BOOLEAN_FIELD]- (sv:StudyValue)-[:LATEST]-(sr:StudyRoot{uid:$study_uid}) 
+            WITH sr, sv
+            match (:CTTermRoot{uid : 'C49488_Y'})-[:HAS_TYPE]-(sf:StudyField{ field_name : 'is_trial_randomised'})-[:HAS_BOOLEAN_FIELD]- (sv)
             match (init_arms:StudyArm)-[:HAS_STUDY_ARM]-(sv)
             with distinct init_arms, sv
             with count( init_arms) as counter_arms,  sum( init_arms.number_of_subjects) as all_num_sub, sv
@@ -870,7 +958,7 @@ class QueryService:
             with all_num_sub, sv
             call{
                 with sv
-                match (inv_arms:StudyArm)-[:HAS_STUDY_ARM]-(sv:StudyValue)
+                match (inv_arms:StudyArm)-[:HAS_STUDY_ARM]-(sv)
                 match  (inv_arms)-[:HAS_ARM_TYPE]-(:CTTermRoot)-[:HAS_NAME_ROOT]-(:CTTermNameRoot)-[:LATEST_FINAL]-(:CTTermNameValue{name:"Investigational Arm"})
                 with collect(distinct inv_arms) as collected_inv_arms
                 unwind collected_inv_arms as unwind_inv_arms
@@ -900,15 +988,30 @@ class QueryService:
         RETURN *
         ORDER BY TSPARMCD
         """
+        )
         result_array = db.cypher_query(
-            query=query, params={"study_uid": str(study_uid)}
+            query=query,
+            params={
+                "study_uid": str(study_uid),
+                "study_value_version": str(study_value_version),
+            },
         )
 
         return helpers.db_result_to_list(result_array)
 
-    def get_te(self, study_uid) -> list[Any]:
-        query = """
-        MATCH (sr:StudyRoot {uid: $study_uid})-[:LATEST]->(sv:StudyValue)-[:HAS_STUDY_ELEMENT]->(se:StudyElement)
+    def get_te(
+        self,
+        study_uid,
+        study_value_version: str | None = None,
+    ) -> list[Any]:
+        if study_value_version:
+            query = MATCH_SPECIFIC_STUDY_VERSION
+        else:
+            query = MATCH_LATEST_STUDY
+        query = (
+            query
+            + """
+        MATCH (sv)-[:HAS_STUDY_ELEMENT]->(se:StudyElement)
         RETURN 
             toUpper(sv.study_id_prefix + '-' + sv.study_number) AS STUDYID,
             'TE' AS DOMAIN,
@@ -920,14 +1023,29 @@ class QueryService:
             se.planned_duration AS TEDUR
             ORDER BY se.order
         """
+        )
         result_array = db.cypher_query(
-            query=query, params={"study_uid": str(study_uid)}
+            query=query,
+            params={
+                "study_uid": str(study_uid),
+                "study_value_version": str(study_value_version),
+            },
         )
         return helpers.db_result_to_list(result_array)
 
-    def get_tdm(self, study_uid) -> list[Any]:
-        query = """
-        MATCH (sr:StudyRoot {uid: $study_uid})-[:LATEST]->(sv:StudyValue)-[:HAS_STUDY_DISEASE_MILESTONE]->(sdm:StudyDiseaseMilestone)
+    def get_tdm(
+        self,
+        study_uid,
+        study_value_version: str | None = None,
+    ) -> list[Any]:
+        if study_value_version:
+            query = MATCH_SPECIFIC_STUDY_VERSION
+        else:
+            query = MATCH_LATEST_STUDY
+        query = (
+            query
+            + """
+        MATCH (sv)-[:HAS_STUDY_DISEASE_MILESTONE]->(sdm:StudyDiseaseMilestone)
         MATCH (sdm)-[:HAS_DISEASE_MILESTONE_TYPE]-(tr:CTTermRoot)-[:HAS_NAME_ROOT]-(:CTTermNameRoot)-[:LATEST]-(sdm_term:CTTermNameValue)
         MATCH (tr)-[HAS_ATTRIBUTES_ROOT]->(CTTermAttributesRoot)-[LATEST]->(ctav:CTTermAttributesValue)
         RETURN DISTINCT toUpper(sv.study_id_prefix + '-' + sv.study_number) AS STUDYID,
@@ -939,7 +1057,12 @@ class QueryService:
                 when false then 'N'
             END AS TMRPT
         """
+        )
         result_array = db.cypher_query(
-            query=query, params={"study_uid": str(study_uid)}
+            query=query,
+            params={
+                "study_uid": str(study_uid),
+                "study_value_version": str(study_value_version),
+            },
         )
         return helpers.db_result_to_list(result_array)

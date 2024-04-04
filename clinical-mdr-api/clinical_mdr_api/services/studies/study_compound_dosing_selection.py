@@ -77,6 +77,7 @@ class StudyCompoundDosingSelectionService(StudySelectionMixin):
             find_project_by_study_uid=self._repos.project_repository.find_by_study_uid,
             find_numeric_value_by_uid=self._repos.numeric_value_with_unit_repository.find_by_uid_2,
             find_unit_by_uid=self._repos.unit_definition_repository.find_by_uid_2,
+            study_value_version=study_value_version,
         )
 
     def _transform_study_element_model(
@@ -100,6 +101,7 @@ class StudyCompoundDosingSelectionService(StudySelectionMixin):
             self._find_by_uid_or_raise_not_found,
             get_term_element_type_by_element_subtype=self._repos.study_element_repository.get_element_type_term_uid_by_element_subtype_term_uid,
             find_all_study_time_units=self._repos.unit_definition_repository.find_all,
+            study_value_version=study_value_version,
         )
 
     def _transform_to_response_model(

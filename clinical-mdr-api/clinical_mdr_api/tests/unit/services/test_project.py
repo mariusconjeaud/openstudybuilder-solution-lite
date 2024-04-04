@@ -22,17 +22,17 @@ class TestProjectService(unittest.TestCase):
         project_repository_property_mock.return_value = repo_instance
 
         # when
-        service_response = self.service.get_all_projects()
+        service_response = self.service.get_all_projects(page_size=0)
 
         # then
         # we check if project sets are equal (by project_number)
         self.assertEqual(
-            {_.project_number for _ in service_response},
+            {_.project_number for _ in service_response.items},
             {_.project_number for _ in repo_instance.find_all()},
         )
 
         # then we check whether values retrieved by service agree with those from mocked repo
-        for service_response_item in service_response:
+        for service_response_item in service_response.items:
             self.assertIsNotNone(service_response_item.project_number)
             assert service_response_item.project_number is not None
             repo_item = repo_instance.find_by_project_number(

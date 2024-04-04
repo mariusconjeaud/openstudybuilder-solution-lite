@@ -636,8 +636,10 @@ def random_valid_id_metadata(
     while True:
         result = StudyIdentificationMetadataVO(
             study_number=fixed_or_default("study_number", random_study_number()),
+            subpart_id=fixed_or_default("subpart_id", None),
             study_acronym=fixed_or_default("study_acronym", random_opt_str()),
             project_number=fixed_or_default("project_number", random_opt_str()),
+            description=fixed_or_default("description", random_opt_str()),
             # tested in separate file test_registry_identifier
             registry_identifiers=RegistryIdentifiersVO(
                 ct_gov_id=None,
@@ -647,9 +649,23 @@ def random_valid_id_metadata(
                 investigational_new_drug_application_number_ind=None,
                 ct_gov_id_null_value_code=None,
                 eudract_id_null_value_code=None,
+                eu_trial_number=None,
+                civ_id_sin_number=None,
+                national_clinical_trial_number=None,
+                japanese_trial_registry_number_jrct=None,
+                national_medical_products_administration_nmpa_number=None,
+                eudamed_srn_number=None,
+                investigational_device_exemption_ide_number=None,
                 universal_trial_number_utn_null_value_code=None,
                 japanese_trial_registry_id_japic_null_value_code=None,
                 investigational_new_drug_application_number_ind_null_value_code=None,
+                eu_trial_number_null_value_code=None,
+                civ_id_sin_number_null_value_code=None,
+                national_clinical_trial_number_null_value_code=None,
+                japanese_trial_registry_number_jrct_null_value_code=None,
+                national_medical_products_administration_nmpa_number_null_value_code=None,
+                eudamed_srn_number_null_value_code=None,
+                investigational_device_exemption_ide_number_null_value_code=None,
             ),
         )
         if condition is None or condition(result):
@@ -679,19 +695,21 @@ class TestIdentificationMetadataVO(unittest.TestCase):
         # (study_number, study_acronym, study_id_prefix, ct_gov_id, eudract_id, study_status, version_number,
         #       project_number)
         test_tuples = [
-            ("study-num", "study-acronym", "id-prefix", "proj-num"),
-            ("s-num", None, None, None),
-            (None, "study-acronym", None, None),
-            (None, None, "id-prefix", None),
+            ("study-num", "study-acronym", "id-prefix", "proj-num", "desc"),
+            ("s-num", None, None, None, None),
+            (None, "study-acronym", None, None, None),
+            (None, None, "id-prefix", None, None),
         ]
         for test_tuple in test_tuples:
             with self.subTest(test_tuple=test_tuple):
                 # given
                 id_metadata = StudyIdentificationMetadataVO(
                     study_number=test_tuple[0],
+                    subpart_id=None,
                     study_acronym=test_tuple[1],
                     _study_id_prefix=test_tuple[2],
                     project_number=test_tuple[3],
+                    description=test_tuple[4],
                     registry_identifiers=RegistryIdentifiersVO(
                         ct_gov_id=None,
                         eudract_id=None,
@@ -700,9 +718,23 @@ class TestIdentificationMetadataVO(unittest.TestCase):
                         investigational_new_drug_application_number_ind=None,
                         ct_gov_id_null_value_code=None,
                         eudract_id_null_value_code=None,
+                        eu_trial_number=None,
+                        civ_id_sin_number=None,
+                        national_clinical_trial_number=None,
+                        japanese_trial_registry_number_jrct=None,
+                        national_medical_products_administration_nmpa_number=None,
+                        eudamed_srn_number=None,
+                        investigational_device_exemption_ide_number=None,
                         universal_trial_number_utn_null_value_code=None,
                         japanese_trial_registry_id_japic_null_value_code=None,
                         investigational_new_drug_application_number_ind_null_value_code=None,
+                        eu_trial_number_null_value_code=None,
+                        civ_id_sin_number_null_value_code=None,
+                        national_clinical_trial_number_null_value_code=None,
+                        japanese_trial_registry_number_jrct_null_value_code=None,
+                        national_medical_products_administration_nmpa_number_null_value_code=None,
+                        eudamed_srn_number_null_value_code=None,
+                        investigational_device_exemption_ide_number_null_value_code=None,
                     ),
                 )
                 # when
@@ -728,8 +760,10 @@ class TestIdentificationMetadataVO(unittest.TestCase):
                 # given
                 study_id_metadata = StudyIdentificationMetadataVO.from_input_values(
                     study_number=study_number,
+                    subpart_id=None,
                     project_number=None,
                     study_acronym=None,
+                    description=None,
                     registry_identifiers=RegistryIdentifiersVO(
                         ct_gov_id=None,
                         eudract_id=None,
@@ -738,9 +772,23 @@ class TestIdentificationMetadataVO(unittest.TestCase):
                         investigational_new_drug_application_number_ind=None,
                         ct_gov_id_null_value_code=None,
                         eudract_id_null_value_code=None,
+                        eu_trial_number=None,
+                        civ_id_sin_number=None,
+                        national_clinical_trial_number=None,
+                        japanese_trial_registry_number_jrct=None,
+                        national_medical_products_administration_nmpa_number=None,
+                        eudamed_srn_number=None,
+                        investigational_device_exemption_ide_number=None,
                         universal_trial_number_utn_null_value_code=None,
                         japanese_trial_registry_id_japic_null_value_code=None,
                         investigational_new_drug_application_number_ind_null_value_code=None,
+                        eu_trial_number_null_value_code=None,
+                        civ_id_sin_number_null_value_code=None,
+                        national_clinical_trial_number_null_value_code=None,
+                        japanese_trial_registry_number_jrct_null_value_code=None,
+                        national_medical_products_administration_nmpa_number_null_value_code=None,
+                        eudamed_srn_number_null_value_code=None,
+                        investigational_device_exemption_ide_number_null_value_code=None,
                     ),
                 )
 
@@ -755,8 +803,10 @@ class TestIdentificationMetadataVO(unittest.TestCase):
         for study_number in study_numbers:
             study_id_metadata = StudyIdentificationMetadataVO.from_input_values(
                 study_number=study_number,
+                subpart_id=None,
                 project_number=None,
                 study_acronym=None,
+                description=None,
                 registry_identifiers=RegistryIdentifiersVO(
                     ct_gov_id=None,
                     eudract_id=None,
@@ -765,9 +815,23 @@ class TestIdentificationMetadataVO(unittest.TestCase):
                     investigational_new_drug_application_number_ind=None,
                     ct_gov_id_null_value_code=None,
                     eudract_id_null_value_code=None,
+                    eu_trial_number=None,
+                    civ_id_sin_number=None,
+                    national_clinical_trial_number=None,
+                    japanese_trial_registry_number_jrct=None,
+                    national_medical_products_administration_nmpa_number=None,
+                    eudamed_srn_number=None,
+                    investigational_device_exemption_ide_number=None,
                     universal_trial_number_utn_null_value_code=None,
                     japanese_trial_registry_id_japic_null_value_code=None,
                     investigational_new_drug_application_number_ind_null_value_code=None,
+                    eu_trial_number_null_value_code=None,
+                    civ_id_sin_number_null_value_code=None,
+                    national_clinical_trial_number_null_value_code=None,
+                    japanese_trial_registry_number_jrct_null_value_code=None,
+                    national_medical_products_administration_nmpa_number_null_value_code=None,
+                    eudamed_srn_number_null_value_code=None,
+                    investigational_device_exemption_ide_number_null_value_code=None,
                 ),
             )
 

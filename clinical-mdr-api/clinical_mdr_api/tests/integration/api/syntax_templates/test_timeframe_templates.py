@@ -470,30 +470,6 @@ def test_get_specific_version_of_timeframe_template(api_client):
     assert res["status"] == "Draft"
 
 
-def test_create_timeframe_template_with_default_parameters(api_client):
-    data = {
-        "name": "test_name [TextValue]",
-        "guidance_text": "test_guidance_text",
-        "library_name": "Sponsor",
-    }
-    response = api_client.post(URL, json=data)
-    res = response.json()
-    log.info("Created Timeframe Template with default parameter terms: %s", res)
-
-    assert response.status_code == 201
-    assert res["uid"]
-    assert res["sequence_id"]
-    assert res["name"] == "test_name [TextValue]"
-    assert res["guidance_text"] == "test_guidance_text"
-    assert res["parameters"][0]["name"] == "TextValue"
-    assert res["parameters"][0]["terms"] == []
-    assert res["version"] == "0.1"
-    assert res["status"] == "Draft"
-    assert set(list(res.keys())) == set(TIMEFRAME_TEMPLATE_FIELDS_ALL)
-    for key in TIMEFRAME_TEMPLATE_FIELDS_NOT_NULL:
-        assert res[key] is not None
-
-
 def test_delete_timeframe_template(api_client):
     response = api_client.delete(f"{URL}/{timeframe_templates[2].uid}")
     log.info(
@@ -599,14 +575,13 @@ def test_timeframe_template_audit_trail(api_client):
     log.info("TimeframeTemplate Audit Trail: %s", res)
 
     assert response.status_code == 200
-    assert res["total"] == 55
+    assert res["total"] == 54
     expected_uids = [
         "TimeframeTemplate_000004",
         "TimeframeTemplate_000004",
         "TimeframeTemplate_000006",
         "TimeframeTemplate_000006",
         "TimeframeTemplate_000004",
-        "TimeframeTemplate_000027",
         "TimeframeTemplate_000005",
         "TimeframeTemplate_000026",
         "TimeframeTemplate_000025",

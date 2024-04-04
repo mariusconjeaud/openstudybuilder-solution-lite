@@ -2,12 +2,16 @@ import csv
 import sys
 
 if len(sys.argv) < 4:
-    print('Usage:')
-    print('> python csvdiff.py old.csv new.csv key_column')
-    print('Optionally specify columns to skip, skips any columns with names starting with col_a or col_b:')
+    print("Usage:")
+    print("> python csvdiff.py old.csv new.csv key_column")
+    print(
+        "Optionally specify columns to skip, skips any columns with names starting with col_a or col_b:"
+    )
     print('> python csvdiff.py old.csv new.csv key_column "col_a,col_b')
-    print("Example") 
-    print('> python csvdiff.py ucum.csv ucum2.csv UCUM_CODE "Row #,Previous UCUM version,Description of Change Made"')
+    print("Example")
+    print(
+        '> python csvdiff.py ucum.csv ucum2.csv UCUM_CODE "Row #,Previous UCUM version,Description of Change Made"'
+    )
     sys.exit()
 file1 = sys.argv[1]
 file2 = sys.argv[2]
@@ -18,13 +22,13 @@ else:
     skip_columns = []
 
 rows1 = {}
-with open(file1, newline='', errors='replace') as csvfile:
+with open(file1, newline="", errors="replace") as csvfile:
     reader = csv.DictReader(csvfile)
     for row in reader:
         rows1[row[keyname]] = row
 
 rows2 = {}
-with open(file2, newline='', errors='replace') as csvfile:
+with open(file2, newline="", errors="replace") as csvfile:
     reader = csv.DictReader(csvfile)
     for row in reader:
         rows2[row[keyname]] = row
@@ -80,5 +84,3 @@ for key, data in rows1.items():
 for key in rows2.keys():
     if key not in checked:
         print(f"Added:   {key}")
-
-

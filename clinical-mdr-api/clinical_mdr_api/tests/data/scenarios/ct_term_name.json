@@ -16,7 +16,12 @@
             "result": {
                 "term_uid": "term_root_draft",
                 "catalogue_name": "SDTM CT",
-                "codelist_uid": "editable_cr",
+                "codelists": [
+                    {
+                        "codelist_uid": "editable_cr",
+                        "order": 5
+                    }
+                ],
                 "concept_id": null,
                 "code_submission_value": "code_submission_value",
                 "name_submission_value": "name_submission_value",
@@ -24,7 +29,6 @@
                 "definition": "definition",
                 "sponsor_preferred_name": "term_value_name2",
                 "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
-                "order": 5,
                 "library_name": "Sponsor",
                 "possible_actions": [
                     "approve",
@@ -52,10 +56,14 @@
             "result": {
                 "term_uid": "term_root_draft",
                 "catalogue_name": "SDTM CT",
-                "codelist_uid": "editable_cr",
+                "codelists": [
+                    {
+                        "codelist_uid": "editable_cr",
+                        "order": 5
+                    }
+                ],
                 "sponsor_preferred_name": "sponsor_preferred_name",
                 "sponsor_preferred_name_sentence_case": "sponsor_preferred_name_sentence_case",
-                "order": 5,
                 "change_description": "Term name update",
                 "library_name": "Sponsor",
                 "start_date": "2021-04-06T12:38:32.069969",
@@ -85,10 +93,14 @@
             "result": {
                 "term_uid": "term_root_draft",
                 "catalogue_name": "SDTM CT",
-                "codelist_uid": "editable_cr",
+                "codelists": [
+                    {
+                        "codelist_uid": "editable_cr",
+                        "order": 5
+                    }
+                ],
                 "sponsor_preferred_name": "sponsor_preferred_name",
                 "sponsor_preferred_name_sentence_case": "sponsor_preferred_name_sentence_case",
-                "order": 5,
                 "change_description": "Approved version",
                 "library_name": "Sponsor",
                 "start_date": "2021-04-06T12:38:32.069969",
@@ -117,10 +129,14 @@
             "result": {
                 "term_uid": "term_root_draft",
                 "catalogue_name": "SDTM CT",
-                "codelist_uid": "editable_cr",
+                "codelists": [
+                    {
+                        "codelist_uid": "editable_cr",
+                        "order": 5
+                    }
+                ],
                 "sponsor_preferred_name": "sponsor_preferred_name",
                 "sponsor_preferred_name_sentence_case": "sponsor_preferred_name_sentence_case",
-                "order": 5,
                 "change_description": "Inactivated version",
                 "library_name": "Sponsor",
                 "start_date": "2021-04-06T12:38:32.069969",
@@ -148,10 +164,14 @@
             "result": {
                 "term_uid": "term_root_draft",
                 "catalogue_name": "SDTM CT",
-                "codelist_uid": "editable_cr",
+                "codelists": [
+                    {
+                        "codelist_uid": "editable_cr",
+                        "order": 5
+                    }
+                ],
                 "sponsor_preferred_name": "sponsor_preferred_name",
                 "sponsor_preferred_name_sentence_case": "sponsor_preferred_name_sentence_case",
-                "order": 5,
                 "change_description": "Reactivated version",
                 "library_name": "Sponsor",
                 "start_date": "2021-04-06T12:38:32.069969",
@@ -180,10 +200,14 @@
             "result": {
                 "term_uid": "term_root_draft",
                 "catalogue_name": "SDTM CT",
-                "codelist_uid": "editable_cr",
+                "codelists": [
+                    {
+                        "codelist_uid": "editable_cr",
+                        "order": 5
+                    }
+                ],
                 "sponsor_preferred_name": "sponsor_preferred_name",
                 "sponsor_preferred_name_sentence_case": "sponsor_preferred_name_sentence_case",
-                "order": 5,
                 "change_description": "New draft created",
                 "library_name": "Sponsor",
                 "start_date": "2021-04-06T12:38:32.069969",

@@ -131,17 +131,17 @@
           </tr>
           <tr>
             <td>{{ $t('CodelistTermDetail.order') }}</td>
-            <td>{{ termNames.order }}</td>
+            <td>{{ getTermOrderInCodelist(termNames, this.codelistUid) }}</td>
           </tr>
         </tbody>
       </table>
     </div>
   </div>
 
-  <div class="v-label pa-4 mt-6">{{ $t('CodeListDetail.attributes_title') }}</div>
+  <div class="v-label pa-4 mt-6">{{ $t('CodelistTermDetail.attributes_title') }}</div>
   <div class="v-data-table">
     <div class="v-data-table__wrapper">
-      <table class="white" :aria-label="$t('CodeListDetail.attributes_title')">
+      <table class="white" :aria-label="$t('CodelistTermDetail.attributes_title')">
         <thead>
           <tr class="greyBackground">
             <th width="25%">{{ $t('CodeListDetail.ct_identifiers') }}</th>
@@ -225,11 +225,11 @@
             </td>
           </tr>
           <tr>
-            <td>{{ $t('CodelistTermDetail.term_name') }}</td>
+            <td>{{ $t('CodelistTermDetail.name_submission_value') }}</td>
             <td>{{ termAttributes.name_submission_value }}</td>
           </tr>
           <tr>
-            <td>{{ $t('CodelistTermDetail.submission_value') }}</td>
+            <td>{{ $t('CodelistTermDetail.code_submission_value') }}</td>
             <td>{{ termAttributes.code_submission_value }}</td>
           </tr>
           <tr>
@@ -239,10 +239,6 @@
           <tr>
             <td>{{ $t('_global.definition') }}</td>
             <td>{{ termAttributes.definition }}</td>
-          </tr>
-          <tr>
-            <td>{{ $t('CodelistTermDetail.synonyms') }}</td>
-            <td>{{ termAttributes.synonyms }}</td>
           </tr>
         </tbody>
       </table>
@@ -256,6 +252,7 @@
     >
     <codelist-term-names-form
       v-model="termNames"
+      :codelistUid="codelistUid"
       @close="showNamesForm = false"
       />
   </v-dialog>
@@ -432,18 +429,21 @@ export default {
         { text: this.$t('_global.version'), value: 'version' }
       ]
       const resp = await controlledTerminology.getCodelistTermNamesVersions(this.termUid)
-      this.historyItems = resp.data
+
+      this.historyItems = resp.data.map(item => {
+        item.order = this.getTermOrderInCodelist(item, this.codelistUid)
+        return item
+      })
       this.showHistory = true
     },
     async openCTValuesHistory () {
       this.historyType = 'termAttributes'
       this.historyHeaders = [
-        { text: this.$t('CodelistTermDetail.concept_id'), value: 'concept_id' },
-        { text: this.$t('CodelistTermDetail.term_name'), value: 'name_submission_value' },
-        { text: this.$t('CodelistTermDetail.submission_value'), value: 'code_submission_value' },
+        { text: this.$t('CodelistTermDetail.concept_id'), value: 'term_uid' },
+        { text: this.$t('CodelistTermDetail.name_submission_value'), value: 'name_submission_value' },
+        { text: this.$t('CodelistTermDetail.code_submission_value'), value: 'code_submission_value' },
         { text: this.$t('CodeListDetail.nci_pref_name'), value: 'nci_preferred_name' },
         { text: this.$t('_global.definition'), value: 'definition' },
-        { text: this.$t('CodelistTermDetail.synonyms'), value: 'synonyms' },
         { text: this.$t('_global.status'), value: 'status' },
         { text: this.$t('_global.version'), value: 'version' }
       ]

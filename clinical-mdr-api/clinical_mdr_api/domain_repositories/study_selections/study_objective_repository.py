@@ -3,15 +3,11 @@ from dataclasses import dataclass
 
 from neomodel import db
 
-from clinical_mdr_api import exceptions
 from clinical_mdr_api.domain_repositories._utils import helpers
 from clinical_mdr_api.domain_repositories.generic_repository import (
     manage_previous_connected_study_selection_relationships,
 )
-from clinical_mdr_api.domain_repositories.models._utils import (
-    convert_to_datetime,
-    to_relation_trees,
-)
+from clinical_mdr_api.domain_repositories.models._utils import convert_to_datetime
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
     CTTermRoot,
 )
@@ -213,28 +209,6 @@ class StudySelectionObjectiveRepository:
         if for_update:
             selection_aggregate.repository_closure_data = all_selections
         return selection_aggregate
-
-    def find_by_uid_specific_version(
-        self, uid: str, version: int
-    ) -> list[StudySelectionObjectiveVO]:
-        objective_node = to_relation_trees(
-            StudyObjective.nodes.fetch_relations(
-                "study_value__has_version",
-            ).filter(uid=uid, **{"study_value__has_version|version": str(version)})
-        )
-        unique_objectives = []
-        for ith_objective_node in objective_node:
-            if ith_objective_node not in unique_objectives:
-                unique_objectives.extend([ith_objective_node])
-        if len(unique_objectives) > 1:
-            raise exceptions.ValidationException(
-                f"Found more than one Study Objective node with uid='{uid}'."
-            )
-        if len(unique_objectives) == 0:
-            raise exceptions.ValidationException(
-                f"The Study Objective with uid='{uid}' could not be found."
-            )
-        return unique_objectives
 
     def _get_audit_node(
         self, study_selection: StudySelectionObjectivesAR, study_selection_uid: str
@@ -533,4 +507,6 @@ class StudySelectionObjectiveRepository:
         return self._get_selection_with_history(study_uid=study_uid)
 
     def close(self) -> None:
+        # Our repository guidelines state that repos should have a close method
+        # But nothing needs to be done in this one
         pass

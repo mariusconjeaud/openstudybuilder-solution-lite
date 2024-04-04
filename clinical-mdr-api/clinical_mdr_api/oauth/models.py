@@ -32,7 +32,7 @@ class JWTTokenClaims(BaseModel):
     scp: list[str] | None = None
 
     @validator("aud", "scp", pre=True)
-    # pylint:disable=no-self-argument
+    # pylint: disable=no-self-argument
     def split_str(cls, elm):
         """Splits claim space-separated-string into a list of str elements"""
         if isinstance(elm, str):
@@ -57,44 +57,6 @@ class AccessTokenClaims(JWTTokenClaims):
     tid: str | None = None
 
     azp: str | None
-
-
-class IdTokenClaims(JWTTokenClaims):
-    """ID Token claims -- as per OpenID Connect 1.0 specification"""
-
-    # Optional by OpenID Connect Core 1.0
-    auth_time: int | None
-    nonce: str | None
-    acr: str | None
-    amr: str | None
-    azp: str | None
-
-    # OpenID Connect Core 1.0 Standard Claims
-    name: str | None = None
-    given_name: str | None = None
-    family_name: str | None = None
-    middle_name: str | None = None
-    nickname: str | None = None
-    preferred_username: str | None = None
-    profile: str | None = None
-    picture: str | None = None
-    website: str | None = None
-    email: str | None = None
-    email_verified: bool | None = None
-    gender: str | None = None
-    birthdate: str | None = None
-    zoneinfo: str | None = None
-    locale: str | None = None
-    phone_number: str | None = None
-    phone_number_verified: str | None = None
-    address: str | None = None
-    updated_at: str | None = None
-
-    # Seen in Active Directory tokens
-    username: str | None = None
-    idtyp: str | None = None
-    oid: str | None = None
-    tid: str | None = None
 
 
 class UserInfo(BaseModel):

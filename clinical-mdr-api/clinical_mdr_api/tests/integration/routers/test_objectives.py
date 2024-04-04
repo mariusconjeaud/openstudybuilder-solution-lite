@@ -82,8 +82,8 @@ class ObjectiveNegativeTest(api.APITest):
     def post_test(self):
         def check_objectives_empty():
             repos = MetaRepository()
-            data = list(repos.objective_repository.find_all())
-            self.assertListEqual(data, [])
+            data = list(repos.objective_repository.get_all())
+            self.assertListEqual(data, [[], 0])
 
         check_objectives_empty()
 

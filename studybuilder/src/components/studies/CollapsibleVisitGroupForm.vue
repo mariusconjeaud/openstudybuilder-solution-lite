@@ -24,8 +24,8 @@
               v-model="visitTemplate"
               :items="visits"
               :label="$t('CollapsibleVisitGroupForm.visit_template')"
-              item-text="visit_short_name"
-              item-value="uid"
+              item-text="text"
+              item-value="refs[0].uid"
               :error-messages="errors"
               />
           </validation-provider>
@@ -67,7 +67,7 @@ export default {
       this.$refs.form.working = false
     },
     async submit () {
-      const visitUids = this.visits.map(item => item.uid)
+      const visitUids = this.visits.map(item => item.refs[0].uid)
       await studyEpochs.createCollapsibleVisitGroup(this.selectedStudy.uid, visitUids, this.visitTemplate)
       this.$emit('created')
       this.close()

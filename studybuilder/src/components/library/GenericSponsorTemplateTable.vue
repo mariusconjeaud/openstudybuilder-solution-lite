@@ -22,6 +22,7 @@
     history-change-field="change_description"
     :history-change-field-label="$t('_global.change_description')"
     :history-excluded-headers="historyExcludedHeaders"
+    :default-filters="defaultFilters"
     >
     <template v-slot:actions="">
       <v-btn
@@ -236,6 +237,10 @@ export default Vue.extend({
     prepareDuplicatePayloadFunc: {
       type: Function,
       required: false
+    },
+    defaultFilters: {
+      type: Array,
+      required: false
     }
   },
   components: {
@@ -397,7 +402,9 @@ export default Vue.extend({
       this.templates.filter((item, pos) => {
         if (item.uid === template.uid && item.status === status) {
           this.$set(this.templates, pos, template)
+          return true
         }
+        return false
       })
     },
     async approveTemplate (template) {

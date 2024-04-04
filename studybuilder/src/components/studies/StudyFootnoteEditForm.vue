@@ -128,19 +128,15 @@ export default {
     })
   },
   methods: {
-    redirectToDetailedSoA () {
-      if (window.location.href.includes('detailed')) {
-        this.$emit('enableFootnoteMode', this.studyFootnote)
-      } else {
-        this.$router.push({ name: 'StudyActivities', params: { tab: 'detailed', footnote: this.studyFootnote } })
-      }
-      this.$refs.form.close()
-    },
-    initForm (form) {
-      this.originalForm = JSON.parse(JSON.stringify(form))
+    resetReferences () {
+      this.referencedSoAGroups = []
       this.referencedActivities = []
       this.referencedEpochsAndVisits = []
-      this.studyFootnote.referenced_items.forEach(item => {
+      this.referencedSchedules = []
+    },
+    setReferences (refs) {
+      this.resetReferences()
+      refs.forEach(item => {
         if (['StudySoAGroup'].indexOf(item.item_type) > -1) {
           this.referencedSoAGroups.push(item.item_name)
         } else if (['StudyActivity', 'StudyActivityGroup', 'StudyActivitySubGroup'].indexOf(item.item_type) > -1) {
@@ -155,6 +151,18 @@ export default {
       this.referencedSoAGroups = this.removeDuplicates(this.referencedSoAGroups).join(', ')
       this.referencedEpochsAndVisits = this.referencedEpochsAndVisits.join(', ')
       this.referencedSchedules = this.referencedSchedules.join(', ')
+    },
+    redirectToDetailedSoA () {
+      if (window.location.href.includes('detailed')) {
+        this.$emit('enableFootnoteMode', this.studyFootnote)
+      } else {
+        this.$router.push({ name: 'StudyActivities', params: { tab: 'detailed', footnote: this.studyFootnote } })
+      }
+      this.$refs.form.close()
+    },
+    initForm (form) {
+      this.originalForm = JSON.parse(JSON.stringify(form))
+      this.setReferences(this.studyFootnote.referenced_items)
     },
     removeDuplicates (arr) {
       return arr.filter((item, index, self) => {
@@ -210,6 +218,15 @@ export default {
       this.referencedEpochsAndVisits = []
       this.referencedSchedules = []
       this.$emit('close')
+    }
+  },
+  watch: {
+    studyFootnote (value) {
+      if (value) {
+        study.getStudyFootnote(this.selectedStudy, value.uid).then(resp => {
+          this.setReferences(resp.data.referenced_items)
+        })
+      }
     }
   }
 }

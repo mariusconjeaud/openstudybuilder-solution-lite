@@ -14,6 +14,7 @@ class NumericValueType(Enum):
     STUDY_WEEK = "study_week"
     STUDY_DURATION_DAYS = "study_duration_days"
     STUDY_DURATION_WEEKS = "study_duration_weeks"
+    WEEK_IN_STUDY = "week_in_study"
 
 
 @dataclass(frozen=True)

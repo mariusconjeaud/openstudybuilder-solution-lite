@@ -184,7 +184,7 @@
         }
     },
     {
-        "name": "Test cannot create an ODM Condition connected to non-existing ODM Formal Expression",
+        "name": "Test cannot create an ODM Condition connected to non-existent ODM Formal Expression",
         "request": {
             "headers": {},
             "method": "POST",
@@ -207,7 +207,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "ODM Condition tried to connect to non existing concepts [('Concept Name: ODM Formal Expression', \"uids: {'wrong_uid'}\")].",
+                "message": "ODM Condition tried to connect to non-existent concepts [('Concept Name: ODM Formal Expression', \"uids: {'wrong_uid'}\")].",
                 "time": "2022-03-07T12: 14: 18.116363",
                 "path": "http://testserver/concepts/odms/conditions",
                 "method": "POST",
@@ -216,7 +216,7 @@
         }
     },
     {
-        "name": "Test cannot create an ODM Condition connected to non-existing ODM Description",
+        "name": "Test cannot create an ODM Condition connected to non-existent ODM Description",
         "request": {
             "headers": {},
             "method": "POST",
@@ -239,7 +239,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "ODM Condition tried to connect to non existing concepts [('Concept Name: ODM Description', \"uids: {'wrong_uid'}\")].",
+                "message": "ODM Condition tried to connect to non-existent concepts [('Concept Name: ODM Description', \"uids: {'wrong_uid'}\")].",
                 "time": "2022-03-07T12: 14: 18.116363",
                 "path": "http://testserver/concepts/odms/conditions",
                 "method": "POST",
@@ -248,7 +248,7 @@
         }
     },
     {
-        "name": "Test cannot create an ODM Condition connected to non-existing ODM Alias",
+        "name": "Test cannot create an ODM Condition connected to non-existent ODM Alias",
         "request": {
             "headers": {},
             "method": "POST",
@@ -273,7 +273,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "ODM Condition tried to connect to non existing concepts [('Concept Name: ODM Alias', \"uids: {'wrong_uid'}\")].",
+                "message": "ODM Condition tried to connect to non-existent concepts [('Concept Name: ODM Alias', \"uids: {'wrong_uid'}\")].",
                 "time": "2022-03-07T12: 14: 18.116363",
                 "path": "http://testserver/concepts/odms/conditions",
                 "method": "POST",
@@ -314,7 +314,7 @@
         }
     },
     {
-        "name": "Test getting error for retrieving non existing ODM Condition",
+        "name": "Test getting error for retrieving non-existent ODM Condition",
         "request": {
             "headers": {},
             "method": "GET",

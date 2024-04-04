@@ -30,7 +30,7 @@ disable = 'missing-function-docstring,missing-class-docstring,missing-module-doc
 
 [tool.pylint.'FORMAT']
 max-line-length = 150
-max-module-lines = 5000
+max-module-lines = 5500
 
 [tool.pylint.'BASIC']
 good-names = '_,e,i,j,k,x,y,z,ar,ex,rs,_AggregateRootType'

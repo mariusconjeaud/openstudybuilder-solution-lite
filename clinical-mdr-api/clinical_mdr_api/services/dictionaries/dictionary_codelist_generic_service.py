@@ -92,7 +92,7 @@ class DictionaryCodelistGenericService:
         dictionary_type = self.get_dictionary_type(library=library)
 
         items, total = self.repository.find_all(
-            library=dictionary_type,
+            library_name=dictionary_type,
             sort_by=sort_by,
             filter_by=filter_by,
             filter_operator=filter_operator,

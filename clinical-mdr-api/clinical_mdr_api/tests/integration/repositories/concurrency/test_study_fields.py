@@ -19,6 +19,7 @@ from clinical_mdr_api.domains.controlled_terminologies.ct_term_attributes import
     CTTermAttributesVO,
 )
 from clinical_mdr_api.domains.controlled_terminologies.ct_term_name import (
+    CTTermCodelistVO,
     CTTermNameAR,
     CTTermNameVO,
 )
@@ -88,6 +89,8 @@ class StudyFieldsConcurrencyTest(unittest.TestCase):
                     project_number="456",
                     study_acronym="STUDY_ACR",
                     study_number="123",
+                    subpart_id=None,
+                    description="123description",
                     registry_identifiers=RegistryIdentifiersVO.from_input_values(
                         ct_gov_id="CT_GOV_ID",
                         eudract_id="EUDRACT_ID",
@@ -99,6 +102,20 @@ class StudyFieldsConcurrencyTest(unittest.TestCase):
                         universal_trial_number_utn_null_value_code=None,
                         japanese_trial_registry_id_japic_null_value_code=None,
                         investigational_new_drug_application_number_ind_null_value_code=None,
+                        eu_trial_number=None,
+                        eu_trial_number_null_value_code=None,
+                        civ_id_sin_number=None,
+                        civ_id_sin_number_null_value_code=None,
+                        national_clinical_trial_number=None,
+                        national_clinical_trial_number_null_value_code=None,
+                        japanese_trial_registry_number_jrct=None,
+                        japanese_trial_registry_number_jrct_null_value_code=None,
+                        national_medical_products_administration_nmpa_number=None,
+                        national_medical_products_administration_nmpa_number_null_value_code=None,
+                        eudamed_srn_number=None,
+                        eudamed_srn_number_null_value_code=None,
+                        investigational_device_exemption_ide_number=None,
+                        investigational_device_exemption_ide_number_null_value_code=None,
                     ),
                 ),
                 project_exists_callback=(lambda _: True),
@@ -116,7 +133,7 @@ class StudyFieldsConcurrencyTest(unittest.TestCase):
             )
 
             ct_term_attributes_vo = CTTermAttributesVO.from_repository_values(
-                codelist_uid=codelist_uid,
+                codelists=[CTTermCodelistVO(codelist_uid=codelist_uid, order=1)],
                 catalogue_name="SDTM CT",
                 concept_id=None,
                 code_submission_value="code_submission_value",
@@ -142,11 +159,10 @@ class StudyFieldsConcurrencyTest(unittest.TestCase):
 
         with db.transaction:
             ct_term_name_vo = CTTermNameVO.from_repository_values(
-                codelist_uid=codelist_uid,
+                codelists=[CTTermCodelistVO(codelist_uid=codelist_uid, order=1)],
                 catalogue_name="SDTM CT",
                 name="StudyTitle",
                 name_sentence_case="study_title",
-                order=1,
             )
 
             self.ct_term_name_ar = CTTermNameAR.from_input_values(

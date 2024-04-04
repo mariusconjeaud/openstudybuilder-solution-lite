@@ -15,7 +15,7 @@ def strtobool(value: str) -> int:
         return 1
     if val in ("n", "no", "f", "false", "off", "0"):
         return 0
-    raise ValueError(f"invalid truth value {value:r}")
+    raise ValueError(f"invalid truth value: {value:s}")
 
 
 def booltostr(value: bool | str, true_format: str = "Yes") -> str:

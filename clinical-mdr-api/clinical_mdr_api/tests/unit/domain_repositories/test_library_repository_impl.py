@@ -40,7 +40,7 @@ def test__library_repository_impl__find_by_name__existing_library__result(
 
 @given(library_name=text())
 @patch(LibraryRepository.__module__ + ".Library")
-def test__library_repository_impl__find_by_name__non_existing_library__result(
+def test__library_repository_impl__find_by_name__non_existent_library__result(
     library_mock, *, library_name: str
 ):
     # given

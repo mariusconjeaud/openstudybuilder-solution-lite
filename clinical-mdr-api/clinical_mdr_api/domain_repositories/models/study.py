@@ -18,6 +18,7 @@ from clinical_mdr_api.domain_repositories.models.study_field import (
 from clinical_mdr_api.domain_repositories.models.study_selections import (
     AuditTrailMixin,
     StudyActivity,
+    StudyActivityInstance,
     StudyActivityInstruction,
     StudyActivitySchedule,
     StudyArm,
@@ -42,8 +43,10 @@ class StudyValue(ClinicalMdrNode, AuditTrailMixin):
     """
 
     study_number = StringProperty()
+    subpart_id = StringProperty()
     study_acronym = StringProperty()
     study_id_prefix = StringProperty()
+    description = StringProperty()
 
     has_project = RelationshipTo(StudyProjectField, "HAS_PROJECT", model=ClinicalMdrRel)
     has_time_field = RelationshipTo(
@@ -89,6 +92,9 @@ class StudyValue(ClinicalMdrNode, AuditTrailMixin):
     )
     has_study_activity = RelationshipTo(
         StudyActivity, "HAS_STUDY_ACTIVITY", model=ClinicalMdrRel
+    )
+    has_study_activity_instance = RelationshipTo(
+        StudyActivityInstance, "HAS_STUDY_ACTIVITY_INSTANCE", model=ClinicalMdrRel
     )
     has_study_activity_schedule = RelationshipTo(
         StudyActivitySchedule, "HAS_STUDY_ACTIVITY_SCHEDULE", model=ClinicalMdrRel
@@ -147,3 +153,7 @@ class StudyRoot(ClinicalMdrNodeWithUID):
         StudyValue, "LATEST_RELEASED", model=VersionRelationship
     )
     audit_trail = RelationshipTo(StudyAction, "AUDIT_TRAIL", model=ClinicalMdrRel)
+    study_subpart = RelationshipTo("StudyRoot", "STUDY_SUBPART", model=ClinicalMdrRel)
+    study_parent_part = RelationshipFrom(
+        "StudyRoot", "STUDY_SUBPART", model=ClinicalMdrRel
+    )

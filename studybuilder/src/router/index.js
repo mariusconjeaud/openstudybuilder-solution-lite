@@ -3,7 +3,6 @@ import VueRouter from 'vue-router'
 
 import store from '@/store'
 import study from '@/api/study'
-import Home from '../views/Home.vue'
 
 Vue.use(VueRouter)
 
@@ -11,7 +10,7 @@ const routes = [
   {
     path: '/library',
     name: 'Library',
-    component: () => import('../views/library/Summary.vue'),
+    component: () => import('../views/library/SummaryPage.vue'),
     meta: {
       resetBreadcrumbs: true,
       authRequired: true
@@ -108,7 +107,7 @@ const routes = [
   {
     path: '/library/cdisc',
     name: 'CDISC',
-    component: () => import('../views/library/Cdisc.vue'),
+    component: () => import('../views/library/CdiscPage.vue'),
     meta: {
       authRequired: true
     }
@@ -116,7 +115,7 @@ const routes = [
   {
     path: '/library/sponsor',
     name: 'Sponsor',
-    component: () => import('../views/library/Sponsor.vue'),
+    component: () => import('../views/library/SponsorPage.vue'),
     meta: {
       authRequired: true
     }
@@ -124,7 +123,7 @@ const routes = [
   {
     path: '/library/snomed',
     name: 'Snomed',
-    component: () => import('../views/library/Snomed.vue'),
+    component: () => import('../views/library/SnomedPage.vue'),
     meta: {
       authRequired: true
     }
@@ -148,7 +147,7 @@ const routes = [
   {
     path: '/library/unii',
     name: 'Unii',
-    component: () => import('../views/library/Unii.vue'),
+    component: () => import('../views/library/UniiPage.vue'),
     meta: {
       authRequired: true
     }
@@ -156,7 +155,7 @@ const routes = [
   {
     path: '/library/loinc',
     name: 'Loinc',
-    component: () => import('../views/library/Loinc.vue'),
+    component: () => import('../views/library/LoincPage.vue'),
     meta: {
       authRequired: true
     }
@@ -164,7 +163,7 @@ const routes = [
   {
     path: '/library/ucum',
     name: 'Ucum',
-    component: () => import('../views/library/Ucum.vue'),
+    component: () => import('../views/library/UcumPage.vue'),
     meta: {
       authRequired: true
     }
@@ -188,7 +187,7 @@ const routes = [
   {
     path: '/library/activities/:tab?',
     name: 'Activities',
-    component: () => import('../views/library/Activities.vue'),
+    component: () => import('../views/library/ActivitiesPage.vue'),
     meta: {
       authRequired: true
     }
@@ -196,7 +195,7 @@ const routes = [
   {
     path: '/library/units',
     name: 'Units',
-    component: () => import('../views/library/Units.vue'),
+    component: () => import('../views/library/UnitsPage.vue'),
     meta: {
       authRequired: true
     }
@@ -204,7 +203,7 @@ const routes = [
   {
     path: '/library/crfs/:tab?/:type?/:uid?',
     name: 'Crfs',
-    component: () => import('../views/library/Crfs.vue'),
+    component: () => import('../views/library/CrfsPage.vue'),
     meta: {
       authRequired: true
     }
@@ -212,7 +211,7 @@ const routes = [
   {
     path: '/library/compounds/:tab?',
     name: 'Compounds',
-    component: () => import('../views/library/Compounds.vue'),
+    component: () => import('../views/library/CompoundsPage.vue'),
     meta: {
       authRequired: true
     }
@@ -308,7 +307,7 @@ const routes = [
   {
     path: '/library/cdash',
     name: 'Cdash',
-    component: () => import('../views/library/Cdash.vue'),
+    component: () => import('../views/library/CdashPage.vue'),
     meta: {
       authRequired: true
     }
@@ -316,7 +315,7 @@ const routes = [
   {
     path: '/library/sdtm',
     name: 'Sdtm',
-    component: () => import('../views/library/Sdtm.vue'),
+    component: () => import('../views/library/SdtmPage.vue'),
     meta: {
       authRequired: true
     }
@@ -324,7 +323,7 @@ const routes = [
   {
     path: '/library/adam',
     name: 'Adam',
-    component: () => import('../views/library/Adam.vue'),
+    component: () => import('../views/library/AdamPage.vue'),
     meta: {
       authRequired: true
     }
@@ -380,7 +379,7 @@ const routes = [
   {
     path: '/library/objectives',
     name: 'Objectives',
-    component: () => import('../views/library/Objectives.vue'),
+    component: () => import('../views/library/ObjectivesPage.vue'),
     meta: {
       documentation: { page: 'userguide/library/template_instatiations/objectives.html' },
       authRequired: true
@@ -389,7 +388,7 @@ const routes = [
   {
     path: '/library/endpoints',
     name: 'Endpoints',
-    component: () => import('../views/library/Endpoints.vue'),
+    component: () => import('../views/library/EndpointsPage.vue'),
     meta: {
       documentation: { page: 'userguide/library/template_instatiations/endpoints.html' },
       authRequired: true
@@ -398,7 +397,7 @@ const routes = [
   {
     path: '/library/timeframe_instances',
     name: 'Timeframes',
-    component: () => import('../views/library/Timeframes.vue'),
+    component: () => import('../views/library/TimeframesPage.vue'),
     meta: {
       documentation: { page: 'userguide/library/template_instatiations/timeframes.html' },
       authRequired: true
@@ -423,7 +422,7 @@ const routes = [
   {
     path: '/library/footnote_instances',
     name: 'FootnoteInstances',
-    component: () => import('../views/library/Footnotes.vue'),
+    component: () => import('../views/library/FootnotesPage.vue'),
     meta: {
       authRequired: true
     }
@@ -437,9 +436,25 @@ const routes = [
     }
   },
   {
+    path: '/library/clinical_programmes',
+    name: 'ClinicalProgrammes',
+    component: () => import('../views/library/ClinicalProgrammeList.vue'),
+    meta: {
+      authRequired: true
+    }
+  },
+  {
+    path: '/library/projects',
+    name: 'Projects',
+    component: () => import('../views/library/ProjectList.vue'),
+    meta: {
+      authRequired: true
+    }
+  },
+  {
     path: '/studies',
     name: 'Studies',
-    component: () => import('../views/studies/Summary.vue'),
+    component: () => import('../views/studies/SummaryPage.vue'),
     meta: {
       resetBreadcrumbs: true,
       authRequired: true
@@ -500,7 +515,7 @@ const routes = [
   {
     path: '/studies/:study_id/activities/:tab?',
     name: 'StudyActivities',
-    component: () => import('../views/studies/Activities.vue'),
+    component: () => import('../views/studies/ActivitiesPage.vue'),
     meta: {
       authRequired: true,
       studyRequired: true
@@ -518,7 +533,7 @@ const routes = [
   {
     path: '/studies/:study_id/study_interventions/:tab?',
     name: 'StudyInterventions',
-    component: () => import('../views/studies/Interventions.vue'),
+    component: () => import('../views/studies/InterventionsPage.vue'),
     meta: {
       studyRequired: true,
       authRequired: true
@@ -658,7 +673,7 @@ const routes = [
   {
     path: '/studies/terminology',
     name: 'StudyTerminology',
-    component: () => import('../views/studies/Terminology.vue'),
+    component: () => import('../views/studies/TerminologyPage.vue'),
     meta: {
       authRequired: true
     }
@@ -675,7 +690,7 @@ const routes = [
   {
     path: '/studies/:study_id/population',
     name: 'StudyPopulation',
-    component: () => import('../views/studies/Population.vue'),
+    component: () => import('../views/studies/PopulationPage.vue'),
     meta: {
       studyRequired: true,
       authRequired: true
@@ -698,11 +713,12 @@ const routes = [
     }
   },
   {
-    path: '/studies/analysis_study_metadata_new/:tab?',
+    path: '/studies/:study_id/analysis_study_metadata_new/:tab?',
     name: 'AnalysisStudyMetadataNew',
     component: () => import('../views/studies/AnalysisStudyMetadataNew.vue'),
     meta: {
-      authRequired: true
+      authRequired: true,
+      studyRequired: true
     }
   },
   {
@@ -755,6 +771,7 @@ const routes = [
     name: 'StudyArmOverview',
     component: () => import('../components/studies/overviews/StudyArmOverview.vue'),
     meta: {
+      studyRequired: true,
       authRequired: true
     }
   },
@@ -763,6 +780,7 @@ const routes = [
     name: 'StudyBranchArmOverview',
     component: () => import('../components/studies/overviews/StudyBranchArmOverview.vue'),
     meta: {
+      studyRequired: true,
       authRequired: true
     }
   },
@@ -771,6 +789,7 @@ const routes = [
     name: 'StudyCohortOverview',
     component: () => import('../components/studies/overviews/StudyCohortOverview.vue'),
     meta: {
+      studyRequired: true,
       authRequired: true
     }
   },
@@ -779,6 +798,7 @@ const routes = [
     name: 'StudyEpochOverview',
     component: () => import('../components/studies/overviews/StudyEpochOverview.vue'),
     meta: {
+      studyRequired: true,
       authRequired: true
     }
   },
@@ -787,6 +807,7 @@ const routes = [
     name: 'StudyElementOverview',
     component: () => import('../components/studies/overviews/StudyElementOverview.vue'),
     meta: {
+      studyRequired: true,
       authRequired: true
     }
   },
@@ -795,13 +816,32 @@ const routes = [
     name: 'StudyVisitOverview',
     component: () => import('../components/studies/overviews/StudyVisitOverview.vue'),
     meta: {
+      studyRequired: true,
+      authRequired: true
+    }
+  },
+  {
+    path: '/studies/:study_id/activities/list/:id/overview',
+    name: 'StudyActivityOverview',
+    component: () => import('../components/studies/overviews/StudyActivityOverview.vue'),
+    meta: {
+      studyRequired: true,
+      authRequired: true
+    }
+  },
+  {
+    path: '/studies/:study_id/study_interventions/study_compounds/:id/overview',
+    name: 'StudyCompoundOverview',
+    component: () => import('../components/studies/overviews/StudyCompoundOverview.vue'),
+    meta: {
+      studyRequired: true,
       authRequired: true
     }
   },
   {
     path: '/',
     name: 'Home',
-    component: Home,
+    component: () => import('../views/HomePage.vue'),
     meta: {
       layoutTemplate: 'empty'
     }
@@ -809,7 +849,7 @@ const routes = [
   {
     path: '/login',
     name: 'Login',
-    component: () => import('../views/Login.vue'),
+    component: () => import('../views/LoginPage.vue'),
     meta: {
       authRequired: true
     }
@@ -825,13 +865,8 @@ const routes = [
   {
     path: '/logout',
     name: 'Logout',
-    component: () => import('../views/Logout.vue'),
+    component: () => import('../views/LogoutPage.vue'),
     meta: {}
-  },
-  {
-    path: '*',
-    name: 'NotFound',
-    component: () => import('../views/404.vue')
   }
 ]
 

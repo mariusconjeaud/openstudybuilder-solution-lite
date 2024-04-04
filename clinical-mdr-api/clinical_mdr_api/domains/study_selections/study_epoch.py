@@ -19,14 +19,6 @@ from clinical_mdr_api.domains.study_selections.study_visit import (
     VisitSubclass,
 )
 
-
-@dataclass
-class StudyEpochAllowedConfig:
-    epoch: str
-    subtype: str
-    epoch_type: str
-
-
 EpochTypeNamedTuple = namedtuple("EpochTypeNamedTuple", ["name", "value"])
 StudyEpochType: dict[str, EpochTypeNamedTuple] = {}
 
@@ -365,6 +357,7 @@ class TimelineAR:
                 visit.study_duration_weeks.value = (
                     visit.derive_study_duration_weeks_number()
                 )
+                visit.week_in_study.value = visit.derive_week_in_study_number()
 
         # sort visits that are returned in the end to capture all timing changes
         ordered_visits = sorted(

@@ -83,11 +83,11 @@
               <v-checkbox v-model="data.attrs.inputValue"/>
             </v-list-item-action>
             <v-list-item-content>
-              <v-list-item-title>{{ data.item }}</v-list-item-title>
+              <v-list-item-title>{{ data.item.replace(/<\/?[^>]+(>)/g, '') }}</v-list-item-title>
             </v-list-item-content>
           </v-layout>
         </template>
-        <span>{{ data.item }}</span>
+        <span>{{ data.item.replace(/<\/?[^>]+(>)/g, '') }}</span>
       </v-tooltip>
     </template>
     <template v-slot:prepend-item>

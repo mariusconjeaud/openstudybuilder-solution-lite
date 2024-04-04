@@ -20,7 +20,8 @@ module.exports = {
                         'userguide/userguides_introduction',
                         'userguide/studies/manage_studies',
                         'userguide/studies/guide_study_structure',
-                        'userguide/studies/guide_visits'
+                        'userguide/studies/guide_visits',
+                        'userguide/reports/userguides_reports'
                     ]
                 },
                 {

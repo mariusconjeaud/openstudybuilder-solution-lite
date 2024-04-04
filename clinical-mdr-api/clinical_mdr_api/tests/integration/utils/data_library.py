@@ -2998,6 +2998,8 @@ CREATE_BASE_TEMPLATE_PARAMETER_TREE = f"""
         MERGE (study_duration_days)-[:HAS_PARENT_PARAMETER]->(numeric_values)
         MERGE (study_duration_weeks:TemplateParameter {{name:"StudyDurationWeeks"}})
         MERGE (study_duration_weeks)-[:HAS_PARENT_PARAMETER]->(numeric_values)
+        MERGE (week_in_study:TemplateParameter {{name:"WeekInStudy"}})
+        MERGE (week_in_study)-[:HAS_PARENT_PARAMETER]->(numeric_values)
         MERGE (time_points:TemplateParameter {{name:"TimePoint"}})
         MERGE (time_points)-[:HAS_PARENT_PARAMETER]->(simple_concepts)
         MERGE (lag_time:TemplateParameter {{name:"LagTime"}})
@@ -3374,6 +3376,7 @@ def is_specific(path):
             "{study_number}",
             "{thread_uid}",
             "{reply_uid}",
+            "{study_uid}",
         )
     ):
         return True
@@ -3389,6 +3392,7 @@ def create_stub(path, methods):
         path = path.replace("{study_number}", "1")
         path = path.replace("{thread_uid}", "1")
         path = path.replace("{reply_uid}", "1")
+        path = path.replace("{study_uid}", "1")
         retval = {
             "id": 1,
             "path_spec": path,

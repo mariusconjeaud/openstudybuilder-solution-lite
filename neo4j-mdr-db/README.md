@@ -275,3 +275,19 @@ $ pipenv run import_from_cypher dump_example.cypher
 
 The database is created if it doesn't already exist.
 If it does exist, it should be empty to avoid any errors due to conflicts.
+
+# Import NeoDash reports
+The script `import_reports` can be used to import pre-built NeoDash reports into the Neo4j database. That way, anyone connecting to the database using NeoDash will see a list of available reports to browse.
+
+It connects to the database specified by the same environment variables as the init script:
+```
+NEO4J_MDR_DATABASE
+NEO4J_MDR_HOST
+NEO4J_MDR_BOLT_PORT
+NEO4J_MDR_AUTH_USER
+NEO4J_MDR_AUTH_PASSWORD
+```
+Run it with pipenv, specifying the directory where the reports JSON files are stored:
+```
+$ pipenv run import_reports "neodash_reports"
+```

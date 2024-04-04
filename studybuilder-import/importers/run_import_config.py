@@ -1,9 +1,8 @@
+import csv
+
+from .functions.utils import load_env
 from .utils.importer import BaseImporter, open_file
 from .utils.metrics import Metrics
-import csv
-from typing import Optional, Sequence, Any
-
-from .functions.utils import load_env, camel_case_data
 
 # ---------------------------------------------------------------
 # Env loading
@@ -24,7 +23,7 @@ class Configuration(BaseImporter):
         for line in r:
             path = "/configurations"
             data = line
-            #data = camel_case_data(line)
+            # data = camel_case_data(line)
             # TODO check why simple_path="study_fields_configuration"
             self.log.info(
                 f"Adding study field '{data['study_field_name']}' to codelist '{data['configured_codelist_name']}'"

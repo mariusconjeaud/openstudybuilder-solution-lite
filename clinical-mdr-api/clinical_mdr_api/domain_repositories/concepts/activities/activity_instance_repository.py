@@ -26,6 +26,7 @@ from clinical_mdr_api.domain_repositories.models.generic import (
     Library,
     VersionRelationship,
 )
+from clinical_mdr_api.domains._utils import ObjectStatus
 from clinical_mdr_api.domains.concepts.activities.activity_instance import (
     ActivityInstanceAR,
     ActivityInstanceGroupingVO,
@@ -54,17 +55,6 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
     value_object_class = ActivityInstanceVO
     return_model = ActivityInstance
 
-    def _get_name_or_none(self, node):
-        if node is None:
-            return None
-        name_root = node.has_name_root.get_or_none()
-        if name_root is None:
-            return None
-        name_value = name_root.has_latest_value.get_or_none()
-        if name_value is None:
-            return None
-        return name_value.name
-
     def _create_new_value_node(self, ar: _AggregateRootType) -> ActivityInstanceValue:
         value_node: ActivityInstanceValue = super()._create_new_value_node(ar=ar)
         value_node.topic_code = ar.concept_vo.topic_code
@@ -75,6 +65,7 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
         )
         value_node.is_data_sharing = ar.concept_vo.is_data_sharing
         value_node.is_legacy_usage = ar.concept_vo.is_legacy_usage
+        value_node.is_derived = ar.concept_vo.is_derived
         value_node.legacy_description = ar.concept_vo.legacy_description
 
         value_node.save()
@@ -189,6 +180,7 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
             != value.is_default_selected_for_activity
             or ar.concept_vo.is_data_sharing != value.is_data_sharing
             or ar.concept_vo.is_legacy_usage != value.is_legacy_usage
+            or ar.concept_vo.is_derived != value.is_derived
             or ar.concept_vo.legacy_description != value.legacy_description
         )
 
@@ -205,16 +197,6 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
             or item_data_changed
         )
         return are_concept_properties_changed or are_props_changed or are_rels_changed
-
-    def _get_item_name_and_uid(
-        self, item: dict, key: str
-    ) -> tuple[str | None, str | None]:
-        item_value = item.get(key)
-        if item_value is None:
-            return (None, None)
-        name = item_value.get("name")
-        uid = item_value.get("uid")
-        return (name, uid)
 
     def _create_aggregate_root_instance_from_cypher_result(
         self, input_dict: dict
@@ -244,6 +226,7 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
                 ),
                 is_data_sharing=input_dict.get("is_data_sharing", False),
                 is_legacy_usage=input_dict.get("is_legacy_usage", False),
+                is_derived=input_dict.get("is_derived", False),
                 legacy_description=input_dict.get("legacy_description"),
                 activity_groupings=[
                     ActivityInstanceGroupingVO(
@@ -307,8 +290,6 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
             activity_item_class_root = (
                 activity_item.has_activity_item_class.get_or_none()
             )
-            # unit_definitions = activity_item.has_unit_definition.all()
-            # ct_terms = activity_item.has_ct_term.all()
             ct_terms = []
             unit_definitions = []
             for unit in activity_item.has_unit_definition.all():
@@ -375,6 +356,7 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
                 is_legacy_usage=value.is_legacy_usage
                 if value.is_legacy_usage
                 else False,
+                is_derived=value.is_derived if value.is_derived else False,
                 legacy_description=value.legacy_description,
                 activity_groupings=[
                     ActivityInstanceGroupingVO(
@@ -395,7 +377,9 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
             item_metadata=self._library_item_metadata_vo_from_relation(relationship),
         )
 
-    def specific_alias_clause(self) -> str:
+    def specific_alias_clause(
+        self, only_specific_status: str = ObjectStatus.LATEST.name
+    ) -> str:
         return """
         WITH *,
             concept_value.topic_code AS topic_code,
@@ -404,6 +388,7 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
             coalesce(concept_value.is_default_selected_for_activity, false) AS is_default_selected_for_activity,
             coalesce(concept_value.is_data_sharing, false) AS is_data_sharing,
             coalesce(concept_value.is_legacy_usage, false) AS is_legacy_usage,
+            coalesce(concept_value.is_derived, false) AS is_derived,
             concept_value.legacy_description AS legacy_description,
             
             head([(concept_value)-[:ACTIVITY_INSTANCE_CLASS]->
@@ -526,8 +511,62 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
             overview_dict[attribute_name] = overview_prop
         return overview_dict
 
+    def get_cosmos_activity_instance_overview(self, uid: str) -> dict:
+        query = """
+        MATCH (activity_instance_root:ActivityInstanceRoot {uid:$uid})-[:LATEST]->(activity_instance_value:ActivityInstanceValue)
+        WITH activity_instance_root,activity_instance_value,
+            head([(library)-[:CONTAINS_CONCEPT]->(activity_instance_root) | library.name]) AS instance_library_name,
+            head([(activity_instance_value)-[:ACTIVITY_INSTANCE_CLASS]->
+            (activity_instance_class_root:ActivityInstanceClassRoot)-[:LATEST]->(activity_instance_class_value:ActivityInstanceClassValue) 
+            | activity_instance_class_value.name]) AS activity_instance_class_name
+        WITH *,
+            [(activity_instance_value)-[:HAS_ACTIVITY]->(:ActivityGrouping)-[:IN_SUBGROUP]->(activity_valid_group:ActivityValidGroup)
+            <-[:HAS_GROUP]-(activity_subgroup_value:ActivitySubGroupValue) | activity_subgroup_value.name] AS activity_subgroups,
+            apoc.coll.toSet([(activity_instance_value)-[:CONTAINS_ACTIVITY_ITEM]->(activity_item)
+            <-[HAS_ACTIVITY_ITEM]-(activity_item_class_root)-[:LATEST]->(activity_item_class_value) | 
+            {
+                nci_concept_id: activity_item_class_value.nci_concept_id,
+                name: activity_item_class_value.name,
+                type: head([(activity_item_class_value)-[:HAS_DATA_TYPE]->()-[:HAS_NAME_ROOT]->()-[:LATEST]->(data_type_value) | data_type_value.name]),
+                example_set: [(activity_item)-[:HAS_CT_TERM]->(term_root:CTTermRoot)-[:HAS_NAME_ROOT]->(term_name_root:CTTermNameRoot)-[:LATEST]->(term_name_value:CTTermNameValue) | {uid: term_root.uid, name: term_name_value.name}] + [(activity_item)-[:HAS_UNIT_DEFINITION]->(unit_definition_root:UnitDefinitionRoot)-[:LATEST]->(unit_definition_value:UnitDefinitionValue) | {uid: unit_definition_root.uid, name: unit_definition_value.name}]
+            }
+            ]) AS activity_items
+        WITH DISTINCT
+            activity_instance_value,
+            activity_instance_class_name,
+            activity_subgroups,
+            activity_items
+        RETURN *
+        """
+        result_array, attribute_names = db.cypher_query(
+            query=query, params={"uid": uid}
+        )
+        if len(result_array) != 1:
+            raise exceptions.BusinessLogicException(
+                f"The overview query returned broken data: {result_array}"
+            )
+        return {
+            attribute_name: result_array[0][index]
+            for index, attribute_name in enumerate(attribute_names)
+        }
+
     def generic_match_clause_all_versions(self):
         return """
             MATCH (concept_root:ActivityInstanceRoot)-[version:HAS_VERSION]->(concept_value:ActivityInstanceValue)
                    -[:HAS_ACTIVITY]->(activity_grouping:ActivityGrouping)<-[:HAS_GROUPING]-(activity_value:ActivityValue)
         """
+
+    def get_all_activity_instances_for_activity_grouping(
+        self,
+        activity_uid: str,
+        activity_subgroup_uid: str,
+        activity_group_uid: str,
+    ) -> list[ActivityInstanceRoot]:
+        activity_instances = to_relation_trees(
+            ActivityInstanceRoot.nodes.filter(
+                has_latest_value__has_activity__has_grouping__has_latest_value__uid=activity_uid,
+                has_latest_value__has_activity__in_subgroup__has_group__has_latest_value__uid=activity_subgroup_uid,
+                has_latest_value__has_activity__in_subgroup__in_group__has_latest_value__uid=activity_group_uid,
+            )
+        ).distinct()
+        return activity_instances

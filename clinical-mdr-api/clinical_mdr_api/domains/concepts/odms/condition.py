@@ -78,7 +78,7 @@ class OdmConditionVO(ConceptVO):
             )
             if not formal_expression:
                 raise BusinessLogicException(
-                    "ODM Condition tried to connect to non existing concepts "
+                    "ODM Condition tried to connect to non-existent concepts "
                     f"""[('Concept Name: ODM Formal Expression', "uids: {{'{formal_expression_uid}'}}")]."""
                 )
             if formal_expression.concept_vo.context in contexts:
@@ -109,7 +109,7 @@ class OdmConditionVO(ConceptVO):
             desc = find_odm_description_callback(description_uid)
             if not desc:
                 raise BusinessLogicException(
-                    "ODM Condition tried to connect to non existing concepts "
+                    "ODM Condition tried to connect to non-existent concepts "
                     f"""[('Concept Name: ODM Description', "uids: {{'{description_uid}'}}")]."""
                 )
             descriptions.append(desc)

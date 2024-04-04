@@ -1,6 +1,6 @@
 """Fixtures creating a Study and related nodes"""
 
-# pylint:disable=unused-import,redefined-outer-name,unused-argument
+# pylint: disable=unused-import,redefined-outer-name,unused-argument
 
 import logging
 
