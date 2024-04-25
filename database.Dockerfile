@@ -1,5 +1,5 @@
 ARG NEO4J_IMAGE=neo4j:5.10.0-enterprise
-ARG PYTHON_IMAGE=python:3.11.3-slim
+ARG PYTHON_IMAGE=python:3.11.9-slim
 
 # --- Build stage ----
 FROM $PYTHON_IMAGE as build-stage
@@ -20,6 +20,7 @@ RUN apt-get update \
         libharfbuzz0b \
         libpangoft2-1.0-0 \
         jq \
+        gcc \
     && pip install --upgrade pip pipenv wheel \
     && apt-get clean && rm -rf /var/lib/apt/lists && rm -rf ~/.cache
 
@@ -28,6 +29,32 @@ WORKDIR /neo4j
 ARG NEO4J_server_memory_heap_initial__size="2G"
 ARG NEO4J_server_memory_heap_max__size="2G"
 ARG NEO4J_server_memory_pagecache_size="1G"
+
+ARG reportDate="2024-01-05 14:54:32 +0100"
+
+ARG CDISC_DATA_DIR="mdr_standards_import/container_booting/"
+ARG NEO4J_MDR_AUTH_PASSWORD="changeme1234"
+
+# Environment variables for database
+ENV NEO4J_MDR_BOLT_PORT=7687 \
+    NEO4J_MDR_HTTP_PORT=7674 \
+    NEO4J_MDR_HTTPS_PORT=7673 \
+    NEO4J_MDR_HOST=localhost \
+    NEO4J_MDR_AUTH_USER=neo4j \
+    NEO4J_MDR_DATABASE=mdrdb \
+    NEO4J_CDISC_IMPORT_BOLT_PORT=7687 \
+    NEO4J_CDISC_IMPORT_HOST=localhost \
+    NEO4J_CDISC_IMPORT_AUTH_USER=neo4j \
+    NEO4J_CDISC_IMPORT_AUTH_PASSWORD=$NEO4J_MDR_AUTH_PASSWORD \
+    NEO4J_CDISC_IMPORT_DATABASE=cdisc-import \
+    NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
+
+# Environment variables for api
+ENV NEO4J_DSN="bolt://${NEO4J_MDR_AUTH_USER}:${NEO4J_MDR_AUTH_PASSWORD}@localhost:7687/" \
+    NEO4J_DATABASE=mdrdb \
+    OAUTH_ENABLED=false \
+    ALLOW_ORIGIN_REGEX=".*"
+
 
 # Install Neo4j from tarball
 RUN curl --fail --location --output neo4j.tar.gz --silent --show-error "$NEO4J_DOWNLOAD_URL" \
@@ -47,35 +74,32 @@ WORKDIR /build
 COPY ./neo4j-mdr-db/Pipfile* neo4j-mdr-db/
 COPY ./mdr-standards-import/Pipfile* mdr-standards-import/
 
-# Install dependencies
+# Install dependencies for neo4j-mdr-db and mdr-standards-import
 RUN cd neo4j-mdr-db && pipenv sync \
     && cd ../mdr-standards-import && pipenv sync \
     && rm -rf ~/.cache
 
-# Copy program files
+# Copy program files for neo4j-mdr-db and mdr-standards-import
 COPY ./neo4j-mdr-db neo4j-mdr-db
 COPY ./mdr-standards-import mdr-standards-import
 
-# Copy environment file
+# Copy environment file for mdr-standards-import
 COPY ./studybuilder-import/.env.import mdr-standards-import/.env
 
-ARG CDISC_DATA_DIR="mdr_standards_import/container_booting/"
-ARG NEO4J_MDR_AUTH_PASSWORD="changeme1234"
+# Install dependencies for studybuilder-import and clinical-mdr-api
+COPY ./studybuilder-import/Pipfile* studybuilder-import/
+COPY ./clinical-mdr-api/Pipfile* clinical-mdr-api/
+RUN cd studybuilder-import && pipenv sync \
+    && cd ../clinical-mdr-api && pipenv sync \
+    && rm -rf ~/.cache
 
-ENV NEO4J_MDR_BOLT_PORT=7687 \
-    NEO4J_MDR_HTTP_PORT=7674 \
-    NEO4J_MDR_HTTPS_PORT=7673 \
-    NEO4J_MDR_HOST=localhost \
-    NEO4J_MDR_AUTH_USER=neo4j \
-    NEO4J_MDR_DATABASE=mdrdb \
-    NEO4J_CDISC_IMPORT_BOLT_PORT=7687 \
-    NEO4J_CDISC_IMPORT_HOST=localhost \
-    NEO4J_CDISC_IMPORT_AUTH_USER=neo4j \
-    NEO4J_CDISC_IMPORT_AUTH_PASSWORD=$NEO4J_MDR_AUTH_PASSWORD \
-    NEO4J_CDISC_IMPORT_DATABASE=cdisc-import \
-    NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
+# Copy program files for studybuilder-import and clinical-mdr-api
+COPY ./studybuilder-import studybuilder-import
+COPY ./clinical-mdr-api clinical-mdr-api
 
-ARG reportDate="2024-01-05 14:54:32 +0100"
+# Set up environments for studybuilder-import
+COPY ./studybuilder-import/.env.import studybuilder-import/.env
+
 
 # Start Neo4j then run init and import
 RUN /neo4j/bin/neo4j-admin dbms set-initial-password "$NEO4J_MDR_AUTH_PASSWORD" \
@@ -96,47 +120,18 @@ RUN /neo4j/bin/neo4j-admin dbms set-initial-password "$NEO4J_MDR_AUTH_PASSWORD" 
     && python -m pipenv run import_reports neodash_reports/import \
     # imports
     && cd ../mdr-standards-import && pipenv run pipeline_bulk_import "IMPORT" "packages" true \
-    # stop neo4j server gently, but first wait a little for recent transactions to finish
-    && sleep 60 && kill -TERM $neo4j_pid && wait $neo4j_pid \
-    && trap EXIT
-
-# Install dependencies
-COPY ./studybuilder-import/Pipfile* studybuilder-import/
-COPY ./clinical-mdr-api/Pipfile* clinical-mdr-api/
-RUN cd studybuilder-import && pipenv sync \
-    && cd ../clinical-mdr-api && pipenv sync \
-    && rm -rf ~/.cache
-
-# Copy program files
-COPY ./studybuilder-import studybuilder-import
-COPY ./clinical-mdr-api clinical-mdr-api
-
-# Set up environments
-COPY ./studybuilder-import/.env.import studybuilder-import/.env
-
-ENV NEO4J_DSN="bolt://${NEO4J_MDR_AUTH_USER}:${NEO4J_MDR_AUTH_PASSWORD}@localhost:7687/" \
-    NEO4J_DATABASE=mdrdb \
-    OAUTH_ENABLED=false \
-    ALLOW_ORIGIN_REGEX=".*"
-
-# Start Neo4j and API and do the studybuilder-import
-RUN /neo4j/bin/neo4j console & neo4j_pid=$! \
-    && trap "kill -TERM $api_pid $neo4j_pid" EXIT \
-    # wait until $NEO4J_MDR_BOLT_PORT 7687/tcp is open
-    && while ! grep -qF "$(printf ':%04X' "$NEO4J_MDR_BOLT_PORT")" /proc/net/tcp; do sleep 2; done \
     # start API
-    && sleep 60 && { cd clinical-mdr-api && pipenv run uvicorn --host 127.0.0.1 --port 8000 --log-level info clinical_mdr_api.main:app & api_pid=$! ;} \
+    && { cd ../clinical-mdr-api && pipenv run uvicorn --host 127.0.0.1 --port 8000 --log-level info clinical_mdr_api.main:app & api_pid=$! ;} \
     # wait until 8000/tcp is open (hex 1F40)
     && while ! grep -qF "$(printf ':%04X' 8000)" /proc/net/tcp; do sleep 2; done \
     && set -x \
     # imports
-    && sleep 60 && cd studybuilder-import && pipenv run import_all \
+    && sleep 10 && cd ../studybuilder-import && pipenv run import_all \
     # stop the api
     && sleep 10 && kill -TERM $api_pid && wait $api_pid \
     # stop neo4j server gently, but first wait a little for recent transactions to finish
-    && sleep 30 && kill -TERM $neo4j_pid && wait $neo4j_pid \
+    && sleep 10 && kill -TERM $neo4j_pid && wait $neo4j_pid \
     && trap EXIT
-
 
 # --- Prod stage ----
 # Copy database directory from build-stage to the official neo4j docker image
