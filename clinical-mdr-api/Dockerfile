@@ -61,6 +61,7 @@ RUN echo "Building dev-stage" 1>&2 ; \
         libpango-1.0-0 \
         libharfbuzz0b \
         libpangoft2-1.0-0 \
+        gcc \
     && pip install --upgrade pip pipenv wheel \
     # clean-up
     && apt-get clean && rm -rf /var/lib/apt/lists && rm -rf ~/.cache
