@@ -6,7 +6,8 @@ from os import environ
 from neomodel import config
 from pydantic import BaseSettings
 
-_UPPERCASE_FALSE_STRINGS = ("", "FALSE", "0", "OFF", "NO")
+_UPPERCASE_FALSE_STRINGS = ("", "FALSE", "0", "OFF", "NO", "DISABLED")
+_UPPERCASE_TRUE_STRINGS = ("TRUE", "1", "ON", "YES", "Y", "ENABLED")
 
 
 # Teach urljoin that Neo4j DSN URLs like bolt:// and neo4j:// semantically similar to http://
@@ -54,6 +55,7 @@ STUDY_EPOCH_EPOCH_UID = "C99079"
 STUDY_DISEASE_MILESTONE_TYPE_NAME = "Disease Milestone Type"
 
 STUDY_VISIT_TYPE_NAME = "VisitType"
+STUDY_VISIT_REPEATING_FREQUENCY = "Repeating Visit Frequency"
 STUDY_VISIT_NAME = "VisitName"
 STUDY_DAY_NAME = "StudyDay"
 STUDY_DURATION_DAYS_NAME = "StudyDurationDays"
@@ -69,11 +71,21 @@ ANCHOR_VISIT_IN_VISIT_GROUP = "Anchor visit in visit group"
 STUDY_ENDPOINT_TP_NAME = "StudyEndpoint"
 STUDY_FIELD_PREFERRED_TIME_UNIT_NAME = "preferred_time_unit"
 STUDY_FIELD_SOA_PREFERRED_TIME_UNIT_NAME = "soa_preferred_time_unit"
+STUDY_FIELD_SOA_SHOW_EPOCHS = "soa_show_epochs"
+STUDY_FIELD_SOA_SHOW_MILESTONES = "soa_show_milestones"
+STUDY_FIELD_SOA_BASELINE_AS_TIME_ZERO = "baseline_as_time_zero"
+STUDY_SOA_PREFERENCES_FIELDS = (
+    # can't be a set: Neomodel's transform_operator_to_filter is strict for IN operator only accepts list or tuple
+    STUDY_FIELD_SOA_SHOW_EPOCHS,
+    STUDY_FIELD_SOA_SHOW_MILESTONES,
+    STUDY_FIELD_SOA_BASELINE_AS_TIME_ZERO,
+)
 
 STUDY_VISIT_SUBLABEL = "Visit Sub Label"
 STUDY_VISIT_CONTACT_MODE_NAME = "Visit Contact Mode"
 STUDY_VISIT_EPOCH_ALLOCATION_NAME = "Epoch Allocation"
 DATE_TIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%f%z"
+OPERATOR_PARAMETER_NAME = "Operator"
 
 DAY_UNIT_NAME = "day"
 # conversion to second which is master unit for time units
@@ -100,6 +112,16 @@ TRACING_DISABLED = environ.get("TRACING_DISABLED", "").upper().strip() not in (
     _UPPERCASE_FALSE_STRINGS
 )
 
+TRACE_REQUEST_BODY = environ.get("TRACE_REQUEST_BODY", "").upper().strip() in (
+    _UPPERCASE_TRUE_STRINGS
+)
+TRACE_REQUEST_BODY_MIN_STATUS_CODE = int(
+    environ.get("TRACE_REQUEST_BODY_MIN_STATUS_CODE", "400")
+)
+TRACE_REQUEST_BODY_TRUNCATE_BYTES = int(
+    environ.get("TRACE_REQUEST_BODY_TRUNCATE_BYTES", "2048")
+)
+
 # Absolute path of application root directory
 APP_ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
 
@@ -114,3 +136,4 @@ ALLOW_CREDENTIALS = environ.get("ALLOW_CREDENTIALS", "true").upper().strip() not
 )
 ALLOW_METHODS = environ.get("ALLOW_METHODS", "*").split(",")
 ALLOW_HEADERS = environ.get("ALLOW_HEADERS", "*").split(",")
+SLOW_QUERY_TIME_SECS = 1

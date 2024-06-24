@@ -1,59 +1,69 @@
 <template>
-<div>
-  <label v-if="label" class="v-label">{{ label }}</label>
-  <v-row class="align-center pr-4">
-    <v-col cols="11">
-      <slot name="mainField" v-bind:notApplicable="notApplicable"></slot>
-    </v-col>
-    <v-col cols="1">
-      <v-checkbox
-        data-cy="not-applicable-checkbox"
-        v-model="notApplicable"
-        :label="naLabel"
-        hide-details
-        @change="cleanFunction"
-        :disabled="disabled"
+  <div>
+    <label v-if="label" class="v-label">{{ label }}</label>
+    <v-row class="align-center">
+      <v-col cols="10">
+        <slot name="mainField" :not-applicable="notApplicable" />
+      </v-col>
+      <v-col cols="2">
+        <v-checkbox
+          v-model="notApplicable"
+          color="primary"
+          data-cy="not-applicable-checkbox"
+          :label="naLabel"
+          hide-details
+          :disabled="disabled"
+          @change="cleanFunction"
         />
-    </v-col>
-  </v-row>
-</div>
+      </v-col>
+    </v-row>
+  </div>
 </template>
 
 <script>
-import i18n from '@/plugins/i18n'
+import { i18n } from '@/plugins/i18n'
 
 export default {
   props: {
-    label: String,
-    hint: String,
+    label: {
+      type: String,
+      default: '',
+    },
+    hint: {
+      type: String,
+      default: '',
+    },
     naLabel: {
       type: String,
-      default: () => i18n.t('_global.not_applicable')
+      default: () => i18n.t('_global.not_applicable'),
     },
-    cleanFunction: Function,
+    cleanFunction: {
+      type: Function,
+      default: undefined,
+    },
     checked: Boolean,
     disabled: {
       type: Boolean,
-      default: false
-    }
+      default: false,
+    },
   },
-  data () {
+  data() {
     return {
-      notApplicable: false
+      notApplicable: false,
     }
-  },
-  methods: {
-    reset () {
-      this.notApplicable = false
-    }
-  },
-  created () {
-    this.notApplicable = this.checked
   },
   watch: {
-    checked (newValue) {
+    checked() {
       this.notApplicable = this.checked
-    }
-  }
+    },
+  },
+  created() {
+    this.notApplicable = this.checked
+  },
+  methods: {
+    reset() {
+      this.notApplicable = false
+    },
+  },
 }
 </script>

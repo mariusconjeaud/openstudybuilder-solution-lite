@@ -275,11 +275,17 @@ class SimpleCTTermAttributes(BaseModel):
 class SimpleTermModel(BaseModel):
     @classmethod
     def from_ct_code(
-        cls, c_code: str, find_term_by_uid: Callable[[str], Any | None]
+        cls,
+        c_code: str,
+        find_term_by_uid: Callable[[str], Any | None],
+        at_specific_date=None,
     ) -> Self | None:
         simple_term_model = None
         if c_code is not None:
-            term = find_term_by_uid(c_code)
+            if "ct_term_generic_repository" in find_term_by_uid.__module__:
+                term = find_term_by_uid(c_code, at_specific_date=at_specific_date)
+            else:
+                term = find_term_by_uid(c_code)
 
             if term is not None:
                 if hasattr(term, "ct_term_vo"):

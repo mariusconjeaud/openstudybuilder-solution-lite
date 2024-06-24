@@ -304,7 +304,7 @@ class StudyDesignCellRepository:
                 )
             )
             # if any StudyBranchArms connectect to StudyArm has a study_value
-            if self.get_current_outbound_node(
+            if study_arm_node and self.get_current_outbound_node(
                 node=study_arm_node,
                 outbound_rel_name="has_branch_arm",
                 study_value=latest_study_value_node,

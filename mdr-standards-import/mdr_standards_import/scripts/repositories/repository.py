@@ -142,6 +142,7 @@ def create_data_model_import_node(tx, dm_import: DataModelImport):
     result = tx.run(
         """
         CREATE (import:DataModelImport{
+            library: $library,
             catalogue: $catalogue,
             version_number: $version_number,
             implements_data_model: $implements_data_model,
@@ -153,6 +154,7 @@ def create_data_model_import_node(tx, dm_import: DataModelImport):
             import.import_date_time = datetime($import_date_time)
         RETURN id(import) AS import_id
         """,
+        library=dm_import.library,
         catalogue=dm_import.catalogue,
         version_number=dm_import.version_number,
         data_model_type=dm_import.get_type().value,
@@ -402,6 +404,7 @@ def _create_variables(tx, catalogue, version_number, variables_data):
                 variable.qualifies_variables = v.qualifies_variables,
                 variable.role_description = v.role_description,
                 variable.simple_datatype = v.simple_datatype,
+                variable.length = v.length,
                 variable.implementation_notes = v.implementation_notes,
                 variable.mapping_instructions = v.mapping_instructions,
                 variable.prompt = v.prompt,

@@ -1,65 +1,84 @@
 <template>
-<div>
-  <not-applicable-field
-    :clean-function="cleanIndications"
-    :checked="template && (!template.indications || !template.indications.length)"
-    >
-    <template v-slot:mainField="{ notApplicable }">
-      <validation-provider
-        v-slot="{ errors }"
-        :rules="`requiredIfNotNA:${notApplicable}`"
-        >
-        <multiple-select
-          v-model="form.indications"
-          :label="$t('GenericTemplateForm.study_indication')"
-          data-cy="template-indication-dropdown"
-          :items="indications"
-          item-text="name"
-          return-object
-          :disabled="notApplicable"
-          :errors="errors"
-          />
-      </validation-provider>
+  <NotApplicableField
+    :clean-function="
+      () => {
+        ;(localForm.indications = []), emitFormUpdate('indications')
+      }
+    "
+    :checked="
+      template && (!template.indications || !template.indications.length)
+    "
+  >
+    <template #mainField="{ notApplicable }">
+      <MultipleSelect
+        v-model="localForm.indications"
+        :label="$t('GenericTemplateForm.study_indication')"
+        data-cy="template-indication-dropdown"
+        :items="indications"
+        item-title="name"
+        return-object
+        :disabled="notApplicable"
+        :rules="[(value) => formRules.requiredIfNotNA(value, notApplicable)]"
+        @update:model-value="emitFormUpdate('indications')"
+      />
     </template>
-  </not-applicable-field>
-  <slot name="templateIndexFields"></slot>
-</div>
+  </NotApplicableField>
+  <slot name="templateIndexFields" />
 </template>
 
 <script>
 import dictionaries from '@/api/dictionaries'
-import MultipleSelect from '@/components/tools/MultipleSelect'
-import NotApplicableField from '@/components/tools/NotApplicableField'
+import MultipleSelect from '@/components/tools/MultipleSelect.vue'
+import NotApplicableField from '@/components/tools/NotApplicableField.vue'
 
 export default {
   components: {
     MultipleSelect,
-    NotApplicableField
+    NotApplicableField,
   },
+  inject: ['formRules'],
   props: {
-    form: Object,
-    template: Object
+    form: {
+      type: Object,
+      default: null,
+    },
+    template: {
+      type: Object,
+      default: null,
+    },
   },
-  data () {
+  emits: ['emit-form'],
+  data() {
     return {
-      indications: []
+      indications: [],
+      localForm: { ...this.form },
     }
   },
-  created () {
-    dictionaries.getCodelists('SNOMED').then(resp => {
+  created() {
+    dictionaries.getCodelists('SNOMED').then((resp) => {
       /* FIXME: we need a direct way to retrieve the terms here */
-      dictionaries.getTerms({ codelist_uid: resp.data.items[0].codelist_uid, page_size: 0 }).then(resp => {
-        this.indications = resp.data.items
-        this.indications.sort((a, b) => a.name.localeCompare(b.name))
-      })
+      dictionaries
+        .getTerms({
+          codelist_uid: resp.data.items[0].codelist_uid,
+          page_size: 0,
+        })
+        .then((resp) => {
+          this.indications = resp.data.items
+          this.indications.sort((a, b) => a.name.localeCompare(b.name))
+        })
     })
   },
   methods: {
-    cleanIndications (value) {
-      if (value) {
-        this.$set(this.form, 'indications', [])
-      }
-    }
-  }
+    emitFormUpdate(fieldName) {
+      this.$emit('emit-form', { [fieldName]: this.localForm[fieldName] })
+    },
+    preparePayload() {
+      const data = {}
+      data.indication_uids = this.localForm.indications.length
+        ? this.localForm.indications.map((item) => item.term_uid)
+        : []
+      return data
+    },
+  },
 }
 </script>

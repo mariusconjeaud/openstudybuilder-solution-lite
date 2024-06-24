@@ -17,6 +17,7 @@ from clinical_mdr_api.domains.concepts.odms.vendor_attribute import OdmVendorAtt
 from clinical_mdr_api.domains.concepts.utils import RelationType, VendorCompatibleType
 from clinical_mdr_api.exceptions import BusinessLogicException
 from clinical_mdr_api.models.concepts.odms.odm_common_models import (
+    OdmVendorElementRelationPostInput,
     OdmVendorRelationPostInput,
     OdmVendorsPostInput,
 )
@@ -32,14 +33,14 @@ class OdmGenericService(ConceptGenericService[_AggregateRootType], ABC):
     def fail_if_non_present_vendor_elements_are_used_by_current_odm_element_attributes(
         self,
         attribute_uids: list[str],
-        input_elements: list[OdmVendorRelationPostInput],
+        input_elements: list[OdmVendorElementRelationPostInput],
     ):
         """
         Raises an error if any ODM vendor element that is not present in the input is used by any of the given ODM element attributes.
 
         Args:
             attribute_uids (list[str]): The uids of the ODM element attributes.
-            input_elements (list[OdmVendorRelationPostInput]): The input ODM vendor elements.
+            input_elements (list[OdmVendorElementRelationPostInput]): The input ODM vendor elements.
 
         Returns:
             None

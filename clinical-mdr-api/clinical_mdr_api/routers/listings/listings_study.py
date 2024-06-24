@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Path, Query
+from fastapi import APIRouter, Query
 
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.listings.listings_study import StudyMetadataListingModel
@@ -14,9 +14,9 @@ router = APIRouter()
 
 
 @router.get(
-    "/studies/{study_number}/study-metadata",
+    "/studies/study-metadata",
     dependencies=[rbac.STUDY_READ],
-    summary="Retrieve study metadata from a given study number",
+    summary="Retrieve study metadata of a specific study",
     response_model=StudyMetadataListingModel,
     response_class=PrettyJSONResponse,
     status_code=200,
@@ -27,13 +27,15 @@ router = APIRouter()
         500: _generic_descriptions.ERROR_500,
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - No study with the specified 'study_number'.",
+            "description": "Not Found - No study with the specified study ID.",
         },
     },
 )
 def get_study_metadata(
-    study_number: str = Path(
-        None, description="Return study title for specific study number"
+    project_id: str = Query(None, description="Project ID of study requested"),
+    study_number: str = Query(None, description="Study number of study requested"),
+    subpart_acronym: str = Query(
+        None, description="subpart, if exists, of study requested"
     ),
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
     datetime: str
@@ -45,5 +47,5 @@ def get_study_metadata(
 ):
     study_metadata_listing_service = StudyMetadataListingService()
     return study_metadata_listing_service.get_study_metadata(
-        study_number, study_value_version, datetime
+        project_id, study_number, subpart_acronym, study_value_version, datetime
     )

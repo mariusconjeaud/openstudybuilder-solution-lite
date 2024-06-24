@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -e
 # Stop and remove neo4j_local if it already exists
-if [ -n "$(docker ps -qa -f name=neo4j_local)" ]; then
+if [ -n "$(docker ps -qa -f name=^/neo4j_local$)" ]; then
 	echo "- Found container neo4j_local"
-	if [ -n "$(docker ps -q -f name=neo4j_local)" ]; then
+	if [ -n "$(docker ps -q -f name=^/neo4j_local$)" ]; then
 		echo "- Stopping running container neo4j_local"
 		docker stop neo4j_local
 	fi
@@ -73,4 +73,4 @@ docker run -d \
     -e NEO4J_server_https_listen__address=:"$NEO4J_MDR_HTTPS_PORT" \
     -e NEO4J_server_metrics_enabled=false \
     --env=NEO4J_PLUGINS='["apoc"]' \
-    neo4j:5.9.0-enterprise
+    neo4j:5.18.1-enterprise

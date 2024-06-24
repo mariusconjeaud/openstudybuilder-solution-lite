@@ -1,52 +1,56 @@
 <template data-cy="template-text-part">
-<base-template-form
-  object-type="footnote"
-  :template="template"
-  :prepare-payload-function="preparePayload"
-  :help-items="helpItems"
-  :title-context="{ type: footnoteType.sponsor_preferred_name }"
-  data-cy="template-text"
-  v-bind="$attrs"
-  v-on="$listeners"
+  <BaseTemplateForm
+    object-type="footnote"
+    :template="template"
+    :prepare-payload-function="preparePayload"
+    :prepare-indexing-payload-function="prepareIndexingPayload"
+    :help-items="helpItems"
+    :title-context="{ type: footnoteType.sponsor_preferred_name }"
+    data-cy="template-text"
+    v-bind="$attrs"
   >
-  <template v-slot:indexingTab="{ form }">
-    <footnote-template-indexing-form
-      ref="indexingForm"
-      :form="form"
-      :template="template"
+    <template #indexingTab="{ form }">
+      <FootnoteTemplateIndexingForm
+        ref="indexingForm"
+        :form="form"
+        :template="template"
       />
-  </template>
-</base-template-form>
+    </template>
+  </BaseTemplateForm>
 </template>
 
-<script>
-import BaseTemplateForm from './BaseTemplateForm'
-import FootnoteTemplateIndexingForm from './FootnoteTemplateIndexingForm'
+<script setup>
+import BaseTemplateForm from './BaseTemplateForm.vue'
+import FootnoteTemplateIndexingForm from './FootnoteTemplateIndexingForm.vue'
+import { ref } from 'vue'
 
-export default {
-  components: {
-    BaseTemplateForm,
-    FootnoteTemplateIndexingForm
+const indexingForm = ref()
+
+const props = defineProps({
+  template: {
+    type: Object,
+    default: null,
   },
-  props: {
-    template: Object,
-    footnoteType: Object
+  footnoteType: {
+    type: Object,
+    default: null,
   },
-  data () {
-    return {
-      helpItems: [
-        'FootnoteTemplateForm.indications',
-        'FootnoteTemplateForm.group',
-        'FootnoteTemplateForm.sub_group',
-        'FootnoteTemplateForm.activity'
-      ]
-    }
-  },
-  methods: {
-    preparePayload (payload) {
-      payload.type_uid = this.footnoteType.term_uid
-      Object.assign(payload, this.$refs.indexingForm.preparePayload(payload))
-    }
+})
+
+const helpItems = [
+  'FootnoteTemplateForm.indications',
+  'FootnoteTemplateForm.group',
+  'FootnoteTemplateForm.sub_group',
+  'FootnoteTemplateForm.activity',
+]
+
+function preparePayload(payload) {
+  payload.type_uid = props.footnoteType.term_uid
+}
+
+function prepareIndexingPayload(payload) {
+  if (indexingForm.value) {
+    Object.assign(payload, indexingForm.value.preparePayload(payload))
   }
 }
 </script>

@@ -72,10 +72,6 @@
             {
               "codelist_uid": "ct_codelist_root_endpoint",
               "order": 1
-            },
-            {
-              "codelist_uid": "editable_cr",
-              "order": 1
             }
           ],
           "sponsor_preferred_name": "term_value_name1",
@@ -147,10 +143,6 @@
               "codelists": [
                 {
                   "codelist_uid": "ct_codelist_root_endpoint",
-                  "order": 1
-                },
-                {
-                  "codelist_uid": "editable_cr",
                   "order": 1
                 }
               ],
@@ -234,10 +226,6 @@
             {
               "codelist_uid": "ct_codelist_root_endpoint",
               "order": 1
-            },
-            {
-              "codelist_uid": "editable_cr",
-              "order": 1
             }
           ],
           "sponsor_preferred_name": "term_value_name1",
@@ -304,10 +292,6 @@
                 {
                   "codelist_uid": "ct_codelist_root_endpoint",
                   "order": 1
-                },
-                {
-                  "codelist_uid": "editable_cr",
-                  "order": 1
                 }
               ],
               "sponsor_preferred_name": "term_value_name1",
@@ -358,10 +342,6 @@
               "codelists": [
                 {
                   "codelist_uid": "ct_codelist_root_endpoint",
-                  "order": 1
-                },
-                {
-                  "codelist_uid": "editable_cr",
                   "order": 1
                 }
               ],
@@ -435,10 +415,6 @@
             {
               "codelist_uid": "ct_codelist_root_endpoint",
               "order": 1
-            },
-            {
-              "codelist_uid": "editable_cr",
-              "order": 1
             }
           ],
           "sponsor_preferred_name": "term_value_name1",
@@ -492,6 +468,7 @@
             "study_number": "0",
             "subpart_id": null,
             "study_acronym": null,
+            "study_subpart_acronym": null,
             "project_number": "123",
             "description": null,
             "project_name": "Project ABC",
@@ -711,7 +688,7 @@
           },
           "study_compound_dosing_count": null,
           "start_date": "2022-08-05T07:28:57.742069",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "end_date": null,
           "status": null,
           "change_type": "Edit",
@@ -765,10 +742,6 @@
               {
                 "codelist_uid": "ct_codelist_root_endpoint",
                 "order": 1
-              },
-              {
-                "codelist_uid": "editable_cr",
-                "order": 1
               }
             ],
             "sponsor_preferred_name": "term_value_name1",
@@ -787,7 +760,7 @@
           },
           "study_compound_dosing_count": null,
           "start_date": "2022-08-05T07:28:57.307886",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "end_date": "2022-08-05T07:28:57.742069",
           "status": null,
           "change_type": "Create",
@@ -910,10 +883,6 @@
               {
                 "codelist_uid": "ct_codelist_root_endpoint",
                 "order": 1
-              },
-              {
-                "codelist_uid": "editable_cr",
-                "order": 1
               }
             ],
             "sponsor_preferred_name": "term_value_name1",
@@ -932,7 +901,7 @@
           },
           "study_compound_dosing_count": null,
           "start_date": "2022-08-05T07:47:39.481823",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "end_date": null,
           "status": null,
           "change_type": "Edit",
@@ -992,10 +961,6 @@
               {
                 "codelist_uid": "ct_codelist_root_endpoint",
                 "order": 1
-              },
-              {
-                "codelist_uid": "editable_cr",
-                "order": 1
               }
             ],
             "sponsor_preferred_name": "term_value_name1",
@@ -1014,7 +979,7 @@
           },
           "study_compound_dosing_count": null,
           "start_date": "2022-08-05T07:47:38.066809",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "end_date": "2022-08-05T07:47:39.481823",
           "status": null,
           "change_type": "Create",
@@ -1068,7 +1033,7 @@
           },
           "study_compound_dosing_count": null,
           "start_date": "2022-08-05T07:47:39.506444",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "end_date": null,
           "status": null,
           "change_type": "Edit",
@@ -1146,7 +1111,7 @@
           },
           "study_compound_dosing_count": null,
           "start_date": "2022-08-05T07:47:39.092935",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "end_date": "2022-08-05T07:47:39.506444",
           "status": null,
           "change_type": "Edit",
@@ -1200,10 +1165,6 @@
               {
                 "codelist_uid": "ct_codelist_root_endpoint",
                 "order": 1
-              },
-              {
-                "codelist_uid": "editable_cr",
-                "order": 1
               }
             ],
             "sponsor_preferred_name": "term_value_name1",
@@ -1222,7 +1183,7 @@
           },
           "study_compound_dosing_count": null,
           "start_date": "2022-08-05T07:47:38.658851",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "end_date": "2022-08-05T07:47:39.092935",
           "status": null,
           "change_type": "Create",
@@ -1363,10 +1324,6 @@
           "codelists": [
             {
               "codelist_uid": "ct_codelist_root_endpoint",
-              "order": 1
-            },
-            {
-              "codelist_uid": "editable_cr",
               "order": 1
             }
           ],

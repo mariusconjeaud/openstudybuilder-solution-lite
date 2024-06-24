@@ -1,19 +1,18 @@
-from fastapi import APIRouter, Body, Depends, Path, Query, Response, status
+from fastapi import APIRouter, Body, Path, Query, Response, status
 
 from clinical_mdr_api import config, models
 from clinical_mdr_api.domains.comments.comments import CommentThreadStatus
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.oauth import get_current_user_info, rbac
-from clinical_mdr_api.oauth.models import UserInfo
+from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.routers import _generic_descriptions
-from clinical_mdr_api.services.comments.comments import CommmentsService
+from clinical_mdr_api.services.comments.comments import CommentsService
 
 # Endpoints prefixed with "/comment*"
 router = APIRouter()
 
 CommentThreadUID = Path(None, description="Unique id of comment thread")
 CommentReplyUID = Path(None, description="Unique id of comment reply")
-Service = CommmentsService
+Service = CommentsService
 
 
 @router.get(
@@ -49,9 +48,8 @@ def get_comment_topics(
         le=config.MAX_PAGE_SIZE,
         description=_generic_descriptions.PAGE_SIZE,
     ),
-    current_user: UserInfo = Depends(get_current_user_info),
 ) -> CustomPage[models.CommentTopic]:
-    results = Service(current_user).get_all_comment_topics(
+    results = Service().get_all_comment_topics(
         topic_path=topic_path,
         topic_path_partial_match=topic_path_partial_match,
         page_number=page_number,
@@ -100,9 +98,8 @@ def get_comment_threads(
         le=config.MAX_PAGE_SIZE,
         description=_generic_descriptions.PAGE_SIZE,
     ),
-    current_user: UserInfo = Depends(get_current_user_info),
 ) -> CustomPage[models.CommentThread]:
-    results = Service(current_user).get_all_comment_threads(
+    results = Service().get_all_comment_threads(
         topic_path=topic_path,
         topic_path_partial_match=topic_path_partial_match,
         status=status,
@@ -125,11 +122,8 @@ def get_comment_threads(
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_comment_thread(
-    uid: str = CommentThreadUID,
-    current_user: UserInfo = Depends(get_current_user_info),
-) -> models.CommentThread:
-    return Service(current_user).get_comment_thread(uid)
+def get_comment_thread(uid: str = CommentThreadUID) -> models.CommentThread:
+    return Service().get_comment_thread(uid)
 
 
 @router.post(
@@ -147,9 +141,8 @@ def create_comment_thread(
     create_input: models.CommentThreadCreateInput = Body(
         description="Comment thread that shall be created"
     ),
-    current_user: UserInfo = Depends(get_current_user_info),
 ) -> models.CommentThread:
-    return Service(current_user).create_comment_thread(create_input)
+    return Service().create_comment_thread(create_input)
 
 
 @router.patch(
@@ -169,9 +162,8 @@ def edit_comment_thread(
     edit_input: models.CommentThreadEditInput = Body(
         description="Properties of the comment thread that shall be updated"
     ),
-    current_user: UserInfo = Depends(get_current_user_info),
 ) -> models.CommentThread:
-    return Service(current_user).edit_comment_thread(uid, edit_input)
+    return Service().edit_comment_thread(uid, edit_input)
 
 
 @router.delete(
@@ -185,10 +177,8 @@ def edit_comment_thread(
         500: _generic_descriptions.ERROR_500,
     },
 )
-def delete_comment_thread(
-    uid: str = CommentThreadUID, current_user: UserInfo = Depends(get_current_user_info)
-) -> None:
-    Service(current_user).delete_comment_thread(uid)
+def delete_comment_thread(uid: str = CommentThreadUID) -> None:
+    Service().delete_comment_thread(uid)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -209,9 +199,8 @@ def create_comment_reply(
     create_input: models.CommentReplyCreateInput = Body(
         description="Comment reply that shall be created"
     ),
-    current_user: UserInfo = Depends(get_current_user_info),
 ) -> models.CommentReply:
-    return Service(current_user).create_comment_reply(thread_uid, create_input)
+    return Service().create_comment_reply(thread_uid, create_input)
 
 
 @router.get(
@@ -227,9 +216,8 @@ def create_comment_reply(
 )
 def get_comment_thread_replies(
     thread_uid: str = CommentThreadUID,
-    current_user: UserInfo = Depends(get_current_user_info),
 ) -> list[models.CommentReply]:
-    return Service(current_user).get_all_comment_thread_replies(thread_uid)
+    return Service().get_all_comment_thread_replies(thread_uid)
 
 
 @router.get(
@@ -245,11 +233,9 @@ def get_comment_thread_replies(
 )
 # pylint: disable=unused-argument
 def get_comment_thread_reply(
-    thread_uid: str = CommentThreadUID,
-    reply_uid: str = CommentReplyUID,
-    current_user: UserInfo = Depends(get_current_user_info),
+    thread_uid: str = CommentThreadUID, reply_uid: str = CommentReplyUID
 ) -> models.CommentThread:
-    return Service(current_user).get_comment_thread_reply(reply_uid)
+    return Service().get_comment_thread_reply(reply_uid)
 
 
 @router.patch(
@@ -271,9 +257,8 @@ def edit_comment_thread_reply(
     edit_input: models.CommentReplyEditInput = Body(
         description="Updated text of the comment reply"
     ),
-    current_user: UserInfo = Depends(get_current_user_info),
 ) -> models.CommentReply:
-    return Service(current_user).edit_comment_thread_reply(reply_uid, edit_input)
+    return Service().edit_comment_thread_reply(reply_uid, edit_input)
 
 
 @router.delete(
@@ -289,9 +274,7 @@ def edit_comment_thread_reply(
 )
 # pylint: disable=unused-argument
 def delete_comment_reply(
-    thread_uid: str = CommentThreadUID,
-    reply_uid: str = CommentReplyUID,
-    current_user: UserInfo = Depends(get_current_user_info),
-) -> None:
-    Service(current_user).delete_comment_reply(reply_uid)
+    thread_uid: str = CommentThreadUID, reply_uid: str = CommentReplyUID
+):
+    Service().delete_comment_reply(reply_uid)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

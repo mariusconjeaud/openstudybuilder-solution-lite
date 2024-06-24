@@ -10,6 +10,9 @@ from clinical_mdr_api.domain_repositories.models.syntax import (
     ObjectiveRoot,
     ObjectiveValue,
 )
+from clinical_mdr_api.models.study_selections.study_soa_footnote import (
+    StudySoAFootnoteCreateInput,
+)
 from clinical_mdr_api.services.studies.study import StudyService
 from clinical_mdr_api.services.studies.study_activity_instruction import (
     StudyActivityInstructionService,
@@ -20,6 +23,7 @@ from clinical_mdr_api.services.studies.study_activity_selection import (
 from clinical_mdr_api.services.studies.study_criteria_selection import (
     StudyCriteriaSelectionService,
 )
+from clinical_mdr_api.services.studies.study_soa_footnote import StudySoAFootnoteService
 from clinical_mdr_api.services.syntax_instances.endpoints import EndpointService
 from clinical_mdr_api.services.syntax_instances.objectives import ObjectiveService
 from clinical_mdr_api.tests.integration.utils import data_library
@@ -75,8 +79,17 @@ class TestListStudies(unittest.TestCase):
         ObjectiveRoot.generate_node_uids_if_not_present()
         EndpointRoot.generate_node_uids_if_not_present()
 
+        footnote = TestUtils.create_footnote()
+
+        # Create a SoA Study Footnote
+        StudySoAFootnoteService().create(
+            "study_root",
+            footnote_input=StudySoAFootnoteCreateInput(footnote_uid=footnote.uid),
+            create_footnote=False,
+        )
+
         # Create a study activity
-        StudyActivitySelectionService("AZNG").make_selection(
+        StudyActivitySelectionService().make_selection(
             "study_root",
             models.StudySelectionActivityCreateInput(
                 soa_group_term_uid="term_root_final",
@@ -106,7 +119,7 @@ class TestListStudies(unittest.TestCase):
         )
 
         # Create a study criteria
-        StudyCriteriaSelectionService("AZNG").make_selection_create_criteria(
+        StudyCriteriaSelectionService().make_selection_create_criteria(
             "study_root",
             models.study_selections.study_selection.StudySelectionCriteriaCreateInput(
                 criteria_data=models.syntax_instances.criteria.CriteriaCreateInput(
@@ -136,7 +149,7 @@ class TestListStudies(unittest.TestCase):
         )
 
         # Create a study activity instruction
-        StudyActivityInstructionService("AZNG").create(
+        StudyActivityInstructionService().create(
             "study_root",
             models.StudyActivityInstructionCreateInput(
                 activity_instruction_data=models.ActivityInstructionCreateInput(
@@ -167,6 +180,10 @@ class TestListStudies(unittest.TestCase):
         )
 
         self.study_service = StudyService()
+
+    def test_filter_by_study_footnote(self):
+        result = self.study_service.get_all(has_study_footnote=True)
+        self.assertEqual(len(result.items), 1)
 
     def test_filter_by_study_objective(self):
         result = self.study_service.get_all(has_study_objective=True)

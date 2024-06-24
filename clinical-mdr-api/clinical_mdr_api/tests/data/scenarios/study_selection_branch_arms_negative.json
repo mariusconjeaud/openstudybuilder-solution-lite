@@ -54,10 +54,6 @@
                             {
                                 "codelist_uid": "ct_codelist_root_endpoint",
                                 "order": 1
-                            },
-                            {
-                                "codelist_uid": "editable_cr",
-                                "order": 1
                             }
                         ],
                         "sponsor_preferred_name": "term_value_name1",
@@ -145,10 +141,6 @@
                         "codelists": [
                             {
                                 "codelist_uid": "ct_codelist_root_endpoint",
-                                "order": 1
-                            },
-                            {
-                                "codelist_uid": "editable_cr",
                                 "order": 1
                             }
                         ],
@@ -264,10 +256,6 @@
                             {
                                 "codelist_uid": "ct_codelist_root_endpoint",
                                 "order": 1
-                            },
-                            {
-                                "codelist_uid": "editable_cr",
-                                "order": 1
                             }
                         ],
                         "sponsor_preferred_name": "term_value_name1",
@@ -328,7 +316,7 @@
                     "randomization_group": "Randomization_Group_4",
                     "number_of_subjects": 1,
                     "start_date": "2022-08-11T05:46:54.470678",
-                    "user_initials": "TEST_USER",
+                    "user_initials": "unknown-user",
                     "end_date": null,
                     "status": null,
                     "change_type": "Edit",
@@ -372,7 +360,7 @@
                     "randomization_group": "Randomization_Group_1",
                     "number_of_subjects": 1,
                     "start_date": "2022-08-11T05:24:53.229953",
-                    "user_initials": "TEST_USER",
+                    "user_initials": "unknown-user",
                     "end_date": "2022-08-11T05:46:54.470678",
                     "status": null,
                     "change_type": "Create",
@@ -434,10 +422,6 @@
                             {
                                 "codelist_uid": "ct_codelist_root_endpoint",
                                 "order": 1
-                            },
-                            {
-                                "codelist_uid": "editable_cr",
-                                "order": 1
                             }
                         ],
                         "sponsor_preferred_name": "term_value_name1",
@@ -462,7 +446,7 @@
                     "accepted_version": null
                 },
                 "start_date": "2022-05-11T08:52:26.575638",
-                "user_initials": "TEST_USER",
+                "user_initials": "unknown-user",
                 "end_date": null,
                 "status": null,
                 "change_type": null,

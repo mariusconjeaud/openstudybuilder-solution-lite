@@ -1,70 +1,98 @@
 <template>
-<v-row>
-  <v-col cols="6">
-    <v-autocomplete
-      :value="value"
-      :label="$t('SubstanceField.label')"
-      :items="substances"
-      item-text="name"
-      return-object
-      @input="update"
-      dense
+  <v-row>
+    <v-col cols="6">
+      <v-autocomplete
+        v-model="value"
+        :label="$t('SubstanceField.label')"
+        :items="substances"
+        item-title="name"
+        return-object
+        density="compact"
       />
-  </v-col>
-  <v-col cols="6">
-    <v-text-field
-      :value="unii"
-      label="UNII"
-      filled
-      disabled
-      dense
-      hide-details
+    </v-col>
+    <v-col cols="6">
+      <v-text-field
+        :value="unii"
+        label="UNII"
+        variant="filled"
+        disabled
+        density="compact"
+        hide-details
       />
-  </v-col>
-  <v-col cols="6">
-    <v-text-field
-      :value="pclass"
-      :label="$t('SubstanceField.pharmacological_class')"
-      filled
-      disabled
-      dense
-      hide-details
+    </v-col>
+    <v-col cols="6">
+      <v-text-field
+        :value="pclass"
+        :label="$t('SubstanceField.pharmacological_class')"
+        variant="filled"
+        disabled
+        density="compact"
+        hide-details
       />
-  </v-col>
-  <v-col cols="6">
-    <v-text-field
-      :value="medrtId"
-      :label="$t('SubstanceField.medrt')"
-      filled
-      disabled
-      dense
-      hide-details
+    </v-col>
+    <v-col cols="6">
+      <v-text-field
+        :value="medrtId"
+        :label="$t('SubstanceField.medrt')"
+        variant="filled"
+        disabled
+        density="compact"
+        hide-details
       />
-  </v-col>
-</v-row>
+    </v-col>
+  </v-row>
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { computed } from 'vue'
+import { useCompoundsStore } from '@/stores/library-compounds'
 
 export default {
   props: {
-    value: Object
+    modelValue: {
+      type: Object,
+      default: null,
+    },
   },
-  computed: {
-    ...mapGetters({
-      substances: 'compounds/substances'
-    })
+  emits: ['update:modelValue'],
+  setup() {
+    const compoundsStore = useCompoundsStore()
+    return {
+      substances: computed(() => compoundsStore.substances),
+    }
   },
-  data () {
+  data() {
     return {
       medrtId: '',
       pclass: '',
-      unii: ''
+      unii: '',
+    }
+  },
+  computed: {
+    value: {
+      get() {
+        return this.modelValue
+      },
+      set(value) {
+        this.fillInformation(value)
+        this.$emit('update:modelValue', value)
+      },
+    },
+  },
+  watch: {
+    substances(value) {
+      if (value) {
+        this.fillInformation(this.value)
+      }
+    },
+  },
+  mounted() {
+    if (this.modelValue) {
+      this.fillInformation(this.value)
     }
   },
   methods: {
-    fillInformation (value) {
+    fillInformation(value) {
       if (value) {
         if (value.pclass) {
           this.pclass = value.pclass.name
@@ -76,28 +104,6 @@ export default {
         this.unii = value.dictionary_id
       }
     },
-    update (val) {
-      this.fillInformation(val)
-      this.$emit('input', val)
-    }
   },
-  mounted () {
-    if (this.value) {
-      this.fillInformation(this.value)
-    }
-  },
-  watch: {
-    value: {
-      handler: function (newValue) {
-        this.fillInformation(newValue)
-      },
-      immediate: true
-    },
-    substances (value) {
-      if (value) {
-        this.fillInformation(this.value)
-      }
-    }
-  }
 }
 </script>

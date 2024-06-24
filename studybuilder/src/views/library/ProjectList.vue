@@ -1,89 +1,79 @@
 <template>
-  <div>
-    <n-n-table
-      :headers="headers"
-      :items="items"
-      :options.sync="options"
-      :server-items-length="total"
-      has-api
-      hide-default-switches
-      column-data-resource="projects"
-      @filter="fetchProjects"
-      item-key="project_number">
-      <template v-slot:actions="">
-      <slot name="extraActions"></slot>
+  <NNTable
+    :headers="headers"
+    :items="items"
+    :items-length="total"
+    hide-default-switches
+    column-data-resource="projects"
+    item-value="project_number"
+    @filter="fetchProjects"
+  >
+    <template #actions="">
+      <slot name="extraActions" />
       <v-btn
-        fab
-        dark
-        small
+        size="small"
         color="primary"
         data-cy="add-project"
-        @click.stop="showForm"
         :title="$t('ProjectForm.title')"
-        >
-        <v-icon dark>
-          mdi-plus
-        </v-icon>
-      </v-btn>
+        icon="mdi-plus"
+        @click.stop="showForm"
+      />
     </template>
-    </n-n-table>
-    <project-form
-      :open="showProjectForm"
-      @close="closeForm"/>
-</div>
+  </NNTable>
+  <ProjectForm :open="showProjectForm" @close="closeForm" />
 </template>
 
 <script>
-import NNTable from '@/components/tools/NNTable'
+import NNTable from '@/components/tools/NNTable.vue'
 import projects from '@/api/projects'
-import ProjectForm from '@/components/library/ProjectForm'
+import ProjectForm from '@/components/library/ProjectForm.vue'
 import filteringParameters from '@/utils/filteringParameters'
 
 export default {
   components: {
     NNTable,
-    ProjectForm
+    ProjectForm,
   },
-  data () {
+  data() {
     return {
       headers: [
-        { text: this.$t('Projects.name'), value: 'name' },
-        { text: this.$t('Projects.project_number'), value: 'project_number' },
-        { text: this.$t('Projects.clinical_programme'), value: 'clinical_programme.name' },
-        { text: this.$t('Projects.description'), value: 'description' }
+        { title: this.$t('Projects.name'), key: 'name' },
+        { title: this.$t('Projects.project_number'), key: 'project_number' },
+        {
+          title: this.$t('Projects.clinical_programme'),
+          key: 'clinical_programme.name',
+        },
+        { title: this.$t('Projects.description'), key: 'description' },
       ],
       items: [],
-      options: {},
       total: 0,
       filters: '',
-      showProjectForm: false
+      showProjectForm: false,
     }
   },
   methods: {
-    fetchProjects (filters, sort, filtersUpdated) {
+    fetchProjects(filters, options, filtersUpdated) {
       if (!filters && this.filters) {
         filters = this.filters
       }
       const params = filteringParameters.prepareParameters(
-        this.options, filters, sort, filtersUpdated)
+        options,
+        filters,
+        filtersUpdated
+      )
       this.filters = filters
-      projects.get(params).then(resp => {
+      projects.get(params).then((resp) => {
         this.items = resp.data.items
         this.total = resp.data.total
       })
     },
-    showForm () {
+    showForm() {
       this.showProjectForm = true
     },
-    closeForm () {
+    closeForm() {
       this.showProjectForm = false
       this.fetchProjects()
-    }
+    },
   },
-  watch: {
-    options () {
-      this.fetchProjects()
-    }
-  }
 }
 </script>

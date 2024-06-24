@@ -1,246 +1,231 @@
 <template>
-<simple-form-dialog
-  ref="form"
-  :title="$t('DictionaryTermForm.title', { dictionaryName })"
-  :help-items="helpItems"
-  @close="close"
-  @submit="submit"
-  :open="open"
+  <SimpleFormDialog
+    ref="form"
+    :title="$t('DictionaryTermForm.title', { dictionaryName })"
+    :help-items="helpItems"
+    :open="open"
+    @close="cancel"
+    @submit="submit"
   >
-  <template v-slot:body>
-    <validation-observer ref="observer">
-      <v-row>
-        <v-col cols="12">
-          <validation-provider
-            v-slot="{ errors }"
-            rules="required"
-            >
+    <template #body>
+      <v-form ref="observer">
+        <v-row>
+          <v-col cols="12">
             <v-text-field
               v-model="form.dictionary_id"
               :label="`${dictionaryName} ID`"
-              :error-messages="errors"
-              dense
+              density="compact"
               clearable
-              />
-          </validation-provider>
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col cols="12">
-          <validation-provider
-            v-slot="{ errors }"
-            rules="required"
-            >
+              :rules="[formRules.required]"
+            />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col cols="12">
             <v-text-field
               v-model="form.name"
               :label="$t('_global.name')"
-              :error-messages="errors"
-              dense
+              density="compact"
               clearable
+              :rules="[formRules.required]"
               @blur="setLowerCase"
-              />
-          </validation-provider>
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col cols="12">
-          <validation-provider
-            v-slot="{ errors }"
-            rules="required"
-            >
+            />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col cols="12">
             <v-text-field
               v-model="form.name_sentence_case"
               :label="$t('DictionaryTermForm.lower_case_name')"
-              :error-messages="errors"
-              dense
+              density="compact"
               clearable
-              />
-          </validation-provider>
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col cols="12">
-          <validation-provider
-            v-slot="{ errors }"
-            rules=""
-            >
+              :rules="[formRules.required]"
+            />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col cols="12">
             <v-text-field
               v-model="form.abbreviation"
               :label="$t('DictionaryTermForm.abbreviation')"
-              :error-messages="errors"
-              dense
+              density="compact"
               clearable
-              />
-          </validation-provider>
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col cols="12">
-          <validation-provider
-            v-slot="{ errors }"
-            rules=""
-            >
+            />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col cols="12">
             <v-textarea
               v-model="form.definition"
               :label="$t('DictionaryTermForm.definition')"
-              :error-messages="errors"
-              dense
+              density="compact"
               clearable
               rows="1"
               auto-grow
-              />
-          </validation-provider>
-        </v-col>
-      </v-row>
-      <v-row v-if="editedTerm">
-        <v-col cols="12">
-          <validation-provider
-            v-slot="{ errors }"
-            rules="required"
-            >
+            />
+          </v-col>
+        </v-row>
+        <v-row v-if="editedTerm">
+          <v-col cols="12">
             <v-textarea
               v-model="form.change_description"
               :label="$t('_global.change_description')"
-              :error-messages="errors"
-              dense
+              density="compact"
               clearable
               rows="1"
               auto-grow
-              />
-          </validation-provider>
-        </v-col>
-      </v-row>
-    </validation-observer>
-  </template>
-</simple-form-dialog>
+              :rules="[formRules.required]"
+            />
+          </v-col>
+        </v-row>
+      </v-form>
+    </template>
+  </SimpleFormDialog>
 </template>
 
 <script>
-import { bus } from '@/main'
 import dictionaries from '@/api/dictionaries'
-import SimpleFormDialog from '@/components/tools/SimpleFormDialog'
-import _isEqual from 'lodash/isEqual'
+import SimpleFormDialog from '@/components/tools/SimpleFormDialog.vue'
+import { useFormStore } from '@/stores/form'
 
 export default {
   components: {
-    SimpleFormDialog
+    SimpleFormDialog,
   },
+  inject: ['eventBusEmit', 'formRules'],
   props: {
-    editedTerm: Object,
-    editedTermCategory: String,
-    dictionaryName: String,
-    open: Boolean
+    editedTerm: {
+      type: Object,
+      default: null,
+    },
+    editedTermCategory: {
+      type: String,
+      default: null,
+    },
+    dictionaryName: {
+      type: String,
+      default: null,
+    },
+    open: Boolean,
   },
-  data () {
+  emits: ['close', 'save'],
+  setup() {
+    const formStore = useFormStore()
+
+    return {
+      formStore,
+    }
+  },
+  data() {
     return {
       helpItems: [
         'DictionaryTermForm.dictionary_id',
         'DictionaryTermForm.name',
         'DictionaryTermForm.lower_case_name',
         'DictionaryTermForm.abbreviation',
-        'DictionaryTermForm.definition'
+        'DictionaryTermForm.definition',
       ],
-      form: {}
+      form: {},
     }
   },
+  watch: {
+    editedTerm: {
+      handler(value) {
+        if (value) {
+          this.initForm(value)
+          this.form.codelist_uid = this.editedTermCategory
+          this.formStore.save(this.form)
+        }
+      },
+      immediate: true,
+    },
+  },
+  mounted() {
+    if (this.editedTerm) {
+      this.initForm(this.editedTerm)
+      this.form.change_description = this.$t(
+        'DictionaryTermForm.default_change_descr'
+      )
+    }
+    this.form.codelist_uid = this.editedTermCategory
+    this.formStore.save(this.form)
+  },
   methods: {
-    isUpdate () {
+    isUpdate() {
       return Boolean(this.editedTerm)
     },
-    async cancel () {
-      if (this.$store.getters['form/form'] === '' || _isEqual(this.$store.getters['form/form'], JSON.stringify(this.form))) {
+    async cancel() {
+      if (this.formStore.isEmpty || this.formStore.isEqual(this.form)) {
         this.close()
       } else {
         const options = {
           type: 'warning',
           cancelLabel: this.$t('_global.cancel'),
-          agreeLabel: this.$t('_global.continue')
+          agreeLabel: this.$t('_global.continue'),
         }
-        if (await this.$refs.form.confirm(this.$t('_global.cancel_changes'), options)) {
+        if (
+          await this.$refs.form.confirm(
+            this.$t('_global.cancel_changes'),
+            options
+          )
+        ) {
           this.close()
         }
       }
     },
-    close () {
+    close() {
       this.form = {}
       this.$refs.form.working = false
-      this.$store.commit('form/CLEAR_FORM')
+      this.formStore.reset()
       this.$emit('close')
     },
-    submit () {
+    submit() {
       if (this.editedTerm) {
         this.edit()
       } else {
         this.create()
       }
     },
-    edit () {
-      if (this.form.defComplete) {
-        this.form.defComplete = 'Y'
-      } else {
-        this.form.defComplete = 'N'
-      }
+    edit() {
       const data = JSON.parse(JSON.stringify(this.form))
-      dictionaries.edit(this.editedTerm.term_uid, data).then(resp => {
-        bus.$emit('notification', { msg: this.$t('DictionaryTermForm.update_success') })
-        this.$emit('save')
-        this.close()
-      }, _err => {
-        this.$refs.form.working = false
-      })
+      dictionaries.edit(this.editedTerm.term_uid, data).then(
+        () => {
+          this.eventBusEmit('notification', {
+            msg: this.$t('DictionaryTermForm.update_success'),
+          })
+          this.$emit('save')
+          this.close()
+        },
+        () => {
+          this.$refs.form.working = false
+        }
+      )
     },
-    async create () {
+    async create() {
       this.form.library_name = this.dictionaryName
       this.form.codelist_uid = this.editedTermCategory
       const data = JSON.parse(JSON.stringify(this.form))
-      dictionaries.create(data).then(resp => {
-        bus.$emit('notification', { msg: this.$t('DictionaryTermForm.create_success') })
-        this.$emit('save')
-        this.close()
-      }, _err => {
-        this.$refs.form.working = false
-      })
+      dictionaries.create(data).then(
+        () => {
+          this.eventBusEmit('notification', {
+            msg: this.$t('DictionaryTermForm.create_success'),
+          })
+          this.$emit('save')
+          this.close()
+        },
+        () => {
+          this.$refs.form.working = false
+        }
+      )
     },
-    initForm (form) {
+    initForm(form) {
       this.form = form
     },
-    setLowerCase () {
+    setLowerCase() {
       if (this.form.name) {
-        this.$set(
-          this.form, 'name_sentence_case', this.form.name.toLowerCase()
-        )
+        this.form.name_sentence_case = this.form.name.toLowerCase()
       }
-    }
+    },
   },
-  mounted () {
-    if (this.editedTerm) {
-      if (this.editedTerm.defComplete === 'Y') {
-        this.editedTerm.defComplete = true
-      } else {
-        this.editedTerm.defComplete = false
-      }
-      this.initForm(this.editedTerm)
-      this.form.change_description = this.$t('DictionaryTermForm.default_change_descr')
-    }
-    this.form.codelist_uid = this.editedTermCategory
-    this.$store.commit('form/SET_FORM', this.form)
-  },
-  watch: {
-    editedTerm: {
-      handler (value) {
-        if (value) {
-          if (this.editedTerm.defComplete === 'Y') {
-            this.editedTerm.defComplete = true
-          } else {
-            this.editedTerm.defComplete = false
-          }
-          this.initForm(value)
-          this.form.codelist_uid = this.editedTermCategory
-          this.$store.commit('form/SET_FORM', this.form)
-        }
-      },
-      immediate: true
-    }
-  }
 }
 </script>

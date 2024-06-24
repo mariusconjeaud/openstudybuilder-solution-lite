@@ -11,7 +11,7 @@ SKIP_PATHS = {"/openapi.json", "/docs", "/docs/oauth2-redirect", "/redoc"}
 EXPIRED_ACCESS_TOKEN = os.environ.get("EXPIRED_ACCESS_TOKEN")
 
 
-def test_global_security_dependency(main_app_all_route_paths, app_client):
+def test_global_security_dependency(main_app_all_route_paths, api_client):
     """Test that global Security dependency is in effect, and mandates an access token on (nearly) all paths"""
 
     for path, methods in main_app_all_route_paths:
@@ -19,7 +19,7 @@ def test_global_security_dependency(main_app_all_route_paths, app_client):
             continue
 
         for method in methods:
-            response = app_client.request(method, path)
+            response = api_client.request(method, path)
             assert response.status_code == 401, f"Bad status code for {method} {path}"
 
 
@@ -29,7 +29,7 @@ def test_global_security_dependency(main_app_all_route_paths, app_client):
     reason="EXPIRED_ACCESS_TOKEN is not set",
 )
 def test_global_security_dependency_with_invalid_token(
-    main_app_all_route_paths, app_client
+    main_app_all_route_paths, api_client
 ):
     """Test that global Security dependency is in effect, and refuses an expired access token on (nearly) all paths"""
 
@@ -38,7 +38,7 @@ def test_global_security_dependency_with_invalid_token(
             continue
 
         for method in methods:
-            response = app_client.request(
+            response = api_client.request(
                 method,
                 path,
                 headers={"Authorization": f"Bearer {EXPIRED_ACCESS_TOKEN}"},

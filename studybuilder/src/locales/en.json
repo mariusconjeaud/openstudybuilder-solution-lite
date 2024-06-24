@@ -20,6 +20,9 @@
         "search": "Search",
         "status": "Status",
         "version": "Version",
+        "start_date": "Start date",
+        "end_date": "End date",
+        "date_null": "None",
         "library": "Library",
         "studies": "Studies",
         "overview": "Overview",
@@ -91,7 +94,6 @@
         "not_applicable_full_name": "Not Applicable",
         "positive_infinity_full_name": "Positive Infinity",
         "na_uid": "C48660_NA",
-        "unknown_user": "unknown-user",
         "filtering_to_add": "Filtering currently not activated",
         "save_anyway": "Save anyway",
         "add_defaults": "Default values",
@@ -131,11 +133,16 @@
         "add_pre_instance": "Create pre-instantiation",
         "sequence_number": "Sequence number",
         "sequence_number_short": "#",
+        "number": "Number",
         "access_groups": "Access Groups:",
         "operator": "Operator",
         "download_docx": "Download DOCX",
         "audit_trail": "Audit trail",
-        "remove": "Remove"
+        "remove": "Remove",
+        "change_order": "Change order",
+        "order_updated": "The order was updated",
+        "reject": "Reject",
+        "accept": "Accept"
     },
     "_errors": {
         "exclusive_select": "Field and Null Flavor can't be selected at the same time.",
@@ -414,11 +421,11 @@
             "label": "If value is missing, select reason (null flavor)"
         },
         "RegistryIdentifiersForm": {
-            "ctgovid": "The unique identification code given to a clinical study registered on ClinicalTrials.gov. Format is 'NCT' followed by an 8-digit number (ex. NCT00000419).",
-            "eudractid": "European Union Drug Regulating Authorities Clinical Trials identification number. Format is YYYY-NNNNNN-CC, where: YYYY is the year in which the number is issued. NNNNNN is a six digit sequential number. CC is a check digit (ex. 2007-002422-29)",
-            "utn": "WHO International Clinical Trials Registry identification number. Format is Uxxxx-xxxx-xxxx where x is a digit (ex.  U1111-1168-4339) ",
-            "japic": "Japan Pharmaceutical Information Center (JAPIC) Identification number. Format is Japic CTI-xxxxxx where x is a digit (ex. Japic CTI-111668)",
-            "ind": "The identification number provided by FDA when a pharmaceutical company obtains permission to start human clinical trials. Format is IND Number xxxxxx where x is a digit (ex. IND Number: 132371)."
+            "ct_gov_id": "The unique identification code given to a clinical study registered on ClinicalTrials.gov. Format is 'NCT' followed by an 8-digit number (ex. NCT00000419).",
+            "eudract_id": "European Union Drug Regulating Authorities Clinical Trials identification number. Format is YYYY-NNNNNN-CC, where: YYYY is the year in which the number is issued. NNNNNN is a six digit sequential number. CC is a check digit (ex. 2007-002422-29)",
+            "universal_trial_number_utn": "WHO International Clinical Trials Registry identification number. Format is Uxxxx-xxxx-xxxx where x is a digit (ex.  U1111-1168-4339) ",
+            "japanese_trial_registry_id_japic": "Japan Pharmaceutical Information Center (JAPIC) Identification number. Format is Japic CTI-xxxxxx where x is a digit (ex. Japic CTI-111668)",
+            "investigational_new_drug_application_number_ind": "The identification number provided by FDA when a pharmaceutical company obtains permission to start human clinical trials. Format is IND Number xxxxxx where x is a digit (ex. IND Number: 132371)."
         },
         "StudyDefineForm": {
             "general": "This section is for defining the Study. For requesting a term/value added to drop-down list, please refer to SharePoint",
@@ -517,31 +524,28 @@
             "general": "Use the add button (under the menu) to add the endpoint needed. The endpoint can be based on standard templates, selected from other studies or created from scratch. Some criteria contain parameters highlighted with orange text (parameter labels) or green text (parameter values) for which new values can be selected, or the parameter omitted, by using the Edit button next to each editable endpoint in the table."
         },
         "StudyVisitForm": {
-            "vtype_step_label": "Select the type of visit: Scheduled visit is a planned visit as per protocol, Non Visit is for study activities not planned, e.g. an AE. Unscheduled visit is for additional visits that was not planned for, e.g. extra lab samples. The Non Visit and Unscheduled Visit is used for Form setup. Special Visit is a visit without specific timing but related to data collection. Example: early treatment discontinuation, where certain data are to be collected, but not at the timing of the planned End of Treatment visit. A special visit is always related to another visit and is shown in the schedule of activities as visit VXXA (XX being the number of the related visit). there can only be one Special Visits per Epoch.",
-            "period": "The epoch types corresponds to the epochs defined in the Study Epochs tab. Select the one applicable for the visit",
-            "single_visit": "Single visit. Default should be set to Single Visit. If visits need subgrouping, e.g. a set of days need to be grouped into a visit then select Anchor Visit in Group. For subsequent select additional sub-visit",
-            "anchor_visit_in_group": "If ticked, it will create a local anchor visit. Visits referencing to a Anchor visit in group will have the same Visit number concatenated with number of days. Eg. if Visits 3 (V3) is Anchor visit in group then a visits referring this (Time reference) will have same visit but visits short name as V3D2, if it occurs 2 days after the anchor visit. Remember to tick subsequent visits as Additional Sub-visit. This will allow for selecting the local anchor visit from the time reference drop-down.",
-            "visit_type": "For definition of visit types see <a href='https://studybuilder.clinicalmdr-dev.corp.azure.novonordisk.com/library/ct_catalogues/All/CTCodelist_000005' target='_blank'>[Visit Type]<a>",
-            "contact_mode": "How did study subject interact with the study investigator at the visit",
-            "anchor_visit": "If ticked, it will set the visit timing to 0 days (Study Day 1)",
-            "current_anchor_visit": "Will display the visit that has been designated as Global Anchor Visit using the Anchor Visit tick mark. If not set. it will be blank",
-            "time_reference": "Select the reference for the visit, e.g. reference to Global Anchor Visit or reference to the previous visit. When the first visit (e.g. Screening) is defined then select Global Anchor Visit as reference. The Global anchor visit can be set later for the appropriate visit. For Special Visit select the planned visit it should relate to.",
-            "time_value": "Numeric. Negative or Positive number of e.g. days before/after the time reference does the visit occur. Time unit can bet set using the Time Unit drop-down.",
+            "vtype_step_label": "Select the type of visit: Scheduled visit is a planned visit as per protocol. Unscheduled visit is an additional visit to capture activities that may happen outside of normal schedule, e.g. extra lab samples. Non Visit is for study activities not related to any visits, e.g. for self-measured plasma glucose results. The Unscheduled Visit and Non Visit are placeholders required for most of the studies for proper SDTM mapping. Special Visit is a visit without specific timing but related to data collection. Example: early discontinuation visit, where certain data are to be collected, but not at the timing of the originally planned End of Treatment visit. A special visit is always related to another visit and is shown in the schedule of activities as visit VXXA (XX being the number of the related visit). There can be only one Special Visits per study period (Epoch). If after first patient enrolled on study (FPFV) adding new visit as per protocol amendment is needed, then Manually defined visit has to be used. After FPFV changing names or numbering of visits that were initially implemented may have serious consequences, while adding Manually Defined visit is not impacting on data that were already collected.",
+            "period": "Select the study period (epoch) applicable for the visit. The epoch types correspond to the epochs defined in the Study Epochs tab.",
+            "single_anchor_addtional": "Selection is applicable only if visit scheduling type is scheduled. For newly created visits by default the Single Visit radiobutton is selected. If visits need subgrouping, e.g. a set of days (Day 1, Day 2, Day 3) to be grouped into a one visit (Visit 3), then select Anchor visit in visit group. It will allow to create Visit 3 Day 1, which will be the local anchor visit for subsequent sub-visits. To add subsequent visits (Visit 3 Day 2, Visit 3 Day 3) then, while creating them, select Additional sub-visit radiobutton and appropriate anchor visit from the time reference drop-down.",
+            "visit_type": "For definition of visit  types see: Library, Code Lists, Sponsor, and filter Sponsor Preferred name=VisitType or Concept ID CTCodelist_000002 to review the terms.",
+            "contact_mode": "Specify how subject interacts with the study investigator at the visit.",
+            "anchor_visit": "If ticked, it will set visit timing to 0 days and define this visit as a global anchor (Day 1 of the study). Usually this refers to randomisation visit. There can be only one global anchor visit per study.",
+            "current_anchor_visit": "It displays the visit that has been designated as Global anchor visit using the Anchor visit tick mark. If not set, then it will be left blank.",
+            "time_reference": "Select the reference for the visit, e.g. reference to Global anchor visit or reference to the previous visit. For the first entered visit (e.g. Screening), the Global anchor visit can be selected as reference only. For Special Visit, time reference is indicating the visit name that the special visit is related to.",
+            "time_value": "Please enter numeric value: negative or positive number to reflect how many days/weeks/years before/after the time reference does the visit occur. Time unit can bet set using the Time unit drop-down.",
             "time_unit": "The time unit for the timing of the visit",
-            "visit_name": "Auto-populated",
-            "visit_short_name": "Auto-populated",
+            "visit_name": "To be selected manually for Manually defined visits. Auto-populated for other visit types.",
+            "visit_short_name": "To be selected manually for Manually defined visits. Auto-populated for other visit types.",
             "study_day_label": "Auto-populated",
             "study_week_label": "Auto-populated",
-            "visit_win_min": "Enter the minimum visit window. The allowable number of days the visit can occur prior to the planned time point",
-            "visit_win_max": "Enter the maximum visit window. The allowable number of days the visit can occur after the planned time point",
-            "visit_win_unit": "Unit for visit window",
-            "visit_description": "Additional description of the visit",
-            "epoch_allocation": "Observations at a visit might be affected by treatment administered in a previous epoch. Example: Baseline visit (in treatment epoch) where subjects are instructed to take first medication the next day will have measurements taken that represents 'Pre Treatment' epoch treatment, i.e. No treatment. In this case the Epoch Allocation Rule should be Previous Visit. In most cases the rule is Current Visit, i.e. measurements at this visit is measurements of the treatment (element) given in the epoch. The corresponding rules with Date is to be used for Non-visits and unscheduled visits. The Actual Treatment is used if the actual treatment of the subject at the visit is to be used instead of the planned treatment. ",
+            "visit_window_min": "Enter the earliest, allowable per protocol, number of days/weeks/years when the visit may occur prior planned time point.",
+            "visit_window_max": "Enter the latest, allowable per protocol, number of days/weeks/years when the visit may occur after planned time point.",
+            "visit_win_unit": "Select unit for visit window.",
+            "visit_description": "Text field to add description of the visit.",
+            "epoch_allocation": "Observations at a visit might be affected by treatment administered in a previous epoch. Example: Baseline visit (in treatment epoch) where subjects are instructed to take first medication the next day will have measurements taken that represents 'Pre Treatment' epoch treatment, i.e. No treatment. In this case the Epoch Allocation Rule should be Previous Visit. In most cases the rule is Current Visit, i.e. measurements at this visit is measurements of the treatment (element) given in the epoch. The corresponding rules with Date is to be used for Non-visits and unscheduled visits. The Actual Treatment is used if the actual treatment of the subject at the visit is to be used instead of the planned treatment. Reach out to the study SDTM programmer for further information.",
             "visit_start_rule": "Enter visit start rule. Describe when the visit starts, in relation to the sequence of elements, e.g. 2 weeks after start of Treatment Epoch",
             "visit_stop_rule": "Enter visit stop rule. Describe when the visit ends, in relation to the sequence of elements e.g. At End of Trial",
-            "visit_notes": "Notes for the visit that need to be added to the SoA as footnotes.",
-            "collapsible_visit": "Indicate whether the visit is part of a group of visits which should be shown as a range of visits in the SoA. This will provide an additional label to the visit(s).",
-            "duplicate_visit": "Specify the timing for the new visit. The time reference is the same for the visit being copied from. E.g. if the reference is global anchor visit and you are copying visit 7 being 7 days after global anchor visit, then if you select 8 days in the timing the new visit will be visit 8 (8 days after global anchor visit). Note, you cannot copy a randomisation visit."
+            "duplicate_visit": "To create new visit that will be a copy of the previously defined visit, click on 3 dots next to the row of the visit that you want to copy and select Duplicate. Specify the timing and timing unit for newly created visit. The time reference is the same as for the visit being copied from. E.g. if for the visit 7 that you are copying the Time reference is Global anchor visit and timing set to 7 days, then new visit, visit 8, with timing selected as 8 days is taking place 8 days after global anchor visit. Note, you cannot duplicate global anchor visit (e.g. very often this is randomisation visit)."
         },
         "StudyVisitDuplicate": {
             "time_value": "Numeric. Negative or Positive number of e.g. days before/after the time reference does the visit occur. Note: the reference is the same as the visit being copied from. Time unit can bet set using the Time Unit drop-down.",
@@ -673,6 +677,9 @@
             "SDTM_CT": "Study Data Tabulation Controlled Terminology. Terminology to support the tabulation of the collected data. SDTM is one of the required standards for data submission to FDA (U.S.) and PMDA (Japan).",
             "SEND_CT": "Standard for the Exchange of Nonclinical Data Controlled Terminology. SEND is an implementation of the SDTM standard for nonclinical studies. SEND is one of the required standards for data submission to FDA."
         },
+        "CtSponsorPackagesTable": {
+            "general": "The CT Sponsor Packages displays all version of both CDISC and Sponsor code lists and terms. Navigate using the CT Sponsor package date to show specific subsets of terminology."
+        },
         "SnomedTable": {
             "general": "SNOMED CT (Systematized Nomenclature of Medicine -- Clinical Terms) is a standardized, multilingual vocabulary of clinical terminology that is used by physicians and other health care providers for the electronic exchange of clinical health information."
         },
@@ -715,9 +722,6 @@
         },
         "TimeframesTable": {
             "general": "The list of Time Frames and which template they are based on, and the number of studies using the Time Frame. To create specific time rame from a template, click on the +-button in the top right side of the table."
-        },
-        "GeneralClinicalMetadataTable": {
-            "general": "Help text to be added."
         },
         "StudyPurposeView": {
             "general": "A statement describing the overall rationale of the study. It describes the contribution of this study to product development, i.e., what knowledge is being contributed from the conduct of this study. Follow the tabs to define objectives, endpoints and estimands (if applicable).",
@@ -766,20 +770,13 @@
             "activity_instructions": "Tab for specification of instructions for an activity. E.g. Study drug must be given the next day after randomisation"
         },
         "StudyActivity": {
-            "general": "An Activity is a definition of an activity performed on a subject. The Activity is the overall name of the activity used in the protocol Schedule of Activities (SoA).",
-            "flowchart_group": "The overall group of the Schedule of Activities (SoA) that the Activity belongs to.",
-            "activity_group": "The overall group(s) that the Activity belongs to. The grouping is also used for protocol SoA display and for searching in the List of Activities.",
-            "activity_sub_group": "This is a sub-grouping within a group. The sub-grouping is also used for protocol SoA display and for searching in the List of Activities.",
-            "activity": "The name of the Activity",
-            "data_collection": "Specifies if the Activity involves data collection. Some Activities are reminders and do not invole data collection. ",
-            "expand_all": "Expand table to view all activities. Select the visit (tick the circle) in which the activities are to occur. To tick multiple visits for multiple activities then  select the activities (tick the box next to the activity) then press the blue pencil icon above the table (to the right).",
-            "collapse_all": "Collapse table to only view the high-level SoA groups",
-            "hide_activity_selection": "Some activity details may not be needed in the high-level protocol SoA. Hide activity that are not needed in protocol SoA using the hide eye indicator. To hide multiple activities, select the activities (or activity groups) and use the grey hide eye-indicator above the table (to the right)",
-            "show_activity_selection": "Show activity in protocol SoA using the green show eye-indicator. To show multiple activities, select the activities (or activity groups) and use the show green eye-indicator above the table (to the right)",
-            "hide_flowchart_groups": "To show/hide the overall SoA group from the view then slide the toggle. In general, the SoA groups are not shown in the Protocol SoA",
-            "edit_dialog_title": "To edit the activities, epochs or visits press on the pencil in the left corner of the SoA table. This will navigate to the relevant page in the study builder.",
-            "download_docx": "Press DOWNLOAD DOCX to download the WORD version of the SoA",
-            "instructions": "To add an instruction to the activities selected, then add from a study, from a template or from scratch"
+            "general": "A 'Study Activity' is an assessment or procedure performed on a subject in a clinical study. The menu option 'Study Activities' is where you administer/select the activities needed for your study and the group them, you assign them to relevant visits, and specify how it should be in the protocol view of the Schedule of Activity (SoA). You can also attach footnotes to the SoA, control the SoA header row and preview different detail levels of the SoA.",
+            "settings": "The 'Settings' option allow you to control the time unit (days/weeks) for the SoA and whether or not you need baseline visit (eg. randomisation) shown as time 0",
+            "study_activities": "The activities can be selected from the library, from other studies or activity placeholders can be created for requesting new activities.",
+            "detailed_soa": "'Detailed SoA' is detailed level of the SoA, where you define at what visit an activity is needed. By default the activity is listed under activities with now allocation to visits. You then mark the visits the activity is applicable for (by clicking on the circle under the relevant visit). Thereafter, you decide what should be visible in the SoA for the protocol by clicking on the small eye icon (hide/unhide).",
+            "study_footnotes": "Select or create footnotes to be used in the  protocol SoA. Footnotes can be selected from library, other studies or created from scratch. The footnotes will automatically be ordered by occurrence in the SoA.",
+            "protocol_soa": "The Protocol SoA is a preview of the settings/selections in the 'Detailed SoA' section. The view is what will be pulled into the protocol template via the Word add-in. You can also preview the SoA at the detailed and data specification operational level.",
+            "instructions": "NOTE: This functionality is not in use yet. When in use, it will link selected activities from the SoA to the applicable instruction text for section 8 of the protocol 'Study assessments and procedures'"
         },
         "StudyActivityForm": {
             "general": "Select the activities for the study. ",
@@ -887,7 +884,7 @@
         "dashboard_description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud",
         "define_description": "Specify the design, interventions, study population, objectives, visit structure, schedule of activities and activity, etc. by using controlled terminology and syntax templates or by reusing content from other studies.",
         "build_description": "Preview the study information (entered e.g. under Define Study), but compiled for different downstream usages, e.g. for import into the protocol template, for upload to external registries, for population of the SDTM study design datasets, for CRF design, etc. ",
-        "list_description": "Various kinds of listings of the study specification data defined for your study.",
+        "list_description": "Find, edit and add studies.",
         "process_overview_description": "Find schematic overviews of the activities covered under Studies. You can use these to navigate to the relevant pages to enter or look up information."
     },
     "Settings": {
@@ -932,8 +929,7 @@
             "syntax_templates": "Syntax Templates",
             "cdisc": "CDISC",
             "sponsor": "Sponsor",
-            "objective_templates": "Objective Templates",
-            "endpoint_templates": "Endpoint Templates",
+            "sponsor_ct_packages": "Sponsor CT Packages",
             "concepts": "Concepts",
             "activities": "Activities",
             "units": "Units",
@@ -957,7 +953,7 @@
             "parameter_templates": "Parameter Templates",
             "criteria_instances": "Criteria Instances",
             "criteria_templates": "Criteria Templates",
-            "activity_templates": "Activity Templates",
+            "activity_instructions": "Activity Instructions",
             "activity_instruction_instances": "Activity Instruction Instances",
             "footnote_templates": "Footnote Templates",
             "footnote_instances": "Footnote Instances",
@@ -965,8 +961,10 @@
             "objectives": "Objectives",
             "endpoints": "Endpoints",
             "timeframes": "Time Frames",
+            "criteria": "Criteria",
             "project": "Project",
             "general": "General",
+            "footnotes": "Footnotes",
             "template_collections": "Template Collections",
             "project_templates": "Project Templates",
             "shared_templates": "Shared Templates",
@@ -1077,7 +1075,8 @@
             "study_interventions_and_therapy": "Study Interventions",
             "specification_overview": "Specification Overview",
             "study_branches": "Study Branches",
-            "disease_milestones": "Disease Milestones"
+            "disease_milestones": "Disease Milestones",
+            "data_specifications": "Data Specifications"
         }
     },
     "HomeView": {
@@ -1419,11 +1418,14 @@
         "project_name": "Project name",
         "id": "Study ID",
         "acronym": "Study acronym",
+        "subpart_acronym": "Study subpart acronym",
         "select": "Select",
         "unselect": "Unselect",
         "number": "Study number",
         "brand_name": "Brand name",
-        "title": "Study title"
+        "title": "Study title",
+        "subpart_id": "Subpart ID",
+        "sub_study_id": "Sub study ID"
     },
     "StudyForm": {
         "add_title": "Add study",
@@ -1439,6 +1441,7 @@
         "number": "Study number",
         "number_hint": "Type {length}-digits study number",
         "acronym": "Study acronym",
+        "subpart_acronym": "Study subpart acronym",
         "acronym_hint": "Optional free-text field (expect if used instead of study number in the early planning phase)",
         "add_success": "Study added",
         "update_success": "Study updated"
@@ -1524,11 +1527,18 @@
     "RegistryIdentifiersForm": {
         "title": "Add or edit registry identifiers",
         "update_success": "Registry identifiers updated",
-        "ctgovid": "ClinicalTrials.gov ID",
-        "eudractid": "EUDRACT ID",
-        "utn": "Universal Trial Number (UTN)",
-        "japic": "Japanese Trial Registry ID (JAPIC)",
-        "ind": "Investigational New Drug Application (IND) Number"
+        "ct_gov_id": "ClinicalTrials.gov ID",
+        "eudract_id": "EUDRACT ID",
+        "universal_trial_number_utn": "Universal Trial Number (UTN)",
+        "japanese_trial_registry_id_japic": "Japanese Trial Registry ID (JAPIC)",
+        "investigational_new_drug_application_number_ind": "Investigational New Drug Application (IND) Number",
+        "eu_trial_number": "EU Trial Number",
+        "civ_id_sin_number": "CID ID SIN Number",
+        "national_clinical_trial_number": "National Clinical Trial Number",
+        "japanese_trial_registry_number_jrct": "Japanese Trial Registry Number",
+        "national_medical_products_administration_nmpa_number": "NMPA Number",
+        "eudamed_srn_number": "EUDAMED number",
+        "investigational_device_exemption_ide_number": "Investigational Device Exemption Number"
     },
     "DurationField": {
         "label": "Unit"
@@ -1706,7 +1716,8 @@
         "select_objective": "Select a study objective or check the Select later box",
         "copy_objective": "Select study objective",
         "selected_endpoints": "Selected study endpoints",
-        "study_endpoint": "Study endpoint"
+        "study_endpoint": "Study endpoint",
+        "no_objective_available": "No objective is available yet. Click Select later and continue or cancel."
     },
     "StudyEndpointEditForm": {
         "title": "Edit study endpoint",
@@ -1888,7 +1899,7 @@
         "abbreviation": "Abbreviation",
         "definition": "Definition",
         "rationale_for_request": "Rationale for activity request",
-        "create_sponsor_from_request": "Handle placeholder request",
+        "handle_placeholder_request": "Handle placeholder request",
         "topic_code": "Topic code",
         "adam_code": "ADaM parameter code",
         "specimen": "Specimen",
@@ -1914,7 +1925,9 @@
         "is_default_selected_for_activity": "Default selected for activity",
         "is_data_sharing": "Data sharing",
         "is_legacy_usage": "Legacy usage",
-        "nci_concept_id": "NCI Concept ID"
+        "nci_concept_id": "NCI Concept ID",
+        "show_only_handled": "Show only handled requests",
+        "study_id": "Study ID"
     },
     "ActivityFormsInstantiations": {
         "select_type": "Select type",
@@ -1948,7 +1961,11 @@
         "requested_activity": "Requested Activity",
         "new_sponsor_concept": "New Sponsor Activity Concept",
         "new_concept_warning": "New Activity Concept must be approved before available for selection, and this will retire the replacing Activity Concept",
-        "data_collection": "Data collection"
+        "data_collection": "Data collection",
+        "reject_activity": "Reject activity request",
+        "rejecting_reason": "Reason for rejecting",
+        "contact": "Contact",
+        "activity_rejected": "Activity request rejected"
     },
     "ActivityForms": {
         "activity_subgroup": "Activity subgroup",
@@ -2001,29 +2018,8 @@
         "select_class": "Select class",
         "nci_concept_id": "NCI Concept ID",
         "add_activity_request": "Add activity request",
-        "edit_activity_request": "Edit activity request"
-    },
-    "ClinicalMetadataView": {
-        "title": "General Clinical Metadata",
-        "topic_code_def": "Topic Code Definitions",
-        "unit_def": "Unit Definition",
-        "cdisc_version": "CDISC CT Version",
-        "cdisc_package": "CDISC CT Package",
-        "cdisc_list": "CDISC CT List",
-        "cdisc_values": "CDISC CT Values"
-    },
-    "ClinicalMetadataTable": {
-        "label": "Label",
-        "topic_code": "Topic code",
-        "short_topic_code": "Short topic code",
-        "convert_to_si_unit": "Convert to SI Unit",
-        "convert_to_us_conv_unit": "Convert to US Conventional Unit",
-        "description": "Description",
-        "molecular_weight": "Molecular weight",
-        "value_sas_display_format": "SAS display format",
-        "general_domain_class": "General domain class",
-        "sub_domain_class": "Sub domain class",
-        "sub_domain_type": "Sub domain type"
+        "edit_activity_request": "Edit activity request",
+        "submit_request": "Submit request"
     },
     "StudyTitleView": {
         "title": "Study Title",
@@ -2090,7 +2086,7 @@
         "loading": "Reloading Objectives and Endpoints..."
     },
     "ActivityTemplatesView": {
-        "title": "Activity Templates"
+        "title": "Activity Instructions Templates"
     },
     "ActivityTemplateTable": {
         "singular_title": "Activity template",
@@ -2302,6 +2298,7 @@
         "dimension": "Dimension",
         "legacy_code": "Legacy code",
         "add_success": "Unit added",
+        "update_success": "Unit updated",
         "molecular_weight": "Molecular weight",
         "conversion_factor": "Conversion factor to master",
         "reason_for_change": "Reason for change"
@@ -2518,6 +2515,21 @@
     "CtPackagesView": {
         "title": "CT Packages"
     },
+    "SponsorCtPackages": {
+        "title": "Sponsor CT Packages"
+    },
+    "SponsorCTPackagesTable": {
+        "no_package_yet": "There is no Sponsor CT package defined yet.",
+        "create_first_one": "Create first one"
+    },
+    "SponsorCTPackageForm": {
+        "title": "Sponsor CT Package creation",
+        "package_label": "Select a CDISC CT SDTM package",
+        "creation_success": "Sponsor CT package created"
+    },
+    "PackageTimeline": {
+        "add_label": "Add package"
+    },
     "NNTemplateInputField": {
         "default_hint": "Create the template text and include editable parameters from the drop-down list as relevant. The parameters constitute the editable part of the template whereas the text is the non editable locked part. You can create editable text by including the text in a TextValue parameter. You cannot save a template that is identical to an existing template."
     },
@@ -2573,7 +2585,8 @@
         "update_version_alert": "The underlying template has been updated",
         "previous_version": "Old version:",
         "new_version": "New version:",
-        "update_version_successful": "criteria version updated"
+        "update_version_successful": "criteria version updated",
+        "criteria_length_warning": "Only first 200 characters of the criteria can be submitted in a dataset. Please make sure that the first 200 characters are not the same across 2 or more criterias."
     },
     "EligibilityCriteriaForm": {
         "add_inclusion_criteria": "Add inclusion criteria",
@@ -2610,13 +2623,6 @@
         "title": "Edit Study Criteria",
         "key_criteria": "Key criteria",
         "update_success": "Study criteria updated"
-    },
-    "SelectFromListField": {
-        "global_list_label": "Available items",
-        "selection_list_label": "Selected items",
-        "select_all": "Select all",
-        "deselect_all": "Deselect all",
-        "remove_all": "Remove all"
     },
     "CtPackagesHistoryView": {
         "title": "Controlled Terminology Packages History"
@@ -2689,7 +2695,9 @@
         "show_visit": "Show visit",
         "visit_window": "Visit window",
         "visit_win_min": "Min",
+        "visit_window_min": "Visit window, Min",
         "visit_win_max": "Max",
+        "visit_window_max": "Visit window, Max",
         "visit_win_unit": "Unit",
         "visit_win_unit_uid": "Unit UID",
         "visit_details": "Additional visit details",
@@ -2716,6 +2724,7 @@
         "timing": "Visit type, timing and name",
         "if_applicable": "If applicable",
         "single_visit": "Single visit",
+        "single_anchor_addtional": "Single visit/Anchor visit in visit group/Additional sub-visit", 
         "anchor_visit_in_group": "Anchor visit in visit group",
         "additional_sub_visit": "Additional sub-visit",
         "select_visit": "Select visit",
@@ -2743,7 +2752,9 @@
         "special_visit": "Special visit",
         "existing_visits": "Existing visits",
         "names_and_timing": "Names and timing",
-        "no_visit_available": "No visit in this epoch"
+        "no_visit_available": "No visit in this epoch",
+        "manually_defined_visit": "Manually defined visit",
+        "visit_number_uniqueness_warning": "Enter unique visit names and visit numbers. Ensure that the newly created manually defined visit is placed in the correct chronological order, reflecting the defined visit names and numbers."
     },
     "StudyVisitDuplicate": {
         "time_value": "Timing",
@@ -2905,7 +2916,7 @@
         "study_visit_history_title": "History for study visit [{visitUid}]",
         "group_visit_title": "Group selected visits together",
         "grouping_no_selection": "Please select the visits that should be grouped. Note that the visits must be similar and in consecutive order",
-        "preferred_time_unit": "Preferred time unit:",
+        "time_unit": "Time unit:",
         "timeline_preview": "Time line preview"
     },
     "GroupStudyVisits": {
@@ -3033,14 +3044,22 @@
         "tab6_title": "Activity Instructions"
     },
     "ProtocolFlowchart": {
+        "compact": "Protocol SoA",
         "detailed": "Detailed SoA",
+        "operational": "Operational SoA",
         "title": "Protocol SoA",
         "update_flowchart": "Update SoA",
         "downloading": "Downloading SoA...",
+        "layout": "SoA layout",
         "loading": "Reloading SoA...",
         "day": "Day",
         "week": "Week",
-        "preferred_time_unit": "Preferred time unit:"
+        "time_unit": "Time unit:",
+        "baseline_as_time_zero": "Baseline shown as time 0",
+        "show_epochs": "Show epochs",
+        "show_milestones": "Show milestones",
+        "soa_settings": "SoA Settings",
+        "soa_settings_message": "Changes made here will apply to the Detailed, Protocol and Operational Schedule of Activities."
     },
     "ProtocolInterventionsTable": {
         "title": "Protocol Interventions",
@@ -3057,7 +3076,14 @@
         "global_history_title": "Study activities history",
         "study_activity_history_title": "History for study activity [{studyActivityUid}]",
         "update_activity_request": "Update to approved activity",
-        "update_success": "Study activity updated"
+        "update_success": "Study activity updated",
+        "remove_and_info": "Remove not-approved activity and get further information",
+        "rejected_activity_info_part_1": "The request for an activity named:",
+        "rejected_activity_info_part_2": "has been rejected. Reason is:",
+        "rejected_activity_info_part_3": "Contact",
+        "rejected_activity_info_part_4": " or your assigned Standards Developer for further details.   Click accept and remove the not-approved activity from the study.",
+        "submitted": "Submitted",
+        "not_submitted": "Not Submitted"
     },
     "StudyActivity": {
         "study_activity": "Study activity",
@@ -3077,7 +3103,43 @@
         "edit_dialog_title": "Edit",
         "download_docx": "Download DOCX",
         "instructions": "Instructions",
-        "other_groupings": "Other activity groupings"
+        "other_groupings": "Other activity groupings",
+        "general": "General",
+        "settings": "Settings",
+        "study_activities": "Study Activities",
+        "detailed_soa": "Detailed SoA",
+        "study_footnotes": "Study Footnotes",
+        "protocol_soa": "Protocol SoA"
+    },
+    "StudyDataSpecifications": {
+        "title": "Study Data Specifications",
+        "tab1_title": "Study Activity Instances",
+        "tab2_title": "Operational SoA"
+    },
+    "StudyActivityInstances": {
+        "instance": "Instance",
+        "activity_instance": "Activity instance",
+        "topic_code": "Topic code",
+        "state_actions": "State/Actions",
+        "add_instance": "Add Instance",
+        "edit_relationship": "Edit Activity - Instance relationship",
+        "delete_relationship": "Delete Activity - Instance relationship",
+        "update_to_new_version": "Update Instance to new version",
+        "instance_deleted": "Study Activity Instance deleted",
+        "instance_updated": "Study Activity Instance updated",
+        "edit_add_instance": "Edit/Add Activity instance(s)",
+        "activity_selected": "Activity Selected",
+        "details": "Details",
+        "state": "State",
+        "mandatory": "Mandatory",
+        "defaulted": "Defaulted",
+        "suggestion": "Suggestion",
+        "study_activity_instance_history_title": "History for study activity instance [{studyActivityInstanceUid}]",
+        "confirm_delete": "The study activity instance '{instance}' will be deleted",
+        "adam_code": "ADaM param code",
+        "no_action_needed": "No action needed",
+        "notification": "Notification",
+        "action_needed": "Action needed"
     },
     "StudyActivityForm": {
         "add_title": "Add study activities",
@@ -3559,7 +3621,8 @@
         "edit_reference": "Edit reference attributes",
         "view_reference": "View reference attributes",
         "approve_all": "Approve all",
-        "vendor_extension_applied": "Vendor Extension Applied"
+        "vendor_extension_applied": "Vendor Extension Applied",
+        "ref_vendor_extension_applied": "Reference Vendor Extension Applied"
     },
     "CrfConditionForm": {
         "set_condition": "Set a Condition",
@@ -3652,7 +3715,9 @@
         "extension": "Extension: ",
         "edit_extension": "Edit extension",
         "regex_expression": "Regex Expression",
-        "compatible_types": "Compatible Types"
+        "compatible_types": "Compatible Types",
+        "namespace_delete_warning": "You are about to delete vendor namespace.",
+        "namespace_deleted": "Namespace deleted"
     },
     "DiseaseMilestone": {
         "disease_milestone_type": "Type",
@@ -3858,7 +3923,15 @@
         "covered_items": "SoA items covered",
         "confirm_delete": "The SoA footnote '{footnote}' will be deleted",
         "delete_footnote_success": "SoA footnote deleted",
-        "global_history_title": "SoA footnotes history"
+        "global_history_title": "SoA footnotes history",
+        "footnote_version_updated": "Study Footnote version updated",
+        "footnote_version_accepted": "Study Footnote version accepted",
+        "update_footnote_version": "Update footnote version",
+        "update_version_alert": "The underlying template has been updated",
+        "old_version": "Old version:",
+        "new_version": "New version:",
+        "keep_old_version": "Keep old version",
+        "use_new_version": "Use new version"
     },
     "StudyFootnoteForm": {
         "add_title": "Add SoA footnotes",
@@ -3972,9 +4045,17 @@
         "create_subpart": "Create study subpart",
         "select_study_warning": "You need to select a study to link as substudy",
         "subpart_created": "Study subpart created",
+        "subpart_edited": "Study subpart edited",
         "add_subpart": "Add study subpart",
         "edit_subpart": "Edit study subpart",
         "add_existing": "Add existing study as study subpart",
-        "create_new": "Create new study to be study subpart"
+        "create_new": "Create new study to be study subpart",
+        "select_warning": "Any Study ID, acronym, title or registry identifiers already added to the selected study will be overwritten when adding this as a subpart to another study.",
+        "subparts_history_title": "Study subparts history",
+        "subpart_history_title": "History for study subpart [{subpartUid}]"
+    },
+    "SelectionOrderUpdateForm": {
+        "title": "Change order",
+        "order": "Order"
     }
 }

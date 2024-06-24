@@ -3,10 +3,10 @@ import repository from './repository'
 const resource = 'concepts'
 
 export default {
-  create (data, source) {
+  create(data, source) {
     const params = {
-      ...data
+      ...data,
     }
     return repository.post(`${resource}/${source}`, params)
-  }
+  },
 }

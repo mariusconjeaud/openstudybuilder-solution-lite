@@ -31,7 +31,11 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryVO,
     VersioningException,
 )
-from clinical_mdr_api.exceptions import BusinessLogicException, NotFoundException
+from clinical_mdr_api.exceptions import (
+    BusinessLogicException,
+    NotFoundException,
+    ValidationException,
+)
 from clinical_mdr_api.models.study_selections.study import Study
 from clinical_mdr_api.models.syntax_templates.template_parameter_multi_select_input import (
     TemplateParameterMultiSelectInput,
@@ -137,6 +141,8 @@ class GenericSyntaxInstanceService(GenericSyntaxService[_AggregateRootType], abc
         Supports create object action.
         When the preview parameter is set to true, don't create the object, just preview it.
         """
+        self.authorize_user_defined_syntax_write(template.library_name)
+
         item = None
         try:
             # Transaction that is performing initial save
@@ -254,6 +260,10 @@ class GenericSyntaxInstanceService(GenericSyntaxService[_AggregateRootType], abc
                 include_study_endpoints=include_study_endpoints,
             )
         )
+
+        if not template.parameter_terms and self._allowed_parameters:
+            raise ValidationException("parameter_terms must be provided.")
+
         parameter: TemplateParameterMultiSelectInput
         idx = 0
         for _, allowed_parameter in enumerate(self._allowed_parameters):
@@ -349,7 +359,7 @@ class GenericSyntaxInstanceService(GenericSyntaxService[_AggregateRootType], abc
             uid=uid, library_item_type=node_type, sort_by={"uid": True}
         ).items
 
-        study_service = StudyService(user=self.user_initials)
+        study_service = StudyService()
         return_items = [
             study_service._models_study_from_study_definition_ar(
                 study_definition_ar=item,
@@ -359,7 +369,6 @@ class GenericSyntaxInstanceService(GenericSyntaxService[_AggregateRootType], abc
                 find_study_parent_part_by_uid=self._repos.study_definition_repository.find_by_uid,
                 include_sections=include_sections,
                 exclude_sections=exclude_sections,
-                is_subpart=item.study_parent_part_uid is not None,
             )
             for item in studies
         ]

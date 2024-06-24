@@ -14,6 +14,7 @@ from clinical_mdr_api.models import (
 )
 from clinical_mdr_api.models.concepts.odms.odm_common_models import (
     OdmElementWithParentUid,
+    OdmVendorElementRelationPostInput,
     OdmVendorRelationPostInput,
     OdmVendorsPostInput,
 )
@@ -584,7 +585,7 @@ def add_vendor_elements_to_odm_item_group(
         False,
         description="If true, all existing ODM Vendor Element relationships will be replaced with the provided ODM Vendor Element relationships.",
     ),
-    odm_vendor_relation_post_input: list[OdmVendorRelationPostInput] = Body(
+    odm_vendor_relation_post_input: list[OdmVendorElementRelationPostInput] = Body(
         description=""
     ),
 ):

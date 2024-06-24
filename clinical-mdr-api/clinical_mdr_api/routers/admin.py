@@ -1,8 +1,8 @@
 from typing import Any
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Query
 
-from clinical_mdr_api.oauth import get_current_user_id, rbac
+from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.routers import _generic_descriptions
 from clinical_mdr_api.services._meta_repository import MetaRepository
 
@@ -26,10 +26,7 @@ CACHE_STORE_NAMES = [
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_caches(
-    _current_user_id: str = Depends(get_current_user_id),
-    show_items: bool | None = Query(False),
-) -> list[dict]:
+def get_caches(show_items: bool | None = Query(False)) -> list[dict]:
     all_repos = _get_all_repos()
     return [_get_cache_info(x, show_items) for x in all_repos]
 
@@ -44,9 +41,7 @@ def get_caches(
         500: _generic_descriptions.ERROR_500,
     },
 )
-def clear_caches(
-    current_user_id: str = Depends(get_current_user_id),
-) -> list[dict]:
+def clear_caches() -> list[dict]:
     all_repos = _get_all_repos()
     for repo in all_repos:
         for store_name in CACHE_STORE_NAMES:
@@ -54,7 +49,7 @@ def clear_caches(
             if cache_store is not None:
                 cache_store.clear()
 
-    return get_caches(current_user_id)
+    return get_caches()
 
 
 def _get_all_repos():

@@ -1,40 +1,36 @@
 <template>
-<pre-instance-form
-  object-type="objectiveTemplates"
-  :prepare-payload-function="preparePayload"
-  v-bind="$attrs"
-  v-on="$listeners"
+  <PreInstanceForm
+    object-type="objectiveTemplates"
+    :prepare-indexing-payload-function="prepareIndexingPayload"
+    v-bind="$attrs"
   >
-  <template v-slot:indexingTab="{ form, template, preInstance }">
-    <objective-template-indexing-form
-      v-if="template"
-      ref="indexingForm"
-      :form="form"
-      :template="template"
+    <template #indexingTab="{ form, template, preInstance }">
+      <ObjectiveTemplateIndexingForm
+        v-if="template"
+        ref="indexingForm"
+        :form="form"
+        :template="template"
       />
-    <objective-template-indexing-form
-      v-else
-      ref="indexingForm"
-      :form="form"
-      :template="preInstance"
+      <ObjectiveTemplateIndexingForm
+        v-else
+        ref="indexingForm"
+        :form="form"
+        :template="preInstance"
       />
-  </template>
-</pre-instance-form>
+    </template>
+  </PreInstanceForm>
 </template>
 
-<script>
-import ObjectiveTemplateIndexingForm from './ObjectiveTemplateIndexingForm'
-import PreInstanceForm from '@/components/library/PreInstanceForm'
+<script setup>
+import { ref } from 'vue'
+import ObjectiveTemplateIndexingForm from './ObjectiveTemplateIndexingForm.vue'
+import PreInstanceForm from '@/components/library/PreInstanceForm.vue'
 
-export default {
-  components: {
-    ObjectiveTemplateIndexingForm,
-    PreInstanceForm
-  },
-  methods: {
-    preparePayload (payload) {
-      Object.assign(payload, this.$refs.indexingForm.preparePayload(payload))
-    }
+const indexingForm = ref()
+
+function prepareIndexingPayload(payload) {
+  if (indexingForm.value) {
+    Object.assign(payload, indexingForm.value.preparePayload(payload))
   }
 }
 </script>

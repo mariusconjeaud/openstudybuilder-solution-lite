@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from neomodel import db
 
 from clinical_mdr_api import exceptions, models
@@ -8,18 +10,9 @@ from clinical_mdr_api.domains.study_selections.study_selection_arm import (
     StudySelectionArmAR,
     StudySelectionArmVO,
 )
-from clinical_mdr_api.domains.study_selections.study_selection_endpoint import (
-    StudySelectionEndpointVO,
-)
-from clinical_mdr_api.domains.syntax_instances.endpoint import EndpointAR
-from clinical_mdr_api.domains.syntax_instances.timeframe import TimeframeAR
-from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
 from clinical_mdr_api.models.controlled_terminologies.ct_term import SimpleTermModel
-from clinical_mdr_api.models.study_selections.study_selection import (
-    EndpointUnitsInput,
-    StudySelectionEndpointInput,
-)
 from clinical_mdr_api.models.utils import GenericFilteringReturn
+from clinical_mdr_api.oauth.user import user
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._meta_repository import MetaRepository
 from clinical_mdr_api.services._utils import (
@@ -34,9 +27,9 @@ from clinical_mdr_api.services.studies.study_selection_base import StudySelectio
 class StudyArmSelectionService(StudySelectionMixin):
     _repos: MetaRepository
 
-    def __init__(self, author):
+    def __init__(self):
         self._repos = MetaRepository()
-        self.author = author
+        self.author = user().id()
 
     def _transform_all_to_response_model(
         self,
@@ -44,6 +37,10 @@ class StudyArmSelectionService(StudySelectionMixin):
         study_value_version: str | None = None,
     ) -> list[models.StudySelectionArmWithConnectedBranchArms]:
         result = []
+        terms_at_specific_datetime = self._extract_study_standards_effective_date(
+            study_uid=study_selection.study_uid,
+            study_value_version=study_value_version,
+        )
         for order, selection in enumerate(
             study_selection.study_arms_selection, start=1
         ):
@@ -53,6 +50,7 @@ class StudyArmSelectionService(StudySelectionMixin):
                     order=order,
                     study_uid=study_selection.study_uid,
                     study_value_version=study_value_version,
+                    terms_at_specific_datetime=terms_at_specific_datetime,
                 )
             )
         return result
@@ -63,6 +61,7 @@ class StudyArmSelectionService(StudySelectionMixin):
         order: int,
         study_uid: str,
         study_value_version: str | None = None,
+        terms_at_specific_datetime: datetime | None = None,
     ) -> models.StudySelectionArmWithConnectedBranchArms:
         # pylint: disable=line-too-long
         return models.StudySelectionArmWithConnectedBranchArms.from_study_selection_arm_ar__order__connected_branch_arms(
@@ -72,6 +71,7 @@ class StudyArmSelectionService(StudySelectionMixin):
             find_simple_term_arm_type_by_term_uid=self._find_by_uid_or_raise_not_found,
             find_multiple_connected_branch_arm=self._find_branch_arms_connected_to_arm_uid,
             study_value_version=study_value_version,
+            terms_at_specific_datetime=terms_at_specific_datetime,
         )
 
     @db.transaction
@@ -356,186 +356,19 @@ class StudyArmSelectionService(StudySelectionMixin):
             new_selection, order = selection_aggregate.get_specific_arm_selection(
                 study_selection_uid
             )
+            terms_at_specific_datetime = self._extract_study_standards_effective_date(
+                study_uid=study_uid,
+            )
 
             # add the objective and return
             return self._transform_single_to_response_model(
-                new_selection, order, study_uid
+                new_selection,
+                order,
+                study_uid,
+                terms_at_specific_datetime=terms_at_specific_datetime,
             )
         finally:
             repos.close()
-
-    def _patch_prepare_new_study_endpoint(
-        self,
-        request_study_endpoint: StudySelectionEndpointInput,
-        current_study_endpoint: StudySelectionEndpointVO,
-    ) -> StudySelectionEndpointVO:
-        endpoint_repo = self._repos.endpoint_repository
-        timeframe_repo = self._repos.timeframe_repository
-        if request_study_endpoint.endpoint_uid:
-            endpoint_ar: EndpointAR = endpoint_repo.find_by_uid(
-                request_study_endpoint.endpoint_uid
-            )
-        elif current_study_endpoint.endpoint_uid:
-            endpoint_ar: EndpointAR = endpoint_repo.find_by_uid(
-                current_study_endpoint.endpoint_uid
-            )
-        else:
-            endpoint_ar = None
-        if request_study_endpoint.timeframe_uid:
-            timeframe_ar: TimeframeAR = timeframe_repo.find_by_uid(
-                request_study_endpoint.timeframe_uid
-            )
-        elif current_study_endpoint.timeframe_uid:
-            timeframe_ar: TimeframeAR = timeframe_repo.find_by_uid(
-                current_study_endpoint.timeframe_uid
-            )
-        else:
-            timeframe_ar = None
-
-        # transform current to input model
-        transformed_current = StudySelectionEndpointInput(
-            endpoint_uid=current_study_endpoint.endpoint_uid,
-            endpoint_level_uid=current_study_endpoint.endpoint_level_uid,
-            endpoint_units=EndpointUnitsInput(
-                units=current_study_endpoint.endpoint_units,
-                separator=current_study_endpoint.unit_separator,
-            ),
-            study_objective_uid=current_study_endpoint.study_objective_uid,
-            timeframe_uid=current_study_endpoint.timeframe_uid,
-        )
-
-        # fill the missing from the inputs
-        fill_missing_values_in_base_model_from_reference_base_model(
-            base_model_with_missing_values=request_study_endpoint,
-            reference_base_model=transformed_current,
-        )
-
-        # get order from the endpoint level CT term
-        if request_study_endpoint.endpoint_level_uid is not None:
-            endpoint_level_order = (
-                self._repos.ct_term_name_repository.term_specific_order_by_uid(
-                    uid=request_study_endpoint.endpoint_level_uid
-                )
-            )
-        else:
-            endpoint_level_order = None
-
-        return StudySelectionEndpointVO.from_input_values(
-            endpoint_uid=request_study_endpoint.endpoint_uid,
-            endpoint_version=endpoint_ar.item_metadata.version if endpoint_ar else None,
-            endpoint_level_uid=request_study_endpoint.endpoint_level_uid,
-            endpoint_sublevel_uid=request_study_endpoint.endpoint_sublevel_uid,
-            endpoint_units=request_study_endpoint.endpoint_units.units,
-            timeframe_uid=request_study_endpoint.timeframe_uid,
-            timeframe_version=(
-                timeframe_ar.item_metadata.version if timeframe_ar else None
-            ),
-            unit_separator=request_study_endpoint.endpoint_units.separator,
-            study_objective_uid=request_study_endpoint.study_objective_uid,
-            study_selection_uid=current_study_endpoint.study_selection_uid,
-            endpoint_level_order=endpoint_level_order,
-            user_initials=self.author,
-        )
-
-    @db.transaction
-    def update_selection_to_latest_version_of_endpoint(
-        self, study_uid: str, study_selection_uid: str
-    ):
-        selection_ar, selection, order = self._get_specific_endpoint_selection_by_uids(
-            study_uid, study_selection_uid, for_update=True
-        )
-        endpoint_uid = selection.endpoint_uid
-        endpoint_ar = self._repos.endpoint_repository.find_by_uid(endpoint_uid)
-        if endpoint_ar.item_metadata.status == LibraryItemStatus.DRAFT:
-            endpoint_ar.approve(self.author)
-            self._repos.endpoint_repository.save(endpoint_ar)
-        elif endpoint_ar.item_metadata.status == LibraryItemStatus.RETIRED:
-            raise exceptions.BusinessLogicException(
-                "Cannot add retired objective as selection. Please reactivate."
-            )
-        new_selection = selection.update_endpoint_version(
-            endpoint_ar.item_metadata.version
-        )
-        selection_ar.update_selection(
-            new_selection, endpoint_exist_callback=lambda x: True
-        )
-        self._repos.study_endpoint_repository.save(selection_ar, self.author)
-
-        return self._transform_single_to_response_model(new_selection, order, study_uid)
-
-    @db.transaction
-    def update_selection_to_latest_version_of_timeframe(
-        self, study_uid: str, study_selection_uid: str
-    ):
-        selection_ar, selection, order = self._get_specific_endpoint_selection_by_uids(
-            study_uid, study_selection_uid, for_update=True
-        )
-        timeframe_uid = selection.timeframe_uid
-        timeframe_ar = self._repos.timeframe_repository.find_by_uid(timeframe_uid)
-        if timeframe_ar.item_metadata.status == LibraryItemStatus.DRAFT:
-            timeframe_ar.approve(self.author)
-            self._repos.timeframe_repository.save(timeframe_ar)
-        elif timeframe_ar.item_metadata.status == LibraryItemStatus.RETIRED:
-            raise exceptions.BusinessLogicException(
-                "Cannot add retired timeframe as selection. Please reactivate."
-            )
-        new_selection = selection.update_timeframe_version(
-            timeframe_ar.item_metadata.version
-        )
-        selection_ar.update_selection(
-            new_selection, timeframe_exist_callback=lambda x: True
-        )
-        self._repos.study_endpoint_repository.save(selection_ar, self.author)
-
-        return self._transform_single_to_response_model(new_selection, order, study_uid)
-
-    @db.transaction
-    def update_selection_accept_versions(
-        self, study_uid: str, study_selection_uid: str
-    ):
-        selection: StudySelectionEndpointVO
-        selection_ar, selection, order = self._get_specific_endpoint_selection_by_uids(
-            study_uid, study_selection_uid, for_update=True
-        )
-        endpoint_uid = selection.endpoint_uid
-        endpoint_ar = self._repos.endpoint_repository.find_by_uid(endpoint_uid)
-        if endpoint_ar.item_metadata.status == LibraryItemStatus.DRAFT:
-            endpoint_ar.approve(self.author)
-            self._repos.endpoint_repository.save(endpoint_ar)
-        elif endpoint_ar.item_metadata.status == LibraryItemStatus.RETIRED:
-            raise exceptions.BusinessLogicException(
-                "Cannot add retired objective as selection. Please reactivate."
-            )
-        new_selection = selection.accept_versions()
-        selection_ar.update_selection(
-            new_selection, endpoint_exist_callback=lambda x: True
-        )
-        self._repos.study_endpoint_repository.save(selection_ar, self.author)
-
-        return self._transform_single_to_response_model(new_selection, order, study_uid)
-
-    def _transform_single_study_objective_to_model(
-        self, study_uid: str, study_selection_uid: str, no_brackets: bool = False
-    ) -> models.StudySelectionObjective:
-        repos = self._repos
-        selection_aggregate = repos.study_objective_repository.find_by_study(study_uid)
-        assert selection_aggregate is not None
-        _, order = selection_aggregate.get_specific_objective_selection(
-            study_selection_uid
-        )
-        result = models.StudySelectionObjective.from_study_selection_objectives_ar_and_order(
-            study_selection_objectives_ar=selection_aggregate,
-            order=order,
-            get_objective_by_uid_callback=self._transform_latest_objective_model,
-            get_objective_by_uid_version_callback=self._transform_objective_model,
-            get_ct_term_by_uid=self._find_by_uid_or_raise_not_found,
-            get_study_selection_endpoints_ar_by_study_uid_callback=(
-                repos.study_endpoint_repository.find_by_study
-            ),
-            no_brackets=no_brackets,
-            find_project_by_study_uid=self._repos.project_repository.find_by_study_uid,
-        )
-        return result
 
     def _transform_each_history_to_response_model(
         self, study_selection_history: SelectionHistoryArm, study_uid: str
@@ -652,7 +485,9 @@ class StudyArmSelectionService(StudySelectionMixin):
                 new_selection, order = selection_aggregate.get_specific_arm_selection(
                     new_selection.study_selection_uid
                 )
-
+                terms_at_specific_datetime = (
+                    self._extract_study_standards_effective_date(study_uid=study_uid)
+                )
                 # add the arm and return
                 # StudyArm without connected BranchArms not make sense that has BranchArms yet
                 return models.StudySelectionArm.from_study_selection_arm_ar_and_order(
@@ -660,6 +495,7 @@ class StudyArmSelectionService(StudySelectionMixin):
                     selection=new_selection,
                     order=order,
                     find_simple_term_arm_type_by_term_uid=self._find_by_uid_or_raise_not_found,
+                    terms_at_specific_datetime=terms_at_specific_datetime,
                 )
         finally:
             repos.close()
@@ -745,6 +581,9 @@ class StudyArmSelectionService(StudySelectionMixin):
                 study_selection_uid
             )
 
+            terms_at_specific_datetime = self._extract_study_standards_effective_date(
+                study_uid=study_uid
+            )
             # add the arm and return
             # With Connected BranchArms because can carry out the connected BranchARms
             # pylint: disable=line-too-long
@@ -754,6 +593,7 @@ class StudyArmSelectionService(StudySelectionMixin):
                 order=order,
                 find_simple_term_arm_type_by_term_uid=self._find_by_uid_or_raise_not_found,
                 find_multiple_connected_branch_arm=self._find_branch_arms_connected_to_arm_uid,
+                terms_at_specific_datetime=terms_at_specific_datetime,
             )
         finally:
             repos.close()
@@ -772,6 +612,10 @@ class StudyArmSelectionService(StudySelectionMixin):
         ) = self._get_specific_arm_selection_by_uids(
             study_uid, study_selection_uid, study_value_version=study_value_version
         )
+        terms_at_specific_datetime = self._extract_study_standards_effective_date(
+            study_uid=study_uid,
+            study_value_version=study_value_version,
+        )
         # With Connected BranchArms due to it may has already connected BranchArms to it
         # pylint: disable=line-too-long
         return models.StudySelectionArmWithConnectedBranchArms.from_study_selection_arm_ar__order__connected_branch_arms(
@@ -781,4 +625,5 @@ class StudyArmSelectionService(StudySelectionMixin):
             find_simple_term_arm_type_by_term_uid=self._find_by_uid_or_raise_not_found,
             find_multiple_connected_branch_arm=self._find_branch_arms_connected_to_arm_uid,
             study_value_version=study_value_version,
+            terms_at_specific_datetime=terms_at_specific_datetime,
         )

@@ -1,7 +1,7 @@
 """New Activities router."""
 from typing import Any
 
-from fastapi import APIRouter, Body, Depends, Path, Query, Response, status
+from fastapi import APIRouter, Body, Path, Query, Response, status
 from pydantic.types import Json
 from starlette.requests import Request
 
@@ -14,7 +14,7 @@ from clinical_mdr_api.models.concepts.activities.activity_instance import (
 )
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.oauth import get_current_user_id, rbac
+from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.routers.responses import YAMLResponse
@@ -92,6 +92,18 @@ def get_activities(
         description="A list of activity names to use as a specific filter",
         alias="activity_names[]",
     ),
+    activity_subgroup_names: list[str]
+    | None = Query(
+        None,
+        description="A list of activity subgroup names to use as a specific filter",
+        alias="activity_subgroup_names[]",
+    ),
+    activity_group_names: list[str]
+    | None = Query(
+        None,
+        description="A list of activity group names to use as a specific filter",
+        alias="activity_group_names[]",
+    ),
     activity_instance_class_names: list[str]
     | None = Query(
         None,
@@ -117,12 +129,13 @@ def get_activities(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    activity_instance_service = ActivityInstanceService(user=current_user_id)
+    activity_instance_service = ActivityInstanceService()
     results = activity_instance_service.get_all_concepts(
         library=library,
         activity_names=activity_names,
+        activity_subgroup_names=activity_subgroup_names,
+        activity_group_names=activity_group_names,
         activity_instance_class_names=activity_instance_class_names,
         sort_by=sort_by,
         page_number=page_number,
@@ -225,9 +238,8 @@ def get_activity_instances_versions(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    activity_instance_service = ActivityInstanceService(user=current_user_id)
+    activity_instance_service = ActivityInstanceService()
     results = activity_instance_service.get_all_concept_versions(
         library=library,
         activity_names=activity_names,
@@ -261,7 +273,6 @@ def get_activity_instances_versions(
     },
 )
 def get_distinct_values_for_header(
-    current_user_id: str = Depends(get_current_user_id),
     library: str | None = Query(None, description=""),
     field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
     search_string: str
@@ -276,7 +287,7 @@ def get_distinct_values_for_header(
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
 ):
-    activity_instance_service = ActivityInstanceService(user=current_user_id)
+    activity_instance_service = ActivityInstanceService()
     return activity_instance_service.get_distinct_values_for_header(
         library=library,
         field_name=field_name,
@@ -313,10 +324,8 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_activity(
-    uid: str = ActivityInstanceUID, current_user_id: str = Depends(get_current_user_id)
-):
-    activity_instance_service = ActivityInstanceService(user=current_user_id)
+def get_activity(uid: str = ActivityInstanceUID):
+    activity_instance_service = ActivityInstanceService()
     return activity_instance_service.get_by_uid(uid=uid)
 
 
@@ -367,11 +376,14 @@ Possible errors:
 def get_activity_instance_overview(
     request: Request,  # request is actually required by the allow_exports decorator
     uid: str = ActivityInstanceUID,
-    current_user_id: str = Depends(get_current_user_id),
+    version: str
+    | None = Query(
+        None, description="Select specific version, omit to view latest version"
+    ),
 ):
-    activity_instance_service = ActivityInstanceService(user=current_user_id)
+    activity_instance_service = ActivityInstanceService()
     return activity_instance_service.get_activity_instance_overview(
-        activity_instance_uid=uid
+        activity_instance_uid=uid, version=version
     )
 
 
@@ -405,9 +417,8 @@ Possible errors:
 def get_cosmos_activity_instance_overview(
     request: Request,  # request is actually required by the allow_exports decorator
     uid: str = ActivityInstanceUID,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    activity_instance_service = ActivityInstanceService(user=current_user_id)
+    activity_instance_service = ActivityInstanceService()
     return YAMLResponse(
         activity_instance_service.get_cosmos_activity_instance_overview(
             activity_instance_uid=uid
@@ -443,10 +454,8 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_versions(
-    uid: str = ActivityInstanceUID, current_user_id: str = Depends(get_current_user_id)
-):
-    activity_instance_service = ActivityInstanceService(user=current_user_id)
+def get_versions(uid: str = ActivityInstanceUID):
+    activity_instance_service = ActivityInstanceService()
     return activity_instance_service.get_version_history(uid=uid)
 
 
@@ -491,9 +500,8 @@ Possible errors:
 )
 def create(
     activity_instance_create_input: ActivityInstanceCreateInput = Body(description=""),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    activity_instance_service = ActivityInstanceService(user=current_user_id)
+    activity_instance_service = ActivityInstanceService()
     return activity_instance_service.create(
         concept_input=activity_instance_create_input
     )
@@ -541,9 +549,8 @@ Possible errors:
 def edit(
     uid: str = ActivityInstanceUID,
     activity_instance_edit_input: ActivityInstanceEditInput = Body(description=""),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    activity_instance_service = ActivityInstanceService(user=current_user_id)
+    activity_instance_service = ActivityInstanceService()
     return activity_instance_service.edit_draft(
         uid=uid, concept_edit_input=activity_instance_edit_input
     )
@@ -587,9 +594,8 @@ Possible errors:
 )
 def create_new_version(
     uid: str = ActivityInstanceUID,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    activity_instance_service = ActivityInstanceService(user=current_user_id)
+    activity_instance_service = ActivityInstanceService()
     return activity_instance_service.create_new_version(uid=uid)
 
 
@@ -633,9 +639,8 @@ Possible errors:
 )
 def approve(
     uid: str = ActivityInstanceUID,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    activity_instance_service = ActivityInstanceService(user=current_user_id)
+    activity_instance_service = ActivityInstanceService()
     return activity_instance_service.approve(uid=uid)
 
 
@@ -678,9 +683,8 @@ Possible errors:
 )
 def inactivate(
     uid: str = ActivityInstanceUID,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    activity_instance_service = ActivityInstanceService(user=current_user_id)
+    activity_instance_service = ActivityInstanceService()
     return activity_instance_service.inactivate_final(uid=uid)
 
 
@@ -723,9 +727,8 @@ Possible errors:
 )
 def reactivate(
     uid: str = ActivityInstanceUID,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    activity_instance_service = ActivityInstanceService(user=current_user_id)
+    activity_instance_service = ActivityInstanceService()
     return activity_instance_service.reactivate_retired(uid=uid)
 
 
@@ -770,8 +773,7 @@ Possible errors:
 )
 def delete_activity_instance(
     uid: str = ActivityInstanceUID,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    activity_instance_service = ActivityInstanceService(user=current_user_id)
+    activity_instance_service = ActivityInstanceService()
     activity_instance_service.soft_delete(uid=uid)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

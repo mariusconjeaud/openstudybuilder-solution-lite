@@ -11,14 +11,13 @@ from clinical_mdr_api.domains.comments.comments import (
     CommentTopicAR,
 )
 from clinical_mdr_api.models.utils import GenericFilteringReturn
-from clinical_mdr_api.oauth import get_default_user_info
-from clinical_mdr_api.oauth.models import UserInfo
+from clinical_mdr_api.oauth import user
 from clinical_mdr_api.services._meta_repository import MetaRepository  # type: ignore
 
 
-class CommmentsService:
-    def __init__(self, user_info: UserInfo = get_default_user_info()):
-        self.user_info = user_info
+class CommentsService:
+    def __init__(self):
+        self.user_info = user()
         self.repos = MetaRepository()
 
     def get_all_comment_topics(
@@ -97,7 +96,7 @@ class CommmentsService:
             comment_thread_ar = CommentThreadAR.from_input_values(
                 text=comment_thread_create_input.text,
                 topic_path=comment_thread_create_input.topic_path,
-                author=self.user_info.initials,
+                author=self.user_info.id(),
                 author_display_name=self.user_info.name,
                 status=CommentThreadStatus.ACTIVE,
                 created_at=datetime.now(),
@@ -138,7 +137,7 @@ class CommmentsService:
             comment_thread_previous = copy.deepcopy(comment_thread_latest)
 
             if comment_thread_edit_input.text is not None:
-                if comment_thread_latest.author != self.user_info.initials:
+                if comment_thread_latest.author != self.user_info.id():
                     raise exceptions.ForbiddenException(
                         "Only the author can edit a comment thread."
                     )
@@ -151,7 +150,7 @@ class CommmentsService:
                 self.repos.comments_repository.edit_comment_thread(
                     comment_thread_latest,
                     comment_thread_previous,
-                    self.user_info.initials,
+                    self.user_info.id(),
                 )
 
             return models.CommentThread.from_uid(
@@ -170,7 +169,7 @@ class CommmentsService:
     @db.transaction
     def delete_comment_thread(self, uid: str):
         comment_thread = self.repos.comments_repository.find_comment_thread_by_uid(uid)
-        if comment_thread and comment_thread.author != self.user_info.initials:
+        if comment_thread and comment_thread.author != self.user_info.id():
             raise exceptions.ForbiddenException(
                 "Only the author can delete a comment thread."
             )
@@ -210,7 +209,7 @@ class CommmentsService:
             comment_reply_ar = CommentReplyAR.from_input_values(
                 text=create_input.text,
                 comment_thread_uid=thread_uid,
-                author=self.user_info.initials,
+                author=self.user_info.id(),
                 author_display_name=self.user_info.name,
                 created_at=datetime.now(),
                 generate_uid_callback=self.repos.comments_repository.generate_reply_uid,
@@ -254,7 +253,7 @@ class CommmentsService:
             reply_previous = copy.deepcopy(reply_latest)
 
             if reply_edit_input.text != reply_latest.text:
-                if reply_latest.author != self.user_info.initials:
+                if reply_latest.author != self.user_info.id():
                     raise exceptions.ForbiddenException(
                         "Only the author can edit a comment thread reply."
                     )
@@ -274,7 +273,7 @@ class CommmentsService:
     @db.transaction
     def delete_comment_reply(self, uid: str):
         comment_reply = self.repos.comments_repository.find_comment_reply_by_uid(uid)
-        if comment_reply and comment_reply.author != self.user_info.initials:
+        if comment_reply and comment_reply.author != self.user_info.id():
             raise exceptions.ForbiddenException(
                 "Only the author can delete a comment reply."
             )

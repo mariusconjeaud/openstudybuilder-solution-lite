@@ -125,6 +125,8 @@ REL_INDEXES = [
     ("CONTAINS_DATASET_SCENARIO", "href"),
     ("HAS_VARIABLE_CLASS", "version_number"),
     ("HAS_DATASET_VARIABLE", "version_number"),
+    ("HAS_VERSION", "start_date"),
+    ("HAS_VERSION", "end_date"),
 ]
 
 # array of constraints to create [label, property, type["NODE KEY", "UNIQUE", "NOT NULL"]]

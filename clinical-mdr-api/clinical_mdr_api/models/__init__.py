@@ -233,6 +233,7 @@ from clinical_mdr_api.models.study_selections.study_selection import (
     StudySelectionActivityInstanceCreateInput,
     StudySelectionActivityInstanceEditInput,
     StudySelectionActivityRequestEditInput,
+    UpdateActivityPlaceholderToSponsorActivity,
     StudyActivitySchedule,
     StudyActivityScheduleCreateInput,
     StudyActivityScheduleHistory,
@@ -377,6 +378,9 @@ from clinical_mdr_api.models.concepts.active_substance import ActiveSubstance
 from clinical_mdr_api.models.concepts.pharmaceutical_product import (
     PharmaceuticalProduct,
 )
+from clinical_mdr_api.models.concepts.medicinal_product import (
+    MedicinalProduct,
+)
 from clinical_mdr_api.models.concepts.concept import (
     TextValue,
     TextValueInput,
@@ -425,6 +429,7 @@ __all__ = [
     "StudySelectionActivityInstanceCreateInput",
     "StudySelectionActivityInstanceEditInput",
     "StudySelectionActivityRequestEditInput",
+    "UpdateActivityPlaceholderToSponsorActivity",
     "StudyActivitySchedule",
     "StudyActivityScheduleCreateInput",
     "StudyActivityScheduleHistory",
@@ -668,6 +673,7 @@ __all__ = [
     "CompoundAlias",
     "ActiveSubstance",
     "PharmaceuticalProduct",
+    "MedicinalProduct",
     "TextValue",
     "TextValueInput",
     "TimePoint",

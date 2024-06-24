@@ -1,76 +1,53 @@
 <template>
-<simple-form-dialog
-  ref="form"
-  :title="$t('TemplateIndexingDialog.title')"
-  :open="show"
-  @submit="submit"
-  @close="close"
-  v-bind="$attrs"
-  v-on="$listeners"
+  <SimpleFormDialog
+    ref="form"
+    :title="$t('TemplateIndexingDialog.title')"
+    :open="show"
+    v-bind="$attrs"
+    @submit="submit"
+    @close="close"
   >
-  <template v-slot:body>
-    <validation-observer ref="observer">
-      <slot
-        name="form"
-        v-bind:form="form"
-        v-bind:template="template"
-        />
-    </validation-observer>
-  </template>
-</simple-form-dialog>
+    <template #body>
+      <v-form ref="observer">
+        <slot name="form" :form="form" :template="template" />
+      </v-form>
+    </template>
+  </SimpleFormDialog>
 </template>
 
 <script>
-import { bus } from '@/main'
-import SimpleFormDialog from '@/components/tools/SimpleFormDialog'
+import SimpleFormDialog from '@/components/tools/SimpleFormDialog.vue'
 import templates from '@/api/templates'
 import templatePreInstances from '@/api/templatePreInstances'
 
 export default {
   components: {
-    SimpleFormDialog
+    SimpleFormDialog,
   },
+  inject: ['eventBusEmit'],
   props: {
-    preparePayloadFunc: Function,
-    template: Object,
-    urlPrefix: String,
+    preparePayloadFunc: {
+      type: Function,
+      default: null,
+    },
+    template: {
+      type: Object,
+      default: null,
+    },
+    urlPrefix: {
+      type: String,
+      default: null,
+    },
     show: Boolean,
     preInstanceMode: {
       type: Boolean,
-      default: false
-    }
+      default: false,
+    },
   },
-  data () {
+  emits: ['close', 'updated'],
+  data() {
     return {
-      form: {}
-    }
-  },
-  methods: {
-    close () {
-      this.$refs.observer.reset()
-      this.$emit('close')
-    },
-    getBaseObjectType () {
-      let result = this.urlPrefix.replace('-templates', '')
-      if (result === '/activity') {
-        result = '/activity-instruction'
-      }
-      return result.slice(1)
-    },
-    async submit () {
-      const data = {
-        indication_uids: (this.form.indications) ? this.form.indications.map(item => item.term_uid) : [],
-        ...this.preparePayloadFunc(this.form)
-      }
-      const api = (this.preInstanceMode) ? templatePreInstances(this.getBaseObjectType()) : templates(this.urlPrefix)
-      api.updateIndexings(this.template.uid, data).then(() => {
-        this.$emit('updated')
-        this.$emit('close')
-        const msg = this.$t('TemplateIndexingDialog.update_success')
-        bus.$emit('notification', { msg, type: 'success' })
-      }, _err => {
-        this.$refs.form.working = false
-      })
+      form: {},
     }
   },
   watch: {
@@ -80,8 +57,38 @@ export default {
           this.form = { ...value }
         }
       },
-      immediate: true
-    }
-  }
+      immediate: true,
+    },
+  },
+  methods: {
+    close() {
+      this.$refs.observer.reset()
+      this.$emit('close')
+    },
+    getBaseObjectType() {
+      let result = this.urlPrefix.replace('-templates', '')
+      if (result === '/activity') {
+        result = '/activity-instruction'
+      }
+      return result.slice(1)
+    },
+    async submit() {
+      const data = this.preparePayloadFunc()
+      const api = this.preInstanceMode
+        ? templatePreInstances(this.getBaseObjectType())
+        : templates(this.urlPrefix)
+      api.updateIndexings(this.template.uid, data).then(
+        () => {
+          this.$emit('updated')
+          this.$emit('close')
+          const msg = this.$t('TemplateIndexingDialog.update_success')
+          this.eventBusEmit('notification', { msg, type: 'success' })
+        },
+        () => {
+          this.$refs.form.working = false
+        }
+      )
+    },
+  },
 }
 </script>

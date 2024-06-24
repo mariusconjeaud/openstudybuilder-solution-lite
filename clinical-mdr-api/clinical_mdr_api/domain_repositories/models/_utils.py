@@ -12,7 +12,6 @@ from neomodel import (
     relationship_manager,
 )
 from neomodel.core import db
-from opencensus.trace import execution_context
 
 from clinical_mdr_api import exceptions
 
@@ -769,14 +768,10 @@ class CustomQueryBuilder(match.QueryBuilder):
                     f"{db.get_id_method()}({item})" for item in self._ast.return_set
                 ]
         query = self.build_query()
-        tracer = execution_context.get_opencensus_tracer()
-        with tracer.span("neomodel.query") as span:
-            span.add_attribute("cypher.query", query)
-            span.add_attribute("cypher.params", self._query_params)
 
-            results, prop_names = db.cypher_query(
-                query, self._query_params, resolve_objects=True
-            )
+        results, prop_names = db.cypher_query(
+            query, self._query_params, resolve_objects=True
+        )
 
         if dict_output:
             result_dict = []

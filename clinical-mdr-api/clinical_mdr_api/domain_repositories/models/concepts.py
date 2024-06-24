@@ -30,6 +30,7 @@ class ConceptValue(VersionValue):
     name_sentence_case = StringProperty()
     definition = StringProperty()
     abbreviation = StringProperty()
+    external_id = StringProperty()
 
 
 class ConceptRoot(VersionRoot):

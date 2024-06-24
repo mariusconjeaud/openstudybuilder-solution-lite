@@ -1,83 +1,87 @@
 <template>
-<simple-form-dialog
-  ref="form"
-  :title="$t('StudyActivityBatchEditForm.title')"
-  :help-items="helpItems"
-  @close="close"
-  @submit="$emit('submit')"
-  :open="open"
+  <SimpleFormDialog
+    ref="form"
+    :title="$t('StudyActivityBatchEditForm.title')"
+    :help-items="helpItems"
+    :open="open"
+    @close="close"
+    @submit="$emit('submit')"
   >
-  <template v-slot:body>
-    <p>{{ $t('StudyActivityBatchEditForm.note') }}</p>
-    <div class="d-flex align-center">
-      <div>{{ $t('StudyActivityBatchEditForm.items_selected') }} <span class="font-weight-bold">{{ selection.length }}</span></div>
-      <div class="ml-10 d-flex align-center">
-        {{ $t('StudyActivityBatchEditForm.show_items') }}
-        <v-checkbox
-          v-model="showItems"
-          on-icon="mdi-close-circle-outline"
-          off-icon="mdi-dots-horizontal-circle-outline"
-          hide-details
-          class="ml-2"
+    <template #body>
+      <p>{{ $t('StudyActivityBatchEditForm.note') }}</p>
+      <div class="d-flex align-center">
+        <div>
+          {{ $t('StudyActivityBatchEditForm.items_selected') }}
+          <span class="font-weight-bold">{{ selection.length }}</span>
+        </div>
+        <div class="ml-10 d-flex align-center">
+          {{ $t('StudyActivityBatchEditForm.show_items') }}
+          <v-checkbox
+            v-model="showItems"
+            on-icon="mdi-close-circle-outline"
+            off-icon="mdi-dots-horizontal-circle-outline"
+            hide-details
+            class="ml-2"
           />
+        </div>
       </div>
-    </div>
-    <v-simple-table v-if="showItems" dense class="mt-4 preview">
-      <template v-slot:default>
+      <v-table v-if="showItems" density="compact" class="mt-4 preview">
         <tbody>
-          <tr
-            v-for="item in selection"
-            :key="item.name"
-            >
+          <tr v-for="item in selection" :key="item.name">
             <td>{{ item.activity.name }}</td>
             <td v-if="withDeleteAction" class="text-right">
               <v-btn
                 color="error"
-                icon
+                icon="mdi-close"
+                variant="text"
                 @click="removeItem(item)"
-                >
-                <v-icon>mdi-close</v-icon>
-              </v-btn>
+              />
             </td>
           </tr>
         </tbody>
-      </template>
-    </v-simple-table>
-    <slot name="body"></slot>
-  </template>
-</simple-form-dialog>
+      </v-table>
+      <slot name="body" />
+    </template>
+  </SimpleFormDialog>
 </template>
 
 <script>
-import SimpleFormDialog from '@/components/tools/SimpleFormDialog'
+import SimpleFormDialog from '@/components/tools/SimpleFormDialog.vue'
 
 export default {
   components: {
-    SimpleFormDialog
+    SimpleFormDialog,
   },
   props: {
-    helpItems: Array,
-    selection: Array,
+    helpItems: {
+      type: Array,
+      default: () => [],
+    },
+    selection: {
+      type: Array,
+      default: () => [],
+    },
     withDeleteAction: {
       type: Boolean,
-      default: false
+      default: false,
     },
-    open: Boolean
+    open: Boolean,
   },
-  data () {
+  emits: ['close', 'remove', 'submit'],
+  data() {
     return {
-      showItems: false
+      showItems: false,
     }
   },
   methods: {
-    close () {
+    close() {
       this.showItems = false
       this.$emit('close')
     },
-    removeItem (item) {
+    removeItem(item) {
       this.$emit('remove', item)
-    }
-  }
+    },
+  },
 }
 </script>
 

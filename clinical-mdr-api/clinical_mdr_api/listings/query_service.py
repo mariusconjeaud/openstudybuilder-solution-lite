@@ -749,6 +749,7 @@ class QueryService:
             WHEN 'pediatric_postmarket_study_indicator' THEN 'C123631_PDPSTIND'
             WHEN 'therapeutic_area_codes' THEN 'C101302_THERAREA'
             WHEN 'diagnosis_group_codes' THEN 'C49650_TDIGRP'
+            WHEN 'sex_of_participants_code' THEN 'C49696_SEXPOP'
             WHEN 'planned_maximum_age_of_subjects' THEN 'C49694_AGEMAX'
             WHEN 'planned_minimum_age_of_subjects' THEN 'C49693_AGEMIN'
             WHEN 'number_of_expected_subjects' THEN 'C49692_PLANSUB'
@@ -837,13 +838,32 @@ class QueryService:
         MATCH (sv)-[:HAS_STUDY_ENDPOINT]->(send)-[:HAS_ENDPOINT_LEVEL]->(endplv)-->(ectar:CTTermAttributesRoot)-[:LATEST_FINAL]->(ectav:CTTermAttributesValue) 
         MATCH (send)-[:HAS_SELECTED_TIMEFRAME]->(tf:TimeframeValue)
         MATCH (send)-[:HAS_SELECTED_ENDPOINT]->(endp:EndpointValue)
+        OPTIONAL MATCH (send)-[:HAS_ENDPOINT_SUB_LEVEL]->(:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(end_sublev:CTTermNameValue)
+        OPTIONAL MATCH (send)-[:HAS_SELECTED_ENDPOINT]->(end_val:EndpointValue)<--(end_roo:EndpointRoot)
+        OPTIONAL MATCH (send)-[:HAS_UNIT]->(:UnitDefinitionRoot)-[:LATEST]->(uni_value:UnitDefinitionValue)-[:HAS_CT_UNIT]->(uni_ctt_roo:CTTermRoot)
+        OPTIONAL MATCH (send)-[:HAS_SELECTED_TIMEFRAME]->(tim_fra_val:TimeframeValue)<--(tim_fra_roo:TimeframeRoot)
+        CALL {
+                WITH send
+                OPTIONAL MATCH (send)-[:HAS_UNIT]->(:UnitDefinitionRoot)-[:LATEST]->(uni_value:UnitDefinitionValue)-[:HAS_CT_UNIT]->(uni_ctt_roo:CTTermRoot)
+                OPTIONAL MATCH (send)-[:HAS_CONJUNCTION]->(con:Conjunction)
+                WITH distinct send,collect(distinct uni_value.name) as units,
+                CASE 
+                        WHEN con IS NULL THEN ", "
+                        ELSE " "+con.string +" "
+                end as con_string,
+                CASE 
+                        WHEN uni_value IS NULL THEN ["",""]
+                        ELSE [" (",")."]
+                end as units_space
+                RETURN send as send_uax, units_space[0]+ apoc.text.join([i IN units | toString(i)], con_string) + units_space[1] as unit_str
+        }
         RETURN
-        sv.study_id_prefix+'-'+sv.study_number AS STUDYID,
+        DISTINCT sv.study_id_prefix+'-'+sv.study_number AS STUDYID,
         'TS' AS DOMAIN,
         ectav.code_submission_value AS TSPARMCD,
         ectav.name_submission_value AS TSPARM,
         '' AS controlled_by,
-        endp.name_plain + ' Time frame: ' + tf.name_plain AS TSVAL,
+        endp.name_plain + unit_str +' Time frame: ' + tf.name_plain + '.'AS TSVAL,
         '' AS TSVALNF,
         '' AS TSVALCD,
         '' AS TSVCDREF,

@@ -344,6 +344,8 @@ STUDY_FOOTNOTE_FIELDS_ALL = [
     "referenced_items",
     "modified",
     "study_version",
+    "accepted_version",
+    "latest_footnote",
 ]
 
 STUDY_FOOTNOTE_FIELDS_NOT_NULL = [
@@ -352,6 +354,7 @@ STUDY_FOOTNOTE_FIELDS_NOT_NULL = [
     "order",
     "referenced_items",
     "modified",
+    "accepted_version",
 ]
 
 
@@ -1044,6 +1047,19 @@ def test_add_footnotes_to_subgroup_and_group(api_client):
 
 def test_modify_actions_on_locked_study(api_client):
     _study_epoch = create_study_epoch("EpochSubType_0002", study_uid=study.uid)
+    text_value_2_name = "test-2ndname"
+    # change footnote name and approve the version
+    response = api_client.post(
+        f"/footnote-templates/{footnote_templates[0].uid}/versions",
+        json={
+            "change_description": "test change",
+            "name": text_value_2_name,
+            "guidance_text": "don't know",
+        },
+    )
+    response = api_client.post(
+        f"/footnote-templates/{footnote_templates[0].uid}/approvals?cascade=true"
+    )
 
     response = api_client.patch(
         f"/studies/{study.uid}/study-soa-footnotes/StudySoAFootnote_000008",
@@ -1215,9 +1231,9 @@ def test_modify_actions_on_locked_study(api_client):
         "Randomized",
         "Epoch Subtype1",
         "Weight V2",
-        "Body Measurement activity V1",
         "Body Measurements",
         "General",
+        "Body Measurement activity V1",
     ]
 
     response = api_client.get(
@@ -1299,7 +1315,7 @@ def test_update_footnote_library_items_of_relationship_to_value_nodes(api_client
     library_template_footnote_uid = res["footnote"]["footnote_template"]["uid"]
     initial_footnote_name = res["footnote"]["footnote_template"]["name"]
 
-    text_value_2_name = "2ndname"
+    text_value_2_name = "3rdname"
     # change footnote name and approve the version
     response = api_client.post(
         f"/footnote-templates/{library_template_footnote_uid}/versions",
@@ -1326,3 +1342,35 @@ def test_update_footnote_library_items_of_relationship_to_value_nodes(api_client
     res = response.json()
     assert response.status_code == 200
     assert res["footnote"]["footnote_template"]["name"] == initial_footnote_name
+
+    # check that the StudySelection can approve the current version
+    response = api_client.post(
+        f"/studies/{study.uid}/study-soa-footnotes/{study_soa_footnote_uid}/accept-version",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["accepted_version"] is True
+    assert res["footnote"]["footnote_template"]["name"] == initial_footnote_name
+    assert res["latest_footnote"]["footnote_template"]["name"] == text_value_2_name
+
+    response = api_client.get(
+        f"/studies/{study.uid}/study-soa-footnotes/{study_soa_footnote_uid}/audit-trail"
+    )
+    assert response.status_code == 200
+    res = response.json()
+    counting_before_sync = len(res)
+
+    # check that the StudySelection's Footnote can be updated to the LATEST
+    response = api_client.post(
+        f"/studies/{study.uid}/study-soa-footnotes/{study_soa_footnote_uid}/sync-latest-version",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["footnote"]["footnote_template"]["name"] == text_value_2_name
+
+    response = api_client.get(
+        f"/studies/{study.uid}/study-soa-footnotes/{study_soa_footnote_uid}/audit-trail"
+    )
+    assert response.status_code == 200
+    res = response.json()
+    assert len(res) == counting_before_sync + 1

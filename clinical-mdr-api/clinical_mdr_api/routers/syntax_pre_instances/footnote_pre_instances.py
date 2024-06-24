@@ -1,6 +1,6 @@
 from typing import Any
 
-from fastapi import APIRouter, Body, Depends, Path, Query, Request, Response
+from fastapi import APIRouter, Body, Path, Query, Request, Response
 from fastapi import status as fast_api_status
 from pydantic.types import Json
 
@@ -8,7 +8,7 @@ from clinical_mdr_api import config, models
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.oauth import get_current_user_id, rbac
+from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.syntax_pre_instances.footnote_pre_instances import (
@@ -127,7 +127,6 @@ def footnote_pre_instances(
     },
 )
 def get_distinct_values_for_header(
-    current_user_id: str = Depends(get_current_user_id),
     status: LibraryItemStatus
     | None = Query(
         None,
@@ -149,7 +148,7 @@ def get_distinct_values_for_header(
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
 ):
-    return Service(current_user_id).get_distinct_values_for_header(
+    return Service().get_distinct_values_for_header(
         status=status,
         field_name=field_name,
         search_string=search_string,
@@ -183,9 +182,8 @@ def retrieve_audit_trail(
     ),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    results = Service(current_user_id).get_all(
+    results = Service().get_all(
         page_number=page_number,
         page_size=page_size,
         total_count=total_count,
@@ -215,9 +213,8 @@ def retrieve_audit_trail(
 )
 def get(
     uid: str = FootnotePreInstanceUID,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    return FootnotePreInstanceService(current_user_id).get_by_uid(uid=uid)
+    return FootnotePreInstanceService().get_by_uid(uid=uid)
 
 
 @router.patch(
@@ -259,9 +256,8 @@ def edit(
         None,
         description="The new parameter terms for the Footnote Pre-Instance, its indexings and the change description.",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    return Service(current_user_id).edit_draft(uid=uid, template=footnote_pre_instance)
+    return Service().edit_draft(uid=uid, template=footnote_pre_instance)
 
 
 @router.patch(
@@ -292,9 +288,8 @@ def patch_indexings(
         None,
         description="The lists of UIDs for the new indexings to be set, grouped by indexings to be updated.",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.FootnotePreInstance:
-    return Service(current_user_id).patch_indexings(uid=uid, indexings=indexings)
+    return Service().patch_indexings(uid=uid, indexings=indexings)
 
 
 @router.get(
@@ -365,9 +360,8 @@ The returned versions are ordered by `start_date` descending (newest entries fir
 def get_versions(
     request: Request,  # request is actually required by the allow_exports decorator
     uid: str = FootnotePreInstanceUID,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    return Service(current_user_id).get_version_history(uid)
+    return Service().get_version_history(uid)
 
 
 @router.post(
@@ -406,9 +400,8 @@ Only the surrounding text (excluding the parameters) can be changed.
 )
 def create_new_version(
     uid: str = FootnotePreInstanceUID,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    return Service(current_user_id).create_new_version(uid=uid)
+    return Service().create_new_version(uid=uid)
 
 
 @router.delete(
@@ -441,9 +434,8 @@ If the request succeeds:
 )
 def inactivate(
     uid: str = FootnotePreInstanceUID,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    return FootnotePreInstanceService(current_user_id).inactivate_final(uid)
+    return FootnotePreInstanceService().inactivate_final(uid)
 
 
 @router.post(
@@ -476,9 +468,8 @@ If the request succeeds:
 )
 def reactivate(
     uid: str = FootnotePreInstanceUID,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    return FootnotePreInstanceService(current_user_id).reactivate_retired(uid)
+    return FootnotePreInstanceService().reactivate_retired(uid)
 
 
 @router.delete(
@@ -510,9 +501,8 @@ def reactivate(
 )
 def delete(
     uid: str = FootnotePreInstanceUID,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    Service(current_user_id).soft_delete(uid)
+    Service().soft_delete(uid)
     return Response(status_code=fast_api_status.HTTP_204_NO_CONTENT)
 
 
@@ -548,6 +538,5 @@ If the request succeeds:
 )
 def approve(
     uid: str = FootnotePreInstanceUID,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    return Service(current_user_id).approve(uid)
+    return Service().approve(uid)

@@ -1,94 +1,90 @@
 <template>
-<div class="px-4">
-  <div class="page-title d-flex align-center">
-    {{ $t('CriteriaTemplatesView.title') }}
-    <help-button :help-text="$t('_help.CriteriaTemplatesTable.general')" />
-  </div>
-  <v-tabs v-model="tab">
-    <v-tab
-      v-for="type in criteriaTypes"
-      :key="type.term_uid"
-      :href="`#${type.sponsor_preferred_name}`"
-      >
-      {{ type.sponsor_preferred_name }}
-    </v-tab>
-  </v-tabs>
-  <v-tabs-items v-model="tab">
-    <v-tab-item
-      v-for="type in criteriaTypes"
-      :key="type.term_uid"
-      :id="type.sponsor_preferred_name"
-      >
-      <criteria-template-table
+  <div class="px-4">
+    <div class="page-title d-flex align-center">
+      {{ $t('CriteriaTemplatesView.title') }}
+      <HelpButton :help-text="$t('_help.CriteriaTemplatesTable.general')" />
+    </div>
+    <v-tabs v-model="tab" bg-color="white">
+      <v-tab
+        v-for="type in criteriaTypes"
         :key="type.term_uid"
-        :criteria-type="type"
+        :value="type.name.sponsor_preferred_name"
+      >
+        {{ type.name.sponsor_preferred_name }}
+      </v-tab>
+    </v-tabs>
+    <v-window v-model="tab">
+      <v-window-item
+        v-for="type in criteriaTypes"
+        :key="type.term_uid"
+        :value="type.name.sponsor_preferred_name"
+      >
+        <CriteriaTemplateTable
+          :ref="(el) => (tableRefs[type.name.sponsor_preferred_name] = el)"
+          :key="type.term_uid"
+          :criteria-type="type"
         />
-    </v-tab-item>
-  </v-tabs-items>
-</div>
+      </v-window-item>
+    </v-window>
+  </div>
 </template>
 
-<script>
-import CriteriaTemplateTable from '@/components/library/CriteriaTemplateTable'
-import HelpButton from '@/components/tools/HelpButton'
+<script setup>
+import { nextTick, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import CriteriaTemplateTable from '@/components/library/CriteriaTemplateTable.vue'
+import HelpButton from '@/components/tools/HelpButton.vue'
 import terms from '@/api/controlledTerminology/terms'
-import { mapActions } from 'vuex'
+import { useAppStore } from '@/stores/app'
 
-export default {
-  components: {
-    CriteriaTemplateTable,
-    HelpButton
-  },
-  data () {
-    return {
-      criteriaTypes: [],
-      tab: null
-    }
-  },
-  mounted () {
-    terms.getByCodelist('criteriaTypes').then(resp => {
-      this.criteriaTypes = resp.data.items
-      this.criteriaTypes.forEach(type => {
-        type.sponsor_preferred_name = type.sponsor_preferred_name.replace(' Criteria', '')
-      })
+const appStore = useAppStore()
+const route = useRoute()
+const router = useRouter()
+
+const criteriaTypes = ref([])
+const tab = ref(null)
+const tableRefs = ref({})
+
+watch(tab, (newValue) => {
+  const params = { type: newValue }
+  router.push({
+    name: 'CriteriaTemplates',
+    params,
+  })
+  appStore.addBreadcrumbsLevel(newValue, undefined, 3, true)
+})
+
+watch(
+  () => route.params.type,
+  (newValue) => {
+    tab.value = newValue
+    nextTick(() => {
+      if (tableRefs.value[newValue]) {
+        tableRefs.value[newValue].restoreTab()
+      }
     })
-    this.tab = this.$route.params.type
-    setTimeout(() => {
-      this.addBreadcrumbsLevel({
-        text: this.tab,
-        index: 3,
-        replace: true
-      })
-    }, 100)
-  },
-  methods: {
-    ...mapActions({
-      addBreadcrumbsLevel: 'app/addBreadcrumbsLevel'
-    })
-  },
-  watch: {
-    tab (newValue) {
-      const params = { ...this.$route.params }
-      params.type = newValue
-      this.$router.push({
-        name: 'CriteriaTemplates',
-        params
-      })
-      this.addBreadcrumbsLevel({
-        text: newValue,
-        index: 3,
-        replace: true
-      })
-    },
-    '$route.params.type' (newValue) {
-      this.tab = newValue
-    }
   }
-}
+)
+
+terms.getByCodelist('criteriaTypes').then((resp) => {
+  criteriaTypes.value = resp.data.items
+  criteriaTypes.value.forEach((type) => {
+    type.name.sponsor_preferred_name = type.name.sponsor_preferred_name.replace(
+      ' Criteria',
+      ''
+    )
+  })
+  if (route.params.type) {
+    tab.value = route.params.type
+  } else {
+    tab.value = criteriaTypes.value[0].name.sponsor_preferred_name
+  }
+  appStore.addBreadcrumbsLevel(tab.value, undefined, 3, true)
+})
 </script>
 
 <style scoped>
-.v-tabs-items {
+.v-window {
   min-height: 50vh;
 }
 </style>

@@ -111,6 +111,9 @@ class StudyArrayField(StudyField):
 class StudyBooleanField(StudyField):
     value = BooleanProperty()
     field_name = StringProperty()
+    has_boolean_field = RelationshipFrom(
+        ".study.StudyValue", "HAS_BOOLEAN_FIELD", model=ClinicalMdrRel
+    )
 
 
 class StudyTimeField(StudyField):

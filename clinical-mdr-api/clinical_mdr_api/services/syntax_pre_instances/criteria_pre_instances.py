@@ -24,15 +24,7 @@ class CriteriaPreInstanceService(CriteriaService[CriteriaPreInstanceAR]):
     def _transform_aggregate_root_to_pydantic_model(
         self, item_ar: CriteriaPreInstanceAR
     ) -> CriteriaPreInstance:
-        item = CriteriaPreInstance.from_criteria_pre_instance_ar(item_ar)
-        item.template_type_uid = (
-            self._repos.criteria_template_repository.get_template_type_uid(
-                self._repos.criteria_template_repository.root_class.nodes.get(
-                    uid=item.template_uid
-                )
-            )
-        )
-        return item
+        return CriteriaPreInstance.from_criteria_pre_instance_ar(item_ar)
 
     def create_ar_from_input_values(
         self,
@@ -58,9 +50,17 @@ class CriteriaPreInstanceService(CriteriaService[CriteriaPreInstanceAR]):
             _,
             _,
             _,
-            _,
-        ) = self._get_indexings(template)
+            template_type,
+        ) = self._get_indexings(
+            template,
+            self.repository.get_template_type_uid(
+                self._repos.criteria_template_repository.root_class.nodes.get_or_none(
+                    uid=template_uid
+                )
+            ),
+        )
 
+        item_ar._type = template_type
         item_ar._indications = indications
         item_ar._categories = categories
         item_ar._subcategories = sub_categories

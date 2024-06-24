@@ -707,6 +707,37 @@ def test_change_activity_instruction_pre_instance_indexings(api_client):
         assert res[key] is not None
 
 
+def test_remove_activity_instruction_pre_instance_indexings(api_client):
+    data = {
+        "indication_uids": [],
+        "activity_uids": [],
+        "activity_group_uids": [],
+        "activity_subgroup_uids": [],
+    }
+    response = api_client.patch(
+        f"{URL}/{activity_instruction_pre_instances[0].uid}/indexings",
+        json=data,
+    )
+    res = response.json()
+    log.info("Removed Activity Instruction Pre-Instance indexings: %s", res)
+
+    assert response.status_code == 200
+    assert res["uid"]
+    assert res["sequence_id"]
+    assert res["template_uid"] == activity_instruction_template.uid
+    assert res["template_name"] == activity_instruction_template.name
+    assert res["name"] == f"Default name with [{text_value_1.name_sentence_case}]"
+    assert not res["indications"]
+    assert not res["activities"]
+    assert not res["activity_groups"]
+    assert not res["activity_subgroups"]
+    assert res["version"] == "1.0"
+    assert res["status"] == "Final"
+    assert set(list(res.keys())) == set(ACTIVITY_INSTRUCTION_PRE_INSTANCE_FIELDS_ALL)
+    for key in ACTIVITY_INSTRUCTION_PRE_INSTANCE_FIELDS_NOT_NULL:
+        assert res[key] is not None
+
+
 def test_delete_activity_instruction_pre_instance(api_client):
     response = api_client.delete(f"{URL}/{activity_instruction_pre_instances[3].uid}")
     log.info(
@@ -936,6 +967,53 @@ def test_create_pre_instance_activity_instruction_template(api_client):
     assert res["status"] == "Draft"
 
 
+def test_keep_original_case_of_unit_definition_parameter_if_it_is_in_the_start_of_activity_instruction_pre_instance(
+    api_client,
+):
+    TestUtils.create_template_parameter("Unit")
+    _unit = TestUtils.create_unit_definition("u/week", template_parameter=True)
+
+    _activity_instruction_template = TestUtils.create_activity_instruction_template(
+        name="[Unit] test ignore case",
+        guidance_text="Default guidance text",
+        library_name="Sponsor",
+        indication_uids=[],
+        activity_uids=[],
+        activity_group_uids=[activity_group.uid],
+        activity_subgroup_uids=[activity_subgroup.uid],
+    )
+    data = {
+        "library_name": "Sponsor",
+        "parameter_terms": [
+            {
+                "position": 1,
+                "conjunction": "",
+                "terms": [
+                    {
+                        "index": 1,
+                        "name": _unit.name,
+                        "uid": _unit.uid,
+                        "type": "Unit",
+                    }
+                ],
+            }
+        ],
+        "indication_uids": [],
+        "activity_uids": [],
+        "activity_group_uids": [],
+        "activity_subgroup_uids": [],
+    }
+    response = api_client.post(
+        f"activity-instruction-templates/{_activity_instruction_template.uid}/pre-instances",
+        json=data,
+    )
+    res = response.json()
+    log.info("Created Activity Instruction Pre-Instance: %s", res)
+
+    assert response.status_code == 201
+    assert res["name"] == f"[{_unit.name}] test ignore case"
+
+
 def test_activity_instruction_pre_instance_sequence_id_generation(api_client):
     template = TestUtils.create_activity_instruction_template(
         name="Test [TextValue]",
@@ -976,7 +1054,7 @@ def test_activity_instruction_pre_instance_sequence_id_generation(api_client):
 
     assert response.status_code == 201
     assert "PreInstance" in res["uid"]
-    assert res["sequence_id"] == "AI2P1"
+    assert res["sequence_id"] == "AI3P1"
     assert res["template_uid"] == template.uid
     assert res["name"] == f"Test [{text_value_1.name_sentence_case}]"
     assert (
@@ -1059,7 +1137,7 @@ def test_activity_instruction_pre_instance_template_parameter_rules(api_client):
 
     assert response.status_code == 201
     assert "PreInstance" in res["uid"]
-    assert res["sequence_id"] == "AI3P1"
+    assert res["sequence_id"] == "AI4P1"
     assert res["template_uid"] == template.uid
     assert (
         res["name"]

@@ -1,7 +1,7 @@
 <script>
 export default {
-  mounted () {
+  mounted() {
     this.$auth.oauthLoginCallback()
-  }
+  },
 }
 </script>

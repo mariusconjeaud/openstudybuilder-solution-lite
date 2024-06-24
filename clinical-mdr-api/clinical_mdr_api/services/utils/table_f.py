@@ -2,10 +2,10 @@ from typing import Any, Mapping
 
 import yattag
 from docx.shared import Inches
-from opencensus.trace import execution_context
 from pydantic import BaseModel, Field
 
 from clinical_mdr_api.services.utils.docx_builder import DocxBuilder
+from clinical_mdr_api.telemetry import trace_calls
 
 
 class Ref(BaseModel):
@@ -24,7 +24,7 @@ class TableCell(BaseModel):
     text: str = Field("", title="Text contents of cell")
     span: int = Field(1, title="Horizontal spanning of cell, 1 by default")
     style: str | None = Field(None, title="Associated style to cell")
-    refs: list[Ref] = Field(default_factory=list, title="Reference to item")
+    refs: list[Ref] | None = Field(None, title="Reference to item")
     footnotes: list[str] | None = Field(None, title="Referenced footnotes")
     vertical: bool | None = Field(None, title="Text text direction")
 
@@ -52,135 +52,161 @@ class SimpleFootnote(BaseModel):
 
 class TableWithFootnotes(BaseModel):
     rows: list[TableRow] = Field(default_factory=list, title="List of table rows")
-    footnotes: dict[str, SimpleFootnote] = Field(
-        default_factory=list, title="Mapping of symbols and table footnotes"
+    footnotes: dict[str, SimpleFootnote] | None = Field(
+        None, title="Mapping of symbols and table footnotes"
     )
     num_header_rows: int = Field(0, title="Number of header rows")
     num_header_cols: int = Field(0, title="Number of header columns")
-    title: str | None = Field(None, title="Table title")
+    title: str | None = Field(None, title="Table title (when rendered to HTML)")
+    id: str | None = Field(None, title="Table id (when rendered to HTML)")
 
 
+@trace_calls()
 def table_to_docx(
     table: TableWithFootnotes, styles: Mapping[str, tuple[str, Any]] = None
 ) -> DocxBuilder:
-    num_columns = sum((c.span for c in table.rows[0].cells))
+    # assume horizontal table dimension from number of cells in first row
+    num_cols = sum((c.span for c in table.rows[0].cells))
 
-    tracer = execution_context.get_opencensus_tracer()
-    with tracer.span("table_to_docx"):
-        docx = DocxBuilder(styles=styles, landscape=True, margins=[0.5, 0.5, 0.5, 0.5])
+    # parses an empty template DOCX file into a helper class
+    docx = DocxBuilder(
+        styles=styles,
+        landscape=True,
+        margins=[0.5, 0.5, 0.5, 0.5],
+    )
 
-        # Table has to be created with number of columns set. Also creates first row.
-        tablex = docx.create_table(
-            num_rows=1,
-            num_columns=num_columns,
-        )
+    # adds a table to the document
+    x_table = docx.create_table(
+        num_rows=sum(1 for row in table.rows if not row.hide),
+        num_columns=num_cols,
+    )
 
-        # Set width of first column
-        tablex.columns[0].width = Inches(4)
+    # set width of first column
+    x_table.columns[0].width = Inches(4)
 
-        # Update header rows
-        for row_idx, row in enumerate((row for row in table.rows if not row.hide)):
-            if row_idx:
-                rowx = tablex.add_row()
-            else:
-                rowx = tablex.rows[row_idx]
+    # cache porperty for performance issues, see github.com/python-openxml/python-docx/issues/174
+    x_cells = x_table._cells
+    x_rows = x_table.rows
 
-            for cell_idx, cell in enumerate(row.cells):
-                cellx = rowx.cells[cell_idx]
-                para = cellx.paragraphs[0]
+    for r, t_row in enumerate((row for row in table.rows if not row.hide)):
+        num_merge, merge_to = 0, None
 
-                if cell.span == 0:
-                    continue
+        # set header row to repeat on each page
+        if r < table.num_header_rows:
+            docx.repeat_table_header(x_rows[r])
 
-                if cell.span > 1:
-                    # Merge cells
-                    for i in range(1, min(len(rowx.cells), cell.span)):
-                        cellx.merge(rowx.cells[cell_idx + i])
+        for c, t_cell in enumerate(t_row.cells):
+            x_cell = x_cells[r * num_cols + c]
 
-                if cell.text:
-                    para.text = cell.text
+            # merge with previous spanning cell
+            if num_merge:
+                merge_to.merge(x_cell)
+                num_merge -= 1
+                continue
 
-                style_name = styles.get(cell.style, [None])[0] if styles else None
-                if style_name:
-                    para.style = style_name
+            # skip invisible cells (should not get here if spans are coherent)
+            if t_cell.span < 1:
+                continue
 
-                if cell.vertical:
-                    docx.set_vertical_cell_direction(cellx, "btLr")
+            # when cell span > 1 merge the following N cells into this one
+            num_merge = t_cell.span - 1
+            merge_to = x_cell
 
-                for symbol in cell.footnotes or []:
-                    run = para.add_run(f" {symbol}")
-                    run.font.superscript = True
+            # all docx cells host one or more paragraph for contents
+            x_para = x_cell.paragraphs[0]
 
-            # Set header row to repeat after page breaks
-            if row_idx < table.num_header_rows:
-                docx.repeat_table_header(rowx)
+            # set cell text in the paragraph
+            if t_cell.text:
+                x_para.text = t_cell.text
 
-        # add footnotes
+            # resolve style name and apply to paragraph
+            style_name = styles.get(t_cell.style, [None])[0] if styles else None
+            if style_name:
+                x_para.style = style_name
+
+            # set vertical text direction
+            if t_cell.vertical:
+                docx.set_vertical_cell_direction(x_cell, "btLr")
+
+            # add a new run (like <span>) within the paragraph for each footnote symbol, with spacing in the run
+            for symbol in t_cell.footnotes or []:
+                run = x_para.add_run(f" {symbol}")
+                run.font.superscript = True
+
+    # add footnotes
+    if table.footnotes:
         style_name = styles.get("footnote", [None])[0] if styles else None
+
         for symbol, footnote in table.footnotes.items():
-            para = docx.document.add_paragraph(style=style_name)
-            run = para.add_run(f" {symbol}")
+            # each footnote is a new paragraph at the end of the document
+            x_para = docx.document.add_paragraph(style=style_name)
+
+            # footnote symbols into a run (like <span>) with superscript
+            run = x_para.add_run(symbol)
             run.font.superscript = True
-            para.add_run(f": {footnote.text_plain}")
 
-        return docx
+            # footnote text with glue and spacing into a distinct run
+            x_para.add_run(f": {footnote.text_plain}")
+
+    return docx
 
 
+@trace_calls
 def table_to_html(table: TableWithFootnotes) -> str:
-    tracer = execution_context.get_opencensus_tracer()
-    with tracer.span("table_to_html"):
-        doc, tag, text, line = yattag.Doc().ttl()
-        doc.asis("<!DOCTYPE html>")
+    doc, tag, text, line = yattag.Doc().ttl()
+    doc.asis("<!DOCTYPE html>")
 
-        with tag("html", lang="en"):
-            with tag("head"):
-                if table.title:
-                    line("title", table.title)
+    with tag("html", lang="en"):
+        with tag("head"):
+            if table.title:
+                line("title", table.title)
 
-            with tag("body"):
-                with tag("table"):
-                    with tag("thead"):
-                        for row in table.rows[: table.num_header_rows]:
-                            if row.hide:
-                                continue
+        with tag("body"):
+            attrs = {"id": table.id} if table.id else {}
+            with tag("table", **attrs):
+                with tag("thead"):
+                    for row in table.rows[: table.num_header_rows]:
+                        if row.hide:
+                            continue
 
-                            with tag("tr"):
-                                for cell in row.cells:
-                                    if cell.span == 0:
-                                        continue
+                        with tag("tr"):
+                            for cell in row.cells:
+                                if cell.span == 0:
+                                    continue
 
-                                    with tag("th", **_cell_to_attrs(cell)):
-                                        text(cell.text)
-                                        for symbol in cell.footnotes or []:
-                                            doc.asis("&nbsp;")
-                                            line("sup", symbol)
+                                with tag("th", **_cell_to_attrs(cell)):
+                                    text(cell.text)
+                                    for symbol in cell.footnotes or []:
+                                        doc.asis("&nbsp;")
+                                        line("sup", symbol)
 
-                    with tag("tbody"):
-                        for row in table.rows[table.num_header_rows :]:
-                            if row.hide:
-                                continue
+                with tag("tbody"):
+                    for row in table.rows[table.num_header_rows :]:
+                        if row.hide:
+                            continue
 
-                            with tag("tr"):
-                                for i, cell in enumerate(row.cells):
-                                    if cell.span == 0:
-                                        continue
+                        with tag("tr"):
+                            for i, cell in enumerate(row.cells):
+                                if cell.span == 0:
+                                    continue
 
-                                    with tag(
-                                        ("th" if i < table.num_header_cols else "td"),
-                                        **_cell_to_attrs(cell),
-                                    ):
-                                        text(cell.text)
-                                        for symbol in cell.footnotes or []:
-                                            doc.asis("&nbsp;")
-                                            line("sup", symbol)
+                                with tag(
+                                    ("th" if i < table.num_header_cols else "td"),
+                                    **_cell_to_attrs(cell),
+                                ):
+                                    text(cell.text)
+                                    for symbol in cell.footnotes or []:
+                                        doc.asis("&nbsp;")
+                                        line("sup", symbol)
 
+            if table.footnotes:
                 with tag("dl", klass="footnotes"):
                     for symbol, footnote in table.footnotes.items():
                         line("dt", symbol)
                         with tag("dd"):
                             doc.asis(footnote.text_plain)
 
-        return yattag.indent(doc.getvalue())
+    return yattag.indent(doc.getvalue())
 
 
 def _cell_to_attrs(cell):

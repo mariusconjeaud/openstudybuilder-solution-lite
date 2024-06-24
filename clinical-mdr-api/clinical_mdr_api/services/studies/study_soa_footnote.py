@@ -15,6 +15,7 @@ from clinical_mdr_api.domains.study_selections.study_soa_footnote import (
     StudySoAFootnoteVOHistory,
 )
 from clinical_mdr_api.domains.syntax_instances.footnote import FootnoteAR
+from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
 from clinical_mdr_api.exceptions import NotFoundException
 from clinical_mdr_api.models import FootnoteCreateInput
 from clinical_mdr_api.models.study_selections.study_soa_footnote import (
@@ -27,21 +28,24 @@ from clinical_mdr_api.models.study_selections.study_soa_footnote import (
     StudySoAFootnoteVersion,
 )
 from clinical_mdr_api.models.utils import GenericFilteringReturn
+from clinical_mdr_api.oauth.user import user
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._meta_repository import MetaRepository
 from clinical_mdr_api.services._utils import (
     calculate_diffs,
     calculate_diffs_history,
+    extract_filtering_values,
     normalize_string,
     service_level_generic_filtering,
     service_level_generic_header_filtering,
 )
 from clinical_mdr_api.services.syntax_instances.footnotes import FootnoteService
+from clinical_mdr_api.telemetry import trace_calls
 
 
 class StudySoAFootnoteService:
-    def __init__(self, author="TODO Initials"):
-        self.author = author
+    def __init__(self):
+        self.author = user().id()
         self._repos = MetaRepository()
         self.repository_interface = StudySoAFootnoteRepository
 
@@ -85,8 +89,16 @@ class StudySoAFootnoteService:
         total_count: bool = False,
         study_value_version: str | None = None,
     ) -> GenericFilteringReturn[StudySoAFootnote]:
+        # Extract the study uids to use database level filtering for these
+        # instead of service level filtering
+        if filter_operator is None or filter_operator == FilterOperator.AND:
+            study_uids = extract_filtering_values(filter_by, "study_uid")
+        else:
+            study_uids = None
+
         items = self.repository.find_all_footnotes(
-            study_value_version=study_value_version
+            study_uids=study_uids,
+            study_value_version=study_value_version,
         )
         items = [
             self._transform_vo_to_pydantic_model(study_soa_footnote_vo=item)
@@ -106,6 +118,7 @@ class StudySoAFootnoteService:
         )
         return all_items
 
+    @trace_calls
     def get_all_by_study_uid(
         self,
         study_uid: str,
@@ -118,7 +131,7 @@ class StudySoAFootnoteService:
         study_value_version: str | None = None,
     ) -> GenericFilteringReturn[StudySoAFootnote]:
         items = self.repository.find_all_footnotes(
-            study_uid=study_uid, study_value_version=study_value_version
+            study_uids=study_uid, study_value_version=study_value_version
         )
         items = [
             self._transform_vo_to_pydantic_model(
@@ -155,7 +168,11 @@ class StudySoAFootnoteService:
                 study_uid=study_uid, study_value_version=study_value_version
             )
         else:
-            all_items = self.get_all(study_value_version=study_value_version)
+            all_items = self.get_all(
+                study_value_version=study_value_version,
+                filter_by=filter_by,
+                filter_operator=filter_operator,
+            )
         header_values = service_level_generic_header_filtering(
             items=all_items.items,
             field_name=field_name,
@@ -198,9 +215,11 @@ class StudySoAFootnoteService:
             return len(all_soa_footnotes) + 1
 
         # get coordinates mapping uid -> [row, column] position of items in protocol SoA flowchart table
-        uid_coordinates_in_flowchart = StudyFlowchartService(
-            self.author
-        ).get_flowchart_item_uid_coordinates(study_uid=study_uid)
+        uid_coordinates_in_flowchart = (
+            StudyFlowchartService().get_flowchart_item_uid_coordinates(
+                study_uid=study_uid
+            )
+        )
 
         # collect coordinates of items referenced by existing footnotes
         footnote_coordinates = []
@@ -237,6 +256,9 @@ class StudySoAFootnoteService:
         referenced_items: list[ReferencedItem],
         footnote_number: int,
         uid: str | None = None,
+        accepted_version: bool = False,
+        footnote_version: str | None = None,
+        footnote_template_version: str | None = None,
     ):
         footnote_vo = StudySoAFootnoteVO.from_input_values(
             study_uid=study_uid,
@@ -256,6 +278,9 @@ class StudySoAFootnoteService:
             ),
             status=StudyStatus.DRAFT,
             author=self.author,
+            accepted_version=accepted_version,
+            footnote_version=footnote_version,
+            footnote_template_version=footnote_template_version,
         )
         return footnote_vo
 
@@ -334,7 +359,7 @@ class StudySoAFootnoteService:
     def manage_create(
         self, study_uid: str, footnote_input: StudySoAFootnoteCreateInput
     ) -> StudySoAFootnote:
-        all_soa_footnotes = self.repository.find_all_footnotes(study_uid=study_uid)
+        all_soa_footnotes = self.repository.find_all_footnotes(study_uids=study_uid)
 
         footnote_number = self.derive_footnote_number(
             study_uid=study_uid,
@@ -394,7 +419,7 @@ class StudySoAFootnoteService:
         soa_footnote_vo.is_deleted = True
         self.repository.save(soa_footnote_vo, create=False)
 
-        all_soa_footnotes = self.repository.find_all_footnotes(study_uid=study_uid)
+        all_soa_footnotes = self.repository.find_all_footnotes(study_uids=study_uid)
         self.synchronize_footnotes(footnotes_to_fix=all_soa_footnotes)
 
     def validate(
@@ -441,10 +466,12 @@ class StudySoAFootnoteService:
         study_uid: str,
         study_soa_footnote_uid: str,
         footnote_edit_input: StudySoAFootnoteEditInput,
+        accept_version: bool = False,
+        sync_latest_version: bool = False,
     ):
         soa_footnote = self.repository.find_by_uid(uid=study_soa_footnote_uid)
         footnote_number = soa_footnote.footnote_number
-        all_soa_footnotes = self.repository.find_all_footnotes(study_uid=study_uid)
+        all_soa_footnotes = self.repository.find_all_footnotes(study_uids=study_uid)
         # remove footnote that is being edited from calculations as it will be added in the end
         all_soa_footnotes = [
             soa_footnote
@@ -461,26 +488,69 @@ class StudySoAFootnoteService:
             )
         if (
             footnote_edit_input.referenced_items == soa_footnote.referenced_items
-            or footnote_edit_input is None
+            or footnote_edit_input.referenced_items is None
         ) and (
             footnote_edit_input.footnote_uid == soa_footnote.footnote_uid
             or footnote_edit_input.footnote_uid is None
         ):
-            raise exceptions.ValidationException("Nothing is changed")
+            if (
+                footnote_edit_input.footnote_template_uid
+                == soa_footnote.footnote_template_uid
+                or footnote_edit_input.footnote_template_uid is None
+            ) and (
+                accept_version is False
+                or soa_footnote.accepted_version == accept_version
+            ):
+                if sync_latest_version is False or all(
+                    i and i is None
+                    for i in [
+                        soa_footnote.footnote_version,
+                        soa_footnote.footnote_template_version,
+                    ]
+                ):
+                    raise exceptions.ValidationException("Nothing is changed")
         footnote_uid = None
+        footnote_version = None
         if footnote_edit_input.footnote_uid:
             footnote_uid = footnote_edit_input.footnote_uid
         elif soa_footnote.footnote_uid:
             footnote_uid = soa_footnote.footnote_uid
+            footnote_version = (
+                soa_footnote.footnote_version if soa_footnote.footnote_version else None
+            )
         footnote_template_uid = None
+        footnote_template_version = None
         if footnote_edit_input.footnote_template_uid:
             footnote_template_uid = footnote_edit_input.footnote_template_uid
         elif soa_footnote.footnote_template_uid:
             footnote_template_uid = soa_footnote.footnote_template_uid
+            footnote_template_version = (
+                soa_footnote.footnote_template_version
+                if soa_footnote.footnote_template_version
+                else None
+            )
+        if accept_version:
+            self.validate_footnote_for_update_or_sync(
+                study_soa_footnote_vo=soa_footnote
+            )
+            # the version to be accepted
+            soa_footnote.accepted_version = True
+        else:
+            # it isn't an accepted version
+            soa_footnote.accepted_version = False
+        if sync_latest_version:
+            self.validate_footnote_for_update_or_sync(
+                study_soa_footnote_vo=soa_footnote
+            )
+            # None for a specific version
+            footnote_version = None
+            footnote_template_version = None
         new_footnote_vo = self.instantiate_study_soa_vo(
             study_uid=study_uid,
             footnote_uid=footnote_uid,
+            footnote_version=footnote_version,
             footnote_template_uid=footnote_template_uid,
+            footnote_template_version=footnote_template_version,
             referenced_items=(
                 footnote_edit_input.referenced_items
                 if footnote_edit_input.referenced_items is not None
@@ -488,6 +558,7 @@ class StudySoAFootnoteService:
             ),
             footnote_number=footnote_number,
             uid=study_soa_footnote_uid,
+            accepted_version=soa_footnote.accepted_version,
         )
         self.validate(
             footnote_uid=footnote_uid,
@@ -510,7 +581,7 @@ class StudySoAFootnoteService:
             study_uid=study_uid,
         )
         footnote_ar.approve(self.author)
-        all_soa_footnotes = self.repository.find_all_footnotes(study_uid=study_uid)
+        all_soa_footnotes = self.repository.find_all_footnotes(study_uids=study_uid)
         footnote_number = self.derive_footnote_number(
             study_uid=study_uid,
             referenced_items=footnote_create_input.referenced_items,
@@ -558,3 +629,17 @@ class StudySoAFootnoteService:
             version_object_class=StudySoAFootnoteVersion,
         )
         return data
+
+    def validate_footnote_for_update_or_sync(
+        self,
+        study_soa_footnote_vo: StudySoAFootnoteVO,
+    ):
+        soa_footnote_uid = study_soa_footnote_vo.footnote_uid
+        soa_footnote_ar = self._repos.footnote_repository.find_by_uid(soa_footnote_uid)
+        if soa_footnote_ar.item_metadata.status == LibraryItemStatus.DRAFT:
+            soa_footnote_ar.approve(self.author)
+            self._repos.footnote_repository.save(soa_footnote_ar)
+        elif soa_footnote_ar.item_metadata.status == LibraryItemStatus.RETIRED:
+            raise exceptions.BusinessLogicException(
+                "Cannot add retired objective as selection. Please reactivate."
+            )

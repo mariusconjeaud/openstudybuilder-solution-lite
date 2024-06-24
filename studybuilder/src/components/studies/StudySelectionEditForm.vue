@@ -1,170 +1,165 @@
 <template>
-<simple-form-dialog
-  ref="form"
-  :title="title"
-  :help-items="helpItems"
-  @close="close"
-  @submit="submit"
-  :open="open"
+  <SimpleFormDialog
+    ref="form"
+    :title="title"
+    :help-items="helpItems"
+    :open="open"
+    @close="close"
+    @submit="submit"
   >
-  <template v-slot:body>
-    <div class="d-flex align-center">
-      <div class="secondary--text text-h6">
-        {{ $t('_global.template') }}
+    <template #body>
+      <div class="d-flex align-center">
+        <div class="text-secondary text-h6">
+          {{ $t('_global.template') }}
+        </div>
+        <v-btn
+          v-if="!editTemplate"
+          color="primary"
+          icon="mdi-pencil-outline"
+          :title="$t('StudySelectionEditForm.edit_syntax')"
+          class="ml-4"
+          variant="text"
+          @click="editTemplate = true"
+        />
+        <v-btn
+          v-if="editTemplate"
+          icon="mdi-content-save-outline"
+          color="success"
+          class="ml-4"
+          :loading="savingTemplate"
+          :title="$t('StudySelectionEditForm.save_syntax')"
+          variant="text"
+          @click="saveTemplate"
+        />
+        <v-btn
+          v-if="editTemplate"
+          icon="mdi-close"
+          :loading="savingTemplate"
+          :title="$t('StudySelectionEditForm.cancel_modifications')"
+          variant="text"
+          @click="editTemplate = false"
+        />
       </div>
-      <v-btn
-        v-if="!editTemplate"
-        icon
-        :title="$t('StudySelectionEditForm.edit_syntax')"
-        @click="editTemplate = true" class="ml-4"
-        >
-        <v-icon color="primary">mdi-pencil-outline</v-icon>
-      </v-btn>
-      <v-btn
-        v-if="editTemplate"
-        icon
-        color="success"
-        class="ml-4"
-        @click="saveTemplate"
-        :loading="savingTemplate"
-        :title="$t('StudySelectionEditForm.save_syntax')"
-        >
-        <v-icon>mdi-content-save-outline</v-icon>
-      </v-btn>
-      <v-btn
-        v-if="editTemplate"
-        icon
-        @click="editTemplate = false"
-        :loading="savingTemplate"
-        :title="$t('StudySelectionEditForm.cancel_modifications')"
-        >
-        <v-icon>mdi-close</v-icon>
-      </v-btn>
-    </div>
-    <validation-observer v-if="editTemplate" ref="observer_1">
-      <v-alert
-        dense
-        type="info"
-        >
-        {{ templateEditWarning }}
-      </v-alert>
-      <validation-provider
-        v-slot="{ errors }"
-        rules="required"
-        >
-        <n-n-template-input-field
+      <v-form v-if="editTemplate" ref="observer_1">
+        <v-alert density="compact" type="info">
+          {{ templateEditWarning }}
+        </v-alert>
+        <NNTemplateInputField
           v-model="templateForm.name"
           :label="$t('ObjectiveTemplateForm.name')"
           :items="parameterTypes"
-          :error-messages="errors"
           :show-drop-down-early="true"
+          :rules="[formRules.required]"
+        />
+      </v-form>
+      <v-card v-else flat class="bg-parameterBackground">
+        <v-card-text>
+          <NNParameterHighlighter
+            :name="templateForm.name"
+            default-color="orange"
+            :tooltip="false"
           />
-      </validation-provider>
-    </validation-observer>
-    <v-card v-else flat class="parameterBackground">
-      <v-card-text>
-        <n-n-parameter-highlighter
-          :name="templateForm.name"
-          default-color="orange"
-          :tooltip="false"
-          />
-      </v-card-text>
-    </v-card>
-    <validation-observer ref="observer_2">
-      <div class="mt-6">
-        <v-progress-circular
-          v-if="loadingParameters"
-          indeterminate
-          color="secondary"
+        </v-card-text>
+      </v-card>
+      <v-form ref="observer_2">
+        <div class="mt-6">
+          <v-progress-circular
+            v-if="loadingParameters"
+            indeterminate
+            color="secondary"
           />
 
-        <template v-else>
-          <parameter-value-selector
-            ref="paramSelector"
-            :value="parameters"
-            :template="templateName"
-            color="white"
-            stacked
-            :disabled="editTemplate"
-            :with-unformatted-version="withUnformattedVersion"
-            :unformatted-label="$t('StudySelectionEditForm.unformatted_text')"
+          <template v-else>
+            <ParameterValueSelector
+              ref="paramSelector"
+              v-model="parameters"
+              :template="templateName"
+              color="white"
+              stacked
+              :max-template-length="maxTemplateLength"
+              :disabled="editTemplate"
+              :with-unformatted-version="withUnformattedVersion"
+              :unformatted-label="$t('StudySelectionEditForm.unformatted_text')"
             />
-        </template>
-      </div>
-    </validation-observer>
-    <slot name="formFields" v-bind:editTemplate="editTemplate" v-bind:form="form" />
-  </template>
-</simple-form-dialog>
+          </template>
+        </div>
+      </v-form>
+      <slot name="formFields" :edit-template="editTemplate" :form="form" />
+    </template>
+  </SimpleFormDialog>
 </template>
 
 <script>
+import { computed } from 'vue'
 import constants from '@/constants/libraries'
 import statuses from '@/constants/statuses'
 import libraryObjects from '@/api/libraryObjects'
-import { mapGetters } from 'vuex'
-import NNParameterHighlighter from '@/components/tools/NNParameterHighlighter'
-import NNTemplateInputField from '@/components/tools/NNTemplateInputField'
-import { objectManagerMixin } from '@/mixins/objectManager'
-import ParameterValueSelector from '@/components/tools/ParameterValueSelector'
-import SimpleFormDialog from '@/components/tools/SimpleFormDialog'
+import NNParameterHighlighter from '@/components/tools/NNParameterHighlighter.vue'
+import NNTemplateInputField from '@/components/tools/NNTemplateInputField.vue'
+import ParameterValueSelector from '@/components/tools/ParameterValueSelector.vue'
+import SimpleFormDialog from '@/components/tools/SimpleFormDialog.vue'
 import templateParameters from '@/utils/templateParameters'
 import templateParameterTypes from '@/api/templateParameterTypes'
 import templates from '@/api/templates'
+import { useStudiesGeneralStore } from '@/stores/studies-general'
+import instances from '@/utils/instances'
 
 export default {
-  mixins: [objectManagerMixin],
   components: {
     NNParameterHighlighter,
     NNTemplateInputField,
     ParameterValueSelector,
-    SimpleFormDialog
+    SimpleFormDialog,
   },
+  inject: ['formRules'],
   props: {
-    title: String,
-    studySelection: Object,
-    template: Object,
-    libraryName: String,
-    objectType: String,
-    getObjectFromSelection: Function,
+    title: {
+      type: String,
+      default: '',
+    },
+    studySelection: {
+      type: Object,
+      default: undefined,
+    },
+    template: {
+      type: Object,
+      default: undefined,
+    },
+    libraryName: {
+      type: String,
+      default: '',
+    },
+    objectType: {
+      type: String,
+      default: '',
+    },
+    getObjectFromSelection: {
+      type: Function,
+      default: undefined,
+    },
     open: Boolean,
     withUnformattedVersion: {
       type: Boolean,
-      default: true
+      default: true,
     },
     prepareTemplatePayloadFunc: {
       type: Function,
-      required: false
+      required: false,
+      default: undefined,
+    },
+    maxTemplateLength: {
+      type: Boolean,
+      default: null
     }
   },
-  computed: {
-    ...mapGetters({
-      selectedStudy: 'studiesGeneral/selectedStudy'
-    }),
-    templateName () {
-      return this.newTemplate
-        ? this.newTemplate.name
-        : this.studySelection ? this.template.name : ''
-    },
-    apiEndpoint () {
-      if (this.objectType !== 'criteria') {
-        return libraryObjects(`/${this.objectType}s`)
-      }
-      return libraryObjects(`/${this.objectType}`)
-    },
-    templateApi () {
-      return templates(`/${this.objectType}-templates`)
-    },
-    templateEditWarning () {
-      if (this.newTemplate) {
-        return this.$t('StudySelectionEditForm.edit_user_tpl_warning')
-      }
-      if (this.studySelection && this.libraryName === constants.LIBRARY_USER_DEFINED) {
-        return this.$t('StudySelectionEditForm.edit_user_tpl_warning')
-      }
-      return this.$t('StudySelectionEditForm.edit_parent_tpl_warning')
+  emits: ['close', 'initForm', 'submit'],
+  setup() {
+    const studiesGeneralStore = useStudiesGeneralStore()
+    return {
+      selectedStudy: computed(() => studiesGeneralStore.selectedStudy),
     }
   },
-  data () {
+  data() {
     return {
       editTemplate: false,
       form: { template: {} },
@@ -175,14 +170,76 @@ export default {
       parameterTypes: [],
       savingTemplate: false,
       steps: [
-        { name: 'editSyntax', title: this.$t('StudySelectionEditForm.edit_syntax') },
-        { name: 'editValues', title: this.$t('StudySelectionEditForm.edit_values') }
+        {
+          name: 'editSyntax',
+          title: this.$t('StudySelectionEditForm.edit_syntax'),
+        },
+        {
+          name: 'editValues',
+          title: this.$t('StudySelectionEditForm.edit_values'),
+        },
       ],
-      templateForm: {}
+      templateForm: {},
     }
   },
+  computed: {
+    templateName() {
+      return this.newTemplate
+        ? this.newTemplate.name
+        : this.studySelection
+          ? this.template.name
+          : ''
+    },
+    apiEndpoint() {
+      if (this.objectType !== 'criteria') {
+        return libraryObjects(`/${this.objectType}s`)
+      }
+      return libraryObjects(`/${this.objectType}`)
+    },
+    templateApi() {
+      return templates(`/${this.objectType}-templates`)
+    },
+    templateEditWarning() {
+      if (this.newTemplate) {
+        return this.$t('StudySelectionEditForm.edit_user_tpl_warning')
+      }
+      if (
+        this.studySelection &&
+        this.libraryName === constants.LIBRARY_USER_DEFINED
+      ) {
+        return this.$t('StudySelectionEditForm.edit_user_tpl_warning')
+      }
+      return this.$t('StudySelectionEditForm.edit_parent_tpl_warning')
+    },
+  },
+  watch: {
+    template: {
+      handler(newValue) {
+        if (newValue) {
+          this.templateForm = { ...newValue }
+          this.$emit('initForm', this.form)
+          this.loadParameters()
+        } else {
+          this.templateForm = {}
+        }
+      },
+      immediate: true,
+    },
+    editTemplate(value) {
+      if (value) {
+        this.$refs.form.disableActions()
+      } else {
+        this.$refs.form.enableActions()
+      }
+    },
+  },
+  mounted() {
+    templateParameterTypes.getTypes().then((resp) => {
+      this.parameterTypes = resp.data
+    })
+  },
   methods: {
-    close () {
+    close() {
       this.form = { template: {} }
       this.templateForm = {}
       this.parameters = []
@@ -194,9 +251,11 @@ export default {
       this.$refs.form.working = false
       this.$emit('close')
     },
-    compareParameters (oldTemplate, newTemplate) {
-      const oldParams = templateParameters.getTemplateParametersFromTemplate(oldTemplate)
-      const newParams = templateParameters.getTemplateParametersFromTemplate(newTemplate)
+    compareParameters(oldTemplate, newTemplate) {
+      const oldParams =
+        templateParameters.getTemplateParametersFromTemplate(oldTemplate)
+      const newParams =
+        templateParameters.getTemplateParametersFromTemplate(newTemplate)
       if (oldParams.length === newParams.length) {
         let differ = false
         for (let index = 0; index < oldParams.length; index++) {
@@ -211,20 +270,23 @@ export default {
       }
       return false
     },
-    cleanName (value) {
+    cleanName(value) {
       const result = value.replace(/^<p>/, '')
       return result.replace(/<\/p>$/, '')
     },
-    async saveTemplate () {
-      const valid = await this.$refs.observer_1.validate()
+    async saveTemplate() {
+      const { valid } = await this.$refs.observer_1.validate()
       if (!valid) {
+        this.$refs.form.working = false
         return
       }
       this.savingTemplate = true
       const cleanedName = this.cleanName(this.templateForm.name)
       const cleanedOriginalName = this.cleanName(this.template.name)
-      if ((!this.newTemplate && cleanedName !== cleanedOriginalName) ||
-          (this.newTemplate && this.templateForm.name !== this.newTemplate.name)) {
+      if (
+        (!this.newTemplate && cleanedName !== cleanedOriginalName) ||
+        (this.newTemplate && this.templateForm.name !== this.newTemplate.name)
+      ) {
         const data = { ...this.templateForm, studyUid: this.selectedStudy.uid }
         data.library_name = constants.LIBRARY_USER_DEFINED
         if (this.prepareTemplatePayloadFunc) {
@@ -232,12 +294,14 @@ export default {
         }
         try {
           const resp = await this.templateApi.create(data)
-          if (resp.data.status === statuses.DRAFT) await this.templateApi.approve(resp.data.uid)
+          if (resp.data.status === statuses.DRAFT)
+            await this.templateApi.approve(resp.data.uid)
           this.newTemplate = resp.data
           if (
             !this.compareParameters(
               this.template.name_plain,
-              this.newTemplate.name_plain)
+              this.newTemplate.name_plain
+            )
           ) {
             this.loadParameters(true)
           }
@@ -249,55 +313,55 @@ export default {
       }
       this.editTemplate = false
     },
-    loadParameters (forceLoading) {
+    showParametersFromObject(object) {
+      this.apiEndpoint.getObjectParameters(object.uid).then((resp) => {
+        this.parameterResponse = resp.data
+
+        const parameters = []
+        resp.data.forEach((value) => {
+          if (value.format) {
+            parameters.push(...value.parameters)
+          } else {
+            parameters.push(value)
+          }
+        })
+        this.parameters = parameters
+        this.apiEndpoint.getObject(object.uid).then((resp) => {
+          instances.loadParameterValues(
+            resp.data.parameter_terms,
+            this.parameters
+          )
+        })
+      })
+    },
+    loadParameters(forceLoading) {
       if (this.parameters.length && !forceLoading) {
         return
       }
       this.loadingParameters = true
-      const templateUid = this.newTemplate ? this.newTemplate.uid : this.template.uid
-      this.templateApi.getParameters(templateUid, { study_uid: this.selectedStudy.uid }).then(resp => {
-        this.parameters = resp.data
-        this.loadingParameters = false
-        const instance = this.getObjectFromSelection(this.studySelection)
-        if (!forceLoading && instance) {
-          this.showParametersFromObject(instance)
-        }
-      })
+      const templateUid = this.newTemplate
+        ? this.newTemplate.uid
+        : this.template.uid
+      this.templateApi
+        .getParameters(templateUid, { study_uid: this.selectedStudy.uid })
+        .then((resp) => {
+          this.parameters = resp.data
+          this.loadingParameters = false
+          const instance = this.getObjectFromSelection(this.studySelection)
+          if (!forceLoading && instance) {
+            this.showParametersFromObject(instance)
+          }
+        })
     },
-    async submit () {
-      const valid = await this.$refs.observer_2.validate()
+    async submit() {
+      const { valid } = await this.$refs.observer_2.validate()
       if (!valid) {
+        this.$refs.form.working = false
         return
       }
-      this.$refs.working = true
+      this.$refs.form.working = true
       this.$emit('submit', this.newTemplate, this.form, this.parameters)
-    }
-  },
-  mounted () {
-    templateParameterTypes.getTypes().then(resp => {
-      this.parameterTypes = resp.data
-    })
-  },
-  watch: {
-    template: {
-      handler (newValue) {
-        if (newValue) {
-          this.templateForm = { ...newValue }
-          this.$emit('initForm', this.form)
-          this.loadParameters()
-        } else {
-          this.templateForm = {}
-        }
-      },
-      immediate: true
     },
-    editTemplate (value) {
-      if (value) {
-        this.$refs.form.disableActions()
-      } else {
-        this.$refs.form.enableActions()
-      }
-    }
-  }
+  },
 }
 </script>

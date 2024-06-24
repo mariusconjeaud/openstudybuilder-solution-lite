@@ -50,6 +50,7 @@ class StudyDefinitionSnapshot:
         study_number: str | None = None
         subpart_id: str | None = None
         study_acronym: str | None = None
+        study_subpart_acronym: str | None = None
         study_id_prefix: str | None = None
         project_number: str | None = None
         description: str | None = None
@@ -359,6 +360,7 @@ class StudyDefinitionAR:
         sex_of_participants_exists_callback: Callable[
             [str], bool
         ] = default_failure_callback_for_variable("sex_of_participants"),
+        study_number_exists_callback: Callable[[str, str], bool] = (lambda x, y: False),
         project_exists_callback: Callable[
             [str], bool
         ] = default_failure_callback_for_variable("project_number"),
@@ -439,6 +441,7 @@ class StudyDefinitionAR:
                     study_number=new_id_metadata.study_number,
                     subpart_id=new_id_metadata.subpart_id,
                     study_acronym=new_id_metadata.study_acronym,
+                    study_subpart_acronym=new_id_metadata.study_subpart_acronym,
                     description=new_id_metadata.description,
                     registry_identifiers=RegistryIdentifiersVO(
                         ct_gov_id=new_id_metadata.registry_identifiers.ct_gov_id,
@@ -484,13 +487,16 @@ class StudyDefinitionAR:
                     ),
                 )
             else:
-                # if the study has locked versions study_id_prefix and study_number stays the same
+                # if the study has locked versions study_id_prefix stays the same
                 new_id_metadata = StudyIdentificationMetadataVO(
                     _study_id_prefix=self.current_metadata.id_metadata.study_id_prefix,  # here comes the substitution
                     project_number=new_id_metadata.project_number,
-                    study_number=self.current_metadata.id_metadata.study_number,
+                    study_number=new_id_metadata.study_number
+                    if is_subpart
+                    else self.current_metadata.id_metadata.study_number,
                     subpart_id=new_id_metadata.subpart_id,
                     study_acronym=new_id_metadata.study_acronym,
+                    study_subpart_acronym=new_id_metadata.study_subpart_acronym,
                     description=new_id_metadata.description,
                     registry_identifiers=RegistryIdentifiersVO(
                         ct_gov_id=new_id_metadata.registry_identifiers.ct_gov_id,
@@ -539,7 +545,9 @@ class StudyDefinitionAR:
             assert new_id_metadata is not None  # making linter happy
             if new_id_metadata != self.current_metadata.id_metadata:
                 new_id_metadata.validate(
+                    uid=self.uid,
                     project_exists_callback=project_exists_callback,
+                    study_number_exists_callback=study_number_exists_callback,
                     is_subpart=is_subpart,
                     updatable_subpart=updatable_subpart,
                     previous_project_number=self.current_metadata.id_metadata.project_number,
@@ -925,6 +933,7 @@ class StudyDefinitionAR:
                         subpart_id=study_metadata_snapshot.subpart_id,
                         project_number=study_metadata_snapshot.project_number,
                         study_acronym=study_metadata_snapshot.study_acronym,
+                        study_subpart_acronym=study_metadata_snapshot.study_subpart_acronym,
                         description=study_metadata_snapshot.description,
                         _study_id_prefix=study_metadata_snapshot.study_id_prefix,
                         registry_identifiers=RegistryIdentifiersVO(
@@ -1048,9 +1057,7 @@ class StudyDefinitionAR:
         project_exists_callback: Callable[
             [str], bool
         ] = default_failure_callback_for_variable("project_number"),
-        study_number_exists_callback: Callable[
-            [str], bool
-        ] = default_failure_callback_for_variable("study_number"),
+        study_number_exists_callback: Callable[[str, str], bool] = (lambda x, y: False),
         initial_high_level_study_design: HighLevelStudyDesignVO = _DEF_INITIAL_HIGH_LEVEL_STUDY_DESIGN,
         initial_study_population: StudyPopulationVO = _DEF_INITIAL_STUDY_POPULATION,
         initial_study_intervention: StudyInterventionVO = _DEF_INITIAL_STUDY_INTERVENTION,
@@ -1171,6 +1178,7 @@ class StudyDefinitionAR:
             study_number=initial_id_metadata.study_number,
             subpart_id=initial_id_metadata.subpart_id,
             study_acronym=initial_id_metadata.study_acronym,
+            study_subpart_acronym=initial_id_metadata.study_subpart_acronym,
             description=initial_id_metadata.description,
             registry_identifiers=RegistryIdentifiersVO(
                 ct_gov_id=initial_id_metadata.registry_identifiers.ct_gov_id,

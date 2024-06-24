@@ -67,6 +67,7 @@ class StudyIdentificationMetadataVO:
     study_number: str | None
     subpart_id: str | None
     study_acronym: str | None
+    study_subpart_acronym: str | None
     study_id_prefix: str | None
     description: str | None
     registry_identifiers: RegistryIdentifiersVO | None
@@ -79,6 +80,7 @@ class StudyIdentificationMetadataVO:
         study_acronym: str | None,
         description: str | None,
         registry_identifiers: RegistryIdentifiersVO,
+        study_subpart_acronym: str | None = None,
         _study_id_prefix: str | None = None
         # we denote this param with underscore, for "internal" use
         # (i.e.) use with caution and where You know what You are doing (setting an arbitrary value here)
@@ -89,6 +91,7 @@ class StudyIdentificationMetadataVO:
             study_number=normalize_string(study_number),
             subpart_id=normalize_string(subpart_id),
             study_acronym=normalize_string(study_acronym),
+            study_subpart_acronym=normalize_string(study_subpart_acronym),
             study_id_prefix=normalize_string(_study_id_prefix),
             description=normalize_string(description),
             registry_identifiers=registry_identifiers,
@@ -103,11 +106,13 @@ class StudyIdentificationMetadataVO:
         study_acronym: str | None,
         description: str | None,
         registry_identifiers: RegistryIdentifiersVO | None,
+        study_subpart_acronym: str | None = None,
     ) -> Self:
         return cls(
             study_number=study_number,
             subpart_id=subpart_id,
             study_acronym=study_acronym,
+            study_subpart_acronym=study_subpart_acronym,
             project_number=project_number,
             description=description,
             registry_identifiers=registry_identifiers,
@@ -122,11 +127,12 @@ class StudyIdentificationMetadataVO:
     def validate(
         self,
         project_exists_callback: Callable[[str], bool] = (lambda _: True),
-        study_number_exists_callback: Callable[[str], bool] = (lambda _: False),
+        study_number_exists_callback: Callable[[str, str], bool] = (lambda x, y: False),
         null_value_exists_callback: Callable[[str], bool] = (lambda _: True),
         is_subpart: bool = False,
         updatable_subpart: bool = False,
         previous_project_number: str | None = None,
+        uid: str | None = None,
     ) -> None:
         """
         Raises exceptions.ValidationException if values do not comply with relevant business rules.
@@ -152,9 +158,14 @@ class StudyIdentificationMetadataVO:
             null_value_exists_callback=null_value_exists_callback
         )
 
-        if self.study_number is None and self.study_acronym is None:
+        if not is_subpart and self.study_number is None and self.study_acronym is None:
             raise exceptions.ValidationException(
                 "Either study number or study acronym must be given in study metadata."
+            )
+
+        if is_subpart and not self.study_subpart_acronym:
+            raise exceptions.ValidationException(
+                "Study Subpart Acronym must be provided for Study Subpart."
             )
 
         if (
@@ -177,7 +188,7 @@ class StudyIdentificationMetadataVO:
         if (
             not is_subpart
             and self.study_number is not None
-            and study_number_exists_callback(self.study_number)
+            and study_number_exists_callback(self.study_number, uid)
         ):
             raise BusinessLogicException(
                 f"The following study number already exists in the database ({self.study_number})"
@@ -208,6 +219,7 @@ class StudyIdentificationMetadataVO:
         study_number: str | None = field(),
         subpart_id: str | None = field(),
         study_acronym: str | None = field(),
+        study_subpart_acronym: str | None = field(),
         study_id_prefix: str | None = field(),
         description: str | None = field(),
         registry_identifiers: RegistryIdentifiersVO | None = field(),
@@ -227,6 +239,9 @@ class StudyIdentificationMetadataVO:
             study_number=helper(study_number, self.study_number),
             subpart_id=helper(subpart_id, self.subpart_id),
             study_acronym=helper(study_acronym, self.study_acronym),
+            study_subpart_acronym=helper(
+                study_subpart_acronym, self.study_subpart_acronym
+            ),
             description=helper(description, self.description),
             registry_identifiers=helper(
                 registry_identifiers, self.registry_identifiers
@@ -1491,7 +1506,7 @@ class StudyMetadataVO:
         self,
         *,
         project_exists_callback: Callable[[str], bool] = (lambda _: True),
-        study_number_exists_callback: Callable[[str], bool] = (lambda _: False),
+        study_number_exists_callback: Callable[[str, str], bool] = (lambda x, y: False),
         study_type_exists_callback: Callable[[str], bool] = (lambda _: True),
         trial_intent_type_exists_callback: Callable[[str], bool] = (lambda _: True),
         trial_type_exists_callback: Callable[[str], bool] = (lambda _: True),

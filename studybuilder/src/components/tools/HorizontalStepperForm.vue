@@ -1,334 +1,376 @@
 <template>
-<v-card data-cy="form-body" color="dfltBackground fullscreen-dialog">
-  <v-card-title>
-    <span class="dialog-title ml-6">{{ title }}</span>
-    <help-button v-if="helpText" :help-text="helpText" />
-    <help-button-with-panels v-if="helpItems" :title="$t('_global.help')" :items="helpItems" />
-    <v-btn
-      v-if="formUrl"
-      color="secondary"
-      class="ml-2"
-      small
-      @click="copyUrl"
+  <v-card
+    data-cy="form-body"
+    color="dfltBackground"
+    class="bg-dfltBackground fullscreen-dialog"
+  >
+    <v-card-title class="d-flex align-center">
+      <span class="dialog-title ml-6">{{ title }}</span>
+      <HelpButton v-if="helpText" :help-text="helpText" />
+      <HelpButtonWithPanels
+        v-if="helpItems"
+        :title="$t('_global.help')"
+        :items="helpItems"
+      />
+      <v-btn
+        v-if="formUrl"
+        color="secondary"
+        class="ml-2"
+        size="small"
+        @click="copyUrl"
       >
-      {{ $t('_global.copy_link') }}
-    </v-btn>
-  </v-card-title>
-  <v-card-text class="mt-4 dfltBackground">
-    <v-stepper
-      v-model="currentStep"
-      :non-linear="editable"
+        {{ $t('_global.copy_link') }}
+      </v-btn>
+    </v-card-title>
+    <v-card-text class="mt-4 bg-dfltBackground">
+      <v-stepper
+        v-model="currentStep"
+        bg-color="white"
+        :items="stepTitles"
+        :non-linear="editable"
+        :editable="editable"
+        hide-actions
       >
-      <v-stepper-header class="white mx-8">
-        <template v-for="(step, index) in steps">
-          <v-stepper-step
-            :key="`stepper-${index}`"
-            :complete="currentStep > index + 1 || editable"
-            :step="index + 1"
-            color="secondary"
-            :class="currentStep === index + 1 ? 'gray' : ''"
-            :editable="editable"
-            :edit-icon="editable ? '$complete' : '$edit'"
-            >
-            <span class="bigger" :class="{ 'step-title': currentStep >= index + 1, 'step-title-inactive': currentStep < index + 1 }">{{ step.title }}</span>
-          </v-stepper-step>
-          <v-divider :key="`divider-${index}`" v-if="index < steps.length - 1"></v-divider>
-        </template>
-      </v-stepper-header>
-      <v-stepper-items>
-        <v-stepper-content
-          v-for="(step, index) in steps"
+        <template
+          v-for="(step, index) in stepTitles"
           :key="`content-${index}`"
-          :step="index + 1"
-          >
+          #[`item.${index+1}`]
+        >
           <v-sheet elevation="0" class="ma-2 pa-4">
             <v-row>
-              <v-col v-if="step.belowDisplay" cols="12" class="d-flex align-start justify-end py-4">
+              <v-col
+                v-if="step.belowDisplay"
+                cols="12"
+                class="d-flex align-start justify-end py-4"
+              >
                 <div v-if="currentStep === 1">
-                  <slot name="actions"></slot>
+                  <slot name="actions" />
                 </div>
                 <div class="mx-2">
                   <v-btn
-                   :data-cy="step.name + '-continue-button'"
                     v-if="currentStep < steps.length"
+                    :data-cy="steps[index].name + '-continue-button'"
                     color="secondary"
                     class="ml-2"
-                    @click="goToStep(index + 1, index + 2)"
                     :loading="loadingContinue"
                     elevation="2"
                     width="120px"
-                    >
+                    @click="goToStep(index + 1, index + 2)"
+                  >
                     {{ $t('_global.continue') }}
                   </v-btn>
                   <v-btn
-                    :data-cy="step.name + '-save-button'"
                     v-if="currentStep >= steps.length || saveFromAnyStep"
+                    :data-cy="steps[index].name + '-save-button'"
                     color="secondary"
                     class="ml-2"
-                    @click="submit"
                     :loading="loading"
                     elevation="2"
                     width="120px"
-                    >
+                    @click="submit"
+                  >
                     {{ $t('_global.save') }}
                   </v-btn>
-                  <slot :name="`step.${step.name}.actions.middle`" v-bind:step="index + 1" />
+                  <slot
+                    :name="`step.${steps[index].name}.actions.middle`"
+                    :step="index + 1"
+                  />
                   <v-btn
                     class="secondary-btn"
-                    @click="cancel"
-                    outlined
+                    variant="outlined"
                     elevation="2"
                     width="120px"
-                    >
+                    @click="cancel"
+                  >
                     {{ $t('_global.cancel') }}
                   </v-btn>
                   <v-btn
                     v-if="currentStep > 1"
                     class="secondary-btn ml-2"
-                    @click="currentStep = index"
-                    outlined
+                    variant="outlined"
                     elevation="2"
                     width="120px"
-                    >
+                    @click="currentStep = index"
+                  >
                     {{ $t('_global.previous') }}
                   </v-btn>
-                  <slot :name="`step.${step.name}.afterActions`" v-bind:step="index + 1" />
+                  <slot
+                    :name="`step.${steps[index].name}.afterActions`"
+                    :step="index + 1"
+                  />
                 </div>
               </v-col>
               <v-col :cols="step.belowDisplay ? 12 : 10" class="pr-0">
-                <slot :name="`step.${step.name}`" v-bind:step="index + 1" />
+                <slot :name="`step.${steps[index].name}`" :step="index + 1" />
               </v-col>
-              <v-col v-if="!step.belowDisplay" cols="2" class="d-flex align-start justify-end py-4">
+              <v-col
+                v-if="!step.belowDisplay"
+                cols="2"
+                class="d-flex align-start justify-end py-4"
+              >
                 <div v-if="currentStep === 1">
-                  <slot name="actions"></slot>
+                  <slot name="actions" />
                 </div>
                 <div class="mx-2">
-                  <v-col cols="12" v-if="currentStep < steps.length">
+                  <v-col v-if="currentStep < steps.length" cols="12">
                     <v-btn
-                      :data-cy="step.name + '-continue-button'"
+                      :data-cy="steps[index].name + '-continue-button'"
                       color="secondary"
-                      @click="goToStep(index + 1, index + 2)"
                       :loading="loadingContinue"
                       elevation="2"
                       width="120px"
-                      >
+                      @click="goToStep(index + 1, index + 2)"
+                    >
                       {{ $t('_global.continue') }}
                     </v-btn>
                   </v-col>
-                  <v-col cols="12" v-if="currentStep >= steps.length || saveFromAnyStep">
+                  <v-col
+                    v-if="currentStep >= steps.length || saveFromAnyStep"
+                    cols="12"
+                  >
                     <v-btn
-                      :data-cy="step.name + '-save-button'"
+                      :data-cy="steps[index].name + '-save-button'"
                       color="secondary"
-                      @click="submit"
                       :loading="loading"
                       elevation="2"
                       width="120px"
-                      >
+                      @click="submit"
+                    >
                       {{ $t('_global.save') }}
                     </v-btn>
                   </v-col>
                   <v-col cols="12">
                     <v-btn
                       class="secondary-btn"
-                      @click="cancel"
-                      outlined
+                      variant="outlined"
                       elevation="2"
                       width="120px"
-                      >
+                      @click="cancel"
+                    >
                       {{ $t('_global.cancel') }}
                     </v-btn>
                   </v-col>
-                  <v-col cols="12" v-if="currentStep > 1">
+                  <v-col v-if="currentStep > 1" cols="12">
                     <v-btn
                       class="secondary-btn"
-                      @click="currentStep = index"
-                      outlined
+                      variant="outlined"
                       elevation="2"
                       width="120px"
-                      >
+                      @click="currentStep = index"
+                    >
                       {{ $t('_global.previous') }}
                     </v-btn>
                   </v-col>
                   <v-col cols="12">
-                    <slot :name="`step.${step.name}.afterActions`" v-bind:step="index + 1" />
+                    <slot
+                      :name="`step.${steps[index].name}.afterActions`"
+                      :step="index + 1"
+                    />
                   </v-col>
                 </div>
               </v-col>
-              <slot :name="`step.${step.name}.after`" v-bind:step="index + 1" />
+              <slot
+                :name="`step.${steps[index].name}.after`"
+                :step="index + 1"
+              />
             </v-row>
           </v-sheet>
-        </v-stepper-content>
-      </v-stepper-items>
-    </v-stepper>
-  </v-card-text>
-  <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
-  <template v-if="debug">
-    <div class="debug">{{ editData }}</div>
-  </template>
-</v-card>
+        </template>
+      </v-stepper>
+    </v-card-text>
+    <ConfirmDialog ref="confirm" :text-cols="6" :action-cols="5" />
+    <template v-if="debug">
+      <div class="debug">
+        {{ editData }}
+      </div>
+    </template>
+  </v-card>
 </template>
 
-<script>
-import HelpButton from '@/components/tools/HelpButton'
-import HelpButtonWithPanels from '@/components/tools/HelpButtonWithPanels'
-import ConfirmDialog from '@/components/tools/ConfirmDialog'
-import _isEqual from 'lodash/isEqual'
+<script setup>
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+import HelpButton from '@/components/tools/HelpButton.vue'
+import HelpButtonWithPanels from '@/components/tools/HelpButtonWithPanels.vue'
+import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
+import { useFormStore } from '@/stores/form'
 
-export default {
-  components: {
-    HelpButton,
-    HelpButtonWithPanels,
-    ConfirmDialog
+const { t } = useI18n()
+const props = defineProps({
+  title: {
+    type: String,
+    default: '',
   },
-  props: {
-    title: String,
-    steps: Array,
-    formObserverGetter: Function,
-    editable: {
-      type: Boolean,
-      default: false
-    },
-    extraStepValidation: {
-      type: Function,
-      required: false
-    },
-    helpText: {
-      type: String,
-      required: false
-    },
-    helpItems: {
-      type: Array,
-      required: false
-    },
-    editData: Object,
-    debug: Boolean,
-    formUrl: String,
-    saveFromAnyStep: {
-      type: Boolean,
-      default: false
-    },
-    loadingContinue: {
-      type: Boolean,
-      default: false
-    },
-    resetLoading: Number
+  steps: {
+    type: Array,
+    default: () => [],
   },
-  data () {
-    return {
-      currentStep: 1,
-      loading: false
+  formObserverGetter: {
+    type: Function,
+    default: undefined,
+  },
+  editable: {
+    type: Boolean,
+    default: false,
+  },
+  extraStepValidation: {
+    type: Function,
+    required: false,
+    default: undefined,
+  },
+  helpText: {
+    type: String,
+    required: false,
+    default: '',
+  },
+  helpItems: {
+    type: Array,
+    required: false,
+    default: null,
+  },
+  editData: {
+    type: Object,
+    default: undefined,
+  },
+  debug: Boolean,
+  formUrl: {
+    type: String,
+    default: '',
+  },
+  saveFromAnyStep: {
+    type: Boolean,
+    default: false,
+  },
+  loadingContinue: {
+    type: Boolean,
+    default: false,
+  },
+  resetLoading: {
+    type: Number,
+    default: 0,
+  },
+})
+const emit = defineEmits(['close', 'change', 'save', 'stepLoaded'])
+const formStore = useFormStore()
+
+const currentStep = ref(1)
+const loading = ref(false)
+const confirm = ref()
+
+const stepTitles = computed(() => {
+  return props.steps.map((step) => step.title)
+})
+
+watch(currentStep, (value) => {
+  emit('change', value)
+})
+watch(
+  () => props.resetLoading,
+  () => {
+    loading.value = false
+  }
+)
+
+onMounted(() => {
+  formStore.save(props.editData)
+  document.addEventListener('keydown', (evt) => {
+    if (evt.code === 'Escape') {
+      cancel()
     }
-  },
-  mounted () {
-    this.$store.commit('form/SET_FORM', this.editData)
-    document.addEventListener('keydown', (evt) => {
-      if (evt.code === 'Escape') {
-        this.cancel()
-      }
-    })
-  },
-  methods: {
-    copyUrl () {
-      navigator.clipboard.writeText(this.formUrl)
-    },
-    async cancel () {
-      if (this.$store.getters['form/form'] === '' || _isEqual(this.$store.getters['form/form'], JSON.stringify(this.editData))) {
-        this.close()
-      } else {
-        const options = {
-          type: 'warning',
-          cancelLabel: this.$t('_global.cancel'),
-          agreeLabel: this.$t('_global.continue')
-        }
-        if (await this.$refs.confirm.open(this.$t('_global.cancel_changes'), options)) {
-          this.close()
-        }
-      }
-    },
-    close () {
-      this.$emit('close')
-      this.$store.commit('form/CLEAR_FORM')
-      this.reset()
-    },
-    reset () {
-      this.currentStep = 1
-      this.steps.forEach((item, index) => {
-        const observer = this.formObserverGetter(index + 1)
-        if (observer !== undefined) {
-          observer.reset()
-        }
-      })
-      this.loading = false
-    },
-    async validateStepObserver (step) {
-      const observer = this.formObserverGetter(step)
-      if (observer !== undefined) {
-        return await observer.validate()
-      }
-      return true
-    },
-    async goToStep (currentStep, nextStep) {
-      if (!await this.validateStepObserver(currentStep)) {
-        return
-      }
-      if (this.extraStepValidation) {
-        if (!await this.extraStepValidation(currentStep)) {
-          return
-        }
-      }
-      this.currentStep = nextStep
-      this.$nextTick(() => {
-        this.$emit('stepLoaded', nextStep)
-      })
-    },
-    setCurrentStep (value) {
-      this.currentStep = value
-    },
-    async submit () {
-      if (!await this.validateStepObserver(this.currentStep)) {
-        return
-      }
-      this.loading = true
-      this.$emit('save')
+  })
+})
+
+function copyUrl() {
+  navigator.clipboard.writeText(props.formUrl)
+}
+async function cancel() {
+  if (formStore.isEmpty || formStore.isEqual(props.editData)) {
+    close()
+  } else {
+    const options = {
+      type: 'warning',
+      cancelLabel: t('_global.cancel'),
+      agreeLabel: t('_global.continue'),
     }
-  },
-  watch: {
-    editData (value) {
-      if (this.$store.getters['form/form'] === '') {
-        this.$store.commit('form/SET_FORM', value)
-      }
-    },
-    currentStep (value) {
-      this.$emit('change', value)
-    },
-    resetLoading () {
-      this.loading = false
+    if (await confirm.value.open(t('_global.cancel_changes'), options)) {
+      close()
     }
   }
 }
+function close() {
+  emit('close')
+  formStore.reset()
+  reset()
+}
+function reset() {
+  currentStep.value = 1
+  props.steps.forEach((item, index) => {
+    const observer = props.formObserverGetter(index + 1)
+    if (observer !== undefined && observer !== null) {
+      observer.reset()
+    }
+  })
+  loading.value = false
+}
+async function validateStepObserver(step) {
+  const observer = props.formObserverGetter(step)
+  if (observer !== undefined && observer !== null) {
+    const { valid } = await observer.validate()
+    return valid
+  }
+  return true
+}
+async function goToStep(step, nextStep) {
+  if (!(await validateStepObserver(step))) {
+    return
+  }
+  if (props.extraStepValidation) {
+    if (!(await props.extraStepValidation(step))) {
+      return
+    }
+  }
+  currentStep.value = nextStep
+  nextTick(() => {
+    emit('stepLoaded', nextStep)
+  })
+}
+async function submit() {
+  if (!(await validateStepObserver(currentStep.value))) {
+    return
+  }
+  loading.value = true
+  emit('save')
+}
+
+defineExpose({
+  reset,
+  loading,
+  close,
+})
 </script>
 
-<style scoped lang="scss">
-.v-stepper {
-  background-color: var(--v-dltBackground-base) !important;
-}
-.bigger {
+<style lang="scss">
+.v-stepper-item {
   font-size: large;
-}
-.step-title {
-  color: var(--v-secondary-base);
-}
-.step-title-inactive {
   color: rgba(0, 0, 0, 0.6);
-}
-.gray {
-  background: rgb(233, 233, 233);
+
+  .v-avatar {
+    background-color: rgba(0, 0, 0, 0.6) !important;
+  }
+
+  &--selected {
+    background: rgb(233, 233, 233);
+    color: rgb(var(--v-theme-secondary)) !important;
+
+    .v-avatar {
+      background-color: rgb(var(--v-theme-secondary)) !important;
+    }
+  }
 }
 
 .debug {
-    padding: 1% 10%;
-    background: lightgray;
-    white-space: pre-wrap;
+  padding: 1% 10%;
+  background: lightgray;
+  white-space: pre-wrap;
 }
-
 </style>

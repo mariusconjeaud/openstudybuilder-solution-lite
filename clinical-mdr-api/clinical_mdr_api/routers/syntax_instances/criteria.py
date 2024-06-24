@@ -1,6 +1,6 @@
 from typing import Any
 
-from fastapi import APIRouter, Depends, Path, Query, Request, Response
+from fastapi import APIRouter, Path, Query, Request, Response
 from fastapi import status as fast_api_status
 from fastapi.param_functions import Body
 from pydantic.types import Json
@@ -14,7 +14,7 @@ from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatu
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.study_selections.study import Study
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.oauth import get_current_user_id, rbac
+from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.routers._generic_descriptions import study_section_description
@@ -118,9 +118,8 @@ def get_all(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    all_items = CriteriaService(current_user_id).get_all(
+    all_items = CriteriaService().get_all(
         page_number=page_number,
         page_size=page_size,
         total_count=total_count,
@@ -154,7 +153,6 @@ def get_all(
     },
 )
 def get_distinct_values_for_header(
-    current_user_id: str = Depends(get_current_user_id),
     status: LibraryItemStatus
     | None = Query(
         None,
@@ -178,7 +176,7 @@ def get_distinct_values_for_header(
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
 ):
-    return CriteriaService(current_user_id).get_distinct_values_for_header(
+    return CriteriaService().get_distinct_values_for_header(
         status=status,
         field_name=field_name,
         search_string=search_string,
@@ -212,9 +210,8 @@ def retrieve_audit_trail(
     ),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    results = Service(current_user_id).get_all(
+    results = Service().get_all(
         page_number=page_number,
         page_size=page_size,
         total_count=total_count,
@@ -244,9 +241,8 @@ def retrieve_audit_trail(
 )
 def get(
     uid: str = CriteriaUID,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    return CriteriaService(current_user_id).get_by_uid(uid=uid)
+    return CriteriaService().get_by_uid(uid=uid)
 
 
 @router.get(
@@ -265,10 +261,8 @@ def get(
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_versions(
-    uid: str = CriteriaUID, current_user_id: str = Depends(get_current_user_id)
-):
-    return Service(current_user_id).get_version_history(uid=uid)
+def get_versions(uid: str = CriteriaUID):
+    return Service().get_version_history(uid=uid)
 
 
 @router.post(
@@ -311,9 +305,8 @@ def create(
     criteria: models.CriteriaCreateInput = Body(
         description="Related parameters of the criteria that shall be created."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    return CriteriaService(current_user_id).create(criteria)
+    return CriteriaService().create(criteria)
 
 
 @router.post(
@@ -352,9 +345,8 @@ def preview(
     criteria: models.CriteriaCreateInput = Body(
         description="Related parameters of the criteria that shall be previewed."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    return CriteriaService(current_user_id).create(criteria, preview=True)
+    return CriteriaService().create(criteria, preview=True)
 
 
 @router.patch(
@@ -394,9 +386,8 @@ def edit(
     criteria: models.CriteriaEditInput = Body(
         description="The new parameter terms for the criteria including the change description.",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    return Service(current_user_id).edit_draft(uid, criteria)
+    return Service().edit_draft(uid, criteria)
 
 
 @router.post(
@@ -429,10 +420,8 @@ If the request succeeds:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def approve(
-    uid: str = CriteriaUID, current_user_id: str = Depends(get_current_user_id)
-):
-    return Service(current_user_id).approve(uid)
+def approve(uid: str = CriteriaUID):
+    return Service().approve(uid)
 
 
 @router.delete(
@@ -463,10 +452,8 @@ If the request succeeds:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def inactivate(
-    uid: str = CriteriaUID, current_user_id: str = Depends(get_current_user_id)
-):
-    return Service(current_user_id).inactivate_final(uid=uid)
+def inactivate(uid: str = CriteriaUID):
+    return Service().inactivate_final(uid=uid)
 
 
 @router.post(
@@ -497,10 +484,8 @@ If the request succeeds:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def reactivate(
-    uid: str = CriteriaUID, current_user_id: str = Depends(get_current_user_id)
-):
-    return Service(current_user_id).reactivate_retired(uid)
+def reactivate(uid: str = CriteriaUID):
+    return Service().reactivate_retired(uid)
 
 
 @router.delete(
@@ -528,8 +513,8 @@ def reactivate(
         500: _generic_descriptions.ERROR_500,
     },
 )
-def delete(uid: str = CriteriaUID, current_user_id: str = Depends(get_current_user_id)):
-    Service(current_user_id).soft_delete(uid)
+def delete(uid: str = CriteriaUID):
+    Service().soft_delete(uid)
     return Response(status_code=fast_api_status.HTTP_204_NO_CONTENT)
 
 
@@ -550,13 +535,12 @@ def delete(uid: str = CriteriaUID, current_user_id: str = Depends(get_current_us
 )
 def get_studies(
     uid: str = CriteriaUID,
-    current_user_id: str = Depends(get_current_user_id),
     include_sections: list[StudyComponentEnum]
     | None = Query(None, description=study_section_description("include")),
     exclude_sections: list[StudyComponentEnum]
     | None = Query(None, description=study_section_description("exclude")),
 ):
-    return Service(current_user_id).get_referencing_studies(
+    return Service().get_referencing_studies(
         uid=uid,
         node_type=CriteriaValue,
         include_sections=include_sections,
@@ -592,6 +576,5 @@ In that case, the same parameter (with the same values) is included multiple tim
 )
 def get_parameters(
     uid: str = Path(None, description="The unique id of the criteria."),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    return CriteriaService(current_user_id).get_parameters(uid)
+    return CriteriaService().get_parameters(uid)

@@ -105,11 +105,17 @@ class ActivityGrouping(ClinicalMdrNodeWithUID):
     has_grouping = RelationshipFrom(
         "ActivityValue", "HAS_GROUPING", model=ClinicalMdrRel, cardinality=One
     )
+    has_activity = RelationshipFrom(
+        "ActivityInstanceValue",
+        "HAS_ACTIVITY",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrMore,
+    )
 
 
 class ActivityValue(ConceptValue):
     is_data_collected = BooleanProperty()
-    is_multiple_selection_allowed = BooleanProperty()
+    is_multiple_selection_allowed = BooleanProperty(default=True)
     has_latest_value = RelationshipFrom("ActivityRoot", "LATEST", model=ClinicalMdrRel)
     has_version = RelationshipFrom(
         "ActivityRoot", "HAS_VERSION", model=VersionRelationship
@@ -126,8 +132,6 @@ class ActivityValue(ConceptValue):
     has_grouping = RelationshipTo(
         ActivityGrouping, "HAS_GROUPING", model=ClinicalMdrRel, cardinality=ZeroOrMore
     )
-    request_rationale = StringProperty()
-    is_request_final = BooleanProperty()
     replaced_by_activity = RelationshipTo(
         "ActivityRoot",
         "REPLACED_BY_ACTIVITY",
@@ -140,9 +144,12 @@ class ActivityValue(ConceptValue):
         model=ClinicalMdrRel,
         cardinality=ZeroOrMore,
     )
+    # Activity Request properties
+    request_rationale = StringProperty()
+    is_request_final = BooleanProperty(default=False)
     reason_for_rejecting = StringProperty()
     contact_person = StringProperty()
-    is_request_rejected = BooleanProperty()
+    is_request_rejected = BooleanProperty(default=False)
 
 
 class ActivityRoot(ConceptRoot):

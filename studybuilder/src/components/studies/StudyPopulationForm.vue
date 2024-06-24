@@ -1,299 +1,250 @@
 <template>
-<simple-form-dialog
-  ref="form"
-  :title="$t('StudyPopulationForm.title')"
-  :help-items="helpItems"
-  @close="cancel"
-  @submit="submit"
-  :open="open"
+  <SimpleFormDialog
+    ref="form"
+    :title="$t('StudyPopulationForm.title')"
+    :help-items="helpItems"
+    :open="open"
+    @close="cancel"
+    @submit="submit"
   >
-  <template v-slot:body>
-    <validation-observer ref="observer">
-      <v-row class="pr-4">
-        <v-col cols="11">
-          <validation-provider
-            v-slot="{ errors }"
-            name="TherapeuticArea"
-            rules=""
-            >
-            <multiple-select
+    <template #body>
+      <v-form ref="observer">
+        <v-row class="pr-4">
+          <v-col cols="11">
+            <MultipleSelect
               v-model="form.therapeutic_area_codes"
               :data-cy="$t('StudyPopulationForm.therapeuticarea')"
               :label="$t('StudyPopulationForm.therapeuticarea')"
-              :items="snomedTerms"
-              item-text="name"
+              :items="studiesGeneralStore.snomedTerms"
+              item-title="name"
               item-value="term_uid"
               return-object
-              :errors="errors"
-              />
-          </validation-provider>
-        </v-col>
-      </v-row>
-      <not-applicable-field
-        :clean-function="setNullValueStudyDisease"
-        :checked="form.disease_condition_or_indication_null_value_code ? true : false"
-        >
-        <template v-slot:mainField="{ notApplicable }">
-          <multiple-select
-            :data-cy="$t('StudyPopulationForm.disease_condition')"
-            :label="$t('StudyPopulationForm.disease_condition')"
-            :disabled="notApplicable"
-            v-model="form.disease_condition_or_indication_codes"
-            :items="snomedTerms"
-            item-value="term_uid"
-            item-text="name"
-            return-object
             />
-        </template>
-      </not-applicable-field>
-      <not-applicable-field
-        :label=" $t('StudyPopulationForm.stable_disease_min_duration')"
-        :clean-function="setNullValueDiseaseDuration"
-        :checked="form.stable_disease_minimum_duration_null_value_code ? true : false"
-        >
-        <template v-slot:mainField="{ notApplicable }">
-          <duration-field
-            data-cy="stable-disease-min-duration"
-            class="unit-select"
-            v-model="form.stable_disease_minimum_duration"
-            :disabled="notApplicable"
-            :max="undefined"
-            />
-        </template>
-      </not-applicable-field>
-      <validation-provider
-        v-slot="{ errors }"
-        >
-        <v-row class="pr-4">
-          <v-col cols="11">
-            <multiple-select
-              :data-cy="$t('StudyPopulationForm.diagnosis_group')"
-              v-model="form.diagnosis_group_codes"
-              :label="$t('StudyPopulationForm.diagnosis_group')"
-              :items="snomedTerms"
-              item-value="term_uid"
-              item-text="name"
-              :errors="errors"
-              return-object
-              />
           </v-col>
         </v-row>
-      </validation-provider>
-      <not-applicable-field
-        :clean-function="setNullValueRelapseCriteria"
-        :checked="form.relapse_criteria_null_value_code ? true : false"
+        <NotApplicableField
+          :clean-function="setNullValueStudyDisease"
+          :checked="
+            form.disease_condition_or_indication_null_value_code ? true : false
+          "
         >
-        <template v-slot:mainField="{ notApplicable }">
-          <v-text-field
-            :data-cy="$t('StudyPopulationForm.relapse_criteria')"
-            v-model="form.relapse_criteria"
-            :label="$t('StudyPopulationForm.relapse_criteria')"
-            class="pt-0 my-0"
-            :disabled="notApplicable"
-            />
-        </template>
-      </not-applicable-field>
-      <v-row>
-        <v-col cols="4">
-          <v-text-field
-            :data-cy="$t('StudyPopulationForm.number_of_expected_subjects')"
-            v-model="form.number_of_expected_subjects"
-            :label="$t('StudyPopulationForm.number_of_expected_subjects')"
-            :hint="$t('StudyPopulationForm.number_of_expected_subjects_hint')"
-            class="pt-0 my-0"
-            type="number"
-            />
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col cols="4">
-          <validation-provider
-            v-slot="{ errors }"
-            name="HealthySubjects"
-            rules=""
-            >
-            <yes-no-field
-              :data-cy="$t('StudyPopulationForm.healthy_subjects')"
-              v-model="form.healthy_subject_indicator"
-              :error-messages="errors"
-              :label="$t('StudyPopulationForm.healthy_subjects')"
-              />
-          </validation-provider>
-        </v-col>
-        <v-col cols="5">
-          <validation-provider
-            v-slot="{ errors }"
-            name="RareDiseaseIndicator"
-            rules=""
-            >
-            <yes-no-field
-              :data-cy="$t('StudyPopulationForm.rare_disease_indicator')"
-              v-model="form.rare_disease_indicator"
-              :error-messages="errors"
-              :label="$t('StudyPopulationForm.rare_disease_indicator')"
-              />
-          </validation-provider>
-        </v-col>
-      </v-row>
-      <v-row class="pr-4">
-        <v-col cols="11">
-          <validation-provider
-            v-slot="{ errors }"
-            >
-            <v-select
-              :data-cy="$t('StudyPopulationForm.sex_of_study_participants')"
-              v-model="form.sex_of_participants_code"
-              :label="$t('StudyPopulationForm.sex_of_study_participants')"
-              :items="sexOfParticipants"
+          <template #mainField="{ notApplicable }">
+            <MultipleSelect
+              v-model="form.disease_condition_or_indication_codes"
+              :data-cy="$t('StudyPopulationForm.disease_condition')"
+              :label="$t('StudyPopulationForm.disease_condition')"
+              :disabled="notApplicable"
+              :items="studiesGeneralStore.snomedTerms"
               item-value="term_uid"
-              item-text="sponsor_preferred_name"
+              item-title="name"
               return-object
-              dense
-              :errors="errors"
+            />
+          </template>
+        </NotApplicableField>
+        <NotApplicableField
+          :label="$t('StudyPopulationForm.stable_disease_min_duration')"
+          :clean-function="setNullValueDiseaseDuration"
+          :checked="
+            form.stable_disease_minimum_duration_null_value_code ? true : false
+          "
+        >
+          <template #mainField="{ notApplicable }">
+            <DurationField
+              v-model="form.stable_disease_minimum_duration"
+              data-cy="stable-disease-min-duration"
+              class="unit-select"
+              :disabled="notApplicable"
+              :max="undefined"
+            />
+          </template>
+        </NotApplicableField>
+        <v-row class="pr-4">
+          <v-col cols="11">
+            <MultipleSelect
+              v-model="form.diagnosis_group_codes"
+              :data-cy="$t('StudyPopulationForm.diagnosis_group')"
+              :label="$t('StudyPopulationForm.diagnosis_group')"
+              :items="studiesGeneralStore.snomedTerms"
+              item-value="term_uid"
+              item-title="name"
+              return-object
+            />
+          </v-col>
+        </v-row>
+        <NotApplicableField
+          :clean-function="setNullValueRelapseCriteria"
+          :checked="form.relapse_criteria_null_value_code ? true : false"
+        >
+          <template #mainField="{ notApplicable }">
+            <v-text-field
+              v-model="form.relapse_criteria"
+              :data-cy="$t('StudyPopulationForm.relapse_criteria')"
+              :label="$t('StudyPopulationForm.relapse_criteria')"
+              class="pt-0 my-0"
+              :disabled="notApplicable"
+            />
+          </template>
+        </NotApplicableField>
+        <v-row>
+          <v-col cols="4">
+            <v-text-field
+              v-model="form.number_of_expected_subjects"
+              :data-cy="$t('StudyPopulationForm.number_of_expected_subjects')"
+              :label="$t('StudyPopulationForm.number_of_expected_subjects')"
+              :hint="$t('StudyPopulationForm.number_of_expected_subjects_hint')"
+              class="pt-0 my-0"
+              type="number"
+            />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col cols="4">
+            <YesNoField
+              v-model="form.healthy_subject_indicator"
+              :data-cy="$t('StudyPopulationForm.healthy_subjects')"
+              :label="$t('StudyPopulationForm.healthy_subjects')"
+            />
+          </v-col>
+          <v-col cols="5">
+            <YesNoField
+              v-model="form.rare_disease_indicator"
+              :data-cy="$t('StudyPopulationForm.rare_disease_indicator')"
+              :label="$t('StudyPopulationForm.rare_disease_indicator')"
+            />
+          </v-col>
+        </v-row>
+        <v-row class="pr-4">
+          <v-col cols="11">
+            <v-select
+              v-model="form.sex_of_participants_code"
+              :data-cy="$t('StudyPopulationForm.sex_of_study_participants')"
+              :label="$t('StudyPopulationForm.sex_of_study_participants')"
+              :items="studiesGeneralStore.sexOfParticipants"
+              item-value="term_uid"
+              item-title="sponsor_preferred_name"
+              return-object
+              density="compact"
               clearable
               hide-details="auto"
-              />
-          </validation-provider>
-        </v-col>
-      </v-row>
-      <div class="mt-10">
-        <label class="v-label">
-          {{ $t('StudyPopulationForm.planned_min_max_age') }}
-        </label>
-      </div>
-      <not-applicable-field
-        :na-label="$t('StudyPopulationForm.pinf')"
-        :clean-function="setPositiveInfinity"
-        :checked="form.planned_maximum_age_of_subjects_null_value_code ? true : false"
+            />
+          </v-col>
+        </v-row>
+        <div class="mt-10">
+          <label class="v-label">
+            {{ $t('StudyPopulationForm.planned_min_max_age') }}
+          </label>
+        </div>
+        <NotApplicableField
+          :na-label="$t('StudyPopulationForm.pinf')"
+          :clean-function="setPositiveInfinity"
+          :checked="
+            form.planned_maximum_age_of_subjects_null_value_code ? true : false
+          "
         >
-        <template v-slot:mainField="{ notApplicable }">
-          <v-row>
-            <v-col cols="6">
-              <validation-provider
-                v-slot="{ errors }"
-                name="PlannedMinAge"
-                rules=""
-                >
-                <duration-field
-                  data-cy="planned-minimum-age"
+          <template #mainField="{ notApplicable }">
+            <v-row>
+              <v-col cols="6">
+                <DurationField
                   v-model="form.planned_minimum_age_of_subjects"
-                  :errors="errors"
+                  data-cy="planned-minimum-age"
                   numeric-field-name="duration_value"
                   unit-field-name="duration_unit_code"
                   :hint="$t('StudyPopulationForm.planned_min_age')"
-                  />
-              </validation-provider>
-            </v-col>
-            <v-col cols="6">
-              <validation-provider
-                v-slot="{ errors }"
-                name="PlannedMaxAge"
-                rules=""
-                >
-                <duration-field
-                  data-cy="planned-maximum-age"
+                />
+              </v-col>
+              <v-col cols="6">
+                <DurationField
                   v-model="form.planned_maximum_age_of_subjects"
-                  :errors="errors"
+                  data-cy="planned-maximum-age"
                   numeric-field-name="duration_value"
                   unit-field-name="duration_unit_code"
                   :disabled="notApplicable"
                   :hint="$t('StudyPopulationForm.planned_max_age')"
-                  />
-              </validation-provider>
-            </v-col>
-          </v-row>
-        </template>
-      </not-applicable-field>
-      <v-row>
-        <v-col cols="4">
-          <validation-provider
-            v-slot="{ errors }"
-            name="pediatric_study_indicator"
-            rules=""
-            >
-            <yes-no-field
-              :data-cy="$t('StudyPopulationForm.pediatric_study_indicator')"
+                />
+              </v-col>
+            </v-row>
+          </template>
+        </NotApplicableField>
+        <v-row>
+          <v-col cols="4">
+            <YesNoField
               v-model="form.pediatric_study_indicator"
-              :error-messages="errors"
+              :data-cy="$t('StudyPopulationForm.pediatric_study_indicator')"
               :label="$t('StudyPopulationForm.pediatric_study_indicator')"
-              />
-          </validation-provider>
-        </v-col>
-        <v-col cols="5">
-          <validation-provider
-            v-slot="{ errors }"
-            name="pediatric_investigation_plan_indicator"
-            rules=""
-            >
-            <yes-no-field
-              :data-cy="$t('StudyPopulationForm.pediatric_investigation_plan_indicator')"
+            />
+          </v-col>
+          <v-col cols="5">
+            <YesNoField
               v-model="form.pediatric_investigation_plan_indicator"
-              :error-messages="errors"
-              :label="$t('StudyPopulationForm.pediatric_investigation_plan_indicator')"
-              />
-          </validation-provider>
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col cols="9">
-          <validation-provider
-            v-slot="{ errors }"
-            name="pediatric_postmarket_study_indicator"
-            rules=""
-            >
-            <yes-no-field
-              :data-cy="$t('StudyPopulationForm.pediatric_postmarket_study_indicator')"
+              :data-cy="
+                $t('StudyPopulationForm.pediatric_investigation_plan_indicator')
+              "
+              :label="
+                $t('StudyPopulationForm.pediatric_investigation_plan_indicator')
+              "
+            />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col cols="9">
+            <YesNoField
               v-model="form.pediatric_postmarket_study_indicator"
-              :error-messages="errors"
-              :label="$t('StudyPopulationForm.pediatric_postmarket_study_indicator')"
-              />
-          </validation-provider>
-        </v-col>
-      </v-row>
-    </validation-observer>
-  </template>
-</simple-form-dialog>
+              :data-cy="
+                $t('StudyPopulationForm.pediatric_postmarket_study_indicator')
+              "
+              :label="
+                $t('StudyPopulationForm.pediatric_postmarket_study_indicator')
+              "
+            />
+          </v-col>
+        </v-row>
+      </v-form>
+    </template>
+  </SimpleFormDialog>
 </template>
 
 <script>
 import _isEqual from 'lodash/isEqual'
-import { mapGetters } from 'vuex'
-import { bus } from '@/main'
-import { studyMetadataFormMixin } from '@/mixins/studyMetadataForm'
-import DurationField from '@/components/tools/DurationField'
-import MultipleSelect from '@/components/tools/MultipleSelect'
-import NotApplicableField from '@/components/tools/NotApplicableField'
-import SimpleFormDialog from '@/components/tools/SimpleFormDialog'
-import YesNoField from '@/components/tools/YesNoField'
+import DurationField from '@/components/tools/DurationField.vue'
+import MultipleSelect from '@/components/tools/MultipleSelect.vue'
+import NotApplicableField from '@/components/tools/NotApplicableField.vue'
+import SimpleFormDialog from '@/components/tools/SimpleFormDialog.vue'
+import YesNoField from '@/components/tools/YesNoField.vue'
+import { useStudiesGeneralStore } from '@/stores/studies-general'
+import { useStudiesManageStore } from '@/stores/studies-manage'
+import studyMetadataForms from '@/utils/studyMetadataForms'
 
 export default {
-  mixins: [studyMetadataFormMixin],
   components: {
     DurationField,
     MultipleSelect,
     NotApplicableField,
     SimpleFormDialog,
-    YesNoField
+    YesNoField,
   },
+  inject: ['eventBusEmit'],
   props: {
-    metadata: Object,
-    open: Boolean
+    metadata: {
+      type: Object,
+      default: undefined,
+    },
+    open: Boolean,
   },
-  computed: {
-    ...mapGetters({
-      selectedStudy: 'studiesGeneral/selectedStudy',
-      snomedTerms: 'studiesGeneral/snomedTerms',
-      sexOfParticipants: 'studiesGeneral/sexOfParticipants',
-      units: 'studiesGeneral/units',
-      nullValues: 'studiesGeneral/nullValues'
-    })
+  emits: ['close', 'updated'],
+  setup() {
+    const studiesGeneralStore = useStudiesGeneralStore()
+    const studiesManageStore = useStudiesManageStore()
+    return {
+      studiesGeneralStore,
+      studiesManageStore,
+    }
   },
-  data () {
+  data() {
     return {
       form: {
         planned_minimum_age_of_subjects: {},
         planned_maximum_age_of_subjects: {},
-        stable_disease_minimum_duration: {}
+        stable_disease_minimum_duration: {},
       },
       helpItems: [
         'StudyPopulationForm.therapeuticarea',
@@ -307,106 +258,10 @@ export default {
         'StudyPopulationForm.stable_disease_min_duration',
         'StudyPopulationForm.relapse_criteria',
         'StudyPopulationForm.number_of_expected_subjects',
-        'StudyPopulationForm.sex_of_study_participants'
+        'StudyPopulationForm.sex_of_study_participants',
       ],
       minimumDurationCheckbox: false,
-      data: this.metadata
-    }
-  },
-  mounted () {
-    this.$store.dispatch('studiesGeneral/fetchNullValues')
-  },
-  methods: {
-    setNullValueStudyDisease () {
-      this.$set(this.form, 'disease_condition_or_indication_codes', [])
-      if (this.form.disease_condition_or_indication_null_value_code) {
-        this.$set(this.form, 'disease_condition_or_indication_null_value_code', null)
-      } else {
-        this.$set(this.form, 'disease_condition_or_indication_null_value_code', { term_uid: this.$t('_global.na_uid'), name: this.$t('_global.not_applicable_full_name') })
-      }
-    },
-    setNullValueDiseaseDuration () {
-      this.$set(this.form, 'stable_disease_minimum_duration', {})
-      if (this.form.stable_disease_minimum_duration_null_value_code) {
-        this.$set(this.form, 'stable_disease_minimum_duration_null_value_code', null)
-      } else {
-        this.$set(this.form, 'stable_disease_minimum_duration_null_value_code', { term_uid: this.$t('_global.na_uid'), name: this.$t('_global.not_applicable_full_name') })
-      }
-    },
-    setNullValueRelapseCriteria () {
-      this.$set(this.form, 'relapse_criteria', '')
-      if (this.form.relapse_criteria_null_value_code) {
-        this.$set(this.form, 'relapse_criteria_null_value_code', null)
-      } else {
-        this.$set(this.form, 'relapse_criteria_null_value_code', { term_uid: this.$t('_global.na_uid'), name: this.$t('_global.not_applicable_full_name') })
-      }
-    },
-    setNullValueNumberOfExpectedSubjects () {
-      this.$set(this.form, 'number_of_expected_subjects', '')
-      if (this.form.number_of_expected_subjects_null_value_code) {
-        this.$set(this.form, 'number_of_expected_subjects_null_value_code', null)
-      } else {
-        this.$set(this.form, 'number_of_expected_subjects_null_value_code', { term_uid: this.$t('_global.na_uid'), name: this.$t('_global.not_applicable_full_name') })
-      }
-    },
-    setPositiveInfinity () {
-      this.$set(this.form, 'planned_maximum_age_of_subjects', {})
-      if (this.form.planned_maximum_age_of_subjects_null_value_code) {
-        this.$set(this.form, 'planned_maximum_age_of_subjects_null_value_code', null)
-      } else {
-        this.$set(this.form, 'planned_maximum_age_of_subjects_null_value_code', { term_uid: this.nullValues.find(el => el.sponsor_preferred_name === 'Positive infinity').term_uid, name: this.$t('_global.positive_infinity_full_name') })
-      }
-    },
-    close () {
-      this.$emit('close')
-      this.$refs.observer.reset()
-    },
-    async cancel () {
-      if (_isEqual(this.metadata, this.prepareRequestPayload())) {
-        this.close()
-        return
-      }
-      const options = {
-        type: 'warning',
-        cancelLabel: this.$t('_global.cancel'),
-        agreeLabel: this.$t('_global.continue')
-      }
-      if (await this.$refs.form.confirm(this.$t('_global.cancel_changes'), options)) {
-        this.data = {}
-        this.data = this.metadata
-        this.close()
-      }
-    },
-    prepareRequestPayload () {
-      const data = JSON.parse(JSON.stringify(this.form))
-      if (Object.keys(data.planned_minimum_age_of_subjects).length === 0 || !data.planned_minimum_age_of_subjects.duration_value) {
-        data.planned_minimum_age_of_subjects = null
-      }
-      if (Object.keys(data.planned_maximum_age_of_subjects).length === 0 || !data.planned_maximum_age_of_subjects.duration_value) {
-        data.planned_maximum_age_of_subjects = null
-      }
-      if (Object.keys(data.stable_disease_minimum_duration).length === 0 || !data.stable_disease_minimum_duration.duration_value) {
-        data.stable_disease_minimum_duration = null
-      }
-      if (!data.number_of_expected_subjects) {
-        data.number_of_expected_subjects = null
-      }
-      data.sex_of_participants_code = this.getTermPayload('sex_of_participants_code')
-      data.therapeutic_area_codes = this.getTermsPayload('therapeutic_area_codes')
-      data.disease_condition_or_indication_codes = this.getTermsPayload('disease_condition_or_indication_codes')
-      data.diagnosis_group_codes = this.getTermsPayload('diagnosis_group_codes')
-      return data
-    },
-    async submit () {
-      const data = this.prepareRequestPayload()
-      try {
-        await this.$store.dispatch('manageStudies/editStudyPopulation', [this.selectedStudy.uid, data])
-        this.$emit('updated', data)
-        bus.$emit('notification', { msg: this.$t('StudyPopulationForm.update_success') })
-        this.close()
-      } finally {
-        this.$refs.form.working = false
-      }
+      data: this.metadata,
     }
   },
   watch: {
@@ -425,12 +280,162 @@ export default {
         if (!this.form.stable_disease_minimum_duration) {
           this.form.stable_disease_minimum_duration = {}
         }
+        if (this.form.sex_of_participants_code) {
+          this.form.sex_of_participants_code.sponsor_preferred_name =
+            this.form.sex_of_participants_code.name
+        }
       },
-      immediate: true
+      immediate: true,
     },
-    metadata (value) {
+    metadata(value) {
       this.data = value
-    }
-  }
+    },
+  },
+  mounted() {
+    this.studiesGeneralStore.fetchNullValues()
+  },
+  methods: {
+    setNullValueStudyDisease() {
+      this.form.disease_condition_or_indication_codes = []
+      if (this.form.disease_condition_or_indication_null_value_code) {
+        this.form.disease_condition_or_indication_null_value_code = null
+      } else {
+        this.form.disease_condition_or_indication_null_value_code = {
+          term_uid: this.$t('_global.na_uid'),
+          name: this.$t('_global.not_applicable_full_name'),
+        }
+      }
+    },
+    setNullValueDiseaseDuration() {
+      this.form.stable_disease_minimum_duration = {}
+      if (this.form.stable_disease_minimum_duration_null_value_code) {
+        this.form.stable_disease_minimum_duration_null_value_code = null
+      } else {
+        this.form.stable_disease_minimum_duration_null_value_code = {
+          term_uid: this.$t('_global.na_uid'),
+          name: this.$t('_global.not_applicable_full_name'),
+        }
+      }
+    },
+    setNullValueRelapseCriteria() {
+      this.form.relapse_criteria = ''
+      if (this.form.relapse_criteria_null_value_code) {
+        this.form.relapse_criteria_null_value_code = null
+      } else {
+        this.form.relapse_criteria_null_value_code = {
+          term_uid: this.$t('_global.na_uid'),
+          name: this.$t('_global.not_applicable_full_name'),
+        }
+      }
+    },
+    setNullValueNumberOfExpectedSubjects() {
+      this.form.number_of_expected_subjects = ''
+      if (this.form.number_of_expected_subjects_null_value_code) {
+        this.form.number_of_expected_subjects_null_value_code = null
+      } else {
+        this.form.number_of_expected_subjects_null_value_code = {
+          term_uid: this.$t('_global.na_uid'),
+          name: this.$t('_global.not_applicable_full_name'),
+        }
+      }
+    },
+    setPositiveInfinity() {
+      this.form.planned_maximum_age_of_subjects = {}
+      if (this.form.planned_maximum_age_of_subjects_null_value_code) {
+        this.form.planned_maximum_age_of_subjects_null_value_code = null
+      } else {
+        this.form.planned_maximum_age_of_subjects_null_value_code = {
+          term_uid: this.studiesGeneralStore.nullValues.find(
+            (el) => el.sponsor_preferred_name === 'Positive infinity'
+          ).term_uid,
+          name: this.$t('_global.positive_infinity_full_name'),
+        }
+      }
+    },
+    close() {
+      this.$emit('close')
+      this.$refs.observer.resetValidation()
+    },
+    async cancel() {
+      if (_isEqual(this.metadata, this.prepareRequestPayload())) {
+        this.close()
+        return
+      }
+      const options = {
+        type: 'warning',
+        cancelLabel: this.$t('_global.cancel'),
+        agreeLabel: this.$t('_global.continue'),
+      }
+      if (
+        await this.$refs.form.confirm(
+          this.$t('_global.cancel_changes'),
+          options
+        )
+      ) {
+        this.data = {}
+        this.data = this.metadata
+        this.close()
+      }
+    },
+    prepareRequestPayload() {
+      const data = JSON.parse(JSON.stringify(this.form))
+      if (
+        Object.keys(data.planned_minimum_age_of_subjects).length === 0 ||
+        !data.planned_minimum_age_of_subjects.duration_value
+      ) {
+        data.planned_minimum_age_of_subjects = null
+      }
+      if (
+        Object.keys(data.planned_maximum_age_of_subjects).length === 0 ||
+        !data.planned_maximum_age_of_subjects.duration_value
+      ) {
+        data.planned_maximum_age_of_subjects = null
+      }
+      if (
+        Object.keys(data.stable_disease_minimum_duration).length === 0 ||
+        !data.stable_disease_minimum_duration.duration_value
+      ) {
+        data.stable_disease_minimum_duration = null
+      }
+      if (!data.number_of_expected_subjects) {
+        data.number_of_expected_subjects = null
+      }
+      data.sex_of_participants_code = studyMetadataForms.getTermPayload(
+        data,
+        'sex_of_participants_code'
+      )
+      data.therapeutic_area_codes = studyMetadataForms.getTermsPayload(
+        data,
+        'therapeutic_area_codes'
+      )
+      data.disease_condition_or_indication_codes =
+        studyMetadataForms.getTermsPayload(
+          data,
+          'disease_condition_or_indication_codes'
+        )
+      data.diagnosis_group_codes = studyMetadataForms.getTermsPayload(
+        data,
+        'diagnosis_group_codes'
+      )
+      return data
+    },
+    async submit() {
+      const data = this.prepareRequestPayload()
+      try {
+        await this.studiesManageStore.editStudyPopulation(
+          this.studiesGeneralStore.selectedStudy.uid,
+          data,
+          this.studiesGeneralStore.selectedStudy.study_parent_part ? this.studiesGeneralStore.selectedStudy.study_parent_part.uid : null
+        )
+        this.$emit('updated', data)
+        this.eventBusEmit('notification', {
+          msg: this.$t('StudyPopulationForm.update_success'),
+        })
+        this.close()
+      } finally {
+        this.$refs.form.working = false
+      }
+    },
+  },
 }
 </script>

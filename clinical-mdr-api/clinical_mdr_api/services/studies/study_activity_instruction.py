@@ -18,6 +18,7 @@ from clinical_mdr_api.domains.syntax_instances.activity_instruction import (
 )
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
 from clinical_mdr_api.models.utils import GenericFilteringReturn
+from clinical_mdr_api.oauth.user import user
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._meta_repository import MetaRepository
 from clinical_mdr_api.services._utils import service_level_generic_filtering
@@ -30,9 +31,9 @@ from clinical_mdr_api.services.syntax_instances.activity_instructions import (
 class StudyActivityInstructionService(StudySelectionMixin):
     _repos: MetaRepository
 
-    def __init__(self, author):
+    def __init__(self):
         self._repos = MetaRepository()
-        self.author = author
+        self.author = user().id()
 
     @db.transaction
     def get_all_instructions_for_all_studies(

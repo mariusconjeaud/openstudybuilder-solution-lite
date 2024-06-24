@@ -9,7 +9,7 @@
     <html>
       <head>
         <title><xsl:value-of select="/ODM/Study/@OID"/></title>
-        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" />
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0" />
         <style>
           em {
@@ -87,11 +87,6 @@
           .alert-green {
           color: green;
           }
-          input, textarea {
-          background: #eee;
-          border: 0.01em solid;
-          height: 1.6em;
-          }
           [disabled] {
           opacity: 0.3;
           }
@@ -115,11 +110,11 @@
       <body>
         <div class="container">
           <div class="row">
-            <div class="col-8 text-left">
-              <h3><xsl:value-of select="/ODM/Study/GlobalVariables/StudyName"/></h3>
+            <div class="col-sm-8 text-start">
+              <h1><xsl:value-of select="/ODM/Study/GlobalVariables/StudyName"/></h1>
             </div>
-            <div class="col text-right">
-              <h3>Annotated CRF</h3>
+            <div class="col-sm-4 text-end">
+              <h2>Annotated CRF</h2>
             </div>
           </div>
           <div class="row">
@@ -128,7 +123,7 @@
             </div>
           </div>
           <div class="row"> <!-- Legend -->
-            <div class="col-3 text-left">
+            <div class="col-3 text-start">
               <span class="blackItem">Black label</span> are Mandatory (otherwise <span class="greenItem">Green</span>)
             </div>
             <div class="col-3 text-center">
@@ -137,15 +132,14 @@
             <div class="col-3 text-center">
               <em>*</em> Data Entry Required
             </div>
-            <div class="col-3 text-right">
+            <div class="col-3 text-end">
               <span class="material-symbols-outlined">account_tree</span> Source Data Verification (SDV)
             </div>
           </div>
         </div>
       </body>
       <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-      <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js" integrity="sha384-oBqDVmMz9ATKxIep9tiCxS/Z9fNfEXiDAYTujMAeBAsjFuCZSmKbSSUnQlmh/jp3" crossorigin="anonymous"></script>
-      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.min.js" integrity="sha384-IDwe1+LCz02ROU9k972gdyvl+AESN10+x7tBKgc9I5HFtuNz0wWnPclzo6p9vxnk" crossorigin="anonymous"></script>
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     </html>
   </xsl:template>
 
@@ -163,8 +157,8 @@
     <div class="row">
       <xsl:choose>
         <xsl:when test="./@DataType = 'comment'"> <!-- Title -->         
-          <div class="col-4 border text-right" /> <!-- Item lable column -->
-          <div class="col border text-left">
+          <div class="col-sm-4 border text-end" /> <!-- Item lable column -->
+          <div class="col-sm-8 border text-start">
             <xsl:choose>
               <xsl:when test="./Question">
                 <xsl:choose>
@@ -214,14 +208,14 @@
           </div>         
         </xsl:when>
         <xsl:otherwise> <!-- Not a title -->
-          <div class="col-1 border text-left">
+          <div class="col-sm-1 border text-star">
             <xsl:if test="//ItemGroupDef/ItemRef[@ItemOID = current()/@OID]/@Mandatory = 'Yes'">
               <em> * </em>
             </xsl:if>
             <span class="material-symbols-outlined">lock</span>
             <span class="material-symbols-outlined">account_tree</span>
           </div>
-          <div class="col-3 border text-right"> <!-- Item lable column -->
+          <div class="col-sm-3 border text-end"> <!-- Item lable column -->
             <i aria-hidden="true" class="v-icon notranslate mr-1 mdi mdi-alpha-i-circle theme--light crfItem--text"></i>
             <xsl:choose>
               <xsl:when test="./Question">
@@ -260,16 +254,16 @@
           <!-- Item field column -->
           <xsl:choose>
             <xsl:when test="MeasurementUnitRef">
-              <div class="col-4 border text-left">
-                <div class="input-group">
+              <div class="col-sm-4 border text-start">
+                <div class="input-group flex-baselinewrap">
                   <xsl:choose>
                     <xsl:when test="./@Origin = 'Derived Value'">
-                      <input type="{@DataType}" class="form-control" id="item{@OID}" name="{@Name}" min="4" max="40" size="{@Length}" aria-describedby="basic-addon2" disabled="disabled" />
-                      <span class="input-group-text" id="item{@OID}"><xsl:value-of select="@Length" /> digit(s)</span>
+                      <input type="{@DataType}" class="form-control" name="{@Name}" min="4" max="40" size="{@Length}" aria-describedby="basic-addon2" disabled="disabled" />
+                      <span class="input-group-text text-center" id="item{@OID}"><xsl:value-of select="@Length" /> digit(s)</span>
                     </xsl:when>
                     <xsl:otherwise>
-                      <input type="{@DataType}" class="form-control" id="item{@OID}" name="{@Name}" min="4" max="40" size="{@Length}" aria-describedby="basic-addon2" />
-                      <span class="input-group-text" id="item{@OID}"><xsl:value-of select="@Length" /> digit(s)</span>
+                      <input type="{@DataType}" class="form-control" name="{@Name}" min="4" max="40" size="{@Length}" aria-describedby="basic-addon2" />
+                      <span class="input-group-text text-center" id="item{@OID}"><xsl:value-of select="@Length" /> digit(s)</span>
                     </xsl:otherwise>
                   </xsl:choose>
                 </div>
@@ -300,12 +294,14 @@
                   </xsl:when>
                 </xsl:choose>
               </div>
-              <div class="col-1 border text-right">
-                Unit :
+              <div class="col-sm-1 border text-center">
+                <label for="DisabledTextInput" class="form-label">
+                Unit
+                </label>
               </div>
-              <div class="col border text-left">
+              <div class="col-sm-3 border text-left">
                 <xsl:for-each select="MeasurementUnitRef">
-                  <input type="radio" id="{@MeasurementUnitOID}" name="{../@OID}" value="{@MeasurementUnitOID}" />
+                  <input class="form-check-input" type="radio" id="{@MeasurementUnitOID}" name="{../@OID}" value="{@MeasurementUnitOID}" />
                   <label for="contactChoice1">&#160;
                     <xsl:apply-templates select="//BasicDefinitions/MeasurementUnit[@OID = current()/@MeasurementUnitOID]/Symbol" />
                   </label>&#160;<span class="oidinfo"> [OID=<xsl:value-of select="@MeasurementUnitOID" />, Version=<xsl:value-of select="//BasicDefinitions/MeasurementUnit[@OID = current()/@MeasurementUnitOID]/@osb:version" />]</span>
@@ -314,7 +310,7 @@
               </div>
             </xsl:when>
             <xsl:otherwise> <!-- Not a MeasurementUnitRef -->
-              <div class="col border text-left">
+              <div class="col-sm-8 border text-star">
                 <xsl:choose>
                   <xsl:when test="CodeListRef">
                     <xsl:for-each select="CodeListRef">
@@ -370,21 +366,21 @@
                           <xsl:choose>
                             <xsl:when test="./Alias/@Context = 'DEFAULT_VALUE'">
                               <input type="{@DataType}" class="form-control" id="item{@OID}" name="{@Name}" min="4" max="40" size="{@Length}" aria-describedby="item{@OID}" placeholder="{./Alias[@Context = 'DEFAULT_VALUE']/@Name}" disabled="disabled" />
-                              <span class="input-group-text" id="item{@OID}"><xsl:value-of select="@Length" /> digit(s)</span>
+                              <span class="input-group-text text-center" id="item{@OID}"><xsl:value-of select="@Length" /> digit(s)</span>
                             </xsl:when>
                             <xsl:otherwise>
-                              <input type="{@DataType}" class="form-control" id="item{@OID}" name="{@Name}" min="4" max="40" size="{@Length}" aria-describedby="item{@OID}" disabled="disabled" />
-                              <span class="input-group-text" id="item{@OID}"><xsl:value-of select="@Length" /> digit(s)</span>
+                              <input type="{@DataType}" class="form-control" id="item{@OID}" name="{@Name}" min="4" max="{@Length}" size="{@Length}" aria-describedby="item{@OID}" disabled="disabled" />
+                              <span class="input-group-text text-center" id="item{@OID}"><xsl:value-of select="@Length" /> digit(s)</span>
                             </xsl:otherwise>
                           </xsl:choose>
                         </xsl:when>
                         <xsl:when test="./Alias/@Context = 'DEFAULT_VALUE'">
                           <input type="{@DataType}" class="form-control" id="item{@OID}" name="{@Name}" min="4" max="40" size="{@Length}" aria-describedby="item{@OID}" placeholder="{./Alias[@Context = 'DEFAULT_VALUE']/@Name}" aria-label="{@Name}" />
-                          <span class="input-group-text" id="item{@OID}"><xsl:value-of select="@Length" /> digit(s)</span>
+                          <span class="input-group-text text-center" id="item{@OID}"><xsl:value-of select="@Length" /> digit(s)</span>
                         </xsl:when>
                         <xsl:otherwise>
                           <input type="{@DataType}" class="form-control" id="item{@OID}" name="{@Name}" min="4" max="40" size="{@Length}" aria-describedby="item{@OID}" />
-                          <span class="input-group-text" id="item{@OID}"><xsl:value-of select="@Length" /> digit(s)</span>
+                          <span class="input-group-text text-center" id="item{@OID}"><xsl:value-of select="@Length" /> digit(s)</span>
                         </xsl:otherwise>
                       </xsl:choose>
                     </div>
@@ -465,37 +461,15 @@
       </xsl:choose>
     </xsl:variable>
     <div class="row border">
-      <div class="col-8">
-        <i aria-hidden="true" class="v-icon notranslate mr-1 mdi mdi-alpha-g-circle theme--light crfGroup--text"></i>&#160;<xsl:value-of disable-output-escaping="yes" select="./Description/TranslatedText" />
+      <div class="col-sm-8">
+        <h3><xsl:value-of disable-output-escaping="yes" select="./Description/TranslatedText" />&#160;[ItemGroup]
         <xsl:if test="//FormDef/ItemGroupRef[@ItemGroupOID = current()/@OID]/@Mandatory = 'Yes'">
           <em>&#160;*&#160;</em>
         </xsl:if>
-        <br /><span class="oidinfo d-flex">[OID=<xsl:value-of select="@OID" />, Version=<xsl:value-of select="@osb:version" />]</span>
-        <xsl:choose>
-          <xsl:when test="./@osb:instruction != 'None'">
-            <div class="alert alert-secondary d-flex" role="alert">
-              <span class="material-symbols-outlined">help</span>&#160;<xsl:value-of disable-output-escaping="yes" select="@osb:instruction" />
-            </div>
-          </xsl:when>
-        </xsl:choose>
-        <xsl:choose>
-          <xsl:when test="./@osb:sponsorInstruction != 'None'">
-            <div class="alert alert-danger d-flex" role="alert">
-              <span class="material-symbols-outlined">emergency_home</span>&#160;<xsl:value-of disable-output-escaping="yes" select="@osb:sponsorInstruction" />
-            </div>
-          </xsl:when>
-        </xsl:choose>
-        <xsl:choose>
-          <xsl:when test="./Alias/@Context = 'ImplementationNotes'">
-            <div class="alert alert-danger d-flex" role="alert">
-              <xsl:for-each select="./Alias[@Context = 'ImplementationNotes']">
-                <span class="material-symbols-outlined">emergency_home</span>&#160;<xsl:value-of disable-output-escaping="yes" select="./@Name" />
-              </xsl:for-each>
-            </div>
-          </xsl:when>
-        </xsl:choose>
+        </h3>
+        <div class="oidinfo d-flex">[OID=<xsl:value-of select="@OID" />, Version=<xsl:value-of select="@osb:version" />]</div>
       </div>
-      <div class="col text-right">
+      <div class="col-sm-4 text-end">
         <xsl:choose>
           <xsl:when test="./osb:SdtmMetadata/osb:Sdtm">
             <xsl:for-each select="./osb:SdtmMetadata/osb:Sdtm">
@@ -525,6 +499,33 @@
         </xsl:choose>
       </div>
     </div>
+    <div class="row border">
+      <div class="col-sm-12">
+        <xsl:choose>
+          <xsl:when test="./@osb:instruction != 'None'">
+            <div class="alert alert-secondary d-flex" role="alert">
+              <span class="material-symbols-outlined">help</span>&#160;<xsl:value-of disable-output-escaping="yes" select="@osb:instruction" />
+            </div>
+          </xsl:when>
+        </xsl:choose>
+        <xsl:choose>
+          <xsl:when test="./@osb:sponsorInstruction != 'None'">
+            <div class="alert alert-danger d-flex" role="alert">
+              <span class="material-symbols-outlined">emergency_home</span>&#160;<xsl:value-of disable-output-escaping="yes" select="@osb:sponsorInstruction" />
+            </div>
+          </xsl:when>
+        </xsl:choose>
+        <xsl:choose>
+          <xsl:when test="./Alias/@Context = 'ImplementationNotes'">
+            <div class="alert alert-danger d-flex" role="alert">
+              <xsl:for-each select="./Alias[@Context = 'ImplementationNotes']">
+                <span class="material-symbols-outlined">emergency_home</span>&#160;<xsl:value-of disable-output-escaping="yes" select="./@Name" />
+              </xsl:for-each>
+            </div>
+          </xsl:when>
+        </xsl:choose>
+      </div>
+    </div>
 
     <xsl:for-each select="ItemRef">
       <xsl:sort select="@OrderNumber"/>
@@ -539,8 +540,8 @@
 
   <xsl:template match="FormDef" >
     <div class="row border">
-      <div class="col">
-        <h3><i aria-hidden="true" class="v-icon notranslate mr-1 mdi mdi-alpha-f-circle theme--light crfForm--text"></i><xsl:value-of select="@Name" /></h3>
+      <div class="col-sm-12">
+        <h2><xsl:value-of select="@Name" />&#160;[Form]</h2>
         <span class="oidinfo">[OID=<xsl:value-of select="@OID" />, Version=<xsl:value-of select="@osb:version" />]</span>
         <xsl:choose>
           <xsl:when test="./@osb:instruction != 'None'">

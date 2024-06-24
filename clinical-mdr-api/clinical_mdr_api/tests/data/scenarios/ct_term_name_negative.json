@@ -101,5 +101,29 @@
                 "type": "BusinessLogicException"
             }
         }
+    },
+    {
+        "name": "Test PATCH name terms name already exists",
+        "request": {
+            "headers": {},
+            "method": "PATCH",
+            "request": {
+                "sponsor_preferred_name": "term_value_name1",
+                "sponsor_preferred_name_sentence_case": "term_value_name1",
+                "order": 1,
+                "change_description": "changed"
+            },
+            "url": "/ct/terms/term_root_draft/names"
+        },
+        "response": {
+            "code": 400,
+            "result": {
+                "message": "CTTermName with name (term_value_name1) already exists.",
+                "method": "PATCH",
+                "path": "http://testserver/ct/terms/term_root_draft/names",
+                "time": "2020-11-10T01:51:17.884429",
+                "type": "ValidationException"
+            }
+        }
     }
 ]

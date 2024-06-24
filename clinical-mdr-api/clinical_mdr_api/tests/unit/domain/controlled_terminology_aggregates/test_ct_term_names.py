@@ -91,7 +91,10 @@ class TestCTTermNameAR(unittest.TestCase):
         # when
         ct_term_vo = create_random_ct_term_name_vo()
         ct_term_name_ar.edit_draft(
-            author="TODO", change_description="Test", ct_term_vo=ct_term_vo
+            author="TODO",
+            change_description="Test",
+            ct_term_vo=ct_term_vo,
+            term_exists_by_name_in_codelists_callback=lambda x, y: False,
         )
 
         # then

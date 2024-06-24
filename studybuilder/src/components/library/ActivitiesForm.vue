@@ -1,343 +1,319 @@
 <template>
-<simple-form-dialog
-  ref="form"
-  :title="title"
-  :help-items="helpItems"
-  @close="close"
-  @submit="submit"
-  :open="open"
+  <SimpleFormDialog
+    ref="formRef"
+    :title="title"
+    :help-items="helpItems"
+    :open="open"
+    @close="close"
+    @submit="submit"
   >
-  <template v-slot:body>
-    <validation-observer ref="observer">
-      <v-row>
-        <v-col>
-          <v-text-field
-            :label="$t('_global.library')"
-            v-model="form.library_name"
-            dense
-            disabled
-            />
-        </v-col>
-      </v-row>
-      <v-card style="position: relative" class="sub-v-card">
-        <v-card-title style="position: relative">
-          {{ $t('ActivityForms.activity_groupings') }}
-        </v-card-title>
-        <v-btn
-          color="primary"
-          absolute
-          top
-          right
-          fab
-          x-small
-          @click="addGrouping"
-          >
-          <v-icon>mdi-plus</v-icon>
-        </v-btn>
-        <v-card-text>
-          <v-card v-for="(grouping, index) in form.activity_groupings" :key="index" class="sub-v-card">
-            <v-card-text style="position: relative">
-              <validation-provider
-                v-slot="{ errors }"
-                rules="required"
-                data-cy="activityform-activity-group-class"
-                >
-                <v-autocomplete
-                  :label="$t('ActivityForms.activity_group')"
-                  data-cy="activityform-activity-group-dropdown"
-                  :items="groups"
-                  v-model="form.activity_groupings[index].activity_group_uid"
-                  item-text="name"
-                  item-value="uid"
-                  :error-messages="errors"
-                  dense
-                  clearable
-                  />
-              </validation-provider>
-              <validation-provider
-                v-slot="{ errors }"
-                rules="required"
-                data-cy="activityform-activity-subgroup-class"
-                >
-                <v-autocomplete
-                  :label="$t('ActivityForms.activity_subgroup')"
-                  data-cy="activityform-activity-subgroup-dropdown"
-                  :items="filteredSubGroups(index)"
-                  v-model="form.activity_groupings[index].activity_subgroup_uid"
-                  item-text="name"
-                  item-value="uid"
-                  :error-messages="errors"
-                  dense
-                  clearable
-                  :disabled="form.activity_groupings[index].activity_group_uid ? false : true"
-                  />
-              </validation-provider>
-            </v-card-text>
-            <v-btn
-              v-if="index > 0"
-              color="error"
-              absolute
-              top
-              right
-              fab
-              x-small
-              @click="removeGrouping(index)"
-              >
-              <v-icon>mdi-delete-outline</v-icon>
-            </v-btn>
-          </v-card>
-        </v-card-text>
-      </v-card>
-      <validation-provider
-        v-slot="{ errors }"
-        rules="required"
-        data-cy="activityform-activity-name-class"
-        >
+    <template #body>
+      <v-form ref="observer">
         <v-row>
           <v-col>
             <v-text-field
+              v-model="form.library_name"
+              :label="$t('_global.library')"
+              density="compact"
+              disabled
+            />
+          </v-col>
+        </v-row>
+        <v-card position="relative" class="sub-v-card">
+          <v-card-title style="position: relative">
+            {{ $t('ActivityForms.activity_groupings') }}
+          </v-card-title>
+          <v-btn
+            color="primary"
+            position="absolute"
+            location="top right"
+            icon="mdi-plus"
+            size="x-small"
+            @click="addGrouping"
+          />
+          <v-card-text>
+            <v-card
+              v-for="(grouping, index) in form.activity_groupings"
+              :key="index"
+              class="sub-v-card"
+            >
+              <v-card-text style="position: relative">
+                <div data-cy="activityform-activity-group-class">
+                  <v-autocomplete
+                    v-model="form.activity_groupings[index].activity_group_uid"
+                    :label="$t('ActivityForms.activity_group')"
+                    data-cy="activityform-activity-group-dropdown"
+                    :items="activitiesStore.activityGroups"
+                    item-title="name"
+                    item-value="uid"
+                    :rules="[formRules.required]"
+                    density="compact"
+                    clearable
+                  />
+                </div>
+                <div data-cy="activityform-activity-subgroup-class">
+                  <v-autocomplete
+                    v-model="
+                      form.activity_groupings[index].activity_subgroup_uid
+                    "
+                    :label="$t('ActivityForms.activity_subgroup')"
+                    data-cy="activityform-activity-subgroup-dropdown"
+                    :items="filteredSubGroups(index)"
+                    item-title="name"
+                    item-value="uid"
+                    density="compact"
+                    clearable
+                    :disabled="
+                      form.activity_groupings[index].activity_group_uid
+                        ? false
+                        : true
+                    "
+                    :rules="[formRules.required]"
+                  />
+                </div>
+              </v-card-text>
+              <v-btn
+                v-if="index > 0"
+                color="error"
+                position="absolute"
+                location="top right"
+                icon="mdi-delete-outline"
+                size="x-small"
+                @click="removeGrouping(index)"
+              />
+            </v-card>
+          </v-card-text>
+        </v-card>
+        <v-row data-cy="activityform-activity-name-class">
+          <v-col>
+            <v-text-field
+              v-model="form.name"
               :label="$t('ActivityForms.activity_name')"
               data-cy="activityform-activity-name-field"
-              v-model="form.name"
-              :error-messages="errors"
-              dense
+              :rules="[formRules.required]"
+              density="compact"
               clearable
-              />
+            />
           </v-col>
         </v-row>
-      </validation-provider>
-      <sentence-case-name-field
-        :name="form.name"
-        :initial-name="form.name_sentence_case"
-        v-model="form.name_sentence_case"/>
-      <v-row>
-        <v-col>
-          <v-text-field
-            :label="$t('ActivityForms.nci_concept_id')"
-            data-cy="activityform-nci-concept-id-field"
-            v-model="form.nci_concept_id"
-            :error-messages="errors"
-            dense
-            clearable
-            />
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col>
-          <v-checkbox
-            :label="$t('ActivityForms.is_data_collected')"
-            data-cy="activityform-datacollection-checkbox"
-            v-model="form.is_data_collected">
-          </v-checkbox>
-        </v-col>
-      </v-row>
-      <validation-provider
-        v-slot="{ errors }"
-        >
+        <SentenceCaseNameField
+          v-model="form.name_sentence_case"
+          :name="form.name"
+        />
         <v-row>
           <v-col>
             <v-text-field
+              v-model="form.nci_concept_id"
+              :label="$t('ActivityForms.nci_concept_id')"
+              data-cy="activityform-nci-concept-id-field"
+              density="compact"
+              clearable
+            />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col>
+            <v-checkbox
+              v-model="form.is_data_collected"
+              :label="$t('ActivityForms.is_data_collected')"
+              color="primary"
+              data-cy="activityform-datacollection-checkbox"
+            />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col>
+            <v-text-field
+              v-model="form.abbreviation"
               :label="$t('ActivityForms.abbreviation')"
               data-cy="activityform-abbreviation-field"
-              v-model="form.abbreviation"
               :error-messages="errors"
-              dense
+              density="compact"
               clearable
-              />
+            />
           </v-col>
         </v-row>
-      </validation-provider>
-      <validation-provider
-        v-slot="{ errors }"
-        rules="required"
-        data-cy="activityform-definition-class"
-        >
-        <v-row>
+        <v-row data-cy="activityform-definition-class">
           <v-col>
             <v-textarea
+              v-model="form.definition"
               :label="$t('ActivityForms.definition')"
               data-cy="activityform-definition-field"
-              v-model="form.definition"
-              :error-messages="errors"
-              dense
+              density="compact"
               clearable
               auto-grow
               rows="1"
-              />
+            />
           </v-col>
         </v-row>
-      </validation-provider>
-      <validation-provider
-        v-if="editing"
-        v-slot="{ errors }"
-        >
-        <v-row>
+        <v-row v-if="editing">
           <v-col>
-            <label class="v-label">{{ $t('ActivityForms.reason_for_change') }}</label>
+            <label class="v-label">{{
+              $t('ActivityForms.reason_for_change')
+            }}</label>
             <v-textarea
               v-model="form.change_description"
-              :error-messages="errors"
-              dense
+              density="compact"
               clearable
               auto-grow
               rows="1"
-              />
+            />
           </v-col>
         </v-row>
-      </validation-provider>
-    </validation-observer>
-  </template>
-</simple-form-dialog>
+      </v-form>
+    </template>
+  </SimpleFormDialog>
 </template>
 
-<script>
-import { bus } from '@/main'
-import _isEqual from 'lodash/isEqual'
+<script setup>
 import _isEmpty from 'lodash/isEmpty'
 import activities from '@/api/activities'
-import SimpleFormDialog from '@/components/tools/SimpleFormDialog'
-import SentenceCaseNameField from '@/components/tools/SentenceCaseNameField'
+import SimpleFormDialog from '@/components/tools/SimpleFormDialog.vue'
+import SentenceCaseNameField from '@/components/tools/SentenceCaseNameField.vue'
 import constants from '@/constants/libraries.js'
+import { useFormStore } from '@/stores/form'
+import { useLibraryActivitiesStore } from '@/stores/library-activities'
+import { computed, inject, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 
-export default {
-  components: {
-    SimpleFormDialog,
-    SentenceCaseNameField
+const { t } = useI18n()
+const formStore = useFormStore()
+const activitiesStore = useLibraryActivitiesStore()
+const eventBusEmit = inject('eventBusEmit')
+const formRules = inject('formRules')
+const emit = defineEmits(['close'])
+const formRef = ref()
+const observer = ref()
+
+const props = defineProps({
+  editedActivity: {
+    type: Object,
+    default: null,
   },
-  props: {
-    editedActivity: Object,
-    open: Boolean
-  },
-  computed: {
-    title () {
-      return (!_isEmpty(this.editedActivity))
-        ? this.$t('ActivityForms.edit_activity')
-        : this.$t('ActivityForms.add_activity')
-    }
-  },
-  data () {
-    return {
-      form: {
-        library_name: constants.LIBRARY_SPONSOR,
-        activity_groupings: [{}],
-        is_data_collected: true
-      },
-      errors: [],
-      groups: [],
-      subGroups: [],
-      libraries: [],
-      helpItems: [
-        'ActivityForms.activity_group',
-        'ActivityForms.activity_subgroup',
-        'ActivityForms.name',
-        'ActivityForms.nci_concept_id',
-        'ActivityForms.is_data_collected',
-        'ActivityForms.abbreviation',
-        'ActivityForms.definition',
-        'ActivityForms.activity_name'
-      ],
-      editing: false
-    }
-  },
-  methods: {
-    filteredSubGroups (index) {
-      if (!this.form.activity_groupings[index].activity_group_uid) {
-        return []
-      }
-      return this.subGroups.filter(el => el.activity_groups.find(o => o.uid === this.form.activity_groupings[index].activity_group_uid) !== undefined)
-    },
-    initForm (value) {
-      this.editing = true
-      this.form = {
-        name: value.name,
-        name_sentence_case: value.name_sentence_case,
-        nci_concept_id: value.nci_concept_id,
-        is_data_collected: value.is_data_collected,
-        definition: value.definition,
-        abbreviation: value.abbreviation,
-        change_description: '',
-        library_name: value.library_name,
-        activity_groupings: [{}]
-      }
-      if (!_isEmpty(value)) {
-        this.$set(this.form, 'activity_groupings', value.activity_groupings)
-      }
-      this.$store.commit('form/SET_FORM', this.form)
-    },
-    async cancel () {
-      if (this.$store.getters['form/form'] === '' || _isEqual(this.$store.getters['form/form'], JSON.stringify(this.form))) {
-        this.close()
-      } else {
-        const options = {
-          type: 'warning',
-          cancelLabel: this.$t('_global.cancel'),
-          agreeLabel: this.$t('_global.continue')
-        }
-        if (await this.$refs.form.confirm(this.$t('_global.cancel_changes'), options)) {
-          this.close()
-        }
-      }
-    },
-    close () {
-      this.$emit('close')
-      this.form = {
-        library_name: constants.LIBRARY_SPONSOR,
-        activity_groupings: [{}],
-        is_data_collected: true
-      }
-      this.editing = false
-      this.$store.commit('form/CLEAR_FORM')
-      this.$refs.observer.reset()
-    },
-    async submit () {
-      if (!this.editedActivity) {
-        activities.create(this.form, 'activities').then(resp => {
-          bus.$emit('notification', { msg: this.$t('ActivityForms.activity_created') })
-          this.close()
-        }, _err => {
-          this.$refs.form.working = false
-        })
-      } else {
-        activities.update(this.editedActivity.uid, this.form, 'activities').then(resp => {
-          bus.$emit('notification', { msg: this.$t('ActivityForms.activity_updated') })
-          this.close()
-        }, _err => {
-          this.$refs.form.working = false
-        })
-      }
-    },
-    getGroupsAndSubGroups () {
-      activities.get({ page_size: 0 }, 'activity-sub-groups').then(resp => {
-        this.subGroups = resp.data.items
-      })
-      activities.get({ page_size: 0 }, 'activity-groups').then(resp => {
-        this.groups = resp.data.items
-      })
-    },
-    addGrouping () {
-      this.form.activity_groupings.push({})
-    },
-    removeGrouping (index) {
-      this.form.activity_groupings.splice(index, 1)
-    }
-  },
-  mounted () {
-    if (!_isEmpty(this.editedActivity)) {
-      this.initForm(this.editedActivity)
-    }
-    this.getGroupsAndSubGroups()
-  },
-  watch: {
-    editedActivity: {
-      handler (value) {
-        if (!_isEmpty(value)) {
-          this.initForm(value)
-        }
-      },
-      immediate: true
+  open: Boolean,
+})
+
+const form = ref({
+  library_name: constants.LIBRARY_SPONSOR,
+  activity_groupings: [{}],
+  is_data_collected: true,
+})
+const errors = ref([])
+const helpItems = [
+  'ActivityForms.activity_group',
+  'ActivityForms.activity_subgroup',
+  'ActivityForms.name',
+  'ActivityForms.nci_concept_id',
+  'ActivityForms.is_data_collected',
+  'ActivityForms.abbreviation',
+  'ActivityForms.definition',
+  'ActivityForms.activity_name',
+]
+const editing = ref(false)
+      
+const title = computed(() => {
+  return !_isEmpty(props.editedActivity)
+    ? t('ActivityForms.edit_activity')
+    : t('ActivityForms.add_activity')
+})
+
+watch(
+  () => props.editedActivity,
+  (value) => {
+    if (!_isEmpty(value)) {
+      initForm(value)
     }
   }
+)
+
+onMounted(() => {
+  if (!_isEmpty(props.editedActivity)) {
+    initForm(props.editedActivity)
+  }
+})
+  
+function filteredSubGroups(index) {
+  if (!form.value.activity_groupings[index].activity_group_uid) {
+    return []
+  }
+  return activitiesStore.activitySubGroups.filter(
+    (el) =>
+      el.activity_groups.find(
+        (o) =>
+          o.uid === form.value.activity_groupings[index].activity_group_uid
+      ) !== undefined
+  )
 }
+
+function initForm(value) {
+  editing.value = true
+  form.value = {
+    name: value.name,
+    name_sentence_case: value.name_sentence_case,
+    nci_concept_id: value.nci_concept_id,
+    is_data_collected: value.is_data_collected,
+    definition: value.definition,
+    abbreviation: value.abbreviation,
+    change_description: '',
+    library_name: value.library_name,
+    activity_groupings: [{}],
+  }
+  if (!_isEmpty(value)) {
+    form.value.activity_groupings = value.activity_groupings
+  }
+  formStore.save(form.value)
+}
+
+function close() {
+  emit('close')
+  form.value = {
+    library_name: constants.LIBRARY_SPONSOR,
+    activity_groupings: [{}],
+    is_data_collected: true,
+  }
+  editing.value = false
+  formStore.reset()
+  observer.value.reset()
+}
+
+async function submit() {
+  if (!props.editedActivity) {
+    activities.create(form.value, 'activities').then(
+      () => {
+        eventBusEmit('notification', {
+          msg: t('ActivityForms.activity_created'),
+        })
+        close()
+      },
+      () => {
+        formRef.value.working = false
+      }
+    )
+  } else {
+    activities
+      .update(props.editedActivity.uid, form.value, 'activities')
+      .then(
+        () => {
+          eventBusEmit('notification', {
+            msg: t('ActivityForms.activity_updated'),
+          })
+          close()
+        },
+        () => {
+          formRef.value.working = false
+        }
+      )
+  }
+}
+
+function addGrouping() {
+  form.value.activity_groupings.push({})
+}
+
+function removeGrouping(index) {
+  form.value.activity_groupings.splice(index, 1)
+}
+    
 </script>
 <style>
 .sub-v-card {

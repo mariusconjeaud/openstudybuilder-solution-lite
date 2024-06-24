@@ -1,6 +1,5 @@
 import datetime
 
-from aenum import extend_enum
 from neomodel import db
 
 from clinical_mdr_api import config as settings
@@ -9,9 +8,11 @@ from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import 
     StudyStatus,
 )
 from clinical_mdr_api.domains.study_selections.study_disease_milestone import (
+    DiseaseMilestoneTypeNamedTuple,
     StudyDiseaseMilestoneHistoryVO,
     StudyDiseaseMilestoneType,
     StudyDiseaseMilestoneVO,
+    TypeNameDefinition,
 )
 from clinical_mdr_api.models.study_selections.study_disease_milestone import (
     StudyDiseaseMilestone,
@@ -23,6 +24,7 @@ from clinical_mdr_api.models.utils import (
     GenericFilteringReturn,
     get_latest_on_datetime_str,
 )
+from clinical_mdr_api.oauth.user import user
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._meta_repository import MetaRepository
 from clinical_mdr_api.services._utils import (
@@ -33,24 +35,29 @@ from clinical_mdr_api.services._utils import (
 
 
 class StudyDiseaseMilestoneService:
-    def __init__(self, author="NA"):
+    def __init__(self):
         self._repos = MetaRepository()
         self.repo = self._repos.study_disease_milestone_repository
-        self.author = author
+        self.author = user().id()
         self._create_ctlist_map()
 
     def _create_ctlist_map(self):
         self.study_disease_milestone_types = self.repo.create_ctlist_definition(
             settings.STUDY_DISEASE_MILESTONE_TYPE_NAME
         )
-        for uid, name_definition in self.study_disease_milestone_types.items():
-            if uid not in StudyDiseaseMilestoneType._member_map_:
-                extend_enum(
-                    StudyDiseaseMilestoneType,
+        StudyDiseaseMilestoneType.clear()
+        StudyDiseaseMilestoneType.update(
+            (
+                uid,
+                DiseaseMilestoneTypeNamedTuple(
                     uid,
-                    name_definition["name"],
-                    name_definition["definition"],
-                )
+                    TypeNameDefinition(
+                        name_definition["name"], name_definition["definition"]
+                    ),
+                ),
+            )
+            for uid, name_definition in self.study_disease_milestone_types.items()
+        )
 
     def _transform_all_to_response_model(
         self,
@@ -60,9 +67,11 @@ class StudyDiseaseMilestoneService:
         return StudyDiseaseMilestone(
             uid=disease_milestone.uid,
             study_uid=disease_milestone.study_uid,
-            study_version=study_value_version
-            if study_value_version
-            else get_latest_on_datetime_str(),
+            study_version=(
+                study_value_version
+                if study_value_version
+                else get_latest_on_datetime_str()
+            ),
             order=disease_milestone.order,
             status=disease_milestone.status.value,
             start_date=disease_milestone.start_date.strftime(settings.DATE_TIME_FORMAT),
@@ -91,7 +100,7 @@ class StudyDiseaseMilestoneService:
     def _instantiate_disease_milestone_items(
         self,
         study_disease_milestone_create_input: StudyDiseaseMilestoneCreateInput,
-    ):
+    ) -> DiseaseMilestoneTypeNamedTuple:
         dm_type = StudyDiseaseMilestoneType[
             study_disease_milestone_create_input.disease_milestone_type
         ]
@@ -157,9 +166,10 @@ class StudyDiseaseMilestoneService:
             raise exceptions.ValidationException(
                 f'Value "{disease_milestone_input.disease_milestone_type}" in field Type is not unique for the study'
             )
-        if disease_milestone_input.disease_milestone_type not in [
-            i.name for i in StudyDiseaseMilestoneType
-        ]:
+        if (
+            disease_milestone_input.disease_milestone_type
+            not in StudyDiseaseMilestoneType
+        ):
             raise exceptions.ValidationException(
                 "Invalid value for study Disease Milestone type"
             )
@@ -188,7 +198,7 @@ class StudyDiseaseMilestoneService:
         if (
             disease_milestone_input.disease_milestone_type is not None
             and disease_milestone_input.disease_milestone_type
-            not in [i.name for i in StudyDiseaseMilestoneType]
+            not in StudyDiseaseMilestoneType
         ):
             raise exceptions.ValidationException(
                 "Invalid value for study disease_milestone type"
@@ -224,7 +234,7 @@ class StudyDiseaseMilestoneService:
         study_disease_milestone_to_edit: StudyDiseaseMilestoneVO,
         study_disease_milestone_edit_input: StudyDiseaseMilestoneEditInput,
     ) -> StudyDiseaseMilestoneVO:
-        dm_type: StudyDiseaseMilestoneType | None = None
+        dm_type: DiseaseMilestoneTypeNamedTuple | None = None
         if (
             study_disease_milestone_to_edit.disease_milestone_type
             != study_disease_milestone_edit_input.disease_milestone_type
@@ -234,9 +244,11 @@ class StudyDiseaseMilestoneService:
             ]
 
         study_disease_milestone_to_edit.edit_core_properties(
-            disease_milestone_type=dm_type.name
-            if dm_type
-            else study_disease_milestone_to_edit.disease_milestone_type,
+            disease_milestone_type=(
+                dm_type.name
+                if dm_type
+                else study_disease_milestone_to_edit.disease_milestone_type
+            ),
             repetition_indicator=study_disease_milestone_edit_input.repetition_indicator,
         )
 

@@ -14,6 +14,7 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
 )
 from clinical_mdr_api.exceptions import ValidationException
 from clinical_mdr_api.models.utils import GenericFilteringReturn
+from clinical_mdr_api.oauth.user import user
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._meta_repository import MetaRepository
 from clinical_mdr_api.services._utils import (
@@ -34,8 +35,8 @@ class NeomodelExtGenericService(ABC):
     api_model_class: BaseModel
     version_class: BaseModel
 
-    def __init__(self, user: str | None = None):
-        self.user_initials = user if user is not None else "TODO user initials"
+    def __init__(self):
+        self.user_initials = user().id()
         self._repos = MetaRepository(self.user_initials)
 
     def __del__(self):

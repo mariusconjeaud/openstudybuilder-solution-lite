@@ -28,7 +28,9 @@ from clinical_mdr_api.tests.integration.utils.method_library import (
 )
 from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 
+study_uid: str
 study_number: str
+project_id: str
 
 
 @pytest.fixture(scope="module")
@@ -45,13 +47,18 @@ def test_data():
     inject_base_data()
     codelist = TestUtils.create_ct_codelist()
     TestUtils.create_study_ct_data_map(codelist_uid=codelist.codelist_uid)
-    study_service = StudyService(user="some_user")
+    study_service = StudyService()
     studies = study_service.get_all()
+    global study_uid
     study_uid = studies.items[0].uid
     global study_number
     study_number = studies.items[
         0
     ].current_metadata.identification_metadata.study_number
+    global project_id
+    project_id = studies.items[
+        0
+    ].current_metadata.identification_metadata.project_number
     # Inject study metadata
     input_metadata_in_study(study_uid)
     # Create study epochs
@@ -298,7 +305,7 @@ def test_data():
 
 def test_study_metadata_listing_api(api_client):
     response = api_client.get(
-        f"/listings/studies/{study_number}/study-metadata?datetime=2099-12-30",
+        f"/listings/studies/study-metadata?project_id={project_id}&study_number={study_number}&datetime=2099-12-30",
     )
     assert response.status_code == 200
     res = response.json()
@@ -307,9 +314,9 @@ def test_study_metadata_listing_api(api_client):
     expected_output = {
         "api_ver": "TBA",
         "study_id": "123-123",
-        "study_ver": "1",
+        "study_ver": 1.0,
         "specified_dt": "2099-12-30",
-        "request_dt": "2024-02-02T12:50:28.761450+00:00",
+        "request_dt": "2024-03-18T10:41:58",
         "title": "Some Study Title for Testing",
         "reg_id": {
             "ct_gov": "some ct gov id",
@@ -332,27 +339,27 @@ def test_study_metadata_listing_api(api_client):
             "trial_type_nf": "",
             "phase": "",
             "phase_nf": "",
-            "extension": "False",
+            "extension": "N",
             "extension_nf": "",
-            "adaptive": "False",
+            "adaptive": "N",
             "adaptive_nf": "",
             "stop_rule": "some stop rule",
             "stop_rule_nf": "",
             "confirmed_res_min_dur": "",
             "confirmed_res_min_dur_nf": "",
-            "post_auth": "True",
+            "post_auth": "Y",
             "post_auth_nf": "",
         },
         "study_attributes": {
             "intv_type": "",
             "intv_type_nf": "",
-            "add_on": "False",
+            "add_on": "N",
             "add_on_nf": "",
             "control_type": "",
             "control_type_nf": "",
             "intv_model": "",
             "intv_model_nf": "",
-            "randomised": "True",
+            "randomised": "Y",
             "randomised_nf": "",
             "strata": "Some stratification factors",
             "strata_nf": "",
@@ -372,9 +379,9 @@ def test_study_metadata_listing_api(api_client):
             "diag_grp_nf": "",
             "sex": "",
             "sex_nf": "",
-            "rare_dis": "",
+            "rare_dis": "N",
             "rare_dis_nf": "",
-            "healthy_subj": "",
+            "healthy_subj": "N",
             "healthy_subj_nf": "",
             "min_age": "",
             "min_age_nf": "",
@@ -382,11 +389,11 @@ def test_study_metadata_listing_api(api_client):
             "max_age_nf": "",
             "stable_dis_min_dur": "",
             "stable_dis_min_dur_nf": "",
-            "pediatric": "",
+            "pediatric": "N",
             "pediatric_nf": "",
-            "pediatric_postmarket": "False",
+            "pediatric_postmarket": "N",
             "pediatric_postmarket_nf": "",
-            "pediatric_inv": "True",
+            "pediatric_inv": "Y",
             "pediatric_inv_nf": "",
             "relapse_criteria": "some criteria",
             "relapse_criteria_nf": "",
@@ -401,7 +408,7 @@ def test_study_metadata_listing_api(api_client):
                 "code": "Arm_code_1",
                 "no_subject": 100,
                 "desc": "desc...",
-                "order": "1",
+                "order": 1,
                 "rand_grp": "Arm_randomizationGroup",
                 "type": "test",
             },
@@ -412,7 +419,7 @@ def test_study_metadata_listing_api(api_client):
                 "code": "Arm_code_2",
                 "no_subject": 100,
                 "desc": "desc...",
-                "order": "2",
+                "order": 2,
                 "rand_grp": "Arm_randomizationGroup2",
                 "type": "test",
             },
@@ -423,7 +430,7 @@ def test_study_metadata_listing_api(api_client):
                 "code": "Arm_code_3",
                 "no_subject": 100,
                 "desc": "desc...",
-                "order": "3",
+                "order": 3,
                 "rand_grp": "Arm_randomizationGroup3",
                 "type": "test",
             },
@@ -434,7 +441,7 @@ def test_study_metadata_listing_api(api_client):
                 "code": "Arm_code_9",
                 "no_subject": 100,
                 "desc": "desc...",
-                "order": "4",
+                "order": 4,
                 "rand_grp": "Arm_randomizationGroup9",
                 "type": "test",
             },
@@ -447,7 +454,7 @@ def test_study_metadata_listing_api(api_client):
                 "code": "Branch_Arm_code_1",
                 "no_subject": 100,
                 "desc": "desc...",
-                "order": "1",
+                "order": 1,
                 "arm_uid": "StudyArm_000003",
                 "rand_grp": "Branch_Arm_randomizationGroup",
             }
@@ -515,25 +522,25 @@ def test_study_metadata_listing_api(api_client):
         "design_matrix": [
             {
                 "arm_uid": "",
-                "branch_uid": None,
+                "branch_uid": "StudyBranchArm_000001",
                 "epoch_uid": "StudyEpoch_000001",
                 "element_uid": "StudyElement_000001",
             },
             {
                 "arm_uid": "",
-                "branch_uid": None,
+                "branch_uid": "StudyBranchArm_000001",
                 "epoch_uid": "StudyEpoch_000002",
                 "element_uid": "StudyElement_000001",
             },
             {
                 "arm_uid": "StudyArm_000001",
-                "branch_uid": None,
+                "branch_uid": "",
                 "epoch_uid": "StudyEpoch_000002",
                 "element_uid": "StudyElement_000003",
             },
             {
                 "arm_uid": "StudyArm_000005",
-                "branch_uid": None,
+                "branch_uid": "",
                 "epoch_uid": "StudyEpoch_000002",
                 "element_uid": "StudyElement_000001",
             },
@@ -552,7 +559,7 @@ def test_study_metadata_listing_api(api_client):
                 "window_max": 1,
                 "window_unit": "day",
                 "desc": "description",
-                "epoch_alloc": None,
+                "epoch_alloc": "",
                 "start_rule": "start_rule",
                 "end_rule": "end_rule",
             },
@@ -564,12 +571,12 @@ def test_study_metadata_listing_api(api_client):
                 "visit_no": "200",
                 "name": "Visit 2",
                 "short_name": "V2",
-                "study_day": 1,
+                "study_day": 11,
                 "window_min": -1,
                 "window_max": 1,
                 "window_unit": "day",
                 "desc": "description",
-                "epoch_alloc": None,
+                "epoch_alloc": "",
                 "start_rule": "start_rule",
                 "end_rule": "end_rule",
             },
@@ -581,12 +588,12 @@ def test_study_metadata_listing_api(api_client):
                 "visit_no": "300",
                 "name": "Visit 3",
                 "short_name": "V3",
-                "study_day": 1,
+                "study_day": 13,
                 "window_min": -1,
                 "window_max": 1,
                 "window_unit": "day",
                 "desc": "description",
-                "epoch_alloc": None,
+                "epoch_alloc": "",
                 "start_rule": "start_rule",
                 "end_rule": "end_rule",
             },
@@ -598,29 +605,29 @@ def test_study_metadata_listing_api(api_client):
                 "visit_no": "400",
                 "name": "Visit 4",
                 "short_name": "V4D1",
-                "study_day": 1,
+                "study_day": 31,
                 "window_min": -1,
                 "window_max": 1,
                 "window_unit": "day",
                 "desc": "description",
-                "epoch_alloc": None,
+                "epoch_alloc": "",
                 "start_rule": "start_rule",
                 "end_rule": "end_rule",
             },
             {
-                "epoch_uid": "StudyEpoch_000001",
-                "epoch_name": "Epoch Subtype",
+                "epoch_uid": "StudyEpoch_000002",
+                "epoch_name": "Epoch Subtype1",
                 "visit_type": "Visit Type3",
                 "contact_model": "On Site Visit",
                 "visit_no": "500",
                 "name": "Visit 5",
                 "short_name": "V5",
-                "study_day": 1,
+                "study_day": 36,
                 "window_min": -1,
                 "window_max": 1,
                 "window_unit": "day",
                 "desc": "description",
-                "epoch_alloc": None,
+                "epoch_alloc": "",
                 "start_rule": "start_rule",
                 "end_rule": "end_rule",
             },
@@ -631,52 +638,494 @@ def test_study_metadata_listing_api(api_client):
                 "contact_model": "On Site Visit",
                 "visit_no": "410",
                 "name": "Visit 4",
-                "short_name": "V4D1",
-                "study_day": 1,
+                "short_name": "V4D32",
+                "study_day": 62,
                 "window_min": -1,
                 "window_max": 1,
                 "window_unit": "day",
                 "desc": "description",
-                "epoch_alloc": None,
+                "epoch_alloc": "",
                 "start_rule": "start_rule",
                 "end_rule": "end_rule",
             },
         ],
         "criteria": [
-            {"type": "code_submission_value-2614035641", "text": "ct-8403586530"},
-            {"type": "code_submission_value-4703711177", "text": "ct-9697053288"},
+            {"type": "code_submission_value-938695620", "text": "ct-2909257234"},
+            {"type": "code_submission_value-8594230448", "text": "ct-2050518536"},
         ],
         "objectives": [
-            {"uid": "StudyObjective_000001", "type": "", "text": "ot-2878659828"},
-            {"uid": "StudyObjective_000002", "type": "", "text": "ot-2878659828"},
+            {"uid": "StudyObjective_000001", "type": "", "text": "ot-5233975461"},
+            {"uid": "StudyObjective_000002", "type": "", "text": "ot-5233975461"},
         ],
         "endpoints": [
             {
                 "uid": "StudyEndpoint_000003",
                 "type": "",
                 "subtype": "",
-                "text": "et-7031793002",
+                "text": "et-1714377337",
                 "objective_uid": "StudyObjective_000002",
-                "timeframe": "tt-1224710194",
-                "endpoint_unit": {"units": [], "separator": None},
+                "timeframe": "tt-7280569194",
+                "endpoint_unit": "",
             },
             {
                 "uid": "StudyEndpoint_000001",
                 "type": "",
                 "subtype": "",
-                "text": "et-7031793002",
+                "text": "et-1714377337",
                 "objective_uid": "",
-                "timeframe": "tt-1224710194",
-                "endpoint_unit": {
-                    "units": [
-                        {"uid": "UnitDefinition_000003", "name": "unit1"},
-                        {"uid": "UnitDefinition_000004", "name": "unit2"},
-                    ],
-                    "separator": "and",
-                },
+                "timeframe": "tt-7280569194",
+                "endpoint_unit": "unit1 and unit2",
             },
         ],
     }
+
+    print("******************")
+    print(res)
+    print("******************")
+
+    assert res["api_ver"] == expected_output["api_ver"]
+    assert res["study_id"] == expected_output["study_id"]
+    assert res["study_ver"] == expected_output["study_ver"]
+    assert res["specified_dt"] == expected_output["specified_dt"]
+    assert res["title"] == expected_output["title"]
+    assert res["reg_id"] == expected_output["reg_id"]
+    assert res["study_type"] == expected_output["study_type"]
+    assert res["study_attributes"] == expected_output["study_attributes"]
+    assert res["study_population"] == expected_output["study_population"]
+    assert res["arms"] == expected_output["arms"]
+    assert res["branches"] == expected_output["branches"]
+    assert res["cohorts"] == expected_output["cohorts"]
+    assert res["epochs"] == expected_output["epochs"]
+    assert res["elements"] == expected_output["elements"]
+    assert res["design_matrix"] == expected_output["design_matrix"]
+    assert res["visits"] == expected_output["visits"]
+    assert len(res["criteria"]) == len(expected_output["criteria"])
+    assert len(res["objectives"]) == len(expected_output["objectives"])
+    assert len(res["endpoints"]) == len(expected_output["endpoints"])
+
+
+def test_study_metadata_listing_with_subpart(api_client):
+    p_study_number = "5555"
+    subpart_acronym = "test"
+    # create parent study
+    parent_study = TestUtils.create_study(
+        number=p_study_number, project_number=project_id
+    )
+    # connect study to parent
+    response = api_client.patch(
+        f"/studies/{study_uid}",
+        json={
+            "study_parent_part_uid": parent_study.uid,
+            "current_metadata": {
+                "identification_metadata": {"study_subpart_acronym": subpart_acronym}
+            },
+        },
+    )
+    assert response.status_code == 200
+    res = response.json()
+    response = api_client.patch(
+        f"/studies/{parent_study.uid}",
+        json={
+            "current_metadata": {"study_description": {"study_title": "new title"}},
+        },
+    )
+    assert response.status_code == 200
+    # Lock
+    response = api_client.post(
+        f"/studies/{parent_study.uid}/locks",
+        json={"change_description": "Lock 1"},
+    )
+    assert response.status_code == 201
+
+    response = api_client.get(
+        f"/listings/studies/study-metadata?project_id={project_id}&study_number={p_study_number}&datetime=2099-12-30",
+    )
+    assert response.status_code == 400
+    assert (
+        response.json()["message"]
+        == f"Study {project_id}-{p_study_number} is a parent study, please specify study subpart acronym for specific sub study."
+    )
+
+    response = api_client.get(
+        "/listings/studies/study-metadata?"
+        + f"project_id={project_id}&study_number={p_study_number}&subpart_acronym={subpart_acronym}&datetime=2099-12-30",
+    )
+    assert response.status_code == 200
+    res = response.json()
+    assert res is not None
+
+    expected_output = {
+        "api_ver": "TBA",
+        "study_id": "123-5555test",
+        "study_ver": 2.0,
+        "specified_dt": "2099-12-30",
+        "request_dt": "2024-04-05T09:55:55",
+        "title": "new title",
+        "reg_id": {
+            "ct_gov": "",
+            "eudract": "",
+            "utn": "",
+            "japic": "",
+            "ind": "",
+            "eutn": "",
+            "civ": "",
+            "nctn": "",
+            "jrct": "",
+            "nmpa": "",
+            "esn": "",
+            "ide": "",
+        },
+        "study_type": {
+            "stype": "",
+            "stype_nf": "",
+            "trial_type": [],
+            "trial_type_nf": "",
+            "phase": "",
+            "phase_nf": "",
+            "extension": "N",
+            "extension_nf": "",
+            "adaptive": "N",
+            "adaptive_nf": "",
+            "stop_rule": "some stop rule",
+            "stop_rule_nf": "",
+            "confirmed_res_min_dur": "",
+            "confirmed_res_min_dur_nf": "",
+            "post_auth": "Y",
+            "post_auth_nf": "",
+        },
+        "study_attributes": {
+            "intv_type": "",
+            "intv_type_nf": "",
+            "add_on": "N",
+            "add_on_nf": "",
+            "control_type": "",
+            "control_type_nf": "",
+            "intv_model": "",
+            "intv_model_nf": "",
+            "randomised": "Y",
+            "randomised_nf": "",
+            "strata": "Some stratification factors",
+            "strata_nf": "",
+            "blinding": "",
+            "blinding_nf": "",
+            "planned_length": "",
+            "planned_length_nf": "",
+            "study_intent": [],
+            "study_intent_nf": "",
+        },
+        "study_population": {
+            "therapy_area": [],
+            "therapy_area_nf": "",
+            "indication": [],
+            "indication_nf": "",
+            "diag_grp": [],
+            "diag_grp_nf": "",
+            "sex": "",
+            "sex_nf": "",
+            "rare_dis": "N",
+            "rare_dis_nf": "",
+            "healthy_subj": "N",
+            "healthy_subj_nf": "",
+            "min_age": "",
+            "min_age_nf": "",
+            "max_age": "",
+            "max_age_nf": "",
+            "stable_dis_min_dur": "",
+            "stable_dis_min_dur_nf": "",
+            "pediatric": "N",
+            "pediatric_nf": "",
+            "pediatric_postmarket": "N",
+            "pediatric_postmarket_nf": "",
+            "pediatric_inv": "Y",
+            "pediatric_inv_nf": "",
+            "relapse_criteria": "some criteria",
+            "relapse_criteria_nf": "",
+            "plan_no_subject": None,
+            "plan_no_subject_nf": "",
+        },
+        "arms": [
+            {
+                "uid": "StudyArm_000001",
+                "name": "Arm_Name_1",
+                "short_name": "Arm_Short_Name_1",
+                "code": "Arm_code_1",
+                "no_subject": 100,
+                "desc": "desc...",
+                "order": 1,
+                "rand_grp": "Arm_randomizationGroup",
+                "type": "test",
+            },
+            {
+                "uid": "StudyArm_000003",
+                "name": "Arm_Name_2",
+                "short_name": "Arm_Short_Name_2",
+                "code": "Arm_code_2",
+                "no_subject": 100,
+                "desc": "desc...",
+                "order": 2,
+                "rand_grp": "Arm_randomizationGroup2",
+                "type": "test",
+            },
+            {
+                "uid": "StudyArm_000005",
+                "name": "Arm_Name_3",
+                "short_name": "Arm_Short_Name_3",
+                "code": "Arm_code_3",
+                "no_subject": 100,
+                "desc": "desc...",
+                "order": 3,
+                "rand_grp": "Arm_randomizationGroup3",
+                "type": "test",
+            },
+            {
+                "uid": "StudyArm_000007",
+                "name": "Arm_Name_9",
+                "short_name": "Arm_Short_Name_9",
+                "code": "Arm_code_9",
+                "no_subject": 100,
+                "desc": "desc...",
+                "order": 4,
+                "rand_grp": "Arm_randomizationGroup9",
+                "type": "test",
+            },
+        ],
+        "branches": [
+            {
+                "uid": "StudyBranchArm_000001",
+                "name": "Branch_Arm_Name_1",
+                "short_name": "Branch_Arm_Short_Name_1",
+                "code": "Branch_Arm_code_1",
+                "no_subject": 100,
+                "desc": "desc...",
+                "order": 1,
+                "arm_uid": "StudyArm_000003",
+                "rand_grp": "Branch_Arm_randomizationGroup",
+            }
+        ],
+        "cohorts": [
+            {
+                "uid": "StudyCohort_000001",
+                "name": "Cohort_Name_1",
+                "short_name": "Cohort_Short_Name_1",
+                "code": "Cohort_code_1",
+                "no_subject": 100,
+                "desc": "desc...",
+                "arm_uid": ["StudyArm_000001"],
+                "branch_uid": [],
+            }
+        ],
+        "epochs": [
+            {
+                "uid": "StudyEpoch_000001",
+                "order": 1,
+                "name": "Epoch Subtype",
+                "type": "test",
+                "subtype": "test",
+                "start_rule": "",
+                "end_rule": "",
+                "description": "",
+            },
+            {
+                "uid": "StudyEpoch_000002",
+                "order": 2,
+                "name": "Epoch Subtype1",
+                "type": "test",
+                "subtype": "test",
+                "start_rule": "",
+                "end_rule": "",
+                "description": "",
+            },
+        ],
+        "elements": [
+            {
+                "uid": "StudyElement_000001",
+                "order": 1,
+                "name": "Element_Name_1",
+                "short_name": "Element_Short_Name_1",
+                "type": "uid: Element_code_1 not found",
+                "subtype": "test",
+                "start_rule": "",
+                "end_rule": "",
+                "dur": "",
+                "desc": "desc...",
+            },
+            {
+                "uid": "StudyElement_000003",
+                "order": 2,
+                "name": "Element_Name_1",
+                "short_name": "Element_Short_Name_1",
+                "type": "uid: Element_code_1 not found",
+                "subtype": "test",
+                "start_rule": "",
+                "end_rule": "",
+                "dur": "",
+                "desc": "desc...",
+            },
+        ],
+        "design_matrix": [
+            {
+                "arm_uid": "",
+                "branch_uid": "StudyBranchArm_000001",
+                "epoch_uid": "StudyEpoch_000001",
+                "element_uid": "StudyElement_000001",
+            },
+            {
+                "arm_uid": "",
+                "branch_uid": "StudyBranchArm_000001",
+                "epoch_uid": "StudyEpoch_000002",
+                "element_uid": "StudyElement_000001",
+            },
+            {
+                "arm_uid": "StudyArm_000001",
+                "branch_uid": "",
+                "epoch_uid": "StudyEpoch_000002",
+                "element_uid": "StudyElement_000003",
+            },
+            {
+                "arm_uid": "StudyArm_000005",
+                "branch_uid": "",
+                "epoch_uid": "StudyEpoch_000002",
+                "element_uid": "StudyElement_000001",
+            },
+        ],
+        "visits": [
+            {
+                "epoch_uid": "StudyEpoch_000001",
+                "epoch_name": "Epoch Subtype",
+                "visit_type": "BASELINE",
+                "contact_model": "On Site Visit",
+                "visit_no": "100",
+                "name": "Visit 1",
+                "short_name": "V1",
+                "study_day": 1,
+                "window_min": -1,
+                "window_max": 1,
+                "window_unit": "day",
+                "desc": "description",
+                "epoch_alloc": "",
+                "start_rule": "start_rule",
+                "end_rule": "end_rule",
+            },
+            {
+                "epoch_uid": "StudyEpoch_000001",
+                "epoch_name": "Epoch Subtype",
+                "visit_type": "Visit Type2",
+                "contact_model": "On Site Visit",
+                "visit_no": "200",
+                "name": "Visit 2",
+                "short_name": "V2",
+                "study_day": 11,
+                "window_min": -1,
+                "window_max": 1,
+                "window_unit": "day",
+                "desc": "description",
+                "epoch_alloc": "",
+                "start_rule": "start_rule",
+                "end_rule": "end_rule",
+            },
+            {
+                "epoch_uid": "StudyEpoch_000001",
+                "epoch_name": "Epoch Subtype",
+                "visit_type": "Visit Type2",
+                "contact_model": "On Site Visit",
+                "visit_no": "300",
+                "name": "Visit 3",
+                "short_name": "V3",
+                "study_day": 13,
+                "window_min": -1,
+                "window_max": 1,
+                "window_unit": "day",
+                "desc": "description",
+                "epoch_alloc": "",
+                "start_rule": "start_rule",
+                "end_rule": "end_rule",
+            },
+            {
+                "epoch_uid": "StudyEpoch_000002",
+                "epoch_name": "Epoch Subtype1",
+                "visit_type": "BASELINE2",
+                "contact_model": "On Site Visit",
+                "visit_no": "400",
+                "name": "Visit 4",
+                "short_name": "V4D1",
+                "study_day": 31,
+                "window_min": -1,
+                "window_max": 1,
+                "window_unit": "day",
+                "desc": "description",
+                "epoch_alloc": "",
+                "start_rule": "start_rule",
+                "end_rule": "end_rule",
+            },
+            {
+                "epoch_uid": "StudyEpoch_000002",
+                "epoch_name": "Epoch Subtype1",
+                "visit_type": "Visit Type3",
+                "contact_model": "On Site Visit",
+                "visit_no": "500",
+                "name": "Visit 5",
+                "short_name": "V5",
+                "study_day": 36,
+                "window_min": -1,
+                "window_max": 1,
+                "window_unit": "day",
+                "desc": "description",
+                "epoch_alloc": "",
+                "start_rule": "start_rule",
+                "end_rule": "end_rule",
+            },
+            {
+                "epoch_uid": "StudyEpoch_000002",
+                "epoch_name": "Epoch Subtype1",
+                "visit_type": "Visit Type2",
+                "contact_model": "On Site Visit",
+                "visit_no": "410",
+                "name": "Visit 4",
+                "short_name": "V4D32",
+                "study_day": 62,
+                "window_min": -1,
+                "window_max": 1,
+                "window_unit": "day",
+                "desc": "description",
+                "epoch_alloc": "",
+                "start_rule": "start_rule",
+                "end_rule": "end_rule",
+            },
+        ],
+        "criteria": [
+            {"type": "code_submission_value-7516643925", "text": "ct-5124433050"},
+            {"type": "code_submission_value-1098504529", "text": "ct-8525557584"},
+        ],
+        "objectives": [
+            {"uid": "StudyObjective_000001", "type": "", "text": "ot-3953094314"},
+            {"uid": "StudyObjective_000002", "type": "", "text": "ot-3953094314"},
+        ],
+        "endpoints": [
+            {
+                "uid": "StudyEndpoint_000003",
+                "type": "",
+                "subtype": "",
+                "text": "et-4088726782",
+                "objective_uid": "StudyObjective_000002",
+                "timeframe": "tt-1204109695",
+                "endpoint_unit": "",
+            },
+            {
+                "uid": "StudyEndpoint_000001",
+                "type": "",
+                "subtype": "",
+                "text": "et-4088726782",
+                "objective_uid": "",
+                "timeframe": "tt-1204109695",
+                "endpoint_unit": "unit1 and unit2",
+            },
+        ],
+    }
+
+    print("******************")
+    print(res)
+    print("******************")
+
     assert res["api_ver"] == expected_output["api_ver"]
     assert res["study_id"] == expected_output["study_id"]
     assert res["study_ver"] == expected_output["study_ver"]

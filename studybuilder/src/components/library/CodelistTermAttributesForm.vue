@@ -1,169 +1,147 @@
 <template>
-<v-card color="dfltBackground">
-  <v-card-title>
-    <span class="dialog-title">{{ $t('CodelistTermNamesForm.title') }}</span>
-    <help-button-with-panels :title="$t('_global.help')" :items="helpItems" />
-  </v-card-title>
-  <v-card-text class="mt-4">
-    <div class="white pa-4">
-      <validation-observer ref="observer">
-        <validation-provider
-          v-slot="{ errors }"
-          rules="required"
-          >
+  <v-card color="dfltBackground">
+    <v-card-title class="d-flex align-center">
+      <span class="dialog-title">{{ $t('CodelistTermNamesForm.title') }}</span>
+      <HelpButtonWithPanels :title="$t('_global.help')" :items="helpItems" />
+    </v-card-title>
+    <v-card-text class="mt-4">
+      <div class="bg-white pa-4">
+        <v-form ref="observer">
           <v-text-field
             v-model="form.name_submission_value"
             :label="$t('CodelistTermCreationForm.name_submission_value')"
-            :error-messages="errors"
+            :rules="[formRules.required]"
             clearable
-            />
-        </validation-provider>
-        <validation-provider
-          v-slot="{ errors }"
-          rules="required"
-          >
+          />
           <v-text-field
             v-model="form.code_submission_value"
             :label="$t('CodelistTermCreationForm.code_submission_value')"
-            :error-messages="errors"
+            :rules="[formRules.required]"
             clearable
-            />
-        </validation-provider>
-        <validation-provider
-          v-slot="{ errors }"
-          rules="required"
-          >
+          />
           <v-text-field
             v-model="form.nci_preferred_name"
             :label="$t('CodelistTermCreationForm.nci_pref_name')"
-            :error-messages="errors"
+            :rules="[formRules.required]"
             clearable
-            />
-        </validation-provider>
-        <validation-provider
-          v-slot="{ errors }"
-          rules="required"
-          >
+          />
           <v-textarea
             v-model="form.definition"
             :label="$t('CodelistTermCreationForm.definition')"
-            :error-messages="errors"
+            :rules="[formRules.required]"
             clearable
             rows="1"
             auto-grow
-            />
-        </validation-provider>
-        <validation-provider
-          v-slot="{ errors }"
-          rules="required"
-          >
+          />
           <v-textarea
             v-model="form.change_description"
             :label="$t('HistoryTable.change_description')"
-            :error-messages="errors"
+            :rules="[formRules.required]"
             :rows="1"
             class="white py-2"
             auto-grow
-            />
-        </validation-provider>
-      </validation-observer>
-    </div>
-  </v-card-text>
-  <v-card-actions>
-    <v-spacer></v-spacer>
-    <v-btn
-      class="secondary-btn"
-      color="white"
-      @click="cancel"
-      >
-      {{ $t('_global.cancel') }}
-    </v-btn>
-    <v-btn
-      color="secondary"
-      :loading="working"
-      @click="submit"
-      >
-      {{ $t('_global.save') }}
-    </v-btn>
-  </v-card-actions>
-  <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
-</v-card>
+          />
+        </v-form>
+      </div>
+    </v-card-text>
+    <v-card-actions>
+      <v-spacer />
+      <v-btn class="secondary-btn" color="white" @click="cancel">
+        {{ $t('_global.cancel') }}
+      </v-btn>
+      <v-btn color="secondary" :loading="working" @click="submit">
+        {{ $t('_global.save') }}
+      </v-btn>
+    </v-card-actions>
+    <ConfirmDialog ref="confirm" :text-cols="6" :action-cols="5" />
+  </v-card>
 </template>
 
-<script>
-import { bus } from '@/main'
+<script setup>
+import { inject, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import controlledTerminology from '@/api/controlledTerminology'
-import HelpButtonWithPanels from '@/components/tools/HelpButtonWithPanels'
-import _isEqual from 'lodash/isEqual'
-import ConfirmDialog from '@/components/tools/ConfirmDialog'
+import HelpButtonWithPanels from '@/components/tools/HelpButtonWithPanels.vue'
+import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
+import { useFormStore } from '@/stores/form'
 
-export default {
-  props: ['value'],
-  components: {
-    HelpButtonWithPanels,
-    ConfirmDialog
+const { t } = useI18n()
+const eventBusEmit = inject('eventBusEmit')
+const formRules = inject('formRules')
+const props = defineProps({
+  modelValue: {
+    type: Object,
+    default: null,
   },
-  data () {
-    return {
-      form: {},
-      helpItems: [
-        'CodelistTermCreationForm.name_submission_value',
-        'CodelistTermCreationForm.code_submission_value',
-        'CodelistTermCreationForm.nci_pref_name',
-        'CodelistTermCreationForm.definition'
-      ],
-      working: false
-    }
-  },
-  methods: {
-    async cancel () {
-      if (this.$store.getters['form/form'] === '' || _isEqual(this.$store.getters['form/form'], JSON.stringify(this.form))) {
-        this.close()
-      } else {
-        const options = {
-          type: 'warning',
-          cancelLabel: this.$t('_global.cancel'),
-          agreeLabel: this.$t('_global.continue')
-        }
-        if (await this.$refs.confirm.open(this.$t('_global.cancel_changes'), options)) {
-          this.close()
-        }
+})
+const emit = defineEmits(['close', 'update:modelValue'])
+const formStore = useFormStore()
+
+const form = ref({})
+const working = ref(false)
+const confirm = ref()
+const observer = ref()
+
+const helpItems = [
+  'CodelistTermCreationForm.name_submission_value',
+  'CodelistTermCreationForm.code_submission_value',
+  'CodelistTermCreationForm.nci_pref_name',
+  'CodelistTermCreationForm.definition',
+]
+
+watch(
+  () => props.modelValue,
+  (val) => {
+    if (val) {
+      form.value = {
+        name_submission_value: val.name_submission_value,
+        code_submission_value: val.code_submission_value,
+        nci_preferred_name: val.nci_preferred_name,
+        definition: val.definition,
       }
-    },
-    close () {
-      this.$emit('close')
-      this.$store.commit('form/CLEAR_FORM')
-      this.form.change_description = ''
-    },
-    async submit () {
-      const isValid = await this.$refs.observer.validate()
-      if (!isValid) return
-      this.working = true
-      try {
-        const resp = await controlledTerminology.updateCodelistTermAttributes(this.value.term_uid, this.form)
-        this.$emit('input', resp.data)
-        bus.$emit('notification', { msg: this.$t('CodelistTermNamesForm.update_success') })
-        this.close()
-      } finally {
-        this.working = false
-      }
+      formStore.save(form.value)
     }
   },
-  watch: {
-    value: {
-      handler (val) {
-        if (val) {
-          this.form = {
-            name_submission_value: val.name_submission_value,
-            code_submission_value: val.code_submission_value,
-            nci_preferred_name: val.nci_preferred_name,
-            definition: val.definition
-          }
-          this.$store.commit('form/SET_FORM', this.form)
-        }
-      },
-      immediate: true
+  { immediate: true }
+)
+
+async function cancel() {
+  if (formStore.isEmpty || formStore.isEqual(form.value)) {
+    close()
+  } else {
+    const options = {
+      type: 'warning',
+      cancelLabel: t('_global.cancel'),
+      agreeLabel: t('_global.continue'),
     }
+    if (await confirm.value.open(t('_global.cancel_changes'), options)) {
+      close()
+    }
+  }
+}
+
+function close() {
+  emit('close')
+  formStore.reset()
+  form.value.change_description = ''
+}
+
+async function submit() {
+  const { valid } = await observer.value.validate()
+  if (!valid) return
+  working.value = true
+  try {
+    const resp = await controlledTerminology.updateCodelistTermAttributes(
+      props.modelValue.term_uid,
+      form.value
+    )
+    emit('update:modelValue', resp.data)
+    eventBusEmit('notification', {
+      msg: t('CodelistTermNamesForm.update_success'),
+    })
+    close()
+  } finally {
+    working.value = false
   }
 }
 </script>

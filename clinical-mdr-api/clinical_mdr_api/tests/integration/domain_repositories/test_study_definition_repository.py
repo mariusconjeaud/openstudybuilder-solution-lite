@@ -1,13 +1,21 @@
+# pylint: disable=unused-argument
+
 import sys
 import unittest
 
+import pytest
 from neomodel import db  # type: ignore
 
+from clinical_mdr_api import config
 from clinical_mdr_api.domain_repositories.clinical_programmes.clinical_programme_repository import (
     ClinicalProgrammeRepository,
 )
+from clinical_mdr_api.domain_repositories.models.study import StudyRoot
 from clinical_mdr_api.domain_repositories.projects.project_repository import (
     ProjectRepository,
+)
+from clinical_mdr_api.domain_repositories.study_definitions.study_definition_repository import (
+    StudyDefinitionRepository,
 )
 from clinical_mdr_api.domain_repositories.study_definitions.study_definition_repository_impl import (
     StudyDefinitionRepositoryImpl,
@@ -16,6 +24,12 @@ from clinical_mdr_api.domains.study_definition_aggregates.root import StudyDefin
 from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import (
     StudyDescriptionVO,
 )
+from clinical_mdr_api.models import Project
+from clinical_mdr_api.models.study_selections.study import (
+    StudyFieldAuditTrailAction,
+    StudySoaPreferencesInput,
+)
+from clinical_mdr_api.oauth import user
 from clinical_mdr_api.tests.integration.domain_repositories._utils import (
     wipe_study_definition_repository,  # type: ignore
 )
@@ -715,6 +729,7 @@ class TestStudyDefinitionRepository(unittest.TestCase):
                         "project_number": self.created_project.project_number
                     },
                     is_study_after_create=True,
+                    author="test__find_all__results",
                 )
                 for _ in range(0, 10)
             ]
@@ -753,6 +768,7 @@ class TestStudyDefinitionRepository(unittest.TestCase):
                         "project_number": self.created_project.project_number
                     },
                     is_study_after_create=True,
+                    author="test__find_all__with_custom_sort_order__success",
                 )
                 for _ in range(0, 10)
             ]
@@ -830,3 +846,343 @@ class TestStudyDefinitionRepository(unittest.TestCase):
         with self.assertRaises(SystemError):
             # when
             repo.save(study)
+
+
+@pytest.mark.parametrize(
+    ("soa_preferences_input", "expected_preferences"),
+    (
+        (  # 0
+            StudySoaPreferencesInput(),
+            {
+                "soa_show_epochs": True,
+                "soa_show_milestones": False,
+                "baseline_as_time_zero": False,
+            },
+        ),
+        (  # 1
+            StudySoaPreferencesInput(show_milestones=True),
+            {
+                "soa_show_epochs": True,
+                "soa_show_milestones": True,
+                "baseline_as_time_zero": False,
+            },
+        ),
+        (  # 2
+            StudySoaPreferencesInput(
+                show_milestones=True, show_epochs=False, baseline_as_time_zero=True
+            ),
+            {
+                "soa_show_epochs": False,
+                "soa_show_milestones": True,
+                "baseline_as_time_zero": True,
+            },
+        ),
+        (  # 3
+            StudySoaPreferencesInput(show_epochs=True, baseline_as_time_zero=True),
+            {
+                "soa_show_epochs": True,
+                "soa_show_milestones": False,
+                "baseline_as_time_zero": True,
+            },
+        ),
+        (  # 4
+            StudySoaPreferencesInput(
+                show_epochs=False, show_milestones=False, baseline_as_time_zero=False
+            ),
+            {
+                "soa_show_epochs": False,
+                "soa_show_milestones": False,
+                "baseline_as_time_zero": False,
+            },
+        ),
+        (  # 5
+            StudySoaPreferencesInput(show_milestones=True, show_epochs=True),
+            {
+                "soa_show_epochs": True,
+                "soa_show_milestones": True,
+                "baseline_as_time_zero": False,
+            },
+        ),
+        (  # 6
+            StudySoaPreferencesInput(show_epochs=True, show_milestones=False),
+            {
+                "soa_show_epochs": True,
+                "soa_show_milestones": False,
+                "baseline_as_time_zero": False,
+            },
+        ),
+        (  # 7
+            StudySoaPreferencesInput(
+                baseline_as_time_zero=True, show_epochs=True, show_milestones=False
+            ),
+            {
+                "soa_show_epochs": True,
+                "soa_show_milestones": False,
+                "baseline_as_time_zero": True,
+            },
+        ),
+        (  # 8
+            StudySoaPreferencesInput(baseline_as_time_zero=True),
+            {
+                "soa_show_epochs": True,
+                "soa_show_milestones": False,
+                "baseline_as_time_zero": True,
+            },
+        ),
+    ),
+)
+def test_post_soa_preferences(
+    base_data,
+    tst_project: Project,
+    soa_preferences_input: StudySoaPreferencesInput,
+    expected_preferences: dict[str, bool],
+):
+    repo: StudyDefinitionRepository = StudyDefinitionRepositoryImpl(user().id())
+
+    study = TestUtils.create_study(
+        TestUtils.random_str(4), project_number=tst_project.project_number
+    )
+
+    # should have two StudySoaPreferencesInput created at Study creation
+    nodes = repo.get_soa_preferences(study.uid)
+    assert len(nodes) == 3
+
+    unlink_study_soa_properties(study.uid, repo)
+
+    assert not repo.get_soa_preferences(study.uid)
+
+    with db.transaction:
+        nodes = repo.post_soa_preferences(study.uid, soa_preferences_input)
+
+    preferences = {node.field_name: node.value for node in nodes}
+    assert preferences == expected_preferences
+
+
+@pytest.mark.parametrize(
+    (
+        "soa_preferences_initial",
+        "soa_preferences_update",
+        "expected_preferences",
+        "expected_num_actions",
+    ),
+    (
+        (None, StudySoaPreferencesInput(), {}, 3),  # 0
+        (  # 1
+            StudySoaPreferencesInput(show_epochs=False, show_milestones=True),
+            StudySoaPreferencesInput(),
+            {
+                "soa_show_epochs": False,
+                "soa_show_milestones": True,
+                "baseline_as_time_zero": False,
+            },
+            6,
+        ),
+        (  # 2
+            StudySoaPreferencesInput(
+                show_epochs=False, show_milestones=False, baseline_as_time_zero=False
+            ),
+            StudySoaPreferencesInput(),
+            {
+                "soa_show_epochs": False,
+                "soa_show_milestones": False,
+                "baseline_as_time_zero": False,
+            },
+            6,
+        ),
+        (  # 3
+            StudySoaPreferencesInput(
+                show_epochs=True, show_milestones=False, baseline_as_time_zero=True
+            ),
+            StudySoaPreferencesInput(),
+            {
+                "soa_show_epochs": True,
+                "soa_show_milestones": False,
+                "baseline_as_time_zero": True,
+            },
+            6,
+        ),
+        (  # 4
+            StudySoaPreferencesInput(
+                show_epochs=True, show_milestones=True, baseline_as_time_zero=True
+            ),
+            StudySoaPreferencesInput(),
+            {
+                "soa_show_epochs": True,
+                "soa_show_milestones": True,
+                "baseline_as_time_zero": True,
+            },
+            6,
+        ),
+        (  # 5
+            StudySoaPreferencesInput(),
+            StudySoaPreferencesInput(),
+            {
+                "soa_show_epochs": True,
+                "soa_show_milestones": False,
+                "baseline_as_time_zero": False,
+            },
+            6,
+        ),
+        (  # 6
+            StudySoaPreferencesInput(show_milestones=False),
+            StudySoaPreferencesInput(show_milestones=False),
+            {
+                "soa_show_epochs": True,
+                "soa_show_milestones": False,
+                "baseline_as_time_zero": False,
+            },
+            6,
+        ),
+        (  # 7
+            StudySoaPreferencesInput(show_milestones=True, show_epochs=False),
+            StudySoaPreferencesInput(show_milestones=True, show_epochs=False),
+            {
+                "soa_show_epochs": False,
+                "soa_show_milestones": True,
+                "baseline_as_time_zero": False,
+            },
+            6,
+        ),
+        (  # 8
+            StudySoaPreferencesInput(show_epochs=True),
+            StudySoaPreferencesInput(show_milestones=False, show_epochs=False),
+            {
+                "soa_show_epochs": False,
+                "soa_show_milestones": False,
+                "baseline_as_time_zero": False,
+            },
+            7,
+        ),
+        (  # 9
+            StudySoaPreferencesInput(show_epochs=True),
+            StudySoaPreferencesInput(show_epochs=False),
+            {
+                "soa_show_epochs": False,
+                "soa_show_milestones": False,
+                "baseline_as_time_zero": False,
+            },
+            7,
+        ),
+        (  # 10
+            StudySoaPreferencesInput(show_milestones=True, show_epochs=False),
+            StudySoaPreferencesInput(show_epochs=True, show_milestones=False),
+            {
+                "soa_show_epochs": True,
+                "soa_show_milestones": False,
+                "baseline_as_time_zero": False,
+            },
+            8,
+        ),
+        (  # 11
+            StudySoaPreferencesInput(
+                show_milestones=True, show_epochs=False, baseline_as_time_zero=True
+            ),
+            StudySoaPreferencesInput(show_milestones=True, show_epochs=False),
+            {
+                "soa_show_epochs": False,
+                "soa_show_milestones": True,
+                "baseline_as_time_zero": True,
+            },
+            6,
+        ),
+        (  # 12
+            StudySoaPreferencesInput(show_epochs=True, baseline_as_time_zero=False),
+            StudySoaPreferencesInput(show_milestones=False, show_epochs=False),
+            {
+                "soa_show_epochs": False,
+                "soa_show_milestones": False,
+                "baseline_as_time_zero": False,
+            },
+            7,
+        ),
+        (  # 13
+            StudySoaPreferencesInput(show_epochs=True, baseline_as_time_zero=True),
+            StudySoaPreferencesInput(show_epochs=False, baseline_as_time_zero=False),
+            {
+                "soa_show_epochs": False,
+                "soa_show_milestones": False,
+                "baseline_as_time_zero": False,
+            },
+            8,
+        ),
+        (  # 14
+            StudySoaPreferencesInput(show_milestones=True, show_epochs=False),
+            StudySoaPreferencesInput(
+                show_epochs=True, show_milestones=False, baseline_as_time_zero=True
+            ),
+            {
+                "soa_show_epochs": True,
+                "soa_show_milestones": False,
+                "baseline_as_time_zero": True,
+            },
+            9,
+        ),
+    ),
+)
+def test_edit_soa_preferences(
+    base_data,
+    tst_project: Project,
+    soa_preferences_initial: StudySoaPreferencesInput | None,
+    soa_preferences_update: StudySoaPreferencesInput,
+    expected_preferences: dict[str, bool],
+    expected_num_actions: int,
+):
+    repo: StudyDefinitionRepository = StudyDefinitionRepositoryImpl(user().id())
+
+    study = TestUtils.create_study(
+        TestUtils.random_str(4), project_number=tst_project.project_number
+    )
+
+    unlink_study_soa_properties(study.uid, repo)
+
+    if soa_preferences_initial:
+        with db.transaction:
+            repo.post_soa_preferences(study.uid, soa_preferences_initial)
+
+    with db.transaction:
+        nodes = repo.edit_soa_preferences(study.uid, soa_preferences_update)
+
+    preferences = {node.field_name: node.value for node in nodes}
+    assert preferences == expected_preferences
+
+    actions = _get_study_soa_preferences_audit_trail_actions(study.uid, repo)
+    assert len(actions) == expected_num_actions
+
+    for action in actions:
+        if action.action == "Create":
+            assert action.before_value is None
+        if action.action == "Edit":
+            assert action.before_value is not None
+        assert action.after_value is not None
+
+
+def _get_study_soa_preferences_audit_trail_actions(
+    study_uid: str, repo: StudyDefinitionRepository
+) -> list[StudyFieldAuditTrailAction]:
+    """Gets audit trail actions on StudySoaPreferences fields"""
+
+    trails = repo.get_audit_trail_by_uid(study_uid)
+    trails.sort(key=lambda x: x.date)
+
+    actions = [
+        action
+        for trail in trails
+        for action in trail.actions
+        if action.field_name in config.STUDY_SOA_PREFERENCES_FIELDS
+    ]
+
+    return actions
+
+
+def unlink_study_soa_properties(
+    study_uid: str, repo: StudyDefinitionRepository | None = None
+):
+    """Removes existing StudySoaPreferences"""
+
+    if repo is None:
+        repo = StudyDefinitionRepositoryImpl(user().id())
+
+    latest_study_value = StudyRoot.nodes.get(uid=study_uid).latest_value.single()
+
+    for node in repo.get_soa_preferences(study_uid):
+        latest_study_value.has_boolean_field.disconnect(node)

@@ -45,7 +45,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "No Syntax Template with UID (wrong-uid) found in given status and version.",
+                "message": "No ObjectiveTemplateRoot with UID (wrong-uid) found in given status, date and version.",
                 "time": "2020-11-10T01:52:30.985556",
                 "path": "http://testserver/objectives",
                 "method": "POST",
@@ -72,7 +72,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "No Syntax Template with UID ({otuidna}) found in given status and version.",
+                "message": "No ObjectiveTemplateRoot with UID ({otuidna}) found in given status, date and version.",
                 "time": "2020-11-10T01:52:30.985556",
                 "path": "http://testserver/objectives",
                 "method": "POST",

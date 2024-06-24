@@ -1,9 +1,8 @@
 <template>
-<div class="pt-4">
-  <n-n-table
+  <NNTable
     :headers="headers"
     :items="criteria"
-    item-key="study_criteria_uid"
+    item-value="study_criteria_uid"
     hide-fixed-headers-switch
     :export-data-url="exportDataUrl"
     :export-data-url-params="exportDataUrlParams"
@@ -11,52 +10,54 @@
     :history-data-fetcher="fetchAllCriteriaHistory"
     :history-title="$t('EligibilityCriteriaTable.global_history_title')"
     :history-html-fields="historyHtmlFields"
-    has-api
-    :column-data-resource="`studies/${selectedStudy.uid}/study-criteria`"
-    :options.sync="options"
-    :server-items-length="total"
+    :column-data-resource="`studies/${studiesGeneralStore.selectedStudy.uid}/study-criteria`"
+    :items-length="total"
+    :filters-modify-function="addTypeFilterToHeader"
     @filter="getStudyCriteria"
-    >
-    <template v-slot:afterSwitches>
-      <div :title="$t('NNTableTooltips.reorder_content')">
-        <v-switch
-          v-model="sortMode"
-          :label="$t('NNTable.reorder_content')"
-          hide-details
-          class="mr-6"
-          />
-      </div>
-    </template>
-    <template v-slot:actions>
+  >
+    <template #actions>
       <v-btn
         data-cy="add-study-criteria"
-        fab
-        small
+        size="small"
         color="primary"
-        @click.stop="addCriteria"
         :title="$t('EligibilityCriteriaTable.add_criteria')"
-        :disabled="!checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
-        >
-        <v-icon dark>
-          mdi-plus
-        </v-icon>
-      </v-btn>
+        :disabled="
+          !accessGuard.checkPermission($roles.STUDY_WRITE) ||
+          studiesGeneralStore.selectedStudyVersion !== null
+        "
+        icon="mdi-plus"
+        @click.stop="addCriteria"
+      />
     </template>
-    <template v-slot:item.criteria.name="{ item }">
+    <template #[`item.order`]="{ item }">
+      {{ item.order }}
+      <template  v-if="item.criteria">
+        <v-tooltip
+          v-if="item.criteria.name_plain.length > 200"
+          location="bottom"
+        >
+          <template #activator="{ props }">
+            <v-badge v-bind="props" color="warning" icon="mdi-exclamation" bordered inline />
+          </template>
+          <span>{{ $t('EligibilityCriteriaTable.criteria_length_warning') }}</span>
+        </v-tooltip>
+      </template>
+    </template>
+    <template #[`item.criteria.name`]="{ item }">
       <template v-if="item.criteria_template">
-        <n-n-parameter-highlighter
+        <NNParameterHighlighter
           :name="item.criteria_template.name"
           default-color="orange"
-          />
+        />
       </template>
       <template v-else>
-        <n-n-parameter-highlighter
+        <NNParameterHighlighter
           :name="item.criteria.name"
           :show-prefix-and-postfix="false"
-          />
+        />
       </template>
     </template>
-    <template v-slot:item.criteria.criteria_template.guidance_text="{ item }">
+    <template #[`item.criteria.criteria_template.guidance_text`]="{ item }">
       <template v-if="item.criteria_template">
         <span v-html="item.criteria_template.guidance_text" />
       </template>
@@ -64,410 +65,450 @@
         <span v-html="item.criteria.criteria_template.guidance_text" />
       </template>
     </template>
-    <template v-slot:item.key_criteria="{ item }">
+    <template #[`item.key_criteria`]="{ item }">
       <v-checkbox
         v-model="item.key_criteria"
-        @change="updateKeyCriteria($event, item.study_criteria_uid)"
-        />
+        color="primary"
+        @update:model-value="updateKeyCriteria($event, item.study_criteria_uid)"
+      />
     </template>
-    <template v-slot:item.start_date="{ item }">
-      {{ item.start_date|date }}
+    <template #[`item.start_date`]="{ item }">
+      {{ $filters.date(item.start_date) }}
     </template>
-    <template v-slot:item.actions="{ item }">
-      <actions-menu
+    <template #[`item.actions`]="{ item }">
+      <ActionsMenu
         :key="item.study_criteria_uid"
         :actions="filterEditAction(item)"
         :item="item"
         :badge="actionsMenuBadge(item)"
-        />
-    </template>
-    <template v-slot:body="props" v-if="criteria.length > 0 && sortMode">
-      <draggable
-        :list="props.items"
-        tag="tbody"
-        @change="onOrderChange($event)"
-        >
-        <tr
-          v-for="(item, index) in props.items"
-          :key="index"
-          >
-          <td v-if="props.showSelectBoxes">
-            <v-checkbox
-              :value="item.criteria.name"
-              hide-details
-              @change="props.select(!props.isSelected(item))"
-              />
-          </td>
-          <td>
-            <actions-menu
-              :key="item.studyCriteriaUid"
-              :actions="filterEditAction(item)"
-              :item="item"
-              :badge="actionsMenuBadge(item)"
-              />
-          </td>
-          <td>
-            <v-icon
-              small
-              v-if="sortMode"
-              >
-              mdi-sort
-            </v-icon>
-            {{ item.order }}
-          </td>
-          <td>
-            <template v-if="item.criteria_template">
-              <n-n-parameter-highlighter
-                :name="item.criteria_template.name"
-                default-color="orange"
-                />
-            </template>
-            <template v-else>
-              <n-n-parameter-highlighter
-                :name="item.criteria.name"
-                :show-prefix-and-postfix="false"
-                />
-            </template>
-          </td>
-          <td>
-            <template v-if="item.criteria_template">
-              <span v-html="item.criteria_template.guidance_text" />
-            </template>
-            <template v-else>
-              <span v-html="item.criteria.criteria_template.guidance_text" />
-            </template>
-          </td>
-          <td>
-            <v-checkbox
-              v-model="item.key_criteria"
-              @change="updateKeyCriteria($event, item.study_criteria_uid)"
-              />
-          </td>
-          <td>
-            {{ item.start_date|date }}
-          </td>
-          <td>
-            {{ item.user_initials }}
-          </td>
-        </tr>
-      </draggable>
-    </template>
-  </n-n-table>
-  <v-dialog v-model="showForm"
-            persistent
-            fullscreen
-            content-class="fullscreen-dialog"
-            >
-    <eligibility-criteria-form
-      @close="closeForm"
-      :criteriaType="criteriaType"
-      class="fullscreen-dialog"
-      @added="getStudyCriteria"
       />
+    </template>
+  </NNTable>
+  <v-dialog
+    v-model="showForm"
+    persistent
+    fullscreen
+    content-class="fullscreen-dialog"
+  >
+    <EligibilityCriteriaForm
+      :criteria-type="criteriaType"
+      class="fullscreen-dialog"
+      @close="closeForm"
+      @added="getStudyCriteria"
+    />
   </v-dialog>
-  <eligibility-criteria-edit-form
+  <EligibilityCriteriaEditForm
     :open="showEditForm"
     :study-criteria="selectedStudyCriteria"
     @close="closeEditForm"
     @updated="getStudyCriteria"
-    />
+  />
   <v-dialog
     v-model="showHistory"
-    @keydown.esc="closeHistory"
     persistent
-    :max-width="globalHistoryDialogMaxWidth"
-    :fullscreen="globalHistoryDialogFullscreen"
-    >
-    <history-table
+    :fullscreen="$globals.historyDialogFullscreen"
+    @keydown.esc="closeHistory"
+  >
+    <HistoryTable
       :title="studyCriteriaHistoryTitle"
-      @close="closeHistory"
       :headers="headers"
       :items="criteriaHistoryItems"
       :html-fields="historyHtmlFields"
-      />
+      @close="closeHistory"
+    />
   </v-dialog>
-  <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
-</div>
+  <ConfirmDialog ref="confirm" :text-cols="6" :action-cols="5" />
+  <SelectionOrderUpdateForm
+    v-if="selectedStudyCriteria"
+    ref="orderForm"
+    :initial-value="selectedStudyCriteria.order"
+    :open="showOrderForm"
+    @close="closeOrderForm"
+    @submit="submitOrder"
+  />
 </template>
 
-<script>
-import ActionsMenu from '@/components/tools/ActionsMenu'
-import { bus } from '@/main'
-import ConfirmDialog from '@/components/tools/ConfirmDialog'
-import draggable from 'vuedraggable'
-import EligibilityCriteriaEditForm from './EligibilityCriteriaEditForm'
-import EligibilityCriteriaForm from './EligibilityCriteriaForm'
-import HistoryTable from '@/components/tools/HistoryTable'
-import { mapGetters } from 'vuex'
-import NNParameterHighlighter from '@/components/tools/NNParameterHighlighter'
-import NNTable from '@/components/tools/NNTable'
+<script setup>
+import { computed, inject, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
+import ActionsMenu from '@/components/tools/ActionsMenu.vue'
+import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
+import EligibilityCriteriaEditForm from './EligibilityCriteriaEditForm.vue'
+import EligibilityCriteriaForm from './EligibilityCriteriaForm.vue'
+import HistoryTable from '@/components/tools/HistoryTable.vue'
+import NNParameterHighlighter from '@/components/tools/NNParameterHighlighter.vue'
+import SelectionOrderUpdateForm from '@/components/studies/SelectionOrderUpdateForm.vue'
+import NNTable from '@/components/tools/NNTable.vue'
 import study from '@/api/study'
-import { accessGuard } from '@/mixins/accessRoleVerifier'
 import filteringParameters from '@/utils/filteringParameters'
 import statuses from '@/constants/statuses'
+import { useAccessGuard } from '@/composables/accessGuard'
+import { useStudiesGeneralStore } from '@/stores/studies-general'
 
-export default {
-  mixins: [accessGuard],
-  props: {
-    criteriaType: Object
+const eventBusEmit = inject('eventBusEmit')
+const roles = inject('roles')
+const props = defineProps({
+  criteriaType: {
+    type: Object,
+    default: undefined,
   },
-  components: {
-    ActionsMenu,
-    ConfirmDialog,
-    draggable,
-    EligibilityCriteriaEditForm,
-    EligibilityCriteriaForm,
-    HistoryTable,
-    NNParameterHighlighter,
-    NNTable
+})
+const accessGuard = useAccessGuard()
+const studiesGeneralStore = useStudiesGeneralStore()
+const { t } = useI18n()
+
+const criteria = ref([])
+const criteriaHistoryItems = ref([])
+const headers = ref([
+  { title: '', key: 'actions', width: '5%' },
+  { title: '#', key: 'order', width: '5%' },
+  {
+    title: props.criteriaType.name.sponsor_preferred_name,
+    key: 'criteria.name',
+    width: '30%',
   },
-  computed: {
-    ...mapGetters({
-      selectedStudy: 'studiesGeneral/selectedStudy',
-      selectedStudyVersion: 'studiesGeneral/selectedStudyVersion'
+  {
+    title: t('EligibilityCriteriaTable.guidance_text'),
+    key: 'criteria.criteria_template.guidance_text',
+    width: '20%',
+  },
+  { title: t('EligibilityCriteriaTable.key_criteria'), key: 'key_criteria' },
+  { title: t('_global.modified'), key: 'start_date' },
+  { title: t('_global.modified_by'), key: 'user_initials' },
+])
+const selectedStudyCriteria = ref(null)
+const showEditForm = ref(false)
+const showForm = ref(false)
+const showHistory = ref(false)
+const showOrderForm = ref(false)
+const total = ref(0)
+const confirm = ref()
+
+const historyHtmlFields = [
+  'criteria.name',
+  'criteria.criteria_template.guidance_text',
+]
+
+const exportDataUrl = computed(() => {
+  return `studies/${studiesGeneralStore.selectedStudy.uid}/study-criteria`
+})
+const exportDataUrlParams = computed(() => {
+  return {
+    filters: JSON.stringify({
+      'criteria_type.sponsor_preferred_name_sentence_case': {
+        v: [props.criteriaType.name.sponsor_preferred_name_sentence_case],
+      },
     }),
-    exportDataUrl () {
-      return `studies/${this.selectedStudy.uid}/study-criteria`
-    },
-    exportDataUrlParams () {
-      return {
-        filters: JSON.stringify({ 'criteria_type.sponsor_preferred_name_sentence_case': { v: [this.criteriaType.sponsor_preferred_name_sentence_case] } })
-      }
-    },
-    studyCriteriaHistoryTitle () {
-      if (this.selectedStudyCriteria) {
-        return this.$t(
-          'EligibilityCriteriaTable.study_criteria_history_title',
-          { studyCriteriaUid: this.selectedStudyCriteria.study_criteria_uid })
-      }
-      return ''
+  }
+})
+const studyCriteriaHistoryTitle = computed(() => {
+  if (selectedStudyCriteria.value) {
+    return t('EligibilityCriteriaTable.study_criteria_history_title', {
+      studyCriteriaUid: selectedStudyCriteria.value.study_criteria_uid,
+    })
+  }
+  return ''
+})
+
+onMounted(() => {
+  studiesGeneralStore.fetchTrialPhases()
+})
+
+async function fetchAllCriteriaHistory() {
+  const resp = await study.getStudyCriteriaAllAuditTrail(
+    studiesGeneralStore.selectedStudy.uid,
+    props.criteriaType.term_uid
+  )
+  const auditTrailData = transformItems(resp.data)
+  auditTrailData.forEach((item) => {
+    if (!item.criteria) {
+      item.criteria = item.criteria_template
     }
-  },
-  data () {
+  })
+  return auditTrailData
+}
+
+function actionsMenuBadge(item) {
+  if (needUpdate(item)) {
     return {
-      actions: [
-        {
-          label: this.$t('EligibilityCriteriaTable.update_version_retired_tooltip'),
-          icon: 'mdi-alert-outline',
-          iconColor: 'orange',
-          condition: (item) => this.isLatestRetired(item),
-          accessRole: this.$roles.STUDY_WRITE
-        },
-        {
-          label: this.$t('EligibilityCriteriaTable.update_version_tooltip'),
-          icon: 'mdi-bell-ring-outline',
-          iconColorFunc: this.criteriaUpdateAborted,
-          condition: (item) => this.needUpdate(item) && !this.selectedStudyVersion,
-          click: this.updateVersion,
-          accessRole: this.$roles.STUDY_WRITE
-        },
-        {
-          label: this.$t('_global.edit'),
-          icon: 'mdi-pencil-outline',
-          iconColor: 'primary',
-          condition: () => !this.selectedStudyVersion,
-          click: this.editStudyCriteria,
-          accessRole: this.$roles.STUDY_WRITE
-        },
-        {
-          label: this.$t('_global.delete'),
-          icon: 'mdi-delete-outline',
-          iconColor: 'error',
-          condition: () => !this.selectedStudyVersion,
-          click: this.deleteStudyCriteria,
-          accessRole: this.$roles.STUDY_WRITE
-        },
-        {
-          label: this.$t('_global.history'),
-          icon: 'mdi-history',
-          click: this.openHistory
-        }
-      ],
-      criteria: [],
-      criteriaHistoryItems: [],
-      headers: [
-        { text: '', value: 'actions', width: '5%' },
-        { text: '#', value: 'order', width: '5%' },
-        { text: this.criteriaType.sponsor_preferred_name, value: 'criteria.name', width: '30%' },
-        { text: this.$t('EligibilityCriteriaTable.guidance_text'), value: 'criteria.criteria_template.guidance_text', width: '20%' },
-        { text: this.$t('EligibilityCriteriaTable.key_criteria'), value: 'key_criteria' },
-        { text: this.$t('_global.modified'), value: 'start_date' },
-        { text: this.$t('_global.modified_by'), value: 'user_initials' }
-      ],
-      historyHtmlFields: ['criteria.name', 'criteria.criteria_template.guidance_text'],
-      selectedStudyCriteria: null,
-      showEditForm: false,
-      showForm: false,
-      showHistory: false,
-      sortMode: false,
-      total: 0,
-      options: {}
-    }
-  },
-  methods: {
-    async fetchAllCriteriaHistory () {
-      const resp = await study.getStudyCriteriaAllAuditTrail(this.selectedStudy.uid, this.criteriaType.term_uid)
-      const auditTrailData = this.transformItems(resp.data)
-      auditTrailData.forEach(item => {
-        if (!item.criteria) {
-          item.criteria = item.criteria_template
-        }
-      })
-      return auditTrailData
-    },
-    actionsMenuBadge (item) {
-      if (this.needUpdate(item)) {
-        return {
-          color: 'error',
-          icon: 'mdi-bell-outline'
-        }
-      }
-      if (!item.criteria && item.criteria_template.parameters.length > 0) {
-        return {
-          color: 'error',
-          icon: 'mdi-exclamation'
-        }
-      }
-      return undefined
-    },
-    filterEditAction (item) {
-      if ((item.criteria && item.criteria.parameter_terms.length > 0) || (item.criteria_template && item.criteria_template.parameters.length > 0)) {
-        return this.actions
-      } else {
-        return this.actions.slice(1)
-      }
-    },
-    addCriteria () {
-      this.showForm = true
-    },
-    closeEditForm () {
-      this.showEditForm = false
-    },
-    closeForm () {
-      this.showForm = false
-    },
-    closeHistory () {
-      this.selectedStudyCriteria = null
-      this.showHistory = false
-    },
-    async openHistory (studyCriteria) {
-      this.selectedStudyCriteria = studyCriteria
-      const resp = await study.getStudyCriteriaAuditTrail(this.selectedStudy.uid, studyCriteria.study_criteria_uid)
-      this.criteriaHistoryItems = this.transformItems(resp.data)
-      this.criteriaHistoryItems.forEach(item => {
-        if (!item.criteria) {
-          item.criteria = item.criteria_template
-        }
-      })
-      this.showHistory = true
-    },
-    editStudyCriteria (studyCriteria) {
-      this.showEditForm = true
-      this.selectedStudyCriteria = studyCriteria
-    },
-    async deleteStudyCriteria (studyCriteria) {
-      const options = { type: 'warning' }
-      let criterion = (studyCriteria.criteria_template) ? studyCriteria.criteria_template.name : studyCriteria.criteria.name
-
-      criterion = criterion.replaceAll(/\[|\]/g, '')
-      if (await this.$refs.confirm.open(this.$t('EligibilityCriteriaTable.confirm_delete', { criterion }), options)) {
-        await study.deleteStudyCriteria(this.selectedStudy.uid, studyCriteria.study_criteria_uid)
-        this.getStudyCriteria()
-        bus.$emit('notification', { msg: this.$t('EligibilityCriteriaTable.delete_success') })
-      }
-    },
-    getStudyCriteria (filters, sort, filtersUpdated) {
-      const params = filteringParameters.prepareParameters(
-        this.options, filters, sort, filtersUpdated)
-      params.study_value_version = this.selectedStudyVersion
-      study.getStudyCriteriaWithType(this.selectedStudy.uid, this.criteriaType, params).then(resp => {
-        this.criteria = this.transformItems(resp.data.items)
-        this.total = resp.data.total
-      })
-    },
-    onOrderChange (event) {
-      const studyCriteria = event.moved.element
-      const replacedStudyCriteria = this.criteria[event.moved.newIndex]
-      study.updateStudyCriteriaOrder(this.selectedStudy.uid, studyCriteria.study_criteria_uid, replacedStudyCriteria.order).then(resp => {
-        this.getStudyCriteria()
-      })
-    },
-    updateKeyCriteria (value, studyCriteriaUid) {
-      study.updateStudyCriteriaKeyCriteria(this.selectedStudy.uid, studyCriteriaUid, value).then(() => {
-        this.getStudyCriteria()
-      })
-    },
-    transformItems (items) {
-      const result = []
-      for (const item of items) {
-        const newItem = { ...item }
-        if (newItem.criteria_template) {
-          newItem.name = item.criteria_template.name
-          newItem.guidance_text = item.criteria_template.guidance_text
-        } else {
-          newItem.name = item.criteria.name
-          newItem.guidance_text = item.criteria.guidance_text
-        }
-        result.push(newItem)
-      }
-      return result
-    },
-    needUpdate (item) {
-      if (item.latest_criteria) {
-        if (!this.isLatestRetired(item)) {
-          return item.criteria.version !== item.latest_criteria.version
-        }
-      }
-      return false
-    },
-    criteriaUpdateAborted (item) {
-      return item.accepted_version ? '' : 'error'
-    },
-    isLatestRetired (item) {
-      if (item.latest_criteria) {
-        return item.latest_criteria.status === statuses.RETIRED
-      }
-      return false
-    },
-    async updateVersion (item) {
-      const options = {
-        type: 'warning',
-        width: 1000,
-        cancelLabel: this.$t('EligibilityCriteriaTable.keep_old_version'),
-        agreeLabel: this.$t('EligibilityCriteriaTable.use_new_version')
-      }
-      const message = this.$t('EligibilityCriteriaTable.update_version_alert') + '<br>' + this.$t('EligibilityCriteriaTable.previous_version') + ' ' + item.criteria.name_plain +
-      '<br>' + this.$t('EligibilityCriteriaTable.new_version') + ' ' + item.latest_criteria.name_plain
-
-      if (await this.$refs.confirm.open(message, options)) {
-        study.updateStudyCriteriaLatestVersion(item.study_uid, item.study_criteria_uid).then(() => {
-          bus.$emit('notification', { msg: this.$t('EligibilityCriteriaTable.update_version_successful') })
-          this.getStudyCriteria()
-        }).catch(error => {
-          bus.$emit('notification', { type: 'error', msg: error.response.data.message })
-        })
-      } else {
-        study.updateStudyCriteriaAcceptVersion(item.study_uid, item.study_criteria_uid).then(() => {
-          this.getStudyCriteria()
-        }).catch(error => {
-          bus.$emit('notification', { type: 'error', msg: error.response.data.message })
-        })
-      }
-    }
-  },
-  mounted () {
-    this.$store.dispatch('studiesGeneral/fetchTrialPhases')
-    this.getStudyCriteria()
-  },
-  watch: {
-    sortMode (value) {
-      this.headers.forEach(header => {
-        this.$set(header, 'sortable', !value)
-      })
-    },
-    options () {
-      this.getStudyCriteria()
+      color: item.accepted_version ? 'lightgray' : 'error',
+      icon: 'mdi-bell-outline',
     }
   }
+  if (!item.criteria && item.criteria_template.parameters.length > 0) {
+    return {
+      color: 'error',
+      icon: 'mdi-exclamation',
+    }
+  }
+  return undefined
 }
+
+function filterEditAction(item) {
+  if (
+    (item.criteria && item.criteria.parameter_terms.length > 0) ||
+    (item.criteria_template && item.criteria_template.parameters.length > 0)
+  ) {
+    return actions.value
+  } else {
+    return actions.value.slice(1)
+  }
+}
+
+function addCriteria() {
+  showForm.value = true
+}
+
+function closeEditForm() {
+  showEditForm.value = false
+}
+
+function closeForm() {
+  showForm.value = false
+}
+
+function closeHistory() {
+  selectedStudyCriteria.value = null
+  showHistory.value = false
+}
+
+async function openHistory(studyCriteria) {
+  selectedStudyCriteria.value = studyCriteria
+  const resp = await study.getStudyCriteriaAuditTrail(
+    studiesGeneralStore.selectedStudy.uid,
+    studyCriteria.study_criteria_uid
+  )
+  criteriaHistoryItems.value = transformItems(resp.data)
+  criteriaHistoryItems.value.forEach((item) => {
+    if (!item.criteria) {
+      item.criteria = item.criteria_template
+    }
+  })
+  showHistory.value = true
+}
+
+function editStudyCriteria(studyCriteria) {
+  showEditForm.value = true
+  selectedStudyCriteria.value = studyCriteria
+}
+
+async function deleteStudyCriteria(studyCriteria) {
+  const options = { type: 'warning' }
+  let criterion = studyCriteria.criteria_template
+    ? studyCriteria.criteria_template.name
+    : studyCriteria.criteria.name
+
+  criterion = criterion.replaceAll(/\[|\]/g, '')
+  if (
+    await confirm.value.open(
+      t('EligibilityCriteriaTable.confirm_delete', { criterion }),
+      options
+    )
+  ) {
+    await study.deleteStudyCriteria(
+      studiesGeneralStore.selectedStudy.uid,
+      studyCriteria.study_criteria_uid
+    )
+    getStudyCriteria()
+    eventBusEmit('notification', {
+      msg: t('EligibilityCriteriaTable.delete_success'),
+    })
+  }
+}
+
+function getStudyCriteria(filters, options, filtersUpdated) {
+  const params = filteringParameters.prepareParameters(
+    options,
+    filters,
+    filtersUpdated
+  )
+  study
+    .getStudyCriteriaWithType(
+      studiesGeneralStore.selectedStudy.uid,
+      props.criteriaType,
+      params
+    )
+    .then((resp) => {
+      criteria.value = transformItems(resp.data.items)
+      total.value = resp.data.total
+    })
+}
+
+function submitOrder(value) {
+  study
+    .updateStudyCriteriaOrder(
+      selectedStudyCriteria.value.study_uid,
+      selectedStudyCriteria.value.study_criteria_uid,
+      value
+    )
+    .then(() => {
+      getStudyCriteria()
+      closeOrderForm()
+      eventBusEmit('notification', { msg: t('_global.order_updated') })
+    })
+}
+function changeCriteriaOrder(criteria) {
+  selectedStudyCriteria.value = criteria
+  showOrderForm.value = true
+}
+
+function closeOrderForm() {
+  showOrderForm.value = false
+}
+
+function updateKeyCriteria(value, studyCriteriaUid) {
+  study
+    .updateStudyCriteriaKeyCriteria(
+      studiesGeneralStore.selectedStudy.uid,
+      studyCriteriaUid,
+      value
+    )
+    .then(() => {
+      getStudyCriteria()
+    })
+}
+
+function transformItems(items) {
+  const result = []
+  for (const item of items) {
+    const newItem = { ...item }
+    if (newItem.criteria_template) {
+      newItem.name = item.criteria_template.name
+      newItem.guidance_text = item.criteria_template.guidance_text
+    } else {
+      newItem.name = item.criteria.name
+      newItem.guidance_text = item.criteria.guidance_text
+    }
+    result.push(newItem)
+  }
+  return result
+}
+
+function needUpdate(item) {
+  if (item.latest_criteria) {
+    if (!isLatestRetired(item)) {
+      return item.criteria.version !== item.latest_criteria.version
+    }
+  }
+  return false
+}
+
+function criteriaUpdateAborted(item) {
+  return item.accepted_version ? '' : 'error'
+}
+
+function isLatestRetired(item) {
+  if (item.latest_criteria) {
+    return item.latest_criteria.status === statuses.RETIRED
+  }
+  return false
+}
+
+async function updateVersion(item) {
+  const options = {
+    type: 'warning',
+    width: 1000,
+    cancelLabel: t('EligibilityCriteriaTable.keep_old_version'),
+    agreeLabel: t('EligibilityCriteriaTable.use_new_version'),
+  }
+  const message =
+    t('EligibilityCriteriaTable.update_version_alert') +
+    '<br>' +
+    t('EligibilityCriteriaTable.previous_version') +
+    ' ' +
+    item.criteria.name_plain +
+    '<br>' +
+    t('EligibilityCriteriaTable.new_version') +
+    ' ' +
+    item.latest_criteria.name_plain
+
+  if (await confirm.value.open(message, options)) {
+    study
+      .updateStudyCriteriaLatestVersion(item.study_uid, item.study_criteria_uid)
+      .then(() => {
+        eventBusEmit('notification', {
+          msg: t('EligibilityCriteriaTable.update_version_successful'),
+        })
+        getStudyCriteria()
+      })
+      .catch((error) => {
+        eventBusEmit('notification', {
+          type: 'error',
+          msg: error.response.data.message,
+        })
+      })
+  } else {
+    study
+      .updateStudyCriteriaAcceptVersion(item.study_uid, item.study_criteria_uid)
+      .then(() => {
+        getStudyCriteria()
+      })
+      .catch((error) => {
+        eventBusEmit('notification', {
+          type: 'error',
+          msg: error.response.data.message,
+        })
+      })
+  }
+}
+
+function addTypeFilterToHeader(jsonFilter, params) {
+  if (params.field_name === 'criteria.name') {
+    jsonFilter['criteria_type.sponsor_preferred_name_sentence_case'] = {
+      v: [props.criteriaType.name.sponsor_preferred_name_sentence_case],
+    }
+  }
+  return {
+    jsonFilter,
+    params,
+  }
+}
+
+const actions = ref([
+  {
+    label: t('EligibilityCriteriaTable.update_version_retired_tooltip'),
+    icon: 'mdi-alert-outline',
+    iconColor: 'orange',
+    condition: (item) => isLatestRetired(item),
+    accessRole: roles.STUDY_WRITE,
+  },
+  {
+    label: t('EligibilityCriteriaTable.update_version_tooltip'),
+    icon: 'mdi-bell-ring-outline',
+    iconColorFunc: criteriaUpdateAborted,
+    condition: (item) =>
+      needUpdate(item) && !studiesGeneralStore.selectedStudyVersion,
+    click: updateVersion,
+    accessRole: roles.STUDY_WRITE,
+  },
+  {
+    label: t('_global.edit'),
+    icon: 'mdi-pencil-outline',
+    iconColor: 'primary',
+    condition: () => !studiesGeneralStore.selectedStudyVersion,
+    click: editStudyCriteria,
+    accessRole: roles.STUDY_WRITE,
+  },
+  {
+    label: t('_global.change_order'),
+    icon: 'mdi-pencil-outline',
+    iconColor: 'primary',
+    condition: () => !studiesGeneralStore.selectedStudyVersion,
+    click: changeCriteriaOrder,
+    accessRole: roles.STUDY_WRITE,
+  },
+  {
+    label: t('_global.delete'),
+    icon: 'mdi-delete-outline',
+    iconColor: 'error',
+    condition: () => !studiesGeneralStore.selectedStudyVersion,
+    click: deleteStudyCriteria,
+    accessRole: roles.STUDY_WRITE,
+  },
+  {
+    label: t('_global.history'),
+    icon: 'mdi-history',
+    click: openHistory,
+  },
+])
 </script>

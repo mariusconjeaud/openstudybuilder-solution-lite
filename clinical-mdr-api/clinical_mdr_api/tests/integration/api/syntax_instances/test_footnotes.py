@@ -221,7 +221,7 @@ def test_data():
         )
 
     # TODO Should be enabled when Study Footnote Selection has been implemented
-    study_footnote_selection_service = StudySoAFootnoteService(author="test")
+    study_footnote_selection_service = StudySoAFootnoteService()
     for footnote in footnotes:
         if footnote.status == "Final":
             study_footnote_selection_service.manage_create(
@@ -533,6 +533,49 @@ def test_create_footnote(api_client):
     assert set(list(res.keys())) == set(FOOTNOTE_FIELDS_ALL)
     for key in FOOTNOTE_FIELDS_NOT_NULL:
         assert res[key] is not None
+
+
+def test_keep_original_case_of_unit_definition_parameter_if_it_is_in_the_start_of_footnote(
+    api_client,
+):
+    TestUtils.create_template_parameter("Unit")
+    _unit = TestUtils.create_unit_definition("u/week", template_parameter=True)
+
+    _footnote_template = TestUtils.create_footnote_template(
+        name="[Unit] test ignore case",
+        study_uid=None,
+        type_uid=ct_term_schedule_of_activities.term_uid,
+        library_name="Sponsor",
+        indication_uids=[],
+        activity_uids=[],
+        activity_group_uids=[activity_group.uid],
+        activity_subgroup_uids=[activity_subgroup.uid],
+    )
+
+    data = {
+        "footnote_template_uid": _footnote_template.uid,
+        "library_name": "Sponsor",
+        "parameter_terms": [
+            {
+                "position": 1,
+                "conjunction": "",
+                "terms": [
+                    {
+                        "index": 1,
+                        "name": _unit.name,
+                        "uid": _unit.uid,
+                        "type": "Unit",
+                    }
+                ],
+            }
+        ],
+    }
+    response = api_client.post(URL, json=data)
+    res = response.json()
+    log.info("Created Footnote: %s", res)
+
+    assert response.status_code == 201
+    assert res["name"] == f"[{_unit.name}] test ignore case"
 
 
 def test_update_footnote(api_client):

@@ -1,6 +1,7 @@
 import abc
 import copy
 from datetime import datetime
+from threading import Lock
 from typing import Any, Iterable, Mapping, TypeVar
 
 from cachetools import TTLCache, cached
@@ -19,9 +20,11 @@ from clinical_mdr_api import config
 from clinical_mdr_api.domain_repositories._generic_repository_interface import (
     GenericRepository,
 )
+from clinical_mdr_api.domain_repositories._utils.helpers import validate_dict
 from clinical_mdr_api.domain_repositories.generic_repository import RepositoryImpl
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
     ControlledTerminology,
+    CTTermNameRoot,
 )
 from clinical_mdr_api.domain_repositories.models.generic import (
     Library,
@@ -37,8 +40,14 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemStatus,
     VersioningException,
 )
-from clinical_mdr_api.exceptions import BusinessLogicException, NotFoundException
+from clinical_mdr_api.exceptions import (
+    BusinessLogicException,
+    NotFoundException,
+    ValidationException,
+)
 from clinical_mdr_api.repositories._utils import (
+    ComparisonOperator,
+    FilterOperator,
     sb_clear_cache,
     validate_max_skip_clause,
 )
@@ -54,6 +63,7 @@ class LibraryItemRepositoryImplBase(
     cache_store_item_by_uid = TTLCache(
         maxsize=config.CACHE_MAX_SIZE, ttl=config.CACHE_TTL
     )
+    lock_store_item_by_uid = Lock()
     has_library = True
 
     @abc.abstractmethod
@@ -731,11 +741,19 @@ class LibraryItemRepositoryImplBase(
         )
 
     def _get_version_active_at_date_time(
-        self, has_version_rel: RelationshipDefinition, at_specific_date: datetime
+        self,
+        has_version_rel: RelationshipDefinition,
+        at_specific_date: datetime,
+        status=None,
     ) -> tuple[VersionValue | None, VersionRelationship | None]:
-        matching_values: list[VersionValue] = has_version_rel.match(
-            start_date__lte=at_specific_date
-        )
+        if status:
+            matching_values: list[VersionValue] = has_version_rel.match(
+                start_date__lte=at_specific_date, status__exact=status.value
+            )
+        else:
+            matching_values: list[VersionValue] = has_version_rel.match(
+                start_date__lte=at_specific_date,
+            )
         latest_matching_relationship: VersionRelationship | None = None
         latest_matching_value: VersionValue | None = None
         for matching_value in matching_values:
@@ -743,15 +761,29 @@ class LibraryItemRepositoryImplBase(
                 VersionRelationship
             ] = has_version_rel.all_relationships(matching_value)
             for relationship in relationships:
-                if (
-                    latest_matching_relationship is None
-                    or latest_matching_relationship.start_date < relationship.start_date
-                ):
-                    latest_matching_relationship = relationship
-                    latest_matching_value = matching_value
+                if status:
+                    if (
+                        latest_matching_relationship is None
+                        or latest_matching_relationship.start_date
+                        < relationship.start_date
+                    ) and relationship.status == status.value:
+                        latest_matching_relationship = relationship
+                        latest_matching_value = matching_value
+                else:
+                    if (
+                        latest_matching_relationship is None
+                        or latest_matching_relationship.start_date
+                        < relationship.start_date
+                    ):
+                        latest_matching_relationship = relationship
+                        latest_matching_value = matching_value
         return latest_matching_value, latest_matching_relationship
 
-    @cached(cache=cache_store_item_by_uid, key=hashkey_library_item)
+    @cached(
+        cache=cache_store_item_by_uid,
+        key=hashkey_library_item,
+        lock=lock_store_item_by_uid,
+    )
     def find_by_uid_2(
         self,
         uid: str,
@@ -802,15 +834,21 @@ class LibraryItemRepositoryImplBase(
                         has_version_rel, at_specific_date
                     )
             else:
-                # Find the latest version with the specified status
-                value, relationship = self._get_latest_value_with_status(
-                    root,
-                    status,
-                    has_version_rel,
-                    latest_draft_rel,
-                    latest_final_rel,
-                    latest_retired_rel,
-                )
+                if at_specific_date is None:
+                    # Find the latest version with the specified status
+                    value, relationship = self._get_latest_value_with_status(
+                        root,
+                        status,
+                        has_version_rel,
+                        latest_draft_rel,
+                        latest_final_rel,
+                        latest_retired_rel,
+                    )
+                else:
+                    # Find the latest version (regardless of status) that exists at the specified date
+                    value, relationship = self._get_version_active_at_date_time(
+                        has_version_rel, at_specific_date, status=status
+                    )
         else:
             # Find the version with the specified version number, and optionally status
             value, relationship = self._get_value_with_version_number(
@@ -1054,3 +1092,1152 @@ class LibraryItemRepositoryImplBase(
 
     def _get_uid_or_none(self, node):
         return node.uid if node is not None else None
+
+    def _create_ar(
+        self,
+        root: VersionRoot,
+        library: Library,
+        relationship: VersionRelationship,
+        value: VersionValue,
+        study_count: int = 0,
+        **kwargs,
+    ) -> _AggregateRootType:
+        raise NotImplementedError
+
+    def hashkey_library_item_with_metadata(
+        self,
+        uid: str,
+        for_update=False,
+        *,
+        library_name: str | None = None,
+        status: LibraryItemStatus | None = None,
+        version: str | None = None,
+        return_study_count: bool | None = False,
+        for_audit_trail: bool = False,
+        at_specific_date: datetime | None = None,
+    ):
+        """
+        Returns a hash key that will be used for mapping objects stored in cache,
+        which ultimately determines whether a method invocation is a hit or miss.
+
+        We need to define this custom hashing function with the same signature as the method we wish to cache (find_by_uid_optimized),
+        since the target method contains optional/default parameters.
+        If this custom hashkey function is not defined, most invocations of find_by_uid_optimized method will be misses.
+        """
+        return hashkey(
+            str(self),
+            uid,
+            for_update,
+            library_name,
+            status,
+            version,
+            return_study_count,
+            for_audit_trail,
+            at_specific_date,
+        )
+
+    @cached(
+        cache=cache_store_item_by_uid,
+        key=hashkey_library_item_with_metadata,
+        lock=lock_store_item_by_uid,
+    )
+    def find_by_uid_optimized(
+        self,
+        uid: str,
+        for_update=False,
+        *,
+        library_name: str | None = None,
+        status: LibraryItemStatus | None = None,
+        version: str | None = None,
+        return_study_count: bool | None = False,
+        for_audit_trail: bool = False,
+        at_specific_date: datetime | None = None,
+    ) -> _AggregateRootType | list[_AggregateRootType]:
+        if for_update and (version is not None or status is not None):
+            raise NotImplementedError(
+                "Retrieval for update supported only for latest version."
+            )
+
+        if for_update:
+            self._lock_object(uid)
+
+        aggregates: list[_AggregateRootType] = []
+
+        match_stmt, return_stmt = self._find_cypher_query_optimized(
+            with_status=bool(status),
+            with_version=bool(version),
+            with_pagination=False,
+            with_at_specific_date=bool(at_specific_date),
+            return_study_count=return_study_count,
+            uid=uid,
+            for_audit_trail=for_audit_trail,
+        )
+
+        params = {"uid": uid}
+        if status:
+            params["status"] = status.value
+        if version:
+            params["version"] = version
+        if at_specific_date:
+            params["at_specific_date"] = at_specific_date
+
+        try:
+            result, _ = db.cypher_query(
+                match_stmt + return_stmt,
+                params=params,
+                resolve_objects=True,
+            )
+        except NodeClassNotDefined as exc:
+            raise VersioningException(
+                "Object labels were changed - likely the object was deleted in a concurrent transaction."
+            ) from exc
+
+        if not result:
+            raise NotFoundException(
+                f"No {self.root_class.__label__} with UID ({uid}) found in given status, date and version."
+            )
+
+        for (
+            library,
+            root,
+            relationship,
+            value,
+            study_count,
+            ctterm_names,
+            activity_root,
+            activity_subgroups_root,
+            unit_definition,
+            indications,
+            categories,
+            subcategories,
+            activities,
+            activity_groups,
+            activity_subgroups,
+            template_type,
+            instance_template,
+        ) in result:
+            if library and library_name is not None and library_name != library.name:
+                continue
+
+            ar: _AggregateRootType = self._create_ar(
+                library=library,
+                root=root,
+                relationship=relationship,
+                value=value,
+                study_count=study_count,
+                ctterm_names=ctterm_names,
+                activity_root=activity_root,
+                activity_subgroups_root=activity_subgroups_root,
+                unit_definition=unit_definition,
+                indications=indications[0] if indications else [],
+                template_type=template_type,
+                categories=categories[0] if categories else [],
+                subcategories=subcategories[0] if subcategories else [],
+                activities=activities[0] if activities else [],
+                activity_groups=activity_groups[0] if activity_groups else [],
+                activity_subgroups=activity_subgroups[0] if activity_subgroups else [],
+                instance_template=instance_template,
+            )
+
+            if value and relationship:
+                if for_update:
+                    ar.repository_closure_data = (
+                        root,
+                        value,
+                        library,
+                        copy.deepcopy(ar),
+                    )
+                else:
+                    ar.repository_closure_data = RETRIEVED_READ_ONLY_MARK
+                aggregates.append(ar)
+
+        if not for_audit_trail:
+            return aggregates[0]
+
+        return aggregates
+
+    def get_all_optimized(
+        self,
+        *,
+        status: LibraryItemStatus | None = None,
+        library_name: str | None = None,
+        return_study_count: bool | None = False,
+        sort_by: dict | None = None,
+        page_number: int = 1,
+        page_size: int = 0,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
+        total_count: bool = False,
+        for_audit_trail: bool = False,
+    ) -> tuple[list, int]:
+        validate_dict(filter_by, "filters")
+        validate_dict(sort_by, "sort_by")
+        validate_max_skip_clause(page_number=page_number, page_size=page_size)
+
+        aggregates = []
+
+        where_stmt, params = self._where_stmt_optimized(filter_by, filter_operator)
+
+        match_stmt, return_stmt = self._find_cypher_query_optimized(
+            with_status=bool(status),
+            with_pagination=bool(page_size),
+            return_study_count=return_study_count,
+            where_stmt=where_stmt,
+            sort_by=sort_by,
+            for_audit_trail=for_audit_trail,
+        )
+
+        if status:
+            params["status"] = status.value
+
+        if page_size > 0:
+            params["page_number"] = page_number - 1
+            params["page_size"] = page_size
+
+        result, _ = db.cypher_query(
+            match_stmt + return_stmt,
+            params=params,
+            resolve_objects=True,
+        )
+
+        for (
+            library,
+            root,
+            relationship,
+            value,
+            study_count,
+            ctterm_names,
+            activity_root,
+            activity_subgroups_root,
+            unit_definition,
+            indications,
+            categories,
+            subcategories,
+            activities,
+            activity_groups,
+            activity_subgroups,
+            template_type,
+            instance_template,
+        ) in result:
+            if library and library_name is not None and library_name != library.name:
+                continue
+
+            ar = self._create_ar(
+                library=library,
+                root=root,
+                relationship=relationship,
+                value=value,
+                study_count=study_count,
+                ctterm_names=ctterm_names,
+                activity_root=activity_root,
+                activity_subgroups_root=activity_subgroups_root,
+                unit_definition=unit_definition,
+                indications=indications[0] if indications else [],
+                template_type=template_type,
+                categories=categories[0] if categories else [],
+                subcategories=subcategories[0] if subcategories else [],
+                activities=activities[0] if activities else [],
+                activity_groups=activity_groups[0] if activity_groups else [],
+                activity_subgroups=activity_subgroups[0] if activity_subgroups else [],
+                instance_template=instance_template,
+            )
+
+            ar.repository_closure_data = RETRIEVED_READ_ONLY_MARK
+            aggregates.append(ar)
+
+        count_result = []
+        if total_count:
+            count_result, _ = db.cypher_query(
+                query=match_stmt + "RETURN count(DISTINCT ver_rel)", params=params
+            )
+        total_amount = (
+            count_result[0][0] if len(count_result) > 0 and total_count else 0
+        )
+        return aggregates, total_amount
+
+    def get_headers_optimized(
+        self,
+        *,
+        field_name: str,
+        status: LibraryItemStatus | None = None,
+        search_string: str | None = "",
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
+        result_count: int = 10,
+    ):
+        if result_count <= 0:
+            return []
+
+        validate_dict(filter_by, "filters")
+
+        if filter_by is None:
+            filter_by = {}
+
+        try:
+            cypher_field_name = self.basemodel_to_cypher_mapping_optimized()[field_name]
+        except KeyError as e:
+            raise ValidationException(
+                f"Unsupported field name parameter: {field_name}. "
+                f"Supported parameters are: {list(self.basemodel_to_cypher_mapping_optimized())}"
+            ) from e
+
+        if search_string:
+            filter_by[field_name] = {
+                "v": [search_string],
+                "op": ComparisonOperator.CONTAINS.value,
+            }
+
+        where_stmt, params = self._where_stmt_optimized(
+            filter_by, filter_operator, True
+        )
+
+        match_stmt, return_stmt = self._headers_cypher_query(
+            cypher_field_name=cypher_field_name,
+            with_status=bool(status),
+            where_stmt=where_stmt,
+        )
+
+        if status:
+            params["status"] = status.value
+
+        result, _ = db.cypher_query(
+            match_stmt + return_stmt,
+            params=params | {"result_count": result_count},
+            resolve_objects=True,
+        )
+
+        rs = []
+        for item in result:
+            if item[0]:
+                rs.append(item[0])
+
+        return rs
+
+    def basemodel_to_cypher_mapping_optimized(self, header_query: bool = False):
+        # Mapping between BaseModel attribute names and their corresponding
+        # cypher query (as returned by _find_cypher_query() and _headers_cypher_query()) variables for filtering, sorting and headers
+        mapping = {
+            "library.name": "library.name",
+            "uid": "root.uid",
+            "sequence_id": "root.sequence_id",
+            "name": "value.name",
+            "name_plain": "value.name_plain",
+            "status": "ver_rel.status",
+            "version": "ver_rel.version",
+            "start_date": "ver_rel.start_date",
+            "end_date": "ver_rel.end_date",
+        }
+
+        if (
+            "SyntaxTemplateRoot"
+            in [
+                ith_class.__label__ if hasattr(ith_class, "__label__") else None
+                for ith_class in self.root_class.mro()
+            ]
+            or "SyntaxInstanceRoot"
+            in [
+                ith_class.__label__ if hasattr(ith_class, "__label__") else None
+                for ith_class in self.root_class.mro()
+            ]
+            and not header_query
+        ):
+            mapping |= {"study_count": "study_count"}
+
+        if hasattr(self.root_class, "is_confirmatory_testing"):
+            mapping |= {"is_confirmatory_testing": "root.is_confirmatory_testing"}
+
+        # pylint: disable=no-member
+        if hasattr(self, "template_class") and hasattr(self.template_class, "has_type"):
+            mapping |= {
+                "template_uid": "template_root.uid",
+                "template_name": "template_value.name",
+                "template_type_uid": "type_root.uid",
+                "type.term_uid": "type_root.uid",
+                "criteria_template.type.term_uid": "type_root.uid",
+            }
+
+        if hasattr(self.value_class, "guidance_text"):
+            mapping |= {"guidance_text": "value.guidance_text"}
+
+        if hasattr(self.root_class, "has_indication"):
+            mapping |= {
+                "indications.term_uid": "indication_root.uid",
+                "indications.name": "indication_value.name",
+            }
+
+        if hasattr(self.root_class, "has_type"):
+            mapping |= {
+                "template_type_uid": "type_root.uid",
+                "type.term_uid": "type_root.uid",
+                "type.name.sponsor_preferred_name": "type_ct_term_name_value.name",
+                "type.name.sponsor_preferred_name_sentence_case": "type_ct_term_name_value.name_sentence_case",
+                "type.attributes.code_submission_value": "type_ct_term_attributes_value.code_submission_value",
+                "type.attributes.preferred_term": "type_ct_term_attributes_value.preferred_term",
+            }
+
+        if hasattr(self.root_class, "has_category"):
+            mapping |= {
+                "categories.term_uid": "category_root.uid",
+                "categories.name.sponsor_preferred_name": "category_ct_term_name_value.name",
+                "categories.name.sponsor_preferred_name_sentence_case": "category_ct_term_name_value.name_sentence_case",
+                "categories.attributes.code_submission_value": "category_ct_term_attributes_value.code_submission_value",
+                "categories.attributes.preferred_term": "category_ct_term_attributes_value.preferred_term",
+            }
+
+        if hasattr(self.root_class, "has_subcategory"):
+            mapping |= {
+                "sub_categories.term_uid": "subcategory_root.uid",
+                "sub_categories.name.sponsor_preferred_name": "subcategory_ct_term_name_value.name",
+                "sub_categories.name.sponsor_preferred_name_sentence_case": "subcategory_ct_term_name_value.name_sentence_case",
+                "sub_categories.attributes.code_submission_value": "subcategory_ct_term_attributes_value.code_submission_value",
+                "sub_categories.attributes.preferred_term": "subcategory_ct_term_attributes_value.preferred_term",
+                "subCategories.term_uid": "subcategory_root.uid",
+                "subCategories.name.sponsor_preferred_name": "subcategory_ct_term_name_value.name",
+                "subCategories.name.sponsor_preferred_name_sentence_case": "subcategory_ct_term_name_value.name_sentence_case",
+                "subCategories.attributes.code_submission_value": "subcategory_ct_term_attributes_value.code_submission_value",
+                "subCategories.attributes.preferred_term": "subcategory_ct_term_attributes_value.preferred_term",
+            }
+
+        if hasattr(self.root_class, "has_activity"):
+            mapping |= {
+                "activities.uid": "activity_root.uid",
+                "activities": "activity_value.name",
+                "activities.name": "activity_value.name",
+                "activities.name_sentence_case": "activity_value.name_sentence_case",
+                "activity.uid": "activity_root.uid",
+                "activity": "activity_value.name",
+                "activity.name": "activity_value.name",
+                "activity.name_sentence_case": "activity_value.name_sentence_case",
+            }
+
+        if hasattr(self.root_class, "has_activity_group"):
+            mapping |= {
+                "activity_groups.uid": "activity_group_root.uid",
+                "activity_groups": "activity_group_value.name",
+                "activity_groups.name": "activity_group_value.name",
+                "activity_groups.name_sentence_case": "activity_group_value.name_sentence_case",
+                "activity.activity_group.uid": "activity_group_root.uid",
+                "activity.activity_group": "activity_group_value.name",
+                "activity.activity_group.name": "activity_group_value.name",
+                "activity.activity_group.name_sentence_case": "activity_group_value.name_sentence_case",
+            }
+
+        if hasattr(self.root_class, "has_activity_subgroup"):
+            mapping |= {
+                "activity_subgroups.uid": "activity_subgroup_root.uid",
+                "activity_subgroups": "activity_subgroup_value.name",
+                "activity_subgroups.name": "activity_subgroup_value.name",
+                "activity_subgroups.name_sentence_case": "activity_subgroup_value.name_sentence_case",
+                "activity.activity_subgroup.uid": "activity_subgroup_root.uid",
+                "activity.activity_subgroup": "activity_subgroup_value.name",
+                "activity.activity_subgroup.name": "activity_subgroup_value.name",
+                "activity.activity_subgroup.name_sentence_case": "activity_subgroup_value.name_sentence_case",
+            }
+
+        return mapping
+
+    def _where_stmt_optimized(
+        self,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
+        header_query: bool = False,
+    ):
+        if not filter_by:
+            return "", {}
+
+        mapping = self.basemodel_to_cypher_mapping_optimized(header_query)
+
+        fields_generic = []
+        fields_non_generic = []
+        params = {}
+        where_stmt = ""
+
+        if "*" in filter_by:
+            for _, cypher_name in mapping.items():
+                if (
+                    "op" in filter_by["*"]
+                    and filter_by["*"]["op"] == ComparisonOperator.EQUALS.value
+                ):
+                    operator = "="
+                else:
+                    operator = "CONTAINS"
+
+                if any(not isinstance(value, str) for value in filter_by["*"]["v"]):
+                    operator = "="
+
+                for idx, value in enumerate(filter_by["*"]["v"]):
+                    param_variable = f"{cypher_name}_generic_{idx}".replace(".", "_")
+                    params[param_variable] = value
+                    fields_generic.append(
+                        f" {cypher_name} {operator} ${param_variable} "
+                    )
+
+            where_stmt += "(" + " OR ".join(fields_generic) + ")"
+
+        filter_by.pop("*", None)
+        for filter_name, items in filter_by.items():
+            if filter_name not in mapping:
+                raise BusinessLogicException(
+                    f"Unsupported filtering parameter: {filter_name}. "
+                    f"Supported parameters are: {list(self.basemodel_to_cypher_mapping_optimized(header_query))}"
+                )
+
+            if "op" in items and items["op"] == ComparisonOperator.EQUALS.value:
+                operator = "="
+            else:
+                operator = "CONTAINS"
+
+            if any(not isinstance(value, str) for value in items["v"]):
+                operator = "="
+
+            for idx, value in enumerate(items["v"]):
+                param_variable = f"{mapping[filter_name]}_non_generic_{idx}".replace(
+                    ".", "_"
+                )
+                params[param_variable] = value
+                fields_non_generic.append(
+                    f" {mapping[filter_name]} {operator} ${param_variable} "
+                )
+
+        if not where_stmt:
+            where_stmt += f" {filter_operator.value} ".join(fields_non_generic)
+        elif fields_non_generic:
+            where_stmt += (
+                f" {filter_operator.value} ("
+                + f" {filter_operator.value} ".join(fields_non_generic)
+                + ")"
+            )
+
+        return "WHERE " + where_stmt, params
+
+    def _sort_stmt(self, sort_by: dict | None = None):
+        if not sort_by:
+            return "ORDER BY root.uid DESC"
+
+        mapping = self.basemodel_to_cypher_mapping_optimized()
+
+        fields = []
+        for sort_field, direction in sort_by.items():
+            if sort_field not in mapping:
+                raise BusinessLogicException(
+                    f"Unsupported sorting parameter: {sort_field}. "
+                    f"Supported parameters are: {list(self.basemodel_to_cypher_mapping_optimized())}"
+                )
+
+            fields.append(f'{mapping[sort_field]} {"ASC" if direction else "DESC"}')
+
+        return "ORDER BY " + ", ".join(fields)
+
+    def _headers_cypher_query(
+        self,
+        cypher_field_name: str,
+        with_status: bool = False,
+        where_stmt: str = "",
+    ):
+        version_where_stmt = ""
+        retire_exclusion = "WITH root as _root"
+        if with_status:
+            version_where_stmt += "WHERE ver_rel.status = $status"
+            retire_exclusion = """
+            CALL {
+                WITH root, value
+                MATCH (root)-[ver_rel:HAS_VERSION]->()
+                WITH * ORDER BY ver_rel.start_date DESC LIMIT 1
+                WHERE $status <> "Final" OR (ver_rel.status <> "Retired" AND $status = "Final")
+                MATCH (_root)-[ver_rel]->()
+                RETURN _root
+            }
+            """
+
+        match_stmt = f"""
+            MATCH (library:Library)-[:{self.root_class.LIBRARY_REL_LABEL}]->(root:{self.root_class.__label__})
+            -[:LATEST]->(value:{self.value_class.__label__})
+            CALL {{
+                WITH root, value
+                {retire_exclusion}
+                MATCH (_root)-[ver_rel:HAS_VERSION]->(_value)
+                WITH ver_rel, _root, _value
+                {version_where_stmt}
+                RETURN _root, _value, ver_rel ORDER BY ver_rel.start_date DESC LIMIT 1
+            }}
+            WITH _root AS root, _value AS value, library, ver_rel
+        """
+
+        if "SyntaxInstanceRoot" in [
+            ith_class.__label__ if hasattr(ith_class, "__label__") else None
+            for ith_class in self.root_class.mro()
+        ]:
+            match_stmt += self._only_instances_with_studies()
+
+        if "SyntaxInstanceRoot" in [
+            ith_class.__label__ if hasattr(ith_class, "__label__") else None
+            for ith_class in self.root_class.mro()
+        ] or "SyntaxPreInstanceRoot" in [
+            ith_class.__label__ if hasattr(ith_class, "__label__") else None
+            for ith_class in self.root_class.mro()
+        ]:
+            stmt, _ = self._instance_template_match_return_stmt()
+
+            match_stmt += stmt
+
+        if hasattr(self.root_class, "has_indication"):
+            stmt, _ = self._indication_match_return_stmt()
+
+            match_stmt += stmt
+
+        # pylint: disable=no-member
+        if hasattr(self.root_class, "has_type") or (
+            hasattr(self, "template_class") and hasattr(self.template_class, "has_type")
+        ):
+            stmt, _ = self._template_type_match_return_stmt()
+
+            match_stmt += stmt
+
+        if hasattr(self.root_class, "has_category"):
+            stmt, _ = self._category_match_return_stmt()
+
+            match_stmt += stmt
+
+        if hasattr(self.root_class, "has_subcategory"):
+            stmt, _ = self._subcategory_match_return_stmt()
+
+            match_stmt += stmt
+
+        if hasattr(self.root_class, "has_activity"):
+            stmt, _ = self._activity_match_return_stmt()
+
+            match_stmt += stmt
+
+        if hasattr(self.root_class, "has_activity_group"):
+            stmt, _ = self._activity_group_match_return_stmt()
+
+            match_stmt += stmt
+
+        if hasattr(self.root_class, "has_activity_subgroup"):
+            stmt, _ = self._activity_subgroup_match_return_stmt()
+
+            match_stmt += stmt
+
+        if where_stmt:
+            match_stmt += f"WITH * {where_stmt} "
+
+        return_stmt = f"""
+            RETURN DISTINCT {cypher_field_name}
+            LIMIT $result_count
+        """
+
+        return match_stmt, return_stmt
+
+    # pylint: disable=too-many-statements
+    def _find_cypher_query_optimized(
+        self,
+        with_status: bool = False,
+        with_version: bool = False,
+        with_pagination: bool = True,
+        with_at_specific_date: bool = False,
+        return_study_count: bool = False,
+        where_stmt: str = "",
+        sort_by: dict | None = None,
+        uid: str | None = None,
+        for_audit_trail: bool = False,
+    ):
+        version_where_stmt = ""
+        retire_exclusion = "WITH root as _root"
+        if with_status:
+            version_where_stmt += "WHERE ver_rel.status = $status"
+            retire_exclusion = """
+            CALL {
+                WITH root, value
+                MATCH (root)-[ver_rel:HAS_VERSION]->()
+                WITH * ORDER BY ver_rel.start_date DESC LIMIT 1
+                WHERE $status <> "Final" OR (ver_rel.status <> "Retired" AND $status = "Final")
+                MATCH (_root)-[ver_rel]->()
+                RETURN _root
+            }
+            """
+        if with_version:
+            if version_where_stmt:
+                version_where_stmt += " AND ver_rel.version = $version"
+            else:
+                version_where_stmt += "WHERE ver_rel.version = $version"
+        if with_at_specific_date:
+            if version_where_stmt:
+                version_where_stmt += " AND"
+            else:
+                version_where_stmt += "WHERE"
+            version_where_stmt += """(ver_rel.start_date<= datetime($at_specific_date) < datetime(ver_rel.end_date))
+                                        OR (ver_rel.end_date IS NULL AND (ver_rel.start_date <= datetime($at_specific_date)))"""
+        version_call = f"""
+            CALL {{
+                WITH root, value
+                {retire_exclusion}
+                MATCH (_root)-[ver_rel:HAS_VERSION]->(_value)
+                WITH ver_rel, _root, _value
+                {version_where_stmt}
+                RETURN _root, _value, ver_rel ORDER BY ver_rel.start_date DESC LIMIT 1
+            }}
+            WITH _root AS root, _value AS value, library, ver_rel
+        """
+        version_rel = "ver_rel:HAS_VERSION"
+
+        if for_audit_trail and not with_status:
+            version_call = ""
+        else:
+            version_rel = ":LATEST" if not with_version and not with_status else ""
+
+        if uid:
+            if issubclass(self.root_class, CTTermNameRoot):
+                uid_where_stmt = "WHERE elementID(root)  = $uid"
+                library__stmt = "MATCH (library:Library)-[:CONTAINS_TERM]->(ctterm_root:CTTermRoot)-[:HAS_NAME_ROOT]->(root)"
+            else:
+                uid_where_stmt = "WHERE root.uid = $uid"
+                library__stmt = f"MATCH (library:Library)-[:{self.root_class.LIBRARY_REL_LABEL}]->(root)"
+        else:
+            uid_where_stmt = ""
+            library__stmt = f"MATCH (library:Library)-[:{self.root_class.LIBRARY_REL_LABEL}]->(root)"
+
+        match_stmt = f"""
+            MATCH (root:{self.root_class.__label__})-[{version_rel}]->(value:{self.value_class.__label__})
+            {uid_where_stmt}
+            {library__stmt}
+            {version_call}
+        """
+
+        if not uid and "SyntaxInstanceRoot" in [
+            ith_class.__label__ if hasattr(ith_class, "__label__") else None
+            for ith_class in self.root_class.mro()
+        ]:
+            match_stmt += self._only_instances_with_studies()
+
+        if return_study_count and "SyntaxTemplateRoot" in [
+            ith_class.__label__ if hasattr(ith_class, "__label__") else None
+            for ith_class in self.root_class.mro()
+        ]:
+            match_stmt += f"""
+                OPTIONAL MATCH (root)-[:{self.root_class.TEMPLATE_REL_LABEL}]->(:SyntaxInstanceRoot)-->(:SyntaxInstanceValue)
+                <--(:StudySelection)<--(:StudyValue)<-[:HAS_VERSION|LATEST_DRAFT|LATEST_FINAL|LATEST_RETIRED]-(sr:StudyRoot)
+            """
+
+        if return_study_count and "SyntaxInstanceRoot" in [
+            ith_class.__label__ if hasattr(ith_class, "__label__") else None
+            for ith_class in self.root_class.mro()
+        ]:
+            match_stmt += """
+                OPTIONAL MATCH (value)<--(:StudySelection)<--(:StudyValue)<-[:HAS_VERSION|LATEST_DRAFT|LATEST_FINAL|LATEST_RETIRED]-(sr:StudyRoot)
+            """
+
+        ctterm_names_return = ", null as ctterm_name"
+        activity_root_return = ", null as activity_root"
+        activity_subgroups_root_return = ", null as activity_subgroups_root"
+        unit_definition_return = ", null as unit_definition"
+        instance_template_return = ", null as instance_template"
+        indications_return = ", null as indication"
+        template_type_return = ", null as template_type"
+        categories_return = ", null as categories"
+        subcategories_return = ", null as subcategories"
+        activities_return = ", null as activities"
+        activity_groups_return = ", null as activity_groups"
+        activity_subgroups_return = ", null as activity_subgroups"
+
+        if issubclass(self.root_class, CTTermNameRoot):
+            stmt, ctterm_names_return = self._ctterm_name_match_return_stmt()
+            match_stmt += stmt
+
+        if self.root_class.__label__ == "ActivityRoot":
+            stmt, activity_root_return = self._activity_root_match_return_stmt()
+
+            match_stmt += stmt
+
+        if self.root_class.__label__ == "ActivitySubGroupRoot":
+            (
+                stmt,
+                activity_subgroups_root_return,
+            ) = self._activity_subgroup_root_match_return_stmt()
+
+            match_stmt += stmt
+
+        if self.root_class.__label__ == "UnitDefinitionRoot":
+            stmt, unit_definition_return = self._unit_definition_match_return_stmt()
+
+            match_stmt += stmt
+
+        if "SyntaxInstanceRoot" in [
+            ith_class.__label__ if hasattr(ith_class, "__label__") else None
+            for ith_class in self.root_class.mro()
+        ] or "SyntaxPreInstanceRoot" in [
+            ith_class.__label__ if hasattr(ith_class, "__label__") else None
+            for ith_class in self.root_class.mro()
+        ]:
+            stmt, instance_template_return = self._instance_template_match_return_stmt()
+
+            match_stmt += stmt
+
+        if hasattr(self.root_class, "has_indication"):
+            stmt, indications_return = self._indication_match_return_stmt()
+
+            match_stmt += stmt
+
+        # pylint: disable=no-member
+        if hasattr(self.root_class, "has_type") or (
+            hasattr(self, "template_class") and hasattr(self.template_class, "has_type")
+        ):
+            stmt, template_type_return = self._template_type_match_return_stmt()
+
+            match_stmt += stmt
+
+        if hasattr(self.root_class, "has_category"):
+            stmt, categories_return = self._category_match_return_stmt()
+
+            match_stmt += stmt
+
+        if hasattr(self.root_class, "has_subcategory"):
+            stmt, subcategories_return = self._subcategory_match_return_stmt()
+
+            match_stmt += stmt
+
+        if hasattr(self.root_class, "has_activity"):
+            stmt, activities_return = self._activity_match_return_stmt()
+
+            match_stmt += stmt
+
+        if hasattr(self.root_class, "has_activity_group"):
+            stmt, activity_groups_return = self._activity_group_match_return_stmt()
+
+            match_stmt += stmt
+
+        if hasattr(self.root_class, "has_activity_subgroup"):
+            (
+                stmt,
+                activity_subgroups_return,
+            ) = self._activity_subgroup_match_return_stmt()
+
+            match_stmt += stmt
+
+        with_agg_study_count = (
+            "COUNT(DISTINCT sr) as study_count "
+            if return_study_count
+            and (
+                "SyntaxTemplateRoot"
+                in [
+                    ith_class.__label__ if hasattr(ith_class, "__label__") else None
+                    for ith_class in self.root_class.mro()
+                ]
+                or "SyntaxInstanceRoot"
+                in [
+                    ith_class.__label__ if hasattr(ith_class, "__label__") else None
+                    for ith_class in self.root_class.mro()
+                ]
+            )
+            else "0 as study_count "
+        )
+        with_agg_codelist = (
+            """, collect(DISTINCT {
+                uid: ctcodelist_root.uid
+                ,order: ctterm_root__ct_codelist_root.order
+            }) as codelists"""
+            if self._is_repository_related_to_ct()
+            else ""
+        )
+
+        match_stmt += "WITH *, " + with_agg_study_count + with_agg_codelist
+
+        if where_stmt:
+            match_stmt += f" {where_stmt} "
+
+        return_stmt = f"""
+            RETURN
+                library
+                ,root
+                ,ver_rel
+                ,value
+                ,study_count
+                {ctterm_names_return}
+                {activity_root_return}
+                {activity_subgroups_root_return}
+                {unit_definition_return}
+                {indications_return}
+                {categories_return}
+                {subcategories_return}
+                {activities_return}
+                {activity_groups_return}
+                {activity_subgroups_return}
+                {template_type_return}
+                {instance_template_return}
+            """
+
+        if not for_audit_trail:
+            if not uid:
+                return_stmt += f" {self._sort_stmt(sort_by)} "
+
+                if with_pagination:
+                    return_stmt += " SKIP $page_number * $page_size LIMIT $page_size "
+        else:
+            if not uid:
+                return_stmt += " ORDER BY ver_rel.start_date DESC "
+
+                if with_pagination:
+                    return_stmt += " SKIP $page_number * $page_size LIMIT $page_size "
+            else:
+                return_stmt += " ORDER BY ver_rel.start_date DESC "
+
+        return match_stmt, return_stmt
+
+    def _ctterm_name_match_return_stmt(self):
+        match_stmt = """
+            MATCH (root)--(ctterm_root)-[ctterm_root__ct_codelist_root]-(ctcodelist_root:CTCodelistRoot)--(ct_catalogue:CTCatalogue)
+        """
+        ctterm_names_return = """,
+            {
+                ctterm_root_uid: ctterm_root.uid
+                ,catalogue: ct_catalogue.name
+                ,codelists: codelists
+            } as ctterm_name
+        """
+        return match_stmt, ctterm_names_return
+
+    def _activity_root_match_return_stmt(self):
+        match_stmt = """
+            OPTIONAL MATCH (root)-[:LATEST]-(:ActivityValue)-[:REPLACED_BY_ACTIVITY]-(replaced_by_activity:ActivityRoot)
+            CALL{
+                WITH *
+                MATCH (root)-[:LATEST]->(:ActivityValue)-[:HAS_GROUPING]->(:ActivityGrouping)-[:IN_SUBGROUP]->(activity_valid_group:ActivityValidGroup)
+                MATCH (activity_group_root:ActivityGroupRoot)-[:HAS_VERSION]->(:ActivityGroupValue)-[:IN_GROUP]-(activity_valid_group)-[:HAS_GROUP]-(:ActivitySubGroupValue)<-[:HAS_VERSION]-(activity_sub_group_root:ActivitySubGroupRoot)
+                RETURN collect(distinct {activity_group_uid: activity_group_root.uid, activity_subgroup_uid: activity_sub_group_root.uid}) as activity_groupings
+            }
+        """
+
+        activity_root_return = """,
+            {
+                activity_groupings: activity_groupings,
+                replaced_activity_uid: replaced_by_activity.uid
+            } as activity_root
+        """
+
+        return match_stmt, activity_root_return
+
+    def _activity_subgroup_root_match_return_stmt(self):
+        match_stmt = """
+            CALL{
+                WITH *
+                OPTIONAL MATCH (root)-[:LATEST]->(:ActivitySubGroupValue)-[:HAS_GROUP]->(:ActivityValidGroup)-[:IN_GROUP]->(:ActivityGroupValue)<-[:LATEST]-(activity_group:ActivityGroupRoot)
+                RETURN collect(DISTINCT activity_group.uid) as activity_groups_uids
+            }
+        """
+
+        activity_subgroups_root_return = """,
+            {
+                activity_groups_uids: activity_groups_uids
+            } as activity_subgroups_root
+        """
+
+        return match_stmt, activity_subgroups_root_return
+
+    def _unit_definition_match_return_stmt(self):
+        match_stmt = """
+            CALL{
+                WITH *
+                MATCH (root)-[:LATEST]->(:UnitDefinitionValue)-[:HAS_CT_UNIT]->(ctterm_root_unit_definition:CTTermRoot)
+                MATCH (ctterm_root_unit_definition)-->(:CTTermNameRoot)-[:LATEST_FINAL]->(ct_name_value:CTTermNameValue)
+                RETURN collect(DISTINCT {uid:ctterm_root_unit_definition.uid, name:ct_name_value.name }) as ct_units
+            }
+            CALL{
+                WITH *
+                MATCH (root)-[:LATEST]->(:UnitDefinitionValue)-[:HAS_UNIT_SUBSET]-(ct_unit_subset:CTTermRoot)-->(:CTTermNameRoot)-[:LATEST_FINAL]->(name_value:CTTermNameValue)
+                return collect(DISTINCT {uid:ct_unit_subset.uid, name:name_value.name})  as unit_subsets
+            }
+            OPTIONAL MATCH (root)-[:LATEST]->(:UnitDefinitionValue)-[:HAS_CT_DIMENSION]->(ct_dimension:CTTermRoot)
+            OPTIONAL MATCH (root)-[:LATEST]->(:UnitDefinitionValue)-[:HAS_UCUM_TERM]->(ucum_term_root:UCUMTermRoot)
+
+        """
+
+        unit_definition_return = """,
+            {
+                ct_units: ct_units,
+                unit_subsets: unit_subsets,
+                ct_dimension_uid: ct_dimension.uid,
+                ucum_term_uid: ucum_term_root.uid, 
+                bool_template: CASE WHEN "TemplateParameterTermValue" in LABELS(value) THEN TRUE else FALSE END 
+            } as unit_definition
+        """
+
+        return match_stmt, unit_definition_return
+
+    def _only_instances_with_studies(self):
+        return f"""
+            MATCH (root)-->(:SyntaxInstanceValue)<-[:{self.value_class.STUDY_SELECTION_REL_LABEL}]-(:StudySelection)<--(:StudyValue)<-[:HAS_VERSION|LATEST_DRAFT|LATEST_FINAL|LATEST_RETIRED]-(isr:StudyRoot)
+            WITH *, COUNT(isr) as cnt
+            WHERE cnt > 0
+        """
+
+    def _activity_subgroup_match_return_stmt(self):
+        match_stmt = """
+            OPTIONAL MATCH (root)-[:HAS_ACTIVITY_SUBGROUP]->(activity_subgroup_root:ActivitySubGroupRoot)-[:LATEST]->(activity_subgroup_value:ActivitySubGroupValue)
+        """
+
+        activity_subgroups_return = """,
+            collect(DISTINCT {
+                uid: activity_subgroup_root.uid,
+                name: activity_subgroup_value.name,
+                name_sentence_case: activity_subgroup_value.name_sentence_case
+            }) as activity_subgroups
+        """
+
+        return match_stmt, activity_subgroups_return
+
+    def _activity_group_match_return_stmt(self):
+        match_stmt = """
+            OPTIONAL MATCH (root)-[:HAS_ACTIVITY_GROUP]->(activity_group_root:ActivityGroupRoot)-[:LATEST]->(activity_group_value:ActivityGroupValue)
+        """
+
+        activity_groups_return = """,
+            collect(DISTINCT {
+                uid: activity_group_root.uid,
+                name: activity_group_value.name,
+                name_sentence_case: activity_group_value.name_sentence_case
+            }) as activity_groups
+        """
+
+        return match_stmt, activity_groups_return
+
+    def _activity_match_return_stmt(self):
+        match_stmt = """
+            OPTIONAL MATCH (root)-[:HAS_ACTIVITY]->(activity_root:ActivityRoot)-[:LATEST]->(activity_value:ActivityValue)
+        """
+
+        activities_return = """,
+            collect(DISTINCT {
+                uid: activity_root.uid,
+                name: activity_value.name,
+                name_sentence_case: activity_value.name_sentence_case
+            }) as activities
+        """
+
+        return match_stmt, activities_return
+
+    def _subcategory_match_return_stmt(self):
+        match_stmt = """
+            OPTIONAL MATCH (root)-[:HAS_SUBCATEGORY]->(subcategory_root:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(subcategory_ct_term_name_value:CTTermNameValue)
+            OPTIONAL MATCH (subcategory_root:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]->(:CTTermAttributesRoot)-[:LATEST]->(subcategory_ct_term_attributes_value:CTTermAttributesValue)
+        """
+
+        subcategories_return = """,
+            collect(DISTINCT {
+                term_uid: subcategory_root.uid,
+                name: subcategory_ct_term_name_value.name,
+                name_sentence_case: subcategory_ct_term_name_value.name_sentence_case,
+                code_submission_value: subcategory_ct_term_attributes_value.code_submission_value,
+                preferred_term: subcategory_ct_term_attributes_value.preferred_term
+            }) as subcategories
+        """
+
+        return match_stmt, subcategories_return
+
+    def _category_match_return_stmt(self):
+        match_stmt = """
+            OPTIONAL MATCH (root)-[:HAS_CATEGORY]->(category_root:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(category_ct_term_name_value:CTTermNameValue)
+            OPTIONAL MATCH (category_root:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]->(:CTTermAttributesRoot)-[:LATEST]->(category_ct_term_attributes_value:CTTermAttributesValue)
+        """
+
+        categories_return = """,
+            collect(DISTINCT {
+                term_uid: category_root.uid,
+                name: category_ct_term_name_value.name,
+                name_sentence_case: category_ct_term_name_value.name_sentence_case,
+                code_submission_value: category_ct_term_attributes_value.code_submission_value,
+                preferred_term: category_ct_term_attributes_value.preferred_term
+            }) as categories
+        """
+
+        return match_stmt, categories_return
+
+    def _instance_template_match_return_stmt(self):
+        if hasattr(self, "template_class"):
+            rel_type = (
+                "-[:CREATED_FROM]->"
+                if "SyntaxPreInstanceRoot"
+                in [
+                    ith_class.__label__ if hasattr(ith_class, "__label__") else None
+                    for ith_class in self.root_class.mro()
+                ]
+                else f"<-[:{self.root_class.TEMPLATE_REL_LABEL}]-"
+            )
+            match_stmt = f"""
+                CALL {{
+                    WITH root, ver_rel
+                    OPTIONAL MATCH (root){rel_type}(template_root)-[template_rel:HAS_VERSION]->(template_value)
+                    WHERE template_rel.status = "Final" AND datetime(template_rel.start_date) <= datetime(ver_rel.start_date)
+                    OPTIONAL MATCH (template_root)<-[:CONTAINS_SYNTAX_TEMPLATE]-(template_library:Library)
+                    RETURN template_root, template_value, template_library
+                    ORDER BY template_rel.start_date DESC
+                    LIMIT 1
+                }}
+                OPTIONAL MATCH (template_root)-[:HAS_TYPE]->(type_root:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(type_ct_term_name_value:CTTermNameValue)
+                OPTIONAL MATCH (type_root)-[:HAS_ATTRIBUTES_ROOT]->(:CTTermAttributesRoot)-[:LATEST]->(type_ct_term_attributes_value:CTTermAttributesValue)
+            """
+
+            instance_template_return = """,
+                {
+                    template_uid: template_root.uid,
+                    template_sequence_id: template_root.sequence_id,
+                    template_name: template_value.name,
+                    template_guidance_text: template_value.guidance_text,
+                    template_library_name: template_library.name,
+                    term_uid: type_root.uid,
+                    name: type_ct_term_name_value.name,
+                    name_sentence_case: type_ct_term_name_value.name_sentence_case,
+                    code_submission_value: type_ct_term_attributes_value.code_submission_value,
+                    preferred_term: type_ct_term_attributes_value.preferred_term
+                } as instance_template_return
+            """
+
+            return match_stmt, instance_template_return
+
+        return "", ", null as instance_template "
+
+    def _indication_match_return_stmt(self):
+        match_stmt = """
+            OPTIONAL MATCH (root)-[:HAS_INDICATION]->(indication_root:DictionaryTermRoot)-[:LATEST]-(indication_value:DictionaryTermValue)
+        """
+
+        indications_return = """,
+            collect(DISTINCT {
+                term_uid: indication_root.uid,
+                name: indication_value.name
+            }) as indications
+        """
+        return match_stmt, indications_return
+
+    def _template_type_match_return_stmt(self):
+        if hasattr(self.root_class, "has_type"):
+            match_stmt = """
+                OPTIONAL MATCH (root)-[:HAS_TYPE]->(type_root:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(type_ct_term_name_value:CTTermNameValue)
+                OPTIONAL MATCH (type_root)-[:HAS_ATTRIBUTES_ROOT]->(:CTTermAttributesRoot)-[:LATEST]->(type_ct_term_attributes_value:CTTermAttributesValue)
+            """
+
+            template_type_return = """,
+                {
+                    term_uid: type_root.uid,
+                    name: type_ct_term_name_value.name,
+                    name_sentence_case: type_ct_term_name_value.name_sentence_case,
+                    code_submission_value: type_ct_term_attributes_value.code_submission_value,
+                    preferred_term: type_ct_term_attributes_value.preferred_term
+                } as template_type
+            """
+        else:
+            match_stmt = """
+                OPTIONAL MATCH (root)-[:CREATED_FROM]->(template_root)-[:HAS_TYPE]->(type_root:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(type_ct_term_name_value:CTTermNameValue)
+                OPTIONAL MATCH (type_root)-[:HAS_ATTRIBUTES_ROOT]->(:CTTermAttributesRoot)-[:LATEST]->(type_ct_term_attributes_value:CTTermAttributesValue)
+                OPTIONAL MATCH (template_root)-[:LATEST]->(template_value)
+            """
+
+            template_type_return = """,
+                {
+                    term_uid: type_root.uid,
+                    name: type_ct_term_name_value.name,
+                    name_sentence_case: type_ct_term_name_value.name_sentence_case,
+                    code_submission_value: type_ct_term_attributes_value.code_submission_value,
+                    preferred_term: type_ct_term_attributes_value.preferred_term
+                } as template_type
+            """
+
+        return match_stmt, template_type_return

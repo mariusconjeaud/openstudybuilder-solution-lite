@@ -218,7 +218,7 @@ def get_available_model_versions_meta_data_from_api() -> json:
 
 
 def download_newer_data_model_versions_than(
-    last_available_versions: dict, to_directory: str
+    last_available_versions: dict, to_directory: str, library: str="CDISC"
 ):
     """
     Downloads the versions from the CDISC REST API where the version number is higher than the specified
@@ -228,6 +228,7 @@ def download_newer_data_model_versions_than(
     Args:
         last_available_versions (dict): Dictionary with last version number available for each catalogue. e.g. {"sdtm": "1.8", "cdashig": "1.1"}
         to_directory (str): Directory where to store the downloaded data
+        library (str): Library name to use in the DataModelImport object. Default is "CDISC"
     """
 
     available_versions_in_api = get_available_model_versions_meta_data_from_api()
@@ -244,7 +245,7 @@ def download_newer_data_model_versions_than(
             version_number = path.basename(href)
 
             data_model_import = DataModelImport(
-                catalogue=catalogue, version_number=version_number, user_initials="TMP"
+                library=library, catalogue=catalogue, version_number=version_number, user_initials="TMP"
             )
             if (catalogue not in last_available_versions) or (
                 catalogue in last_available_versions

@@ -79,10 +79,6 @@
                 {
                   "codelist_uid": "ct_codelist_root_endpoint",
                   "order": 1
-                },
-                {
-                  "codelist_uid": "editable_cr",
-                  "order": 1
                 }
               ],
               "sponsor_preferred_name": "term_value_name1",
@@ -210,10 +206,6 @@
                     {
                       "codelist_uid": "ct_codelist_root_endpoint",
                       "order": 1
-                    },
-                    {
-                      "codelist_uid": "editable_cr",
-                      "order": 1
                     }
                   ],
                   "sponsor_preferred_name": "term_value_name1",
@@ -334,10 +326,6 @@
               "codelists": [
                 {
                   "codelist_uid": "ct_codelist_root_endpoint",
-                  "order": 1
-                },
-                {
-                  "codelist_uid": "editable_cr",
                   "order": 1
                 }
               ],
@@ -460,10 +448,6 @@
                 {
                   "codelist_uid": "ct_codelist_root_endpoint",
                   "order": 1
-                },
-                {
-                  "codelist_uid": "editable_cr",
-                  "order": 1
                 }
               ],
               "sponsor_preferred_name": "term_value_name1",
@@ -565,7 +549,7 @@
           "colour_code": "colour_code_1",
           "number_of_subjects": 1,
           "start_date": "2022-08-08T07:26:43.017048",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "end_date": null,
           "status": null,
           "change_type": "Edit",
@@ -612,7 +596,7 @@
           "colour_code": "colour_code_1",
           "number_of_subjects": 1,
           "start_date": "2022-08-08T07:26:42.240473",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "end_date": "2022-08-08T07:26:43.017048",
           "status": null,
           "change_type": "Create",
@@ -683,10 +667,6 @@
               "codelists": [
                 {
                   "codelist_uid": "ct_codelist_root_endpoint",
-                  "order": 1
-                },
-                {
-                  "codelist_uid": "editable_cr",
                   "order": 1
                 }
               ],
@@ -791,10 +771,6 @@
               "codelists": [
                 {
                   "codelist_uid": "ct_codelist_root_endpoint",
-                  "order": 1
-                },
-                {
-                  "codelist_uid": "editable_cr",
                   "order": 1
                 }
               ],
@@ -1018,10 +994,6 @@
                 {
                   "codelist_uid": "ct_codelist_root_endpoint",
                   "order": 1
-                },
-                {
-                  "codelist_uid": "editable_cr",
-                  "order": 1
                 }
               ],
               "sponsor_preferred_name": "term_value_name1",
@@ -1129,10 +1101,6 @@
                 "codelists": [
                   {
                     "codelist_uid": "ct_codelist_root_endpoint",
-                    "order": 1
-                  },
-                  {
-                    "codelist_uid": "editable_cr",
                     "order": 1
                   }
                 ],
@@ -1290,10 +1258,6 @@
                   {
                     "codelist_uid": "ct_codelist_root_endpoint",
                     "order": 1
-                  },
-                  {
-                    "codelist_uid": "editable_cr",
-                    "order": 1
                   }
                 ],
                 "sponsor_preferred_name": "term_value_name1",
@@ -1353,10 +1317,6 @@
                 "codelists": [
                   {
                     "codelist_uid": "ct_codelist_root_endpoint",
-                    "order": 1
-                  },
-                  {
-                    "codelist_uid": "editable_cr",
                     "order": 1
                   }
                 ],
@@ -1511,10 +1471,6 @@
                   {
                     "codelist_uid": "ct_codelist_root_endpoint",
                     "order": 1
-                  },
-                  {
-                    "codelist_uid": "editable_cr",
-                    "order": 1
                   }
                 ],
                 "sponsor_preferred_name": "term_value_name1",
@@ -1584,7 +1540,7 @@
           }
         ],
         "start_date": "2022-07-19T08:03:40.392436",
-        "user_initials": "TEST_USER",
+        "user_initials": "unknown-user",
         "end_date": null,
         "status": null,
         "change_type": null,
@@ -1621,7 +1577,7 @@
           "colour_code": "colour_code_1",
           "number_of_subjects": 1,
           "start_date": "2022-08-08T07:54:40.076018",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "end_date": null,
           "status": null,
           "change_type": "Delete",
@@ -1668,7 +1624,7 @@
           "colour_code": "colour_code_1",
           "number_of_subjects": 1,
           "start_date": "2022-08-08T07:54:39.544924",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "end_date": "2022-08-08T07:54:40.076018",
           "status": null,
           "change_type": "Edit",
@@ -1715,7 +1671,7 @@
           "colour_code": "colour_code_1",
           "number_of_subjects": 1,
           "start_date": "2022-08-08T07:54:38.762710",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "end_date": "2022-08-08T07:54:39.544924",
           "status": null,
           "change_type": "Create",
@@ -1741,7 +1697,7 @@
           "colour_code": "colour_code_2",
           "number_of_subjects": 1,
           "start_date": "2022-08-08T07:54:40.052914",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "end_date": null,
           "status": null,
           "change_type": "Edit",
@@ -1787,7 +1743,7 @@
           "colour_code": "colour_code_2",
           "number_of_subjects": 1,
           "start_date": "2022-08-08T07:54:39.841331",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "end_date": "2022-08-08T07:54:40.052914",
           "status": null,
           "change_type": "Create",
@@ -1812,7 +1768,7 @@
           "colour_code": "colour_code_3",
           "number_of_subjects": 3,
           "start_date": "2022-08-08T07:54:40.514081",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "end_date": null,
           "status": null,
           "change_type": "Edit",
@@ -1858,7 +1814,7 @@
           "colour_code": "colour_code_3",
           "number_of_subjects": 3,
           "start_date": "2022-08-08T07:54:40.162217",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "end_date": "2022-08-08T07:54:40.514081",
           "status": null,
           "change_type": "Create",
@@ -1883,7 +1839,7 @@
           "colour_code": "colour_code_4",
           "number_of_subjects": 4,
           "start_date": "2022-08-08T07:54:40.534262",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "end_date": null,
           "status": null,
           "change_type": "Edit",
@@ -1929,7 +1885,7 @@
           "colour_code": "colour_code_4",
           "number_of_subjects": 4,
           "start_date": "2022-08-08T07:54:40.288606",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "end_date": "2022-08-08T07:54:40.534262",
           "status": null,
           "change_type": "Create",
@@ -1954,7 +1910,7 @@
           "colour_code": "colour_code_5",
           "number_of_subjects": 5,
           "start_date": "2022-08-08T07:54:40.551393",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "end_date": null,
           "status": null,
           "change_type": "Edit",
@@ -1998,7 +1954,7 @@
           "colour_code": "colour_code_5",
           "number_of_subjects": 5,
           "start_date": "2022-08-08T07:54:40.413824",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "end_date": "2022-08-08T07:54:40.551393",
           "status": null,
           "change_type": "Create",
@@ -2021,7 +1977,7 @@
           "colour_code": "colour_code_6",
           "number_of_subjects": 1,
           "start_date": "2022-08-08T07:54:40.691210",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "end_date": null,
           "status": null,
           "change_type": "Create",
@@ -2048,7 +2004,7 @@
           "colour_code": "colour_code_7",
           "number_of_subjects": 1,
           "start_date": "2022-08-08T07:54:40.940448",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "end_date": null,
           "status": null,
           "change_type": "Create",
@@ -2099,7 +2055,7 @@
         "branch_arm_roots": null,
         "arm_roots": null,
         "start_date": "2022-08-04T07:35:09.630201",
-        "user_initials": "TEST_USER",
+        "user_initials": "unknown-user",
         "end_date": null,
         "status": null,
         "change_type": null,
@@ -2135,7 +2091,7 @@
         "colour_code": "colour_code_7",
         "number_of_subjects": null,
         "start_date": "2022-08-22T06:42:26.133476",
-        "user_initials": "TEST_USER",
+        "user_initials": "unknown-user",
         "end_date": null,
         "status": null,
         "change_type": null,
@@ -2176,10 +2132,6 @@
                 "codelists": [
                   {
                     "codelist_uid": "ct_codelist_root_endpoint",
-                    "order": 1
-                  },
-                  {
-                    "codelist_uid": "editable_cr",
                     "order": 1
                   }
                 ],

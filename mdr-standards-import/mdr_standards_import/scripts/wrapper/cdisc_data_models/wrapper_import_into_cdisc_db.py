@@ -6,6 +6,9 @@ from mdr_standards_import.scripts.download_json_data_from_cdisc_api import (
 from mdr_standards_import.scripts.import_scripts.cdisc_data_models.import_json_data_into_cdisc_db import (
     import_data_model_json_data_into_cdisc_db,
 )
+from mdr_standards_import.scripts.import_scripts.cdisc_data_models.import_csv_data_into_cdisc_db import (
+    import_data_model_csv_data_into_cdisc_db,
+)
 from mdr_standards_import.scripts.utils import (
     get_cdisc_neo4j_driver,
     get_ordered_data_model_versions,
@@ -21,6 +24,7 @@ def wrapper_import_cdisc_data_models_into_cdisc_db(
     """
     Downloads the CDISC Standards Data Model versions from the CDISC REST API
     and calls the import step to transform the JSON files into the CDISC graph structure.
+    It also calls the import step to load the lab specifications data into the CDISC graph structure.
     """
     cdisc_neo4j_driver = get_cdisc_neo4j_driver()
 
@@ -40,13 +44,28 @@ def wrapper_import_cdisc_data_models_into_cdisc_db(
         for version_number in versions[catalogue]:
             print(f"==== Importing version {version_number}.")
 
-            import_data_model_json_data_into_cdisc_db(
-                catalogue=catalogue,
-                version_number=version_number,
-                data_directory=json_data_directory,
-                cdisc_import_neo4j_driver=cdisc_neo4j_driver,
-                cdisc_import_db_name=CDISC_IMPORT_DATABASE,
-                user_initials=user_initials,
-            )
+            if catalogue in ["FBDE"]:
+                import_data_model_csv_data_into_cdisc_db(
+                    library="Sponsor",
+                    catalogue=catalogue,
+                    version_number=version_number,
+                    data_directory=json_data_directory,
+                    cdisc_import_neo4j_driver=cdisc_neo4j_driver,
+                    cdisc_import_db_name=CDISC_IMPORT_DATABASE,
+                    user_initials=user_initials,
+                )
+            elif catalogue in ["FBDEIG"]:
+                # Already imported by above condition
+                pass
+            else:
+                import_data_model_json_data_into_cdisc_db(
+                    library="CDISC",
+                    catalogue=catalogue,
+                    version_number=version_number,
+                    data_directory=json_data_directory,
+                    cdisc_import_neo4j_driver=cdisc_neo4j_driver,
+                    cdisc_import_db_name=CDISC_IMPORT_DATABASE,
+                    user_initials=user_initials,
+                )
 
     cdisc_neo4j_driver.close()

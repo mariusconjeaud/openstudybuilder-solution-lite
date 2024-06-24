@@ -96,7 +96,7 @@
                 "status": "Draft",
                 "study_count": null,
                 "uid": "55236767-3834-42d8-923d-ba8aba8eed18",
-                "user_initials": "TEST_USER",
+                "user_initials": "unknown-user",
                 "version": "0.1"
             },
             "save": {
@@ -156,7 +156,7 @@
                 "status": "Final",
                 "study_count": null,
                 "uid": "facdc47d-cf95-465d-a4c8-fa4ec5a23c8b",
-                "user_initials": "TEST_USER",
+                "user_initials": "unknown-user",
                 "version": "1.0"
             }
         }

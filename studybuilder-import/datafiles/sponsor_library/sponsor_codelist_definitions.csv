@@ -1,4 +1,5 @@
 library,catalogue,legacy_codelist_id,legacy_codelist_name,new_codelist_name,template_parameter,submission_value,preferred_term,definition,extensible,synonyms,href
+Sponsor,SDTM CT,REPEATING_VISIT_FREQUENCY,Repeating Visit Frequency,Repeating Visit Frequency,Y,REPEATING_VISIT_FREQUENCY,Repeating Visit Frequency,Repeating frequency for repeating visits,Y,,
 Sponsor,SDTM CT,TRL_TM_REF,Trial Time Reference,Time Point Reference,Y,TIMEREF,Time Point Reference,"Time points that can act as a time reference, e.g. other time points will have their time reference to this time point.",Y,,
 Sponsor,SDTM CT,VIS_TYPE,VisitType,VisitType,Y,TIMELB,Time Point Label,"Label for a time point in the clinical study schedule, can be the same as the type of visit.",Y,,
 Sponsor,SDTM CT,UNIT_DIMENSION,Unit Dimension,Unit Dimension,N,UNITDIM,Unit Dimension,Unit Dimension act as a reference to a set of unit definitions where unit conversion is possible,Y,,

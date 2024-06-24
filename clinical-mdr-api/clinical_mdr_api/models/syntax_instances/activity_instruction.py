@@ -82,10 +82,12 @@ class ActivityInstruction(ActivityInstructionNameUid):
             name=capitalize_first_letter_if_template_parameter(
                 activity_instruction_ar.name,
                 activity_instruction_ar.template_name_plain,
+                activity_instruction_ar._template.parameter_terms,
             ),
             name_plain=capitalize_first_letter_if_template_parameter(
                 activity_instruction_ar.name_plain,
                 activity_instruction_ar.template_name_plain,
+                activity_instruction_ar._template.parameter_terms,
             ),
             start_date=activity_instruction_ar.item_metadata.start_date,
             end_date=activity_instruction_ar.item_metadata.end_date,

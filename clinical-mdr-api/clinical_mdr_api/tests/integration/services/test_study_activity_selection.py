@@ -26,7 +26,7 @@ class StudyActivitySelectionTestCase(unittest.TestCase):
         db.cypher_query(data_library.STARTUP_STUDY_ACTIVITY_CYPHER)
 
     def test_batch_operations(self):
-        service = StudyActivitySelectionService("test")
+        service = StudyActivitySelectionService()
         service.handle_batch_operations(
             "study_root",
             [

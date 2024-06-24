@@ -27,6 +27,12 @@ class CriteriaPreInstanceAR(PreInstanceAR):
 
     _subcategories: list[SimpleCTTermNameAndAttributes] | None = None
 
+    _type: SimpleCTTermNameAndAttributes | None = None
+
+    @property
+    def type(self) -> SimpleCTTermNameAndAttributes | None:
+        return self._type
+
     @property
     def indications(self) -> list[SimpleTermModel]:
         return self._indications
@@ -49,6 +55,7 @@ class CriteriaPreInstanceAR(PreInstanceAR):
         sequence_id: str,
         study_count: int = 0,
         guidance_text: str | None = None,
+        criteria_type: SimpleCTTermNameAndAttributes | None = None,
         indications: list[SimpleTermModel] | None = None,
         categories: list[SimpleCTTermNameAndAttributes] | None = None,
         sub_categories: list[SimpleCTTermNameAndAttributes] | None = None,
@@ -59,6 +66,7 @@ class CriteriaPreInstanceAR(PreInstanceAR):
             _item_metadata=item_metadata,
             _library=library,
             _template=template,
+            _type=criteria_type,
             guidance_text=guidance_text,
             _indications=indications,
             _categories=categories,
@@ -76,6 +84,7 @@ class CriteriaPreInstanceAR(PreInstanceAR):
         next_available_sequence_id_callback: Callable[[str], str | None] = (
             lambda _: None
         ),
+        criteria_type: SimpleCTTermNameAndAttributes | None = None,
         guidance_text: str | None = None,
         indications: list[SimpleTermModel] | None = None,
         categories: list[SimpleCTTermNameAndAttributes] | None = None,
@@ -93,6 +102,7 @@ class CriteriaPreInstanceAR(PreInstanceAR):
             _template=template,
             _item_metadata=item_metadata,
         )
+        ar._type = criteria_type
         ar._indications = indications
         ar._categories = categories
         ar._subcategories = sub_categories

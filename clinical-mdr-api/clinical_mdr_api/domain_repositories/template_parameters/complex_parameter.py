@@ -108,6 +108,9 @@ class ComplexTemplateParameterRepository:
             CALL {
                 WITH pt
                 MATCH (pt)<-[:HAS_PARENT_PARAMETER*0..]-(pt_parents)-[:HAS_PARAMETER_TERM]->(pr)-[:LATEST_FINAL]->(pv)
+                // Filter out the child template parameter values if theirs parent contains the same value.
+                // This ensures that the terms response will contain unique values
+                WHERE pt=pt_parents OR NOT ((pt_parents)-[:HAS_PARAMETER_TERM]->(pr) AND (pt)-[:HAS_PARAMETER_TERM]->(pr))
                 WITH  pr, pv,  pt_parents
                 ORDER BY pv.name ASC
                 RETURN collect({uid: pr.uid, name: pv.name, type: pt_parents.name}) AS terms

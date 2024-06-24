@@ -357,6 +357,39 @@ def test_update_endpoint_library_items_of_relationship_to_value_nodes(api_client
     assert response.status_code == 200
     assert res["endpoint"]["name"] == initial_endpoint_name
 
+    # check that the StudySelection can approve the current version
+    response = api_client.post(
+        f"/studies/{study.uid}/study-endpoints/{endpoint_uid}/accept-version",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["accepted_version"] is True
+    assert res["endpoint"]["endpoint_template"]["name"] == initial_endpoint_name
+
+    # get all objectives
+    response = api_client.get(
+        f"/studies/{study.uid}/study-endpoints/audit-trail/",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    counting_before_sync = len(res)
+
+    # check that the StudySelection's objective can be updated to the LATEST
+    response = api_client.post(
+        f"/studies/{study.uid}/study-endpoints/{endpoint_uid}/sync-latest-endpoint-version",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["endpoint"]["endpoint_template"]["name"] == text_value_2_name
+
+    # get all objectives
+    response = api_client.get(
+        f"/studies/{study.uid}/study-endpoints/audit-trail/",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert len(res) == counting_before_sync + 1
+
 
 def test_update_timeframe_library_items_of_relationship_to_value_nodes(api_client):
     """
@@ -410,3 +443,36 @@ def test_update_timeframe_library_items_of_relationship_to_value_nodes(api_clien
     res = response.json()
     assert response.status_code == 200
     assert res["timeframe"]["name"] == initial_timeframe_name
+
+    # check that the StudySelection can approve the current version
+    response = api_client.post(
+        f"/studies/{study.uid}/study-endpoints/{endpoint_uid}/accept-version",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["accepted_version"] is True
+    assert res["timeframe"]["timeframe_template"]["name"] == initial_timeframe_name
+
+    # get all objectives
+    response = api_client.get(
+        f"/studies/{study.uid}/study-endpoints/audit-trail/",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    counting_before_sync = len(res)
+
+    # check that the StudySelection's objective can be updated to the LATEST
+    response = api_client.post(
+        f"/studies/{study.uid}/study-endpoints/{endpoint_uid}/sync-latest-timeframe-version",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["timeframe"]["timeframe_template"]["name"] == text_value_2_name
+
+    # get all objectives
+    response = api_client.get(
+        f"/studies/{study.uid}/study-endpoints/audit-trail/",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert len(res) == counting_before_sync + 1

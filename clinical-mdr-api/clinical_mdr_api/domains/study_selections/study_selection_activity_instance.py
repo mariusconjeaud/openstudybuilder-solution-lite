@@ -1,5 +1,5 @@
 import datetime
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import Enum
 from typing import Callable
 
@@ -12,6 +12,7 @@ class StudyActivityInstanceState(Enum):
     MISSING_SELECTION = "Missing selection"
     REQUIRED = "Required"
     DEFAULTED = "Defaulted"
+    SUGGESTION = "Suggestion"
     NOT_REQUIRED = "Not required"
 
 
@@ -31,7 +32,6 @@ class StudySelectionActivityInstanceVO(study_selection_base.StudySelectionBaseVO
     activity_instance_name: str | None
     activity_instance_version: str | None
     show_activity_instance_in_protocol_flowchart: bool
-    order: int | None
     # Study selection Versioning
     start_date: datetime.datetime
     user_initials: str | None
@@ -57,7 +57,6 @@ class StudySelectionActivityInstanceVO(study_selection_base.StudySelectionBaseVO
         activity_instance_uid: str | None = None,
         activity_instance_name: str | None = None,
         activity_instance_version: str | None = None,
-        order: int | None = 0,
         show_activity_instance_in_protocol_flowchart: bool | None = False,
         study_selection_uid: str | None = None,
         start_date: datetime.datetime | None = None,
@@ -89,7 +88,6 @@ class StudySelectionActivityInstanceVO(study_selection_base.StudySelectionBaseVO
             activity_version=normalize_string(activity_version),
             show_activity_instance_in_protocol_flowchart=show_activity_instance_in_protocol_flowchart,
             start_date=start_date,
-            order=order,
             study_selection_uid=normalize_string(study_selection_uid),
             user_initials=normalize_string(user_initials),
             accepted_version=accepted_version,
@@ -117,6 +115,9 @@ class StudySelectionActivityInstanceVO(study_selection_base.StudySelectionBaseVO
                 f"There is no approved activity instance identified by provided uid ({self.activity_instance_uid})"
             )
 
+    def update_version(self, activity_instance_version: str):
+        return replace(self, activity_instance_version=activity_instance_version)
+
 
 @dataclass
 class StudySelectionActivityInstanceAR(study_selection_base.StudySelectionBaseAR):
@@ -134,7 +135,7 @@ class StudySelectionActivityInstanceAR(study_selection_base.StudySelectionBaseAR
     _object_type = "activity_instance"
     _object_uid_field = "activity_instance_uid"
     _object_name_field = "activity_instance_name"
-    _order_field_name = "order"
+    _order_field_name = ""
 
     def validate(self):
         objects = []

@@ -1,133 +1,161 @@
 <template>
-<simple-form-dialog
-  ref="form"
-  :title="title"
-  :help-items="helpItems"
-  @close="cancel"
-  @submit="submit"
-  :open="open">
-  <template v-slot:body>
-    <validation-observer ref="observer">
-      <v-row>
-        <v-col cols="6">
-          <validation-provider
-            v-slot="{ errors }"
-            rules="required">
+  <SimpleFormDialog
+    ref="form"
+    :title="title"
+    :help-items="helpItems"
+    :open="open"
+    @close="cancel"
+    @submit="submit"
+  >
+    <template #body>
+      <v-form ref="observer">
+        <v-row>
+          <v-col cols="6">
             <v-text-field
-              :label="$t('CrfExtensions.attr_name')"
               v-model="form.name"
-              dense
+              :label="$t('CrfExtensions.attr_name')"
+              density="compact"
               clearable
-              :error-messages="errors"/>
-          </validation-provider>
-        </v-col>
-        <v-col cols="6">
-          <validation-provider
-            v-slot="{ errors }"
-            rules="required">
+              :rules="[formRules.required]"
+            />
+          </v-col>
+          <v-col cols="6">
             <v-select
               v-model="form.data_type"
               :label="$t('CrfExtensions.data_type')"
               :items="dataTypes"
-              item-text="code_submission_value"
+              item-title="code_submission_value"
               item-value="code_submission_value"
-              :error-messages="errors"
-              dense
-              clearable/>
-          </validation-provider>
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col cols="6" v-if="parentType === crfTypes.NAMESPACE">
-          <v-select
-            v-model="form.compatible_types"
-            :label="$t('CrfExtensions.compatible_types')"
-            :items="compatibleTypes"
-            dense
-            multiple
-            clearable/>
-        </v-col>
-        <v-col cols="6">
-          <v-text-field
-            :label="$t('CrfExtensions.regex_expression')"
-            v-model="form.value_regex"
-            dense
-            clearable/>
-        </v-col>
-      </v-row>
-    </validation-observer>
-  </template>
-</simple-form-dialog>
+              :rules="[formRules.required]"
+              density="compact"
+              clearable
+            />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col v-if="parentType === crfTypes.NAMESPACE" cols="6">
+            <v-select
+              v-model="form.compatible_types"
+              :label="$t('CrfExtensions.compatible_types')"
+              :items="compatibleTypes"
+              density="compact"
+              multiple
+              clearable
+            />
+          </v-col>
+          <v-col cols="6">
+            <v-text-field
+              v-model="form.value_regex"
+              :label="$t('CrfExtensions.regex_expression')"
+              density="compact"
+              clearable
+            />
+          </v-col>
+        </v-row>
+      </v-form>
+    </template>
+  </SimpleFormDialog>
 </template>
 
 <script>
-import SimpleFormDialog from '@/components/tools/SimpleFormDialog'
+import SimpleFormDialog from '@/components/tools/SimpleFormDialog.vue'
 import crfs from '@/api/crfs'
 import terms from '@/api/controlledTerminology/terms'
 import crfTypes from '@/constants/crfTypes'
 
 export default {
   components: {
-    SimpleFormDialog
+    SimpleFormDialog,
   },
+  inject: ['formRules'],
   props: {
     open: Boolean,
-    editItem: Object,
-    parentUid: String,
-    parentType: String
+    editItem: {
+      type: Object,
+      default: null,
+    },
+    parentUid: {
+      type: String,
+      default: null,
+    },
+    parentType: {
+      type: String,
+      default: null,
+    },
   },
-  computed: {
-    title () {
-      return (this.editItem.uid)
-        ? this.$t('CrfExtensions.edit_attr')
-        : this.$t('CrfExtensions.new_attr')
-    }
-  },
-  created () {
-    this.crfTypes = crfTypes
-  },
-  data () {
+  emits: ['close'],
+  data() {
     return {
       form: {},
       helpItems: [],
       dataTypes: [],
-      compatibleTypes: ['FormDef', 'ItemGroupDef', 'ItemDef', 'ItemGroupRef', 'ItemRef']
+      compatibleTypes: [
+        'FormDef',
+        'ItemGroupDef',
+        'ItemDef',
+        'ItemGroupRef',
+        'ItemRef',
+      ],
     }
   },
-  mounted () {
-    terms.getAttributesByCodelist('dataType').then(resp => {
+  computed: {
+    title() {
+      return this.editItem.uid
+        ? this.$t('CrfExtensions.edit_attr')
+        : this.$t('CrfExtensions.new_attr')
+    },
+  },
+  watch: {
+    editItem(value) {
+      this.initForm(value)
+    },
+  },
+  created() {
+    this.crfTypes = crfTypes
+  },
+  mounted() {
+    terms.getAttributesByCodelist('dataType').then((resp) => {
       this.dataTypes = resp.data.items
     })
   },
   methods: {
-    async cancel () {
+    async cancel() {
       this.close()
     },
-    close () {
+    close() {
       this.$refs.observer.reset()
       this.$emit('close')
     },
-    async submit () {
+    async submit() {
       if (this.parentType === crfTypes.NAMESPACE) {
-        this.$set(this.form, 'vendor_namespace_uid', this.parentUid)
+        this.form.vendor_namespace_uid = this.parentUid
       } else {
-        this.$set(this.form, 'vendor_element_uid', this.parentUid)
+        this.form.vendor_element_uid = this.parentUid
       }
       if (this.editItem.uid) {
-        await crfs.editAttribute(this.editItem.uid, this.form)
+        await crfs.editAttribute(this.editItem.uid, this.form).then(
+          () => {
+            this.close()
+          },
+          () => {
+            this.$refs.form.working = false
+          }
+        )
       } else {
-        await crfs.createAttribute(this.form)
+        await crfs.createAttribute(this.form).then(
+          () => {
+            this.close()
+          },
+          () => {
+            this.$refs.form.working = false
+          }
+        )
       }
       this.close()
     },
-    initForm (item) {
+    initForm(item) {
       this.form = item
-    }
+    },
   },
-  watch: {
-    editItem (value) {
-      this.initForm(value)
-    }
-  }
 }
 </script>

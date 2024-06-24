@@ -291,3 +291,10 @@ Run it with pipenv, specifying the directory where the reports JSON files are st
 ```
 $ pipenv run import_reports "neodash_reports"
 ```
+
+# Update CT stats
+The script `update_ct_stats` loops through all CT packages to update the counters of added, modified and removed terms and codelists.
+This is intended to be run periodically to keep these counters up to date.
+
+The script reuses a fair bit of code from the API.
+A future improvement could be to build this update functionality directy into the API.

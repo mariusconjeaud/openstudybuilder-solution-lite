@@ -184,13 +184,17 @@ class ActivityInstanceService(ConceptGenericService[ActivityInstanceAR]):
                 adam_param_code=concept_edit_input.adam_param_code
                 or item.concept_vo.adam_param_code,
                 is_required_for_activity=concept_edit_input.is_required_for_activity
-                or item.concept_vo.is_required_for_activity,
+                if concept_edit_input.is_required_for_activity is not None
+                else item.concept_vo.is_required_for_activity,
                 is_default_selected_for_activity=concept_edit_input.is_default_selected_for_activity
-                or item.concept_vo.is_default_selected_for_activity,
+                if concept_edit_input.is_default_selected_for_activity is not None
+                else item.concept_vo.is_default_selected_for_activity,
                 is_data_sharing=concept_edit_input.is_data_sharing
-                or item.concept_vo.is_data_sharing,
+                if concept_edit_input.is_data_sharing is not None
+                else item.concept_vo.is_data_sharing,
                 is_legacy_usage=concept_edit_input.is_legacy_usage
-                or item.concept_vo.is_legacy_usage,
+                if concept_edit_input.is_legacy_usage is not None
+                else item.concept_vo.is_legacy_usage,
                 is_derived=concept_edit_input.is_derived or item.concept_vo.is_derived,
                 legacy_description=concept_edit_input.legacy_description
                 or item.concept_vo.legacy_description,
@@ -212,7 +216,7 @@ class ActivityInstanceService(ConceptGenericService[ActivityInstanceAR]):
         return item
 
     def get_activity_instance_overview(
-        self, activity_instance_uid: str
+        self, activity_instance_uid: str, version: str | None = None
     ) -> ActivityInstanceOverview:
         if not self.repository.exists_by("uid", activity_instance_uid, True):
             raise NotFoundException(
@@ -220,7 +224,7 @@ class ActivityInstanceService(ConceptGenericService[ActivityInstanceAR]):
             )
         overview = (
             self._repos.activity_instance_repository.get_activity_instance_overview(
-                uid=activity_instance_uid
+                uid=activity_instance_uid, version=version
             )
         )
         return ActivityInstanceOverview.from_repository_input(overview=overview)

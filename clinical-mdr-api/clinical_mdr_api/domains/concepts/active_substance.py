@@ -19,7 +19,7 @@ class ActiveSubstanceVO(ConceptVO):
     short_number: str | None
     long_number: str | None
     inn: str | None
-    prodex_id: str | None
+    external_id: str | None
     unii_term_uid: str | None
 
     @classmethod
@@ -29,7 +29,7 @@ class ActiveSubstanceVO(ConceptVO):
         short_number: str | None,
         long_number: str | None,
         inn: str | None,
-        prodex_id: str | None,
+        external_id: str | None,
         unii_term_uid: str | None,
     ) -> Self:
         active_substance_vo = cls(
@@ -37,7 +37,7 @@ class ActiveSubstanceVO(ConceptVO):
             short_number=short_number,
             long_number=long_number,
             inn=inn,
-            prodex_id=prodex_id,
+            external_id=external_id,
             unii_term_uid=unii_term_uid,
             name="",
             name_sentence_case="",
@@ -81,9 +81,9 @@ class ActiveSubstanceVO(ConceptVO):
         self.validate_uniqueness(
             lookup_callback=active_substance_uid_by_property_value_callback,
             uid=uid,
-            property_name="prodex_id",
-            value=self.prodex_id,
-            error_message=f"ActiveSubstance with prodex_id ({self.prodex_id}) already exists",
+            property_name="external_id",
+            value=self.external_id,
+            error_message=f"ActiveSubstance with external_id ({self.external_id}) already exists",
         )
 
         if self.unii_term_uid and not dictionary_term_exists_callback(
@@ -95,7 +95,7 @@ class ActiveSubstanceVO(ConceptVO):
 
 
 class ActiveSubstanceAR(ConceptARBase):
-    _prodex_id: str | None
+    _external_id: str | None
     _concept_vo: ActiveSubstanceVO
 
     @property

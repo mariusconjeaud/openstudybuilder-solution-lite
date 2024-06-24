@@ -161,7 +161,7 @@ class StudySelectionsConcurrencyTests(unittest.TestCase):
                 project_exists_callback=(lambda _: True),
                 study_title_exists_callback=(lambda _, study_number: False),
                 study_short_title_exists_callback=(lambda _, study_number: False),
-                study_number_exists_callback=(lambda _: False),
+                study_number_exists_callback=(lambda x, y: False),
             )
             self.studies_repository.save(study_ar)
 

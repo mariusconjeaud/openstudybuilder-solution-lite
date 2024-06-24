@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/bin/bash
 set -e
 if [ $# -lt 2 ]; then
 	cat 1>&2 <<- EOF
@@ -16,8 +16,17 @@ if [ -z "$NEO4J_MDR_AUTH_USER" ] || [ -z "$NEO4J_MDR_AUTH_PASSWORD" ] || [ -z "$
 	exit 2
 fi
 
+echo "- Checking for database alias"
+DBNAME=$(docker exec "$1" /var/lib/neo4j/bin/cypher-shell -d system -u "$NEO4J_MDR_AUTH_USER" -p "$NEO4J_MDR_AUTH_PASSWORD" -a "neo4j://localhost:$NEO4J_MDR_BOLT_PORT" "SHOW ALIASES FOR DATABASE YIELD * WHERE name=\"$2\" RETURN database" | tail -n 1 | tr -d '"')
+if [ -z "$DBNAME" ]
+then
+	DBNAME="$2"
+else
+	echo "$2 is an alias for database $DBNAME"
+fi
+
 echo "- List existing databases"
 docker exec "$1" /var/lib/neo4j/bin/cypher-shell -d system -u "$NEO4J_MDR_AUTH_USER" -p "$NEO4J_MDR_AUTH_PASSWORD" -a "neo4j://localhost:$NEO4J_MDR_BOLT_PORT" "SHOW DATABASES;"
 
 echo "- Perform backup"
-docker exec "$1" /var/lib/neo4j/bin/neo4j-admin database backup --to-path=/db_backup/ --type=FULL "$2"
+docker exec "$1" /var/lib/neo4j/bin/neo4j-admin database backup --to-path=/db_backup/ --type=FULL "$DBNAME"

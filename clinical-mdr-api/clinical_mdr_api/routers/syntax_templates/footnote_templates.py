@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from fastapi import APIRouter, Body, Depends, Path, Query, Request, Response
+from fastapi import APIRouter, Body, Path, Query, Request, Response
 from fastapi import status as fast_api_status
 from pydantic.types import Json
 
@@ -16,7 +16,7 @@ from clinical_mdr_api.models.syntax_templates.footnote_template import (
     FootnoteTemplateWithCount,
 )
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.oauth import get_current_user_id, rbac
+from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.syntax_pre_instances.footnote_pre_instances import (
@@ -153,9 +153,8 @@ def get_footnote_templates(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> CustomPage[models.FootnoteTemplate]:
-    results = Service(current_user_id).get_all(
+    results = Service().get_all(
         status=status,
         return_study_count=True,
         page_number=page_number,
@@ -188,7 +187,6 @@ def get_footnote_templates(
     },
 )
 def get_distinct_values_for_header(
-    current_user_id: str = Depends(get_current_user_id),
     status: LibraryItemStatus
     | None = Query(
         None,
@@ -212,7 +210,7 @@ def get_distinct_values_for_header(
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
 ):
-    return Service(current_user_id).get_distinct_values_for_header(
+    return Service().get_distinct_values_for_header(
         status=status,
         field_name=field_name,
         search_string=search_string,
@@ -246,9 +244,8 @@ def retrieve_audit_trail(
     ),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    results = Service(current_user_id).get_all(
+    results = Service().get_all(
         page_number=page_number,
         page_size=page_size,
         total_count=total_count,
@@ -278,9 +275,8 @@ def retrieve_audit_trail(
 )
 def get_footnote_template(
     uid: str = FootnoteTemplateUID,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    return Service(current_user_id).get_by_uid(uid=uid)
+    return Service().get_by_uid(uid=uid)
 
 
 @router.get(
@@ -364,9 +360,8 @@ The returned versions are ordered by `start_date` descending (newest entries fir
 def get_footnote_template_versions(
     request: Request,  # request is actually required by the allow_exports decorator
     uid: str = FootnoteTemplateUID,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    return Service(current_user_id).get_version_history(uid=uid)
+    return Service().get_version_history(uid=uid)
 
 
 @router.get(
@@ -396,9 +391,8 @@ def get_footnote_template_version(
         "The version number is specified in the following format: \\<major\\>.\\<minor\\> where \\<major\\> and \\<minor\\> are digits.\n"
         "E.g. '0.1', '0.2', '1.0', ...",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    return Service(current_user_id).get_specific_version(uid=uid, version=version)
+    return Service().get_specific_version(uid=uid, version=version)
 
 
 @router.get(
@@ -416,10 +410,8 @@ def get_footnote_template_version(
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_footnote_template_releases(
-    uid: str = FootnoteTemplateUID, current_user_id: str = Depends(get_current_user_id)
-):
-    return Service(current_user_id).get_releases(uid=uid, return_study_count=False)
+def get_footnote_template_releases(uid: str = FootnoteTemplateUID):
+    return Service().get_releases(uid=uid, return_study_count=False)
 
 
 @router.post(
@@ -460,14 +452,13 @@ def create_footnote_template(
     footnote_template: models.FootnoteTemplateCreateInput = Body(
         description="The footnote template that shall be created."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    return Service(current_user_id).create(footnote_template)
+    return Service().create(footnote_template)
 
 
 @router.patch(
     "/{uid}",
-    dependencies=[rbac.LIBRARY_WRITE],
+    dependencies=[rbac.LIBRARY_WRITE_OR_STUDY_WRITE],
     summary="Updates the footnote template identified by 'uid'.",
     description="""This request is only valid if the footnote template
 * is in 'Draft' status and
@@ -506,9 +497,8 @@ def edit(
     footnote_template: models.FootnoteTemplateEditInput = Body(
         description="The new content of the footnote template including the change description.",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    return Service(current_user_id).edit_draft(uid=uid, template=footnote_template)
+    return Service().edit_draft(uid=uid, template=footnote_template)
 
 
 @router.patch(
@@ -538,9 +528,8 @@ def patch_indexings(
     indexings: models.FootnoteTemplateEditIndexingsInput = Body(
         description="The lists of UIDs for the new indexings to be set, grouped by indexings to be updated.",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.FootnoteTemplate:
-    return Service(current_user_id).patch_indexings(uid=uid, indexings=indexings)
+    return Service().patch_indexings(uid=uid, indexings=indexings)
 
 
 @router.post(
@@ -582,11 +571,8 @@ def create_new_version(
     footnote_template: models.FootnoteTemplateEditInput = Body(
         description="The content of the footnote template for the new 'Draft' version including the change description.",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    return Service(current_user_id).create_new_version(
-        uid=uid, template=footnote_template
-    )
+    return Service().create_new_version(uid=uid, template=footnote_template)
 
 
 @router.post(
@@ -626,15 +612,14 @@ If the request succeeds:
 def approve(
     uid: str = FootnoteTemplateUID,
     cascade: bool = False,
-    current_user_id: str = Depends(get_current_user_id),
 ):
     """
     Approves footnote template. Fails with 409 if there is some footnote created
     from this template and cascade is false
     """
     if not cascade:
-        return Service(current_user_id).approve(uid=uid)
-    return Service(current_user_id).approve_cascade(uid=uid)
+        return Service().approve(uid=uid)
+    return Service().approve_cascade(uid=uid)
 
 
 @router.delete(
@@ -665,10 +650,8 @@ If the request succeeds:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def inactivate(
-    uid: str = FootnoteTemplateUID, current_user_id: str = Depends(get_current_user_id)
-):
-    return Service(current_user_id).inactivate_final(uid=uid)
+def inactivate(uid: str = FootnoteTemplateUID):
+    return Service().inactivate_final(uid=uid)
 
 
 @router.post(
@@ -699,10 +682,8 @@ If the request succeeds:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def reactivate(
-    uid: str = FootnoteTemplateUID, current_user_id: str = Depends(get_current_user_id)
-):
-    return Service(current_user_id).reactivate_retired(uid=uid)
+def reactivate(uid: str = FootnoteTemplateUID):
+    return Service().reactivate_retired(uid=uid)
 
 
 @router.delete(
@@ -734,10 +715,8 @@ def reactivate(
         500: _generic_descriptions.ERROR_500,
     },
 )
-def delete_footnote_template(
-    uid: str = FootnoteTemplateUID, current_user_id: str = Depends(get_current_user_id)
-):
-    Service(current_user_id).soft_delete(uid)
+def delete_footnote_template(uid: str = FootnoteTemplateUID):
+    Service().soft_delete(uid)
     return Response(status_code=fast_api_status.HTTP_204_NO_CONTENT)
 
 
@@ -765,9 +744,8 @@ In that case, the same parameter (with the same terms) is included multiple time
 )
 def get_parameters(
     uid: str = Path(None, description="The unique id of the footnote template."),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    return Service(current_user_id).get_parameters(uid=uid)
+    return Service().get_parameters(uid=uid)
 
 
 @router.post(
@@ -798,9 +776,8 @@ def pre_validate(
     footnote_template: models.FootnoteTemplateNameInput = Body(
         description="The content of the footnote template that shall be validated.",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    Service(current_user_id).validate_template_syntax(footnote_template.name)
+    Service().validate_template_syntax(footnote_template.name)
 
 
 @router.post(

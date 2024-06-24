@@ -109,6 +109,62 @@ class UnitDefinitionRepository(ConceptGenericRepository[UnitDefinitionAR]):
             )
         return filter_statements_to_return, filter_query_parameters
 
+    def _create_ar(
+        self,
+        root: VersionRoot,
+        library: Library,
+        relationship: VersionRelationship,
+        value: VersionValue,
+        **_kwargs,
+    ) -> UnitDefinitionAR:
+        ar_root = cast(UnitDefinitionRoot, root)
+        ar_value = cast(UnitDefinitionValue, value)
+
+        ct_units = []
+        for ct_unit in _kwargs["unit_definition"]["ct_units"]:
+            ct_term = CTTerm(
+                uid=ct_unit["uid"],
+                name=ct_unit["name"],
+            )
+            ct_units.append(ct_term)
+
+        unit_subsets = []
+        for unit_subset in _kwargs["unit_definition"]["unit_subsets"]:
+            unit_subset_term = CTTerm(
+                uid=unit_subset["uid"],
+                name=unit_subset["name"],
+            )
+            unit_subsets.append(unit_subset_term)
+        result = UnitDefinitionAR.from_repository_values(
+            library=LibraryVO.from_repository_values(
+                library_name=library.name, is_editable=library.is_editable
+            ),
+            uid=ar_root.uid,
+            item_metadata=self._library_item_metadata_vo_from_relation(relationship),
+            unit_definition_value=UnitDefinitionValueVO.from_repository_values(
+                name=ar_value.name,
+                definition=ar_value.definition,
+                si_unit=ar_value.si_unit,
+                display_unit=ar_value.display_unit,
+                master_unit=ar_value.master_unit,
+                convertible_unit=ar_value.convertible_unit,
+                us_conventional_unit=ar_value.convertible_unit,
+                molecular_weight_conv_expon=ar_value.molecular_weight_conv_expon,
+                legacy_code=ar_value.legacy_code,
+                conversion_factor_to_master=ar_value.conversion_factor_to_master,
+                order=ar_value.order,
+                comment=ar_value.comment,
+                ct_units=ct_units,
+                unit_subsets=unit_subsets,
+                unit_dimension_uid=_kwargs["unit_definition"]["ct_dimension_uid"],
+                ucum_uid=_kwargs["unit_definition"]["ucum_term_uid"],
+                ucum_name=None,
+                unit_dimension_name=None,
+                is_template_parameter=_kwargs["unit_definition"]["bool_template"],
+            ),
+        )
+        return result
+
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
         root: VersionRoot,

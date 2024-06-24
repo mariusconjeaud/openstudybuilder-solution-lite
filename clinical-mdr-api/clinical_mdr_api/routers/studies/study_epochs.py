@@ -1,13 +1,14 @@
+from datetime import date
 from typing import Any
 
-from fastapi import Body, Depends, Path, Query, Request, Response, status
+from fastapi import Body, Path, Query, Request, Response, status
 from pydantic.types import Json
 
 from clinical_mdr_api import config
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.study_selections import study_epoch
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.oauth import get_current_user_id, rbac
+from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.routers import study_router as router
@@ -110,9 +111,8 @@ def get_all(
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
     uid: str = studyUID,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> CustomPage[study_epoch.StudyEpoch]:
-    service = StudyEpochService(current_user_id)
+    service = StudyEpochService(study_uid=uid, study_value_version=study_value_version)
 
     all_items = service.get_all_epochs(
         study_uid=uid,
@@ -164,9 +164,8 @@ def get_distinct_values_for_header(
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
     uid: str = studyUID,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    service = StudyEpochService(author=current_user_id)
+    service = StudyEpochService(study_uid=uid, study_value_version=study_value_version)
     return service.get_distinct_values_for_header(
         study_uid=uid,
         field_name=field_name,
@@ -217,9 +216,8 @@ def get_study_epoch(
     uid: str = studyUID,
     study_epoch_uid: str = study_epoch_uid_description,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> study_epoch.StudyEpoch:
-    service = StudyEpochService(current_user_id)
+    service = StudyEpochService(study_uid=uid, study_value_version=study_value_version)
     return service.find_by_uid(
         uid=study_epoch_uid, study_uid=uid, study_value_version=study_value_version
     )
@@ -257,9 +255,8 @@ Possible errors:
 def get_study_epoch_audit_trail(
     uid: str = studyUID,
     study_epoch_uid: str = study_epoch_uid_description,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> list[study_epoch.StudyEpochVersion]:
-    service = StudyEpochService(current_user_id)
+    service = StudyEpochService(study_uid=uid)
     return service.audit_trail(study_uid=uid, epoch_uid=study_epoch_uid)
 
 
@@ -294,9 +291,8 @@ Possible errors:
 )
 def get_study_epochs_all_audit_trail(
     uid: str = studyUID,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> list[study_epoch.StudyEpochVersion]:
-    service = StudyEpochService(current_user_id)
+    service = StudyEpochService(study_uid=uid)
     return service.audit_trail_all_epochs(uid)
 
 
@@ -340,9 +336,8 @@ def post_new_epoch_create(
     selection: study_epoch.StudyEpochCreateInput = Body(
         description="Related parameters of the selection that shall be created."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> study_epoch.StudyEpoch:
-    service = StudyEpochService(current_user_id)
+    service = StudyEpochService(study_uid=uid)
     return service.create(study_uid=uid, study_epoch_input=selection)
 
 
@@ -367,9 +362,8 @@ def post_preview_epoch(
     selection: study_epoch.StudyEpochCreateInput = Body(
         description="Related parameters of the epoch that shall be created."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> study_epoch.StudyEpoch:
-    service = StudyEpochService(current_user_id)
+    service = StudyEpochService(study_uid=uid)
     return service.preview(study_uid=uid, study_epoch_input=selection)
 
 
@@ -409,9 +403,8 @@ Possible errors:
 def delete_study_epoch(
     uid: str = studyUID,
     study_epoch_uid: str = study_epoch_uid_description,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    service = StudyEpochService(author=current_user_id)
+    service = StudyEpochService(study_uid=uid)
 
     service.delete(study_uid=uid, study_epoch_uid=study_epoch_uid)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
@@ -464,9 +457,8 @@ def patch_reorder(
     uid: str = studyUID,
     study_epoch_uid: str = study_epoch_uid_description,
     new_order: int = 0,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> study_epoch.StudyEpoch:
-    service = StudyEpochService(current_user_id)
+    service = StudyEpochService(study_uid=uid)
     return service.reorder(
         study_epoch_uid=study_epoch_uid, study_uid=uid, new_order=new_order
     )
@@ -512,9 +504,8 @@ def patch_update_epoch(
     selection: study_epoch.StudyEpochEditInput = Body(
         description="Related parameters of the selection that shall be created."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> study_epoch.StudyEpoch:
-    service = StudyEpochService(current_user_id)
+    service = StudyEpochService(study_uid=uid)
     return service.edit(
         study_uid=uid, study_epoch_uid=study_epoch_uid, study_epoch_input=selection
     )
@@ -533,9 +524,14 @@ def patch_update_epoch(
     },
 )
 def get_all_configs(
-    current_user_id: str = Depends(get_current_user_id),
+    terms_at_specific_date: date = Query(
+        None,
+        description="""If specified, allowed configurations with specified date is returned.
+
+        This should be in date format YYYY-MM-DD""",
+    ),
 ) -> list[study_epoch.StudyEpoch]:
-    service = StudyEpochService(current_user_id)
+    service = StudyEpochService(terms_at_specific_date=terms_at_specific_date)
     return service.get_allowed_configs()
 
 
@@ -555,7 +551,8 @@ def get_all_configs(
     },
 )
 def get_all_consecutive_groups(
-    uid: str = studyUID, current_user_id: str = Depends(get_current_user_id)
+    uid: str = studyUID,
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> set[str]:
-    service = StudyVisitService(current_user_id)
+    service = StudyVisitService(study_uid=uid, study_value_version=study_value_version)
     return service.get_consecutive_groups(uid)

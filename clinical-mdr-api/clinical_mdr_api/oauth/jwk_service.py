@@ -53,11 +53,14 @@ class JWKService(KeySet):
                 iss = [iss]
             self.claims_options["iss"] = {"values": iss}
 
-        aud = self.audience
-        if aud:
+        if aud := self.audience:
             if isinstance(aud, str):
                 aud = [aud]
             self.claims_options["aud"] = {"values": aud}
+        else:
+            raise RuntimeError(
+                "OAuth application id not configured, set in OAUTH_API_APP_ID environment variable"
+            )
 
         log.info(
             "JWKService: required claims of access tokens are %s",

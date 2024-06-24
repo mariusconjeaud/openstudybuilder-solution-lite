@@ -1,10 +1,10 @@
 """CTCatalogue router."""
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Query
 
 from clinical_mdr_api import models
-from clinical_mdr_api.oauth import get_current_user_id, rbac
+from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.routers import _generic_descriptions
 from clinical_mdr_api.services.controlled_terminologies.ct_catalogue import (
     CTCatalogueService,
@@ -32,7 +32,6 @@ def get_catalogues(
         None,
         description="If specified, only catalogues from given library are returned.",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
     ct_catalogue_service = CTCatalogueService()
     return ct_catalogue_service.get_all_ct_catalogues(library_name=library)
@@ -78,11 +77,10 @@ def get_catalogues_changes(
         "If it is not passed, then the current datetime is assigned.",
         example="2023-03-27T00:00:00+00:00",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
     if end_datetime is None:
         end_datetime = datetime.now(timezone.utc)
-    ct_catalogue_service = CTCatalogueService(current_user_id)
+    ct_catalogue_service = CTCatalogueService()
     return ct_catalogue_service.get_ct_catalogues_changes(
         library_name=library_name,
         catalogue_name=catalogue_name,

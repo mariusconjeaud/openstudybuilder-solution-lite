@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import TypeVar
 
 from neomodel import db
@@ -18,6 +19,7 @@ from clinical_mdr_api.models import (
     CTCodelistNameAndAttributes,
 )
 from clinical_mdr_api.models.utils import GenericFilteringReturn
+from clinical_mdr_api.oauth.user import user
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._meta_repository import MetaRepository  # type: ignore
 from clinical_mdr_api.services._utils import is_library_editable, normalize_string
@@ -29,15 +31,17 @@ class CTCodelistService:
     _repos: MetaRepository
     user_initials: str | None
 
-    def __init__(self, user: str | None = None):
-        self.user_initials = user if user is not None else "TODO user initials"
+    def __init__(self):
+        self.user_initials = user().id()
         self._repos = MetaRepository(self.user_initials)
 
     def __del__(self):
         self._repos.close()
 
     def non_transactional_create(
-        self, codelist_input: CTCodelistCreateInput
+        self,
+        codelist_input: CTCodelistCreateInput,
+        start_date: datetime | None = None,
     ) -> CTCodelist:
         """
         Method creates CTCodelistAttributesAR and saves that object to the database.
@@ -83,6 +87,7 @@ class CTCodelistService:
                 ),
             ),
             library=library_vo,
+            start_date=start_date,
             generate_uid_callback=self._repos.ct_codelist_attribute_repository.generate_uid,
         )
 
@@ -101,6 +106,7 @@ class CTCodelistService:
                 codelist_exists_by_name_callback=self._repos.ct_codelist_name_repository.codelist_specific_exists_by_name,
             ),
             library=library_vo,
+            start_date=start_date,
             generate_uid_callback=lambda: ct_codelist_attributes_ar.uid,
         )
 
@@ -164,14 +170,19 @@ class CTCodelistService:
         )
 
     @db.transaction
-    def create(self, codelist_input: CTCodelistCreateInput) -> CTCodelist:
-        return self.non_transactional_create(codelist_input)
+    def create(
+        self,
+        codelist_input: CTCodelistCreateInput,
+        start_date: datetime | None = None,
+    ) -> CTCodelist:
+        return self.non_transactional_create(codelist_input, start_date=start_date)
 
     def get_all_codelists(
         self,
         catalogue_name: str | None = None,
         library: str | None = None,
         package: str | None = None,
+        is_sponsor: bool = False,
         sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
@@ -187,6 +198,7 @@ class CTCodelistService:
                 catalogue_name=catalogue_name,
                 library=library,
                 package=package,
+                is_sponsor=is_sponsor,
                 total_count=total_count,
                 sort_by=sort_by,
                 filter_by=filter_by,
@@ -271,6 +283,7 @@ class CTCodelistService:
         library: str | None,
         package: str | None,
         field_name: str,
+        is_sponsor: bool = False,
         search_string: str | None = "",
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
@@ -283,6 +296,7 @@ class CTCodelistService:
                 catalogue_name=catalogue_name,
                 library=library,
                 package=package,
+                is_sponsor=is_sponsor,
                 field_name=field_name,
                 search_string=search_string,
                 filter_by=filter_by,

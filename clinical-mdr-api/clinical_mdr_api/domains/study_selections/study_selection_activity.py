@@ -22,6 +22,7 @@ class StudySelectionActivityVO(study_selection_base.StudySelectionBaseVO):
     study_uid: str
     activity_uid: str
     activity_version: str | None
+    activity_library_name: str | None
     study_soa_group_uid: str
     soa_group_term_uid: str
     activity_order: int | None
@@ -44,6 +45,7 @@ class StudySelectionActivityVO(study_selection_base.StudySelectionBaseVO):
         study_soa_group_uid: str,
         soa_group_term_uid: str,
         user_initials: str,
+        activity_library_name: str | None = None,
         study_activity_subgroup_uid: str | None = None,
         activity_subgroup_uid: str | None = None,
         study_activity_group_uid: str | None = None,
@@ -69,6 +71,7 @@ class StudySelectionActivityVO(study_selection_base.StudySelectionBaseVO):
             study_uid=normalize_string(study_uid),
             activity_uid=normalize_string(activity_uid),
             activity_name=normalize_string(activity_name),
+            activity_library_name=normalize_string(activity_library_name),
             activity_version=activity_version,
             study_soa_group_uid=normalize_string(study_soa_group_uid),
             soa_group_term_uid=normalize_string(soa_group_term_uid),

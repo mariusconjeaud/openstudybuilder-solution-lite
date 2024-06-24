@@ -1,6 +1,6 @@
 from typing import Any
 
-from fastapi import Body, Depends, Path, Query
+from fastapi import Body, Path, Query
 from pydantic.types import Json
 from starlette import status
 from starlette.requests import Request
@@ -11,7 +11,7 @@ from clinical_mdr_api import config
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.study_selections import study_epoch
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.oauth import get_current_user_id, rbac
+from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.routers import study_router as router
@@ -117,9 +117,8 @@ def get_all(
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> CustomPage[clinical_mdr_api.models.StudyVisit]:
-    service = StudyVisitService(current_user_id)
+    service = StudyVisitService(study_uid=uid, study_value_version=study_value_version)
     results = service.get_all_visits(
         study_uid=uid,
         sort_by=sort_by,
@@ -153,7 +152,6 @@ def get_all(
 )
 def get_distinct_values_for_header(
     uid: str = studyUID,
-    current_user_id: str = Depends(get_current_user_id),
     field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
     search_string: str
     | None = Query("", description=_generic_descriptions.HEADER_SEARCH_STRING),
@@ -168,7 +166,9 @@ def get_distinct_values_for_header(
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ):
-    return StudyVisitService(current_user_id).get_distinct_values_for_header(
+    return StudyVisitService(
+        study_uid=uid, study_value_version=study_value_version
+    ).get_distinct_values_for_header(
         study_uid=uid,
         field_name=field_name,
         search_string=search_string,
@@ -194,9 +194,9 @@ def get_distinct_values_for_header(
     },
 )
 def get_all_references(
-    uid: str = studyUID, current_user_id: str = Depends(get_current_user_id)
+    uid: str = studyUID,
 ) -> list[clinical_mdr_api.models.study_selections.study_visit.StudyVisit]:
-    service = StudyVisitService(current_user_id)
+    service = StudyVisitService(study_uid=uid)
     return service.get_all_references(study_uid=uid)
 
 
@@ -276,11 +276,10 @@ Possible errors:
 def post_new_visit_create(
     uid: str = studyUID,
     selection: clinical_mdr_api.models.study_selections.study_visit.StudyVisitCreateInput = Body(
-        description="Related parameters of the visit that shalll be created."
+        description="Related parameters of the visit that shall be created."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> clinical_mdr_api.models.study_selections.study_visit.StudyVisit:
-    service = StudyVisitService(current_user_id)
+    service = StudyVisitService(study_uid=uid)
     return service.create(study_uid=uid, study_visit_input=selection)
 
 
@@ -303,11 +302,10 @@ def post_new_visit_create(
 def post_preview_visit(
     uid: str = studyUID,
     selection: clinical_mdr_api.models.study_selections.study_visit.StudyVisitCreateInput = Body(
-        description="Related parameters of the visit that shalll be created."
+        description="Related parameters of the visit that shall be created."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> clinical_mdr_api.models.study_selections.study_visit.StudyVisit:
-    service = StudyVisitService(current_user_id)
+    service = StudyVisitService(study_uid=uid)
     return service.preview(study_uid=uid, study_visit_input=selection)
 
 
@@ -326,7 +324,6 @@ def post_preview_visit(
     },
 )
 def get_allowed_visit_types_for_epoch_type(
-    current_user_id: str = Depends(get_current_user_id),
     epoch_type_uid: str = Query(
         ...,
         description="The unique uid of the epoch type for which the "
@@ -336,7 +333,7 @@ def get_allowed_visit_types_for_epoch_type(
 ) -> list[
     clinical_mdr_api.models.study_selections.study_visit.AllowedVisitTypesForEpochType
 ]:
-    service = StudyVisitService(current_user_id)
+    service = StudyVisitService(study_uid=uid)
     return service.get_valid_visit_types_for_epoch_type(
         epoch_type_uid=epoch_type_uid, study_uid=uid
     )
@@ -357,10 +354,9 @@ def get_allowed_visit_types_for_epoch_type(
     },
 )
 def get_allowed_time_references_for_given_study(
-    current_user_id: str = Depends(get_current_user_id),
     uid: str = Path(description="The unique uid of the study"),
 ) -> list[clinical_mdr_api.models.study_selections.study_visit.AllowedTimeReferences]:
-    service = StudyVisitService(current_user_id)
+    service = StudyVisitService(study_uid=uid)
     return service.get_allowed_time_references_for_study(study_uid=uid)
 
 
@@ -400,9 +396,8 @@ def patch_update_visit(
     selection: clinical_mdr_api.models.study_selections.study_visit.StudyVisitEditInput = Body(
         description="Related parameters of the selection that shall be created."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> study_epoch.StudyEpoch:
-    service = StudyVisitService(current_user_id)
+    service = StudyVisitService(study_uid=uid)
     return service.edit(
         study_uid=uid, study_visit_uid=study_visit_uid, study_visit_input=selection
     )
@@ -444,9 +439,8 @@ Possible errors:
 def delete_study_visit(
     uid: str = studyUID,
     study_visit_uid: str = study_visit_uid_description,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    service = StudyVisitService(current_user_id)
+    service = StudyVisitService(study_uid=uid)
     service.delete(study_uid=uid, study_visit_uid=study_visit_uid)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
@@ -486,9 +480,8 @@ Possible errors:
 def get_study_visit_audit_trail(
     uid: str = studyUID,
     study_visit_uid: str = study_visit_uid_description,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> list[clinical_mdr_api.models.study_selections.study_visit.StudyVisitVersion]:
-    service = StudyVisitService(current_user_id)
+    service = StudyVisitService(study_uid=uid)
     return service.audit_trail(study_visit_uid, study_uid=uid)
 
 
@@ -525,9 +518,8 @@ Possible errors:
 )
 def get_study_visits_all_audit_trail(
     uid: str = studyUID,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> list[clinical_mdr_api.models.study_selections.study_visit.StudyVisitVersion]:
-    service = StudyVisitService(current_user_id)
+    service = StudyVisitService(study_uid=uid)
     return service.audit_trail_all_visits(study_uid=uid)
 
 
@@ -568,10 +560,9 @@ Possible errors:
 def get_study_visit(
     uid: str = studyUID,
     study_visit_uid: str = study_visit_uid_description,
-    current_user_id: str = Depends(get_current_user_id),
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> clinical_mdr_api.models.study_selections.study_visit.StudyVisit:
-    service = StudyVisitService(current_user_id)
+    service = StudyVisitService(study_uid=uid, study_value_version=study_value_version)
     return service.find_by_uid(
         study_uid=uid, uid=study_visit_uid, study_value_version=study_value_version
     )
@@ -605,10 +596,9 @@ Possible errors:
 )
 def get_amount_of_visits_in_given_epoch(
     uid: str = studyUID,
-    current_user_id: str = Depends(get_current_user_id),
     study_epoch_uid: str = Path(..., description="The unique uid of the study epoch"),
 ) -> int:
-    service = StudyVisitService(current_user_id)
+    service = StudyVisitService(study_uid=uid)
     return service.get_amount_of_visits_in_given_epoch(
         study_uid=uid, study_epoch_uid=study_epoch_uid
     )
@@ -641,9 +631,9 @@ Possible errors:
     },
 )
 def get_global_anchor_visit(
-    uid: str = studyUID, current_user_id: str = Depends(get_current_user_id)
+    uid: str = studyUID,
 ) -> clinical_mdr_api.models.study_selections.study_visit.SimpleStudyVisit | None:
-    service = StudyVisitService(current_user_id)
+    service = StudyVisitService(study_uid=uid)
     return service.get_global_anchor_visit(study_uid=uid)
 
 
@@ -675,9 +665,9 @@ Possible errors:
     },
 )
 def get_anchor_visits_in_group_of_subvisits(
-    uid: str = studyUID, current_user_id: str = Depends(get_current_user_id)
+    uid: str = studyUID,
 ) -> list[clinical_mdr_api.models.study_selections.study_visit.SimpleStudyVisit]:
-    service = StudyVisitService(current_user_id)
+    service = StudyVisitService(study_uid=uid)
     return service.get_anchor_visits_in_a_group_of_subvisits(study_uid=uid)
 
 
@@ -709,9 +699,9 @@ Possible errors:
     },
 )
 def get_anchor_visits_for_special_visit(
-    uid: str = studyUID, current_user_id: str = Depends(get_current_user_id)
+    uid: str = studyUID,
 ) -> list[clinical_mdr_api.models.study_selections.study_visit.SimpleStudyVisit]:
-    service = StudyVisitService(current_user_id)
+    service = StudyVisitService(study_uid=uid)
     return service.get_anchor_for_special_visit(study_uid=uid)
 
 
@@ -748,9 +738,8 @@ def assign_consecutive_visit_group_for_selected_study_visit(
     consecutive_visit_group_input: clinical_mdr_api.models.study_selections.study_visit.VisitConsecutiveGroupInput = Body(
         description="The properties needed to assign visits into consecutive visit group",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> list[clinical_mdr_api.models.study_selections.study_visit.StudyVisit]:
-    service = StudyVisitService(current_user_id)
+    service = StudyVisitService(study_uid=uid)
     return service.assign_visit_consecutive_group(
         study_uid=uid,
         visits_to_assign=consecutive_visit_group_input.visits_to_assign,
@@ -789,9 +778,8 @@ def remove_consecutive_group(
         ...,
         description="The name of the consecutive-visit-group that is removed",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    service = StudyVisitService(current_user_id)
+    service = StudyVisitService(study_uid=uid)
     service.remove_visit_consecutive_group(
         study_uid=uid, consecutive_visit_group=consecutive_visit_group_name
     )

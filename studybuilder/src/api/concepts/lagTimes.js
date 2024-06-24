@@ -3,10 +3,10 @@ import repository from '../repository'
 const resource = 'concepts/lag-times'
 
 export default {
-  create (data) {
+  create(data) {
     const params = {
-      ...data
+      ...data,
     }
     return repository.post(resource, params)
-  }
+  },
 }

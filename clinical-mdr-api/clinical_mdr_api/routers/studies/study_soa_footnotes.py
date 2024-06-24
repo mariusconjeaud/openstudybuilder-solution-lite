@@ -1,6 +1,6 @@
 from typing import Any
 
-from fastapi import Body, Depends, Query, Response, status
+from fastapi import Body, Query, Response, status
 from pydantic import Json
 
 from clinical_mdr_api import config
@@ -13,7 +13,7 @@ from clinical_mdr_api.models.study_selections.study_soa_footnote import (
     StudySoAFootnoteVersion,
 )
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.oauth import get_current_user_id, rbac
+from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.routers import study_router as router
@@ -51,9 +51,8 @@ def get_all_study_soa_footnotes_from_all_studies(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> CustomPage[StudySoAFootnote]:
-    service = StudySoAFootnoteService(author=current_user_id)
+    service = StudySoAFootnoteService()
     all_footnotes = service.get_all(
         page_number=page_number,
         page_size=page_size,
@@ -106,9 +105,8 @@ def get_all_study_soa_footnotes(
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> CustomPage[StudySoAFootnote]:
-    service = StudySoAFootnoteService(author=current_user_id)
+    service = StudySoAFootnoteService()
     all_footnotes = service.get_all_by_study_uid(
         study_uid=uid,
         page_number=page_number,
@@ -145,7 +143,6 @@ def get_all_study_soa_footnotes(
 )
 def get_distinct_values_for_header(
     uid: str = utils.studyUID,
-    current_user_id: str = Depends(get_current_user_id),
     field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
     search_string: str
     | None = Query("", description=_generic_descriptions.HEADER_SEARCH_STRING),
@@ -160,7 +157,7 @@ def get_distinct_values_for_header(
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ):
-    service = StudySoAFootnoteService(author=current_user_id)
+    service = StudySoAFootnoteService()
     return service.get_distinct_values_for_header(
         study_uid=uid,
         field_name=field_name,
@@ -189,7 +186,6 @@ def get_distinct_values_for_header(
     },
 )
 def get_distinct_values_for_header_top_level(
-    current_user_id: str = Depends(get_current_user_id),
     field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
     search_string: str
     | None = Query("", description=_generic_descriptions.HEADER_SEARCH_STRING),
@@ -203,7 +199,7 @@ def get_distinct_values_for_header_top_level(
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
 ):
-    service = StudySoAFootnoteService(author=current_user_id)
+    service = StudySoAFootnoteService()
     return service.get_distinct_values_for_header(
         study_uid=None,
         field_name=field_name,
@@ -232,10 +228,9 @@ def get_study_soa_footnote(
     # pylint: disable=unused-argument
     uid: str = utils.studyUID,
     study_soa_footnote_uid: str = utils.study_soa_footnote_uid,
-    current_user_id: str = Depends(get_current_user_id),
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> StudySoAFootnote:
-    service = StudySoAFootnoteService(author=current_user_id)
+    service = StudySoAFootnoteService()
     return service.get_by_uid(
         uid=study_soa_footnote_uid, study_value_version=study_value_version
     )
@@ -268,9 +263,8 @@ def post_new_soa_footnote(
         "- If this parameter is set to `true`, a `StudySoAFootnoteCreateFootnoteInput` payload needs to be sent.\n"
         "- Otherwise, `StudySoAFootnoteCreateInput` payload should be sent, referencing an existing library footnote by uid.",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> StudySoAFootnote:
-    service = StudySoAFootnoteService(author=current_user_id)
+    service = StudySoAFootnoteService()
     return service.create(
         study_uid=uid,
         footnote_input=soa_footnote_input,
@@ -298,9 +292,8 @@ def post_new_soa_footnotes_batch_select(
     soa_footnote_input: list[StudySoAFootnoteCreateFootnoteInput] = Body(
         description="Related parameters of the footnote that shall be created."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> StudySoAFootnote:
-    service = StudySoAFootnoteService(author=current_user_id)
+    service = StudySoAFootnoteService()
     return service.batch_create(study_uid=uid, footnote_input=soa_footnote_input)
 
 
@@ -328,9 +321,8 @@ def edit_study_soa_footnote(
     soa_footnote_edit_input: StudySoAFootnoteEditInput = Body(
         description="Related parameters of the schedule that shall be edited."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    service = StudySoAFootnoteService(author=current_user_id)
+    service = StudySoAFootnoteService()
     return service.edit(
         study_uid=uid,
         study_soa_footnote_uid=study_soa_footnote_uid,
@@ -359,9 +351,8 @@ def edit_study_soa_footnote(
 def delete_study_soa_footnote(
     uid: str = utils.studyUID,
     study_soa_footnote_uid: str = utils.study_soa_footnote_uid,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    service = StudySoAFootnoteService(author=current_user_id)
+    service = StudySoAFootnoteService()
     service.delete(study_uid=uid, study_soa_footnote_uid=study_soa_footnote_uid)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
@@ -391,9 +382,8 @@ def preview_new_soa_footnote(
     footnote_input: StudySoAFootnoteCreateFootnoteInput = Body(
         description="Related parameters of the selection that shall be previewed."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> StudySoAFootnote:
-    service = StudySoAFootnoteService(author=current_user_id)
+    service = StudySoAFootnoteService()
     return service.preview_soa_footnote(
         study_uid=uid, footnote_create_input=footnote_input
     )
@@ -422,9 +412,8 @@ The following values should be returned for all study soa footnotes:
 def get_specific_soa_footnotes_audit_trail(
     uid: str = utils.studyUID,
     study_soa_footnote_uid: str = utils.study_soa_footnote_uid,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> list[StudySoAFootnoteVersion]:
-    service = StudySoAFootnoteService(author=current_user_id)
+    service = StudySoAFootnoteService()
     return service.audit_trail_specific_soa_footnote(
         study_uid=uid, study_soa_footnote_uid=study_soa_footnote_uid
     )
@@ -452,7 +441,96 @@ The following values should be returned for all study soa footnotes:
 )
 def get_all_soa_footnotes_audit_trail(
     uid: str = utils.studyUID,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> list[StudySoAFootnoteVersion]:
-    service = StudySoAFootnoteService(author=current_user_id)
+    service = StudySoAFootnoteService()
     return service.audit_trail_all_soa_footnotes(study_uid=uid)
+
+
+@router.post(
+    "/studies/{uid}/study-soa-footnotes/{study_soa_footnote_uid}/accept-version",
+    dependencies=[rbac.STUDY_WRITE],
+    summary="accept StudySoAFootnote selection's footnote version",
+    description="""
+    State before:
+     - Study must exist
+     - Study SoA Footnote selection must exist
+     - Footnote version selected for study footnote selection is not the latest available final version of the footnote.
+
+    Business logic:
+     - Update specified footnote study-selection, setting accepted version to show that update was refused by user.
+
+    State after:
+     - Study exists
+     - Study SoA Footnote selection exists
+     - Footnote version selected for study SoA Footnote selection is not changed.
+     - Added new entry in the audit trail for the update of the study-soa-footnote.""",
+    response_model=StudySoAFootnote,
+    response_model_exclude_unset=True,
+    status_code=200,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - There exist no selection between the study and study soa footnote",
+        },
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+@decorators.validate_if_study_is_not_locked("uid")
+def patch_footnote_accept_version(
+    uid: str = utils.studyUID,
+    study_soa_footnote_uid: str = utils.study_soa_footnote_uid,
+) -> StudySoAFootnote:
+    service = StudySoAFootnoteService()
+    return service.edit(
+        study_uid=uid,
+        study_soa_footnote_uid=study_soa_footnote_uid,
+        footnote_edit_input=StudySoAFootnoteEditInput(
+            footnote_uid=None, footnote_template_uid=None, referenced_items=None
+        ),
+        accept_version=True,
+    )
+
+
+@router.post(
+    "/studies/{uid}/study-soa-footnotes/{study_soa_footnote_uid}/sync-latest-version",
+    dependencies=[rbac.STUDY_WRITE],
+    summary="update to latest footnote version study selection",
+    description="""
+    State before:
+     - Study must exist
+     - Study SoA Footnote selection must exist
+     - Footnote version selected for study footnote selection is not the latest available final version of the footnote.
+
+    Business logic:
+     - Update specified footnote study-selection to latest footnote
+
+    State after:
+     - Study exists
+     - Study SoA Footnote selection exists
+     - Footnote version selected for study SoA Footnote selection is not changed.
+     - Added new entry in the audit trail for the update of the study-soa-footnote.""",
+    response_model=StudySoAFootnote,
+    response_model_exclude_unset=True,
+    status_code=200,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - There exist no selection between the study and study soa footnote",
+        },
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+@decorators.validate_if_study_is_not_locked("uid")
+def patch_footnote_sync_to_latest_footnote(
+    uid: str = utils.studyUID,
+    study_soa_footnote_uid: str = utils.study_soa_footnote_uid,
+) -> StudySoAFootnote:
+    service = StudySoAFootnoteService()
+    return service.edit(
+        study_uid=uid,
+        study_soa_footnote_uid=study_soa_footnote_uid,
+        footnote_edit_input=StudySoAFootnoteEditInput(
+            footnote_uid=None, footnote_template_uid=None, referenced_items=None
+        ),
+        sync_latest_version=True,
+    )

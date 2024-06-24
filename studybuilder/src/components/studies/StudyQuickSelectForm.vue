@@ -1,130 +1,127 @@
 <template>
-<v-card data-cy="form-body" color="white">
-  <v-card-title>
-    <span class="dialog-title">{{ $t('StudyQuickSelectForm.title') }}</span>
-  </v-card-title>
-  <v-card-text>
-    <validation-observer ref="observer">
-      <v-row class="mt-4">
-        <v-col cols="6">
-          <validation-provider
-            v-slot="{ errors }"
-            rules="atleastone:@study_id"
-            vid="study_id"
-            >
+  <v-card data-cy="form-body" color="white">
+    <v-card-title>
+      <span class="dialog-title">{{ $t('StudyQuickSelectForm.title') }}</span>
+    </v-card-title>
+    <v-card-text>
+      <v-form ref="observer">
+        <v-row class="mt-4">
+          <v-col cols="6">
             <v-autocomplete
               v-model="studyById"
               :label="$t('StudyQuickSelectForm.study_id')"
               :items="studiesWithId"
-              item-text="current_metadata.identification_metadata.study_id"
+              item-title="current_metadata.identification_metadata.study_id"
               return-object
-              :error-messages="errors"
+              :rules="[(value) => formRules.atleastone(value, studyByAcronym)]"
               clearable
-              @change="autoPopulateAcronym"
-              />
-          </validation-provider>
-        </v-col>
-        <v-col cols="6">
-          <validation-provider
-            v-slot="{ errors }"
-            rules="atleastone:@study_acronym"
-            vid="study_acronym"
-            >
+              @update:model-value="autoPopulateAcronym"
+            />
+          </v-col>
+          <v-col cols="6">
             <v-autocomplete
               v-model="studyByAcronym"
               :label="$t('StudyQuickSelectForm.study_acronym')"
               :items="studiesWithAcronym"
-              item-text="current_metadata.identification_metadata.study_acronym"
+              item-title="current_metadata.identification_metadata.study_acronym"
               return-object
-              :error-messages="errors"
+              :rules="[(value) => formRules.atleastone(value, studyById)]"
               clearable
-              @change="autoPopulateId"
-              />
-          </validation-provider>
-        </v-col>
-      </v-row>
-    </validation-observer>
-  </v-card-text>
-  <v-spacer v-if="expand || expand2" class="distance"></v-spacer>
-  <v-card-actions class="pb-4">
-    <v-spacer />
-    <v-btn
-      class="secondary-btn"
-      color="white"
-      elevation="3"
-      @click="close"
-      >
-      {{ $t('_global.cancel') }}
-    </v-btn>
-    <v-btn
-      color="secondary"
-      elevation="3"
-      @click="select"
-      >
-      {{ $t('_global.ok') }}
-    </v-btn>
-  </v-card-actions>
-</v-card>
+              @update:model-value="autoPopulateId"
+            />
+          </v-col>
+        </v-row>
+      </v-form>
+    </v-card-text>
+    <v-spacer v-if="expand || expand2" class="distance" />
+    <v-card-actions class="pb-4">
+      <v-spacer />
+      <v-btn class="secondary-btn" color="white" elevation="3" @click="close">
+        {{ $t('_global.cancel') }}
+      </v-btn>
+      <v-btn color="secondary" variant="flat" elevation="3" @click="select">
+        {{ $t('_global.ok') }}
+      </v-btn>
+    </v-card-actions>
+  </v-card>
 </template>
 
 <script>
 import study from '@/api/study'
+import { useStudiesGeneralStore } from '@/stores/studies-general'
 
 export default {
-  computed: {
-    studiesWithId () {
-      return this.studies.filter(study => study.current_metadata.identification_metadata.study_id !== null)
-    },
-    studiesWithAcronym () {
-      return this.studies.filter(study => study.current_metadata.identification_metadata.study_acronym !== null)
+  inject: ['formRules'],
+  emits: ['close', 'selected'],
+  setup() {
+    const studiesGeneralStore = useStudiesGeneralStore()
+    return {
+      studiesGeneralStore,
     }
   },
-  data () {
+  data() {
     return {
       studyById: null,
       studyByAcronym: null,
       studies: [],
       expand: false,
-      expand2: false
+      expand2: false,
     }
   },
+  computed: {
+    studiesWithId() {
+      return this.studies.filter(
+        (study) =>
+          study.current_metadata.identification_metadata.study_id !== null
+      )
+    },
+    studiesWithAcronym() {
+      return this.studies.filter(
+        (study) =>
+          study.current_metadata.identification_metadata.study_acronym !== null
+      )
+    },
+  },
+  mounted() {
+    const params = {
+      sort_by: { 'current_metadata.identification_metadata.study_id': true },
+      page_size: 0,
+    }
+    study.get(params).then((resp) => {
+      this.studies = resp.data.items
+    })
+  },
   methods: {
-    close () {
+    close() {
       this.$emit('close')
     },
-    async select () {
-      const valid = await this.$refs.observer.validate()
+    async select() {
+      const { valid } = await this.$refs.observer.validate()
       if (!valid) {
         return
       }
       if (this.studyById) {
-        this.$store.dispatch('studiesGeneral/selectStudy', { studyObj: this.studyById })
+        this.studiesGeneralStore.selectStudy(this.studyById)
       } else {
-        this.$store.dispatch('studiesGeneral/selectStudy', { studyObj: this.studyByAcronym })
+        this.studiesGeneralStore.selectStudy(this.studyByAcronym)
       }
       this.$emit('selected')
       this.close()
     },
-    autoPopulateAcronym (study) {
-      if (study && study.current_metadata.identification_metadata.study_acronym) {
+    autoPopulateAcronym(study) {
+      if (
+        study &&
+        study.current_metadata.identification_metadata.study_acronym
+      ) {
         this.studyByAcronym = study
       }
     },
-    autoPopulateId (study) {
+    autoPopulateId(study) {
       if (study && study.current_metadata.identification_metadata.study_id) {
         this.studyById = study
       }
-    }
+    },
   },
-  mounted () {
-    const params = {
-      sort_by: { 'current_metadata.identification_metadata.study_id': true },
-      page_size: 0
-    }
-    study.get(params).then(resp => {
-      this.studies = resp.data.items
-    })
-  }
 }
 </script>
 

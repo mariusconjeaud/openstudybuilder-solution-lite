@@ -707,6 +707,7 @@ class CypherQueryBuilder:
                                     elm=elm,
                                 )
                             elif (
+                                # pylint: disable=too-many-boolean-expressions
                                 self.return_model
                                 and issubclass(self.return_model, BaseModel)
                                 and self.return_model.__fields__.get(_alias)
@@ -714,6 +715,9 @@ class CypherQueryBuilder:
                                 is not None
                                 and self.return_model.__fields__.get(_alias).type_
                                 is str
+                                and not self.return_model.__fields__.get(
+                                    _alias
+                                ).field_info.extra.get("is_json", False)
                             ):
                                 _predicates.append(f"${_query_param_name} IN {_alias}")
                                 self.parameters[_query_param_name] = elm
@@ -767,12 +771,25 @@ class CypherQueryBuilder:
         _sort_clause = "ORDER BY "
         # Add list of order by statements parsed from dict
         # If necessary, replace key using return-model-to-cypher fieldname mapping
-        sort_by_statements = map(
-            lambda key: f"{self.format_filter_sort_keys(key) if self.format_filter_sort_keys else key} "
-            + ("ASC" if self.sort_by[key] else "DESC"),
-            self.sort_by.keys(),
-        )
-        sort_by_statements = list(sort_by_statements)
+        sort_by_statements = []
+        for key, value in self.sort_by.items():
+            if value:
+                sort_order = " ASC"
+            else:
+                sort_order = " DESC"
+            if self.format_filter_sort_keys:
+                key = self.format_filter_sort_keys(key)
+            if self.return_model and issubclass(self.return_model, BaseModel):
+                attr_desc = self.return_model.__fields__.get(key)
+                # if property is of string type we should apply toLower() to sort
+                if (
+                    attr_desc
+                    and attr_desc.type_ is str
+                    and attr_desc.sub_fields is None
+                ):
+                    key = f"toLower({key})"
+            sort_by_statements.append(key + sort_order)
+
         if (
             self.implicit_sort_by is not None
             and self.implicit_sort_by not in self.sort_by

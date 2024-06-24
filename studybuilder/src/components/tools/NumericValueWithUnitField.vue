@@ -1,45 +1,36 @@
 <template>
-<div>
-  <div class="d-flex">
-    <validation-observer ref="observer">
-      <validation-provider
-        v-slot="{ errors }"
-        rules=""
-        vid="manualInput"
-        >
-        <v-text-field
-          class="value-selector"
-          v-model="form.value"
-          :label="label"
-          type="number"
-          hide-details="auto"
-          :error-messages="errors"
-          :disabled="disabled"
-          dense
-          @input="update"
-          />
-      </validation-provider>
-    </validation-observer>
-    <v-select
-      class="unit-selector ml-4"
-      v-model="form.unit_definition_uid"
-      :label="$t('DurationField.label')"
-      :items="units"
-      item-text="name"
-      item-value="uid"
-      dense
-      clearable
-      hide-details="auto"
-      @input="update"
-      :disabled="disabled"
+  <div>
+    <div class="d-flex">
+      <v-text-field
+        v-model="form.value"
+        class="value-selector"
+        :label="label"
+        type="number"
+        hide-details="auto"
+        :disabled="disabled"
+        density="compact"
+        @input="update"
       />
-  </div>
-  <div class="mt-1 v-messages theme--light">
-    <div class="v-messages__message">
-      {{ hint }}
+      <v-select
+        v-model="form.unit_definition_uid"
+        class="unit-selector ml-4"
+        :label="$t('DurationField.label')"
+        :items="units"
+        item-title="name"
+        item-value="uid"
+        density="compact"
+        clearable
+        hide-details="auto"
+        :disabled="disabled"
+        @input="update"
+      />
+    </div>
+    <div class="mt-1 v-messages theme--light">
+      <div class="v-messages__message">
+        {{ hint }}
+      </div>
     </div>
   </div>
-</div>
 </template>
 
 <script>
@@ -47,40 +38,56 @@ import units from '@/api/units'
 
 export default {
   props: {
-    initialValue: Object,
-    label: String,
-    hint: String,
-    subset: String,
-    errors: Array,
+    initialValue: {
+      type: Object,
+      default: undefined,
+    },
+    label: {
+      type: String,
+      default: '',
+    },
+    hint: {
+      type: String,
+      default: '',
+    },
+    subset: {
+      type: String,
+      default: '',
+    },
+    errors: {
+      type: Array,
+      default: () => [],
+    },
     disabled: {
       type: Boolean,
-      default: false
-    }
+      default: false,
+    },
   },
-  data () {
+  emits: ['input'],
+  data() {
     return {
       form: {},
-      units: []
+      units: [],
     }
   },
-  methods: {
-    update (val) {
-      this.$emit('input', this.form)
-    }
+  watch: {
+    initialValue(val) {
+      this.form = { ...val }
+    },
   },
-  created () {
+  created() {
     this.form = { ...this.initialValue }
   },
-  mounted () {
-    units.getBySubset(this.subset).then(resp => {
+  mounted() {
+    units.getBySubset(this.subset).then((resp) => {
       this.units = resp.data.items
     })
   },
-  watch: {
-    initialValue (val) {
-      this.form = { ...val }
-    }
-  }
+  methods: {
+    update() {
+      this.$emit('input', this.form)
+    },
+  },
 }
 </script>
 

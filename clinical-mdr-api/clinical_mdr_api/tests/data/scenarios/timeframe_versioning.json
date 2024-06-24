@@ -68,7 +68,7 @@
                 "start_date": "2020-11-03T22:19:07+00:00",
                 "status": "Draft",
                 "uid": "55236767-3834-42d8-923d-ba8aba8eed18",
-                "user_initials": "TEST_USER",
+                "user_initials": "unknown-user",
                 "version": "0.1"
             },
             "save": {
@@ -115,7 +115,7 @@
                 "start_date": "2020-11-03T22:19:07+00:00",
                 "status": "Final",
                 "uid": "55236767-3834-42d8-923d-ba8aba8eed18",
-                "user_initials": "TEST_USER",
+                "user_initials": "unknown-user",
                 "version": "1.0"
             }
         }
@@ -203,7 +203,7 @@
                     "version": "1.0",
                     "change_description": "Approved version",
                     "study_count": 0,
-                    "user_initials": "TEST_USER",
+                    "user_initials": "unknown-user",
                     "possible_actions": [
                         "inactivate"
                     ],
@@ -213,7 +213,7 @@
                         "guidance_text": null,
                         "uid": "{ttuid}",
                         "sequence_id": "T1",
-                    "library_name": "Test library"
+                        "library_name": "Test library"
                     },
                     "parameter_terms": [],
                     "library": {
@@ -247,7 +247,7 @@
                     "version": "0.1",
                     "change_description": "Initial version",
                     "study_count": 0,
-                    "user_initials": "TEST_USER",
+                    "user_initials": "unknown-user",
                     "possible_actions": [
                         "approve",
                         "delete",
@@ -259,7 +259,7 @@
                         "guidance_text": null,
                         "uid": "{ttuid}",
                         "sequence_id": "T1",
-                    "library_name": "Test library"
+                        "library_name": "Test library"
                     },
                     "parameter_terms": [],
                     "library": {

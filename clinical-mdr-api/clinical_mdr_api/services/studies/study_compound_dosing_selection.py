@@ -11,6 +11,7 @@ from clinical_mdr_api.domains.study_selections.study_compound_dosing import (
     StudySelectionCompoundDosingsAR,
 )
 from clinical_mdr_api.models.utils import GenericFilteringReturn
+from clinical_mdr_api.oauth.user import user
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._meta_repository import MetaRepository
 from clinical_mdr_api.services._utils import (
@@ -44,9 +45,9 @@ class StudyCompoundDosingRelationMixin:
 class StudyCompoundDosingSelectionService(StudySelectionMixin):
     _repos: MetaRepository
 
-    def __init__(self, author: str):
+    def __init__(self):
         self._repos = MetaRepository()
-        self.author = author
+        self.author = user().id()
 
     def _transform_study_compound_model(
         self,
@@ -54,6 +55,7 @@ class StudyCompoundDosingSelectionService(StudySelectionMixin):
         study_compound_uid: str,
         compound_uid: str,
         compound_alias_uid: str,
+        terms_at_specific_datetime: datetime.datetime | None,
         study_value_version: str | None = None,
     ) -> models.StudySelectionCompound:
         (
@@ -66,7 +68,6 @@ class StudyCompoundDosingSelectionService(StudySelectionMixin):
         )
         compound = self._transform_compound_model(compound_uid)
         compound_alias = self._transform_compound_alias_model(compound_alias_uid)
-
         return models.StudySelectionCompound.from_study_compound_ar(
             study_uid=study_uid,
             selection=study_compound,
@@ -78,12 +79,14 @@ class StudyCompoundDosingSelectionService(StudySelectionMixin):
             find_numeric_value_by_uid=self._repos.numeric_value_with_unit_repository.find_by_uid_2,
             find_unit_by_uid=self._repos.unit_definition_repository.find_by_uid_2,
             study_value_version=study_value_version,
+            terms_at_specific_datetime=terms_at_specific_datetime,
         )
 
     def _transform_study_element_model(
         self,
         study_uid: str,
         study_element_uid: str,
+        terms_at_specific_datetime: datetime.datetime | None,
         study_value_version: str | None = None,
     ) -> models.StudySelectionElement:
         (
@@ -102,6 +105,7 @@ class StudyCompoundDosingSelectionService(StudySelectionMixin):
             get_term_element_type_by_element_subtype=self._repos.study_element_repository.get_element_type_term_uid_by_element_subtype_term_uid,
             find_all_study_time_units=self._repos.unit_definition_repository.find_all,
             study_value_version=study_value_version,
+            terms_at_specific_datetime=terms_at_specific_datetime,
         )
 
     def _transform_to_response_model(
@@ -109,6 +113,7 @@ class StudyCompoundDosingSelectionService(StudySelectionMixin):
         study_uid: str,
         compound_dosing_vo: StudyCompoundDosingVO,
         order: int,
+        terms_at_specific_datetime: datetime.datetime | None,
         study_value_version: str | None = None,
     ) -> models.StudyCompoundDosing:
         return models.StudyCompoundDosing.from_vo(
@@ -120,15 +125,18 @@ class StudyCompoundDosingSelectionService(StudySelectionMixin):
                 compound_dosing_vo.compound_uid,
                 compound_dosing_vo.compound_alias_uid,
                 study_value_version=study_value_version,
+                terms_at_specific_datetime=terms_at_specific_datetime,
             ),
             self._transform_study_element_model(
                 study_uid,
                 compound_dosing_vo.study_element_uid,
                 study_value_version=study_value_version,
+                terms_at_specific_datetime=terms_at_specific_datetime,
             ),
             find_simple_term_model_name_by_term_uid=self.find_term_name_by_uid,
             find_numeric_value_by_uid=self._repos.numeric_value_with_unit_repository.find_by_uid_2,
             find_unit_by_uid=self._repos.unit_definition_repository.find_by_uid_2,
+            terms_at_specific_datetime=terms_at_specific_datetime,
         )
 
     def _transform_all_to_response_model(
@@ -137,6 +145,10 @@ class StudyCompoundDosingSelectionService(StudySelectionMixin):
         study_value_version: str | None = None,
     ) -> list[models.StudyCompoundDosing]:
         result = []
+        terms_at_specific_datetime = self._extract_study_standards_effective_date(
+            study_uid=study_selection.study_uid,
+            study_value_version=study_value_version,
+        )
         for order, selection in enumerate(
             study_selection.study_compound_dosings_selection, start=1
         ):
@@ -146,6 +158,7 @@ class StudyCompoundDosingSelectionService(StudySelectionMixin):
                     selection,
                     order,
                     study_value_version=study_value_version,
+                    terms_at_specific_datetime=terms_at_specific_datetime,
                 )
             )
         return result
@@ -249,9 +262,12 @@ class StudyCompoundDosingSelectionService(StudySelectionMixin):
                         history.study_compound_uid,
                         history.compound_uid,
                         history.compound_alias_uid,
+                        terms_at_specific_datetime=None,
                     ),
                     self._transform_study_element_model(
-                        study_uid, history.study_element_uid
+                        study_uid,
+                        history.study_element_uid,
+                        terms_at_specific_datetime=None,
                     ),
                     find_simple_term_model_name_by_term_uid=self.find_term_name_by_uid,
                     find_numeric_value_by_uid=self._repos.numeric_value_with_unit_repository.find_by_uid_2,
@@ -345,8 +361,16 @@ class StudyCompoundDosingSelectionService(StudySelectionMixin):
             ) = selection_aggregate.get_specific_compound_dosing_selection(
                 new_selection.study_selection_uid
             )
+            terms_at_specific_datetime = self._extract_study_standards_effective_date(
+                study_uid=study_uid
+            )
             # add the objective and return
-            return self._transform_to_response_model(study_uid, new_selection, order)
+            return self._transform_to_response_model(
+                study_uid,
+                new_selection,
+                order,
+                terms_at_specific_datetime=terms_at_specific_datetime,
+            )
         finally:
             repos.close()
 
@@ -455,8 +479,16 @@ class StudyCompoundDosingSelectionService(StudySelectionMixin):
             ) = selection_aggregate.get_specific_compound_dosing_selection(
                 study_selection_uid
             )
+            terms_at_specific_datetime = self._extract_study_standards_effective_date(
+                study_uid=study_uid
+            )
 
             # add the compound dosing and return
-            return self._transform_to_response_model(study_uid, new_selection, order)
+            return self._transform_to_response_model(
+                study_uid,
+                new_selection,
+                order,
+                terms_at_specific_datetime=terms_at_specific_datetime,
+            )
         finally:
             repos.close()

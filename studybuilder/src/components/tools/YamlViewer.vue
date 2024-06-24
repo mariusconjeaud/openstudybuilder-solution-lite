@@ -1,33 +1,34 @@
 <template>
-<div>
-  <div class="d-flex align-end mb-4">
-    <v-text-field
-      v-model="search"
-      :label="$t('YamlViewer.search_content')"
-      append-icon="mdi-magnify"
-      hide-details
-      clearable
-      class="search-input mr-6"
-      dense
-      ></v-text-field>
-    <v-switch
-      :label="$t('YamlViewer.expand_all')"
-      @change="toggleTreeview"
-      hide-details
-      class="mr-auto"
+  <div>
+    <div class="d-flex align-end mb-4">
+      <v-text-field
+        v-model="search"
+        :label="$t('YamlViewer.search_content')"
+        append-icon="mdi-magnify"
+        hide-details
+        clearable
+        class="search-input mr-6"
+        density="compact"
       />
-  </div>
+      <v-switch
+        :label="$t('YamlViewer.expand_all')"
+        hide-details
+        class="mr-auto"
+        color="primary"
+        @change="toggleTreeview"
+      />
+    </div>
 
-  <v-treeview
-    ref="tree"
-    :items="yamlTree"
-    :search="search"
-    dense
-    open-on-click
-    transition
-    :open-all="expanded"
+    <v-treeview
+      ref="tree"
+      :items="yamlTree"
+      :search="search"
+      density="compact"
+      open-on-click
+      transition
+      :open-all="expanded"
     />
-</div>
+  </div>
 </template>
 
 <script>
@@ -35,24 +36,42 @@ import YAML from 'yaml'
 
 export default {
   props: {
-    content: String
+    content: {
+      type: String,
+      default: '',
+    },
   },
-  data () {
+  data() {
     return {
       expanded: false,
       index: 0,
       search: null,
-      yamlTree: null
+      yamlTree: null,
     }
   },
+  watch: {
+    content: {
+      handler(value) {
+        if (value) {
+          const parsed = YAML.parse(value)
+          this.renderTreeView(parsed)
+        }
+      },
+      immediate: true,
+    },
+  },
   methods: {
-    renderTreeView (obj) {
+    renderTreeView(obj) {
       const retValue = []
 
       for (const key in obj) {
         this.index += 1
         if (typeof obj[key] === 'object') {
-          retValue.push({ id: this.index, name: key, children: this.renderTreeView(obj[key]) })
+          retValue.push({
+            id: this.index,
+            name: key,
+            children: this.renderTreeView(obj[key]),
+          })
         } else {
           if (!isNaN(key)) {
             retValue.push({ id: this.index, name: obj[key] })
@@ -61,7 +80,11 @@ export default {
             if (typeof obj[key] === 'boolean') {
               value = !obj[key] ? 'no' : 'yes'
             }
-            retValue.push({ id: this.index, name: key, children: [{ id: this.index + 1, name: value }] })
+            retValue.push({
+              id: this.index,
+              name: key,
+              children: [{ id: this.index + 1, name: value }],
+            })
             this.index += 1
           }
         }
@@ -69,22 +92,11 @@ export default {
       this.yamlTree = retValue
       return retValue
     },
-    toggleTreeview () {
+    toggleTreeview() {
       this.expanded = !this.expanded
       this.$refs.tree.updateAll(this.expanded)
-    }
+    },
   },
-  watch: {
-    content: {
-      handler (value) {
-        if (value) {
-          const parsed = YAML.parse(value)
-          this.renderTreeView(parsed)
-        }
-      },
-      immediate: true
-    }
-  }
 }
 </script>
 

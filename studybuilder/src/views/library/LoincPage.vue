@@ -1,15 +1,15 @@
 <template>
-<div>
-  <UnderConstruction />
-</div>
+  <div>
+    <UnderConstruction />
+  </div>
 </template>
 
 <script>
-import UnderConstruction from '@/components/layout/UnderConstruction'
+import UnderConstruction from '@/components/layout/UnderConstruction.vue'
 
 export default {
   components: {
-    UnderConstruction
-  }
+    UnderConstruction,
+  },
 }
 </script>

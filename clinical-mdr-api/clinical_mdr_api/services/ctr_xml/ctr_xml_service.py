@@ -29,7 +29,6 @@ from clinical_mdr_api.models.study_selections.study import (
     StudyPopulationJsonModel,
     StudyVersionMetadataJsonModel,
 )
-from clinical_mdr_api.oauth import get_current_user_id
 from clinical_mdr_api.services.concepts.odms.odm_forms import OdmFormService
 from clinical_mdr_api.services.concepts.odms.odm_item_groups import OdmItemGroupService
 from clinical_mdr_api.services.concepts.odms.odm_items import OdmItemService
@@ -75,9 +74,7 @@ class ODMBuilder:
 
     @cached_property
     def project(self) -> Project:
-        project = ProjectService(user=get_current_user_id()).get_by_study_uid(
-            self.study_uid
-        )
+        project = ProjectService().get_by_study_uid(self.study_uid)
         if not project:
             raise BusinessLogicException("Missing study project")
         return project
@@ -92,7 +89,7 @@ class ODMBuilder:
             StudyComponentEnum.STUDY_POPULATION,
             StudyComponentEnum.STUDY_INTERVENTION,
         ]
-        study = StudyService(user=get_current_user_id()).get_by_uid(
+        study = StudyService().get_by_uid(
             uid=self.study_uid, include_sections=include_sections
         )
         if study.current_metadata is None:
@@ -101,7 +98,7 @@ class ODMBuilder:
 
     @cached_property
     def study_visits(self) -> list[StudyVisit]:
-        result = StudyVisitService(author=get_current_user_id()).get_all_visits(
+        result = StudyVisitService(study_uid=self.study_uid).get_all_visits(
             self.study_uid
         )
         return result.items
@@ -225,7 +222,7 @@ class ODMBuilder:
     @cached_property
     def odm_forms(self) -> list[OdmForm]:
         # TODO: add filtering by StudyUID when it gets implemented in database schema
-        result = OdmFormService(user=get_current_user_id()).get_all_concepts()
+        result = OdmFormService().get_all_concepts()
         # noinspection PyTypeChecker
         return result.items
 
@@ -269,7 +266,7 @@ class ODMBuilder:
         uids = [
             item_group.uid for form in self.odm_forms for item_group in form.item_groups
         ]
-        result = OdmItemGroupService(user=get_current_user_id()).get_all_concepts(
+        result = OdmItemGroupService().get_all_concepts(
             filter_by={"uid": {"v": uids, "op": "eq"}}
         )
         # noinspection PyTypeChecker
@@ -320,7 +317,7 @@ class ODMBuilder:
         uids = [
             item.uid for item_group in self.odm_item_groups for item in item_group.items
         ]
-        result = OdmItemService(user=get_current_user_id()).get_all_concepts(
+        result = OdmItemService().get_all_concepts(
             filter_by={"uid": {"v": uids, "op": "eq"}}
         )
         # noinspection PyTypeChecker
@@ -351,9 +348,7 @@ class ODMBuilder:
     @cached_property
     def ct_codelist_attributes(self) -> list[CTCodelistAttributes]:
         uids = [item.codelist.uid for item in self.odm_items if item.codelist]
-        result = CTCodelistAttributesService(
-            user=get_current_user_id()
-        ).get_all_ct_codelists(
+        result = CTCodelistAttributesService().get_all_ct_codelists(
             catalogue_name=None,
             library=None,
             package=None,

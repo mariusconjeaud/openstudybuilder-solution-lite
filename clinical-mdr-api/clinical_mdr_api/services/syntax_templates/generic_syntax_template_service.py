@@ -64,6 +64,8 @@ class GenericSyntaxTemplateService(GenericSyntaxService[_AggregateRootType], abc
     def create(self, template: BaseModel) -> BaseModel:
         # This function is not decorated with db.transaction as internal transactions
         # are handled manually by "with" statement.
+        self.authorize_user_defined_syntax_write(template.library_name)
+
         try:
             # Transaction that is performing initial save
             with db.transaction:
@@ -77,7 +79,7 @@ class GenericSyntaxTemplateService(GenericSyntaxService[_AggregateRootType], abc
                 if existing_template := self.repository.get_all(filter_by=filter_by)[0]:
                     if existing_template[0].library.name == "User Defined":
                         return self._transform_aggregate_root_to_pydantic_model(
-                            existing_template
+                            existing_template[0]
                         )
 
                     raise exceptions.ValidationException(
@@ -146,6 +148,9 @@ class GenericSyntaxTemplateService(GenericSyntaxService[_AggregateRootType], abc
     def approve_cascade(self, uid: str) -> BaseModel:
         try:
             item = self.repository.find_by_uid(uid, for_update=True)
+
+            self.authorize_user_defined_syntax_write(item.library.name)
+
             item.approve(author=self.user_initials)
             self.repository.save(item)
 
@@ -268,6 +273,8 @@ class GenericSyntaxTemplateService(GenericSyntaxService[_AggregateRootType], abc
             item = self.repository.find_by_uid(
                 uid, for_update=True, return_study_count=True
             )
+
+            self.authorize_user_defined_syntax_write(item.library.name)
 
             if (
                 self.repository.check_exists_by_name_in_library(

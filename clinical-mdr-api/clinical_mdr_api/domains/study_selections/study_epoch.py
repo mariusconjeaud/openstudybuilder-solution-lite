@@ -35,9 +35,9 @@ class StudyEpochVO:
     start_rule: str
     end_rule: str
 
-    epoch: StudyEpochEpoch
-    subtype: StudyEpochSubType
-    epoch_type: StudyEpochType
+    epoch: EpochNamedTuple
+    subtype: EpochSubtypeNamedTuple
+    epoch_type: EpochTypeNamedTuple
     description: str
 
     order: int
@@ -70,9 +70,9 @@ class StudyEpochVO:
         start_rule: str,
         end_rule: str,
         description: str,
-        epoch: StudyEpochEpoch,
-        subtype: StudyEpochSubType,
-        epoch_type: StudyEpochType,
+        epoch: EpochNamedTuple,
+        subtype: EpochSubtypeNamedTuple,
+        epoch_type: EpochTypeNamedTuple,
         order: int,
         change_description: str,
         color_hash: str | None,
@@ -281,6 +281,8 @@ class TimelineAR:
                 visit.set_order_and_number(
                     UNSCHEDULED_VISIT_NUMBER, UNSCHEDULED_VISIT_NUMBER
                 )
+            elif visit.visit_class == VisitClass.MANUALLY_DEFINED_VISIT:
+                visit.set_order_and_number(order, visit.visit_number)
             elif visit.visit_class == VisitClass.SPECIAL_VISIT:
                 anchor_for_special_vis = special_visit_anchors[
                     visit.visit_sublabel_reference
@@ -304,9 +306,9 @@ class TimelineAR:
                     amount_of_subvisits_for_visit.get(visit.visit_sublabel_reference, 0)
                     + 1
                 )
-            else:
+            elif visit.visit_class != VisitClass.MANUALLY_DEFINED_VISIT:
                 last_visit_num += 1
-                order += 1
+            order += 1
 
         for order, visit in enumerate(ordered_visits):
             if (

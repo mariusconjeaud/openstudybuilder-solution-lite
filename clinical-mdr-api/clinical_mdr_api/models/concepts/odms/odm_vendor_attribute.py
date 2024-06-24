@@ -27,7 +27,7 @@ from clinical_mdr_api.models.validators import (
 
 
 class OdmVendorAttribute(ConceptModel):
-    compatible_types: list[str]
+    compatible_types: list[str] = Field(..., is_json=True)
     data_type: str | None = Field(None, nullable=True)
     value_regex: str | None = Field(None, nullable=True)
     vendor_namespace: OdmVendorNamespaceSimpleModel | None = Field(None, nullable=True)

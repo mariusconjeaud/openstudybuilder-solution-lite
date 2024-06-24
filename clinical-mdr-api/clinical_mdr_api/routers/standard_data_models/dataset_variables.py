@@ -1,7 +1,7 @@
 """dataset variables router."""
 from typing import Any
 
-from fastapi import APIRouter, Depends, Path, Query
+from fastapi import APIRouter, Path, Query
 from pydantic.types import Json
 from starlette.requests import Request
 
@@ -11,7 +11,7 @@ from clinical_mdr_api.models.standard_data_models.dataset_variable import (
     DatasetVariable,
 )
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.oauth import get_current_user_id, rbac
+from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.standard_data_models.dataset_variable import (
@@ -92,9 +92,8 @@ def get_dataset_variables(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    dataset_variable_service = DatasetVariableService(user=current_user_id)
+    dataset_variable_service = DatasetVariableService()
     results = dataset_variable_service.get_all_items(
         sort_by=sort_by,
         page_number=page_number,
@@ -136,7 +135,6 @@ def get_distinct_values_for_header(
         ...,
         description="The version of the selected Data model IG, for instance '1.4'",
     ),
-    current_user_id: str = Depends(get_current_user_id),
     field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
     search_string: str
     | None = Query("", description=_generic_descriptions.HEADER_SEARCH_STRING),
@@ -150,7 +148,7 @@ def get_distinct_values_for_header(
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
 ):
-    dataset_variable_service = DatasetVariableService(user=current_user_id)
+    dataset_variable_service = DatasetVariableService()
     return dataset_variable_service.get_distinct_values_for_header(
         data_model_ig_name=data_model_ig_name,
         data_model_ig_version=data_model_ig_version,
@@ -187,7 +185,6 @@ Possible errors:
 )
 def get_dataset_variable(
     uid: str = DatasetVariableUID,
-    current_user_id: str = Depends(get_current_user_id),
     data_model_ig_name: str = Query(
         ...,
         description="The name of the selected Data model IG, for instance 'SDTMIG'",
@@ -197,7 +194,7 @@ def get_dataset_variable(
         description="The version of the selected Data model IG, for instance '1.4'",
     ),
 ):
-    dataset_variable_service = DatasetVariableService(user=current_user_id)
+    dataset_variable_service = DatasetVariableService()
     return dataset_variable_service.get_by_uid(
         uid=uid,
         data_model_ig_name=data_model_ig_name,

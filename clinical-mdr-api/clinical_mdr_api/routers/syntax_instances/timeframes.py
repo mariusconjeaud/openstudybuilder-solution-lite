@@ -1,6 +1,6 @@
 from typing import Any
 
-from fastapi import APIRouter, Body, Depends, Path, Query, Request, Response
+from fastapi import APIRouter, Body, Path, Query, Request, Response
 from fastapi import status as fast_api_status
 from pydantic.types import Json
 
@@ -11,7 +11,7 @@ from clinical_mdr_api.models.syntax_templates.template_parameter import (
     ComplexTemplateParameter,
 )
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.oauth import get_current_user_id, rbac
+from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.syntax_instances.timeframes import TimeframeService
@@ -101,9 +101,8 @@ def get_all(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    data = Service(current_user_id).get_all(
+    data = Service().get_all(
         status=status,
         return_study_count=True,
         page_number=page_number,
@@ -135,7 +134,6 @@ def get_all(
     },
 )
 def get_distinct_values_for_header(
-    current_user_id: str = Depends(get_current_user_id),
     status: LibraryItemStatus
     | None = Query(
         None,
@@ -159,7 +157,7 @@ def get_distinct_values_for_header(
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
 ):
-    return Service(current_user_id).get_distinct_values_for_header(
+    return Service().get_distinct_values_for_header(
         status=status,
         field_name=field_name,
         search_string=search_string,
@@ -193,9 +191,8 @@ def retrieve_audit_trail(
     ),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    results = Service(current_user_id).get_all(
+    results = Service().get_all(
         page_number=page_number,
         page_size=page_size,
         total_count=total_count,
@@ -243,9 +240,8 @@ def get(
         r"The version is specified in the following format: \<major\>.\<minor\> where \<major\> and \<minor\> are digits. "
         r"E.g. '0.1', '0.2', '1.0', ...",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    return Service(current_user_id).get_by_uid(uid=uid, version=version, status=status)
+    return Service().get_by_uid(uid=uid, version=version, status=status)
 
 
 @router.get(
@@ -264,10 +260,8 @@ def get(
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_versions(
-    uid: str = TimeframeUID, current_user_id: str = Depends(get_current_user_id)
-):
-    return Service(current_user_id).get_version_history(uid)
+def get_versions(uid: str = TimeframeUID):
+    return Service().get_version_history(uid)
 
 
 @router.post(
@@ -308,9 +302,8 @@ def create(
     timeframe: models.TimeframeCreateInput = Body(
         description="Related parameters of the timeframe that shall be created."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    return Service(current_user_id).create(timeframe)
+    return Service().create(timeframe)
 
 
 @router.post(
@@ -349,9 +342,8 @@ def preview(
     timeframe: models.TimeframeCreateInput = Body(
         description="Related parameters of the timeframe that shall be previewed."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    return Service(current_user_id).create(timeframe, preview=True)
+    return Service().create(timeframe, preview=True)
 
 
 @router.patch(
@@ -391,9 +383,8 @@ def edit(
     timeframe: models.TimeframeEditInput = Body(
         description="The new parameter terms for the timeframe including the change description.",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    return Service(current_user_id).edit_draft(uid, timeframe)
+    return Service().edit_draft(uid, timeframe)
 
 
 @router.post(
@@ -426,10 +417,8 @@ If the request succeeds:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def approve(
-    uid: str = TimeframeUID, current_user_id: str = Depends(get_current_user_id)
-):
-    return Service(current_user_id).approve(uid)
+def approve(uid: str = TimeframeUID):
+    return Service().approve(uid)
 
 
 @router.delete(
@@ -460,10 +449,8 @@ If the request succeeds:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def inactivate(
-    uid: str = TimeframeUID, current_user_id: str = Depends(get_current_user_id)
-):
-    return Service(current_user_id).inactivate_final(uid)
+def inactivate(uid: str = TimeframeUID):
+    return Service().inactivate_final(uid)
 
 
 # TODO check if * there is no other timeframe with the same name (it may be that one had been created after inactivating this one here)
@@ -495,10 +482,8 @@ If the request succeeds:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def reactivate(
-    uid: str = TimeframeUID, current_user_id: str = Depends(get_current_user_id)
-):
-    return Service(current_user_id).reactivate_retired(uid)
+def reactivate(uid: str = TimeframeUID):
+    return Service().reactivate_retired(uid)
 
 
 @router.delete(
@@ -526,10 +511,8 @@ def reactivate(
         500: _generic_descriptions.ERROR_500,
     },
 )
-def delete(
-    uid: str = TimeframeUID, current_user_id: str = Depends(get_current_user_id)
-):
-    Service(current_user_id).soft_delete(uid)
+def delete(uid: str = TimeframeUID):
+    Service().soft_delete(uid)
     return Response(status_code=fast_api_status.HTTP_204_NO_CONTENT)
 
 
@@ -554,6 +537,5 @@ def get_parameters(
         None,
         description="if specified only valid parameters for a given study will be returned.",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    return Service(current_user_id).get_parameters(uid, study_uid=study_uid)
+    return Service().get_parameters(uid, study_uid=study_uid)

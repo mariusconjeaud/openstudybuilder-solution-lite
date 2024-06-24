@@ -4,6 +4,7 @@ from clinical_mdr_api import exceptions, models
 from clinical_mdr_api.domains._utils import normalize_string
 from clinical_mdr_api.domains.controlled_terminologies.ct_catalogue import CTCatalogueAR
 from clinical_mdr_api.models import CTCatalogueChanges
+from clinical_mdr_api.oauth.user import user
 from clinical_mdr_api.repositories.ct_catalogues import (
     CatalogueComparisonType,
     get_ct_catalogues_changes,
@@ -14,8 +15,8 @@ from clinical_mdr_api.services._meta_repository import MetaRepository  # type: i
 class CTCatalogueService:
     _repos: MetaRepository
 
-    def __init__(self, user: str | None = None):
-        self.user_initials = user if user is not None else "TODO user initials"
+    def __init__(self):
+        self.user_initials = user().id()
         self._repos = MetaRepository(self.user_initials)
 
     def _close_all_repos(self) -> None:

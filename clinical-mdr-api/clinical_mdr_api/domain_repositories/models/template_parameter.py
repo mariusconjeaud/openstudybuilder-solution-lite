@@ -52,16 +52,17 @@ class TemplateParameterTermRoot(VersionRoot):
         cls, parameter_name: str, parameter_term_uid: str
     ) -> bool:
         cypher_query = """
-            MATCH (pt:TemplateParameter {name: $name})<-[:HAS_PARENT_PARAMETER*0..]-(pt_parents)-[:HAS_PARAMETER_TERM]->(pr {uid: $uid})
             RETURN
-                pt.name AS name, pt_parents.name AS type, pr.uid AS uid
+                CASE 
+                    WHEN EXISTS((:TemplateParameter {name: $name})<-[:HAS_PARENT_PARAMETER*0..]-()-[:HAS_PARAMETER_TERM]->(:TemplateParameterTermRoot{uid: $uid})) THEN TRUE
+                    WHEN EXISTS((:TemplateParameter {name: $name})-[:HAS_PARAMETER_TERM]->(:CTTermNameRoot{uid: $uid})) THEN TRUE
+                    ELSE FALSE
+                END AS RESULT
             """
         dataset, _ = db.cypher_query(
             cypher_query, {"uid": parameter_term_uid, "name": parameter_name}
         )
-        if len(dataset) == 0:
-            return False
-        return True
+        return dataset[0][0]
 
 
 class ParameterTemplateValue(TemplateParameterTermValue):

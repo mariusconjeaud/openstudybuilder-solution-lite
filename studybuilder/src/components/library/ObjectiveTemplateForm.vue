@@ -1,53 +1,57 @@
 <template>
-<base-template-form
-  object-type="objective"
-  :template="template"
-  :load-form-function="loadForm"
-  :prepare-payload-function="preparePayload"
-  :help-items="helpItems"
-  v-bind="$attrs"
-  v-on="$listeners"
+  <BaseTemplateForm
+    object-type="objective"
+    :template="template"
+    :load-form-function="loadForm"
+    :prepare-indexing-payload-function="prepareIndexingPayload"
+    :help-items="helpItems"
+    v-bind="$attrs"
   >
-  <template v-slot:indexingTab="{ form }">
-    <objective-template-indexing-form
-      ref="indexingForm"
-      :form="form"
-      :template="template"
+    <template #indexingTab="{ form }">
+      <ObjectiveTemplateIndexingForm
+        ref="indexingForm"
+        :form="form"
+        :template="template"
       />
-  </template>
-</base-template-form>
+    </template>
+  </BaseTemplateForm>
 </template>
 
-<script>
-import BaseTemplateForm from './BaseTemplateForm'
-import ObjectiveTemplateIndexingForm from './ObjectiveTemplateIndexingForm'
+<script setup>
+import { ref } from 'vue'
+import BaseTemplateForm from './BaseTemplateForm.vue'
+import ObjectiveTemplateIndexingForm from './ObjectiveTemplateIndexingForm.vue'
 
-export default {
-  components: {
-    BaseTemplateForm,
-    ObjectiveTemplateIndexingForm
+const props = defineProps({
+  template: {
+    type: Object,
+    default: null,
   },
-  props: {
-    template: Object
-  },
-  data () {
-    return {
-      helpItems: [
-        'ObjectiveTemplateForm.objective_category',
-        'ObjectiveTemplateForm.confirmatory_testing'
-      ]
-    }
-  },
-  methods: {
-    loadForm (form) {
-      form.is_confirmatory_testing = this.template ? this.template.is_confirmatory_testing : null
-      if (this.template.categories && this.template.categories.length) {
-        this.$set(form, 'categories', this.template.categories)
-      }
-    },
-    preparePayload (payload) {
-      Object.assign(payload, this.$refs.indexingForm.preparePayload(payload))
-    }
+})
+
+const helpItems = ref([
+  'ObjectiveTemplateForm.objective_category',
+  'ObjectiveTemplateForm.confirmatory_testing',
+])
+const indexingForm = ref()
+
+function loadForm(form) {
+  form.is_confirmatory_testing = this.template
+    ? this.template.is_confirmatory_testing
+    : null
+  if (
+    this.template &&
+    this.template.categories &&
+    this.template.categories.length
+  ) {
+    form.categories = this.template.categories
+  }
+}
+
+function prepareIndexingPayload(payload) {
+  // Check if form has been displayed before (possible in edit mode)
+  if (indexingForm.value) {
+    Object.assign(payload, indexingForm.value.preparePayload(payload))
   }
 }
 </script>

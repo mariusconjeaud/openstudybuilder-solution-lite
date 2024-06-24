@@ -23,7 +23,7 @@ from clinical_mdr_api.services.studies.study import StudyService
 
 
 def input_metadata_in_study(study_uid):
-    study_service = StudyService(user="some_user")
+    study_service = StudyService()
     study_service.patch(
         uid=study_uid,
         dry=False,

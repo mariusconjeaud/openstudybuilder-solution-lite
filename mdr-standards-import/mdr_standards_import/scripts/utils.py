@@ -126,25 +126,42 @@ def get_ordered_data_model_versions(json_data_directory: str):
     existing_versions = {}
     # List all the directories, ignoring potential hidden files
     for catalogue in [f for f in listdir(json_data_directory) if not f.startswith(".")]:
-        _existing_versions = list(
-            set(
-                [
-                    path.splitext(path.basename(x))[0]
-                    for x in listdir(
-                        path.join(json_data_directory, catalogue, "models")
-                    )
-                    if path.splitext(x)[1] == ".json"
-                ]
+        if catalogue in ["FBDE"]:
+            _existing_versions = listdir(path.join(json_data_directory, catalogue))
+        else:
+            _existing_versions = list(
+                set(
+                    [
+                        path.splitext(path.basename(x))[0]
+                        for x in listdir(
+                            path.join(json_data_directory, catalogue, "models")
+                        )
+                        if path.splitext(x)[1] == ".json"
+                    ]
+                )
             )
-        )
-        _existing_versions.sort()
+            _existing_versions.sort()
         existing_versions[catalogue] = _existing_versions
+
+        if catalogue in ["FBDE"]:
+            existing_versions[f"{catalogue}IG"] = _existing_versions
+
     return existing_versions
 
 
 def get_classes_directory_name(data_model_type: str):
     return (
         "classes" if data_model_type == DataModelType.FOUNDATIONAL.value else "datasets"
+    )
+
+def get_classes_csv_filename(data_model_type: str):
+    return (
+        "dataset_class.csv" if data_model_type == DataModelType.FOUNDATIONAL else "dataset.csv"
+    )
+
+def get_variables_csv_filename(data_model_type: str):
+    return (
+        "variable_class.csv" if data_model_type == DataModelType.FOUNDATIONAL else "variable.csv"
     )
 
 

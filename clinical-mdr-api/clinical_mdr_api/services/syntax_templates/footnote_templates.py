@@ -19,7 +19,6 @@ from clinical_mdr_api.exceptions import BusinessLogicException
 from clinical_mdr_api.models.syntax_templates.footnote_template import (
     FootnoteTemplate,
     FootnoteTemplateCreateInput,
-    FootnoteTemplateEditIndexingsInput,
     FootnoteTemplateEditInput,
     FootnoteTemplateVersion,
     FootnoteTemplateWithCount,
@@ -83,6 +82,8 @@ class FootnoteTemplateService(GenericSyntaxTemplateService[FootnoteTemplateAR]):
         try:
             item = self.repository.find_by_uid(uid, for_update=True)
 
+            self.authorize_user_defined_syntax_write(item.library.name)
+
             if (
                 self.repository.check_exists_by_name_in_library(
                     name=template.name,
@@ -115,26 +116,3 @@ class FootnoteTemplateService(GenericSyntaxTemplateService[FootnoteTemplateAR]):
             return self._transform_aggregate_root_to_pydantic_model(item)
         except VersioningException as e:
             raise BusinessLogicException(e.msg) from e
-
-    @db.transaction
-    def patch_indexings(
-        self, uid: str, indexings: FootnoteTemplateEditIndexingsInput
-    ) -> FootnoteTemplate:
-        try:
-            self._find_by_uid_or_raise_not_found(uid)
-            if indexings.indication_uids is not None:
-                self.repository.patch_indications(uid, indexings.indication_uids)
-            if indexings.activity_uids is not None:
-                self.repository.patch_activities(uid, indexings.activity_uids)
-            if indexings.activity_group_uids is not None:
-                self.repository.patch_activity_groups(
-                    uid, indexings.activity_group_uids
-                )
-            if indexings.activity_subgroup_uids is not None:
-                self.repository.patch_activity_subgroups(
-                    uid, indexings.activity_subgroup_uids
-                )
-        finally:
-            self.repository.close()
-
-        return self.get_by_uid(uid)

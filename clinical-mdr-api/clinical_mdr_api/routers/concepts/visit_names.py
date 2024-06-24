@@ -1,14 +1,14 @@
 """Text values router."""
 from typing import Any
 
-from fastapi import APIRouter, Body, Depends, Path, Query
+from fastapi import APIRouter, Body, Path, Query
 from pydantic.types import Json
 
 from clinical_mdr_api import config
 from clinical_mdr_api.models.concepts.concept import VisitName, VisitNameInput
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.oauth import get_current_user_id, rbac
+from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions
 from clinical_mdr_api.services.concepts.simple_concepts.visit_name import (
@@ -65,9 +65,8 @@ def get_visit_names(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    visit_name_service = VisitNameService(user=current_user_id)
+    visit_name_service = VisitNameService()
     results = visit_name_service.get_all_concepts(
         library=library,
         sort_by=sort_by,
@@ -99,7 +98,6 @@ def get_visit_names(
     },
 )
 def get_distinct_values_for_header(
-    current_user_id: str = Depends(get_current_user_id),
     library: str | None = Query(None, description="The library name"),
     field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
     search_string: str
@@ -114,7 +112,7 @@ def get_distinct_values_for_header(
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
 ):
-    visit_name_service = VisitNameService(user=current_user_id)
+    visit_name_service = VisitNameService()
     return visit_name_service.get_distinct_values_for_header(
         library=library,
         field_name=field_name,
@@ -146,10 +144,8 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_visit_name(
-    uid: str = VisitNameUID, current_user_id: str = Depends(get_current_user_id)
-):
-    visit_name_service = VisitNameService(user=current_user_id)
+def get_visit_name(uid: str = VisitNameUID):
+    visit_name_service = VisitNameService()
     return visit_name_service.get_by_uid(uid=uid)
 
 
@@ -180,9 +176,6 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def create(
-    visit_name_create_input: VisitNameInput = Body(description=""),
-    current_user_id: str = Depends(get_current_user_id),
-):
-    visit_name_service = VisitNameService(user=current_user_id)
+def create(visit_name_create_input: VisitNameInput = Body(description="")):
+    visit_name_service = VisitNameService()
     return visit_name_service.create(concept_input=visit_name_create_input)

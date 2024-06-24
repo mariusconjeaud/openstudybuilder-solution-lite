@@ -1,99 +1,73 @@
 <template>
-<div>
-  <v-tabs v-model="tab">
-    <v-tab v-for="catalogue in allCatalogues"
-           :key="catalogue.name"
-           :href="`#${catalogue.name}`"
-           >
-      {{ catalogue.name }}
-    </v-tab>
-  </v-tabs>
-  <v-tabs-items v-model="tab">
-    <v-tab-item
-      v-for="catalogue in allCatalogues"
-      :key="catalogue.name"
-      :id="catalogue.name"
+  <div>
+    <v-tabs v-model="tab" bg-color="white">
+      <v-tab
+        v-for="catalogue in allCatalogues"
+        :key="catalogue.name"
+        :value="catalogue.name"
       >
-      <codelist-table
-        :catalogue="catalogue.name"
-        @openCodelistTerms="openCodelistTerms"
-        column-data-resource="ct/codelists"
-        library="Sponsor"
-        :terms="terms"
-        :loading="loading"
+        {{ catalogue.name }}
+      </v-tab>
+    </v-tabs>
+    <v-window v-model="tab" class="bg-white">
+      <v-window-item
+        v-for="catalogue in allCatalogues"
+        :key="catalogue.name"
+        :value="catalogue.name"
+      >
+        <CodelistTable
+          :catalogue="catalogue.name"
+          column-data-resource="ct/codelists"
+          library="Sponsor"
+          @open-codelist-terms="openCodelistTerms"
         />
-    </v-tab-item>
-  </v-tabs-items>
-</div>
+      </v-window-item>
+    </v-window>
+  </div>
 </template>
 
-<script>
-import { mapGetters, mapActions } from 'vuex'
-import CodelistTable from './CodelistTable'
-import controlledTerminology from '@/api/controlledTerminology'
+<script setup lang="js">
+import { useCtCataloguesStore } from '@/stores/library-ctcatalogues'
+import { ref, watch, watchEffect, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useAppStore } from '@/stores/app'
+import CodelistTable from './CodelistTable.vue'
 
-export default {
-  components: {
-    CodelistTable
-  },
-  props: ['catalogue_name'],
-  computed: {
-    ...mapGetters({
-      catalogues: 'ctCatalogues/catalogues'
-    }),
-    allCatalogues () {
-      const array = [{ name: 'All' }]
-      return array.concat(this.catalogues)
-    }
-  },
-  data () {
-    return {
-      tab: null,
-      terms: [],
-      loading: false
-    }
-  },
-  mounted () {
-    this.$store.dispatch('ctCatalogues/fetchCatalogues')
-    this.fetchTerms()
-    setTimeout(() => {
-      this.addBreadcrumbsLevel({
-        text: this.tab,
-        index: 3,
-        replace: true
-      })
-    }, 100)
-  },
-  methods: {
-    ...mapActions({
-      addBreadcrumbsLevel: 'app/addBreadcrumbsLevel'
-    }),
-    openCodelistTerms ({ codelist, catalogueName }) {
-      this.$router.push({
-        name: 'CodelistTerms',
-        params: { codelist_id: codelist.codelist_uid, catalogue_name: catalogueName }
-      })
+const route = useRoute()
+const router = useRouter()
+const appStore = useAppStore()
+const ctCataloguesStore = useCtCataloguesStore()
+const allCatalogues = ref([])
+
+watchEffect(() => {
+  allCatalogues.value = [{ name: 'All' }].concat(ctCataloguesStore.catalogues)
+})
+
+const tab = ref(null)
+
+const openCodelistTerms = ({ codelist, catalogueName }) => {
+  router.push({
+    name: 'CodelistTerms',
+    params: {
+      codelist_id: codelist.codelist_uid,
+      catalogue_name: catalogueName,
     },
-    fetchTerms  () {
-      this.loading = true
-      const params = {
-        page_size: 0,
-        compact_response: true
-      }
-      controlledTerminology.getCodelistTermsNames(params).then(resp => {
-        this.terms = resp.data.items
-        this.loading = false
-      })
-    }
-  },
-  watch: {
-    tab (newValue) {
-      this.addBreadcrumbsLevel({
-        text: newValue,
-        index: 3,
-        replace: true
-      })
-    }
-  }
+  })
 }
+
+watch(tab, (newValue) => {
+  router.push({
+    name: 'Sponsor',
+    params: { tab: newValue },
+  })
+  appStore.addBreadcrumbsLevel(newValue, undefined, 3, true)
+})
+
+onMounted(() => {
+  tab.value = route.params.tab || 'All'
+  ctCataloguesStore.fetchCatalogues()
+  setTimeout(() => {
+    appStore.addBreadcrumbsLevel(tab, undefined, 3, true)
+  }, 100)
+})
 </script>

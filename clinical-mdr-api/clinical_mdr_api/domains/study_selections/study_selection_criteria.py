@@ -111,6 +111,10 @@ class StudySelectionCriteriaAR:
     def study_criteria_selection(self) -> tuple[StudySelectionCriteriaVO]:
         return self._study_criteria_selection
 
+    @study_criteria_selection.setter
+    def study_criteria_selection(self, value: Iterable[StudySelectionCriteriaVO]):
+        self._study_criteria_selection = tuple(value)
+
     def get_specific_criteria_selection(
         self, study_criteria_uid: str, criteria_type_uid: str | None = None
     ) -> tuple[StudySelectionCriteriaVO, int] | None:

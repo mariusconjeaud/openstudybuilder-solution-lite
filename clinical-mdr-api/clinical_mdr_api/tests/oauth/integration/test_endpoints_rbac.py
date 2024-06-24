@@ -14,13 +14,23 @@ from clinical_mdr_api.tests.fixtures.routes import PARAMETER_DEFAULTS
 from clinical_mdr_api.tests.oauth.integration.routes import ALL_ROUTES_METHODS_ROLES
 from clinical_mdr_api.tests.oauth.markers import if_oauth_enabled
 from clinical_mdr_api.tests.oauth.unit.test_jwk_service import mk_claims, mk_jwt
-from clinical_mdr_api.tests.oauth.unit.test_rbac import IRRELEVANT_ROLES, KNOWN_ROLES
 from clinical_mdr_api.tests.utils.checks import assert_response_status_code
 
 log = logging.getLogger(__name__)
 
 # Skipp all tests in this module if OAuth is not enabled
 pytestmark = if_oauth_enabled
+
+KNOWN_ROLES = {
+    "Admin.Read",
+    "Admin.Write",
+    "Library.Read",
+    "Library.Write",
+    "Study.Read",
+    "Study.Write",
+}
+
+IRRELEVANT_ROLES = ["Some, Fake", "Testing", ""]
 
 
 @pytest.fixture(scope="session")
@@ -56,7 +66,7 @@ def test_endpoints_rbac_wrong_roles(
     monkeypatch,
     mock_jwks_service,
     mock_token,
-    app_client,
+    api_client,
     openapi_schema,
     path,
     method,
@@ -114,7 +124,7 @@ def test_endpoints_rbac_wrong_roles(
     # Ensure that http request with token having wrong roles fails
     for roles in insufficient_role_sets:
         response = do_request_with_token(
-            app_client,
+            api_client,
             mock_token(roles=roles),
             method,
             path,
@@ -132,7 +142,7 @@ def test_endpoints_rbac_correct_roles(
     monkeypatch,
     mock_jwks_service,
     mock_token,
-    app_client,
+    api_client,
     openapi_schema,
     path,
     method,
@@ -175,7 +185,7 @@ def test_endpoints_rbac_correct_roles(
     # If response status code is different than 401/403, we assume that authentication has passed
     for roles in valid_role_sets:
         response = do_request_with_token(
-            app_client,
+            api_client,
             mock_token(roles=roles),
             method,
             path,
@@ -201,7 +211,7 @@ def test_endpoints_rbac_no_roles(
     monkeypatch,
     mock_jwks_service,
     mock_token,
-    app_client,
+    api_client,
     openapi_schema,
     path,
     method,
@@ -224,7 +234,7 @@ def test_endpoints_rbac_no_roles(
 
     # Ensure that http request with token with no role claims fails
     response = do_request_with_token(
-        app_client,
+        api_client,
         mock_token(),  # token with no roles
         method,
         path,
@@ -253,7 +263,7 @@ def test_endpoints_rbac_no_roles(
 
 
 def do_request_with_token(
-    app_client,
+    api_client,
     token,
     method,
     path,
@@ -275,7 +285,7 @@ def do_request_with_token(
         headers,
     )
 
-    return app_client.request(
+    return api_client.request(
         method,
         path.format_map(path_parameters),
         params=query_parameters,
@@ -442,5 +452,5 @@ def _assert_insufficient_roles_error(
     payload = response.json()
     message = payload.get("message") or ""
     assert (
-        "requires role" in message.lower()
+        "following roles" in message.lower()
     ), f"Actual response: {response.status_code}: {response.json()} \n"

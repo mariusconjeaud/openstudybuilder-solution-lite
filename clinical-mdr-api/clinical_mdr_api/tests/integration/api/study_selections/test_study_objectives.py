@@ -283,3 +283,37 @@ def test_update_library_items_of_relationship_to_value_nodes(api_client):
     res = response.json()
     assert response.status_code == 200
     assert res["objective"]["name"] == initial_objective_name
+
+    # check that the StudySelection can approve the current version
+    response = api_client.post(
+        f"/studies/{study.uid}/study-objectives/{study_objective_uid}/accept-version",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["accepted_version"] is True
+    assert res["objective"]["name"] == initial_objective_name
+    assert res["latest_objective"]["name"] == text_value_2_name
+
+    # get all objectives
+    response = api_client.get(
+        f"/studies/{study.uid}/study-objectives/audit-trail/",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    counting_before_sync = len(res)
+
+    # check that the StudySelection's objective can be updated to the LATEST
+    response = api_client.post(
+        f"/studies/{study.uid}/study-objectives/{study_objective_uid}/sync-latest-version",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["objective"]["name"] == text_value_2_name
+
+    # get all objectives
+    response = api_client.get(
+        f"/studies/{study.uid}/study-objectives/audit-trail/",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert len(res) == counting_before_sync + 1

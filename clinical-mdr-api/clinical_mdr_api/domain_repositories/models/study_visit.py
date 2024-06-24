@@ -1,5 +1,6 @@
 from neomodel import (
     BooleanProperty,
+    FloatProperty,
     IntegerProperty,
     RelationshipFrom,
     RelationshipTo,
@@ -45,12 +46,7 @@ class StudyVisit(StudySelection):
         cardinality=ZeroOrOne,
     )
 
-    legacy_visit_id = StringProperty()
-    legacy_visit_type_alias = StringProperty()
-    legacy_name = StringProperty()
-    legacy_subname = StringProperty()
-
-    visit_number = IntegerProperty()
+    visit_number = FloatProperty()
 
     has_visit_type = RelationshipTo(
         CTTermRoot,
@@ -98,7 +94,14 @@ class StudyVisit(StudySelection):
     status = StringProperty()
     visit_class = StringProperty()
     visit_subclass = StringProperty()
+    is_soa_milestone = BooleanProperty(default=False)
 
+    has_repeating_frequency = RelationshipTo(
+        CTTermRoot,
+        "HAS_REPEATING_FREQUENCY",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrOne,
+    )
     has_timepoint = RelationshipTo(
         TimePointRoot,
         "HAS_TIMEPOINT",

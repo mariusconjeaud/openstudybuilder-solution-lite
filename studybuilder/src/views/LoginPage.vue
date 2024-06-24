@@ -1,20 +1,21 @@
 <template>
-<div></div>
+  <div />
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { useAuthStore } from '@/stores/auth'
 
 export default {
-  computed: {
-    ...mapGetters({
-      userInfo: 'auth/userInfo'
-    })
+  setup() {
+    const authStore = useAuthStore()
+    return {
+      authStore,
+    }
   },
-  mounted () {
-    if (this.userInfo) {
+  mounted() {
+    if (this.authStore.userInfo) {
       this.$router.push({ name: 'Studies' })
     }
-  }
+  },
 }
 </script>

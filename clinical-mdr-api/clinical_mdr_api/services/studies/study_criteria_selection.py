@@ -21,9 +21,14 @@ from clinical_mdr_api.models.syntax_instances.criteria import (
     CriteriaUpdateWithCriteriaKeyInput,
 )
 from clinical_mdr_api.models.utils import GenericFilteringReturn
+from clinical_mdr_api.oauth.user import user
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._meta_repository import MetaRepository
 from clinical_mdr_api.services._utils import (
+    build_simple_filters,
+    extract_filtering_values,
+    generic_item_filtering,
+    generic_pagination,
     service_level_generic_filtering,
     service_level_generic_header_filtering,
 )
@@ -34,9 +39,16 @@ from clinical_mdr_api.services.syntax_instances.criteria import CriteriaService
 class StudyCriteriaSelectionService(StudySelectionMixin):
     _repos: MetaRepository
 
-    def __init__(self, author):
+    _vo_to_ar_filter_map = {
+        "order": "criteria_type_order",
+        "start_date": "start_date",
+        "user_initials": "user_initials",
+        "key_criteria": "key_criteria",
+    }
+
+    def __init__(self):
         self._repos = MetaRepository()
-        self.author = author
+        self.author = user().id()
 
     def _transform_all_to_response_model(
         self,
@@ -44,14 +56,17 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
         no_brackets: bool,
         study_value_version: str | None = None,
     ) -> list[models.StudySelectionCriteria]:
+        terms_at_specific_datetime = self._extract_study_standards_effective_date(
+            study_uid=study_selection.study_uid,
+            study_value_version=study_value_version,
+        )
         result = []
         for selection in study_selection.study_criteria_selection:
             if selection.is_instance:
                 result.append(
-                    models.StudySelectionCriteria.from_study_selection_criteria_ar_and_order(
+                    models.StudySelectionCriteria.from_study_selection_criteria_ar(
                         study_selection_criteria_ar=study_selection,
-                        criteria_type_uid=selection.criteria_type_uid,
-                        criteria_type_order=selection.criteria_type_order,
+                        study_selection_criteria_vo=selection,
                         accepted_version=selection.accepted_version,
                         get_criteria_by_uid_callback=self._transform_latest_criteria_model,
                         get_criteria_by_uid_version_callback=self._transform_criteria_model,
@@ -59,20 +74,21 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
                         no_brackets=no_brackets,
                         find_project_by_study_uid=self._repos.project_repository.find_by_study_uid,
                         study_value_version=study_value_version,
+                        terms_at_specific_datetime=terms_at_specific_datetime,
                     )
                 )
             else:
                 result.append(
-                    models.StudySelectionCriteria.from_study_selection_criteria_template_ar_and_order(
+                    models.StudySelectionCriteria.from_study_selection_criteria_template_ar(
                         study_selection_criteria_ar=study_selection,
-                        criteria_type_uid=selection.criteria_type_uid,
-                        criteria_type_order=selection.criteria_type_order,
+                        study_selection_criteria_vo=selection,
                         accepted_version=selection.accepted_version,
                         get_criteria_template_by_uid_callback=self._transform_latest_criteria_template_model,
                         get_criteria_template_by_uid_version_callback=self._transform_criteria_template_model,
                         get_ct_term_criteria_type=self._find_by_uid_or_raise_not_found,
                         find_project_by_study_uid=self._repos.project_repository.find_by_study_uid,
                         study_value_version=study_value_version,
+                        terms_at_specific_datetime=terms_at_specific_datetime,
                     )
                 )
         return result
@@ -99,6 +115,9 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
         repos = self._repos
         try:
             with db.transaction:
+                terms_at_specific_datetime = (
+                    self._extract_study_standards_effective_date(study_uid=study_uid)
+                )
                 criteria_template_repo = repos.criteria_template_repository
                 selections = []
                 for template_input in selection_create_input:
@@ -176,6 +195,7 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
                                 get_criteria_template_by_uid_version_callback=self._transform_criteria_template_model,
                                 get_ct_term_criteria_type=self._find_by_uid_or_raise_not_found,
                                 find_project_by_study_uid=self._repos.project_repository.find_by_study_uid,
+                                terms_at_specific_datetime=terms_at_specific_datetime,
                             )
                         )
                     else:
@@ -302,7 +322,9 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
                     study_criteria_uid=study_criteria_uid,
                     criteria_type_uid=criteria_type_uid,
                 )
-
+                terms_at_specific_datetime = (
+                    self._extract_study_standards_effective_date(study_uid=study_uid)
+                )
                 # add the criteria and return
                 return models.StudySelectionCriteria.from_study_selection_criteria_ar_and_order(
                     study_selection_criteria_ar=selection_aggregate,
@@ -312,6 +334,7 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
                     get_criteria_by_uid_version_callback=self._transform_criteria_model,
                     get_ct_term_criteria_type=self._find_by_uid_or_raise_not_found,
                     find_project_by_study_uid=self._repos.project_repository.find_by_study_uid,
+                    terms_at_specific_datetime=terms_at_specific_datetime,
                 )
         finally:
             repos.close()
@@ -378,7 +401,9 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
             new_selection, order = selection_aggregate.get_specific_criteria_selection(
                 new_selection.study_selection_uid, criteria_type_uid
             )
-
+            terms_at_specific_datetime = self._extract_study_standards_effective_date(
+                study_uid=study_uid
+            )
             return models.StudySelectionCriteria.from_study_selection_criteria_ar_and_order(
                 study_selection_criteria_ar=selection_aggregate,
                 criteria_type_order=order,
@@ -387,6 +412,7 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
                 get_criteria_by_uid_version_callback=self._transform_criteria_model,
                 get_ct_term_criteria_type=self._find_by_uid_or_raise_not_found,
                 find_project_by_study_uid=self._repos.project_repository.find_by_study_uid,
+                terms_at_specific_datetime=terms_at_specific_datetime,
             )
         finally:
             self._repos.close()
@@ -444,6 +470,9 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
                 study_criteria_uid=new_selection.study_selection_uid,
                 criteria_type_uid=criteria_type_uid,
             )
+            terms_at_specific_datetime = self._extract_study_standards_effective_date(
+                study_uid=study_uid
+            )
 
             # add the criteria and return
             return models.StudySelectionCriteria.from_study_selection_criteria_ar_and_order(
@@ -454,6 +483,7 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
                 get_criteria_by_uid_version_callback=self._transform_criteria_model,
                 get_ct_term_criteria_type=self._find_by_uid_or_raise_not_found,
                 find_project_by_study_uid=self._repos.project_repository.find_by_study_uid,
+                terms_at_specific_datetime=terms_at_specific_datetime,
             )
         finally:
             repos.close()
@@ -509,6 +539,9 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
                     study_criteria_uid=new_selection.study_selection_uid,
                     criteria_type_uid=criteria_type_uid,
                 )
+                terms_at_specific_datetime = (
+                    self._extract_study_standards_effective_date(study_uid=study_uid)
+                )
 
                 # add the criteria and return
                 return models.StudySelectionCriteria.from_study_selection_criteria_ar_and_order(
@@ -527,6 +560,7 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
                     ),
                     get_ct_term_criteria_type=self._find_by_uid_or_raise_not_found,
                     find_project_by_study_uid=self._repos.project_repository.find_by_study_uid,
+                    terms_at_specific_datetime=terms_at_specific_datetime,
                 )
         finally:
             repos.close()
@@ -544,11 +578,19 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
         filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[models.StudySelectionCriteria]:
+        # Extract the study uids to use database level filtering for these
+        # instead of service level filtering
+        if filter_operator is None or filter_operator == FilterOperator.AND:
+            study_uids = extract_filtering_values(filter_by, "study_uid")
+        else:
+            study_uids = None
+
         repos = self._repos
 
         criteria_selection_ars = repos.study_criteria_repository.find_all(
             project_name=project_name,
             project_number=project_number,
+            study_uids=study_uids,
         )
 
         # In order for filtering to work, we need to unwind the aggregated AR object first
@@ -589,8 +631,19 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
         repos = self._repos
 
         if study_uid:
+            if filter_operator is None or filter_operator == FilterOperator.AND:
+                criteria_type_name = extract_filtering_values(
+                    filter_by,
+                    "criteria_type.sponsor_preferred_name_sentence_case",
+                    single_value=True,
+                )
+            else:
+                criteria_type_name = None
+
             criteria_selection_ar = repos.study_criteria_repository.find_by_study(
-                study_uid, study_value_version=study_value_version
+                study_uid,
+                study_value_version=study_value_version,
+                criteria_type_name=criteria_type_name,
             )
 
             header_values = service_level_generic_header_filtering(
@@ -606,9 +659,17 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
 
             return header_values
 
+        # Extract the study uids to use database level filtering for these
+        # instead of service level filtering
+        if filter_operator is None or filter_operator == FilterOperator.AND:
+            study_uids = extract_filtering_values(filter_by, "study_uid")
+        else:
+            study_uids = None
+
         criteria_selection_ars = repos.study_criteria_repository.find_all(
             project_name=project_name,
             project_number=project_number,
+            study_uids=study_uids,
         )
 
         # In order for filtering to work, we need to unwind the aggregated AR object first
@@ -648,25 +709,61 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
     ) -> GenericFilteringReturn[models.StudySelectionCriteria]:
         repos = self._repos
         try:
-            criteria_selection_ar = repos.study_criteria_repository.find_by_study(
-                study_uid, study_value_version=study_value_version
-            )
-            assert criteria_selection_ar is not None
+            if filter_operator is None or filter_operator == FilterOperator.AND:
+                criteria_type_name = extract_filtering_values(
+                    filter_by,
+                    "criteria_type.sponsor_preferred_name_sentence_case",
+                    single_value=True,
+                )
+            else:
+                criteria_type_name = None
 
-            # In order for filtering to work, we need to unwind the aggregated AR object first
-            # Unwind ARs
-            selections = []
-            parsed_selections = self._transform_all_to_response_model(
+            criteria_selection_ar = repos.study_criteria_repository.find_by_study(
+                study_uid,
+                study_value_version=study_value_version,
+                criteria_type_name=criteria_type_name,
+            )
+
+            simple_filters = build_simple_filters(
+                self._vo_to_ar_filter_map, filter_by, sort_by
+            )
+            if simple_filters:
+                # Filtering only needs data that is already available in the AR
+                items = list(criteria_selection_ar.study_criteria_selection)
+                filtered_items = generic_item_filtering(
+                    items=items,
+                    filter_by=simple_filters["filter_by"],
+                    filter_operator=filter_operator,
+                    sort_by=simple_filters["sort_by"],
+                )
+
+                # Do count
+                count = len(filtered_items) if total_count else 0
+
+                # Do pagination
+                filtered_items = generic_pagination(
+                    items=filtered_items,
+                    page_number=page_number,
+                    page_size=page_size,
+                )
+                # Put the sorted and filtered items back into the AR and transform them to the response model
+                criteria_selection_ar.study_criteria_selection = filtered_items
+                filtered_items = self._transform_all_to_response_model(
+                    criteria_selection_ar,
+                    no_brackets=no_brackets,
+                    study_value_version=study_value_version,
+                )
+                return GenericFilteringReturn.create(filtered_items, count)
+
+            # Fall back to full generic filtering
+            selection = self._transform_all_to_response_model(
                 criteria_selection_ar,
                 no_brackets=no_brackets,
                 study_value_version=study_value_version,
             )
-            for selection in parsed_selections:
-                selections.append(selection)
-
             # Do filtering, sorting, pagination and count
-            filtered_items = service_level_generic_filtering(
-                items=selections,
+            selection = service_level_generic_filtering(
+                items=selection,
                 filter_by=filter_by,
                 filter_operator=filter_operator,
                 sort_by=sort_by,
@@ -674,8 +771,7 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
                 page_number=page_number,
                 page_size=page_size,
             )
-
-            return filtered_items
+            return selection
         finally:
             repos.close()
 
@@ -693,6 +789,10 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
         ) = self._get_specific_criteria_selection_by_uids(
             study_uid, study_selection_uid, study_value_version
         )
+        terms_at_specific_datetime = self._extract_study_standards_effective_date(
+            study_uid=study_uid,
+            study_value_version=study_value_version,
+        )
         if new_selection.is_instance:
             return models.StudySelectionCriteria.from_study_selection_criteria_ar_and_order(
                 study_selection_criteria_ar=selection_aggregate,
@@ -703,6 +803,7 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
                 get_criteria_by_uid_version_callback=self._transform_criteria_model,
                 get_ct_term_criteria_type=self._find_by_uid_or_raise_not_found,
                 find_project_by_study_uid=repos.project_repository.find_by_study_uid,
+                terms_at_specific_datetime=terms_at_specific_datetime,
             )
         return models.StudySelectionCriteria.from_study_selection_criteria_template_ar_and_order(
             study_selection_criteria_ar=selection_aggregate,
@@ -713,6 +814,7 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
             get_criteria_template_by_uid_version_callback=self._transform_criteria_template_model,
             get_ct_term_criteria_type=self._find_by_uid_or_raise_not_found,
             find_project_by_study_uid=repos.project_repository.find_by_study_uid,
+            terms_at_specific_datetime=terms_at_specific_datetime,
         )
 
     def _transform_history_to_response_model(
@@ -816,7 +918,9 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
             new_selection, _ = selection_aggregate.get_specific_criteria_selection(
                 study_criteria_uid=study_selection_uid
             )
-
+            terms_at_specific_datetime = self._extract_study_standards_effective_date(
+                study_uid=study_uid
+            )
             # add the criteria and return
             if new_selection.is_instance:
                 return models.StudySelectionCriteria.from_study_selection_criteria_ar_and_order(
@@ -827,6 +931,7 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
                     get_criteria_by_uid_version_callback=self._transform_criteria_model,
                     get_ct_term_criteria_type=self._find_by_uid_or_raise_not_found,
                     find_project_by_study_uid=self._repos.project_repository.find_by_study_uid,
+                    terms_at_specific_datetime=terms_at_specific_datetime,
                 )
             return models.StudySelectionCriteria.from_study_selection_criteria_template_ar_and_order(
                 study_selection_criteria_ar=selection_aggregate,
@@ -836,6 +941,7 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
                 get_criteria_template_by_uid_version_callback=self._transform_criteria_template_model,
                 get_ct_term_criteria_type=self._find_by_uid_or_raise_not_found,
                 find_project_by_study_uid=self._repos.project_repository.find_by_study_uid,
+                terms_at_specific_datetime=terms_at_specific_datetime,
             )
         finally:
             repos.close()
@@ -882,7 +988,9 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
             new_selection, _ = selection_aggregate.get_specific_criteria_selection(
                 study_criteria_uid=study_selection_uid
             )
-
+            terms_at_specific_datetime = self._extract_study_standards_effective_date(
+                study_uid=study_uid
+            )
             # add the criteria and return
             if new_selection.is_instance:
                 return models.StudySelectionCriteria.from_study_selection_criteria_ar_and_order(
@@ -893,6 +1001,7 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
                     get_criteria_by_uid_version_callback=self._transform_criteria_model,
                     get_ct_term_criteria_type=self._find_by_uid_or_raise_not_found,
                     find_project_by_study_uid=self._repos.project_repository.find_by_study_uid,
+                    terms_at_specific_datetime=terms_at_specific_datetime,
                 )
             return models.StudySelectionCriteria.from_study_selection_criteria_template_ar_and_order(
                 study_selection_criteria_ar=selection_aggregate,
@@ -902,6 +1011,7 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
                 get_criteria_template_by_uid_version_callback=self._transform_criteria_template_model,
                 get_ct_term_criteria_type=self._find_by_uid_or_raise_not_found,
                 find_project_by_study_uid=self._repos.project_repository.find_by_study_uid,
+                terms_at_specific_datetime=terms_at_specific_datetime,
             )
         finally:
             repos.close()
@@ -928,7 +1038,9 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
             new_selection, criteria_exist_callback=lambda x: True
         )
         self._repos.study_criteria_repository.save(selection_ar, self.author)
-
+        terms_at_specific_datetime = self._extract_study_standards_effective_date(
+            study_uid=study_uid
+        )
         return models.StudySelectionCriteria.from_study_selection_criteria_ar_and_order(
             study_selection_criteria_ar=selection_ar,
             criteria_type_order=selection.criteria_type_order,
@@ -937,6 +1049,7 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
             get_criteria_by_uid_version_callback=self._transform_criteria_model,
             get_ct_term_criteria_type=self._find_by_uid_or_raise_not_found,
             find_project_by_study_uid=self._repos.project_repository.find_by_study_uid,
+            terms_at_specific_datetime=terms_at_specific_datetime,
         )
 
     @db.transaction
@@ -960,14 +1073,17 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
             new_selection, criteria_exist_callback=lambda x: True
         )
         self._repos.study_criteria_repository.save(selection_ar, self.author)
-
+        terms_at_specific_datetime = self._extract_study_standards_effective_date(
+            study_uid=study_uid
+        )
         return models.StudySelectionCriteria.from_study_selection_criteria_ar_and_order(
             study_selection_criteria_ar=selection_ar,
             criteria_type_order=selection.criteria_type_order,
             criteria_type_uid=selection.criteria_type_uid,
-            accepted_version=selection.accepted_version,
+            accepted_version=new_selection.accepted_version,
             get_criteria_by_uid_callback=self._transform_latest_criteria_model,
             get_criteria_by_uid_version_callback=self._transform_criteria_model,
             get_ct_term_criteria_type=self._find_by_uid_or_raise_not_found,
             find_project_by_study_uid=self._repos.project_repository.find_by_study_uid,
+            terms_at_specific_datetime=terms_at_specific_datetime,
         )

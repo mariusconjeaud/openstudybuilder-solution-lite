@@ -1,34 +1,43 @@
 <template>
-<div v-if="activityOverview" class="px-4">
-  <div class="d-flex page-title">
-    {{ activityOverview.activity.name }}
-    <help-button-with-panels :help-text="$t('_help.ActivityOverview.general')" :items="helpItems"/>
-  </div>
-  <activity-overview
-    v-if="activityOverview"
-    source="activities"
-    :item-uid="$route.params.id"
-    :item-overview="activityOverview"
-    :yaml-version="activityYAML"
-    :cosmos-version="activityCOSMoS"
-    @refresh="fetchOverview"
-    @closePage="closePage"
+  <div v-if="activityOverview" class="px-4">
+    <div class="d-flex page-title">
+      {{ activityOverview.activity.name }}
+      <HelpButtonWithPanels
+        :help-text="$t('_help.ActivityOverview.general')"
+        :items="helpItems"
+      />
+    </div>
+    <ActivityOverview
+      v-if="activityOverview"
+      source="activities"
+      :item-uid="$route.params.id"
+      :item-overview="activityOverview"
+      :yaml-version="activityYAML"
+      :cosmos-version="activityCOSMoS"
+      @refresh="fetchOverview"
+      @close-page="closePage"
     />
-</div>
+  </div>
 </template>
 
 <script>
-import ActivityOverview from '@/components/library/ActivityOverview'
+import ActivityOverview from '@/components/library/ActivityOverview.vue'
 import activities from '@/api/activities'
-import HelpButtonWithPanels from '@/components/tools/HelpButtonWithPanels'
-import { mapActions } from 'vuex'
+import HelpButtonWithPanels from '@/components/tools/HelpButtonWithPanels.vue'
+import { useAppStore } from '@/stores/app'
 
 export default {
   components: {
     ActivityOverview,
-    HelpButtonWithPanels
+    HelpButtonWithPanels,
   },
-  data () {
+  setup() {
+    const appStore = useAppStore()
+    return {
+      addBreadcrumbsLevel: appStore.addBreadcrumbsLevel,
+    }
+  },
+  data() {
     return {
       activityOverview: null,
       activityYAML: null,
@@ -42,36 +51,48 @@ export default {
         'ActivityOverview.class',
         'ActivityOverview.instances',
         'ActivityOverview.is_data_collected',
-        'ActivityOverview.activity_groupings'
-      ]
+        'ActivityOverview.activity_groupings',
+      ],
     }
   },
-  created () {
+  created() {
     this.fetchOverview()
   },
   methods: {
-    ...mapActions({
-      addBreadcrumbsLevel: 'app/addBreadcrumbsLevel'
-    }),
-    fetchOverview () {
-      activities.getObjectOverview('activities', this.$route.params.id).then(resp => {
-        this.activityOverview = resp.data
-        this.addBreadcrumbsLevel({
-          text: this.activityOverview.activity.name,
-          to: { name: 'ActivityOverview', params: this.$route.params },
-          index: 4
+    fetchOverview() {
+      activities
+        .getObjectOverview(
+          'activities',
+          this.$route.params.id,
+          this.$route.params.version
+        )
+        .then((resp) => {
+          this.activityOverview = resp.data
+          this.addBreadcrumbsLevel(
+            this.activityOverview.activity.name,
+            { name: 'ActivityOverview', params: this.$route.params },
+            4
+          )
         })
-      })
-      activities.getObjectOverview('activities', this.$route.params.id, 'yaml').then(resp => {
-        this.activityYAML = resp.data
-      })
-      activities.getCOSMoSOverview('activities', this.$route.params.id).then(resp => {
-        this.activityCOSMoS = resp.data
-      })
+      activities
+        .getObjectOverview(
+          'activities',
+          this.$route.params.id,
+          undefined,
+          'yaml'
+        )
+        .then((resp) => {
+          this.activityYAML = resp.data
+        })
+      activities
+        .getCOSMoSOverview('activities', this.$route.params.id)
+        .then((resp) => {
+          this.activityCOSMoS = resp.data
+        })
     },
-    closePage () {
+    closePage() {
       this.$router.go(-1)
-    }
-  }
+    },
+  },
 }
 </script>

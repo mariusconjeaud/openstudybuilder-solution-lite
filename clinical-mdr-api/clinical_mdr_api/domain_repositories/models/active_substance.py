@@ -16,7 +16,6 @@ class ActiveSubstanceValue(ConceptValue):
     short_number = StringProperty()
     long_number = StringProperty()
     inn = StringProperty()
-    prodex_id = StringProperty()
 
     has_unii_value = RelationshipTo(
         DictionaryTermRoot,

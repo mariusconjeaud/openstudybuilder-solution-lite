@@ -1,56 +1,56 @@
 <template>
-<div class="px-4">
-  <div class="page-title d-flex align-center">
-    {{ $t('DictionaryTermTable.ucum_title') }}
-    <help-button :help-text="$t('_help.UcumTable.general')" />
-  </div>
-  <dictionary-term-table
-    :codelist-uid="codelistUid"
-    :dictionary-name="dictionaryName"
-    :headers="headers"
-    column-data-resource="dictionaries/terms"
+  <div class="px-4">
+    <div class="page-title d-flex align-center">
+      {{ $t('DictionaryTermTable.ucum_title') }}
+      <HelpButton :help-text="$t('_help.UcumTable.general')" />
+    </div>
+    <DictionaryTermTable
+      :codelist-uid="codelistUid"
+      :dictionary-name="dictionaryName"
+      :headers="headers"
+      column-data-resource="dictionaries/terms"
     >
-    <template v-slot:termForm="{ closeForm, open }">
-      <ucum-code-form
-        :open="open"
-        :codelist-uid="codelistUid"
-        @close="closeForm"
+      <template #termForm="{ closeForm, open }">
+        <UcumCodeForm
+          :open="open"
+          :codelist-uid="codelistUid"
+          @close="closeForm"
         />
-    </template>
-  </dictionary-term-table>
-</div>
+      </template>
+    </DictionaryTermTable>
+  </div>
 </template>
 
 <script>
 import dictionaries from '@/api/dictionaries'
-import DictionaryTermTable from '@/components/library/DictionaryTermTable'
-import UcumCodeForm from '@/components/library/UCUMCodeForm'
-import HelpButton from '@/components/tools/HelpButton'
+import DictionaryTermTable from '@/components/library/DictionaryTermTable.vue'
+import UcumCodeForm from '@/components/library/UCUMCodeForm.vue'
+import HelpButton from '@/components/tools/HelpButton.vue'
 
 export default {
   components: {
     DictionaryTermTable,
     UcumCodeForm,
-    HelpButton
+    HelpButton,
   },
-  data () {
+  data() {
     return {
       codelistUid: null,
       dictionaryName: 'UCUM',
       headers: [
-        { text: '', value: 'actions', width: '5%' },
-        { text: this.$t('UCUM.code'), value: 'name' },
-        { text: this.$t('UCUM.description'), value: 'definition' },
-        { text: this.$t('_global.status'), value: 'status' },
-        { text: this.$t('_global.version'), value: 'version' },
-        { text: this.$t('_global.modified'), value: 'start_date' }
-      ]
+        { title: '', key: 'actions', width: '5%' },
+        { title: this.$t('UCUM.code'), key: 'name' },
+        { title: this.$t('UCUM.description'), key: 'definition' },
+        { title: this.$t('_global.status'), key: 'status' },
+        { title: this.$t('_global.version'), key: 'version' },
+        { title: this.$t('_global.modified'), key: 'start_date' },
+      ],
     }
   },
-  mounted () {
-    dictionaries.getCodelists(this.dictionaryName).then(resp => {
+  mounted() {
+    dictionaries.getCodelists(this.dictionaryName).then((resp) => {
       this.codelistUid = resp.data.items[0].codelist_uid
     })
-  }
+  },
 }
 </script>

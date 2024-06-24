@@ -1,23 +1,28 @@
 <template>
-<div class="px-4">
-  <div class="page-title d-flex align-center">
-    {{ $t('StudyPopulationView.title') }} ({{ studyId }})
-    <help-button :help-text="$t('_help.StudyPopulationTable.general')" />
+  <div class="px-4">
+    <div class="page-title d-flex align-center">
+      {{ $t('StudyPopulationView.title') }} ({{ studyId }})
+      <HelpButton :help-text="$t('_help.StudyPopulationTable.general')" />
+    </div>
+    <StudyPopulationSummary />
   </div>
-  <study-population-summary />
-</div>
 </template>
 
 <script>
-import { studySelectedNavigationGuard } from '@/mixins/studies'
-import StudyPopulationSummary from '@/components/studies/StudyPopulationSummary'
-import HelpButton from '@/components/tools/HelpButton'
+import StudyPopulationSummary from '@/components/studies/StudyPopulationSummary.vue'
+import HelpButton from '@/components/tools/HelpButton.vue'
+import { useStudiesGeneralStore } from '@/stores/studies-general'
 
 export default {
-  mixins: [studySelectedNavigationGuard],
   components: {
     StudyPopulationSummary,
-    HelpButton
-  }
+    HelpButton,
+  },
+  setup() {
+    const studiesGeneralStore = useStudiesGeneralStore()
+    return {
+      studyId: studiesGeneralStore.studyId,
+    }
+  },
 }
 </script>

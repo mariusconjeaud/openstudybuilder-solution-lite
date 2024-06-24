@@ -1,134 +1,146 @@
 <template>
-<simple-form-dialog
-  ref="form"
-  :title="title"
-  :help-items="helpItems"
-  @close="cancel"
-  @submit="submit"
-  :open="open"
+  <SimpleFormDialog
+    ref="form"
+    :title="title"
+    :help-items="helpItems"
+    :open="open"
+    @close="cancel"
+    @submit="submit"
   >
-  <template v-slot:body>
-    <validation-observer ref="observer">
-      <v-row>
-        <v-col>
-          <validation-provider
-            v-slot="{ errors }"
-            rules="required"
-            >
+    <template #body>
+      <v-form ref="observer">
+        <v-row>
+          <v-col>
             <v-text-field
-              :label="$t('CrfAliases.context')"
               v-model="form.context"
-              dense
+              :label="$t('CrfAliases.context')"
+              density="compact"
               clearable
-              :error-messages="errors"
+              :rules="[formRules.required]"
             />
-          </validation-provider>
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col>
-          <validation-provider
-            v-slot="{ errors }"
-            rules="required"
-            >
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col>
             <v-text-field
-              :label="$t('CrfAliases.name')"
               v-model="form.name"
-              dense
+              :label="$t('CrfAliases.name')"
+              density="compact"
               clearable
-              :error-messages="errors"
+              :rules="[formRules.required]"
             />
-          </validation-provider>
-        </v-col>
-      </v-row>
-    </validation-observer>
-  </template>
-</simple-form-dialog>
+          </v-col>
+        </v-row>
+      </v-form>
+    </template>
+  </SimpleFormDialog>
 </template>
 
 <script>
-import SimpleFormDialog from '@/components/tools/SimpleFormDialog'
+import SimpleFormDialog from '@/components/tools/SimpleFormDialog.vue'
 import crfs from '@/api/crfs'
-import _isEqual from 'lodash/isEqual'
-import { bus } from '@/main'
+import { useFormStore } from '@/stores/form'
 
 export default {
   components: {
-    SimpleFormDialog
+    SimpleFormDialog,
   },
+  inject: ['eventBusEmit', 'formRules'],
   props: {
-    editedItem: Object,
-    open: Boolean
+    editedItem: {
+      type: Object,
+      default: null,
+    },
+    open: Boolean,
   },
-  computed: {
-    title () {
-      return (Object.keys(this.editedItem).length !== 0)
-        ? this.$t('CrfAliases.edit_alias')
-        : this.$t('CrfAliases.add_alias')
+  emits: ['close'],
+  setup() {
+    const formStore = useFormStore()
+    return {
+      formStore,
     }
   },
-  data () {
+  data() {
     return {
       form: {},
-      helpItems: [
-        'CrfAliases.context',
-        'CrfAliases.name'
-      ]
+      helpItems: ['CrfAliases.context', 'CrfAliases.name'],
+    }
+  },
+  computed: {
+    title() {
+      return Object.keys(this.editedItem).length !== 0
+        ? this.$t('CrfAliases.edit_alias')
+        : this.$t('CrfAliases.add_alias')
+    },
+  },
+  watch: {
+    editedItem(value) {
+      if (Object.keys(value).length !== 0) {
+        this.form = value
+        this.formStore.save(this.form)
+      }
+    },
+  },
+  mounted() {
+    if (Object.keys(this.editedItem).length !== 0) {
+      this.form = this.editedItem
+      this.formStore.save(this.form)
     }
   },
   methods: {
-    async cancel () {
-      if (this.$store.getters['form/form'] === '' || _isEqual(this.$store.getters['form/form'], JSON.stringify(this.form))) {
+    async cancel() {
+      if (this.formStore.isEmpty || this.formStore.isEqual(this.form)) {
         this.close()
       } else {
         const options = {
           type: 'warning',
           cancelLabel: this.$t('_global.cancel'),
-          agreeLabel: this.$t('_global.continue')
+          agreeLabel: this.$t('_global.continue'),
         }
-        if (await this.$refs.form.confirm(this.$t('_global.cancel_changes'), options)) {
+        if (
+          await this.$refs.form.confirm(
+            this.$t('_global.cancel_changes'),
+            options
+          )
+        ) {
           this.close()
         }
       }
     },
-    close () {
+    close() {
       this.$emit('close')
       this.form = {}
-      this.$store.commit('form/CLEAR_FORM')
+      this.formStore.reset()
       this.$refs.observer.reset()
     },
-    async submit () {
+    async submit() {
       this.form.library_name = 'Sponsor'
       if (Object.keys(this.editedItem).length !== 0) {
-        crfs.editAlias(this.editedItem.uid, this.form).then(() => {
-          bus.$emit('notification', { msg: this.$t('CrfAliases.alias_edited') })
-          this.close()
-        }, _err => {
-          this.$refs.form.working = false
-        })
+        crfs.editAlias(this.editedItem.uid, this.form).then(
+          () => {
+            this.eventBusEmit('notification', {
+              msg: this.$t('CrfAliases.alias_edited'),
+            })
+            this.close()
+          },
+          () => {
+            this.$refs.form.working = false
+          }
+        )
       } else {
-        crfs.addAlias(this.form).then(() => {
-          bus.$emit('notification', { msg: this.$t('CrfAliases.alias_created') })
-          this.close()
-        }, _err => {
-          this.$refs.form.working = false
-        })
+        crfs.addAlias(this.form).then(
+          () => {
+            this.eventBusEmit('notification', {
+              msg: this.$t('CrfAliases.alias_created'),
+            })
+            this.close()
+          },
+          () => {
+            this.$refs.form.working = false
+          }
+        )
       }
-    }
+    },
   },
-  mounted () {
-    if (Object.keys(this.editedItem).length !== 0) {
-      this.form = this.editedItem
-      this.$store.commit('form/SET_FORM', this.form)
-    }
-  },
-  watch: {
-    editedItem (value) {
-      if (Object.keys(value).length !== 0) {
-        this.form = value
-        this.$store.commit('form/SET_FORM', this.form)
-      }
-    }
-  }
 }
 </script>

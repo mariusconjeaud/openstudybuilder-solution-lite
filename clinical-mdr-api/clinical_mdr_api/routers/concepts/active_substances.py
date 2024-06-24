@@ -1,7 +1,7 @@
 """active_substances router"""
 from typing import Any
 
-from fastapi import APIRouter, Body, Depends, Path, Query
+from fastapi import APIRouter, Body, Path, Query
 from pydantic.types import Json
 from starlette.requests import Request
 
@@ -13,7 +13,7 @@ from clinical_mdr_api.models.concepts.active_substance import (
 )
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.oauth import get_current_user_id, rbac
+from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.concepts.active_substances_service import (
@@ -60,7 +60,7 @@ Possible errors:
             "short_number",
             "long_number",
             "inn",
-            "prodex_id",
+            "external_id",
             "start_date",
             "version",
             "status",
@@ -96,9 +96,8 @@ def get_active_substances(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    active_substance_service = ActiveSubstanceService(user=current_user_id)
+    active_substance_service = ActiveSubstanceService()
     results = active_substance_service.get_all_concepts(
         library=library,
         sort_by=sort_by,
@@ -130,7 +129,6 @@ def get_active_substances(
     },
 )
 def get_distinct_values_for_header(
-    current_user_id: str = Depends(get_current_user_id),
     library: str | None = Query(None, description=_generic_descriptions.LIBRARY_NAME),
     field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
     search_string: str
@@ -145,7 +143,7 @@ def get_distinct_values_for_header(
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
 ):
-    active_substance_service = ActiveSubstanceService(user=current_user_id)
+    active_substance_service = ActiveSubstanceService()
     return active_substance_service.get_distinct_values_for_header(
         library=library,
         field_name=field_name,
@@ -171,10 +169,8 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_activity(
-    uid: str = ActiveSubstanceUID, current_user_id: str = Depends(get_current_user_id)
-):
-    active_substance_service = ActiveSubstanceService(user=current_user_id)
+def get_activity(uid: str = ActiveSubstanceUID):
+    active_substance_service = ActiveSubstanceService()
     return active_substance_service.get_by_uid(uid=uid)
 
 
@@ -206,10 +202,8 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_versions(
-    uid: str = ActiveSubstanceUID, current_user_id: str = Depends(get_current_user_id)
-):
-    active_substance_service = ActiveSubstanceService(user=current_user_id)
+def get_versions(uid: str = ActiveSubstanceUID):
+    active_substance_service = ActiveSubstanceService()
     return active_substance_service.get_version_history(uid=uid)
 
 
@@ -254,9 +248,8 @@ Possible errors:
 )
 def create(
     active_substance_create_input: ActiveSubstanceCreateInput = Body(description=""),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    active_substance_service = ActiveSubstanceService(user=current_user_id)
+    active_substance_service = ActiveSubstanceService()
     return active_substance_service.create(concept_input=active_substance_create_input)
 
 
@@ -303,9 +296,8 @@ Possible errors:
 def edit(
     uid: str = ActiveSubstanceUID,
     active_substance_edit_input: ActiveSubstanceEditInput = Body(description=""),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    active_substance_service = ActiveSubstanceService(user=current_user_id)
+    active_substance_service = ActiveSubstanceService()
     return active_substance_service.edit_draft(
         uid=uid, concept_edit_input=active_substance_edit_input
     )
@@ -349,10 +341,8 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def approve(
-    uid: str = ActiveSubstanceUID, current_user_id: str = Depends(get_current_user_id)
-):
-    active_substance_service = ActiveSubstanceService(user=current_user_id)
+def approve(uid: str = ActiveSubstanceUID):
+    active_substance_service = ActiveSubstanceService()
     return active_substance_service.approve(uid=uid)
 
 
@@ -392,10 +382,8 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def create_new_version(
-    uid: str = ActiveSubstanceUID, current_user_id: str = Depends(get_current_user_id)
-):
-    active_substance_service = ActiveSubstanceService(user=current_user_id)
+def create_new_version(uid: str = ActiveSubstanceUID):
+    active_substance_service = ActiveSubstanceService()
     return active_substance_service.create_new_version(uid=uid)
 
 
@@ -436,10 +424,8 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def inactivate(
-    uid: str = ActiveSubstanceUID, current_user_id: str = Depends(get_current_user_id)
-):
-    active_substance_service = ActiveSubstanceService(user=current_user_id)
+def inactivate(uid: str = ActiveSubstanceUID):
+    active_substance_service = ActiveSubstanceService()
     return active_substance_service.inactivate_final(uid=uid)
 
 
@@ -480,10 +466,8 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def reactivate(
-    uid: str = ActiveSubstanceUID, current_user_id: str = Depends(get_current_user_id)
-):
-    active_substance_service = ActiveSubstanceService(user=current_user_id)
+def reactivate(uid: str = ActiveSubstanceUID):
+    active_substance_service = ActiveSubstanceService()
     return active_substance_service.reactivate_retired(uid=uid)
 
 
@@ -526,8 +510,6 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def delete(
-    uid: str = ActiveSubstanceUID, current_user_id: str = Depends(get_current_user_id)
-):
-    active_substance_service = ActiveSubstanceService(user=current_user_id)
+def delete(uid: str = ActiveSubstanceUID):
+    active_substance_service = ActiveSubstanceService()
     active_substance_service.soft_delete(uid=uid)

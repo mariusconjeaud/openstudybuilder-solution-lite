@@ -17,6 +17,9 @@ import pytest
 from fastapi.testclient import TestClient
 
 from clinical_mdr_api import models
+from clinical_mdr_api.domain_repositories.template_parameters.complex_parameter import (
+    ComplexTemplateParameterRepository,
+)
 from clinical_mdr_api.main import app
 from clinical_mdr_api.models.study_selections.study_selection import (
     StudySelectionEndpointInput,
@@ -50,6 +53,9 @@ indications_codelist: models.DictionaryCodelist
 indications_library_name: str
 text_value_1: models.TextValue
 text_value_2: models.TextValue
+endpoint_template_operator: EndpointTemplate
+endpoints_with_operator: list[Endpoint]
+operator_parameter_terms: models.TextValue
 
 URL = "endpoints"
 
@@ -77,6 +83,9 @@ def test_data():
     global indications_library_name
     global text_value_1
     global text_value_2
+    global endpoint_template_operator
+    global endpoints_with_operator
+    global operator_parameter_terms
 
     # Create Template Parameter
     TestUtils.create_template_parameter("TextValue")
@@ -211,7 +220,7 @@ def test_data():
             )
         )
 
-    study_endpoint_selection_service = StudyEndpointSelectionService(author="test")
+    study_endpoint_selection_service = StudyEndpointSelectionService()
     for endpoint in endpoints:
         if endpoint.status == "Final":
             study_endpoint_selection_service.make_selection(
@@ -220,6 +229,67 @@ def test_data():
                     endpoint_uid=endpoint.uid
                 ),
             )
+
+    codelist = TestUtils.create_ct_codelist(
+        sponsor_preferred_name="Operator",
+        template_parameter=True,
+        extensible=True,
+        approve=True,
+    )
+
+    _ = TestUtils.create_ct_term(
+        codelist_uid=codelist.codelist_uid,
+        sponsor_preferred_name="<",
+        sponsor_preferred_name_sentence_case="<",
+    )
+    _ = TestUtils.create_ct_term(
+        codelist_uid=codelist.codelist_uid,
+        sponsor_preferred_name=">",
+        sponsor_preferred_name_sentence_case=">",
+    )
+
+    operator_parameter_terms = ComplexTemplateParameterRepository().find_values(
+        template_parameter_name=codelist.sponsor_preferred_name
+    )
+
+    def generate_parameter_operator_terms(index: int):
+        return [
+            MultiTemplateParameterTerm(
+                position=1,
+                conjunction="",
+                terms=[
+                    IndexedTemplateParameterTerm(
+                        index=1,
+                        name=operator_parameter_terms[index]["name"],
+                        uid=operator_parameter_terms[index]["uid"],
+                        type="Operator",
+                    )
+                ],
+            )
+        ]
+
+    endpoint_template_operator = TestUtils.create_endpoint_template(
+        name="Default name with [Operator] ",
+        guidance_text="Default guidance text",
+        library_name="Sponsor",
+    )
+
+    endpoints_with_operator = []
+
+    endpoints_with_operator.append(
+        TestUtils.create_endpoint(
+            endpoint_template_uid=endpoint_template_operator.uid,
+            library_name="Sponsor",
+            parameter_terms=generate_parameter_operator_terms(0),
+        )
+    )
+    endpoints_with_operator.append(
+        TestUtils.create_endpoint(
+            endpoint_template_uid=endpoint_template_operator.uid,
+            library_name="Sponsor",
+            parameter_terms=generate_parameter_operator_terms(1),
+        )
+    )
 
     yield
 
@@ -248,6 +318,65 @@ ENDPOINT_FIELDS_NOT_NULL = [
     "name",
     "endpoint_template",
 ]
+
+
+def test_operator_parameter(api_client):
+    response = api_client.get(
+        f"endpoint-templates/{endpoint_template_operator.uid}/parameters"
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert len(res[0]["terms"]) == 2
+    assert res[0]["terms"][0]["name"] == "<"
+    assert res[0]["terms"][1]["name"] == ">"
+
+    response = api_client.get(f"{URL}/{endpoints_with_operator[0].uid}")
+    res = response.json()
+
+    assert response.status_code == 200
+
+    assert res["uid"] == endpoints_with_operator[0].uid
+    assert res["name"] == f"Default name with [{operator_parameter_terms[0]['name']}]"
+    assert (
+        res["name_plain"] == f"Default name with {operator_parameter_terms[0]['name']}"
+    )
+    assert res["endpoint_template"]["uid"] == endpoint_template_operator.uid
+    assert res["endpoint_template"]["sequence_id"] == "E2"
+    assert (
+        res["parameter_terms"][0]["terms"][0]["uid"]
+        == operator_parameter_terms[0]["uid"]
+    )
+    assert (
+        res["parameter_terms"][0]["terms"][0]["name"]
+        == operator_parameter_terms[0]["name"]
+    )
+    assert res["parameter_terms"][0]["terms"][0]["type"] == "Operator"
+    assert res["version"] == "1.0"
+    assert res["status"] == "Final"
+
+    response = api_client.get(f"{URL}/{endpoints_with_operator[1].uid}")
+    res = response.json()
+
+    assert response.status_code == 200
+
+    assert res["uid"] == endpoints_with_operator[1].uid
+    assert res["name"] == f"Default name with [{operator_parameter_terms[1]['name']}]"
+    assert (
+        res["name_plain"] == f"Default name with {operator_parameter_terms[1]['name']}"
+    )
+    assert res["endpoint_template"]["uid"] == endpoint_template_operator.uid
+    assert res["endpoint_template"]["sequence_id"] == "E2"
+    assert (
+        res["parameter_terms"][0]["terms"][0]["uid"]
+        == operator_parameter_terms[1]["uid"]
+    )
+    assert (
+        res["parameter_terms"][0]["terms"][0]["name"]
+        == operator_parameter_terms[1]["name"]
+    )
+    assert res["parameter_terms"][0]["terms"][0]["type"] == "Operator"
+    assert res["version"] == "1.0"
+    assert res["status"] == "Final"
 
 
 def test_get_endpoint(api_client):
@@ -525,6 +654,48 @@ def test_create_endpoint(api_client):
     assert set(list(res.keys())) == set(ENDPOINT_FIELDS_ALL)
     for key in ENDPOINT_FIELDS_NOT_NULL:
         assert res[key] is not None
+
+
+def test_keep_original_case_of_unit_definition_parameter_if_it_is_in_the_start_of_endpoint(
+    api_client,
+):
+    TestUtils.create_template_parameter("Unit")
+    _unit = TestUtils.create_unit_definition("u/week", template_parameter=True)
+
+    _endpoint_template = TestUtils.create_endpoint_template(
+        name="[Unit] test ignore case",
+        guidance_text="Default guidance text",
+        study_uid=None,
+        library_name="Sponsor",
+        indication_uids=[],
+        category_uids=[],
+        sub_category_uids=[],
+    )
+
+    data = {
+        "endpoint_template_uid": _endpoint_template.uid,
+        "library_name": "Sponsor",
+        "parameter_terms": [
+            {
+                "position": 1,
+                "conjunction": "",
+                "terms": [
+                    {
+                        "index": 1,
+                        "name": _unit.name,
+                        "uid": _unit.uid,
+                        "type": "Unit",
+                    }
+                ],
+            }
+        ],
+    }
+    response = api_client.post(URL, json=data)
+    res = response.json()
+    log.info("Created Endpoint: %s", res)
+
+    assert response.status_code == 201
+    assert res["name"] == f"[{_unit.name}] test ignore case"
 
 
 def test_update_endpoint(api_client):

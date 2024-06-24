@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime
 from enum import Enum
 from typing import Callable, Self
@@ -12,6 +12,7 @@ from clinical_mdr_api.exceptions import ValidationException
 class SoAItemType(Enum):
     STUDY_ACTIVITY_SCHEDULE = "StudyActivitySchedule"
     STUDY_ACTIVITY = "StudyActivity"
+    STUDY_ACTIVITY_INSTANCE = "StudyActivityInstance"
     STUDY_ACTIVITY_SUBGROUP = "StudyActivitySubGroup"
     STUDY_ACTIVITY_GROUP = "StudyActivityGroup"
     STUDY_SOA_GROUP = "StudySoAGroup"
@@ -42,6 +43,7 @@ class StudySoAFootnoteVOHistory:
     status: StudyStatus | None = None
     author: str | None = None
     is_deleted: bool = False
+    accepted_version: bool = False
 
 
 @dataclass
@@ -58,32 +60,37 @@ class StudySoAFootnoteVO:
     status: StudyStatus | None = None
     author: str | None = None
     is_deleted: bool = False
+    accepted_version: bool = False
 
     @classmethod
     def from_input_values(
         cls,
         study_uid: str,
         footnote_uid: str,
+        footnote_version: str | None,
         footnote_template_uid: str,
+        footnote_template_version: str | None,
         referenced_items: list[ReferencedItemVO],
         footnote_number: int,
         author: str,
         status: StudyStatus,
         modified: datetime | None = None,
         generate_uid_callback: Callable[[], str | None] = (lambda: None),
+        accepted_version: bool = False,
     ) -> Self:
         footnote_ar = cls(
             uid=generate_uid_callback(),
             study_uid=study_uid,
             footnote_uid=footnote_uid,
-            footnote_version=None,
+            footnote_version=footnote_version,
             footnote_template_uid=footnote_template_uid,
-            footnote_template_version=None,
+            footnote_template_version=footnote_template_version,
             footnote_number=footnote_number,
             referenced_items=referenced_items,
             author=author,
             status=status,
             modified=modified,
+            accepted_version=accepted_version,
         )
         return footnote_ar
 
@@ -99,6 +106,7 @@ class StudySoAFootnoteVO:
         modified: datetime,
         author: str,
         status: StudyStatus,
+        accepted_version: bool,
         footnote_version: str = None,
         footnote_template_version: str = None,
     ) -> Self:
@@ -114,6 +122,7 @@ class StudySoAFootnoteVO:
             modified=modified,
             author=author,
             status=status,
+            accepted_version=accepted_version,
         )
         return footnote_ar
 
@@ -126,3 +135,6 @@ class StudySoAFootnoteVO:
             raise ValidationException(
                 f"At least one of Footnote uid {self.footnote_uid} and footnote template uid {self.footnote_template_uid} must be set"
             )
+
+    def accept_versions(self):
+        return replace(self, accepted_version=True)

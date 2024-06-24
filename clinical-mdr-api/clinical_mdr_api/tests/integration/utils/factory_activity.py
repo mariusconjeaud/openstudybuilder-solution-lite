@@ -11,7 +11,7 @@ def create_study_activity(
     activity_uid="activity_root1",
     soa_group_term_uid="term_root_final",
 ):
-    return StudyActivitySelectionService(author="test").make_selection(
+    return StudyActivitySelectionService().make_selection(
         study_uid,
         StudySelectionActivityCreateInput(
             soa_group_term_uid=soa_group_term_uid,

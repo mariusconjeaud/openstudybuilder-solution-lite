@@ -1,7 +1,7 @@
 """ActivityItemClass hierarchies router."""
 from typing import Any
 
-from fastapi import APIRouter, Body, Depends, Path, Query, Response, status
+from fastapi import APIRouter, Body, Path, Query, Response, status
 from pydantic.types import Json
 from starlette.requests import Request
 
@@ -14,7 +14,7 @@ from clinical_mdr_api.models.biomedical_concepts.activity_item_class import (
 )
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.oauth import get_current_user_id, rbac
+from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.biomedical_concepts.activity_item_class import (
@@ -87,9 +87,8 @@ def get_activity_item_classes(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    activity_item_class_service = ActivityItemClassService(user=current_user_id)
+    activity_item_class_service = ActivityItemClassService()
     results = activity_item_class_service.get_all_items(
         sort_by=sort_by,
         page_number=page_number,
@@ -120,7 +119,6 @@ def get_activity_item_classes(
     },
 )
 def get_distinct_values_for_header(
-    current_user_id: str = Depends(get_current_user_id),
     field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
     search_string: str
     | None = Query("", description=_generic_descriptions.HEADER_SEARCH_STRING),
@@ -134,7 +132,7 @@ def get_distinct_values_for_header(
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
 ):
-    activity_item_class_service = ActivityItemClassService(user=current_user_id)
+    activity_item_class_service = ActivityItemClassService()
     return activity_item_class_service.get_distinct_values_for_header(
         field_name=field_name,
         search_string=search_string,
@@ -168,9 +166,8 @@ Possible errors:
 )
 def get_activity(
     uid: str = ActivityItemClassUID,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    activity_item_class_service = ActivityItemClassService(user=current_user_id)
+    activity_item_class_service = ActivityItemClassService()
     return activity_item_class_service.get_by_uid(uid=uid)
 
 
@@ -205,9 +202,8 @@ Possible errors:
 )
 def get_versions(
     uid: str = ActivityItemClassUID,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    activity_item_class_service = ActivityItemClassService(user=current_user_id)
+    activity_item_class_service = ActivityItemClassService()
     return activity_item_class_service.get_version_history(uid=uid)
 
 
@@ -250,9 +246,8 @@ Possible errors:
 )
 def create(
     activity_item_class_input: ActivityItemClassCreateInput = Body(description=""),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    activity_item_class_service = ActivityItemClassService(user=current_user_id)
+    activity_item_class_service = ActivityItemClassService()
     return activity_item_class_service.create(item_input=activity_item_class_input)
 
 
@@ -299,9 +294,8 @@ Possible errors:
 def edit(
     uid: str = ActivityItemClassUID,
     activity_item_class_input: ActivityItemClassEditInput = Body(description=""),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    activity_item_class_service = ActivityItemClassService(user=current_user_id)
+    activity_item_class_service = ActivityItemClassService()
     return activity_item_class_service.edit_draft(
         uid=uid, item_edit_input=activity_item_class_input
     )
@@ -339,9 +333,8 @@ def patch_mappings(
     mapping_input: ActivityItemClassMappingInput = Body(
         description="The uid of variable classes to map activity item class to."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    activity_item_class_service = ActivityItemClassService(user=current_user_id)
+    activity_item_class_service = ActivityItemClassService()
     return activity_item_class_service.patch_mappings(
         uid=uid, mapping_input=mapping_input
     )
@@ -386,9 +379,8 @@ Possible errors:
 )
 def new_version(
     uid: str = ActivityItemClassUID,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    activity_item_class_service = ActivityItemClassService(user=current_user_id)
+    activity_item_class_service = ActivityItemClassService()
     return activity_item_class_service.create_new_version(uid=uid)
 
 
@@ -433,9 +425,8 @@ Possible errors:
 )
 def approve(
     uid: str = ActivityItemClassUID,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    activity_item_class_service = ActivityItemClassService(user=current_user_id)
+    activity_item_class_service = ActivityItemClassService()
     return activity_item_class_service.approve(uid=uid)
 
 
@@ -479,9 +470,8 @@ Possible errors:
 )
 def inactivate(
     uid: str = ActivityItemClassUID,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    activity_item_class_service = ActivityItemClassService(user=current_user_id)
+    activity_item_class_service = ActivityItemClassService()
     return activity_item_class_service.inactivate_final(uid=uid)
 
 
@@ -525,9 +515,8 @@ Possible errors:
 )
 def reactivate(
     uid: str = ActivityItemClassUID,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    activity_item_class_service = ActivityItemClassService(user=current_user_id)
+    activity_item_class_service = ActivityItemClassService()
     return activity_item_class_service.reactivate_retired(uid=uid)
 
 
@@ -572,8 +561,7 @@ Possible errors:
 )
 def delete_activity_item_class(
     uid: str = ActivityItemClassUID,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    activity_item_class_service = ActivityItemClassService(user=current_user_id)
+    activity_item_class_service = ActivityItemClassService()
     activity_item_class_service.soft_delete(uid=uid)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

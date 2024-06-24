@@ -56,9 +56,12 @@ class TestStudyListing(unittest.TestCase):
         inject_base_data()
         codelist = TestUtils.create_ct_codelist()
         TestUtils.create_study_ct_data_map(codelist_uid=codelist.codelist_uid)
-        study_service = StudyService(user="some_user")
+        study_service = StudyService()
         studies = study_service.get_all()
         cls.study_uid = studies.items[0].uid
+        cls.project_id = studies.items[
+            0
+        ].current_metadata.identification_metadata.project_number
         cls.study_number = studies.items[
             0
         ].current_metadata.identification_metadata.study_number
@@ -312,13 +315,15 @@ class TestStudyListing(unittest.TestCase):
         self.maxDiff = None  # pylint: disable=invalid-name
         study_listing_service = StudyMetadataListingService()
         output = study_listing_service.get_study_metadata(
-            self.study_number, datetime="2099-12-30"
+            project_id=self.project_id,
+            study_number=self.study_number,
+            datetime="2099-12-30",
         )
         expected_output = StudyMetadataListingModel(
             api_ver="TBA",
             study_id="123-123",
-            study_ver="1",
-            request_dt=datetime.now(timezone.utc),
+            study_ver=1,
+            request_dt=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S"),
             specified_dt="2099-12-30",
             title=generate_description_json_model().study_title,
             reg_id=RegistryIdentifiersListingModel.from_study_registry_identifiers_vo(
@@ -400,13 +405,6 @@ class TestStudyListing(unittest.TestCase):
                 find_timeframe_by_uid=study_listing_service.timeframe_repo.find_by_uid,
             ),
         )
-        print("****************************************************")
-        print("output:")
-        print(output)
-        print("****************************************************")
-        print("expected output:")
-        print(expected_output)
-        print("****************************************************")
 
         # Check api version
         self.assertEqual(output.api_ver, expected_output.api_ver)

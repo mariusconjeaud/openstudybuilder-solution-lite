@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Callable
 
 from neomodel import db
@@ -25,9 +26,6 @@ from clinical_mdr_api.services._utils import (
 from clinical_mdr_api.services.concepts.activities.activity_instance_service import (
     ActivityInstanceService,
 )
-from clinical_mdr_api.services.studies.study_activity_schedule import (
-    StudyActivityScheduleService,
-)
 from clinical_mdr_api.services.studies.study_activity_selection_base import (
     StudyActivitySelectionBaseService,
 )
@@ -38,6 +36,16 @@ class StudyActivityInstanceSelectionService(StudyActivitySelectionBaseService):
     repository_interface = StudySelectionActivityInstanceRepository
     selected_object_repository_interface = ActivityInstanceRepository
 
+    _vo_to_ar_filter_map = {
+        "order": "activity_order",
+        "start_date": "start_date",
+        "user_initials": "user_initials",
+        "activity_instance.name": "activity_instance_name",
+        "study_soa_group.soa_group_name": "soa_group_term_name",
+        "study_activity_subgroup.activity_subgroup_name": "activity_subgroup_name",
+        "study_activity_group.activity_group_name": "activity_group_name",
+    }
+
     def _get_selected_object_exist_check(self) -> Callable[[str], bool]:
         return self.selected_object_repository.final_concept_exists
 
@@ -45,6 +53,7 @@ class StudyActivityInstanceSelectionService(StudyActivitySelectionBaseService):
         self,
         study_selection_ar: StudySelectionActivityInstanceAR,
         order: int,
+        terms_at_specific_datetime: datetime | None = None,
         accepted_version: bool = False,
     ) -> models.StudySelectionActivityInstance:
         return models.StudySelectionActivityInstance.from_study_selection_activity_instance_ar_and_order(
@@ -211,20 +220,6 @@ class StudyActivityInstanceSelectionService(StudyActivitySelectionBaseService):
     def delete_selection(self, study_uid: str, study_selection_uid: str):
         repos = self._repos
         try:
-            # Remove related Study activity schedules
-            study_activity_schedules_service = StudyActivityScheduleService(
-                author=self.author
-            )
-            study_activity_schedules = study_activity_schedules_service.get_all_schedules_for_specific_activity_instance(
-                study_uid=study_uid, study_activity_instance_uid=study_selection_uid
-            )
-            for study_activity_schedule in study_activity_schedules:
-                self._repos.study_activity_schedule_repository.delete(
-                    study_uid,
-                    study_activity_schedule.study_activity_schedule_uid,
-                    self.author,
-                )
-
             # Load aggregate
             selection_aggregate = (
                 repos.study_activity_instance_repository.find_by_study(
@@ -265,22 +260,29 @@ class StudyActivityInstanceSelectionService(StudyActivitySelectionBaseService):
             study_uid=current_object.study_uid,
             study_selection_uid=current_object.study_activity_uid,
         )
-        activity_instance_ar = self.activity_instance_validation(
-            activity_instance_uid=request_object.activity_instance_uid,
-            study_activity_selection=study_activity_selection,
-        )
+        if request_object.activity_instance_uid:
+            activity_instance_ar = self.activity_instance_validation(
+                activity_instance_uid=request_object.activity_instance_uid,
+                study_activity_selection=study_activity_selection,
+            )
+        else:
+            activity_instance_ar = None
+
         return StudySelectionActivityInstanceVO.from_input_values(
             study_uid=current_object.study_uid,
             study_selection_uid=current_object.study_selection_uid,
             user_initials=self.author,
-            activity_instance_uid=request_object.activity_instance_uid,
-            activity_instance_version=activity_instance_ar.item_metadata.version,
+            activity_instance_uid=activity_instance_ar.uid
+            if activity_instance_ar
+            else None,
+            activity_instance_version=activity_instance_ar.item_metadata.version
+            if activity_instance_ar
+            else None,
             activity_uid=current_object.activity_uid,
             activity_subgroup_uid=current_object.activity_subgroup_uid,
             activity_group_uid=current_object.activity_group_uid,
             activity_version=current_object.activity_version,
             study_activity_uid=current_object.study_activity_uid,
-            order=current_object.order,
             show_activity_instance_in_protocol_flowchart=request_object.show_activity_instance_in_protocol_flowchart,
         )
 
@@ -300,5 +302,40 @@ class StudyActivityInstanceSelectionService(StudyActivitySelectionBaseService):
         )
         return self._transform_from_ar_and_order_to_response_model(
             study_selection_ar=selection_aggregate,
+            order=order,
+        )
+
+    @db.transaction
+    def update_selection_to_latest_version(
+        self, study_uid: str, study_selection_uid: str
+    ):
+        (
+            selection_ar,
+            selection,
+            order,
+        ) = self._get_specific_activity_instance_selection_by_uids(
+            study_uid=study_uid,
+            study_selection_uid=study_selection_uid,
+            for_update=True,
+        )
+        activity_instance_uid = selection.activity_instance_uid
+        activity_instance_ar = self._repos.activity_instance_repository.find_by_uid_2(
+            activity_instance_uid, for_update=True
+        )
+        if activity_instance_ar.item_metadata.status == LibraryItemStatus.DRAFT:
+            activity_instance_ar.approve(self.author)
+            self._repos.activity_instance_repository.save(activity_instance_ar)
+        elif activity_instance_ar.item_metadata.status == LibraryItemStatus.RETIRED:
+            raise exceptions.BusinessLogicException(
+                "Cannot add retired activity instances as selection. Please reactivate."
+            )
+        new_selection: StudySelectionActivityInstanceVO = selection.update_version(
+            activity_instance_version=activity_instance_ar.item_metadata.version
+        )
+        selection_ar.update_selection(new_selection)
+        self._repos.study_activity_instance_repository.save(selection_ar, self.author)
+
+        return self._transform_from_ar_and_order_to_response_model(
+            study_selection_ar=selection_ar,
             order=order,
         )

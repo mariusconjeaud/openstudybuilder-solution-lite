@@ -1,10 +1,10 @@
-from fastapi import Body, Depends, Query, Response, status
+from fastapi import Body, Query, Response, status
 from pydantic.types import Json
 
 from clinical_mdr_api import config, models
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.oauth import get_current_user_id, rbac
+from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions
 from clinical_mdr_api.routers import study_router as router
@@ -46,9 +46,8 @@ def get_all_activity_instructions_for_all_studies(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> CustomPage[models.StudyActivityInstruction]:
-    service = StudyActivityInstructionService(author=current_user_id)
+    service = StudyActivityInstructionService()
     all_selections = service.get_all_instructions_for_all_studies(
         page_number=page_number,
         page_size=page_size,
@@ -83,9 +82,8 @@ def get_all_activity_instructions_for_all_studies(
 def get_all_selected_instructions(
     uid: str = utils.studyUID,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> list[models.StudyActivityInstruction]:
-    service = StudyActivityInstructionService(author=current_user_id)
+    service = StudyActivityInstructionService()
     return service.get_all_instructions(
         study_uid=uid, study_value_version=study_value_version
     )
@@ -109,9 +107,8 @@ def get_all_selected_instructions(
 def delete_activity_instructon(
     uid: str = utils.studyUID,
     study_activity_instruction_uid: str = utils.study_activity_instruction_uid,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    service = StudyActivityInstructionService(author=current_user_id)
+    service = StudyActivityInstructionService()
     service.delete(study_uid=uid, instruction_uid=study_activity_instruction_uid)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
@@ -132,7 +129,6 @@ def activity_instruction_batch_operations(
     operations: list[models.StudyActivityInstructionBatchInput] = Body(
         description="List of operation to perform"
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> list[models.StudyActivityInstructionBatchOutput]:
-    service = StudyActivityInstructionService(author=current_user_id)
+    service = StudyActivityInstructionService()
     return service.handle_batch_operations(uid, operations)

@@ -1,198 +1,212 @@
 <template>
-<template-indexing-form
-  :form="form"
-  :template="template"
+  <TemplateIndexingForm
+    ref="baseForm"
+    :form="form"
+    :template="template"
+    @emit-form="updateForm"
   >
-  <template v-slot:templateIndexFields>
-    <not-applicable-field
-      :checked="template && (!template.activity_groups || !template.activity_groups.length)"
-      :clean-function="value => $set(form, 'activity_group', null)"
+    <template #templateIndexFields>
+      <NotApplicableField
+        :checked="
+          template &&
+          (!template.activity_groups || !template.activity_groups.length)
+        "
+        :clean-function="() => (localForm.activity_group = null)"
       >
-      <template v-slot:mainField="{ notApplicable }">
-        <validation-provider
-          v-slot="{ errors }"
-          :rules="`requiredIfNotNA:${notApplicable}`"
-          >
+        <template #mainField="{ notApplicable }">
           <v-row>
             <v-col cols="11">
               <v-autocomplete
-                v-model="form.activity_group"
+                v-model="localForm.activity_group"
                 :label="$t('FootnoteTemplateForm.group')"
                 data-cy="template-activity-group"
                 :items="groups"
-                item-text="name"
+                item-title="name"
                 item-value="uid"
-                :error-messages="errors"
-                dense
+                density="compact"
                 clearable
-                @change="setSubGroups"
                 :disabled="notApplicable"
-                />
+                :rules="[
+                  (value) => formRules.requiredIfNotNA(value, notApplicable),
+                ]"
+                @update:model-value="setSubGroups"
+              />
             </v-col>
           </v-row>
-        </validation-provider>
-      </template>
-    </not-applicable-field>
-    <not-applicable-field
-      :checked="template && (!template.activity_subgroups || !template.activity_subgroups.length)"
-      :clean-function="value => $set(form, 'activity_subgroups', null)"
+        </template>
+      </NotApplicableField>
+      <NotApplicableField
+        :checked="
+          template &&
+          (!template.activity_subgroups || !template.activity_subgroups.length)
+        "
+        :clean-function="() => (localForm.activity_subgroups = null)"
       >
-      <template v-slot:mainField="{ notApplicable }">
-        <validation-provider
-          v-slot="{ errors }"
-          :rules="`requiredIfNotNA:${notApplicable}`"
-          >
+        <template #mainField="{ notApplicable }">
           <v-row>
             <v-col cols="11">
               <v-autocomplete
-                v-model="form.activity_subgroups"
+                v-model="localForm.activity_subgroups"
                 :label="$t('FootnoteTemplateForm.sub_group')"
                 data-cy="template-activity-sub-group"
                 :items="subGroups"
-                item-text="name"
+                item-title="name"
                 item-value="uid"
-                :error-messages="errors"
-                dense
+                density="compact"
                 clearable
                 multiple
-                @change="setActivities"
                 :disabled="notApplicable"
-                />
+                :rules="[
+                  (value) => formRules.requiredIfNotNA(value, notApplicable),
+                ]"
+                @update:model-value="setActivities"
+              />
             </v-col>
           </v-row>
-        </validation-provider>
-      </template>
-    </not-applicable-field>
-    <not-applicable-field
-      :checked="template && (!template.activities || !template.activities.length)"
-      :clean-function="value => $set(form, 'activities', null)"
+        </template>
+      </NotApplicableField>
+      <NotApplicableField
+        :checked="
+          template && (!template.activities || !template.activities.length)
+        "
+        :clean-function="() => (localForm.activities = null)"
       >
-      <template v-slot:mainField="{ notApplicable }">
-        <validation-provider
-          v-slot="{ errors }"
-          name="activity"
-          :rules="`requiredIfNotNA:${notApplicable}`"
-          >
+        <template #mainField="{ notApplicable }">
           <v-row>
             <v-col cols="11">
               <v-autocomplete
-                v-model="form.activities"
+                v-model="localForm.activities"
                 :label="$t('FootnoteTemplateForm.activity')"
                 data-cy="template-activity-activity"
                 :items="activities"
-                item-text="name"
+                item-title="name"
                 return-object
-                :error-messages="errors"
-                dense
+                density="compact"
                 clearable
                 multiple
                 :disabled="notApplicable"
-                />
+                :rules="[
+                  (value) => formRules.requiredIfNotNA(value, notApplicable),
+                ]"
+              />
             </v-col>
           </v-row>
-        </validation-provider>
-      </template>
-    </not-applicable-field>
-  </template>
-</template-indexing-form>
+        </template>
+      </NotApplicableField>
+    </template>
+  </TemplateIndexingForm>
 </template>
 
-<script>
-import activities from '@/api/activities'
-import NotApplicableField from '@/components/tools/NotApplicableField'
-import TemplateIndexingForm from './TemplateIndexingForm'
+<script setup>
+import activitiesApi from '@/api/activities'
+import NotApplicableField from '@/components/tools/NotApplicableField.vue'
+import TemplateIndexingForm from './TemplateIndexingForm.vue'
+import { ref, watch, inject } from 'vue'
 
-export default {
-  components: {
-    NotApplicableField,
-    TemplateIndexingForm
+const formRules = inject('formRules')
+const baseForm = ref()
+
+const props = defineProps({
+  form: {
+    type: Object,
+    default: null,
   },
-  props: {
-    form: Object,
-    template: Object
+  template: {
+    type: Object,
+    default: null,
   },
-  data () {
-    return {
-      activities: [],
-      groups: [],
-      subGroups: []
-    }
-  },
-  methods: {
-    preparePayload (form) {
-      const result = {}
-      if (form.activity_group) {
-        result.activity_group_uids = [form.activity_group]
-      } else {
-        result.activity_group_uids = []
+})
+
+const activities = ref([])
+const groups = ref([])
+const subGroups = ref([])
+const localForm = ref({ ...props.form })
+
+watch(
+  () => props.template,
+  async (value) => {
+    if (value && value.activity_groups && value.activity_groups.length) {
+      if (!groups.value.length) {
+        const resp = await activitiesApi.getGroups()
+        groups.value = resp.data.items
       }
-      if (form.activity_group && form.activity_group.length) {
-        result.activity_subgroup_uids = []
-        for (const item of form.activity_subgroups) {
-          const itemUid = (typeof item !== 'string') ? item.uid : item
-          result.activity_subgroup_uids.push(itemUid)
-        }
-      } else {
-        form.activity_subgroup_uids = []
+      const activityGroupUid =
+        typeof props.template.activity_groups[0] !== 'string'
+          ? props.template.activity_groups[0].uid
+          : props.template.activity_groups[0]
+      localForm.value.activity_group = activityGroupUid
+      await setSubGroups(localForm.value.activity_group, true)
+      if (!localForm.value.activity_subgroups) {
+        localForm.value.activity_subgroups = value.activity_subgroups
       }
-      if (form.activities) {
-        result.activity_uids = form.activities.map(item => item.uid)
-      } else {
-        result.activity_uids = []
+      const subgroupUids = localForm.value.activity_subgroups.map((g) => g.uid)
+      setActivities(subgroupUids, true)
+      if (!localForm.value.activities) {
+        localForm.value.activities = value.activities
       }
-      return result
-    },
-    async setSubGroups (group, noSubgroupReset) {
-      if (group) {
-        const resp = await activities.getSubGroups(group)
-        this.subGroups = resp.data.items
-      }
-      if (!noSubgroupReset) {
-        this.$set(this.form, 'activity_subgroups', [])
-        this.$set(this.form, 'activities', [])
-      }
-    },
-    setActivities (subgroupUids) {
-      this.activities = []
-      for (const sg of subgroupUids) {
-        activities.getSubGroupActivities(sg).then(resp => {
-          this.activities = this.activities.concat(resp.data.items)
-        })
-      }
-    }
-  },
-  created () {
-    if (!this.groups.length) {
-      activities.getGroups({ page_size: 0 }).then(resp => {
-        this.groups = resp.data.items
-      })
-    }
-  },
-  watch: {
-    template: {
-      handler: async function (value) {
-        if (value && value.activity_groups && value.activity_groups.length) {
-          if (!this.groups.length) {
-            const resp = await activities.getGroups()
-            this.groups = resp.data.items
-          }
-          const activityGroupUid = (typeof this.template.activity_groups[0] !== 'string')
-            ? this.template.activity_groups[0].uid
-            : this.template.activity_groups[0]
-          this.$set(this.form, 'activity_group', activityGroupUid)
-          await this.setSubGroups(this.form.activity_group, true)
-          if (!this.form.activity_subgroups) {
-            this.$set(this.form, 'activity_subgroups', value.activity_subgroups)
-          }
-          const subgroupUids = this.form.activity_subgroups.map(g => g.uid)
-          await this.setActivities(subgroupUids, true)
-          if (!this.form.activities) {
-            this.$set(this.form, 'activities', value.activities)
-          }
-        }
-      },
-      immediate: true
     }
   }
+)
+
+if (!groups.value.length) {
+  activitiesApi.getGroups({ page_size: 0 }).then((resp) => {
+    groups.value = resp.data.items
+  })
 }
+
+function updateForm(indications) {
+  localForm.value = { ...localForm.value, ...indications }
+}
+
+function preparePayload() {
+  const result = {}
+  Object.assign(result, baseForm.value.preparePayload())
+  if (localForm.value.activity_group) {
+    result.activity_group_uids = [localForm.value.activity_group]
+  } else {
+    result.activity_group_uids = []
+  }
+  if (
+    localForm.value.activity_subgroups &&
+    localForm.value.activity_subgroups.length
+  ) {
+    result.activity_subgroup_uids = []
+    for (const item of localForm.value.activity_subgroups) {
+      const itemUid = typeof item !== 'string' ? item.uid : item
+      result.activity_subgroup_uids.push(itemUid)
+    }
+  } else {
+    result.activity_subgroup_uids = []
+  }
+  if (localForm.value.activities) {
+    result.activity_uids = localForm.value.activities.map((item) => item.uid)
+  } else {
+    result.activity_uids = []
+  }
+  return result
+}
+
+async function setSubGroups(group, noSubgroupReset) {
+  if (group) {
+    const resp = await activitiesApi.getSubGroups(group)
+    subGroups.value = resp.data.items
+  }
+  if (!noSubgroupReset) {
+    localForm.value.activity_subgroups = []
+    localForm.value.activities = []
+  }
+}
+
+function setActivities(subgroupUids) {
+  activities.value = []
+  for (const sg of subgroupUids) {
+    activitiesApi.getSubGroupActivities(sg).then((resp) => {
+      activities.value = activities.value.concat(resp.data.items)
+    })
+  }
+}
+
+defineExpose({
+  preparePayload,
+})
 </script>

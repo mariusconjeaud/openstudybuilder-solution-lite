@@ -1,30 +1,34 @@
 <template>
-<div>
-  <instance-table
-    fetch-instances-action-name="endpoints/fetchFilteredEndpoints"
-    type="endpoint"
-    :instances="endpoints"
-    base-url="/endpoints"
-    export-object-label="Endpoints"
-    column-data-resource="endpoints"
-    :server-items-length="total"
+  <div>
+    <InstanceTable
+      type="endpoint"
+      :instances="endpoints"
+      base-url="/endpoints"
+      export-object-label="Endpoints"
+      column-data-resource="endpoints"
+      :items-length="total"
+      :fetching-function="fetchFilteredEndpoints"
     />
-</div>
+  </div>
 </template>
 
 <script>
-import InstanceTable from './InstanceTable'
-import { mapGetters } from 'vuex'
+import InstanceTable from './InstanceTable.vue'
+import { useEndpointsStore } from '@/stores/library-endpoints'
+import { computed } from 'vue'
 
 export default {
   components: {
-    InstanceTable
+    InstanceTable,
   },
-  computed: {
-    ...mapGetters({
-      endpoints: 'endpoints/endpoints',
-      total: 'endpoints/total'
-    })
-  }
+  setup() {
+    const endpointsStore = useEndpointsStore()
+
+    return {
+      fetchFilteredEndpoints: endpointsStore.fetchFilteredEndpoints,
+      total: computed(() => endpointsStore.total),
+      endpoints: computed(() => endpointsStore.endpoints),
+    }
+  },
 }
 </script>

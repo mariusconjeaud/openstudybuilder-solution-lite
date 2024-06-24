@@ -51,7 +51,6 @@ class PharmaceuticalProductRepository(ConceptGenericRepository):
 
     def _create_new_value_node(self, ar: _AggregateRootType) -> VersionValue:
         value_node = super()._create_new_value_node(ar=ar)
-        value_node.prodex_id = ar.concept_vo.prodex_id
         value_node.save()
 
         for uid in ar.concept_vo.dosage_form_uids:
@@ -64,12 +63,12 @@ class PharmaceuticalProductRepository(ConceptGenericRepository):
 
         for formulation in ar.concept_vo.formulations:
             formulation_node = IngredientFormulation(
-                prodex_id=formulation.prodex_id, name=formulation.name
+                external_id=formulation.external_id, name=formulation.name
             )
             formulation_node.save()
 
             for ingredient in formulation.ingredients:
-                ingredient_node = Ingredient(prodex_id=ingredient.prodex_id)
+                ingredient_node = Ingredient(external_id=ingredient.external_id)
                 ingredient_node.save()
                 formulation_node.has_ingredient.connect(ingredient_node)
 
@@ -99,7 +98,7 @@ class PharmaceuticalProductRepository(ConceptGenericRepository):
     def _has_data_changed(self, ar: _AggregateRootType, value: VersionValue) -> bool:
         was_parent_data_modified = super()._has_data_changed(ar=ar, value=value)
 
-        are_props_changed = ar.concept_vo.prodex_id != value.prodex_id
+        are_props_changed = False
 
         are_rels_changed = sorted(ar.concept_vo.dosage_form_uids) != sorted(
             [val.uid for val in value.has_dosage_form.all()]
@@ -123,12 +122,12 @@ class PharmaceuticalProductRepository(ConceptGenericRepository):
     ) -> list[FormulationVO]:
         return [
             FormulationVO.from_repository_values(
-                prodex_id=form.prodex_id,
+                external_id=form.external_id,
                 name=form.name,
                 ingredients=[
                     IngredientVO.from_repository_values(
                         active_substance_uid=ingredient.has_substance.get().uid,
-                        prodex_id=ingredient.prodex_id,
+                        external_id=ingredient.external_id,
                         strength_uid=getattr(
                             ingredient.has_strength_value.get_or_none(), "uid", None
                         ),
@@ -171,7 +170,7 @@ class PharmaceuticalProductRepository(ConceptGenericRepository):
                     ),
                     None,
                 ),
-                prodex_id=ingredient_node.get("prodex_id"),
+                external_id=ingredient_node.get("external_id"),
                 strength_uid=next(
                     (
                         x["ingr_strength_rel"].end_node.get("uid")
@@ -207,7 +206,7 @@ class PharmaceuticalProductRepository(ConceptGenericRepository):
         ar = PharmaceuticalProductAR.from_repository_values(
             uid=input_dict.get("uid"),
             concept_vo=PharmaceuticalProductVO.from_repository_values(
-                prodex_id=input_dict.get("prodex_id"),
+                external_id=input_dict.get("external_id"),
                 dosage_form_uids=list(
                     map(lambda x: x.get("uid"), input_dict.get("dosage_forms"))
                 ),
@@ -220,7 +219,7 @@ class PharmaceuticalProductRepository(ConceptGenericRepository):
                 formulations=list(
                     map(
                         lambda x: FormulationVO.from_repository_values(
-                            prodex_id=x.get("prodex_id"),
+                            external_id=x.get("external_id"),
                             name=x.get("name"),
                             ingredients=self._get_formulation_ingredients(
                                 formulation=x,
@@ -276,7 +275,7 @@ class PharmaceuticalProductRepository(ConceptGenericRepository):
         ar = PharmaceuticalProductAR.from_repository_values(
             uid=root.uid,
             concept_vo=PharmaceuticalProductVO.from_repository_values(
-                prodex_id=value.prodex_id,
+                external_id=value.external_id,
                 dosage_form_uids=[x.uid for x in value.has_dosage_form.all()],
                 route_of_administration_uids=[
                     x.uid for x in value.has_route_of_administration.all()
@@ -284,7 +283,7 @@ class PharmaceuticalProductRepository(ConceptGenericRepository):
                 formulations=list(
                     map(
                         lambda x: FormulationVO.from_repository_values(
-                            prodex_id=x.prodex_id,
+                            external_id=x.external_id,
                             name=x.name,
                             ingredients=[
                                 IngredientVO.from_repository_values(
@@ -293,7 +292,7 @@ class PharmaceuticalProductRepository(ConceptGenericRepository):
                                         "uid",
                                         None,
                                     ),
-                                    prodex_id=ingredient.prodex_id,
+                                    external_id=ingredient.external_id,
                                     strength_uid=getattr(
                                         ingredient.has_strength_value.get_or_none(),
                                         "uid",
@@ -329,7 +328,6 @@ class PharmaceuticalProductRepository(ConceptGenericRepository):
     ) -> str:
         return """
             WITH *,
-                concept_value.prodex_id AS prodex_id,            
                 [(concept_value)-[:HAS_DOSAGE_FORM]->(dosage_form:CTTermRoot) | dosage_form] AS dosage_forms,
                 [(concept_value)-[:HAS_ROUTE_OF_ADMINISTRATION]->(route_of_administration:CTTermRoot) | route_of_administration] AS routes_of_administration,
                 [(concept_value)-[:HAS_FORMULATION]->(formulation:IngredientFormulation) | formulation] as formulations,

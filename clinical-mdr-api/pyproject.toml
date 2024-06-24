@@ -33,7 +33,7 @@ max-line-length = 150
 max-module-lines = 5500
 
 [tool.pylint.'BASIC']
-good-names = '_,e,i,j,k,x,y,z,ar,ex,rs,_AggregateRootType'
+good-names = '_,c,e,i,j,k,l,r,v,x,y,z,ar,ex,rs,_AggregateRootType'
 
 [tool.pylint.'DESIGN']
 max-args = 35

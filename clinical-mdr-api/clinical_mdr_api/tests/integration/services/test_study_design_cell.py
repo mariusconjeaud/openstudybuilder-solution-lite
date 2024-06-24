@@ -194,7 +194,7 @@ class StudyDesignCellTestCase(unittest.TestCase):
         ]
 
     def test_create_patch_delete_design_cell(self):
-        service = StudyDesignCellService("test")
+        service = StudyDesignCellService()
         # Check if the BusinessLogicException is raised when a StudyDesignCell is assigned to an Arm that has StudyBranchArm assigned to it.
         with self.assertRaises(exceptions.BusinessLogicException):
             # Create a design cell -- Arm Specified
@@ -347,7 +347,7 @@ class StudyDesignCellTestCase(unittest.TestCase):
         assert len(design_cells) == 1
 
     def test_batch_operations(self):
-        service = StudyDesignCellService("test")
+        service = StudyDesignCellService()
 
         # create
         service.handle_batch_operations(

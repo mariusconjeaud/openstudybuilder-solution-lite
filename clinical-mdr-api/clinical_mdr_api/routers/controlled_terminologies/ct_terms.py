@@ -1,14 +1,14 @@
 """CTTerms router."""
 from typing import Any
 
-from fastapi import APIRouter, Body, Depends, Path, Query
+from fastapi import APIRouter, Body, Path, Query
 from pydantic.types import Json
 from starlette.requests import Request
 
 from clinical_mdr_api import config, models
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.oauth import get_current_user_id, rbac
+from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.controlled_terminologies.ct_term import CTTermService
@@ -48,9 +48,8 @@ def create(
     term_input: models.CTTermCreateInput = Body(
         description="Properties to create CTTermAttributes and CTTermName."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    ct_term_service = CTTermService(user=current_user_id)
+    ct_term_service = CTTermService()
     return ct_term_service.create(term_input)
 
 
@@ -121,6 +120,11 @@ def get_all_terms(
     | None = Query(
         None, description="If specified, only terms from given package are returned."
     ),
+    is_sponsor: bool
+    | None = Query(
+        False,
+        description="Boolean value to indicate desired package is a sponsor package. Defaults to False.",
+    ),
     sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
     page_number: int
     | None = Query(1, ge=1, description=_generic_descriptions.PAGE_NUMBER),
@@ -140,14 +144,14 @@ def get_all_terms(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    ct_term_service = CTTermService(user=current_user_id)
+    ct_term_service = CTTermService()
     results = ct_term_service.get_all_terms(
         codelist_uid=codelist_uid,
         codelist_name=codelist_name,
         library=library,
         package=package,
+        is_sponsor=is_sponsor,
         sort_by=sort_by,
         page_number=page_number,
         page_size=page_size,
@@ -177,7 +181,6 @@ def get_all_terms(
     },
 )
 def get_distinct_values_for_header(
-    current_user_id: str = Depends(get_current_user_id),
     codelist_uid: str
     | None = Query(
         None, description="If specified, only terms from given codelist are returned."
@@ -207,7 +210,7 @@ def get_distinct_values_for_header(
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
 ):
-    ct_term_service = CTTermService(user=current_user_id)
+    ct_term_service = CTTermService()
     return ct_term_service.get_distinct_values_for_header(
         codelist_uid=codelist_uid,
         codelist_name=codelist_name,
@@ -252,9 +255,8 @@ def add_parent(
         description="The type of the parent relationship.\n"
         "Valid types are 'type' or 'subtype', 'valid_for_epoch'",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    ct_term_service = CTTermService(user=current_user_id)
+    ct_term_service = CTTermService()
     return ct_term_service.add_parent(
         term_uid=term_uid, parent_uid=parent_uid, relationship_type=relationship_type
     )
@@ -291,9 +293,8 @@ def remove_parent(
         description="The type of the parent relationship.\n"
         "Valid types are 'type' or 'subtype'",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    ct_term_service = CTTermService(user=current_user_id)
+    ct_term_service = CTTermService()
     return ct_term_service.remove_parent(
         term_uid=term_uid, parent_uid=parent_uid, relationship_type=relationship_type
     )
@@ -323,9 +324,8 @@ def patch_new_term_order(
     new_order_input: models.CTTermNewOrder = Body(
         description="Parameters needed for the reorder action."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.CTTerm:
-    ct_term_service = CTTermService(user=current_user_id)
+    ct_term_service = CTTermService()
     return ct_term_service.set_new_order(
         term_uid=term_uid,
         codelist_uid=new_order_input.codelist_uid,

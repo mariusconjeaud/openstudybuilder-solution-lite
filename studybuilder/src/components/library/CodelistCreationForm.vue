@@ -1,183 +1,156 @@
 <template>
-<div>
-  <stepper-form
+  <StepperForm
     ref="stepper"
     :title="$t('CodelistCreationForm.title')"
     :steps="steps"
-    @close="cancel"
-    @save="submit"
     :form-observer-getter="getObserver"
     :help-items="helpItems"
-    >
-    <template v-slot:step.catalogue="{ step }">
-      <validation-observer :ref="`observer_${step}`">
-        <validation-provider
-          v-slot="{ errors }"
-          rules="required"
-          >
-          <v-row>
-            <v-col>
-              <v-select
-                data-cy="catalogue-dropdown"
-                v-model="form.catalogue_name"
-                :label="$t('CodelistCreationForm.catalogue')"
-                :items="catalogues"
-                item-text="name"
-                item-value="name"
-                clearable
-                dense
-                :error-messages="errors"
-                persistent-hint
-                />
-            </v-col>
-          </v-row>
-        </validation-provider>
-      </validation-observer>
+    @close="cancel"
+    @save="submit"
+  >
+    <template #[`step.catalogue`]="{ step }">
+      <v-form :ref="`observer_${step}`">
+        <v-row>
+          <v-col>
+            <v-select
+              v-model="form.catalogue_name"
+              data-cy="catalogue-dropdown"
+              :label="$t('CodelistCreationForm.catalogue')"
+              :items="catalogues"
+              item-title="name"
+              item-value="name"
+              clearable
+              density="compact"
+              persistent-hint
+              :rules="[formRules.required]"
+            />
+          </v-col>
+        </v-row>
+      </v-form>
     </template>
-    <template v-slot:step.names="{ step }">
-      <validation-observer :ref="`observer_${step}`">
-        <validation-provider
-          v-slot="{ errors }"
-          rules="required"
-          >
-          <v-row>
-            <v-col>
-              <v-text-field
-                data-cy="sponsor-preffered-name"
-                v-model="form.sponsor_preferred_name"
-                :label="$t('CodelistSponsorValuesForm.pref_name')"
-                :error-messages="errors"
-                clearable
-                dense
-                class="mt-2"
-                />
-            </v-col>
-          </v-row>
-        </validation-provider>
+    <template #[`step.names`]="{ step }">
+      <v-form :ref="`observer_${step}`">
+        <v-row>
+          <v-col>
+            <v-text-field
+              v-model="form.sponsor_preferred_name"
+              data-cy="sponsor-preffered-name"
+              :label="$t('CodelistSponsorValuesForm.pref_name')"
+              clearable
+              density="compact"
+              class="mt-2"
+              :rules="[formRules.required]"
+            />
+          </v-col>
+        </v-row>
         <v-row>
           <v-col>
             <v-switch
               v-model="form.template_parameter"
+              color="primary"
               :label="$t('CodelistSponsorValuesForm.tpl_parameter')"
-              />
+              density="compact"
+            />
           </v-col>
         </v-row>
-      </validation-observer>
+      </v-form>
     </template>
-    <template v-slot:step.attributes="{ step }">
-      <validation-observer :ref="`observer_${step}`">
-        <validation-provider
-          v-slot="{ errors }"
-          rules="required"
-          >
-          <v-row>
-            <v-col>
-              <v-text-field
-                data-cy="codelist-name"
-                v-model="form.name"
-                :label="$t('CodelistAttributesForm.name')"
-                :error-messages="errors"
-                clearable
-                dense
-                class="mt-3"
-                />
-            </v-col>
-          </v-row>
-        </validation-provider>
-        <validation-provider
-          v-slot="{ errors }"
-          rules="required"
-          >
-          <v-row>
-            <v-col>
-              <v-text-field
-                data-cy="submission-value"
-                v-model="form.submission_value"
-                :label="$t('CodelistAttributesForm.subm_value')"
-                :error-messages="errors"
-                dense
-                clearable
-                class="mt-4"
-                />
-            </v-col>
-          </v-row>
-        </validation-provider>
-        <validation-provider
-          v-slot="{ errors }"
-          rules="required"
-          >
-          <v-row>
-            <v-col>
-              <v-text-field
-                data-cy="nci-preffered-name"
-                v-model="form.nci_preferred_name"
-                :label="$t('CodelistAttributesForm.nci_pref_name')"
-                :error-messages="errors"
-                dense
-                clearable
-                class="mt-4"
-                />
-            </v-col>
-          </v-row>
-        </validation-provider>
+    <template #[`step.attributes`]="{ step }">
+      <v-form :ref="`observer_${step}`">
+        <v-row>
+          <v-col>
+            <v-text-field
+              v-model="form.name"
+              data-cy="codelist-name"
+              :label="$t('CodelistAttributesForm.name')"
+              clearable
+              density="compact"
+              :rules="[formRules.required]"
+            />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col>
+            <v-text-field
+              v-model="form.submission_value"
+              data-cy="submission-value"
+              :label="$t('CodelistAttributesForm.subm_value')"
+              density="compact"
+              clearable
+              :rules="[formRules.required]"
+            />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col>
+            <v-text-field
+              v-model="form.nci_preferred_name"
+              data-cy="nci-preffered-name"
+              :label="$t('CodelistAttributesForm.nci_pref_name')"
+              density="compact"
+              clearable
+              :rules="[formRules.required]"
+            />
+          </v-col>
+        </v-row>
         <v-row>
           <v-col>
             <v-switch
-              data-cy="extensible-toggle"
               v-model="form.extensible"
+              color="primary"
+              data-cy="extensible-toggle"
               :label="$t('CodelistAttributesForm.extensible')"
-              class="mt-2"
-              />
+              density="compact"
+            />
           </v-col>
         </v-row>
-        <validation-provider
-          v-slot="{ errors }"
-          rules="required"
-          >
-          <v-row>
-            <v-col>
-              <v-textarea
-                data-cy="definition"
-                v-model="form.definition"
-                :label="$t('CodelistAttributesForm.definition')"
-                :error-messages="errors"
-                rows="1"
-                clearable
-                auto-grow
-                />
-            </v-col>
-          </v-row>
-        </validation-provider>
-      </validation-observer>
+        <v-row>
+          <v-col>
+            <v-textarea
+              v-model="form.definition"
+              data-cy="definition"
+              :label="$t('CodelistAttributesForm.definition')"
+              rows="1"
+              clearable
+              auto-grow
+              density="compact"
+              :rules="[formRules.required]"
+            />
+          </v-col>
+        </v-row>
+      </v-form>
     </template>
-  </stepper-form>
-  <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
-</div>
+  </StepperForm>
+  <ConfirmDialog ref="confirm" :text-cols="6" :action-cols="5" />
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { computed } from 'vue'
+import { useCtCataloguesStore } from '@/stores/library-ctcatalogues'
 import controlledTerminology from '@/api/controlledTerminology'
-import StepperForm from '@/components/tools/StepperForm'
-import ConfirmDialog from '@/components/tools/ConfirmDialog'
+import StepperForm from '@/components/tools/StepperForm.vue'
+import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
 
 export default {
   components: {
     StepperForm,
-    ConfirmDialog
+    ConfirmDialog,
   },
-  props: ['catalogue'],
-  computed: {
-    ...mapGetters({
-      catalogues: 'ctCatalogues/catalogues'
-    })
+  inject: ['formRules'],
+  emits: ['close', 'created'],
+  setup() {
+    const ctCataloguesStore = useCtCataloguesStore()
+
+    return {
+      catalogues: computed(() => ctCataloguesStore.catalogues),
+    }
   },
-  data () {
+  data() {
     return {
       form: {
         extensible: false,
         library_name: 'Sponsor',
-        template_parameter: false
+        template_parameter: false,
       },
       helpItems: [
         'CodelistCreationForm.catalogue',
@@ -187,39 +160,50 @@ export default {
         'CodelistAttributesForm.subm_value',
         'CodelistAttributesForm.nci_pref_name',
         'CodelistAttributesForm.extensible',
-        'CodelistAttributesForm.definition'
+        'CodelistAttributesForm.definition',
       ],
       steps: [
-        { name: 'catalogue', title: this.$t('CodelistCreationForm.step1_title') },
+        {
+          name: 'catalogue',
+          title: this.$t('CodelistCreationForm.step1_title'),
+        },
         { name: 'names', title: this.$t('CodelistCreationForm.step2_title') },
-        { name: 'attributes', title: this.$t('CodelistCreationForm.step3_title') }
-      ]
+        {
+          name: 'attributes',
+          title: this.$t('CodelistCreationForm.step3_title'),
+        },
+      ],
     }
   },
   methods: {
-    async cancel () {
+    async cancel() {
       if (this.form.catalogue_name === 'All') {
         this.close()
       } else {
         const options = {
           type: 'warning',
           cancelLabel: this.$t('_global.cancel'),
-          agreeLabel: this.$t('_global.continue')
+          agreeLabel: this.$t('_global.continue'),
         }
-        if (await this.$refs.confirm.open(this.$t('_global.cancel_changes'), options)) {
+        if (
+          await this.$refs.confirm.open(
+            this.$t('_global.cancel_changes'),
+            options
+          )
+        ) {
           this.close()
         }
       }
     },
-    close () {
+    close() {
       this.$emit('close')
       this.form = {}
       this.$refs.stepper.reset()
     },
-    getObserver (step) {
+    getObserver(step) {
       return this.$refs[`observer_${step}`]
     },
-    async submit () {
+    async submit() {
       this.form.terms = []
       const data = JSON.parse(JSON.stringify(this.form))
       try {
@@ -229,7 +213,7 @@ export default {
       } finally {
         this.$refs.stepper.loading = false
       }
-    }
-  }
+    },
+  },
 }
 </script>

@@ -40,8 +40,6 @@ from clinical_mdr_api.domains.study_selections.study_selection_element import (
     StudySelectionElementVO,
 )
 from clinical_mdr_api.domains.study_selections.study_selection_endpoint import (
-    EndpointUnitItem,
-    EndpointUnits,
     StudySelectionEndpointsAR,
     StudySelectionEndpointVO,
 )
@@ -107,6 +105,12 @@ def ct_term_uid_to_str(ct_uid: str, find_term_by_uid: Callable[[str], Any | None
         else:
             return f"uid: {ct_uid} not found"
     return ""
+
+
+def boolean_to_ny(response: bool):
+    if response:
+        return "Y"
+    return "N"
 
 
 def none_to_empty_str(obj):
@@ -178,16 +182,16 @@ class StudyTypeListingModel(BaseModel):
     stype: str
     stype_nf: str
 
-    trial_type: list[SimpleListingCTModel] | None = Field(None, nullable=True)
+    trial_type: list[SimpleListingCTModel]
     trial_type_nf: str
 
     phase: str
     phase_nf: str
 
-    extension: str | bool
+    extension: str
     extension_nf: str
 
-    adaptive: str | bool
+    adaptive: str
     adaptive_nf: str
 
     stop_rule: str
@@ -221,6 +225,7 @@ class StudyTypeListingModel(BaseModel):
                     ct_uid=trial_type_code, find_term_by_uid=find_term_by_uid
                 )
                 for trial_type_code in high_level_study_design_vo.trial_type_codes
+                if high_level_study_design_vo.trial_type_codes
             ],
             trial_type_nf=ct_term_uid_to_str(
                 ct_uid=high_level_study_design_vo.trial_type_null_value_code,
@@ -234,12 +239,16 @@ class StudyTypeListingModel(BaseModel):
                 ct_uid=high_level_study_design_vo.trial_phase_null_value_code,
                 find_term_by_uid=find_term_by_uid,
             ),
-            extension=none_to_empty_str(high_level_study_design_vo.is_extension_trial),
+            extension=none_to_empty_str(
+                boolean_to_ny(high_level_study_design_vo.is_extension_trial)
+            ),
             extension_nf=ct_term_uid_to_str(
                 ct_uid=high_level_study_design_vo.is_extension_trial_null_value_code,
                 find_term_by_uid=find_term_by_uid,
             ),
-            adaptive=none_to_empty_str(high_level_study_design_vo.is_adaptive_design),
+            adaptive=none_to_empty_str(
+                boolean_to_ny(high_level_study_design_vo.is_adaptive_design)
+            ),
             adaptive_nf=ct_term_uid_to_str(
                 ct_uid=high_level_study_design_vo.is_adaptive_design_null_value_code,
                 find_term_by_uid=find_term_by_uid,
@@ -256,7 +265,9 @@ class StudyTypeListingModel(BaseModel):
                 ct_uid=high_level_study_design_vo.confirmed_response_minimum_duration_null_value_code,
                 find_term_by_uid=find_term_by_uid,
             ),
-            post_auth=none_to_empty_str(high_level_study_design_vo.post_auth_indicator),
+            post_auth=none_to_empty_str(
+                boolean_to_ny(high_level_study_design_vo.post_auth_indicator)
+            ),
             post_auth_nf=ct_term_uid_to_str(
                 ct_uid=high_level_study_design_vo.post_auth_indicator_null_value_code,
                 find_term_by_uid=find_term_by_uid,
@@ -271,22 +282,22 @@ class StudyPopulationListingModel(BaseModel):
             "Study population model for listing supplying SDTM generation framework."
         )
 
-    therapy_area: list[SimpleListingCTModel] | None = Field(None, nullable=True)
+    therapy_area: list[SimpleListingCTModel]
     therapy_area_nf: str
 
-    indication: list[SimpleListingCTModel] | None = Field(None, nullable=True)
+    indication: list[SimpleListingCTModel]
     indication_nf: str
 
-    diag_grp: list[SimpleListingCTModel] | None = Field(None, nullable=True)
+    diag_grp: list[SimpleListingCTModel]
     diag_grp_nf: str
 
     sex: str
     sex_nf: str
 
-    rare_dis: str | bool
+    rare_dis: str
     rare_dis_nf: str
 
-    healthy_subj: str | bool
+    healthy_subj: str
     healthy_subj_nf: str
 
     min_age: str
@@ -298,13 +309,13 @@ class StudyPopulationListingModel(BaseModel):
     stable_dis_min_dur: str
     stable_dis_min_dur_nf: str
 
-    pediatric: str | bool
+    pediatric: str
     pediatric_nf: str
 
-    pediatric_postmarket: str | bool
+    pediatric_postmarket: str
     pediatric_postmarket_nf: str
 
-    pediatric_inv: str | bool
+    pediatric_inv: str
     pediatric_inv_nf: str
 
     relapse_criteria: str
@@ -329,6 +340,7 @@ class StudyPopulationListingModel(BaseModel):
                     find_term_by_uid=find_dictionary_term_by_uid,
                 )
                 for therapeutic_area_code in study_population_vo.therapeutic_area_codes
+                if study_population_vo.therapeutic_area_codes
             ],
             therapy_area_nf=ct_term_uid_to_str(
                 ct_uid=study_population_vo.therapeutic_area_null_value_code,
@@ -340,6 +352,7 @@ class StudyPopulationListingModel(BaseModel):
                     find_term_by_uid=find_dictionary_term_by_uid,
                 )
                 for disease_or_indication_code in study_population_vo.disease_condition_or_indication_codes
+                if study_population_vo.disease_condition_or_indication_codes
             ],
             indication_nf=(
                 ct_term_uid_to_str(
@@ -353,6 +366,7 @@ class StudyPopulationListingModel(BaseModel):
                     find_term_by_uid=find_dictionary_term_by_uid,
                 )
                 for diagnosis_group_code in study_population_vo.diagnosis_group_codes
+                if study_population_vo.diagnosis_group_codes
             ],
             diag_grp_nf=ct_term_uid_to_str(
                 ct_uid=study_population_vo.diagnosis_group_null_value_code,
@@ -366,13 +380,15 @@ class StudyPopulationListingModel(BaseModel):
                 ct_uid=study_population_vo.sex_of_participants_null_value_code,
                 find_term_by_uid=find_term_by_uid,
             ),
-            rare_dis=none_to_empty_str(study_population_vo.rare_disease_indicator),
+            rare_dis=none_to_empty_str(
+                boolean_to_ny(study_population_vo.rare_disease_indicator)
+            ),
             rare_dis_nf=ct_term_uid_to_str(
                 ct_uid=study_population_vo.rare_disease_indicator_null_value_code,
                 find_term_by_uid=find_term_by_uid,
             ),
             healthy_subj=none_to_empty_str(
-                study_population_vo.healthy_subject_indicator
+                boolean_to_ny(study_population_vo.healthy_subject_indicator)
             ),
             healthy_subj_nf=ct_term_uid_to_str(
                 ct_uid=study_population_vo.healthy_subject_indicator_null_value_code,
@@ -399,20 +415,24 @@ class StudyPopulationListingModel(BaseModel):
                 ct_uid=study_population_vo.stable_disease_minimum_duration_null_value_code,
                 find_term_by_uid=find_term_by_uid,
             ),
-            pediatric=none_to_empty_str(study_population_vo.pediatric_study_indicator),
+            pediatric=none_to_empty_str(
+                boolean_to_ny(study_population_vo.pediatric_study_indicator)
+            ),
             pediatric_nf=ct_term_uid_to_str(
                 ct_uid=study_population_vo.pediatric_study_indicator_null_value_code,
                 find_term_by_uid=find_term_by_uid,
             ),
             pediatric_postmarket=none_to_empty_str(
-                study_population_vo.pediatric_postmarket_study_indicator
+                boolean_to_ny(study_population_vo.pediatric_postmarket_study_indicator)
             ),
             pediatric_postmarket_nf=ct_term_uid_to_str(
                 ct_uid=study_population_vo.pediatric_postmarket_study_indicator_null_value_code,
                 find_term_by_uid=find_term_by_uid,
             ),
             pediatric_inv=none_to_empty_str(
-                study_population_vo.pediatric_investigation_plan_indicator
+                boolean_to_ny(
+                    study_population_vo.pediatric_investigation_plan_indicator
+                )
             ),
             pediatric_inv_nf=ct_term_uid_to_str(
                 ct_uid=study_population_vo.pediatric_investigation_plan_indicator_null_value_code,
@@ -441,7 +461,7 @@ class StudyAttributesListingModel(BaseModel):
     intv_type: str
     intv_type_nf: str
 
-    add_on: str | bool
+    add_on: str
     add_on_nf: str
 
     control_type: str
@@ -450,7 +470,7 @@ class StudyAttributesListingModel(BaseModel):
     intv_model: str
     intv_model_nf: str
 
-    randomised: str | bool
+    randomised: str
     randomised_nf: str
 
     strata: str
@@ -462,7 +482,7 @@ class StudyAttributesListingModel(BaseModel):
     planned_length: str
     planned_length_nf: str
 
-    study_intent: list[SimpleListingCTModel] | None = Field(None, nullable=True)
+    study_intent: list[SimpleListingCTModel]
     study_intent_nf: str
 
     @classmethod
@@ -483,7 +503,7 @@ class StudyAttributesListingModel(BaseModel):
                 find_term_by_uid=find_term_by_uid,
             ),
             add_on=none_to_empty_str(
-                study_intervention_vo.add_on_to_existing_treatments
+                boolean_to_ny(study_intervention_vo.add_on_to_existing_treatments)
             ),
             add_on_nf=ct_term_uid_to_str(
                 ct_uid=study_intervention_vo.add_on_to_existing_treatments_null_value_code,
@@ -505,7 +525,9 @@ class StudyAttributesListingModel(BaseModel):
                 ct_uid=study_intervention_vo.intervention_model_null_value_code,
                 find_term_by_uid=find_term_by_uid,
             ),
-            randomised=none_to_empty_str(study_intervention_vo.is_trial_randomised),
+            randomised=none_to_empty_str(
+                boolean_to_ny(study_intervention_vo.is_trial_randomised)
+            ),
             randomised_nf=ct_term_uid_to_str(
                 ct_uid=study_intervention_vo.is_trial_randomised_null_value_code,
                 find_term_by_uid=find_term_by_uid,
@@ -535,6 +557,7 @@ class StudyAttributesListingModel(BaseModel):
                     ct_uid=trial_intent_type_code, find_term_by_uid=find_term_by_uid
                 )
                 for trial_intent_type_code in study_intervention_vo.trial_intent_types_codes
+                if study_intervention_vo.trial_intent_types_codes
             ],
             study_intent_nf=ct_term_uid_to_str(
                 ct_uid=study_intervention_vo.trial_intent_type_null_value_code,
@@ -547,9 +570,9 @@ class StudySelctionListingModel(BaseModel):
     uid: str
     name: str
     short_name: str
-    code: str | None = Field(None, nullable=True)
+    code: str
     no_subject: int | None = Field(None, nullable=True)
-    desc: str | None = Field(None, nullable=True)
+    desc: str
 
 
 class StudyBranchArmListingModel(StudySelctionListingModel):
@@ -557,9 +580,9 @@ class StudyBranchArmListingModel(StudySelctionListingModel):
         title = "Study Branch Arm model for listing"
         description = "Study Branch Arm model for listing."
 
-    order: str
+    order: int
     arm_uid: str
-    rand_grp: str | None
+    rand_grp: str
 
     @classmethod
     def from_study_selection_branch_arm_vo(
@@ -606,8 +629,8 @@ class StudyArmListingModel(StudySelctionListingModel):
         title = "Study Arm model for listing"
         description = "Study Arm model for listing."
 
-    order: str
-    rand_grp: str | None
+    order: int
+    rand_grp: str
     type: str
 
     @classmethod
@@ -657,8 +680,8 @@ class StudyCohortListingModel(StudySelctionListingModel):
         title = "study attributes model for listing"
         description = "Study attributes model for listing"
 
-    arm_uid: list[str] | None = Field(None, nullable=True)
-    branch_uid: list[str] | None = Field(None, nullable=True)
+    arm_uid: list[str]
+    branch_uid: list[str]
 
     @classmethod
     def from_study_selection_cohort_vo(
@@ -672,8 +695,12 @@ class StudyCohortListingModel(StudySelctionListingModel):
             code=none_to_empty_str(study_selection_cohort_vo.code),
             no_subject=study_selection_cohort_vo.number_of_subjects,
             desc=none_to_empty_str(study_selection_cohort_vo.description),
-            arm_uid=study_selection_cohort_vo.arm_root_uids,
-            branch_uid=study_selection_cohort_vo.branch_arm_root_uids,
+            arm_uid=study_selection_cohort_vo.arm_root_uids
+            if study_selection_cohort_vo.arm_root_uids
+            else [],
+            branch_uid=study_selection_cohort_vo.branch_arm_root_uids
+            if study_selection_cohort_vo.branch_arm_root_uids
+            else [],
         )
 
     @staticmethod
@@ -696,9 +723,9 @@ class StudyEpochListingModel(BaseModel):
     name: str
     type: str
     subtype: str
-    start_rule: str | None = Field(None, nullable=True)
-    end_rule: str | None = Field(None, nullable=True)
-    description: str | None = Field(None, nullable=True)
+    start_rule: str
+    end_rule: str
+    description: str
 
     @classmethod
     def from_study_epoch(
@@ -744,10 +771,10 @@ class StudyElementListingModel(BaseModel):
     short_name: str
     type: str
     subtype: str
-    start_rule: str | None = Field(None, nullable=True)
-    end_rule: str | None = Field(None, nullable=True)
-    dur: str | None = Field(None, nullable=True)
-    desc: str | None = Field(None, nullable=True)
+    start_rule: str
+    end_rule: str
+    dur: str
+    desc: str
 
     @classmethod
     def from_study_element_vo(
@@ -794,10 +821,10 @@ class StudyElementListingModel(BaseModel):
 
 
 class StudyDesignMatrixListingModel(BaseModel):
-    arm_uid: str | None
-    branch_uid: str | None
+    arm_uid: str
+    branch_uid: str
     epoch_uid: str
-    element_uid: str | None
+    element_uid: str
 
     @classmethod
     def from_study_design_cell_vo(
@@ -806,7 +833,7 @@ class StudyDesignMatrixListingModel(BaseModel):
     ) -> Self:
         return cls(
             arm_uid=none_to_empty_str(design_cell_vo.study_arm_uid),
-            branch_arm_uid=none_to_empty_str(design_cell_vo.study_branch_arm_uid),
+            branch_uid=none_to_empty_str(design_cell_vo.study_branch_arm_uid),
             epoch_uid=design_cell_vo.study_epoch_uid,
             element_uid=none_to_empty_str(design_cell_vo.study_element_uid),
         )
@@ -836,11 +863,11 @@ class StudyVisitListingModel(BaseModel):
     study_day: int | None = Field(None, nullable=True)
     window_min: int | None = Field(None, nullable=True)
     window_max: int | None = Field(None, nullable=True)
-    window_unit: str | None = Field(None, nullable=True)
-    desc: str | None = Field(None, nullable=True)
-    epoch_alloc: str | None = Field(None, nullable=True)
-    start_rule: str | None = Field(None, nullable=True)
-    end_rule: str | None = Field(None, nullable=True)
+    window_unit: str
+    desc: str
+    epoch_alloc: str
+    start_rule: str
+    end_rule: str
 
     @classmethod
     def from_study_visit_vo(
@@ -860,15 +887,19 @@ class StudyVisitListingModel(BaseModel):
             else None,
             window_min=study_visit_vo.visit_window_min,
             window_max=study_visit_vo.visit_window_max,
-            window_unit=study_visit_vo.window_unit_object.name
-            if study_visit_vo.window_unit_object
-            else None,
-            desc=study_visit_vo.description,
-            epoch_alloc=study_visit_vo.epoch_allocation.value
-            if study_visit_vo.epoch_allocation
-            else None,
-            start_rule=study_visit_vo.start_rule,
-            end_rule=study_visit_vo.end_rule,
+            window_unit=none_to_empty_str(
+                study_visit_vo.window_unit_object.name
+                if study_visit_vo.window_unit_object
+                else None
+            ),
+            desc=none_to_empty_str(study_visit_vo.description),
+            epoch_alloc=none_to_empty_str(
+                study_visit_vo.epoch_allocation.value
+                if study_visit_vo.epoch_allocation
+                else None
+            ),
+            start_rule=none_to_empty_str(study_visit_vo.start_rule),
+            end_rule=none_to_empty_str(study_visit_vo.end_rule),
         )
 
     @staticmethod
@@ -887,7 +918,7 @@ class StudyVisitListingModel(BaseModel):
 
 class StudyCriteriaListingModel(BaseModel):
     type: str
-    text: str | None
+    text: str
 
     @classmethod
     def from_study_criteria_vo(
@@ -930,7 +961,7 @@ class StudyCriteriaListingModel(BaseModel):
 class StudyObjectiveListingModel(BaseModel):
     uid: str
     type: str
-    text: str | None
+    text: str
 
     @classmethod
     def from_study_objective_vo(
@@ -973,11 +1004,11 @@ class StudyObjectiveListingModel(BaseModel):
 class StudyEndpointListingModel(BaseModel):
     uid: str
     type: str
-    subtype: str | None
-    text: str | None
-    objective_uid: str | None
-    timeframe: str | None
-    endpoint_unit: str | EndpointUnits | None
+    subtype: str
+    text: str
+    objective_uid: str
+    timeframe: str
+    endpoint_unit: str
 
     @classmethod
     def from_study_endpoint_vo(
@@ -987,6 +1018,17 @@ class StudyEndpointListingModel(BaseModel):
         find_endpoint_by_uid: Callable[[str], Endpoint | None],
         find_timeframe_by_uid: Callable[[str], Timeframe | None],
     ) -> Self:
+        units = (
+            [u["name"] for u in study_endpoint_vo.endpoint_units]
+            if study_endpoint_vo.endpoint_units
+            else None
+        )
+        if units is None:
+            ep_unit = ""
+        elif len(units) == 1:
+            ep_unit = units[0]
+        else:
+            ep_unit = f" {study_endpoint_vo.unit_separator} ".join(units)
         return cls(
             uid=study_endpoint_vo.study_selection_uid,
             type=ct_term_uid_to_str(
@@ -1008,12 +1050,7 @@ class StudyEndpointListingModel(BaseModel):
             ).name_plain
             if study_endpoint_vo.timeframe_uid
             else "",
-            endpoint_unit=EndpointUnits(
-                units=tuple(
-                    EndpointUnitItem(**u) for u in study_endpoint_vo.endpoint_units
-                ),
-                separator=study_endpoint_vo.unit_separator,
-            ),
+            endpoint_unit=ep_unit,
         )
 
     @staticmethod
@@ -1043,9 +1080,9 @@ class StudyMetadataListingModel(BaseModel):
 
     api_ver: str
     study_id: str
-    study_ver: str
-    specified_dt: str | None = Field(None, nullable=True)
-    request_dt: datetime
+    study_ver: float
+    specified_dt: str
+    request_dt: str
     title: str
     reg_id: RegistryIdentifiersListingModel | None = Field(None, nullable=True)
     study_type: StudyTypeListingModel | None = Field(None, nullable=True)
@@ -1070,7 +1107,7 @@ class StudyMetadataListingModel(BaseModel):
         api_ver: str,
         study_id: str,
         study_ver: str,
-        specified_dt: str,
+        specified_dt: str | None,
         study_metadata_vo: StudyMetadataVO,
         study_selection_arm_ar: StudySelectionArmAR,
         study_selection_branch_arm_ar: StudySelectionBranchArmAR,
@@ -1094,9 +1131,9 @@ class StudyMetadataListingModel(BaseModel):
         return cls(
             api_ver=api_ver,
             study_id=study_id,
-            study_ver=study_ver,
-            specified_dt=specified_dt,
-            request_dt=datetime.now(timezone.utc),
+            study_ver=float(study_ver),
+            specified_dt=none_to_empty_str(specified_dt),
+            request_dt=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S"),
             title=StudyDescriptionJsonModel.from_study_description_vo(
                 study_description_vo=study_metadata_vo.study_description
             ).study_title,

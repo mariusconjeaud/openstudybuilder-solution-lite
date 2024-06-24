@@ -85,10 +85,6 @@
             {
               "codelist_uid": "ct_codelist_root_endpoint",
               "order": 1
-            },
-            {
-              "codelist_uid": "editable_cr",
-              "order": 1
             }
           ],
           "sponsor_preferred_name": "term_value_name1",
@@ -151,10 +147,6 @@
               "codelists": [
                 {
                   "codelist_uid": "ct_codelist_root_endpoint",
-                  "order": 1
-                },
-                {
-                  "codelist_uid": "editable_cr",
                   "order": 1
                 }
               ],
@@ -222,10 +214,6 @@
                 {
                   "codelist_uid": "ct_codelist_root_endpoint",
                   "order": 1
-                },
-                {
-                  "codelist_uid": "editable_cr",
-                  "order": 1
                 }
               ],
               "sponsor_preferred_name": "term_value_name1",
@@ -290,6 +278,7 @@
             "study_number": "0",
             "subpart_id": null,
             "study_acronym": null,
+            "study_subpart_acronym": null,
             "project_number": "123",
             "description": null,
             "project_name": "Project ABC",
@@ -486,7 +475,7 @@
             ]
           },
           "start_date": "2022-08-05T06:04:15.293556",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "end_date": null,
           "status": null,
           "change_type": "Edit",
@@ -535,10 +524,6 @@
               {
                 "codelist_uid": "ct_codelist_root_endpoint",
                 "order": 1
-              },
-              {
-                "codelist_uid": "editable_cr",
-                "order": 1
               }
             ],
             "sponsor_preferred_name": "term_value_name1",
@@ -556,7 +541,7 @@
             ]
           },
           "start_date": "2022-08-05T06:04:14.589691",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "end_date": "2022-08-05T06:04:15.293556",
           "status": null,
           "change_type": "Create",
@@ -607,10 +592,6 @@
           "codelists": [
             {
               "codelist_uid": "ct_codelist_root_endpoint",
-              "order": 1
-            },
-            {
-              "codelist_uid": "editable_cr",
               "order": 1
             }
           ],
@@ -673,10 +654,6 @@
             {
               "codelist_uid": "ct_codelist_root_endpoint",
               "order": 1
-            },
-            {
-              "codelist_uid": "editable_cr",
-              "order": 1
             }
           ],
           "sponsor_preferred_name": "term_value_name1",
@@ -737,10 +714,6 @@
           "codelists": [
             {
               "codelist_uid": "ct_codelist_root_endpoint",
-              "order": 1
-            },
-            {
-              "codelist_uid": "editable_cr",
               "order": 1
             }
           ],
@@ -975,7 +948,7 @@
             ]
           },
           "start_date": "2022-08-05T06:24:24.492385",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "end_date": null,
           "status": null,
           "change_type": "Edit",
@@ -1019,7 +992,7 @@
           "number_of_subjects": 1,
           "arm_type": null,
           "start_date": "2022-08-05T06:24:24.356206",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "end_date": "2022-08-05T06:24:24.492385",
           "status": null,
           "change_type": "Create",
@@ -1121,7 +1094,7 @@
             ]
           },
           "start_date": "2022-08-05T06:47:58.659743",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "end_date": null,
           "status": null,
           "change_type": "Edit",
@@ -1170,10 +1143,6 @@
               {
                 "codelist_uid": "ct_codelist_root_endpoint",
                 "order": 1
-              },
-              {
-                "codelist_uid": "editable_cr",
-                "order": 1
               }
             ],
             "sponsor_preferred_name": "term_value_name1",
@@ -1191,7 +1160,7 @@
             ]
           },
           "start_date": "2022-08-05T06:47:57.942748",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "end_date": "2022-08-05T06:47:58.659743",
           "status": null,
           "change_type": "Create",
@@ -1219,10 +1188,6 @@
               {
                 "codelist_uid": "ct_codelist_root_endpoint",
                 "order": 1
-              },
-              {
-                "codelist_uid": "editable_cr",
-                "order": 1
               }
             ],
             "sponsor_preferred_name": "term_value_name1",
@@ -1240,7 +1205,7 @@
             ]
           },
           "start_date": "2022-08-05T06:47:59.512093",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "end_date": null,
           "status": null,
           "change_type": "Delete",
@@ -1289,10 +1254,6 @@
               {
                 "codelist_uid": "ct_codelist_root_endpoint",
                 "order": 1
-              },
-              {
-                "codelist_uid": "editable_cr",
-                "order": 1
               }
             ],
             "sponsor_preferred_name": "term_value_name1",
@@ -1310,7 +1271,7 @@
             ]
           },
           "start_date": "2022-08-05T06:47:59.033366",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "end_date": "2022-08-05T06:47:59.512093",
           "status": null,
           "change_type": "Create",
@@ -1333,7 +1294,7 @@
           "number_of_subjects": 1,
           "arm_type": null,
           "start_date": "2022-08-05T06:47:59.935946",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "end_date": null,
           "status": null,
           "change_type": "Edit",
@@ -1399,7 +1360,7 @@
             ]
           },
           "start_date": "2022-08-05T06:47:59.711887",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "end_date": "2022-08-05T06:47:59.935946",
           "status": null,
           "change_type": "Edit",
@@ -1443,7 +1404,7 @@
           "number_of_subjects": 1,
           "arm_type": null,
           "start_date": "2022-08-05T06:47:59.581876",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "end_date": "2022-08-05T06:47:59.711887",
           "status": null,
           "change_type": "Create",

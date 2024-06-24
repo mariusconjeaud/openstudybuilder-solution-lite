@@ -147,7 +147,7 @@
                     "library_name": "Test library"
                 },
                 "uid": "8220b276-0bd3-4308-8e27-91231f1e4c9d",
-                "user_initials": "TEST_USER",
+                "user_initials": "unknown-user",
                 "version": "0.1"
             }
         }
@@ -237,7 +237,7 @@
                     "library_name": "Test library"
                 },
                 "uid": "8220b276-0bd3-4308-8e27-91231f1e4c9d",
-                "user_initials": "TEST_USER",
+                "user_initials": "unknown-user",
                 "version": "0.1"
             }
         }
@@ -361,7 +361,7 @@
                     "library_name": "Test library"
                 },
                 "uid": "8220b276-0bd3-4308-8e27-91231f1e4c9d",
-                "user_initials": "TEST_USER",
+                "user_initials": "unknown-user",
                 "version": "0.1"
             }
         }

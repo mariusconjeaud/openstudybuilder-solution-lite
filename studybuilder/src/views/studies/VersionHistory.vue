@@ -1,16 +1,15 @@
 <template>
   <div>
-      <UnderConstruction />
+    <UnderConstruction />
   </div>
 </template>
 
 <script>
-
 import UnderConstruction from '@/components/layout/UnderConstruction'
 
 export default {
   components: {
-    UnderConstruction
-  }
+    UnderConstruction,
+  },
 }
 </script>

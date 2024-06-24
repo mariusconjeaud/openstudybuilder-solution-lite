@@ -1,85 +1,77 @@
 <template>
-  <div>
-    <n-n-table
-      :headers="headers"
-      :items="items"
-      :options.sync="options"
-      :server-items-length="total"
-      only-text-search
-      @filter="fetchProgrammes"
-      hide-default-switches
-      item-key="name">
-      <template v-slot:actions="">
-      <slot name="extraActions"></slot>
+  <NNTable
+    :headers="headers"
+    :items="items"
+    :items-length="total"
+    only-text-search
+    hide-default-switches
+    item-value="name"
+    @filter="fetchProgrammes"
+  >
+    <template #actions="">
+      <slot name="extraActions" />
       <v-btn
-        fab
-        dark
-        small
+        size="small"
         color="primary"
         data-cy="add-clinical-programme"
-        @click.stop="showForm"
         :title="$t('ClinicalProgrammeForm.title')"
-        >
-        <v-icon dark>
-          mdi-plus
-        </v-icon>
-      </v-btn>
+        icon="mdi-plus"
+        @click.stop="showForm"
+      />
     </template>
-    </n-n-table>
-    <clinical-programme-form
-      :open="showClinicalProgrammeForm"
-      @close="closeForm"/>
-  </div>
+  </NNTable>
+  <ClinicalProgrammeForm :open="showClinicalProgrammeForm" @close="closeForm" />
 </template>
 
 <script>
-import NNTable from '@/components/tools/NNTable'
+import NNTable from '@/components/tools/NNTable.vue'
 import programmes from '@/api/clinicalProgrammes'
-import ClinicalProgrammeForm from '@/components/library/ClinicalProgrammeForm'
+import ClinicalProgrammeForm from '@/components/library/ClinicalProgrammeForm.vue'
 import filteringParameters from '@/utils/filteringParameters'
 
 export default {
   components: {
     NNTable,
-    ClinicalProgrammeForm
+    ClinicalProgrammeForm,
   },
-  data () {
+  data() {
     return {
-      headers: [
-        { text: this.$t('ClinicalProgrammes.name'), value: 'name' }
-      ],
+      headers: [{ title: this.$t('ClinicalProgrammes.name'), key: 'name' }],
       items: [],
       options: {},
       total: 0,
       filters: '',
-      showClinicalProgrammeForm: false
+      showClinicalProgrammeForm: false,
     }
   },
+  watch: {
+    options() {
+      this.fetchProgrammes()
+    },
+  },
   methods: {
-    fetchProgrammes (filters, sort, filtersUpdated) {
+    fetchProgrammes(filters, options, filtersUpdated) {
       if (!filters && this.filters) {
         filters = this.filters
       }
       const params = filteringParameters.prepareParameters(
-        this.options, filters, sort, filtersUpdated)
+        options,
+        filters,
+        filtersUpdated
+      )
       this.filters = filters
-      programmes.get(params).then(resp => {
+      programmes.get(params).then((resp) => {
         this.items = resp.data.items
         this.total = resp.data.total
       })
     },
-    showForm () {
+    showForm() {
       this.showClinicalProgrammeForm = true
     },
-    closeForm () {
+    closeForm() {
       this.showClinicalProgrammeForm = false
       this.fetchProgrammes()
-    }
+    },
   },
-  watch: {
-    options () {
-      this.fetchProgrammes()
-    }
-  }
 }
 </script>

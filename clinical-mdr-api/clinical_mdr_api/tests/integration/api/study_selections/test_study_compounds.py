@@ -66,6 +66,15 @@ def test_data():
     global compound_alias2
 
     study = TestUtils.create_study()
+    catalogue = "SDTM CT"
+    cdisc_package_name = "SDTM CT 2020-03-27"
+
+    standards_ct_package_uid = TestUtils.create_ct_package(
+        catalogue=catalogue, name=cdisc_package_name, approve_elements=False
+    )
+    TestUtils.create_study_standard_version(
+        study_uid=study.uid, ct_package_uid=standards_ct_package_uid
+    )
 
     compound = TestUtils.create_compound(name="name-AAA", approve=True)
     compound2 = TestUtils.create_compound(name="name-BBB", approve=True)
@@ -88,6 +97,11 @@ def test_compound_modify_actions_on_locked_study(api_client):
     )
     res = response.json()
     assert response.status_code == 201
+
+    # get all compounds
+    response = api_client.get(f"/studies/{study.uid}/study-compounds")
+    res = response.json()
+    assert response.status_code == 200
 
     # get all compounds
     response = api_client.get(f"/studies/{study.uid}/study-compounds/audit-trail/")

@@ -1,261 +1,210 @@
 <template>
-<simple-form-dialog
-  ref="form"
-  :title="title"
-  :help-items="helpItems"
-  :help-text="$t('_help.StudyDefineForm.general')"
-  @close="cancel"
-  @submit="submit"
-  :open="open"
+  <SimpleFormDialog
+    ref="form"
+    :title="title"
+    :help-items="helpItems"
+    :help-text="$t('_help.StudyDefineForm.general')"
+    :open="open"
+    @close="cancel"
+    @submit="submit"
   >
-  <template v-slot:body>
-    <validation-observer ref="observer">
-      <v-row>
-        <v-col>
-          <validation-provider
-            v-slot="{ errors }"
-            name=""
-            rules=""
-            >
+    <template #body>
+      <v-form ref="observer">
+        <v-row>
+          <v-col>
             <v-autocomplete
               v-model="form.code"
               :label="$t('StudyElements.el_type')"
               :items="elementTypes"
-              item-text="type_name"
+              item-title="type_name"
               item-value="type"
-              :error-messages="errors"
               clearable
-              ></v-autocomplete>
-          </validation-provider>
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col>
-          <validation-provider
-            v-slot="{ errors }"
-            name=""
-            rules="required"
-            >
+              density="compact"
+            />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col>
             <v-autocomplete
               v-model="form.element_subtype_uid"
               :label="$t('StudyElements.el_sub_type')"
-              item-text="subtype_name"
+              item-title="subtype_name"
               item-value="subtype"
               :items="elementSubTypes"
-              :error-messages="errors"
+              :rules="[formRules.required]"
               clearable
               class="required"
-              ></v-autocomplete>
-          </validation-provider>
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col>
-          <validation-provider
-            v-slot="{ errors }"
-            name=""
-            rules="required|max:200"
-            >
+              density="compact"
+            />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col>
             <v-text-field
               v-model="form.name"
               :label="$t('StudyElements.el_name')"
-              :error-messages="errors"
+              :rules="[formRules.required, formRules.max(form.name, 200)]"
               clearable
               class="required"
-              ></v-text-field>
-          </validation-provider>
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col>
-          <validation-provider
-            v-slot="{ errors }"
-            name=""
-            rules="required|max:20"
-            >
+              density="compact"
+            />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col>
             <v-text-field
               v-model="form.short_name"
               :label="$t('StudyElements.el_short_name')"
-              :error-messages="errors"
+              :rules="[formRules.required, formRules.max(form.short_name, 20)]"
               clearable
               class="required"
-              ></v-text-field>
-          </validation-provider>
-        </v-col>
-      </v-row>
-      <duration-field
-        v-model="form.planned_duration"
-        />
-      <validation-provider
-        v-slot="{ errors }"
-        >
+              density="compact"
+            />
+          </v-col>
+        </v-row>
+        <DurationField v-model="form.planned_duration" />
         <v-row>
           <v-col>
             <v-textarea
               id="startRule"
-              :label="$t('StudyElements.el_start_rule')"
               v-model="form.start_rule"
+              :label="$t('StudyElements.el_start_rule')"
               rows="1"
               auto-grow
-              :error-messages="errors"
-              />
+              density="compact"
+            />
           </v-col>
         </v-row>
-      </validation-provider>
-      <validation-provider
-        v-slot="{ errors }"
-        >
         <v-row>
           <v-col>
             <v-textarea
               id="endRule"
-              :label="$t('StudyElements.el_end_rule')"
               v-model="form.end_rule"
+              :label="$t('StudyElements.el_end_rule')"
               rows="1"
               auto-grow
-              :error-messages="errors"
-              />
+              density="compact"
+            />
           </v-col>
         </v-row>
-      </validation-provider>
-      <v-row>
-        <v-col>
-          <validation-provider
-            v-slot="{ errors }"
-            name=""
-            >
+        <v-row>
+          <v-col>
             <v-text-field
               v-model="form.description"
               :label="$t('_global.description')"
-              :error-messages="errors"
               clearable
-              ></v-text-field>
-          </validation-provider>
-        </v-col>
-      </v-row>
-      <div class="mt-4">
-        <label class="v-label">{{ $t('StudyEpochForm.color') }}</label>
-        <v-color-picker
-          data-cy="epoch-color-picker"
-          v-model="colorHash"
-          clearable
-          show-swatches
-          hide-canvas
-          hide-sliders
-          swatches-max-height="300px"
+              density="compact"
+            />
+          </v-col>
+        </v-row>
+        <div class="mt-4">
+          <label class="v-label">{{ $t('StudyEpochForm.color') }}</label>
+          <v-color-picker
+            v-model="colorHash"
+            data-cy="epoch-color-picker"
+            clearable
+            show-swatches
+            hide-canvas
+            hide-sliders
+            swatches-max-height="300px"
           />
-      </div>
-    </validation-observer>
-  </template>
-</simple-form-dialog>
+        </div>
+      </v-form>
+    </template>
+  </SimpleFormDialog>
 </template>
 
 <script>
-import _isEqual from 'lodash/isEqual'
-import { bus } from '@/main'
-import { mapGetters } from 'vuex'
-import { studyMetadataFormMixin } from '@/mixins/studyMetadataForm'
-import SimpleFormDialog from '@/components/tools/SimpleFormDialog'
+import SimpleFormDialog from '@/components/tools/SimpleFormDialog.vue'
 import arms from '@/api/arms'
-import DurationField from '@/components/tools/DurationField'
+import DurationField from '@/components/tools/DurationField.vue'
+import { useStudiesGeneralStore } from '@/stores/studies-general'
+import { useFormStore } from '@/stores/form'
 
 export default {
-  mixins: [studyMetadataFormMixin],
   components: {
     SimpleFormDialog,
-    DurationField
+    DurationField,
   },
+  inject: ['eventBusEmit', 'formRules'],
   props: {
-    metadata: Object,
-    open: Boolean
+    metadata: {
+      type: Object,
+      default: undefined,
+    },
+    open: Boolean,
   },
-  data () {
+  emits: ['close'],
+  setup() {
+    const studiesGeneralStore = useStudiesGeneralStore()
+    const formStore = useFormStore()
+    return {
+      selectedStudy: studiesGeneralStore.selectedStudy,
+      formStore,
+    }
+  },
+  data() {
     return {
       form: {
-        planned_duration: {}
+        planned_duration: {},
       },
       helpItems: [
         'StudyElements.el_name',
         'StudyElements.el_short_name',
         'StudyElements.el_sub_type',
-        'StudyElements.el_type'
+        'StudyElements.el_type',
       ],
       data: [],
       allowedConfigs: [],
-      colorHash: null
+      colorHash: null,
     }
   },
   computed: {
-    ...mapGetters({
-      selectedStudy: 'studiesGeneral/selectedStudy'
-    }),
-    title () {
-      return this.metadata ? this.$t('StudyElements.edit_el') : this.$t('StudyElements.add_el')
+    title() {
+      return this.metadata
+        ? this.$t('StudyElements.edit_el')
+        : this.$t('StudyElements.add_el')
     },
-    elementTypes () {
+    elementTypes() {
       if (!this.form.element_subtype_uid) {
-        return this.allowedConfigs
+        return [
+          ...new Map(this.allowedConfigs.map((v) => [v.type_name, v])).values(),
+        ]
       } else {
-        return this.allowedConfigs.filter(element => element.subtype === this.form.element_subtype_uid)
+        return this.allowedConfigs.filter(
+          (element) => element.subtype === this.form.element_subtype_uid
+        )
       }
     },
-    elementSubTypes () {
+    elementSubTypes() {
       if (!this.form.code) {
         return this.allowedConfigs
       } else {
-        return this.allowedConfigs.filter(element => element.type === this.form.code)
+        return this.allowedConfigs.filter(
+          (element) => element.type === this.form.code
+        )
       }
-    }
+    },
   },
-  methods: {
-    close () {
-      this.form = {}
-      this.$emit('close')
-      this.colorHash = null
-      this.$refs.observer.reset()
-      this.$store.commit('form/CLEAR_FORM')
-    },
-    async cancel () {
-      if (this.$store.getters['form/form'] === '' || _isEqual(this.$store.getters['form/form'], JSON.stringify(this.form))) {
-        this.close()
-      } else {
-        const options = {
-          type: 'warning',
-          cancelLabel: this.$t('_global.cancel'),
-          agreeLabel: this.$t('_global.continue')
-        }
-        if (await this.$refs.form.confirm(this.$t('_global.cancel_changes'), options)) {
-          this.data = {}
-          this.data = this.metadata
-          this.close()
-        }
-      }
-    },
-    async submit () {
-      if (this.colorHash) {
-        this.form.element_colour = this.colorHash.hexa !== undefined ? this.colorHash.hexa : this.colorHash
-      }
+  watch: {
+    metadata() {
       if (this.metadata) {
-        arms.editStudyElement(this.selectedStudy.uid, this.metadata.element_uid, this.form).then(resp => {
-          bus.$emit('notification', { msg: this.$t('StudyElements.el_edited') })
-          this.$refs.form.working = false
-          this.close()
-        }, _err => {
-          this.$refs.form.working = false
-        })
-      } else {
-        arms.addStudyElement(this.selectedStudy.uid, this.form).then(resp => {
-          bus.$emit('notification', { msg: this.$t('StudyElements.el_created') })
-          this.$refs.form.working = false
-          this.close()
-        }, _err => {
-          this.$refs.form.working = false
-        })
+        this.form = this.metadata
+        if (this.form.element_colour) {
+          this.colorHash = this.form.element_colour
+        }
+        if (!this.form.planned_duration) {
+          this.form.planned_duration = {}
+        }
+        if (this.metadata.element_subtype) {
+          this.form.element_subtype_uid = this.metadata.element_subtype.term_uid
+        }
+        this.formStore.save(this.form)
       }
-    }
+    },
   },
-  mounted () {
-    arms.getStudyElementsAllowedConfigs().then(resp => {
+  mounted() {
+    arms.getStudyElementsAllowedConfigs().then((resp) => {
       this.allowedConfigs = resp.data
     })
     if (this.metadata) {
@@ -267,27 +216,83 @@ export default {
         this.form.planned_duration = {}
       }
       if (this.metadata.element_subtype) {
-        this.$set(this.form, 'element_subtype_uid', this.metadata.element_subtype.term_uid)
+        this.form.element_subtype_uid = this.metadata.element_subtype.term_uid
       }
-      this.$store.commit('form/SET_FORM', this.form)
+      this.formStore.save(this.form)
     }
   },
-  watch: {
-    metadata () {
-      if (this.metadata) {
-        this.form = this.metadata
-        if (this.form.element_colour) {
-          this.colorHash = this.form.element_colour
+  methods: {
+    close() {
+      this.form = {}
+      this.$emit('close')
+      this.colorHash = null
+      this.$refs.observer.reset()
+      this.formStore.reset()
+    },
+    async cancel() {
+      if (this.formStore.isEmpty || this.formStore.isEqual(this.form)) {
+        this.close()
+      } else {
+        const options = {
+          type: 'warning',
+          cancelLabel: this.$t('_global.cancel'),
+          agreeLabel: this.$t('_global.continue'),
         }
-        if (!this.form.planned_duration) {
-          this.form.planned_duration = {}
+        if (
+          await this.$refs.form.confirm(
+            this.$t('_global.cancel_changes'),
+            options
+          )
+        ) {
+          this.data = {}
+          this.data = this.metadata
+          this.close()
         }
-        if (this.metadata.element_subtype) {
-          this.$set(this.form, 'element_subtype_uid', this.metadata.element_subtype.term_uid)
-        }
-        this.$store.commit('form/SET_FORM', this.form)
       }
-    }
-  }
+    },
+    async submit() {
+      if (this.colorHash) {
+        this.form.element_colour =
+          this.colorHash.hexa !== undefined
+            ? this.colorHash.hexa
+            : this.colorHash
+      } else {
+        this.form.element_colour = '#BDBDBD'
+      }
+      if (this.metadata) {
+        arms
+          .editStudyElement(
+            this.selectedStudy.uid,
+            this.metadata.element_uid,
+            this.form
+          )
+          .then(
+            () => {
+              this.eventBusEmit('notification', {
+                msg: this.$t('StudyElements.el_edited'),
+              })
+              this.$refs.form.working = false
+              this.close()
+            },
+            () => {
+              this.$refs.form.working = false
+            }
+          )
+      } else {
+        arms.addStudyElement(this.selectedStudy.uid, this.form).then(
+          () => {
+            this.eventBusEmit('notification', {
+              msg: this.$t('StudyElements.el_created'),
+            })
+            this.$refs.form.working = false
+            this.close()
+          },
+          () => {
+            this.$refs.form.working = false
+          }
+        )
+      }
+    },
+  },
 }
 </script>

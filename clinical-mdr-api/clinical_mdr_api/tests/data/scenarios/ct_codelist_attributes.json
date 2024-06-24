@@ -344,7 +344,7 @@
                 "status": "Final",
                 "version": "1.0",
                 "change_description": "Approved version",
-                "user_initials": "TEST_USER",
+                "user_initials": "unknown-user",
                 "possible_actions": [
                     "new_version"
                 ]
@@ -412,7 +412,7 @@
                             "status": "Draft",
                             "version": "0.1",
                             "change_description": "Initial version",
-                            "user_initials": "TEST_USER",
+                            "user_initials": "unknown-user",
                             "possible_actions": [
                                 "approve",
                                 "edit"
@@ -429,7 +429,7 @@
                             "status": "Final",
                             "version": "1.0",
                             "change_description": "Approved version",
-                            "user_initials": "TEST_USER",
+                            "user_initials": "unknown-user",
                             "possible_actions": [
                                 "new_version"
                             ]

@@ -8,10 +8,10 @@ from clinical_mdr_api.tests.utils.checks import (
 
 
 def test_svg_response(
-    app_client,
+    api_client,
 ):
     study = generate_study_root()
-    response = app_client.get(f"/studies/{study.uid}/design.svg")
+    response = api_client.get(f"/studies/{study.uid}/design.svg")
     assert_response_status_code(response, 200)
     assert_response_content_type(response, "image/svg+xml")
     root = ET.fromstring(response.text)

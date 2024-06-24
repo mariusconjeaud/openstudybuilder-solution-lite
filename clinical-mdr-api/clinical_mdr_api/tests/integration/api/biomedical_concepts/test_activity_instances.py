@@ -295,6 +295,7 @@ ACTIVITY_INSTANCES_FIELDS_ALL = [
     "is_derived",
     "legacy_description",
     "activity_groupings",
+    "activity_name",
     "activity_instance_class",
     "activity_items",
     "library_name",
@@ -329,6 +330,7 @@ def test_get_activity_instance(api_client):
 
     assert res["uid"] == activity_instances_all[0].uid
     assert res["name"] == "name A"
+    assert res["activity_name"] == activities[0].name
     assert res["name_sentence_case"] == "name A"
     assert res["topic_code"] == "topic code A"
     assert len(res["activity_groupings"]) == 1
@@ -407,6 +409,7 @@ def test_get_activity_instances_pagination(api_client):
         pytest.param(10, 3, True, None, 5),  # Total numer of data models is 25
         pytest.param(10, 1, True, '{"name": false}', 10),
         pytest.param(10, 2, True, '{"name": true}', 10),
+        pytest.param(10, 1, True, '{"activity_name": true}', 10),
     ],
 )
 def test_get_activity_instances(
@@ -1001,7 +1004,7 @@ def test_activity_instance_overview(api_client):
 
 
 def verify_instance_overview_content(res: dict):
-    print(json.dumps(res, indent=2))
+    print(json.dumps(res, indent=2, default=str))
 
     assert len(res["activity_groupings"]) == 1
     # activity

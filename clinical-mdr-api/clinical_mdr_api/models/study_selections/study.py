@@ -1,12 +1,11 @@
 """Study model."""
-from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
 from typing import Callable, Collection, Iterable, Self
 
 from pydantic import Field
 
-from clinical_mdr_api import exceptions
+from clinical_mdr_api import config, exceptions
 from clinical_mdr_api.domains.clinical_programmes.clinical_programme import (
     ClinicalProgrammeAR,
 )
@@ -36,7 +35,7 @@ from clinical_mdr_api.models.study_selections.duration import DurationJsonModel
 from clinical_mdr_api.models.utils import BaseModel
 
 
-def update_study_subpart_study_id(study: "Study | CompactStudy"):
+def update_study_subpart_properties(study: "Study | CompactStudy"):
     if study.study_parent_part and study.study_parent_part.study_id:
         study.current_metadata.identification_metadata.study_id = (
             study.study_parent_part.study_id
@@ -73,6 +72,42 @@ class StudyPreferredTimeUnitInput(BaseModel):
     )
 
 
+class StudySoaPreferencesInput(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+        title = "Study SoA Preferences input"
+
+    show_epochs: bool = Field(
+        True,
+        title="SoA shows epochs",
+        description="Show study epochs in detailed SoA",
+        alias=config.STUDY_FIELD_SOA_SHOW_EPOCHS,
+    )
+    show_milestones: bool = Field(
+        False,
+        title="SoA shows milestones",
+        description="Show study milestones in detailed SoA",
+        alias=config.STUDY_FIELD_SOA_SHOW_MILESTONES,
+    )
+    baseline_as_time_zero: bool = Field(
+        False,
+        title="Baseline shown as time 0",
+        description="Show the baseline visit as time 0 in all SoA layouts",
+        alias=config.STUDY_FIELD_SOA_BASELINE_AS_TIME_ZERO,
+    )
+
+
+class StudySoaPreferences(StudySoaPreferencesInput):
+    class Config:
+        allow_population_by_field_name = True
+        title = "Study SoA Preferences"
+
+    study_uid: str = Field(
+        ...,
+        description="Uid of study",
+    )
+
+
 class RegistryIdentifiersJsonModel(BaseModel):
     class Config:
         title = "RegistryIdentifiersMetadata"
@@ -93,9 +128,9 @@ class RegistryIdentifiersJsonModel(BaseModel):
     investigational_new_drug_application_number_ind: str | None = Field(
         None, nullable=True
     )
-    investigational_new_drug_application_number_ind_null_value_code: SimpleTermModel | None = Field(
-        None, nullable=True
-    )
+    investigational_new_drug_application_number_ind_null_value_code: (
+        SimpleTermModel | None
+    ) = Field(None, nullable=True)
     eu_trial_number: str | None = Field(None, nullable=True)
     eu_trial_number_null_value_code: SimpleTermModel | None = Field(None, nullable=True)
     civ_id_sin_number: str | None = Field(None, nullable=True)
@@ -113,90 +148,86 @@ class RegistryIdentifiersJsonModel(BaseModel):
     national_medical_products_administration_nmpa_number: str | None = Field(
         None, nullable=True
     )
-    national_medical_products_administration_nmpa_number_null_value_code: SimpleTermModel | None = Field(
-        None, nullable=True
-    )
+    national_medical_products_administration_nmpa_number_null_value_code: (
+        SimpleTermModel | None
+    ) = Field(None, nullable=True)
     eudamed_srn_number: str | None = Field(None, nullable=True)
     eudamed_srn_number_null_value_code: SimpleTermModel | None = Field(
         None, nullable=True
     )
     investigational_device_exemption_ide_number: str | None = Field(None, nullable=True)
-    investigational_device_exemption_ide_number_null_value_code: SimpleTermModel | None = Field(
-        None, nullable=True
-    )
+    investigational_device_exemption_ide_number_null_value_code: (
+        SimpleTermModel | None
+    ) = Field(None, nullable=True)
 
     @classmethod
     def from_study_registry_identifiers_vo(
         cls,
         registry_identifiers_vo: RegistryIdentifiersVO,
         find_term_by_uid: Callable[[str], CTTermNameAR | None],
-        is_subpart: bool = False,
     ) -> Self:
-        if not is_subpart:
-            return cls(
-                ct_gov_id=registry_identifiers_vo.ct_gov_id,
-                ct_gov_id_null_value_code=SimpleTermModel.from_ct_code(
-                    c_code=registry_identifiers_vo.ct_gov_id_null_value_code,
-                    find_term_by_uid=find_term_by_uid,
-                ),
-                eudract_id=registry_identifiers_vo.eudract_id,
-                eudract_id_null_value_code=SimpleTermModel.from_ct_code(
-                    c_code=registry_identifiers_vo.eudract_id_null_value_code,
-                    find_term_by_uid=find_term_by_uid,
-                ),
-                universal_trial_number_utn=registry_identifiers_vo.universal_trial_number_utn,
-                universal_trial_number_utn_null_value_code=SimpleTermModel.from_ct_code(
-                    c_code=registry_identifiers_vo.universal_trial_number_utn_null_value_code,
-                    find_term_by_uid=find_term_by_uid,
-                ),
-                japanese_trial_registry_id_japic=registry_identifiers_vo.japanese_trial_registry_id_japic,
-                japanese_trial_registry_id_japic_null_value_code=SimpleTermModel.from_ct_code(
-                    c_code=registry_identifiers_vo.japanese_trial_registry_id_japic_null_value_code,
-                    find_term_by_uid=find_term_by_uid,
-                ),
-                investigational_new_drug_application_number_ind=registry_identifiers_vo.investigational_new_drug_application_number_ind,
-                investigational_new_drug_application_number_ind_null_value_code=SimpleTermModel.from_ct_code(
-                    c_code=registry_identifiers_vo.investigational_new_drug_application_number_ind_null_value_code,
-                    find_term_by_uid=find_term_by_uid,
-                ),
-                eu_trial_number=registry_identifiers_vo.eu_trial_number,
-                eu_trial_number_null_value_code=SimpleTermModel.from_ct_code(
-                    c_code=registry_identifiers_vo.eu_trial_number_null_value_code,
-                    find_term_by_uid=find_term_by_uid,
-                ),
-                civ_id_sin_number=registry_identifiers_vo.civ_id_sin_number,
-                civ_id_sin_number_null_value_code=SimpleTermModel.from_ct_code(
-                    c_code=registry_identifiers_vo.civ_id_sin_number_null_value_code,
-                    find_term_by_uid=find_term_by_uid,
-                ),
-                national_clinical_trial_number=registry_identifiers_vo.national_clinical_trial_number,
-                national_clinical_trial_number_null_value_code=SimpleTermModel.from_ct_code(
-                    c_code=registry_identifiers_vo.national_clinical_trial_number_null_value_code,
-                    find_term_by_uid=find_term_by_uid,
-                ),
-                japanese_trial_registry_number_jrct=registry_identifiers_vo.japanese_trial_registry_number_jrct,
-                japanese_trial_registry_number_jrct_null_value_code=SimpleTermModel.from_ct_code(
-                    c_code=registry_identifiers_vo.japanese_trial_registry_number_jrct_null_value_code,
-                    find_term_by_uid=find_term_by_uid,
-                ),
-                national_medical_products_administration_nmpa_number=registry_identifiers_vo.national_medical_products_administration_nmpa_number,
-                national_medical_products_administration_nmpa_number_null_value_code=SimpleTermModel.from_ct_code(
-                    c_code=registry_identifiers_vo.national_medical_products_administration_nmpa_number_null_value_code,
-                    find_term_by_uid=find_term_by_uid,
-                ),
-                eudamed_srn_number=registry_identifiers_vo.eudamed_srn_number,
-                eudamed_srn_number_null_value_code=SimpleTermModel.from_ct_code(
-                    c_code=registry_identifiers_vo.eudamed_srn_number_null_value_code,
-                    find_term_by_uid=find_term_by_uid,
-                ),
-                investigational_device_exemption_ide_number=registry_identifiers_vo.investigational_device_exemption_ide_number,
-                investigational_device_exemption_ide_number_null_value_code=SimpleTermModel.from_ct_code(
-                    c_code=registry_identifiers_vo.investigational_device_exemption_ide_number_null_value_code,
-                    find_term_by_uid=find_term_by_uid,
-                ),
-            )
-
-        return None
+        return cls(
+            ct_gov_id=registry_identifiers_vo.ct_gov_id,
+            ct_gov_id_null_value_code=SimpleTermModel.from_ct_code(
+                c_code=registry_identifiers_vo.ct_gov_id_null_value_code,
+                find_term_by_uid=find_term_by_uid,
+            ),
+            eudract_id=registry_identifiers_vo.eudract_id,
+            eudract_id_null_value_code=SimpleTermModel.from_ct_code(
+                c_code=registry_identifiers_vo.eudract_id_null_value_code,
+                find_term_by_uid=find_term_by_uid,
+            ),
+            universal_trial_number_utn=registry_identifiers_vo.universal_trial_number_utn,
+            universal_trial_number_utn_null_value_code=SimpleTermModel.from_ct_code(
+                c_code=registry_identifiers_vo.universal_trial_number_utn_null_value_code,
+                find_term_by_uid=find_term_by_uid,
+            ),
+            japanese_trial_registry_id_japic=registry_identifiers_vo.japanese_trial_registry_id_japic,
+            japanese_trial_registry_id_japic_null_value_code=SimpleTermModel.from_ct_code(
+                c_code=registry_identifiers_vo.japanese_trial_registry_id_japic_null_value_code,
+                find_term_by_uid=find_term_by_uid,
+            ),
+            investigational_new_drug_application_number_ind=registry_identifiers_vo.investigational_new_drug_application_number_ind,
+            investigational_new_drug_application_number_ind_null_value_code=SimpleTermModel.from_ct_code(
+                c_code=registry_identifiers_vo.investigational_new_drug_application_number_ind_null_value_code,
+                find_term_by_uid=find_term_by_uid,
+            ),
+            eu_trial_number=registry_identifiers_vo.eu_trial_number,
+            eu_trial_number_null_value_code=SimpleTermModel.from_ct_code(
+                c_code=registry_identifiers_vo.eu_trial_number_null_value_code,
+                find_term_by_uid=find_term_by_uid,
+            ),
+            civ_id_sin_number=registry_identifiers_vo.civ_id_sin_number,
+            civ_id_sin_number_null_value_code=SimpleTermModel.from_ct_code(
+                c_code=registry_identifiers_vo.civ_id_sin_number_null_value_code,
+                find_term_by_uid=find_term_by_uid,
+            ),
+            national_clinical_trial_number=registry_identifiers_vo.national_clinical_trial_number,
+            national_clinical_trial_number_null_value_code=SimpleTermModel.from_ct_code(
+                c_code=registry_identifiers_vo.national_clinical_trial_number_null_value_code,
+                find_term_by_uid=find_term_by_uid,
+            ),
+            japanese_trial_registry_number_jrct=registry_identifiers_vo.japanese_trial_registry_number_jrct,
+            japanese_trial_registry_number_jrct_null_value_code=SimpleTermModel.from_ct_code(
+                c_code=registry_identifiers_vo.japanese_trial_registry_number_jrct_null_value_code,
+                find_term_by_uid=find_term_by_uid,
+            ),
+            national_medical_products_administration_nmpa_number=registry_identifiers_vo.national_medical_products_administration_nmpa_number,
+            national_medical_products_administration_nmpa_number_null_value_code=SimpleTermModel.from_ct_code(
+                c_code=registry_identifiers_vo.national_medical_products_administration_nmpa_number_null_value_code,
+                find_term_by_uid=find_term_by_uid,
+            ),
+            eudamed_srn_number=registry_identifiers_vo.eudamed_srn_number,
+            eudamed_srn_number_null_value_code=SimpleTermModel.from_ct_code(
+                c_code=registry_identifiers_vo.eudamed_srn_number_null_value_code,
+                find_term_by_uid=find_term_by_uid,
+            ),
+            investigational_device_exemption_ide_number=registry_identifiers_vo.investigational_device_exemption_ide_number,
+            investigational_device_exemption_ide_number_null_value_code=SimpleTermModel.from_ct_code(
+                c_code=registry_identifiers_vo.investigational_device_exemption_ide_number_null_value_code,
+                find_term_by_uid=find_term_by_uid,
+            ),
+        )
 
 
 class StudyIdentificationMetadataJsonModel(BaseModel):
@@ -207,6 +238,7 @@ class StudyIdentificationMetadataJsonModel(BaseModel):
     study_number: str | None = Field(None, nullable=True)
     subpart_id: str | None = Field(None, nullable=True)
     study_acronym: str | None = Field(None, nullable=True)
+    study_subpart_acronym: str | None = Field(None, nullable=True)
     project_number: str | None = Field(None, nullable=True)
     project_name: str | None = Field(None, nullable=True)
     description: str | None = Field(None, nullable=True)
@@ -223,7 +255,6 @@ class StudyIdentificationMetadataJsonModel(BaseModel):
         find_project_by_project_number: Callable[[str], ProjectAR],
         find_clinical_programme_by_uid: Callable[[str], ClinicalProgrammeAR],
         find_term_by_uid: Callable[[str], CTTermNameAR | None],
-        is_subpart: bool = False,
     ) -> Self | None:
         if study_identification_o is None:
             return None
@@ -238,6 +269,7 @@ class StudyIdentificationMetadataJsonModel(BaseModel):
             study_number=study_identification_o.study_number,
             subpart_id=study_identification_o.subpart_id,
             study_acronym=study_identification_o.study_acronym,
+            study_subpart_acronym=study_identification_o.study_subpart_acronym,
             project_number=study_identification_o.project_number,
             project_name=project_ar.name,
             description=study_identification_o.description,
@@ -246,9 +278,7 @@ class StudyIdentificationMetadataJsonModel(BaseModel):
             ).name,
             study_id=study_identification_o.study_id,
             registry_identifiers=RegistryIdentifiersJsonModel.from_study_registry_identifiers_vo(
-                study_identification_o.registry_identifiers,
-                find_term_by_uid,
-                is_subpart,
+                study_identification_o.registry_identifiers, find_term_by_uid
             ),
         )
 
@@ -261,6 +291,7 @@ class CompactStudyIdentificationMetadataJsonModel(BaseModel):
     study_number: str | None = Field(None, nullable=True)
     subpart_id: str | None = Field(None, nullable=True)
     study_acronym: str | None = Field(None, nullable=True)
+    study_subpart_acronym: str | None = Field(None, nullable=True)
     project_number: str | None = Field(None, nullable=True)
     project_name: str | None = Field(None, nullable=True)
     description: str | None = Field(None, nullable=True)
@@ -283,6 +314,7 @@ class CompactStudyIdentificationMetadataJsonModel(BaseModel):
             study_number=study_identification_o.study_number,
             subpart_id=study_identification_o.subpart_id,
             study_acronym=study_identification_o.study_acronym,
+            study_subpart_acronym=study_identification_o.study_subpart_acronym,
             project_number=study_identification_o.project_number,
             project_name=project_ar.name,
             description=study_identification_o.description,
@@ -849,7 +881,6 @@ class StudyMetadataJsonModel(BaseModel):
         find_all_study_time_units: Callable[[str], Iterable[UnitDefinitionAR]],
         find_term_by_uid: Callable[[str], CTTermNameAR | None],
         find_dictionary_term_by_uid: Callable[[str], DictionaryTermAR | None],
-        is_subpart: bool = False,
     ) -> Self:
         return cls(
             identification_metadata=StudyIdentificationMetadataJsonModel.from_study_identification_vo(
@@ -857,7 +888,6 @@ class StudyMetadataJsonModel(BaseModel):
                 find_project_by_project_number=find_project_by_project_number,
                 find_clinical_programme_by_uid=find_clinical_programme_by_uid,
                 find_term_by_uid=find_term_by_uid,
-                is_subpart=is_subpart,
             ),
             version_metadata=StudyVersionMetadataJsonModel.from_study_version_metadata_vo(
                 study_version_metadata_vo=study_metadata_vo.ver_metadata
@@ -981,7 +1011,7 @@ class CompactStudy(BaseModel):
             ),
         )
 
-        update_study_subpart_study_id(study)
+        update_study_subpart_properties(study)
 
         return study
 
@@ -1021,7 +1051,6 @@ class Study(BaseModel):
         study_value_version: str | None = None,
         status: StudyStatus | None = None,
         history_endpoint: bool = False,
-        is_subpart: bool = False,
     ) -> Self | None:
         current_metadata = None
         if status is not None:
@@ -1064,11 +1093,10 @@ class Study(BaseModel):
                 find_all_study_time_units=find_all_study_time_units,
                 find_term_by_uid=find_term_by_uid,
                 find_dictionary_term_by_uid=find_dictionary_term_by_uid,
-                is_subpart=is_subpart,
             ),
         )
 
-        update_study_subpart_study_id(study)
+        update_study_subpart_properties(study)
 
         return study
 
@@ -1096,7 +1124,8 @@ class StudyCreateInput(BaseModel):
 
 
 class StudySubpartCreateInput(BaseModel):
-    study_acronym: str | None = Field(title="study_acronym", description="")
+    study_acronym: str | None = Field(None, title="study_acronym", description="")
+    study_subpart_acronym: str = Field(title="study_subpart_acronym", description="")
 
     description: str | None = Field(title="description", description="")
 
@@ -1247,12 +1276,20 @@ class StudySubpartReorderingInput(BaseModel):
     )
 
 
-@dataclass
-class StudySubpartAuditTrail:
-    subpart_uid: str
+class StudySubpartAuditTrail(BaseModel):
+    subpart_uid: str | None
     subpart_id: str | None
     study_acronym: str | None
-    start_date: datetime
+    study_subpart_acronym: str | None
+    start_date: datetime | None
     end_date: datetime | None
-    user_initials: str
+    user_initials: str | None
     change_type: str
+    changes: dict[str, bool] | None = Field(
+        None,
+        description=(
+            "Denotes whether or not there was a change in a specific field/property compared to the previous version. "
+            "The field names in this object here refer to the field names of the objective (e.g. name, start_date, ..)."
+        ),
+        nullable=True,
+    )

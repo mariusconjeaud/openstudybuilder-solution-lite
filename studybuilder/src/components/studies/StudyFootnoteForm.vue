@@ -1,129 +1,132 @@
 <template>
-<div>
-  <horizontal-stepper-form
+  <HorizontalStepperForm
     ref="stepper"
     :title="title"
     :steps="steps"
-    @close="close"
-    @save="submit"
     :form-observer-getter="getObserver"
     :extra-step-validation="extraStepValidation"
-    :helpItems="helpItems"
-    :editData="form"
-    :loadingContinue="loadingContinue"
-    >
-    <template v-slot:step.creationMode>
-      <v-radio-group
-        v-model="creationMode"
-        >
-        <v-radio data-cy="footnote-from-template" :label="$t('StudyFootnoteForm.template_mode')" value="template" />
-        <v-radio data-cy="footnote-from-select" :label="$t('StudyFootnoteForm.select_mode')" value="select" />
-        <v-radio data-cy="footnote-from-scratch" :label="$t('StudyFootnoteForm.scratch_mode')" value="scratch" />
+    :help-items="helpItems"
+    :edit-data="form"
+    :loading-continue="loadingContinue"
+    @close="close"
+    @save="submit"
+  >
+    <template #[`step.creationMode`]>
+      <v-radio-group v-model="creationMode" color="primary">
+        <v-radio
+          data-cy="footnote-from-template"
+          :label="$t('StudyFootnoteForm.template_mode')"
+          value="template"
+        />
+        <v-radio
+          data-cy="footnote-from-select"
+          :label="$t('StudyFootnoteForm.select_mode')"
+          value="select"
+        />
+        <v-radio
+          data-cy="footnote-from-scratch"
+          :label="$t('StudyFootnoteForm.scratch_mode')"
+          value="scratch"
+        />
       </v-radio-group>
     </template>
-    <template v-slot:step.selectStudies="{ step }">
-      <validation-observer :ref="`observer_${step}`">
-        <validation-provider
-          v-slot="{ errors }"
-          rules="required"
-          >
-          <v-autocomplete
-            :data-cy="$t('StudySelectionTable.select_studies')"
-            v-model="selectedStudies"
-            :label="$t('StudySelectionTable.studies')"
-            :items="studies"
-            :error-messages="errors"
-            item-text="current_metadata.identification_metadata.study_id"
-            clearable
-            multiple
-            return-object
-            />
-        </validation-provider>
-      </validation-observer>
+    <template #[`step.selectStudies`]="{ step }">
+      <v-form :ref="`observer_${step}`">
+        <v-autocomplete
+          v-model="selectedStudies"
+          :data-cy="$t('StudySelectionTable.select_studies')"
+          :label="$t('StudySelectionTable.studies')"
+          :items="studies"
+          :rules="[formRules.required]"
+          item-title="current_metadata.identification_metadata.study_id"
+          clearable
+          multiple
+          return-object
+        />
+      </v-form>
     </template>
-    <template v-slot:step.selectFootnote>
-      <p class="grey--text text-subtitle-1 font-weight-bold">{{ $t('StudyFootnoteForm.selected_footnotes') }}</p>
+    <template #[`step.selectFootnote`]>
+      <p class="text-grey text-subtitle-1 font-weight-bold">
+        {{ $t('StudyFootnoteForm.selected_footnotes') }}
+      </p>
       <v-data-table
         data-cy="selected-footnotes-table"
         :headers="selectedFootnoteHeaders"
         :items="selectedStudyFootnotes"
-        >
-        <template v-slot:item.footnote.name="{ item }">
-          <n-n-parameter-highlighter :name="item.footnote.name" />
+      >
+        <template #[`item.footnote.name`]="{ item }">
+          <NNParameterHighlighter :name="item.footnote.name" />
         </template>
-        <template v-slot:item.actions="{ item }">
+        <template #[`item.actions`]="{ item }">
           <v-btn
-            icon
+            icon="mdi-delete-outline"
             color="red"
+            variant="text"
             @click="unselectStudyFootnote(item)"
-           >
-            <v-icon>mdi-delete-outline</v-icon>
-          </v-btn>
+          />
         </template>
       </v-data-table>
     </template>
-    <template v-slot:step.selectFootnote.after>
-      <p class="grey--text text-subtitle-1 font-weight-bold mb-0 ml-3">{{ $t('StudyFootnoteForm.copy_instructions') }}</p>
+    <template #[`step.selectFootnote.after`]>
+      <p class="text-grey text-subtitle-1 font-weight-bold mb-0 ml-3">
+        {{ $t('StudyFootnoteForm.copy_instructions') }}
+      </p>
       <v-col cols="12" flat class="pt-0 mt-0">
-        <study-selection-table
+        <StudySelectionTable
           :headers="footnoteHeaders"
           data-fetcher-name="getAllStudyFootnotes"
           :extra-data-fetcher-filters="extraStudyFootnoteFilters"
-          @item-selected="selectStudyFootnote"
           :studies="selectedStudies"
           column-data-resource="study-soa-footnotes"
-          >
-          <template v-slot:item.footnote.name="{ item }">
-            <n-n-parameter-highlighter :name="item.footnote.name" />
+          @item-selected="selectStudyFootnote"
+        >
+          <template #[`item.footnote.name`]="{ item }">
+            <NNParameterHighlighter :name="item.footnote.name" />
           </template>
-          <template v-slot:item.actions="{ item }">
+          <template #[`item.actions`]="{ item }">
             <v-btn
               :data-cy="$t('StudySelectionTable.copy_item')"
-              icon
+              icon="mdi-content-copy"
               :color="getCopyButtonColor(item)"
               :disabled="isStudyFootnoteselected(item)"
+              :title="$t('StudySelectionTable.copy_item')"
+              variant="text"
               @click="selectStudyFootnote(item)"
-              :title="$t('StudySelectionTable.copy_item')">
-              <v-icon>mdi-content-copy</v-icon>
-            </v-btn>
+            />
           </template>
-        </study-selection-table>
+        </StudySelectionTable>
       </v-col>
     </template>
-    <template v-slot:step.selectTemplates>
-       <v-data-table
-         :headers="selectionHeaders"
-         :items="selectedTemplates"
-         >
-         <template v-slot:item.name="{ item }">
-           <n-n-parameter-highlighter
-             :name="item.name"
-             default-color="orange"
-             />
-         </template>
-         <template v-slot:item.actions="{ item }">
-           <v-btn
-             icon
-             color="red"
-             @click="unselectTemplate(item)"
-             >
-             <v-icon>mdi-delete-outline</v-icon>
-           </v-btn>
-         </template>
-       </v-data-table>
+    <template #[`step.selectTemplates`]>
+      <v-data-table :headers="selectionHeaders" :items="selectedTemplates">
+        <template #[`item.name`]="{ item }">
+          <NNParameterHighlighter :name="item.name" default-color="orange" />
+        </template>
+        <template #[`item.actions`]="{ item }">
+          <v-btn
+            icon="mdi-delete-outline"
+            color="red"
+            variant="text"
+            @click="unselectTemplate(item)"
+          />
+        </template>
+      </v-data-table>
     </template>
-    <template v-slot:step.selectTemplates.after>
+    <template #[`step.selectTemplates.after`]>
       <div class="d-flex align-center">
-        <p class="grey--text text-subtitle-1 font-weight-bold mb-0 ml-3">{{ $t('StudyFootnoteForm.copy_instructions') }}</p>
+        <p class="text-grey text-subtitle-1 font-weight-bold mb-0 ml-3">
+          {{ $t('StudyFootnoteForm.copy_instructions') }}
+        </p>
         <v-switch
           v-model="preInstanceMode"
+          color="primary"
           :label="$t('StudyFootnoteForm.show_pre_instances')"
           hide-details
           class="ml-4"
-          />
+        />
       </div>
       <v-col cols="12" class="pt-0">
-        <n-n-table
+        <NNTable
           key="templatesTable"
           :headers="tplHeaders"
           :items="templates"
@@ -132,171 +135,167 @@
           :default-filters="defaultTplFilters"
           :items-per-page="15"
           elevation="0"
-          :options.sync="options"
-          :server-items-length="total"
-          has-api
-          :column-data-resource="`footnote-templates`"
+          :items-length="total"
+          :column-data-resource="
+            preInstanceMode ? 'footnote-pre-instances' : 'footnote-templates'
+          "
           @filter="getFootnoteTemplates"
-          >
-          <template v-slot:item.categories.name.sponsor_preferred_name="{ item }">
+        >
+          <template #[`item.categories.name.sponsor_preferred_name`]="{ item }">
             <template v-if="item.categories">
-              {{ item.categories|terms }}
+              {{ $filters.terms(item.categories) }}
             </template>
             <template v-else>
               {{ $t('_global.not_applicable_long') }}
             </template>
           </template>
-          <template v-slot:item.is_confirmatory_testing="{ item }">
+          <template #[`item.is_confirmatory_testing`]="{ item }">
             <template v-if="item.is_confirmatory_testing !== null">
-              {{ item.is_confirmatory_testing|yesno }}
+              {{ $filters.yesno(item.is_confirmatory_testing) }}
             </template>
             <template v-else>
               {{ $t('_global.not_applicable_long') }}
             </template>
           </template>
-          <template v-slot:item.indications="{ item }">
+          <template #[`item.indications`]="{ item }">
             <template v-if="item.indications && item.indications.length">
-              {{ item.indications | names }}
+              {{ $filters.names(item.indications) }}
             </template>
             <template v-else>
               {{ $t('_global.not_applicable_long') }}
             </template>
           </template>
-          <template v-slot:item.activity_groups="{ item }">
-            <template v-if="item.activity_groups && item.activity_groups.length">
-              {{ item.activity_groups | names }}
+          <template #[`item.activity_groups`]="{ item }">
+            <template
+              v-if="item.activity_groups && item.activity_groups.length"
+            >
+              {{ $filters.names(item.activity_groups) }}
             </template>
             <template v-else>
               {{ $t('_global.not_applicable_long') }}
             </template>
           </template>
-          <template v-slot:item.activity_subgroups="{ item }">
-            <template v-if="item.activity_subgroups && item.activity_subgroups.length">
-              {{ item.activity_subgroups | names }}
+          <template #[`item.activity_subgroups`]="{ item }">
+            <template
+              v-if="item.activity_subgroups && item.activity_subgroups.length"
+            >
+              {{ $filters.names(item.activity_subgroups) }}
             </template>
             <template v-else>
               {{ $t('_global.not_applicable_long') }}
             </template>
           </template>
-          <template v-slot:item.activities="{ item }">
+          <template #[`item.activities`]="{ item }">
             <template v-if="item.activities && item.activities.length">
-              {{ item.activities | names }}
+              {{ $filters.names(item.activities) }}
             </template>
             <template v-else>
               {{ $t('_global.not_applicable_long') }}
             </template>
           </template>
-          <template v-slot:item.name="{ item }">
-            <n-n-parameter-highlighter
-              :name="item.name"
-              default-color="orange"
-              />
+          <template #[`item.name`]="{ item }">
+            <NNParameterHighlighter :name="item.name" default-color="orange" />
           </template>
-          <template v-slot:item.actions="{ item }">
+          <template #[`item.actions`]="{ item }">
             <v-btn
               :data-cy="$t('StudyFootnoteForm.copy_template')"
-              icon
+              icon="mdi-content-copy"
               color="primary"
+              :title="$t('StudyFootnoteForm.copy_template')"
+              variant="text"
               @click="selectFootnoteTemplate(item)"
-              :title="$t('StudyFootnoteForm.copy_template')">
-              <v-icon>mdi-content-copy</v-icon>
-            </v-btn>
+            />
           </template>
-        </n-n-table>
+        </NNTable>
       </v-col>
     </template>
-    <template v-slot:step.createTemplate="{ step }">
-      <validation-observer :ref="`observer_${step}`">
-        <validation-provider
-          v-slot="{ errors }"
-          rules="required"
-          >
-          <n-n-template-input-field
-            :data-cy="$t('FootnoteTemplateForm.name')"
-            v-model="templateForm.name"
-            :label="$t('FootnoteTemplateForm.name')"
-            :items="parameterTypes"
-            :error-messages="errors"
-            :show-drop-down-early="true"
-            />
-        </validation-provider>
-      </validation-observer>
+    <template #[`step.createTemplate`]="{ step }">
+      <v-form :ref="`observer_${step}`">
+        <NNTemplateInputField
+          v-model="templateForm.name"
+          :data-cy="$t('FootnoteTemplateForm.name')"
+          :label="$t('FootnoteTemplateForm.name')"
+          :items="parameterTypes"
+          :rules="[formRules.required]"
+          :show-drop-down-early="true"
+        />
+      </v-form>
     </template>
-    <template v-slot:step.createFootnote="{ step }">
-      <validation-observer :ref="`observer_${step}`">
+    <template #[`step.createFootnote`]="{ step }">
+      <v-form :ref="`observer_${step}`">
         <v-progress-circular
           v-if="loadingParameters"
           indeterminate
           color="secondary"
-          />
+        />
 
         <template v-if="form.footnote_template !== undefined">
-          <parameter-value-selector
+          <ParameterValueSelector
             ref="paramSelector"
-            :value="parameters"
+            :model-value="parameters"
             :template="form.footnote_template.name"
             color="white"
             preview-text=" "
-            />
+          />
         </template>
-      </validation-observer>
+      </v-form>
     </template>
-  </horizontal-stepper-form>
-</div>
+  </HorizontalStepperForm>
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
-import { bus } from '@/main'
-import { objectManagerMixin } from '@/mixins/objectManager'
+import { computed } from 'vue'
 import instances from '@/utils/instances'
 import statuses from '@/constants/statuses'
 import footnoteConstants from '@/constants/footnotes'
 import footnoteTemplates from '@/api/footnoteTemplates'
 import templatePreInstances from '@/api/templatePreInstances'
 import templateParameterTypes from '@/api/templateParameterTypes'
-import HorizontalStepperForm from '@/components/tools/HorizontalStepperForm'
-import NNParameterHighlighter from '@/components/tools/NNParameterHighlighter'
-import NNTable from '@/components/tools/NNTable'
-import NNTemplateInputField from '@/components/tools/NNTemplateInputField'
-import ParameterValueSelector from '@/components/tools/ParameterValueSelector'
+import HorizontalStepperForm from '@/components/tools/HorizontalStepperForm.vue'
+import NNParameterHighlighter from '@/components/tools/NNParameterHighlighter.vue'
+import NNTable from '@/components/tools/NNTable.vue'
+import NNTemplateInputField from '@/components/tools/NNTemplateInputField.vue'
+import ParameterValueSelector from '@/components/tools/ParameterValueSelector.vue'
 import study from '@/api/study'
-import StudySelectionTable from './StudySelectionTable'
+import StudySelectionTable from './StudySelectionTable.vue'
 import terms from '@/api/controlledTerminology/terms'
 import filteringParameters from '@/utils/filteringParameters'
 import constants from '@/constants/libraries'
+import { useStudiesGeneralStore } from '@/stores/studies-general'
+import { useFootnotesStore } from '@/stores/studies-footnotes'
 
 export default {
-  mixins: [objectManagerMixin],
   components: {
     HorizontalStepperForm,
     NNParameterHighlighter,
     NNTable,
     NNTemplateInputField,
     ParameterValueSelector,
-    StudySelectionTable
+    StudySelectionTable,
   },
+  inject: ['eventBusEmit', 'formRules'],
   props: {
-    currentStudyFootnotes: Array
-  },
-  computed: {
-    ...mapGetters({
-      selectedStudy: 'studiesGeneral/selectedStudy'
-    }),
-    title () {
-      return this.$t('StudyFootnoteForm.add_title')
+    currentStudyFootnotes: {
+      type: Array,
+      default: () => [],
     },
-    selectedTemplateName () {
-      return (this.form.footnote_template) ? this.form.footnote_template.name : ''
+  },
+  emits: ['close', 'added'],
+  setup() {
+    const studiesGeneralStore = useStudiesGeneralStore()
+    const footnotesStore = useFootnotesStore()
+    return {
+      selectedStudy: computed(() => studiesGeneralStore.selectedStudy),
+      footnotesStore,
     }
   },
-  data () {
+  data() {
     return {
       apiEndpoint: null,
       helpItems: [],
       creationMode: 'template',
       extraStudyFootnoteFilters: {
-        'footnote.library.name': { v: [constants.LIBRARY_SPONSOR] }
+        'footnote_template': { v: [] },
       },
       footnoteType: null,
       form: {},
@@ -305,19 +304,41 @@ export default {
       parameters: [],
       parameterTypes: [],
       alternateSteps: [
-        { name: 'creationMode', title: this.$t('StudyFootnoteForm.creation_mode_label') },
-        { name: 'selectStudies', title: this.$t('StudyFootnoteForm.select_studies') },
-        { name: 'selectFootnote', title: this.$t('StudyFootnoteForm.select_footnote') }
+        {
+          name: 'creationMode',
+          title: this.$t('StudyFootnoteForm.creation_mode_label'),
+        },
+        {
+          name: 'selectStudies',
+          title: this.$t('StudyFootnoteForm.select_studies'),
+        },
+        {
+          name: 'selectFootnote',
+          title: this.$t('StudyFootnoteForm.select_footnote'),
+        },
       ],
       scratchModeSteps: [
-        { name: 'creationMode', title: this.$t('StudyFootnoteForm.creation_mode_label') },
-        { name: 'createTemplate', title: this.$t('StudyFootnoteForm.create_template_title') },
-        { name: 'createFootnote', title: this.$t('StudyFootnoteForm.step2_title') }
+        {
+          name: 'creationMode',
+          title: this.$t('StudyFootnoteForm.creation_mode_label'),
+        },
+        {
+          name: 'createTemplate',
+          title: this.$t('StudyFootnoteForm.create_template_title'),
+        },
+        {
+          name: 'createFootnote',
+          title: this.$t('StudyFootnoteForm.step2_title'),
+        },
       ],
       preInstanceMode: true,
       selectionHeaders: [
-        { text: '', value: 'actions', width: '5%' },
-        { text: this.$t('_global.template'), value: 'name', class: 'text-center' }
+        { title: '', key: 'actions', width: '5%' },
+        {
+          title: this.$t('_global.template'),
+          key: 'name',
+          class: 'text-center',
+        },
       ],
       selectedStudies: [],
       selectedStudyFootnotes: [],
@@ -326,38 +347,127 @@ export default {
       studies: [],
       templates: [],
       tplHeaders: [
-        { text: '', value: 'actions', width: '5%' },
-        { text: this.$t('_global.order_short'), value: 'sequence_id', width: '5%' },
-        { text: this.$t('_global.template'), value: 'name', filteringName: 'name_plain' },
-        { text: this.$t('FootnoteTemplateTable.indications'), value: 'indications' },
-        { text: this.$t('ActivityTemplateTable.activity_group'), value: 'activity_groups' },
-        { text: this.$t('ActivityTemplateTable.activity_subgroup'), value: 'activity_subgroups' },
-        { text: this.$t('ActivityTemplateTable.activity_name'), value: 'activities' }
+        { title: '', key: 'actions', width: '5%' },
+        {
+          title: this.$t('_global.order_short'),
+          key: 'sequence_id',
+          width: '5%',
+        },
+        {
+          title: this.$t('_global.template'),
+          key: 'name',
+          filteringName: 'name_plain',
+        },
+        {
+          title: this.$t('FootnoteTemplateTable.indications'),
+          key: 'indications',
+        },
+        {
+          title: this.$t('ActivityTemplateTable.activity_group'),
+          key: 'activity_groups',
+        },
+        {
+          title: this.$t('ActivityTemplateTable.activity_subgroup'),
+          key: 'activity_subgroups',
+        },
+        {
+          title: this.$t('ActivityTemplateTable.activity_name'),
+          key: 'activities',
+        },
       ],
       defaultTplFilters: [
-        { text: this.$t('_global.sequence_number_short'), value: 'sequence_id' },
-        { text: this.$t('_global.indications'), value: 'indications', filteringName: 'indications.name' },
-        { text: this.$t('StudyActivity.activity_group'), value: 'activity.activity_group.name' },
-        { text: this.$t('StudyActivity.activity_sub_group'), value: 'activity.activity_subgroup.name' },
-        { text: this.$t('StudyActivity.activity'), value: 'activity.name' }
+        { title: this.$t('_global.sequence_number_short'), key: 'sequence_id' },
+        {
+          title: this.$t('_global.indications'),
+          key: 'indications',
+          filteringName: 'indications.name',
+        },
+        {
+          title: this.$t('StudyActivity.activity_group'),
+          key: 'activity.activity_group.name',
+        },
+        {
+          title: this.$t('StudyActivity.activity_sub_group'),
+          key: 'activity.activity_subgroup.name',
+        },
+        { title: this.$t('StudyActivity.activity'), key: 'activity.name' },
       ],
       footnoteHeaders: [
-        { text: '', value: 'actions', width: '5%' },
-        { text: this.$t('Study.study_id'), value: 'study_id', noFilter: true },
-        { text: this.$t('StudyFootnoteForm.study_footnote'), value: 'footnote.name', filteringName: 'footnote.name_plain' }
+        { title: '', key: 'actions', width: '5%' },
+        { title: this.$t('Study.study_id'), key: 'study_id', noFilter: true },
+        {
+          title: this.$t('StudyFootnoteForm.study_footnote'),
+          key: 'footnote.name',
+          filteringName: 'footnote.name_plain',
+        },
       ],
       selectedFootnoteHeaders: [
-        { text: '', value: 'actions', width: '5%' },
-        { text: this.$t('Study.study_id'), value: 'study_id' },
-        { text: this.$t('StudyFootnoteForm.study_footnote'), value: 'footnote.name' }
+        { title: '', key: 'actions', width: '5%' },
+        { title: this.$t('Study.study_id'), key: 'study_id' },
+        {
+          title: this.$t('StudyFootnoteForm.study_footnote'),
+          key: 'footnote.name',
+        },
       ],
       loadingContinue: false,
-      options: {},
-      total: 0
+      total: 0,
     }
   },
+  computed: {
+    title() {
+      return this.$t('StudyFootnoteForm.add_title')
+    },
+    selectedTemplateName() {
+      return this.form.footnote_template ? this.form.footnote_template.name : ''
+    },
+  },
+  watch: {
+    creationMode(value) {
+      if (value === 'template') {
+        this.steps = this.getInitialSteps()
+        this.getFootnoteTemplates()
+      } else if (value === 'select') {
+        this.steps = this.alternateSteps
+      } else {
+        this.steps = this.scratchModeSteps
+      }
+    },
+    preInstanceMode(value) {
+      this.apiEndpoint = value ? this.preInstanceApi : footnoteTemplates
+      this.getFootnoteTemplates()
+      this.selectedTemplates = []
+    },
+    footnoteType() {
+      this.getFootnoteTemplates()
+    },
+  },
+  created() {
+    this.preInstanceApi = templatePreInstances('footnote')
+    this.apiEndpoint = this.preInstanceApi
+  },
+  mounted() {
+    templateParameterTypes.getTypes().then((resp) => {
+      this.parameterTypes = resp.data
+    })
+    study.get({ has_study_footnote: true, page_size: 0 }).then((resp) => {
+      this.studies = resp.data.items.filter(
+        (study) => study.uid !== this.selectedStudy.uid
+      )
+    })
+    terms.getByCodelist('footnoteTypes').then((resp) => {
+      for (const type of resp.data.items) {
+        if (
+          type.name.sponsor_preferred_name ===
+          footnoteConstants.FOOTNOTE_TYPE_SOA
+        ) {
+          this.footnoteType = type
+          break
+        }
+      }
+    })
+  },
   methods: {
-    close () {
+    close() {
       this.creationMode = 'template'
       this.form = {}
       this.templateForm = {}
@@ -368,19 +478,28 @@ export default {
       this.$emit('close')
       this.$refs.stepper.reset()
     },
-    getObserver (step) {
+    getObserver(step) {
       return this.$refs[`observer_${step}`]
     },
-    getInitialSteps () {
+    getInitialSteps() {
       return [
-        { name: 'creationMode', title: this.$t('StudyFootnoteForm.creation_mode_label') },
-        { name: 'selectTemplates', title: this.$t('StudyFootnoteForm.select_tpl_title') }
+        {
+          name: 'creationMode',
+          title: this.$t('StudyFootnoteForm.creation_mode_label'),
+        },
+        {
+          name: 'selectTemplates',
+          title: this.$t('StudyFootnoteForm.select_tpl_title'),
+        },
       ]
     },
-    getFootnoteTemplates (filters, sort, filtersUpdated) {
+    getFootnoteTemplates(filters, options, filtersUpdated) {
       if (this.footnoteType) {
         const params = filteringParameters.prepareParameters(
-          this.options, filters, sort, filtersUpdated)
+          options,
+          filters,
+          filtersUpdated
+        )
         params.status = statuses.FINAL
         if (params.filters) {
           params.filters = JSON.parse(params.filters)
@@ -388,27 +507,30 @@ export default {
           params.filters = {}
         }
         Object.assign(params.filters, {
-          'library.name': { v: [constants.LIBRARY_SPONSOR] }
+          'library.name': { v: [constants.LIBRARY_SPONSOR] },
         })
         if (this.preInstanceMode) {
           params.filters.template_type_uid = {
-            v: [this.footnoteType.term_uid]
+            v: [this.footnoteType.term_uid],
           }
         } else {
           params.filters['type.name.sponsor_preferred_name'] = {
-            v: [this.footnoteType.sponsor_preferred_name]
+            v: [this.footnoteType.name.sponsor_preferred_name],
           }
         }
-        this.apiEndpoint.get(params).then(resp => {
+        this.apiEndpoint.get(params).then((resp) => {
           this.templates = resp.data.items
           this.total = resp.data.total
         })
       }
     },
-    async loadParameters (template) {
+    async loadParameters(template) {
       if (template) {
         if (this.cloneMode) {
-          const parameters = this.$refs.paramSelector.getTemplateParametersFromTemplate(template.name_plain)
+          const parameters =
+            this.$refs.paramSelector.getTemplateParametersFromTemplate(
+              template.name_plain
+            )
           if (parameters.length === this.parameters.length) {
             let differ = false
             for (let index = 0; index < parameters.length; index++) {
@@ -423,43 +545,62 @@ export default {
           }
         }
         this.loadingParameters = true
-        const templateUid = (this.creationMode !== 'scratch' && this.preInstanceMode) ? template.template_uid : template.uid
-        const resp = await this.apiEndpoint.getParameters(templateUid, { study_uid: this.selectedStudy.uid })
+        const templateUid =
+          this.creationMode !== 'scratch' && this.preInstanceMode
+            ? template.template_uid
+            : template.uid
+        const resp = await this.apiEndpoint.getParameters(templateUid, {
+          study_uid: this.selectedStudy.uid,
+        })
         this.parameters = resp.data
         this.loadingParameters = false
       } else {
         this.parameters = []
       }
     },
-    selectFootnoteTemplate (template) {
+    selectFootnoteTemplate(template) {
       this.selectedTemplates.push(template)
     },
-    unselectTemplate (template) {
-      this.selectedTemplates = this.selectedTemplates.filter(item => item.name !== template.name)
+    unselectTemplate(template) {
+      this.selectedTemplates = this.selectedTemplates.filter(
+        (item) => item.name !== template.name
+      )
     },
-    selectStudyFootnote (studyFootnote) {
+    selectStudyFootnote(studyFootnote) {
       this.selectedStudyFootnotes.push(studyFootnote)
     },
-    unselectStudyFootnote (studyFootnote) {
-      this.selectedStudyFootnotes = this.selectedStudyFootnotes.filter(item => item.footnote.name !== studyFootnote.footnote.name)
+    unselectStudyFootnote(studyFootnote) {
+      this.selectedStudyFootnotes = this.selectedStudyFootnotes.filter(
+        (item) => item.footnote.name !== studyFootnote.footnote.name
+      )
     },
-    isStudyFootnoteselected (studyFootnote) {
-      let selected = this.selectedStudyFootnotes.find(item => item.footnote.uid === studyFootnote.footnote.uid)
+    isStudyFootnoteselected(studyFootnote) {
+      let selected = this.selectedStudyFootnotes.find(
+        (item) => item.footnote.uid === studyFootnote.footnote.uid
+      )
       if (!selected && this.currentStudyFootnotes.length) {
-        selected = this.currentStudyFootnotes.find(item => item.footnote.uid === studyFootnote.footnote.uid)
+        selected = this.currentStudyFootnotes.find(
+          (item) => item.footnote.uid === studyFootnote.footnote.uid
+        )
       }
       return selected !== undefined
     },
-    getCopyButtonColor (item) {
-      return (!this.isStudyFootnoteselected(item) ? 'primary' : '')
+    getCopyButtonColor(item) {
+      return !this.isStudyFootnoteselected(item) ? 'primary' : ''
     },
-    async extraStepValidation (step) {
+    async extraStepValidation(step) {
       if (this.creationMode === 'template' && step === 1) {
         this.getFootnoteTemplates()
       }
       if (this.creationMode === 'template' && step === 2) {
-        if (this.form.footnote_template === undefined || this.form.footnote_template === null) {
-          bus.$emit('notification', { msg: this.$t('StudyFootnoteForm.template_not_selected'), type: 'error' })
+        if (
+          this.form.footnote_template === undefined ||
+          this.form.footnote_template === null
+        ) {
+          this.eventBusEmit('notification', {
+            msg: this.$t('StudyFootnoteForm.template_not_selected'),
+            type: 'error',
+          })
           return false
         }
         return true
@@ -467,20 +608,24 @@ export default {
       if (this.creationMode !== 'scratch' || step !== 2) {
         return true
       }
-      if (this.form.footnote_template && this.form.footnote_template.name === this.templateForm.name) {
+      if (
+        this.form.footnote_template &&
+        this.form.footnote_template.name === this.templateForm.name
+      ) {
         return true
       }
       const data = {
         ...this.templateForm,
         studyUid: this.selectedStudy.uid,
         library_name: constants.LIBRARY_USER_DEFINED,
-        type_uid: this.footnoteType.term_uid
+        type_uid: this.footnoteType.term_uid,
       }
       try {
         this.loadingContinue = true
         const resp = await footnoteTemplates.create(data)
-        if (resp.data.status === statuses.DRAFT) await footnoteTemplates.approve(resp.data.uid)
-        this.$set(this.form, 'footnote_template', resp.data)
+        if (resp.data.status === statuses.DRAFT)
+          await footnoteTemplates.approve(resp.data.uid)
+        this.form.footnote_template = resp.data
         this.loadingContinue = false
       } catch (error) {
         this.loadingContinue = false
@@ -489,21 +634,27 @@ export default {
       this.loadParameters(this.form.footnote_template)
       return true
     },
-    async getStudyFootnoteNamePreview () {
+    async getStudyFootnoteNamePreview() {
       const footnoteData = {
         footnote_template_uid: this.form.footnote.footnote_template.uid,
         parameter_terms: await instances.formatParameterValues(this.parameters),
-        library_name: this.form.footnote_template ? this.form.footnote_template.library.name : this.form.footnote.library.name
+        library_name: this.form.footnote_template
+          ? this.form.footnote_template.library.name
+          : this.form.footnote.library.name,
       }
-      const resp = await study.getStudyFootnotePreview(this.selectedStudy.uid, { footnote_data: footnoteData })
+      const resp = await study.getStudyFootnotePreview(this.selectedStudy.uid, {
+        footnote_data: footnoteData,
+      })
       return resp.data.footnote.name
     },
-    async submit () {
+    async submit() {
       let args = null
-
       if (this.creationMode === 'template') {
         if (!this.selectedTemplates.length) {
-          bus.$emit('notification', { msg: this.$t('EligibilityCriteriaForm.no_template_error'), type: 'error' })
+          this.eventBusEmit('notification', {
+            msg: this.$t('EligibilityCriteriaForm.no_template_error'),
+            type: 'error',
+          })
           this.$refs.stepper.loading = false
           return
         }
@@ -511,10 +662,14 @@ export default {
         for (const template of this.selectedTemplates) {
           data.push({
             footnote_data: {
-              footnote_template_uid: this.preInstanceMode ? template.template_uid : template.uid,
-              parameter_terms: this.preInstanceMode ? template.parameter_terms : [],
-              library_name: template.library.name
-            }
+              footnote_template_uid: this.preInstanceMode
+                ? template.template_uid
+                : template.uid,
+              parameter_terms: this.preInstanceMode
+                ? template.parameter_terms
+                : [],
+              library_name: template.library.name,
+            },
           })
         }
         await study.batchCreateStudyFootnotes(this.selectedStudy.uid, data)
@@ -526,68 +681,30 @@ export default {
         args = {
           studyUid: this.selectedStudy.uid,
           form: data,
-          parameters: this.parameters
+          parameters: this.parameters,
         }
-        await this.$store.dispatch('studyFootnotes/addStudyFootnoteFromTemplate', args)
+        await this.footnotesStore.addStudyFootnoteFromTemplate(args)
       } else {
         for (const item of this.selectedStudyFootnotes) {
           args = {
             studyUid: this.selectedStudy.uid,
-            footnoteUid: item.footnote.uid
+            footnoteUid: item.footnote.uid,
           }
-          await this.$store.dispatch('studyFootnotes/addStudyFootnote', args)
+          await this.footnotesStore.selectFromStudyFootnote(args)
         }
       }
       this.$emit('added')
-      bus.$emit('notification', { msg: this.$t('StudyFootnoteForm.footnote_added') })
+      this.eventBusEmit('notification', {
+        msg: this.$t('StudyFootnoteForm.footnote_added'),
+      })
       this.close()
-    }
-  },
-  created () {
-    this.preInstanceApi = templatePreInstances('footnote')
-    this.apiEndpoint = this.preInstanceApi
-  },
-  mounted () {
-    templateParameterTypes.getTypes().then(resp => {
-      this.parameterTypes = resp.data
-    })
-    study.get({ has_study_footnote: true, page_size: 0 }).then(resp => {
-      this.studies = resp.data.items.filter(study => study.uid !== this.selectedStudy.uid)
-    })
-    terms.getByCodelist('footnoteTypes').then(resp => {
-      for (const type of resp.data.items) {
-        if (type.sponsor_preferred_name === footnoteConstants.FOOTNOTE_TYPE_SOA) {
-          this.footnoteType = type
-          break
-        }
-      }
-    })
-  },
-  watch: {
-    creationMode (value) {
-      if (value === 'template') {
-        this.steps = this.getInitialSteps()
-        this.getFootnoteTemplates()
-      } else if (value === 'select') {
-        this.steps = this.alternateSteps
-      } else {
-        this.steps = this.scratchModeSteps
-      }
     },
-    preInstanceMode (value) {
-      this.apiEndpoint = value ? this.preInstanceApi : footnoteTemplates
-      this.getFootnoteTemplates()
-      this.selectedTemplates = []
-    },
-    footnoteType () {
-      this.getFootnoteTemplates()
-    }
-  }
+  },
 }
 </script>
 <style scoped>
 .header-title {
-  color: var(--v-secondary-base) !important;
+  color: rgb(var(--v-theme-secondary)) !important;
   font-size: large;
 }
 </style>

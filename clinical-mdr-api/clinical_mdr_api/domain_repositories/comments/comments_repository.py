@@ -1,4 +1,5 @@
 from datetime import datetime
+from threading import Lock
 from typing import Collection
 
 from cachetools import TTLCache, cached
@@ -34,6 +35,7 @@ class CommentsRepository:
     cache_store_item_by_uid = TTLCache(
         maxsize=config.CACHE_MAX_SIZE, ttl=config.CACHE_TTL
     )
+    lock_store_item_by_uid = Lock()
 
     def generate_topic_uid(self) -> str:
         return CommentTopic.get_next_free_uid_and_increment_counter()
@@ -57,7 +59,7 @@ class CommentsRepository:
             uid,
         )
 
-    @cached(cache=cache_store_item_by_uid, key=get_hashkey)
+    @cached(cache=cache_store_item_by_uid, key=get_hashkey, lock=lock_store_item_by_uid)
     def find_comment_thread_by_uid(self, uid: str) -> CommentThreadAR | None:
         node: CommentThread = CommentThread.nodes.get_or_none(uid=uid, is_deleted=False)
         if node is not None:
@@ -77,7 +79,7 @@ class CommentsRepository:
             return item
         return None
 
-    @cached(cache=cache_store_item_by_uid, key=get_hashkey)
+    @cached(cache=cache_store_item_by_uid, key=get_hashkey, lock=lock_store_item_by_uid)
     def find_comment_reply_by_uid(self, uid: str) -> CommentReplyAR | None:
         nodes = CommentReply.nodes.get_or_none(
             uid=uid, is_deleted=False, reply_to__is_deleted=False
@@ -141,7 +143,7 @@ class CommentsRepository:
     ) -> None:
         now = datetime.now()
 
-        # Update the latest version of comment thread (i.e. the existing CommmentThread node)
+        # Update the latest version of comment thread (i.e. the existing CommentThread node)
         node_latest = CommentThread.nodes.get_or_none(uid=item_latest.uid)
         node_latest.text = item_latest.text
         node_latest.status = item_latest.status.value
@@ -203,7 +205,7 @@ class CommentsRepository:
     ) -> None:
         now = datetime.now()
 
-        # Update the latest version of comment reply (i.e. the existing CommmentReply node)
+        # Update the latest version of comment reply (i.e. the existing CommentReply node)
         node_latest = CommentReply.nodes.get_or_none(uid=item_latest.uid)
         node_latest.text = item_latest.text
         node_latest.modified_at = now

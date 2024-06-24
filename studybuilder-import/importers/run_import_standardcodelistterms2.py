@@ -72,7 +72,7 @@ MDR_MIGRATION_INTERVENTION_SUBCATEGORIES = load_env(
     "MDR_MIGRATION_INTERVENTION_SUBCATEGORIES"
 )
 MDR_MIGRATION_FOOTNOTE_TYPE = load_env("MDR_MIGRATION_FOOTNOTE_TYPE")
-
+MDR_MIGRATION_REPEATING_VISIT_FREQUENCY = load_env("MDR_MIGRATION_REPEATING_VISIT_FREQUENCY")
 
 # Import terms to standard codelists in sponsor library
 class StandardCodelistTerms2(BaseImporter):
@@ -415,6 +415,12 @@ class StandardCodelistTerms2(BaseImporter):
             await self.migrate_term(
                 MDR_MIGRATION_FOOTNOTE_TYPE,
                 codelist_name="Footnote Type",
+                code_lists_uids=code_lists_uids,
+                session=session,
+            )
+            await self.migrate_term(
+                MDR_MIGRATION_REPEATING_VISIT_FREQUENCY,
+                codelist_name="Repeating Visit Frequency",
                 code_lists_uids=code_lists_uids,
                 session=session,
             )

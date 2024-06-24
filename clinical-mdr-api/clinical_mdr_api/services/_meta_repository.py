@@ -231,6 +231,9 @@ from clinical_mdr_api.domain_repositories.study_selections.study_soa_footnote_re
 from clinical_mdr_api.domain_repositories.study_selections.study_soa_group_repository import (
     StudySoAGroupRepository,
 )
+from clinical_mdr_api.domain_repositories.study_selections.study_standard_version_repository import (
+    StudyStandardVersionRepository,
+)
 from clinical_mdr_api.domain_repositories.study_selections.study_visit_repository import (
     StudyVisitRepository,
 )
@@ -714,6 +717,10 @@ class MetaRepository:
     @property
     def study_disease_milestone_repository(self) -> StudyDiseaseMilestoneRepository:
         return StudyDiseaseMilestoneRepository(self._user)
+
+    @property
+    def study_standard_version_repository(self) -> StudyStandardVersionRepository:
+        return StudyStandardVersionRepository(self._user)
 
     @property
     def study_visit_repository(self) -> StudyVisitRepository:

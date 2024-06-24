@@ -1,6 +1,7 @@
 """
 Utility module to store the common parts of terms get all and specific term get all requests.
 """
+
 from clinical_mdr_api.domain_repositories.models._utils import convert_to_datetime
 from clinical_mdr_api.domains.controlled_terminologies.ct_codelist_attributes import (
     CTCodelistAttributesAR,
@@ -51,9 +52,11 @@ def create_term_filter_statement(
     codelist_name: str | None = None,
     library_name: str | None = None,
     package: str | None = None,
+    is_sponsor: bool = False,
 ) -> tuple[str, dict]:
     """
     Method creates filter string from demanded filter option.
+    Note that it expects pre-defined Cypher variables named codelist_root and term_root.
 
     :param codelist_uid:
     :param codelist_name:
@@ -63,33 +66,46 @@ def create_term_filter_statement(
     """
     filter_parameters = []
     filter_query_parameters = {}
+    filter_statement = ""
     if codelist_uid:
         filter_by_codelist_uid = """
                 codelist_root.uid=$codelist_uid"""
         filter_parameters.append(filter_by_codelist_uid)
         filter_query_parameters["codelist_uid"] = codelist_uid
     if codelist_name:
-        filter_by_codelist_name = """
-                head([(codelist_root)-[:HAS_NAME_ROOT]->(codelist_ver_root:CTCodelistNameRoot)-[:LATEST]->
-                (codelist_ver_value:CTCodelistNameValue) | codelist_ver_value.name])=$codelist_name  
-                """
+        filter_statement += """
+            MATCH (codelist_ver_value:CTCodelistNameValue)
+            <-[:LATEST]-(:CTCodelistNameRoot)<-[:HAS_NAME_ROOT]-(codelist_root)
+        """
+        filter_by_codelist_name = "codelist_ver_value.name=$codelist_name"
         filter_parameters.append(filter_by_codelist_name)
         filter_query_parameters["codelist_name"] = codelist_name
     if library_name:
-        filter_by_library_name = """
-                head([(library:Library)-[:CONTAINS_TERM]->(term_root) | library.name])=$library_name"""
+        if not is_sponsor:
+            filter_statement += "MATCH (library:Library)-[:CONTAINS_TERM]->(term_root)"
+        filter_by_library_name = "library.name=$library_name"
         filter_parameters.append(filter_by_library_name)
         filter_query_parameters["library_name"] = library_name
     if package:
-        filter_by_package = """
-                package.name=$package_name"""
-        filter_parameters.append(filter_by_package)
+        if not is_sponsor:
+            if codelist_name or codelist_uid:
+                filter_statement += """
+                MATCH (package:CTPackage)-[:CONTAINS_CODELIST]->(ct_package_codelist:CTPackageCodelist)-[:CONTAINS_TERM]->(:CTPackageTerm)-
+                    [:CONTAINS_ATTRIBUTES]->(term_attributes_value:CTTermAttributesValue)<--(term_attributes_root:CTTermAttributesRoot)<-[:HAS_ATTRIBUTES_ROOT]-
+                    (term_root:CTTermRoot)
+                MATCH (ct_package_codelist)-[:CONTAINS_ATTRIBUTES]->(:CTCodelistAttributesValue)<--(:CTCodelistAttributesRoot)<-[:HAS_ATTRIBUTES_ROOT]-
+                    (codelist_root)
+                """
+            filter_by_package = """
+                    package.name=$package_name"""
+            filter_parameters.append(filter_by_package)
         filter_query_parameters["package_name"] = package
     filter_statements = " AND ".join(filter_parameters)
     filter_statements = (
         "WHERE " + filter_statements if len(filter_statements) > 0 else ""
     )
-    return filter_statements, filter_query_parameters
+    filter_statement += filter_statements
+    return filter_statement, filter_query_parameters
 
 
 def create_term_name_aggregate_instances_from_cypher_result(
@@ -109,11 +125,12 @@ def create_term_name_aggregate_instances_from_cypher_result(
     rel_data = term_dict[f"rel_data{specific_suffix}"]
     major, minor = rel_data.get("version").split(".")
 
-    codelists = [
-        CTTermCodelistVO(
-            codelist_uid=term_dict.get("codelist_uid"), order=term_dict.get("order")
+    codelist_uid = term_dict.get("codelist_uid")
+    codelists = []
+    if codelist_uid:
+        codelists.append(
+            CTTermCodelistVO(codelist_uid=codelist_uid, order=term_dict.get("order"))
         )
-    ]
 
     library_name = term_dict.get("library_name")
     term_name_ar = CTTermNameAR.from_repository_values(
@@ -126,14 +143,16 @@ def create_term_name_aggregate_instances_from_cypher_result(
             ),
             catalogue_name=term_dict.get("catalogue_name"),
         ),
-        library=LibraryVO.from_input_values_2(
-            library_name=library_name,
-            is_library_editable_callback=(
-                lambda _: term_dict.get("is_library_editable")
-            ),
-        )
-        if library_name
-        else None,
+        library=(
+            LibraryVO.from_input_values_2(
+                library_name=library_name,
+                is_library_editable_callback=(
+                    lambda _: term_dict.get("is_library_editable")
+                ),
+            )
+            if library_name
+            else None
+        ),
         item_metadata=LibraryItemMetadataVO.from_repository_values(
             change_description=rel_data.get("change_description"),
             status=LibraryItemStatus(rel_data.get("status")),
@@ -167,11 +186,12 @@ def create_term_attributes_aggregate_instances_from_cypher_result(
 
     library_name = term_dict.get("library_name")
 
-    codelists = [
-        CTTermCodelistVO(
-            codelist_uid=term_dict.get("codelist_uid"), order=term_dict.get("order")
+    codelist_uid = term_dict.get("codelist_uid")
+    codelists = []
+    if codelist_uid:
+        codelists.append(
+            CTTermCodelistVO(codelist_uid=codelist_uid, order=term_dict.get("order"))
         )
-    ]
 
     term_attributes_ar = CTTermAttributesAR.from_repository_values(
         uid=term_dict.get("term_uid"),
@@ -190,14 +210,16 @@ def create_term_attributes_aggregate_instances_from_cypher_result(
             definition=term_dict.get(f"value_node{specific_suffix}").get("definition"),
             catalogue_name=term_dict.get("catalogue_name"),
         ),
-        library=LibraryVO.from_input_values_2(
-            library_name=library_name,
-            is_library_editable_callback=(
-                lambda _: term_dict.get("is_library_editable")
-            ),
-        )
-        if library_name
-        else None,
+        library=(
+            LibraryVO.from_input_values_2(
+                library_name=library_name,
+                is_library_editable_callback=(
+                    lambda _: term_dict.get("is_library_editable")
+                ),
+            )
+            if library_name
+            else None
+        ),
         item_metadata=LibraryItemMetadataVO.from_repository_values(
             change_description=rel_data.get("change_description"),
             status=LibraryItemStatus(rel_data.get("status")),
@@ -310,6 +332,7 @@ def create_codelist_filter_statement(
     catalogue_name: str | None = None,
     library_name: str | None = None,
     package: str | None = None,
+    is_sponsor: bool = False,
 ) -> tuple[str, dict]:
     """
     Method creates filter string from demanded filter option.
@@ -327,13 +350,15 @@ def create_codelist_filter_statement(
         filter_parameters.append(filter_by_catalogue)
         filter_query_parameters["catalogue_name"] = catalogue_name
     if package:
-        filter_by_package_name = "package.name=$package_name"
-        filter_parameters.append(filter_by_package_name)
+        if not is_sponsor:
+            filter_by_package_name = "package.name=$package_name"
+            filter_parameters.append(filter_by_package_name)
         filter_query_parameters["package_name"] = package
     if library_name:
-        filter_by_library_name = """
-        head([(library:Library)-[:CONTAINS_CODELIST]->(codelist_root) | library.name])=$library_name"""
-        filter_parameters.append(filter_by_library_name)
+        if not is_sponsor:
+            filter_by_library_name = """
+            head([(library:Library)-[:CONTAINS_CODELIST]->(codelist_root) | library.name])=$library_name"""
+            filter_parameters.append(filter_by_library_name)
         filter_query_parameters["library_name"] = library_name
     filter_statements = " AND ".join(filter_parameters)
     filter_statements = (

@@ -68,7 +68,7 @@
                 "status": "Draft",
                 "study_count": null,
                 "uid": "55236767-3834-42d8-923d-ba8aba8eed18",
-                "user_initials": "TEST_USER",
+                "user_initials": "unknown-user",
                 "version": "0.1"
             },
             "save": {
@@ -115,7 +115,7 @@
                 "status": "Final",
                 "study_count": null,
                 "uid": "55236767-3834-42d8-923d-ba8aba8eed18",
-                "user_initials": "TEST_USER",
+                "user_initials": "unknown-user",
                 "version": "1.0"
             }
         }
@@ -224,7 +224,7 @@
                         "guidance_text": null,
                         "uid": "{otuid}",
                         "sequence_id": "O1",
-                    "library_name": "Test library"
+                        "library_name": "Test library"
                     },
                     "parameter_terms": [],
                     "possible_actions": [
@@ -234,7 +234,7 @@
                     "status": "Final",
                     "study_count": null,
                     "uid": "04f672c6-5532-4c8b-bd46-32c26e28d529",
-                    "user_initials": "TEST_USER",
+                    "user_initials": "unknown-user",
                     "version": "1.0"
                 },
                 {
@@ -253,7 +253,7 @@
                         "guidance_text": null,
                         "uid": "{otuid}",
                         "sequence_id": "O1",
-                    "library_name": "Test library"
+                        "library_name": "Test library"
                     },
                     "parameter_terms": [],
                     "possible_actions": [
@@ -265,7 +265,7 @@
                     "status": "Draft",
                     "study_count": null,
                     "uid": "04f672c6-5532-4c8b-bd46-32c26e28d529",
-                    "user_initials": "TEST_USER",
+                    "user_initials": "unknown-user",
                     "version": "0.1"
                 }
             ]

@@ -5,6 +5,7 @@ from mdr_standards_import.scripts.entities.cdisc_data_models.data_model_variable
 )
 from mdr_standards_import.scripts.entities.cdisc_data_models.utils import (
     extract_variables_from_json_data,
+    extract_variables_from_csv_data,
 )
 
 
@@ -60,6 +61,26 @@ class DataModelClass:
             catalogue=catalogue,
             data_model_import=data_model_import,
             data_model_type=data_model_type,
+            is_class_dataset=is_class_dataset,
+        )
+
+        self.__add_variables(variables)
+
+    def load_variables_from_csv_data(
+        self,
+        class_csv_data,
+        catalogue,
+        data_model_import,
+        data_model_type,
+        variables_data,
+        is_class_dataset: bool = False,
+    ) -> None:
+        variables = extract_variables_from_csv_data(
+            class_csv_data=class_csv_data,
+            catalogue=catalogue,
+            data_model_import=data_model_import,
+            data_model_type=data_model_type,
+            variables_data=variables_data,
             is_class_dataset=is_class_dataset,
         )
 

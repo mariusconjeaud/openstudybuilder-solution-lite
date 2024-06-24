@@ -1,5 +1,6 @@
 import asyncio
 import csv
+import json
 
 import aiohttp
 
@@ -23,6 +24,9 @@ API_BASE_URL = load_env("API_BASE_URL")
 # ---------------------------------------------------------------
 #
 
+# Set to true to use the old CT API
+# TODO this is a temporary workaround, remove when no longer needed.
+OLD_CT_API = False
 
 def sample_from_dict(d, sample=10):
     if SAMPLE:
@@ -48,6 +52,10 @@ ACTIVITY_ITEM_CLASSES_PATH = "/activity-item-classes"
 ACTIVITY_ITEMS_PATH = "/activity-items"
 ACTIVITY_INSTANCES_PATH = "/concepts/activities/activity-instances"
 
+
+
+class ConflictingItemError(ValueError):
+    pass
 
 # Activities with instances, groups and subgroups in sponsor library
 class Activities(BaseImporter):
@@ -89,19 +97,25 @@ class Activities(BaseImporter):
         for submval in sdtm_cat_lists:
             cl_uid = all_codelist_uids.get(submval)
             if cl_uid is not None:
-                sdtm_cat_uids.extend(
-                    term
-                    for term in self.cache.all_terms_attributes
-                    if cl_uid in [x["codelist_uid"] for x in term["codelists"]]
-                )
+                if OLD_CT_API:
+                    sdtm_cat_uids.extend(term for term in self.cache.all_terms_attributes if term["codelist_uid"] == cl_uid)
+                else:
+                    sdtm_cat_uids.extend(
+                        term
+                        for term in self.cache.all_terms_attributes
+                        if cl_uid in [x["codelist_uid"] for x in term["codelists"]]
+                    )
         for submval in sdtm_subcat_lists:
             cl_uid = all_codelist_uids.get(submval)
             if cl_uid is not None:
-                sdtm_subcat_uids.extend(
-                    term
-                    for term in self.cache.all_terms_attributes
-                    if cl_uid in [x["codelist_uid"] for x in term["codelists"]]
-                )
+                if OLD_CT_API:
+                    sdtm_subcat_uids.extend(term for term in self.cache.all_terms_attributes if term["codelist_uid"] == cl_uid)
+                else:
+                    sdtm_subcat_uids.extend(
+                        term
+                        for term in self.cache.all_terms_attributes
+                        if cl_uid in [x["codelist_uid"] for x in term["codelists"]]
+                    )
         return sdtm_cat_uids, sdtm_subcat_uids
 
     # Get a dictionary with key = submission value and value = uid
@@ -123,11 +137,14 @@ class Activities(BaseImporter):
         all_codelist_uids = self._get_codelists_uid_and_submval()
         cl_uid = all_codelist_uids.get(codelist_submval)
         if cl_uid is not None:
-            terms = [
-                term
-                for term in self.cache.all_terms_attributes
-                if cl_uid in [x["codelist_uid"] for x in term["codelists"]]
-            ]
+            if OLD_CT_API:
+                terms = [term for term in self.cache.all_terms_attributes if term["codelist_uid"] == cl_uid]
+            else:
+                terms = [
+                    term
+                    for term in self.cache.all_terms_attributes
+                    if cl_uid in [x["codelist_uid"] for x in term["codelists"]]
+                ]
             return terms
 
     # Get a dictionary mapping submission values to term uids for a codelist identified by its uid
@@ -388,7 +405,13 @@ class Activities(BaseImporter):
 
         self.log.info("Fetching all existing activities")
         existing_activities = {}
-        for item in self.api.get_all_activity_objects("activities"):
+        raw_activities = self.api.get_all_activity_objects("activities")
+        for item in raw_activities:
+            if item["name"] in existing_activities:
+                if item["library_name"] == "Requested":
+                    # Don't replace with a requested activity
+                    continue
+
             existing_activities[item["name"]] = {
                 "uid": item["uid"],
                 "name_sentence_case": item["name_sentence_case"],
@@ -396,6 +419,8 @@ class Activities(BaseImporter):
                 "nci_concept_id": item["nci_concept_id"],
                 "definition": item["definition"],
                 "activity_groupings": item["activity_groupings"],
+                "library_name": item["library_name"],
+                "status": item["status"],
             }
 
         api_tasks = []
@@ -450,51 +475,102 @@ class Activities(BaseImporter):
         for _key, item_data in unique_activities.items():
             activity_name = item_data["name"]
             # Check if activity exists
-            if activity_name in existing_activities:
-                # If the activity does not already have all groups -> patch it
-                groupings = item_data["activity_groupings"]
-                if self._are_activities_equal(
-                    existing_activities[activity_name], item_data
-                ):
+            try:
+                existing = self.get_existing_activity(activity_name, existing_activities)
+                if existing is not None:
+                    existing = existing_activities[activity_name]
+                    if existing["library_name"] == "Requested" and existing["status"] == "Retired":
+                        self.log.info(
+                            f"Activity '{activity_name}' already exists as a retired request, ok to create a new one"
+                        )
+                    elif existing["library_name"] == "Requested":
+                        self.log.warning(
+                            f"Activity '{activity_name}' already exists as a requested activity, skipping"
+                        )
+                        continue
+                    elif existing["status"] == "Retired":
+                        self.log.warning(
+                            f"Activity '{activity_name}' already exists and is retired, skipping"
+                        )
+                        continue
+                    # If the activity does not already have all groups -> patch it
+                    groupings = item_data["activity_groupings"]
+                    if self._are_activities_equal(
+                        existing_activities[activity_name], item_data
+                    ):
+                        self.log.info(
+                            f"Identical activity '{activity_name}' already exists"
+                        )
+                        if existing["status"] == "Draft":
+                            self.log.info(
+                                f"Identical activity '{activity_name}' is in draft, approving"
+                            )
+                            api_tasks.append(
+                                self.api.approve_item_async(
+                                    uid=existing["uid"], url=ACTIVITIES_PATH, session=session
+                                )
+                            )
+                        continue
+                    data = {
+                        "path": ACTIVITIES_PATH,
+                        "patch_path": path_join(
+                            ACTIVITIES_PATH, existing_activities[activity_name]["uid"]
+                        ),
+                        "new_path": path_join(
+                            ACTIVITIES_PATH,
+                            existing_activities[activity_name]["uid"],
+                            "versions",
+                        ),
+                        "approve_path": ACTIVITIES_PATH,
+                        "body": item_data,
+                    }
+                    data["body"]["change_description"] = "Migration modification"
                     self.log.info(
-                        f"Identical activity '{activity_name}' already exists"
+                        f"Adding activity '{activity_name}' to groupings '{groupings}'"
                     )
-                    continue
-                data = {
-                    "path": ACTIVITIES_PATH,
-                    "patch_path": path_join(
-                        ACTIVITIES_PATH, existing_activities[activity_name]["uid"]
-                    ),
-                    "new_path": path_join(
-                        ACTIVITIES_PATH,
-                        existing_activities[activity_name]["uid"],
-                        "versions",
-                    ),
-                    "approve_path": ACTIVITIES_PATH,
-                    "body": item_data,
-                }
-                data["body"]["change_description"] = "Migration modification"
-                self.log.info(
-                    f"Adding activity '{activity_name}' to groupings '{groupings}'"
-                )
-                api_tasks.append(
-                    self.api.new_version_patch_then_approve(
-                        data=data, session=session, approve=True
+                    api_tasks.append(
+                        self.api.new_version_patch_then_approve(
+                            data=data, session=session, approve=True
+                        )
                     )
-                )
-            else:  # Create the activity
-                data = {
-                    "path": ACTIVITIES_PATH,
-                    "approve_path": ACTIVITIES_PATH,
-                    "body": item_data,
-                }
-                self.log.info(f"Adding activity '{activity_name}'")
-                api_tasks.append(
-                    self.api.post_then_approve(data=data, session=session, approve=True)
+                else:  # Create the activity
+                    data = {
+                        "path": ACTIVITIES_PATH,
+                        "approve_path": ACTIVITIES_PATH,
+                        "body": item_data,
+                    }
+                    self.log.info(f"Adding activity '{activity_name}'")
+                    api_tasks.append(
+                        self.api.post_then_approve(data=data, session=session, approve=True)
+                    )
+            except ConflictingItemError as e:
+                self.log.warning(
+                    f"Activity '{activity_name}' already exists as {e}, skipping"
                 )
 
         await asyncio.gather(*api_tasks)
-        # await session.close()
+
+    def get_existing_activity(self, activity_name, existing_activities):
+        if activity_name in existing_activities:
+            existing = existing_activities[activity_name]
+            if existing["library_name"] == "Requested" and existing["status"] == "Retired":
+                self.log.info(
+                    f"Activity '{activity_name}' already exists as a retired request, ok to create a new one"
+                )
+                return None
+            elif existing["library_name"] == "Requested":
+                self.log.warning(
+                    f"Activity '{activity_name}' already exists as a requested activity, skipping"
+                )
+                raise ConflictingItemError("Requested")
+            elif existing["status"] == "Retired":
+                self.log.warning(
+                    f"Activity '{activity_name}' already exists and is retired, skipping"
+                )
+                raise ConflictingItemError("Retired")
+            return existing
+        return None
+
 
     @open_file_async()
     async def handle_activity_instance_classes(self, csvfile, session):
@@ -898,8 +974,13 @@ class Activities(BaseImporter):
         readCSV = csv.DictReader(csvfile, delimiter=",")
         api_tasks = []
 
+        # get only Final activities in Sponsor library
+        activity_filters = {
+            "library_name": {"v": ["Sponsor"], "op": "eq"},
+            "status": {"v": ["Final"], "op": "eq"}
+        }
         all_activities = self.api.get_all_identifiers(
-            self.api.get_all_activity_objects("activities"),
+            self.api.get_all_activity_objects("activities", filters=json.dumps(activity_filters)),
             identifier="name",
             value="uid",
         )
@@ -985,8 +1066,15 @@ class Activities(BaseImporter):
                 grp = group in all_groups
                 sgrp = subgroup in all_subgroups
                 self.log.warning(
-                    f"Missing items, found activity '{activity}' {act}, group '{group}' {grp}, subgroup '{subgroup}' {sgrp}"
+                    f"Skipping instance {activity_instance_name} due to missing dependency"
                 )
+                if not act:
+                    self.log.warning(f"Activity '{activity}' not found")
+                if not grp:
+                    self.log.warning(f"Group '{group}' not found")
+                if not sgrp:
+                    self.log.warning(f"Subgroup '{subgroup}' not found")
+                continue
 
             domain = row["GENERAL_DOMAIN_CLASS"]
             item_cols = [
@@ -1030,31 +1118,9 @@ class Activities(BaseImporter):
 
             # find related Activity Instance Class
             sub_domain_class = row["sub_domain_class"]
-            if sub_domain_class.lower() == "adverse event":
-                activity_instance_class_uid = all_activity_instance_classes.get(
-                    "AdverseEvent"
-                )
-            elif sub_domain_class.lower() == "medical history":
-                activity_instance_class_uid = all_activity_instance_classes.get(
-                    "MedicalHistory"
-                )
-            elif sub_domain_class.lower() == "disposition":
-                activity_instance_class_uid = all_activity_instance_classes.get(
-                    "Disposition"
-                )
-            elif sub_domain_class.lower() == "categoric finding":
-                activity_instance_class_uid = all_activity_instance_classes.get(
-                    "CategoricFinding"
-                )
-            elif sub_domain_class.lower() == "numeric finding":
-                activity_instance_class_uid = all_activity_instance_classes.get(
-                    "NumericFinding"
-                )
-            elif sub_domain_class.lower() == "textual finding":
-                activity_instance_class_uid = all_activity_instance_classes.get(
-                    "TextualFinding"
-                )
-            else:
+            instance_class_name = sub_domain_class.title().replace(" ", "")
+            activity_instance_class_uid = all_activity_instance_classes.get(instance_class_name)
+            if not activity_instance_class_uid:
                 # The activity instance type was not recognized
                 self.log.warning(
                     f"Activity instance '{activity_instance_name}' has an unknown domain class '{sub_domain_class}'"

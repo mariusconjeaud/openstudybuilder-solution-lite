@@ -72,18 +72,38 @@ def get_valid_visit_types_for_epoch_type(epoch_type_uid: str, study_uid: str):
     return {a[0]: a[1] for a in items}
 
 
-def get_valid_time_references_for_study(study_uid: str):
-    cypher_query = """
-        MATCH (time_reference_value:CTTermNameValue)<-[:LATEST]-(:CTTermNameRoot)<-[HAS_NAME_ROOT]-
+def get_valid_time_references_for_study(
+    study_uid: str, effective_date: datetime.datetime | None = None
+):
+    if not effective_date:
+        time_reference_match = "MATCH (time_reference_value:CTTermNameValue)<-[:LATEST]-(time_reference_name_root)"
+        visit_type_match = (
+            "MATCH (visit_type_root)-[:LATEST]->(visit_type_value:CTTermNameValue)"
+        )
+    else:
+        time_reference_match = """
+        MATCH (time_reference_value:CTTermNameValue)<-[hv:HAS_VERSION]-(time_reference_name_root)
+            WHERE (hv.start_date<= datetime($effective_date) < hv.end_date) OR (hv.end_date IS NULL AND (hv.start_date <= datetime($effective_date)))
+        """
+        visit_type_match = """
+        MATCH (visit_type_root)-[hv_type:HAS_VERSION]->(visit_type_value:CTTermNameValue)
+            WHERE (hv_type.start_date<= datetime($effective_date) < hv_type.end_date) OR (hv_type.end_date IS NULL AND (hv_type.start_date <= datetime($effective_date)))
+        """
+    cypher_query = f"""
+        MATCH (time_reference_name_root:CTTermNameRoot)<-[HAS_NAME_ROOT]-
         (time_reference_root:CTTermRoot)<-[HAS_TERM]-(codelist_root:CTCodelistRoot)-[:HAS_NAME_ROOT]->
-        (:CTCodelistNameRoot)-[:LATEST]->(:CTCodelistNameValue {name:$time_reference_codelist_name})
-        
-        WHERE time_reference_value.name IN [
-            (study_root:StudyRoot {uid:$study_uid})-[:LATEST]->(:StudyValue)-[:HAS_STUDY_VISIT]->
-            (study_visit:StudyVisit)-[:HAS_VISIT_TYPE]->(:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->
-            (visit_type_value:CTTermNameValue) | visit_type_value.name 
-        ] OR time_reference_value.name IN [$global_anchor_visit_name, $previous_visit_name]
+        (:CTCodelistNameRoot)-[:LATEST]->(:CTCodelistNameValue {{name:$time_reference_codelist_name}})
 
+        {time_reference_match}
+        
+        MATCH (study_root:StudyRoot {{uid:$study_uid}})-[:LATEST]->(:StudyValue)-[:HAS_STUDY_VISIT]->
+            (study_visit:StudyVisit)-[:HAS_VISIT_TYPE]->(:CTTermRoot)-[:HAS_NAME_ROOT]->(visit_type_root:CTTermNameRoot) 
+        
+        {visit_type_match}
+            
+        WITH time_reference_root, time_reference_value, COLLECT(visit_type_value.name) AS visit_type_value_names 
+            WHERE time_reference_value.name IN visit_type_value_names 
+                OR time_reference_value.name IN [$global_anchor_visit_name, $previous_visit_name]
         RETURN time_reference_root.uid, time_reference_value.name
         """
     items, _ = db.cypher_query(
@@ -93,6 +113,9 @@ def get_valid_time_references_for_study(study_uid: str):
             "study_uid": study_uid,
             "global_anchor_visit_name": GLOBAL_ANCHOR_VISIT_NAME,
             "previous_visit_name": PREVIOUS_VISIT_NAME,
+            "effective_date": effective_date.strftime("%Y-%m-%dT%H:%M:%SZ")
+            if effective_date
+            else None,
         },
     )
 
@@ -103,7 +126,7 @@ class StudyVisitRepository:
     def __init__(self, author: str):
         self.author = author
         unit_repository = UnitDefinitionRepository(self.author)
-        units, _ = unit_repository.find_all()
+        units, _ = unit_repository.get_all_optimized()
         unit: UnitDefinitionAR
         self._day_unit = None
         self._week_unit = None
@@ -113,16 +136,17 @@ class StudyVisitRepository:
             if unit.concept_vo.name == "week":
                 self._week_unit = unit
 
-    def fetch_ctlist(self, code_list_name: str):
-        return get_ctlist_terms_by_name(code_list_name)
+    def generate_uid(self) -> str:
+        return StudyVisit.get_next_free_uid_and_increment_counter()
+
+    def fetch_ctlist(self, code_list_name: str, effective_date=None):
+        return get_ctlist_terms_by_name(code_list_name, effective_date=effective_date)
 
     def get_day_week_units(self):
         return (self._day_unit, self._week_unit)
 
-    def save(self, visit: StudyVisitVO):
-        if visit.uid is not None:
-            return self._update(visit, create=False)
-        return self._update(visit, create=True)
+    def save(self, visit: StudyVisitVO, create: bool = False):
+        return self._update(visit, create)
 
     def count_activities(
         self, visit_uid: str, study_value_version: str | None = None
@@ -294,7 +318,10 @@ class StudyVisitRepository:
             if study_visit_ogm_input.visit_subclass
             else None,
             is_global_anchor_visit=study_visit_ogm_input.is_global_anchor_visit,
+            is_soa_milestone=study_visit_ogm_input.is_soa_milestone,
             visit_order=study_visit_ogm_input.visit_number,
+            vis_unique_number=study_visit_ogm_input.vis_unique_number,
+            vis_short_name=study_visit_ogm_input.vis_short_name,
         )
 
     def _from_neomodel_to_history_vo(self, study_visit_ogm_input: StudyVisitOGMVer):
@@ -334,7 +361,10 @@ class StudyVisitRepository:
             visit_class=study_visit_vo.visit_class,
             visit_subclass=study_visit_vo.visit_subclass,
             is_global_anchor_visit=study_visit_vo.is_global_anchor_visit,
+            is_soa_milestone=study_visit_vo.is_soa_milestone,
             visit_order=study_visit_vo.visit_number,
+            vis_unique_number=study_visit_vo.vis_unique_number,
+            vis_short_name=study_visit_vo.vis_short_name,
             # History VO params
             change_type=study_visit_ogm_input.change_type,
             end_date=study_visit_ogm_input.end_date,
@@ -368,6 +398,7 @@ class StudyVisitRepository:
                     "study_epoch_has_study_visit__study_value",
                 )
                 .fetch_optional_relations(
+                    "has_repeating_frequency",
                     "has_window_unit__has_latest_value",
                     "has_timepoint__has_latest_value__has_unit_definition__has_latest_value",
                     "has_timepoint__has_latest_value__has_time_reference",
@@ -383,6 +414,18 @@ class StudyVisitRepository:
                 .order_by("unique_visit_number")
             ).distinct()
         ]
+
+    def find_all_visits_referencing_study_visit(
+        self, study_visit_uid: str
+    ) -> list[StudyVisit]:
+        return (
+            StudyVisit.nodes.filter(
+                visit_sublabel_reference=study_visit_uid,
+            )
+            .order_by("unique_visit_number")
+            .has(has_before=False, has_study_visit=True)
+            .all()
+        )
 
     def find_by_uid(
         self, study_uid: str, uid: str, study_value_version: str | None = None
@@ -412,6 +455,7 @@ class StudyVisitRepository:
                 "has_after__audit_trail",
             )
             .fetch_optional_relations(
+                "has_repeating_frequency",
                 "has_window_unit__has_latest_value",
                 "has_timepoint__has_latest_value__has_unit_definition__has_latest_value",
                 "has_timepoint__has_latest_value__has_time_reference",
@@ -492,6 +536,7 @@ class StudyVisitRepository:
                     "study_epoch_has_study_visit__study_value",
                 )
                 .fetch_optional_relations(
+                    "has_repeating_frequency",
                     "has_window_unit__has_latest_value",
                     "has_timepoint__has_latest_value__has_unit_definition__has_latest_value",
                     "has_timepoint__has_latest_value__has_time_reference",
@@ -565,15 +610,10 @@ class StudyVisitRepository:
 
         new_visit = StudyVisit(
             uid=study_visit.uid,
-            legacy_visit_id=study_visit.legacy_visit_id,
-            legacy_visit_type_alias=study_visit.legacy_visit_type_alias,
-            legacy_name=study_visit.legacy_name,
-            legacy_subname=study_visit.legacy_subname,
             visit_number=study_visit.visit_number,
             visit_sublabel=study_visit.visit_sublabel,
             visit_sublabel_uid=study_visit.visit_sublabel_uid,
             visit_sublabel_reference=study_visit.visit_sublabel_reference,
-            visit_name_label=study_visit.visit_name_label,
             short_visit_label=study_visit.visit_short_name,
             unique_visit_number=study_visit.unique_visit_number,
             consecutive_visit_group=study_visit.consecutive_visit_group,
@@ -589,6 +629,7 @@ class StudyVisitRepository:
             if study_visit.visit_subclass
             else None,
             is_global_anchor_visit=study_visit.is_global_anchor_visit,
+            is_soa_milestone=study_visit.is_soa_milestone,
         )
         if study_visit.uid:
             new_visit.uid = study_visit.uid
@@ -598,6 +639,12 @@ class StudyVisitRepository:
 
         visit_type = CTTermRoot.nodes.get(uid=study_visit.visit_type.name)
         new_visit.has_visit_type.connect(visit_type)
+
+        if study_visit.repeating_frequency:
+            visit_repeating_frequency = CTTermRoot.nodes.get(
+                uid=study_visit.repeating_frequency.name
+            )
+            new_visit.has_repeating_frequency.connect(visit_repeating_frequency)
 
         if study_visit.timepoint:
             visit_timepoint = TimePointRoot.nodes.get(uid=study_visit.timepoint.uid)

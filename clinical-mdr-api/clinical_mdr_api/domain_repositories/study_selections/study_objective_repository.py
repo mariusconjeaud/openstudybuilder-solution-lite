@@ -62,21 +62,27 @@ class StudySelectionObjectiveRepository:
 
     def _retrieves_all_data(
         self,
-        study_uid: str | None = None,
+        study_uids: str | list[str] | None = None,
         project_name: str | None = None,
         project_number: str | None = None,
         study_value_version: str | None = None,
     ) -> tuple[StudySelectionObjectiveVO]:
         query = ""
         query_parameters = {}
-        if study_uid:
-            if study_value_version:
-                query = "MATCH (sr:StudyRoot { uid: $uid})-[l:HAS_VERSION{status:'RELEASED', version:$study_value_version}]->(sv:StudyValue)"
-                query_parameters["study_value_version"] = study_value_version
-                query_parameters["uid"] = study_uid
+        if study_uids:
+            if isinstance(study_uids, str):
+                study_uid_statement = "{uid: $uids}"
             else:
-                query = "MATCH (sr:StudyRoot { uid: $uid})-[l:LATEST]->(sv:StudyValue)"
-                query_parameters["uid"] = study_uid
+                study_uid_statement = "WHERE sr.uid IN $uids"
+            if study_value_version:
+                query = f"""
+                    MATCH (sr:StudyRoot {study_uid_statement})-[l:HAS_VERSION{{status:'RELEASED', version:$study_value_version}}]->(sv:StudyValue)
+                    """
+                query_parameters["study_value_version"] = study_value_version
+                query_parameters["uids"] = study_uids
+            else:
+                query = f"MATCH (sr:StudyRoot {study_uid_statement})-[l:LATEST]->(sv:StudyValue)"
+                query_parameters["uids"] = study_uids
         else:
             if study_value_version:
                 query = "MATCH (sr:StudyRoot)-[l:HAS_VERSION{status:'RELEASED', version:$study_value_version}]->(sv:StudyValue)"
@@ -160,6 +166,7 @@ class StudySelectionObjectiveRepository:
         self,
         project_name: str | None = None,
         project_number: str | None = None,
+        study_uids: list[str] | None = None,
     ) -> list[StudySelectionObjectivesAR]:
         """
         Finds all the selected study objectives for all studies, and create the aggregate
@@ -168,6 +175,7 @@ class StudySelectionObjectiveRepository:
         all_selections = self._retrieves_all_data(
             project_name=project_name,
             project_number=project_number,
+            study_uids=study_uids,
         )
         # Create a dictionary, with study_uid as key, and list of selections as value
         selection_aggregate_dict = {}

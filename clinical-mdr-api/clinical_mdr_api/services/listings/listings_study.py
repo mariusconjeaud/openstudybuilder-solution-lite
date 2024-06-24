@@ -83,12 +83,21 @@ class StudyMetadataListingService:
         return timeline.ordered_study_visits
 
     def get_study_metadata(
-        self, study_number: int, version: str | None = None, datetime: str | None = None
+        self,
+        project_id: str,
+        study_number: str,
+        subpart_acronym: str | None = None,
+        version: str | None = None,
+        datetime: str | None = None,
     ) -> StudyMetadataListingModel:
         try:
             # To be implemented, replace by real api version
             api_ver = "TBA"
 
+            if project_id is None or study_number is None:
+                raise exceptions.ValidationException(
+                    "Please specify both project id and study number."
+                )
             if version and datetime:
                 raise exceptions.ValidationException(
                     "Please specify either version or datetime, not both."
@@ -97,48 +106,48 @@ class StudyMetadataListingService:
                 raise exceptions.ValidationException(
                     "No version nor datetime was specified, please specify either one of them."
                 )
-            study_uid = StudyDefinitionRepository.find_uid_by_study_number(study_number)
+            study_uid = StudyDefinitionRepository.find_uid_by_study_number(
+                project_id=project_id,
+                study_number=study_number,
+                subpart_acronym=subpart_acronym,
+            )
             if study_uid is None:
                 raise exceptions.NotFoundException(
-                    f"Study number '{study_number}' not found."
+                    f"Study id {project_id}-{study_number}{subpart_acronym if subpart_acronym else None} not found."
                 )
+
             if datetime:
                 version = self._repos.study_definition_repository.get_latest_released_version_from_specific_datetime(
                     study_uid=study_uid, specified_datetime=datetime
                 )
                 if version is None:
                     raise exceptions.NotFoundException(
-                        f"Study number '{study_number}' has no released version before '{datetime}'."
+                        f"Study {project_id}-{study_number} has no released version before '{datetime}'."
                     )
             study_definition = self._repos.study_definition_repository.find_by_uid(
                 uid=study_uid, study_value_version=version
             )
+
             if study_definition is None:
                 raise exceptions.NotFoundException(
-                    f"Study definition '{study_uid}' not found."
+                    f"Study definition {project_id}-{study_number} not found."
                 )
-
-            project_id = (
-                study_definition.version_specific_metadata.id_metadata.project_number
-                if study_definition.version_specific_metadata.id_metadata.project_number
-                else ""
-            )
-            study_nr = (
-                study_definition.version_specific_metadata.id_metadata.study_number
-                if study_definition.version_specific_metadata.id_metadata.study_number
-                else ""
-            )
-            subpart = (
-                study_definition.version_specific_metadata.id_metadata.subpart_id
-                if study_definition.version_specific_metadata.id_metadata.subpart_id
-                else ""
-            )
-
-            study_id = project_id + "-" + study_nr + subpart
+            if subpart_acronym is None:
+                if study_definition.study_parent_part_uid is not None:
+                    raise exceptions.ValidationException(
+                        f"Study {project_id}-{study_number} is a sub study, please specify study subpart acronym for specific sub study."
+                    )
+                if study_definition.study_subpart_uids != []:
+                    raise exceptions.ValidationException(
+                        f"Study {project_id}-{study_number} is a parent study, please specify study subpart acronym for specific sub study."
+                    )
+                full_study_id = project_id + "-" + study_number
+            else:
+                full_study_id = project_id + "-" + study_number + subpart_acronym
 
             result = StudyMetadataListingModel.from_study_metadata_vo(
                 api_ver=api_ver,
-                study_id=study_id,
+                study_id=full_study_id,
                 study_ver=version,
                 specified_dt=datetime,
                 study_metadata_vo=study_definition.version_specific_metadata,

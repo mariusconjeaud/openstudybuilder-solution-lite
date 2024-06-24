@@ -1,43 +1,47 @@
 <template>
-<pre-instance-form
-  object-type="activityTemplates"
-  :prepare-payload-function="preparePayload"
-  v-bind="$attrs"
-  v-on="$listeners"
+  <PreInstanceForm
+    object-type="activityTemplates"
+    :prepare-indexing-payload-function="prepareIndexingPayload"
+    v-bind="$attrs"
   >
-  <template v-slot:indexingTab="{ form, template, preInstance }">
-    <activity-template-indexing-form
-      v-if="template"
-      ref="indexingForm"
-      :form="form"
-      :template="template"
+    <template #indexingTab="{ form, template, preInstance }">
+      <ActivityTemplateIndexingForm
+        v-if="template"
+        ref="indexingForm"
+        :form="form"
+        :template="template"
       />
-    <activity-template-indexing-form
-      v-else
-      ref="indexingForm"
-      :form="form"
-      :template="preInstance"
+      <ActivityTemplateIndexingForm
+        v-else
+        ref="indexingForm"
+        :form="form"
+        :template="preInstance"
       />
-  </template>
-</pre-instance-form>
+    </template>
+  </PreInstanceForm>
 </template>
 
 <script>
-import ActivityTemplateIndexingForm from './ActivityTemplateIndexingForm'
-import PreInstanceForm from '@/components/library/PreInstanceForm'
+import ActivityTemplateIndexingForm from './ActivityTemplateIndexingForm.vue'
+import PreInstanceForm from '@/components/library/PreInstanceForm.vue'
 
 export default {
   components: {
     ActivityTemplateIndexingForm,
-    PreInstanceForm
+    PreInstanceForm,
   },
   props: {
-    activityType: Object
+    activityType: {
+      type: Object,
+      default: null,
+    },
   },
   methods: {
-    preparePayload (payload) {
-      Object.assign(payload, this.$refs.indexingForm.preparePayload(payload))
-    }
-  }
+    prepareIndexingPayload(payload) {
+      if (this.$refs.indexingForm) {
+        Object.assign(payload, this.$refs.indexingForm.preparePayload(payload))
+      }
+    },
+  },
 }
 </script>

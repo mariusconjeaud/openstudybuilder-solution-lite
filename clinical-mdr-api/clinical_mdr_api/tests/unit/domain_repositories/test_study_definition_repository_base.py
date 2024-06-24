@@ -2,10 +2,11 @@ import copy
 import random
 import unittest
 from dataclasses import dataclass, field
-from typing import AbstractSet, Any, Callable, Generic, TypeVar, cast
+from typing import AbstractSet, Any, Callable, Generic, Sequence, TypeVar, cast
 from unittest.mock import patch
 
 from clinical_mdr_api.config import DEFAULT_STUDY_FIELD_CONFIG_FILE
+from clinical_mdr_api.domain_repositories.models.study_field import StudyBooleanField
 from clinical_mdr_api.domain_repositories.study_definitions.study_definition_repository import (
     StudyDefinitionRepository,
 )
@@ -26,7 +27,7 @@ from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import 
 from clinical_mdr_api.exceptions import MDRApiBaseException
 from clinical_mdr_api.models.study_selections.study import (
     StudyPreferredTimeUnit,
-    StudySubpartAuditTrail,
+    StudySoaPreferencesInput,
 )
 from clinical_mdr_api.models.utils import GenericFilteringReturn
 from clinical_mdr_api.repositories._utils import FilterOperator
@@ -183,7 +184,12 @@ class StudyDefinitionRepositoryFake(StudyDefinitionRepository):
                 additional_closure = copy.deepcopy(snapshot)
         return snapshot, additional_closure
 
-    def _save(self, snapshot: StudyDefinitionSnapshot, additional_closure: Any) -> None:
+    def _save(
+        self,
+        snapshot: StudyDefinitionSnapshot,
+        additional_closure: Any,
+        is_subpart_relationship_update: bool = False,
+    ) -> None:
         # we do primitive form of optimistic locking (which works only if we assume single threaded processing)
         assert snapshot.uid is not None
         if additional_closure != self._simulated_db.find_by_id(snapshot.uid):
@@ -199,6 +205,7 @@ class StudyDefinitionRepositoryFake(StudyDefinitionRepository):
 
     def _retrieve_all_snapshots(
         self,
+        has_study_footnote: bool | None = None,
         has_study_objective: bool | None = None,
         has_study_endpoint: bool | None = None,
         has_study_criteria: bool | None = None,
@@ -233,10 +240,30 @@ class StudyDefinitionRepositoryFake(StudyDefinitionRepository):
     ) -> list[StudyFieldAuditTrailEntryAR] | None:
         raise NotImplementedError("Study fields audit trail is not yet mocked.")
 
-    def _retrieve_study_subpart_with_history(
-        self, uid: str, is_subpart: bool = False
-    ) -> list[StudySubpartAuditTrail] | None:
+    def _retrieve_study_subpart_with_history(self, uid: str, is_subpart: bool = False):
         raise NotImplementedError("Study Subpart audit trail is not yet mocked.")
+
+    def get_soa_preferences(
+        self,
+        study_uid: str,
+        study_value_version: str | None = None,
+        field_names: Sequence[str] | None = None,
+    ) -> list[StudyBooleanField]:
+        raise NotImplementedError("get_soa_preferences")
+
+    def post_soa_preferences(
+        self,
+        study_uid: str,
+        soa_preferences: StudySoaPreferencesInput,
+    ) -> list[StudyBooleanField]:
+        return []
+
+    def edit_soa_preferences(
+        self,
+        study_uid: str,
+        soa_preferences: StudySoaPreferencesInput,
+    ) -> list[StudyBooleanField]:
+        raise NotImplementedError("edit_soa_preferences")
 
 
 def _random_study_number() -> str:
@@ -341,7 +368,7 @@ class TestStudyDefinitionsRepositoryBase(unittest.TestCase):
             generate_uid_callback=lambda: random_str(),
             initial_id_metadata=new_id_metadata,
             project_exists_callback=(lambda _: True),
-            study_number_exists_callback=(lambda _: False),
+            study_number_exists_callback=(lambda _x, y: False),
             study_title_exists_callback=(lambda _, study_number: False),
             study_short_title_exists_callback=(lambda _, study_number: False),
         )

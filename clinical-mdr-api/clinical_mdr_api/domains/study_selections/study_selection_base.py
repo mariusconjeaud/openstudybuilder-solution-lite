@@ -51,6 +51,10 @@ class StudySelectionBaseAR:
     def study_objects_selection(self) -> tuple[Type[StudySelectionBaseVO]]:
         return self._study_objects_selection
 
+    @study_objects_selection.setter
+    def study_objects_selection(self, value: Iterable[Type[StudySelectionBaseVO]]):
+        self._study_objects_selection = tuple(value)
+
     def get_specific_object_selection(
         self, study_selection_uid: str
     ) -> tuple[Type[StudySelectionBaseVO], int]:

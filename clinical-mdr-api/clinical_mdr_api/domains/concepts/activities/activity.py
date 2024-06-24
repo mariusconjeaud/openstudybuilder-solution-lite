@@ -40,6 +40,8 @@ class ActivityVO(ConceptVO):
 
     is_data_collected: bool = False
     is_multiple_selection_allowed: bool = True
+    is_finalized: bool = False
+    is_used_by_legacy_instances: bool = False
 
     @classmethod
     def from_repository_values(
@@ -59,6 +61,8 @@ class ActivityVO(ConceptVO):
         is_request_rejected: bool = False,
         is_data_collected: bool = False,
         is_multiple_selection_allowed: bool = True,
+        is_finalized: bool = False,
+        is_used_by_legacy_instances: bool = False,
     ) -> Self:
         activity_vo = cls(
             nci_concept_id=nci_concept_id,
@@ -77,6 +81,8 @@ class ActivityVO(ConceptVO):
             is_request_rejected=is_request_rejected,
             is_data_collected=is_data_collected,
             is_multiple_selection_allowed=is_multiple_selection_allowed,
+            is_finalized=is_finalized,
+            is_used_by_legacy_instances=is_used_by_legacy_instances,
         )
 
         return activity_vo

@@ -1,4 +1,5 @@
 import logging
+import traceback
 
 from fastapi import Request, status
 from fastapi.encoders import jsonable_encoder
@@ -40,14 +41,7 @@ class ExceptionTracebackMiddleware:
 
         # pylint: disable=broad-except
         except Exception as exc:
-            # add tracing attributes
-            tracer = execution_context.get_opencensus_tracer()
-            tracer.add_attribute_to_current_span(
-                COMMON_ATTRIBUTES["ERROR_NAME"], exc.__class__.__name__
-            )
-            tracer.add_attribute_to_current_span(
-                COMMON_ATTRIBUTES["ERROR_MESSAGE"], str(exc)
-            )
+            self.add_traceback_attributes(exc)
 
             # log traceback
             log.exception(exc)
@@ -57,6 +51,22 @@ class ExceptionTracebackMiddleware:
 
             if not response_started:
                 await response(scope, receive, send)
+
+    @staticmethod
+    def add_traceback_attributes(exception):
+        """adds traceback attributes to current Span of tracing context"""
+
+        if span := execution_context.get_current_span():
+            span.add_attribute(
+                COMMON_ATTRIBUTES["ERROR_NAME"], exception.__class__.__name__
+            )
+
+            span.add_attribute(COMMON_ATTRIBUTES["ERROR_MESSAGE"], str(exception))
+
+            span.add_attribute(
+                COMMON_ATTRIBUTES["STACKTRACE"],
+                "\n".join(traceback.format_tb(exception.__traceback__)),
+            )
 
     @staticmethod
     def error_response(request: Request, exception: Exception) -> Response:

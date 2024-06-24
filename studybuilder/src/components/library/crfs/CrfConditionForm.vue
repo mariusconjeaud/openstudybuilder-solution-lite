@@ -1,193 +1,223 @@
 <template>
-<horizontal-stepper-form
-  ref="stepper"
-  :title="$t('CrfConditionForm.set_condition')"
-  :steps="steps"
-  @close="close"
-  @save="submit"
-  :form-observer-getter="getObserver"
+  <HorizontalStepperForm
+    ref="stepper"
+    :title="$t('CrfConditionForm.set_condition')"
+    :steps="steps"
+    :form-observer-getter="getObserver"
+    @close="close"
+    @save="submit"
   >
-  <template v-slot:step.condition="{ step }">
-    <validation-observer :ref="`observer_${step}`">
-      <v-card
-        elevation="4"
-        class="mx-auto pa-4 mb-4">
-        <div class="text-h5 mb-4">{{ $t('CRFForms.definition') }}</div>
-        <v-row>
-          <v-col cols="6">
-            <v-text-field
-              :label="$t('CRFForms.oid')"
-              data-cy="form-oid"
-              v-model="form.oid"
-              dense
-              clearable
-            />
-          </v-col>
-          <v-col cols="6">
-            <validation-provider
-              v-slot="{ errors }"
-              rules="required"
-              >
+    <template #[`step.condition`]="{ step }">
+      <v-form :ref="`observer_${step}`">
+        <v-card elevation="4" class="mx-auto pa-4 mb-4">
+          <div class="text-h5 mb-4">
+            {{ $t('CRFForms.definition') }}
+          </div>
+          <v-row>
+            <v-col cols="6">
               <v-text-field
+                v-model="form.oid"
+                :label="$t('CRFForms.oid')"
+                data-cy="form-oid"
+                density="compact"
+                clearable
+              />
+            </v-col>
+            <v-col cols="6">
+              <v-text-field
+                v-model="form.name"
                 :label="$t('CRFForms.name') + '*'"
                 data-cy="form-oid-name"
-                v-model="form.name"
-                :error-messages="errors"
-                dense
+                :rules="[formRules.required]"
+                density="compact"
                 clearable
               />
-            </validation-provider>
+            </v-col>
+          </v-row>
+          <v-row>
+            <v-col cols="9">
+              <div class="subtitle-2 text--disabled">
+                {{ $t('CRFForms.help_for_sponsor') }}
+              </div>
+              <VueEditor
+                v-model="engDescription.sponsor_instruction"
+                :toolbar="customToolbar"
+                :placeholder="$t('CRFForms.help_for_sponsor')"
+              />
+            </v-col>
+          </v-row>
+        </v-card>
+      </v-form>
+    </template>
+    <template #[`step.description`]="{ step }">
+      <v-form :ref="`observer_${step}`">
+        <CrfDescriptionTable
+          :key="descKey"
+          :edit-descriptions="desc"
+          @set-desc="setDesc"
+        />
+      </v-form>
+    </template>
+    <template #[`step.expression`]="{ step }">
+      <v-form :ref="`observer_${step}`">
+        <v-row>
+          <v-col>
+            <v-text-field
+              v-model="form.formal_expressions[0].context"
+              :label="$t('CrfConditionForm.context')"
+              :rules="[formRules.required]"
+              density="compact"
+              clearable
+              class="mt-3"
+            />
           </v-col>
         </v-row>
         <v-row>
-          <v-col cols="9">
-            <div class="subtitle-2 text--disabled">{{ $t('CRFForms.help_for_sponsor') }}</div>
-            <vue-editor
-              v-model="engDescription.sponsor_instruction"
-              :editor-toolbar="customToolbar"
-              :placeholder="$t('CRFForms.help_for_sponsor')"/>
-          </v-col>
-        </v-row>
-      </v-card>
-    </validation-observer>
-  </template>
-  <template v-slot:step.description="{ step }">
-    <validation-observer :ref="`observer_${step}`">
-      <crf-description-table @setDesc="setDesc" :editDescriptions="desc" :key="descKey"/>
-    </validation-observer>
-  </template>
-  <template v-slot:step.expression="{ step }">
-    <validation-observer :ref="`observer_${step}`">
-      <v-row>
-        <v-col>
-          <validation-provider
-            v-slot="{ errors }"
-            rules="required"
-            >
-              <v-text-field
-                :label="$t('CrfConditionForm.context')"
-                v-model="form.formal_expressions[0].context"
-                :error-messages="errors"
-                dense
-                clearable
-                class="mt-3"
-              />
-          </validation-provider>
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col>
-          <validation-provider
-            v-slot="{ errors }"
-            rules="required"
-            >
+          <v-col>
             <v-textarea
-              :label="$t('CrfConditionForm.formal_expression')"
               v-model="form.formal_expressions[0].expression"
-              :error-messages="errors"
-              dense
+              :label="$t('CrfConditionForm.formal_expression')"
+              :rules="[formRules.required]"
+              density="compact"
               clearable
               class="mt-6"
             />
-          </validation-provider>
-        </v-col>
-      </v-row>
-      <div v-for="(expression, index) in expressionsArray" :key="expression.index">
-        <div v-if="!form.uid">
-          <v-row>
-            <v-col>
-              <v-autocomplete
-                :label="$t('CrfConditionForm.nested_element')"
-                :items="nestedElements"
-                v-model="expressionsArray[index].elementType"
-                dense
-                clearable
-                @change="setFormalExpression()"/>
-            </v-col>
-            <v-col>
-              <v-autocomplete
-                v-model="expressionsArray[index].element"
-                :items="expressionsArray[index].elementType === 'Form' ? crfForms : (expressionsArray[index].elementType === 'Item Group' ? crfGroups : crfItems)"
-                :disabled="!expressionsArray[index].elementType"
-                item-text="name"
-                item-value="oid"
-                return-object
-                dense
-                clearable
-                @change="setFormalExpression()"/>
-            </v-col>
-            <v-col cols="2">
-              <v-autocomplete
-                :label="$t('CrfConditionForm.separator')"
-                :items="separators"
-                v-model="expressionsArray[index].separator"
-                dense
-                clearable
-                @change="setFormalExpression()"/>
-            </v-col>
-          </v-row>
-          <v-row :key="key" v-show="expressionsArray[index].elementType === 'Item' && expressionsArray[index].element && expressionsArray[index].element.codelist">
-            <v-col>
-              {{ $t('CrfConditionForm.select_value') }}
-            </v-col>
-            <v-col>
-              <v-autocomplete
-                label="Value"
-                :items="expressionsArray[index].terms"
-                v-model="expressionsArray[index].value"
-                item-text="name"
-                item-value="name"
-                dense
-                clearable
-                @change="setFormalExpression()"
-                :key="key"
-                :loading="!expressionsArray[index].terms"
-                />
-            </v-col>
-          </v-row>
-        </div>
-      </div>
-      <v-btn
-        data-cy='create-new-sponsor-values'
-        color="primary"
-        icon
-        @click="addExpression"
-        v-if="!form.uid"
+          </v-col>
+        </v-row>
+        <div
+          v-for="(expression, index) in expressionsArray"
+          :key="expression.index"
         >
-        <v-icon>mdi-plus-circle-outline</v-icon>
-      </v-btn>
-    </validation-observer>
-  </template>
-</horizontal-stepper-form>
+          <div v-if="!form.uid">
+            <v-row>
+              <v-col>
+                <v-autocomplete
+                  v-model="expressionsArray[index].elementType"
+                  :label="$t('CrfConditionForm.nested_element')"
+                  :items="nestedElements"
+                  density="compact"
+                  clearable
+                  @change="setFormalExpression()"
+                />
+              </v-col>
+              <v-col>
+                <v-autocomplete
+                  v-model="expressionsArray[index].element"
+                  :items="
+                    expressionsArray[index].elementType === 'Form'
+                      ? crfForms
+                      : expressionsArray[index].elementType === 'Item Group'
+                        ? crfGroups
+                        : crfItems
+                  "
+                  :disabled="!expressionsArray[index].elementType"
+                  item-title="name"
+                  item-value="oid"
+                  return-object
+                  density="compact"
+                  clearable
+                  @change="setFormalExpression()"
+                />
+              </v-col>
+              <v-col cols="2">
+                <v-autocomplete
+                  v-model="expressionsArray[index].separator"
+                  :label="$t('CrfConditionForm.separator')"
+                  :items="separators"
+                  density="compact"
+                  clearable
+                  @change="setFormalExpression()"
+                />
+              </v-col>
+            </v-row>
+            <v-row
+              v-show="
+                expressionsArray[index].elementType === 'Item' &&
+                expressionsArray[index].element &&
+                expressionsArray[index].element.codelist
+              "
+              :key="key"
+            >
+              <v-col>
+                {{ $t('CrfConditionForm.select_value') }}
+              </v-col>
+              <v-col>
+                <v-autocomplete
+                  :key="key"
+                  v-model="expressionsArray[index].value"
+                  label="Value"
+                  :items="expressionsArray[index].terms"
+                  item-title="name"
+                  item-value="name"
+                  density="compact"
+                  clearable
+                  :loading="!expressionsArray[index].terms"
+                  @change="setFormalExpression()"
+                />
+              </v-col>
+            </v-row>
+          </div>
+        </div>
+        <v-btn
+          v-if="!form.uid"
+          size="small"
+          data-cy="create-new-sponsor-values"
+          color="primary"
+          icon="mdi-plus-circle-outline"
+          @click="addExpression"
+        />
+      </v-form>
+    </template>
+  </HorizontalStepperForm>
 </template>
 
 <script>
 import crfs from '@/api/crfs'
-import CrfDescriptionTable from '@/components/library/crfs/CrfDescriptionTable'
-import HorizontalStepperForm from '@/components/tools/HorizontalStepperForm'
+import CrfDescriptionTable from '@/components/library/crfs/CrfDescriptionTable.vue'
+import HorizontalStepperForm from '@/components/tools/HorizontalStepperForm.vue'
 import constants from '@/constants/libraries'
-import { VueEditor } from 'vue2-editor'
-import { mapGetters } from 'vuex'
+import { VueEditor } from 'vue3-editor-js'
+import { useAppStore } from '@/stores/app'
+import { computed } from 'vue'
 
 export default {
   components: {
     HorizontalStepperForm,
     CrfDescriptionTable,
-    VueEditor
+    VueEditor,
   },
+  inject: ['eventBusEmit', 'formRules'],
   props: {
-    itemToLink: Object,
-    crfForms: Array,
-    crfGroups: Array,
-    crfItems: Array,
-    crfGroup: Object
+    itemToLink: {
+      type: Object,
+      default: null,
+    },
+    crfForms: {
+      type: Array,
+      default: null,
+    },
+    crfGroups: {
+      type: Array,
+      default: null,
+    },
+    crfItems: {
+      type: Array,
+      default: null,
+    },
+    crfGroup: {
+      type: Object,
+      default: null,
+    },
   },
-  computed: {
-    ...mapGetters({
-      userData: 'app/userData'
-    })
+  emits: ['cancel', 'close'],
+  setup() {
+    const appStore = useAppStore()
+
+    return {
+      userData: computed(() => appStore.userData),
+    }
   },
-  data () {
+  data() {
     return {
       helpItems: [],
       form: {
@@ -195,16 +225,23 @@ export default {
         formal_expressions: [
           {
             library_name: 'Sponsor',
-            context: 'XPath'
-          }
+            context: 'XPath',
+          },
         ],
-        alias_uids: []
+        alias_uids: [],
       },
       descriptionUids: [],
       steps: [
         { name: 'condition', title: this.$t('CrfConditionForm.condition') },
-        { name: 'description', title: this.$t('CRFForms.description_details'), belowDisplay: true },
-        { name: 'expression', title: this.$t('CrfConditionForm.formal_expression') }
+        {
+          name: 'description',
+          title: this.$t('CRFForms.description_details'),
+          belowDisplay: true,
+        },
+        {
+          name: 'expression',
+          title: this.$t('CrfConditionForm.formal_expression'),
+        },
       ],
       desc: [],
       nestedElements: ['Form', 'Item Group', 'Item'],
@@ -217,29 +254,40 @@ export default {
       customToolbar: [
         ['bold', 'italic', 'underline'],
         [{ script: 'sub' }, { script: 'super' }],
-        [{ list: 'ordered' }, { list: 'bullet' }]
-      ]
+        [{ list: 'ordered' }, { list: 'bullet' }],
+      ],
     }
   },
-  mounted () {
+  watch: {
+    itemToLink() {
+      this.initiateSteps()
+    },
+  },
+  mounted() {
     this.initiateSteps()
   },
   methods: {
-    initiateSteps () {
+    initiateSteps() {
       this.initForm()
       if (!this.userData.multilingual) {
         this.steps = this.steps.filter(function (obj) {
           return obj.name !== 'description'
         })
       } else {
-        this.steps.splice(1, 0, { name: 'description', title: this.$t('CRFForms.description_details'), belowDisplay: true })
+        this.steps.splice(1, 0, {
+          name: 'description',
+          title: this.$t('CRFForms.description_details'),
+          belowDisplay: true,
+        })
       }
-      const uniqueSteps = Array.from(new Set(this.steps.map(a => a.name))).map(name => {
-        return this.steps.find(a => a.name === name)
+      const uniqueSteps = Array.from(
+        new Set(this.steps.map((a) => a.name))
+      ).map((name) => {
+        return this.steps.find((a) => a.name === name)
       })
       this.steps = uniqueSteps
     },
-    setFormalExpression () {
+    setFormalExpression() {
       const itemDef = 'ItemDef'
       const itemGroupDef = 'ItemGroupDef'
       const formDef = 'FormDef'
@@ -248,39 +296,59 @@ export default {
       this.form.formal_expressions[0].expression = '../'
       this.expressionsArray.forEach((el, index) => {
         if (el.elementType === 'Form' && el.element) {
-          this.form.formal_expressions[0].expression += formDef + oid + el.element.oid + (el.separator ? `] ${el.separator} ../` : ']/')
+          this.form.formal_expressions[0].expression +=
+            formDef +
+            oid +
+            el.element.oid +
+            (el.separator ? `] ${el.separator} ../` : ']/')
         }
         if (el.elementType === 'Item Group' && el.element) {
-          this.form.formal_expressions[0].expression += itemGroupDef + oid + el.element.oid + (el.separator ? `] ${el.separator} ../` : ']/')
+          this.form.formal_expressions[0].expression +=
+            itemGroupDef +
+            oid +
+            el.element.oid +
+            (el.separator ? `] ${el.separator} ../` : ']/')
         }
         if (el.elementType === 'Item' && el.element) {
-          this.form.formal_expressions[0].expression += itemDef + oid + el.element.oid + ']' + value + el.value + (el.separator ? `] ${el.separator} ../` : ']')
+          this.form.formal_expressions[0].expression +=
+            itemDef +
+            oid +
+            el.element.oid +
+            ']' +
+            value +
+            el.value +
+            (el.separator ? `] ${el.separator} ../` : ']')
           this.expressionsArray[index].terms = el.element.terms
         }
       })
-      if (this.form.formal_expressions[0].expression[this.form.formal_expressions[0].length - 1] === '/') {
-        this.form.formal_expressions[0].expression = this.form.formal_expressions[0].slice(0, -1)
+      if (
+        this.form.formal_expressions[0].expression[
+          this.form.formal_expressions[0].length - 1
+        ] === '/'
+      ) {
+        this.form.formal_expressions[0].expression =
+          this.form.formal_expressions[0].slice(0, -1)
       }
     },
-    addExpression () {
+    addExpression() {
       this.expressionsArray.push({ index: this.expressionsArray.length })
     },
-    setDesc (desc) {
+    setDesc(desc) {
       this.desc = desc
     },
-    getObserver (step) {
+    getObserver(step) {
       return this.$refs[`observer_${step}`]
     },
-    close () {
+    close() {
       this.form = {
         oid: 'C.',
         formal_expressions: [
           {
             library_name: 'Sponsor',
-            context: 'XPath'
-          }
+            context: 'XPath',
+          },
         ],
-        alias_uids: []
+        alias_uids: [],
       }
       this.desc = []
       this.engDescription = { library_name: 'Sponsor', language: 'ENG' }
@@ -289,11 +357,11 @@ export default {
       this.$refs.stepper.reset()
       this.$emit('cancel')
     },
-    async submit () {
+    async submit() {
       await this.createOrUpdateDescription()
       this.form.library_name = constants.LIBRARY_SPONSOR
       if (this.form.oid === 'C.') {
-        this.$set(this.form, 'oid', '')
+        this.form.oid = ''
       }
       try {
         if (this.form.uid) {
@@ -303,31 +371,35 @@ export default {
             this.$emit('close')
           })
         } else if (this.itemToLink.parentFormUid) {
-          await crfs.createCondition(this.form).then(resp => {
+          await crfs.createCondition(this.form).then((resp) => {
             const data = [this.itemToLink]
-            this.$set(data[0], 'collection_exception_condition_oid', resp.data.oid)
-            crfs.addItemGroupsToForm(data, this.itemToLink.parentFormUid, false).then(() => {
-              this.close()
-              this.$emit('close')
-            })
+            data[0].collection_exception_condition_oid = resp.data.oid
+            crfs
+              .addItemGroupsToForm(data, this.itemToLink.parentFormUid, false)
+              .then(() => {
+                this.close()
+                this.$emit('close')
+              })
           })
         } else if (this.itemToLink.parentGroupUid) {
-          await crfs.createCondition(this.form).then(resp => {
+          await crfs.createCondition(this.form).then((resp) => {
             const data = [this.itemToLink]
-            this.$set(data[0], 'collection_exception_condition_oid', resp.data.oid)
-            crfs.addItemsToItemGroup(data, this.itemToLink.parentGroupUid, false).then(() => {
-              this.close()
-              this.$emit('close')
-            })
+            data[0].collection_exception_condition_oid = resp.data.oid
+            crfs
+              .addItemsToItemGroup(data, this.itemToLink.parentGroupUid, false)
+              .then(() => {
+                this.close()
+                this.$emit('close')
+              })
           })
         }
       } finally {
         this.$refs.stepper.loading = false
       }
     },
-    async createOrUpdateDescription () {
+    async createOrUpdateDescription() {
       const descArray = []
-      this.desc.forEach(e => {
+      this.desc.forEach((e) => {
         if (e.uid) {
           descArray.push(e)
         } else {
@@ -341,24 +413,27 @@ export default {
       descArray.push(this.engDescription)
       this.form.descriptions = descArray
     },
-    initForm () {
-      if (this.itemToLink.collection_exception_condition_oid && this.itemToLink.collection_exception_condition_oid !== 'null' && this.itemToLink.collection_exception_condition_oid !== 'none') {
+    initForm() {
+      if (
+        this.itemToLink.collection_exception_condition_oid &&
+        this.itemToLink.collection_exception_condition_oid !== 'null' &&
+        this.itemToLink.collection_exception_condition_oid !== 'none'
+      ) {
         const data = {}
         data.filters = `{"oid":{ "v": ["${this.itemToLink.collection_exception_condition_oid}"], "op": "co" }}`
-        crfs.getConditionByOid(data).then(resp => {
-          this.engDescription = resp.data.items[0].descriptions.find(el => el.language === 'ENG')
-          this.desc = resp.data.items[0].descriptions.filter((el) => el.language !== 'ENG')
+        crfs.getConditionByOid(data).then((resp) => {
+          this.engDescription = resp.data.items[0].descriptions.find(
+            (el) => el.language === 'ENG'
+          )
+          this.desc = resp.data.items[0].descriptions.filter(
+            (el) => el.language !== 'ENG'
+          )
           this.form = resp.data.items[0]
           this.form.alias_uids = []
           this.descKey += 1
         })
       }
-    }
+    },
   },
-  watch: {
-    itemToLink () {
-      this.initiateSteps()
-    }
-  }
 }
 </script>

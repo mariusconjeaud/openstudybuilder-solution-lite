@@ -1,46 +1,55 @@
 <template>
-<v-radio-group
-  :value="value"
-  dense
-  :key="radioKey"
-  @change="update"
-  v-bind="$attrs"
-  v-on="$listeners"
+  <v-radio-group
+    :key="radioKey"
+    v-model="value"
+    density="compact"
+    v-bind="$attrs"
   >
-  <v-radio
-    v-for="booleanValue in booleanValues"
-    ref="radio"
-    :data-cy="'radio-' + booleanValue.label"
-    :key="booleanValue.id"
-    :label="booleanValue.label"
-    :value="booleanValue.value"
-    @mouseup.native="clearCurrentRadioValue(booleanValue)"
+    <v-radio
+      v-for="booleanValue in booleanValues"
+      ref="radio"
+      :key="booleanValue.id"
+      :data-cy="'radio-' + booleanValue.label"
+      :label="booleanValue.label"
+      :value="booleanValue.value"
+      color="primary"
+      @mouseup="clearCurrentRadioValue(booleanValue)"
     />
-</v-radio-group>
+  </v-radio-group>
 </template>
 
 <script>
 export default {
-  props: ['value'],
-  data () {
+  props: {
+    modelValue: Boolean,
+  },
+  emits: ['update:modelValue'],
+  data() {
     return {
       booleanValues: [
         { id: 1, label: this.$t('_global.yes'), value: true },
-        { id: 2, label: this.$t('_global.no'), value: false }
+        { id: 2, label: this.$t('_global.no'), value: false },
       ],
-      radioKey: 0
+      radioKey: 0,
     }
   },
+  computed: {
+    value: {
+      get() {
+        return this.modelValue
+      },
+      set(value) {
+        this.$emit('update:modelValue', value)
+      },
+    },
+  },
   methods: {
-    clearCurrentRadioValue (value) {
+    clearCurrentRadioValue(value) {
       if (this.value !== null && value.value === this.value) {
-        this.$emit('input', null)
+        this.$emit('update:modelValue', null)
         this.radioKey += 1
       }
     },
-    update (value) {
-      this.$emit('input', value)
-    }
-  }
+  },
 }
 </script>

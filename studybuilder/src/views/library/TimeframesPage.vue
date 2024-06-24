@@ -1,26 +1,26 @@
 <template>
-<div class="px-4">
-  <div class="page-title d-flex align-center">
-    {{ $t('TimeframesView.title') }}
-    <help-button :help-text="$t('_help.TimeframesTable.general')" />
+  <div class="px-4">
+    <div class="page-title d-flex align-center">
+      {{ $t('TimeframesView.title') }}
+      <HelpButton :help-text="$t('_help.TimeframesTable.general')" />
+    </div>
+    <TimeframeTable />
   </div>
-  <timeframe-table />
-</div>
 </template>
 
 <script>
-import TimeframeTable from '@/components/library/TimeframeTable'
-import HelpButton from '@/components/tools/HelpButton'
+import TimeframeTable from '@/components/library/TimeframeTable.vue'
+import HelpButton from '@/components/tools/HelpButton.vue'
 
 export default {
   components: {
     TimeframeTable,
-    HelpButton
+    HelpButton,
   },
-  data () {
+  data() {
     return {
-      tab: null
+      tab: null,
     }
-  }
+  },
 }
 </script>

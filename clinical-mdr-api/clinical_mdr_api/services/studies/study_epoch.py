@@ -1,6 +1,5 @@
 import datetime
 
-from aenum import extend_enum
 from neomodel import db
 
 from clinical_mdr_api import config as settings
@@ -35,6 +34,10 @@ from clinical_mdr_api.domains.study_selections.study_visit import (
     StudyVisitEpochAllocation,
     StudyVisitTimeReference,
     StudyVisitType,
+    VisitContactModeNamedTuple,
+    VisitEpochAllocationNamedTuple,
+    VisitTimeReferenceNamedTuple,
+    VisitTypeNamedTuple,
 )
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryVO
 from clinical_mdr_api.models.study_selections.study_epoch import (
@@ -48,6 +51,7 @@ from clinical_mdr_api.models.utils import (
     GenericFilteringReturn,
     get_latest_on_datetime_str,
 )
+from clinical_mdr_api.oauth.user import user
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._meta_repository import MetaRepository
 from clinical_mdr_api.services._utils import (
@@ -60,64 +64,138 @@ from clinical_mdr_api.services._utils import (
 
 
 class StudyEpochService:
-    def __init__(self, author="TODO Initials"):
+    def __init__(
+        self,
+        study_uid: str | None = None,
+        study_value_version: str | None = None,
+        terms_at_specific_date: datetime.date | None = None,
+    ):
         self._repos = MetaRepository()
         self.repo = self._repos.study_epoch_repository
         self.visit_repo = self._repos.study_visit_repository
-        self.author = author
+        self.author = user().id()
+        self.terms_at_specific_datetime = None
+        if terms_at_specific_date:
+            self.terms_at_specific_datetime = datetime.datetime(
+                terms_at_specific_date.year,
+                terms_at_specific_date.month,
+                terms_at_specific_date.day,
+                23,
+                59,
+                59,
+                999999,
+            )
+        elif study_uid:
+            self.terms_at_specific_datetime = self._extract_terms_at_date(
+                study_uid=study_uid, study_value_version=study_value_version
+            )
         self._create_ctlist_map()
 
-    def _create_ctlist_map(self):
-        self.study_epoch_types = self.repo.fetch_ctlist(settings.STUDY_EPOCH_TYPE_NAME)
-        self.study_epoch_subtypes = self.repo.fetch_ctlist(
-            settings.STUDY_EPOCH_SUBTYPE_NAME
+    def _extract_terms_at_date(self, study_uid, study_value_version: str = None):
+        study_standard_version = self._repos.study_standard_version_repository.find_standard_version_in_study(
+            study_uid=study_uid,
+            study_value_version=study_value_version,
         )
-        self.study_epoch_epochs = self.repo.fetch_ctlist(
-            settings.STUDY_EPOCH_EPOCH_NAME
+        terms_at_specific_date = None
+        if study_standard_version:
+            terms_at_specific_date = self._repos.ct_package_repository.find_by_uid(
+                study_standard_version[0].ct_package_uid
+            ).effective_date
+        return (
+            datetime.datetime(
+                terms_at_specific_date.year,
+                terms_at_specific_date.month,
+                terms_at_specific_date.day,
+                23,
+                59,
+                59,
+                999999,
+            )
+            if terms_at_specific_date
+            else None
         )
 
-        self.study_visit_types = self.repo.fetch_ctlist(settings.STUDY_VISIT_TYPE_NAME)
-        self.study_visit_timeref = self.repo.fetch_ctlist(
-            settings.STUDY_VISIT_TIMEREF_NAME
+    def _create_ctlist_map(self):
+        self.study_epoch_types = self.repo.fetch_ctlist(
+            settings.STUDY_EPOCH_TYPE_NAME,
+            effective_date=self.terms_at_specific_datetime,
         )
-        self.study_visit_contact_mode = self.repo.fetch_ctlist(
-            settings.STUDY_VISIT_CONTACT_MODE_NAME
-        )
-        self.study_visit_epoch_allocation = self.repo.fetch_ctlist(
-            settings.STUDY_VISIT_EPOCH_ALLOCATION_NAME
-        )
+
         StudyEpochType.clear()
-        for uid, name in self.study_epoch_types.items():
-            if uid not in StudyEpochType:
-                StudyEpochType[uid] = EpochTypeNamedTuple(uid, name)
+        StudyEpochType.update(
+            (uid, EpochTypeNamedTuple(uid, name))
+            for uid, name in self.study_epoch_types.items()
+        )
+
+        self.study_epoch_subtypes = self.repo.fetch_ctlist(
+            settings.STUDY_EPOCH_SUBTYPE_NAME,
+            effective_date=self.terms_at_specific_datetime,
+        )
 
         StudyEpochSubType.clear()
-        for uid, name in self.study_epoch_subtypes.items():
-            if uid not in StudyEpochSubType:
-                StudyEpochSubType[uid] = EpochSubtypeNamedTuple(uid, name)
+        StudyEpochSubType.update(
+            (uid, EpochSubtypeNamedTuple(uid, name))
+            for uid, name in self.study_epoch_subtypes.items()
+        )
+
+        self.study_epoch_epochs = self.repo.fetch_ctlist(
+            settings.STUDY_EPOCH_EPOCH_NAME,
+            effective_date=self.terms_at_specific_datetime,
+        )
 
         StudyEpochEpoch.clear()
-        for uid, name in self.study_epoch_epochs.items():
-            if uid not in StudyEpochEpoch:
-                StudyEpochEpoch[uid] = EpochNamedTuple(uid, name)
+        StudyEpochEpoch.update(
+            (uid, EpochNamedTuple(uid, name))
+            for uid, name in self.study_epoch_epochs.items()
+        )
 
-        for uid, name in self.study_visit_types.items():
-            if uid not in StudyVisitType._member_map_:
-                extend_enum(StudyVisitType, uid, name)
+        self.study_visit_types = self.repo.fetch_ctlist(
+            settings.STUDY_VISIT_TYPE_NAME,
+            effective_date=self.terms_at_specific_datetime,
+        )
 
-        for uid, name in self.study_visit_timeref.items():
-            if uid not in StudyVisitTimeReference._member_map_:
-                extend_enum(StudyVisitTimeReference, uid, name)
+        StudyVisitType.clear()
+        StudyVisitType.update(
+            (uid, VisitTypeNamedTuple(uid, name))
+            for uid, name in self.study_visit_types.items()
+        )
 
-        for uid, name in self.study_visit_contact_mode.items():
-            if uid not in StudyVisitContactMode._member_map_:
-                extend_enum(StudyVisitContactMode, uid, name)
+        self.study_visit_timeref = self.repo.fetch_ctlist(
+            settings.STUDY_VISIT_TIMEREF_NAME,
+            effective_date=self.terms_at_specific_datetime,
+        )
 
-        for uid, name in self.study_visit_epoch_allocation.items():
-            if uid not in StudyVisitEpochAllocation._member_map_:
-                extend_enum(StudyVisitEpochAllocation, uid, name)
+        StudyVisitTimeReference.clear()
+        StudyVisitTimeReference.update(
+            (uid, VisitTimeReferenceNamedTuple(uid, name))
+            for uid, name in self.study_visit_timeref.items()
+        )
 
-        self._allowed_configs = self._get_allowed_configs()
+        self.study_visit_contact_mode = self.repo.fetch_ctlist(
+            settings.STUDY_VISIT_CONTACT_MODE_NAME,
+            effective_date=self.terms_at_specific_datetime,
+        )
+
+        StudyVisitContactMode.clear()
+        StudyVisitContactMode.update(
+            (uid, VisitContactModeNamedTuple(uid, name))
+            for uid, name in self.study_visit_contact_mode.items()
+        )
+
+        self.study_visit_epoch_allocation = self.repo.fetch_ctlist(
+            settings.STUDY_VISIT_EPOCH_ALLOCATION_NAME,
+            effective_date=self.terms_at_specific_datetime,
+        )
+
+        StudyVisitEpochAllocation.clear()
+        StudyVisitEpochAllocation.update(
+            (uid, VisitEpochAllocationNamedTuple(uid, name))
+            for uid, name in self.study_visit_epoch_allocation.items()
+        )
+
+        self._allowed_configs = self._get_allowed_configs(
+            effective_date=self.terms_at_specific_datetime
+        )
 
     def _transform_all_to_response_model(
         self,
@@ -128,16 +206,20 @@ class StudyEpochService:
         return StudyEpoch(
             uid=epoch.uid,
             study_uid=epoch.study_uid,
-            study_version=study_value_version
-            if study_value_version
-            else get_latest_on_datetime_str(),
+            study_version=(
+                study_value_version
+                if study_value_version
+                else get_latest_on_datetime_str()
+            ),
             order=epoch.order,
             description=epoch.description,
             start_rule=epoch.start_rule,
             end_rule=epoch.end_rule,
-            duration=epoch.calculated_duration
-            if epoch.subtype.value != settings.BASIC_EPOCH_NAME
-            else None,
+            duration=(
+                epoch.calculated_duration
+                if epoch.subtype.value != settings.BASIC_EPOCH_NAME
+                else None
+            ),
             duration_unit=epoch.duration_unit,
             epoch=epoch.epoch.name,
             epoch_name=epoch.epoch.value,
@@ -146,18 +228,26 @@ class StudyEpochService:
             epoch_type=epoch.epoch_type.name,
             epoch_type_name=epoch.epoch_type.value,
             status=epoch.status.value,
-            start_day=epoch.get_start_day()
-            if epoch.subtype.value != settings.BASIC_EPOCH_NAME
-            else None,
-            end_day=epoch.get_end_day()
-            if epoch.subtype.value != settings.BASIC_EPOCH_NAME
-            else None,
-            start_week=epoch.get_start_week()
-            if epoch.subtype.value != settings.BASIC_EPOCH_NAME
-            else None,
-            end_week=epoch.get_end_week()
-            if epoch.subtype.value != settings.BASIC_EPOCH_NAME
-            else None,
+            start_day=(
+                epoch.get_start_day()
+                if epoch.subtype.value != settings.BASIC_EPOCH_NAME
+                else None
+            ),
+            end_day=(
+                epoch.get_end_day()
+                if epoch.subtype.value != settings.BASIC_EPOCH_NAME
+                else None
+            ),
+            start_week=(
+                epoch.get_start_week()
+                if epoch.subtype.value != settings.BASIC_EPOCH_NAME
+                else None
+            ),
+            end_week=(
+                epoch.get_end_week()
+                if epoch.subtype.value != settings.BASIC_EPOCH_NAME
+                else None
+            ),
             start_date=epoch.start_date.strftime(settings.DATE_TIME_FORMAT),
             user_initials=epoch.author,
             possible_actions=epoch.possible_actions,
@@ -289,9 +379,7 @@ class StudyEpochService:
             repos.close()
 
     def _validate_creation(self, epoch_input: StudyEpochCreateInput):
-        if epoch_input.epoch_subtype not in [
-            i.name for i in StudyEpochSubType.values()
-        ]:
+        if epoch_input.epoch_subtype not in StudyEpochSubType:
             raise exceptions.ValidationException(
                 "Invalid value for study epoch sub type"
             )
@@ -303,9 +391,10 @@ class StudyEpochService:
                 )
 
     def _validate_update(self, epoch_input: StudyEpochCreateInput):
-        if epoch_input.epoch_subtype is not None and epoch_input.epoch_subtype not in [
-            i.name for i in StudyEpochSubType.values()
-        ]:
+        if (
+            epoch_input.epoch_subtype is not None
+            and epoch_input.epoch_subtype not in StudyEpochSubType
+        ):
             raise exceptions.ValidationException(
                 "Invalid value for study epoch sub type"
             )
@@ -313,7 +402,7 @@ class StudyEpochService:
     def _get_or_create_epoch_in_specific_subtype(
         self,
         epoch_order: int,
-        subtype: StudyEpochSubType,
+        subtype: EpochSubtypeNamedTuple,
         amount_of_epochs_in_subtype: int,
     ):
         """
@@ -433,17 +522,16 @@ class StudyEpochService:
                     relationship_type=TermParentType.PARENT_SUB_TYPE,
                 )
                 # adding newly created sponsor defined epoch term
-                if ct_term_name_ar.uid not in StudyEpochEpoch:
-                    StudyEpochEpoch[ct_term_name_ar.uid] = EpochNamedTuple(
-                        ct_term_name_ar.uid, ct_term_name_ar.name
-                    )
-                epoch = StudyEpochEpoch[ct_term_attributes_ar.uid]
+                epoch = StudyEpochEpoch.setdefault(
+                    ct_term_name_ar.uid,
+                    EpochNamedTuple(ct_term_name_ar.uid, ct_term_name_ar.name),
+                )
         return epoch
 
     def _get_epoch_object(
         self,
         epochs_in_subtype: list[StudyEpochVO],
-        subtype: StudyEpochSubType,
+        subtype: EpochSubtypeNamedTuple,
         after_create: bool = False,
     ):
         # amount of epochs that exists in the specific epoch sub type
@@ -508,9 +596,9 @@ class StudyEpochService:
         study_epoch_to_edit: StudyEpochVO,
         study_epoch_edit_input: StudyEpochEditInput,
     ):
-        epoch: StudyEpochEpoch | None = None
-        subtype: StudyEpochSubType | None = None
-        epoch_type: StudyEpochType | None = None
+        epoch: EpochNamedTuple | None = None
+        subtype: EpochSubtypeNamedTuple | None = None
+        epoch_type: EpochTypeNamedTuple | None = None
 
         # if the epoch subtype wasn't changed in the PATCH payload then we don't have to derive all epoch objects
         # and we can take the epoch, epoch subtype and epoch type from the value object that is being patched
@@ -835,9 +923,9 @@ class StudyEpochService:
             epochs_to_synchronize=epochs_in_subtype, all_epochs=all_epochs_in_study
         )
 
-    def _get_allowed_configs(self):
+    def _get_allowed_configs(self, effective_date: datetime.datetime | None = None):
         resp = []
-        for item in self.repo.get_allowed_configs():
+        for item in self.repo.get_allowed_configs(effective_date=effective_date):
             resp.append(
                 StudyEpochTypes(
                     subtype=item[0],

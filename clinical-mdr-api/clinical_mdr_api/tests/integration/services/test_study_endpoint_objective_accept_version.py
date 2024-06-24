@@ -82,6 +82,7 @@ class TestStudyEndpointUpversion(unittest.TestCase):
     default_template_name_plain = f"Test {TPR_LABEL}"
     changed_template_name = f"Changed Test [{TPR_LABEL}]"
     changed_template_name_plain = f"Changed Test {TPR_LABEL}"
+    lib: Library
 
     def setUp(self):
         inject_and_clear_db("studyendpointacceptversion")
@@ -95,8 +96,8 @@ class TestStudyEndpointUpversion(unittest.TestCase):
         EndpointRoot.generate_node_uids_if_not_present()
         EndpointTemplateRoot.generate_node_uids_if_not_present()
 
-        lib = Library(name="Library", is_editable=True)
-        lib.save()
+        self.lib = Library(name="LibraryName", is_editable=True)
+        self.lib.save()
         self.tpr = TemplateParameter(name=self.TPR_LABEL)
         self.tpr.save()
         self.ttr = TimeframeTemplateRepository()
@@ -109,7 +110,7 @@ class TestStudyEndpointUpversion(unittest.TestCase):
         self.timeframe_template_service = TimeframeTemplateService()
         self.endpoint_template_service = EndpointTemplateService()
 
-        self.library = LibraryVO(name="Library", is_editable=True)
+        self.library = LibraryVO(name="LibraryName", is_editable=True)
         self.template_vo = TemplateVO(
             name=self.default_template_name,
             name_plain=self.default_template_name,
@@ -205,7 +206,7 @@ class TestStudyEndpointUpversion(unittest.TestCase):
         self.create_objectives(count=10, approved=True)
         self.create_endpoints(count=10, approved=True)
         self.create_timeframes(count=10, approved=True)
-        study_service = StudyObjectiveSelectionService(author="TEST_USER")
+        study_service = StudyObjectiveSelectionService()
         study_selection_objective_input = StudySelectionObjectiveInput(
             objective_uid="Objective_000008"
         )
@@ -244,6 +245,7 @@ class TestStudyEndpointUpversion(unittest.TestCase):
             )
             template_parameter_term_value.save()
             template_parameter_term_root.has_parameter_term.connect(self.tpr)
+            template_parameter_term_root.has_library.connect(self.lib)
             template_parameter_term_root.latest_final.connect(
                 template_parameter_term_value
             )
@@ -271,7 +273,7 @@ class TestStudyEndpointUpversion(unittest.TestCase):
             )
             template = ObjectiveCreateInput(
                 objective_template_uid=self.ot_ar.uid,
-                library_name="Library",
+                library_name="LibraryName",
                 parameter_terms=[template_parameter],
             )
 
@@ -299,7 +301,7 @@ class TestStudyEndpointUpversion(unittest.TestCase):
             )
             template = TimeframeCreateInput(
                 timeframe_template_uid=self.tt_ar.uid,
-                library_name="Library",
+                library_name="LibraryName",
                 parameter_terms=[template_parameter],
             )
 
@@ -326,7 +328,7 @@ class TestStudyEndpointUpversion(unittest.TestCase):
             )
             template = EndpointCreateInput(
                 endpoint_template_uid=self.et_ar.uid,
-                library_name="Library",
+                library_name="LibraryName",
                 parameter_terms=[template_parameter],
             )
             item = self.endpoint_service.create(template)
@@ -345,7 +347,7 @@ class TestStudyEndpointUpversion(unittest.TestCase):
             "study_objective_uid": self.selection.study_objective_uid,
             "timeframe_uid": "Timeframe_000005",
         }
-        endpoint_service = StudyEndpointSelectionService(author="TEST_USER")
+        endpoint_service = StudyEndpointSelectionService()
         endpoint_selection_input: StudySelectionEndpointInput = (
             StudySelectionEndpointInput(**endpoint_data)
         )
@@ -391,7 +393,7 @@ class TestStudyEndpointUpversion(unittest.TestCase):
 
     def test__objective__accept_version__update(self):
         # given
-        study_service = StudyObjectiveSelectionService(author="TEST_USER")
+        study_service = StudyObjectiveSelectionService()
         study_selection_objective_input = StudySelectionObjectiveInput(
             objective_uid="Objective_000010"
         )

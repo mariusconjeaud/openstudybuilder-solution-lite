@@ -108,6 +108,8 @@ jobs:
         docker compose pull api
         docker compose run --rm api pipenv run build-sbom > sbom.md
 
+        tail -n +2 sbom-additional.md >> sbom.md
+
         if [[ "$(Build.SourceBranchName)" != "main" && "$(Build.Reason)" == "PullRequest" && `git diff --exit-code sbom.md` ]]; then
           git config --global user.email pipeline@studybuilder.com
           git config --global user.name "Pipeline $(Build.BuildNumber)"

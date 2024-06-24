@@ -1,43 +1,19 @@
 module.exports = {
   root: true,
   env: {
-    node: true
+    node: true,
   },
-  extends: [
-    'plugin:vue/essential',
-    '@vue/standard'
-  ],
-  parserOptions: {
-    parser: '@babel/eslint-parser'
-  },
+  extends: ['plugin:vue/vue3-recommended', 'eslint:recommended', 'prettier'],
   rules: {
-    'no-console': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
-    'no-debugger': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
-    // Rules disabled for now
-    'vue/valid-v-slot': ['error', {
-      allowModifiers: true
-    }],
-    // We should take care of this one ASAP...
-    'vue/no-mutating-props': 'off'
+    'vue/no-v-html': 'off',
+    'vue/component-name-in-template-casing': [
+      'error',
+      'PascalCase',
+      {
+        registeredComponentsOnly: true,
+        ignores: [],
+      },
+    ],
+    'require-atomic-updates': 'off',
   },
-  overrides: [
-    {
-      files: [
-        '**/__tests__/*.{j,t}s?(x)',
-        '**/tests/unit/**/*.spec.{j,t}s?(x)'
-      ],
-      env: {
-        mocha: true
-      }
-    },
-    {
-      files: [
-        '**/__tests__/*.{j,t}s?(x)',
-        '**/tests/unit/**/*.spec.{j,t}s?(x)'
-      ],
-      env: {
-        jest: true
-      }
-    }
-  ]
 }

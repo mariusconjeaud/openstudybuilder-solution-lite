@@ -40,10 +40,10 @@ class StudyActivityInstructionTestCase(unittest.TestCase):
         self.template = service.create(template_input)
         service.approve(self.template.dict()["uid"])
         self._create_study_activities()
-        self.service = StudyActivityInstructionService("AZNG")
+        self.service = StudyActivityInstructionService()
 
     def _create_study_activities(self):
-        service = StudyActivitySelectionService("AZNG")
+        service = StudyActivitySelectionService()
         service.handle_batch_operations(
             "study_root",
             [
@@ -127,7 +127,7 @@ class StudyActivityInstructionTestCase(unittest.TestCase):
 
     def test_delete(self):
         self._create_study_activity_instruction()
-        service = StudyActivitySelectionService("AZNG")
+        service = StudyActivitySelectionService()
         service.patch_selection(
             "study_root",
             "StudyActivity_000001",

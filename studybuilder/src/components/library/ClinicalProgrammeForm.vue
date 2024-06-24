@@ -1,101 +1,102 @@
 <template>
-<simple-form-dialog
-  ref="form"
-  :title="$t('ClinicalProgrammeForm.title')"
-  :help-text="$t('_help.ClinicalProgrammeForm.general')"
-  :help-items="helpItems"
-  @close="close"
-  @submit="submit"
-  :open="open"
+  <SimpleFormDialog
+    ref="form"
+    :title="$t('ClinicalProgrammeForm.title')"
+    :help-text="$t('_help.ClinicalProgrammeForm.general')"
+    :help-items="helpItems"
+    :open="open"
+    @close="close"
+    @submit="submit"
   >
-  <template v-slot:body>
-    <validation-observer ref="observer">
-      <v-row>
-        <v-col cols="12">
-          <validation-provider
-            v-slot="{ errors }"
-            name="Name"
-            rules="required"
-            >
+    <template #body>
+      <v-form ref="observer">
+        <v-row>
+          <v-col cols="12">
             <v-text-field
               id="name"
-              :label="$t('ClinicalProgrammeForm.name')"
               v-model="form.name"
-              :error-messages="errors"
-              dense
+              :label="$t('ClinicalProgrammeForm.name')"
+              density="compact"
               clearable
               data-cy="clinical-programme-name"
-              />
-          </validation-provider>
-        </v-col>
-      </v-row>
-    </validation-observer>
-  </template>
-</simple-form-dialog>
+              :rules="[formRules.required]"
+            />
+          </v-col>
+        </v-row>
+      </v-form>
+    </template>
+  </SimpleFormDialog>
 </template>
 
 <script>
-// import { mapGetters } from 'vuex'
-import { bus } from '@/main'
-import SimpleFormDialog from '@/components/tools/SimpleFormDialog'
+import SimpleFormDialog from '@/components/tools/SimpleFormDialog.vue'
 import programmes from '@/api/clinicalProgrammes'
 
 export default {
   components: {
-    SimpleFormDialog
+    SimpleFormDialog,
   },
+  inject: ['eventBusEmit', 'formRules'],
   props: {
-    editedStudy: Object,
-    open: Boolean
+    editedStudy: {
+      type: Object,
+      default: null,
+    },
+    open: Boolean,
   },
-  data () {
+  emits: ['close', 'created'],
+  data() {
     return {
       form: {},
-      helpItems: [
-        'ClinicalProgrammeForm.name'
-      ]
+      helpItems: ['ClinicalProgrammeForm.name'],
     }
   },
+  watch: {},
+  mounted() {
+    this.initForm()
+  },
   methods: {
-    async close () {
+    async close() {
       if (this.form.name) {
         const options = {
           type: 'warning',
           cancelLabel: this.$t('_global.cancel'),
-          agreeLabel: this.$t('_global.continue')
+          agreeLabel: this.$t('_global.continue'),
         }
-        if (await this.$refs.form.confirm(this.$t('_global.cancel_changes'), options)) {
+        if (
+          await this.$refs.form.confirm(
+            this.$t('_global.cancel_changes'),
+            options
+          )
+        ) {
           this.$emit('close')
         }
       } else {
         this.$emit('close')
       }
     },
-    initForm (value) {
+    initForm() {
       this.form = {
-        name: ''
+        name: '',
       }
     },
-    async addProgramme () {
+    async addProgramme() {
       const data = JSON.parse(JSON.stringify(this.form))
       const resp = await programmes.create(data)
-      bus.$emit('notification', { msg: this.$t('ClinicalProgrammes.add_success') })
+      this.eventBusEmit('notification', {
+        msg: this.$t('ClinicalProgrammes.add_success'),
+      })
       this.$emit('created', resp.data)
     },
 
-    async submit () {
+    async submit() {
       try {
         await this.addProgramme()
         this.$emit('close')
       } finally {
         this.$refs.form.working = false
       }
-    }
+    },
   },
-  mounted () {
-    this.initForm()
-  },
-  watch: {
-  }
 }
 </script>

@@ -22,6 +22,7 @@ from clinical_mdr_api.domain_repositories.models._utils import (
 )
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
     ControlledTerminology,
+    CTTermNameRoot,
     CTTermRoot,
 )
 from clinical_mdr_api.domain_repositories.models.generic import (
@@ -45,9 +46,7 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
     root_class = type
     value_class = type
     relationship_from_root = type
-    # cache_store_item_by_uid: TTLCache = TTLCache(
-    #    maxsize=config.CACHE_MAX_SIZE, ttl=config.CACHE_TTL
-    # )
+
     generic_alias_clause = """
         DISTINCT term_root, term_ver_root, term_ver_value, codelist_root, rel_term
         ORDER BY rel_term.order, term_ver_value.name
@@ -242,10 +241,13 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
             result_array, attributes_names
         )
 
-        count_result, _ = db.cypher_query(
-            query=query.count_query, params=query.parameters
-        )
-        total = count_result[0][0] if len(count_result) > 0 and total_count else 0
+        total = 0
+        if total_count:
+            count_result, _ = db.cypher_query(
+                query=query.count_query, params=query.parameters
+            )
+            if len(count_result) > 0:
+                total = count_result[0][0]
 
         return GenericFilteringReturn.create(items=extracted_items, total=total)
 
@@ -357,6 +359,7 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
         status: LibraryItemStatus | None = None,
         at_specific_date: datetime | None = None,
         for_update: bool = False,
+        codelist_name: str | None = None,
     ):
         """
         Returns a hash key that will be used for mapping objects stored in cache,
@@ -373,10 +376,13 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
             status,
             at_specific_date,
             for_update,
+            codelist_name,
         )
 
     @cached(
-        cache=LibraryItemRepositoryImplBase.cache_store_item_by_uid, key=hashkey_ct_term
+        cache=LibraryItemRepositoryImplBase.cache_store_item_by_uid,
+        key=hashkey_ct_term,
+        lock=LibraryItemRepositoryImplBase.lock_store_item_by_uid,
     )
     def find_by_uid(
         self,
@@ -385,21 +391,36 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
         status: LibraryItemStatus | None = None,
         at_specific_date: datetime | None = None,
         for_update: bool = False,
+        codelist_name: str | None = None,
     ) -> _AggregateRootType | None:
-        ct_term_root: CTTermRoot = CTTermRoot.nodes.get_or_none(uid=term_uid)
+        if not codelist_name:
+            ct_term_root: CTTermRoot = CTTermRoot.nodes.get_or_none(uid=term_uid)
+        else:
+            ct_term_root: CTTermRoot = CTTermRoot.nodes.filter(
+                has_term__has_name_root__has_version__name=codelist_name,
+            ).get_or_none(uid=term_uid)[0]
         if ct_term_root is None:
             return None
         # pylint: disable=unnecessary-dunder-call
         ct_term_version_root_node = ct_term_root.__getattribute__(
             self.relationship_from_root
         ).single()
-        term_ar = self.find_by_uid_2(
-            str(ct_term_version_root_node.element_id),
-            version=version,
-            status=status,
-            at_specific_date=at_specific_date,
-            for_update=for_update,
-        )
+        if issubclass(ct_term_version_root_node.__class__, CTTermNameRoot):
+            term_ar = self.find_by_uid_optimized(
+                ct_term_version_root_node.element_id,
+                version=version,
+                status=status,
+                for_update=for_update,
+                at_specific_date=at_specific_date,
+            )
+        else:
+            term_ar = self.find_by_uid_2(
+                str(ct_term_version_root_node.element_id),
+                version=version,
+                status=status,
+                at_specific_date=at_specific_date,
+                for_update=for_update,
+            )
 
         return term_ar
 
@@ -557,8 +578,10 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
             )
             match_clause += filter_statements
 
-        if not package:
+        if not package and (codelist_uid or codelist_name):
             match_clause += " MATCH (codelist_root:CTCodelistRoot)-[rel_term:HAS_TERM]->(term_root) "
+        elif not package:
+            match_clause += " OPTIONAL MATCH (codelist_root:CTCodelistRoot)-[rel_term:HAS_TERM]->(term_root) "
         else:
             # We are listing terms for a specific package, we need to include HAD_TERM relationships also.
             # If not, we would only get terms that are also in the latest version of the package,

@@ -54,10 +54,6 @@
               {
                 "codelist_uid": "ct_codelist_root_endpoint",
                 "order": 1
-              },
-              {
-                "codelist_uid": "editable_cr",
-                "order": 1
               }
             ],
             "sponsor_preferred_name": "term_value_name1",
@@ -145,10 +141,6 @@
             "codelists": [
               {
                 "codelist_uid": "ct_codelist_root_endpoint",
-                "order": 1
-              },
-              {
-                "codelist_uid": "editable_cr",
                 "order": 1
               }
             ],
@@ -238,10 +230,6 @@
               {
                 "codelist_uid": "ct_codelist_root_endpoint",
                 "order": 1
-              },
-              {
-                "codelist_uid": "editable_cr",
-                "order": 1
               }
             ],
             "sponsor_preferred_name": "term_value_name1",
@@ -330,10 +318,6 @@
               {
                 "codelist_uid": "ct_codelist_root_endpoint",
                 "order": 1
-              },
-              {
-                "codelist_uid": "editable_cr",
-                "order": 1
               }
             ],
             "sponsor_preferred_name": "term_value_name1",
@@ -404,7 +388,7 @@
         "study_element_name": "Element_Name_1",
         "transition_rule": null,
         "start_date": null,
-        "user_initials": "TEST_USER",
+        "user_initials": "unknown-user",
         "order": 1
       }
     }
@@ -443,6 +427,7 @@
             "study_number": "0",
             "subpart_id": null,
             "study_acronym": null,
+            "study_subpart_acronym": null,
             "project_number": "123",
             "description": null,
             "project_name": "Project ABC",
@@ -561,7 +546,7 @@
         "study_element_name": "Element_Name_1",
         "transition_rule": null,
         "start_date": "2022-05-24T04:50:42.426267",
-        "user_initials": "TEST_USER",
+        "user_initials": "unknown-user",
         "order": 2
       }
     }
@@ -615,7 +600,7 @@
             "study_element_name": "Element_Name_1",
             "transition_rule": null,
             "start_date": "2022-07-12T23:00:11.312421",
-            "user_initials": "TEST_USER",
+            "user_initials": "unknown-user",
             "end_date": null,
             "order": 2
           }
@@ -636,7 +621,7 @@
             "study_element_name": "Element_Name_1",
             "transition_rule": null,
             "start_date": "2022-07-13T00:51:20.758056",
-            "user_initials": "TEST_USER",
+            "user_initials": "unknown-user",
             "end_date": null,
             "order": 1
           }
@@ -677,7 +662,7 @@
           "study_element_name": "Element_Name_1",
           "transition_rule": null,
           "start_date": "2022-07-13T00:51:20.758056",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "order": 1
         }
       ]
@@ -717,7 +702,7 @@
           "study_epoch_uid": "StudyEpoch_000001",
           "study_uid": "study_root",
           "transition_rule": "Transition_Rule_2",
-          "user_initials": "TEST_USER"
+          "user_initials": "unknown-user"
         }
       ]
     }
@@ -755,7 +740,7 @@
           "study_element_name": "Element_Name_1",
           "transition_rule": null,
           "start_date": "2022-07-13T00:51:20.758056",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "order": 1
         },
         {
@@ -772,7 +757,7 @@
           "study_element_name": "Element_Name_1",
           "transition_rule": null,
           "start_date": "2022-07-12T23:00:11.312421",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "order": 2
         }
       ]

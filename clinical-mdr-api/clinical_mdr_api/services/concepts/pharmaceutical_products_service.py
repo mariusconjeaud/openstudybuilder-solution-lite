@@ -49,17 +49,17 @@ class PharmaceuticalProductService(ConceptGenericService[PharmaceuticalProductAR
         return PharmaceuticalProductAR.from_input_values(
             author=self.user_initials,
             concept_vo=PharmaceuticalProductVO.from_repository_values(
-                prodex_id=concept_input.prodex_id,
+                external_id=concept_input.external_id,
                 dosage_form_uids=concept_input.dosage_form_uids,
                 route_of_administration_uids=concept_input.route_of_administration_uids,
                 formulations=[
                     FormulationVO.from_repository_values(
-                        prodex_id=formulation_input.prodex_id,
+                        external_id=formulation_input.external_id,
                         name=formulation_input.name,
                         ingredients=[
                             IngredientVO.from_repository_values(
                                 active_substance_uid=ingredient_input.active_substance_uid,
-                                prodex_id=ingredient_input.prodex_id,
+                                external_id=ingredient_input.external_id,
                                 strength_uid=ingredient_input.strength_uid,
                                 half_life_uid=ingredient_input.half_life_uid,
                                 lag_time_uids=ingredient_input.lag_time_uids,
@@ -88,19 +88,19 @@ class PharmaceuticalProductService(ConceptGenericService[PharmaceuticalProductAR
             author=self.user_initials,
             change_description=concept_edit_input.change_description,
             concept_vo=PharmaceuticalProductVO.from_repository_values(
-                prodex_id=concept_edit_input.prodex_id,
+                external_id=concept_edit_input.external_id,
                 dosage_form_uids=concept_edit_input.dosage_form_uids,
                 route_of_administration_uids=concept_edit_input.route_of_administration_uids,
                 formulations=[
                     FormulationVO.from_repository_values(
                         name=getattr(x, "name", None),
-                        prodex_id=getattr(x, "prodex_id", None),
+                        external_id=getattr(x, "external_id", None),
                         ingredients=[
                             IngredientVO.from_repository_values(
                                 active_substance_uid=getattr(
                                     y, "active_substance_uid", None
                                 ),
-                                prodex_id=getattr(y, "prodex_id", None),
+                                external_id=getattr(y, "external_id", None),
                                 strength_uid=getattr(y, "strength_uid", None),
                                 half_life_uid=getattr(y, "half_life_uid", None),
                                 lag_time_uids=getattr(y, "lag_time_uids", []),

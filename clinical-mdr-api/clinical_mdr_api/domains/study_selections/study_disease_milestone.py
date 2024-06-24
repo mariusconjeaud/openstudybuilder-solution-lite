@@ -1,17 +1,20 @@
 import datetime
 from collections import namedtuple
 from dataclasses import dataclass
-from enum import Enum
 
 from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import (
     StudyStatus,
 )
+from clinical_mdr_api.domains.study_selections.study_visit import (
+    VisitTimeReferenceNamedTuple,
+)
 
 TypeNameDefinition = namedtuple("TypeNameDefinition", ["named", "definition"])
 
-
-class StudyDiseaseMilestoneType(TypeNameDefinition, Enum):
-    pass
+DiseaseMilestoneTypeNamedTuple = namedtuple(
+    "DiseaseMilestoneTypeNamedTuple", ["name", "value"]
+)
+StudyDiseaseMilestoneType: dict[str, DiseaseMilestoneTypeNamedTuple] = {}
 
 
 @dataclass
@@ -29,7 +32,7 @@ class StudyDiseaseMilestoneVO:
     uid: str | None = None
 
     @property
-    def dm_type(self):
+    def dm_type(self) -> VisitTimeReferenceNamedTuple:
         return StudyDiseaseMilestoneType[self.disease_milestone_type]
 
     def edit_core_properties(

@@ -24,10 +24,15 @@ from clinical_mdr_api.models.study_selections.study_selection import (
 )
 from clinical_mdr_api.models.syntax_instances.objective import ObjectiveCreateInput
 from clinical_mdr_api.models.utils import GenericFilteringReturn
+from clinical_mdr_api.oauth.user import user
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._meta_repository import MetaRepository
 from clinical_mdr_api.services._utils import (
+    build_simple_filters,
+    extract_filtering_values,
     fill_missing_values_in_base_model_from_reference_base_model,
+    generic_item_filtering,
+    generic_pagination,
     service_level_generic_filtering,
     service_level_generic_header_filtering,
 )
@@ -38,9 +43,15 @@ from clinical_mdr_api.services.syntax_instances.objectives import ObjectiveServi
 class StudyObjectiveSelectionService(StudySelectionMixin):
     _repos: MetaRepository
 
-    def __init__(self, author):
+    _vo_to_ar_filter_map = {
+        "order": "objective_level_order",
+        "start_date": "start_date",
+        "user_initials": "user_initials",
+    }
+
+    def __init__(self):
         self._repos = MetaRepository()
-        self.author = author
+        self.author = user().id()
 
     #     # def _get_endpoint_count_for_objective(self, study_uid: str, study_objective_uid: str) -> int:
     #     study_endpoints = self._repos.study_endpoint_repository.find_by_study(study_uid)
@@ -83,6 +94,10 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
         study_value_version: str | None = None,
     ) -> list[models.StudySelectionObjective]:
         result = []
+        terms_at_specific_datetime = self._extract_study_standards_effective_date(
+            study_uid=study_selection.study_uid,
+            study_value_version=study_value_version,
+        )
         for order, selection in enumerate(
             study_selection.study_objectives_selection, start=1
         ):
@@ -95,12 +110,11 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
                         get_objective_by_uid_callback=self._transform_latest_objective_model,
                         get_objective_by_uid_version_callback=self._transform_objective_model,
                         get_ct_term_by_uid=self._find_by_uid_or_raise_not_found,
-                        get_study_selection_endpoints_ar_by_study_uid_callback=(
-                            self._repos.study_endpoint_repository.find_by_study
-                        ),
+                        get_study_endpoint_count_callback=self._repos.study_endpoint_repository.quantity_of_study_endpoints_in_study_objective_uid,
                         no_brackets=no_brackets,
                         find_project_by_study_uid=self._repos.project_repository.find_by_study_uid,
                         study_value_version=study_value_version,
+                        terms_at_specific_datetime=terms_at_specific_datetime,
                     )
                 )
             else:
@@ -138,17 +152,18 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
             new_selection, objective_exist_callback=lambda x: True
         )
         self._repos.study_objective_repository.save(selection_ar, self.author)
-
+        terms_at_specific_datetime = self._extract_study_standards_effective_date(
+            study_uid=study_uid
+        )
         return models.StudySelectionObjective.from_study_selection_objectives_ar_and_order(
             study_selection_objectives_ar=selection_ar,
             order=order,
             get_objective_by_uid_callback=self._transform_latest_objective_model,
             get_objective_by_uid_version_callback=self._transform_objective_model,
             get_ct_term_by_uid=self._find_by_uid_or_raise_not_found,
-            get_study_selection_endpoints_ar_by_study_uid_callback=(
-                self._repos.study_endpoint_repository.find_by_study
-            ),
+            get_study_endpoint_count_callback=self._repos.study_endpoint_repository.quantity_of_study_endpoints_in_study_objective_uid,
             find_project_by_study_uid=self._repos.project_repository.find_by_study_uid,
+            terms_at_specific_datetime=terms_at_specific_datetime,
         )
 
     @db.transaction
@@ -171,7 +186,9 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
             new_selection, objective_exist_callback=lambda x: True
         )
         self._repos.study_objective_repository.save(selection_ar, self.author)
-
+        terms_at_specific_datetime = self._extract_study_standards_effective_date(
+            study_uid=study_uid
+        )
         return models.StudySelectionObjective.from_study_selection_objectives_ar_and_order(
             study_selection_objectives_ar=selection_ar,
             order=order,
@@ -179,10 +196,9 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
             get_objective_by_uid_callback=self._transform_latest_objective_model,
             get_objective_by_uid_version_callback=self._transform_objective_model,
             get_ct_term_by_uid=self._find_by_uid_or_raise_not_found,
-            get_study_selection_endpoints_ar_by_study_uid_callback=(
-                self._repos.study_endpoint_repository.find_by_study
-            ),
+            get_study_endpoint_count_callback=self._repos.study_endpoint_repository.quantity_of_study_endpoints_in_study_objective_uid,
             find_project_by_study_uid=self._repos.project_repository.find_by_study_uid,
+            terms_at_specific_datetime=terms_at_specific_datetime,
         )
 
     @db.transaction
@@ -260,7 +276,9 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
             new_selection, order = selection_aggregate.get_specific_objective_selection(
                 new_selection.study_selection_uid
             )
-
+            terms_at_specific_datetime = self._extract_study_standards_effective_date(
+                study_uid=study_uid
+            )
             # add the objective and return
             return models.StudySelectionObjective.from_study_selection_objectives_ar_and_order(
                 study_selection_objectives_ar=selection_aggregate,
@@ -268,10 +286,9 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
                 get_objective_by_uid_callback=self._transform_latest_objective_model,
                 get_objective_by_uid_version_callback=self._transform_objective_model,
                 get_ct_term_by_uid=self._find_by_uid_or_raise_not_found,
-                get_study_selection_endpoints_ar_by_study_uid_callback=(
-                    self._repos.study_endpoint_repository.find_by_study
-                ),
+                get_study_endpoint_count_callback=self._repos.study_endpoint_repository.quantity_of_study_endpoints_in_study_objective_uid,
                 find_project_by_study_uid=self._repos.project_repository.find_by_study_uid,
+                terms_at_specific_datetime=terms_at_specific_datetime,
             )
         finally:
             repos.close()
@@ -357,7 +374,9 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
             ) = selection_aggregate.get_specific_objective_selection(
                 new_selection.study_selection_uid
             )
-
+            terms_at_specific_datetime = self._extract_study_standards_effective_date(
+                study_uid=study_uid
+            )
             # add the objective and return
             return models.StudySelectionObjective.from_study_selection_objectives_ar_and_order(
                 study_selection_objectives_ar=selection_aggregate,
@@ -365,10 +384,9 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
                 get_objective_by_uid_callback=self._transform_latest_objective_model,
                 get_objective_by_uid_version_callback=self._transform_objective_model,
                 get_ct_term_by_uid=self._find_by_uid_or_raise_not_found,
-                get_study_selection_endpoints_ar_by_study_uid_callback=(
-                    self._repos.study_endpoint_repository.find_by_study
-                ),
+                get_study_endpoint_count_callback=self._repos.study_endpoint_repository.quantity_of_study_endpoints_in_study_objective_uid,
                 find_project_by_study_uid=self._repos.project_repository.find_by_study_uid,
+                terms_at_specific_datetime=terms_at_specific_datetime,
             )
         finally:
             repos.close()
@@ -539,7 +557,9 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
                 ) = selection_aggregate.get_specific_objective_selection(
                     new_selection.study_selection_uid
                 )
-
+                terms_at_specific_datetime = (
+                    self._extract_study_standards_effective_date(study_uid=study_uid)
+                )
                 # add the objective and return
                 return models.StudySelectionObjective.from_study_selection_objectives_ar_and_order(
                     study_selection_objectives_ar=selection_aggregate,
@@ -551,10 +571,9 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
                         lambda _: models.Objective.from_objective_ar(objective_ar)
                     ),
                     get_ct_term_by_uid=self._find_by_uid_or_raise_not_found,
-                    get_study_selection_endpoints_ar_by_study_uid_callback=(
-                        self._repos.study_endpoint_repository.find_by_study
-                    ),
+                    get_study_endpoint_count_callback=self._repos.study_endpoint_repository.quantity_of_study_endpoints_in_study_objective_uid,
                     find_project_by_study_uid=self._repos.project_repository.find_by_study_uid,
+                    terms_at_specific_datetime=terms_at_specific_datetime,
                 )
         finally:
             repos.close()
@@ -572,10 +591,18 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
         filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[models.StudySelectionObjective]:
+        # Extract the study uids to use database level filtering for these
+        # instead of service level filtering
+        if filter_operator is None or filter_operator == FilterOperator.AND:
+            study_uids = extract_filtering_values(filter_by, "study_uid")
+        else:
+            study_uids = None
+
         repos = self._repos
         objective_selection_ars = repos.study_objective_repository.find_all(
             project_name=project_name,
             project_number=project_number,
+            study_uids=study_uids,
         )
 
         # In order for filtering to work, we need to unwind the aggregated AR object first
@@ -633,9 +660,17 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
 
             return header_values
 
+        # Extract the study uids to use database level filtering for these
+        # instead of service level filtering
+        if filter_operator is None or filter_operator == FilterOperator.AND:
+            study_uids = extract_filtering_values(filter_by, "study_uid")
+        else:
+            study_uids = None
+
         objective_selection_ars = repos.study_objective_repository.find_all(
             project_name=project_name,
             project_number=project_number,
+            study_uids=study_uids,
         )
 
         # In order for filtering to work, we need to unwind the aggregated AR object first
@@ -679,6 +714,38 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
             )
             assert objective_selection_ar is not None
 
+            simple_filters = build_simple_filters(
+                self._vo_to_ar_filter_map, filter_by, None
+            )
+            if simple_filters:
+                # Filtering only needs data that is already available in the AR
+                items = list(objective_selection_ar.study_objectives_selection)
+                filtered_items = generic_item_filtering(
+                    items=items,
+                    filter_by=simple_filters["filter_by"],
+                    filter_operator=filter_operator,
+                    sort_by=simple_filters["sort_by"],
+                )
+
+                # Do count
+                count = len(filtered_items) if total_count else 0
+
+                # Do pagination
+                filtered_items = generic_pagination(
+                    items=filtered_items,
+                    page_number=page_number,
+                    page_size=page_size,
+                )
+                # Put the sorted and filtered items back into the AR and transform them to the response model
+                objective_selection_ar.study_objectives_selection = filtered_items
+                filtered_items = self._transform_all_to_response_model(
+                    objective_selection_ar,
+                    no_brackets=no_brackets,
+                    study_value_version=study_value_version,
+                )
+                return GenericFilteringReturn.create(filtered_items, count)
+
+            # Fall back to full generic filtering
             selections = []
             parsed_selections = self._transform_all_to_response_model(
                 objective_selection_ar,
@@ -766,6 +833,10 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
         ) = self._get_specific_objective_selection_by_uids(
             study_uid, study_selection_uid, study_value_version=study_value_version
         )
+        terms_at_specific_datetime = self._extract_study_standards_effective_date(
+            study_uid=study_uid,
+            study_value_version=study_value_version,
+        )
         if new_selection.is_instance:
             return models.StudySelectionObjective.from_study_selection_objectives_ar_and_order(
                 study_selection_objectives_ar=selection_aggregate,
@@ -774,10 +845,9 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
                 get_objective_by_uid_callback=self._transform_latest_objective_model,
                 get_objective_by_uid_version_callback=self._transform_objective_model,
                 get_ct_term_by_uid=self._find_by_uid_or_raise_not_found,
-                get_study_selection_endpoints_ar_by_study_uid_callback=(
-                    self._repos.study_endpoint_repository.find_by_study
-                ),
+                get_study_endpoint_count_callback=self._repos.study_endpoint_repository.quantity_of_study_endpoints_in_study_objective_uid,
                 find_project_by_study_uid=self._repos.project_repository.find_by_study_uid,
+                terms_at_specific_datetime=terms_at_specific_datetime,
             )
 
         return models.StudySelectionObjective.from_study_selection_objective_template_ar_and_order(
@@ -836,7 +906,9 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
             _, order = selection_aggregate.get_specific_objective_selection(
                 study_selection_uid
             )
-
+            terms_at_specific_datetime = self._extract_study_standards_effective_date(
+                study_uid=study_uid
+            )
             # add the objective and return
             return models.StudySelectionObjective.from_study_selection_objectives_ar_and_order(
                 study_selection_objectives_ar=selection_aggregate,
@@ -844,10 +916,9 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
                 get_objective_by_uid_callback=self._transform_latest_objective_model,
                 get_objective_by_uid_version_callback=self._transform_objective_model,
                 get_ct_term_by_uid=self._find_by_uid_or_raise_not_found,
-                get_study_selection_endpoints_ar_by_study_uid_callback=(
-                    self._repos.study_endpoint_repository.find_by_study
-                ),
+                get_study_endpoint_count_callback=self._repos.study_endpoint_repository.quantity_of_study_endpoints_in_study_objective_uid,
                 find_project_by_study_uid=self._repos.project_repository.find_by_study_uid,
+                terms_at_specific_datetime=terms_at_specific_datetime,
             )
         finally:
             repos.close()
@@ -1002,7 +1073,9 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
             _, order = selection_aggregate.get_specific_objective_selection(
                 study_selection_uid
             )
-
+            terms_at_specific_datetime = self._extract_study_standards_effective_date(
+                study_uid=study_uid
+            )
             # add the objective and return
             return models.StudySelectionObjective.from_study_selection_objectives_ar_and_order(
                 study_selection_objectives_ar=selection_aggregate,
@@ -1010,10 +1083,9 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
                 get_objective_by_uid_callback=self._transform_latest_objective_model,
                 get_objective_by_uid_version_callback=self._transform_objective_model,
                 get_ct_term_by_uid=self._find_by_uid_or_raise_not_found,
-                get_study_selection_endpoints_ar_by_study_uid_callback=(
-                    self._repos.study_endpoint_repository.find_by_study
-                ),
+                get_study_endpoint_count_callback=self._repos.study_endpoint_repository.quantity_of_study_endpoints_in_study_objective_uid,
                 find_project_by_study_uid=self._repos.project_repository.find_by_study_uid,
+                terms_at_specific_datetime=terms_at_specific_datetime,
             )
         finally:
             repos.close()

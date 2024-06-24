@@ -1,105 +1,141 @@
 <template>
-<simple-form-dialog
-  ref="form"
-  :title="title"
-  :help-items="helpItems"
-  @close="close"
-  @submit="submit"
-  :open="open"
-  max-width="1200px"
+  <SimpleFormDialog
+    ref="form"
+    :title="title"
+    :help-items="helpItems"
+    :open="open"
+    max-width="1200px"
+    :scrollable="false"
+    @close="close"
+    @submit="submit"
   >
-  <template v-slot:body>
-    <v-data-table
-      :headers="headers"
-      :items="items"
-      hide-default-footer
-      class="mb-10"
-      />
+    <template #body>
+      <v-data-table :headers="headers" :items="items" class="mb-10">
+        <template #bottom />
+      </v-data-table>
 
-    <validation-observer ref="observer">
-      <v-row>
-        <v-col cols="12">
-          <validation-provider
-            v-slot="{ errors }"
-            rules="required"
-            >
+      <v-form ref="observer">
+        <v-row>
+          <v-col cols="12">
             <v-textarea
+              v-model="form.change_description"
               :label="$t('Study.release_description')"
               data-cy="release-description"
-              v-model="form.change_description"
-              :error-messages="errors"
+              :rules="[formRules.required]"
               hide-details
               class="mt-10"
-              />
-          </validation-provider>
-        </v-col>
-      </v-row>
-    </validation-observer>
-  </template>
-</simple-form-dialog>
+            />
+          </v-col>
+        </v-row>
+      </v-form>
+    </template>
+  </SimpleFormDialog>
 </template>
 
 <script>
 import api from '@/api/study'
-import { bus } from '@/main'
-import { mapGetters } from 'vuex'
-import SimpleFormDialog from '@/components/tools/SimpleFormDialog'
+import SimpleFormDialog from '@/components/tools/SimpleFormDialog.vue'
+import { useStudiesGeneralStore } from '@/stores/studies-general'
 
 export default {
   components: {
-    SimpleFormDialog
+    SimpleFormDialog,
   },
+  inject: ['eventBusEmit', 'formRules'],
   props: {
-    action: String,
-    helpItems: [],
-    open: Boolean
-  },
-  computed: {
-    ...mapGetters({
-      selectedStudy: 'studiesGeneral/selectedStudy'
-    }),
-    title () {
-      return (this.action === 'release') ? this.$t('StudyStatusForm.release_title') : this.$t('StudyStatusForm.lock_title')
+    action: {
+      type: String,
+      default: '',
     },
-    items () {
-      return [this.selectedStudy]
+    helpItems: {
+      type: Array,
+      default: () => [],
+    },
+    open: Boolean,
+  },
+  emits: ['close', 'statusChanged'],
+  setup() {
+    const studiesGeneralStore = useStudiesGeneralStore()
+
+    return {
+      studiesGeneralStore,
     }
   },
-  data () {
+  data() {
     return {
       form: {},
       headers: [
-        { text: this.$t('Study.status'), value: 'current_metadata.version_metadata.study_status' },
-        { text: this.$t('Study.clinical_programme'), value: 'current_metadata.identification_metadata.clinical_programme_name' },
-        { text: this.$t('Study.project_number'), value: 'current_metadata.identification_metadata.project_number' },
-        { text: this.$t('Study.project_name'), value: 'current_metadata.identification_metadata.project_name' },
-        { text: this.$t('Study.study_number'), value: 'current_metadata.identification_metadata.study_number' },
-        { text: this.$t('Study.acronym'), value: 'current_metadata.identification_metadata.study_acronym' }
-      ]
+        {
+          title: this.$t('Study.status'),
+          key: 'current_metadata.version_metadata.study_status',
+        },
+        {
+          title: this.$t('Study.clinical_programme'),
+          key: 'current_metadata.identification_metadata.clinical_programme_name',
+        },
+        {
+          title: this.$t('Study.project_number'),
+          key: 'current_metadata.identification_metadata.project_number',
+        },
+        {
+          title: this.$t('Study.project_name'),
+          key: 'current_metadata.identification_metadata.project_name',
+        },
+        {
+          title: this.$t('Study.study_number'),
+          key: 'current_metadata.identification_metadata.study_number',
+        },
+        {
+          title: this.$t('Study.acronym'),
+          key: 'current_metadata.identification_metadata.study_acronym',
+        },
+      ],
     }
   },
+  computed: {
+    title() {
+      return this.action === 'release'
+        ? this.$t('StudyStatusForm.release_title')
+        : this.$t('StudyStatusForm.lock_title')
+    },
+    items() {
+      return [this.studiesGeneralStore.selectedStudy]
+    },
+  },
   methods: {
-    close () {
+    close() {
       this.form = {}
       this.$refs.observer.reset()
       this.$emit('close')
     },
-    async submit () {
+    async submit() {
       try {
         if (this.action === 'release') {
-          await api.releaseStudy(this.selectedStudy.uid, this.form)
-          bus.$emit('notification', { msg: this.$t('StudyStatusForm.release_success'), type: 'success' })
+          await api.releaseStudy(
+            this.studiesGeneralStore.selectedStudy.uid,
+            this.form
+          )
+          this.eventBusEmit('notification', {
+            msg: this.$t('StudyStatusForm.release_success'),
+            type: 'success',
+          })
         } else {
-          const resp = await api.lockStudy(this.selectedStudy.uid, this.form)
-          this.$store.commit('studiesGeneral/SELECT_STUDY', { studyObj: resp.data })
-          bus.$emit('notification', { msg: this.$t('StudyStatusForm.lock_success'), type: 'success' })
+          const resp = await api.lockStudy(
+            this.studiesGeneralStore.selectedStudy.uid,
+            this.form
+          )
+          this.studiesGeneralStore.selectStudy(resp.data)
+          this.eventBusEmit('notification', {
+            msg: this.$t('StudyStatusForm.lock_success'),
+            type: 'success',
+          })
         }
         this.$emit('statusChanged')
         this.close()
       } finally {
         this.$refs.form.working = false
       }
-    }
-  }
+    },
+  },
 }
 </script>

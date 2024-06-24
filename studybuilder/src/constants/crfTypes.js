@@ -1,11 +1,12 @@
 const ITEM = 'item'
 const GROUP = 'group'
-const ITEM_GROUP = 'item-group'
+const ITEM_GROUP = 'item_group'
 const FORM = 'form'
 const TEMPLATE = 'template'
 const COMMENT = 'COMMENT'
 const ELEMENT = 'Element'
 const NAMESPACE = 'Namespace'
+const STUDY_EVENT = 'study_event'
 
 export default {
   ITEM,
@@ -15,5 +16,6 @@ export default {
   TEMPLATE,
   COMMENT,
   ELEMENT,
-  NAMESPACE
+  NAMESPACE,
+  STUDY_EVENT,
 }

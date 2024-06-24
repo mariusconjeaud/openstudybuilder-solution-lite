@@ -25,9 +25,10 @@ def inject_and_clear_db(db_name):
 
     full_dsn = f"{config.settings.neo4j_dsn}"
     neoconfig.DATABASE_URL = full_dsn
-    neoconfig.DATABASE_NAME = db_name
     db.set_connection(full_dsn)
-    db.cypher_query("CREATE OR REPLACE DATABASE $db", {"db": db_name})
+
+    if db_name.strip() != "":
+        db.cypher_query("CREATE OR REPLACE DATABASE $db", {"db": db_name})
 
     try_cnt = 1
     db_exists = False
@@ -78,7 +79,6 @@ def drop_db(db_name):
 
     full_dsn = f"{config.settings.neo4j_dsn}"
     neoconfig.DATABASE_URL = full_dsn
-    neoconfig.DATABASE_NAME = db_name
     db.set_connection(full_dsn)
     db.cypher_query("DROP DATABASE $db IF EXISTS", {"db": db_name})
 
@@ -298,7 +298,7 @@ class APITest(TestCase):
 
                     request = self.get_request(req_item)
                     url = self.get_url(req_item)
-                    request_headers = {"X-TEST-USER-ID": "TEST_USER"}
+                    request_headers = {"X-TEST-USER-ID": "unknown-user"}
                     request_headers.update(req_item["headers"])
                     if req_item.get("sleep"):
                         time.sleep(req_item.get("sleep"))

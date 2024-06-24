@@ -1,93 +1,74 @@
 <template>
-<div>
-  <v-tabs v-model="tab">
-    <v-tab v-for="catalogue in allCatalogues"
-           :data-cy="catalogue.name"
-           :key="catalogue.name"
-           :href="`#${catalogue.name}`"
-           >
-      {{ catalogue.name }}
-    </v-tab>
-  </v-tabs>
-  <v-tabs-items v-model="tab">
-    <v-tab-item
-      v-for="catalogue in allCatalogues"
-      :key="catalogue.name"
-      :id="catalogue.name"
+  <div>
+    <v-tabs v-model="tab" bg-color="white">
+      <v-tab
+        v-for="catalogue in allCatalogues"
+        :key="catalogue.name"
+        :data-cy="catalogue.name"
+        :value="catalogue.name"
       >
-      <codelist-table
-        :catalogue="catalogue.name"
-        @openCodelistTerms="openCodelistTerms"
-        column-data-resource="ct/codelists"
-        :terms="terms"
-        :loading="loading"
+        {{ catalogue.name }}
+      </v-tab>
+    </v-tabs>
+    <v-window v-model="tab">
+      <v-window-item
+        v-for="catalogue in allCatalogues"
+        :key="catalogue.name"
+        :value="catalogue.name"
+      >
+        <CodelistTable
+          :catalogue="catalogue.name"
+          column-data-resource="ct/codelists"
+          @open-codelist-terms="openCodelistTerms"
         />
-    </v-tab-item>
-  </v-tabs-items>
-</div>
+      </v-window-item>
+    </v-window>
+  </div>
 </template>
 
-<script>
-import { mapGetters } from 'vuex'
-import CodelistTable from './CodelistTable'
-import controlledTerminology from '@/api/controlledTerminology'
+<script setup lang="js">
+import { useCtCataloguesStore } from '@/stores/library-ctcatalogues'
+import { ref, onMounted, watch, watchEffect } from 'vue'
+import CodelistTable from './CodelistTable.vue'
+import { useRouter } from 'vue-router'
 
-export default {
-  components: {
-    CodelistTable
+const props = defineProps({
+  // eslint-disable-next-line vue/prop-name-casing
+  catalogue_name: {
+    type: String,
+    default: null,
   },
-  props: ['catalogue_name'],
-  computed: {
-    ...mapGetters({
-      catalogues: 'ctCatalogues/catalogues'
-    }),
-    allCatalogues () {
-      const array = [{ name: 'All' }]
-      return array.concat(this.catalogues)
-    }
-  },
-  data () {
-    return {
-      tab: null,
-      originalCatalogue: null,
-      terms: [],
-      loading: false
-    }
-  },
-  methods: {
-    openCodelistTerms ({ codelist, catalogueName }) {
-      this.$router.push({
-        name: 'CodelistTerms',
-        params: { codelist_id: codelist.codelist_uid, catalogue_name: catalogueName }
-      })
+})
+const emit = defineEmits(['catalogueChanged'])
+const router = useRouter()
+const ctCataloguesStore = useCtCataloguesStore()
+const allCatalogues = ref([])
+const tab = ref(null)
+const originalCatalogue = ref(null)
+
+watchEffect(() => {
+  allCatalogues.value = [{ name: 'All' }].concat(ctCataloguesStore.catalogues)
+})
+
+const openCodelistTerms = ({ codelist, catalogueName }) => {
+  router.push({
+    name: 'CodelistTerms',
+    params: {
+      codelist_id: codelist.codelist_uid,
+      catalogue_name: catalogueName,
     },
-    fetchTerms  () {
-      this.loading = true
-      const params = {
-        page_size: 0,
-        compact_response: true
-      }
-      controlledTerminology.getCodelistTermsNames(params).then(resp => {
-        this.terms = resp.data.items
-        this.loading = false
-      })
-    }
-  },
-  mounted () {
-    this.originalCatalogue = this.catalogue_name
-    this.$store.dispatch('ctCatalogues/fetchCatalogues')
-    this.fetchTerms()
-  },
-  watch: {
-    tab (newValue, oldValue) {
-      if (newValue !== this.catalogue_name) {
-        this.$store.commit('ctCatalogues/SET_CURRENT_CATALOGUE_PAGE', 1)
-      }
-      this.$emit('catalogueChanged', newValue)
-    },
-    catalogues (newValue) {
-      this.tab = this.originalCatalogue
-    }
-  }
+  })
 }
+
+watch(tab, (newValue) => {
+  if (newValue !== originalCatalogue.value) {
+    ctCataloguesStore.currentCataloguePage = 1
+  }
+  emit('catalogueChanged', newValue)
+})
+
+onMounted(() => {
+  originalCatalogue.value = props.catalogue_name
+  ctCataloguesStore.fetchCatalogues()
+})
 </script>

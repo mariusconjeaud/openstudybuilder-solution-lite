@@ -1,278 +1,394 @@
 <template>
-<div>
-  <n-n-table
+  <NNTable
     :headers="headers"
-    :items="studyFootnotes"
-    item-key="uid"
-    has-api
-    :column-data-resource="`studies/${selectedStudy.uid}/study-soa-footnotes`"
+    :items="footnotesStore.studyFootnotes"
+    item-value="uid"
+    :column-data-resource="`studies/${studiesGeneralStore.selectedStudy.uid}/study-soa-footnotes`"
     export-object-label="StudyFootnotes"
     :export-data-url="exportDataUrl"
-    :options.sync="options"
-    :server-items-length="total"
-    @filter="fetchFootnotes"
+    :items-length="footnotesStore.total"
     :history-data-fetcher="fetchFootnotesHistory"
     :history-title="$t('StudyFootnoteTable.global_history_title')"
     :history-html-fields="historyHtmlFields"
-    >
-    <template v-slot:actions>
+    @filter="fetchFootnotes"
+  >
+    <template #actions>
       <v-btn
         data-cy="add-study-footnote"
-        fab
-        small
+        size="small"
         color="primary"
-        @click.stop="showForm = true"
         :title="$t('StudyFootnoteForm.add_title')"
-        :disabled="!checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
-        >
-        <v-icon>
-          mdi-plus
-        </v-icon>
-      </v-btn>
+        :disabled="
+          !accessGuard.checkPermission($roles.STUDY_WRITE) ||
+          studiesGeneralStore.selectedStudyVersion !== null
+        "
+        icon="mdi-plus"
+        @click.stop="showForm = true"
+      />
     </template>
-    <template v-slot:item.order="{ item }">
-      {{ item.order | letteredOrder }}
+    <template #[`item.order`]="{ item }">
+      {{ $filters.letteredOrder(item.order) }}
     </template>
-    <template v-slot:item.name="{ item }">
+    <template #[`item.name`]="{ item }">
       <template v-if="item.footnote_template">
-        <n-n-parameter-highlighter
+        <NNParameterHighlighter
           :name="item.footnote_template.name"
           default-color="orange"
-          />
+        />
       </template>
       <template v-else>
-        <n-n-parameter-highlighter
+        <NNParameterHighlighter
           :name="item.footnote.name"
           :show-prefix-and-postfix="false"
-          />
+        />
       </template>
     </template>
-    <template v-slot:item.referenced_items="{ item }">
-      {{ removeDuplicates(item.referenced_items) | itemNames }}
+    <template #[`item.referenced_items`]="{ item }">
+      {{ $filters.itemNames(removeDuplicates(item.referenced_items)) }}
     </template>
-    <template v-slot:item.start_date="{ item }">
-      {{ item.start_date | date }}
+    <template #[`item.start_date`]="{ item }">
+      {{ $filters.date(item.start_date) }}
     </template>
-    <template v-slot:item.actions="{ item }">
-      <actions-menu
+    <template #[`item.actions`]="{ item }">
+      <ActionsMenu
         :actions="actions"
         :item="item"
         :badge="actionsMenuBadge(item)"
-        />
-    </template>
-  </n-n-table>
-  <v-dialog v-model="showForm"
-            persistent
-            fullscreen
-            content-class="fullscreen-dialog"
-            >
-    <study-footnote-form
-      @close="closeForm"
-      :current-study-footnotes="studyFootnotes"
-      class="fullscreen-dialog"
-      @added="fetchFootnotes"
       />
+    </template>
+  </NNTable>
+  <v-dialog
+    v-model="showForm"
+    persistent
+    fullscreen
+    content-class="fullscreen-dialog"
+  >
+    <StudyFootnoteForm
+      :current-study-footnotes="footnotesStore.studyFootnotes"
+      class="fullscreen-dialog"
+      @close="closeForm"
+      @added="fetchFootnotes"
+    />
   </v-dialog>
-  <study-footnote-edit-form
+  <StudyFootnoteEditForm
     :open="showEditForm"
     :study-footnote="selectedFootnote"
     @close="closeEditForm"
     @updated="fetchFootnotes"
-    />
-  <v-dialog v-model="showHistory"
-            @keydown.esc="closeHistory"
-            persistent
-            :max-width="globalHistoryDialogMaxWidth"
-            :fullscreen="globalHistoryDialogFullscreen">
-    <history-table
+    @enable-footnote-mode="enableFootnoteMode"
+  />
+  <v-dialog
+    v-model="showHistory"
+    persistent
+    :fullscreen="$globals.historyDialogFullscreen"
+    @keydown.esc="closeHistory"
+  >
+    <HistoryTable
       :title="studyFootnoteHistoryTitle"
-      @close="closeHistory"
       :headers="headers"
       :items="footnoteHistoryItems"
       :html-fields="historyHtmlFields"
-      />
+      @close="closeHistory"
+    />
   </v-dialog>
-  <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
-</div>
+  <ConfirmDialog ref="confirm" :text-cols="6" :action-cols="5" />
 </template>
 
-<script>
-import { accessGuard } from '@/mixins/accessRoleVerifier'
-import ActionsMenu from '@/components/tools/ActionsMenu'
-import { bus } from '@/main'
-import ConfirmDialog from '@/components/tools/ConfirmDialog'
+<script setup>
+import { computed, inject, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { useRoute } from 'vue-router'
+import ActionsMenu from '@/components/tools/ActionsMenu.vue'
+import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
 import filteringParameters from '@/utils/filteringParameters'
-import StudyFootnoteEditForm from '@/components/studies/StudyFootnoteEditForm'
-import StudyFootnoteForm from '@/components/studies/StudyFootnoteForm'
-import { mapGetters } from 'vuex'
-import NNParameterHighlighter from '@/components/tools/NNParameterHighlighter'
-import NNTable from '@/components/tools/NNTable'
+import StudyFootnoteEditForm from '@/components/studies/StudyFootnoteEditForm.vue'
+import StudyFootnoteForm from '@/components/studies/StudyFootnoteForm.vue'
+import NNParameterHighlighter from '@/components/tools/NNParameterHighlighter.vue'
+import NNTable from '@/components/tools/NNTable.vue'
 import study from '@/api/study'
-import HistoryTable from '@/components/tools/HistoryTable'
+import HistoryTable from '@/components/tools/HistoryTable.vue'
 import dataFormating from '@/utils/dataFormating'
+import statuses from '@/constants/statuses'
+import { useAccessGuard } from '@/composables/accessGuard'
+import { useStudiesGeneralStore } from '@/stores/studies-general'
+import { useStudyActivitiesStore } from '@/stores/studies-activities'
+import { useFootnotesStore } from '@/stores/studies-footnotes'
 
-export default {
-  mixins: [accessGuard],
-  components: {
-    ActionsMenu,
-    ConfirmDialog,
-    StudyFootnoteEditForm,
-    StudyFootnoteForm,
-    NNParameterHighlighter,
-    NNTable,
-    HistoryTable
+const { t } = useI18n()
+const eventBusEmit = inject('eventBusEmit')
+const roles = inject('roles')
+const emit = defineEmits(['enableFootnoteMode'])
+const route = useRoute()
+
+const accessGuard = useAccessGuard()
+const studiesGeneralStore = useStudiesGeneralStore()
+const activitiesStore = useStudyActivitiesStore()
+const footnotesStore = useFootnotesStore()
+
+const actions = [
+  {
+    label: t('_global.edit'),
+    icon: 'mdi-pencil-outline',
+    iconColor: 'primary',
+    click: editStudyFootnote,
+    condition: () => !studiesGeneralStore.selectedStudyVersion,
+    accessRole: roles.STUDY_WRITE,
   },
-  computed: {
-    ...mapGetters({
-      selectedStudy: 'studiesGeneral/selectedStudy',
-      selectedStudyVersion: 'studiesGeneral/selectedStudyVersion',
-      studyFootnotes: 'studyFootnotes/studyFootnotes',
-      total: 'studyFootnotes/total'
-    }),
-    exportDataUrl () {
-      return `studies/${this.selectedStudy.uid}/study-soa-footnotes`
-    },
-    studyFootnoteHistoryTitle () {
-      if (this.selectedFootnote) {
-        return this.$t(
-          'StudyFootnoteTable.study_footnote_history_title',
-          { studyFootnoteUid: this.selectedFootnote.uid })
-      }
-      return ''
+  {
+    label: t('StudyFootnoteTable.update_footnote_version'),
+    icon: 'mdi-bell-ring-outline',
+    iconColorFunc: footnoteUpdateAborted,
+    condition: (item) =>
+      needUpdate(item) && !studiesGeneralStore.selectedStudyVersion,
+    click: updateFootnoteVersion,
+    accessRole: roles.STUDY_WRITE,
+  },
+  {
+    label: t('_global.delete'),
+    icon: 'mdi-delete-outline',
+    iconColor: 'error',
+    click: deleteStudyFootnote,
+    condition: () => !studiesGeneralStore.selectedStudyVersion,
+    accessRole: roles.STUDY_WRITE,
+  },
+  {
+    label: t('_global.history'),
+    icon: 'mdi-history',
+    click: openHistory,
+  },
+]
+const footnoteHistoryItems = ref([])
+const headers = [
+  { title: '', key: 'actions', width: '5%' },
+  { title: t('_global.order_short'), key: 'order', width: '3%' },
+  {
+    title: t('StudyFootnoteTable.footnote'),
+    key: 'name',
+    filteringName: 'footnote.name_plain',
+  },
+  {
+    title: t('StudyFootnoteTable.covered_items'),
+    key: 'referenced_items',
+    filteringName: 'referenced_items.item_name',
+  },
+]
+const historyHtmlFields = ['footnote.name']
+const selectedFootnote = ref(null)
+const showEditForm = ref(false)
+const showForm = ref(false)
+const showHistory = ref(false)
+const confirm = ref()
+
+const exportDataUrl = computed(() => {
+  return `studies/${studiesGeneralStore.selectedStudy.uid}/study-soa-footnotes`
+})
+const studyFootnoteHistoryTitle = computed(() => {
+  if (selectedFootnote.value) {
+    return t('StudyFootnoteTable.study_footnote_history_title', {
+      studyFootnoteUid: selectedFootnote.value.uid,
+    })
+  }
+  return ''
+})
+
+watch(
+  () => route.params.editFootnote,
+  (value) => {
+    editStudyFootnote(value)
+    route.params.editFootnote = null
+  }
+)
+
+onMounted(() => {
+  activitiesStore.fetchStudyActivities({
+    studyUid: studiesGeneralStore.selectedStudy.uid,
+  })
+})
+
+function enableFootnoteMode(footnote) {
+  emit('enableFootnoteMode', footnote)
+}
+
+function removeDuplicates(arr) {
+  const uniqueItems = {}
+  const result = []
+
+  for (const item of arr) {
+    const key = `${item.item_name}_${item.item_type}`
+    if (!uniqueItems[key]) {
+      uniqueItems[key] = true
+      result.push(item)
     }
-  },
-  mounted () {
-    this.fetchFootnotes()
-    this.$store.dispatch('studyActivities/fetchStudyActivities', { studyUid: this.selectedStudy.uid })
-  },
-  data () {
+  }
+  return result
+}
+
+function isLatestRetired(item) {
+  if (item.latest_objective) {
+    return item.latest_objective.status === statuses.RETIRED
+  }
+  return false
+}
+
+function needUpdate(item) {
+  if (item.latest_footnote) {
+    if (!isLatestRetired(item)) {
+      return item.footnote.version !== item.latest_footnote.version
+    }
+  }
+  return false
+}
+
+function actionsMenuBadge(item) {
+  if (!item.footnote && item.footnote_template.parameters.length > 0) {
     return {
-      actions: [
-        {
-          label: this.$t('_global.edit'),
-          icon: 'mdi-pencil-outline',
-          iconColor: 'primary',
-          click: this.editStudyFootnote,
-          condition: () => !this.selectedStudyVersion,
-          accessRole: this.$roles.STUDY_WRITE
-        },
-        {
-          label: this.$t('_global.delete'),
-          icon: 'mdi-delete-outline',
-          iconColor: 'error',
-          click: this.deleteStudyFootnote,
-          condition: () => !this.selectedStudyVersion,
-          accessRole: this.$roles.STUDY_WRITE
-        },
-        {
-          label: this.$t('_global.history'),
-          icon: 'mdi-history',
-          click: this.openHistory
-        }
-      ],
-      footnoteHistoryItems: [],
-      headers: [
-        { text: '', value: 'actions', width: '5%' },
-        { text: this.$t('_global.order_short'), value: 'order', width: '3%' },
-        { text: this.$t('StudyFootnoteTable.footnote'), value: 'name', filteringName: 'footnote.name_plain' },
-        { text: this.$t('StudyFootnoteTable.covered_items'), value: 'referenced_items', filteringName: 'referenced_items.item_name' }
-      ],
-      historyHtmlFields: ['footnote.name'],
-      options: {},
-      selectedFootnote: null,
-      showEditForm: false,
-      showForm: false,
-      showHistory: false
+      color: 'error',
+      icon: 'mdi-exclamation',
     }
-  },
-  methods: {
-    removeDuplicates (arr) {
-      const uniqueItems = {}
-      const result = []
+  }
+  if (needUpdate(item) && !studiesGeneralStore.selectedStudyVersion) {
+    return {
+      color: item.accepted_version ? 'lightgray' : 'error',
+      icon: 'mdi-bell-outline',
+    }
+  }
+  return null
+}
 
-      for (const item of arr) {
-        const key = `${item.item_name}_${item.item_type}`
-        if (!uniqueItems[key]) {
-          uniqueItems[key] = true
-          result.push(item)
-        }
-      }
+function footnoteUpdateAborted(item) {
+  return item.accepted_version ? '' : 'error'
+}
 
-      return result
-    },
-    actionsMenuBadge (item) {
-      if (!item.footnote && item.footnote_template.parameters.length > 0) {
-        return {
-          color: 'error',
-          icon: 'mdi-exclamation'
-        }
-      }
-      return null
-    },
-    closeEditForm () {
-      this.showEditForm = false
-      this.selectedFootnote = null
-    },
-    closeForm () {
-      this.showForm = false
-      this.selectedFootnote = null
-    },
-    closeHistory () {
-      this.selectedFootnote = null
-      this.showHistory = false
-    },
-    async openHistory (studyFootnote) {
-      this.selectedStudyFootnote = studyFootnote
-      const resp = await study.getStudyFootnoteAuditTrail(this.selectedStudy.uid, studyFootnote.uid)
-      resp.data.forEach(element => {
-        element.referenced_items = dataFormating.itemNames(element.referenced_items).replaceAll(' ,', '')
-        element.name = element.footnote ? element.footnote.name_plain : element.footnote_template.name_plain
-      })
-      this.footnoteHistoryItems = resp.data
-      this.showHistory = true
-    },
-    async fetchFootnotesHistory () {
-      const resp = await study.getStudyFootnotesAuditTrail(this.selectedStudy.uid)
-      resp.data.forEach(element => {
-        element.referenced_items = dataFormating.itemNames(element.referenced_items).replaceAll(' ,', '')
-        element.name = element.footnote ? element.footnote.name_plain : element.footnote_template.name_plain
-      })
-      return resp.data
-    },
-    fetchFootnotes (filters, sort, filtersUpdated) {
-      const params = filteringParameters.prepareParameters(
-        this.options, filters, sort, filtersUpdated)
-      params.studyUid = this.selectedStudy.uid
-      params.study_value_version = this.selectedStudyVersion
-      this.$store.dispatch('studyFootnotes/fetchStudyFootnotes', params)
-    },
-    editStudyFootnote (studyFootnote) {
-      this.selectedFootnote = studyFootnote
-      this.showEditForm = true
-    },
-    async deleteStudyFootnote (studyFootnote) {
-      const options = { type: 'warning' }
-      const footnote = studyFootnote.footnote ? studyFootnote.footnote.name_plain : '(unnamed)'
+function closeEditForm() {
+  showEditForm.value = false
+  selectedFootnote.value = null
+}
 
-      if (await this.$refs.confirm.open(this.$t('StudyFootnoteTable.confirm_delete', { footnote }), options)) {
-        this.$store.dispatch('studyFootnotes/deleteStudyFootnote', {
-          studyUid: this.selectedStudy.uid,
-          studyFootnoteUid: studyFootnote.uid
-        }).then(() => {
-          this.fetchFootnotes()
-          bus.$emit('notification', { msg: this.$t('StudyFootnoteTable.delete_footnote_success') })
+function closeForm() {
+  showForm.value = false
+  selectedFootnote.value = null
+}
+
+function closeHistory() {
+  selectedFootnote.value = null
+  showHistory.value = false
+}
+
+async function openHistory(studyFootnote) {
+  selectedFootnote.value = studyFootnote
+  const resp = await study.getStudyFootnoteAuditTrail(
+    studiesGeneralStore.selectedStudy.uid,
+    studyFootnote.uid
+  )
+  resp.data.forEach((element) => {
+    element.referenced_items = dataFormating
+      .itemNames(element.referenced_items)
+      .replaceAll(' ,', '')
+    element.name = element.footnote
+      ? element.footnote.name_plain
+      : element.footnote_template.name_plain
+  })
+  footnoteHistoryItems.value = resp.data
+  showHistory.value = true
+}
+
+async function fetchFootnotesHistory() {
+  const resp = await study.getStudyFootnotesAuditTrail(
+    studiesGeneralStore.selectedStudy.uid
+  )
+  resp.data.forEach((element) => {
+    element.referenced_items = dataFormating
+      .itemNames(element.referenced_items)
+      .replaceAll(' ,', '')
+    element.name = element.footnote
+      ? element.footnote.name_plain
+      : element.footnote_template.name_plain
+  })
+  return resp.data
+}
+
+function fetchFootnotes(filters, options, filtersUpdated) {
+  const params = filteringParameters.prepareParameters(
+    options,
+    filters,
+    filtersUpdated
+  )
+  params.studyUid = studiesGeneralStore.selectedStudy.uid
+  footnotesStore.fetchStudyFootnotes(params)
+}
+
+function editStudyFootnote(studyFootnote) {
+  selectedFootnote.value = studyFootnote
+  showEditForm.value = true
+}
+
+async function deleteStudyFootnote(studyFootnote) {
+  const options = { type: 'warning' }
+  const footnote = studyFootnote.footnote
+    ? studyFootnote.footnote.name_plain
+    : '(unnamed)'
+
+  if (
+    await confirm.value.open(
+      t('StudyFootnoteTable.confirm_delete', { footnote }),
+      options
+    )
+  ) {
+    footnotesStore
+      .deleteStudyFootnote(
+        studiesGeneralStore.selectedStudy.uid,
+        studyFootnote.uid
+      )
+      .then(() => {
+        fetchFootnotes()
+        eventBusEmit('notification', {
+          msg: t('StudyFootnoteTable.delete_footnote_success'),
         })
-      }
-    }
-  },
-  watch: {
-    options () {
-      this.fetchFootnotes()
-    },
-    '$route.params.editFootnote' (value) {
-      this.editStudyFootnote(value)
-      this.$route.params.editFootnote = null
-    }
+      })
+  }
+}
+
+async function updateFootnoteVersion(item) {
+  const options = {
+    type: 'warning',
+    width: 1000,
+    cancelLabel: t('StudyFootnoteTable.keep_old_version'),
+    agreeLabel: t('StudyFootnoteTable.use_new_version'),
+  }
+  const message =
+    t('StudyFootnoteTable.update_version_alert') +
+    '</br>' +
+    t('StudyFootnoteTable.old_version') +
+    item.footnote.name +
+    ' ' +
+    t('StudyFootnoteTable.new_version') +
+    ' ' +
+    item.latest_footnote.name
+
+  if (await confirm.value.open(message, options)) {
+    footnotesStore
+      .updateStudyFootnoteVersion(
+        studiesGeneralStore.selectedStudy.uid,
+        item.uid
+      )
+      .then(() => {
+        fetchFootnotes()
+        eventBusEmit('notification', {
+          msg: t('StudyFootnoteTable.footnote_version_updated'),
+        })
+      })
+  } else {
+    footnotesStore
+      .acceptStudyFootnoteVersion(
+        studiesGeneralStore.selectedStudy.uid,
+        item.uid
+      )
+      .then(() => {
+        fetchFootnotes()
+        eventBusEmit('notification', {
+          msg: t('StudyFootnoteTable.footnote_version_accepted'),
+        })
+      })
   }
 }
 </script>

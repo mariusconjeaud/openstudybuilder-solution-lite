@@ -4,6 +4,7 @@ from clinical_mdr_api import models
 from clinical_mdr_api.domains.projects.project import ProjectAR
 from clinical_mdr_api.models import ProjectCreateInput
 from clinical_mdr_api.models.utils import GenericFilteringReturn
+from clinical_mdr_api.oauth.user import user
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._meta_repository import MetaRepository  # type: ignore
 from clinical_mdr_api.services._utils import (
@@ -15,8 +16,8 @@ from clinical_mdr_api.services._utils import (
 class ProjectService:
     user_initials: str | None
 
-    def __init__(self, user: str | None = None):
-        self.user_initials = user if user is not None else "TODO user initials"
+    def __init__(self):
+        self.user_initials = user().id()
 
     def get_all_projects(
         self,

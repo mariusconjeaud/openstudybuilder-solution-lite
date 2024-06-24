@@ -81,6 +81,8 @@ class CriteriaTemplateService(GenericSyntaxTemplateService[CriteriaTemplateAR]):
         try:
             item = self.repository.find_by_uid(uid, for_update=True)
 
+            self.authorize_user_defined_syntax_write(item.library.name)
+
             if (
                 self.repository.check_exists_by_name_in_library(
                     name=template.name,

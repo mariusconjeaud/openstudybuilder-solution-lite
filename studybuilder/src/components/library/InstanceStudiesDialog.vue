@@ -1,101 +1,152 @@
 <template>
-<v-card color="dfltBackground">
-  <v-card-title>
-    <span class="dialog-title">{{ $t('InstanceStudiesDialog.title', { type }) }}</span>
-  </v-card-title>
-  <v-card-text>
-    <v-row class="mt-4">
-      <v-col cols="2">
-        <strong>{{ $t('InstanceStudiesDialog.template', { type: capitalizedType }) }}</strong>
-      </v-col>
-      <v-col cols="10">
-        <n-n-parameter-highlighter :name="template" :show-prefix-and-postfix="false" />
-      </v-col>
-      <v-col cols="2">
-        <strong>{{ $t('InstanceStudiesDialog.text', { type: capitalizedType }) }}</strong>
-      </v-col>
-      <v-col cols="10">
-        <n-n-parameter-highlighter :name="text" :show-prefix-and-postfix="false" />
-      </v-col>
-    </v-row>
-    <n-n-table
-      class="mt-4"
-      :headers="headers"
-      :items="studies"
-      height="40vh"
+  <v-card color="dfltBackground">
+    <v-card-title>
+      <span class="dialog-title">{{
+        $t('InstanceStudiesDialog.title', { type })
+      }}</span>
+    </v-card-title>
+    <v-card-text>
+      <v-row class="mt-4">
+        <v-col cols="2">
+          <strong>{{
+            $t('InstanceStudiesDialog.template', { type: capitalizedType })
+          }}</strong>
+        </v-col>
+        <v-col cols="10">
+          <NNParameterHighlighter
+            :name="template"
+            :show-prefix-and-postfix="false"
+          />
+        </v-col>
+        <v-col cols="2">
+          <strong>{{
+            $t('InstanceStudiesDialog.text', { type: capitalizedType })
+          }}</strong>
+        </v-col>
+        <v-col cols="10">
+          <NNParameterHighlighter
+            :name="text"
+            :show-prefix-and-postfix="false"
+          />
+        </v-col>
+      </v-row>
+      <v-data-table
+        class="mt-4"
+        :headers="headers"
+        :items="studies"
+        height="40vh"
       >
-      <template v-slot:item.redirect="{ item }">
-        <v-btn
-          class="pb-3"
-          fab
-          dark
-          small
-          color="primary"
-          @click="goToStudy(item)"
-          icon
-          >
-          <v-icon dark>
-            mdi-eye-arrow-right-outline
-          </v-icon>
-        </v-btn>
-      </template>
-      </n-n-table>
-  </v-card-text>
-  <v-card-actions>
-    <v-spacer></v-spacer>
-    <v-btn
-      color="secondary"
-      @click="close"
-      >
-      {{ $t('_global.close') }}
-    </v-btn>
-  </v-card-actions>
-</v-card>
+        <template #[`item.redirect`]="{ item }">
+          <v-btn
+            class="pb-3"
+            size="small"
+            color="primary"
+            icon="mdi-eye-arrow-right-outline"
+            variant="text"
+            @click="goToStudy(item)"
+          />
+        </template>
+      </v-data-table>
+    </v-card-text>
+    <v-card-actions>
+      <v-spacer />
+      <v-btn color="secondary" @click="close">
+        {{ $t('_global.close') }}
+      </v-btn>
+    </v-card-actions>
+  </v-card>
 </template>
 
 <script>
-import NNParameterHighlighter from '@/components/tools/NNParameterHighlighter'
-import NNTable from '@/components/tools/NNTable'
+import NNParameterHighlighter from '@/components/tools/NNParameterHighlighter.vue'
+import { useStudiesGeneralStore } from '@/stores/studies-general'
 
 export default {
   components: {
     NNParameterHighlighter,
-    NNTable
   },
   props: {
-    template: String,
-    text: String,
-    type: String,
-    studies: Array
+    template: {
+      type: String,
+      default: null,
+    },
+    text: {
+      type: String,
+      default: null,
+    },
+    type: {
+      type: String,
+      default: null,
+    },
+    studies: {
+      type: Array,
+      default: null,
+    },
   },
-  computed: {
-    capitalizedType () {
-      return this.type.charAt(0).toUpperCase() + this.type.slice(1)
+  emits: ['close'],
+  setup() {
+    const studiesGeneralStore = useStudiesGeneralStore()
+
+    return {
+      selectStudy: studiesGeneralStore.selectStudy,
     }
   },
-  data () {
+  data() {
     return {
       headers: [
-        { text: this.$t('InstanceStudiesDialog.view'), value: 'redirect', width: '5%' },
-        { text: this.$t('InstanceStudiesDialog.project_id'), value: 'current_metadata.identification_metadata.project_number' },
-        { text: this.$t('InstanceStudiesDialog.project_name'), value: 'current_metadata.identification_metadata.project_name' },
-        { text: this.$t('InstanceStudiesDialog.brand_name'), value: 'current_metadata.identification_metadata.brand_name' },
-        { text: this.$t('InstanceStudiesDialog.study_number'), value: 'current_metadata.identification_metadata.study_number' },
-        { text: this.$t('InstanceStudiesDialog.study_id'), value: 'current_metadata.identification_metadata.study_id' },
-        { text: this.$t('InstanceStudiesDialog.study_acronym'), value: 'current_metadata.identification_metadata.study_acronym' },
-        { text: this.$t('_global.status'), value: 'current_metadata.version_metadata.study_status' }
-      ]
+        {
+          title: this.$t('InstanceStudiesDialog.view'),
+          key: 'redirect',
+          width: '5%',
+        },
+        {
+          title: this.$t('InstanceStudiesDialog.project_id'),
+          key: 'current_metadata.identification_metadata.project_number',
+        },
+        {
+          title: this.$t('InstanceStudiesDialog.project_name'),
+          key: 'current_metadata.identification_metadata.project_name',
+        },
+        {
+          title: this.$t('InstanceStudiesDialog.brand_name'),
+          key: 'current_metadata.identification_metadata.brand_name',
+        },
+        {
+          title: this.$t('InstanceStudiesDialog.study_number'),
+          key: 'current_metadata.identification_metadata.study_number',
+        },
+        {
+          title: this.$t('InstanceStudiesDialog.study_id'),
+          key: 'current_metadata.identification_metadata.study_id',
+        },
+        {
+          title: this.$t('InstanceStudiesDialog.study_acronym'),
+          key: 'current_metadata.identification_metadata.study_acronym',
+        },
+        {
+          title: this.$t('_global.status'),
+          key: 'current_metadata.version_metadata.study_status',
+        },
+      ],
     }
   },
+  computed: {
+    capitalizedType() {
+      return this.type.charAt(0).toUpperCase() + this.type.slice(1)
+    },
+  },
   methods: {
-    close () {
+    close() {
       this.$emit('close')
     },
-    goToStudy (study) {
-      this.$store.dispatch('studiesGeneral/selectStudy', { studyObj: study })
-      this.$router.push({ name: 'StudyPurpose', params: { study_id: study.uid, tab: this.type + 's' } })
+    goToStudy(study) {
+      this.selectStudy({ studyObj: study })
+      this.$router.push({
+        name: 'StudyPurpose',
+        params: { study_id: study.uid, tab: this.type + 's' },
+      })
       this.$router.go()
-    }
-  }
+    },
+  },
 }
 </script>

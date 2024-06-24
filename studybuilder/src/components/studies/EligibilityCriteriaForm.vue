@@ -1,65 +1,68 @@
 <template>
-<div>
-  <horizontal-stepper-form
+  <HorizontalStepperForm
     ref="stepper"
     :title="title"
     :steps="steps"
-    @close="close"
-    @save="submit"
     :form-observer-getter="getObserver"
     :help-items="helpItems"
     :extra-step-validation="createTemplate"
-    >
-    <template v-slot:step.creation_mode>
-      <v-radio-group
-        v-model="creationMode"
-        >
-        <v-radio data-cy="criteria-from-template" :label="$t('EligibilityCriteriaForm.create_from_template')" value="template" />
-        <v-radio data-cy="criteria-from-study" :label="$t('EligibilityCriteriaForm.select_from_studies')" value="select" />
-        <v-radio data-cy="criteria-from-scratch" :label="$t('EligibilityCriteriaForm.create_from_scratch')" value="scratch" />
+    @close="close"
+    @save="submit"
+  >
+    <template #[`step.creation_mode`]>
+      <v-radio-group v-model="creationMode" color="primary">
+        <v-radio
+          data-cy="criteria-from-template"
+          :label="$t('EligibilityCriteriaForm.create_from_template')"
+          value="template"
+        />
+        <v-radio
+          data-cy="criteria-from-study"
+          :label="$t('EligibilityCriteriaForm.select_from_studies')"
+          value="select"
+        />
+        <v-radio
+          data-cy="criteria-from-scratch"
+          :label="$t('EligibilityCriteriaForm.create_from_scratch')"
+          value="scratch"
+        />
       </v-radio-group>
     </template>
-    <template v-slot:step.selectStudies="{ step }">
-      <validation-observer :ref="`observer_${step}`">
-        <validation-provider
-          v-slot="{ errors }"
-          rules="required"
-          >
-          <v-autocomplete
-            :data-cy="$t('StudySelectionTable.select_studies')"
-            v-model="selectedStudies"
-            :label="$t('StudySelectionTable.studies')"
-            :items="studies"
-            :error-messages="errors"
-            item-text="current_metadata.identification_metadata.study_id"
-            clearable
-            multiple
-            return-object
-            />
-        </validation-provider>
-      </validation-observer>
+    <template #[`step.selectStudies`]="{ step }">
+      <v-form :ref="`observer_${step}`">
+        <v-autocomplete
+          v-model="selectedStudies"
+          :data-cy="$t('StudySelectionTable.select_studies')"
+          :label="$t('StudySelectionTable.studies')"
+          :items="studies"
+          :rules="[formRules.required]"
+          item-title="current_metadata.identification_metadata.study_id"
+          clearable
+          multiple
+          return-object
+        />
+      </v-form>
     </template>
-    <template v-slot:step.select>
-      <p class="grey--text text-subtitle-1 font-weight-bold">{{ $t('EligibilityCriteriaForm.selected_criteria') }}</p>
-      <v-data-table
-        :headers="selectionHeaders"
-        :items="selectedCriteria"
-        >
-        <template v-slot:item.name="{ item }">
+    <template #[`step.select`]>
+      <p class="text-grey text-subtitle-1 font-weight-bold">
+        {{ $t('EligibilityCriteriaForm.selected_criteria') }}
+      </p>
+      <v-data-table :headers="selectionHeaders" :items="selectedCriteria">
+        <template #[`item.name`]="{ item }">
           <template v-if="item.criteria_template">
-            <n-n-parameter-highlighter
+            <NNParameterHighlighter
               :name="item.criteria_template.name"
               default-color="orange"
-              />
+            />
           </template>
           <template v-else>
-            <n-n-parameter-highlighter
+            <NNParameterHighlighter
               :name="item.criteria.name"
               :show-prefix-and-postfix="false"
-              />
+            />
           </template>
         </template>
-        <template v-slot:item.guidance_text="{ item }">
+        <template #[`item.guidance_text`]="{ item }">
           <template v-if="item.criteria_template">
             <span v-html="item.criteria_template.guidance_text" />
           </template>
@@ -67,43 +70,44 @@
             <span v-html="item.criteria.criteria_template.guidance_text" />
           </template>
         </template>
-        <template v-slot:item.actions="{ item }">
+        <template #[`item.actions`]="{ item }">
           <v-btn
-            icon
+            icon="mdi-delete-outline"
             color="red"
+            variant="text"
             @click="unselectStudyCriteria(item)"
-            >
-            <v-icon>mdi-delete-outline</v-icon>
-          </v-btn>
+          />
         </template>
       </v-data-table>
     </template>
-    <template v-slot:step.select.after>
-      <p class="grey--text text-subtitle-1 font-weight-bold mb-0 ml-3">{{ $t('StudyObjectiveForm.copy_instructions') }}</p>
+    <template #[`step.select.after`]>
+      <p class="text-grey text-subtitle-1 font-weight-bold mb-0 ml-3">
+        {{ $t('StudyObjectiveForm.copy_instructions') }}
+      </p>
       <v-col cols="12">
-        <study-selection-table
+        <StudySelectionTable
           :headers="stdHeaders"
           data-fetcher-name="getAllStudyCriteria"
-          @item-selected="selectTemplate"
           :studies="selectedStudies"
           :extra-data-fetcher-filters="extraDataFetcherFilters"
           column-data-resource="study-criteria"
-          >
-          <template v-slot:item.name="{ item }">
+          @item-selected="selectTemplate"
+        >
+          <template #[`item.name`]="{ item }">
             <template v-if="item.criteria_template">
-              <n-n-parameter-highlighter
+              <NNParameterHighlighter
                 :name="item.criteria_template.name"
                 default-color="orange"
-                />
+              />
             </template>
             <template v-else>
-              <n-n-parameter-highlighter
+              <NNParameterHighlighter
                 :name="item.criteria.name"
                 :show-prefix-and-postfix="false"
-                />
+              />
             </template>
           </template>
-          <template v-slot:item.guidance_text="{ item }">
+          <template #[`item.guidance_text`]="{ item }">
             <template v-if="item.criteria_template">
               <span v-html="item.criteria_template.guidance_text" />
             </template>
@@ -111,46 +115,42 @@
               <span v-html="item.criteria.guidance_text" />
             </template>
           </template>
-        </study-selection-table>
+        </StudySelectionTable>
       </v-col>
     </template>
-    <template v-slot:step.createFromTemplate>
-      <v-data-table
-        :headers="selectionHeaders"
-        :items="selectedCriteria"
-        >
-        <template v-slot:item.name="{ item }">
-          <n-n-parameter-highlighter
-            :name="item.name"
-            default-color="orange"
-            />
+    <template #[`step.createFromTemplate`]>
+      <v-data-table :headers="selectionHeaders" :items="selectedCriteria">
+        <template #[`item.name`]="{ item }">
+          <NNParameterHighlighter :name="item.name" default-color="orange" />
         </template>
-        <template v-slot:item.guidance_text="{ item }">
+        <template #[`item.guidance_text`]="{ item }">
           <span v-html="item.guidance_text" />
         </template>
-        <template v-slot:item.actions="{ item }">
+        <template #[`item.actions`]="{ item }">
           <v-btn
-            icon
+            icon="mdi-delete-outline"
             color="red"
+            variant="text"
             @click="unselectTemplate(item)"
-            >
-            <v-icon>mdi-delete-outline</v-icon>
-          </v-btn>
+          />
         </template>
       </v-data-table>
     </template>
-    <template v-slot:step.createFromTemplate.after>
+    <template #[`step.createFromTemplate.after`]>
       <div class="d-flex align-center">
-        <p class="grey--text text-subtitle-1 font-weight-bold mb-0 ml-3">{{ $t('StudyObjectiveForm.copy_instructions') }}</p>
+        <p class="text-grey text-subtitle-1 font-weight-bold mb-0 ml-3">
+          {{ $t('StudyObjectiveForm.copy_instructions') }}
+        </p>
         <v-switch
           v-model="preInstanceMode"
+          color="primary"
           :label="$t('StudyObjectiveForm.show_pre_instances')"
           hide-details
           class="ml-4"
-          />
+        />
       </div>
       <v-col cols="12">
-        <n-n-table
+        <NNTable
           key="criteriaTemplateTable"
           :headers="tplHeaders"
           :items="criteriaTemplates"
@@ -158,122 +158,130 @@
           hide-default-switches
           hide-actions-menu
           elevation="0"
-          :options.sync="options"
-          :server-items-length="total"
-          has-api
-          column-data-resource="criteria-templates"
-          @filter="getCriteriaTemplates"
+          :items-length="total"
+          :column-data-resource="
+            preInstanceMode ? 'criteria-pre-instances' : 'criteria-templates'
+          "
           :default-filters="defaultTplFilters"
-          >
-          <template v-slot:item.indications="{ item }">
+          :filters-modify-function="addTypeFilterToHeader"
+          @filter="getCriteriaTemplates"
+        >
+          <template #[`item.indications`]="{ item }">
             <template v-if="item.indications">
-              {{ item.indications|names }}
+              {{ $filters.names(item.indications) }}
             </template>
-             <template v-else>
+            <template v-else>
               {{ $t('_global.not_applicable_long') }}
-             </template>
+            </template>
           </template>
-          <template v-slot:item.categories="{ item }">
+          <template #[`item.categories`]="{ item }">
             <template v-if="item.categories">
-              {{ item.categories|terms }}
+              {{ $filters.terms(item.categories) }}
             </template>
             <template v-else>
               {{ $t('_global.not_applicable_long') }}
             </template>
           </template>
-          <template v-slot:item.subCategories="{ item }">
+          <template #[`item.subCategories`]="{ item }">
             <template v-if="item.subCategories">
-              {{ item.subCategories|terms }}
+              {{ $filters.terms(item.subCategories) }}
             </template>
             <template v-else>
               {{ $t('_global.not_applicable_long') }}
             </template>
           </template>
-          <template v-slot:item.name="{ item }">
-            <n-n-parameter-highlighter v-if="preInstanceMode" :name="item.name" default-color="green" :show-prefix-and-postfix="false"/>
-            <n-n-parameter-highlighter v-else :name="item.name" default-color="orange"/>
+          <template #[`item.name`]="{ item }">
+            <NNParameterHighlighter
+              v-if="preInstanceMode"
+              :name="item.name"
+              default-color="green"
+              :show-prefix-and-postfix="false"
+            />
+            <NNParameterHighlighter
+              v-else
+              :name="item.name"
+              default-color="orange"
+            />
           </template>
-          <template v-slot:item.guidance_text="{ item }">
+          <template #[`item.guidance_text`]="{ item }">
             <span v-html="item.guidance_text" />
           </template>
-          <template v-slot:item.actions="{ item }">
+          <template #[`item.actions`]="{ item }">
             <v-btn
               :data-cy="$t('StudyObjectiveForm.copy_template')"
-              icon
+              icon="mdi-content-copy"
               color="primary"
+              :title="$t('StudyObjectiveForm.copy_template')"
+              variant="text"
               @click="selectTemplate(item)"
-              :title="$t('StudyObjectiveForm.copy_template')">
-              <v-icon>mdi-content-copy</v-icon>
-            </v-btn>
+            />
           </template>
-        </n-n-table>
+        </NNTable>
       </v-col>
     </template>
-    <template v-slot:step.createFromScratch="{ step }">
-      <validation-observer :ref="`observer_${step}`">
-        <validation-provider
-          v-slot="{ errors }"
-          rules="required"
-          >
-          <v-row>
-            <v-col>
-              <n-n-template-input-field
-                :data-cy="$t('EligibilityCriteriaForm.criteria_template')"
-                v-model="form.name"
-                :label="$t('EligibilityCriteriaForm.criteria_template')"
-                :items="parameterTypes"
-                :error-messages="errors"
-                :show-drop-down-early="true"
-                />
-            </v-col>
-          </v-row>
-        </validation-provider>
-      </validation-observer>
+    <template #[`step.createFromScratch`]="{ step }">
+      <v-form :ref="`observer_${step}`">
+        <v-row>
+          <v-col>
+            <NNTemplateInputField
+              v-model="form.name"
+              :data-cy="$t('EligibilityCriteriaForm.criteria_template')"
+              :label="$t('EligibilityCriteriaForm.criteria_template')"
+              :items="parameterTypes"
+              :rules="[formRules.required]"
+              :show-drop-down-early="true"
+            />
+          </v-col>
+        </v-row>
+      </v-form>
       <v-row>
         <v-col>
-          <vue-editor
-            ref="editor"
-            id="editor"
-            v-model="form.guidance_text"
-            :editor-toolbar="customToolbar"
-            :placeholder="$t('CriteriaTemplateForm.guidance_text')"
-            class="pt-4"
+          <div>
+            <QuillEditor
+              id="editor"
+              ref="editor"
+              v-model:content="form.guidance_text"
+              content-type="html"
+              :toolbar="customToolbar"
+              :placeholder="$t('CriteriaTemplateForm.guidance_text')"
+              class="pt-4"
             />
+          </div>
         </v-col>
       </v-row>
     </template>
-    <template v-slot:step.createCriteria="{ step }">
-      <validation-observer :ref="`observer_${step}`">
-        <parameter-value-selector
+    <template #[`step.createCriteria`]="{ step }">
+      <v-form :ref="`observer_${step}`">
+        <ParameterValueSelector
           v-if="form.criteria_template"
-          :value="parameters"
+          max-template-length
+          :model-value="parameters"
           :template="form.criteria_template.name"
           color="white"
-          />
-      </validation-observer>
+        />
+      </v-form>
     </template>
-  </horizontal-stepper-form>
-</div>
+  </HorizontalStepperForm>
 </template>
 
 <script>
-import { bus } from '@/main'
+import { computed } from 'vue'
 import templateParameterTypes from '@/api/templateParameterTypes'
 import criteriaTemplates from '@/api/criteriaTemplates'
-import HorizontalStepperForm from '@/components/tools/HorizontalStepperForm'
+import HorizontalStepperForm from '@/components/tools/HorizontalStepperForm.vue'
 import instances from '@/utils/instances'
 import libraries from '@/constants/libraries'
-import { mapGetters } from 'vuex'
-import NNParameterHighlighter from '@/components/tools/NNParameterHighlighter'
-import NNTable from '@/components/tools/NNTable'
-import NNTemplateInputField from '@/components/tools/NNTemplateInputField'
-import ParameterValueSelector from '@/components/tools/ParameterValueSelector'
+import NNParameterHighlighter from '@/components/tools/NNParameterHighlighter.vue'
+import NNTable from '@/components/tools/NNTable.vue'
+import NNTemplateInputField from '@/components/tools/NNTemplateInputField.vue'
+import ParameterValueSelector from '@/components/tools/ParameterValueSelector.vue'
 import study from '@/api/study'
-import StudySelectionTable from './StudySelectionTable'
+import StudySelectionTable from './StudySelectionTable.vue'
 import templatePreInstances from '@/api/templatePreInstances'
 import filteringParameters from '@/utils/filteringParameters'
 import statuses from '@/constants/statuses'
-import { VueEditor } from 'vue2-editor'
+import { QuillEditor } from '@vueup/vue-quill'
+import { useStudiesGeneralStore } from '@/stores/studies-general'
 
 export default {
   components: {
@@ -283,49 +291,76 @@ export default {
     NNTemplateInputField,
     ParameterValueSelector,
     StudySelectionTable,
-    VueEditor
+    QuillEditor,
   },
+  inject: ['eventBusEmit', 'formRules'],
   props: {
-    criteriaType: Object
+    criteriaType: {
+      type: Object,
+      default: undefined,
+    },
   },
-  computed: {
-    ...mapGetters({
-      selectedStudy: 'studiesGeneral/selectedStudy'
-    }),
-    title () {
-      return this.$t('_global.add') + ' ' + this.criteriaType.sponsor_preferred_name_sentence_case
+  emits: ['added', 'close'],
+  setup() {
+    const studiesGeneralStore = useStudiesGeneralStore()
+    return {
+      selectedStudy: computed(() => studiesGeneralStore.selectedStudy),
     }
   },
-  data () {
+  data() {
     return {
       customToolbar: [
         ['bold', 'italic', 'underline'],
         [{ script: 'sub' }, { script: 'super' }],
-        [{ list: 'ordered' }, { list: 'bullet' }]
+        [{ list: 'ordered' }, { list: 'bullet' }],
       ],
       helpItems: [
         'EligibilityCriteriaForm.add_criteria',
         'EligibilityCriteriaForm.select_from_studies',
         'EligibilityCriteriaForm.create_from_template',
         'EligibilityCriteriaForm.create_from_scratch',
-        'EligibilityCriteriaForm.select_criteria_templates'
+        'EligibilityCriteriaForm.select_criteria_templates',
       ],
       creationMode: 'template',
       extraDataFetcherFilters: {
         'criteria.library.name': { v: [libraries.LIBRARY_SPONSOR] },
-        'criteria_type.sponsor_preferred_name': { v: [this.criteriaType.sponsor_preferred_name] }
+        'criteria_type.sponsor_preferred_name': {
+          v: [this.criteriaType.name.sponsor_preferred_name],
+        },
       },
       tplHeaders: [
-        { text: '', value: 'actions', width: '5%' },
-        { text: this.$t('_global.sequence_number_short'), value: 'sequence_id', width: '5%' },
-        { text: this.$t('EligibilityCriteriaForm.criteria_template'), value: 'name' },
-        { text: this.$t('EligibilityCriteriaForm.guidance_text'), value: 'guidance_text' }
+        { title: '', key: 'actions', width: '5%' },
+        {
+          title: this.$t('_global.number'),
+          key: 'sequence_id',
+          width: '5%',
+        },
+        {
+          title: this.$t('EligibilityCriteriaForm.criteria_template'),
+          key: 'name',
+        },
+        {
+          title: this.$t('EligibilityCriteriaForm.guidance_text'),
+          key: 'guidance_text',
+        },
       ],
       defaultTplFilters: [
-        { text: this.$t('_global.sequence_number_short'), value: 'sequence_id' },
-        { text: this.$t('_global.indications'), value: 'indications', filteringName: 'indications.name' },
-        { text: this.$t('EligibilityCriteriaForm.criterion_cat'), value: 'categories', filteringName: 'categories.name.sponsor_preferred_name' },
-        { text: this.$t('EligibilityCriteriaForm.criterion_sub_cat'), value: 'subCategories', filteringName: 'subCategories.name.sponsor_preferred_name' }
+        { title: this.$t('_global.number'), key: 'sequence_id' },
+        {
+          title: this.$t('_global.indications'),
+          key: 'indications',
+          filteringName: 'indications.name',
+        },
+        {
+          title: this.$t('EligibilityCriteriaForm.criterion_cat'),
+          key: 'categories',
+          filteringName: 'categories.name.sponsor_preferred_name',
+        },
+        {
+          title: this.$t('EligibilityCriteriaForm.criterion_sub_cat'),
+          key: 'subCategories',
+          filteringName: 'subCategories.name.sponsor_preferred_name',
+        },
       ],
       criteriaTemplates: [],
       form: {},
@@ -338,46 +373,105 @@ export default {
       steps: this.getInitialSteps(),
       studies: [],
       createFromScratchSteps: [
-        { name: 'creation_mode', title: this.$t('EligibilityCriteriaForm.creation_mode_label') },
-        { name: 'createFromScratch', title: this.$t('EligibilityCriteriaForm.create_from_scratch'), noStyle: true },
-        { name: 'createCriteria', title: this.$t('EligibilityCriteriaForm.create_criteria') }
+        {
+          name: 'creation_mode',
+          title: this.$t('EligibilityCriteriaForm.creation_mode_label'),
+        },
+        {
+          name: 'createFromScratch',
+          title: this.$t('EligibilityCriteriaForm.create_from_scratch'),
+          noStyle: true,
+        },
+        {
+          name: 'createCriteria',
+          title: this.$t('EligibilityCriteriaForm.create_criteria'),
+        },
       ],
       selectFromStudiesSteps: [
-        { name: 'creation_mode', title: this.$t('EligibilityCriteriaForm.creation_mode_label') },
-        { name: 'selectStudies', title: this.$t('EligibilityCriteriaForm.select_studies') },
-        { name: 'select', title: this.$t('EligibilityCriteriaForm.select_criteria') }
+        {
+          name: 'creation_mode',
+          title: this.$t('EligibilityCriteriaForm.creation_mode_label'),
+        },
+        {
+          name: 'selectStudies',
+          title: this.$t('EligibilityCriteriaForm.select_studies'),
+        },
+        {
+          name: 'select',
+          title: this.$t('EligibilityCriteriaForm.select_criteria'),
+        },
       ],
       selectionHeaders: [
-        { text: '', value: 'actions', width: '5%' },
-        { text: this.$t('EligibilityCriteriaForm.criteria_text'), value: 'name', class: 'text-center' },
-        { text: this.$t('EligibilityCriteriaForm.guidance_text'), value: 'guidance_text' }
+        { title: '', key: 'actions', width: '5%' },
+        {
+          title: this.$t('EligibilityCriteriaForm.criteria_text'),
+          key: 'name',
+          class: 'text-center',
+        },
+        {
+          title: this.$t('EligibilityCriteriaForm.guidance_text'),
+          key: 'guidance_text',
+        },
       ],
       stdHeaders: [
-        { text: '', value: 'actions', width: '5%' },
-        { text: this.$t('Study.study_id'), value: 'studyUid' },
-        { text: this.$t('EligibilityCriteriaForm.criteria_text'), value: 'name' },
-        { text: this.$t('EligibilityCriteriaForm.guidance_text'), value: 'guidance_text' }
+        { title: '', key: 'actions', width: '5%' },
+        { title: this.$t('Study.study_id'), key: 'studyUid' },
+        {
+          title: this.$t('EligibilityCriteriaForm.criteria_text'),
+          key: 'name',
+        },
+        {
+          title: this.$t('EligibilityCriteriaForm.guidance_text'),
+          key: 'guidance_text',
+        },
       ],
       options: {},
-      total: 0
+      total: 0,
     }
   },
-  created () {
+  computed: {
+    title() {
+      return (
+        this.$t('_global.add') +
+        ' ' +
+        this.criteriaType.name.sponsor_preferred_name_sentence_case
+      )
+    },
+  },
+  watch: {
+    creationMode(value) {
+      if (value === 'select') {
+        this.steps = this.selectFromStudiesSteps
+      } else if (value === 'template') {
+        this.steps = this.getInitialSteps()
+      } else {
+        this.steps = this.createFromScratchSteps
+      }
+    },
+    preInstanceMode(value) {
+      this.apiEndpoint = value ? this.preInstanceApi : criteriaTemplates
+      this.getCriteriaTemplates()
+      this.selectedCriteria = []
+    },
+  },
+  created() {
     this.preInstanceApi = templatePreInstances('criteria')
     if (!this.studyCriteria) {
       this.apiEndpoint = this.preInstanceApi
     }
   },
-  mounted () {
-    templateParameterTypes.getTypes().then(resp => {
+  mounted() {
+    templateParameterTypes.getTypes().then((resp) => {
       this.parameterTypes = resp.data
     })
-    study.get({ has_study_criteria: true, page_size: 0 }).then(resp => {
-      this.studies = resp.data.items.filter(study => study.uid !== this.selectedStudy.uid)
+    study.get({ has_study_criteria: true, page_size: 0 }).then((resp) => {
+      this.studies = resp.data.items.filter(
+        (study) => study.uid !== this.selectedStudy.uid
+      )
     })
   },
   methods: {
-    close () {
+    close() {
       this.$emit('close')
       this.$refs.stepper.reset()
       this.steps = this.getInitialSteps()
@@ -388,18 +482,27 @@ export default {
       this.preInstanceMode = true
       this.apiEndpoint = this.preInstanceApi
     },
-    getInitialSteps () {
+    getInitialSteps() {
       return [
-        { name: 'creation_mode', title: this.$t('EligibilityCriteriaForm.creation_mode_label') },
-        { name: 'createFromTemplate', title: this.$t('EligibilityCriteriaForm.select_criteria_templates') }
+        {
+          name: 'creation_mode',
+          title: this.$t('EligibilityCriteriaForm.creation_mode_label'),
+        },
+        {
+          name: 'createFromTemplate',
+          title: this.$t('EligibilityCriteriaForm.select_criteria_templates'),
+        },
       ]
     },
-    getObserver (step) {
+    getObserver(step) {
       return this.$refs[`observer_${step}`]
     },
-    getCriteriaTemplates (filters, sort, filtersUpdated) {
+    getCriteriaTemplates(filters, options, filtersUpdated) {
       const params = filteringParameters.prepareParameters(
-        this.options, filters, sort, filtersUpdated)
+        options,
+        filters,
+        filtersUpdated
+      )
       params.status = statuses.FINAL
       if (params.filters) {
         params.filters = JSON.parse(params.filters)
@@ -407,42 +510,65 @@ export default {
         params.filters = {}
       }
       if (!this.preInstanceMode) {
-        Object.assign(params.filters, { 'type.name.sponsor_preferred_name_sentence_case': { v: [this.criteriaType.sponsor_preferred_name_sentence_case] }, 'library.name': { v: [libraries.LIBRARY_SPONSOR] } })
+        Object.assign(params.filters, {
+          'type.name.sponsor_preferred_name_sentence_case': {
+            v: [this.criteriaType.name.sponsor_preferred_name_sentence_case],
+          },
+          'library.name': { v: [libraries.LIBRARY_SPONSOR] },
+        })
       } else {
         Object.assign(params.filters, {
           template_type_uid: {
-            v: [this.criteriaType.term_uid]
-          }
+            v: [this.criteriaType.term_uid],
+          },
         })
       }
-      this.apiEndpoint.get(params).then(resp => {
+      this.apiEndpoint.get(params).then((resp) => {
         this.criteriaTemplates = resp.data.items
         this.total = resp.data.total
       })
     },
-    selectTemplate (template) {
+    addTypeFilterToHeader(jsonFilter, params) {
+      if (!this.preInstanceMode) {
+        jsonFilter['type.name.sponsor_preferred_name_sentence_case'] = {
+          v: [this.criteriaType.name.sponsor_preferred_name_sentence_case],
+        }
+      } else {
+        jsonFilter.template_type_uid = {
+          v: [this.criteriaType.term_uid],
+        }
+      }
+      return {
+        jsonFilter,
+        params,
+      }
+    },
+    selectTemplate(template) {
       this.selectedCriteria.push(template)
     },
-    unselectTemplate (template) {
-      this.selectedCriteria = this.selectedCriteria.filter(item => item.name !== template.name)
+    unselectTemplate(template) {
+      this.selectedCriteria = this.selectedCriteria.filter(
+        (item) => item.name !== template.name
+      )
     },
-    unselectStudyCriteria (studyCriteria) {
-      this.selectedCriteria = this.selectedCriteria.filter(item => item.study_criteria_uid !== studyCriteria.study_criteria_uid)
+    unselectStudyCriteria(studyCriteria) {
+      this.selectedCriteria = this.selectedCriteria.filter(
+        (item) => item.study_criteria_uid !== studyCriteria.study_criteria_uid
+      )
     },
-    async loadParameters (template) {
+    async loadParameters(template) {
       if (template) {
         this.loadingParameters = true
-        const resp = await criteriaTemplates.getObjectTemplateParameters(template.uid)
+        const resp = await criteriaTemplates.getObjectTemplateParameters(
+          template.uid
+        )
         this.parameters = resp.data
         this.loadingParameters = false
       } else {
         this.parameters = []
       }
     },
-    async createTemplate (step) {
-      if (this.creationMode === 'template' && step === 1) {
-        this.getCriteriaTemplates()
-      }
+    async createTemplate(step) {
       if (this.creationMode !== 'scratch' || step !== 2) {
         return true
       }
@@ -450,38 +576,49 @@ export default {
         ...this.form,
         library_name: 'User Defined',
         type_uid: this.criteriaType.term_uid,
-        study_uid: this.selectedStudy.uid
+        study_uid: this.selectedStudy.uid,
       }
       try {
         const resp = await criteriaTemplates.create(data)
-        if (resp.data.status === statuses.DRAFT) await criteriaTemplates.approve(resp.data.uid)
-        this.$set(this.form, 'criteria_template', resp.data)
+        if (resp.data.status === statuses.DRAFT)
+          await criteriaTemplates.approve(resp.data.uid)
+        this.form.criteria_template = resp.data
       } catch (error) {
         return false
       }
       this.loadParameters(this.form.criteria_template)
       return true
     },
-    async submit () {
+    async submit() {
       if (this.creationMode !== 'scratch') {
         if (this.creationMode === 'template') {
           if (!this.selectedCriteria.length) {
-            bus.$emit('notification', { msg: this.$t('EligibilityCriteriaForm.no_template_error'), type: 'error' })
+            this.eventBusEmit('notification', {
+              msg: this.$t('EligibilityCriteriaForm.no_template_error'),
+              type: 'error',
+            })
             this.$refs.stepper.loading = false
             return
           }
           const data = []
           for (const criteria of this.selectedCriteria) {
             data.push({
-              criteria_template_uid: this.preInstanceMode ? criteria.template_uid : criteria.uid,
-              parameter_terms: this.preInstanceMode ? criteria.parameter_terms : undefined,
-              library_name: criteria.library.name
+              criteria_template_uid: this.preInstanceMode
+                ? criteria.template_uid
+                : criteria.uid,
+              parameter_terms: this.preInstanceMode
+                ? criteria.parameter_terms
+                : undefined,
+              library_name: criteria.library.name,
             })
           }
           await study.batchCreateStudyCriteria(this.selectedStudy.uid, data)
         } else {
           if (!this.selectedCriteria.length) {
-            bus.$emit('notification', { msg: this.$t('EligibilityCriteriaForm.no_criteria_error'), type: 'error' })
+            this.eventBusEmit('notification', {
+              msg: this.$t('EligibilityCriteriaForm.no_criteria_error'),
+              type: 'error',
+            })
             this.$refs.stepper.loading = false
             return
           }
@@ -490,15 +627,16 @@ export default {
             if (studyCriteria.criteria_template) {
               data.push({
                 criteria_template_uid: studyCriteria.criteria_template.uid,
-                library_name: studyCriteria.criteria_template.library.name
+                library_name: studyCriteria.criteria_template.library.name,
               })
             } else {
               const payload = {
                 criteria_data: {
                   parameter_terms: studyCriteria.criteria.parameter_terms,
-                  criteria_template_uid: studyCriteria.criteria.criteria_template.uid,
-                  library_name: studyCriteria.criteria.library.name
-                }
+                  criteria_template_uid:
+                    studyCriteria.criteria.criteria_template.uid,
+                  library_name: studyCriteria.criteria.library.name,
+                },
               }
               await study.createStudyCriteria(this.selectedStudy.uid, payload)
             }
@@ -509,33 +647,21 @@ export default {
         const data = {
           criteria_data: {
             criteria_template_uid: this.form.criteria_template.uid,
-            parameter_terms: await instances.formatParameterValues(this.parameters),
-            library_name: libraries.LIBRARY_SPONSOR
-          }
+            parameter_terms: await instances.formatParameterValues(
+              this.parameters
+            ),
+            library_name: libraries.LIBRARY_SPONSOR,
+          },
         }
         await study.createStudyCriteria(this.selectedStudy.uid, data)
       }
-      bus.$emit('notification', { type: 'success', msg: this.$t('EligibilityCriteriaForm.add_success') })
+      this.eventBusEmit('notification', {
+        type: 'success',
+        msg: this.$t('EligibilityCriteriaForm.add_success'),
+      })
       this.$emit('added')
       this.close()
-    }
-  },
-  watch: {
-    creationMode (value) {
-      if (value === 'select') {
-        this.steps = this.selectFromStudiesSteps
-      } else if (value === 'template') {
-        this.steps = this.getInitialSteps()
-        this.getCriteriaTemplates()
-      } else {
-        this.steps = this.createFromScratchSteps
-      }
     },
-    preInstanceMode (value) {
-      this.apiEndpoint = value ? this.preInstanceApi : criteriaTemplates
-      this.getCriteriaTemplates()
-      this.selectedCriteria = []
-    }
-  }
+  },
 }
 </script>

@@ -1,5 +1,195 @@
 # OpenStudyBuilder Commits changelog
 
+## V 0.9
+
+New Features and Enhancements
+============
+
+### Disabled Features
+
+- The placeholder tab for 'Activity instructions' has been removed from the 'Study Activities' page under the 'Define Study' menu as this functionality is not developed yet. The tab is planned to be added back once the functionality has been completed.  The placeholder tab for 'Study Estimands' has been removed from the 'Study Purpose' page under the 'Define Study' menu as this functionality is not developed yet. The tab is planned to be added back once the functionality has been completed.
+- The compound module is under refactoring to be aligned with the Identification of Medical Products (IDMP) model, as this is not yet completed the Compound menu under Library, Concepts and the Study interventions menu under Studies, Define study is disabled. These will be added again in a future release.
+
+### Fixes and Enhancements
+
+- Improvements to API GET endpoints for an internal SDTM solution supplying metadata supporting SDTM generation.
+- Improved workflow and functionalities for handling study activity placeholders and requests.
+- The Neodash environment now support multiple reports and selection between them within the Neodash navigation panel.
+- The entire StudyBuilder frontend have been migrated from Vue2 to Vue3
+- When adding a new study it is now possible to search for the project ID. 
+- When The main page of the Studies module now have additional descriptions of the different menu items under Studies. 
+- When adding activities the Definition field is no longer mandatory to fill out The pre-selected filters for Activity Instances have been reduced to Activities, Activity instances, Status, Topic code and Legacy status Various minor update to the Library menu to improve readability. 
+- When adding a Study Visit, the drop down list to select the time unit is now shown before the field to capture the timing - this will reduce the likelihood of users getting errors due to visits being defined out of order Various text fields for Study Properties and Study Populations have been made longer on the screen to avoid text being truncated when displayed.
+- Various minor improvements to sorting and filtering
+- Refactoring of API to improve performance when working with study selections Refactoring of UI to improve performance when working with drop down lists and filters
+- The study visits pages now support manually defined visits with manually defined visit numbers and names.
+- Implement support for additional registry identifiers in UI (API support was implemented in previous release).
+- In the Detailed SoA identical activity groups are merged, so they not are displayed as duplicates. Improved error handling for import of study activity schedules. Performance improvements for study activities and SoA.
+- Additional API tests are made to ensure that the study selections leave trace on the audit trail on every library update after the selection, so we can be in compliance with audit trail and study versioning solution design.
+- Improved synchronisation logic between parent study and study subparts. Existing studies can be added as a study subpart. Correction to audit trail information for study subparts.
+- When defining a Study Criteria, a warning text and exclamation mark is now shown to users if the criteria text exceeds 200 characters  The left-side menu is now highlighting the page currently shown on the screen after reloading the screen
+- Refactoring of API to improve performance when working with Schedule of Activities (SoA).
+- The system support selection of study duration time in days and weeks with baseline time as time 0.
+- A number of performance improvements have been made for the SoA DOCX generation including a spinner when the system is processing the DOCX generation.
+
+### New Features
+
+- New functionality to define Sponsor CT Packages that enable a persistent reference to sponsor names and terms for a CDISC CT package.
+- New main menu item under Studies, Define Study, Data Specifications for managing Study Activity Instance selections and display of the Operational SoA.
+- New Neodash report for comparing two studies or two versions of a study.
+- New Neodash report listing available template parameters, values, syntax templates for all types as well as study usage.
+- New Neodash report that enable searching and listing audit trail information across data domains by users and datetime. This is a supplement to the view history forms within the application, as these is limited to a specific data domain.
+- New Neodash report enabling listing all data exchange data models.
+
+
+Solved Bugs
+============
+
+### API
+
+#### Miscellaneous
+- Clearing a StudyField get recorded in a non-standard way in audit trail
+- Error message for syntax instances
+- Front End sends multiple duplicated requests to API
+
+### General
+
+#### Both Studies and Libraries
+- Navigation paths are missing in Breadcrumbs
+
+### Library
+
+#### Code Lists -> CT Catalogues
+- 502 error appearing several times
+- Putting a filter for "Submission value" on the page "All" causes an error
+
+#### Code Lists -> CT Packages
+- Modify the API endpoint dealing with displaying the CT Packages with only the Codelists/Terms belonging to the package
+
+#### Code Lists -> Sponsor
+- Duplicate options visible while searching for a term in sponsor codelists
+
+#### Concepts
+- Menubar items in Study affected by menubar items in Library and vice versa
+
+#### Concepts -> Activities
+- Sorting on Activity Group and/or Subgroup table throws error
+
+#### Concepts -> Activities -> Activity Subgroups
+- Filtering on Status column for Activity Subgroups not showing all options
+- Sorting on Activity Group does not work
+- Sorting on tables is not carried over when viewing next 10 items in a table
+
+#### Concepts -> Activities -> Requested Activities
+- Possible to select non-approved activity placeholders in the syntax templates in studies
+
+#### Concepts -> CRFs -> CRF Templates
+- UI CRF building cannot reorder questions (Items) in an ItemGroup
+- UI CRF building does not retain previous data when adding new items
+- UI ODM export length error
+
+#### Concepts -> CRFs -> CRF Tree
+- The Reorder toggle in the CRF Tree tab is not working
+
+#### Concepts ->Activities
+- 'Retired' state of requested Study Activities are displayed
+
+#### List -> General Clinical Metadata
+- Page is still showing for General Clinical Metadata (Removal needed)
+
+#### Syntax Templates
+- If you hide a parameter in a sequence of parameters the sentence generation is incorrect (Applicable for all Syntax templates)
+- Library subsection name not aligned as 'Activity Instructions'
+
+#### Syntax Templates -> Criteria Templates -> Inclusion (Parent)
+- Searching for syntax templates extend the scope of the list
+- Study can select criteria in draft state
+
+#### Syntax Templates -> Endpoint Templates
+- Activity parameter shown default in Step 1 is not reflected in the Step 2 (Test template)
+
+#### Syntax templates
+- URL for all of the templates showing wrong if you are navigate to 'Parent' template
+
+#### Syntax templates -> Objective templates
+- 'NA' answer is not stored correctly for the Template index when updating
+
+### Studies
+
+#### Define Study
+- Missing sorting options (Ascending or Descending) under three dot menu of the column headers
+
+#### Define Study -> Registry Identifiers
+- Study Fields not cleaning the field value when selecting NA
+- Page for Registry Identifiers do not display content for a study subpart
+
+#### Define Study -> Study Activities
+- Adding activities from other studies - "Requested" activities cannot be added by other studies
+- 502 error appearing several times when adding new study activity
+- Adding activity placeholder should not be possible from other studies.
+- After changing the initial grouping of requested activity, then for this activity the activity group and subgroup are lost on study level
+- Copy all button is not working when copying activities from other studies
+- It must not be possible to copy a requested activity from one study to another
+- Non-Display of Activities seen in Study Activities tab
+- Search functionality comes with partly wrong results
+- Study Set-up user must be able to edit any 'user-defined' syntax template
+- Studies are not able to copy when adding Study Activities
+- Study set-up users cannot edit their own SoA footnotes due to limited access (i.e, Library.Write access)
+- Unable to add multiple activities from library due to an error stating one activity is already there
+- Unable to copy all footnotes from one study to another study
+- Batch edit study activities functionality is not working
+- Fix time-unit mismatch in the Detailed SoA
+- Adding footnotes from other studies has performance issue with displaying footnotes
+- Lacking of footnote SoA tag when first time edit and assign the footnote SoA to a study activity
+- SoA DocX performance issue
+
+#### Define Study -> Study Criteria -> Inclusion Criteria
+- Alignment of items in filter section
+- Filtering in add study criteria from template is not unique to the type of criteria
+- Filtering on in/exclusion criteria shows filtering options for both inclusion and exclusion criteria
+- Retired criteria templates are appearing when choosing from library syntax template
+- Template parameters starting letter appears with lower case (case sensitive)
+
+#### Define Study -> Study Purpose -> Study Endpoints
+- Copy all button is not working when copying activities from other studies
+- Edit endpoint form doesn't support multiple units as there's no field for entering unit separator
+- Study Endpoint not showing the separator dropdown menu when editing and adding multiple units
+- Unable to create Study endpoints resulted in throwing error
+
+#### Define Study -> Study Structure
+- "Existing visits Names and Timing" on Add Study Visit is not showing all previously entered visits or not showing any visits at all
+- The "Timeline preview" on the Study Visits tab is incorrectly limited to only show the amount of visits set to be shown by the "Rows per page" dropdown list at the bottom of the page
+
+#### Define Study -> Study Structure -> Study Visits
+- Could not delete Final treatment  ('End of treatment' ) as it is showing  Error: "NoneType" object has no attribute "visit_order"
+- Time line preview is not refreshing automatically after adding the visit
+- Adding visits manually defined visits in "Existing visits Names and timing window" not displayed in proper order
+- Error in calculation of negative study duration time
+
+#### Define Study -> Study Structure -> Study branches
+- Updates to number of Patients in arm is only impacting in branch after F5
+
+#### Define Study -> Study properties
+- History page not showing study intent type null value code
+
+#### Manage Study -> Study -> Study Core Attributes
+- Navigation path for Study core Attributes missing (Breadcrumb error)
+
+#### Manage Study -> Study -> Study Status
+- Possible to open release and lock form for study subpart
+
+#### Manage Study -> Study -> Study Subparts
+- Multiple issues found when adding new study (or) existing study as Study Subparts
+- Not possible to Edit a study subpart when logged in as a 'Study Setup User'
+- Option to edit and reorder study subparts should be disabled for a locked parent study
+- Possible to add a study subpart to a locked parent study
+
+#### Study List
+- Filtering on study list is not working correctly for study subparts
+- It must be possible to add a study without Study number
+- Not possible to see who has created a study
+- The lack of sorting order for Project IDs made it difficult to search for specific individual Project IDs
+
 
 ## V 0.8.1
 

@@ -30,9 +30,9 @@ def mock_msgraph_service_to_none(monkeypatch):
     "pattern",
     ["test", None, "t.sT", "te.*ser"],
 )
-def test_get_users(app_client, pattern):
+def test_get_users(api_client, pattern):
     params = {"search": pattern} if pattern else None
-    response = app_client.get("/integrations/ms-graph/users", params=params)
+    response = api_client.get("/integrations/ms-graph/users", params=params)
 
     assert_response_status_code(response, 200)
     assert_response_content_type(response)
@@ -54,9 +54,9 @@ def test_get_users(app_client, pattern):
     "pattern, expected_users",
     [(None, USERS)] + list(USERS_BY_PATTERN.items()),
 )
-def test_get_users_mocked(app_client, mocked_msgraph_service, pattern, expected_users):
+def test_get_users_mocked(api_client, mocked_msgraph_service, pattern, expected_users):
     params = {"search": pattern} if pattern else None
-    response = app_client.get("/integrations/ms-graph/users", params=params)
+    response = api_client.get("/integrations/ms-graph/users", params=params)
     assert_response_status_code(response, 200)
     assert_response_content_type(response)
     payload = response.json()
@@ -70,10 +70,10 @@ def test_get_users_mocked(app_client, mocked_msgraph_service, pattern, expected_
     ["test", None, "t.sT", "w.*Ter"],
 )
 def test_get_users_when_service_disabled(
-    app_client, mock_msgraph_service_to_none, pattern
+    api_client, mock_msgraph_service_to_none, pattern
 ):
     params = {"search": pattern} if pattern else None
-    response = app_client.get("/integrations/ms-graph/users", params=params)
+    response = api_client.get("/integrations/ms-graph/users", params=params)
     assert_response_status_code(response, 200)
     assert_response_content_type(response)
     payload = response.json()
@@ -125,9 +125,9 @@ def assert_users_well_ordered(payload):
         * 3,
     ],
 )
-def test_get_users_invalid_pattern_length(app_client, mocked_msgraph_service, pattern):
+def test_get_users_invalid_pattern_length(api_client, mocked_msgraph_service, pattern):
     params = {"search": pattern} if pattern else None
-    response = app_client.get("/integrations/ms-graph/users", params=params)
+    response = api_client.get("/integrations/ms-graph/users", params=params)
 
     assert_response_status_code(response, 422)
     assert_response_content_type(response)
@@ -153,9 +153,9 @@ def test_get_users_invalid_pattern_length(app_client, mocked_msgraph_service, pa
         "*foo",
     ],
 )
-def test_get_users_invalid_pattern_regex(app_client, mocked_msgraph_service, pattern):
+def test_get_users_invalid_pattern_regex(api_client, mocked_msgraph_service, pattern):
     params = {"search": pattern} if pattern else None
-    response = app_client.get("/integrations/ms-graph/users", params=params)
+    response = api_client.get("/integrations/ms-graph/users", params=params)
 
     assert_response_status_code(response, 400)
     assert_response_content_type(response)

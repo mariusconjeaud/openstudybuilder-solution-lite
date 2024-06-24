@@ -1,7 +1,7 @@
 """Data models router."""
 from typing import Any
 
-from fastapi import APIRouter, Depends, Path, Query
+from fastapi import APIRouter, Path, Query
 from pydantic.types import Json
 from starlette.requests import Request
 
@@ -9,7 +9,7 @@ from clinical_mdr_api import config
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.standard_data_models.data_model import DataModel
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.oauth import get_current_user_id, rbac
+from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.standard_data_models.data_model import DataModelService
@@ -75,9 +75,8 @@ def get_data_models(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    data_model_service = DataModelService(user=current_user_id)
+    data_model_service = DataModelService()
     results = data_model_service.get_all_items(
         sort_by=sort_by,
         page_number=page_number,
@@ -108,7 +107,6 @@ def get_data_models(
     },
 )
 def get_distinct_values_for_header(
-    current_user_id: str = Depends(get_current_user_id),
     field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
     search_string: str
     | None = Query("", description=_generic_descriptions.HEADER_SEARCH_STRING),
@@ -122,7 +120,7 @@ def get_distinct_values_for_header(
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
 ):
-    data_model_service = DataModelService(user=current_user_id)
+    data_model_service = DataModelService()
     return data_model_service.get_distinct_values_for_header(
         field_name=field_name,
         search_string=search_string,
@@ -155,8 +153,6 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_data_model(
-    uid: str = DataModelUID, current_user_id: str = Depends(get_current_user_id)
-):
-    data_model_service = DataModelService(user=current_user_id)
+def get_data_model(uid: str = DataModelUID):
+    data_model_service = DataModelService()
     return data_model_service.get_by_uid(uid=uid)

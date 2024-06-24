@@ -1,337 +1,416 @@
 <template>
-<div>
-  <n-n-table
+  <NNTable
+    ref="table"
     :headers="headers"
     :items="codelists"
-    :server-items-length="total"
-    :options.sync="options"
-    :page="currentCataloguePage"
+    :items-length="total"
+    :page="ctCataloguesStore.currentCataloguePage"
     export-object-label="Codelists"
     :export-data-url="columnDataResource"
     :export-data-url-params="exportUrlParams"
-    item-key="codelist_uid"
-    @update:page="storeCurrentPage"
-    dense
-    has-api
-    @filter="fetchCodelists"
+    item-value="codelist_uid"
+    density="compact"
     :column-data-resource="columnDataResource"
     :column-data-parameters="getPackageObject()"
     :library="library"
-    >
-    <template v-slot:actions="">
-      <slot name="extraActions"></slot>
+    :disable-filtering="!displayTableToolbar"
+    @filter="fetchCodelists"
+  >
+    <template #actions="">
+      <slot name="extraActions" />
       <v-btn
-        data-cy="add-sponsor-codelist"
         v-if="!readOnly"
-        fab
-        small
+        data-cy="add-sponsor-codelist"
+        size="small"
         color="primary"
-        @click.stop="showCreationForm = true"
         :title="$t('CodelistCreationForm.title')"
-        :disabled="!checkPermission($roles.LIBRARY_WRITE)"
-        >
-        <v-icon dark>
-          mdi-plus
-        </v-icon>
-      </v-btn>
+        :disabled="!accessGuard.checkPermission($roles.LIBRARY_WRITE)"
+        icon="mdi-plus"
+        @click.stop="showCreationForm = true"
+      />
     </template>
-    <template v-slot:afterFilter="">
+    <template #afterFilter="">
       <v-autocomplete
         v-model="selectedTerms"
+        v-model:search-input="search"
         :label="$t('CodelistTable.search_with_terms')"
-        :items="terms"
-        item-text="sponsor_preferred_name"
+        :items="termsStore.terms"
+        item-title="sponsor_preferred_name"
         item-value="term_uid"
-        dense
+        density="compact"
         class="mt-5 max-width-300"
         clearable
         return-object
-        :search-input.sync="search"
         multiple
-        :loading="loading">
-        <template v-slot:selection="{index}">
+        :loading="loading"
+        hide-no-data
+        @update:search="updateTerms"
+      >
+        <template #selection="{ index }">
           <div v-if="index === 0">
-            <span class="items-font-size">{{ selectedTerms[0].sponsor_preferred_name.substring(0, 12) }}</span>
+            <span class="items-font-size">{{
+              selectedTerms[0].sponsor_preferred_name.substring(0, 12)
+            }}</span>
           </div>
-          <span
-            v-if="index === 1"
-            class="grey--text text-caption mr-1"
-          >
-            (+{{ selectedTerms.length -1 }})
+          <span v-if="index === 1" class="text-grey text-caption mr-1">
+            (+{{ selectedTerms.length - 1 }})
           </span>
         </template>
       </v-autocomplete>
       <v-select
-        :items="operators"
         v-model="termsFilterOperator"
+        :items="operators"
         :label="$t('_global.operator')"
         class="mt-5 max-width-100"
-        />
+        density="compact"
+      />
     </template>
-    <template v-slot:item.actions="{ item }">
-      <actions-menu :actions="actions" :item="item" />
+    <template #beforeToolbar>
+      <slot name="beforeToolbar" />
     </template>
-    <template v-slot:item.name.template_parameter="{ item }">
-      {{ item.name.template_parameter|yesno }}
+    <template #[`item.actions`]="{ item }">
+      <ActionsMenu :actions="actions" :item="item" />
     </template>
-    <template v-slot:item.name.status="{ item }">
-      <status-chip :status="item.name.status" />
+    <template #[`item.name.template_parameter`]="{ item }">
+      {{ $filters.yesno(item.name.template_parameter) }}
     </template>
-    <template v-slot:item.name.start_date="{ item }">
-      {{ item.name.start_date | date }}
+    <template #[`item.name.status`]="{ item }">
+      <StatusChip :status="item.name.status" />
     </template>
-    <template v-slot:item.attributes.extensible="{ item }">
-      {{ item.attributes.extensible|yesno }}
+    <template #[`item.name.start_date`]="{ item }">
+      {{ $filters.date(item.name.start_date) }}
     </template>
-    <template v-slot:item.attributes.status="{ item }">
-      <status-chip :status="item.attributes.status" />
+    <template #[`item.attributes.extensible`]="{ item }">
+      {{ $filters.yesno(item.attributes.extensible) }}
     </template>
-    <template v-slot:item.attributes.start_date="{ item }">
-      {{ item.attributes.start_date | date }}
+    <template #[`item.attributes.status`]="{ item }">
+      <StatusChip :status="item.attributes.status" />
     </template>
-  </n-n-table>
+    <template #[`item.attributes.start_date`]="{ item }">
+      {{ $filters.date(item.attributes.start_date) }}
+    </template>
+  </NNTable>
   <v-dialog
     v-if="!readOnly"
     v-model="showCreationForm"
     persistent
     max-width="1200px"
-    >
-    <codelist-creation-form
-      :catalogue="catalogue"
+  >
+    <CodelistCreationForm
       @close="showCreationForm = false"
       @created="goToCodelist"
-      />
+    />
   </v-dialog>
-  <v-dialog v-model="showSponsorValuesHistory"
-            @keydown.esc="closeHistory"
-            persistent
-            :max-width="globalHistoryDialogMaxWidth"
-            :fullscreen="globalHistoryDialogFullscreen"
+  <v-dialog
+    v-model="showSponsorValuesHistory"
+    persistent
+    :fullscreen="$globals.historyDialogFullscreen"
+    @keydown.esc="closeHistory"
   >
-    <history-table
+    <HistoryTable
       :title="historyTitle"
-      @close="closeHistory"
       :headers="historyHeaders"
       :items="historyItems"
-      />
+      @close="closeHistory"
+    />
   </v-dialog>
-</div>
 </template>
 
-<script>
-import { mapGetters } from 'vuex'
-import { bus } from '@/main'
+<script setup>
+import { computed, inject, ref, watch } from 'vue'
+import { useCtCataloguesStore } from '@/stores/library-ctcatalogues'
+import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 import controlledTerminology from '@/api/controlledTerminology'
-import ActionsMenu from '@/components/tools/ActionsMenu'
-import CodelistCreationForm from '@/components/library/CodelistCreationForm'
+import ActionsMenu from '@/components/tools/ActionsMenu.vue'
+import CodelistCreationForm from '@/components/library/CodelistCreationForm.vue'
 import dataFormating from '@/utils/dataFormating'
-import HistoryTable from '@/components/tools/HistoryTable'
-import NNTable from '@/components/tools/NNTable'
-import StatusChip from '@/components/tools/StatusChip'
+import HistoryTable from '@/components/tools/HistoryTable.vue'
+import NNTable from '@/components/tools/NNTable.vue'
+import StatusChip from '@/components/tools/StatusChip.vue'
 import filteringParameters from '@/utils/filteringParameters'
-import { accessGuard } from '@/mixins/accessRoleVerifier'
+import { useAccessGuard } from '@/composables/accessGuard'
+import { useTermsStore } from '@/stores/library-terms'
+import _debounce from 'lodash/debounce'
 
-export default {
-  mixins: [accessGuard],
-  props: {
-    catalogue: {
-      type: String,
-      required: false
-    },
-    package: {
-      type: String,
-      required: false
-    },
-    readOnly: {
-      type: Boolean,
-      default: false
-    },
-    terms: {
-      type: Array,
-      default: () => []
-    },
-    loading: {
-      type: Boolean,
-      default: false
-    },
-    columnDataResource: String,
-    library: String
+const eventBusEmit = inject('eventBusEmit')
+const roles = inject('roles')
+const props = defineProps({
+  catalogue: {
+    type: String,
+    default: null,
+    required: false,
   },
-  components: {
-    ActionsMenu,
-    CodelistCreationForm,
-    HistoryTable,
-    NNTable,
-    StatusChip
+  package: {
+    type: Object,
+    default: null,
+    required: false,
   },
-  computed: {
-    ...mapGetters({
-      currentCataloguePage: 'ctCatalogues/currentCataloguePage'
-    }),
-    historyTitle () {
-      if (this.selectedCodelist) {
-        return this.$t('CodelistTable.history_title', { codelist: this.selectedCodelist.codelist_uid })
-      }
-      return ''
-    },
-    exportUrlParams () {
-      const params = {}
-      if (this.library) {
-        params.library = this.library
-      }
-      if (this.package) {
-        params.package = this.package
-      }
-      if (this.catalogue && this.catalogue !== 'All') {
-        params.catalogue_name = this.catalogue
-      }
-      return params
+  readOnly: {
+    type: Boolean,
+    default: false,
+  },
+  columnDataResource: {
+    type: String,
+    default: null,
+  },
+  library: {
+    type: String,
+    default: null,
+  },
+  displayRowActions: {
+    type: Boolean,
+    default: true,
+  },
+  displayTableToolbar: {
+    type: Boolean,
+    default: true,
+  },
+  sponsor: {
+    type: Boolean,
+    default: false,
+  },
+})
+const emit = defineEmits(['openCodelistTerms'])
+const ctCataloguesStore = useCtCataloguesStore()
+const termsStore = useTermsStore()
+const accessGuard = useAccessGuard()
+const { t } = useI18n()
+const router = useRouter()
+
+const codelists = ref([])
+const headers = ref([
+  { title: '', key: 'actions', width: '5%', sortable: false },
+  { title: t('_global.library'), key: 'library_name' },
+  {
+    title: t('CtCatalogueTable.sponsor_pref_name'),
+    key: 'name.name',
+    width: '15%',
+  },
+  {
+    title: t('CtCatalogueTable.template_parameter'),
+    key: 'name.template_parameter',
+  },
+  { title: t('CtCatalogueTable.cd_status'), key: 'name.status' },
+  { title: t('CtCatalogueTable.modified_name'), key: 'name.start_date' },
+  { title: t('CtCatalogueTable.concept_id'), key: 'codelist_uid' },
+  {
+    title: t('CtCatalogueTable.submission_value'),
+    key: 'attributes.submission_value',
+  },
+  { title: t('CtCatalogueTable.cd_name'), key: 'attributes.name' },
+  {
+    title: t('CtCatalogueTable.nci_pref_name'),
+    key: 'attributes.nci_preferred_name',
+  },
+  { title: t('CtCatalogueTable.extensible'), key: 'attributes.extensible' },
+  { title: t('CtCatalogueTable.attr_status'), key: 'attributes.status' },
+  {
+    title: t('CtCatalogueTable.modified_attributes'),
+    key: 'attributes.start_date',
+  },
+])
+
+const historyHeaders = [
+  { title: t('_global.library'), key: 'library_name' },
+  { title: t('_global.name'), key: 'name' },
+  {
+    title: t('CtCatalogueTable.template_parameter'),
+    key: 'template_parameter',
+  },
+  { title: t('HistoryTable.change_description'), key: 'change_description' },
+  { title: t('_global.status'), key: 'status' },
+  { title: t('_global.version'), key: 'version' },
+]
+
+const historyItems = ref([])
+const loading = ref(false)
+const showCreationForm = ref(false)
+const showSponsorValuesHistory = ref(false)
+const selectedCodelist = ref(null)
+const total = ref(0)
+const savedFilters = ref('')
+const selectedTerms = ref([])
+const search = ref('')
+const operators = ['or', 'and']
+const termsFilterOperator = ref('or')
+const table = ref()
+
+const historyTitle = computed(() => {
+  if (selectedCodelist.value) {
+    return t('CodelistTable.history_title', {
+      codelist: selectedCodelist.value.codelist_uid,
+    })
+  }
+  return ''
+})
+const exportUrlParams = computed(() => {
+  const params = {}
+  if (props.library) {
+    params.library = props.library
+  }
+  if (props.package) {
+    params.package = props.package.name
+  }
+  if (props.catalogue && props.catalogue !== 'All') {
+    params.catalogue_name = props.catalogue
+  }
+  return params
+})
+
+watch(selectedTerms, () => {
+  fetchCodelists()
+})
+watch(termsFilterOperator, () => {
+  fetchCodelists()
+})
+
+function getPackageObject() {
+  const result = {}
+  if (props.catalogue && props.catalogue !== 'All') {
+    result.catalogue_name = props.catalogue
+  }
+  if (props.package) {
+    result.package = props.package.name
+  }
+  return result
+}
+
+function fetchCodelists(filters, options, filtersUpdated) {
+  if (!filters && savedFilters.value) {
+    filters = savedFilters.value
+  }
+  const params = filteringParameters.prepareParameters(
+    options,
+    filters,
+    filtersUpdated
+  )
+  if (
+    params.page_number &&
+    params.page_number !== ctCataloguesStore.currentCataloguePage
+  ) {
+    ctCataloguesStore.currentCataloguePage = params.page_number
+  }
+  savedFilters.value = filters
+  params.library = props.library
+  if (props.package) {
+    params.package = props.package.name
+    if (props.sponsor) {
+      params.is_sponsor = true
     }
-  },
-  data () {
-    return {
-      actions: [
-        {
-          label: this.$t('_global.edit'),
-          icon: 'mdi-pencil-outline',
-          iconColor: 'primary',
-          condition: (item) => !this.readOnly,
-          accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.openCodelistDetail
-        },
-        {
-          label: this.$t('CodelistTable.show_terms'),
-          icon: 'mdi-dots-horizontal-circle-outline',
-          click: this.openCodelistTerms
-        },
-        {
-          label: this.$t('_global.history'),
-          icon: 'mdi-history',
-          click: this.openCodelistHistory
-        }
-      ],
-      codelists: [],
-      headers: [
-        { text: '', value: 'actions', width: '5%' },
-        { text: this.$t('_global.library'), value: 'library_name' },
-        { text: this.$t('CtCatalogueTable.sponsor_pref_name'), value: 'name.name', width: '15%' },
-        { text: this.$t('CtCatalogueTable.template_parameter'), value: 'name.template_parameter' },
-        { text: this.$t('CtCatalogueTable.cd_status'), value: 'name.status' },
-        { text: this.$t('CtCatalogueTable.modified_name'), value: 'name.start_date' },
-        { text: this.$t('CtCatalogueTable.concept_id'), value: 'codelist_uid' },
-        { text: this.$t('CtCatalogueTable.submission_value'), value: 'attributes.submission_value' },
-        { text: this.$t('CtCatalogueTable.cd_name'), value: 'attributes.name' },
-        { text: this.$t('CtCatalogueTable.nci_pref_name'), value: 'attributes.nci_preferred_name' },
-        { text: this.$t('CtCatalogueTable.extensible'), value: 'attributes.extensible' },
-        { text: this.$t('CtCatalogueTable.attr_status'), value: 'attributes.status' },
-        { text: this.$t('CtCatalogueTable.modified_attributes'), value: 'attributes.start_date' }
-      ],
-      historyHeaders: [
-        { text: this.$t('_global.library'), value: 'library_name' },
-        { text: this.$t('_global.name'), value: 'name' },
-        { text: this.$t('CtCatalogueTable.template_parameter'), value: 'template_parameter' },
-        { text: this.$t('HistoryTable.change_description'), value: 'change_description' },
-        { text: this.$t('_global.status'), value: 'status' },
-        { text: this.$t('_global.version'), value: 'version' }
-      ],
-      historyItems: [],
-      options: {},
-      showCreationForm: false,
-      showSponsorValuesHistory: false,
-      selectedCodelist: null,
-      total: 0,
-      filters: '',
-      selectedTerms: [],
-      search: '',
-      operators: ['or', 'and'],
-      termsFilterOperator: 'or'
+  } else if (props.catalogue && props.catalogue !== 'All') {
+    params.catalogue_name = props.catalogue
+  }
+  if (selectedTerms.value.length > 0) {
+    const term_uids = []
+    for (const term of selectedTerms.value) {
+      for (const uid of term.term_uids) {
+        term_uids.push(uid)
+      }
     }
-  },
-  methods: {
-    getPackageObject () {
-      return { catalogue_name: this.catalogue, package: this.package }
+    params.term_filter = JSON.stringify({
+      term_uids,
+      operator: termsFilterOperator.value,
+    })
+  }
+  controlledTerminology.getCodelists(params).then((resp) => {
+    codelists.value = resp.data.items
+    total.value = resp.data.total
+  })
+}
+
+function goToCodelist(codelist) {
+  router.push({
+    name: 'CodeListDetail',
+    params: { codelist_id: codelist.codelist_uid },
+  })
+  eventBusEmit('notification', { msg: t('CodelistCreationForm.add_success') })
+}
+
+function openCodelistDetail(codelist) {
+  router.push({
+    name: 'CodeListDetail',
+    params: {
+      catalogue_name: props.catalogue,
+      codelist_id: codelist.codelist_uid,
     },
-    fetchCodelists (filters, sort, filtersUpdated) {
-      if (!filters && this.filters) {
-        filters = this.filters
-      }
-      const params = filteringParameters.prepareParameters(
-        this.options, filters, sort, filtersUpdated)
-      this.filters = filters
-      params.library = this.library
-      if (this.package) {
-        params.package = this.package
-      } else if (this.catalogue && this.catalogue !== 'All') {
-        params.catalogue_name = this.catalogue
-      }
-      if (this.selectedTerms.length > 0) {
-        params.term_filter = {
-          term_uids: this.selectedTerms.map(term => term.term_uid),
-          operator: this.termsFilterOperator
-        }
-      }
-      controlledTerminology.getCodelists(params).then(resp => {
-        this.codelists = resp.data.items
-        this.total = resp.data.total
-      })
-    },
-    goToCodelist (codelist) {
-      this.$router.push({ name: 'CodeListDetail', params: { codelist_id: codelist.codelist_uid } })
-      bus.$emit('notification', { msg: this.$t('CodelistCreationForm.add_success') })
-    },
-    openCodelistDetail (codelist) {
-      this.$router.push({ name: 'CodeListDetail', params: { catalogue_name: this.catalogue, codelist_id: codelist.codelist_uid } })
-    },
-    openCodelistTerms (codelist) {
-      const params = { codelist }
-      if (this.catalogue) {
-        params.catalogueName = this.catalogue
-      }
-      if (this.package) {
-        params.packageName = this.package
-      }
-      this.$emit('openCodelistTerms', params)
-    },
-    async openCodelistHistory (codelist) {
-      this.selectedCodelist = codelist
-      const resp = await controlledTerminology.getCodelistNamesVersions(codelist.codelist_uid)
-      this.historyItems = resp.data
-      for (const item of this.historyItems) {
-        if (item.template_parameter !== undefined) {
-          item.template_parameter = dataFormating.yesno(item.template_parameter)
-        }
-      }
-      this.showSponsorValuesHistory = true
-    },
-    storeCurrentPage (page) {
-      this.$store.commit('ctCatalogues/SET_CURRENT_CATALOGUE_PAGE', page)
-    },
-    closeHistory () {
-      this.showSponsorValuesHistory = false
-    }
-  },
-  watch: {
-    options: {
-      handler () {
-        this.fetchCodelists()
-      },
-      deep: true
-    },
-    selectedTerms () {
-      this.fetchCodelists()
-    },
-    termsFilterOperator () {
-      this.fetchCodelists()
-    },
-    package (newValue, oldValue) {
-      if (newValue !== oldValue) {
-        this.codelists = []
-        this.fetchCodelists()
-      }
+  })
+}
+
+function openCodelistTerms(codelist) {
+  const params = { codelist }
+  if (props.catalogue) {
+    params.catalogueName = props.catalogue
+  }
+  if (props.package) {
+    params.packageName = props.package.name
+  }
+  emit('openCodelistTerms', params)
+}
+
+async function openCodelistHistory(codelist) {
+  selectedCodelist.value = codelist
+  const resp = await controlledTerminology.getCodelistNamesVersions(
+    codelist.codelist_uid
+  )
+  historyItems.value = resp.data
+  for (const item of historyItems.value) {
+    if (item.template_parameter !== undefined) {
+      item.template_parameter = dataFormating.yesno(item.template_parameter)
     }
   }
+  showSponsorValuesHistory.value = true
 }
+
+function closeHistory() {
+  showSponsorValuesHistory.value = false
+}
+
+const updateTerms = _debounce(function (value) {
+  termsStore.reset()
+  if (value) {
+    loading.value = true
+    const filters = { '*': { v: [value] } }
+    termsStore.fetchTerms(filters).then(() => {
+      loading.value = false
+    })
+  }
+}, 100)
+
+function refresh() {
+  table.value.filterTable()
+}
+
+const actions = [
+  {
+    label: t('_global.edit'),
+    icon: 'mdi-pencil-outline',
+    iconColor: 'primary',
+    condition: () => !props.readOnly,
+    accessRole: roles.LIBRARY_WRITE,
+    click: openCodelistDetail,
+  },
+  {
+    label: t('CodelistTable.show_terms'),
+    icon: 'mdi-dots-horizontal-circle-outline',
+    click: openCodelistTerms,
+  },
+  {
+    label: t('_global.history'),
+    icon: 'mdi-history',
+    click: openCodelistHistory,
+  },
+]
+
+if (!props.displayRowActions) {
+  headers.value.splice(0, 1)
+}
+
+defineExpose({
+  refresh,
+})
 </script>
+
 <style scoped>
 .max-width-100 {
   max-width: 100px;

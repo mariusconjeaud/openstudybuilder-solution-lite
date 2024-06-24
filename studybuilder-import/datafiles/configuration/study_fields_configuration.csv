@@ -3,6 +3,7 @@ text,study_number,,,,,id_metadata,study_number,False
 text,subpart_id,,,,,id_metadata,subpart_id,False
 text,study_id_prefix,,,,,id_metadata,study_id_prefix,False
 text,study_acronym,,,,,id_metadata,study_acronym,False
+text,study_subpart_acronym,,,,,id_metadata,study_subpart_acronym,False
 text,description,,,,,id_metadata,description,False
 registry,ct_gov_id,ct_gov_id_null_value_code,,,,id_metadata.registry_identifiers,ct_gov_id,False
 text,ct_gov_id_null_value_code,,,,,id_metadata.registry_identifiers,ct_gov_id_null_value_code,False

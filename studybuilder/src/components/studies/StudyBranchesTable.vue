@@ -1,176 +1,165 @@
 <template>
-<div>
-  <n-n-table
-    @filter="fetchStudyBranchArms"
-    :headers="headers"
-    item-key="branch_arm_uid"
-    :server-items-length="total"
-    :options.sync="options"
-    :items="branchArms"
-    :no-data-text="arms.length === 0 ? $t('StudyBranchArms.no_data') : undefined"
-    :export-data-url="exportDataUrl"
-    export-object-label="StudyBranches"
-    :history-data-fetcher="fetchBranchArmsHistory"
-    :history-title="$t('StudyBranchArms.global_history_title')"
-    disable-filtering
-    >
-    <template v-slot:afterSwitches>
-      <div :title="$t('NNTableTooltips.reorder_content')">
-        <v-switch
-          v-model="sortMode"
-          :label="$t('NNTable.reorder_content')"
-          hide-details
-          class="mr-6"
-          />
-      </div>
-    </template>
-    <template v-slot:actions="">
-      <v-btn
-        fab
-        small
-        color="primary"
-        @click.stop="addBranchArm"
-        :title="$t('StudyBranchArms.add_branch')"
-        data-cy="add-study-branch-arm"
-        :disabled="!checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
-        >
-        <v-icon dark>
-          mdi-plus
-        </v-icon>
-      </v-btn>
-    </template>
-    <template v-slot:body="props" v-if="sortMode">
-      <draggable
-        :list="props.items"
-        tag="tbody"
-        @change="onChange($event)"
-        >
-        <tr
-          v-for="(item, index) in props.items"
-          :key="index"
-          >
-          <td width="3%">
-            <actions-menu :actions="actions" :item="item"/>
-          </td>
-          <td width="7%">
-            <v-icon
-              small
-              class="page__grab-icon">
-              mdi-sort
-            </v-icon>
-            {{ item.order }}
-          </td>
-          <td width="15%">{{ item.arm_root.name }}</td>
-          <td width="15%">{{ item.name }}</td>
-          <td width="15%">{{ item.short_name }}</td>
-          <td width="10%">{{ item.randomization_group }}</td>
-          <td width="10%">{{ item.code }}</td>
-          <td width="5%">{{ item.number_of_subjects }}</td>
-          <td width="10%">{{ item.description }}</td>
-          <td width="10%"><v-chip :color="item.colour_code" small /></td>
-          <td width="10%">{{ item.start_date | date }}</td>
-          <td width="10%">{{ item.user_initials }}</td>
-        </tr>
-      </draggable>
-    </template>
-    <template v-slot:item.name="{ item }">
-      <router-link :to="{ name: 'StudyBranchArmOverview', params: { study_id: selectedStudy.uid, id: item.branch_arm_uid, root_tab: 'branches' } }">
-        {{ item.name }}
-      </router-link>
-    </template>
-    <template v-slot:item.arm_root.name="{ item }">
-      <router-link :to="{ name: 'StudyArmOverview', params: { study_id: selectedStudy.uid, id: item.arm_root.arm_uid, root_tab: 'branches' } }">
-        {{ item.arm_root.name }}
-      </router-link>
-    </template>
-    <template v-slot:item.colour_code="{ item }">
-      <v-chip :data-cy="'color='+item.colour_code" :color="item.colour_code" small />
-    </template>
-    <template v-slot:item.start_date="{ item }">
-      {{ item.start_date|date }}
-    </template>
-    <template v-slot:item.actions="{ item }">
-      <actions-menu :actions="actions" :item="item" />
-    </template>
-  </n-n-table>
-  <study-branches-form
-    :open="showBranchArmsForm"
-    @close="closeForm"
-    :editedBranchArm="branchArmToEdit"
-    :arms="arms"/>
-  <v-dialog
-    v-model="showBranchHistory"
-    @keydown.esc="closeBranchHistory"
-    persistent
-    :max-width="globalHistoryDialogMaxWidth"
-    :fullscreen="globalHistoryDialogFullscreen"
-    >
-    <history-table
-      :title="studyBranchHistoryTitle"
-      @close="closeBranchHistory"
+  <div>
+    <NNTable
       :headers="headers"
-      :items="branchHistoryItems"
+      item-value="branch_arm_uid"
+      :items-length="total"
+      :items="branchArms"
+      :no-data-text="
+        arms.length === 0 ? $t('StudyBranchArms.no_data') : undefined
+      "
+      :export-data-url="exportDataUrl"
+      export-object-label="StudyBranches"
+      :history-data-fetcher="fetchBranchArmsHistory"
+      :history-title="$t('StudyBranchArms.global_history_title')"
+      disable-filtering
+      @filter="fetchStudyBranchArms"
+    >
+      <template #actions="">
+        <v-btn
+          size="small"
+          color="primary"
+          :title="$t('StudyBranchArms.add_branch')"
+          data-cy="add-study-branch-arm"
+          :disabled="
+            !checkPermission($roles.STUDY_WRITE) ||
+            selectedStudyVersion !== null
+          "
+          icon="mdi-plus"
+          @click.stop="addBranchArm"
+        />
+      </template>
+      <template #[`item.name`]="{ item }">
+        <router-link
+          :to="{
+            name: 'StudyBranchArmOverview',
+            params: { study_id: selectedStudy.uid, id: item.branch_arm_uid },
+          }"
+        >
+          {{ item.name }}
+        </router-link>
+      </template>
+      <template #[`item.arm_root.name`]="{ item }">
+        <router-link
+          :to="{
+            name: 'StudyArmOverview',
+            params: { study_id: selectedStudy.uid, id: item.arm_root.arm_uid },
+          }"
+        >
+          {{ item.arm_root.name }}
+        </router-link>
+      </template>
+      <template #[`item.colour_code`]="{ item }">
+        <v-chip
+          :data-cy="'color=' + item.colour_code"
+          :color="item.colour_code"
+          size="small"
+          variant="flat"
+        >
+          <span>&nbsp;</span>
+          <span>&nbsp;</span>
+        </v-chip>
+      </template>
+      <template #[`item.start_date`]="{ item }">
+        {{ $filters.date(item.start_date) }}
+      </template>
+      <template #[`item.actions`]="{ item }">
+        <ActionsMenu :actions="actions" :item="item" />
+      </template>
+    </NNTable>
+    <StudyBranchesForm
+      :open="showBranchArmsForm"
+      :edited-branch-arm="branchArmToEdit"
+      :arms="arms"
+      @close="closeForm"
+    />
+    <v-dialog
+      v-model="showBranchHistory"
+      persistent
+      :fullscreen="$globals.historyDialogFullscreen"
+      @keydown.esc="closeBranchHistory"
+    >
+      <HistoryTable
+        :title="studyBranchHistoryTitle"
+        :headers="headers"
+        :items="branchHistoryItems"
+        @close="closeBranchHistory"
       />
-  </v-dialog>
-  <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
-</div>
+    </v-dialog>
+    <ConfirmDialog ref="confirm" :text-cols="6" :action-cols="5" />
+    <SelectionOrderUpdateForm
+      v-if="selectedBranch"
+      ref="orderForm"
+      :initial-value="selectedBranch.order"
+      :open="showOrderForm"
+      @close="closeOrderForm"
+      @submit="submitOrder"
+    />
+  </div>
 </template>
 
 <script>
-import NNTable from '@/components/tools/NNTable'
+import NNTable from '@/components/tools/NNTable.vue'
 import arms from '@/api/arms'
-import StudyBranchesForm from '@/components/studies/StudyBranchesForm'
-import { mapGetters } from 'vuex'
-import ActionsMenu from '@/components/tools/ActionsMenu'
-import ConfirmDialog from '@/components/tools/ConfirmDialog'
-import { bus } from '@/main'
-import draggable from 'vuedraggable'
+import StudyBranchesForm from '@/components/studies/StudyBranchesForm.vue'
+import ActionsMenu from '@/components/tools/ActionsMenu.vue'
+import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
 import studyEpochs from '@/api/studyEpochs'
-import { accessGuard } from '@/mixins/accessRoleVerifier'
-import HistoryTable from '@/components/tools/HistoryTable'
+import { useAccessGuard } from '@/composables/accessGuard'
+import HistoryTable from '@/components/tools/HistoryTable.vue'
+import { useStudiesGeneralStore } from '@/stores/studies-general'
+import filteringParameters from '@/utils/filteringParameters'
+import SelectionOrderUpdateForm from '@/components/studies/SelectionOrderUpdateForm.vue'
 
 export default {
-  mixins: [accessGuard],
   components: {
     NNTable,
     StudyBranchesForm,
     ActionsMenu,
     ConfirmDialog,
     HistoryTable,
-    draggable
+    SelectionOrderUpdateForm,
   },
-  computed: {
-    ...mapGetters({
-      selectedStudy: 'studiesGeneral/selectedStudy',
-      selectedStudyVersion: 'studiesGeneral/selectedStudyVersion'
-    }),
-    exportDataUrl () {
-      return `studies/${this.selectedStudy.uid}/study-branch-arms`
+  inject: ['eventBusEmit'],
+  props: {
+    refresh: {
+      type: Number,
+      default: 0,
     },
-    studyBranchHistoryTitle () {
-      if (this.selectedBranch) {
-        return this.$t(
-          'StudyBranchArms.study_branch_history_title',
-          { branchUid: this.selectedBranch.branch_arm_uid })
-      }
-      return ''
+  },
+  setup() {
+    const studiesGeneralStore = useStudiesGeneralStore()
+    return {
+      ...useAccessGuard(),
+      selectedStudy: studiesGeneralStore.selectedStudy,
+      selectedStudyVersion: studiesGeneralStore.selectedStudyVersion,
     }
   },
-  data () {
+  data() {
     return {
       headers: [
-        { text: '', value: 'actions', width: '5%' },
-        { text: '#', value: 'order', width: '5%' },
-        { text: this.$t('StudyBranchArms.arm_name'), value: 'arm_root.name', historyHeader: 'arm_root_uid' },
-        { text: this.$t('StudyBranchArms.name'), value: 'name' },
-        { text: this.$t('StudyBranchArms.short_name'), value: 'short_name' },
-        { text: this.$t('StudyBranchArms.randomisation_group'), value: 'randomization_group' },
-        { text: this.$t('StudyBranchArms.code'), value: 'code' },
-        { text: this.$t('StudyBranchArms.number_of_subjects'), value: 'number_of_subjects' },
-        { text: this.$t('StudyBranchArms.description'), value: 'description' },
-        { text: this.$t('StudyBranchArms.colour'), value: 'colour_code' },
-        { text: this.$t('_global.modified'), value: 'start_date' },
-        { text: this.$t('_global.modified_by'), value: 'user_initials' }
+        { title: '', key: 'actions', width: '5%' },
+        { title: '#', key: 'order', width: '5%' },
+        {
+          title: this.$t('StudyBranchArms.arm_name'),
+          key: 'arm_root.name',
+          historyHeader: 'arm_root_uid',
+        },
+        { title: this.$t('StudyBranchArms.name'), key: 'name' },
+        { title: this.$t('StudyBranchArms.short_name'), key: 'short_name' },
+        {
+          title: this.$t('StudyBranchArms.randomisation_group'),
+          key: 'randomization_group',
+        },
+        { title: this.$t('StudyBranchArms.code'), key: 'code' },
+        {
+          title: this.$t('StudyBranchArms.number_of_subjects'),
+          key: 'number_of_subjects',
+        },
+        { title: this.$t('StudyBranchArms.description'), key: 'description' },
+        { title: this.$t('StudyBranchArms.colour'), key: 'colour_code' },
+        { title: this.$t('_global.modified'), key: 'start_date' },
+        { title: this.$t('_global.modified_by'), key: 'user_initials' },
       ],
       actions: [
         {
@@ -179,7 +168,15 @@ export default {
           iconColor: 'primary',
           condition: () => !this.selectedStudyVersion,
           click: this.editBranchArm,
-          accessRole: this.$roles.STUDY_WRITE
+          accessRole: this.$roles.STUDY_WRITE,
+        },
+        {
+          label: this.$t('_global.change_order'),
+          icon: 'mdi-pencil-outline',
+          iconColor: 'primary',
+          condition: () => !this.selectedStudyVersion,
+          click: this.changeOrder,
+          accessRole: this.$roles.STUDY_WRITE,
         },
         {
           label: this.$t('_global.delete'),
@@ -187,130 +184,179 @@ export default {
           iconColor: 'error',
           condition: () => !this.selectedStudyVersion,
           click: this.deleteBranchArm,
-          accessRole: this.$roles.STUDY_WRITE
+          accessRole: this.$roles.STUDY_WRITE,
         },
         {
           label: this.$t('_global.history'),
           icon: 'mdi-history',
-          click: this.openBranchHistory
-        }
+          click: this.openBranchHistory,
+        },
       ],
-      options: {},
       total: 0,
       arms: [],
       showBranchArmsForm: false,
       branchArmToEdit: {},
       branchArms: [],
-      sortMode: false,
       showBranchHistory: false,
+      showOrderForm: false,
       branchHistoryItems: [],
       selectedBranch: null,
-      showStudyBranchesHistory: false
+      showStudyBranchesHistory: false,
     }
   },
-  mounted () {
+  computed: {
+    exportDataUrl() {
+      return `studies/${this.selectedStudy.uid}/study-branch-arms`
+    },
+    studyBranchHistoryTitle() {
+      if (this.selectedBranch) {
+        return this.$t('StudyBranchArms.study_branch_history_title', {
+          branchUid: this.selectedBranch.branch_arm_uid,
+        })
+      }
+      return ''
+    },
+  },
+  watch: {
+    refresh() {
+      this.fetchStudyArms()
+    },
+  },
+  mounted() {
     this.fetchStudyArms()
   },
   methods: {
-    async fetchBranchArmsHistory () {
-      const resp = await studyEpochs.getStudyBranchesVersions(this.selectedStudy.uid)
+    async fetchBranchArmsHistory() {
+      const resp = await studyEpochs.getStudyBranchesVersions(
+        this.selectedStudy.uid
+      )
       return resp.data
     },
-    fetchStudyArms () {
+    fetchStudyArms() {
       const params = {
         total_count: true,
         page_size: 0,
-        study_value_version: this.selectedStudyVersion
       }
-      arms.getAllForStudy(this.selectedStudy.uid, { params }).then(resp => {
+      arms.getAllForStudy(this.selectedStudy.uid, { params }).then((resp) => {
         this.arms = resp.data.items
       })
     },
-    fetchStudyBranchArms () {
-      const params = {
-        page_number: (this.options.page),
-        page_size: this.options.itemsPerPage,
-        total_count: true,
-        study_value_version: this.selectedStudyVersion
-      }
-      arms.getAllBranchArms(this.selectedStudy.uid, params).then(resp => {
+    fetchStudyBranchArms(filters, options, filtersUpdated) {
+      const params = filteringParameters.prepareParameters(
+        options,
+        filters,
+        filtersUpdated
+      )
+      params.study_uid = this.selectedStudy.uid
+      arms.getAllBranchArms(this.selectedStudy.uid, params).then((resp) => {
         this.branchArms = resp.data
-        this.total = resp.data.total
+        this.total = resp.data.length
       })
     },
-    closeForm () {
+    closeForm() {
       this.branchArmToEdit = {}
       this.showBranchArmsForm = false
       this.fetchStudyBranchArms()
     },
-    editBranchArm (item) {
+    editBranchArm(item) {
       this.branchArmToEdit = item
       this.showBranchArmsForm = true
     },
-    async openBranchHistory (branch) {
+    async openBranchHistory(branch) {
       this.selectedBranch = branch
-      const resp = await studyEpochs.getStudyBranchVersions(this.selectedStudy.uid, branch.branch_arm_uid)
+      const resp = await studyEpochs.getStudyBranchVersions(
+        this.selectedStudy.uid,
+        branch.branch_arm_uid
+      )
       this.branchHistoryItems = resp.data
       this.showBranchHistory = true
     },
-    closeBranchHistory () {
+    closeBranchHistory() {
       this.showBranchHistory = false
       this.selectedBranch = null
     },
-    async deleteBranchArm (item) {
+    async deleteBranchArm(item) {
       let cellsInBranch = 0
-      const params = {
-        study_value_version: this.selectedStudyVersion
-      }
-      await arms.getAllCellsForBranch(this.selectedStudy.uid, item.branch_arm_uid, params).then(resp => {
-        cellsInBranch = resp.data.length
-      })
+      await arms
+        .getAllCellsForBranch(
+          this.selectedStudy.uid,
+          item.branch_arm_uid
+        )
+        .then((resp) => {
+          cellsInBranch = resp.data.length
+        })
       const options = {
         type: 'warning',
         cancelLabel: this.$t('_global.cancel'),
-        agreeLabel: this.$t('_global.continue')
+        agreeLabel: this.$t('_global.continue'),
       }
       if (cellsInBranch === 0) {
-        arms.deleteBranchArm(this.selectedStudy.uid, item.branch_arm_uid).then(resp => {
-          this.fetchStudyBranchArms()
-          bus.$emit('notification', { msg: this.$t('StudyBranchArms.branch_deleted') })
-        })
-      } else if (await this.$refs.confirm.open(this.$t('StudyBranchArms.branch_delete_notification'), options)) {
-        arms.deleteBranchArm(this.selectedStudy.uid, item.branch_arm_uid).then(resp => {
-          this.fetchStudyBranchArms()
-          bus.$emit('notification', { msg: this.$t('StudyBranchArms.branch_deleted') })
-        })
+        arms
+          .deleteBranchArm(this.selectedStudy.uid, item.branch_arm_uid)
+          .then(() => {
+            this.fetchStudyBranchArms()
+            this.eventBusEmit('notification', {
+              msg: this.$t('StudyBranchArms.branch_deleted'),
+            })
+          })
+      } else if (
+        await this.$refs.confirm.open(
+          this.$t('StudyBranchArms.branch_delete_notification'),
+          options
+        )
+      ) {
+        arms
+          .deleteBranchArm(this.selectedStudy.uid, item.branch_arm_uid)
+          .then(() => {
+            this.fetchStudyBranchArms()
+            this.eventBusEmit('notification', {
+              msg: this.$t('StudyBranchArms.branch_deleted'),
+            })
+          })
       }
     },
-    async addBranchArm () {
+    async addBranchArm() {
       this.fetchStudyArms()
       if (this.arms.length === 0) {
         const options = {
           type: 'warning',
           cancelLabel: this.$t('_global.cancel'),
           agreeLabel: this.$t('StudyBranchArms.add_arm'),
-          redirect: 'arms'
+          redirect: 'arms',
         }
-        if (!await this.$refs.confirm.open(this.$t('StudyBranchArms.add_arm_message'), options)) {
+        if (
+          !(await this.$refs.confirm.open(
+            this.$t('StudyBranchArms.add_arm_message'),
+            options
+          ))
+        ) {
           return
         }
       }
       this.showBranchArmsForm = true
     },
-    onChange (event) {
-      const branch = event.moved.element
-      const newOrder = {
-        new_order: this.branchArms[event.moved.newIndex].order
-      }
-      arms.updateBranchArmOrder(this.selectedStudy.uid, branch.branch_arm_uid, newOrder).then(resp => {
-        this.fetchStudyBranchArms()
-      })
-    }
+    submitOrder(value) {
+      arms
+        .updateBranchArmOrder(
+          this.selectedBranch.study_uid,
+          this.selectedBranch.branch_arm_uid,
+          value
+        )
+        .then(() => {
+          this.fetchStudyBranchArms()
+          this.closeOrderForm()
+          this.eventBusEmit('notification', {
+            msg: this.$t('_global.order_updated'),
+          })
+        })
+    },
+    changeOrder(studyBranch) {
+      this.selectedBranch = studyBranch
+      this.showOrderForm = true
+    },
+    closeOrderForm() {
+      this.showOrderForm = false
+    },
   },
-  watch: {
-    options () {
-      this.fetchStudyBranchArms()
-    }
-  }
 }
 </script>

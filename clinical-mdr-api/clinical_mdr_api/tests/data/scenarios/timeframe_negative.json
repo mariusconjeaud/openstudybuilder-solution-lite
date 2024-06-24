@@ -61,7 +61,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "No Syntax Template with UID (wrong-uid) found in given status and version.",
+                "message": "No TimeframeTemplateRoot with UID (wrong-uid) found in given status, date and version.",
                 "method": "POST",
                 "path": "http://testserver/timeframes",
                 "time": "2020-11-10T01:52:30.985556",
@@ -89,7 +89,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "No Syntax Template with UID ({ttuidna}) found in given status and version.",
+                "message": "No TimeframeTemplateRoot with UID ({ttuidna}) found in given status, date and version.",
                 "method": "POST",
                 "path": "http://testserver/timeframes",
                 "time": "2020-11-10T01:52:30.985556",

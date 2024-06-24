@@ -1,274 +1,322 @@
 <template>
-<div>
-  <div class="mt-2 mb-8">
-    <div class="mb-2 secondary--text text-h6">
-      <template v-if="previewText">{{ previewText }}</template>
-      <template v-else>{{ $t('ParameterValueSelector.preview') }}</template>
-    </div>
-    <v-card flat class="parameterBackground">
-      <v-card-text>
-        <n-n-parameter-highlighter
-          :name="namePreview"
-          :show-prefix-and-postfix="false"
-          :parameters="parameters"
-          edition-mode
-          :tooltip="false"
+  <div>
+    <div class="mt-2 mb-8">
+      <div class="mb-2 text-secondary text-h6">
+        <template v-if="previewText">
+          {{ previewText }}
+        </template>
+        <template v-else>
+          {{ $t('ParameterValueSelector.preview') }}
+        </template>
+      </div>
+      <v-card flat class="bg-parameterBackground">
+        <v-card-text>
+          <NNParameterHighlighter
+            :name="namePreview"
+            :show-prefix-and-postfix="false"
+            :parameters="parameters"
+            edition-mode
+            :tooltip="false"
           />
-      </v-card-text>
-    </v-card>
-  </div>
-  <div :class="color" v-if="stacked">
-    <v-row v-for="(parameter, index) in parameters"
-            :key="index"
-            no-gutters
-            dense
-            cols="3"
-            >
-      <v-row class="align-start">
-        <v-col cols="10">
-          <validation-provider
-            v-slot="{ errors }"
-            :vid="`value-${index}`"
-            :name="`value-${index}`"
-            :rules="!loadParameterValuesFromTemplate ? `requiredIfNotNA:${parameter.skip}` : ''"
-            >
+        </v-card-text>
+      </v-card>
+    </div>
+    <div v-if="stacked" :class="color">
+      <v-row
+        v-for="(parameter, index) in parameters"
+        :key="index"
+        no-gutters
+        density="compact"
+        cols="3"
+      >
+        <v-row class="align-start">
+          <v-col cols="10">
             <v-text-field
               v-if="parameter.name === 'NumericValue'"
               v-model="parameter.selectedValues"
               :label="parameter.name"
-              :error-messages="errors"
               :disabled="disabled || parameter.skip"
               type="number"
+              :rules="
+                !loadParameterValuesFromTemplate
+                  ? [
+                      (value) =>
+                        formRules.requiredIfNotNA(value, parameter.skip),
+                    ]
+                  : []
+              "
               @input="update"
-              />
+            />
             <v-textarea
               v-else-if="parameter.name === 'TextValue'"
               v-model="parameter.selectedValues"
               :label="parameter.name"
-              :error-messages="errors"
               :disabled="disabled || parameter.skip"
               rows="1"
-              @input="update"
               auto-grow
-              />
-            <multiple-select
+              :rules="
+                !loadParameterValuesFromTemplate
+                  ? [
+                      (value) =>
+                        formRules.requiredIfNotNA(value, parameter.skip),
+                    ]
+                  : []
+              "
+              @input="update"
+            />
+            <MultipleSelect
               v-else
               v-model="parameter.selectedValues"
               :label="parameter.name"
               :items="parameter.terms"
-              :item-text="cleanItemName"
-              :errors="errors"
+              :item-title="cleanItemName"
               return-object
               :disabled="disabled || parameter.skip"
               shorter-preview
+              :rules="
+                !loadParameterValuesFromTemplate
+                  ? [
+                      (value) =>
+                        formRules.requiredIfNotNA(value, parameter.skip),
+                    ]
+                  : []
+              "
               @input="update"
-              />
-          </validation-provider>
-        </v-col>
-        <v-col cols="2">
-          <validation-provider
-            v-if="!loadParameterValuesFromTemplate"
-            v-slot="{ errors }"
-            :name="`skip-${index}`"
-            :vid="`skip-${index}`"
-            >
+            />
+          </v-col>
+          <v-col cols="2">
             <v-btn
               icon
               class="ml-4"
-              @click="clearSelection(parameter)"
-              :error-messages="errors"
               :disabled="disabled"
+              variant="text"
+              @click="clearSelection(parameter)"
             >
-              <v-icon v-if="!parameter.skip">mdi-eye-outline</v-icon>
-              <v-icon v-else>mdi-eye-off-outline</v-icon>
+              <v-icon v-if="!parameter.skip"> mdi-eye-outline </v-icon>
+              <v-icon v-else> mdi-eye-off-outline </v-icon>
             </v-btn>
-          </validation-provider>
-        </v-col>
-      </v-row>
-      <v-row v-if="parameter.selectedValues && parameter.selectedValues.length > 1 && parameter.name !== 'NumericValue' && parameter.name !== 'TextValue'">
-        <v-col
-          cols="8"
-          class="pl-2"
-          >
-          <validation-provider
-            v-slot="{ errors }"
-            rules="required"
-            >
+          </v-col>
+        </v-row>
+        <v-row
+          v-if="
+            parameter.selectedValues &&
+            parameter.selectedValues.length > 1 &&
+            parameter.name !== 'NumericValue' &&
+            parameter.name !== 'TextValue'
+          "
+        >
+          <v-col cols="8" class="pl-2">
             <v-select
               v-model="parameter.selectedSeparator"
               :label="$t('ParameterValueSelector.separator')"
               :items="separators"
-              dense
+              density="compact"
               clearable
-              :error-messages="errors"
+              :rules="[formRules.required]"
               :disabled="parameter.skip"
               @input="update"
-              />
-          </validation-provider>
-        </v-col>
+            />
+          </v-col>
+        </v-row>
       </v-row>
-    </v-row>
-  </div>
-  <div :class="color" v-else>
-    <v-row>
-      <v-col v-for="(parameter, index) in parameters"
-             :key="index"
-             no-gutters
-             dense
-             cols="3"
-             >
-        <v-row class="align-start">
-          <v-col cols="10">
-            <validation-provider
-              v-slot="{ errors }"
-              :vid="`value-${index}`"
-              :name="`value-${index}`"
-              :rules="!loadParameterValuesFromTemplate ? `requiredIfNotNA:${parameter.skip}` : ''"
-              >
+    </div>
+    <div v-else :class="color">
+      <v-row>
+        <v-col
+          v-for="(parameter, index) in parameters"
+          :key="index"
+          no-gutters
+          density="compact"
+          cols="3"
+        >
+          <v-row class="align-start">
+            <v-col cols="10">
               <v-text-field
                 v-if="parameter.name === 'NumericValue'"
                 v-model="parameter.selectedValues"
                 :label="parameter.name"
-                :error-messages="errors"
                 :disabled="parameter.skip"
                 type="number"
-                dense
+                density="compact"
+                :rules="
+                  !loadParameterValuesFromTemplate
+                    ? [
+                        (value) =>
+                          formRules.requiredIfNotNA(value, parameter.skip),
+                      ]
+                    : []
+                "
                 @input="update"
-                />
+              />
               <v-textarea
                 v-else-if="parameter.name === 'TextValue'"
                 v-model="parameter.selectedValues"
                 :label="parameter.name"
-                :error-messages="errors"
                 :disabled="parameters[index].skip"
                 :rows="1"
-                dense
-                @input="update"
+                density="compact"
                 auto-grow
-                />
-              <multiple-select
+                :rules="
+                  !loadParameterValuesFromTemplate
+                    ? [
+                        (value) =>
+                          formRules.requiredIfNotNA(value, parameter.skip),
+                      ]
+                    : []
+                "
+                @input="update"
+              />
+              <MultipleSelect
                 v-else
-                :data-cy="parameter.name"
                 v-model="parameter.selectedValues"
+                :data-cy="parameter.name"
                 :label="parameter.name"
                 :items="parameter.terms"
-                :item-text="cleanItemName"
-                :errors="errors"
+                :item-title="cleanItemName"
                 return-object
                 :disabled="parameter.skip"
                 shorter-preview
+                :rules="
+                  !loadParameterValuesFromTemplate
+                    ? [
+                        (value) =>
+                          formRules.requiredIfNotNA(value, parameter.skip),
+                      ]
+                    : []
+                "
                 @input="update"
-                />
-            </validation-provider>
-          </v-col>
-          <v-col cols="2">
-            <validation-provider
-              v-slot="{ errors }"
-              :name="`skip-${index}`"
-              :vid="`skip-${index}`"
-              >
+              />
+            </v-col>
+            <v-col cols="2">
               <v-btn
                 icon
-                class=" ml-n4"
-                @click="clearSelection(parameter)"
-                :error-messages="errors"
+                class="ml-n4"
                 :title="$t('ParameterValueSelector.na_tooltip')"
+                variant="text"
+                @click="clearSelection(parameter)"
               >
-                <v-icon v-if="!parameter.skip">mdi-eye-outline</v-icon>
-                <v-icon v-else>mdi-eye-off-outline</v-icon>
+                <v-icon v-if="!parameter.skip"> mdi-eye-outline </v-icon>
+                <v-icon v-else> mdi-eye-off-outline </v-icon>
               </v-btn>
-            </validation-provider>
-          </v-col>
-        </v-row>
-        <v-row v-if="parameter.selectedValues && parameter.selectedValues.length > 1 && parameter.name !== 'NumericValue' && parameter.name !== 'TextValue'">
-          <v-col
-            cols="8"
-            class="pl-2"
-            >
-            <validation-provider
-              v-slot="{ errors }"
-              rules="required"
-              >
+            </v-col>
+          </v-row>
+          <v-row
+            v-if="
+              parameter.selectedValues &&
+              parameter.selectedValues.length > 1 &&
+              parameter.name !== 'NumericValue' &&
+              parameter.name !== 'TextValue'
+            "
+          >
+            <v-col cols="8" class="pl-2">
               <v-select
                 v-model="parameter.selectedSeparator"
                 :label="$t('ParameterValueSelector.separator')"
                 :items="separators"
-                dense
+                density="compact"
                 clearable
-                :error-messages="errors"
                 :disabled="parameter.skip"
+                :rules="[formRules.required]"
                 @input="update"
-                />
-            </validation-provider>
-          </v-col>
-        </v-row>
-      </v-col>
-    </v-row>
-  </div>
-
-  <template v-if="withUnformattedVersion">
-    <p class="secondary--text text-h6">{{ unformattedTextLabel }}</p>
-    <div class="pa-4 parameterBackground">
-      {{ namePlainPreview }}
+              />
+            </v-col>
+          </v-row>
+        </v-col>
+      </v-row>
     </div>
-  </template>
-</div>
+
+    <template v-if="withUnformattedVersion">
+      <p class="text-secondary text-h6">
+        {{ unformattedTextLabel }}
+        <v-tooltip
+          v-if="maxTemplateLength && namePlainPreview.length > 200"
+          location="bottom"
+        >
+          <template #activator="{ props }">
+            <v-badge v-bind="props" color="warning" icon="mdi-exclamation" bordered inline />
+          </template>
+          <span>{{ $t('EligibilityCriteriaTable.criteria_length_warning') }}</span>
+        </v-tooltip>
+      </p>
+      <div class="pa-4 bg-parameterBackground">
+        {{ namePlainPreview }}
+      </div>
+    </template>
+  </div>
 </template>
 
 <script>
 import constants from '@/constants/parameters'
 import templateParameters from '@/utils/templateParameters'
-import MultipleSelect from '@/components/tools/MultipleSelect'
-import NNParameterHighlighter from '@/components/tools/NNParameterHighlighter'
-import { parameterValuesMixin } from '@/mixins/parameterValues'
+import MultipleSelect from '@/components/tools/MultipleSelect.vue'
+import NNParameterHighlighter from '@/components/tools/NNParameterHighlighter.vue'
 import templateParameterTypes from '@/api/templateParameterTypes'
 
 export default {
-  mixins: [parameterValuesMixin],
   components: {
     MultipleSelect,
-    NNParameterHighlighter
+    NNParameterHighlighter,
   },
+  inject: ['formRules'],
   props: {
-    value: Array,
-    template: String,
+    modelValue: {
+      type: Array,
+      default: () => [],
+    },
+    template: {
+      type: String,
+      default: '',
+    },
     color: {
       type: String,
-      default: 'white'
-    },
-    errorMessages: {
-      type: Array,
-      required: false
+      default: 'white',
     },
     loadParameterValuesFromTemplate: {
       type: Boolean,
-      default: false
+      default: false,
     },
-    previewText: String,
+    previewText: {
+      type: String,
+      default: '',
+    },
     stacked: {
       type: Boolean,
-      default: false
+      default: false,
     },
     disabled: {
       type: Boolean,
-      default: false
+      default: false,
     },
     withUnformattedVersion: {
       type: Boolean,
-      default: true
+      default: true,
     },
     unformattedLabel: {
       type: String,
-      required: false
+      required: false,
+      default: '',
+    },
+    maxTemplateLength: {
+      type: Boolean,
+      default: false
+    }
+  },
+  emits: ['update:modelValue'],
+  data() {
+    return {
+      parameters: [],
+      separators: [' and ', ' or ', ' and/or '],
     }
   },
   computed: {
-    namePreview () {
+    namePreview() {
       return this.cleanName(this.getNamePreview())
     },
-    namePlainPreview () {
+    namePlainPreview() {
       let namePreview = this.cleanName(this.getNamePreview())
-      namePreview = namePreview.replaceAll('</li>', '; ').replaceAll('<li>', ' ')
+      namePreview = namePreview
+        .replaceAll('</li>', '; ')
+        .replaceAll('<li>', ' ')
       if (namePreview !== undefined) {
         const tag = new DOMParser().parseFromString(namePreview, 'text/html')
         if (tag.documentElement.textContent) {
@@ -277,36 +325,88 @@ export default {
       }
       return ''
     },
-    unformattedTextLabel () {
-      return this.unformattedLabel ? this.unformattedLabel : this.$t('_global.plain_text_version')
-    }
+    unformattedTextLabel() {
+      return this.unformattedLabel
+        ? this.unformattedLabel
+        : this.$t('_global.plain_text_version')
+    },
   },
-  data () {
-    return {
-      parameters: [],
-      separators: [' and ', ' or ', ' and/or ']
-    }
+  watch: {
+    /*
+     ** Here we delay the execution of the watcher to avoid unexpected behaviour when the user leaves his finger pressed
+     ** on a key for example.
+     */
+    template: {
+      async handler(value) {
+        if (this.updatingParameters) {
+          return
+        }
+        setTimeout(async () => {
+          if (value !== this.template) {
+            return
+          }
+          this.updatingParameters = true
+          if (this.loadParameterValuesFromTemplate && value) {
+            this.parameters = []
+            const extractedParams =
+              templateParameters.getTemplateParametersFromTemplate(value)
+            if (extractedParams.length !== this.modelValue.length) {
+              this.$emit('update:modelValue', [])
+            }
+            for (const param of extractedParams) {
+              const resp = await templateParameterTypes.getTerms(param)
+              // remove any term with an empty name or where the name only consists of whitespaces
+              const data = resp.data.filter(
+                (term) => term.name.trim().length > 0
+              )
+              this.parameters.push({
+                name: param,
+                terms: data,
+              })
+            }
+            if (this.modelValue.length) {
+              this.modelValue.forEach((param, index) => {
+                if (param.selectedValues) {
+                  this.parameters[index].selectedValues = param.selectedValues
+                }
+                if (param.selectedSeparator) {
+                  this.parameters[index].selectedSeparator =
+                    param.selectedSeparator
+                }
+              })
+            }
+          }
+          this.updatingParameters = false
+        }, 100)
+      },
+      immediate: true,
+    },
+    modelValue(newVal) {
+      if (newVal) {
+        this.parameters = [...newVal]
+      }
+    },
   },
-  created () {
+  created() {
     // Force skip property initialization to avoid a strange side
     // effect with selection clearing and textvalue fields...
-    for (const parameter of this.value) {
+    for (const parameter of this.modelValue) {
       if (parameter.skip === undefined) {
-        this.$set(parameter, 'skip', false)
+        parameter.skip = false
       }
     }
   },
-  mounted () {
-    this.parameters = [...this.value]
+  mounted() {
+    this.parameters = [...this.modelValue]
   },
   methods: {
-    clearSelection (parameter) {
-      this.$set(parameter, 'selectedValues', [])
-      this.$set(parameter, 'selectedSeparator', null)
-      this.$set(parameter, 'skip', !parameter.skip)
+    clearSelection(parameter) {
+      parameter.selectedValues = []
+      parameter.selectedSeparator = null
+      parameter.skip = !parameter.skip
       this.update()
     },
-    cleanName (value) {
+    cleanName(value) {
       const rules = {
         '([])': '[]',
         '[NA]': '[]',
@@ -324,18 +424,18 @@ export default {
         '] with [],': ']',
         '] []': ']',
         '[] [': '[',
-        '[]': ''
+        '[]': '',
       }
       for (const original of Object.keys(rules)) {
         value = value.replace(original, rules[original])
       }
       return value.trim()
     },
-    cleanItemName (item) {
+    cleanItemName(item) {
       // Return the name without any html tags such as <p> or </p>
       return `${item.name.replace(/<\/?[^>]+(>)/g, '')}`
     },
-    getNamePreview (hideEmptyParams) {
+    getNamePreview(hideEmptyParams) {
       if (!this.template) {
         return ''
       }
@@ -350,13 +450,24 @@ export default {
           inParam = true
         } else if (c === ']') {
           if (paramIndex < this.parameters.length) {
-            if (this.parameters[paramIndex].selectedValues && this.parameters[paramIndex].selectedValues.length) {
-              if (this.parameters[paramIndex].name === constants.NUM_VALUE || this.parameters[paramIndex].name === constants.TEXT_VALUE) {
+            if (
+              this.parameters[paramIndex].selectedValues &&
+              this.parameters[paramIndex].selectedValues.length
+            ) {
+              if (
+                this.parameters[paramIndex].name === constants.NUM_VALUE ||
+                this.parameters[paramIndex].name === constants.TEXT_VALUE
+              ) {
                 result += '[' + this.parameters[paramIndex].selectedValues + ']'
               } else {
-                const valueNames = this.parameters[paramIndex].selectedValues.map(v => v.name)
-                const concatenation = (this.parameters[paramIndex].selectedSeparator)
-                  ? valueNames.join(this.parameters[paramIndex].selectedSeparator)
+                const valueNames = this.parameters[
+                  paramIndex
+                ].selectedValues.map((v) => v.name.charAt(0).toUpperCase() + v.name.slice(1))
+                const concatenation = this.parameters[paramIndex]
+                  .selectedSeparator
+                  ? valueNames.join(
+                      this.parameters[paramIndex].selectedSeparator
+                    )
                   : valueNames.join(' ')
                 result += `[${concatenation}]`
               }
@@ -374,58 +485,9 @@ export default {
       }
       return result
     },
-    update () {
-      this.$emit('input', this.parameters)
-    }
-  },
-  watch: {
-    /*
-    ** Here we delay the execution of the watcher to avoid unexpected behaviour when the user leaves his finger pressed
-    ** on a key for example.
-    */
-    async template (value) {
-      if (this.updatingParameters) {
-        return
-      }
-      setTimeout(async () => {
-        if (value !== this.template) {
-          return
-        }
-        this.updatingParameters = true
-        if (this.loadParameterValuesFromTemplate && value) {
-          this.parameters = []
-          const extractedParams = templateParameters.getTemplateParametersFromTemplate(value)
-          if (extractedParams.length !== this.value.length) {
-            this.$emit('input', [])
-          }
-          for (const param of extractedParams) {
-            const resp = await templateParameterTypes.getTerms(param)
-            // remove any term with an empty name or where the name only consists of whitespaces
-            const data = resp.data.filter(term => term.name.trim().length > 0)
-            this.parameters.push({
-              name: param,
-              terms: data
-            })
-          }
-          if (this.value.length) {
-            this.value.forEach((param, index) => {
-              if (param.selectedValues) {
-                this.$set(this.parameters[index], 'selectedValues', param.selectedValues)
-              }
-              if (param.selectedSeparator) {
-                this.$set(this.parameters[index], 'selectedSeparator', param.selectedSeparator)
-              }
-            })
-          }
-        }
-        this.updatingParameters = false
-      }, 100)
+    update() {
+      this.$emit('update:modelValue', this.parameters)
     },
-    value (newVal) {
-      if (newVal) {
-        this.parameters = [...newVal]
-      }
-    }
-  }
+  },
 }
 </script>

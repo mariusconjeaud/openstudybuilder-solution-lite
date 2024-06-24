@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from fastapi import APIRouter, Body, Depends, Path, Query, Request, Response
+from fastapi import APIRouter, Body, Path, Query, Request, Response
 from fastapi import status as fast_api_status
 from pydantic.types import Json
 
@@ -21,7 +21,7 @@ from clinical_mdr_api.models.syntax_templates.timeframe_template import (
     TimeframeTemplateWithCount,
 )
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.oauth import get_current_user_id, rbac
+from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.syntax_templates.timeframe_templates import (
@@ -137,9 +137,8 @@ def get_timeframe_templates(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> CustomPage[TimeframeTemplate]:
-    data = Service(current_user_id).get_all(
+    data = Service().get_all(
         status=status,
         return_study_count=True,
         page_number=page_number,
@@ -171,7 +170,6 @@ def get_timeframe_templates(
     },
 )
 def get_distinct_values_for_header(
-    current_user_id: str = Depends(get_current_user_id),
     status: LibraryItemStatus
     | None = Query(
         None,
@@ -195,7 +193,7 @@ def get_distinct_values_for_header(
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
 ):
-    return Service(current_user_id).get_distinct_values_for_header(
+    return Service().get_distinct_values_for_header(
         status=status,
         field_name=field_name,
         search_string=search_string,
@@ -229,9 +227,8 @@ def retrieve_audit_trail(
     ),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    results = Service(current_user_id).get_all(
+    results = Service().get_all(
         page_number=page_number,
         page_size=page_size,
         total_count=total_count,
@@ -261,9 +258,8 @@ def retrieve_audit_trail(
 )
 def get_timeframe_template(
     uid: str = TimeframeTemplateUID,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> TimeframeTemplate:
-    return Service(current_user_id).get_by_uid(uid)
+    return Service().get_by_uid(uid)
 
 
 @router.get(
@@ -325,9 +321,8 @@ The returned versions are ordered by `start_date` descending (newest entries fir
 def get_timeframe_template_versions(
     request: Request,  # request is actually required by the allow_exports decorator
     uid: str = TimeframeTemplateUID,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> list[TimeframeTemplateVersion]:
-    return Service(current_user_id).get_version_history(uid)
+    return Service().get_version_history(uid)
 
 
 @router.get(
@@ -357,9 +352,8 @@ def get_timeframe_template_version(
         "The version number is specified in the following format: \\<major\\>.\\<minor\\> where \\<major\\> and \\<minor\\> are digits.\n"
         "E.g. '0.1', '0.2', '1.0', ...",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> TimeframeTemplate:
-    return Service(current_user_id).get_specific_version(uid, version)
+    return Service().get_specific_version(uid, version)
 
 
 @router.post(
@@ -400,9 +394,8 @@ def create_timeframe_template(
     timeframe_template: TimeframeTemplateCreateInput = (
         Body(description="The timeframe template that shall be created.")
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> TimeframeTemplate:
-    return Service(current_user_id).create(timeframe_template)
+    return Service().create(timeframe_template)
 
 
 @router.patch(
@@ -446,9 +439,8 @@ def edit(
     timeframe_template: TimeframeTemplateEditInput = Body(
         description="The new content of the timeframe template including the change description.",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> TimeframeTemplate:
-    return Service(current_user_id).edit_draft(uid, timeframe_template)
+    return Service().edit_draft(uid, timeframe_template)
 
 
 @router.post(
@@ -490,9 +482,8 @@ def create_new_version(
     timeframe_template: TimeframeTemplateEditInput = Body(
         description="The content of the timeframe template for the new 'Draft' version including the change description.",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> TimeframeTemplate:
-    return Service(current_user_id).create_new_version(uid, timeframe_template)
+    return Service().create_new_version(uid, timeframe_template)
 
 
 @router.post(
@@ -533,15 +524,14 @@ If the request succeeds:
 def approve(
     uid: str = TimeframeTemplateUID,
     cascade: bool = False,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> TimeframeTemplate:
     """
     Approves timeframe template. Fails with 409 if there is some timeframes created
     from this template and cascade is false
     """
     if not cascade:
-        return Service(current_user_id).approve(uid=uid)
-    return Service(current_user_id).approve_cascade(uid=uid)
+        return Service().approve(uid=uid)
+    return Service().approve_cascade(uid=uid)
 
 
 @router.delete(
@@ -572,11 +562,9 @@ If the request succeeds:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def inactivate(
-    uid: str = TimeframeTemplateUID, current_user_id: str = Depends(get_current_user_id)
-) -> TimeframeTemplate:
+def inactivate(uid: str = TimeframeTemplateUID) -> TimeframeTemplate:
     # TODO: do sth to make static code analysis work fine for this code
-    return Service(current_user_id).inactivate_final(uid)
+    return Service().inactivate_final(uid)
 
 
 @router.post(
@@ -607,11 +595,9 @@ If the request succeeds:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def reactivate(
-    uid: str = TimeframeTemplateUID, current_user_id: str = Depends(get_current_user_id)
-) -> TimeframeTemplate:
+def reactivate(uid: str = TimeframeTemplateUID) -> TimeframeTemplate:
     # TODO: do sth to allow for static code analysis of this code
-    return Service(current_user_id).reactivate_retired(uid)
+    return Service().reactivate_retired(uid)
 
 
 @router.delete(
@@ -643,10 +629,8 @@ def reactivate(
         500: _generic_descriptions.ERROR_500,
     },
 )
-def delete_timeframe_template(
-    uid: str = TimeframeTemplateUID, current_user_id: str = Depends(get_current_user_id)
-) -> None:
-    Service(current_user_id).soft_delete(uid)
+def delete_timeframe_template(uid: str = TimeframeTemplateUID) -> None:
+    Service().soft_delete(uid)
     return Response(status_code=fast_api_status.HTTP_204_NO_CONTENT)
 
 
@@ -679,9 +663,8 @@ def get_parameters(
         None,
         description="if specified only valida parameters for a given study will be returned.",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    return Service(current_user_id).get_parameters(uid, study_uid=study_uid)
+    return Service().get_parameters(uid, study_uid=study_uid)
 
 
 @router.post(
@@ -712,6 +695,5 @@ def pre_validate(
     timeframe_template: TimeframeTemplateNameInput = Body(
         description="The content of the timeframe template that shall be validated.",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    Service(current_user_id).validate_template_syntax(timeframe_template.name)
+    Service().validate_template_syntax(timeframe_template.name)

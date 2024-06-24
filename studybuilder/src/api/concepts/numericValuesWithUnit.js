@@ -3,13 +3,13 @@ import repository from '../repository'
 const resource = 'concepts/numeric-values-with-unit'
 
 export default {
-  getAll (params) {
+  getAll(params) {
     return repository.get(resource, { params })
   },
-  create (data) {
+  create(data) {
     const params = {
-      ...data
+      ...data,
     }
     return repository.post(resource, params)
-  }
+  },
 }

@@ -1,84 +1,91 @@
 <template>
-<package-timeline
-  @catalogueChanged="updateCatalogue"
-  @packageChanged="updateTerms"
-  :catalogueName="$route.params.catalogue_name"
-  :packageName="$route.params.package_name"
+  <PackageTimelines
+    :catalogue-name="route.params.catalogue_name"
+    :package-name="route.params.package_name"
+    @catalogue-changed="updateCatalogue"
+    @package-changed="updateTerms"
   >
-  <template v-slot:default="{ selectedPackage }">
-    <div class="page-title">
-      {{ $t('CodelistTermsView.codelist') }} {{ $route.params.codelist_id }} - {{ codelistAttributes.submission_value }} / {{ $t('CodelistTermsView.terms_listing') }}
-    </div>
-    <codelist-term-table
-      :catalogue-name="$route.params.catalogue_name"
-      :codelist-uid="$route.params.codelist_id"
-      :package-name="selectedPackage"
+    <template #default="{ selectedPackage }">
+      <div class="page-title">
+        {{ $t('CodelistTermsView.codelist') }} {{ route.params.codelist_id }} -
+        {{ codelistAttributes.submission_value }} /
+        {{ $t('CodelistTermsView.terms_listing') }}
+      </div>
+      <CodelistTermTable
+        :catalogue-name="route.params.catalogue_name"
+        :codelist-uid="route.params.codelist_id"
+        :package="selectedPackage"
       />
-  </template>
-</package-timeline>
+    </template>
+  </PackageTimelines>
 </template>
 
-<script>
-import { mapActions } from 'vuex'
+<script setup>
+import { onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import controlledTerminology from '@/api/controlledTerminology'
-import CodelistTermTable from '@/components/library/CodelistTermTable'
-import PackageTimeline from '@/components/library/PackageTimeline'
+import CodelistTermTable from '@/components/library/CodelistTermTable.vue'
+import PackageTimelines from '@/components/library/PackageTimelines.vue'
+import { useAppStore } from '@/stores/app'
 
-export default {
-  components: {
-    CodelistTermTable,
-    PackageTimeline
-  },
-  data () {
-    return {
-      codelistAttributes: {}
-    }
-  },
-  methods: {
-    ...mapActions({
-      addBreadcrumbsLevel: 'app/addBreadcrumbsLevel'
-    }),
-    updateCatalogue (catalogueName) {
-      this.$router.push({
+const appStore = useAppStore()
+const route = useRoute()
+const router = useRouter()
+const { t } = useI18n()
+
+const codelistAttributes = ref({})
+
+watch(
+  () => route.params.package_name,
+  (value) => {
+    if (value) {
+      const to = {
         name: 'CtPackages',
-        params: { catalogue_name: catalogueName }
-      })
-    },
-    updateTerms (catalogueName, packageName) {
-      this.$router.push({
-        name: 'CtPackageTerms',
         params: {
-          codelist_id: this.$route.params.codelist_id,
-          catalogue_name: catalogueName,
-          package_name: packageName
-        }
-      })
-    }
-  },
-  mounted () {
-    this.addBreadcrumbsLevel({
-      text: this.$route.params.codelist_id,
-      to: { name: 'CtPackages', params: this.$route.params },
-      index: 5
-    })
-    this.addBreadcrumbsLevel({
-      text: this.$t('CodelistTermsView.terms'),
-      to: { name: 'CtPackageTerms', params: this.$route.params }
-    })
-    controlledTerminology.getCodelistAttributes(this.$route.params.codelist_id).then(resp => {
-      this.codelistAttributes = resp.data
-    })
-  },
-  watch: {
-    '$route.params.package_name' (value) {
-      if (value) {
-        const to = { name: 'CtPackages', params: { catalogue_name: this.$route.params.catalogue_name, package_name: value } }
-        this.addBreadcrumbsLevel({ text: value, to, index: 4, replace: true })
-      } else {
-        this.$store.commit('app/TRUNCATE_BREADCRUMBS_FROM_LEVEL', 4)
+          catalogue_name: route.params.catalogue_name,
+          package_name: value,
+        },
       }
+      appStore.addBreadcrumbsLevel(value, to, 4, true)
+    } else {
+      appStore.truncateBreadcrumbsFromLevel(4)
     }
   }
+)
 
+onMounted(() => {
+  appStore.addBreadcrumbsLevel(
+    route.params.codelist_id,
+    { name: 'CtPackages', params: { package_name: route.params.package_name } },
+    5
+  )
+  appStore.addBreadcrumbsLevel(t('CodelistTermsView.terms'), {
+    name: 'CtPackageTerms',
+    params: route.params,
+  })
+  controlledTerminology
+    .getCodelistAttributes(route.params.codelist_id)
+    .then((resp) => {
+      codelistAttributes.value = resp.data
+    })
+})
+
+function updateCatalogue(catalogueName) {
+  router.push({
+    name: 'CtPackages',
+    params: { catalogue_name: catalogueName },
+  })
+}
+
+function updateTerms(catalogueName, pkg) {
+  router.push({
+    name: 'CtPackageTerms',
+    params: {
+      codelist_id: route.params.codelist_id,
+      catalogue_name: catalogueName,
+      package_name: pkg ? pkg.name : '',
+    },
+  })
 }
 </script>

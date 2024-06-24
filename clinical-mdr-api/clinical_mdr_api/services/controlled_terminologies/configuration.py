@@ -32,7 +32,7 @@ class CTConfigService:
     def __init__(
         self,
         *,
-        user_id: str = "TEST_USER",
+        user_id: str = "unknown-user",
     ):
         self._repos = MetaRepository()
         self._user_id = user_id

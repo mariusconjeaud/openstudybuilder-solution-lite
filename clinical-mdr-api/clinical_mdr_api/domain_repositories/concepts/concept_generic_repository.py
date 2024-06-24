@@ -78,6 +78,7 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
             name_sentence_case=ar.concept_vo.name_sentence_case,
             definition=ar.concept_vo.definition,
             abbreviation=ar.concept_vo.abbreviation,
+            external_id=getattr(ar.concept_vo, "external_id", None),
         )
 
     def _has_data_changed(self, ar: _AggregateRootType, value: VersionValue) -> bool:
@@ -88,6 +89,8 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
             or ar.concept_vo.name_sentence_case != value.name_sentence_case
             or ar.concept_vo.definition != value.definition
             or ar.concept_vo.abbreviation != value.abbreviation
+            or getattr(ar.concept_vo, "external_id", None)
+            != getattr(value, "external_id", None)
         )
 
     def generate_uid(self) -> str:
@@ -125,9 +128,11 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
                 version_rel
             WITH
                 uid,
+                concept_root,
                 concept_value.nci_concept_id AS nci_concept_id,
                 concept_value.name AS name,
                 concept_value.name_sentence_case AS name_sentence_case,
+                concept_value.external_id AS external_id,
                 concept_value.definition AS definition,
                 concept_value.abbreviation AS abbreviation,
                 CASE WHEN concept_value:TemplateParameterTermValue THEN true ELSE false END AS template_parameter,
@@ -166,9 +171,11 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
                 version_rel
             WITH
                 uid,
+                concept_root,
                 concept_value.nci_concept_id AS nci_concept_id,
                 concept_value.name AS name,
                 concept_value.name_sentence_case AS name_sentence_case,
+                concept_value.external_id AS external_id,
                 concept_value.definition AS definition,
                 concept_value.abbreviation AS abbreviation,
                 CASE WHEN concept_value:TemplateParameterTermValue THEN true ELSE false END AS template_parameter,

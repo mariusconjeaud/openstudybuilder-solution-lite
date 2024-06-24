@@ -1,6 +1,8 @@
 import datetime
+from collections import namedtuple
 from dataclasses import dataclass
 from enum import Enum
+from math import ceil, floor
 from typing import Any, Callable, Self
 
 from clinical_mdr_api import exceptions
@@ -9,21 +11,26 @@ from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import 
     StudyStatus,
 )
 
+VisitTypeNamedTuple = namedtuple("VisitTypeNamedTuple", ["name", "value"])
+StudyVisitType: dict[str, VisitTypeNamedTuple] = {}
 
-class StudyVisitType(Enum):
-    pass
+VisitRepeatingFrequencyNamedTuple = namedtuple(
+    "VisitRepeatingFrequencyNamedTuple", ["name", "value"]
+)
+StudyVisitRepeatingFrequency: dict[str, VisitRepeatingFrequencyNamedTuple] = {}
 
+VisitTimeReferenceNamedTuple = namedtuple(
+    "VisitTimeReferenceNamedTuple", ["name", "value"]
+)
+StudyVisitTimeReference: dict[str, VisitTimeReferenceNamedTuple] = {}
 
-class StudyVisitTimeReference(Enum):
-    pass
+VisitContactModeNamedTuple = namedtuple("VisitContactModeNamedTuple", ["name", "value"])
+StudyVisitContactMode: dict[str, VisitContactModeNamedTuple] = {}
 
-
-class StudyVisitContactMode(Enum):
-    pass
-
-
-class StudyVisitEpochAllocation(Enum):
-    pass
+VisitEpochAllocationNamedTuple = namedtuple(
+    "VisitEpochAllocationNamedTuple", ["name", "value"]
+)
+StudyVisitEpochAllocation: dict[str, VisitEpochAllocationNamedTuple] = {}
 
 
 class VisitClass(Enum):
@@ -31,6 +38,7 @@ class VisitClass(Enum):
     SPECIAL_VISIT = "Special visit"
     NON_VISIT = "Non visit"
     UNSCHEDULED_VISIT = "Unscheduled visit"
+    MANUALLY_DEFINED_VISIT = "Manually defined visit"
 
 
 class VisitSubclass(Enum):
@@ -39,6 +47,7 @@ class VisitSubclass(Enum):
         "Additional subvisit in a group of subvisits"
     )
     ANCHOR_VISIT_IN_GROUP_OF_SUBV = "Anchor visit in group of subvisits"
+    REPEATING_VISIT = "Repeating visit"
 
 
 @dataclass
@@ -51,7 +60,7 @@ class TimeUnit:
 @dataclass
 class TimePoint:
     uid: str
-    visit_timereference: StudyVisitTimeReference
+    visit_timereference: VisitTimeReferenceNamedTuple
     time_unit_uid: str
     visit_value: int
 
@@ -78,8 +87,8 @@ class StudyVisitVO:
     description: str
     start_rule: str  # Free text
     end_rule: str  # Free text
-    visit_contact_mode: StudyVisitContactMode  # CT Codelist Visit Contact Mode
-    visit_type: StudyVisitType  # CT Codelist VISIT_TYPE -
+    visit_contact_mode: VisitContactModeNamedTuple  # CT Codelist Visit Contact Mode
+    visit_type: VisitTypeNamedTuple  # CT Codelist VISIT_TYPE -
 
     status: StudyStatus
     start_date: datetime.datetime
@@ -88,10 +97,10 @@ class StudyVisitVO:
     visit_class: VisitClass
     visit_subclass: VisitSubclass
     is_global_anchor_visit: bool
-    visit_number: int
+    visit_number: float
     visit_order: int
     show_visit: bool
-    epoch_allocation: StudyVisitEpochAllocation | None = None
+    epoch_allocation: VisitEpochAllocationNamedTuple | None = None
     timepoint: TimePoint | None = None
     study_day: NumericValue | None = None
     study_duration_days: NumericValue | None = None
@@ -101,11 +110,6 @@ class StudyVisitVO:
 
     visit_name_sc: TextValue | None = None
 
-    legacy_visit_id: str | None = None
-    legacy_visit_type_alias: str | None = None
-    legacy_name: str | None = None
-    legacy_subname: str | None = None
-
     subvisit_number: int | None = None
     subvisit_anchor: Self | None = None
     time_unit_object: TimeUnit | None = None
@@ -114,6 +118,7 @@ class StudyVisitVO:
     epoch_connector: Any = None
     anchor_visit = None
     is_deleted: bool = False
+    is_soa_milestone: bool = False
     uid: str | None = None
 
     day_unit_object: TimeUnit | None = None
@@ -125,42 +130,59 @@ class StudyVisitVO:
     )
     visit_sublabel_uid: str | None = None  # uid of subvisit label from Codelist
 
-    @property
-    def visit_name_label(self):
-        return self.visit_sublabel
+    vis_unique_number: int | None = None
+    vis_short_name: str | None = None
+
+    repeating_frequency: VisitRepeatingFrequencyNamedTuple | None = None
 
     @property
     def visit_name(self):
-        return self.derive_visit_name()
+        if self.visit_class != VisitClass.MANUALLY_DEFINED_VISIT:
+            return self.derive_visit_name()
+        return self.visit_name_sc.name
 
     def derive_visit_name(self):
-        return f"Visit {self.visit_number}"
+        if self.visit_class != VisitClass.MANUALLY_DEFINED_VISIT:
+            if self.visit_subclass == VisitSubclass.REPEATING_VISIT:
+                return f"Visit {int(self.visit_number)}.N"
+            return f"Visit {int(self.visit_number)}"
+        return self.visit_name_sc.name
 
     @property
     def visit_short_name(self):
-        if "on site visit" in self.visit_contact_mode.value.lower():
-            visit_prefix = "V"
-        elif "phone contact" in self.visit_contact_mode.value.lower():
-            visit_prefix = "P"
-        elif "virtual visit" in self.visit_contact_mode.value.lower():
-            visit_prefix = "O"
-        else:
-            raise exceptions.ValidationException(
-                "Unrecognized visit contact mode passed."
-            )
-        visit_short_name = f"{visit_prefix}{self.visit_number}"
-        if self.visit_subclass == VisitSubclass.ADDITIONAL_SUBVISIT_IN_A_GROUP_OF_SUBV:
-            return (
-                visit_short_name
-                + f"D{self.derive_study_day_number(relative_duration=True)}"
-            )
-        if self.visit_subclass == VisitSubclass.ANCHOR_VISIT_IN_GROUP_OF_SUBV:
-            return visit_short_name + "D1"
-        if self.visit_class == VisitClass.SPECIAL_VISIT:
-            return visit_short_name + "A"
-        if self.visit_class in (VisitClass.NON_VISIT, VisitClass.UNSCHEDULED_VISIT):
-            return self.visit_number
-        return visit_short_name
+        if self.visit_class != VisitClass.MANUALLY_DEFINED_VISIT:
+            visit_number = int(self.visit_number)
+            if "on site visit" in self.visit_contact_mode.value.lower():
+                visit_prefix = "V"
+            elif "phone contact" in self.visit_contact_mode.value.lower():
+                visit_prefix = "P"
+            elif "virtual visit" in self.visit_contact_mode.value.lower():
+                visit_prefix = "O"
+            else:
+                raise exceptions.ValidationException(
+                    "Unrecognized visit contact mode passed."
+                )
+            visit_short_name = f"{visit_prefix}{visit_number}"
+
+            if self.visit_subclass == VisitSubclass.REPEATING_VISIT:
+                return visit_short_name + ".N"
+
+            if (
+                self.visit_subclass
+                == VisitSubclass.ADDITIONAL_SUBVISIT_IN_A_GROUP_OF_SUBV
+            ):
+                return (
+                    visit_short_name
+                    + f"D{self.derive_study_day_number(relative_duration=True)}"
+                )
+            if self.visit_subclass == VisitSubclass.ANCHOR_VISIT_IN_GROUP_OF_SUBV:
+                return visit_short_name + "D1"
+            if self.visit_class == VisitClass.SPECIAL_VISIT:
+                return visit_short_name + "A"
+            if self.visit_class in (VisitClass.NON_VISIT, VisitClass.UNSCHEDULED_VISIT):
+                return visit_number
+            return visit_short_name
+        return self.vis_short_name
 
     @property
     def epoch_uid(self):
@@ -169,12 +191,6 @@ class StudyVisitVO:
     @property
     def study_uid(self):
         return self.epoch_connector.study_uid
-
-    @property
-    def label(self):
-        if self.legacy_name is not None:
-            return self.legacy_name
-        return self.visit_name_label
 
     def set_anchor_visit(self, visit):
         self.anchor_visit = visit
@@ -190,21 +206,20 @@ class StudyVisitVO:
         self.subvisit_number = number
 
     @property
-    def short_visit_label(self):
-        return f"V{self.visit_number}"
-
-    @property
     def unique_visit_number(self):
-        if self.subvisit_number is not None:
-            return int(f"{self.visit_number}{self.subvisit_number:02d}")
-        if (
-            self.visit_subclass
-            and self.visit_subclass == VisitSubclass.ANCHOR_VISIT_IN_GROUP_OF_SUBV
-        ):
-            return int(f"{self.visit_number}{0:02d}")
-        if self.visit_class in (VisitClass.NON_VISIT, VisitClass.UNSCHEDULED_VISIT):
-            return self.visit_number
-        return self.visit_number * 100
+        if self.visit_class != VisitClass.MANUALLY_DEFINED_VISIT:
+            visit_number = int(self.visit_number)
+            if self.subvisit_number is not None:
+                return int(f"{visit_number}{self.subvisit_number:02d}")
+            if (
+                self.visit_subclass
+                and self.visit_subclass == VisitSubclass.ANCHOR_VISIT_IN_GROUP_OF_SUBV
+            ):
+                return int(f"{visit_number}{0:02d}")
+            if self.visit_class in (VisitClass.NON_VISIT, VisitClass.UNSCHEDULED_VISIT):
+                return visit_number
+            return visit_number * 100
+        return self.vis_unique_number
 
     @property
     def epoch(self):
@@ -249,24 +264,34 @@ class StudyVisitVO:
 
     def derive_study_duration_days_number(self) -> int | None:
         derived_study_day_number = self.derive_study_day_number()
-        if derived_study_day_number is None:
-            return None
-        return derived_study_day_number - 1
+        if derived_study_day_number:
+            if derived_study_day_number > 0:
+                return derived_study_day_number - 1
+            return derived_study_day_number
+        return None
 
-    def derive_study_week_number(self) -> int | None:
+    def derive_week_value(self) -> float | None:
         duration = self.get_absolute_duration()
         if self.week_unit_object and duration is not None:
-            weeks = int(duration / self.week_unit_object.conversion_factor_to_master)
-            if weeks < 0:
-                return weeks
-            return weeks + 1
+            weeks = duration / self.week_unit_object.conversion_factor_to_master
+            return weeks
+        return None
+
+    def derive_study_week_number(self) -> int | None:
+        week_value = self.derive_week_value()
+        if week_value is not None:
+            if week_value < 0:
+                return floor(week_value)
+            return floor(week_value) + 1
         return None
 
     def derive_study_duration_weeks_number(self) -> int | None:
-        derived_study_week_number = self.derive_study_week_number()
-        if derived_study_week_number is None:
-            return None
-        return derived_study_week_number - 1
+        week_value = self.derive_week_value()
+        if week_value is not None:
+            if week_value < 0:
+                return ceil(week_value)
+            return floor(week_value)
+        return None
 
     def derive_week_in_study_number(self) -> int | None:
         return self.derive_study_duration_weeks_number()

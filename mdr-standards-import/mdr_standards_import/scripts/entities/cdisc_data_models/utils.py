@@ -1,4 +1,4 @@
-from typing import Sequence, Optional
+from typing import Sequence, Optional, OrderedDict
 
 from os import path
 
@@ -13,6 +13,75 @@ from mdr_standards_import.scripts.utils import (
     flatten_list_of_lists_recursive,
     extract_list_from_json_recursive,
 )
+
+
+def extract_variables_from_csv_data(
+    class_csv_data: OrderedDict,
+    catalogue: str,
+    data_model_import: "DataModelImport",
+    data_model_type: DataModelType,
+    variables_data: Sequence[OrderedDict],
+    is_class_dataset: bool = False,
+) -> "list[DataModelVariable]":
+    variables_output = []
+    class_suffix = "datasets" if is_class_dataset else "classes"
+    variable_suffix = "variables"
+    for variable in variables_data:
+        _variable: DataModelVariable = data_model_import.merge_variable(
+            href="/".join([
+                "/mdr", 
+                catalogue.lower(),
+                data_model_import.get_version().get_version_number(),
+                class_suffix, 
+                class_csv_data['name'],
+                variable_suffix,
+                variable.get("name", None),
+            ])
+        )
+        implements_variables = []
+        if data_model_type == DataModelType.IMPLEMENTATION:
+            implements_variables = [
+                "/".join([
+                    "/mdr",
+                    catalogue.lower()[:-2],
+                    data_model_import.get_version().get_version_number(),
+                    "classes",
+                    class_csv_data['dataset_class'],
+                    "variables",
+                    variable['variable_class']
+                ])
+            ]
+        _variable.set_attributes(
+            name=variable.get("name", None),
+            title=variable.get("title", None),
+            label=variable.get("label", None),
+            description=variable.get("description", None),
+            definition=variable.get("definition", None),
+            ordinal=variable.get("order", None),
+            role=variable.get("role", None),
+            notes=variable.get("notes", None),
+            variable_c_code=variable.get("variableCcode", None),
+            usage_restrictions=variable.get("usageRestrictions", None),
+            examples=variable.get("examples", None),
+            value_list=variable.get("valueList", None),
+            described_value_domain=variable.get("describedValueDomain", None),
+            qualifies_variables=None,
+            role_description=variable.get("roleDescription", None),
+            simple_datatype=variable.get("datatype", None),
+            length=variable.get("length", None),
+            implementation_notes=variable.get("implementationNotes", None),
+            mapping_instructions=variable.get("mappingInstructions", None),
+            prompt=variable.get("prompt", None),
+            question_text=variable.get("questionText", None),
+            completion_instructions=variable.get("completionInstructions", None),
+            core=variable.get("core", None),
+            codelists=None,
+            implements_variables=implements_variables,
+            mapping_targets=None,
+            prior_version=variable.get("priorVersion", None),
+        )
+        variables_output.append(_variable)
+    return variables_output
 
 
 def extract_variables_from_json_data(
@@ -84,6 +153,7 @@ def extract_variables_from_json_data(
             ],
             role_description=variable.get("roleDescription", None),
             simple_datatype=variable.get("simpleDatatype", None),
+            length=variable.get("length", None),
             implementation_notes=variable.get("implementationNotes", None),
             mapping_instructions=variable.get("mappingInstructions", None),
             prompt=variable.get("prompt", None),

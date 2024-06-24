@@ -1,56 +1,68 @@
 <template>
-<div>
-  <v-btn data-cy="help-button" icon color="primary" @click="showHelp = true">
-    <v-icon>mdi-help-circle-outline</v-icon>
-  </v-btn>
-  <v-dialog
-    v-model="showHelp"
-    @keydown.esc="showHelp = false"
-    :width="width"
-    persistent
-    hide-overlay
-    content-class="upperRight"
-    class="rounded-0"
+  <div>
+    {{ pageTitle }}
+    <v-btn
+      data-cy="help-button"
+      icon="mdi-help-circle-outline"
+      color="primary"
+      variant="text"
+      @click="showHelp = true"
+    />
+    <v-dialog
+      v-model="showHelp"
+      :width="width"
+      persistent
+      hide-overlay
+      content-class="upperRight"
+      class="rounded-0"
+      @keydown.esc="showHelp = false"
     >
-    <v-card>
-      <v-card-title class="dialog-title">{{ title }}
-        <v-spacer></v-spacer>
-        <v-btn
-          color="secondary"
-          @click="showHelp = false"
-          icon
-          >
-        <v-icon>mdi-close</v-icon>
-        </v-btn>
-      </v-card-title>
-      <v-card-text>
-        <slot>
-          {{ helpText }}
-        </slot>
-      </v-card-text>
-    </v-card>
-  </v-dialog>
-</div>
+      <v-card>
+        <v-card-title class="d-flex dialog-title align-center">
+          {{ title }}
+          <v-spacer />
+          <v-btn
+            color="secondary"
+            icon="mdi-close"
+            variant="text"
+            @click="showHelp = false"
+          />
+        </v-card-title>
+        <v-card-text>
+          <slot>
+            {{ helpText }}
+          </slot>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
+  </div>
 </template>
 
 <script>
 export default {
   props: {
-    helpText: String,
+    pageTitle: {
+      type: String,
+      default: null,
+    },
+    helpText: {
+      type: String,
+      default: '',
+    },
     title: {
       type: String,
-      default: 'Online help'
+      default: 'Online help',
     },
     width: {
       type: String,
-      default: '495px'
+      default: '495px',
+    },
+  },
+  data() {
+    return {
+      showHelp: false,
     }
   },
-  data () {
-    return {
-      showHelp: false
-    }
-  }
 }
 </script>
 <style>
@@ -60,5 +72,4 @@ export default {
   right: 0;
   border-radius: 0px;
 }
-
 </style>

@@ -1,7 +1,7 @@
 """pharmaceutical_products router"""
 from typing import Any
 
-from fastapi import APIRouter, Body, Depends, Path, Query
+from fastapi import APIRouter, Body, Path, Query
 from pydantic.types import Json
 from starlette.requests import Request
 
@@ -13,7 +13,7 @@ from clinical_mdr_api.models.concepts.pharmaceutical_product import (
 )
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.oauth import get_current_user_id, rbac
+from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.concepts.pharmaceutical_products_service import (
@@ -58,7 +58,10 @@ Possible errors:
     {
         "defaults": [
             "uid",
-            "prodex_id",
+            "external_id",
+            "dosage_forms=dosage_forms.name",
+            "routes_of_administration=routes_of_administration.name",
+            "formulations",
             "start_date",
             "version",
             "status",
@@ -94,9 +97,8 @@ def get_pharmaceutical_products(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    pharmaceutical_product_service = PharmaceuticalProductService(user=current_user_id)
+    pharmaceutical_product_service = PharmaceuticalProductService()
     results = pharmaceutical_product_service.get_all_concepts(
         library=library,
         sort_by=sort_by,
@@ -128,7 +130,6 @@ def get_pharmaceutical_products(
     },
 )
 def get_distinct_values_for_header(
-    current_user_id: str = Depends(get_current_user_id),
     library: str | None = Query(None, description=_generic_descriptions.LIBRARY_NAME),
     field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
     search_string: str
@@ -143,7 +144,7 @@ def get_distinct_values_for_header(
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
 ):
-    pharmaceutical_product_service = PharmaceuticalProductService(user=current_user_id)
+    pharmaceutical_product_service = PharmaceuticalProductService()
     return pharmaceutical_product_service.get_distinct_values_for_header(
         library=library,
         field_name=field_name,
@@ -171,9 +172,8 @@ Possible errors:
 )
 def get_activity(
     uid: str = PharmaceuticalProductUID,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    pharmaceutical_product_service = PharmaceuticalProductService(user=current_user_id)
+    pharmaceutical_product_service = PharmaceuticalProductService()
     return pharmaceutical_product_service.get_by_uid(uid=uid)
 
 
@@ -207,9 +207,8 @@ Possible errors:
 )
 def get_versions(
     uid: str = PharmaceuticalProductUID,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    pharmaceutical_product_service = PharmaceuticalProductService(user=current_user_id)
+    pharmaceutical_product_service = PharmaceuticalProductService()
     return pharmaceutical_product_service.get_version_history(uid=uid)
 
 
@@ -256,9 +255,8 @@ def create(
     pharmaceutical_product_create_input: PharmaceuticalProductCreateInput = Body(
         description=""
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    pharmaceutical_product_service = PharmaceuticalProductService(user=current_user_id)
+    pharmaceutical_product_service = PharmaceuticalProductService()
     return pharmaceutical_product_service.create(
         concept_input=pharmaceutical_product_create_input
     )
@@ -309,9 +307,8 @@ def edit(
     pharmaceutical_product_edit_input: PharmaceuticalProductEditInput = Body(
         description=""
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    pharmaceutical_product_service = PharmaceuticalProductService(user=current_user_id)
+    pharmaceutical_product_service = PharmaceuticalProductService()
     return pharmaceutical_product_service.edit_draft(
         uid=uid, concept_edit_input=pharmaceutical_product_edit_input
     )
@@ -357,9 +354,8 @@ Possible errors:
 )
 def approve(
     uid: str = PharmaceuticalProductUID,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    pharmaceutical_product_service = PharmaceuticalProductService(user=current_user_id)
+    pharmaceutical_product_service = PharmaceuticalProductService()
     return pharmaceutical_product_service.approve(uid=uid)
 
 
@@ -401,9 +397,8 @@ Possible errors:
 )
 def create_new_version(
     uid: str = PharmaceuticalProductUID,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    pharmaceutical_product_service = PharmaceuticalProductService(user=current_user_id)
+    pharmaceutical_product_service = PharmaceuticalProductService()
     return pharmaceutical_product_service.create_new_version(uid=uid)
 
 
@@ -446,9 +441,8 @@ Possible errors:
 )
 def inactivate(
     uid: str = PharmaceuticalProductUID,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    pharmaceutical_product_service = PharmaceuticalProductService(user=current_user_id)
+    pharmaceutical_product_service = PharmaceuticalProductService()
     return pharmaceutical_product_service.inactivate_final(uid=uid)
 
 
@@ -491,9 +485,8 @@ Possible errors:
 )
 def reactivate(
     uid: str = PharmaceuticalProductUID,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    pharmaceutical_product_service = PharmaceuticalProductService(user=current_user_id)
+    pharmaceutical_product_service = PharmaceuticalProductService()
     return pharmaceutical_product_service.reactivate_retired(uid=uid)
 
 
@@ -538,7 +531,6 @@ Possible errors:
 )
 def delete(
     uid: str = PharmaceuticalProductUID,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    pharmaceutical_product_service = PharmaceuticalProductService(user=current_user_id)
+    pharmaceutical_product_service = PharmaceuticalProductService()
     pharmaceutical_product_service.soft_delete(uid=uid)

@@ -53,6 +53,7 @@ def finish_import(tx, import_id):
 
 
 def import_data_model_json_data_into_cdisc_db(
+    library: str,
     catalogue: str,
     version_number: str,
     data_directory: str,
@@ -79,6 +80,7 @@ def import_data_model_json_data_into_cdisc_db(
     try:
         start_time = time.time()
         dm_import = DataModelImport(
+            library=library,
             catalogue=catalogue,
             version_number=version_number,
             user_initials=user_initials,

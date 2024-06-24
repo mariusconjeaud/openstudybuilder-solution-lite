@@ -13,8 +13,6 @@ from clinical_mdr_api.tests.integration.utils.data_library import (
     template_data,
 )
 
-service = tt_service.TimeframeTemplateService()
-
 
 class TestCreate(TestCase):
     TEST_DB_NAME = "ttfversioning"
@@ -28,7 +26,7 @@ class TestCreate(TestCase):
     def test_create(self):
         data = {"name": template_data["name"], "library_name": self.library["name"]}
         timeframe_template = models.TimeframeTemplateCreateInput(**data)
-        result = service.create(timeframe_template)
+        result = tt_service.TimeframeTemplateService().create(timeframe_template)
         self.assertIsInstance(result, models.TimeframeTemplate)
         self.assertEqual(result.name, template_data["name"])
         self.assertEqual(result.status, "Draft")
@@ -45,7 +43,9 @@ class TestDraftEdit(TestCase):
         inject_and_clear_db(cls.TEST_DB_NAME)
         cls.library = library_service.create(**library_data)
         timeframe_template = models.TimeframeTemplateCreateInput(**template_data)
-        cls.timeframe_template = service.create(timeframe_template)
+        cls.timeframe_template = tt_service.TimeframeTemplateService().create(
+            timeframe_template
+        )
 
     def test_edit(self):
         data = {
@@ -54,7 +54,9 @@ class TestDraftEdit(TestCase):
         }
         timeframe_template = models.TimeframeTemplateEditInput(**data)
         assert isinstance(self.timeframe_template, models.TimeframeTemplate)
-        result = service.edit_draft(self.timeframe_template.uid, timeframe_template)
+        result = tt_service.TimeframeTemplateService().edit_draft(
+            self.timeframe_template.uid, timeframe_template
+        )
         assert isinstance(result, models.TimeframeTemplate)
         self.assertEqual(result.version, "0.2")
         self.assertEqual(result.status, "Draft")
@@ -65,7 +67,9 @@ class TestDraftEdit(TestCase):
             "change_description": "tested",
         }
         timeframe_template = models.TimeframeTemplateEditInput(**data)
-        result = service.edit_draft(self.timeframe_template.uid, timeframe_template)
+        result = tt_service.TimeframeTemplateService().edit_draft(
+            self.timeframe_template.uid, timeframe_template
+        )
         assert isinstance(result, models.TimeframeTemplate)
         self.assertEqual(result.version, "0.3")
         self.assertEqual(result.status, "Draft")
@@ -81,12 +85,16 @@ class TestApprove(TestCase):
         inject_and_clear_db(cls.TEST_DB_NAME)
         cls.library = library_service.create(**library_data)
         timeframe_template = models.TimeframeTemplateCreateInput(**template_data)
-        timeframe_template = service.create(timeframe_template)
+        timeframe_template = tt_service.TimeframeTemplateService().create(
+            timeframe_template
+        )
         assert isinstance(timeframe_template, models.TimeframeTemplate)
         cls.timeframe_template = timeframe_template
 
     def test_approve(self):
-        result = service.approve(self.timeframe_template.uid)
+        result = tt_service.TimeframeTemplateService().approve(
+            self.timeframe_template.uid
+        )
         assert isinstance(result, models.TimeframeTemplate)
         self.assertEqual(result.version, "1.0")
         self.assertEqual(result.status, "Final")
@@ -100,26 +108,38 @@ class TestActivation(TestCase):
         inject_and_clear_db(cls.TEST_DB_NAME)
         cls.library = library_service.create(**library_data)
         timeframe_template = models.TimeframeTemplateCreateInput(**template_data)
-        timeframe_template = service.create(timeframe_template)
+        timeframe_template = tt_service.TimeframeTemplateService().create(
+            timeframe_template
+        )
         assert isinstance(timeframe_template, models.TimeframeTemplate)
-        timeframe_template = service.approve(timeframe_template.uid)
+        timeframe_template = tt_service.TimeframeTemplateService().approve(
+            timeframe_template.uid
+        )
         assert isinstance(timeframe_template, models.TimeframeTemplate)
         cls.timeframe_template = timeframe_template
 
     def test_activation(self):
-        result = service.inactivate_final(self.timeframe_template.uid)
+        result = tt_service.TimeframeTemplateService().inactivate_final(
+            self.timeframe_template.uid
+        )
         assert isinstance(result, models.TimeframeTemplate)
         self.assertEqual(result.version, "1.0")
         self.assertEqual(result.status, "Retired")
         with self.assertRaises(BusinessLogicException):
-            service.inactivate_final(self.timeframe_template.uid)
+            tt_service.TimeframeTemplateService().inactivate_final(
+                self.timeframe_template.uid
+            )
 
-        result = service.reactivate_retired(self.timeframe_template.uid)
+        result = tt_service.TimeframeTemplateService().reactivate_retired(
+            self.timeframe_template.uid
+        )
         assert isinstance(result, models.TimeframeTemplate)
         self.assertEqual(result.version, "1.0")
         self.assertEqual(result.status, "Final")
         with self.assertRaises(BusinessLogicException):
-            service.reactivate_retired(self.timeframe_template.uid)
+            tt_service.TimeframeTemplateService().reactivate_retired(
+                self.timeframe_template.uid
+            )
 
 
 # @pytest.mark.skip
@@ -131,17 +151,19 @@ class TestSoftDelete(TestCase):
         inject_and_clear_db(cls.TEST_DB_NAME)
         cls.library = library_service.create(**library_data)
         timeframe_template = models.TimeframeTemplateCreateInput(**template_data)
-        timeframe_template = service.create(timeframe_template)
+        timeframe_template = tt_service.TimeframeTemplateService().create(
+            timeframe_template
+        )
         assert isinstance(timeframe_template, models.TimeframeTemplate)
         cls.timeframe_template = timeframe_template
 
     def test_softdelete(self):
-        service.soft_delete(self.timeframe_template.uid)
+        tt_service.TimeframeTemplateService().soft_delete(self.timeframe_template.uid)
         repos = MetaRepository()
 
         with self.assertRaises(NotFoundException) as message:
             repos.timeframe_template_repository.find_by_uid(self.timeframe_template.uid)
         self.assertEqual(
-            "No Syntax Template with UID (TimeframeTemplate_000001) found in given status and version.",
+            "No TimeframeTemplateRoot with UID (TimeframeTemplate_000001) found in given status, date and version.",
             str(message.exception),
         )

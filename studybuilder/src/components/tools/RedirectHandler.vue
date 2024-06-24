@@ -1,116 +1,125 @@
 <template>
-<div>
-  <confirm-dialog ref="confirm" :text-cols="5" :action-cols="6">
-    <template v-slot:actions>
+  <ConfirmDialog ref="confirm" :text-cols="5" :action-cols="6">
+    <template #actions>
       <v-btn
         color="white"
-        @click.native="openSelectStudyDialog"
-        outlined
+        variant="outlined"
         class="mr-2"
         elevation="2"
-        >
+        @click="openSelectStudyDialog"
+      >
         {{ $t('_global.select_study') }}
       </v-btn>
       <v-btn
         color="white"
-        @click.native="redirectToStudyTable"
-        outlined
+        variant="outlined"
         elevation="2"
-        >
+        @click="redirectToStudyTable"
+      >
         {{ $t('_global.add_study') }}
       </v-btn>
     </template>
-  </confirm-dialog>
-  <v-dialog
-    v-model="showSelectForm"
-    persistent
-    max-width="600px"
-    >
-    <study-quick-select-form @close="showSelectForm = false" @selected="goToNextUrl" />
+  </ConfirmDialog>
+  <v-dialog v-model="showSelectForm" persistent max-width="600px">
+    <StudyQuickSelectForm
+      @close="showSelectForm = false"
+      @selected="goToNextUrl"
+    />
   </v-dialog>
-</div>
 </template>
 
 <script>
-import { mapActions, mapGetters } from 'vuex'
-import ConfirmDialog from '@/components/tools/ConfirmDialog'
-import StudyQuickSelectForm from '@/components/studies/StudyQuickSelectForm'
+import { computed } from 'vue'
+import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
+import StudyQuickSelectForm from '@/components/studies/StudyQuickSelectForm.vue'
+import { useAppStore } from '@/stores/app'
+import { useStudiesGeneralStore } from '@/stores/studies-general'
 import generalUtils from '@/utils/generalUtils'
 
 export default {
-  computed: {
-    ...mapGetters({
-      selectedStudy: 'studiesGeneral/selectedStudy'
-    })
-  },
   components: {
     ConfirmDialog,
-    StudyQuickSelectForm
+    StudyQuickSelectForm,
   },
   props: {
-    target: Object
+    target: {
+      type: Object,
+      default: undefined,
+    },
   },
-  mounted () {
-    this.items = this.studies
+  setup() {
+    const appStore = useAppStore()
+    const studiesGeneralStore = useStudiesGeneralStore()
+    return {
+      addBreadcrumbsLevel: appStore.addBreadcrumbsLevel,
+      selectedStudy: computed(() => studiesGeneralStore.selectedStudy),
+    }
   },
-  data () {
+  data() {
     return {
       items: [],
       expanded: false,
       showSelectForm: false,
-      nextUrl: null
-    }
-  },
-  methods: {
-    ...mapActions({
-      addBreadcrumbsLevel: 'app/addBreadcrumbsLevel'
-    }),
-    startFrom (arr, idx) {
-      return arr.slice(idx)
-    },
-    async redirect (target) {
-      if (target.subitem && target.subitem.studyRequired && !this.selectedStudy) {
-        const options = {
-          type: 'warning'
-        }
-        this.nextUrl = target.subitem.url
-        await this.$refs.confirm.open(this.$t('_global.no_study_selected'), options)
-      } else {
-        target.subitem ? this.$router.push(target.subitem.url) : this.$router.push(target.item.url)
-      }
-      if (Object.prototype.hasOwnProperty.call(target.item, 'meta')) {
-        const breads = target.item.meta.breadcrumb
-        this.addBreadcrumbsLevel({
-          text: breads[0].name
-        })
-        this.addBreadcrumbsLevel({
-          text: breads[1].name
-        })
-      } else {
-        this.addBreadcrumbsLevel({ text: target.item.title, to: target.item.url, index: 1 })
-        if (target.subitem !== undefined) {
-          this.addBreadcrumbsLevel({ text: target.subitem.title, to: target.subitem.url, index: 2 })
-        }
-      }
-    },
-    openSelectStudyDialog () {
-      this.$refs.confirm.cancel()
-      this.showSelectForm = true
-    },
-    redirectToStudyTable () {
-      this.$refs.confirm.cancel()
-      this.$router.push({ name: 'SelectOrAddStudy' })
-    },
-    goToNextUrl () {
-      this.nextUrl.params = { study_id: generalUtils.extractStudyUidFromLocalStorage() }
-      const resolved = this.$router.resolve(this.nextUrl)
-      document.location.href = resolved.href
+      nextUrl: null,
     }
   },
   watch: {
-    target (value) {
+    target(value) {
       this.redirect(value)
-    }
-  }
+    },
+  },
+  mounted() {
+    this.items = this.studies
+  },
+  methods: {
+    startFrom(arr, idx) {
+      return arr.slice(idx)
+    },
+    async redirect(target) {
+      if (
+        target.subitem &&
+        target.subitem.studyRequired &&
+        !this.selectedStudy
+      ) {
+        const options = {
+          type: 'warning',
+        }
+        this.nextUrl = target.subitem.url
+        await this.$refs.confirm.open(
+          this.$t('_global.no_study_selected'),
+          options
+        )
+      } else {
+        target.subitem
+          ? this.$router.push(target.subitem.url)
+          : this.$router.push(target.item.url)
+      }
+      if (Object.prototype.hasOwnProperty.call(target.item, 'meta')) {
+        const breads = target.item.meta.breadcrumb
+        this.addBreadcrumbsLevel(breads[0].name)
+        this.addBreadcrumbsLevel(breads[1].name)
+      } else {
+        this.addBreadcrumbsLevel(target.item.title, target.item.url, 1)
+        if (target.subitem !== undefined) {
+          this.addBreadcrumbsLevel(target.subitem.title, target.subitem.url, 2)
+        }
+      }
+    },
+    openSelectStudyDialog() {
+      this.$refs.confirm.cancel()
+      this.showSelectForm = true
+    },
+    redirectToStudyTable() {
+      this.$refs.confirm.cancel()
+      this.$router.push({ name: 'SelectOrAddStudy' })
+    },
+    goToNextUrl() {
+      this.nextUrl.params = {
+        study_id: generalUtils.extractStudyUidFromLocalStorage(),
+      }
+      const resolved = this.$router.resolve(this.nextUrl)
+      document.location.href = resolved.href
+    },
+  },
 }
 </script>

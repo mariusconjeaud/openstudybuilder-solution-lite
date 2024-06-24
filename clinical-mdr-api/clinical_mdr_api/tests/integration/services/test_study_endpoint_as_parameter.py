@@ -46,12 +46,12 @@ study_endpoint_2: models.StudySelectionEndpoint
 
 @pytest.fixture(scope="function")
 def study_objective_service():
-    return StudyObjectiveSelectionService(AUTHOR)
+    return StudyObjectiveSelectionService()
 
 
 @pytest.fixture(scope="function")
 def objective_template_service():
-    return ObjectiveTemplateService(AUTHOR)
+    return ObjectiveTemplateService()
 
 
 @pytest.fixture(scope="module")

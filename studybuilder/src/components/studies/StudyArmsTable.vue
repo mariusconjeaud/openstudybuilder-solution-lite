@@ -1,182 +1,163 @@
 <template>
-<div>
-  <n-n-table
-    @filter="fetchStudyArms"
-    :headers="headers"
-    item-key="arm_uid"
-    :server-items-length="total"
-    :options.sync="options"
-    :export-data-url="exportDataUrl"
-    export-object-label="StudyArms"
-    :items="arms"
-    has-api
-    :column-data-resource="`studies/${selectedStudy.uid}/study-arms`"
-    :history-data-fetcher="fetchArmsHistory"
-    :history-title="$t('StudyArmsTable.global_history_title')"
-    disable-filtering
-    >
-    <template v-slot:afterSwitches>
-      <div :title="$t('NNTableTooltips.reorder_content')">
-        <v-switch
-          v-model="sortMode"
-          :label="$t('NNTable.reorder_content')"
-          hide-details
-          class="mr-6"
-          />
-      </div>
-    </template>
-    <template v-slot:body="props" v-if="sortMode">
-      <draggable
-        :list="props.items"
-        tag="tbody"
-        @change="onChange($event)"
-        >
-        <tr
-          v-for="(item, index) in props.items"
-          :key="index"
-          >
-          <td width="3%">
-            <actions-menu :actions="actions" :item="item"/>
-          </td>
-          <td width="7%">
-            <v-icon
-              small
-              class="page__grab-icon">
-              mdi-sort
-            </v-icon>
-            {{ item.order }}
-          </td>
-          <td width="10%">{{ item.arm_type.sponsor_preferred_name }}</td>
-          <td width="10%">{{ item.name }}</td>
-          <td width="10%">{{ item.short_name }}</td>
-          <td width="10%">{{ item.randomization_group }}</td>
-          <td width="5%">{{ item.code }}</td>
-          <td width="5%">{{ item.number_of_subjects }}</td>
-          <td width="10%">{{ item.description }}</td>
-          <td width="10%"><v-chip :color="item.arm_colour" small /></td>
-          <td width="15%">{{ item.start_date | date }}</td>
-          <td width="10%">{{ item.user_initials }}</td>
-        </tr>
-      </draggable>
-    </template>
-    <template v-slot:item.name="{ item }">
-      <router-link :to="{ name: 'StudyArmOverview', params: { study_id: selectedStudy.uid, id: item.arm_uid, root_tab: 'arms' } }">
-        {{ item.name }}
-      </router-link>
-    </template>
-    <template v-slot:item.start_date="{ item }">
-      {{ item.start_date|date }}
-    </template>
-    <template v-slot:item.arm_connected_branch_arms="{ item }">
-      <div v-if="item.arm_connected_branch_arms">
-        <router-link v-for="branch of item.arm_connected_branch_arms" v-bind:key="branch.branch_arm_uid" :to="{ name: 'StudyBranchArmOverview', params: { study_id: selectedStudy.uid, id: branch.branch_arm_uid } }">
-          {{ branch.name }}
-        </router-link>
-      </div>
-    </template>
-    <template v-slot:item.arm_colour="{ item }">
-      <v-chip :color="item.arm_colour" small />
-    </template>
-    <template v-slot:item.actions="{ item }">
-      <actions-menu :actions="actions" :item="item" />
-    </template>
-    <template v-slot:actions="">
-      <v-btn
-        fab
-        small
-        color="primary"
-        @click.stop="showArmsForm = true"
-        :title="$t('StudyArmsForm.add_arm')"
-        data-cy="add-study-arm"
-        :disabled="!checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
-        >
-        <v-icon dark>
-          mdi-plus
-        </v-icon>
-      </v-btn>
-    </template>
-  </n-n-table>
-  <study-arms-form
-    :open="showArmsForm"
-    @close="closeForm"
-    :editedArm="armToEdit"
-    />
-  <v-dialog
-    v-model="showArmHistory"
-    @keydown.esc="closeArmHistory"
-    persistent
-    :max-width="globalHistoryDialogMaxWidth"
-    :fullscreen="globalHistoryDialogFullscreen"
-    >
-    <history-table
-      :title="studyArmHistoryTitle"
-      @close="closeArmHistory"
+  <div>
+    <NNTable
       :headers="headers"
-      :items="armHistoryItems"
+      item-value="arm_uid"
+      :items-length="total"
+      :export-data-url="exportDataUrl"
+      export-object-label="StudyArms"
+      :items="arms"
+      :column-data-resource="`studies/${selectedStudy.uid}/study-arms`"
+      :history-data-fetcher="fetchArmsHistory"
+      :history-title="$t('StudyArmsTable.global_history_title')"
+      disable-filtering
+      @filter="fetchStudyArms"
+    >
+      <template #[`item.name`]="{ item }">
+        <router-link
+          :to="{
+            name: 'StudyArmOverview',
+            params: { study_id: selectedStudy.uid, id: item.arm_uid },
+          }"
+        >
+          {{ item.name }}
+        </router-link>
+      </template>
+      <template #[`item.start_date`]="{ item }">
+        {{ $filters.date(item.start_date) }}
+      </template>
+      <template #[`item.arm_connected_branch_arms`]="{ item }">
+        <div v-if="item.arm_connected_branch_arms">
+          <router-link
+            v-for="branch of item.arm_connected_branch_arms"
+            :key="branch.branch_arm_uid"
+            :to="{
+              name: 'StudyBranchArmOverview',
+              params: {
+                study_id: selectedStudy.uid,
+                id: branch.branch_arm_uid,
+              },
+            }"
+          >
+            {{ branch.name }}
+          </router-link>
+        </div>
+      </template>
+      <template #[`item.arm_colour`]="{ item }">
+        <v-chip :color="item.arm_colour" size="small" variant="flat">
+          <span>&nbsp;</span>
+          <span>&nbsp;</span>
+        </v-chip>
+      </template>
+      <template #[`item.actions`]="{ item }">
+        <ActionsMenu :actions="actions" :item="item" />
+      </template>
+      <template #actions="">
+        <v-btn
+          size="small"
+          color="primary"
+          :title="$t('StudyArmsForm.add_arm')"
+          data-cy="add-study-arm"
+          :disabled="
+            !checkPermission($roles.STUDY_WRITE) ||
+            selectedStudyVersion !== null
+          "
+          icon="mdi-plus"
+          @click.stop="showArmsForm = true"
+        />
+      </template>
+    </NNTable>
+    <StudyArmsForm
+      :open="showArmsForm"
+      :edited-arm="armToEdit"
+      @close="closeForm"
+    />
+    <v-dialog
+      v-model="showArmHistory"
+      persistent
+      :fullscreen="$globals.historyDialogFullscreen"
+      @keydown.esc="closeArmHistory"
+    >
+      <HistoryTable
+        :title="studyArmHistoryTitle"
+        :headers="headers"
+        :items="armHistoryItems"
+        @close="closeArmHistory"
       />
-  </v-dialog>
-  <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
-</div>
+    </v-dialog>
+    <ConfirmDialog ref="confirm" :text-cols="6" :action-cols="5" />
+    <SelectionOrderUpdateForm
+      v-if="selectedArm"
+      ref="orderForm"
+      :initial-value="selectedArm.order"
+      :open="showOrderForm"
+      @close="closeOrderForm"
+      @submit="submitOrder"
+    />
+  </div>
 </template>
 
 <script>
-
-import NNTable from '@/components/tools/NNTable'
+import NNTable from '@/components/tools/NNTable.vue'
 import arms from '@/api/arms'
-import StudyArmsForm from '@/components/studies/StudyArmsForm'
-import { mapGetters } from 'vuex'
-import ActionsMenu from '@/components/tools/ActionsMenu'
-import { bus } from '@/main'
-import draggable from 'vuedraggable'
-import ConfirmDialog from '@/components/tools/ConfirmDialog'
+import StudyArmsForm from '@/components/studies/StudyArmsForm.vue'
+import ActionsMenu from '@/components/tools/ActionsMenu.vue'
+import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
 import filteringParameters from '@/utils/filteringParameters'
 import studyEpochs from '@/api/studyEpochs'
-import { accessGuard } from '@/mixins/accessRoleVerifier'
-import HistoryTable from '@/components/tools/HistoryTable'
+import HistoryTable from '@/components/tools/HistoryTable.vue'
+import SelectionOrderUpdateForm from '@/components/studies/SelectionOrderUpdateForm.vue'
+import { useAccessGuard } from '@/composables/accessGuard'
+import { useStudiesGeneralStore } from '@/stores/studies-general'
 
 export default {
-  mixins: [accessGuard],
   components: {
     NNTable,
     StudyArmsForm,
     ActionsMenu,
-    draggable,
     HistoryTable,
-    ConfirmDialog
+    ConfirmDialog,
+    SelectionOrderUpdateForm,
   },
-  computed: {
-    ...mapGetters({
-      selectedStudy: 'studiesGeneral/selectedStudy',
-      selectedStudyVersion: 'studiesGeneral/selectedStudyVersion'
-    }),
-    exportDataUrl () {
-      return `studies/${this.selectedStudy.uid}/study-arms`
-    },
-    studyArmHistoryTitle () {
-      if (this.selectedArm) {
-        return this.$t(
-          'StudyArmsTable.study_arm_history_title',
-          { armUid: this.selectedArm.arm_uid })
-      }
-      return ''
+  inject: ['eventBusEmit'],
+  setup() {
+    const studiesGeneralStore = useStudiesGeneralStore()
+    return {
+      ...useAccessGuard(),
+      selectedStudy: studiesGeneralStore.selectedStudy,
+      selectedStudyVersion: studiesGeneralStore.selectedStudyVersion,
     }
   },
-  data () {
+  data() {
     return {
       headers: [
-        { text: '', value: 'actions', width: '5%' },
-        { text: '#', value: 'order', width: '5%' },
-        { text: this.$t('StudyArmsTable.type'), value: 'arm_type.sponsor_preferred_name', width: '7%' },
-        { text: this.$t('StudyArmsTable.name'), value: 'name' },
-        { text: this.$t('StudyArmsTable.short_name'), value: 'short_name' },
-        { text: this.$t('StudyArmsTable.randomisation_group'), value: 'randomization_group' },
-        { text: this.$t('StudyArmsTable.code'), value: 'code' },
-        { text: this.$t('StudyArmsTable.number_of_subjects'), value: 'number_of_subjects', width: '1%' },
-        { text: this.$t('StudyArmsTable.connected_branches'), value: 'arm_connected_branch_arms' },
-        { text: this.$t('StudyArmsTable.description'), value: 'description' },
-        { text: this.$t('StudyBranchArms.colour'), value: 'arm_colour' },
-        { text: this.$t('_global.modified'), value: 'start_date' },
-        { text: this.$t('_global.modified_by'), value: 'user_initials' }
+        { title: '', key: 'actions', width: '5%' },
+        { title: '#', key: 'order', width: '5%' },
+        {
+          title: this.$t('StudyArmsTable.type'),
+          key: 'arm_type.sponsor_preferred_name',
+          width: '7%',
+        },
+        { title: this.$t('StudyArmsTable.name'), key: 'name' },
+        { title: this.$t('StudyArmsTable.short_name'), key: 'short_name' },
+        {
+          title: this.$t('StudyArmsTable.randomisation_group'),
+          key: 'randomization_group',
+        },
+        { title: this.$t('StudyArmsTable.code'), key: 'code' },
+        {
+          title: this.$t('StudyArmsTable.number_of_subjects'),
+          key: 'number_of_subjects',
+          width: '1%',
+        },
+        {
+          title: this.$t('StudyArmsTable.connected_branches'),
+          key: 'arm_connected_branch_arms',
+        },
+        { title: this.$t('StudyArmsTable.description'), key: 'description' },
+        { title: this.$t('StudyBranchArms.colour'), key: 'arm_colour' },
+        { title: this.$t('_global.modified'), key: 'start_date' },
+        { title: this.$t('_global.modified_by'), key: 'user_initials' },
       ],
       actions: [
         {
@@ -185,7 +166,15 @@ export default {
           iconColor: 'primary',
           condition: () => !this.selectedStudyVersion,
           click: this.editArm,
-          accessRole: this.$roles.STUDY_WRITE
+          accessRole: this.$roles.STUDY_WRITE,
+        },
+        {
+          label: this.$t('_global.change_order'),
+          icon: 'mdi-pencil-outline',
+          iconColor: 'primary',
+          condition: () => !this.selectedStudyVersion,
+          click: this.changeOrder,
+          accessRole: this.$roles.STUDY_WRITE,
         },
         {
           label: this.$t('_global.delete'),
@@ -193,102 +182,180 @@ export default {
           iconColor: 'error',
           condition: () => !this.selectedStudyVersion,
           click: this.deleteArm,
-          accessRole: this.$roles.STUDY_WRITE
+          accessRole: this.$roles.STUDY_WRITE,
         },
         {
           label: this.$t('_global.history'),
           icon: 'mdi-history',
-          click: this.openArmHistory
-        }
+          click: this.openArmHistory,
+        },
       ],
-      options: {},
       total: 0,
       arms: [],
       showArmsForm: false,
       armToEdit: {},
-      sortMode: false,
       showArmHistory: false,
       armHistoryItems: [],
       selectedArm: null,
-      showStudyArmsHistory: false
+      showStudyArmsHistory: false,
     }
   },
+  computed: {
+    exportDataUrl() {
+      return `studies/${this.selectedStudy.uid}/study-arms`
+    },
+    studyArmHistoryTitle() {
+      if (this.selectedArm) {
+        return this.$t('StudyArmsTable.study_arm_history_title', {
+          armUid: this.selectedArm.arm_uid,
+        })
+      }
+      return ''
+    },
+  },
   methods: {
-    async fetchArmsHistory () {
-      const resp = await studyEpochs.getStudyArmsVersions(this.selectedStudy.uid)
+    async fetchArmsHistory() {
+      const resp = await studyEpochs.getStudyArmsVersions(
+        this.selectedStudy.uid
+      )
       return resp.data
     },
-    fetchStudyArms (filters, sort, filtersUpdated) {
+    fetchStudyArms(filters, options, filtersUpdated) {
       const params = filteringParameters.prepareParameters(
-        this.options, filters, sort, filtersUpdated)
-      params.studyUid = this.selectedStudy.uid
-      params.study_value_version = this.selectedStudy.current_metadata.version_metadata.version_number
-      arms.getAllForStudy(this.selectedStudy.uid, { params }).then(resp => {
+        options,
+        filters,
+        filtersUpdated
+      )
+      params.study_uid = this.selectedStudy.uid
+      arms.getAllForStudy(this.selectedStudy.uid, { params }).then((resp) => {
         this.arms = resp.data.items
         this.total = resp.data.total
       })
     },
-    closeForm () {
+    closeForm() {
       this.armToEdit = {}
       this.showArmsForm = false
       this.fetchStudyArms()
     },
-    editArm (item) {
+    editArm(item) {
       this.armToEdit = item
       this.showArmsForm = true
     },
-    async openArmHistory (arm) {
+    async openArmHistory(arm) {
       this.selectedArm = arm
-      const resp = await studyEpochs.getStudyArmVersions(this.selectedStudy.uid, arm.arm_uid)
+      const resp = await studyEpochs.getStudyArmVersions(
+        this.selectedStudy.uid,
+        arm.arm_uid
+      )
       this.armHistoryItems = resp.data
       this.showArmHistory = true
     },
-    closeArmHistory () {
+    closeArmHistory() {
       this.showArmHistory = false
       this.selectedArm = null
     },
-    async deleteArm (item) {
+    async deleteArm(item) {
       let relatedItems = 0
-      await arms.getAllBranchesForArm(this.selectedStudy.uid, item.arm_uid).then(resp => {
-        relatedItems += resp.data.length
-      })
-      await arms.getAllCohortsForArm(this.selectedStudy.uid, item.arm_uid).then(resp => {
-        relatedItems += resp.data.items.length
-      })
-      await arms.getAllCellsForArm(this.selectedStudy.uid, item.arm_uid).then(resp => {
-        relatedItems += resp.data.length
-      })
+      await arms
+        .getAllBranchesForArm(this.selectedStudy.uid, item.arm_uid)
+        .then((resp) => {
+          relatedItems += resp.data.length
+        })
+      await arms
+        .getAllCohortsForArm(this.selectedStudy.uid, item.arm_uid)
+        .then((resp) => {
+          relatedItems += resp.data.items.length
+        })
+      await arms
+        .getAllCellsForArm(this.selectedStudy.uid, item.arm_uid)
+        .then((resp) => {
+          relatedItems += resp.data.length
+        })
       const options = {
         type: 'warning',
         cancelLabel: this.$t('_global.cancel'),
-        agreeLabel: this.$t('_global.continue')
+        agreeLabel: this.$t('_global.continue'),
       }
       if (relatedItems === 0) {
-        arms.delete(this.selectedStudy.uid, item.arm_uid).then(resp => {
-          bus.$emit('notification', { msg: this.$t('StudyArmsTable.arm_deleted') })
+        arms.delete(this.selectedStudy.uid, item.arm_uid).then(() => {
+          this.eventBusEmit('notification', {
+            msg: this.$t('StudyArmsTable.arm_deleted'),
+          })
           this.fetchStudyArms()
         })
-      } else if (await this.$refs.confirm.open(this.$t('StudyArmsTable.arm_delete_notification'), options)) {
-        arms.delete(this.selectedStudy.uid, item.arm_uid).then(resp => {
-          bus.$emit('notification', { msg: this.$t('StudyArmsTable.arm_deleted') })
+      } else if (
+        await this.$refs.confirm.open(
+          this.$t('StudyArmsTable.arm_delete_notification'),
+          options
+        )
+      ) {
+        arms.delete(this.selectedStudy.uid, item.arm_uid).then(() => {
+          this.eventBusEmit('notification', {
+            msg: this.$t('StudyArmsTable.arm_deleted'),
+          })
           this.fetchStudyArms()
         })
       }
     },
-    onChange (event) {
+    onChange(event) {
       const arm = event.moved.element
       const newOrder = {
-        new_order: this.arms[event.moved.newIndex].order
+        new_order: event.moved.newIndex + 1,
       }
-      arms.updateArmOrder(this.selectedStudy.uid, arm.arm_uid, newOrder).then(resp => {
-        this.fetchStudyArms()
-      })
-    }
+      arms
+        .updateArmOrder(this.selectedStudy.uid, arm.arm_uid, newOrder)
+        .then(() => {
+          this.fetchStudyArms()
+        })
+    },
+    submitOrder(value) {
+      arms
+        .updateArmOrder(
+          this.selectedArm.study_uid,
+          this.selectedArm.arm_uid,
+          value
+        )
+        .then(() => {
+          this.fetchStudyArms()
+          this.closeOrderForm()
+          this.eventBusEmit('notification', {
+            msg: this.$t('_global.order_updated'),
+          })
+        })
+    },
+    changeOrder(studyArm) {
+      this.selectedArm = studyArm
+      this.showOrderForm = true
+    },
+    closeOrderForm() {
+      this.showOrderForm = false
+    },
   },
-  watch: {
-    options () {
-      this.fetchStudyArms()
-    }
-  }
 }
 </script>
+
+<style scoped lang="scss">
+table {
+  width: max-content;
+  text-align: left;
+  border-spacing: 0px;
+  border-collapse: collapse;
+}
+thead {
+  background-color: #e5e5e5;
+  color: rgba(26, 26, 26, 0.6);
+}
+tr {
+  &.section {
+    background-color: #e5e5e5;
+  }
+}
+tbody tr {
+  border-bottom: 1px solid #e5e5e5;
+}
+th {
+  background-color: #e5e5e5;
+  padding: 6px;
+  font-size: 14px !important;
+}
+</style>

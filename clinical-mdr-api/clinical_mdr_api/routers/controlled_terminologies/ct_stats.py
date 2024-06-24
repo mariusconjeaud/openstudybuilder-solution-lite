@@ -1,10 +1,10 @@
 """CT stats router."""
 
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Query
 
 from clinical_mdr_api import models
-from clinical_mdr_api.oauth import get_current_user_id, rbac
+from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.routers import _generic_descriptions
 from clinical_mdr_api.services.controlled_terminologies.ct_codelist import (
     CTCodelistService,
@@ -29,13 +29,12 @@ router = APIRouter()
 def get_stats(
     latest_count: int
     | None = Query(3, description="Optional, number of latest codelists to return"),
-    current_user_id: str = Depends(get_current_user_id),
 ):
     ct_stats_service = CTStatsService()
 
     # Get latest codelists from codelist service
     # Use get_all method from codelist repo with order by start_date desc and page_size = latest_count
-    ct_codelist_service = CTCodelistService(user=current_user_id)
+    ct_codelist_service = CTCodelistService()
     latest_codelists = ct_codelist_service.get_all_codelists(
         sort_by={"name.start_date": False, "codelist_uid": True},
         page_number=1,

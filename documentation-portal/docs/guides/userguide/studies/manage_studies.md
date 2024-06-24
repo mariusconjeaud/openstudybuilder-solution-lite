@@ -4,10 +4,7 @@ This user guide explain how to manage study definitions in the StudyBuilder appl
 
 [![Conceptual architecture for the clinical-MDR and the StudyBuilder](~@source/images/user_guides/manage_studies_menu.png)](../../../images/user_guides/manage_studies_menu.png)
  - On the **Study List** sub menu you can search and select studies as well as add new study definitions.
- - On the **Study** sub menu you can maintain the core attributes for a study, study status and versioning, maintain relationship to sub-parts for (for protocols holding multiple sub-studies)<sup>\*</sup> and maintain relationship between study versions and protocol document versions<sup>\*</sup>.
- - On the **Project Standards** sub menu you link your study to selected project and thearuputic area standards<sup>\*</sup>.
-
-> Note, items marked by <sup>\*</sup> are not implemented yet.
+ - On the **Study** sub menu you can maintain the core attributes for a study, study status and versioning, maintain relationship to sub-parts for (for protocols holding multiple sub-studies) and maintain relationship between study versions and protocol document versions.
 
 
 ## Search and Select Study
@@ -75,3 +72,127 @@ Some of these study definition instances are general, and some refer to the spec
 These study definition instances should be used in different ways. For final deliverables (like a final protocol version) a locked version should always be used. For testing e.g., SDTM generation a stable released study definition instance can be used. The benefit here is it is stable so will not have instance changes as the study definition is being updated, this makes it simpler to test and debug the programs using the metadata.
 
 For general queries and exploration of study definitions metadata the general lates study definition instance should be used, where you always see the lates metadata independent of status.
+
+
+## Study Subparts
+
+Study Subparts are needed, whenever a single protocol is including multiple sub-studies. This could be the case with a single dose and multi dose included in one, single protocol.
+
+For StudyBuilder to support this need, the study subparts are available.
+
+Usually it has been decided at an early stage, when a study should have multiple parts and it can make sense to create all parts at when setting up the study. It is also possible to create the subparts later.
+
+The easiest approach is to start with creating a study containing the title, sub title and registry identifiers intended for the protocol. The titles and registry identifiers will be shared between the subparts as a single protocol can only have one title and one of each registry identifiers.
+
+
+### Add first part/main study
+
+A new study is created in studies/Study List by using the + button (add button) ![Add](~@source/images/bt_add_blue.png)
+
+Add titles and registry identifiers as applicable
+
+[![Study subparts figure 1](~@source/images/user_guides/study_subparts_1.png)](../../../images/user_guides/study_subparts_1.png)
+
+*<p style="text-align: center;">Figure 1 Titles added to 'main' study for output to protocol</p>*
+
+[![Study subparts figure 2](~@source/images/user_guides/study_subparts_2.png)](../../../images/user_guides/study_subparts_2.png)
+
+*<p style="text-align: center;">Figure 2 Registry identifiers added ti 'main' study for output to protocol</p>*
+
+
+### Create/add subpart
+
+Once the initial part is created, the subparts can be created. This is done in Manage Study/Study/Study Subparts
+
+[![Study subparts figure 3](~@source/images/user_guides/study_subparts_3.png)](../../../images/user_guides/study_subparts_3.png)
+
+*<p style="text-align: center;">Figure 3 Study subpart are added from Studies/Manage study/Study/study Subparts</p>*
+
+In the study Subparts tab, click the + button (add button) where 2 actions become available:
+
+1. Create new study to be study subpart
+1. Add existing study as study subpart
+
+
+#### Option: Create new study to be study subpart to the study already selected
+
+This option is to create a new study as a subpart. Make sure to have the study selected for which the study subpart should be added
+
+1. Select ‘Create new study to be study subpart’
+1. Select ‘continue’
+1. Write study subpart acronym (could be Multi Dose, or part 2 or something else, this field is required)
+1. Write study acronym (this is the basic acronym for the study similar to the acronym for normal studies, the field is optional)
+1. Write a description (optional)
+1. Press ‘Save’
+
+The study subpart is now created. Note that the study subpart has been provided a subpart ID and a Subpart acronym.
+
+In the study List, both the initial (first) part and the new subpart will be available for selection and editing.
+
+[![Study subparts figure 4](~@source/images/user_guides/study_subparts_4.png)](../../../images/user_guides/study_subparts_4.png)
+
+*<p style="text-align: center;">Figure 4 Main study and subpart a in the Study List</p>*
+
+When looking into the title page and the registry identifiers, then they are inherited from the main part and not writeable.
+
+[![Study subparts figure 5](~@source/images/user_guides/study_subparts_5.png)](../../../images/user_guides/study_subparts_5.png)
+
+*<p style="text-align: center;">Figure 5 Titles and registry identifiers are inherited</p>*
+
+[![Study subparts figure 6](~@source/images/user_guides/study_subparts_6.png)](../../../images/user_guides/study_subparts_6.png)
+
+*<p style="text-align: center;">Figure 6 Impact of creating a new study subpart</p>*
+
+Almost all other content besides titles, registry identifiers (and study structure) can be copied from the original part by using the ‘Copy from study’ or the ‘Select from studies’ functionality, if needed.
+
+
+#### Option: Add existing study as study subpart
+
+If an existing study should be added as study subpart to another study, then this option should be used. Make sure to have the study selected for which the existing study should be added as subpart.
+
+Only studies within same project ID can be add as subpart to the ‘main’ study
+
+1. Select ‘Add existing study as study subpart’
+1. Select ‘continue’
+1. Select existing study by using the copy button ![Copy](~@source/images/user_guides/copy_button.png)
+1. Write study subpart acronym (could be Multi Dose, or part 2 or something else, this field is required)
+1. Write a description (optional) or reuse any existing description
+1. Press ‘Save’
+
+The existing study will have the study number overwritten with the number from the ‘main’ study.
+
+>**Example:**
+>Study CDISC DEV-5555 has been build with title and content. The project agrees to add the existing and fully described study CDISC DEV-6666 as subpart to CDISC DEV-5555.
+>When this is done, the title and registry identifiers from CDISC DEV-5555 is inherited to CDISC DEV-6666, which is now CDISC DEV-5555-a.
+
+[![Study subparts figure 7](~@source/images/user_guides/study_subparts_7.png)](../../../images/user_guides/study_subparts_7.png)
+
+*<p style="text-align: center;">Figure 7 Impact of adding an existing study as a study subpart to another study</p>*
+
+
+### Overview of study subparts
+
+In Manage study/Study/Study Subparts it is possible to get an overview of the study with subparts
+
+[![Study subparts figure 8](~@source/images/user_guides/study_subparts_8.png)](../../../images/user_guides/study_subparts_8.png)
+
+*<p style="text-align: center;">Figure 8 The main study in the topbar and subparts in the table</p>*
+
+The ‘main study’ carrying the title and registry identifiers must be selected in the Study List
+
+Then go to Manage study/Study/Study Subparts to get the overview – see Figure 8
+
+| Column | Explanation | Example |
+| --- | --------- | --- |
+| Study ID | The study ID number including project ID | CDISC DEV-5555 |
+| Study Acronym | The acronym for the whole study | DEFINE6 |
+| Subpart ID | The unique ID for the subpart | a   |
+| Subpart acronym | An acronym that describes the subpart | SD/Single Dose |
+| Description | Free text description as needed | Lorem ipsum etc |
+
+
+### Releasing and locking study subparts
+
+A study subpart cannot be released or locked individually - a subpart can only be released or locked together with the parent study. This ensure a multiple parts study always is versioned as a bundle of a parent study and its subparts.
+
+Se more on [study versioning](#maintain-study-status-and-versioning).

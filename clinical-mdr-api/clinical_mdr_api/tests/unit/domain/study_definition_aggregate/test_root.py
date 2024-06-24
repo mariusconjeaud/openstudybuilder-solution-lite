@@ -93,7 +93,7 @@ def create_random_study(
             generate_uid_callback=generate_uid_callback,
             initial_id_metadata=initial_id_metadata,
             project_exists_callback=(lambda _: True),
-            study_number_exists_callback=(lambda _: False),
+            study_number_exists_callback=(lambda x, y: False),
             initial_high_level_study_design=initial_high_level_study_design
             if not is_study_after_create
             else _DEF_INITIAL_HIGH_LEVEL_STUDY_DESIGN,
@@ -436,7 +436,7 @@ class TestStudyDefinitionAR(unittest.TestCase):
                     project_exists_callback=(lambda _: True),
                     study_title_exists_callback=(lambda _, study_number: False),
                     study_short_title_exists_callback=(lambda _, study_number: False),
-                    study_number_exists_callback=(lambda _: False),
+                    study_number_exists_callback=(lambda x, y: False),
                 )
 
                 # then

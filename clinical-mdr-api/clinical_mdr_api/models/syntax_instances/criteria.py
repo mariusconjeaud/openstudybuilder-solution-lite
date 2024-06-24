@@ -82,8 +82,16 @@ class Criteria(BaseModel):
             )
         return cls(
             uid=criteria_ar.uid,
-            name=criteria_ar.name,
-            name_plain=criteria_ar.name_plain,
+            name=capitalize_first_letter_if_template_parameter(
+                criteria_ar.name,
+                criteria_ar.template_name_plain,
+                criteria_ar._template.parameter_terms,
+            ),
+            name_plain=capitalize_first_letter_if_template_parameter(
+                criteria_ar.name_plain,
+                criteria_ar.template_name_plain,
+                criteria_ar._template.parameter_terms,
+            ),
             start_date=criteria_ar.item_metadata.start_date,
             end_date=criteria_ar.item_metadata.end_date,
             status=criteria_ar.item_metadata.status.value,
@@ -135,10 +143,12 @@ class CriteriaWithType(Criteria):
             name=capitalize_first_letter_if_template_parameter(
                 criteria_ar.name,
                 criteria_ar.template_name_plain,
+                criteria_ar._template.parameter_terms,
             ),
             name_plain=capitalize_first_letter_if_template_parameter(
                 criteria_ar.name_plain,
                 criteria_ar.template_name_plain,
+                criteria_ar._template.parameter_terms,
             ),
             start_date=criteria_ar.item_metadata.start_date,
             end_date=criteria_ar.item_metadata.end_date,

@@ -1,303 +1,364 @@
 <template>
-<div>
-  <n-n-table
-    :headers="headers"
-    :items="formatedCompounds"
-    :server-items-length="total"
-    :options.sync="options"
-    item-key="uid"
-    dense
-    has-api
-    @filter="fetchItems"
-    column-data-resource="concepts/compounds"
-    export-data-url="concepts/compounds"
-    export-object-label="compounds"
-    >
-    <template v-slot:actions="">
-      <v-btn
-        fab
-        small
-        color="primary"
-        @click.stop="showCompoundForm = true"
-        :title="$t('CompoundForm.add_title')"
-        :disabled="!checkPermission($roles.LIBRARY_WRITE)"
-        >
-        <v-icon dark>
-          mdi-plus
-        </v-icon>
-      </v-btn>
-    </template>
-    <template v-slot:item.actions="{ item }">
-      <actions-menu
-        :actions="actions"
-        :item="item"
-        />
-    </template>
-    <template v-slot:item.name="{ item }">
-      <router-link :to="{ name: 'CompoundOverview', params: { id: item.uid } }">
-        {{ item.name }}
-      </router-link>
-    </template>
-    <template v-slot:item.start_date="{ item }">
-      {{ item.start_date|date }}
-    </template>
-    <template v-slot:item.status="{ item }">
-      <status-chip :status="item.status" />
-    </template>
-  </n-n-table>
-  <v-dialog
-    v-model="showCompoundForm"
-    fullscreen
-    persistent
-    content-class="fullscreen-dialog"
-    >
-    <compound-form
-      @close="closeCompoundForm"
-      @created="fetchItems"
-      @updated="fetchItems"
-      :compound-uid="selectedCompound ? selectedCompound.uid : null"
-      :formShown="showCompoundForm"
-      />
-  </v-dialog>
-  <v-dialog
-    v-model="showHistory"
-    @keydown.esc="closeHistory"
-    persistent
-    :max-width="globalHistoryDialogMaxWidth"
-    :fullscreen="globalHistoryDialogFullscreen"
-    >
-    <history-table
-      :title="historyTitle"
-      @close="closeHistory"
+  <div>
+    <NNTable
       :headers="headers"
-      :items="historyItems"
+      :items="formatedCompounds"
+      :items-length="total"
+      item-value="uid"
+      density="compact"
+      column-data-resource="concepts/compounds"
+      export-data-url="concepts/compounds"
+      export-object-label="compounds"
+      @filter="fetchItems"
+    >
+      <template #actions="">
+        <v-btn
+          size="small"
+          color="primary"
+          :title="$t('CompoundForm.add_title')"
+          :disabled="!checkPermission($roles.LIBRARY_WRITE)"
+          icon="mdi-plus"
+          @click.stop="showCompoundForm = true"
+        />
+      </template>
+      <template #[`item.actions`]="{ item }">
+        <ActionsMenu :actions="actions" :item="item" />
+      </template>
+      <template #[`item.name`]="{ item }">
+        <router-link
+          :to="{ name: 'CompoundOverview', params: { id: item.uid } }"
+        >
+          {{ item.name }}
+        </router-link>
+      </template>
+      <template #[`item.start_date`]="{ item }">
+        {{ $filters.date(item.start_date) }}
+      </template>
+      <template #[`item.status`]="{ item }">
+        <StatusChip :status="item.status" />
+      </template>
+    </NNTable>
+    <v-dialog
+      v-model="showCompoundForm"
+      fullscreen
+      persistent
+      content-class="fullscreen-dialog"
+    >
+      <CompoundForm
+        :compound-uid="selectedCompound ? selectedCompound.uid : null"
+        :form-shown="showCompoundForm"
+        @close="closeCompoundForm"
+        @created="fetchItems"
+        @updated="fetchItems"
       />
-  </v-dialog>
-  <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
-</div>
+    </v-dialog>
+    <v-dialog
+      v-model="showHistory"
+      persistent
+      :max-width="$globals.historyDialogMaxWidth"
+      :fullscreen="$globals.historyDialogFullscreen"
+      @keydown.esc="closeHistory"
+    >
+      <HistoryTable
+        :title="historyTitle"
+        :headers="headers"
+        :items="historyItems"
+        @close="closeHistory"
+      />
+    </v-dialog>
+    <ConfirmDialog ref="confirm" :text-cols="6" :action-cols="5" />
+  </div>
 </template>
 
 <script>
-import ActionsMenu from '@/components/tools/ActionsMenu'
-import { bus } from '@/main'
-import CompoundForm from './CompoundForm'
+import ActionsMenu from '@/components/tools/ActionsMenu.vue'
+import CompoundForm from './CompoundForm.vue'
 import compounds from '@/api/concepts/compounds'
-import ConfirmDialog from '@/components/tools/ConfirmDialog'
+import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
 import dataFormating from '@/utils/dataFormating'
-import HistoryTable from '@/components/tools/HistoryTable'
-import NNTable from '@/components/tools/NNTable'
-import StatusChip from '@/components/tools/StatusChip'
-import { accessGuard } from '@/mixins/accessRoleVerifier'
+import HistoryTable from '@/components/tools/HistoryTable.vue'
+import NNTable from '@/components/tools/NNTable.vue'
+import StatusChip from '@/components/tools/StatusChip.vue'
+import { useAccessGuard } from '@/composables/accessGuard'
+import filteringParameters from '@/utils/filteringParameters'
 
 export default {
-  mixins: [accessGuard],
   components: {
     ActionsMenu,
     CompoundForm,
     ConfirmDialog,
     HistoryTable,
     NNTable,
-    StatusChip
+    StatusChip,
   },
+  inject: ['eventBusEmit'],
   props: {
-    tabClickedAt: Number
-  },
-  computed: {
-    historyTitle () {
-      if (this.selectedCompound) {
-        return this.$t('CompoundTable.compound_history_title', { compound: this.selectedCompound.uid })
-      }
-      return ''
+    tabClickedAt: {
+      type: Number,
+      default: null,
     },
-    formatedCompounds () {
-      return this.transformItems(this.compounds)
+  },
+  setup() {
+    const accessGuard = useAccessGuard()
+    return {
+      ...accessGuard,
     }
   },
-  data () {
+  data() {
     return {
       actions: [
         {
           label: this.$t('_global.edit'),
           icon: 'mdi-pencil-outline',
           iconColor: 'primary',
-          condition: (item) => item.possible_actions.find(action => action === 'edit'),
+          condition: (item) =>
+            item.possible_actions.find((action) => action === 'edit'),
           accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.editCompound
+          click: this.editCompound,
         },
         {
           label: this.$t('_global.approve'),
           icon: 'mdi-check-decagram',
           iconColor: 'success',
-          condition: (item) => item.possible_actions.find(action => action === 'approve'),
+          condition: (item) =>
+            item.possible_actions.find((action) => action === 'approve'),
           accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.approveCompound
+          click: this.approveCompound,
         },
         {
           label: this.$t('_global.new_version'),
           icon: 'mdi-plus-circle-outline',
           iconColor: 'primary',
-          condition: (item) => item.possible_actions.find(action => action === 'new_version'),
+          condition: (item) =>
+            item.possible_actions.find((action) => action === 'new_version'),
           accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.createNewVersion
+          click: this.createNewVersion,
         },
         {
           label: this.$t('_global.inactivate'),
           icon: 'mdi-close-octagon-outline',
           iconColor: 'primary',
-          condition: (item) => item.possible_actions.find(action => action === 'inactivate'),
+          condition: (item) =>
+            item.possible_actions.find((action) => action === 'inactivate'),
           accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.inactivateCompound
+          click: this.inactivateCompound,
         },
         {
           label: this.$t('_global.reactivate'),
           icon: 'mdi-undo-variant',
           iconColor: 'primary',
-          condition: (item) => item.possible_actions.find(action => action === 'reactivate'),
+          condition: (item) =>
+            item.possible_actions.find((action) => action === 'reactivate'),
           accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.reactivateCompound
+          click: this.reactivateCompound,
         },
         {
           label: this.$t('_global.delete'),
           icon: 'mdi-delete-outline',
           iconColor: 'error',
-          condition: (item) => item.possible_actions.find(action => action === 'delete'),
+          condition: (item) =>
+            item.possible_actions.find((action) => action === 'delete'),
           accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.deleteCompound
+          click: this.deleteCompound,
         },
         {
           label: this.$t('_global.history'),
           icon: 'mdi-history',
-          click: this.openHistory
-        }
+          click: this.openHistory,
+        },
       ],
       compounds: [],
       filters: {},
-      sort: {},
       headers: [
-        { text: '', value: 'actions', width: '5%' },
-        { text: this.$t('CompoundTable.sponsor_compound'), value: 'is_sponsor_compound' },
-        { text: this.$t('CompoundTable.compound_name'), value: 'name' },
-        { text: this.$t('CompoundTable.is_name_inn'), value: 'is_name_inn' },
-        { text: this.$t('CompoundTable.nnc_number_long'), value: 'nnc_long_number' },
-        { text: this.$t('CompoundTable.nnc_number_short'), value: 'nnc_short_number' },
-        { text: this.$t('CompoundTable.analyte_number'), value: 'analyte_number' },
-        { text: this.$t('_global.definition'), value: 'definition' },
-        { text: this.$t('CompoundTable.brand_name'), value: 'brands' },
-        { text: this.$t('CompoundTable.substance_name'), value: 'substances' },
-        { text: this.$t('CompoundTable.pharmacological_class'), value: 'pharmacological_classes' },
-        { text: this.$t('CompoundTable.dose'), value: 'dose_values' },
-        { text: this.$t('CompoundTable.strength'), value: 'strength_values' },
-        { text: this.$t('CompoundTable.dosage_form'), value: 'dosage_forms' },
-        { text: this.$t('CompoundTable.route_of_admin'), value: 'routes_of_administration' },
-        { text: this.$t('CompoundTable.dose_frequency'), value: 'dose_frequencies' },
-        { text: this.$t('CompoundTable.dispensed_in'), value: 'dispensers' },
-        { text: this.$t('CompoundTable.delivery_device'), value: 'delivery_devices' },
-        { text: this.$t('CompoundTable.half_life'), value: 'half_life' },
-        { text: this.$t('CompoundTable.lag_time'), value: 'lag_times' },
-        { text: this.$t('_global.modified'), value: 'start_date' },
-        { text: this.$t('_global.version'), value: 'version' },
-        { text: this.$t('_global.status'), value: 'status' }
+        { title: '', key: 'actions', width: '5%' },
+        {
+          title: this.$t('CompoundTable.sponsor_compound'),
+          key: 'is_sponsor_compound',
+        },
+        { title: this.$t('CompoundTable.compound_name'), key: 'name' },
+        { title: this.$t('CompoundTable.is_name_inn'), key: 'is_name_inn' },
+        {
+          title: this.$t('CompoundTable.nnc_number_long'),
+          key: 'nnc_long_number',
+        },
+        {
+          title: this.$t('CompoundTable.nnc_number_short'),
+          key: 'nnc_short_number',
+        },
+        {
+          title: this.$t('CompoundTable.analyte_number'),
+          key: 'analyte_number',
+        },
+        { title: this.$t('_global.definition'), key: 'definition' },
+        { title: this.$t('CompoundTable.brand_name'), key: 'brands' },
+        { title: this.$t('CompoundTable.substance_name'), key: 'substances' },
+        {
+          title: this.$t('CompoundTable.pharmacological_class'),
+          key: 'pharmacological_classes',
+        },
+        { title: this.$t('CompoundTable.dose'), key: 'dose_keys' },
+        { title: this.$t('CompoundTable.strength'), key: 'strength_keys' },
+        { title: this.$t('CompoundTable.dosage_form'), key: 'dosage_forms' },
+        {
+          title: this.$t('CompoundTable.route_of_admin'),
+          key: 'routes_of_administration',
+        },
+        {
+          title: this.$t('CompoundTable.dose_frequency'),
+          key: 'dose_frequencies',
+        },
+        { title: this.$t('CompoundTable.dispensed_in'), key: 'dispensers' },
+        {
+          title: this.$t('CompoundTable.delivery_device'),
+          key: 'delivery_devices',
+        },
+        { title: this.$t('CompoundTable.half_life'), key: 'half_life' },
+        { title: this.$t('CompoundTable.lag_time'), key: 'lag_times' },
+        { title: this.$t('_global.modified'), key: 'start_date' },
+        { title: this.$t('_global.version'), key: 'version' },
+        { title: this.$t('_global.status'), key: 'status' },
       ],
       historyItems: [],
-      options: {},
       selectedCompound: null,
       showCompoundForm: false,
       showHistory: false,
-      total: 0
+      total: 0,
     }
   },
+  computed: {
+    historyTitle() {
+      if (this.selectedCompound) {
+        return this.$t('CompoundTable.compound_history_title', {
+          compound: this.selectedCompound.uid,
+        })
+      }
+      return ''
+    },
+    formatedCompounds() {
+      return this.transformItems(this.compounds)
+    },
+  },
+  watch: {
+    tabClickedAt() {
+      this.fetchItems(this.filters, this.sort)
+    },
+    options: {
+      handler() {
+        this.fetchItems()
+      },
+      deep: true,
+    },
+  },
   methods: {
-    fetchItems (filters, sort, filtersUpdated) {
+    fetchItems(filters, options, filtersUpdated) {
       if (filters !== undefined) {
         this.filters = filters
       }
-      if (sort !== undefined) {
-        this.sort = sort
-      }
-      if (filtersUpdated) {
-        this.options.page = 1
-      }
-      const params = {
-        page_number: (this.options.page),
-        page_size: this.options.itemsPerPage,
-        total_count: true
-      }
-      if (this.filters !== undefined) {
-        params.filters = this.filters
-      }
-      if (this.options.sortBy.length !== 0 && this.sort !== undefined) {
-        params.sort_by = `{"${this.options.sortBy[0]}":${!this.sort}}`
-      }
-      compounds.getFiltered(params).then(resp => {
+      const params = filteringParameters.prepareParameters(
+        options,
+        filters,
+        filtersUpdated
+      )
+      compounds.getFiltered(params).then((resp) => {
         this.compounds = resp.data.items
         this.total = resp.data.total
       })
     },
-    closeCompoundForm () {
+    closeCompoundForm() {
       this.showCompoundForm = false
       this.selectedCompound = null
     },
-    editCompound (item) {
+    editCompound(item) {
       // Make sure to edit the orignal compound, not the formated one
-      const orignalItem = this.compounds.find(compound => compound.uid === item.uid)
+      const orignalItem = this.compounds.find(
+        (compound) => compound.uid === item.uid
+      )
       this.selectedCompound = orignalItem
       this.showCompoundForm = true
     },
-    approveCompound (item) {
+    approveCompound(item) {
       compounds.approve(item.uid).then(() => {
         this.fetchItems()
-        bus.$emit('notification', { msg: this.$t('CompoundTable.approve_success'), type: 'success' })
+        this.eventBusEmit('notification', {
+          msg: this.$t('CompoundTable.approve_success'),
+          type: 'success',
+        })
       })
     },
-    async deleteCompound (item) {
+    async deleteCompound(item) {
       const options = { type: 'warning' }
       const compound = item.name
-      if (await this.$refs.confirm.open(this.$t('CompoundTable.confirm_delete', { compound }), options)) {
+      if (
+        await this.$refs.confirm.open(
+          this.$t('CompoundTable.confirm_delete', { compound }),
+          options
+        )
+      ) {
         await compounds.deleteObject(item.uid)
         this.fetchItems()
-        bus.$emit('notification', { msg: this.$t('CompoundTable.delete_success'), type: 'success' })
+        this.eventBusEmit('notification', {
+          msg: this.$t('CompoundTable.delete_success'),
+          type: 'success',
+        })
       }
     },
-    createNewVersion (item) {
+    createNewVersion(item) {
       compounds.newVersion(item.uid).then(() => {
         this.fetchItems()
-        bus.$emit('notification', { msg: this.$t('CompoundTable.new_version_success'), type: 'success' })
+        this.eventBusEmit('notification', {
+          msg: this.$t('CompoundTable.new_version_success'),
+          type: 'success',
+        })
       })
     },
-    inactivateCompound (item) {
+    inactivateCompound(item) {
       compounds.inactivate(item.uid).then(() => {
         this.fetchItems()
-        bus.$emit('notification', { msg: this.$t('CompoundTable.inactivate_success'), type: 'success' })
+        this.eventBusEmit('notification', {
+          msg: this.$t('CompoundTable.inactivate_success'),
+          type: 'success',
+        })
       })
     },
-    reactivateCompound (item) {
+    reactivateCompound(item) {
       compounds.reactivate(item.uid).then(() => {
         this.fetchItems()
-        bus.$emit('notification', { msg: this.$t('CompoundTable.reactivate_success'), type: 'success' })
+        this.eventBusEmit('notification', {
+          msg: this.$t('CompoundTable.reactivate_success'),
+          type: 'success',
+        })
       })
     },
-    async openHistory (item) {
+    async openHistory(item) {
       this.selectedCompound = item
       const resp = await compounds.getVersions(this.selectedCompound.uid)
       this.historyItems = this.transformItems(resp.data)
       this.showHistory = true
     },
-    closeHistory () {
+    closeHistory() {
       this.showHistory = false
     },
-    transformItems (items) {
+    transformItems(items) {
       const result = []
       for (const item of items) {
         const newItem = { ...item }
-        newItem.is_sponsor_compound = dataFormating.yesno(newItem.is_sponsor_compound)
+        newItem.is_sponsor_compound = dataFormating.yesno(
+          newItem.is_sponsor_compound
+        )
         newItem.is_name_inn = dataFormating.yesno(newItem.is_name_inn)
         newItem.brands = dataFormating.names(newItem.brands)
         newItem.substances = dataFormating.substances(item.substances)
-        newItem.pharmacological_classes = dataFormating.pharmacologicalClasses(item.substances)
+        newItem.pharmacological_classes = dataFormating.pharmacologicalClasses(
+          item.substances
+        )
         newItem.dose_values = dataFormating.numericValues(newItem.dose_values)
-        newItem.strength_values = dataFormating.numericValues(newItem.strength_values)
+        newItem.strength_values = dataFormating.numericValues(
+          newItem.strength_values
+        )
         newItem.dosage_forms = dataFormating.names(newItem.dosage_forms)
-        newItem.routes_of_administration = dataFormating.names(newItem.routes_of_administration)
+        newItem.routes_of_administration = dataFormating.names(
+          newItem.routes_of_administration
+        )
         newItem.dose_frequencies = dataFormating.names(newItem.dose_frequencies)
         newItem.dispensers = dataFormating.names(newItem.dispensers)
         newItem.delivery_devices = dataFormating.names(newItem.delivery_devices)
@@ -308,18 +369,7 @@ export default {
         result.push(newItem)
       }
       return result
-    }
-  },
-  watch: {
-    tabClickedAt () {
-      this.fetchItems(this.filters, this.sort)
     },
-    options: {
-      handler () {
-        this.fetchItems()
-      },
-      deep: true
-    }
-  }
+  },
 }
 </script>

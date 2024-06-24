@@ -1,26 +1,36 @@
 <template>
-<div class="px-4">
-  <div class="page-title d-flex align-center">
-    {{ $t('StudyRegistryIdentifiersView.title') }} ({{ studyId }})
-    <help-button :help-text="$t('_help.RegistryIdentifiersTable.general')" />
+  <div class="px-4">
+    <div class="page-title d-flex align-center">
+      {{ $t('StudyRegistryIdentifiersView.title') }} ({{ studyId }})
+      <HelpButton :help-text="$t('_help.RegistryIdentifiersTable.general')" />
+    </div>
+    <RegistryIdentifiersSummary />
+    <CommentThreadList
+      :topic-path="'/studies/' + selectedStudy.uid + '/registry_identifiers'"
+      :is-transparent="false"
+    />
   </div>
-  <registry-identifiers-summary />
-  <comment-thread-list :topicPath="'/studies/' + selectedStudy.uid + '/registry_identifiers'" :isTransparent="false"></comment-thread-list>
-</div>
 </template>
 
 <script>
-import { studySelectedNavigationGuard } from '@/mixins/studies'
-import RegistryIdentifiersSummary from '@/components/studies/RegistryIdentifiersSummary'
-import HelpButton from '@/components/tools/HelpButton'
-import CommentThreadList from '@/components/tools/CommentThreadList'
+import { computed } from 'vue'
+import RegistryIdentifiersSummary from '@/components/studies/RegistryIdentifiersSummary.vue'
+import HelpButton from '@/components/tools/HelpButton.vue'
+import CommentThreadList from '@/components/tools/CommentThreadList.vue'
+import { useStudiesGeneralStore } from '@/stores/studies-general'
 
 export default {
-  mixins: [studySelectedNavigationGuard],
   components: {
     RegistryIdentifiersSummary,
     CommentThreadList,
-    HelpButton
-  }
+    HelpButton,
+  },
+  setup() {
+    const studiesGeneralStore = useStudiesGeneralStore()
+    return {
+      selectedStudy: computed(() => studiesGeneralStore.selectedStudy),
+      studyId: studiesGeneralStore.studyId,
+    }
+  },
 }
 </script>

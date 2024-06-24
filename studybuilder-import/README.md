@@ -216,6 +216,7 @@ as well as what environment variables that determine which files are used.
 | visit type | MDR_MIGRATION_VISIT_TYPE |
 | visit sub label | MDR_MIGRATION_VISIT_SUB_LABEL |
 | null flavor | MDR_MIGRATION_NULL_FLAVOR |
+| sponsor domain | MDR_MIGRATION_SPONSOR_DOMAIN |
 
 ### CRFs
 | step | environment variable(s) |

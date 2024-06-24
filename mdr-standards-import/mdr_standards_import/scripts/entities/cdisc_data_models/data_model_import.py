@@ -1,5 +1,4 @@
 import datetime
-from typing import Sequence
 from mdr_standards_import.scripts.entities.cdisc_data_models.version import Version
 from mdr_standards_import.scripts.entities.cdisc_data_models.data_model_type import (
     DataModelType,
@@ -16,8 +15,9 @@ from mdr_standards_import.scripts.entities.cdisc_data_models.data_model_variable
 
 
 class DataModelImport:
-    def __init__(self, catalogue: str, version_number: str, user_initials: str):
+    def __init__(self, library:str, catalogue: str, version_number: str, user_initials: str):
         self.import_date_time: str = datetime.datetime.now().astimezone().isoformat()
+        self.library: str = library
         self.catalogue: str = catalogue
         self.version_number: str = version_number
         self.user_initials: str = user_initials

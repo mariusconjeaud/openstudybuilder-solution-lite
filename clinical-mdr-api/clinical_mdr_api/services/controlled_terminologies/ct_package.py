@@ -7,6 +7,7 @@ from clinical_mdr_api.models import (
     CTPackageChangesSpecificCodelist,
     CTPackageDates,
 )
+from clinical_mdr_api.oauth.user import user
 from clinical_mdr_api.repositories.ct_packages import (
     get_ct_packages_changes,
     get_ct_packages_codelist_changes,
@@ -18,14 +19,19 @@ from clinical_mdr_api.services._utils import normalize_string
 class CTPackageService:
     _repos: MetaRepository
 
-    def __init__(self, user: str | None = None):
-        self.user_initials = user if user is not None else "TODO user initials"
+    def __init__(self):
+        self.user_initials = user().id()
         self._repos = MetaRepository(self.user_initials)
 
     def _close_all_repos(self) -> None:
         self._repos.close()
 
-    def get_all_ct_packages(self, catalogue_name: str | None) -> list[models.CTPackage]:
+    def get_all_ct_packages(
+        self,
+        catalogue_name: str | None,
+        standards_only: bool = True,
+        sponsor_only: bool = False,
+    ) -> list[models.CTPackage]:
         try:
             if (
                 catalogue_name is not None
@@ -37,8 +43,13 @@ class CTPackageService:
                     f"There is no catalogue identified by provided catalogue name ({catalogue_name})"
                 )
 
+            if standards_only and sponsor_only:
+                standards_only = False
+
             all_ct_packages = self._repos.ct_package_repository.find_all(
-                catalogue_name=catalogue_name
+                catalogue_name=catalogue_name,
+                standards_only=standards_only,
+                sponsor_only=sponsor_only,
             )
             return [
                 CTPackage.from_ct_package_ar(ct_package_ar)
@@ -68,6 +79,21 @@ class CTPackageService:
         finally:
             self._close_all_repos()
 
+    def create_sponsor_ct_package(
+        self, extends_package: str, effective_date: date
+    ) -> models.CTPackage:
+        try:
+            sponsor_package_ar = (
+                self._repos.ct_package_repository.create_sponsor_package(
+                    extends_package=extends_package,
+                    effective_date=effective_date,
+                    user_initials=self.user_initials,
+                )
+            )
+            return CTPackage.from_ct_package_ar(sponsor_package_ar)
+        finally:
+            self._close_all_repos()
+
     def get_ct_packages_changes(
         self, catalogue_name: str, old_package_date: date, new_package_date: date
     ) -> CTPackageChanges:
@@ -88,6 +114,15 @@ class CTPackageService:
                 new_package_name=new_package.name,
                 query_output=result,
             )
+        finally:
+            self._close_all_repos()
+
+    def get_ct_package_by_uid(
+        self,
+        ct_package_uid: str,
+    ) -> CTPackage:
+        try:
+            return self._repos.ct_package_repository.find_by_uid(uid=ct_package_uid)
         finally:
             self._close_all_repos()
 

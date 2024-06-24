@@ -1,88 +1,99 @@
 <template>
-<study-activity-selection-base-form
-  :help-items="helpItems"
-  :selection="selection"
-  @submit="submit"
-  @close="close"
-  with-delete-action
-  @remove="unselectItem"
-  :open="open"
+  <StudyActivitySelectionBaseForm
+    :help-items="helpItems"
+    :selection="selection"
+    with-delete-action
+    :open="open"
+    @submit="submit"
+    @close="close"
+    @remove="unselectItem"
   >
-  <template v-slot:body>
-    <v-autocomplete
-      v-model="form.flowchart_group"
-      :label="$t('StudyActivityForm.flowchart_group')"
-      :items="flowchartGroups"
-      item-text="sponsor_preferred_name"
-      return-object
-      clearable
-      class="border-top mt-4"
+    <template #body>
+      <v-autocomplete
+        v-model="form.flowchart_group"
+        :label="$t('StudyActivityForm.flowchart_group')"
+        :items="flowchartGroups"
+        item-title="name.sponsor_preferred_name"
+        return-object
+        clearable
+        class="border-top mt-4"
       />
-    <v-checkbox
-      v-model="form.deleteSelection"
-      :color="form.deleteSelection ? 'error': ''"
+      <v-checkbox
+        v-model="form.deleteSelection"
+        :color="form.deleteSelection ? 'error' : ''"
       >
-      <template v-slot:label>
-        <span :class="{ 'error--text': form.deleteSelection }">
-          {{ $t('StudyActivityBatchEditForm.delete_selection') }}
-        </span>
-      </template>
-    </v-checkbox>
-  </template>
-</study-activity-selection-base-form>
+        <template #label>
+          <span :class="{ 'error--text': form.deleteSelection }">
+            {{ $t('StudyActivityBatchEditForm.delete_selection') }}
+          </span>
+        </template>
+      </v-checkbox>
+    </template>
+  </StudyActivitySelectionBaseForm>
 </template>
 
 <script>
-import { bus } from '@/main'
-import { mapGetters } from 'vuex'
+import { computed } from 'vue'
 import study from '@/api/study'
-import StudyActivitySelectionBaseForm from './StudyActivitySelectionBaseForm'
+import StudyActivitySelectionBaseForm from './StudyActivitySelectionBaseForm.vue'
 import terms from '@/api/controlledTerminology/terms'
+import { useStudiesGeneralStore } from '@/stores/studies-general'
 
 export default {
   components: {
-    StudyActivitySelectionBaseForm
+    StudyActivitySelectionBaseForm,
   },
+  inject: ['eventBusEmit'],
   props: {
-    selection: Array,
-    open: Boolean
+    selection: {
+      type: Array,
+      default: () => [],
+    },
+    open: Boolean,
   },
-  computed: {
-    ...mapGetters({
-      selectedStudy: 'studiesGeneral/selectedStudy'
-    })
+  emits: ['close', 'remove', 'updated'],
+  setup() {
+    const studiesGeneralStore = useStudiesGeneralStore()
+    return {
+      selectedStudy: computed(() => studiesGeneralStore.selectedStudy),
+    }
   },
-  data () {
+  data() {
     return {
       flowchartGroups: [],
       form: {},
-      helpItems: []
+      helpItems: [],
     }
   },
+  mounted() {
+    terms.getByCodelist('flowchartGroups').then((resp) => {
+      this.flowchartGroups = resp.data.items
+    })
+  },
   methods: {
-    close () {
+    close() {
       this.form = {}
       this.$emit('close')
     },
-    unselectItem (item) {
+    unselectItem(item) {
       this.$emit('remove', item)
     },
-    async submit () {
+    async submit() {
       const data = []
       if (this.form.deleteSelection) {
         for (const item of this.selection) {
           data.push({
             method: 'DELETE',
             content: {
-              study_activity_uid: item.study_activity_uid
-            }
+              study_activity_uid: item.study_activity_uid,
+            },
           })
         }
       }
       if (this.form.flowchart_group || this.form.note) {
         for (const item of this.selection) {
           const content = {
-            note: this.form.note
+            note: this.form.note,
           }
           if (this.form.flowchart_group) {
             content.soa_group_term_uid = this.form.flowchart_group.term_uid
@@ -91,32 +102,32 @@ export default {
             method: 'PATCH',
             content: {
               study_activity_uid: item.study_activity_uid,
-              content
-            }
+              content,
+            },
           })
         }
       }
       if (data.length) {
-        study.studyActivityBatchOperations(this.selectedStudy.uid, data).then(() => {
-          bus.$emit('notification', { type: 'success', msg: this.$t('StudyActivityBatchEditForm.update_success') })
-          this.$emit('updated')
-          this.close()
-        })
+        study
+          .studyActivityBatchOperations(this.selectedStudy.uid, data)
+          .then(() => {
+            this.eventBusEmit('notification', {
+              type: 'success',
+              msg: this.$t('StudyActivityBatchEditForm.update_success'),
+            })
+            this.$emit('updated')
+            this.close()
+          })
       } else {
         this.close()
       }
-    }
+    },
   },
-  mounted () {
-    terms.getByCodelist('flowchartGroups').then(resp => {
-      this.flowchartGroups = resp.data.items
-    })
-  }
 }
 </script>
 
 <style scoped>
 .border-top {
-  border-top: 1px solid var(--v-dfltBackground-darken1);
+  border-top: 1px solid rgb(var(--v-theme-dfltBackground));
 }
 </style>

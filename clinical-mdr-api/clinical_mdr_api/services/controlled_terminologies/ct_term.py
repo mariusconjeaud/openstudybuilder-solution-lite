@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Any, TypeVar
 
 from neomodel import db
@@ -19,6 +20,7 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
 )
 from clinical_mdr_api.models import CTTerm, CTTermCreateInput, CTTermNameAndAttributes
 from clinical_mdr_api.models.utils import GenericFilteringReturn
+from clinical_mdr_api.oauth.user import user
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._meta_repository import MetaRepository  # type: ignore
 from clinical_mdr_api.services._utils import is_library_editable, normalize_string
@@ -30,14 +32,17 @@ class CTTermService:
     _repos: MetaRepository
     user_initials: str | None
 
-    def __init__(self, user: str | None = None):
-        self.user_initials = user if user is not None else "TODO user initials"
+    def __init__(self):
+        self.user_initials = user().id()
+
         self._repos = MetaRepository(self.user_initials)
 
     def __del__(self):
         self._repos.close()
 
-    def non_transactional_create(self, term_input: CTTermCreateInput) -> CTTerm:
+    def non_transactional_create(
+        self, term_input: CTTermCreateInput, start_date: datetime | None = None
+    ) -> CTTerm:
         """
         Method creates CTTermAttributesAR and saves that object to the database.
         When saving CTTermAttributesAR - CTTermRoot node is created that will become a root node for
@@ -77,7 +82,10 @@ class CTTermService:
         ct_codelist_name_ar = self._repos.ct_codelist_name_repository.find_by_uid(
             codelist_uid=term_input.codelist_uid
         )
-        if ct_codelist_name_ar.item_metadata.status is LibraryItemStatus.DRAFT:
+        if (
+            ct_codelist_name_ar
+            and ct_codelist_name_ar.item_metadata.status is LibraryItemStatus.DRAFT
+        ):
             raise exceptions.BusinessLogicException(
                 f"Until Codelist {term_input.codelist_uid} is in DRAFT status, no Terms can be added"
             )
@@ -107,6 +115,7 @@ class CTTermService:
                 ),
             ),
             library=library_vo,
+            start_date=start_date,
             generate_uid_callback=self._repos.ct_term_attributes_repository.generate_uid,
         )
 
@@ -125,8 +134,10 @@ class CTTermService:
                 name_sentence_case=term_input.sponsor_preferred_name_sentence_case,
                 codelist_exists_callback=self._repos.ct_codelist_attribute_repository.codelist_exists,
                 catalogue_exists_callback=self._repos.ct_catalogue_repository.catalogue_exists,
+                term_exists_by_name_in_codelists_callback=self._repos.ct_term_name_repository.term_specific_exists_by_name_in_codelists,
             ),
             library=library_vo,
+            start_date=start_date,
             generate_uid_callback=lambda: ct_term_attributes_ar.uid,
         )
 
@@ -135,8 +146,10 @@ class CTTermService:
         return CTTerm.from_ct_term_ars(ct_term_name_ar, ct_term_attributes_ar)
 
     @db.transaction
-    def create(self, term_input: CTTermCreateInput) -> CTTerm:
-        return self.non_transactional_create(term_input)
+    def create(
+        self, term_input: CTTermCreateInput, start_date: datetime | None = None
+    ) -> CTTerm:
+        return self.non_transactional_create(term_input, start_date=start_date)
 
     def get_all_terms(
         self,
@@ -144,6 +157,7 @@ class CTTermService:
         codelist_name: str | None,
         library: str | None,
         package: str | None,
+        is_sponsor: bool = False,
         sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
@@ -161,6 +175,7 @@ class CTTermService:
                 codelist_name=codelist_name,
                 library=library,
                 package=package,
+                is_sponsor=is_sponsor,
                 total_count=total_count,
                 sort_by=sort_by,
                 filter_by=filter_by,

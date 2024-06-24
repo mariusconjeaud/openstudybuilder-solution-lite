@@ -7,6 +7,7 @@ from clinical_mdr_api.models.controlled_terminologies.ct_stats import (
     CountTypeEnum,
     CTStats,
 )
+from clinical_mdr_api.oauth.user import user
 from clinical_mdr_api.repositories.ct_packages import get_package_changes_by_year
 from clinical_mdr_api.services._meta_repository import MetaRepository
 
@@ -15,8 +16,8 @@ class CTStatsService:
     _repos: MetaRepository
     user_initials: str | None
 
-    def __init__(self, user: str | None = None):
-        self.user_initials = user if user is not None else "TODO user initials"
+    def __init__(self):
+        self.user_initials = user().id()
         self._repos = MetaRepository(self.user_initials)
 
     def _close_all_repos(self) -> None:

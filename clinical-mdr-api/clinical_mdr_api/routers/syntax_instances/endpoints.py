@@ -1,6 +1,6 @@
 from typing import Any
 
-from fastapi import APIRouter, Body, Depends, Path, Query, Request, Response
+from fastapi import APIRouter, Body, Path, Query, Request, Response
 from fastapi import status as fast_api_status
 from pydantic.types import Json
 
@@ -13,7 +13,7 @@ from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatu
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.study_selections.study import Study
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.oauth import get_current_user_id, rbac
+from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.routers._generic_descriptions import study_section_description
@@ -117,9 +117,8 @@ def get_all(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    all_items = EndpointService(current_user_id).get_all(
+    all_items = EndpointService().get_all(
         status=LibraryItemStatus.FINAL.value,
         page_number=page_number,
         page_size=page_size,
@@ -151,7 +150,6 @@ def get_all(
     },
 )
 def get_distinct_values_for_header(
-    current_user_id: str = Depends(get_current_user_id),
     status: LibraryItemStatus
     | None = Query(
         None,
@@ -175,7 +173,7 @@ def get_distinct_values_for_header(
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
 ):
-    return Service(current_user_id).get_distinct_values_for_header(
+    return Service().get_distinct_values_for_header(
         status=status,
         field_name=field_name,
         search_string=search_string,
@@ -209,9 +207,8 @@ def retrieve_audit_trail(
     ),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    results = Service(current_user_id).get_all(
+    results = Service().get_all(
         page_number=page_number,
         page_size=page_size,
         total_count=total_count,
@@ -241,9 +238,8 @@ def retrieve_audit_trail(
 )
 def get(
     uid: str = EndpointUID,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    return EndpointService(current_user_id).get_by_uid(uid=uid)
+    return EndpointService().get_by_uid(uid=uid)
 
 
 @router.get(
@@ -345,9 +341,8 @@ The returned versions are ordered by `start_date` descending (newest entries fir
 def get_versions(
     request: Request,  # request is actually required by the allow_exports decorator
     uid: str = EndpointUID,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    return EndpointService(current_user_id).get_version_history(uid)
+    return EndpointService().get_version_history(uid)
 
 
 @router.get(
@@ -367,13 +362,12 @@ def get_versions(
 )
 def get_studies(
     uid: str = EndpointUID,
-    current_user_id: str = Depends(get_current_user_id),
     include_sections: list[StudyComponentEnum]
     | None = Query(None, description=study_section_description("include")),
     exclude_sections: list[StudyComponentEnum]
     | None = Query(None, description=study_section_description("exclude")),
 ):
-    return Service(current_user_id).get_referencing_studies(
+    return Service().get_referencing_studies(
         uid=uid,
         node_type=EndpointValue,
         include_sections=include_sections,
@@ -421,9 +415,8 @@ def create(
     endpoint: models.EndpointCreateInput = Body(
         description="Related parameters of the endpoint that shall be created."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    return EndpointService(current_user_id).create(endpoint)
+    return EndpointService().create(endpoint)
 
 
 @router.post(
@@ -462,14 +455,13 @@ def preview(
     endpoint: models.EndpointCreateInput = Body(
         description="Related parameters of the endpoint that shall be previewed."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    return EndpointService(current_user_id).create(endpoint, preview=True)
+    return EndpointService().create(endpoint, preview=True)
 
 
 @router.patch(
     "/{uid}",
-    dependencies=[rbac.LIBRARY_WRITE],
+    dependencies=[rbac.LIBRARY_WRITE_OR_STUDY_WRITE],
     summary="Updates the endpoint identified by 'uid'.",
     description="""This request is only valid if the endpoint
 * is in 'Draft' status and
@@ -505,9 +497,8 @@ def edit(
     endpoint: models.EndpointEditInput = Body(
         description="The new parameter terms for the endpoint including the change description.",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    return EndpointService(current_user_id).edit_draft(uid=uid, template=endpoint)
+    return EndpointService().edit_draft(uid=uid, template=endpoint)
 
 
 @router.post(
@@ -540,10 +531,8 @@ If the request succeeds:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def approve(
-    uid: str = EndpointUID, current_user_id: str = Depends(get_current_user_id)
-):
-    return EndpointService(current_user_id).approve(uid)
+def approve(uid: str = EndpointUID):
+    return EndpointService().approve(uid)
 
 
 @router.delete(
@@ -574,10 +563,8 @@ If the request succeeds:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def inactivate(
-    uid: str = EndpointUID, current_user_id: str = Depends(get_current_user_id)
-):
-    return EndpointService(current_user_id).inactivate_final(uid)
+def inactivate(uid: str = EndpointUID):
+    return EndpointService().inactivate_final(uid)
 
 
 # TODO check if * there is no other endpoint with the same name (it may be that one had been created after inactivating this one here)
@@ -609,10 +596,8 @@ If the request succeeds:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def reactivate(
-    uid: str = EndpointUID, current_user_id: str = Depends(get_current_user_id)
-):
-    return EndpointService(current_user_id).reactivate_retired(uid)
+def reactivate(uid: str = EndpointUID):
+    return EndpointService().reactivate_retired(uid)
 
 
 @router.delete(
@@ -640,8 +625,8 @@ def reactivate(
         500: _generic_descriptions.ERROR_500,
     },
 )
-def delete(uid: str = EndpointUID, current_user_id: str = Depends(get_current_user_id)):
-    EndpointService(current_user_id).soft_delete(uid)
+def delete(uid: str = EndpointUID):
+    EndpointService().soft_delete(uid)
     return Response(status_code=fast_api_status.HTTP_204_NO_CONTENT)
 
 
@@ -673,6 +658,5 @@ In that case, the same parameter (with the same values) is included multiple tim
 )
 def get_parameters(
     uid: str = Path(None, description="The unique id of the endpoint."),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    return EndpointService(current_user_id).get_parameters(uid)
+    return EndpointService().get_parameters(uid)

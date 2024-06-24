@@ -3,12 +3,13 @@ from neomodel import db  # type: ignore
 from clinical_mdr_api import exceptions, models
 from clinical_mdr_api.domains.brands.brand import BrandAR
 from clinical_mdr_api.models import BrandCreateInput
+from clinical_mdr_api.oauth.user import user
 from clinical_mdr_api.services._meta_repository import MetaRepository  # type: ignore
 
 
 class BrandService:
-    def __init__(self, user_id: str | None = None):
-        self.user_id = user_id if user_id is not None else "-Unknown-"
+    def __init__(self):
+        self.user_id = user().id()
         self.repos = MetaRepository()
 
     def get_all_brands(self) -> list[models.Brand]:

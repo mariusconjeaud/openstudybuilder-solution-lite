@@ -1,11 +1,32 @@
 <template>
   <div>
-    <v-textarea auto-grow rows="1" outlined :class="isTransparent ? 'mx-0' : 'mx-5'" v-model="text" :label="$t('Comments.comment_add_placeholder')"></v-textarea>
-    <div v-show="!loading" class="buttons" :class="isTransparent ? 'mx-0' : 'mx-5'" v-if="this.text.length > 0">
-      <v-btn class="secondary-btn" color="white" @click="cancelCreate">{{ $t('_global.cancel') }}</v-btn>
-      <v-btn class="primary-btn mx-4" color="secondary" @click="createThread">{{ $t('Comments.comment_add_button') }}</v-btn>
+    <v-textarea
+      v-model="text"
+      auto-grow
+      rows="1"
+      variant="outlined"
+      :class="isTransparent ? 'mx-0' : 'mx-5'"
+      :label="$t('Comments.comment_add_placeholder')"
+    />
+    <div
+      v-show="!loading"
+      v-if="text.length > 0"
+      class="buttons"
+      :class="isTransparent ? 'mx-0' : 'mx-5'"
+    >
+      <v-btn class="secondary-btn" color="white" @click="cancelCreate">
+        {{ $t('_global.cancel') }}
+      </v-btn>
+      <v-btn class="primary-btn mx-4" color="secondary" @click="createThread">
+        {{ $t('Comments.comment_add_button') }}
+      </v-btn>
     </div>
-    <v-progress-linear v-show="loading" indeterminate color="primary" class="mb-4"></v-progress-linear>
+    <v-progress-linear
+      v-show="loading"
+      indeterminate
+      color="primary"
+      class="mb-4"
+    />
   </div>
 </template>
 
@@ -16,39 +37,42 @@ export default {
   props: {
     topicPath: {
       type: String,
-      required: true
+      required: true,
     },
     isTransparent: {
       type: Boolean,
-      default: false
-    }
+      default: false,
+    },
   },
-  data () {
+  emits: ['commentThreadAdded'],
+  data() {
     return {
       text: '',
-      loading: false
+      loading: false,
     }
   },
   methods: {
-    createThread () {
+    createThread() {
       const data = {
         topic_path: this.topicPath,
-        text: this.text
+        text: this.text,
       }
       this.loading = true
-      comments.createThread(data)
-        .then(resp => {
+      comments.createThread(data).then(
+        () => {
           this.text = ''
           this.loading = false
           this.$emit('commentThreadAdded')
-        }, (_err) => {
+        },
+        () => {
           this.loading = false
-        })
+        }
+      )
     },
-    cancelCreate () {
+    cancelCreate() {
       this.text = ''
-    }
-  }
+    },
+  },
 }
 </script>
 

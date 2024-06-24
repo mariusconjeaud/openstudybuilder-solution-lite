@@ -1,80 +1,106 @@
 <template>
-<div class="pa-4" v-if="selectedStudyVersion === null">
-  <div class="mt-6 d-flex align-center">
-    <span class="text-h6">{{ $t('ProtocolInterventionsTable.title') }}</span>
-    <v-spacer/>
-    <span class="text-center font-italic">{{ loadingMessage }}</span>
-    <v-spacer/>
-    <div class="d-flex ml-4">
-      <v-btn
-        color="secondary"
-        @click="downloadDocx($event)"
-        class="ml-3"
-        :disabled="Boolean(loadingMessage)"
-      >
-        {{ $t('_global.download_docx') }}
-      </v-btn>
+  <div v-if="selectedStudyVersion === null" class="pa-4">
+    <div class="mt-6 d-flex align-center">
+      <span class="text-h6">{{ $t('ProtocolInterventionsTable.title') }}</span>
+      <v-spacer />
+      <span class="text-center font-italic">{{ loadingMessage }}</span>
+      <v-spacer />
+      <div class="d-flex ml-4">
+        <v-btn
+          color="secondary"
+          class="ml-3"
+          :disabled="Boolean(loadingMessage)"
+          @click="downloadDocx($event)"
+        >
+          {{ $t('_global.download_docx') }}
+        </v-btn>
+      </div>
     </div>
+    <div
+      id="ProtocolInterventions"
+      class="mt-4"
+      v-html="protocolInterventionsTable"
+    />
   </div>
-  <div class="mt-4" v-html="protocolInterventionsTable" id="ProtocolInterventions"></div>
-</div>
-<div v-else>
-  <under-construction :message="$t('UnderConstruction.not_supported')"/>
-</div>
+  <div v-else>
+    <UnderConstruction :message="$t('UnderConstruction.not_supported')" />
+  </div>
 </template>
 
 <script>
 import study from '@/api/study'
 import exportLoader from '@/utils/exportLoader'
-import { mapGetters } from 'vuex'
-import UnderConstruction from '@/components/layout/UnderConstruction'
+import UnderConstruction from '@/components/layout/UnderConstruction.vue'
+import { useStudiesGeneralStore } from '@/stores/studies-general'
+import { computed } from 'vue'
 
 export default {
   components: {
-    UnderConstruction
-  },
-  computed: {
-    ...mapGetters({
-      selectedStudyVersion: 'studiesGeneral/selectedStudyVersion'
-    })
+    UnderConstruction,
   },
   props: {
-    studyUid: String,
-    update: Number
+    studyUid: {
+      type: String,
+      default: '',
+    },
+    update: {
+      type: Number,
+      default: 0,
+    },
   },
-  data () {
+  setup() {
+    const studiesGeneralStore = useStudiesGeneralStore()
+    return {
+      selectedStudyVersion: computed(
+        () => studiesGeneralStore.selectedStudyVersion
+      ),
+    }
+  },
+  data() {
     return {
       protocolInterventionsTable: '',
-      loadingMessage: ''
+      loadingMessage: '',
     }
-  },
-  methods: {
-    updateTable () {
-      this.loadingMessage = this.$t('ProtocolInterventionsTable.loading')
-      study.getStudyProtocolInterventionsTableHtml(this.studyUid).then(resp => {
-        this.protocolInterventionsTable = resp.data
-      }).then(this.finally).catch(this.finally)
-    },
-    downloadDocx () {
-      this.loadingMessage = this.$t('ProtocolInterventionsTable.downloading')
-      study.getStudyProtocolInterventionsTableDocx(this.studyUid).then(response => {
-        exportLoader.downloadFile(response.data, response.headers['content-type'] ||
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document', `${this.studyUid} interventions.docx`)
-      }).then(this.finally).catch(this.finally)
-    },
-    finally (error) {
-      this.loadingMessage = ''
-      if (error) throw error
-    }
-  },
-  mounted () {
-    this.updateTable()
   },
   watch: {
-    update (newVal, oldVal) {
+    update(newVal, oldVal) {
       if (newVal !== oldVal) this.updateTable()
-    }
-  }
+    },
+  },
+  mounted() {
+    this.updateTable()
+  },
+  methods: {
+    updateTable() {
+      this.loadingMessage = this.$t('ProtocolInterventionsTable.loading')
+      study
+        .getStudyProtocolInterventionsTableHtml(this.studyUid)
+        .then((resp) => {
+          this.protocolInterventionsTable = resp.data
+        })
+        .then(this.finally)
+        .catch(this.finally)
+    },
+    downloadDocx() {
+      this.loadingMessage = this.$t('ProtocolInterventionsTable.downloading')
+      study
+        .getStudyProtocolInterventionsTableDocx(this.studyUid)
+        .then((response) => {
+          exportLoader.downloadFile(
+            response.data,
+            response.headers['content-type'] ||
+              'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            `${this.studyUid} interventions.docx`
+          )
+        })
+        .then(this.finally)
+        .catch(this.finally)
+    },
+    finally(error) {
+      this.loadingMessage = ''
+      if (error) throw error
+    },
+  },
 }
 </script>
 
@@ -85,13 +111,14 @@ export default {
   resize: both;
   border-collapse: collapse;
 
-  &, & TH, & TD {
+  &,
+  & TH,
+  & TD {
     border: 1px solid #ebe8e5;
     padding: 1px 3px;
   }
 
   & THEAD {
-
     & TH {
       text-align: center;
       font-weight: bold;
@@ -111,7 +138,6 @@ export default {
     & TR TD {
       text-align: left;
     }
-
   }
 }
 </style>

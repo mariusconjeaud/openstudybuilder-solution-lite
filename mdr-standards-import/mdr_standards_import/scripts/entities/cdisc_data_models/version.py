@@ -1,4 +1,4 @@
-from typing import Sequence
+from typing import Sequence, OrderedDict
 
 from mdr_standards_import.scripts.entities.cdisc_data_models.data_model_type import (
     DataModelType,
@@ -75,9 +75,9 @@ class Version:
         self.prior_version: str = prior_version
 
     def load_from_json_data(self, version_json_data) -> None:
-        self.__load_version_data(version_json_data)
+        self.__load_json_version_data(version_json_data)
 
-    def __load_version_data(self, version_json_data) -> None:
+    def __load_json_version_data(self, version_json_data) -> None:
         data_model_type = self.__get_data_model_type(version_json_data)
         self.__set_attributes(
             name=version_json_data.get("name", None),
@@ -151,6 +151,96 @@ class Version:
                 class_ordinal=class_ordinal,
                 implements_class=implements_class,
             )
+
+
+    def load_from_csv_data(self, catalogue: str, version_csv_data, data_model_type: str) -> None:
+        self.__load_csv_version_data(catalogue, version_csv_data, data_model_type)
+
+    def __load_csv_version_data(self, catalogue: str, version_csv_data, data_model_type: str) -> None:
+        self.__set_attributes(
+            name=version_csv_data.get("name", None),
+            label=version_csv_data.get("label", None),
+            description=version_csv_data.get("description", None),
+            source=version_csv_data.get("source", None),
+            registration_status=version_csv_data.get("registrationStatus", None),
+            effective_date=version_csv_data.get("release_date", None),
+            data_model_type=data_model_type,
+            href=version_csv_data.get("href", None),
+            prior_version=version_csv_data.get("prior_version", None),
+        )
+        if data_model_type == DataModelType.IMPLEMENTATION:
+            implements_href = "/".join([
+                "/mdr",
+                catalogue.lower(),
+                self.get_version_number(),
+            ])
+            self.set_implements_data_model(implements_href)
+
+
+    def load_class_from_csv_data(
+        self, 
+        class_csv_data: OrderedDict, 
+        data_model_type: DataModelType, 
+        catalogue: str, 
+        variables_csv_data: Sequence[OrderedDict],
+    ) -> None:
+        implements_class = None
+        is_class_dataset = False
+        if data_model_type == DataModelType.IMPLEMENTATION:
+            is_class_dataset = True
+            implements_class = "/".join([
+                "/mdr",
+                catalogue.lower()[:-2],
+                self.get_version_number(),
+                "classes",
+                class_csv_data.get("dataset_class", None),
+            ])
+
+        class_name = class_csv_data.get("name", None)
+        class_ordinal = class_csv_data.get("order")
+        self.__parse_and_create_csv_class(
+            catalogue=catalogue,
+            data_model_type=data_model_type,
+            class_csv_data=class_csv_data,
+            name=class_name,
+            class_ordinal=class_ordinal,
+            implements_class=implements_class,
+            variables_csv_data=variables_csv_data,
+            is_class_dataset=is_class_dataset
+        )
+
+    def __parse_and_create_csv_class(
+        self,
+        catalogue: str,
+        data_model_type: DataModelType,
+        class_csv_data: OrderedDict,
+        name: str,
+        implements_class: str,
+        class_ordinal: str,
+        variables_csv_data: Sequence[OrderedDict],
+        is_class_dataset: bool = False,
+    ):
+        _class: DataModelClass = self.get_data_model_import().merge_class(name)
+        _class.set_attributes(
+            title=class_csv_data.get("title", None),
+            label=class_csv_data.get("label"),
+            description=class_csv_data.get("description"),
+            ordinal=class_ordinal,
+            href=class_csv_data.get("href", None),
+            implements_class=implements_class,
+            prior_version=class_csv_data.get("prior_version", None),
+        )
+
+        _class.load_variables_from_csv_data(
+            class_csv_data=class_csv_data,
+            catalogue=catalogue,
+            data_model_import=self.get_data_model_import(),
+            data_model_type=data_model_type,
+            variables_data=variables_csv_data,
+            is_class_dataset=is_class_dataset,
+        )
+
+        self.__add_class(_class)
 
     def __parse_and_create_class(
         self,

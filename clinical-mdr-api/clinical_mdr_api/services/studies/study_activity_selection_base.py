@@ -1,4 +1,5 @@
 import abc
+from datetime import datetime
 from typing import Any, Callable, TypeVar
 
 from neomodel import db
@@ -7,14 +8,23 @@ from clinical_mdr_api import exceptions
 from clinical_mdr_api.domain_repositories.study_selections.study_activity_base_repository import (
     StudySelectionActivityBaseRepository,
 )
+from clinical_mdr_api.domains.study_selections.study_selection_base import (
+    StudySelectionBaseAR,
+)
 from clinical_mdr_api.models.utils import BaseModel, GenericFilteringReturn
+from clinical_mdr_api.oauth.user import user
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._meta_repository import MetaRepository
 from clinical_mdr_api.services._utils import (
+    build_simple_filters,
+    extract_filtering_values,
+    generic_item_filtering,
+    generic_pagination,
     service_level_generic_filtering,
     service_level_generic_header_filtering,
 )
 from clinical_mdr_api.services.studies.study_selection_base import StudySelectionMixin
+from clinical_mdr_api.telemetry import trace_calls
 
 _AggregateRootType = TypeVar("_AggregateRootType")
 _VOType = TypeVar("_VOType")  # pylint: disable=invalid-name
@@ -25,9 +35,11 @@ class StudyActivitySelectionBaseService(StudySelectionMixin):
     repository_interface: type
     selected_object_repository_interface: type
 
-    def __init__(self, author):
+    _vo_to_ar_filter_map = {}
+
+    def __init__(self):
         self._repos = MetaRepository()
-        self.author = author
+        self.author = user().id()
 
     @property
     def repository(self) -> StudySelectionActivityBaseRepository[_AggregateRootType]:
@@ -58,6 +70,7 @@ class StudyActivitySelectionBaseService(StudySelectionMixin):
         self,
         study_selection_ar: _AggregateRootType,
         order: int,
+        terms_at_specific_datetime: datetime | None,
         accepted_version: bool | None = None,
     ) -> BaseModel:
         raise NotImplementedError
@@ -98,8 +111,18 @@ class StudyActivitySelectionBaseService(StudySelectionMixin):
         total_count: bool = False,
         **kwargs,
     ) -> GenericFilteringReturn[BaseModel]:
+        # Extract the study uids to use database level filtering for these
+        # instead of service level filtering
+        if filter_operator is None or filter_operator == FilterOperator.AND:
+            study_uids = extract_filtering_values(filter_by, "study_uid")
+        else:
+            study_uids = None
+
         selection_ars = self.repository.find_all(
-            project_name=project_name, project_number=project_number, **kwargs
+            project_name=project_name,
+            project_number=project_number,
+            study_uids=study_uids,
+            **kwargs,
         )
 
         # In order for filtering to work, we need to unwind the aggregated AR object first
@@ -122,6 +145,7 @@ class StudyActivitySelectionBaseService(StudySelectionMixin):
         )
         return filtered_items
 
+    @trace_calls
     def get_all_selection(
         self,
         study_uid: str,
@@ -132,8 +156,9 @@ class StudyActivitySelectionBaseService(StudySelectionMixin):
         filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
         study_value_version: str | None = None,
+        for_field_name: str | None = None,
         **kwargs,
-    ) -> GenericFilteringReturn[BaseModel]:
+    ) -> GenericFilteringReturn[BaseModel] | list[StudySelectionBaseAR]:
         repos = self._repos
         try:
             activity_selection_ar = self.repository.find_by_study(
@@ -141,18 +166,53 @@ class StudyActivitySelectionBaseService(StudySelectionMixin):
             )
             assert activity_selection_ar is not None
 
-            filtered_items = service_level_generic_filtering(
-                items=self._transform_all_to_response_model(
-                    activity_selection_ar, study_value_version=study_value_version
-                ),
-                filter_by=filter_by,
-                filter_operator=filter_operator,
-                sort_by=sort_by,
-                total_count=total_count,
-                page_number=page_number,
-                page_size=page_size,
+            simple_filters = build_simple_filters(
+                self._vo_to_ar_filter_map, filter_by, sort_by
             )
+            if simple_filters:
+                # Filtering only needs data that is already available in the AR
+                items = list(activity_selection_ar.study_objects_selection)
+                filtered_items = generic_item_filtering(
+                    items=items,
+                    filter_by=simple_filters["filter_by"],
+                    filter_operator=filter_operator,
+                    sort_by=simple_filters["sort_by"],
+                )
 
+                # Do count
+                count = len(filtered_items) if total_count else 0
+
+                # Do pagination
+                filtered_items = generic_pagination(
+                    items=filtered_items,
+                    page_number=page_number,
+                    page_size=page_size,
+                )
+                # Put the sorted and filtered items back into the AR and transform them to the response model
+                if (
+                    for_field_name is None
+                    or for_field_name not in self._vo_to_ar_filter_map
+                ):
+                    activity_selection_ar.study_objects_selection = filtered_items
+                    filtered_items = self._transform_all_to_response_model(
+                        activity_selection_ar, study_value_version=study_value_version
+                    )
+                else:
+                    return filtered_items
+                filtered_items = GenericFilteringReturn.create(filtered_items, count)
+            else:
+                # Fall back to full generic filtering
+                filtered_items = service_level_generic_filtering(
+                    items=self._transform_all_to_response_model(
+                        activity_selection_ar, study_value_version=study_value_version
+                    ),
+                    filter_by=filter_by,
+                    filter_operator=filter_operator,
+                    sort_by=sort_by,
+                    total_count=total_count,
+                    page_number=page_number,
+                    page_size=page_size,
+                )
             return filtered_items
         finally:
             repos.close()
@@ -205,14 +265,18 @@ class StudyActivitySelectionBaseService(StudySelectionMixin):
         ) = self._get_specific_activity_selection_by_uids(
             study_uid, study_selection_uid, study_value_version=study_value_version
         )
+        terms_at_specific_datetime = self._extract_study_standards_effective_date(
+            study_uid=study_uid,
+            study_value_version=study_value_version,
+        )
         return self._transform_from_ar_and_order_to_response_model(
             study_selection_ar=selection_aggregate,
             order=order,
             accepted_version=new_selection.accepted_version,
+            terms_at_specific_datetime=terms_at_specific_datetime,
         )
 
-    @db.transaction
-    def patch_selection(
+    def patch_selection_non_transactional(
         self,
         study_uid: str,
         study_selection_uid: str,
@@ -253,14 +317,31 @@ class StudyActivitySelectionBaseService(StudySelectionMixin):
             _, order = selection_aggregate.get_specific_object_selection(
                 study_selection_uid
             )
+            terms_at_specific_datetime = self._extract_study_standards_effective_date(
+                study_uid=study_uid
+            )
 
             # add the activity and return
             return self._transform_from_ar_and_order_to_response_model(
                 selection_aggregate,
                 order,
+                terms_at_specific_datetime=terms_at_specific_datetime,
             )
         finally:
             repos.close()
+
+    @db.transaction
+    def patch_selection(
+        self,
+        study_uid: str,
+        study_selection_uid: str,
+        selection_update_input: BaseModel,
+    ) -> BaseModel:
+        return self.patch_selection_non_transactional(
+            study_uid=study_uid,
+            study_selection_uid=study_selection_uid,
+            selection_update_input=selection_update_input,
+        )
 
     def get_distinct_values_for_header(
         self,
@@ -273,11 +354,21 @@ class StudyActivitySelectionBaseService(StudySelectionMixin):
         study_value_version: str | None = None,
     ):
         all_items = self.get_all_selection(
-            study_uid=study_uid, study_value_version=study_value_version
+            study_uid=study_uid,
+            study_value_version=study_value_version,
+            filter_by=filter_by,
+            filter_operator=filter_operator,
+            for_field_name=field_name,
         )
+        if isinstance(all_items, list):
+            # We got a list of StudySelectionBaseAR,
+            # this means we look up the values in the AR under a modified field name
+            field_name = self._vo_to_ar_filter_map[field_name]
+        else:
+            all_items = all_items.items
 
         header_values = service_level_generic_header_filtering(
-            items=all_items.items,
+            items=all_items,
             field_name=field_name,
             search_string=search_string,
             filter_by=filter_by,
@@ -311,11 +402,15 @@ class StudyActivitySelectionBaseService(StudySelectionMixin):
             _, order = selection_aggregate.get_specific_object_selection(
                 study_selection_uid
             )
+            terms_at_specific_datetime = self._extract_study_standards_effective_date(
+                study_uid=study_uid
+            )
 
             # add the activity and return
             return self._transform_from_ar_and_order_to_response_model(
                 study_selection_ar=selection_aggregate,
                 order=order,
+                terms_at_specific_datetime=terms_at_specific_datetime,
             )
         finally:
             repos.close()
