@@ -1,30 +1,32 @@
 <template>
-<div>
-  <instance-table
-    fetch-instances-action-name="objectives/fetchFilteredObjectives"
+  <InstanceTable
     type="objective"
     :instances="objectives"
     base-url="/objectives"
     export-object-label="Objectives"
     column-data-resource="objectives"
-    :server-items-length="total"
-    />
-</div>
+    :items-length="total"
+    :fetching-function="fetchFilteredObjectives"
+  />
 </template>
 
 <script>
-import InstanceTable from './InstanceTable'
-import { mapGetters } from 'vuex'
+import InstanceTable from './InstanceTable.vue'
+import { useObjectivesStore } from '@/stores/library-objectives'
+import { computed } from 'vue'
 
 export default {
   components: {
-    InstanceTable
+    InstanceTable,
   },
-  computed: {
-    ...mapGetters({
-      objectives: 'objectives/objectives',
-      total: 'objectives/total'
-    })
-  }
+  setup() {
+    const objectivesStore = useObjectivesStore()
+
+    return {
+      fetchFilteredObjectives: objectivesStore.fetchFilteredObjectives,
+      total: computed(() => objectivesStore.total),
+      objectives: computed(() => objectivesStore.objectives),
+    }
+  },
 }
 </script>

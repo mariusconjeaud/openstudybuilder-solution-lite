@@ -1,121 +1,117 @@
 <template>
-<simple-form-dialog
-  ref="form"
-  :title="title"
-  :help-items="helpItems"
-  @close="cancel"
-  @submit="submit"
-  :open="open"
+  <SimpleFormDialog
+    ref="form"
+    :title="title"
+    :help-items="helpItems"
+    :open="open"
+    @close="cancel"
+    @submit="submit"
   >
-  <template v-slot:body>
-    <validation-observer ref="observer">
-      <v-row>
-        <v-col cols="6">
-          <validation-provider
-            v-slot="{ errors }"
-            rules="required"
-            >
+    <template #body>
+      <v-form ref="observer">
+        <v-row>
+          <v-col cols="6">
             <v-text-field
-              :label="$t('_global.name')"
               v-model="form.name"
-              dense
+              :label="$t('_global.name')"
+              density="compact"
               clearable
-              :error-messages="errors"
+              :rules="[formRules.required]"
             />
-          </validation-provider>
-        </v-col>
-        <v-col cols="6">
-          <validation-provider
-            v-slot="{ errors }"
-            rules="required"
-            >
+          </v-col>
+          <v-col cols="6">
             <v-text-field
-              :label="$t('CrfExtensions.prefix')"
               v-model="form.prefix"
-              dense
+              :label="$t('CrfExtensions.prefix')"
+              density="compact"
               clearable
-              :error-messages="errors"
+              :rules="[formRules.required]"
             />
-          </validation-provider>
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col>
-          <validation-provider
-            v-slot="{ errors }"
-            rules="required"
-            >
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col>
             <v-text-field
-              :label="$t('CrfExtensions.url')"
               v-model="form.url"
-              dense
+              :label="$t('CrfExtensions.url')"
+              density="compact"
               clearable
-              :error-messages="errors"
+              :rules="[formRules.required]"
             />
-          </validation-provider>
-        </v-col>
-      </v-row>
-    </validation-observer>
-  </template>
-</simple-form-dialog>
+          </v-col>
+        </v-row>
+      </v-form>
+    </template>
+  </SimpleFormDialog>
 </template>
 
 <script>
-import SimpleFormDialog from '@/components/tools/SimpleFormDialog'
+import SimpleFormDialog from '@/components/tools/SimpleFormDialog.vue'
 import crfs from '@/api/crfs'
 
 export default {
   components: {
-    SimpleFormDialog
+    SimpleFormDialog,
   },
+  inject: ['formRules'],
   props: {
     open: Boolean,
-    editItem: Object
+    editItem: {
+      type: Object,
+      default: null,
+    },
   },
-  computed: {
-    title () {
-      return (this.editItem.uid)
-        ? this.$t('CrfExtensions.edit_namespace')
-        : this.$t('CrfExtensions.new_namespace')
-    }
-  },
-  data () {
+  emits: ['close'],
+  data() {
     return {
       form: {},
-      helpItems: []
+      helpItems: [],
     }
   },
+  computed: {
+    title() {
+      return this.editItem.uid
+        ? this.$t('CrfExtensions.edit_namespace')
+        : this.$t('CrfExtensions.new_namespace')
+    },
+  },
+  watch: {
+    editItem(value) {
+      this.initForm(value)
+    },
+  },
   methods: {
-    async cancel () {
+    async cancel() {
       this.close()
     },
-    close () {
+    close() {
       this.$refs.observer.reset()
       this.$emit('close')
     },
-    async submit () {
+    async submit() {
       if (this.editItem.uid) {
-        crfs.editNamespace(this.editItem.uid, this.form).then(() => {
-          this.close()
-        }, _err => {
-          this.$refs.form.working = false
-        })
+        crfs.editNamespace(this.editItem.uid, this.form).then(
+          () => {
+            this.close()
+          },
+          () => {
+            this.$refs.form.working = false
+          }
+        )
       } else {
-        crfs.createNamespace(this.form).then(() => {
-          this.close()
-        }, _err => {
-          this.$refs.form.working = false
-        })
+        crfs.createNamespace(this.form).then(
+          () => {
+            this.close()
+          },
+          () => {
+            this.$refs.form.working = false
+          }
+        )
       }
     },
-    initForm (item) {
+    initForm(item) {
       this.form = item
-    }
+    },
   },
-  watch: {
-    editItem (value) {
-      this.initForm(value)
-    }
-  }
 }
 </script>

@@ -16,6 +16,10 @@ from clinical_mdr_api.models.syntax_templates.template_parameter import (
 )
 from clinical_mdr_api.models.utils import BaseModel
 
+IS_CONFIRMATORY_TESTING_DESC = (
+    "Indicates if template is related to confirmatory testing. Defaults to False."
+)
+
 
 class ObjectiveTemplateName(BaseModel):
     name: str | None = Field(
@@ -202,8 +206,8 @@ class ObjectiveTemplateCreateInput(ObjectiveTemplateNameInput):
         None,
         description="A list of UID of the study indications, conditions, diseases or disorders to attach the template to.",
     )
-    is_confirmatory_testing: bool | None = Field(
-        None, description="Indicates if template is related to confirmatory testing."
+    is_confirmatory_testing: bool = Field(
+        False, description=IS_CONFIRMATORY_TESTING_DESC
     )
     category_uids: list[str] | None = Field(
         None, description="A list of UID of the categories to attach the template to."
@@ -225,6 +229,6 @@ class ObjectiveTemplateEditIndexingsInput(BaseModel):
     category_uids: list[str] | None = Field(
         None, description="A list of UID of the categories to attach the template to."
     )
-    is_confirmatory_testing: bool | None = Field(
-        None, description="Indicates if template is related to confirmatory testing."
+    is_confirmatory_testing: bool = Field(
+        False, description=IS_CONFIRMATORY_TESTING_DESC
     )

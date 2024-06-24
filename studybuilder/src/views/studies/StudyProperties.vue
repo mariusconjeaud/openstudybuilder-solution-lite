@@ -1,83 +1,97 @@
 <template>
-<div class="px-4">
-  <div class="page-title d-flex align-center">
-    {{ $t('Sidebar.study.study_properties') }} ({{ studyId }})
-    <help-button-with-panels
-      :help-text="$t('_help.StudyProperties.general')"
-      :items="helpItems"
+  <div class="px-4">
+    <div class="page-title d-flex align-center">
+      {{ $t('Sidebar.study.study_properties') }} ({{ studyId }})
+      <HelpButtonWithPanels
+        :help-text="$t('_help.StudyProperties.general')"
+        :items="helpItems"
       />
+    </div>
+    <v-tabs v-model="tab" bg-color="white">
+      <v-tab v-for="item of tabs" :key="item.tab" :value="item.tab">
+        {{ item.name }}
+      </v-tab>
+    </v-tabs>
+    <v-window v-model="tab">
+      <v-window-item value="type">
+        <StudyTypeSummary />
+      </v-window-item>
+      <v-window-item value="attributes">
+        <InterventionTypeSummary />
+      </v-window-item>
+    </v-window>
   </div>
-  <v-tabs v-model="tab">
-    <v-tab v-for="tab of tabs" :key="tab.tab" :href="tab.tab">{{ tab.name }}</v-tab>
-  </v-tabs>
-  <v-tabs-items v-model="tab">
-    <v-tab-item id="type">
-      <study-type-summary />
-    </v-tab-item>
-    <v-tab-item id="attributes">
-      <intervention-type-summary />
-    </v-tab-item>
-  </v-tabs-items>
-</div>
 </template>
 
 <script>
-import HelpButtonWithPanels from '@/components/tools/HelpButtonWithPanels'
-import InterventionTypeSummary from '@/components/studies/InterventionTypeSummary'
-import { studySelectedNavigationGuard } from '@/mixins/studies'
-import StudyTypeSummary from '@/components/studies/StudyTypeSummary'
-import { mapActions } from 'vuex'
+import { computed } from 'vue'
+import HelpButtonWithPanels from '@/components/tools/HelpButtonWithPanels.vue'
+import InterventionTypeSummary from '@/components/studies/InterventionTypeSummary.vue'
+import StudyTypeSummary from '@/components/studies/StudyTypeSummary.vue'
+import { useAppStore } from '@/stores/app'
+import { useStudiesGeneralStore } from '@/stores/studies-general'
 
 export default {
-  mixins: [studySelectedNavigationGuard],
   components: {
     InterventionTypeSummary,
     HelpButtonWithPanels,
-    StudyTypeSummary
+    StudyTypeSummary,
   },
-  data () {
+  setup() {
+    const appStore = useAppStore()
+    const studiesGeneralStore = useStudiesGeneralStore()
     return {
-      helpItems: [
-        'StudyProperties.study_type'
-      ],
+      addBreadcrumbsLevel: appStore.addBreadcrumbsLevel,
+      selectedStudy: computed(() => studiesGeneralStore.selectedStudy),
+      studyId: computed(() => studiesGeneralStore.studyId),
+    }
+  },
+  data() {
+    return {
+      helpItems: ['StudyProperties.study_type'],
       tab: null,
       tabs: [
-        { tab: '#type', name: this.$t('Sidebar.study.study_type') },
-        { tab: '#attributes', name: this.$t('Sidebar.study.study_attributes') }
-      ]
+        { tab: 'type', name: this.$t('Sidebar.study.study_type') },
+        { tab: 'attributes', name: this.$t('Sidebar.study.study_attributes') },
+      ],
     }
-  },
-  mounted () {
-    this.tab = this.$route.params.tab
-    const tabName = this.tab ? this.tabs.find(el => el.tab.substring(1) === this.tab).name : this.tabs[0].name
-    setTimeout(() => {
-      this.addBreadcrumbsLevel({
-        text: tabName,
-        to: { name: 'StudyProperties', params: { tab: tabName } },
-        index: 3,
-        replace: true
-      })
-    }, 100)
-  },
-  methods: {
-    ...mapActions({
-      addBreadcrumbsLevel: 'app/addBreadcrumbsLevel'
-    })
   },
   watch: {
-    tab (newValue) {
+    tab(newValue) {
       this.$router.push({
         name: 'StudyProperties',
-        params: { tab: newValue }
+        params: { tab: newValue },
       })
-      const tabName = newValue ? this.tabs.find(el => el.tab.substring(1) === newValue).name : this.tabs[0].name
-      this.addBreadcrumbsLevel({
-        text: tabName,
-        to: { name: 'StudyProperties', params: { tab: tabName } },
-        index: 3,
-        replace: true
-      })
-    }
-  }
+      const tabName = newValue
+        ? this.tabs.find((el) => el.tab === newValue).name
+        : this.tabs[0].name
+      this.addBreadcrumbsLevel(
+        tabName,
+        {
+          name: 'StudyProperties',
+          params: { study_id: this.selectedStudy.uid, tab: tabName },
+        },
+        3,
+        true
+      )
+    },
+  },
+  mounted() {
+    this.tab = this.$route.params.tab || this.tabs[0].tab
+    const tabName = this.tab
+      ? this.tabs.find((el) => el.tab === this.tab).name
+      : this.tabs[0].name
+    setTimeout(() => {
+      this.addBreadcrumbsLevel(
+        tabName,
+        {
+          name: 'StudyProperties',
+          params: { study_id: this.selectedStudy.uid, tab: tabName },
+        },
+        3,
+        true
+      )
+    }, 100)
+  },
 }
 </script>

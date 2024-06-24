@@ -3,6 +3,13 @@ from enum import Enum
 
 from neomodel import db
 
+from clinical_mdr_api.repositories.ct_packages import (
+    CODELIST_DIFF_CLAUSE,
+    CODELIST_RETURN_CLAUSE,
+    COMPARISON_PART,
+    TERM_DIFF_CLAUSE,
+)
+
 
 class CatalogueComparisonType(Enum):
     """
@@ -81,21 +88,6 @@ def get_ct_catalogues_changes(
     collect(apoc.map.fromValues([codelist_root.uid, {{value_node:new_codelist_ver_value, change_date: latest_date}}])) AS new_items
     """
 
-    codelist_diff_clause = """
-    CASE WHEN old_items_map[common_item] <> new_items_map[common_item] THEN
-    apoc.map.fromValues([
-        'uid', common_item, 
-        'value_node', apoc.diff.nodes(old_items_map[common_item].value_node, new_items_map[common_item].value_node),
-        'change_date', new_items_map[common_item].change_date,
-        'is_change_of_codelist', true
-        ])
-    END AS diff
-    """
-    codelist_return_clause = """
-    WITH collect(diff) as items_diffs, added_items, removed_items, new_items_map
-    RETURN added_items, removed_items, items_diffs, new_items_map
-    """
-
     term_data_retrieval = f"""
     MATCH (codelist_root:CTCodelistRoot)-[:HAS_TERM]->(term_root)-[:{relationship_type}]->
     (old_term_ver_root)-[old_versions]->(old_term_ver_value)
@@ -134,72 +126,12 @@ def get_ct_catalogues_changes(
     collect(apoc.map.fromValues([term_root.uid, {{value_node:new_term_ver_value, codelists:[
         (term_root)<-[:HAS_TERM]-(codelist_root) | codelist_root.uid], change_date: latest_date}}])) AS new_items
     """
-    term_diff_clause = """
-    CASE WHEN old_items_map[common_item] <> new_items_map[common_item] THEN
-    apoc.map.fromValues([
-        'uid', common_item, 
-        'value_node', apoc.diff.nodes(old_items_map[common_item].value_node, new_items_map[common_item].value_node),
-        'change_date', new_items_map[common_item].change_date,
-        'codelists', new_items_map[common_item].codelists
-        ])
-    END AS diff
-    """
+
     term_return_clause = """
     WITH collect(diff) as items_diffs, added_items, removed_items
     RETURN added_items, removed_items, items_diffs
     """
 
-    comparison_part = """
-    // From data retrieval part we get list of maps, where each map represents data for specific codelist or term.
-    // The following section merge list of maps coming from data retrieval part into one map.
-    // The created maps store codelist uids or term uids as a keys and attributes values as a map values.
-    WITH old_items, new_items,
-    apoc.map.mergeList(old_items) AS old_items_map,
-    apoc.map.mergeList(new_items) AS new_items_map
-    // The following section creates arrays with codelist uids or terms uids 
-    WITH old_items_map, new_items_map,
-    keys(old_items_map) AS old_items_uids,
-    keys(new_items_map) AS new_items_uids
-    // In the following section the comparison of uid arrays is made to identify if given codelist or term:
-    // was added, deleted, or is not moved in new catalogue
-    WITH old_items_map, new_items_map, old_items_uids, new_items_uids,
-    apoc.coll.subtract(new_items_uids, old_items_uids) AS added_items,
-    apoc.coll.subtract(old_items_uids, new_items_uids) AS removed_items,
-    apoc.coll.intersection(old_items_uids, new_items_uids) AS common_items
-    // The following section unwinds list with uids of added items to filter out added items from the map that contains
-    // all elements from new catalogue
-    WITH old_items_map, new_items_map, added_items, removed_items, common_items
-    UNWIND
-      CASE WHEN added_items=[] THEN [NULL]
-      ELSE added_items
-      END AS added_item
-    WITH *, old_items_map, new_items_map,
-      CASE WHEN added_items <> [] THEN
-      collect(apoc.map.merge(apoc.map.fromValues(['uid',added_item]), new_items_map[added_item])) 
-      ELSE collect(added_item) 
-      END AS added_items, 
-    removed_items, common_items
-    // The following section unwinds list with uids of removed items to filter out removed items from the map that contains
-    // all elements from old catalogue
-    UNWIND 
-      CASE WHEN removed_items=[] THEN [NULL]
-      ELSE removed_items
-      END as removed_item
-    WITH *, old_items_map, new_items_map, added_items, 
-      CASE WHEN removed_items <> [] THEN 
-      collect(apoc.map.merge(apoc.map.fromValues(['uid', removed_item]), old_items_map[removed_item]))
-      ELSE collect(removed_item) END 
-      AS removed_items, 
-    common_items
-    // The following section unwinds list with uids of items that are present in old catalogue and new catalogue
-    // to filter out common items from the map that contains all elements from new catalogue.
-    UNWIND 
-      CASE WHEN common_items=[] THEN [NULL]
-      ELSE common_items
-      END AS common_item
-    // The following section makes the comparison of nodes that are present in both catalogues
-    WITH old_items_map, new_items_map, added_items, removed_items, common_items, common_item,
-    """
     query_params = {
         "library_name": library_name,
         "catalogue_name": catalogue_name,
@@ -212,9 +144,9 @@ def get_ct_catalogues_changes(
     complete_codelist_query = " ".join(
         [
             codelist_data_retrieval,
-            comparison_part,
-            codelist_diff_clause,
-            codelist_return_clause,
+            COMPARISON_PART,
+            CODELIST_DIFF_CLAUSE,
+            CODELIST_RETURN_CLAUSE,
         ]
     )
     codelist_ret, _ = db.cypher_query(complete_codelist_query, query_params)
@@ -233,7 +165,7 @@ def get_ct_catalogues_changes(
 
     # terms query
     complete_term_query = " ".join(
-        [term_data_retrieval, comparison_part, term_diff_clause, term_return_clause]
+        [term_data_retrieval, COMPARISON_PART, TERM_DIFF_CLAUSE, term_return_clause]
     )
     terms_ret, _ = db.cypher_query(complete_term_query, query_params)
     output["new_terms"] = (

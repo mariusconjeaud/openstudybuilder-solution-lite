@@ -5,7 +5,7 @@ from neomodel.core import db
 # Helpers
 from starlette.routing import Mount
 
-from clinical_mdr_api.config import STUDY_ENDPOINT_TP_NAME
+from clinical_mdr_api import config
 
 # Models
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
@@ -527,7 +527,7 @@ MATCH (FormRoot:OdmFormRoot {uid: "odm_form1"})
 MATCH (ItemGroupRoot:OdmItemGroupRoot {uid: "odm_item_group1"})
 MATCH (VendorElementRoot:OdmVendorElementRoot {uid: "odm_vendor_element1"})
 MERGE (FormRoot)-[:ITEM_GROUP_REF {order_number: "1", mandatory: true, collection_exception_condition_oid: "oid2", vendor: '{"attributes": [{"uid": "odm_vendor_attribute3", "value": "No"}]}'}]->(ItemGroupRoot)
-MERGE (FormRoot)-[:HAS_VENDOR_ELEMENT {value: "test value"}]->(VendorElementRoot)
+MERGE (FormRoot)-[:HAS_VENDOR_ELEMENT]->(VendorElementRoot)
 
 WITH *
 MATCH (StudyEventRoot:OdmStudyEventRoot {uid: "odm_study_event1"})
@@ -2294,6 +2294,8 @@ WITH {{
     user_initials: "TODO initials",
     version: "1.0"
 }} AS final_properties
+MERGE (l:Library {{name:"Library", is_editable:true}})
+
 MERGE (intervention:TemplateParameter {{name: 'Intervention'}})
 MERGE (pr1:TemplateParameterTermRoot {{uid: 'Intervention-99991'}})-[:LATEST_FINAL]->(prv1:TemplateParameterTermValue {{name: 'human insulin'}})
 MERGE (intervention)-[:HAS_PARAMETER_TERM]->(pr1)
@@ -2319,7 +2321,13 @@ MERGE (pr5)-[hv5:HAS_VERSION]->(prv5)
 set hv5 = final_properties
 
 //Study Endpoint
-MERGE (endpoint:TemplateParameter {{name: '{STUDY_ENDPOINT_TP_NAME}'}})
+MERGE (endpoint:TemplateParameter {{name: '{config.STUDY_ENDPOINT_TP_NAME}'}})
+
+CREATE (l)-[:CONTAINS]->(pr1)
+CREATE (l)-[:CONTAINS]->(pr2)
+CREATE (l)-[:CONTAINS]->(pr3)
+CREATE (l)-[:CONTAINS]->(pr4)
+CREATE (l)-[:CONTAINS]->(pr5)
 """
 
 STARTUP_STUDY_FIELD_CYPHER = """
@@ -3006,7 +3014,7 @@ CREATE_BASE_TEMPLATE_PARAMETER_TREE = f"""
         MERGE (lag_time)-[:HAS_PARENT_PARAMETER]->(numeric_values)
 
         //Study Endpoint
-        MERGE (endpoint:TemplateParameter {{name: '{STUDY_ENDPOINT_TP_NAME}'}})
+        MERGE (endpoint:TemplateParameter {{name: '{config.STUDY_ENDPOINT_TP_NAME}'}})
 """
 
 CREATE_NA_TEMPLATE_PARAMETER = """
@@ -3437,6 +3445,9 @@ def inject_base_data() -> Study:
         * SNOMED - editable
     * Catalogues :
         * SDTM CT
+    # Codelists
+        * Those defined in CT_CODELIST_NAMES/CT_CODELIST_UIDS constants
+
     Returns created Study object
     """
 
@@ -3454,14 +3465,34 @@ def inject_base_data() -> Study:
     TestUtils.create_library("CDISC", True)
     TestUtils.create_library("Sponsor", True)
     TestUtils.create_library("SNOMED", True)
+    TestUtils.create_library(name=config.REQUESTED_LIBRARY_NAME, is_editable=True)
     with db.write_transaction:
         sdtm = CTCatalogue(name="SDTM CT").save()
         cdisc = Library.nodes.get(name="CDISC")
         sdtm.contains_catalogue.connect(cdisc)
 
     ## Unit Definitions
-    TestUtils.create_unit_definition(name="day")
-    TestUtils.create_unit_definition(name="week")
+    TestUtils.create_unit_definition(
+        name=config.DAY_UNIT_NAME,
+        convertible_unit=True,
+        display_unit=True,
+        master_unit=False,
+        si_unit=True,
+        us_conventional_unit=True,
+        conversion_factor_to_master=config.DAY_UNIT_CONVERSION_FACTOR_TO_MASTER,
+    )
+    TestUtils.create_unit_definition(
+        name=config.WEEK_UNIT_NAME,
+        convertible_unit=True,
+        display_unit=True,
+        master_unit=False,
+        si_unit=True,
+        us_conventional_unit=True,
+        conversion_factor_to_master=config.WEEK_UNIT_CONVERSION_FACTOR_TO_MASTER,
+    )
+
+    ## Codelists
+    TestUtils.create_ct_codelists_using_cypher()
 
     ## Study snapshot definition
     ## It needs CDISC Library and SDTM CT catalogue

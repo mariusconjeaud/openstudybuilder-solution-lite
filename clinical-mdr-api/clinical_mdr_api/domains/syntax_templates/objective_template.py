@@ -23,7 +23,7 @@ class ObjectiveTemplateAR(TemplateAggregateRootBase):
     behavior. Inherits generic template versioning behaviors
     """
 
-    _is_confirmatory_testing: bool | None = None
+    _is_confirmatory_testing: bool = False
 
     _indications: list[SimpleTermModel] | None = None
 
@@ -51,7 +51,7 @@ class ObjectiveTemplateAR(TemplateAggregateRootBase):
         item_metadata: LibraryItemMetadataVO,
         study_count: int = 0,
         counts: InstantiationCountsVO | None = None,
-        is_confirmatory_testing: bool | None = None,
+        is_confirmatory_testing: bool = False,
         indications: list[SimpleTermModel] | None = None,
         categories: list[SimpleCTTermNameAndAttributes] | None = None,
     ) -> Self:
@@ -79,7 +79,7 @@ class ObjectiveTemplateAR(TemplateAggregateRootBase):
         next_available_sequence_id_callback: Callable[
             [str, LibraryVO | None], str | None
         ] = lambda uid, library: None,
-        is_confirmatory_testing: bool | None = None,
+        is_confirmatory_testing: bool = False,
         indications: list[SimpleTermModel] | None = None,
         categories: list[SimpleCTTermNameAndAttributes] | None = None,
     ) -> Self:

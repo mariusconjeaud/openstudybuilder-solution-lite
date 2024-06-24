@@ -1,34 +1,43 @@
 <template>
-<v-chip :color="color" :outlined="outlined" :dark="!outlined">{{ status }}</v-chip>
+  <v-chip :color="color" :variant="variant">
+    {{ status }}
+  </v-chip>
 </template>
 
-<script>
+<script setup>
+import { computed } from 'vue'
 import statuses from '@/constants/statuses'
 
-export default {
-  props: {
-    status: String,
-    outlined: {
-      type: Boolean,
-      default: true
-    }
+const props = defineProps({
+  status: {
+    type: String,
+    default: '',
   },
-  computed: {
-    color () {
-      if (this.status === statuses.FINAL || this.status === statuses.STUDY_DRAFT) {
-        return 'green'
-      }
-      if (this.status === statuses.RETIRED) {
-        return 'orange'
-      }
-      if (this.status === statuses.RELEASED) {
-        return 'info'
-      }
-      if (this.status === statuses.STUDY_LOCKED) {
-        return 'red'
-      }
-      return 'secondary'
-    }
+  outlined: {
+    type: Boolean,
+    default: true,
+  },
+})
+
+const color = computed(() => {
+  if (
+    props.status === statuses.FINAL ||
+    props.status === statuses.STUDY_DRAFT
+  ) {
+    return 'green'
   }
-}
+  if (props.status === statuses.RETIRED) {
+    return 'orange'
+  }
+  if (props.status === statuses.RELEASED) {
+    return 'info'
+  }
+  if (props.status === statuses.STUDY_LOCKED) {
+    return 'red'
+  }
+  return 'secondary'
+})
+const variant = computed(() => {
+  return props.outlined ? 'outlined' : 'flat'
+})
 </script>

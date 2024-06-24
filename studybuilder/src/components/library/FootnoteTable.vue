@@ -1,28 +1,20 @@
 <template>
-<div>
-  <instance-table
-    fetch-instances-action-name="footnotes/fetchFilteredFootnotes"
-    type="footnote"
-    :instances="footnotes"
-    base-url="/footnotes"
-    export-object-label="Footnotes"
-    column-data-resource="footnotes"
+  <div>
+    <InstanceTable
+      type="footnote"
+      :instances="footnotesStore.footnotes"
+      base-url="/footnotes"
+      export-object-label="Footnotes"
+      column-data-resource="footnotes"
+      :items-length="footnotesStore.total"
+      :fetching-function="footnotesStore.fetchFilteredFootnotes"
     />
-</div>
+  </div>
 </template>
 
-<script>
-import InstanceTable from './InstanceTable'
-import { mapGetters } from 'vuex'
+<script setup>
+import InstanceTable from './InstanceTable.vue'
+import { useFootnotesStore } from '@/stores/library-footnotes'
 
-export default {
-  components: {
-    InstanceTable
-  },
-  computed: {
-    ...mapGetters({
-      footnotes: 'footnotes/footnotes'
-    })
-  }
-}
+const footnotesStore = useFootnotesStore()
 </script>

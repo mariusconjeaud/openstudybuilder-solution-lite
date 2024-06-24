@@ -7,8 +7,8 @@ from clinical_mdr_api.tests.utils.checks import (
 )
 
 
-def test_information(app_client):
-    response = app_client.request("GET", "/system/information")
+def test_information(api_client):
+    response = api_client.request("GET", "/system/information")
     assert_response_status_code(response, 200)
     assert_response_content_type(response, JSON_CONTENT_TYPE)
     info = models.SystemInformation(**response.json())
@@ -17,8 +17,8 @@ def test_information(app_client):
     assert info.build_id
 
 
-def test_build_id(app_client):
-    response = app_client.request("GET", "/system/information/build-id")
+def test_build_id(api_client):
+    response = api_client.request("GET", "/system/information/build-id")
     assert_response_status_code(response, 200)
     assert_response_content_type(response, PLAIN_TEXT_CONTENT_TYPE)
     assert len(response.text) < 20

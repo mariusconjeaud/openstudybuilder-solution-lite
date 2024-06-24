@@ -1,95 +1,93 @@
 <template>
-<div class="px-4">
-  <div class="page-title d-flex align-center">
-    {{ $t('Sidebar.study.purpose') }} ({{ studyId }})
-    <help-button-with-panels
-      :help-text="$t('_help.StudyPurposeView.general')"
-      :items="helpItems"
+  <div class="px-4">
+    <div class="page-title d-flex align-center">
+      {{ $t('Sidebar.study.purpose') }} ({{ studyId }})
+      <HelpButtonWithPanels
+        :help-text="$t('_help.StudyPurposeView.general')"
+        :items="helpItems"
       />
+    </div>
+    <v-tabs v-model="tab" bg-color="white">
+      <v-tab v-for="item of tabs" :key="item.tab" :value="item.tab">
+        {{ item.name }}
+      </v-tab>
+    </v-tabs>
+    <v-window v-model="tab">
+      <v-window-item value="objectives">
+        <ObjectiveTable @updated="endpointTableKey++" />
+      </v-window-item>
+      <v-window-item value="endpoints">
+        <EndpointTable :key="endpointTableKey" />
+      </v-window-item>
+      <v-window-item value="estimands">
+        <UnderConstruction />
+      </v-window-item>
+    </v-window>
   </div>
-  <v-tabs v-model="tab">
-    <v-tab v-for="tab of tabs" :key="tab.tab" :href="tab.tab">{{ tab.name }}</v-tab>
-  </v-tabs>
-  <v-tabs-items v-model="tab">
-    <v-tab-item id="objectives">
-      <objective-table
-        @updated="endpointTableKey++"
-        />
-    </v-tab-item>
-    <v-tab-item id="endpoints">
-      <endpoint-table
-        :key="endpointTableKey"
-        />
-    </v-tab-item>
-    <v-tab-item id="estimands">
-      <UnderConstruction />
-    </v-tab-item>
-  </v-tabs-items>
-</div>
 </template>
 
 <script>
-import { studySelectedNavigationGuard } from '@/mixins/studies'
-import EndpointTable from '@/components/studies/EndpointTable'
-import ObjectiveTable from '@/components/studies/ObjectiveTable'
+import EndpointTable from '@/components/studies/EndpointTable.vue'
+import ObjectiveTable from '@/components/studies/ObjectiveTable.vue'
 import UnderConstruction from '@/components/layout/UnderConstruction.vue'
-import HelpButtonWithPanels from '@/components/tools/HelpButtonWithPanels'
-import { mapActions } from 'vuex'
+import HelpButtonWithPanels from '@/components/tools/HelpButtonWithPanels.vue'
+import { useAppStore } from '@/stores/app'
+import { useStudiesGeneralStore } from '@/stores/studies-general'
+import { computed } from 'vue'
 
 export default {
-  mixins: [studySelectedNavigationGuard],
   components: {
     EndpointTable,
     HelpButtonWithPanels,
     ObjectiveTable,
-    UnderConstruction
+    UnderConstruction,
   },
-  data () {
+  setup() {
+    const appStore = useAppStore()
+    const studiesGeneralStore = useStudiesGeneralStore()
+    return {
+      addBreadcrumbsLevel: appStore.addBreadcrumbsLevel,
+      selectedStudy: computed(() => studiesGeneralStore.selectedStudy),
+      studyId: computed(() => studiesGeneralStore.studyId),
+    }
+  },
+  data() {
     return {
       endpointTableKey: 1,
       tab: null,
       helpItems: [
         'StudyPurposeView.study_objectives',
         'StudyPurposeView.study_endpoints',
-        'StudyPurposeView.study_estimands'
+        'StudyPurposeView.study_estimands',
       ],
       tabs: [
-        { tab: '#objectives', name: this.$t('StudyPurposeView.study_objectives') },
-        { tab: '#endpoints', name: this.$t('StudyPurposeView.study_endpoints') },
-        { tab: '#estimands', name: this.$t('StudyPurposeView.study_estimands') }
-      ]
+        {
+          tab: 'objectives',
+          name: this.$t('StudyPurposeView.study_objectives'),
+        },
+        { tab: 'endpoints', name: this.$t('StudyPurposeView.study_endpoints') },
+        // { tab: 'estimands', name: this.$t('StudyPurposeView.study_estimands') },
+      ],
     }
   },
-  mounted () {
-    this.tab = this.$route.params.tab
-    const tabName = this.tab ? this.tabs.find(el => el.tab.substring(1) === this.tab).name : this.tabs[0].name
-    setTimeout(() => {
-      this.addBreadcrumbsLevel({
-        text: tabName,
-        to: { name: 'StudyPurpose', params: { tab: tabName } },
-        index: 3,
-        replace: true
-      })
-    }, 100)
-  },
-  methods: {
-    ...mapActions({
-      addBreadcrumbsLevel: 'app/addBreadcrumbsLevel'
-    })
-  },
   watch: {
-    tab (newValue) {
-      const tabName = newValue ? this.tabs.find(el => el.tab.substring(1) === newValue).name : this.tabs[0].name
+    tab(newValue) {
+      const tabName = newValue
+        ? this.tabs.find((el) => el.tab === newValue).name
+        : this.tabs[0].name
       this.$router.push({
         name: 'StudyPurpose',
-        params: { tab: newValue }
+        params: { tab: newValue },
       })
-      this.addBreadcrumbsLevel({
-        text: tabName,
-        to: { name: 'StudyPurpose', params: { tab: tabName } },
-        index: 3,
-        replace: true
-      })
+      this.addBreadcrumbsLevel(
+        tabName,
+        {
+          name: 'StudyPurpose',
+          params: { study_id: this.selectedStudy.uid, tab: tabName },
+        },
+        3,
+        true
+      )
       this.helpItems.splice(3, 4)
       if (newValue === 'objectives') {
         this.helpItems.push(
@@ -105,7 +103,24 @@ export default {
           'StudyEndpointsTable.units'
         )
       }
-    }
-  }
+    },
+  },
+  mounted() {
+    this.tab = this.$route.params.tab || this.tabs[0].tab
+    const tabName = this.tab
+      ? this.tabs.find((el) => el.tab === this.tab).name
+      : this.tabs[0].name
+    setTimeout(() => {
+      this.addBreadcrumbsLevel(
+        tabName,
+        {
+          name: 'StudyPurpose',
+          params: { study_id: this.selectedStudy.uid, tab: tabName },
+        },
+        3,
+        true
+      )
+    }, 100)
+  },
 }
 </script>

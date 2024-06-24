@@ -261,6 +261,10 @@ class StudySelectionEndpointsAR:
     def study_endpoints_selection(self) -> tuple[StudySelectionEndpointVO]:
         return self._study_endpoints_selection
 
+    @study_endpoints_selection.setter
+    def study_endpoints_selection(self, value: Iterable[StudySelectionEndpointVO]):
+        self._study_endpoints_selection = tuple(value)
+
     def get_specific_endpoint_selection(
         self, study_selection_uid: str
     ) -> tuple[StudySelectionEndpointVO, int]:

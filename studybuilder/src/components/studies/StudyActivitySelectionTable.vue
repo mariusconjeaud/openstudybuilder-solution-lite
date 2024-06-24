@@ -1,7 +1,8 @@
 <template>
-<div>
   <div class="d-flex align-center">
-    <div>{{ title }} <span class="font-weight-bold">{{ selection.length }}</span></div>
+    <div>
+      {{ title }} <span class="font-weight-bold">{{ selection.length }}</span>
+    </div>
     <div class="ml-10 d-flex align-center">
       {{ $t('StudyActivitySelectionTable.show_items') }}
       <v-checkbox
@@ -10,53 +11,54 @@
         off-icon="mdi-dots-horizontal-circle-outline"
         hide-details
         class="ml-2"
-        />
+        color="primary"
+      />
     </div>
   </div>
-  <v-simple-table v-if="showItems" dense class="mt-4 preview">
-    <template v-slot:default>
-      <tbody>
-        <tr
-          v-for="item in selection"
-          :key="item.name"
-          >
-          <td>{{ item.activity.name }}</td>
-          <td v-if="withDeleteAction" class="text-right">
-            <v-btn
-              color="error"
-              icon
-              @click="removeItem(item)"
-              >
-              <v-icon>mdi-close</v-icon>
-            </v-btn>
-          </td>
-        </tr>
-      </tbody>
-    </template>
-  </v-simple-table>
-</div>
+  <v-table v-if="showItems" density="compact" class="mt-4 preview">
+    <tbody>
+      <tr v-for="item in selection" :key="item.name">
+        <td>{{ item.activity.name }}</td>
+        <td v-if="withDeleteAction" class="text-right">
+          <v-btn
+            color="error"
+            icon="mdi-close"
+            variant="text"
+            @click="removeItem(item)"
+          />
+        </td>
+      </tr>
+    </tbody>
+  </v-table>
 </template>
 
 <script>
 export default {
   props: {
-    selection: Array,
-    title: String,
+    selection: {
+      type: Array,
+      default: () => [],
+    },
+    title: {
+      type: String,
+      default: '',
+    },
     withDeleteAction: {
       type: Boolean,
-      default: true
-    }
+      default: true,
+    },
   },
-  data () {
+  emits: ['remove'],
+  data() {
     return {
-      showItems: false
+      showItems: false,
     }
   },
   methods: {
-    removeItem (item) {
+    removeItem(item) {
       this.$emit('remove', item)
-    }
-  }
+    },
+  },
 }
 </script>
 

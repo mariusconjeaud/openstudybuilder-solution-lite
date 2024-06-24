@@ -1,110 +1,122 @@
 <template>
-<n-n-table
-  v-model="selected"
-  :headers="headers"
-  :items="templates"
-  item-key="uid"
-  :export-object-label="objectType"
-  :export-data-url="urlPrefix"
-  :server-items-length="total"
-  sort-by="start_date"
-  sort-desc
-  :options.sync="options"
-  :has-api="hasApi"
-  :column-data-resource="columnDataResource"
-  :column-data-parameters="extendedColumnDataParameters"
-  @filter="filter"
+  <NNTable
+    v-model="selected"
+    :headers="headers"
+    :items="templates"
+    item-value="uid"
+    :export-object-label="objectType"
+    :export-data-url="urlPrefix"
+    :items-length="total"
+    :sort-by="[{ key: 'start_date' }]"
+    sort-desc
+    :column-data-resource="columnDataResource"
+    :column-data-parameters="extendedColumnDataParameters"
+    @filter="filter"
   >
-  <template v-for="(_, slot) of $scopedSlots" v-slot:[slot]="scope">
-    <slot :name="slot" v-bind="scope" />
-  </template>
-  <template v-slot:item.name="{ item }">
-    <n-n-parameter-highlighter :name="item.name" default-color="orange" />
-  </template>
-  <template v-slot:item.start_date="{ item }">
-    {{ item.start_date | date }}
-  </template>
-  <template v-slot:item.status="{ item }">
-    <status-chip :status="item.status" />
-  </template>
-</n-n-table>
+    <template v-for="(_, slot) of $slots" #[slot]="scope">
+      <slot :name="slot" v-bind="scope" />
+    </template>
+    <template #[`item.name`]="{ item }">
+      <NNParameterHighlighter :name="item.name" default-color="orange" />
+    </template>
+    <template #[`item.start_date`]="{ item }">
+      {{ $filters.date(item.start_date) }}
+    </template>
+    <template #[`item.status`]="{ item }">
+      <StatusChip :status="item.status" />
+    </template>
+  </NNTable>
 </template>
 
 <script>
 import libraryConstants from '@/constants/libraries'
-import NNParameterHighlighter from '@/components/tools/NNParameterHighlighter'
-import NNTable from '@/components/tools/NNTable'
+import NNParameterHighlighter from '@/components/tools/NNParameterHighlighter.vue'
+import NNTable from '@/components/tools/NNTable.vue'
+import StatusChip from '@/components/tools/StatusChip.vue'
 import templates from '@/api/templates'
 import filteringParameters from '@/utils/filteringParameters'
 
 export default {
   components: {
     NNParameterHighlighter,
-    NNTable
+    NNTable,
+    StatusChip,
   },
   props: {
     urlPrefix: {
       type: String,
-      default: ''
+      default: '',
     },
     translationType: {
       type: String,
-      default: ''
+      default: '',
     },
     objectType: {
       type: String,
-      default: ''
-    },
-    hasApi: {
-      type: Boolean,
-      default: false
+      default: '',
     },
     columnDataResource: {
       type: String,
-      default: ''
+      default: '',
     },
     exportDataUrlParams: {
       type: Object,
-      required: false
+      default: null,
+      required: false,
     },
     columnDataParameters: {
       type: Object,
-      default () {
+      default() {
         return { filters: {} }
-      }
-    }
+      },
+    },
   },
-  data () {
+  data() {
     return {
       headers: [
-        { text: this.$t('_global.template'), value: 'name', width: '70%', filteringName: 'name_plain' },
-        { text: this.$t('_global.modified'), value: 'start_date' },
-        { text: this.$t('_global.modified_by'), value: 'user_initials' }
+        {
+          title: this.$t('_global.template'),
+          key: 'name',
+          width: '70%',
+          filteringName: 'name_plain',
+        },
+        { title: this.$t('_global.modified'), key: 'start_date' },
+        { title: this.$t('_global.modified_by'), key: 'user_initials' },
       ],
       options: {},
       selected: [],
       templates: [],
       total: 0,
-      api: null
+      api: null,
     }
   },
   computed: {
-    extendedColumnDataParameters () {
-      const result = this.columnDataParameters ? { ...this.columnDataParameters } : { filters: {} }
-      result.filters['library.name'] = { v: [libraryConstants.LIBRARY_USER_DEFINED] }
+    extendedColumnDataParameters() {
+      const result = this.columnDataParameters
+        ? { ...this.columnDataParameters }
+        : { filters: {} }
+      result.filters['library.name'] = {
+        v: [libraryConstants.LIBRARY_USER_DEFINED],
+      }
       return result
-    }
+    },
   },
-  created () {
+  created() {
     this.api = templates(this.urlPrefix)
   },
   methods: {
-    async filter (filters, sort, filtersUpdated) {
-      filters = (filters) ? { ...JSON.parse(filters), ...this.columnDataParameters.filters } : { ...this.columnDataParameters.filters }
+    async filter(filters, sort, filtersUpdated) {
+      filters = filters
+        ? { ...JSON.parse(filters), ...this.columnDataParameters.filters }
+        : { ...this.columnDataParameters.filters }
       filters['library.name'] = { v: [libraryConstants.LIBRARY_USER_DEFINED] }
       const params = filteringParameters.prepareParameters(
-        this.options, filters, sort, filtersUpdated)
-      this.api.get(params).then(resp => {
+        this.options,
+        filters,
+        sort,
+        filtersUpdated
+      )
+      this.api.get(params).then((resp) => {
         if (resp.data.items !== undefined) {
           this.templates = resp.data.items
           this.total = resp.data.total
@@ -113,15 +125,7 @@ export default {
           this.total = this.templates.length
         }
       })
-    }
+    },
   },
-  watch: {
-    options: {
-      handler () {
-        this.filter()
-      },
-      deep: true
-    }
-  }
 }
 </script>

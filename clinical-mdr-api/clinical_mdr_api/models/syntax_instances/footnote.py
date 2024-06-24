@@ -84,10 +84,12 @@ class Footnote(BaseModel):
             name=capitalize_first_letter_if_template_parameter(
                 footnote_ar.name,
                 footnote_ar.template_name_plain,
+                footnote_ar._template.parameter_terms,
             ),
             name_plain=capitalize_first_letter_if_template_parameter(
                 footnote_ar.name_plain,
                 footnote_ar.template_name_plain,
+                footnote_ar._template.parameter_terms,
             ),
             start_date=footnote_ar.item_metadata.start_date,
             end_date=footnote_ar.item_metadata.end_date,
@@ -145,10 +147,12 @@ class FootnoteWithType(Footnote):
             name=capitalize_first_letter_if_template_parameter(
                 footnote_ar.name,
                 footnote_ar.template_name_plain,
+                footnote_ar._template.parameter_terms,
             ),
             name_plain=capitalize_first_letter_if_template_parameter(
                 footnote_ar.name_plain,
                 footnote_ar.template_name_plain,
+                footnote_ar._template.parameter_terms,
             ),
             start_date=footnote_ar.item_metadata.start_date,
             end_date=footnote_ar.item_metadata.end_date,

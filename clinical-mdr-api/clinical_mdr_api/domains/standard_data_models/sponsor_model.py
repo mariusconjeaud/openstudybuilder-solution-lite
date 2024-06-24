@@ -46,6 +46,7 @@ class SponsorModelMetadataVO(LibraryItemMetadataVO):
     def version(self) -> str:
         return self._major_version
 
+    # pylint: disable=arguments-renamed
     @classmethod
     def get_initial_item_metadata(cls, author: str, version: str) -> Self:
         return cls(

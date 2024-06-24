@@ -1,60 +1,50 @@
 <template>
-<div>
-  <div class="mt-6 d-flex align-center">
-    <v-card-title class="text-h6 ml-2">{{ $t('StudyPopulationView.title') }}</v-card-title>
+  <div>
+    <div class="mt-6 d-flex align-center">
+      <v-card-title class="text-h6 ml-2">
+        {{ $t('StudyPopulationView.title') }}
+      </v-card-title>
     </div>
     <div>
-    <v-radio-group
-      v-model="expand"
-      row
-      class="pt-2 ml-5"
-    >
-      <v-radio
-        :label="$t('StudyPopulationView.show_all')"
-        :value="true"
-      ></v-radio>
-      <v-radio
-        :label="$t('StudyPopulationView.hide_all')"
-        :value="false"
-      ></v-radio>
-    </v-radio-group>
-  </div>
-  <v-expansion-panels
-    :key="key"
-    multiple
-    v-model="panel"
-    flat
-    tile
-    accordion>
-    <v-expansion-panel v-for="(criterias, name,) in studyCriterias" :key="name">
-      <v-expansion-panel-header
-        v-if="criterias.length > 0"
-        class="text-h6 grey--text"
-        v-html="name"
+      <v-radio-group v-model="expand" row color="primary" class="pt-2 ml-5">
+        <v-radio :label="$t('StudyPopulationView.show_all')" :value="true" />
+        <v-radio :label="$t('StudyPopulationView.hide_all')" :value="false" />
+      </v-radio-group>
+    </div>
+    <v-expansion-panels :key="key" v-model="panel" multiple accordion>
+      <v-expansion-panel
+        v-for="(criterias, name) in studyCriterias"
+        :key="name"
+      >
+        <v-expansion-panel-title
+          v-if="criterias.length > 0"
+          class="text-h6 text-grey"
         >
-      </v-expansion-panel-header>
-      <v-expansion-panel-content>
-        <ol>
-          <li v-for="(item, index) in criterias" :key="index" v-html="item"></li>
-        </ol>
-      </v-expansion-panel-content>
-    </v-expansion-panel>
-  </v-expansion-panels>
-</div>
+          <span v-html="name" />
+        </v-expansion-panel-title>
+        <v-expansion-panel-text>
+          <ol>
+            <li v-for="(item, index) in criterias" :key="index" v-html="item" />
+          </ol>
+        </v-expansion-panel-text>
+      </v-expansion-panel>
+    </v-expansion-panels>
+  </div>
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
 import study from '@/api/study'
+import { useStudiesGeneralStore } from '@/stores/studies-general'
+import { computed } from 'vue'
 
 export default {
-  computed: {
-    ...mapGetters({
-      selectedStudy: 'studiesGeneral/selectedStudy',
-      selectedStudyVersion: 'studiesGeneral/selectedStudyVersion'
-    })
+  setup() {
+    const studiesGeneralStore = useStudiesGeneralStore()
+    return {
+      selectedStudy: computed(() => studiesGeneralStore.selectedStudy),
+    }
   },
-  data () {
+  data() {
     return {
       studyCriterias: {
         'Inclusion Criteria': [], // Hardcoded to keep correct order
@@ -62,45 +52,55 @@ export default {
         'Run-in Criteria': [],
         'Randomisation Criteria': [],
         'Dosing Criteria': [],
-        'Withdrawal Criteria': []
+        'Withdrawal Criteria': [],
       },
       key: 0,
       panel: [],
-      expand: false
+      expand: false,
     }
   },
-  mounted () {
-    study.getStudyCriteria(this.selectedStudy.uid, this.selectedStudyVersion).then(resp => {
-      resp.data.items.forEach(el => {
-        if (el.criteria_type.sponsor_preferred_name in this.studyCriterias) {
-          this.studyCriterias[el.criteria_type.sponsor_preferred_name].push(el.criteria ? this.removeBrackets(el.criteria.name) : this.removeBrackets(el.criteria_template.name))
-        } else {
-          this.studyCriterias[el.criteria_type.sponsor_preferred_name] = []
-          this.studyCriterias[el.criteria_type.sponsor_preferred_name].push(el.criteria ? this.removeBrackets(el.criteria.name) : this.removeBrackets(el.criteria_template.name))
-        }
+  watch: {
+    expand(value) {
+      value ? this.openAll() : this.closeAll()
+    },
+  },
+  mounted() {
+    study
+      .getStudyCriteria(this.selectedStudy.uid)
+      .then((resp) => {
+        resp.data.items.forEach((el) => {
+          if (el.criteria_type.sponsor_preferred_name in this.studyCriterias) {
+            this.studyCriterias[el.criteria_type.sponsor_preferred_name].push(
+              el.criteria
+                ? this.removeBrackets(el.criteria.name)
+                : this.removeBrackets(el.criteria_template.name)
+            )
+          } else {
+            this.studyCriterias[el.criteria_type.sponsor_preferred_name] = []
+            this.studyCriterias[el.criteria_type.sponsor_preferred_name].push(
+              el.criteria
+                ? this.removeBrackets(el.criteria.name)
+                : this.removeBrackets(el.criteria_template.name)
+            )
+          }
+        })
+        this.key += 1
       })
-      this.key += 1
-    })
   },
   methods: {
-    openAll () {
+    openAll() {
       let length = Object.keys(this.studyCriterias).length
       while (length >= 0) {
         this.panel.push(length)
         length--
       }
     },
-    closeAll () {
+    closeAll() {
       this.panel = []
     },
-    removeBrackets (value) {
+    removeBrackets(value) {
       return value.replaceAll('[', '').replaceAll(']', '')
-    }
+    },
   },
-  watch: {
-    expand (value) {
-      value ? this.openAll() : this.closeAll()
-    }
-  }
 }
 </script>

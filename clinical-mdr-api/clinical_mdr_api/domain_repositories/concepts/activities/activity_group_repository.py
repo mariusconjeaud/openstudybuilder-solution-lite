@@ -59,6 +59,29 @@ class ActivityGroupRepository(ConceptGenericRepository[ActivityGroupAR]):
             ),
         )
 
+    def _create_ar(
+        self,
+        root: VersionRoot,
+        library: Library | None,
+        relationship: VersionRelationship,
+        value: VersionValue,
+        **_kwargs,
+    ) -> ActivityGroupAR:
+        return ActivityGroupAR.from_repository_values(
+            uid=root.uid,
+            concept_vo=ActivityGroupVO.from_repository_values(
+                name=value.name,
+                name_sentence_case=value.name_sentence_case,
+                definition=value.definition,
+                abbreviation=value.abbreviation,
+            ),
+            library=LibraryVO.from_input_values_2(
+                library_name=library.name,
+                is_library_editable_callback=(lambda _: library.is_editable),
+            ),
+            item_metadata=self._library_item_metadata_vo_from_relation(relationship),
+        )
+
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
         root: VersionRoot,
@@ -132,9 +155,6 @@ class ActivityGroupRepository(ConceptGenericRepository[ActivityGroupAR]):
             head([(concept_value)<-[:IN_GROUP]-(:ActivityValidGroup)<-[:IN_SUBGROUP]-(:ActivityGrouping)<-[:HAS_GROUPING]-(activity_value:ActivityValue)
             <-[:HAS_VERSION]-(activity_root:ActivityRoot) | {uid:activity_root.uid, name:activity_value.name}]) AS activity
         """
-
-    def specific_header_match_clause(self) -> str | None:
-        return " MATCH (concept_value)<-[:IN_GROUP]-()<-[:IN_SUBGROUP]-()<-[:HAS_GROUPING]-() "
 
     def _create_new_value_node(self, ar: ActivityGroupAR) -> ActivityGroupValue:
         value_node = super()._create_new_value_node(ar=ar)

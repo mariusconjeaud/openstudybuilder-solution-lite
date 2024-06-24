@@ -885,6 +885,52 @@ def test_change_footnote_template_indexings(api_client):
         assert res[key] is not None
 
 
+def test_remove_footnote_template_indexings(api_client):
+    data = {
+        "indication_uids": [],
+        "activity_uids": [],
+        "activity_group_uids": [],
+        "activity_subgroup_uids": [],
+    }
+    response = api_client.patch(
+        f"{URL}/{footnote_templates[1].uid}/indexings",
+        json=data,
+    )
+    res = response.json()
+    log.info("Removed Footnote Template indexings: %s", res)
+
+    assert response.status_code == 200
+    assert res["uid"]
+    assert res["sequence_id"]
+    assert res["name"] == "Default-AAA name with [TextValue]"
+    assert res["type"]["term_uid"] == ct_term_schedule_of_activities.term_uid
+    assert (
+        res["type"]["name"]["sponsor_preferred_name"]
+        == ct_term_schedule_of_activities.sponsor_preferred_name
+    )
+    assert (
+        res["type"]["name"]["sponsor_preferred_name_sentence_case"]
+        == ct_term_schedule_of_activities.sponsor_preferred_name_sentence_case
+    )
+    assert (
+        res["type"]["attributes"]["code_submission_value"]
+        == ct_term_schedule_of_activities.code_submission_value
+    )
+    assert (
+        res["type"]["attributes"]["nci_preferred_name"]
+        == ct_term_schedule_of_activities.nci_preferred_name
+    )
+    assert not res["indications"]
+    assert not res["activities"]
+    assert not res["activity_groups"]
+    assert not res["activity_subgroups"]
+    assert res["version"] == "1.0"
+    assert res["status"] == "Final"
+    assert set(list(res.keys())) == set(FOOTNOTE_TEMPLATE_FIELDS_ALL)
+    for key in FOOTNOTE_TEMPLATE_FIELDS_NOT_NULL:
+        assert res[key] is not None
+
+
 def test_delete_footnote_template(api_client):
     response = api_client.delete(f"{URL}/{footnote_templates[2].uid}")
     log.info("Deleted Footnote Template: %s", footnote_templates[2].uid)
@@ -1093,6 +1139,22 @@ def test_inactivate_footnote_template(api_client):
     assert res["name"] == f"cascade check [{text_value_1.name_sentence_case}]"
     assert res["version"] == "2.0"
     assert res["status"] == "Retired"
+
+
+def test_current_final_footnote_template(api_client):
+    response = api_client.get(
+        f"""{URL}?status=Final&filters={{"sequence_id": {{"v": ["FSA6"], "op": "eq"}}}}"""
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert not res["items"]
+
+    response = api_client.get(
+        f"""{URL}/headers?field_name=sequence_id&status=Final&filters={{"sequence_id": {{"v": ["FSA6"], "op": "eq"}}}}"""
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert not res
 
 
 def test_reactivate_footnote_template(api_client):

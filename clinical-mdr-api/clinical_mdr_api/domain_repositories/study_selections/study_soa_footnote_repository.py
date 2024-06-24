@@ -20,6 +20,8 @@ from clinical_mdr_api.domain_repositories.models.study_selections import (
 from clinical_mdr_api.domain_repositories.models.syntax import (
     FootnoteRoot,
     FootnoteTemplateRoot,
+    FootnoteTemplateValue,
+    FootnoteValue,
 )
 from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import (
     StudyStatus,
@@ -106,6 +108,7 @@ class StudySoAFootnoteRepository:
                 sr.uid AS study_uid,
                 sf.uid AS uid,
                 sf.footnote_number AS footnote_number,
+                sf.accepted_version as accepted_version,
                 footnote.uid as footnote_uid, 
                 footnote.version as footnote_version,
                 footnote_template.uid as footnote_template_uid, 
@@ -218,6 +221,7 @@ class StudySoAFootnoteRepository:
             modified=convert_to_datetime(value=selection.get("modified_date")),
             author=selection.get("user_initials"),
             status=StudyStatus(selection.get("status")),
+            accepted_version=selection.get("accepted_version"),
         )
         return selection_vo
 
@@ -245,27 +249,34 @@ class StudySoAFootnoteRepository:
             change_type=change_type,
             author=selection.get("user_initials"),
             status=StudyStatus(selection.get("status")),
+            accepted_version=selection.get("accepted_version"),
         )
         return selection_vo
 
     def find_all_footnotes(
-        self, study_uid: str | None = None, study_value_version: str | None = None
+        self,
+        study_uids: str | list[str] | None = None,
+        study_value_version: str | None = None,
     ) -> list[StudySoAFootnoteVO]:
         query_parameters = {}
-        if study_uid:
+        if study_uids:
+            if isinstance(study_uids, str):
+                study_uid_statement = "{uid: $uids}"
+            else:
+                study_uid_statement = "WHERE sr.uid IN $uids"
             if study_value_version:
                 query = (
-                    "MATCH (sr:StudyRoot { uid: $uid})-[l:HAS_VERSION{status:'RELEASED', version:$study_value_version}]->(sv:StudyValue)"
+                    f"MATCH (sr:StudyRoot {study_uid_statement})-[l:HAS_VERSION{{status:'RELEASED', version:$study_value_version}}]->(sv:StudyValue)"
                     "-[:HAS_STUDY_FOOTNOTE]->(sf:StudySoAFootnote)<-[:AFTER]-(sa:StudyAction)"
                 )
                 query_parameters["study_value_version"] = study_value_version
-                query_parameters["uid"] = study_uid
+                query_parameters["uids"] = study_uids
             else:
                 query = (
-                    "MATCH (sr:StudyRoot {uid: $uid})-[l:LATEST]->(sv:StudyValue)-[:HAS_STUDY_FOOTNOTE]->"
+                    f"MATCH (sr:StudyRoot {study_uid_statement})-[l:LATEST]->(sv:StudyValue)-[:HAS_STUDY_FOOTNOTE]->"
                     "(sf:StudySoAFootnote)<-[:AFTER]-(sa:StudyAction)"
                 )
-                query_parameters["uid"] = study_uid
+                query_parameters["uids"] = study_uids
         else:
             if study_value_version:
                 query = (
@@ -336,22 +347,54 @@ class StudySoAFootnoteRepository:
         soa_footnote_node = StudySoAFootnote(
             uid=soa_footnote_vo.uid,
             footnote_number=soa_footnote_vo.footnote_number,
+            accepted_version=soa_footnote_vo.accepted_version,
         )
         soa_footnote_node.save()
 
-        # link to selected footnote
-        if soa_footnote_vo.footnote_uid:
+        # link to selected footnote if there's no specific version
+        if soa_footnote_vo.footnote_uid and not soa_footnote_vo.footnote_version:
             selected_footnote = FootnoteRoot.nodes.get(
                 uid=soa_footnote_vo.footnote_uid
             ).has_latest_value.get()
             soa_footnote_node.has_footnote.connect(selected_footnote)
-        # link to selected footnote template
-        elif soa_footnote_vo.footnote_template_uid:
+        # link to selected footnote with specified version
+        elif soa_footnote_vo.footnote_uid and soa_footnote_vo.footnote_version:
+            selected_footnote = (
+                FootnoteValue.nodes.fetch_relations("has_version")
+                .filter(
+                    **{
+                        "has_version__uid": soa_footnote_vo.footnote_uid,
+                        "has_version|version": soa_footnote_vo.footnote_version,
+                    }
+                )
+                .get_or_none()[1]
+            )
+            soa_footnote_node.has_footnote.connect(selected_footnote)
+        # link to selected footnote template if there's no specific version specified
+        elif (
+            soa_footnote_vo.footnote_template_uid
+            and not soa_footnote_vo.footnote_template_version
+        ):
             selected_footnote_template = FootnoteTemplateRoot.nodes.get(
                 uid=soa_footnote_vo.footnote_template_uid
             ).has_latest_value.get()
             soa_footnote_node.has_footnote_template.connect(selected_footnote_template)
-
+        # link to selected footnote template with specified version
+        elif (
+            soa_footnote_vo.footnote_template_uid
+            and soa_footnote_vo.footnote_template_version
+        ):
+            selected_footnote_template = (
+                FootnoteTemplateValue.nodes.fetch_relations("has_version")
+                .filter(
+                    **{
+                        "has_version__uid": soa_footnote_vo.footnote_template_uid,
+                        "has_version|version": soa_footnote_vo.footnote_template_version,
+                    }
+                )
+                .get_or_none()[1]
+            )
+            soa_footnote_node.has_footnote_template.connect(selected_footnote_template)
         not_found_items = []
         # link to referenced items by a footnote
         for referenced_item in soa_footnote_vo.referenced_items:

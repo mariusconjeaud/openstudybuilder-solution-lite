@@ -66,7 +66,7 @@
           "status": "Final",
           "version": "1.0",
           "change_description": "Approved version",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "possible_actions": [
             "inactivate"
           ],
@@ -91,7 +91,7 @@
           "study_count": null
         },
         "start_date": "2021-10-25T13:17:02.952076",
-        "user_initials": "TEST_USER",
+        "user_initials": "unknown-user",
         "endpoint_count": 0,
         "latest_objective": null,
         "accepted_version": false
@@ -172,7 +172,7 @@
           "status": "Final",
           "version": "1.0",
           "change_description": "Approved version",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "possible_actions": [
             "inactivate"
           ],
@@ -204,7 +204,7 @@
           "study_count": null
         },
         "start_date": "2021-10-25T13:17:02.952076",
-        "user_initials": "TEST_USER",
+        "user_initials": "unknown-user",
         "endpoint_count": 0,
         "latest_objective": null,
         "accepted_version": false
@@ -291,7 +291,7 @@
           "status": "Final",
           "version": "1.0",
           "change_description": "Approved version",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "possible_actions": [
             "inactivate"
           ],
@@ -329,7 +329,7 @@
           "study_count": null
         },
         "start_date": "2021-10-25T13:17:02.952076",
-        "user_initials": "TEST_USER",
+        "user_initials": "unknown-user",
         "endpoint_count": 0,
         "latest_objective": null,
         "accepted_version": false
@@ -422,7 +422,7 @@
           "status": "Final",
           "version": "1.0",
           "change_description": "Approved version",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "possible_actions": [
             "inactivate"
           ],
@@ -466,7 +466,7 @@
           "study_count": null
         },
         "start_date": "2021-10-25T13:17:02.952076",
-        "user_initials": "TEST_USER",
+        "user_initials": "unknown-user",
         "endpoint_count": 0,
         "latest_objective": null,
         "accepted_version": false

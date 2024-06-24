@@ -31,6 +31,9 @@ from clinical_mdr_api.routers.concepts.compound_aliases import (
 )
 from clinical_mdr_api.routers.concepts.compounds import router as compounds_router
 from clinical_mdr_api.routers.concepts.lag_times import router as lag_times_router
+from clinical_mdr_api.routers.concepts.medicinal_products import (
+    router as medicinal_products_router,
+)
 from clinical_mdr_api.routers.concepts.numeric_values import (
     router as numeric_values_router,
 )
@@ -111,6 +114,7 @@ from clinical_mdr_api.routers.controlled_terminologies.ct_terms import (
     router as ct_terms_router,
 )
 from clinical_mdr_api.routers.ctr_xml.ctr_xml import router as ctr_xml_router
+from clinical_mdr_api.routers.ddf.study_definitions import router as ddf_router
 from clinical_mdr_api.routers.dictionaries.dictionary_codelists import (
     router as dictionary_codelists_router,
 )
@@ -204,6 +208,9 @@ from clinical_mdr_api.routers.studies.study_interventions import (
 from clinical_mdr_api.routers.studies.study_soa_footnotes import (
     router as study_soa_footnotes_router,
 )
+from clinical_mdr_api.routers.studies.study_standard_version import (
+    router as study_standard_version_router,
+)
 from clinical_mdr_api.routers.studies.study_visits import router as study_visit_router
 from clinical_mdr_api.routers.studies.study_weeks import router as study_weeks_router
 from clinical_mdr_api.routers.syntax_instances.activity_instructions import (
@@ -264,6 +271,7 @@ __all__ = [
     "activities_router",
     "active_substances_router",
     "pharmaceutical_products_router",
+    "medicinal_products_router",
     "odm_study_events_router",
     "odm_forms_router",
     "odm_item_groups_router",
@@ -330,6 +338,7 @@ __all__ = [
     "study_router",
     "study_epoch_router",
     "study_disease_milestone_router",
+    "study_standard_version_router",
     "study_visit_router",
     "study_activity_instructions_router",
     "study_activity_schedule_router",
@@ -363,4 +372,5 @@ __all__ = [
     "dataset_classes_router",
     "class_variables_router",
     "dataset_variables_router",
+    "ddf_router",
 ]

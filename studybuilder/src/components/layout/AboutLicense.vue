@@ -1,16 +1,16 @@
 <template>
-  <v-card color="dfltBackground">
+  <v-card color="bg-dfltBackground">
     <v-card-actions>
       <v-card-title class="dialog-about-title">
-        {{ this.title }}
-    </v-card-title>
-      <v-spacer></v-spacer>
+        {{ title }}
+      </v-card-title>
+      <v-spacer />
       <v-btn class="secondary-btn" color="white" @click="$emit('close')">
         {{ $t('_global.close') }}
       </v-btn>
     </v-card-actions>
     <v-card-text>
-      <span v-html="this.licenseContent"></span>
+      <span v-html="licenseContent" />
     </v-card-text>
   </v-card>
 </template>
@@ -20,13 +20,20 @@ import { marked } from 'marked'
 
 export default {
   props: {
-    rawMarkdown: String,
-    title: String
+    rawMarkdown: {
+      type: String,
+      default: '',
+    },
+    title: {
+      type: String,
+      default: '',
+    },
   },
+  emits: ['close'],
   computed: {
-    licenseContent () {
+    licenseContent() {
       return marked.parse(this.rawMarkdown)
-    }
-  }
+    },
+  },
 }
 </script>

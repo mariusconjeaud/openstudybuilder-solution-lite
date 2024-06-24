@@ -1,79 +1,105 @@
 <template>
-<v-dialog
-  v-model="dialog"
-  :max-width="options.width"
-  :style="{ zIndex: options.zIndex }"
-  @keydown.esc="cancel"
+  <v-dialog
+    :model-value="dialog"
+    :max-width="options.width"
+    :style="{ zIndex: options.zIndex }"
+    @keydown.esc="cancel"
   >
-  <v-card :color="backgroundColor">
-    <v-card-text
-      v-if="message"
-      class="pt-2 white--text"
-      >
-      <v-row no-gutters class="align-center pa-2">
-        <v-col cols="2" >
-          <v-icon class="mr-4" color="white" x-large>{{ icon }}</v-icon>
-        </v-col>
-        <v-col cols="10">
-          <div class="text-body-1 mt-1" v-html="message">
-          </div>
-        </v-col>
-      </v-row>
-      <v-divider class="pa-2" />
-      <v-row>
-        <v-col class="text-center">
-          <v-btn
-            v-if="!options.noCancel"
-            color="white"
-            @click.native="cancel"
-            data-cy="cancel-popup"
-            class="mr-4 warning"
-            elevation="4"
+    <v-card :class="cardClasses">
+      <v-card-text v-if="message" class="pt-2 text-white">
+        <v-row no-gutters class="align-center pa-2">
+          <v-col cols="2">
+            <v-icon
+              class="mr-4"
+              color="white"
+              size="x-large"
+              :icon="getIcon()"
+            />
+          </v-col>
+          <v-col cols="10">
+            <div class="text-body-1 mt-1" v-html="message" />
+          </v-col>
+        </v-row>
+        <v-divider class="pa-2" />
+        <v-row>
+          <v-col class="text-center">
+            <v-btn
+              v-if="!options.noCancel"
+              color="white"
+              variant="outlined"
+              data-cy="cancel-popup"
+              class="mr-4 text-white"
+              elevation="2"
+              @click="cancel"
             >
-            {{ options.cancelLabel }}
-          </v-btn>
-          <slot name="actions">
-            <v-btn
-              v-if="options.redirect === null"
-              color="white"
-              @click.native="agree"
-              data-cy="continue-popup"
-              class="warning darken-1"
-              elevation="4"
-              >
-              {{ options.agreeLabel }}
+              {{ options.cancelLabel }}
             </v-btn>
-            <v-btn
-              v-else
-              color="white"
-              @click.native="agreeAndRedirect"
-              data-cy="continue-popup"
-              class="warning darken-2"
-              elevation="4"
+            <slot name="actions">
+              <v-btn
+                v-if="options.redirect === null"
+                color="white"
+                variant="outlined"
+                data-cy="continue-popup"
+                class="text-white"
+                elevation="2"
+                @click="agree"
               >
-              {{ options.agreeLabel }}
-            </v-btn>
-          </slot>
-        </v-col>
-      </v-row>
-    </v-card-text>
-  </v-card>
-</v-dialog>
+                {{ options.agreeLabel }}
+              </v-btn>
+              <v-btn
+                v-else
+                color="white"
+                data-cy="continue-popup"
+                variant="outlined"
+                elevation="2"
+                @click="agreeAndRedirect"
+              >
+                {{ options.agreeLabel }}
+              </v-btn>
+            </slot>
+          </v-col>
+        </v-row>
+      </v-card-text>
+    </v-card>
+  </v-dialog>
 </template>
 
 <script>
 export default {
+  data() {
+    return {
+      dialog: false,
+      resolve: null,
+      reject: null,
+      message: null,
+      type: null,
+      options: {
+        type: 'success',
+        width: 450,
+        zIndex: 3000,
+        noCancel: false,
+        agreeLabel: this.$t('_global.continue'),
+        cancelLabel: this.$t('_global.cancel'),
+        cancelIsPrimaryAction: false,
+        redirect: null,
+      },
+    }
+  },
   computed: {
-    backgroundColor () {
+    cardClasses() {
+      const result = { 'pa-1': true }
       if (this.options.type === 'warning') {
-        return 'warning'
+        result['bg-warning'] = true
+      } else if (this.options.type === 'info') {
+        result['bg-info'] = true
+      } else {
+        result['bg-green'] = true
       }
-      if (this.options.type === 'info') {
-        return 'info'
-      }
-      return 'green'
+      return result
     },
-    icon () {
+  },
+  methods: {
+    getIcon() {
       if (this.options.type === 'info') {
         return 'mdi-information-outline'
       }
@@ -84,29 +110,8 @@ export default {
         return 'mdi-alert-octagon-outline'
       }
       return 'mdi-check-circle-outline'
-    }
-  },
-  data () {
-    return {
-      dialog: false,
-      resolve: null,
-      reject: null,
-      message: null,
-      type: null,
-      options: {
-        type: 'success',
-        width: 450,
-        zIndex: 200,
-        noCancel: false,
-        agreeLabel: this.$t('_global.continue'),
-        cancelLabel: this.$t('_global.cancel'),
-        cancelIsPrimaryAction: false,
-        redirect: null
-      }
-    }
-  },
-  methods: {
-    open (message, options) {
+    },
+    open(message, options) {
       this.dialog = true
       this.message = message
       this.options = Object.assign(this.options, options)
@@ -115,18 +120,18 @@ export default {
         this.reject = reject
       })
     },
-    agree () {
+    agree() {
       this.resolve(true)
       this.dialog = false
     },
-    agreeAndRedirect () {
+    agreeAndRedirect() {
       this.dialog = false
       this.$router.push(this.options.redirect)
     },
-    cancel () {
+    cancel() {
       this.resolve(false)
       this.dialog = false
-    }
-  }
+    },
+  },
 }
 </script>

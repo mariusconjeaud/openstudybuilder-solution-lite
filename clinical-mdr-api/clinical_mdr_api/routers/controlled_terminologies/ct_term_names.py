@@ -2,7 +2,7 @@
 from datetime import datetime
 from typing import Any
 
-from fastapi import APIRouter, Body, Depends, Path, Query, Response
+from fastapi import APIRouter, Body, Path, Query, Response
 from fastapi import status as fast_api_status
 from pydantic.types import Json
 
@@ -10,7 +10,7 @@ from clinical_mdr_api import config, models
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.oauth import get_current_user_id, rbac
+from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions
 from clinical_mdr_api.services.controlled_terminologies.ct_term_name import (
@@ -75,9 +75,8 @@ def get_terms(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    ct_term_name_service = CTTermNameService(user=current_user_id)
+    ct_term_name_service = CTTermNameService()
     results = ct_term_name_service.get_all_ct_terms(
         codelist_uid=codelist_uid,
         codelist_name=codelist_name,
@@ -92,14 +91,25 @@ def get_terms(
     )
 
     if compact_response:
-        results.items = list(
-            map(
-                lambda x: models.CTTermNameSimple(
-                    term_uid=x.term_uid, sponsor_preferred_name=x.sponsor_preferred_name
-                ),
-                results.items,
-            )
+        # TODO: This is a workaround to remove duplicates from the response.
+        # Creating the compact model removes some fields that make the items unique,
+        # leading to duplicates in the response.
+        # To remove these duplicates, go via a set of tuples.
+        # The downside is that the number of returned items may be smaller than
+        # the requested page size even if there are more items in the database.
+        unique_items = set(
+            (x.term_uid, x.sponsor_preferred_name) for x in results.items
         )
+
+        results.items = [
+            models.CTTermNameSimple(
+                term_uid=term_uid,
+                sponsor_preferred_name=sponsor_preferred_name,
+            )
+            for term_uid, sponsor_preferred_name in unique_items
+        ]
+
+        page_size = len(results.items)
 
     return CustomPage.create(
         items=results.items, total=results.total, page=page_number, size=page_size
@@ -123,7 +133,6 @@ def get_terms(
     },
 )
 def get_distinct_values_for_header(
-    current_user_id: str = Depends(get_current_user_id),
     codelist_uid: str
     | None = Query(
         None, description="If specified, only terms from given codelist are returned."
@@ -153,7 +162,7 @@ def get_distinct_values_for_header(
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
 ):
-    ct_term_service = CTTermNameService(user=current_user_id)
+    ct_term_service = CTTermNameService()
     return ct_term_service.get_distinct_values_for_header(
         codelist_uid=codelist_uid,
         codelist_name=codelist_name,
@@ -204,9 +213,8 @@ def get_term_names(
         "Only exact matches are considered. The version is specified in the following format:"
         "<major>.<minor> where <major> and <minor> are digits. E.g. '0.1', '0.2', '1.0',",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    ct_term_name_service = CTTermNameService(user=current_user_id)
+    ct_term_name_service = CTTermNameService()
     return ct_term_name_service.get_by_uid(
         term_uid=term_uid,
         at_specific_date=at_specified_date_time,
@@ -231,10 +239,8 @@ def get_term_names(
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_versions(
-    term_uid: str = CTTermUID, current_user_id: str = Depends(get_current_user_id)
-):
-    ct_term_name_service = CTTermNameService(user=current_user_id)
+def get_versions(term_uid: str = CTTermUID):
+    ct_term_name_service = CTTermNameService()
     return ct_term_name_service.get_version_history(term_uid=term_uid)
 
 
@@ -273,9 +279,8 @@ def edit(
     term_input: models.CTTermNameEditInput = Body(
         description="The new parameter terms for the term including the change description.",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    ct_term_name_service = CTTermNameService(user=current_user_id)
+    ct_term_name_service = CTTermNameService()
     return ct_term_name_service.edit_draft(term_uid=term_uid, term_input=term_input)
 
 
@@ -310,10 +315,8 @@ If the request succeeds:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def create(
-    term_uid: str = CTTermUID, current_user_id: str = Depends(get_current_user_id)
-):
-    ct_term_name_service = CTTermNameService(user=current_user_id)
+def create(term_uid: str = CTTermUID):
+    ct_term_name_service = CTTermNameService()
     return ct_term_name_service.create_new_version(term_uid=term_uid)
 
 
@@ -347,10 +350,8 @@ If the request succeeds:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def approve(
-    term_uid: str = CTTermUID, current_user_id: str = Depends(get_current_user_id)
-):
-    ct_term_name_service = CTTermNameService(user=current_user_id)
+def approve(term_uid: str = CTTermUID):
+    ct_term_name_service = CTTermNameService()
     return ct_term_name_service.approve(term_uid=term_uid)
 
 
@@ -382,10 +383,8 @@ If the request succeeds:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def inactivate(
-    term_uid: str = CTTermUID, current_user_id: str = Depends(get_current_user_id)
-):
-    ct_term_name_service = CTTermNameService(user=current_user_id)
+def inactivate(term_uid: str = CTTermUID):
+    ct_term_name_service = CTTermNameService()
     return ct_term_name_service.inactivate_final(term_uid=term_uid)
 
 
@@ -417,10 +416,8 @@ If the request succeeds:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def reactivate(
-    term_uid: str = CTTermUID, current_user_id: str = Depends(get_current_user_id)
-):
-    ct_term_name_service = CTTermNameService(user=current_user_id)
+def reactivate(term_uid: str = CTTermUID):
+    ct_term_name_service = CTTermNameService()
     return ct_term_name_service.reactivate_retired(term_uid=term_uid)
 
 
@@ -450,9 +447,7 @@ def reactivate(
         500: _generic_descriptions.ERROR_500,
     },
 )
-def delete_ct_term(
-    term_uid: str = CTTermUID, current_user_id: str = Depends(get_current_user_id)
-):
-    ct_term_name_service = CTTermNameService(user=current_user_id)
+def delete_ct_term(term_uid: str = CTTermUID):
+    ct_term_name_service = CTTermNameService()
     ct_term_name_service.soft_delete(term_uid=term_uid)
     return Response(status_code=fast_api_status.HTTP_204_NO_CONTENT)

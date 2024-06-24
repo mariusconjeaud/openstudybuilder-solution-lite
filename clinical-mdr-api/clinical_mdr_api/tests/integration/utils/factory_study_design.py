@@ -44,7 +44,7 @@ def create_study_element(
         description=description,
         element_subtype_uid=element_subtype_uid,
     )
-    item = StudyElementSelectionService(author="test").make_selection(
+    item = StudyElementSelectionService().make_selection(
         study_uid, selection_create_input=study_selection_element_create_input
     )
     return item
@@ -58,7 +58,7 @@ def edit_study_element(
         study_uid=study_uid,
         short_name=new_short_name,
     )
-    item = StudyElementSelectionService(author="test").patch_selection(
+    item = StudyElementSelectionService().patch_selection(
         study_uid,
         study_selection_uid=element_uid,
         selection_update_input=study_selection_element_edit_input,
@@ -90,7 +90,7 @@ def create_study_element_with_planned_duration(
         ),
         element_subtype_uid=element_subtype_uid,
     )
-    item = StudyElementSelectionService(author="test").make_selection(
+    item = StudyElementSelectionService().make_selection(
         study_uid, selection_create_input=study_selection_element_create_input
     )
     return item
@@ -117,7 +117,7 @@ def create_study_arm(
         number_of_subjects=number_of_subjects,
         arm_type_uid=arm_type_uid,
     )
-    item = StudyArmSelectionService(author="test").make_selection(
+    item = StudyArmSelectionService().make_selection(
         study_uid, selection_create_input=study_selection_arm_create_input
     )
     return item
@@ -134,7 +134,7 @@ def edit_study_arm(
         name=name,
         short_name=short_name,
     )
-    item = StudyArmSelectionService(author="test").patch_selection(
+    item = StudyArmSelectionService().patch_selection(
         study_uid,
         study_selection_uid=arm_uid,
         selection_update_input=study_selection_arm_edit_input,
@@ -163,7 +163,7 @@ def create_study_branch_arm(
         number_of_subjects=number_of_subjects,
         arm_uid=arm_uid,
     )
-    item = StudyBranchArmSelectionService(author="test").make_selection(
+    item = StudyBranchArmSelectionService().make_selection(
         study_uid, selection_create_input=study_selection_branch_arm_create_input
     )
     return item
@@ -174,7 +174,7 @@ def patch_study_branch_arm(branch_arm_uid: str, study_uid: str):
         branch_arm_uid=branch_arm_uid,
         name="Branch_Arm_Name_1_edit",
     )
-    item = StudyBranchArmSelectionService(author="test").patch_selection(
+    item = StudyBranchArmSelectionService().patch_selection(
         study_uid=study_uid,
         selection_update_input=study_selection_branch_arm_edit_input,
     )
@@ -200,7 +200,7 @@ def create_study_cohort(
         number_of_subjects=number_of_subjects,
         arm_uids=arm_uids,
     )
-    item = StudyCohortSelectionService(author="test").make_selection(
+    item = StudyCohortSelectionService().make_selection(
         study_uid, selection_create_input=study_selection_cohort_create_input
     )
     return item
@@ -219,7 +219,7 @@ def create_study_design_cell(
         transition_rule="Transition_Rule_1",
     )
     # Create a design cell -- Arm Specified
-    item = StudyDesignCellService(author="test").create(
+    item = StudyDesignCellService().create(
         study_uid=study_uid, design_cell_input=study_design_cell_create_input
     )
     return item
@@ -234,7 +234,7 @@ def patch_order_study_design_cell(
         study_design_cell_uid=study_design_cell_uid, order=order
     )
     # Create a design cell -- Arm Specified
-    item = StudyDesignCellService(author="test").patch(
+    item = StudyDesignCellService().patch(
         study_uid=study_uid, design_cell_update_input=study_design_cell_update_input
     )
     return item

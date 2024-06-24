@@ -1,180 +1,191 @@
 <template>
-<v-card color="dfltBackground">
-  <v-card-title>
-    <span class="dialog-title">{{ getTitle() }}</span>
-    <help-button-with-panels :title="$t('_global.help')" :items="helpItems" />
-  </v-card-title>
-  <v-card-text class="mt-4">
-    <validation-observer ref="observer">
-      <v-row>
-        <v-col cols="12">
-          <validation-provider
-            v-slot="{ errors }"
-            name="Name"
-            vid="name"
-            rules="required"
-            >
-            <div class="pa-6 white">
-              <n-n-template-input-field
+  <v-card color="dfltBackground">
+    <v-card-title class="d-flex align-center">
+      <span class="dialog-title">{{ getTitle() }}</span>
+      <HelpButtonWithPanels :title="$t('_global.help')" :items="helpItems" />
+    </v-card-title>
+    <v-card-text class="mt-4">
+      <v-form ref="observer">
+        <v-row>
+          <v-col cols="12">
+            <div class="pa-6 bg-white">
+              <NNTemplateInputField
                 v-model="form.name"
                 :items="parameterTypes"
-                :error-messages="errors"
                 :show-drop-down-early="true"
                 :label="$t(translationObject + '.name')"
-                ></n-n-template-input-field>
+                :rules="[formRules.required]"
+              />
             </div>
-          </validation-provider>
-        </v-col>
-      </v-row>
-      <slot name="extraFields" :form="form"></slot>
-      <v-row v-if="template">
-        <v-col cols="12">
-          <validation-provider
-            v-slot="{ errors }"
-            name="ChangeDescription"
-            rules="required"
-            >
+          </v-col>
+        </v-row>
+        <slot name="extraFields" :form="form" />
+        <v-row v-if="template">
+          <v-col cols="12">
             <v-textarea
               v-model="form.change_description"
               :label="$t('HistoryTable.change_description')"
-              :error-messages="errors"
               rows="1"
-              dense
+              density="compact"
               clearable
               auto-grow
-              class="white pa-5"
-              ></v-textarea>
-          </validation-provider>
-        </v-col>
-      </v-row>
+              class="bg-white pa-5"
+              :rules="[formRules.required]"
+            />
+          </v-col>
+        </v-row>
 
-      <v-expansion-panels flat class="mt-6" v-if="withClassificationAttributes" v-model="panel">
-        <v-expansion-panel>
-          <v-expansion-panel-header>
-            {{ $t('GenericTemplateForm.template_properties') }}
-          </v-expansion-panel-header>
-          <v-expansion-panel-content>
-            <not-applicable-field
-              :clean-function="updateIndicationsNA"
-              :checked="template && !template.indications"
+        <v-expansion-panels
+          v-if="withClassificationAttributes"
+          v-model="panel"
+          flat
+          class="mt-6"
+        >
+          <v-expansion-panel>
+            <v-expansion-panel-title>
+              {{ $t('GenericTemplateForm.template_properties') }}
+            </v-expansion-panel-title>
+            <v-expansion-panel-text>
+              <NotApplicableField
+                :clean-function="updateIndicationsNA"
+                :checked="template && !template.indications"
               >
-              <template v-slot:mainField="{ notApplicable }">
-                <validation-provider
-                  v-slot="{ errors }"
-                  name="ChangeDescription"
-                  :rules="`requiredIfNotNA:${notApplicable}`"
-                  >
-                  <multiple-select
+                <template #mainField="{ notApplicable }">
+                  <MultipleSelect
                     v-model="form.indications"
                     :label="$t('GenericTemplateForm.study_indication')"
                     data-cy="template-indication-dropdown"
                     :items="indications"
                     return-object
-                    item-text="name"
+                    item-title="name"
                     item-value="termUid"
                     :disabled="notApplicable"
-                    :errors="errors"
-                    />
-                </validation-provider>
-              </template>
-            </not-applicable-field>
-            <slot name="templateFields" v-bind:form="form"></slot>
-          </v-expansion-panel-content>
-        </v-expansion-panel>
-      </v-expansion-panels>
-    </validation-observer>
-  </v-card-text>
-  <v-card-actions class="pb-6 px-6">
-    <v-spacer></v-spacer>
-    <v-btn
-      class="secondary-btn"
-      color="white"
-      data-cy="cancel-button"
-      @click="cancel"
+                    :rules="[
+                      (value) =>
+                        formRules.requiredIfNotNA(value, notApplicable),
+                    ]"
+                  />
+                </template>
+              </NotApplicableField>
+              <slot name="templateFields" :form="form" />
+            </v-expansion-panel-text>
+          </v-expansion-panel>
+        </v-expansion-panels>
+      </v-form>
+    </v-card-text>
+    <v-card-actions class="pb-6 px-6">
+      <v-spacer />
+      <v-btn
+        class="secondary-btn"
+        color="white"
+        data-cy="cancel-button"
+        variant="elevated"
+        @click="cancel"
       >
-      {{ $t('_global.cancel') }}
-    </v-btn>
-    <v-btn
-      class="secondary-btn"
-      color="white"
-      data-cy="verify-syntax-button"
-      @click="verifySyntax"
+        {{ $t('_global.cancel') }}
+      </v-btn>
+      <v-btn
+        class="secondary-btn"
+        color="white"
+        data-cy="verify-syntax-button"
+        variant="elevated"
+        @click="verifySyntax"
       >
-      {{ $t('_global.verify_syntax') }}
-    </v-btn>
-    <v-btn
-      color="secondary"
-      data-cy="save-button"
-      @click="submit"
-      :loading="loading"
+        {{ $t('_global.verify_syntax') }}
+      </v-btn>
+      <v-btn
+        color="secondary"
+        data-cy="save-button"
+        variant="elevated"
+        :loading="loading"
+        @click="submit"
       >
-      {{ $t('_global.save') }}
-    </v-btn>
-  </v-card-actions>
-  <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
-</v-card>
+        {{ $t('_global.save') }}
+      </v-btn>
+    </v-card-actions>
+    <ConfirmDialog ref="confirm" :text-cols="6" :action-cols="5" />
+  </v-card>
 </template>
 
 <script>
-import _isEqual from 'lodash/isEqual'
-import { bus } from '@/main'
-import ConfirmDialog from '@/components/tools/ConfirmDialog'
+import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
 import dictionaries from '@/api/dictionaries'
 import libraries from '@/api/libraries'
-import HelpButtonWithPanels from '@/components/tools/HelpButtonWithPanels'
-import MultipleSelect from '@/components/tools/MultipleSelect'
-import NNTemplateInputField from '@/components/tools/NNTemplateInputField'
-import NotApplicableField from '@/components/tools/NotApplicableField'
+import HelpButtonWithPanels from '@/components/tools/HelpButtonWithPanels.vue'
+import MultipleSelect from '@/components/tools/MultipleSelect.vue'
+import NNTemplateInputField from '@/components/tools/NNTemplateInputField.vue'
+import NotApplicableField from '@/components/tools/NotApplicableField.vue'
 import statuses from '@/constants/statuses'
 import templatesApi from '@/api/templates'
 import templateParameterTypes from '@/api/templateParameterTypes'
+import { useFormStore } from '@/stores/form'
 
 export default {
-  props: {
-    template: Object,
-    urlPrefix: {
-      type: String,
-      default: ''
-    },
-    translationType: {
-      type: String,
-      default: ''
-    },
-    objectType: {
-      type: String,
-      default: ''
-    },
-    withClassificationAttributes: {
-      type: Boolean,
-      default: true
-    },
-    openClassificationAttributes: {
-      type: Boolean,
-      default: false
-    },
-    loadFormFunction: {
-      type: Function,
-      required: false
-    },
-    preparePayloadFunction: {
-      type: Function,
-      required: false
-    },
-    getHelpFunction: Function,
-    title: {
-      type: String,
-      required: false
-    },
-    typeUid: String
-  },
   components: {
     HelpButtonWithPanels,
     MultipleSelect,
     NNTemplateInputField,
     NotApplicableField,
-    ConfirmDialog
+    ConfirmDialog,
   },
-  data () {
+  inject: ['eventBusEmit', 'formRules'],
+  props: {
+    template: {
+      type: Object,
+      default: null,
+    },
+    urlPrefix: {
+      type: String,
+      default: '',
+    },
+    translationType: {
+      type: String,
+      default: '',
+    },
+    objectType: {
+      type: String,
+      default: '',
+    },
+    withClassificationAttributes: {
+      type: Boolean,
+      default: true,
+    },
+    openClassificationAttributes: {
+      type: Boolean,
+      default: false,
+    },
+    loadFormFunction: {
+      type: Function,
+      default: null,
+      required: false,
+    },
+    preparePayloadFunction: {
+      type: Function,
+      default: null,
+      required: false,
+    },
+    getHelpFunction: {
+      type: Function,
+      default: null,
+    },
+    title: {
+      type: String,
+      default: null,
+      required: false,
+    },
+    typeUid: {
+      type: String,
+      default: null,
+    },
+  },
+  emits: ['close', 'templateAdded', 'templateUpdated'],
+  setup() {
+    const formStore = useFormStore()
+    return {
+      formStore,
+    }
+  },
+  data() {
     return {
       api: null,
       form: this.getInitialFormContent(),
@@ -182,12 +193,34 @@ export default {
       loading: false,
       panel: null,
       parameterTypes: [],
-      indications: []
+      indications: [],
     }
   },
-  created () {
+  computed: {
+    translationObject() {
+      return this.translationType.replace('Table', 'Form')
+    },
+    helpItems() {
+      const items = [
+        `${this.translationObject}.name`,
+        'GenericTemplateForm.study_indication',
+      ]
+      if (this.getHelpFunction) {
+        return items.concat(this.getHelpFunction())
+      }
+      return items
+    },
+  },
+  watch: {
+    template(value) {
+      if (value) {
+        this.loadFormFromTemplate()
+      }
+    },
+  },
+  created() {
     this.api = templatesApi(this.urlPrefix)
-    libraries.get(1).then(resp => {
+    libraries.get(1).then((resp) => {
       this.libraries = resp.data
     })
     this.loadParameterTypes()
@@ -195,85 +228,87 @@ export default {
       this.panel = 0
     }
   },
-  computed: {
-    translationObject () {
-      return this.translationType.replace('Table', 'Form')
-    },
-    helpItems () {
-      const items = [
-        `${this.translationObject}.name`,
-        'GenericTemplateForm.study_indication'
-      ]
-      if (this.getHelpFunction) {
-        return items.concat(this.getHelpFunction())
-      }
-      return items
+  mounted() {
+    if (this.template) {
+      this.loadFormFromTemplate()
     }
+    dictionaries.getCodelists('SNOMED').then((resp) => {
+      /* FIXME: we need a direct way to retrieve the terms here */
+      dictionaries
+        .getTerms({ codelist_uid: resp.data.items[0].codelist_uid })
+        .then((resp) => {
+          this.indications = resp.data.items
+        })
+    })
   },
   methods: {
-    getInitialFormContent () {
+    getInitialFormContent() {
       return {
         library: {
-          name: 'Sponsor'
-        }
+          name: 'Sponsor',
+        },
       }
     },
-    getTitle () {
+    getTitle() {
       if (this.title) {
         return this.title
       }
-      return (this.template)
+      return this.template
         ? this.$t(this.translationObject + '.edit_title')
         : this.$t(this.translationObject + '.add_title')
     },
-    loadParameterTypes () {
-      templateParameterTypes.getTypes().then(resp => {
+    loadParameterTypes() {
+      templateParameterTypes.getTypes().then((resp) => {
         this.parameterTypes = resp.data
       })
     },
-    addTemplate () {
+    addTemplate() {
       const data = { ...this.form }
       data.type_uid = this.typeUid
       if (data.indications && data.indications.length > 0) {
-        data.indication_uids = data.indications.map(item => item.term_uid)
+        data.indication_uids = data.indications.map((item) => item.term_uid)
       }
       if (this.preparePayloadFunction) {
         this.preparePayloadFunction(data)
       }
-      return this.api.create(data).then(resp => {
+      return this.api.create(data).then(() => {
         this.$emit('templateAdded')
-        bus.$emit('notification', { msg: this.$t(this.translationObject + '.add_success') })
+        this.eventBusEmit('notification', {
+          msg: this.$t(this.translationObject + '.add_success'),
+        })
         this.close()
       })
     },
-    updateIndicationsNA (value) {
+    updateIndicationsNA(value) {
       if (value) {
-        this.$set(this.form, 'indications', null)
+        this.form.indications = null
       }
     },
-    injectParameter (parameter) {
+    injectParameter(parameter) {
       if (this.form.name === undefined) {
-        this.$set(this.form, 'name', '')
+        this.form.name = ''
       }
-      this.$set(this.form, 'name', this.form.name + ` [${parameter.name}]`)
+      this.form.name = this.form.name + ` [${parameter.name}]`
     },
-    updateTemplate () {
+    updateTemplate() {
       const data = { ...this.form }
       if (data.indications && data.indications.length > 0) {
-        data.indication_uids = data.indications.map(item => item.term_uid)
+        data.indication_uids = data.indications.map((item) => item.term_uid)
         delete data.indications
       }
       if (this.preparePayloadFunction) {
         this.preparePayloadFunction(data)
       }
-      return this.api.update(this.template.uid, data).then(resp => {
+      return this.api.update(this.template.uid, data).then((resp) => {
         this.$emit('templateUpdated', resp.data)
-        bus.$emit('notification', { msg: this.$t(this.translationObject + '.update_success') })
+        this.eventBusEmit('notification', {
+          msg: this.$t(this.translationObject + '.update_success'),
+        })
         this.close()
       })
     },
-    async submit () {
-      const valid = await this.$refs.observer.validate()
+    async submit() {
+      const { valid } = await this.$refs.observer.validate()
       if (!valid) {
         return
       }
@@ -292,74 +327,61 @@ export default {
         this.loading = false
       }
     },
-    async cancel () {
-      if (this.$store.getters['form/form'] === '' || _isEqual(this.$store.getters['form/form'], JSON.stringify(this.form))) {
+    async cancel() {
+      if (this.formStore.isEmpty || this.formStore.isEqual(this.form)) {
         this.close()
       } else {
         const options = {
           type: 'warning',
           cancelLabel: this.$t('_global.cancel'),
-          agreeLabel: this.$t('_global.continue')
+          agreeLabel: this.$t('_global.continue'),
         }
-        if (await this.$refs.confirm.open(this.$t('_global.cancel_changes'), options)) {
+        if (
+          await this.$refs.confirm.open(
+            this.$t('_global.cancel_changes'),
+            options
+          )
+        ) {
           this.close()
         }
       }
     },
-    close () {
+    close() {
       this.form = this.getInitialFormContent()
-      this.$store.commit('form/CLEAR_FORM')
+      this.formStore.reset()
       this.$refs.observer.reset()
       this.$emit('close')
     },
-    verifySyntax () {
+    verifySyntax() {
       if (!this.form.name) {
         return
       }
       const data = { name: this.form.name }
-      this.api.preValidate(data).then(resp => {
-        bus.$emit(
-          'notification',
-          { msg: this.$t('_global.valid_syntax') })
+      this.api.preValidate(data).then(() => {
+        this.eventBusEmit('notification', {
+          msg: this.$t('_global.valid_syntax'),
+        })
       })
     },
     /**
      * Do a step by step loading of the form using the given template because we don't want to include every fields.
      */
-    loadFormFromTemplate () {
+    loadFormFromTemplate() {
       this.form = {
         name: this.template ? this.template.name : null,
         library: this.template ? this.template.library : { name: 'Sponsor' },
-        indications: this.template ? this.template.indications : null
+        indications: this.template ? this.template.indications : null,
       }
       if (this.template.status === statuses.DRAFT) {
-        this.$set(this.form, 'change_description', this.$t('_global.work_in_progress'))
+        this.form.change_description = this.$t('_global.work_in_progress')
       }
       if (this.loadFormFunction) {
         this.loadFormFunction(this.form)
       } else {
-        this.$store.commit('form/SET_FORM', this.form)
+        this.formStore.save(this.form)
       }
-    }
+    },
   },
-  mounted () {
-    if (this.template) {
-      this.loadFormFromTemplate()
-    }
-    dictionaries.getCodelists('SNOMED').then(resp => {
-      /* FIXME: we need a direct way to retrieve the terms here */
-      dictionaries.getTerms({ codelist_uid: resp.data.items[0].codelist_uid }).then(resp => {
-        this.indications = resp.data.items
-      })
-    })
-  },
-  watch: {
-    template (value) {
-      if (value) {
-        this.loadFormFromTemplate()
-      }
-    }
-  }
 }
 </script>
 

@@ -1,7 +1,7 @@
 """datasets router."""
 from typing import Any
 
-from fastapi import APIRouter, Depends, Path, Query
+from fastapi import APIRouter, Path, Query
 from pydantic.types import Json
 from starlette.requests import Request
 
@@ -9,7 +9,7 @@ from clinical_mdr_api import config
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.standard_data_models.dataset import Dataset
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.oauth import get_current_user_id, rbac
+from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.standard_data_models.dataset import DatasetService
@@ -83,9 +83,8 @@ def get_datasets(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    dataset_service = DatasetService(user=current_user_id)
+    dataset_service = DatasetService()
     results = dataset_service.get_all_items(
         data_model_ig_name=data_model_ig_name,
         data_model_ig_version=data_model_ig_version,
@@ -126,7 +125,6 @@ def get_distinct_values_for_header(
         ...,
         description="The version of the selected Data model implementation guide, for instance '2.2'",
     ),
-    current_user_id: str = Depends(get_current_user_id),
     field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
     search_string: str
     | None = Query("", description=_generic_descriptions.HEADER_SEARCH_STRING),
@@ -140,7 +138,7 @@ def get_distinct_values_for_header(
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
 ):
-    dataset_service = DatasetService(user=current_user_id)
+    dataset_service = DatasetService()
     return dataset_service.get_distinct_values_for_header(
         field_name=field_name,
         search_string=search_string,
@@ -185,9 +183,8 @@ def get_dataset(
         description="The version of the selected Data model implementation guide, for instance '2.2'",
     ),
     uid: str = DatasetUID,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    dataset_service = DatasetService(user=current_user_id)
+    dataset_service = DatasetService()
     return dataset_service.get_by_uid(
         uid=uid,
         data_model_ig_version=data_model_ig_version,

@@ -189,7 +189,7 @@ def get_version(tx, catalogue: str, prefixed_version_number: str):
         MATCH (import:DataModelImport{catalogue: $catalogue, version_number: $prefixed_version_number})-[:INCLUDES]->(version)
         WHERE NOT (:Inconsistency)-[:AFFECTS_VERSION]->(version)
         RETURN
-            version{uid: version.name, catalogue: $catalogue, data_model_type: import.data_model_type, implements_data_model: import.implements_data_model, .*} AS version
+            version{uid: version.name, catalogue: $catalogue, library: import.library, data_model_type: import.data_model_type, implements_data_model: import.implements_data_model, .*} AS version
         """,
         catalogue=catalogue,
         prefixed_version_number=prefixed_version_number,
@@ -282,8 +282,11 @@ def merge_structure_nodes_and_relationships(
 def merge_catalogues_and_versions(tx, version_data):
     tx.run(
         """
-        MERGE (library:Library{name: 'CDISC'})
-        ON CREATE SET library.is_editable = false
+        WITH $version_data as version_data
+        WITH version_data, coalesce(version_data.library, 'CDISC') AS library_name
+        WITH version_data, library_name, library_name='Sponsor' AS is_editable
+        MERGE (library:Library{name: library_name})
+        ON CREATE SET library.is_editable = is_editable
         WITH library, $version_data as version_data
         MERGE (catalogue:DataModelCatalogue{name: version_data.catalogue})
         ON CREATE SET catalogue.data_model_type = version_data.data_model_type
@@ -694,6 +697,8 @@ def _get_reusable_variable(existing_variables, target_variable):
             != target_variable.get("role_description", None)
             or value.get("simple_datatype", None)
             != target_variable.get("simple_datatype", None)
+            or value.get("length", None)
+            != target_variable.get("length", None)
             or value.get("implementation_notes", None)
             != target_variable.get("implementation_notes", None)
             or value.get("mapping_instructions", None)
@@ -1144,7 +1149,8 @@ def build_variable_instance_query(
             SET
                {instance_node_variable_name}.title = $variable_data.title,
                {instance_node_variable_name}.label = $variable_data.label,
-               {instance_node_variable_name}.simple_datatype = $variable_data.simple_datatype
+               {instance_node_variable_name}.simple_datatype = $variable_data.simple_datatype,
+               {instance_node_variable_name}.length = $variable_data.length
     """
     with_clause = f" WITH {instance_node_variable_name} "
 

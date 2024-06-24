@@ -918,6 +918,34 @@ def test_change_endpoint_template_indexings(api_client):
         assert res[key] is not None
 
 
+def test_remove_endpoint_template_indexings(api_client):
+    data = {
+        "indication_uids": [],
+        "sub_category_uids": [],
+        "category_uids": [],
+    }
+    response = api_client.patch(
+        f"{URL}/{endpoint_templates[1].uid}/indexings",
+        json=data,
+    )
+    res = response.json()
+    log.info("Removed Endpoint Template indexings: %s", res)
+
+    assert response.status_code == 200
+    assert res["uid"]
+    assert res["sequence_id"]
+    assert res["name"] == "Default-AAA name with [TextValue]"
+    assert res["guidance_text"] == "Default-AAA guidance text"
+    assert not res["indications"]
+    assert not res["categories"]
+    assert not res["sub_categories"]
+    assert res["version"] == "1.0"
+    assert res["status"] == "Final"
+    assert set(list(res.keys())) == set(ENDPOINT_TEMPLATE_FIELDS_ALL)
+    for key in ENDPOINT_TEMPLATE_FIELDS_NOT_NULL:
+        assert res[key] is not None
+
+
 def test_delete_endpoint_template(api_client):
     response = api_client.delete(f"{URL}/{endpoint_templates[2].uid}")
     log.info("Deleted Endpoint Template: %s", endpoint_templates[2].uid)
@@ -1133,6 +1161,22 @@ def test_inactivate_endpoint_template(api_client):
     assert res["name"] == f"cascade check [{text_value_1.name_sentence_case}]"
     assert res["version"] == "2.0"
     assert res["status"] == "Retired"
+
+
+def test_current_final_endpoint_template(api_client):
+    response = api_client.get(
+        f"""{URL}?status=Final&filters={{"sequence_id": {{"v": ["E6"], "op": "eq"}}}}"""
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert not res["items"]
+
+    response = api_client.get(
+        f"""{URL}/headers?field_name=sequence_id&status=Final&filters={{"sequence_id": {{"v": ["E6"], "op": "eq"}}}}"""
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert not res
 
 
 def test_reactivate_endpoint_template(api_client):

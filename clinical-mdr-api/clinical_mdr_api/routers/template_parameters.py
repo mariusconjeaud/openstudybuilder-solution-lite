@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Query
 
 from clinical_mdr_api import models
-from clinical_mdr_api.oauth import get_current_user_id, rbac
+from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.routers import _generic_descriptions
 from clinical_mdr_api.services import template_parameters as service
 
@@ -21,8 +21,7 @@ router = APIRouter()
         500: _generic_descriptions.ERROR_500,
     },
 )
-# pylint: disable=unused-argument
-def get_all_template_parameters(current_user_id: str = Depends(get_current_user_id)):
+def get_all_template_parameters():
     return service.get_all()
 
 
@@ -37,9 +36,7 @@ def get_all_template_parameters(current_user_id: str = Depends(get_current_user_
         500: _generic_descriptions.ERROR_500,
     },
 )
-# pylint: disable=unused-argument
 def get_template_parameter_terms(
-    name: str = Query(..., description="Name of the template parameter"),
-    current_user_id: str = Depends(get_current_user_id),
+    name: str = Query(..., description="Name of the template parameter")
 ):
     return service.get_template_parameter_terms(name)

@@ -2,6 +2,7 @@ const DRAFT = 'Draft'
 const FINAL = 'Final'
 const RETIRED = 'Retired'
 const LATEST = 'Latest'
+const SUGGESTION = 'Suggestion'
 
 const STUDY_DRAFT = 'DRAFT'
 const STUDY_RELEASED = 'RELEASED'
@@ -18,5 +19,6 @@ export default {
   STUDY_RELEASED,
   STUDY_LOCKED,
   COMMENT_STATUS_ACTIVE,
-  COMMENT_STATUS_RESOLVED
+  COMMENT_STATUS_RESOLVED,
+  SUGGESTION,
 }

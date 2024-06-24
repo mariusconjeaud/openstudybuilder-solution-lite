@@ -1,199 +1,223 @@
 <template>
-<div>
-  <n-n-table
-    :headers="headers"
-    :items="computedParams"
-    item-key="name"
-    :itemsPerPage="15"
-    disable-filtering
-    hide-export-button
-    hide-default-switches
+  <v-card elevation="0" class="rounded-0">
+    <v-card-title
+      style="z-index: 3; position: relative"
+      class="pt-0 mt-3 d-flex align-center"
     >
-    <template v-slot:actions="">
-      <slot
-        name="topActions"
-        >
-      </slot>
+      <v-spacer />
+      <slot name="topActions" />
       <v-btn
         v-if="copyFromStudy"
         color="primary"
         data-cy="copy-from-study"
-        fab
-        small
-        @click.stop="openCopyForm"
+        size="small"
         :title="$t('NNTableTooltips.copy_from_study')"
-        :disabled="!checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
-        >
-        <v-icon>mdi-content-copy</v-icon>
-      </v-btn>
+        :disabled="
+          !checkPermission($roles.STUDY_WRITE) ||
+          studiesGeneralStore.selectedStudyVersion !== null
+        "
+        icon="mdi-content-copy"
+        @click.stop="openCopyForm"
+      />
       <v-btn
-        fab
-        small
+        size="small"
         class="ml-2"
         color="primary"
-        @click.stop="openForm"
         :title="$t('NNTableTooltips.edit_content')"
-        :disabled="!checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
+        :disabled="
+          !checkPermission($roles.STUDY_WRITE) ||
+          studiesGeneralStore.selectedStudyVersion !== null ||
+          disableEdit
+        "
         data-cy="edit-content"
-        >
-        <v-icon>
-          mdi-pencil-outline
-        </v-icon>
-      </v-btn>
+        icon="mdi-pencil-outline"
+        @click.stop="openForm"
+      />
       <v-btn
         class="ml-2"
         color="secondary"
-        fab
-        small
+        size="small"
         :title="$t('NNTableTooltips.history')"
+        icon="mdi-history"
         @click="openHistory"
-        >
-        <v-icon>mdi-history</v-icon>
-      </v-btn>
-    </template>
-  </n-n-table>
-  <slot name="form" :openHandler="showForm" v-bind:closeHandler="closeForm" v-bind:data="metadata" v-bind:dataToCopy="dataToCopy"></slot>
-
-  <v-dialog
-    v-model="showCopyForm"
-    @keydown.esc="closeCopyForm"
-    persistent
-    max-width="500px"
-    >
-    <copy-from-study-form @close="closeCopyForm" @apply="openFormToCopy" :component="component"/>
-  </v-dialog>
-
-  <v-dialog
-    v-model="showHistory"
-    @keydown.esc="closeHistory"
-    persistent
-    :max-width="globalHistoryDialogMaxWidth"
-    :fullscreen="globalHistoryDialogFullscreen"
-    >
-    <history-table
-      :headers="historyHeaders"
-      :items="historyItems"
-      :title="historyTitle"
-      :export-name="component"
-      @close="closeHistory"
-      start-date-header="date"
-      change-type-header="action"
-      simple-styling
       />
-  </v-dialog>
-</div>
+    </v-card-title>
+    <v-card-text>
+      <v-data-table
+        :headers="headers"
+        :items="computedParams"
+        item-value="name"
+        :items-per-page="15"
+      />
+      <slot
+        name="form"
+        :open-handler="showForm"
+        :close-handler="closeForm"
+        :data="metadata"
+        :data-to-copy="dataToCopy"
+      />
+
+      <v-dialog
+        v-model="showCopyForm"
+        persistent
+        max-width="500px"
+        @keydown.esc="closeCopyForm"
+      >
+        <CopyFromStudyForm
+          :component="component"
+          @close="closeCopyForm"
+          @apply="openFormToCopy"
+        />
+      </v-dialog>
+
+      <v-dialog
+        v-model="showHistory"
+        persistent
+        :fullscreen="$globals.historyDialogFullscreen"
+        @keydown.esc="closeHistory"
+      >
+        <HistoryTable
+          :headers="historyHeaders"
+          :items="historyItems"
+          :title="historyTitle"
+          :export-name="component"
+          start-date-header="date"
+          change-field="action"
+          simple-styling
+          @close="closeHistory"
+        />
+      </v-dialog>
+    </v-card-text>
+  </v-card>
 </template>
 
 <script>
-import CopyFromStudyForm from '@/components/tools/CopyFromStudyForm'
-import HistoryTable from '@/components/tools/HistoryTable'
-import { mapGetters } from 'vuex'
-import NNTable from '@/components/tools/NNTable'
+import CopyFromStudyForm from '@/components/tools/CopyFromStudyForm.vue'
+import HistoryTable from '@/components/tools/HistoryTable.vue'
 import study from '@/api/study'
-import { accessGuard } from '@/mixins/accessRoleVerifier'
+import { useAccessGuard } from '@/composables/accessGuard'
+import { useStudiesGeneralStore } from '@/stores/studies-general'
 
 export default {
-  mixins: [accessGuard],
   components: {
     HistoryTable,
-    NNTable,
-    CopyFromStudyForm
+    CopyFromStudyForm,
   },
   props: {
-    params: Array,
-    metadata: Object,
-    firstColLabel: String,
+    params: {
+      type: Array,
+      default: () => [],
+    },
+    metadata: {
+      type: Object,
+      default: undefined,
+    },
+    firstColLabel: {
+      type: String,
+      default: '',
+    },
     persistentDialog: {
       type: Boolean,
-      default: false
+      default: false,
     },
     formMaxWidth: {
       type: String,
-      required: false
+      required: false,
+      default: '',
     },
     copyFromStudy: {
       type: Boolean,
-      default: false
+      default: false,
     },
-    component: String,
+    component: {
+      type: String,
+      default: '',
+    },
     withReasonForMissing: {
       type: Boolean,
-      default: true
+      default: true,
+    },
+    disableEdit: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  setup() {
+    const accessGuard = useAccessGuard()
+    const studiesGeneralStore = useStudiesGeneralStore()
+
+    return {
+      studiesGeneralStore,
+      ...accessGuard,
     }
   },
-  computed: {
-    ...mapGetters({
-      selectedStudy: 'studiesGeneral/selectedStudy',
-      selectedStudyVersion: 'studiesGeneral/selectedStudyVersion',
-      studyTypes: 'studiesGeneral/studyTypes',
-      trialIntentTypes: 'studiesGeneral/trialIntentTypes',
-      trialTypes: 'studiesGeneral/trialTypes',
-      trialPhases: 'studiesGeneral/trialPhases',
-      therapeuticAreas: 'studiesGeneral/therapeuticAreas',
-      diseaseConditions: 'studiesGeneral/diseaseConditions',
-      sexOfParticipants: 'studiesGeneral/sexOfParticipants',
-      diagnosisGroups: 'studiesGeneral/diagnosisGroups',
-      controlTypes: 'studiesGeneral/controlTypes',
-      interventionModels: 'studiesGeneral/interventionModels',
-      trialBlindingSchemas: 'studiesGeneral/trialBlindingSchemas',
-      nullValues: 'studiesGeneral/nullValues'
-    }),
-    computedParams () {
-      return this.buildTableParams(this.params)
-    },
-    historyTitle () {
-      return `${this.component} ${this.$t('HistoryTable.fields')} ${this.$t('HistoryTable.history')} (${this.selectedStudy.uid})`
-    },
-    exportDataUrl () {
-      return `studies/${this.selectedStudy.uid}`
-    }
-  },
-  data () {
+  data() {
     const headers = [
-      { text: this.firstColLabel, value: 'name', width: '30%' },
-      { text: this.$t('StudyMetadataSummary.selected_values'), value: 'values' }
+      { title: this.firstColLabel, key: 'name', width: '30%' },
+      { title: this.$t('StudyMetadataSummary.selected_values'), key: 'values' },
     ]
     if (this.withReasonForMissing) {
-      headers.push(
-        { text: this.$t('StudyMetadataSummary.reason_for_missing'), value: 'reason_for_missing' }
-      )
+      headers.push({
+        title: this.$t('StudyMetadataSummary.reason_for_missing'),
+        key: 'reason_for_missing',
+      })
     }
     return {
       headers,
       historyHeaders: [
-        { text: this.$t('HistoryTable.field'), value: 'field' },
-        { text: this.$t('HistoryTable.value_before'), value: 'before_value.term_uid' },
-        { text: this.$t('HistoryTable.value_after'), value: 'after_value.term_uid' },
-        { text: this.$t('_global.user'), value: 'user_initials' }
+        { title: this.$t('HistoryTable.field'), key: 'field' },
+        {
+          title: this.$t('HistoryTable.value_before'),
+          key: 'before_value.term_uid',
+        },
+        {
+          title: this.$t('HistoryTable.value_after'),
+          key: 'after_value.term_uid',
+        },
+        { title: this.$t('_global.user'), key: 'user_initials' },
       ],
       historyItems: [],
       showHistory: false,
       showForm: false,
       showCopyForm: false,
-      dataToCopy: {}
+      dataToCopy: {},
     }
   },
+  computed: {
+    computedParams() {
+      return this.buildTableParams(this.params)
+    },
+    historyTitle() {
+      return `${this.component} ${this.$t('HistoryTable.fields')} ${this.$t('HistoryTable.history')} (${this.studiesGeneralStore.selectedStudy.uid})`
+    },
+    exportDataUrl() {
+      return `studies/${this.studiesGeneralStore.selectedStudy.uid}`
+    },
+  },
   methods: {
-    openForm () {
+    openForm() {
       this.showForm = true
     },
-    closeForm () {
+    closeForm() {
       this.showForm = false
     },
-    openFormToCopy (data) {
+    openFormToCopy(data) {
       this.dataToCopy = data
       this.showForm = true
       this.showCopyForm = false
     },
-    openCopyForm () {
+    openCopyForm() {
       this.showCopyForm = true
     },
-    closeCopyForm () {
+    closeCopyForm() {
       this.showCopyForm = false
     },
-    async openHistory () {
+    async openHistory() {
       this.historyItems = []
-      const resp = await study.getStudyFieldsAuditTrail(this.selectedStudy.uid, this.component)
+      const resp = await study.getStudyFieldsAuditTrail(
+        this.studiesGeneralStore.selectedStudy.uid,
+        this.component
+      )
       for (const group of resp.data) {
         for (const groupItem of group.actions) {
           const row = {
@@ -202,24 +226,24 @@ export default {
             field: groupItem.field,
             action: groupItem.action,
             before_value: groupItem.before_value,
-            after_value: groupItem.after_value
+            after_value: groupItem.after_value,
           }
           this.historyItems.push(row)
         }
       }
       this.showHistory = true
     },
-    closeHistory () {
+    closeHistory() {
       this.showHistory = false
     },
-    buildTableParams (fields) {
+    buildTableParams(fields) {
       const result = []
-      fields.forEach(field => {
+      fields.forEach((field) => {
         let nullValueName = null
         if (field.nullValueName === undefined) {
           nullValueName = field.name
           const suffixes = ['_code', '_codes']
-          suffixes.forEach(suffix => {
+          suffixes.forEach((suffix) => {
             if (nullValueName.endsWith(suffix)) {
               nullValueName = nullValueName.replace(suffix, '')
             }
@@ -229,7 +253,11 @@ export default {
           nullValueName = field.nullValueName
         }
         let values = this.metadata[field.name]
-        if (field.name === 'sex_of_participants_code' && values !== undefined && values !== null) {
+        if (
+          field.name === 'sex_of_participants_code' &&
+          values !== undefined &&
+          values !== null
+        ) {
           values = values.name
         }
         if (field.name === 'study_stop_rules' && values == null) {
@@ -237,33 +265,39 @@ export default {
         }
         result.push({
           name: field.label,
-          values: (values !== undefined && values !== null && field.valuesDisplay && field.name !== 'sex_of_participants_code') ? this[`${field.valuesDisplay}Display`](values) : values,
-          reason_for_missing: this.naDisplay(this.metadata[nullValueName])
+          values:
+            values !== undefined &&
+            values !== null &&
+            field.valuesDisplay &&
+            field.name !== 'sex_of_participants_code'
+              ? this[`${field.valuesDisplay}Display`](values)
+              : values,
+          reason_for_missing: this.naDisplay(this.metadata[nullValueName]),
         })
       })
       return result
     },
-    yesnoDisplay (value) {
-      return (value) ? this.$t('_global.yes') : this.$t('_global.no')
+    yesnoDisplay(value) {
+      return value ? this.$t('_global.yes') : this.$t('_global.no')
     },
-    durationDisplay (value) {
+    durationDisplay(value) {
       return `${value.duration_value} ${value.duration_unit_code.name}`
     },
-    termDisplay (value) {
+    termDisplay(value) {
       if (!value) {
         return ''
       }
       return value.name
     },
-    termsDisplay (value) {
-      const result = value.map(item => item.name)
+    termsDisplay(value) {
+      const result = value.map((item) => item.name)
       return result.join(', ')
     },
-    naDisplay (value) {
+    naDisplay(value) {
       if (value) {
         return value.name
       }
-    }
-  }
+    },
+  },
 }
 </script>

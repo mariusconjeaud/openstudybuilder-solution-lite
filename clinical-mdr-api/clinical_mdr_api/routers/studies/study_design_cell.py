@@ -1,8 +1,8 @@
-from fastapi import Body, Depends, Response, status
+from fastapi import Body, Response, status
 
 from clinical_mdr_api import models
 from clinical_mdr_api.models.error import ErrorResponse
-from clinical_mdr_api.oauth import get_current_user_id, rbac
+from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.routers import study_router as router
 from clinical_mdr_api.routers.studies import utils
@@ -26,10 +26,9 @@ from clinical_mdr_api.services.studies.study_design_cell import StudyDesignCellS
 )
 def get_all_design_cells(
     uid: str = utils.studyUID,
-    current_user_id: str = Depends(get_current_user_id),
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> list[models.StudyDesignCell]:
-    service = StudyDesignCellService(author=current_user_id)
+    service = StudyDesignCellService()
     cells = service.get_all_design_cells(
         study_uid=uid, study_value_version=study_value_version
     )
@@ -61,9 +60,8 @@ def post_new_design_cell_create(
     selection: models.StudyDesignCellCreateInput = Body(
         description="Related parameters of the design cell that shall be created."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudyDesignCell:
-    service = StudyDesignCellService(author=current_user_id)
+    service = StudyDesignCellService()
     return service.create(study_uid=uid, design_cell_input=selection)
 
 
@@ -114,9 +112,8 @@ def edit_design_cell(
     selection: models.StudyDesignCellEditInput = Body(
         description="Related parameters of the selection that shall be updated."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionActivity:
-    service = StudyDesignCellService(author=current_user_id)
+    service = StudyDesignCellService()
     service.patch(
         study_uid=uid,
         design_cell_update_input=selection,
@@ -143,9 +140,8 @@ def edit_design_cell(
 def delete_design_cell(
     uid: str = utils.studyUID,
     study_design_cell_uid: str = utils.study_design_cell_uid,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    service = StudyDesignCellService(author=current_user_id)
+    service = StudyDesignCellService()
     service.delete(study_uid=uid, design_cell_uid=study_design_cell_uid)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
@@ -171,9 +167,9 @@ The following values should be returned for all study design cells:
     },
 )
 def get_all_design_cells_audit_trail(
-    uid: str = utils.studyUID, current_user_id: str = Depends(get_current_user_id)
+    uid: str = utils.studyUID,
 ) -> list[models.StudyDesignCellVersion]:
-    service = StudyDesignCellService(author=current_user_id)
+    service = StudyDesignCellService()
     return service.get_all_design_cells_audit_trail(study_uid=uid)
 
 
@@ -195,9 +191,8 @@ def get_all_design_cells_audit_trail(
 def get_specific_schedule_audit_trail(
     uid: str = utils.studyUID,
     study_design_cell_uid: str = utils.study_design_cell_uid,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudyDesignCellVersion:
-    service = StudyDesignCellService(author=current_user_id)
+    service = StudyDesignCellService()
     return service.get_specific_selection_audit_trail(
         study_uid=uid, design_cell_uid=study_design_cell_uid
     )
@@ -220,9 +215,8 @@ def design_cell_batch_operations(
     operations: list[models.StudyDesignCellBatchInput] = Body(
         description="List of operations to perform"
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> list[models.StudyDesignCellBatchOutput]:
-    service = StudyDesignCellService(author=current_user_id)
+    service = StudyDesignCellService()
     return service.handle_batch_operations(uid, operations)
 
 
@@ -259,10 +253,9 @@ def design_cell_batch_operations(
 def get_all_selected_desing_cells_connected_arm(
     uid: str,
     arm_uid: str,
-    current_user_id: str = Depends(get_current_user_id),
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> list[models.StudyDesignCell]:
-    service = StudyDesignCellService(author=current_user_id)
+    service = StudyDesignCellService()
     return service.get_all_selection_within_arm(
         study_uid=uid, study_arm_uid=arm_uid, study_value_version=study_value_version
     )
@@ -305,10 +298,9 @@ def get_all_selected_desing_cells_connected_arm(
 def get_all_selected_desing_cells_connected_branch_arm(
     uid: str,
     branch_arm_uid: str,
-    current_user_id: str = Depends(get_current_user_id),
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> list[models.StudyDesignCell]:
-    service = StudyDesignCellService(author=current_user_id)
+    service = StudyDesignCellService()
     return service.get_all_selection_within_branch_arm(
         study_uid=uid,
         study_branch_arm_uid=branch_arm_uid,
@@ -349,10 +341,9 @@ def get_all_selected_desing_cells_connected_branch_arm(
 def get_all_selected_desing_cells_connected_epoch(
     uid: str,
     epoch_uid: str,
-    current_user_id: str = Depends(get_current_user_id),
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> list[models.StudyDesignCell]:
-    service = StudyDesignCellService(author=current_user_id)
+    service = StudyDesignCellService()
     return service.get_all_selection_within_epoch(
         study_uid=uid,
         study_epoch_uid=epoch_uid,

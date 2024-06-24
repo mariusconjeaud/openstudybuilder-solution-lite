@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Sequence
 
 from neomodel import NodeMeta, db
 
@@ -9,6 +9,7 @@ from clinical_mdr_api.domain_repositories.generic_repository import (
     RepositoryClosureData,  # type: ignore
 )
 from clinical_mdr_api.domain_repositories.models.study import StudyRoot, StudyValue
+from clinical_mdr_api.domain_repositories.models.study_field import StudyBooleanField
 from clinical_mdr_api.domains.study_definition_aggregates.root import (
     StudyDefinitionAR,
     StudyDefinitionSnapshot,
@@ -18,7 +19,7 @@ from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import 
 )
 from clinical_mdr_api.models.study_selections.study import (
     StudyPreferredTimeUnit,
-    StudySubpartAuditTrail,
+    StudySoaPreferencesInput,
 )
 from clinical_mdr_api.models.utils import GenericFilteringReturn
 from clinical_mdr_api.repositories._utils import FilterOperator
@@ -141,51 +142,63 @@ class StudyDefinitionRepository(ABC):
         # and that's it we are done
         return result
 
+    def update_subpart_relationship(
+        self,
+        subpart_ar: StudyDefinitionAR,
+        patch_parent_uid: str | None = None,
+        new_parent: bool = True,
+    ):
+        if subpart_ar.study_parent_part_uid == patch_parent_uid:
+            return
+
+        parent_part_uid = patch_parent_uid or subpart_ar.study_parent_part_uid
+
+        if new_parent:
+            parent_study_ar = self.find_by_uid(parent_part_uid, for_update=True)
+
+            self.save(study=parent_study_ar, is_subpart_relationship_update=True)
+
+        study_subpart_root = StudyRoot.nodes.get(uid=subpart_ar.uid)
+        latest_study_subpart_value = study_subpart_root.latest_value.single()
+
+        study_parent_root = StudyRoot.nodes.get(uid=parent_part_uid)
+        latest_study_parent_value = study_parent_root.latest_value.single()
+
+        db.cypher_query(
+            """
+            MATCH (:StudyRoot {uid: $parent_uid})-[:LATEST]-(:StudyValue)
+            -[pr:HAS_STUDY_SUBPART]->(:StudyValue)--(:StudyRoot {uid: $subpart_uid})
+            DELETE pr
+
+            WITH *
+
+            MATCH (:StudyRoot {uid: $subpart_uid})-[:LATEST]-(:StudyValue)
+            <-[sr:HAS_STUDY_SUBPART]-(:StudyValue)--(:StudyRoot {uid: $parent_uid})
+            DELETE sr
+            """,
+            params={"parent_uid": parent_part_uid, "subpart_uid": subpart_ar.uid},
+        )
+        if patch_parent_uid:
+            latest_study_parent_value.has_study_subpart.connect(
+                latest_study_subpart_value
+            )
+
     @staticmethod
-    def disconnect_study_parent_parts(study_subpart_uid: str) -> StudyRoot | None:
-        """
-        Disconnects the Study Parent Part from the specified Study Subpart.
-
-        Args:
-            study_subpart_uid (str): The unique identifier (UID) of the Study Subpart.
-
-        Returns:
-            StudyRoot | None: The disconnected Study Subpart if found, else None.
-        """
-        study_subpart = StudyRoot.nodes.get_or_none(uid=study_subpart_uid)
-        if study_subpart:
-            study_subpart.study_parent_part.disconnect_all()
-        return study_subpart
-
-    @staticmethod
-    def connect_study_parent_part(
-        study_subpart: StudyRoot | str, study_parent_part: StudyRoot | str
-    ) -> tuple[StudyRoot | None, StudyRoot | None]:
-        """
-        Connects the Study Parent Part to the specified Study Subpart.
-
-        Args:
-            study_subpart (StudyRoot | str): The Study Subpart or its unique identifier (UID).
-            study_parent_part (StudyRoot | str): The Study Parent Part or its unique identifier (UID).
-
-        Returns:
-            tuple[StudyRoot | None, StudyRoot | None]: A tuple containing the connected Study Subpart
-            and Study Parent Part, or (None, None) if either is not found.
-        """
-        if isinstance(study_subpart, str):
-            study_subpart = StudyRoot.nodes.get_or_none(uid=study_subpart)
-
-        if isinstance(study_parent_part, str):
-            study_parent_part = StudyRoot.nodes.get_or_none(uid=study_parent_part)
-
-        if study_parent_part:
-            study_subpart.study_parent_part.connect(study_parent_part)
-
-        return study_subpart, study_parent_part
-
-    @staticmethod
-    def find_uid_by_study_number(study_number: int):
-        all_study_values = StudyValue.nodes.filter(study_number=study_number)
+    def find_uid_by_study_number(
+        project_id: str, study_number: str, subpart_acronym: str | None = None
+    ):
+        if subpart_acronym:
+            all_study_values = StudyValue.nodes.filter(
+                study_id_prefix=project_id,
+                study_number=study_number,
+                study_subpart_acronym=subpart_acronym,
+            )
+        else:
+            all_study_values = StudyValue.nodes.filter(
+                study_id_prefix=project_id,
+                study_number=study_number,
+                study_subpart_acronym__isnull=True,
+            )
         for study_value in all_study_values:
             study_root = study_value.latest_value.get_or_none()
             if study_root is not None:
@@ -193,16 +206,30 @@ class StudyDefinitionRepository(ABC):
         return None
 
     @staticmethod
-    def study_number_exists(study_number: str) -> bool:
+    def study_number_exists(study_number: str, uid: str | None = None) -> bool:
         """
-        Checks whether a specified study number already exists within the database.
+        Checks whether a normal study or a parent study with specified study number already exists within the database.
         """
-        study_value = StudyValue.nodes.get_or_none(study_number=study_number)
-        if study_value:
-            return bool(study_value.latest_value.get_or_none())
-        return False
+        params = {"study_number": study_number}
 
-    def save(self, study: StudyDefinitionAR) -> None:
+        query = """
+            MATCH (value:StudyValue {study_number: $study_number})<-[:LATEST]-(root:StudyRoot)
+            WHERE NOT (value)<-[:HAS_STUDY_SUBPART]-(:StudyValue)
+        """
+
+        if uid:
+            query += " AND NOT root.uid = $uid "
+            params |= {"uid": uid}
+
+        query += " RETURN value"
+
+        rs = db.cypher_query(query, params=params)
+
+        return bool(rs[0])
+
+    def save(
+        self, study: StudyDefinitionAR, is_subpart_relationship_update=False
+    ) -> None:
         """
         Public repository method for persisting a (possibly modified) state of the Study instance into the underlying
         DB. Provided instance can be brand new instance (never persisted before) or an instance which has been
@@ -236,7 +263,11 @@ class StudyDefinitionRepository(ABC):
             # following assertion should hold
             assert self.__retrieved_for_update[snapshot.uid] == study
 
-            self._save(snapshot, repository_closure_data.additional_closure)
+            self._save(
+                snapshot,
+                repository_closure_data.additional_closure,
+                is_subpart_relationship_update,
+            )
             self.__retrieved_for_update.pop(snapshot.uid)
 
         # we assume save is possible only once per instance
@@ -248,6 +279,7 @@ class StudyDefinitionRepository(ABC):
 
     def find_all(
         self,
+        has_study_footnote: bool | None = None,
         has_study_objective: bool | None = None,
         has_study_endpoint: bool | None = None,
         has_study_criteria: bool | None = None,
@@ -275,6 +307,7 @@ class StudyDefinitionRepository(ABC):
         instances. Currently this is a case for StudyDefinitionAR, so we do that (however we must be prepared for
         refactoring and reimplementation of those reporting methods as we progress).
 
+        has_study_footnote: boolean to specify if returned studies must be linked to study footnotes or not
         has_study_objective: boolean to specify if returned studies must be linked to study objectives or not
         has_study_endpoint: boolean to specify if returned studies must be linked to study endpoints or not
         has_study_criteria: boolean to specify if returned studies must be linked to study criteria or not
@@ -298,6 +331,7 @@ class StudyDefinitionRepository(ABC):
         snapshots: GenericFilteringReturn[
             StudyDefinitionSnapshot
         ] = self._retrieve_all_snapshots(
+            has_study_footnote=has_study_footnote,
             has_study_objective=has_study_objective,
             has_study_endpoint=has_study_endpoint,
             has_study_criteria=has_study_criteria,
@@ -368,7 +402,7 @@ class StudyDefinitionRepository(ABC):
     def get_occupied_study_subpart_ids(self, study_parent_part_uid):
         return db.cypher_query(
             """
-            MATCH (pr:StudyRoot {uid: $uid})-[:STUDY_SUBPART]->(sr:StudyRoot)-[:LATEST]->(sv:StudyValue)
+            MATCH (:StudyRoot {uid: $uid})-[:LATEST]->(:StudyValue)-[:HAS_STUDY_SUBPART]->(sv:StudyValue)<-[:LATEST]-(:StudyRoot)
             WHERE NOT EXISTS((sv)<-[:BEFORE]-(:StudyAction:`Delete`))
             RETURN sv.subpart_id
             ORDER BY sv.subpart_id
@@ -471,7 +505,12 @@ class StudyDefinitionRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def _save(self, snapshot: StudyDefinitionSnapshot, additional_closure: Any) -> None:
+    def _save(
+        self,
+        snapshot: StudyDefinitionSnapshot,
+        additional_closure: Any,
+        is_subpart_relationship_update: bool = False,
+    ) -> None:
         """
         Abstract method of the study repository, which is supposed to update and instance of the study aggregate, which
         was earlier retrieved with _get_by_uid (with for_update == True). The method is expected to save a new state
@@ -488,6 +527,8 @@ class StudyDefinitionRepository(ABC):
 
         :param additional_closure: A reference to object which was returned on index 2 of the tuple returned by
             _get_by_id when the instance of the aggregate was retrieved from the DB.
+
+        :param is_subpart_relationship_update:
         """
         raise NotImplementedError
 
@@ -505,6 +546,7 @@ class StudyDefinitionRepository(ABC):
     @abstractmethod
     def _retrieve_all_snapshots(
         self,
+        has_study_footnote: bool | None = None,
         has_study_objective: bool | None = None,
         has_study_endpoint: bool | None = None,
         has_study_criteria: bool | None = None,
@@ -574,7 +616,7 @@ class StudyDefinitionRepository(ABC):
 
     def get_subpart_audit_trail_by_uid(
         self, uid: str, is_subpart: bool = False
-    ) -> list[StudySubpartAuditTrail] | None:
+    ) -> list:
         """
         Public method which is to retrieve the audit trail for a given study identified by UID.
         :return: A list of retrieved data in a form StudyAuditTrailAR instances.
@@ -621,6 +663,43 @@ class StudyDefinitionRepository(ABC):
         A method that edits a StudyTimeField for the study preferred time unit. The preferred time unit is the unit definition
         that is used to display items like study visits on the timescale.
         :return: StudyPreferredTimeUnit
+        """
+
+    @abstractmethod
+    def get_soa_preferences(
+        self,
+        study_uid: str,
+        study_value_version: str | None = None,
+        field_names: Sequence[str] | None = None,
+    ) -> list[StudyBooleanField]:
+        """
+        Gets study SoA preferences.
+
+        :return: list[StudyBooleanField]
+        """
+
+    @abstractmethod
+    def post_soa_preferences(
+        self,
+        study_uid: str,
+        soa_preferences: StudySoaPreferencesInput,
+    ) -> list[StudyBooleanField]:
+        """
+        Creates study SoA preferences.
+
+        :return: list[StudyBooleanField]
+        """
+
+    @abstractmethod
+    def edit_soa_preferences(
+        self,
+        study_uid: str,
+        soa_preferences: StudySoaPreferencesInput,
+    ) -> list[StudyBooleanField]:
+        """
+        Updates study SoA preferences.
+
+        :return: list[StudyBooleanField]
         """
 
     @abstractmethod

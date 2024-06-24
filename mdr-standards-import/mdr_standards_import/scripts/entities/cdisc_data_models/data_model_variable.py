@@ -19,6 +19,7 @@ class DataModelVariable:
         qualifies_variables: "list[str]",
         role_description: str,
         simple_datatype: str,
+        length: str,
         definition: str,
         implementation_notes: str,
         mapping_instructions: str,
@@ -39,6 +40,7 @@ class DataModelVariable:
         self.role: str = role
         self.role_description: str = role_description
         self.simple_datatype: str = simple_datatype
+        self.length: str = length
         self.codelists: list[str] = codelists
         self.prior_version: str = prior_version
 

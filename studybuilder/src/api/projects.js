@@ -3,16 +3,16 @@ import repository from './repository'
 const resource = 'projects'
 
 export default {
-  get (options) {
+  get(options) {
     const params = {
-      ...options
+      ...options,
     }
     return repository.get(resource, { params })
   },
-  create (data) {
+  create(data) {
     const params = {
-      ...data
+      ...data,
     }
     return repository.post(resource, params)
-  }
+  },
 }

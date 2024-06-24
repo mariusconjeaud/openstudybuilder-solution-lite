@@ -1,14 +1,14 @@
 """Text values router."""
 from typing import Any
 
-from fastapi import APIRouter, Body, Depends, Path, Query
+from fastapi import APIRouter, Body, Path, Query
 from pydantic.types import Json
 
 from clinical_mdr_api import config
 from clinical_mdr_api.models.concepts.concept import TextValue, TextValueInput
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.oauth import get_current_user_id, rbac
+from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions
 from clinical_mdr_api.services.concepts.simple_concepts.text_value import (
@@ -65,9 +65,8 @@ def get_text_values(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    text_value_service = TextValueService(user=current_user_id)
+    text_value_service = TextValueService()
     results = text_value_service.get_all_concepts(
         library=library,
         sort_by=sort_by,
@@ -99,7 +98,6 @@ def get_text_values(
     },
 )
 def get_distinct_values_for_header(
-    current_user_id: str = Depends(get_current_user_id),
     library: str | None = Query(None, description="The library name"),
     field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
     search_string: str
@@ -114,7 +112,7 @@ def get_distinct_values_for_header(
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
 ):
-    text_value_service = TextValueService(user=current_user_id)
+    text_value_service = TextValueService()
     return text_value_service.get_distinct_values_for_header(
         library=library,
         field_name=field_name,
@@ -146,10 +144,8 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_text_value(
-    uid: str = TextValueUID, current_user_id: str = Depends(get_current_user_id)
-):
-    text_value_service = TextValueService(user=current_user_id)
+def get_text_value(uid: str = TextValueUID):
+    text_value_service = TextValueService()
     return text_value_service.get_by_uid(uid=uid)
 
 
@@ -180,9 +176,6 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def create(
-    text_value_create_input: TextValueInput = Body(description=""),
-    current_user_id: str = Depends(get_current_user_id),
-):
-    text_value_service = TextValueService(user=current_user_id)
+def create(text_value_create_input: TextValueInput = Body(description="")):
+    text_value_service = TextValueService()
     return text_value_service.create(concept_input=text_value_create_input)

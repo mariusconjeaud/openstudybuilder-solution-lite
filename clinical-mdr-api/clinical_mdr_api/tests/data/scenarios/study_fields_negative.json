@@ -55,6 +55,7 @@
                   "study_number": "007",
                   "subpart_id": null,
                   "study_acronym": "Study-007",
+                  "study_subpart_acronym": null,
                   "project_number": "123",
                   "description": "desc123",
                   "project_name": "Project ABC",

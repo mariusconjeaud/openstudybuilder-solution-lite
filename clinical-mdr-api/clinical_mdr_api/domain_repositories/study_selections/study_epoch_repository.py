@@ -32,16 +32,31 @@ from clinical_mdr_api.models.study_selections.study_epoch import (
 )
 
 
-def get_ctlist_terms_by_name(code_list_name: str):
-    cypher_query = """
-        MATCH (:CTCodelistNameValue {name: $code_list_name})<-[:LATEST_FINAL]-(:CTCodelistNameRoot)<-[:HAS_NAME_ROOT]-
+def get_ctlist_terms_by_name(
+    code_list_name: str, effective_date: datetime.datetime | None = None
+):
+    if not effective_date:
+        ctterm_name_match = "(:CTTermNameRoot)-[:LATEST_FINAL]->(ctnv:CTTermNameValue)"
+    else:
+        ctterm_name_match = """(ctnr:CTTermNameRoot)-[hv:HAS_VERSION]->(ctnv:CTTermNameValue)
+            WHERE (hv.start_date<= datetime($effective_date) < datetime(hv.end_date)) OR (hv.end_date IS NULL AND (hv.start_date <= datetime($effective_date)))
+        """
+    cypher_query = f"""
+        MATCH (:CTCodelistNameValue {{name: $code_list_name}})<-[:LATEST_FINAL]-(:CTCodelistNameRoot)<-[:HAS_NAME_ROOT]-
         (:CTCodelistRoot)-[:HAS_TERM]->
         (tr:CTTermRoot)-[:HAS_NAME_ROOT]->
-        (:CTTermNameRoot)-[:LATEST_FINAL]->
-        (ctnv:CTTermNameValue)
+        {ctterm_name_match}
         return tr.uid, ctnv.name
         """
-    items, _ = db.cypher_query(cypher_query, {"code_list_name": code_list_name})
+    items, _ = db.cypher_query(
+        cypher_query,
+        {
+            "code_list_name": code_list_name,
+            "effective_date": effective_date.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+            if effective_date
+            else None,
+        },
+    )
     return {a[0]: a[1] for a in items}
 
 
@@ -49,27 +64,48 @@ class StudyEpochRepository:
     def __init__(self, author: str):
         self.author = author
 
-    def fetch_ctlist(self, code_list_name: str):
-        return get_ctlist_terms_by_name(code_list_name)
+    def fetch_ctlist(
+        self, code_list_name: str, effective_date: datetime.datetime | None = None
+    ):
+        return get_ctlist_terms_by_name(code_list_name, effective_date=effective_date)
 
-    def get_allowed_configs(self):
-        cypher_query = """
-        MATCH (:CTCodelistNameValue {name: $code_list_name})<-[:LATEST_FINAL]-(:CTCodelistNameRoot)<-[:HAS_NAME_ROOT]
-        -(:CTCodelistRoot)-[:HAS_TERM]->(term_subtype_root:CTTermRoot)-[:HAS_NAME_ROOT]->
-        (term_subtype_name_root:CTTermNameRoot)-[:LATEST_FINAL]->(term_subtype_name_value:CTTermNameValue)
-        MATCH (term_subtype_root)-[:HAS_PARENT_TYPE]->(term_type_root:CTTermRoot)-
-        [:HAS_NAME_ROOT]->(term_type_name_root)-[:LATEST_FINAL]->(term_type_name_value:CTTermNameValue)
-        return term_subtype_root.uid, term_subtype_name_value.name, term_type_root.uid, term_type_name_value.name
+    def get_allowed_configs(self, effective_date: datetime.datetime | None = None):
+        if effective_date:
+            subtype_name_value_match = """MATCH (term_subtype_name_root)-[hv:HAS_VERSION]->(term_subtype_name_value:CTTermNameValue)
+                WHERE (hv.start_date<= datetime($effective_date) < hv.end_date) OR (hv.end_date IS NULL AND (hv.start_date <= datetime($effective_date)))
+            """
+            type_name_value_match = """MATCH (term_type_name_root)-[hv_type:HAS_VERSION]->(term_type_name_value:CTTermNameValue)
+                WHERE (hv_type.start_date<= datetime($effective_date) < hv_type.end_date) OR (hv_type.end_date IS NULL AND (hv_type.start_date <= datetime($effective_date)))
+            """
+        else:
+            subtype_name_value_match = "MATCH (term_subtype_name_root:CTTermNameRoot)-[:LATEST_FINAL]->(term_subtype_name_value:CTTermNameValue)"
+            type_name_value_match = "MATCH (term_type_name_root)-[:LATEST_FINAL]->(term_type_name_value:CTTermNameValue)"
+
+        cypher_query = f"""
+            MATCH (:CTCodelistNameValue {{name: $code_list_name}})<-[:LATEST_FINAL]-(:CTCodelistNameRoot)<-[:HAS_NAME_ROOT]
+            -(:CTCodelistRoot)-[:HAS_TERM]->(term_subtype_root:CTTermRoot)-[:HAS_NAME_ROOT]->(term_subtype_name_root:CTTermNameRoot)
+            {subtype_name_value_match}
+            MATCH (term_subtype_root)-[:HAS_PARENT_TYPE]->(term_type_root:CTTermRoot)-
+            [:HAS_NAME_ROOT]->(term_type_name_root)
+            {type_name_value_match}
+
+            return term_subtype_root.uid, term_subtype_name_value.name, term_type_root.uid, term_type_name_value.name
         """
         items, _ = db.cypher_query(
-            cypher_query, {"code_list_name": settings.STUDY_EPOCH_SUBTYPE_NAME}
+            cypher_query,
+            {
+                "code_list_name": settings.STUDY_EPOCH_SUBTYPE_NAME,
+                "effective_date": effective_date.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+                if effective_date
+                else None,
+            },
         )
         return items
 
     def get_basic_epoch(self, study_uid: str) -> str | None:
         cypher_query = """
         MATCH (study_root:StudyRoot {uid:$study_uid})-[:LATEST]->(:StudyValue)-[:HAS_STUDY_EPOCH]->(study_epoch:StudyEpoch)-[:HAS_EPOCH_SUB_TYPE]->(:CTTermRoot)-
-        [:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST_FINAL]->(:CTTermNameValue {name:$basic_epoch_name})
+        [:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:HAS_VERSION]->(:CTTermNameValue {name:$basic_epoch_name})
         WHERE NOT exists((:Delete)-[:BEFORE]->(study_epoch))
         return study_epoch.uid
         """

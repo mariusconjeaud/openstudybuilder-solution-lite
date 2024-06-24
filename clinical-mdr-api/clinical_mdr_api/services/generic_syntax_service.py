@@ -28,6 +28,7 @@ from clinical_mdr_api.models.controlled_terminologies.ct_term import (
 )
 from clinical_mdr_api.models.generic_models import SimpleNameModel
 from clinical_mdr_api.models.utils import GenericFilteringReturn
+from clinical_mdr_api.oauth.user import user
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._meta_repository import MetaRepository
 from clinical_mdr_api.services._utils import calculate_diffs, raise_404_if_none
@@ -56,8 +57,8 @@ class GenericSyntaxService(Generic[_AggregateRootType], abc.ABC):
     _repos: MetaRepository
     user_initials: str | None
 
-    def __init__(self, user: str | None = None):
-        self.user_initials = user if user is not None else "TODO Initials"
+    def __init__(self):
+        self.user_initials = user().id()
         self._repos = MetaRepository()
 
     def __del__(self):
@@ -193,6 +194,9 @@ class GenericSyntaxService(Generic[_AggregateRootType], abc.ABC):
     def approve(self, uid: str) -> BaseModel:
         try:
             item = self.repository.find_by_uid(uid, for_update=True)
+
+            self.authorize_user_defined_syntax_write(item.library.name)
+
             uses = self.repository.check_usage_count(uid)
             if uses > 0:
                 raise ConflictErrorException(
@@ -289,7 +293,7 @@ class GenericSyntaxService(Generic[_AggregateRootType], abc.ABC):
             raise BusinessLogicException(e.msg) from e
 
     def _get_indexings(
-        self, template: BaseModel
+        self, template: BaseModel, template_type_uid: str | None = None
     ) -> tuple[
         list[SimpleTermModel],
         list[SimpleCTTermNameAndAttributes],
@@ -307,7 +311,9 @@ class GenericSyntaxService(Generic[_AggregateRootType], abc.ABC):
         activity_subgroups: list[SimpleNameModel] = []
         template_type: SimpleCTTermNameAndAttributes | None = None
 
-        template_type_term_uid = getattr(template, "type_uid", None)
+        template_type_term_uid = (
+            getattr(template, "type_uid", None) or template_type_uid
+        )
 
         if template_type_term_uid is not None:
             template_type_name = self._repos.ct_term_name_repository.find_by_uid(
@@ -477,15 +483,31 @@ class GenericSyntaxService(Generic[_AggregateRootType], abc.ABC):
 
     @db.transaction
     def patch_indexings(self, uid: str, indexings: BaseModel) -> BaseModel:
-        self.repository.find_by_uid(uid)
-
         try:
-            if getattr(indexings, "indication_uids", None):
+            self.repository.find_by_uid(uid)
+
+            if hasattr(indexings, "indication_uids"):
                 self.repository.patch_indications(uid, indexings.indication_uids)
-            if getattr(indexings, "category_uids", None):
+
+            if hasattr(indexings, "category_uids"):
                 self.repository.patch_categories(uid, indexings.category_uids)
-            if getattr(indexings, "sub_category_uids", None):
+
+            if hasattr(indexings, "sub_category_uids"):
                 self.repository.patch_subcategories(uid, indexings.sub_category_uids)
+
+            if hasattr(indexings, "activity_uids"):
+                self.repository.patch_activities(uid, indexings.activity_uids)
+
+            if hasattr(indexings, "activity_group_uids"):
+                self.repository.patch_activity_groups(
+                    uid, indexings.activity_group_uids
+                )
+
+            if hasattr(indexings, "activity_subgroup_uids"):
+                self.repository.patch_activity_subgroups(
+                    uid, indexings.activity_subgroup_uids
+                )
+
             if hasattr(indexings, "is_confirmatory_testing"):
                 self.repository.patch_is_confirmatory_testing(
                     uid, indexings.is_confirmatory_testing
@@ -494,3 +516,11 @@ class GenericSyntaxService(Generic[_AggregateRootType], abc.ABC):
             self.repository.close()
 
         return self.get_by_uid(uid)
+
+    def authorize_user_defined_syntax_write(self, library_name: str):
+        sufficient_roles = ["Library.Write"]
+
+        if library_name == "User Defined":
+            sufficient_roles.append("Study.Write")
+
+        user().authorize(*sufficient_roles)

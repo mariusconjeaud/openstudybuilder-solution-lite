@@ -800,6 +800,35 @@ def test_change_endpoint_pre_instance_indexings(api_client):
         assert res[key] is not None
 
 
+def test_remove_endpoint_pre_instance_indexings(api_client):
+    data = {
+        "indication_uids": [],
+        "sub_category_uids": [],
+        "category_uids": [],
+    }
+    response = api_client.patch(
+        f"{URL}/{endpoint_pre_instances[0].uid}/indexings",
+        json=data,
+    )
+    res = response.json()
+    log.info("Removed Endpoint Pre-Instance indexings: %s", res)
+
+    assert response.status_code == 200
+    assert res["uid"]
+    assert res["sequence_id"]
+    assert res["template_uid"] == endpoint_template.uid
+    assert res["template_name"] == endpoint_template.name
+    assert res["name"] == f"Default name with [{text_value_1.name_sentence_case}]"
+    assert not res["indications"]
+    assert not res["categories"]
+    assert not res["sub_categories"]
+    assert res["version"] == "1.0"
+    assert res["status"] == "Final"
+    assert set(list(res.keys())) == set(ENDPOINT_PRE_INSTANCE_FIELDS_ALL)
+    for key in ENDPOINT_PRE_INSTANCE_FIELDS_NOT_NULL:
+        assert res[key] is not None
+
+
 def test_delete_endpoint_pre_instance(api_client):
     response = api_client.delete(f"{URL}/{endpoint_pre_instances[3].uid}")
     log.info("Deleted Endpoint Pre-Instance: %s", endpoint_pre_instances[3].uid)
@@ -1094,6 +1123,52 @@ def test_create_pre_instance_endpoint_template(api_client):
     assert res["status"] == "Draft"
 
 
+def test_keep_original_case_of_unit_definition_parameter_if_it_is_in_the_start_of_endpoint_pre_instance(
+    api_client,
+):
+    TestUtils.create_template_parameter("Unit")
+    _unit = TestUtils.create_unit_definition("u/week", template_parameter=True)
+
+    _endpoint_template = TestUtils.create_endpoint_template(
+        name="[Unit] test ignore case",
+        guidance_text="Default guidance text",
+        study_uid=None,
+        library_name="Sponsor",
+        indication_uids=[],
+        category_uids=[],
+        sub_category_uids=[],
+    )
+
+    data = {
+        "library_name": "Sponsor",
+        "parameter_terms": [
+            {
+                "position": 1,
+                "conjunction": "",
+                "terms": [
+                    {
+                        "index": 1,
+                        "name": _unit.name,
+                        "uid": _unit.uid,
+                        "type": "Unit",
+                    }
+                ],
+            }
+        ],
+        "indication_uids": [],
+        "category_uids": [],
+        "sub_category_uids": [],
+    }
+    response = api_client.post(
+        f"endpoint-templates/{_endpoint_template.uid}/pre-instances", json=data
+    )
+    res = response.json()
+    log.info("Created Endpoint Pre-Instance: %s", res)
+
+    assert response.status_code == 201
+    assert res["name"] == f"[{_unit.name}] test ignore case"
+
+
 def test_endpoint_pre_instance_sequence_id_generation(api_client):
     template = TestUtils.create_endpoint_template(
         name="Default [TextValue]",
@@ -1132,7 +1207,7 @@ def test_endpoint_pre_instance_sequence_id_generation(api_client):
 
     assert response.status_code == 201
     assert "PreInstance" in res["uid"]
-    assert res["sequence_id"] == "E2P1"
+    assert res["sequence_id"] == "E3P1"
     assert res["template_uid"] == template.uid
     assert res["name"] == f"Default [{text_value_1.name_sentence_case}]"
     assert (
@@ -1232,7 +1307,7 @@ def test_endpoint_pre_instance_template_parameter_rules(api_client):
 
     assert response.status_code == 201
     assert "PreInstance" in res["uid"]
-    assert res["sequence_id"] == "E3P1"
+    assert res["sequence_id"] == "E4P1"
     assert res["template_uid"] == template.uid
     assert (
         res["name"]

@@ -14,6 +14,7 @@ from clinical_mdr_api.domain_repositories.study_selections.study_design_cell_rep
 from clinical_mdr_api.domains.study_selections.study_design_cell import (
     StudyDesignCellVO,
 )
+from clinical_mdr_api.oauth.user import user
 from clinical_mdr_api.services._meta_repository import MetaRepository
 from clinical_mdr_api.services._utils import (
     calculate_diffs,
@@ -27,9 +28,9 @@ from clinical_mdr_api.services.studies.study_endpoint_selection import (
 class StudyDesignCellService(StudySelectionMixin):
     _repos: MetaRepository
 
-    def __init__(self, author: str):
+    def __init__(self):
         self._repos = MetaRepository()
-        self.author = author
+        self.author = user().id()
 
     @db.transaction
     def get_all_design_cells(

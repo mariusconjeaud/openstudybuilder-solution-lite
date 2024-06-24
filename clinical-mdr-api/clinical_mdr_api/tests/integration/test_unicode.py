@@ -23,26 +23,26 @@ def json_dumps(obj: Any, **kwds: Any):
     return _json_dumps(obj, **kwds)
 
 
-def request_with_json_payload(app_client, method, url, payload):
+def request_with_json_payload(api_client, method, url, payload):
     data = json_dumps(payload).encode("utf-8")
-    return app_client.request(
+    return api_client.request(
         method, url, data=data, headers={"content-type": "application/json"}
     )
 
 
-def create_unicode_brand_name_for_testing(app_client, test_string):
+def create_unicode_brand_name_for_testing(api_client, test_string):
     response = request_with_json_payload(
-        app_client, "POST", "/brands", {"name": test_string}
+        api_client, "POST", "/brands", {"name": test_string}
     )
     response.raise_for_status()
     payload = response.json()
     return payload
 
 
-def test_unicode_input(app_client):
+def test_unicode_input(api_client):
     """Validates if we can send unicode characters as properties"""
     test_string = create_unicode_test_string()
-    payload = create_unicode_brand_name_for_testing(app_client, test_string)
+    payload = create_unicode_brand_name_for_testing(api_client, test_string)
     uid = payload.get("uid")
 
     try:
@@ -51,18 +51,18 @@ def test_unicode_input(app_client):
         assert name == test_string, "unicode value does not match after creation"
     finally:
         if uid:
-            app_client.delete(f"/brands/{uid}")
+            api_client.delete(f"/brands/{uid}")
 
 
-def test_unicode_retrieval(app_client):
+def test_unicode_retrieval(api_client):
     """Validates the retrieval of a node with unicode chars in a property"""
     test_string = create_unicode_test_string()
-    payload = create_unicode_brand_name_for_testing(app_client, test_string)
+    payload = create_unicode_brand_name_for_testing(api_client, test_string)
     uid = payload.get("uid")
     assert uid
 
     try:
-        response = app_client.get(f"/brands/{uid}")
+        response = api_client.get(f"/brands/{uid}")
         response.raise_for_status()
         payload = response.json()
         name = payload.get("name")
@@ -70,15 +70,15 @@ def test_unicode_retrieval(app_client):
         assert name == test_string, "unicode value does not match after retrieval"
     finally:
         if uid:
-            app_client.delete(f"/brands/{uid}")
+            api_client.delete(f"/brands/{uid}")
 
 
-def test_unicode_patch(app_client):
+def test_unicode_patch(api_client):
     """Validates that a resource maintains unicode value of a property after patching"""
     test_string = create_unicode_test_string()
     property_name = "study_field_name"
     response = request_with_json_payload(
-        app_client,
+        api_client,
         "POST",
         "/configurations",
         {
@@ -100,7 +100,7 @@ def test_unicode_patch(app_client):
 
         test_string = create_unicode_test_string()
         response = request_with_json_payload(
-            app_client,
+            api_client,
             "PATCH",
             f"/configurations/{uid}",
             {
@@ -117,7 +117,7 @@ def test_unicode_patch(app_client):
         assert value
         assert value == test_string, "unicode name did not match after patching"
 
-        response = app_client.get(f"/configurations/{uid}")
+        response = api_client.get(f"/configurations/{uid}")
         response.raise_for_status()
         payload = response.json()
         value = payload.get(property_name)
@@ -126,10 +126,10 @@ def test_unicode_patch(app_client):
 
     finally:
         if uid:
-            app_client.delete(f"/configurations/{uid}")
+            api_client.delete(f"/configurations/{uid}")
 
 
-def test_non_unicode_input_error_response(app_client):
+def test_non_unicode_input_error_response(api_client):
     """Validates that API rejects non-UTF-8/16 and non-ASCII-escaped JSON payload on POST request"""
     test_string = f"testing {GREEKS}"
     payload = {"name": test_string}
@@ -137,18 +137,18 @@ def test_non_unicode_input_error_response(app_client):
     data = data.encode("iso-8859-7")
     assert isinstance(data, bytes)
 
-    response = app_client.post(
+    response = api_client.post(
         "/brands", data=data, headers={"content-type": "application/json"}
     )
     assert_response_status_code(response, 400)
 
 
-def test_non_unicode_patch_error_response(app_client):
+def test_non_unicode_patch_error_response(api_client):
     """Validates that API rejects on-UTF-8/16 and non-ASCII-escaped JSON payload on PATCH request"""
     test_string = create_unicode_test_string()
     property_name = "study_field_name"
     response = request_with_json_payload(
-        app_client,
+        api_client,
         "POST",
         "/configurations",
         {
@@ -171,7 +171,7 @@ def test_non_unicode_patch_error_response(app_client):
         data = data.encode("iso-8859-7")
         assert isinstance(data, bytes)
 
-        response = app_client.patch(
+        response = api_client.patch(
             f"/configurations/{uid}",
             data=data,
             headers={"content-type": "application/json"},
@@ -180,4 +180,4 @@ def test_non_unicode_patch_error_response(app_client):
 
     finally:
         if uid:
-            app_client.delete(f"/configurations/{uid}")
+            api_client.delete(f"/configurations/{uid}")

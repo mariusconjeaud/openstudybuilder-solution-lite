@@ -485,7 +485,7 @@
             "status": "Final",
             "version": "1.0",
             "change_description": "Approved version",
-            "user_initials": "TEST_USER",
+            "user_initials": "unknown-user",
             "start_date": null,
             "end_date": null,
             "possible_actions": [
@@ -635,7 +635,7 @@
             "status": "Draft",
             "version": "1.1",
             "change_description": "New draft created",
-            "user_initials": "TEST_USER",
+            "user_initials": "unknown-user",
             "start_date": null,
             "end_date": null,
             "possible_actions": [
@@ -1137,7 +1137,7 @@
             "status": "Final",
             "version": "2.0",
             "change_description": "Approved version",
-            "user_initials": "TEST_USER",
+            "user_initials": "unknown-user",
             "start_date": null,
             "end_date": null,
             "possible_actions": [
@@ -1287,7 +1287,7 @@
             "status": "Retired",
             "version": "2.0",
             "change_description": "Inactivated version",
-            "user_initials": "TEST_USER",
+            "user_initials": "unknown-user",
             "start_date": null,
             "end_date": null,
             "possible_actions": [
@@ -1436,7 +1436,7 @@
             "status": "Final",
             "version": "2.0",
             "change_description": "Reactivated version",
-            "user_initials": "TEST_USER",
+            "user_initials": "unknown-user",
             "start_date": null,
             "end_date": null,
             "possible_actions": [

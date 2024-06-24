@@ -94,10 +94,16 @@ class TestApi(TestCase):
                         self.assertIn(response.status_code, [422])
                     elif path == "/system/check/secured":
                         self.assertIn(response.status_code, [401, 501])
+                    elif path == "/listings/studies/study-metadata":
+                        # This test fails because of mandatory query parameters
+                        self.assertIn(response.status_code, [400])
                     elif (
                         path == "/concepts/odms/metadata/xmls/stylesheets/{stylesheet}"
                     ):
                         self.assertEqual(response.status_code, 400)
+                    elif path == "/ddf/v3/studyDefinitions/{study_uid}":
+                        # This test fails because of mandatory path parameters
+                        self.assertIn(response.status_code, [404])
                     else:
                         self.assertEqual(response.status_code, 200)
                 except Exception as e:

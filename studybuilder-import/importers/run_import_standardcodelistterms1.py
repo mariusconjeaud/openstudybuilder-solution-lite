@@ -203,11 +203,17 @@ class StandardCodelistTerms1(BaseImporter):
                 continue
             reused_item = False
             # connect cdisc epoch sub type term with a sponsor epoch sub type term
-            if row[headers.index("CT_CD")].startswith("C") and parent_term_uid:
+            concept_id = row[headers.index("CT_CD")]
+            if concept_id.startswith("C") and parent_term_uid:
                 reused_item = True
-                term_uid = find_term_by_concept_id(
-                    row[headers.index("CT_CD")], all_epoch_terms
-                )
+                if "|" in concept_id:
+                    cids = concept_id.split("|")
+                else:
+                    cids = [concept_id]
+                for cid in cids:
+                    term_uid = find_term_by_concept_id(cid, all_epoch_terms)
+                    if term_uid is not None:
+                        break
                 self.log.info(
                     f"Epoch subtype '{row[headers.index('GEN_EPOCH_SUB_TYPE')]}' links to existing Epoch term '{term_uid}'"
                 )
@@ -655,10 +661,14 @@ class StandardCodelistTerms1(BaseImporter):
                 )
                 self.metrics.icrement("/ct/codelists/-AttributesApprove")
             return result
-        else:
+        elif status == 400 and "already exists" in response.get("message", ""):
             self.log.info(
                 f"Codelist {data['body']['name']} already exists, skipping approve."
             )
+            return response
+        else:
+            self.log.error(f"Failed to create codelist: {data['body']['name']}, response: {response}")
+            self.metrics.icrement("/ct/codelists-ERROR")
             return response
 
     async def process_codelist_parameter(

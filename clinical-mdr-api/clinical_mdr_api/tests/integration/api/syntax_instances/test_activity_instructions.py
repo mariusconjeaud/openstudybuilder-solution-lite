@@ -247,7 +247,7 @@ def test_data():
         )
     )
 
-    study_activity = StudyActivitySelectionService(author="test").make_selection(
+    study_activity = StudyActivitySelectionService().make_selection(
         study_uid="Study_000001",
         selection_create_input=StudySelectionActivityCreateInput(
             soa_group_term_uid=ct_term_soa_group.term_uid,
@@ -259,7 +259,7 @@ def test_data():
 
     for activity_instruction in activity_instructions:
         if activity_instruction.status == "Final":
-            StudyActivityInstructionService(author="test").create(
+            StudyActivityInstructionService().create(
                 study_uid="Study_000001",
                 study_activity_instruction_input=StudyActivityInstructionCreateInput(
                     activity_instruction_uid=activity_instruction.uid,
@@ -585,6 +585,48 @@ def test_create_activity_instruction(api_client):
     assert set(list(res.keys())) == set(ACTIVITY_INSTRUCTION_FIELDS_ALL)
     for key in ACTIVITY_INSTRUCTION_FIELDS_NOT_NULL:
         assert res[key] is not None
+
+
+def test_keep_original_case_of_unit_definition_parameter_if_it_is_in_the_start_of_activity_instruction(
+    api_client,
+):
+    TestUtils.create_template_parameter("Unit")
+    _unit = TestUtils.create_unit_definition("u/week", template_parameter=True)
+
+    _activity_instruction_template = TestUtils.create_activity_instruction_template(
+        name="[Unit] test ignore case",
+        guidance_text="Default guidance text",
+        library_name="Sponsor",
+        indication_uids=[],
+        activity_uids=[],
+        activity_group_uids=[activity_group.uid],
+        activity_subgroup_uids=[activity_subgroup.uid],
+    )
+
+    data = {
+        "activity_instruction_template_uid": _activity_instruction_template.uid,
+        "library_name": "Sponsor",
+        "parameter_terms": [
+            {
+                "position": 1,
+                "conjunction": "",
+                "terms": [
+                    {
+                        "index": 1,
+                        "name": _unit.name,
+                        "uid": _unit.uid,
+                        "type": "Unit",
+                    }
+                ],
+            }
+        ],
+    }
+    response = api_client.post(URL, json=data)
+    res = response.json()
+    log.info("Created Activity Instruction: %s", res)
+
+    assert response.status_code == 201
+    assert res["name"] == f"[{_unit.name}] test ignore case"
 
 
 def test_update_activity_instruction(api_client):

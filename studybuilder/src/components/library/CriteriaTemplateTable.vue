@@ -1,192 +1,233 @@
 <template>
-<studybuilder-template-table
-  ref="table"
-  :url-prefix="urlPrefix"
-  translation-type="CriteriaTemplateTable"
-  object-type="criteriaTemplates"
-  :headers="headers"
-  :extra-filters-func="getExtraFilters"
-  has-api
-  column-data-resource="criteria-templates"
-  :column-data-parameters="columnDataParameters"
-  fullscreen-form
-  :history-formating-func="formatHistoryItem"
-  :history-excluded-headers="historyExcludedHeaders"
-  :export-data-url-params="columnDataParameters"
-  double-breadcrumb
-  :prepare-duplicate-payload-func="prepareDuplicatePayload"
-  @refresh="refreshTable"
-  :default-filters="defaultFilters"
+  <StudybuilderTemplateTable
+    ref="table"
+    :url-prefix="urlPrefix"
+    translation-type="CriteriaTemplateTable"
+    object-type="criteriaTemplates"
+    :headers="headers"
+    :extra-filters-func="getExtraFilters"
+    column-data-resource="criteria-templates"
+    :column-data-parameters="columnDataParameters"
+    fullscreen-form
+    :history-formating-func="formatHistoryItem"
+    :history-excluded-headers="historyExcludedHeaders"
+    :export-data-url-params="columnDataParameters"
+    double-breadcrumb
+    :prepare-duplicate-payload-func="prepareDuplicatePayload"
+    :default-filters="defaultFilters"
+    :extra-route-params="extraRouteParams"
+    @refresh="refreshTable"
   >
-  <template v-slot:editform="{ closeForm, selectedObject, preInstanceMode }">
-    <criteria-template-pre-instance-form
-      v-if="preInstanceMode"
-      :pre-instance="selectedObject"
-      :criteria-type="criteriaType"
-      @close="closeForm"
-      @success="refreshTable"
+    <template #editform="{ closeForm, selectedObject, preInstanceMode }">
+      <CriteriaTemplatePreInstanceForm
+        v-if="preInstanceMode"
+        :pre-instance="selectedObject"
+        :criteria-type="criteriaType"
+        @close="closeForm"
+        @success="refreshTable"
       />
-    <criteria-template-form
-      v-else
-      :criteria-type="criteriaType"
-      @close="closeForm"
-      :template="selectedObject"
-      @templateAdded="refreshTable"
-      @templateUpdated="refreshTable"
+      <CriteriaTemplateForm
+        v-else
+        :criteria-type="criteriaType"
+        :template="selectedObject"
+        @close="closeForm"
+        @template-added="refreshTable"
+        @template-updated="refreshTable"
       />
-  </template>
-  <template v-slot:item.guidance_text="{ item }">
-    <div v-html="item.guidance_text" />
-  </template>
-  <template v-slot:item.categories.name.sponsor_preferred_name="{ item }">
-    <template v-if="item.categories && item.categories.length">
-      {{ item.categories|terms }}
     </template>
-    <template v-else>
-      {{ $t('_global.not_applicable_long') }}
+    <template #[`item.guidance_text`]="{ item }">
+      <div v-html="item.guidance_text" />
     </template>
-  </template>
-  <template v-slot:item.sub_categories.name.sponsor_preferred_name="{ item }">
-    <template v-if="item.sub_categories && item.sub_categories.length">
-      {{ item.sub_categories|terms }}
-    </template>
-    <template v-else>
-      {{ $t('_global.not_applicable_long') }}
-    </template>
-  </template>
-  <template v-slot:indexingDialog="{ closeDialog, template, show, preInstanceMode }">
-    <template-indexing-dialog
-      @close="closeDialog"
-      @updated="refreshTable"
-      :show="show"
-      :template="template"
-      :prepare-payload-func="prepareIndexingPayload"
-      :url-prefix="urlPrefix"
-      :pre-instance-mode="preInstanceMode"
-      >
-      <template v-slot:form="{ form }">
-        <criteria-template-indexing-form
-          ref="indexingForm"
-          :form="form"
-          :template="template"
-          />
+    <template #[`item.categories.name.sponsor_preferred_name`]="{ item }">
+      <template v-if="item.categories && item.categories.length">
+        {{ $filters.terms(item.categories) }}
       </template>
-    </template-indexing-dialog>
-  </template>
-  <template v-slot:preInstanceForm="{ closeDialog, template }">
-    <criteria-template-pre-instance-form
-      :template="template"
-      :criteria-type="criteriaType"
-      @close="closeDialog"
-      @success="refreshTable"
+      <template v-else>
+        {{ $t('_global.not_applicable_long') }}
+      </template>
+    </template>
+    <template #[`item.sub_categories.name.sponsor_preferred_name`]="{ item }">
+      <template v-if="item.sub_categories && item.sub_categories.length">
+        {{ $filters.terms(item.sub_categories) }}
+      </template>
+      <template v-else>
+        {{ $t('_global.not_applicable_long') }}
+      </template>
+    </template>
+    <template
+      #indexingDialog="{ closeDialog, template, show, preInstanceMode }"
+    >
+      <TemplateIndexingDialog
+        :show="show"
+        :template="template"
+        :prepare-payload-func="prepareIndexingPayload"
+        :url-prefix="urlPrefix"
+        :pre-instance-mode="preInstanceMode"
+        @close="closeDialog"
+        @updated="refreshTable"
+      >
+        <template #form="{ form }">
+          <CriteriaTemplateIndexingForm
+            ref="indexingForm"
+            :form="form"
+            :template="template"
+          />
+        </template>
+      </TemplateIndexingDialog>
+    </template>
+    <template #preInstanceForm="{ closeDialog, template }">
+      <CriteriaTemplatePreInstanceForm
+        :template="template"
+        :criteria-type="criteriaType"
+        @close="closeDialog"
+        @success="refreshTable"
       />
-  </template>
-</studybuilder-template-table>
+    </template>
+  </StudybuilderTemplateTable>
 </template>
 
-<script>
-import CriteriaTemplateForm from './CriteriaTemplateForm'
-import CriteriaTemplateIndexingForm from './CriteriaTemplateIndexingForm'
-import CriteriaTemplatePreInstanceForm from './CriteriaTemplatePreInstanceForm'
+<script setup>
+import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
+import CriteriaTemplateForm from './CriteriaTemplateForm.vue'
+import CriteriaTemplateIndexingForm from './CriteriaTemplateIndexingForm.vue'
+import CriteriaTemplatePreInstanceForm from './CriteriaTemplatePreInstanceForm.vue'
 import dataFormating from '@/utils/dataFormating'
-import StudybuilderTemplateTable from '@/components/library/StudybuilderTemplateTable'
-import TemplateIndexingDialog from './TemplateIndexingDialog'
+import StudybuilderTemplateTable from '@/components/library/StudybuilderTemplateTable.vue'
+import TemplateIndexingDialog from './TemplateIndexingDialog.vue'
+import { useStudiesGeneralStore } from '@/stores/studies-general'
 
-export default {
-  props: {
-    criteriaType: Object
+const props = defineProps({
+  criteriaType: {
+    type: Object,
+    default: null,
   },
-  components: {
-    CriteriaTemplateForm,
-    CriteriaTemplateIndexingForm,
-    CriteriaTemplatePreInstanceForm,
-    StudybuilderTemplateTable,
-    TemplateIndexingDialog
+})
+const { t } = useI18n()
+const studiesGeneralStore = useStudiesGeneralStore()
+
+const indexingForm = ref()
+const table = ref()
+
+const headers = [
+  {
+    title: '',
+    key: 'actions',
+    sortable: false,
+    width: '5%',
   },
-  computed: {
-    columnDataParameters () {
-      const keyName = (this.$route.params && this.$route.params.tab === 'pre-instances') ? 'template_type_uid' : 'type.term_uid'
-      const filters = {}
-      filters[keyName] = { v: [this.criteriaType.term_uid], op: 'eq' }
-      return { filters }
-    }
+  { title: t('_global.sequence_number'), key: 'sequence_id' },
+  {
+    title: t('_global.parent_template'),
+    key: 'name',
+    width: '30%',
+    filteringName: 'name_plain',
   },
-  data () {
-    return {
-      headers: [
-        {
-          text: '',
-          value: 'actions',
-          sortable: false,
-          width: '5%'
-        },
-        { text: this.$t('_global.sequence_number'), value: 'sequence_id' },
-        { text: this.$t('_global.parent_template'), value: 'name', width: '30%', filteringName: 'name_plain' },
-        { text: this.$t('CriteriaTemplateTable.guidance_text'), value: 'guidance_text', width: '30%' },
-        { text: this.$t('_global.modified'), value: 'start_date' },
-        { text: this.$t('_global.status'), value: 'status' },
-        { text: this.$t('_global.version'), value: 'version' }
-      ],
-      defaultFilters: [
-        { text: this.$t('CriteriaTemplateTable.indications'), value: 'indications.name' },
-        { text: this.$t('CriteriaTemplateTable.criterion_cat'), value: 'categories.name.sponsor_preferred_name' },
-        { text: this.$t('CriteriaTemplateTable.criterion_sub_cat'), value: 'sub_categories.name.sponsor_preferred_name' }
-      ],
-      historyExcludedHeaders: [
-        'indications.name',
-        'categories.name.sponsor_preferred_name',
-        'sub_categories.name.sponsor_preferred_name'
-      ],
-      types: [],
-      urlPrefix: '/criteria-templates'
-    }
+  {
+    title: t('CriteriaTemplateTable.guidance_text'),
+    key: 'guidance_text',
+    width: '30%',
   },
-  methods: {
-    getExtraFilters (filters, preInstanceMode) {
-      if (!preInstanceMode) {
-        filters['type.term_uid'] = { v: [this.criteriaType.term_uid] }
-      } else {
-        filters.template_type_uid = { v: [this.criteriaType.term_uid] }
-      }
-    },
-    prepareIndexingPayload (form) {
-      return this.$refs.indexingForm.preparePayload(form)
-    },
-    prepareDuplicatePayload (payload, preInstance) {
-      if (preInstance.categories && preInstance.categories.length) {
-        payload.category_uids = preInstance.categories.map(item => item.term_uid)
-      } else {
-        payload.category_uids = []
-      }
-      if (preInstance.sub_categories && preInstance.sub_categories.length) {
-        payload.sub_category_uids = preInstance.sub_categories.map(item => item.term_uid)
-      } else {
-        payload.sub_category_uids = []
-      }
-    },
-    refreshTable () {
-      if (this.$refs.table.$refs.sponsorTable) {
-        this.$refs.table.$refs.sponsorTable.filter()
-      }
-      if (this.$refs.table.$refs.preInstanceTable) {
-        this.$refs.table.$refs.preInstanceTable.filter()
-      }
-    },
-    formatHistoryItem (item) {
-      if (item.categories) {
-        item.categories = { name: { sponsor_preferred_name: dataFormating.terms(item.categories) } }
-      } else {
-        item.categories = { name: { sponsor_preferred_name: this.$t('_global.not_applicable_long') } }
-      }
-      if (item.sub_categories) {
-        item.sub_categories = { name: { sponsor_preferred_name: dataFormating.terms(item.sub_categories) } }
-      } else {
-        item.sub_categories = { name: { sponsor_preferred_name: this.$t('_global.not_applicable_long') } }
-      }
-    }
+  { title: t('_global.modified'), key: 'start_date' },
+  { title: t('_global.status'), key: 'status' },
+  { title: t('_global.version'), key: 'version' },
+]
+const defaultFilters = [
+  { title: t('CriteriaTemplateTable.indications'), key: 'indications.name' },
+  {
+    title: t('CriteriaTemplateTable.criterion_cat'),
+    key: 'categories.name.sponsor_preferred_name',
   },
-  created () {
-    this.$store.dispatch('studiesGeneral/fetchNullValues')
+  {
+    title: t('CriteriaTemplateTable.criterion_sub_cat'),
+    key: 'sub_categories.name.sponsor_preferred_name',
+  },
+]
+const historyExcludedHeaders = [
+  'indications.name',
+  'categories.name.sponsor_preferred_name',
+  'sub_categories.name.sponsor_preferred_name',
+]
+const urlPrefix = '/criteria-templates'
+
+const columnDataParameters = computed(() => {
+  const keyName =
+    table.value && table.value.tab === 'pre-instances'
+      ? 'template_type_uid'
+      : 'type.term_uid'
+  const filters = {}
+  filters[keyName] = { v: [props.criteriaType.term_uid], op: 'eq' }
+  return { filters }
+})
+const extraRouteParams = computed(() => {
+  return { type: props.criteriaType.name.sponsor_preferred_name }
+})
+
+function getExtraFilters(filters, preInstanceMode) {
+  if (!preInstanceMode) {
+    filters['type.term_uid'] = { v: [props.criteriaType.term_uid] }
+  } else {
+    filters.template_type_uid = { v: [props.criteriaType.term_uid] }
   }
 }
+function prepareIndexingPayload(form) {
+  return indexingForm.value.preparePayload(form)
+}
+
+function prepareDuplicatePayload(payload, preInstance) {
+  if (preInstance.categories && preInstance.categories.length) {
+    payload.category_uids = preInstance.categories.map((item) => item.term_uid)
+  } else {
+    payload.category_uids = []
+  }
+  if (preInstance.sub_categories && preInstance.sub_categories.length) {
+    payload.sub_category_uids = preInstance.sub_categories.map(
+      (item) => item.term_uid
+    )
+  } else {
+    payload.sub_category_uids = []
+  }
+}
+
+function refreshTable(tab) {
+  if (table.value.$refs.sponsorTable && (!tab || tab === 'parent')) {
+    table.value.$refs.sponsorTable.filter()
+  }
+  if (table.value.$refs.preInstanceTable && (!tab || tab === 'pre-instances')) {
+    table.value.$refs.preInstanceTable.filter()
+  }
+}
+
+function formatHistoryItem(item) {
+  if (item.categories) {
+    item.categories = {
+      name: { sponsor_preferred_name: dataFormating.terms(item.categories) },
+    }
+  } else {
+    item.categories = {
+      name: { sponsor_preferred_name: t('_global.not_applicable_long') },
+    }
+  }
+  if (item.sub_categories) {
+    item.sub_categories = {
+      name: {
+        sponsor_preferred_name: dataFormating.terms(item.sub_categories),
+      },
+    }
+  } else {
+    item.sub_categories = {
+      name: { sponsor_preferred_name: t('_global.not_applicable_long') },
+    }
+  }
+}
+
+function restoreTab() {
+  table.value.restoreTab()
+}
+
+studiesGeneralStore.fetchNullValues()
+
+defineExpose({
+  restoreTab,
+})
 </script>

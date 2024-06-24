@@ -1,3 +1,4 @@
+from threading import Lock
 from typing import Collection
 
 from cachetools import TTLCache, cached
@@ -20,6 +21,7 @@ class ClinicalProgrammeRepository:
     cache_store_item_by_uid = TTLCache(
         maxsize=config.CACHE_MAX_SIZE, ttl=config.CACHE_TTL
     )
+    lock_store_item_by_uid = Lock()
 
     def generate_uid(self) -> str:
         return ClinicalProgramme.get_next_free_uid_and_increment_counter()
@@ -43,7 +45,7 @@ class ClinicalProgrammeRepository:
             uid,
         )
 
-    @cached(cache=cache_store_item_by_uid, key=get_hashkey)
+    @cached(cache=cache_store_item_by_uid, key=get_hashkey, lock=lock_store_item_by_uid)
     def find_by_uid(self, uid: str) -> ClinicalProgrammeAR | None:
         clinical_programme = ClinicalProgramme.nodes.get_or_none(uid=uid)
         if clinical_programme is not None:

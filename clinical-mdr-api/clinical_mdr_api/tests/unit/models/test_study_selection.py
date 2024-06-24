@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from hypothesis import given, settings
+from hypothesis import HealthCheck, given, settings
 from hypothesis.strategies import (
     composite,
     datetimes,
@@ -175,7 +175,7 @@ def study_selection_objective__from_study_selection_objectives_ar_and_order__tes
     )
 
 
-@settings(max_examples=20)
+@settings(suppress_health_check=(HealthCheck.too_slow,))
 @given(
     test_tuple=study_selection_objective__from_study_selection_objectives_ar_and_order__test_tuples()
 )
@@ -190,8 +190,15 @@ def test__study_selection_objective__from_study_selection_objectives_ar_and_orde
         get_objective_by_uid_callback=lambda _: test_tuple.objective,
         get_objective_by_uid_version_callback=lambda x, y: test_tuple.objective,
         get_ct_term_by_uid=lambda x, y, z=None: None,
-        get_study_selection_endpoints_ar_by_study_uid_callback=lambda _, study_value_version: test_tuple.study_selection_endpoints_ar,
+        get_study_endpoint_count_callback=lambda x, y, study_value_version: sum(
+            _.study_objective_uid
+            == test_tuple.study_selection_objectives_ar.study_objectives_selection[
+                test_tuple.order - 1
+            ].study_selection_uid
+            for _ in test_tuple.study_selection_endpoints_ar.study_endpoints_selection
+        ),
         find_project_by_study_uid=lambda x: test_tuple.project,
+        terms_at_specific_datetime=None,
     )
 
     # then

@@ -3,10 +3,10 @@ import repository from './repository'
 const resource = 'template-parameters'
 
 export default {
-  getTypes () {
+  getTypes() {
     return repository.get(`/${resource}`)
   },
-  getTerms (templateParameterName) {
+  getTerms(templateParameterName) {
     return repository.get(`${resource}/${templateParameterName}/terms`)
-  }
+  },
 }

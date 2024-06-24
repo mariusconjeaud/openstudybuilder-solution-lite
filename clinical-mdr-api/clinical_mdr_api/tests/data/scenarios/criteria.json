@@ -81,7 +81,7 @@
                "status": "Final",
                "version": "1.0",
                "change_description": "Approved version",
-               "user_initials": "TEST_USER",
+               "user_initials": "unknown-user",
                "possible_actions": [
                   "inactivate"
                ],
@@ -101,7 +101,7 @@
                "study_count": null
             },
             "start_date": "2021-10-26T13:45:26.058572",
-            "user_initials": "TEST_USER",
+            "user_initials": "unknown-user",
             "latest_criteria": null,
             "accepted_version": false
          }
@@ -132,7 +132,7 @@
                   "status": "Final",
                   "version": "1.0",
                   "change_description": "Approved version",
-                  "user_initials": "TEST_USER",
+                  "user_initials": "unknown-user",
                   "possible_actions": [
                      "inactivate"
                   ],
@@ -229,7 +229,7 @@
                "status": "Final",
                "version": "1.0",
                "change_description": "Approved version",
-               "user_initials": "TEST_USER",
+               "user_initials": "unknown-user",
                "possible_actions": [
                   "inactivate"
                ],
@@ -249,7 +249,7 @@
                "study_count": null
             },
             "start_date": "2021-10-26T13:49:10.699364",
-            "user_initials": "TEST_USER",
+            "user_initials": "unknown-user",
             "latest_criteria": null,
             "accepted_version": false
          }
@@ -280,7 +280,7 @@
                   "status": "Final",
                   "version": "1.0",
                   "change_description": "Approved version",
-                  "user_initials": "TEST_USER",
+                  "user_initials": "unknown-user",
                   "possible_actions": [
                      "inactivate"
                   ],
@@ -340,7 +340,7 @@
             "status": "Final",
             "version": "1.0",
             "change_description": "Approved version",
-            "user_initials": "TEST_USER",
+            "user_initials": "unknown-user",
             "possible_actions": [
                "inactivate"
             ],
@@ -396,7 +396,7 @@
                "status": "Final",
                "version": "1.0",
                "change_description": "Approved version",
-               "user_initials": "TEST_USER",
+               "user_initials": "unknown-user",
                "possible_actions": [
                   "inactivate"
                ],
@@ -434,7 +434,7 @@
                   "status": true,
                   "version": true,
                   "change_description": true,
-                  "user_initials": true,
+                  "user_initials": false,
                   "possible_actions": true,
                   "criteria_template": false,
                   "parameter_terms": false,
@@ -451,7 +451,7 @@
                "status": "Draft",
                "version": "0.1",
                "change_description": "Initial version",
-               "user_initials": "TODO Initials",
+               "user_initials": "unknown-user",
                "possible_actions": [
                   "approve",
                   "delete",

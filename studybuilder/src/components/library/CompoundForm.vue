@@ -1,475 +1,428 @@
 <template>
-<horizontal-stepper-form
-  ref="stepper"
-  :title="title"
-  :steps="steps"
-  @close="close"
-  @save="submit"
-  :form-observer-getter="getObserver"
-  :editable="compound !== undefined && compound !== null"
-  :helpItems="helpItems"
-  :edit-data="form"
+  <HorizontalStepperForm
+    ref="stepper"
+    :title="title"
+    :steps="steps"
+    :form-observer-getter="getObserver"
+    :editable="compound !== undefined && compound !== null"
+    :help-items="helpItems"
+    :edit-data="form"
+    @close="close"
+    @save="submit"
   >
-  <template v-slot:step.identifiers="{ step }">
-    <validation-observer :ref="`observer_${step}`">
-      <v-row>
-        <v-col cols="12">
-          <validation-provider
-            v-slot="{ errors }"
-            rules="required"
-            >
-            <yes-no-field
+    <template #[`step.identifiers`]="{ step }">
+      <v-form :ref="`observer_${step}`">
+        <v-row>
+          <v-col cols="12">
+            <YesNoField
               v-model="form.is_sponsor_compound"
               :label="$t('CompoundForm.sponsor_compound')"
               row
-              :error-messages="errors"
+              :rules="[formRules.required]"
               class="required"
-              />
-          </validation-provider>
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col cols="4">
-          <validation-provider
-            v-slot="{ errors }"
-            rules=""
-            >
+            />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col cols="4">
             <v-text-field
               v-model="form.analyte_number"
               :label="$t('CompoundForm.analyte_number')"
-              dense
-              :error-messages="errors"
-              />
-          </validation-provider>
-         </v-col>
-        <v-col cols="4">
-          <validation-provider
-            v-slot="{ errors }"
-            rules=""
-            >
+              density="compact"
+            />
+          </v-col>
+          <v-col cols="4">
             <v-text-field
               v-model="form.nnc_long_number"
               :label="$t('CompoundForm.long_number')"
-              dense
-              :error-messages="errors"
-              />
-          </validation-provider>
-        </v-col>
-        <v-col cols="4">
-          <validation-provider
-            v-slot="{ errors }"
-            rules=""
-            >
+              density="compact"
+            />
+          </v-col>
+          <v-col cols="4">
             <v-text-field
               v-model="form.nnc_short_number"
               :label="$t('CompoundForm.short_number')"
-              dense
-              :error-messages="errors"
-              />
-          </validation-provider>
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col cols="6">
-          <validation-provider
-            v-slot="{ errors }"
-            rules="required"
-            >
+              density="compact"
+            />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col cols="6">
             <v-text-field
               v-model="form.name"
               :label="$t('CompoundForm.name')"
-              dense
-              :error-messages="errors"
+              density="compact"
+              :rules="[formRules.required]"
               class="required"
-              />
-          </validation-provider>
-        </v-col>
-        <v-col cols="6">
-           <yes-no-field
-             v-model="form.is_name_inn"
-             :label="$t('CompoundForm.is_inn')"
-             row
-             />
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col cols="12">
-          <v-textarea
-            :label="$t('_global.definition')"
-            v-model="form.definition"
-            dense
-            clearable
-            auto-grow
-            rows="1"
             />
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col cols="12">
-          <multiple-select
-            v-model="form.brands"
-            :label="$t('CompoundForm.brand_name')"
-            :items="brands"
-            return-object
-            item-text="name"
-            />
-        </v-col>
-      </v-row>
-      <v-card style="position: relative">
-        <v-card-title style="position: relative">
-          {{$t('CompoundForm.substances')}}
-        </v-card-title>
-        <v-btn
-            color="primary"
-            absolute
-            top
-            right
-            fab
-            x-small
-            @click="addSubstance"
-            >
-            <v-icon>mdi-plus</v-icon>
-        </v-btn>
-        <v-card-text>
-          <v-card v-for="(substance, index) in form.substances" :key="index" class="sub-v-card">
-            <v-card-text style="position: relative">
-              <substance-field v-model="form.substances[index]" />
-            </v-card-text>
-            <v-btn
-              color="error"
-              absolute
-              top
-              right
-              fab
-              x-small
-              @click="removeSubstance(index)"
-              >
-              <v-icon>mdi-delete-outline</v-icon>
-            </v-btn>
-          </v-card>
-        </v-card-text>
-      </v-card>
-    </validation-observer>
-  </template>
-  <template v-slot:step.dosingDetails="{ step }">
-    <validation-observer :ref="`observer_${step}`">
-      <v-row>
-        <v-col cols="6">
-          <v-card style="position: relative">
-            <v-card-title style="position: relative">
-              {{$t('CompoundForm.doses')}}
-            </v-card-title>
-            <v-btn
-                color="primary"
-                absolute
-                top
-                right
-                fab
-                x-small
-                @click="addDoseValue"
-                >
-                <v-icon>mdi-plus</v-icon>
-            </v-btn>
-            <v-card-text>
-              <v-card v-for="(doseValue, index) in form.dose_values" :key="index" class="sub-v-card">
-                <v-card-text style="position: relative">
-                  <numeric-value-with-unit-field
-                    v-model="form.dose_values[index]"
-                    :label="$t('CompoundForm.dose')"
-                    subset="Dose Unit"
-                    :initial-value="form.dose_values[index]"
-                    />
-                </v-card-text>
-                <v-btn
-                  color="error"
-                  absolute
-                  top
-                  right
-                  fab
-                  x-small
-                  @click="removeDoseValue(index)"
-                  >
-                  <v-icon>mdi-delete-outline</v-icon>
-                </v-btn>
-              </v-card>
-            </v-card-text>
-          </v-card>
-        </v-col>
-        <v-col cols="6">
-          <v-card style="position: relative">
-            <v-card-title style="position: relative">
-              {{$t('CompoundForm.strengths')}}
-            </v-card-title>
-            <v-btn
-                color="primary"
-                absolute
-                top
-                right
-                fab
-                x-small
-                @click="addStrengthValue"
-                >
-                <v-icon>mdi-plus</v-icon>
-            </v-btn>
-            <v-card-text>
-              <v-card v-for="(strengthValue, index) in form.strength_values" :key="index" class="sub-v-card">
-                <v-card-text style="position: relative">
-                  <numeric-value-with-unit-field
-                    v-model="form.strength_values[index]"
-                    :label="$t('CompoundForm.strength')"
-                    subset="Strength Unit"
-                    :initial-value="form.strength_values[index]"
-                    />
-                </v-card-text>
-                <v-btn
-                  color="error"
-                  absolute
-                  top
-                  right
-                  fab
-                  x-small
-                  @click="removeStrengthValue(index)"
-                  >
-                  <v-icon>mdi-delete-outline</v-icon>
-                </v-btn>
-              </v-card>
-            </v-card-text>
-          </v-card>
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col cols="12">
-          <multiple-select
-            v-model="form.dose_frequency_uids"
-            :label="$t('CompoundForm.dosing_frequency')"
-            :items="frequencies"
-            item-text="sponsor_preferred_name"
-            item-value="term_uid"
-            />
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col cols="12">
-          <multiple-select
-            v-model="form.route_of_administration_uids"
-            :label="$t('CompoundForm.route_of_administration')"
-            :items="routesOfAdmin"
-            item-text="sponsor_preferred_name"
-            item-value="term_uid"
-            />
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col cols="12">
-          <multiple-select
-            v-model="form.dosage_form_uids"
-            :label="$t('CompoundForm.dosage_form')"
-            :items="dosageForms"
-            item-text="sponsor_preferred_name"
-            item-value="term_uid"
-            />
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col cols="12">
-          <multiple-select
-            v-model="form.dispensers_uids"
-            :label="$t('CompoundForm.dispensed_in')"
-            :items="dispensers"
-            item-text="sponsor_preferred_name"
-            item-value="term_uid"
-            />
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col cols="12">
-          <multiple-select
-            v-model="form.delivery_devices_uids"
-            :label="$t('CompoundForm.device')"
-            :items="devices"
-            item-text="sponsor_preferred_name"
-            item-value="term_uid"
-            />
-        </v-col>
-      </v-row>
-    </validation-observer>
-  </template>
-  <template v-slot:step.halfLife="{ step }">
-    <validation-observer :ref="`observer_${step}`">
-      <v-row>
-        <v-col cols="12">
-          <numeric-value-with-unit-field
-            v-model="form.half_life"
-            :label="$t('CompoundForm.half_life')"
-            subset="Time Unit"
-            :initial-value="form.half_life"
-            />
-        </v-col>
-      </v-row>
-      <v-card style="position: relative">
-        <v-card-title style="position: relative">
-          {{$t('CompoundForm.lag_times')}}
-        </v-card-title>
-        <v-btn
-          color="primary"
-          absolute
-          top
-          right
-          fab
-          x-small
-          @click="addLagTime"
-          >
-          <v-icon>mdi-plus</v-icon>
-        </v-btn>
-        <v-card-text>
-          <v-card v-for="(lag_time, index) in form.lag_times" :key="index" class="sub-v-card">
-            <v-card-text style="position: relative;">
-              <v-row>
-                <v-col cols="6">
-                  <v-autocomplete
-                    v-model="form.sdtm_domains[index].uid"
-                    :label="$t('CompoundForm.sdtm_domain')"
-                    :items="adverseEvents"
-                    item-text="sponsor_preferred_name"
-                    item-value="term_uid"
-                    dense
-                    clearable
-                    />
-                </v-col>
-                <v-col cols="6">
-                  <numeric-value-with-unit-field
-                    v-model="form.lag_times[index]"
-                    :label="$t('CompoundForm.lag_time')"
-                    subset="Time Unit"
-                    :initial-value="form.lag_times[index]"
-                    />
-                </v-col>
-              </v-row>
-            </v-card-text>
-            <v-btn
-              color="error"
-              absolute
-              top
-              right
-              fab
-              x-small
-              @click="removeLagTime(index)"
-              >
-              <v-icon>mdi-delete-outline</v-icon>
-            </v-btn>
-          </v-card>
-        </v-card-text>
-      </v-card>
-    </validation-observer>
-  </template>
-   <template v-slot:step.alias="{ step }">
-    <template v-if="compoundUid == null">
-      <validation-observer :ref="`observer_${step}`">
-        <v-row>
-          <v-col cols="12">
-            <validation-provider
-              v-slot="{ errors }"
-              rules="required"
-              >
-              <v-text-field
-                v-model="form.alias_name"
-                :label="$t('CompoundAliasForm.name')"
-                dense
-                clearable
-                :error-messages="errors"
-                class="required"
-                />
-            </validation-provider>
           </v-col>
-        </v-row>
-        <v-row>
-          <v-col cols="12">
-            <validation-provider
-              v-slot="{ errors }"
-              rules="required"
-              >
-              <v-text-field
-                v-model="form.alias_name_sentence_case"
-                :label="$t('CompoundAliasForm.sentence_case_name')"
-                dense
-                clearable
-                :error-messages="errors"
-                class="required"
-                />
-            </validation-provider>
-          </v-col>
-        </v-row>
-        <v-row>
-          <v-col cols="12">
-            <validation-provider
-              v-slot="{ errors }"
-              rules="required"
-              >
-              <yes-no-field
-                v-model="form.aliasIsPreferredSynonym"
-                :label="$t('CompoundAliasForm.is_preferred_synonym')"
-                :error-messages="errors"
-                class="required"
-                />
-            </validation-provider>
+          <v-col cols="6">
+            <YesNoField
+              v-model="form.is_name_inn"
+              :label="$t('CompoundForm.is_inn')"
+              row
+            />
           </v-col>
         </v-row>
         <v-row>
           <v-col cols="12">
             <v-textarea
+              v-model="form.definition"
               :label="$t('_global.definition')"
-              v-model="form.aliasDefinition"
-              dense
+              density="compact"
               clearable
               auto-grow
               rows="1"
-              />
+            />
           </v-col>
         </v-row>
-      </validation-observer>
+        <v-row>
+          <v-col cols="12">
+            <MultipleSelect
+              v-model="form.brands"
+              :label="$t('CompoundForm.brand_name')"
+              :items="brands"
+              return-object
+              item-title="name"
+            />
+          </v-col>
+        </v-row>
+        <v-card style="position: relative">
+          <v-card-title style="position: relative">
+            {{ $t('CompoundForm.substances') }}
+          </v-card-title>
+          <v-btn
+            color="primary"
+            position="absolute"
+            location="top right"
+            size="x-small"
+            icon="mdi-plus"
+            @click="addSubstance"
+          />
+          <v-card-text>
+            <v-card
+              v-for="(substance, index) in form.substances"
+              :key="index"
+              class="sub-v-card"
+            >
+              <v-card-text style="position: relative">
+                <SubstanceField v-model="form.substances[index]" />
+              </v-card-text>
+              <v-btn
+                color="error"
+                position="absolute"
+                location="top right"
+                size="x-small"
+                icon="mdi-delete-outline"
+                @click="removeSubstance(index)"
+              />
+            </v-card>
+          </v-card-text>
+        </v-card>
+      </v-form>
     </template>
-    <v-row v-else>
-      <v-col cols="12">
-        <v-simple-table>
-          <template v-slot:default>
+    <template #[`step.dosingDetails`]="{ step }">
+      <v-form :ref="`observer_${step}`">
+        <v-row>
+          <v-col cols="6">
+            <v-card style="position: relative">
+              <v-card-title style="position: relative">
+                {{ $t('CompoundForm.doses') }}
+              </v-card-title>
+              <v-btn
+                color="primary"
+                position="absolute"
+                location="top right"
+                size="x-small"
+                icon="mdi-plus"
+                @click="addDoseValue"
+              />
+              <v-card-text>
+                <v-card
+                  v-for="(doseValue, index) in form.dose_values"
+                  :key="index"
+                  class="sub-v-card"
+                >
+                  <v-card-text style="position: relative">
+                    <NumericValueWithUnitField
+                      v-model="form.dose_values[index]"
+                      :label="$t('CompoundForm.dose')"
+                      subset="Dose Unit"
+                      :initial-value="form.dose_values[index]"
+                    />
+                  </v-card-text>
+                  <v-btn
+                    color="error"
+                    position="absolute"
+                    location="top right"
+                    size="x-small"
+                    icon="mdi-delete-outline"
+                    @click="removeDoseValue(index)"
+                  />
+                </v-card>
+              </v-card-text>
+            </v-card>
+          </v-col>
+          <v-col cols="6">
+            <v-card style="position: relative">
+              <v-card-title style="position: relative">
+                {{ $t('CompoundForm.strengths') }}
+              </v-card-title>
+              <v-btn
+                color="primary"
+                position="absolute"
+                location="top right"
+                size="x-small"
+                icon="mdi-plus"
+                @click="addStrengthValue"
+              />
+              <v-card-text>
+                <v-card
+                  v-for="(strengthValue, index) in form.strength_values"
+                  :key="index"
+                  class="sub-v-card"
+                >
+                  <v-card-text style="position: relative">
+                    <NumericValueWithUnitField
+                      v-model="form.strength_values[index]"
+                      :label="$t('CompoundForm.strength')"
+                      subset="Strength Unit"
+                      :initial-value="form.strength_values[index]"
+                    />
+                  </v-card-text>
+                  <v-btn
+                    color="error"
+                    position="absolute"
+                    location="top right"
+                    size="x-small"
+                    icon="mdi-delete-outline"
+                    @click="removeStrengthValue(index)"
+                  />
+                </v-card>
+              </v-card-text>
+            </v-card>
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col cols="12">
+            <MultipleSelect
+              v-model="form.dose_frequency_uids"
+              :label="$t('CompoundForm.dosing_frequency')"
+              :items="frequencies"
+              item-title="name.sponsor_preferred_name"
+              item-value="term_uid"
+            />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col cols="12">
+            <MultipleSelect
+              v-model="form.route_of_administration_uids"
+              :label="$t('CompoundForm.route_of_administration')"
+              :items="routesOfAdmin"
+              item-title="name.sponsor_preferred_name"
+              item-value="term_uid"
+            />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col cols="12">
+            <MultipleSelect
+              v-model="form.dosage_form_uids"
+              :label="$t('CompoundForm.dosage_form')"
+              :items="dosageForms"
+              item-title="name.sponsor_preferred_name"
+              item-value="term_uid"
+            />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col cols="12">
+            <MultipleSelect
+              v-model="form.dispensers_uids"
+              :label="$t('CompoundForm.dispensed_in')"
+              :items="dispensers"
+              item-title="name.sponsor_preferred_name"
+              item-value="term_uid"
+            />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col cols="12">
+            <MultipleSelect
+              v-model="form.delivery_devices_uids"
+              :label="$t('CompoundForm.device')"
+              :items="devices"
+              item-title="name.sponsor_preferred_name"
+              item-value="term_uid"
+            />
+          </v-col>
+        </v-row>
+      </v-form>
+    </template>
+    <template #[`step.halfLife`]="{ step }">
+      <v-form :ref="`observer_${step}`">
+        <v-row>
+          <v-col cols="12">
+            <NumericValueWithUnitField
+              v-model="form.half_life"
+              :label="$t('CompoundForm.half_life')"
+              subset="Time Unit"
+              :initial-value="form.half_life"
+            />
+          </v-col>
+        </v-row>
+        <v-card style="position: relative">
+          <v-card-title style="position: relative">
+            {{ $t('CompoundForm.lag_times') }}
+          </v-card-title>
+          <v-btn
+            color="primary"
+            position="absolute"
+            location="top right"
+            size="x-small"
+            icon="mdi-plus"
+            @click="addLagTime"
+          />
+          <v-card-text>
+            <v-card
+              v-for="(lag_time, index) in form.lag_times"
+              :key="index"
+              class="sub-v-card"
+            >
+              <v-card-text style="position: relative">
+                <v-row>
+                  <v-col cols="6">
+                    <v-autocomplete
+                      v-model="form.sdtm_domains[index].uid"
+                      :label="$t('CompoundForm.sdtm_domain')"
+                      :items="adverseEvents"
+                      item-title="sponsor_preferred_name"
+                      item-value="term_uid"
+                      density="compact"
+                      clearable
+                    />
+                  </v-col>
+                  <v-col cols="6">
+                    <NumericValueWithUnitField
+                      v-model="form.lag_times[index]"
+                      :label="$t('CompoundForm.lag_time')"
+                      subset="Time Unit"
+                      :initial-value="form.lag_times[index]"
+                    />
+                  </v-col>
+                </v-row>
+              </v-card-text>
+              <v-btn
+                color="error"
+                position="absolute"
+                location="top right"
+                size="x-small"
+                icon="mdi-delete-outline"
+                @click="removeLagTime(index)"
+              />
+            </v-card>
+          </v-card-text>
+        </v-card>
+      </v-form>
+    </template>
+    <template #[`step.alias`]="{ step }">
+      <template v-if="compoundUid == null">
+        <v-form :ref="`observer_${step}`">
+          <v-row>
+            <v-col cols="12">
+              <v-text-field
+                v-model="form.alias_name"
+                :label="$t('CompoundAliasForm.name')"
+                density="compact"
+                clearable
+                :rules="[formRules.required]"
+                class="required"
+              />
+            </v-col>
+          </v-row>
+          <v-row>
+            <v-col cols="12">
+              <v-text-field
+                v-model="form.alias_name_sentence_case"
+                :label="$t('CompoundAliasForm.sentence_case_name')"
+                density="compact"
+                clearable
+                class="required"
+                :rules="[formRules.required]"
+              />
+            </v-col>
+          </v-row>
+          <v-row>
+            <v-col cols="12">
+              <YesNoField
+                v-model="form.aliasIsPreferredSynonym"
+                :label="$t('CompoundAliasForm.is_preferred_synonym')"
+                :rules="[formRules.required]"
+                class="required"
+              />
+            </v-col>
+          </v-row>
+          <v-row>
+            <v-col cols="12">
+              <v-textarea
+                v-model="form.aliasDefinition"
+                :label="$t('_global.definition')"
+                density="compact"
+                clearable
+                auto-grow
+                rows="1"
+              />
+            </v-col>
+          </v-row>
+        </v-form>
+      </template>
+      <v-row v-else>
+        <v-col cols="12">
+          <v-table>
             <thead>
               <tr class="text-left">
-                <th scope="col">{{ $t('CompoundOverview.compound_alias') }}</th>
-                <th scope="col">{{ $t('_global.definition') }}</th>
-                <th scope="col">{{ $t('CompoundOverview.preferred_alias') }}</th>
+                <th scope="col">
+                  {{ $t('CompoundOverview.compound_alias') }}
+                </th>
+                <th scope="col">
+                  {{ $t('_global.definition') }}
+                </th>
+                <th scope="col">
+                  {{ $t('CompoundOverview.preferred_alias') }}
+                </th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="alias in compoundAliases" :key="alias.uid">
                 <td>{{ alias.name }}</td>
                 <td>{{ alias.definition }}</td>
-                <td>{{ alias.is_preferred_synonym|yesno }}</td>
+                <td>{{ $filters.yesno(alias.is_preferred_synonym) }}</td>
               </tr>
             </tbody>
-          </template>
-        </v-simple-table>
-      </v-col>
-    </v-row>
-  </template>
-</horizontal-stepper-form>
+          </v-table>
+        </v-col>
+      </v-row>
+    </template>
+  </HorizontalStepperForm>
 </template>
 
 <script>
-import _isEqual from 'lodash/isEqual'
+import { computed } from 'vue'
 import brands from '@/api/brands'
-import { bus } from '@/main'
 import compounds from '@/api/concepts/compounds'
 import compoundAliases from '@/api/concepts/compoundAliases'
-import HorizontalStepperForm from '@/components/tools/HorizontalStepperForm'
+import HorizontalStepperForm from '@/components/tools/HorizontalStepperForm.vue'
 import lagTimes from '@/api/concepts/lagTimes'
 import libConstants from '@/constants/libraries'
-import { mapGetters } from 'vuex'
-import MultipleSelect from '@/components/tools/MultipleSelect'
-import NumericValueWithUnitField from '@/components/tools/NumericValueWithUnitField'
+import MultipleSelect from '@/components/tools/MultipleSelect.vue'
+import NumericValueWithUnitField from '@/components/tools/NumericValueWithUnitField.vue'
 import numericValuesWithUnit from '@/api/concepts/numericValuesWithUnit'
-import SubstanceField from './SubstanceField'
+import SubstanceField from './SubstanceField.vue'
 import terms from '@/api/controlledTerminology/terms'
-import YesNoField from '@/components/tools/YesNoField'
+import YesNoField from '@/components/tools/YesNoField.vue'
+import { useCompoundsStore } from '@/stores/library-compounds'
+import { useFormStore } from '@/stores/form'
 
 export default {
   components: {
@@ -477,13 +430,27 @@ export default {
     MultipleSelect,
     NumericValueWithUnitField,
     SubstanceField,
-    YesNoField
+    YesNoField,
   },
+  inject: ['eventBusEmit', 'formRules'],
   props: {
-    compoundUid: String,
-    formShown: Boolean
+    compoundUid: {
+      type: String,
+      default: null,
+    },
+    formShown: Boolean,
   },
-  data () {
+  emits: ['close', 'created', 'updated'],
+  setup() {
+    const compoundsStore = useCompoundsStore()
+    const formStore = useFormStore()
+    return {
+      substances: computed(() => compoundsStore.substances),
+      fetchSubstances: compoundsStore.fetchSubstances,
+      formStore,
+    }
+  },
+  data() {
     return {
       compound: null,
       adverseEvents: [],
@@ -521,7 +488,7 @@ export default {
         'CompoundForm.sdtm_domain',
         'CompoundAliasForm.name',
         'CompoundAliasForm.sentence_case_name',
-        'CompoundAliasForm.is_preferred_synonym'
+        'CompoundAliasForm.is_preferred_synonym',
       ],
       routesOfAdmin: [],
       compoundAliases: [],
@@ -529,52 +496,153 @@ export default {
         { name: 'identifiers', title: this.$t('CompoundForm.step1_title') },
         { name: 'dosingDetails', title: this.$t('CompoundForm.step2_title') },
         { name: 'halfLife', title: this.$t('CompoundForm.step4_title') },
-        { name: 'alias', title: this.$t('CompoundForm.step5_title') }
-      ]
+        { name: 'alias', title: this.$t('CompoundForm.step5_title') },
+      ],
     }
   },
   computed: {
-    ...mapGetters({
-      substances: 'compounds/substances'
-    }),
-    title () {
-      return (this.compound) ? this.$t('CompoundForm.edit_title') : this.$t('CompoundForm.add_title')
+    title() {
+      return this.compound
+        ? this.$t('CompoundForm.edit_title')
+        : this.$t('CompoundForm.add_title')
+    },
+  },
+  watch: {
+    formShown(value) {
+      if (value && this.compoundUid !== null) {
+        compounds.getObject(this.compoundUid).then((resp) => {
+          this.compound = resp.data
+        })
+      } else {
+        this.compound = null
+      }
+    },
+    compound: {
+      handler: function (value) {
+        if (value) {
+          this.form = { ...value }
+          this.form.dosage_form_uids = this.form.dosage_forms.map(
+            (item) => item.term_uid
+          )
+          this.form.dose_frequency_uids = this.form.dose_frequencies.map(
+            (item) => item.term_uid
+          )
+          this.form.route_of_administration_uids =
+            this.form.routes_of_administration.map((item) => item.term_uid)
+          this.form.dispensers_uids = this.form.dispensers.map(
+            (item) => item.term_uid
+          )
+          this.form.delivery_devices_uids = this.form.delivery_devices.map(
+            (item) => item.term_uid
+          )
+          for (const field of ['dose_values', 'strength_values', 'lag_times']) {
+            if (!this.form[field].length) {
+              this.form[field] = [{}]
+            }
+          }
+          this.form.sdtm_domains = []
+          if (this.form.lag_times.length) {
+            for (const lagTime of this.form.lag_times) {
+              this.form.sdtm_domains.push({ uid: lagTime.sdtm_domain_uid })
+            }
+          } else {
+            this.form.sdtm_domains.push({})
+          }
+          if (!this.form.substances || !this.form.substances.length) {
+            this.form.substances = [{}]
+          }
+          if (this.substances.length) {
+            this.transformSubstances()
+          }
+
+          const params = {
+            filters: {
+              compound_uid: { v: [value.uid] },
+            },
+          }
+          compoundAliases.getFiltered(params).then((resp) => {
+            this.compoundAliases = resp.data.items
+          })
+        }
+      },
+      immediate: true,
+    },
+    'form.name'(value) {
+      if (value && !this.compound) {
+        this.form.alias_name = value
+      }
+    },
+    'form.alias_name'(value) {
+      if (value) {
+        this.form.alias_name_sentence_case = value.toLowerCase()
+      }
+    },
+  },
+  mounted() {
+    if (this.compoundUid !== null) {
+      compounds.getObject(this.compoundUid).then((resp) => {
+        this.compound = resp.data
+      })
     }
+    this.fetchSubstances().then(() => {
+      this.transformSubstances()
+    })
+    terms.getByCodelist('frequency', true).then((resp) => {
+      this.frequencies = resp.data.items
+    })
+    terms.getByCodelist('routeOfAdministration', true).then((resp) => {
+      this.routesOfAdmin = resp.data.items
+    })
+    terms.getByCodelist('dosageForm', true).then((resp) => {
+      this.dosageForms = resp.data.items
+    })
+    terms.getByCodelist('dispensedIn', true).then((resp) => {
+      this.dispensers = resp.data.items
+    })
+    terms.getByCodelist('deliveryDevice', true).then((resp) => {
+      this.devices = resp.data.items
+    })
+    terms.getByCodelist('adverseEvents', true).then((resp) => {
+      this.adverseEvents = resp.data.items
+    })
+    brands.getAll().then((resp) => {
+      this.brands = resp.data
+    })
   },
   methods: {
-    addDoseValue () {
+    addDoseValue() {
       this.form.dose_values.push({})
     },
-    removeDoseValue (index) {
+    removeDoseValue(index) {
       this.form.dose_values.splice(index, 1)
     },
-    addLagTime () {
+    addLagTime() {
       this.form.lag_times.push({})
       this.form.sdtm_domains.push({})
     },
-    removeLagTime (index) {
+    removeLagTime(index) {
       this.form.lag_times.splice(index, 1)
       this.form.sdtm_domains.splice(index, 1)
     },
-    addStrengthValue () {
+    addStrengthValue() {
       this.form.strength_values.push({})
     },
-    removeStrengthValue (index) {
+    removeStrengthValue(index) {
       this.form.strength_values.splice(index, 1)
     },
-    addSubstance () {
+    addSubstance() {
       this.form.substances.push({})
     },
-    removeSubstance (index) {
+    removeSubstance(index) {
       this.form.substances.splice(index, 1)
     },
-    close () {
+    close() {
       this.$emit('close')
       this.form = this.getInitialForm()
       this.$refs.stepper.reset()
-      this.$store.commit('form/CLEAR_FORM')
+      this.formStore.reset()
     },
-    getInitialForm () {
+    getInitialForm() {
       return {
         is_sponsor_compound: true,
         dose_values: [{}],
@@ -583,13 +651,13 @@ export default {
         sdtm_domains: [{}],
         strength_values: [{}],
         substances: [{}],
-        alias: {}
+        alias: {},
       }
     },
-    getObserver (step) {
+    getObserver(step) {
       return this.$refs[`observer_${step}`]
     },
-    async addCompound (data) {
+    async addCompound(data) {
       data.library_name = libConstants.LIBRARY_SPONSOR
       const createdCompound = await compounds.create(data)
 
@@ -609,20 +677,26 @@ export default {
       }
 
       this.$emit('created')
-      bus.$emit('notification', { msg: this.$t('CompoundForm.add_success'), type: 'success' })
+      this.eventBusEmit('notification', {
+        msg: this.$t('CompoundForm.add_success'),
+        type: 'success',
+      })
     },
-    async updateCompound (data) {
+    async updateCompound(data) {
       data.change_description = this.$t('_global.work_in_progress')
       await compounds.update(this.compound.uid, data)
       this.$emit('updated')
-      bus.$emit('notification', { msg: this.$t('CompoundForm.update_success'), type: 'success' })
+      this.eventBusEmit('notification', {
+        msg: this.$t('CompoundForm.update_success'),
+        type: 'success',
+      })
     },
-    async createNumericValue (item) {
+    async createNumericValue(item) {
       item.library_name = libConstants.LIBRARY_SPONSOR
       const resp = await numericValuesWithUnit.create(item)
       return resp.data.uid
     },
-    async createNumericValues (items) {
+    async createNumericValues(items) {
       const result = []
       for (const item of items) {
         if (item.value && item.unit_definition_uid) {
@@ -631,15 +705,18 @@ export default {
       }
       return result
     },
-    async createLagTime (item) {
+    async createLagTime(item) {
       item.library_name = libConstants.LIBRARY_SPONSOR
       const resp = await lagTimes.create(item)
       return resp.data.uid
     },
-    async submit () {
-      if (this.$store.getters['form/form'] === '' || _isEqual(this.$store.getters['form/form'], JSON.stringify(this.form))) {
+    async submit() {
+      if (this.formStore.isEmpty || this.formStore.isEqual(this.form)) {
         this.close()
-        bus.$emit('notification', { type: 'info', msg: this.$t('_global.no_changes') })
+        this.eventBusEmit('notification', {
+          type: 'info',
+          msg: this.$t('_global.no_changes'),
+        })
         return
       }
       const data = { ...this.form }
@@ -653,7 +730,9 @@ export default {
       delete data.substances
       data.dose_values_uids = await this.createNumericValues(data.dose_values)
       delete data.dose_values
-      data.strength_values_uids = await this.createNumericValues(data.strength_values)
+      data.strength_values_uids = await this.createNumericValues(
+        data.strength_values
+      )
       delete data.strength_values
       if (data.half_life) {
         if (data.half_life.value && data.half_life.unit_definition_uid) {
@@ -663,14 +742,18 @@ export default {
       }
       data.lag_times_uids = []
       for (const [index, item] of data.lag_times.entries()) {
-        if (item.value && item.unit_definition_uid && this.form.sdtm_domains[index].uid) {
+        if (
+          item.value &&
+          item.unit_definition_uid &&
+          this.form.sdtm_domains[index].uid
+        ) {
           item.sdtm_domain_uid = this.form.sdtm_domains[index].uid
           data.lag_times_uids.push(await this.createLagTime(item))
         }
       }
       delete data.lag_times
       if (data.brands) {
-        data.brands_uids = data.brands.map(item => item.uid)
+        data.brands_uids = data.brands.map((item) => item.uid)
         delete data.brands
       }
       try {
@@ -684,105 +767,14 @@ export default {
         this.$refs.stepper.loading = false
       }
     },
-    transformSubstances () {
-      this.$set(this.form, 'substances', this.form.substances.map(substance => {
-        return this.substances.find(item => item.term_uid === substance.substance_term_uid)
-      }))
-    }
-  },
-  mounted () {
-    if (this.compoundUid !== null) {
-      compounds.getObject(this.compoundUid).then(resp => {
-        this.compound = resp.data
+    transformSubstances() {
+      this.form.substances = this.form.substances.map((substance) => {
+        return this.substances.find(
+          (item) => item.term_uid === substance.substance_term_uid
+        )
       })
-    }
-    this.$store.dispatch('compounds/fetchSubstances').then(() => {
-      this.transformSubstances()
-    })
-    terms.getByCodelist('frequency', true).then(resp => {
-      this.frequencies = resp.data.items
-    })
-    terms.getByCodelist('routeOfAdministration', true).then(resp => {
-      this.routesOfAdmin = resp.data.items
-    })
-    terms.getByCodelist('dosageForm', true).then(resp => {
-      this.dosageForms = resp.data.items
-    })
-    terms.getByCodelist('dispensedIn', true).then(resp => {
-      this.dispensers = resp.data.items
-    })
-    terms.getByCodelist('deliveryDevice', true).then(resp => {
-      this.devices = resp.data.items
-    })
-    terms.getByCodelist('adverseEvents', true).then(resp => {
-      this.adverseEvents = resp.data.items
-    })
-    brands.getAll().then(resp => {
-      this.brands = resp.data
-    })
+    },
   },
-  watch: {
-    formShown (value) {
-      if (value && this.compoundUid !== null) {
-        compounds.getObject(this.compoundUid).then(resp => {
-          this.compound = resp.data
-        })
-      } else {
-        this.compound = null
-      }
-    },
-    compound: {
-      handler: function (value) {
-        if (value) {
-          this.form = { ...value }
-          this.form.dosage_form_uids = this.form.dosage_forms.map(item => item.term_uid)
-          this.form.dose_frequency_uids = this.form.dose_frequencies.map(item => item.term_uid)
-          this.form.route_of_administration_uids = this.form.routes_of_administration.map(item => item.term_uid)
-          this.form.dispensers_uids = this.form.dispensers.map(item => item.term_uid)
-          this.form.delivery_devices_uids = this.form.delivery_devices.map(item => item.term_uid)
-          for (const field of ['dose_values', 'strength_values', 'lag_times']) {
-            if (!this.form[field].length) {
-              this.form[field] = [{}]
-            }
-          }
-          this.form.sdtm_domains = []
-          if (this.form.lag_times.length) {
-            for (const lagTime of this.form.lag_times) {
-              this.form.sdtm_domains.push({ uid: lagTime.sdtm_domain_uid })
-            }
-          } else {
-            this.form.sdtm_domains.push({})
-          }
-          if (!this.form.substances || !this.form.substances.length) {
-            this.$set(this.form, 'substances', [{}])
-          }
-          if (this.substances.length) {
-            this.transformSubstances()
-          }
-
-          const params = {
-            filters: {
-              compound_uid: { v: [value.uid] }
-            }
-          }
-          compoundAliases.getFiltered(params).then(resp => {
-            this.compoundAliases = resp.data.items
-          })
-        }
-      },
-      immediate: true
-    },
-    'form.name' (value) {
-      if (value && !this.compound) {
-        this.$set(this.form, 'alias_name', value)
-      }
-    },
-    'form.alias_name' (value) {
-      if (value) {
-        this.$set(this.form, 'alias_name_sentence_case', value.toLowerCase())
-      }
-    }
-  }
 }
 </script>
 

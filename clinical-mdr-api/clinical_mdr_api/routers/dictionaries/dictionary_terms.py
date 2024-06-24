@@ -1,14 +1,14 @@
 """DictionaryTerms router."""
 from typing import Any
 
-from fastapi import APIRouter, Body, Depends, Path, Query, Response, status
+from fastapi import APIRouter, Body, Path, Query, Response, status
 from pydantic.types import Json
 from starlette.requests import Request
 
 from clinical_mdr_api import config, models
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.oauth import get_current_user_id, rbac
+from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.dictionaries.dictionary_term_generic_service import (
@@ -97,9 +97,8 @@ def get_terms(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    dictionary_term_service = DictionaryTermGenericService(user=current_user_id)
+    dictionary_term_service = DictionaryTermGenericService()
     results = dictionary_term_service.get_all_dictionary_terms(
         codelist_uid=codelist_uid,
         sort_by=sort_by,
@@ -131,7 +130,6 @@ def get_terms(
     },
 )
 def get_distinct_values_for_header(
-    current_user_id: str = Depends(get_current_user_id),
     codelist_uid: str = Query(
         ..., description="The unique id of the DictionaryCodelist"
     ),
@@ -148,7 +146,7 @@ def get_distinct_values_for_header(
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
 ):
-    dictionary_term_service = DictionaryTermGenericService(user=current_user_id)
+    dictionary_term_service = DictionaryTermGenericService()
     return dictionary_term_service.get_distinct_values_for_header(
         codelist_uid=codelist_uid,
         field_name=field_name,
@@ -185,9 +183,8 @@ def create(
     dictionary_term_input: models.DictionaryTermCreateInput = Body(
         description="Properties to create DictionaryTermValue node."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    dictionary_term_service = DictionaryTermGenericService(user=current_user_id)
+    dictionary_term_service = DictionaryTermGenericService()
     return dictionary_term_service.create(dictionary_term_input)
 
 
@@ -215,10 +212,8 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_codelists(
-    uid: str = DictionaryTermUID, current_user_id: str = Depends(get_current_user_id)
-):
-    dictionary_term_service = DictionaryTermGenericService(user=current_user_id)
+def get_codelists(uid: str = DictionaryTermUID):
+    dictionary_term_service = DictionaryTermGenericService()
     return dictionary_term_service.get_by_uid(term_uid=uid)
 
 
@@ -250,10 +245,8 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_versions(
-    uid: str = DictionaryTermUID, current_user_id: str = Depends(get_current_user_id)
-):
-    dictionary_term_service = DictionaryTermGenericService(user=current_user_id)
+def get_versions(uid: str = DictionaryTermUID):
+    dictionary_term_service = DictionaryTermGenericService()
     return dictionary_term_service.get_version_history(term_uid=uid)
 
 
@@ -305,9 +298,8 @@ def edit(
     dictionary_term_input: models.DictionaryTermEditInput = Body(
         description="The new parameter terms for the dictionary term including the change description.",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    dictionary_term_service = DictionaryTermGenericService(user=current_user_id)
+    dictionary_term_service = DictionaryTermGenericService()
     return dictionary_term_service.edit_draft(
         term_uid=uid, term_input=dictionary_term_input
     )
@@ -353,10 +345,8 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def create_new_version(
-    uid: str = DictionaryTermUID, current_user_id: str = Depends(get_current_user_id)
-):
-    dictionary_term_service = DictionaryTermGenericService(user=current_user_id)
+def create_new_version(uid: str = DictionaryTermUID):
+    dictionary_term_service = DictionaryTermGenericService()
     return dictionary_term_service.create_new_version(term_uid=uid)
 
 
@@ -399,10 +389,8 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def approve(
-    uid: str = DictionaryTermUID, current_user_id: str = Depends(get_current_user_id)
-):
-    dictionary_term_service = DictionaryTermGenericService(user=current_user_id)
+def approve(uid: str = DictionaryTermUID):
+    dictionary_term_service = DictionaryTermGenericService()
     return dictionary_term_service.approve(term_uid=uid)
 
 
@@ -444,10 +432,8 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def inactivate(
-    uid: str = DictionaryTermUID, current_user_id: str = Depends(get_current_user_id)
-):
-    dictionary_term_service = DictionaryTermGenericService(user=current_user_id)
+def inactivate(uid: str = DictionaryTermUID):
+    dictionary_term_service = DictionaryTermGenericService()
     return dictionary_term_service.inactivate_final(term_uid=uid)
 
 
@@ -489,10 +475,8 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def reactivate(
-    uid: str = DictionaryTermUID, current_user_id: str = Depends(get_current_user_id)
-):
-    dictionary_term_service = DictionaryTermGenericService(user=current_user_id)
+def reactivate(uid: str = DictionaryTermUID):
+    dictionary_term_service = DictionaryTermGenericService()
     return dictionary_term_service.reactivate_retired(term_uid=uid)
 
 
@@ -532,10 +516,8 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def delete_ct_term(
-    uid: str = DictionaryTermUID, current_user_id: str = Depends(get_current_user_id)
-):
-    dictionary_term_service = DictionaryTermGenericService(user=current_user_id)
+def delete_ct_term(uid: str = DictionaryTermUID):
+    dictionary_term_service = DictionaryTermGenericService()
     dictionary_term_service.soft_delete(term_uid=uid)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
@@ -566,9 +548,8 @@ def create_substance(
     dictionary_term_input: models.DictionaryTermSubstanceCreateInput = Body(
         description="Properties to create DictionaryTermValue node."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    dictionary_term_service = DictionaryTermSubstanceService(user=current_user_id)
+    dictionary_term_service = DictionaryTermSubstanceService()
     return dictionary_term_service.create(dictionary_term_input)
 
 
@@ -596,10 +577,8 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_substance_by_id(
-    uid: str = DictionaryTermUID, current_user_id: str = Depends(get_current_user_id)
-):
-    dictionary_term_service = DictionaryTermSubstanceService(user=current_user_id)
+def get_substance_by_id(uid: str = DictionaryTermUID):
+    dictionary_term_service = DictionaryTermSubstanceService()
     return dictionary_term_service.get_by_uid(term_uid=uid)
 
 
@@ -644,9 +623,8 @@ def get_substances(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    dictionary_term_service = DictionaryTermSubstanceService(user=current_user_id)
+    dictionary_term_service = DictionaryTermSubstanceService()
     results = dictionary_term_service.get_all_dictionary_terms(
         codelist_name=config.LIBRARY_SUBSTANCES_CODELIST_NAME,
         sort_by=sort_by,
@@ -707,9 +685,8 @@ def edit_substance(
     dictionary_term_input: models.DictionaryTermSubstanceEditInput = Body(
         description="The new parameter terms for the dictionary term including the change description.",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    dictionary_term_service = DictionaryTermSubstanceService(user=current_user_id)
+    dictionary_term_service = DictionaryTermSubstanceService()
     return dictionary_term_service.edit_draft(
         term_uid=uid, term_input=dictionary_term_input
     )

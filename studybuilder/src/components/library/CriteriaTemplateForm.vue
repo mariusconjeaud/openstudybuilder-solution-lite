@@ -1,87 +1,104 @@
 <template data-cy="template-text-part">
-<base-template-form
-  object-type="criteria"
-  :template="template"
-  :load-form-function="loadForm"
-  :prepare-payload-function="preparePayload"
-  :help-items="helpItems"
-  :title-context="{ type: criteriaType.sponsor_preferred_name }"
-  data-cy="template-text"
-  v-bind="$attrs"
-  v-on="$listeners"
+  <BaseTemplateForm
+    object-type="criteria"
+    :template="template"
+    :load-form-function="loadForm"
+    :prepare-payload-function="preparePayload"
+    :prepare-indexing-payload-function="prepareIndexingPayload"
+    :help-items="helpItems"
+    :title-context="{ type: criteriaType.sponsor_preferred_name }"
+    data-cy="template-text"
+    v-bind="$attrs"
   >
-  <template v-slot:extraFields="{ form }">
-    <validation-observer ref="observer">
+    <template #extraFields="{ form }">
       <v-row>
         <v-col cols="11">
-          <vue-editor
-            ref="editor"
+          <QuillEditor
             id="editor"
+            ref="editor"
+            v-model:content="form.guidance_text"
             data-cy="template-guidance-text"
-            v-model="form.guidance_text"
-            :editor-toolbar="customToolbar"
+            content-type="html"
+            :toolbar="customToolbar"
             :placeholder="$t('CriteriaTemplateForm.guidance_text')"
             class="pt-4"
-            />
+          />
         </v-col>
       </v-row>
-    </validation-observer>
-  </template>
-  <template v-slot:indexingTab="{ form }">
-    <criteria-template-indexing-form
-      ref="indexingForm"
-      :form="form"
-      :template="template"
+    </template>
+    <template #indexingTab="{ form }">
+      <CriteriaTemplateIndexingForm
+        ref="indexingForm"
+        :form="form"
+        :template="template"
       />
-  </template>
-</base-template-form>
+    </template>
+  </BaseTemplateForm>
 </template>
 
 <script>
-import BaseTemplateForm from './BaseTemplateForm'
-import CriteriaTemplateIndexingForm from './CriteriaTemplateIndexingForm'
-import { VueEditor } from 'vue2-editor'
+import BaseTemplateForm from './BaseTemplateForm.vue'
+import CriteriaTemplateIndexingForm from './CriteriaTemplateIndexingForm.vue'
+import { QuillEditor } from '@vueup/vue-quill'
+import '@vueup/vue-quill/dist/vue-quill.snow.css'
+import { useFormStore } from '@/stores/form'
 
 export default {
   components: {
     BaseTemplateForm,
     CriteriaTemplateIndexingForm,
-    VueEditor
+    QuillEditor,
   },
   props: {
-    template: Object,
-    criteriaType: Object
+    template: {
+      type: Object,
+      default: null,
+    },
+    criteriaType: {
+      type: Object,
+      default: null,
+    },
   },
-  data () {
+  setup() {
+    const formStore = useFormStore()
+    return {
+      formStore,
+    }
+  },
+  data() {
     return {
       customToolbar: [
         ['bold', 'italic', 'underline'],
         [{ script: 'sub' }, { script: 'super' }],
-        [{ list: 'ordered' }, { list: 'bullet' }]
+        [{ list: 'ordered' }, { list: 'bullet' }],
       ],
       helpItems: [
         'CriteriaTemplateForm.guidance_text',
         'CriteriaTemplateForm.indication',
         'CriteriaTemplateForm.criterion_cat',
-        'CriteriaTemplateForm.criterion_sub_cat'
-      ]
+        'CriteriaTemplateForm.criterion_sub_cat',
+      ],
     }
   },
   methods: {
-    loadForm (form) {
+    loadForm(form) {
       form.guidance_text = this.template.guidance_text
       if (this.template.categories && this.template.categories.length) {
-        this.$set(form, 'categories', this.template.categories)
+        form.categories = this.template.categories
       }
       if (this.template.sub_categories && this.template.sub_categories.length) {
-        this.$set(form, 'sub_categories', this.template.sub_categories)
+        form.sub_categories = this.template.sub_categories
       }
-      this.$store.commit('form/SET_FORM', form)
+      this.formStore.save(form)
     },
-    preparePayload (payload) {
+    preparePayload(payload) {
       payload.type_uid = this.criteriaType.term_uid
-      Object.assign(payload, this.$refs.indexingForm.preparePayload(payload))
-    }
-  }
+    },
+    prepareIndexingPayload(payload) {
+      if (this.$refs.indexingForm) {
+        Object.assign(payload, this.$refs.indexingForm.preparePayload(payload))
+      }
+    },
+  },
 }
 </script>

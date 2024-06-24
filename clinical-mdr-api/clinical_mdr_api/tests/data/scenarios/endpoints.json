@@ -142,7 +142,7 @@
                 "status": "Draft",
                 "study_count": null,
                 "uid": "64b411b1-b022-4b95-8b9b-52c300d6f988",
-                "user_initials": "TEST_USER",
+                "user_initials": "unknown-user",
                 "version": "0.1"
             }
         }
@@ -220,7 +220,7 @@
                 "status": "Draft",
                 "study_count": null,
                 "uid": "64b411b1-b022-4b95-8b9b-52c300d6f988",
-                "user_initials": "TEST_USER",
+                "user_initials": "unknown-user",
                 "version": "0.1"
             }
         }

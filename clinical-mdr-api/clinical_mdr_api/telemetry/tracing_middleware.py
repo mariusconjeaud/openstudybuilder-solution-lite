@@ -18,6 +18,12 @@ from starlette.responses import Response
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 from starlette_context import context
 
+from clinical_mdr_api import config
+from clinical_mdr_api.telemetry.request_metrics import (
+    include_request_metrics,
+    init_request_metrics,
+)
+
 TRACE_RESPONSE_HEADER_NAME = "traceresponse"
 
 log = logging.getLogger(__name__)
@@ -39,6 +45,8 @@ class TracingMiddleware:
         self.sampler = sampler or AlwaysOnSampler()
         self.exporter = exporter or PrintExporter()
         self.propagator = propagator or TraceContextPropagator()
+
+        log.info("Initializing TracingMiddleware")
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] not in ("http", "websocket"):  # pragma: no cover
@@ -80,20 +88,50 @@ class TracingMiddleware:
             propagator=self.propagator,
         )
 
+        init_request_metrics()
+
+        request_body = None
+        request_body_size = 0
+
+        async def _receive() -> Message:
+            """Saves the first portion of request body and counts the total size of response body"""
+
+            nonlocal request_body, request_body_size
+
+            message = await receive()
+
+            if message.get("type") == "http.request":
+                if (body := message.get("body")) is not None:
+                    request_body_size += len(body)
+
+                    if not request_body and config.TRACE_REQUEST_BODY:
+                        request_body = body[: config.TRACE_REQUEST_BODY_TRUNCATE_BYTES]
+
+            return message
+
+        span: Span
+
+        async def _send(message: Message) -> None:
+            if message["type"] == "http.response.start":
+                self.add_traceresponse_header(message)
+                self.log_access(scope, message)
+                self.add_attributes_form_request_body(
+                    request_size=request_body_size,
+                    request_body=request_body,
+                    status_code=message.get("status", 0),
+                )
+                self.add_attributes_from_response(message, span)
+
+                include_request_metrics(span)
+
+            await send(message)
+
         with tracer.span(f"{scope.get('method')} {scope.get('path')}") as span:
             span.span_kind = SpanKind.SERVER
 
             self.add_attributes_form_request_scope(span, scope, headers=headers)
 
-            async def send_wrapped(message: Message) -> None:
-                if message["type"] == "http.response.start":
-                    self.add_traceresponse_header(message)
-                    self.log_access(scope, message)
-                    self.add_attributes_from_response(message, tracer)
-
-                await send(message)
-
-            await self.app(scope, receive, send_wrapped)
+            await self.app(scope, _receive, _send)
 
     @staticmethod
     def add_attributes_form_request_scope(
@@ -139,13 +177,33 @@ class TracingMiddleware:
             span.add_attribute("ai.device.ip", client[0])
 
     @staticmethod
+    def add_attributes_form_request_body(
+        request_size: int | None = None,
+        request_body: bytes | None = None,
+        status_code: int = 0,
+    ) -> None:
+        """Adds information collected from request body to current tracing span."""
+
+        if span := execution_context.get_current_span():
+            if request_size is not None:
+                span.add_attribute(COMMON_ATTRIBUTES["HTTP_REQUEST_SIZE"], request_size)
+
+            if (
+                config.TRACE_REQUEST_BODY
+                and status_code >= config.TRACE_REQUEST_BODY_MIN_STATUS_CODE
+                and request_body is not None
+            ):
+                request_body = request_body.decode("utf-8", errors="replace")
+                span.add_attribute("http.request_body", request_body)
+
+    @staticmethod
     def add_attributes_from_response(
-        response: Response | Message, tracer: Tracer | None = None
+        response: Response | Message, span: Span | None = None
     ) -> None:
         """Adds attributes and properties to the current tracing span from the response and request state"""
 
-        if not tracer:
-            tracer = execution_context.get_opencensus_tracer()
+        if not span:
+            span = execution_context.get_current_span()
 
         if isinstance(response, Response):
             headers = response.headers
@@ -155,20 +213,16 @@ class TracingMiddleware:
             status_code = response.get("status")
 
         # noinspection PyTypeChecker
-        tracer.add_attribute_to_current_span(
-            COMMON_ATTRIBUTES["HTTP_STATUS_CODE"], int(status_code)
-        )
+        span.add_attribute(COMMON_ATTRIBUTES["HTTP_STATUS_CODE"], int(status_code))
 
         content_length = headers.get("content-length")
         if content_length is not None:
-            tracer.add_attribute_to_current_span(
-                COMMON_ATTRIBUTES["HTTP_RESPONSE_SIZE"], content_length
-            )
+            span.add_attribute(COMMON_ATTRIBUTES["HTTP_RESPONSE_SIZE"], content_length)
 
         content_type = headers.get("content-type")
         if content_type:
             content_type = content_type.split(";", 1)[0]
-            tracer.add_attribute_to_current_span("http.content_type", content_type)
+            span.add_attribute("http.content_type", content_type)
 
     @staticmethod
     def log_access(scope: Scope, response: Response | Message) -> None:

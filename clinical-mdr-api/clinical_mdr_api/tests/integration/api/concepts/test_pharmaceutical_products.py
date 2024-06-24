@@ -93,7 +93,7 @@ def test_data():
     active_substances_all.append(
         TestUtils.create_active_substance(
             unii_term_uid=dictionary_term_unii.term_uid,
-            prodex_id="prodex_id_a",
+            external_id="external_id_a",
             analyte_number="analyte A",
             short_number="short number A",
             long_number="long number A",
@@ -110,14 +110,14 @@ def test_data():
 
     # Create some pharmaceutical products
     ingredient_1 = {
-        "prodex_id": "ingredient-prodex-id-a",
+        "external_id": "ingredient-prodex-id-a",
         "active_substance_uid": active_substances_all[0].uid,
         "strength_uid": strength.uid,
         "half_life_uid": half_life.uid,
         "lag_time_uids": [lag_time.uid],
     }
     ingredient_2 = {
-        "prodex_id": "ingredient-prodex-id-b",
+        "external_id": "ingredient-prodex-id-b",
         "active_substance_uid": active_substances_all[1].uid,
         "strength_uid": strength.uid,
         "half_life_uid": half_life.uid,
@@ -125,7 +125,7 @@ def test_data():
     }
 
     formulation_1 = {
-        "prodex_id": "formulation-prodex-id-a",
+        "external_id": "formulation-prodex-id-a",
         "name": "formulation-name-a",
         "ingredients": [ingredient_1, ingredient_2],
     }
@@ -133,7 +133,7 @@ def test_data():
     pharmaceutical_products_all = []
     pharmaceutical_products_all.append(
         TestUtils.create_pharmaceutical_product(
-            prodex_id="prodex_id_a",
+            external_id="external_id_a",
             dosage_form_uids=[ct_term_dose_form.term_uid],
             route_of_administration_uids=[ct_term_roa.term_uid],
             formulations=[formulation_1],
@@ -141,7 +141,7 @@ def test_data():
     )
     pharmaceutical_products_all.append(
         TestUtils.create_pharmaceutical_product(
-            prodex_id="prodex_id_b",
+            external_id="external_id_b",
             dosage_form_uids=[ct_term_dose_form.term_uid],
             route_of_administration_uids=[ct_term_roa.term_uid],
             formulations=[formulation_1],
@@ -149,30 +149,30 @@ def test_data():
     )
 
     pharmaceutical_products_all.append(
-        TestUtils.create_pharmaceutical_product(prodex_id="prodex_id_AAA")
+        TestUtils.create_pharmaceutical_product(external_id="external_id_AAA")
     )
     pharmaceutical_products_all.append(
-        TestUtils.create_pharmaceutical_product(prodex_id="prodex_id_BBB")
+        TestUtils.create_pharmaceutical_product(external_id="external_id_BBB")
     )
 
     for index in range(5):
         pharmaceutical_product_a = TestUtils.create_pharmaceutical_product(
-            prodex_id=f"prodex_id_AAA_{index}"
+            external_id=f"external_id_AAA_{index}"
         )
         pharmaceutical_products_all.append(pharmaceutical_product_a)
 
         pharmaceutical_product_b = TestUtils.create_pharmaceutical_product(
-            prodex_id=f"prodex_id_BBB_{index}"
+            external_id=f"external_id_BBB_{index}"
         )
         pharmaceutical_products_all.append(pharmaceutical_product_b)
 
         pharmaceutical_product_c = TestUtils.create_pharmaceutical_product(
-            prodex_id=f"prodex_id_XXX_{index}"
+            external_id=f"external_id_XXX_{index}"
         )
         pharmaceutical_products_all.append(pharmaceutical_product_c)
 
         pharmaceutical_product_d = TestUtils.create_pharmaceutical_product(
-            prodex_id=f"prodex_id_YYY_{index}"
+            external_id=f"external_id_YYY_{index}"
         )
         pharmaceutical_products_all.append(pharmaceutical_product_d)
 
@@ -189,7 +189,7 @@ PHARMACEUTICAL_PRODUCT_FIELDS_ALL = [
     "change_description",
     "user_initials",
     "possible_actions",
-    "prodex_id",
+    "external_id",
     "dosage_forms",
     "routes_of_administration",
     "formulations",
@@ -219,7 +219,7 @@ def test_get_pharmaceutical_product(api_client):
         assert res[key] is not None
 
     assert res["uid"] == pharmaceutical_products_all[0].uid
-    assert res["prodex_id"] == "prodex_id_a"
+    assert res["external_id"] == "external_id_a"
     assert res["routes_of_administration"][0]["term_uid"] == ct_term_roa.term_uid
     assert (
         res["routes_of_administration"][0]["name"] == ct_term_roa.sponsor_preferred_name
@@ -227,16 +227,16 @@ def test_get_pharmaceutical_product(api_client):
     assert res["dosage_forms"][0]["term_uid"] == ct_term_dose_form.term_uid
     assert res["dosage_forms"][0]["name"] == ct_term_dose_form.sponsor_preferred_name
 
-    assert res["formulations"][0]["prodex_id"] == "formulation-prodex-id-a"
+    assert res["formulations"][0]["external_id"] == "formulation-prodex-id-a"
     assert res["formulations"][0]["name"] == "formulation-name-a"
 
     ingr_1 = res["formulations"][0]["ingredients"][0]
     ingr_2 = res["formulations"][0]["ingredients"][1]
 
-    assert ingr_1["prodex_id"] == "ingredient-prodex-id-a"
+    assert ingr_1["external_id"] == "ingredient-prodex-id-a"
     assert ingr_1["active_substance"]["uid"] == active_substances_all[0].uid
 
-    assert ingr_2["prodex_id"] == "ingredient-prodex-id-b"
+    assert ingr_2["external_id"] == "ingredient-prodex-id-b"
     assert ingr_2["active_substance"]["uid"] == active_substances_all[1].uid
 
     for ingredient in res["formulations"][0]["ingredients"]:
@@ -275,7 +275,7 @@ def test_update_pharmaceutical_product_property(api_client):
 
     assert response.status_code == 200
     assert res["uid"] == pharmaceutical_products_all[0].uid
-    assert res["prodex_id"] == pharmaceutical_products_all[0].prodex_id
+    assert res["external_id"] == pharmaceutical_products_all[0].external_id
     assert res["routes_of_administration"][0]["term_uid"] == ct_term_roa.term_uid
     assert (
         res["routes_of_administration"][0]["name"] == ct_term_roa.sponsor_preferred_name
@@ -300,7 +300,7 @@ def test_update_pharmaceutical_product_property(api_client):
 
     assert response.status_code == 200
     assert res["uid"] == pharmaceutical_products_all[0].uid
-    assert res["prodex_id"] == pharmaceutical_products_all[0].prodex_id
+    assert res["external_id"] == pharmaceutical_products_all[0].external_id
     assert res["routes_of_administration"][0]["term_uid"] == ct_term_roa.term_uid
     assert (
         res["routes_of_administration"][0]["name"] == ct_term_roa.sponsor_preferred_name
@@ -312,14 +312,14 @@ def test_update_pharmaceutical_product_property(api_client):
     assert res["status"] == "Draft"
     assert list(res["possible_actions"]) == ["approve", "delete", "edit"]
 
-    # Update prodex_id
-    prodex_id_new = f"{pharmaceutical_products_all[0].prodex_id}-updated"
+    # Update external_id
+    external_id_new = f"{pharmaceutical_products_all[0].external_id}-updated"
     payload = {
-        "prodex_id": prodex_id_new,
+        "external_id": external_id_new,
         "dosage_form_uids": [ct_term_dose_form.term_uid],
         "route_of_administration_uids": [ct_term_roa.term_uid],
         "formulations": [formulation_1],
-        "change_description": "prodex_id updated",
+        "change_description": "external_id updated",
     }
     response = api_client.patch(
         f"/concepts/pharmaceutical-products/{pharmaceutical_products_all[0].uid}",
@@ -331,7 +331,7 @@ def test_update_pharmaceutical_product_property(api_client):
     assert response.status_code == 200
 
     assert res["uid"] == pharmaceutical_products_all[0].uid
-    assert res["prodex_id"] == prodex_id_new
+    assert res["external_id"] == external_id_new
     assert res["routes_of_administration"][0]["term_uid"] == ct_term_roa.term_uid
     assert (
         res["routes_of_administration"][0]["name"] == ct_term_roa.sponsor_preferred_name
@@ -346,10 +346,10 @@ def test_update_pharmaceutical_product_property(api_client):
     TestUtils.assert_timestamp_is_in_utc_zone(res["start_date"])
     TestUtils.assert_timestamp_is_newer_than(res["start_date"], 60)
 
-    # Nullify prodex_id
+    # Nullify external_id
     payload = {
-        "prodex_id": None,
-        "change_description": "prodex_id set to null",
+        "external_id": None,
+        "change_description": "external_id set to null",
     }
     response = api_client.patch(
         f"/concepts/pharmaceutical-products/{pharmaceutical_products_all[0].uid}",
@@ -361,7 +361,7 @@ def test_update_pharmaceutical_product_property(api_client):
     assert response.status_code == 200
 
     assert res["uid"] == pharmaceutical_products_all[0].uid
-    assert res["prodex_id"] is None
+    assert res["external_id"] is None
     assert res["routes_of_administration"][0]["term_uid"] == ct_term_roa.term_uid
     assert (
         res["routes_of_administration"][0]["name"] == ct_term_roa.sponsor_preferred_name
@@ -399,7 +399,7 @@ def test_update_pharmaceutical_product_roa(api_client):
     assert response.status_code == 200
 
     assert res["uid"] == pharmaceutical_products_all[1].uid
-    assert res["prodex_id"] == "prodex_id_b"
+    assert res["external_id"] == "external_id_b"
     assert res["routes_of_administration"][0]["term_uid"] == ct_term_roa_new.term_uid
     assert (
         res["routes_of_administration"][0]["name"]
@@ -508,14 +508,14 @@ def test_get_pharmaceutical_product_versioning(api_client):
 
 def test_get_pharmaceutical_products_pagination(api_client):
     results_paginated: dict = {}
-    sort_by = '{"prodex_id": true}'
+    sort_by = '{"external_id": true}'
     for page_number in range(1, 4):
         url = f"/concepts/pharmaceutical-products?page_number={page_number}&page_size=10&sort_by={sort_by}"
         response = api_client.get(url)
         res = response.json()
-        res_prodex_ids = list(map(lambda x: x["prodex_id"], res["items"]))
-        results_paginated[page_number] = res_prodex_ids
-        log.info("Page %s: %s", page_number, res_prodex_ids)
+        res_external_ids = list(map(lambda x: x["external_id"], res["items"]))
+        results_paginated[page_number] = res_external_ids
+        log.info("Page %s: %s", page_number, res_external_ids)
 
     log.info("All pages: %s", results_paginated)
 
@@ -527,7 +527,7 @@ def test_get_pharmaceutical_products_pagination(api_client):
     res_all = api_client.get(
         f"/concepts/pharmaceutical-products?page_number=1&page_size=100&sort_by={sort_by}"
     ).json()
-    results_all_in_one_page = list(map(lambda x: x["prodex_id"], res_all["items"]))
+    results_all_in_one_page = list(map(lambda x: x["external_id"], res_all["items"]))
     log.info("All rows in one page: %s", results_all_in_one_page)
     assert len(results_all_in_one_page) == len(results_paginated_merged)
     assert len(pharmaceutical_products_all) == len(results_paginated_merged)
@@ -543,8 +543,8 @@ def test_get_pharmaceutical_products_pagination(api_client):
         pytest.param(
             10, 3, True, None, 4
         ),  # Total numer of pharmaceutical products is 24, so the last page should have 4 items
-        pytest.param(10, 1, True, '{"prodex_id": false}', 10),
-        pytest.param(10, 2, True, '{"prodex_id": true}', 10),
+        pytest.param(10, 1, True, '{"external_id": false}', 10),
+        pytest.param(10, 2, True, '{"external_id": true}', 10),
     ],
 )
 def test_get_pharmaceutical_products(
@@ -619,12 +619,10 @@ def test_get_pharmaceutical_products_csv_xml_excel(api_client, export_format):
 @pytest.mark.parametrize(
     "filter_by, expected_matched_field, expected_result_prefix",
     [
-        pytest.param('{"*": {"v": ["aaa"]}}', "prodex_id", "prodex_id_AAA"),
-        pytest.param('{"*": {"v": ["bBb"]}}', "prodex_id", "prodex_id_BBB"),
+        pytest.param('{"*": {"v": ["aaa"]}}', "external_id", "external_id_AAA"),
+        pytest.param('{"*": {"v": ["bBb"]}}', "external_id", "external_id_BBB"),
         pytest.param(
-            '{"*": {"v": ["initials"], "op": "co"}}',
-            "user_initials",
-            "TODO user initials",
+            '{"*": {"v": ["wn-us"], "op": "co"}}', "user_initials", "unknown-user"
         ),
         pytest.param('{"*": {"v": ["Draft"]}}', "status", "Draft"),
         pytest.param('{"*": {"v": ["0.1"]}}', "version", "0.1"),
@@ -652,16 +650,16 @@ def test_filtering_wildcard(
     "filter_by, expected_matched_field, expected_result",
     [
         pytest.param(
-            '{"prodex_id": {"v": ["prodex_id_AAA"]}}',
-            "prodex_id",
-            "prodex_id_AAA",
+            '{"external_id": {"v": ["external_id_AAA"]}}',
+            "external_id",
+            "external_id_AAA",
         ),
         pytest.param(
-            '{"prodex_id": {"v": ["prodex_id_BBB"]}}',
-            "prodex_id",
-            "prodex_id_BBB",
+            '{"external_id": {"v": ["external_id_BBB"]}}',
+            "external_id",
+            "external_id_BBB",
         ),
-        pytest.param('{"prodex_id": {"v": ["cc"]}}', None, None),
+        pytest.param('{"external_id": {"v": ["cc"]}}', None, None),
     ],
 )
 def test_filtering_exact(
@@ -684,7 +682,7 @@ def test_filtering_exact(
 @pytest.mark.parametrize(
     "field_name, expected_returned_values",
     [
-        pytest.param("prodex_id", ["prodex_id_AAA", "prodex_id_BBB"]),
+        pytest.param("external_id", ["external_id_AAA", "external_id_BBB"]),
     ],
 )
 def test_get_pharmaceutical_products_headers(
@@ -703,18 +701,18 @@ def test_get_pharmaceutical_products_headers(
 def test_create_and_delete_pharmaceutical_product(api_client):
     # Create new pharmaceutical product
     formulation = {
-        "prodex_id": "formulation-prodex-id",
+        "external_id": "formulation-prodex-id",
         "name": "formulation-name",
         "ingredients": [
             {
-                "prodex_id": "ingredient-prodex-id-a",
+                "external_id": "ingredient-prodex-id-a",
                 "active_substance_uid": active_substances_all[0].uid,
                 "strength_uid": strength.uid,
                 "half_life_uid": half_life.uid,
                 "lag_time_uids": [lag_time.uid],
             },
             {
-                "prodex_id": "ingredient-prodex-id-b",
+                "external_id": "ingredient-prodex-id-b",
                 "active_substance_uid": active_substances_all[1].uid,
                 "strength_uid": strength.uid,
                 "half_life_uid": half_life.uid,
@@ -724,7 +722,7 @@ def test_create_and_delete_pharmaceutical_product(api_client):
     }
     payload = {
         "library_name": "Sponsor",
-        "prodex_id": "prodex_id-NEW",
+        "external_id": "external_id-NEW",
         "dosage_form_uids": [ct_term_dose_form.term_uid],
         "route_of_administration_uids": [ct_term_roa.term_uid],
         "formulations": [formulation],
@@ -735,7 +733,7 @@ def test_create_and_delete_pharmaceutical_product(api_client):
     res = response.json()
 
     assert response.status_code == 201
-    assert res["prodex_id"] == "prodex_id-NEW"
+    assert res["external_id"] == "external_id-NEW"
     assert res["routes_of_administration"][0]["term_uid"] == ct_term_roa.term_uid
     assert (
         res["routes_of_administration"][0]["name"] == ct_term_roa.sponsor_preferred_name
@@ -743,16 +741,16 @@ def test_create_and_delete_pharmaceutical_product(api_client):
     assert res["dosage_forms"][0]["term_uid"] == ct_term_dose_form.term_uid
     assert res["dosage_forms"][0]["name"] == ct_term_dose_form.sponsor_preferred_name
 
-    assert res["formulations"][0]["prodex_id"] == "formulation-prodex-id"
+    assert res["formulations"][0]["external_id"] == "formulation-prodex-id"
     assert res["formulations"][0]["name"] == "formulation-name"
 
     ingr_1 = res["formulations"][0]["ingredients"][0]
     ingr_2 = res["formulations"][0]["ingredients"][1]
 
-    assert ingr_1["prodex_id"] == "ingredient-prodex-id-a"
+    assert ingr_1["external_id"] == "ingredient-prodex-id-a"
     assert ingr_1["active_substance"]["uid"] == active_substances_all[0].uid
 
-    assert ingr_2["prodex_id"] == "ingredient-prodex-id-b"
+    assert ingr_2["external_id"] == "ingredient-prodex-id-b"
     assert ingr_2["active_substance"]["uid"] == active_substances_all[1].uid
 
     for ingredient in res["formulations"][0]["ingredients"]:
@@ -785,15 +783,15 @@ def test_create_and_delete_pharmaceutical_product(api_client):
 def test_create_and_delete_pharmaceutical_product_with_missing_values(api_client):
     # Create new pharmaceutical product
     formulation = {
-        "prodex_id": "formulation-prodex-id",
+        "external_id": "formulation-prodex-id",
         "name": "formulation-name",
         "ingredients": [
             {
-                "prodex_id": "ingredient-prodex-id-a",
+                "external_id": "ingredient-prodex-id-a",
                 "active_substance_uid": active_substances_all[0].uid,
             },
             {
-                "prodex_id": "ingredient-prodex-id-b",
+                "external_id": "ingredient-prodex-id-b",
                 "active_substance_uid": active_substances_all[1].uid,
                 "strength_uid": strength.uid,
                 "half_life_uid": half_life.uid,
@@ -803,7 +801,7 @@ def test_create_and_delete_pharmaceutical_product_with_missing_values(api_client
     }
     payload = {
         "library_name": "Sponsor",
-        "prodex_id": "prodex_id-NEW",
+        "external_id": "external_id-NEW",
         "dosage_form_uids": [ct_term_dose_form.term_uid],
         "route_of_administration_uids": [ct_term_roa.term_uid],
         "formulations": [formulation],
@@ -814,7 +812,7 @@ def test_create_and_delete_pharmaceutical_product_with_missing_values(api_client
     res = response.json()
 
     assert response.status_code == 201
-    assert res["prodex_id"] == "prodex_id-NEW"
+    assert res["external_id"] == "external_id-NEW"
     assert res["routes_of_administration"][0]["term_uid"] == ct_term_roa.term_uid
     assert (
         res["routes_of_administration"][0]["name"] == ct_term_roa.sponsor_preferred_name
@@ -822,16 +820,16 @@ def test_create_and_delete_pharmaceutical_product_with_missing_values(api_client
     assert res["dosage_forms"][0]["term_uid"] == ct_term_dose_form.term_uid
     assert res["dosage_forms"][0]["name"] == ct_term_dose_form.sponsor_preferred_name
 
-    assert res["formulations"][0]["prodex_id"] == "formulation-prodex-id"
+    assert res["formulations"][0]["external_id"] == "formulation-prodex-id"
     assert res["formulations"][0]["name"] == "formulation-name"
 
     ingr_1 = res["formulations"][0]["ingredients"][0]
     ingr_2 = res["formulations"][0]["ingredients"][1]
 
-    assert ingr_1["prodex_id"] == "ingredient-prodex-id-a"
+    assert ingr_1["external_id"] == "ingredient-prodex-id-a"
     assert ingr_1["active_substance"]["uid"] == active_substances_all[0].uid
 
-    assert ingr_2["prodex_id"] == "ingredient-prodex-id-b"
+    assert ingr_2["external_id"] == "ingredient-prodex-id-b"
     assert ingr_2["active_substance"]["uid"] == active_substances_all[1].uid
 
     ingredients = res["formulations"][0]["ingredients"]
@@ -867,18 +865,18 @@ def test_create_and_delete_pharmaceutical_product_with_missing_values(api_client
 
 def test_negative_create_pharmaceutical_product_wrong_links(api_client):
     formulation = {
-        "prodex_id": "formulation-prodex-id",
+        "external_id": "formulation-prodex-id",
         "name": "formulation-name",
         "ingredients": [
             {
-                "prodex_id": "ingredient-prodex-id-a",
+                "external_id": "ingredient-prodex-id-a",
                 "active_substance_uid": active_substances_all[0].uid,
                 "strength_uid": strength.uid,
                 "half_life_uid": half_life.uid,
                 "lag_time_uids": [lag_time.uid],
             },
             {
-                "prodex_id": "ingredient-prodex-id-b",
+                "external_id": "ingredient-prodex-id-b",
                 "active_substance_uid": active_substances_all[1].uid,
                 "strength_uid": strength.uid,
                 "half_life_uid": half_life.uid,
@@ -890,7 +888,7 @@ def test_negative_create_pharmaceutical_product_wrong_links(api_client):
     # Try to create new pharmaceutical product with non-existing dosage form
     payload = {
         "library_name": "Sponsor",
-        "prodex_id": "prodex_id-NEW",
+        "external_id": "external_id-NEW",
         "dosage_form_uids": ["NON_EXISTING_UID"],
         "route_of_administration_uids": [ct_term_roa.term_uid],
         "formulations": [formulation],
@@ -909,7 +907,7 @@ def test_negative_create_pharmaceutical_product_wrong_links(api_client):
     # Try to create new pharmaceutical product with non-existing route of administration
     payload = {
         "library_name": "Sponsor",
-        "prodex_id": "prodex_id-NEW",
+        "external_id": "external_id-NEW",
         "dosage_form_uids": [ct_term_dose_form.term_uid],
         "route_of_administration_uids": ["NON_EXISTING_UID"],
         "formulations": [formulation],
@@ -930,7 +928,7 @@ def test_negative_create_pharmaceutical_product_wrong_links(api_client):
     formulation_wrong_uid["ingredients"][0]["active_substance_uid"] = "NON_EXISTING_UID"
     payload = {
         "library_name": "Sponsor",
-        "prodex_id": "prodex_id-NEW",
+        "external_id": "external_id-NEW",
         "dosage_form_uids": [ct_term_dose_form.term_uid],
         "route_of_administration_uids": [ct_term_roa.term_uid],
         "formulations": [formulation_wrong_uid],
@@ -951,7 +949,7 @@ def test_negative_create_pharmaceutical_product_wrong_links(api_client):
     formulation_wrong_uid["ingredients"][0]["strength_uid"] = "NON_EXISTING_UID"
     payload = {
         "library_name": "Sponsor",
-        "prodex_id": "prodex_id-NEW",
+        "external_id": "external_id-NEW",
         "dosage_form_uids": [ct_term_dose_form.term_uid],
         "route_of_administration_uids": [ct_term_roa.term_uid],
         "formulations": [formulation_wrong_uid],
@@ -972,7 +970,7 @@ def test_negative_create_pharmaceutical_product_wrong_links(api_client):
     formulation_wrong_uid["ingredients"][0]["half_life_uid"] = "NON_EXISTING_UID"
     payload = {
         "library_name": "Sponsor",
-        "prodex_id": "prodex_id-NEW",
+        "external_id": "external_id-NEW",
         "dosage_form_uids": [ct_term_dose_form.term_uid],
         "route_of_administration_uids": [ct_term_roa.term_uid],
         "formulations": [formulation_wrong_uid],
@@ -993,7 +991,7 @@ def test_negative_create_pharmaceutical_product_wrong_links(api_client):
     formulation_wrong_uid["ingredients"][0]["lag_time_uids"][0] = "NON_EXISTING_UID"
     payload = {
         "library_name": "Sponsor",
-        "prodex_id": "prodex_id-NEW",
+        "external_id": "external_id-NEW",
         "dosage_form_uids": [ct_term_dose_form.term_uid],
         "route_of_administration_uids": [ct_term_roa.term_uid],
         "formulations": [formulation_wrong_uid],

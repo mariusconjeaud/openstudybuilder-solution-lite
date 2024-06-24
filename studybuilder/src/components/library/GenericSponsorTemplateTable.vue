@@ -1,576 +1,602 @@
 <template>
-<div>
-  <n-n-table
-    v-model="selected"
-    :headers="updatedHeaders"
-    :items="templates"
-    item-key="uid"
-    :export-object-label="exportFileLabel"
-    :export-data-url="urlPrefix"
-    :export-data-url-params="exportDataUrlParams"
-    :server-items-length="total"
-    sort-by="start_date"
-    sort-desc
-    :options.sync="options"
-    :has-api="hasApi"
-    :column-data-resource="urlPrefix"
-    :column-data-parameters="extendedColumnDataParameters"
-    @filter="filter"
-    :history-title="$t('_global.audit_trail')"
-    :history-data-fetcher="fetchGlobalAuditTrail"
-    :history-html-fields="['template_name', 'name', 'guidance_text']"
-    history-change-field="change_description"
-    :history-change-field-label="$t('_global.change_description')"
-    :history-excluded-headers="historyExcludedHeaders"
-    :default-filters="defaultFilters"
+  <div>
+    <NNTable
+      v-model="selected"
+      :headers="updatedHeaders"
+      :items="templates"
+      item-value="uid"
+      :export-object-label="exportFileLabel"
+      :export-data-url="urlPrefix"
+      :export-data-url-params="exportDataUrlParams"
+      :items-length="total"
+      :sort-by="[{ key: 'start_date' }]"
+      sort-desc
+      :column-data-resource="urlPrefix"
+      :column-data-parameters="extendedColumnDataParameters"
+      :history-title="$t('_global.audit_trail')"
+      :history-data-fetcher="fetchGlobalAuditTrail"
+      :history-html-fields="['template_name', 'name', 'guidance_text']"
+      history-change-field="change_description"
+      :history-change-field-label="$t('_global.change_description')"
+      :history-excluded-headers="historyExcludedHeaders"
+      :default-filters="defaultFilters"
+      @filter="filter"
     >
-    <template v-slot:actions="">
-      <v-btn
-        v-if="!preInstanceMode"
-        fab
-        small
-        color="primary"
-        data-cy="add-template"
-        @click="createTemplate()"
-        :title="$t(`${translationType}.add`)"
-        :disabled="!checkPermission($roles.LIBRARY_WRITE)"
-        >
-        <v-icon dark>
-          mdi-plus
-        </v-icon>
-      </v-btn>
-    </template>
-    <template v-for="(_, slot) of $scopedSlots" v-slot:[slot]="scope">
-      <slot :name="slot" v-bind="scope" />
-    </template>
-    <template v-slot:item.indications.name="{ item }">
-      <template v-if="item.indications && item.indications.length">
-        {{ item.indications|names }}
+      <template #actions>
+        <v-btn
+          v-if="!preInstanceMode"
+          size="small"
+          color="primary"
+          data-cy="add-template"
+          :title="$t(`${translationType}.add`)"
+          :disabled="!accessGuard.checkPermission($roles.LIBRARY_WRITE)"
+          icon="mdi-plus"
+          @click="createTemplate()"
+        />
       </template>
-      <template v-else>
-        {{ $t('_global.not_applicable_long') }}
+      <template v-for="(_, slot) of $slots" #[slot]="scope">
+        <slot :name="slot" v-bind="scope" />
       </template>
-    </template>
-    <template v-slot:item.template_name="{ item }">
-      <n-n-parameter-highlighter
-        :name="item.template_name"
-        default-color="orange"
+      <template #[`item.indications.name`]="{ item }">
+        <template v-if="item.indications && item.indications.length">
+          {{ $filters.names(item.indications) }}
+        </template>
+        <template v-else>
+          {{ $t('_global.not_applicable_long') }}
+        </template>
+      </template>
+      <template #[`item.template_name`]="{ item }">
+        <NNParameterHighlighter
+          :name="item.template_name"
+          default-color="orange"
         />
-    </template>
-    <template v-slot:item.name="{ item }">
-      <n-n-parameter-highlighter
-        :name="item.name"
-        default-color="green"
-        :show-prefix-and-postfix="false"
+      </template>
+      <template #[`item.name`]="{ item }">
+        <NNParameterHighlighter
+          :name="item.name"
+          default-color="green"
+          :show-prefix-and-postfix="false"
         />
-    </template>
-    <template v-slot:item.start_date="{ item }">
-      {{ item.start_date | date }}
-    </template>
-    <template v-slot:item.status="{ item }">
-      <status-chip :status="item.status" />
-    </template>
-    <template v-slot:item.actions="{ item }">
-      <actions-menu
-        :actions="actions"
-        :item="item"
-        />
-    </template>
-  </n-n-table>
-  <v-dialog v-model="showForm"
-            @keydown.esc="closeForm"
-            persistent
-            :fullscreen="fullscreenForm"
-            :max-width="fullscreenForm ? null : '800px'"
-            :content-class="fullscreenForm ? 'fullscreen-dialog' : 'top-dialog'"
-            :key="key"
-            >
-    <slot
-      name="editform"
-      v-bind:closeForm="closeForm"
-      v-bind:selectedObject="selectedObject"
-      v-bind:filter="filter"
-      v-bind:updateTemplate="updateTemplate"
-      v-bind:preInstanceMode="preInstanceMode"
-      >
-    </slot>
-  </v-dialog>
-  <v-dialog
-    v-model="showHistory"
-    @keydown.esc="closeHistory"
-    persistent
-    :max-width="globalHistoryDialogMaxWidth"
-    :fullscreen="globalHistoryDialogFullscreen"
+      </template>
+      <template #[`item.start_date`]="{ item }">
+        {{ $filters.date(item.start_date) }}
+      </template>
+      <template #[`item.status`]="{ item }">
+        <StatusChip :status="item.status" />
+      </template>
+      <template #[`item.actions`]="{ item }">
+        <ActionsMenu :actions="actions" :item="item" />
+      </template>
+    </NNTable>
+    <v-dialog
+      :key="key"
+      v-model="showForm"
+      persistent
+      :fullscreen="fullscreenForm"
+      :max-width="fullscreenForm ? null : '800px'"
+      :content-class="fullscreenForm ? 'fullscreen-dialog' : 'top-dialog'"
+      @keydown.esc="closeForm"
     >
-    <history-table
-      :title="historyTitle"
-      @close="closeHistory"
-      :headers="headers"
-      :items="historyItems"
-      :html-fields="historyHtmlFields"
-      :excluded-headers="historyExcludedHeaders"
+      <slot
+        name="editform"
+        :close-form="closeForm"
+        :selected-object="selectedObject"
+        :filter="filter"
+        :update-template="updateTemplate"
+        :pre-instance-mode="preInstanceMode"
       />
-  </v-dialog>
-  <confirm-dialog ref="confirm" :action-cols="5" :text-cols="6" />
-  <v-dialog v-model="showIndexingForm"
-            persistent
-            max-width="800px"
-            >
-    <slot name="indexingDialog"
-          v-bind:closeDialog="() => showIndexingForm = false"
-          v-bind:template="selectedObject"
-          v-bind:show="showIndexingForm"
-          v-bind:preInstanceMode="preInstanceMode"
-          />
-  </v-dialog>
-  <v-dialog
-    v-model="showPreInstanceForm"
-    @keydown.esc="closeForm"
-    persistent
-    fullscreen
-    content-class="fullscreen-dialog"
+    </v-dialog>
+    <v-dialog
+      v-model="showHistory"
+      persistent
+      :fullscreen="$globals.historyDialogFullscreen"
+      @keydown.esc="closeHistory"
     >
-    <slot name="preInstanceForm"
-          v-bind:closeDialog="closePreInstanceForm"
-          v-bind:template="selectedObject"
-          />
-  </v-dialog>
-</div>
+      <HistoryTable
+        :title="historyTitle"
+        :headers="headers"
+        :items="historyItems"
+        :html-fields="historyHtmlFields"
+        :excluded-headers="historyExcludedHeaders"
+        @close="closeHistory"
+      />
+    </v-dialog>
+    <ConfirmDialog ref="confirm" :action-cols="5" :text-cols="6" />
+    <v-dialog v-model="showIndexingForm" persistent max-width="800px">
+      <slot
+        name="indexingDialog"
+        :close-dialog="() => (showIndexingForm = false)"
+        :template="selectedObject"
+        :show="showIndexingForm"
+        :pre-instance-mode="preInstanceMode"
+      />
+    </v-dialog>
+    <v-dialog
+      v-model="showPreInstanceForm"
+      persistent
+      fullscreen
+      content-class="fullscreen-dialog"
+      @keydown.esc="closeForm"
+    >
+      <slot
+        name="preInstanceForm"
+        :close-dialog="closePreInstanceForm"
+        :template="selectedObject"
+      />
+    </v-dialog>
+  </div>
 </template>
 
-<script>
-import Vue from 'vue'
-import { bus } from '@/main'
+<script setup>
+import { computed, inject, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import templatePreInstances from '@/api/templatePreInstances'
-import templates from '@/api/templates'
-import ActionsMenu from '@/components/tools/ActionsMenu'
+import templatesApi from '@/api/templates'
+import ActionsMenu from '@/components/tools/ActionsMenu.vue'
 import dataFormating from '@/utils/dataFormating'
-import HistoryTable from '@/components/tools/HistoryTable'
+import HistoryTable from '@/components/tools/HistoryTable.vue'
 import libraryConstants from '@/constants/libraries'
-import NNParameterHighlighter from '@/components/tools/NNParameterHighlighter'
-import NNTable from '@/components/tools/NNTable'
-import ConfirmDialog from '@/components/tools/ConfirmDialog'
-import StatusChip from '@/components/tools/StatusChip'
+import NNParameterHighlighter from '@/components/tools/NNParameterHighlighter.vue'
+import NNTable from '@/components/tools/NNTable.vue'
+import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
+import StatusChip from '@/components/tools/StatusChip.vue'
 import statuses from '@/constants/statuses'
 import filteringParameters from '@/utils/filteringParameters'
-import { accessGuard } from '@/mixins/accessRoleVerifier'
+import { useAccessGuard } from '@/composables/accessGuard'
+import { i18n } from '@/plugins/i18n'
 
-export default Vue.extend({
-  mixins: [accessGuard],
-  name: 'studybuilder-template-table',
-  props: {
-    urlPrefix: {
-      type: String,
-      default: ''
-    },
-    translationType: {
-      type: String,
-      default: ''
-    },
-    objectType: {
-      type: String,
-      default: ''
-    },
-    hasApi: {
-      type: Boolean,
-      default: false
-    },
-    columnDataResource: {
-      type: String,
-      default: ''
-    },
-    columnDataParameters: {
-      type: Object,
-      required: false
-    },
-    headers: {
-      type: Array,
-      default: function () {
-        return [
-          {
-            text: '',
-            value: 'actions',
-            sortable: false,
-            width: '5%'
-          },
-          { text: this.$t('_global.library'), value: 'library.name' },
-          { text: this.$t('_global.template'), value: 'name', width: '30%' },
-          { text: this.$t('_global.modified'), value: 'start_date' },
-          { text: this.$t('_global.modified_by'), value: 'fixme' },
-          { text: this.$t('_global.status'), value: 'status' },
-          { text: this.$t('_global.version'), value: 'version' }
-        ]
-      }
-    },
-    extraFiltersFunc: {
-      type: Function,
-      required: false
-    },
-    fullscreenForm: {
-      type: Boolean,
-      default: false
-    },
-    withIndexingProperties: {
-      type: Boolean,
-      default: true
-    },
-    historyFormatingFunc: {
-      type: Function,
-      required: false
-    },
-    historyExcludedHeaders: {
-      type: Array,
-      required: false
-    },
-    exportObjectLabel: {
-      type: String,
-      required: false
-    },
-    exportDataUrlParams: {
-      type: Object,
-      required: false
-    },
-    preInstanceMode: {
-      type: Boolean,
-      default: false
-    },
-    prepareDuplicatePayloadFunc: {
-      type: Function,
-      required: false
-    },
-    defaultFilters: {
-      type: Array,
-      required: false
-    }
+const { t } = useI18n()
+const eventBusEmit = inject('eventBusEmit')
+const roles = inject('roles')
+const props = defineProps({
+  urlPrefix: {
+    type: String,
+    default: '',
   },
-  components: {
-    ActionsMenu,
-    HistoryTable,
-    NNParameterHighlighter,
-    ConfirmDialog,
-    NNTable,
-    StatusChip
+  translationType: {
+    type: String,
+    default: '',
   },
-  data () {
-    const actions = [
-      {
-        label: this.$t('_global.add_pre_instance'),
-        icon: 'mdi-plus-circle-outline',
-        iconColor: 'primary',
-        condition: (item) => this.objectType !== 'timeframeTemplates' && !this.preInstanceMode && item.status === statuses.FINAL,
-        click: this.openPreInstanceForm,
-        accessRole: this.$roles.LIBRARY_WRITE
-      },
-      {
-        label: this.$t('_global.edit'),
-        icon: 'mdi-pencil-outline',
-        iconColor: 'primary',
-        condition: (item) => item.possible_actions.find(action => action === 'edit'),
-        click: this.editTemplate,
-        accessRole: this.$roles.LIBRARY_WRITE
-      },
-      {
-        label: this.$t('_global.approve'),
-        icon: 'mdi-check-decagram',
-        iconColor: 'success',
-        condition: (item) => item.possible_actions.find(action => action === 'approve'),
-        click: this.approveTemplate,
-        accessRole: this.$roles.LIBRARY_WRITE
-      },
-      {
-        label: this.$t('_global.new_version'),
-        icon: 'mdi-plus-circle-outline',
-        iconColor: 'primary',
-        condition: (item) => item.possible_actions.find(action => action === 'new_version'),
-        click: this.createNewVersion,
-        accessRole: this.$roles.LIBRARY_WRITE
-      },
-      {
-        label: this.$t('_global.duplicate'),
-        icon: 'mdi-content-copy',
-        iconColor: 'primary',
-        condition: (item) => this.preInstanceMode && item.status === statuses.FINAL,
-        click: this.duplicatePreInstance,
-        accessRole: this.$roles.LIBRARY_WRITE
-      },
-      {
-        label: this.$t('_global.inactivate'),
-        icon: 'mdi-close-octagon-outline',
-        iconColor: 'primary',
-        condition: (item) => item.possible_actions.find(action => action === 'inactivate'),
-        click: this.inactivateTemplate,
-        accessRole: this.$roles.LIBRARY_WRITE
-      },
-      {
-        label: this.$t('_global.reactivate'),
-        icon: 'mdi-undo-variant',
-        iconColor: 'primary',
-        condition: (item) => item.possible_actions.find(action => action === 'reactivate'),
-        click: this.reactivateTemplate,
-        accessRole: this.$roles.LIBRARY_WRITE
-      },
-      {
-        label: this.$t('_global.delete'),
-        icon: 'mdi-delete-outline',
-        iconColor: 'error',
-        condition: (item) => item.possible_actions.find(action => action === 'delete'),
-        click: this.deleteTemplate,
-        accessRole: this.$roles.LIBRARY_WRITE
-      },
-      {
-        label: this.$t('_global.history'),
-        icon: 'mdi-history',
-        click: this.openTemplateHistory
-      }
-    ]
-    if (this.withIndexingProperties) {
-      actions.unshift({
-        label: this.$t('_global.edit_indexing'),
-        icon: 'mdi-pencil-outline',
-        iconColor: 'primary',
-        condition: (item) => item.status === statuses.FINAL,
-        click: this.editTemplateIndexing,
-        accessRole: this.$roles.LIBRARY_WRITE
-      })
-    }
-    return {
-      actions,
-      api: null,
-      historyHtmlFields: ['name', 'guidance_text'],
-      historyItems: [],
-      showForm: false,
-      showIndexingForm: false,
-      showHistory: false,
-      showPreInstanceForm: false,
-      selectedObject: null,
-      appLabel: this.$t(this.translationType + '.singular_title'),
-      selected: [],
-      templates: [],
-      options: {},
-      total: 0,
-      key: 0
-    }
+  objectType: {
+    type: String,
+    default: '',
   },
-  computed: {
-    updatedHeaders () {
-      const result = JSON.parse(JSON.stringify(this.headers))
-      if (this.preInstanceMode) {
-        const index = result.findIndex(header => header.value === 'name')
-        if (index !== -1) {
-          result[index].text = this.$t('_global.pre_instance_template')
-          result.splice(index, 0, {
-            text: this.$t('_global.parent_template'), value: 'template_name'
-          })
-        }
-      }
-      return result
-    },
-    historyTitle () {
-      if (this.selectedObject) {
-        return this.$t(
-          'GenericTemplateTable.template_history_title',
-          { templateUid: this.selectedObject.uid })
-      }
-      return ''
-    },
-    extendedColumnDataParameters () {
-      const result = this.columnDataParameters ? { ...this.columnDataParameters } : { filters: {} }
-      result.filters['library.name'] = { v: [libraryConstants.LIBRARY_SPONSOR] }
-      return result
-    },
-    exportFileLabel () {
-      return this.exportObjectLabel ? this.exportObjectLabel : this.objectType
-    }
+  columnDataResource: {
+    type: String,
+    default: '',
   },
-  created () {
-    if (!this.preInstanceMode) {
-      this.api = templates(this.urlPrefix)
-    } else {
-      this.api = templatePreInstances(this.getBaseObjectType())
-    }
+  columnDataParameters: {
+    type: Object,
+    default: null,
+    required: false,
   },
-  methods: {
-    createTemplate () {
-      this.selectedObject = null
-      this.showForm = true
+  headers: {
+    type: Array,
+    default: function () {
+      return [
+        {
+          title: '',
+          key: 'actions',
+          sortable: false,
+          width: '5%',
+        },
+        { title: i18n.t('_global.library'), key: 'library.name' },
+        { title: i18n.t('_global.template'), key: 'name', width: '30%' },
+        { title: i18n.t('_global.modified'), key: 'start_date' },
+        { title: i18n.t('_global.modified_by'), key: 'fixme' },
+        { title: i18n.t('_global.status'), key: 'status' },
+        { title: i18n.t('_global.version'), key: 'version' },
+      ]
     },
-    editTemplate (template) {
-      this.selectedObject = template
-      this.showForm = true
-    },
-    updateTemplate (template, status) {
-      this.templates.filter((item, pos) => {
-        if (item.uid === template.uid && item.status === status) {
-          this.$set(this.templates, pos, template)
-          return true
-        }
-        return false
-      })
-    },
-    async approveTemplate (template) {
-      if (template.uid.includes('ActivityInstructionTemplate')) { // Temporary workaround for Activity Templates, will be deleted after backend instantiations activities implement
-        const resp = await this.api.approveCascade(template.uid, false)
-        this.updateTemplate(resp.data, template.status)
-        bus.$emit('notification', { msg: this.$t(this.translationType + '.approve_success') })
-      } else {
-        const resp = await this.api.approveCascade(template.uid, true)
-        this.updateTemplate(resp.data, template.status)
-        const msg = this.$t(
-          this.translationType +
-            ((this.preInstanceMode) ? '.approve_pre_instance_success' : '.approve_success')
-        )
-        bus.$emit('notification', { msg })
-      }
-      this.$emit('refresh')
-    },
-    inactivateTemplate (template) {
-      this.api.inactivate(template.uid).then(resp => {
-        this.updateTemplate(resp.data, template.status)
-        bus.$emit('notification', { msg: this.$t(this.translationType + ((this.preInstanceMode) ? '.inactivate_pre_instance_success' : '.inactivate_success')) })
-        this.$emit('refresh')
-      })
-    },
-    reactivateTemplate (template) {
-      this.api.reactivate(template.uid).then(resp => {
-        this.updateTemplate(resp.data, template.status)
-        bus.$emit('notification', { msg: this.$t(this.translationType + ((this.preInstanceMode) ? '.reactivate_pre_instance_success' : '.approve_success')) })
-        this.$emit('refresh')
-      })
-    },
-    deleteTemplate (template) {
-      this.api.delete(template.uid).then(() => {
-        this.filter()
-        const key = this.preInstanceMode
-          ? `${this.translationType}.delete_pre_instance_success`
-          : `${this.translationType}.delete_success`
-        bus.$emit('notification', { msg: this.$t(key) })
-      })
-    },
-    editTemplateIndexing (template) {
-      this.selectedObject = template
-      this.showIndexingForm = true
-    },
-    async fetchGlobalAuditTrail (options) {
-      const resp = await this.api.getAuditTrail(options)
-      if (this.historyFormatingFunc) {
-        for (const item of resp.data.items) {
-          this.historyFormatingFunc(item)
-        }
-      }
-      return resp.data
-    },
-    async openTemplateHistory (template) {
-      this.selectedObject = template
-      const resp = await this.api.getVersions(template.uid)
-      this.historyItems = this.transformItems(resp.data)
-      this.showHistory = true
-    },
-    closeHistory () {
-      this.selectedObject = null
-      this.showHistory = false
-    },
-    openPreInstanceForm (template) {
-      this.selectedObject = template
-      this.showPreInstanceForm = true
-    },
-    closePreInstanceForm () {
-      this.selectedObject = null
-      this.showPreInstanceForm = false
-    },
-    async createNewVersion (template) {
-      if (template.studyCount > 0) {
-        const options = {
-          cancelLabel: this.$t('_global.cancel_cascade_update'),
-          agreeLabel: this.$t('_global.create_new_version'),
-          type: 'warning',
-          width: 1000
-        }
-        if (!await this.$refs.confirm.open(this.$tc('_global.cascade_update_warning', template.studyCount, { count: template.studyCount }), options)) {
-          return
-        }
-      }
-      const data = {
-        name: template.name,
-        change_description: this.$t(this.translationType + '.new_version_default_description')
-      }
-      this.api.createNewVersion(template.uid, data).then(resp => {
-        this.updateTemplate(resp.data, template.status)
-        bus.$emit('notification', { msg: this.$t(this.translationType + '.new_version_success') })
-      })
-    },
-    duplicatePreInstance (item) {
-      const data = {
-        library_name: item.library.name,
-        parameter_terms: item.parameter_terms,
-        indication_uids: []
-      }
-      if (item.indications) {
-        data.indication_uids = item.indications.map(ind => ind.term_uid)
-      }
-      if (this.prepareDuplicatePayloadFunc) {
-        this.prepareDuplicatePayloadFunc(data, item)
-      }
-      this.api.create(item.template_uid, data).then(() => {
-        bus.$emit('notification', { msg: this.$t(this.translationType + '.duplicate_success') })
-        this.filter()
-      })
-    },
-    closeForm () {
-      this.selectedObject = null
-      this.showForm = false
-      this.key += 1
-    },
-    filter (filters, sort, filtersUpdated) {
-      filters = (filters) ? JSON.parse(filters) : {}
-      filters['library.name'] = { v: [libraryConstants.LIBRARY_SPONSOR] }
-      if (this.extraFiltersFunc) {
-        this.extraFiltersFunc(filters, this.preInstanceMode)
-      }
-      const params = filteringParameters.prepareParameters(
-        this.options, filters, sort, filtersUpdated)
-      this.api.get(params).then(resp => {
-        if (resp.data.items !== undefined) {
-          this.templates = resp.data.items
-          this.total = resp.data.total
-        } else {
-          this.templates = resp.data
-          this.total = this.templates.length
-        }
-      })
-    },
-    getBaseObjectType () {
-      let result = this.objectType.replace('Templates', '')
-      if (result === 'activity') {
-        result = 'activity-instruction'
-      }
-      return result
-    },
-    transformItems (items) {
-      const result = []
-      for (const item of items) {
-        const newItem = { ...item }
-        if (item.indications) {
-          if (item.indications.length) {
-            newItem.indications.name = dataFormating.names(item.indications)
-          } else {
-            newItem.indications.name = this.$t('_global.not_applicable_long')
-          }
-        }
-        if (this.historyFormatingFunc) {
-          this.historyFormatingFunc(newItem)
-        }
-        result.push(newItem)
-      }
-      return result
-    }
   },
-  watch: {
-    options: {
-      handler () {
-        this.filter()
-      },
-      deep: true
+  extraFiltersFunc: {
+    type: Function,
+    default: null,
+    required: false,
+  },
+  fullscreenForm: {
+    type: Boolean,
+    default: false,
+  },
+  withIndexingProperties: {
+    type: Boolean,
+    default: true,
+  },
+  historyFormatingFunc: {
+    type: Function,
+    default: null,
+    required: false,
+  },
+  historyExcludedHeaders: {
+    type: Array,
+    default: null,
+    required: false,
+  },
+  exportObjectLabel: {
+    type: String,
+    default: null,
+    required: false,
+  },
+  exportDataUrlParams: {
+    type: Object,
+    default: null,
+    required: false,
+  },
+  preInstanceMode: {
+    type: Boolean,
+    default: false,
+  },
+  prepareDuplicatePayloadFunc: {
+    type: Function,
+    default: null,
+    required: false,
+  },
+  defaultFilters: {
+    type: Array,
+    default: null,
+    required: false,
+  },
+})
+
+const emit = defineEmits(['refresh'])
+const accessGuard = useAccessGuard()
+
+const actions = [
+  {
+    label: t('_global.add_pre_instance'),
+    icon: 'mdi-plus-circle-outline',
+    iconColor: 'primary',
+    condition: (item) =>
+      props.objectType !== 'timeframeTemplates' &&
+      !props.preInstanceMode &&
+      item.status === statuses.FINAL,
+    click: openPreInstanceForm,
+    accessRole: roles.LIBRARY_WRITE,
+  },
+  {
+    label: t('_global.edit'),
+    icon: 'mdi-pencil-outline',
+    iconColor: 'primary',
+    condition: (item) =>
+      item.possible_actions.find((action) => action === 'edit'),
+    click: editTemplate,
+    accessRole: roles.LIBRARY_WRITE,
+  },
+  {
+    label: t('_global.approve'),
+    icon: 'mdi-check-decagram',
+    iconColor: 'success',
+    condition: (item) =>
+      item.possible_actions.find((action) => action === 'approve'),
+    click: approveTemplate,
+    accessRole: roles.LIBRARY_WRITE,
+  },
+  {
+    label: t('_global.new_version'),
+    icon: 'mdi-plus-circle-outline',
+    iconColor: 'primary',
+    condition: (item) =>
+      item.possible_actions.find((action) => action === 'new_version'),
+    click: createNewVersion,
+    accessRole: roles.LIBRARY_WRITE,
+  },
+  {
+    label: t('_global.duplicate'),
+    icon: 'mdi-content-copy',
+    iconColor: 'primary',
+    condition: (item) =>
+      props.preInstanceMode && item.status === statuses.FINAL,
+    click: duplicatePreInstance,
+    accessRole: roles.LIBRARY_WRITE,
+  },
+  {
+    label: t('_global.inactivate'),
+    icon: 'mdi-close-octagon-outline',
+    iconColor: 'primary',
+    condition: (item) =>
+      item.possible_actions.find((action) => action === 'inactivate'),
+    click: inactivateTemplate,
+    accessRole: roles.LIBRARY_WRITE,
+  },
+  {
+    label: t('_global.reactivate'),
+    icon: 'mdi-undo-variant',
+    iconColor: 'primary',
+    condition: (item) =>
+      item.possible_actions.find((action) => action === 'reactivate'),
+    click: reactivateTemplate,
+    accessRole: roles.LIBRARY_WRITE,
+  },
+  {
+    label: t('_global.delete'),
+    icon: 'mdi-delete-outline',
+    iconColor: 'error',
+    condition: (item) =>
+      item.possible_actions.find((action) => action === 'delete'),
+    click: deleteTemplate,
+    accessRole: roles.LIBRARY_WRITE,
+  },
+  {
+    label: t('_global.history'),
+    icon: 'mdi-history',
+    click: openTemplateHistory,
+  },
+]
+if (props.withIndexingProperties) {
+  actions.unshift({
+    label: t('_global.edit_indexing'),
+    icon: 'mdi-pencil-outline',
+    iconColor: 'primary',
+    condition: (item) => item.status === statuses.FINAL,
+    click: editTemplateIndexing,
+    accessRole: roles.LIBRARY_WRITE,
+  })
+}
+
+let api
+
+const historyHtmlFields = ['name', 'guidance_text']
+const historyItems = ref([])
+const showForm = ref(false)
+const showIndexingForm = ref(false)
+const showHistory = ref(false)
+const showPreInstanceForm = ref(false)
+const selectedObject = ref(null)
+const selected = ref([])
+const templates = ref([])
+const total = ref(0)
+const key = ref(0)
+const confirm = ref()
+
+const updatedHeaders = computed(() => {
+  const result = JSON.parse(JSON.stringify(props.headers))
+  if (props.preInstanceMode) {
+    const index = result.findIndex((header) => header.value === 'name')
+    if (index !== -1) {
+      result[index].text = t('_global.pre_instance_template')
+      result.splice(index, 0, {
+        title: t('_global.parent_template'),
+        key: 'template_name',
+      })
     }
   }
+  return result
+})
+const historyTitle = computed(() => {
+  if (selectedObject.value) {
+    return t('GenericTemplateTable.template_history_title', {
+      templateUid: selectedObject.value.uid,
+    })
+  }
+  return ''
+})
+const extendedColumnDataParameters = computed(() => {
+  const result = props.columnDataParameters
+    ? { ...props.columnDataParameters }
+    : { filters: {} }
+  result.filters['library.name'] = { v: [libraryConstants.LIBRARY_SPONSOR] }
+  return result
+})
+const exportFileLabel = computed(() => {
+  return props.exportObjectLabel ? props.exportObjectLabel : props.objectType
+})
+
+function createTemplate() {
+  selectedObject.value = null
+  showForm.value = true
+}
+function editTemplate(template) {
+  selectedObject.value = template
+  showForm.value = true
+}
+function updateTemplate(template, status) {
+  templates.value.filter((item, pos) => {
+    if (item.uid === template.uid && item.status === status) {
+      templates.value[pos] = template
+      return true
+    }
+    return false
+  })
+}
+async function approveTemplate(template) {
+  if (template.uid.includes('ActivityInstructionTemplate')) {
+    // Temporary workaround for Activity Templates, will be deleted after backend instantiations activities implement
+    const resp = await api.approveCascade(template.uid, false)
+    updateTemplate(resp.data, template.status)
+    eventBusEmit('notification', {
+      msg: t(props.translationType + '.approve_success'),
+    })
+  } else {
+    const resp = await api.approveCascade(template.uid, true)
+    updateTemplate(resp.data, template.status)
+    const msg = t(
+      props.translationType +
+        (props.preInstanceMode
+          ? '.approve_pre_instance_success'
+          : '.approve_success')
+    )
+    eventBusEmit('notification', { msg })
+  }
+  emit('refresh')
+}
+function inactivateTemplate(template) {
+  api.inactivate(template.uid).then((resp) => {
+    updateTemplate(resp.data, template.status)
+    eventBusEmit('notification', {
+      msg: t(
+        props.translationType +
+          (props.preInstanceMode
+            ? '.inactivate_pre_instance_success'
+            : '.inactivate_success')
+      ),
+    })
+    emit('refresh')
+  })
+}
+function reactivateTemplate(template) {
+  api.reactivate(template.uid).then((resp) => {
+    updateTemplate(resp.data, template.status)
+    eventBusEmit('notification', {
+      msg: t(
+        props.translationType +
+          (props.preInstanceMode
+            ? '.reactivate_pre_instance_success'
+            : '.approve_success')
+      ),
+    })
+    emit('refresh')
+  })
+}
+function deleteTemplate(template) {
+  api.delete(template.uid).then(() => {
+    filter()
+    const key = props.preInstanceMode
+      ? `${props.translationType}.delete_pre_instance_success`
+      : `${props.translationType}.delete_success`
+    eventBusEmit('notification', { msg: t(key) })
+  })
+}
+function editTemplateIndexing(template) {
+  selectedObject.value = template
+  showIndexingForm.value = true
+}
+async function fetchGlobalAuditTrail(options) {
+  const resp = await api.getAuditTrail(options)
+  if (props.historyFormatingFunc) {
+    for (const item of resp.data.items) {
+      props.historyFormatingFunc(item)
+    }
+  }
+  return resp.data
+}
+async function openTemplateHistory(template) {
+  selectedObject.value = template
+  const resp = await api.getVersions(template.uid)
+  historyItems.value = transformItems(resp.data)
+  showHistory.value = true
+}
+function closeHistory() {
+  selectedObject.value = null
+  showHistory.value = false
+}
+function openPreInstanceForm(template) {
+  selectedObject.value = template
+  showPreInstanceForm.value = true
+}
+function closePreInstanceForm() {
+  selectedObject.value = null
+  showPreInstanceForm.value = false
+}
+async function createNewVersion(template) {
+  if (template.studyCount > 0) {
+    const options = {
+      cancelLabel: t('_global.cancel_cascade_update'),
+      agreeLabel: t('_global.create_new_version'),
+      type: 'warning',
+      width: 1000,
+    }
+    if (
+      !(await confirm.value.open(
+        t('_global.cascade_update_warning', template.studyCount, {
+          count: template.studyCount,
+        }),
+        options
+      ))
+    ) {
+      return
+    }
+  }
+  const data = {
+    name: template.name,
+    change_description: t(
+      props.translationType + '.new_version_default_description'
+    ),
+  }
+  api.createNewVersion(template.uid, data).then((resp) => {
+    updateTemplate(resp.data, template.status)
+    eventBusEmit('notification', {
+      msg: t(props.translationType + '.new_version_success'),
+    })
+  })
+}
+function duplicatePreInstance(item) {
+  const data = {
+    library_name: item.library.name,
+    parameter_terms: item.parameter_terms,
+    indication_uids: [],
+  }
+  if (item.indications) {
+    data.indication_uids = item.indications.map((ind) => ind.term_uid)
+  }
+  if (props.prepareDuplicatePayloadFunc) {
+    props.prepareDuplicatePayloadFunc(data, item)
+  }
+  api.create(item.template_uid, data).then(() => {
+    eventBusEmit('notification', {
+      msg: t(props.translationType + '.duplicate_success'),
+    })
+    filter()
+  })
+}
+function closeForm() {
+  selectedObject.value = null
+  showForm.value = false
+  key.value += 1
+}
+function filter(filters, options, filtersUpdated) {
+  const localFilters = filters ? JSON.parse(filters) : {}
+  localFilters['library.name'] = { v: [libraryConstants.LIBRARY_SPONSOR] }
+  if (props.extraFiltersFunc) {
+    props.extraFiltersFunc(localFilters, props.preInstanceMode)
+  }
+  const params = filteringParameters.prepareParameters(
+    options,
+    localFilters,
+    filtersUpdated
+  )
+  api.get(params).then((resp) => {
+    if (resp.data.items !== undefined) {
+      templates.value = resp.data.items
+      total.value = resp.data.total
+    } else {
+      templates.value = resp.data
+      total.value = templates.value.length
+    }
+  })
+}
+function getBaseObjectType() {
+  let result = props.objectType.replace('Templates', '')
+  if (result === 'activity') {
+    result = 'activity-instruction'
+  }
+  return result
+}
+function transformItems(items) {
+  const result = []
+  for (const item of items) {
+    const newItem = { ...item }
+    if (item.indications) {
+      if (item.indications.length) {
+        newItem.indications.name = dataFormating.names(item.indications)
+      } else {
+        newItem.indications.name = t('_global.not_applicable_long')
+      }
+    }
+    if (props.historyFormatingFunc) {
+      props.historyFormatingFunc(newItem)
+    }
+    result.push(newItem)
+  }
+  return result
+}
+
+if (!props.preInstanceMode) {
+  api = templatesApi(props.urlPrefix)
+} else {
+  api = templatePreInstances(getBaseObjectType())
+}
+
+defineExpose({
+  filter,
 })
 </script>

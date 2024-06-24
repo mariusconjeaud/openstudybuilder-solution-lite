@@ -17,8 +17,13 @@ class OdmVendorRelationPostInput(BaseModel):
     value: str
 
 
+class OdmVendorElementRelationPostInput(BaseModel):
+    uid: str
+    value: str | None
+
+
 class OdmVendorsPostInput(BaseModel):
-    elements: list[OdmVendorRelationPostInput]
+    elements: list[OdmVendorElementRelationPostInput]
     element_attributes: list[OdmVendorRelationPostInput]
     attributes: list[OdmVendorRelationPostInput]
 

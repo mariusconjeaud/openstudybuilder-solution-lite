@@ -45,8 +45,16 @@ class StudyValue(ClinicalMdrNode, AuditTrailMixin):
     study_number = StringProperty()
     subpart_id = StringProperty()
     study_acronym = StringProperty()
+    study_subpart_acronym = StringProperty()
     study_id_prefix = StringProperty()
     description = StringProperty()
+
+    has_study_subpart = RelationshipTo(
+        "StudyValue", "HAS_STUDY_SUBPART", model=ClinicalMdrRel
+    )
+    belongs_to_study_parent_part = RelationshipFrom(
+        "StudyValue", "HAS_STUDY_SUBPART", model=ClinicalMdrRel
+    )
 
     has_project = RelationshipTo(StudyProjectField, "HAS_PROJECT", model=ClinicalMdrRel)
     has_time_field = RelationshipTo(
@@ -125,6 +133,11 @@ class StudyValue(ClinicalMdrNode, AuditTrailMixin):
         "HAS_STUDY_DISEASE_MILESTONE",
         model=ClinicalMdrRel,
     )
+    has_study_standard_version = RelationshipTo(
+        ".study_standard_version.StudyStandardVersion",
+        "HAS_STUDY_STANDARD_VERSION",
+        model=ClinicalMdrRel,
+    )
     has_study_footnote = RelationshipTo(
         StudySoAFootnote,
         "HAS_STUDY_FOOTNOTE",
@@ -153,7 +166,3 @@ class StudyRoot(ClinicalMdrNodeWithUID):
         StudyValue, "LATEST_RELEASED", model=VersionRelationship
     )
     audit_trail = RelationshipTo(StudyAction, "AUDIT_TRAIL", model=ClinicalMdrRel)
-    study_subpart = RelationshipTo("StudyRoot", "STUDY_SUBPART", model=ClinicalMdrRel)
-    study_parent_part = RelationshipFrom(
-        "StudyRoot", "STUDY_SUBPART", model=ClinicalMdrRel
-    )

@@ -1,8 +1,11 @@
 """Database related helper functions."""
 
+from typing import Any
+
 from neomodel import db
 
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
+from clinical_mdr_api.exceptions import ValidationException
 from clinical_mdr_api.models.concepts.concept import VersionProperties
 
 
@@ -77,3 +80,10 @@ def is_codelist_in_final(ct_codelist_root_node) -> bool:
         latest_version = get_latest_version_properties(attributes_root)
         return latest_version and latest_version.status == LibraryItemStatus.FINAL.value
     return False
+
+
+def validate_dict(item: Any, label: str, ignore_none=True) -> bool:
+    if isinstance(item, dict) or (ignore_none and item is None):
+        return True
+
+    raise ValidationException(f"Invalid value for '{label}': {item}")

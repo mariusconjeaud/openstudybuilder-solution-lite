@@ -1,125 +1,104 @@
 <template>
-<v-app>
-  <top-bar @backToRoot="navigateToRoot" :hide-app-bar-nav-icon="layoutTemplate === 'empty'" />
+  <v-app full-height>
+    <TopBar
+      :hide-app-bar-nav-icon="layoutTemplate === 'empty'"
+      @back-to-root="navigateToRoot"
+    />
 
-  <template v-if="layoutTemplate === 'empty'">
-    <v-main class="primary white--text">
-      <router-view />
-    </v-main>
-  </template>
-
-  <template v-else-if="layoutTemplate === 'error'">
-    <v-main class="">
-      <router-view />
-    </v-main>
-  </template>
-
-  <template v-else>
-    <side-bar />
-
-    <v-main>
-      <v-container class="" fluid>
-        <v-breadcrumbs :items="breadcrumbs" class="mb-2" />
+    <template v-if="layoutTemplate === 'empty'">
+      <v-main class="bg-primary white-text">
         <router-view />
-      </v-container>
-    </v-main>
-  </template>
+      </v-main>
+    </template>
 
-  <v-snackbar
-    v-model="snackbar"
-    :color="notificationColor"
-    :timeout="notificationTimeout"
-    :min-width="550"
-    top
-    centered
-    tile
+    <template v-else-if="layoutTemplate === 'error'">
+      <v-main class="">
+        <router-view />
+      </v-main>
+    </template>
+
+    <template v-else>
+      <SideBar />
+
+      <v-main class="bg-dfltBackground">
+        <v-container class="" fluid>
+          <v-breadcrumbs :items="breadcrumbs" class="mb-2" />
+          <router-view />
+        </v-container>
+      </v-main>
+    </template>
+
+    <v-snackbar
+      v-model="snackbar"
+      :color="notificationColor"
+      :timeout="notificationTimeout"
+      :min-width="550"
+      location="top"
     >
-    <v-row>
-      <v-col cols="1">
-        <v-icon class="mr-2" large>{{ notificationIcon }}</v-icon>
-      </v-col>
-      <v-col cols="10">
-        <div class="text-body-1 mt-1">
-          {{ notification }}
-          <template v-if="correlationId">
-            <p></p>
-            <p class="text-body-2">
-              <span class="font-weight-bold">{{ $t('_global.correlation_id') }}</span><br>
-              {{ correlationId }}
-            </p>
-          </template>
-        </div>
-      </v-col>
-      <v-col cols="1">
-        <v-btn
-          fab
-          color="white"
-          small
-          icon
-          @click="snackbar = false"
-          >
-          <v-icon>mdi-close</v-icon>
-        </v-btn>
-      </v-col>
-    </v-row>
-  </v-snackbar>
-</v-app>
+      <v-row>
+        <v-col cols="1">
+          <v-icon
+            color="white"
+            class="mr-2"
+            size="large"
+            :icon="notificationIcon"
+          />
+        </v-col>
+        <v-col cols="10">
+          <div class="text-body-1 text-white mt-1">
+            {{ notification }}
+            <template v-if="correlationId">
+              <p />
+              <p class="text-body-2">
+                <span class="font-weight-bold">{{
+                  $t('_global.correlation_id')
+                }}</span
+                ><br />
+                {{ correlationId }}
+              </p>
+            </template>
+          </div>
+        </v-col>
+        <v-col cols="1">
+          <v-btn
+            color="white"
+            size="small"
+            icon="mdi-close"
+            variant="text"
+            @click="snackbar = false"
+          />
+        </v-col>
+      </v-row>
+    </v-snackbar>
+  </v-app>
 </template>
 <script>
-import { mapGetters } from 'vuex'
-import { bus } from '@/main'
-import SideBar from './components/layout/SideBar'
-import TopBar from './components/layout/TopBar'
+import { computed } from 'vue'
+import { useAppStore } from '@/stores/app'
+import { useAuthStore } from '@/stores/auth'
+import SideBar from '@/components/layout/SideBar.vue'
+import TopBar from '@/components/layout/TopBar.vue'
+import { eventBus } from '@/plugins/eventBus'
 
 export default {
   name: 'App',
 
   components: {
     SideBar,
-    TopBar
+    TopBar,
   },
+  setup() {
+    const appStore = useAppStore()
+    const authStore = useAuthStore()
 
-  /**
-   * Register a callback to deal with global notifications.
-   */
-  created () {
-    bus.$on('notification', this.showNotification)
-    bus.$on('userSignedIn', () => {
-      this.$store.dispatch('auth/initialize')
-      this.$store.commit('auth/SET_WELCOME_MSG_FLAG', true)
-    })
-    bus.$on('backToRoot', () => {
-      this.$store.commit('app/RESET_BREADCRUMBS')
-      this.$store.commit('app/SET_SECTION', '')
-      this.$router.push('/')
-    })
-  },
-
-  computed: {
-    ...mapGetters({
-      breadcrumbs: 'app/breadcrumbs',
-      section: 'app/section',
-      userData: 'app/userData',
-      userInfo: 'auth/userInfo',
-      displayWelcomeMsg: 'auth/displayWelcomeMsg'
-    }),
-    layoutTemplate () {
-      return this.$route.meta.layoutTemplate || '2cols'
-    },
-    notificationIcon () {
-      if (this.notificationColor === 'green' || this.notificationColor === 'success') {
-        return 'mdi-check-circle-outline'
-      }
-      if (this.notificationColor === 'info') {
-        return 'mdi-information-outline'
-      }
-      if (this.notificationColor === 'warning') {
-        return 'mdi-alert-outline'
-      }
-      if (this.notificationColor === 'error' || this.notificationColor === '#E6553F') {
-        return 'mdi-alert-octagon-outline'
-      }
-      return ''
+    return {
+      breadcrumbs: computed(() => appStore.breadcrumbs),
+      section: computed(() => appStore.section),
+      userData: computed(() => appStore.userData),
+      userInfo: computed(() => authStore.userInfo),
+      displayWelcomeMsg: computed(() => authStore.displayWelcomeMsg),
+      appStore,
+      authStore,
     }
   },
 
@@ -129,23 +108,91 @@ export default {
     notification: '',
     notificationColor: null,
     notificationTimeout: -1,
-    defaultNotificationTimeout: 3000
+    defaultNotificationTimeout: 3000,
   }),
 
+  computed: {
+    layoutTemplate() {
+      return this.$route.meta.layoutTemplate || '2cols'
+    },
+    notificationIcon() {
+      if (
+        this.notificationColor === 'green' ||
+        this.notificationColor === 'success'
+      ) {
+        return 'mdi-check-circle-outline'
+      }
+      if (this.notificationColor === 'info') {
+        return 'mdi-information-outline'
+      }
+      if (this.notificationColor === 'warning') {
+        return 'mdi-alert-outline'
+      }
+      if (
+        this.notificationColor === 'error' ||
+        this.notificationColor === '#E6553F'
+      ) {
+        return 'mdi-alert-octagon-outline'
+      }
+      return ''
+    },
+  },
+  watch: {
+    userInfo(newValue) {
+      if (this.displayWelcomeMsg) {
+        this.showNotification({
+          msg: this.$t('_global.auth_success', { username: newValue.name }),
+        })
+        this.authStore.setWelcomeMsgFlag(false)
+      }
+    },
+  },
+
+  created() {
+    this.$watch(
+      () => eventBus.value.get('notification'),
+      (args) => this.showNotification(...args)
+    )
+    this.$watch(
+      () => eventBus.value.get('userSignedIn'),
+      () => {
+        this.authStore.initialize()
+        this.authStore.setWelcomeMsgFlag(true)
+      }
+    )
+    this.$watch(
+      () => eventBus.value.get('backToRoot'),
+      () => {
+        this.appStore.resetBreadcrumbs()
+        this.appStore.setSection('')
+        this.$router.push('/')
+      }
+    )
+  },
+
+  mounted() {
+    this.appStore.initialize()
+    this.$vuetify.theme.dark = this.userData.darkTheme
+    this.authStore.initialize()
+  },
+
   methods: {
-    navigateToRoot () {
-      this.$store.commit('app/RESET_BREADCRUMBS')
-      this.$store.commit('app/SET_SECTION', '')
+    navigateToRoot() {
+      this.appStore.resetBreadcrumbs()
+      this.appStore.setSection('')
       this.$router.push('/')
     },
-    showNotification (options) {
+    showNotification(options) {
       this.notification = options.msg
       if (options.type) {
-        this.notificationColor = options.type === 'error' ? '#E6553F' : options.type
+        this.notificationColor =
+          options.type === 'error' ? '#E6553F' : options.type
       } else {
         this.notificationColor = 'green'
       }
-      this.notificationTimeout = (options.timeout) ? options.timeout : this.defaultNotificationTimeout
+      this.notificationTimeout = options.timeout
+        ? options.timeout
+        : this.defaultNotificationTimeout
       this.correlationId = options.correlationId
       this.snackbar = true
       if (options.type === 'error') {
@@ -154,22 +201,8 @@ export default {
           console.log(`Correlation ID: ${options.correlationId}`)
         }
       }
-    }
+    },
   },
-
-  mounted () {
-    this.$store.dispatch('app/initialize')
-    this.$vuetify.theme.dark = this.userData.darkTheme
-    this.$store.dispatch('auth/initialize')
-  },
-  watch: {
-    userInfo (newValue, oldValue) {
-      if (this.displayWelcomeMsg) {
-        this.showNotification({ msg: this.$t('_global.auth_success', { username: newValue.name }) })
-        this.$store.commit('auth/SET_WELCOME_MSG_FLAG', false)
-      }
-    }
-  }
 }
 </script>
 
@@ -179,7 +212,8 @@ export default {
   padding-bottom: 5px;
   padding-left: 12px;
 }
-.v-main {
-  background-color: var(--v-dfltBackground-base);
+.v-container {
+  position: relative;
+  height: 100%;
 }
 </style>

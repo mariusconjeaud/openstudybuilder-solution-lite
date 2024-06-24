@@ -83,14 +83,16 @@ class FootnotePreInstance(BaseModel):
             sequence_id=footnote_pre_instance_ar.sequence_id,
             template_uid=footnote_pre_instance_ar.template_uid,
             template_name=footnote_pre_instance_ar.template_name,
-            template_type_uid=None,
+            template_type_uid=footnote_pre_instance_ar.type.term_uid,
             name=capitalize_first_letter_if_template_parameter(
                 footnote_pre_instance_ar.name,
                 footnote_pre_instance_ar.template_name_plain,
+                footnote_pre_instance_ar._template.parameter_terms,
             ),
             name_plain=capitalize_first_letter_if_template_parameter(
                 footnote_pre_instance_ar.name_plain,
                 footnote_pre_instance_ar.template_name_plain,
+                footnote_pre_instance_ar._template.parameter_terms,
             ),
             start_date=footnote_pre_instance_ar.item_metadata.start_date,
             end_date=footnote_pre_instance_ar.item_metadata.end_date,

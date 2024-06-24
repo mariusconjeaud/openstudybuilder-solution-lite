@@ -136,6 +136,7 @@ def map_variables(variables: "list[DataModelVariable]"):
                 "qualifies_variables": _variable.qualifies_variables,
                 "role_description": _variable.role_description,
                 "simple_datatype": _variable.simple_datatype,
+                "length": _variable.length,
                 "implementation_notes": _variable.implementation_notes,
                 "mapping_instructions": _variable.mapping_instructions,
                 "prompt": _variable.prompt,

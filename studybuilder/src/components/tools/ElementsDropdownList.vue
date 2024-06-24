@@ -1,107 +1,102 @@
 <template>
-<div>
-  <v-row v-if="editMode">
-    <v-select
-      v-model="element"
-      :items="studyElements"
-      label="Element"
-      item-text="name"
-      item-value="element_uid"
-      dense
-      clearable
-      class="mt-6 cellWidth"
-      @input="updateElement"
-      @click:clear="deleteElement"/>
-  </v-row>
-  <div v-else>
-    <v-tooltip bottom>
-      <template v-slot:activator="{ on, attrs }">
-        <span
-          v-bind="attrs"
-          v-on="on">
-          <router-link :to="{ name: 'StudyElementOverview', params: { study_id: selectedStudy.uid, id: element, root_tab: 'design_matrix' } }">
-            {{ getElementShortName(element) }}
-          </router-link>
-        </span>
-      </template>
+  <div>
+    <v-row v-if="editMode">
+      <v-select
+        v-model="element"
+        :items="studyElements"
+        label="Element"
+        item-title="name"
+        item-value="element_uid"
+        density="compact"
+        clearable
+        class="mt-6 cellWidth"
+        @update:model-value="updateElement"
+        @click:clear="deleteElement"
+      />
+    </v-row>
+    <div v-else>
+      <v-tooltip bottom>
+        <template #activator="{ props }">
+          <span v-bind="props">
+            <router-link
+              v-if="element"
+              :to="{
+                name: 'StudyElementOverview',
+                params: { study_id: selectedStudy.uid, id: element },
+              }"
+            >
+              {{ getElementShortName(element) }}
+            </router-link>
+            <div v-else>{{ getElementShortName(element) }}</div>
+          </span>
+        </template>
         <span>{{ getElementName(element) }}</span>
-    </v-tooltip>
+      </v-tooltip>
+    </div>
   </div>
-</div>
 </template>
 <script>
-import { mapGetters } from 'vuex'
+import { useStudiesGeneralStore } from '@/stores/studies-general'
+import { useAccessGuard } from '@/composables/accessGuard'
 
 export default {
-  components: {},
   props: {
-    epoch: String,
-    arm: String,
-    armBranch: String,
-    studyElements: Array,
-    cells: Object,
+    epoch: {
+      type: String,
+      default: '',
+    },
+    arm: {
+      type: String,
+      default: '',
+    },
+    armBranch: {
+      type: String,
+      default: '',
+    },
+    studyElements: {
+      type: Array,
+      default: () => [],
+    },
+    cells: {
+      type: Object,
+      default: undefined,
+    },
     editMode: Boolean,
-    saveObject: Boolean
+    saveObject: {
+      type: Boolean,
+      default: undefined,
+    },
   },
-  computed: {
-    ...mapGetters({
-      selectedStudy: 'studiesGeneral/selectedStudy'
-    })
+  emits: ['addToObject'],
+  setup() {
+    const studiesGeneralStore = useStudiesGeneralStore()
+    return {
+      ...useAccessGuard(),
+      selectedStudy: studiesGeneralStore.selectedStudy,
+    }
   },
-  data () {
+  data() {
     return {
       element: '',
       cell: {},
-      data: {}
+      data: {},
     }
   },
-  methods: {
-    updateElement () {
-      if (this.cell && this.element) {
-        this.data = {
-          method: 'PATCH',
-          content: {
-            study_element_uid: this.element,
-            study_design_cell_uid: this.cell.design_cell_uid
-          }
-        }
-        this.armBranch ? this.data.study_branch_arm_uid = this.armBranch : this.data.study_arm_uid = this.arm
-      } else if (this.element) {
-        this.data = {
-          method: 'POST',
-          content: {
-            study_arm_uid: this.arm,
-            study_epoch_uid: this.epoch,
-            study_element_uid: this.element,
-            study_branch_arm_uid: this.armBranch
-          }
-        }
+  watch: {
+    saveObject(value) {
+      if (value) {
+        this.$emit('addToObject', this.data)
+        this.data = {}
       }
     },
-    deleteElement () {
+    cells(value) {
+      this.cell = value.data.find(this.findCell)
       if (this.cell) {
-        this.data = {
-          method: 'DELETE',
-          content: {
-            uid: this.cell.design_cell_uid
-          }
-        }
-        this.cell = undefined
+        this.element = this.cell.study_element_uid
       }
     },
-    findCell (cell) {
-      return (cell.study_epoch_uid === this.epoch && (cell.study_arm_uid ? (cell.study_arm_uid === this.arm) : (cell.study_branch_arm_uid === this.armBranch)))
-    },
-    getElementShortName (elementUid) {
-      const element = this.studyElements.find(el => el.element_uid === elementUid)
-      return element ? element.short_name : ''
-    },
-    getElementName (elementUid) {
-      const element = this.studyElements.find(el => el.element_uid === elementUid)
-      return element ? element.name : ''
-    }
   },
-  mounted () {
+  mounted() {
     if (this.cells.data) {
       this.cell = this.cells.data.find(this.findCell)
     }
@@ -109,25 +104,68 @@ export default {
       this.element = this.cell.study_element_uid
     }
   },
-  watch: {
-    saveObject (value) {
-      if (value) {
-        this.$emit('addToObject', this.data)
-        this.data = {}
+  methods: {
+    updateElement() {
+      if (this.cell && this.element) {
+        this.data = {
+          method: 'PATCH',
+          content: {
+            study_element_uid: this.element,
+            study_design_cell_uid: this.cell.design_cell_uid,
+          },
+        }
+        this.armBranch
+          ? (this.data.study_branch_arm_uid = this.armBranch)
+          : (this.data.study_arm_uid = this.arm)
+      } else if (this.element) {
+        this.data = {
+          method: 'POST',
+          content: {
+            study_arm_uid: this.arm,
+            study_epoch_uid: this.epoch,
+            study_element_uid: this.element,
+            study_branch_arm_uid: this.armBranch,
+          },
+        }
       }
     },
-    cells (value) {
-      this.cell = value.data.find(this.findCell)
+    deleteElement() {
       if (this.cell) {
-        this.element = this.cell.study_element_uid
+        this.data = {
+          method: 'DELETE',
+          content: {
+            uid: this.cell.design_cell_uid,
+          },
+        }
+        this.cell = undefined
       }
-    }
-  }
-
+    },
+    findCell(cell) {
+      return (
+        cell.study_epoch_uid === this.epoch &&
+        (cell.study_arm_uid
+          ? cell.study_arm_uid === this.arm
+          : cell.study_branch_arm_uid === this.armBranch)
+      )
+    },
+    getElementShortName(elementUid) {
+      const element = this.studyElements.find(
+        (el) => el.element_uid === elementUid
+      )
+      return element ? element.short_name : ''
+    },
+    getElementName(elementUid) {
+      const element = this.studyElements.find(
+        (el) => el.element_uid === elementUid
+      )
+      return element ? element.name : ''
+    },
+  },
 }
 </script>
 <style scoped>
-  .cellWidth {
-    max-width: 250px;
-  }
+.cellWidth {
+  max-width: 250px;
+  min-width: 150px;
+}
 </style>

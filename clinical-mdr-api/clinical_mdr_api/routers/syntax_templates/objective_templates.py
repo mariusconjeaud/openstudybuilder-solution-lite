@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from fastapi import APIRouter, Body, Depends, Path, Query, Request, Response
+from fastapi import APIRouter, Body, Path, Query, Request, Response
 from fastapi import status as fast_api_status
 from pydantic.types import Json
 
@@ -17,7 +17,7 @@ from clinical_mdr_api.models.syntax_templates.objective_template import (
     ObjectiveTemplateWithCount,
 )
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.oauth import get_current_user_id, rbac
+from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.syntax_pre_instances.objective_pre_instances import (
@@ -143,9 +143,8 @@ def get_objective_templates(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> CustomPage[models.ObjectiveTemplate]:
-    results = Service(current_user_id).get_all(
+    results = Service().get_all(
         status=status,
         return_study_count=True,
         page_number=page_number,
@@ -178,7 +177,6 @@ def get_objective_templates(
     },
 )
 def get_distinct_values_for_header(
-    current_user_id: str = Depends(get_current_user_id),
     status: LibraryItemStatus
     | None = Query(
         None,
@@ -202,7 +200,7 @@ def get_distinct_values_for_header(
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
 ):
-    return Service(current_user_id).get_distinct_values_for_header(
+    return Service().get_distinct_values_for_header(
         status=status,
         field_name=field_name,
         search_string=search_string,
@@ -236,9 +234,8 @@ def retrieve_audit_trail(
     ),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    results = Service(current_user_id).get_all(
+    results = Service().get_all(
         page_number=page_number,
         page_size=page_size,
         total_count=total_count,
@@ -268,9 +265,8 @@ def retrieve_audit_trail(
 )
 def get_objective_template(
     uid: str = ObjectiveTemplateUID,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.ObjectiveTemplate:
-    return Service(current_user_id).get_by_uid(uid=uid)
+    return Service().get_by_uid(uid=uid)
 
 
 @router.get(
@@ -332,9 +328,8 @@ The returned versions are ordered by `start_date` descending (newest entries fir
 def get_objective_template_versions(
     request: Request,  # request is actually required by the allow_exports decorator
     uid: str = ObjectiveTemplateUID,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    return Service(current_user_id).get_version_history(uid=uid)
+    return Service().get_version_history(uid=uid)
 
 
 @router.get(
@@ -364,9 +359,8 @@ def get_objective_template_version(
         "The version number is specified in the following format: \\<major\\>.\\<minor\\> where \\<major\\> and \\<minor\\> are digits.\n"
         "E.g. '0.1', '0.2', '1.0', ...",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    return Service(current_user_id).get_specific_version(uid=uid, version=version)
+    return Service().get_specific_version(uid=uid, version=version)
 
 
 @router.get(
@@ -384,10 +378,8 @@ def get_objective_template_version(
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_objective_template_releases(
-    uid: str = ObjectiveTemplateUID, current_user_id: str = Depends(get_current_user_id)
-):
-    return Service(current_user_id).get_releases(uid=uid, return_study_count=False)
+def get_objective_template_releases(uid: str = ObjectiveTemplateUID):
+    return Service().get_releases(uid=uid, return_study_count=False)
 
 
 @router.post(
@@ -428,14 +420,13 @@ def create_objective_template(
     objective_template: models.ObjectiveTemplateCreateInput = Body(
         description="The objective template that shall be created."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.ObjectiveTemplate:
-    return Service(current_user_id).create(objective_template)
+    return Service().create(objective_template)
 
 
 @router.patch(
     "/{uid}",
-    dependencies=[rbac.LIBRARY_WRITE],
+    dependencies=[rbac.LIBRARY_WRITE_OR_STUDY_WRITE],
     summary="Updates the objective template identified by 'uid'.",
     description="""This request is only valid if the objective template
 * is in 'Draft' status and
@@ -474,9 +465,8 @@ def edit(
     objective_template: models.ObjectiveTemplateEditInput = Body(
         description="The new content of the objective template including the change description.",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.ObjectiveTemplate:
-    return Service(current_user_id).edit_draft(uid=uid, template=objective_template)
+    return Service().edit_draft(uid=uid, template=objective_template)
 
 
 @router.patch(
@@ -506,9 +496,8 @@ def patch_indexings(
     indexings: models.ObjectiveTemplateEditIndexingsInput = Body(
         description="The lists of UIDs for the new indexings to be set, grouped by indexings to be updated.",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.ObjectiveTemplate:
-    return Service(current_user_id).patch_indexings(uid=uid, indexings=indexings)
+    return Service().patch_indexings(uid=uid, indexings=indexings)
 
 
 @router.post(
@@ -550,13 +539,10 @@ def create_new_version(
     objective_template: models.ObjectiveTemplateEditInput = Body(
         description="The content of the objective template for the new 'Draft' version including the change description.",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.ObjectiveTemplate:
     # return service.create_new_version_of_final_or_retired(uid, objective_template)
     # TODO: do sth not to mislead static code analysis
-    return Service(current_user_id).create_new_version(
-        uid=uid, template=objective_template
-    )
+    return Service().create_new_version(uid=uid, template=objective_template)
 
 
 @router.post(
@@ -596,15 +582,14 @@ If the request succeeds:
 def approve(
     uid: str = ObjectiveTemplateUID,
     cascade: bool = False,
-    current_user_id: str = Depends(get_current_user_id),
 ):
     """
     Approves objective template. Fails with 409 if there is some objectives created
     from this template and cascade is false
     """
     if not cascade:
-        return Service(current_user_id).approve(uid=uid)
-    return Service(current_user_id).approve_cascade(uid=uid)
+        return Service().approve(uid=uid)
+    return Service().approve_cascade(uid=uid)
 
 
 @router.delete(
@@ -635,12 +620,10 @@ If the request succeeds:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def inactivate(
-    uid: str = ObjectiveTemplateUID, current_user_id: str = Depends(get_current_user_id)
-) -> models.ObjectiveTemplate:
+def inactivate(uid: str = ObjectiveTemplateUID) -> models.ObjectiveTemplate:
     # return service.inactivate_final(uid)
     # TODO: do sth to make static code analysis work for this code
-    return Service(current_user_id).inactivate_final(uid=uid)
+    return Service().inactivate_final(uid=uid)
 
 
 @router.post(
@@ -671,12 +654,10 @@ If the request succeeds:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def reactivate(
-    uid: str = ObjectiveTemplateUID, current_user_id: str = Depends(get_current_user_id)
-) -> models.ObjectiveTemplate:
+def reactivate(uid: str = ObjectiveTemplateUID) -> models.ObjectiveTemplate:
     # return service.reactivate_retired(uid)
     # TODO: do sth to allow for static code analysis of this code
-    return Service(current_user_id).reactivate_retired(uid)
+    return Service().reactivate_retired(uid)
 
 
 @router.delete(
@@ -708,11 +689,9 @@ def reactivate(
         500: _generic_descriptions.ERROR_500,
     },
 )
-def delete_objective_template(
-    uid: str = ObjectiveTemplateUID, current_user_id: str = Depends(get_current_user_id)
-) -> None:
+def delete_objective_template(uid: str = ObjectiveTemplateUID) -> None:
     # service.soft_delete(uid)
-    Service(current_user_id).soft_delete(uid)
+    Service().soft_delete(uid)
     return Response(status_code=fast_api_status.HTTP_204_NO_CONTENT)
 
 
@@ -745,9 +724,8 @@ def get_parameters(
         None,
         description="Optionally, the uid of the study to subset the parameters to (e.g. for StudyEndpoints parameters)",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    return Service(current_user_id).get_parameters(
+    return Service().get_parameters(
         uid=uid, study_uid=study_uid, include_study_endpoints=True
     )
 
@@ -780,10 +758,9 @@ def pre_validate(
     objective_template: ObjectiveTemplateNameInput = Body(
         description="The content of the objective template that shall be validated.",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
     # service.validate(objective_template)
-    Service(current_user_id).validate_template_syntax(objective_template.name)
+    Service().validate_template_syntax(objective_template.name)
 
 
 @router.post(

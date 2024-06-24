@@ -1,147 +1,137 @@
 <template>
-<div>
-  <n-n-table
-    :headers="headers"
-    :items="items"
-    item-key="uid"
-    sort-by="name"
-    sort-desc
-    has-api
-    :options.sync="options"
-    :server-items-length="total"
-    @filter="getItems"
-    column-data-resource="concepts/odms/items"
-    export-data-url="concepts/odms/items"
-    export-object-label="CRFItems"
-    >
-    <template v-slot:actions="">
-      <v-btn
-        class="ml-2"
-        fab
-        small
-        color="primary"
-        @click.stop="showForm = true"
-        :title="$t('CRFItems.add_title')"
-        data-cy="add-crf-item"
-        :disabled="!checkPermission($roles.LIBRARY_WRITE)"
-        >
-        <v-icon dark>
-          mdi-plus
-        </v-icon>
-      </v-btn>
-    </template>
-    <template v-slot:item.name="{ item }">
-      <v-tooltip bottom>
-        <template v-slot:activator="{ on, attrs }">
-          <div
-            v-bind="attrs"
-            v-on="on">
-            <n-n-parameter-highlighter :name="item.name.length > 40 ? item.name.substring(0, 40) + '...' : item.name" :show-prefix-and-postfix="false"/></div>
-        </template>
-        <span>{{item.name}}</span>
-      </v-tooltip>
-    </template>
-    <template v-slot:item.description="{ item }">
-      <v-tooltip bottom>
-        <template v-slot:activator="{ on, attrs }">
-          <div v-html="getDescription(item, true)" v-bind="attrs" v-on="on"/>
-        </template>
-        <span>{{getDescription(item, false)}}</span>
-      </v-tooltip>
-    </template>
-    <template v-slot:item.notes="{ item }">
-      <v-tooltip bottom>
-        <template v-slot:activator="{ on, attrs }">
-          <div v-html="getNotes(item, true)" v-bind="attrs" v-on="on"/>
-        </template>
-      <span>{{getNotes(item, false)}}</span>
-      </v-tooltip>
-    </template>
-    <template v-slot:item.activities="{ item }">
-      <v-tooltip bottom v-if="item.activity">
-        <template v-slot:activator="{ on, attrs }">
-          <div v-bind="attrs" v-on="on">
-            {{ item.activity.name.length > 40 ? item.activity.name.substring(0, 40) + '...' : item.activity.name }}
-          </div>
-        </template>
-        <span>{{ item.activity.name }}</span>
-      </v-tooltip>
-    </template>
-    <template v-slot:item.status="{ item }">
-      <status-chip :status="item.status" />
-    </template>
-    <template v-slot:item.actions="{ item }">
-      <actions-menu :actions="actions" :item="item" />
-    </template>
-  </n-n-table>
-  <v-dialog
-    v-model="showForm"
-    persistent
-    content-class="fullscreen-dialog"
-    >
-    <crf-item-form
-      @close="closeForm"
-      @newVersion="newVersion"
-      @approve="approve"
-      :selectedItem="selectedItem"
-      class="fullscreen-dialog"
-      :readOnlyProp="selectedItem && selectedItem.status === constants.FINAL"
-      />
-  </v-dialog>
-  <v-dialog
-    v-model="showItemHistory"
-    @keydown.esc="closeItemHistory"
-    persistent
-    :max-width="globalHistoryDialogMaxWidth"
-    :fullscreen="globalHistoryDialogFullscreen"
-    >
-    <history-table
-      :title="itemHistoryTitle"
-      @close="closeItemHistory"
+  <div>
+    <NNTable
+      ref="table"
       :headers="headers"
-      :items="itemHistoryItems"
+      :items="items"
+      item-value="uid"
+      :items-length="total"
+      column-data-resource="concepts/odms/items"
+      export-data-url="concepts/odms/items"
+      export-object-label="CRFItems"
+      @filter="getItems"
+    >
+      <template #actions="">
+        <v-btn
+          class="ml-2"
+          size="small"
+          color="primary"
+          :title="$t('CRFItems.add_title')"
+          data-cy="add-crf-item"
+          :disabled="!checkPermission($roles.LIBRARY_WRITE)"
+          icon="mdi-plus"
+          @click.stop="showForm = true"
+        />
+      </template>
+      <template #[`item.name`]="{ item }">
+        <v-tooltip bottom>
+          <template #activator="{ props }">
+            <div v-bind="props">
+              <NNParameterHighlighter
+                :name="
+                  item.name.length > 40
+                    ? item.name.substring(0, 40) + '...'
+                    : item.name
+                "
+                :show-prefix-and-postfix="false"
+              />
+            </div>
+          </template>
+          <span>{{ item.name }}</span>
+        </v-tooltip>
+      </template>
+      <template #[`item.description`]="{ item }">
+        <v-tooltip bottom>
+          <template #activator="{ props }">
+            <div v-bind="props" v-html="getDescription(item, true)" />
+          </template>
+          <span>{{ getDescription(item, false) }}</span>
+        </v-tooltip>
+      </template>
+      <template #[`item.notes`]="{ item }">
+        <v-tooltip bottom>
+          <template #activator="{ props }">
+            <div v-bind="props" v-html="getNotes(item, true)" />
+          </template>
+          <span>{{ getNotes(item, false) }}</span>
+        </v-tooltip>
+      </template>
+      <template #[`item.activities`]="{ item }">
+        <v-tooltip v-if="item.activity" bottom>
+          <template #activator="{ props }">
+            <div v-bind="props">
+              {{
+                item.activity.name.length > 40
+                  ? item.activity.name.substring(0, 40) + '...'
+                  : item.activity.name
+              }}
+            </div>
+          </template>
+          <span>{{ item.activity.name }}</span>
+        </v-tooltip>
+      </template>
+      <template #[`item.status`]="{ item }">
+        <StatusChip :status="item.status" />
+      </template>
+      <template #[`item.actions`]="{ item }">
+        <ActionsMenu :actions="actions" :item="item" />
+      </template>
+    </NNTable>
+    <v-dialog v-model="showForm" persistent content-class="fullscreen-dialog">
+      <CrfItemForm
+        :selected-item="selectedItem"
+        class="fullscreen-dialog"
+        :read-only-prop="
+          selectedItem && selectedItem.status === constants.FINAL
+        "
+        @close="closeForm"
+        @new-version="newVersion"
+        @approve="approve"
       />
-  </v-dialog>
-  <crf-activities-models-link-form
-    :open="linkForm"
-    @close="closeLinkForm"
-    :item-to-link="selectedItem"
-    item-type="item" />
-  <v-dialog v-model="showRelations"
-            @keydown.esc="closeRelationsTree()"
-            max-width="800px"
-            persistent>
-    <odm-references-tree
-      :item="selectedItem"
-      type="item"
-      @close="closeRelationsTree()"/>
-  </v-dialog>
-  <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
-</div>
+    </v-dialog>
+    <v-dialog
+      v-model="showItemHistory"
+      persistent
+      :fullscreen="$globals.historyDialogFullscreen"
+      @keydown.esc="closeItemHistory"
+    >
+      <HistoryTable
+        :title="itemHistoryTitle"
+        :headers="headers"
+        :items="itemHistoryItems"
+        @close="closeItemHistory"
+      />
+    </v-dialog>
+    <CrfActivitiesModelsLinkForm
+      :open="linkForm"
+      :item-to-link="selectedItem"
+      item-type="item"
+      @close="closeLinkForm"
+    />
+    <ConfirmDialog ref="confirm" :text-cols="6" :action-cols="5" />
+  </div>
 </template>
 
 <script>
-import NNTable from '@/components/tools/NNTable'
-import NNParameterHighlighter from '@/components/tools/NNParameterHighlighter'
-import StatusChip from '@/components/tools/StatusChip'
-import ActionsMenu from '@/components/tools/ActionsMenu'
+import NNTable from '@/components/tools/NNTable.vue'
+import NNParameterHighlighter from '@/components/tools/NNParameterHighlighter.vue'
+import StatusChip from '@/components/tools/StatusChip.vue'
+import ActionsMenu from '@/components/tools/ActionsMenu.vue'
 import crfs from '@/api/crfs'
-import CrfItemForm from '@/components/library/crfs/CrfItemForm'
-import HistoryTable from '@/components/tools/HistoryTable'
-import CrfActivitiesModelsLinkForm from '@/components/library/crfs/CrfActivitiesModelsLinkForm'
+import CrfItemForm from '@/components/library/crfs/CrfItemForm.vue'
+import HistoryTable from '@/components/tools/HistoryTable.vue'
+import CrfActivitiesModelsLinkForm from '@/components/library/crfs/CrfActivitiesModelsLinkForm.vue'
 import constants from '@/constants/statuses'
 import filteringParameters from '@/utils/filteringParameters'
-import OdmReferencesTree from '@/components/library/crfs/OdmReferencesTree'
-import ConfirmDialog from '@/components/tools/ConfirmDialog'
+import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
 import crfTypes from '@/constants/crfTypes'
 import parameters from '@/constants/parameters'
 import dataFormating from '@/utils/dataFormating'
-import { mapGetters } from 'vuex'
-import _isEmpty from 'lodash/isEmpty'
-import { accessGuard } from '@/mixins/accessRoleVerifier'
+import { useAccessGuard } from '@/composables/accessGuard'
+import { useCrfsStore } from '@/stores/crfs'
+import { computed } from 'vue'
 
 export default {
-  mixins: [accessGuard],
   components: {
     NNTable,
     NNParameterHighlighter,
@@ -150,83 +140,88 @@ export default {
     CrfItemForm,
     HistoryTable,
     CrfActivitiesModelsLinkForm,
-    OdmReferencesTree,
-    ConfirmDialog
+    ConfirmDialog,
   },
   props: {
-    elementProp: Object
+    elementProp: {
+      type: Object,
+      default: null,
+    },
   },
-  computed: {
-    ...mapGetters({
-      items: 'crfs/items',
-      total: 'crfs/totalItems'
-    }),
-    itemHistoryTitle () {
-      if (this.selectedItem) {
-        return this.$t(
-          'CRFItems.item_history_title',
-          { itemUid: this.selectedItem.uid })
-      }
-      return ''
+  emits: ['updateItem', 'clearUid'],
+  setup() {
+    const crfsStore = useCrfsStore()
+
+    return {
+      fetchItems: crfsStore.fetchItems,
+      total: computed(() => crfsStore.totalItems),
+      items: computed(() => crfsStore.items),
+      ...useAccessGuard(),
     }
   },
-  data () {
+  data() {
     return {
       actions: [
         {
           label: this.$t('_global.approve'),
           icon: 'mdi-check-decagram',
           iconColor: 'success',
-          condition: (item) => item.possible_actions.find(action => action === 'approve'),
+          condition: (item) =>
+            item.possible_actions.find((action) => action === 'approve'),
           accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.approve
+          click: this.approve,
         },
         {
           label: this.$t('_global.edit'),
           icon: 'mdi-pencil-outline',
           iconColor: 'primary',
-          condition: (item) => item.possible_actions.find(action => action === 'edit'),
+          condition: (item) =>
+            item.possible_actions.find((action) => action === 'edit'),
           accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.edit
+          click: this.edit,
         },
         {
           label: this.$t('_global.view'),
           icon: 'mdi-eye-outline',
           iconColor: 'primary',
           condition: (item) => item.status === constants.FINAL,
-          click: this.view
+          click: this.view,
         },
         {
           label: this.$t('_global.new_version'),
           icon: 'mdi-plus-circle-outline',
           iconColor: 'primary',
-          condition: (item) => item.possible_actions.find(action => action === 'new_version'),
+          condition: (item) =>
+            item.possible_actions.find((action) => action === 'new_version'),
           accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.newVersion
+          click: this.newVersion,
         },
         {
           label: this.$t('_global.inactivate'),
           icon: 'mdi-close-octagon-outline',
           iconColor: 'primary',
-          condition: (item) => item.possible_actions.find(action => action === 'inactivate'),
+          condition: (item) =>
+            item.possible_actions.find((action) => action === 'inactivate'),
           accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.inactivate
+          click: this.inactivate,
         },
         {
           label: this.$t('_global.reactivate'),
           icon: 'mdi-undo-variant',
           iconColor: 'primary',
-          condition: (item) => item.possible_actions.find(action => action === 'reactivate'),
+          condition: (item) =>
+            item.possible_actions.find((action) => action === 'reactivate'),
           accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.reactivate
+          click: this.reactivate,
         },
         {
           label: this.$t('_global.delete'),
           icon: 'mdi-delete-outline',
           iconColor: 'error',
-          condition: (item) => item.possible_actions.find(action => action === 'delete'),
+          condition: (item) =>
+            item.possible_actions.find((action) => action === 'delete'),
           accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.delete
+          click: this.delete,
         },
         {
           label: this.$t('CrfLinikingForm.link_activities'),
@@ -234,96 +229,108 @@ export default {
           iconColor: 'primary',
           condition: (item) => item.status === constants.DRAFT,
           accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.openLinkForm
-        },
-        {
-          label: this.$t('_global.relations'),
-          icon: 'mdi-family-tree',
-          click: this.openRelationsTree
+          click: this.openLinkForm,
         },
         {
           label: this.$t('_global.history'),
           icon: 'mdi-history',
-          click: this.openItemHistory
-        }
+          click: this.openItemHistory,
+        },
       ],
       headers: [
-        { text: '', value: 'actions', width: '1%' },
-        { text: this.$t('CRFItems.oid'), value: 'oid' },
-        { text: this.$t('_global.name'), value: 'name' },
-        { text: this.$t('_global.description'), value: 'description' },
-        { text: this.$t('CRFItems.impl_notes'), value: 'notes' },
-        { text: this.$t('CRFItems.type'), value: 'datatype', width: '1%' },
-        { text: this.$t('CRFItems.length'), value: 'length', width: '1%' },
-        { text: this.$t('CRFItems.sds_name'), value: 'sdsVarName' },
-        { text: this.$t('_global.links'), value: 'activities' },
-        { text: this.$t('_global.version'), value: 'version', width: '1%' },
-        { text: this.$t('_global.status'), value: 'status', width: '1%' }
+        { title: '', key: 'actions', width: '1%' },
+        { title: this.$t('CRFItems.oid'), key: 'oid' },
+        { title: this.$t('_global.name'), key: 'name' },
+        { title: this.$t('_global.description'), key: 'description' },
+        { title: this.$t('CRFItems.impl_notes'), key: 'notes' },
+        { title: this.$t('CRFItems.type'), key: 'datatype', width: '1%' },
+        { title: this.$t('CRFItems.length'), key: 'length', width: '1%' },
+        { title: this.$t('CRFItems.sds_name'), key: 'sdsVarName' },
+        { title: this.$t('_global.links'), key: 'activities' },
+        { title: this.$t('_global.version'), key: 'version', width: '1%' },
+        { title: this.$t('_global.status'), key: 'status', width: '1%' },
       ],
       showForm: false,
-      options: {},
       filters: '',
       selectedItem: null,
       showItemHistory: false,
       linkForm: false,
-      showRelations: false,
-      itemHistoryItems: []
+      itemHistoryItems: [],
     }
   },
-  mounted () {
-    this.getItems()
-    if (this.elementProp.tab === 'items' && this.elementProp.type === crfTypes.ITEM && this.elementProp.uid) {
+  computed: {
+    itemHistoryTitle() {
+      if (this.selectedItem) {
+        return this.$t('CRFItems.item_history_title', {
+          itemUid: this.selectedItem.uid,
+        })
+      }
+      return ''
+    },
+  },
+  watch: {
+    elementProp(value) {
+      if (value.tab === 'items' && value.type === crfTypes.ITEM && value.uid) {
+        this.edit(value)
+      }
+    },
+  },
+  mounted() {
+    if (
+      this.elementProp.tab === 'items' &&
+      this.elementProp.type === crfTypes.ITEM &&
+      this.elementProp.uid
+    ) {
       this.edit(this.elementProp)
     }
   },
-  created () {
+  created() {
     this.constants = constants
   },
   methods: {
-    getDescription (item, short) {
-      const engDesc = item.descriptions.find(el => el.language === parameters.ENG)
-      if (engDesc) {
-        return short ? (engDesc.description.length > 40 ? engDesc.description.substring(0, 40) + '...' : engDesc.description) : engDesc.description
+    getDescription(item, short) {
+      const engDesc = item.descriptions.find(
+        (el) => el.language === parameters.ENG
+      )
+      if (engDesc && engDesc.description) {
+        return short
+          ? engDesc.description.length > 40
+            ? engDesc.description.substring(0, 40) + '...'
+            : engDesc.description
+          : engDesc.description
       }
       return ''
     },
-    getNotes (item, short) {
-      const engDesc = item.descriptions.find(el => el.language === parameters.ENG)
-      if (engDesc) {
-        return short ? (engDesc.sponsor_instruction.length > 40 ? engDesc.sponsor_instruction.substring(0, 40) + '...' : engDesc.sponsor_instruction) : engDesc.sponsor_instruction
+    getNotes(item, short) {
+      const engDesc = item.descriptions.find(
+        (el) => el.language === parameters.ENG
+      )
+      if (engDesc && engDesc.sponsor_instruction) {
+        return short
+          ? engDesc.sponsor_instruction.length > 40
+            ? engDesc.sponsor_instruction.substring(0, 40) + '...'
+            : engDesc.sponsor_instruction
+          : engDesc.sponsor_instruction
       }
       return ''
     },
-    openRelationsTree (item) {
-      this.showRelations = true
-      this.selectedItem = item
-    },
-    closeRelationsTree () {
-      this.selectedItem = null
-      this.showRelations = false
-    },
-    openForm () {
+    openForm() {
       this.showForm = true
     },
-    closeForm () {
-      if (!_isEmpty(this.selectedItem)) {
-        crfs.getItem(this.selectedItem.uid).then((resp) => {
-          this.$emit('updateItem', { type: crfTypes.ITEM, element: resp.data })
-        })
-      }
+    closeForm() {
       this.showForm = false
       this.selectedItem = null
-      this.getItems()
+      this.$refs.table.filterTable()
     },
-    approve (item) {
+    approve(item) {
       crfs.approve('items', item.uid).then((resp) => {
         this.$emit('updateItem', { type: crfTypes.ITEM, element: resp.data })
-        this.getItems()
+        this.$refs.table.filterTable()
       })
     },
-    async delete (item) {
+    async delete(item) {
       let relationships = 0
-      await crfs.getRelationships(item.uid, 'items').then(resp => {
+      await crfs.getRelationships(item.uid, 'items').then((resp) => {
         if (resp.data.OdmItemGroup && resp.data.OdmItemGroup.length > 0) {
           relationships = resp.data.OdmItemGroup.length
         }
@@ -331,33 +338,39 @@ export default {
       const options = {
         type: 'warning',
         cancelLabel: this.$t('_global.cancel'),
-        agreeLabel: this.$t('_global.continue')
+        agreeLabel: this.$t('_global.continue'),
       }
-      if (relationships > 0 && await this.$refs.confirm.open(`${this.$t('CRFItems.delete_warning_1')} ${relationships} ${this.$t('CRFItems.delete_warning_2')}`, options)) {
-        crfs.delete('items', item.uid).then((resp) => {
-          this.getItems()
+      if (
+        relationships > 0 &&
+        (await this.$refs.confirm.open(
+          `${this.$t('CRFItems.delete_warning_1')} ${relationships} ${this.$t('CRFItems.delete_warning_2')}`,
+          options
+        ))
+      ) {
+        crfs.delete('items', item.uid).then(() => {
+          this.$refs.table.filterTable()
         })
       } else if (relationships === 0) {
-        crfs.delete('items', item.uid).then((resp) => {
-          this.getItems()
+        crfs.delete('items', item.uid).then(() => {
+          this.$refs.table.filterTable()
         })
       }
     },
-    inactivate (item) {
+    inactivate(item) {
       crfs.inactivate('items', item.uid).then((resp) => {
         this.$emit('updateItem', { type: crfTypes.ITEM, element: resp.data })
-        this.getItems()
+        this.$refs.table.filterTable()
       })
     },
-    reactivate (item) {
+    reactivate(item) {
       crfs.reactivate('items', item.uid).then((resp) => {
         this.$emit('updateItem', { type: crfTypes.ITEM, element: resp.data })
-        this.getItems()
+        this.$refs.table.filterTable()
       })
     },
-    async newVersion (item) {
+    async newVersion(item) {
       let relationships = 0
-      await crfs.getRelationships(item.uid, 'items').then(resp => {
+      await crfs.getRelationships(item.uid, 'items').then((resp) => {
         if (resp.data.OdmItemGroup && resp.data.OdmItemGroup.length > 0) {
           relationships = resp.data.OdmItemGroup.length
         }
@@ -365,44 +378,50 @@ export default {
       const options = {
         type: 'warning',
         cancelLabel: this.$t('_global.cancel'),
-        agreeLabel: this.$t('_global.continue')
+        agreeLabel: this.$t('_global.continue'),
       }
-      if (relationships > 1 && await this.$refs.confirm.open(`${this.$t('CRFForms.new_version_warning')}`, options)) {
+      if (
+        relationships > 1 &&
+        (await this.$refs.confirm.open(
+          `${this.$t('CRFForms.new_version_warning')}`,
+          options
+        ))
+      ) {
         crfs.newVersion('items', item.uid).then((resp) => {
           this.$emit('updateItem', { type: crfTypes.ITEM, element: resp.data })
-          this.getItems()
+          this.$refs.table.filterTable()
         })
       } else if (relationships <= 1) {
         crfs.newVersion('items', item.uid).then((resp) => {
           this.$emit('updateItem', { type: crfTypes.ITEM, element: resp.data })
-          this.getItems()
+          this.$refs.table.filterTable()
         })
       }
     },
-    edit (item) {
+    edit(item) {
       crfs.getItem(item.uid).then((resp) => {
         this.selectedItem = resp.data
         this.showForm = true
         this.$emit('clearUid')
       })
     },
-    view (item) {
+    view(item) {
       crfs.getItem(item.uid).then((resp) => {
         this.selectedItem = resp.data
         this.showForm = true
       })
     },
-    async openItemHistory (item) {
+    async openItemHistory(item) {
       this.selectedItem = item
       const resp = await crfs.getItemAuditTrail(item.uid)
       this.itemHistoryItems = this.transformItems(resp.data)
       this.showItemHistory = true
     },
-    closeItemHistory () {
+    closeItemHistory() {
       this.selectedItem = null
       this.showItemHistory = false
     },
-    transformItems (items) {
+    transformItems(items) {
       const result = []
       for (const item of items) {
         const newItem = { ...item }
@@ -415,36 +434,26 @@ export default {
       }
       return result
     },
-    openLinkForm (item) {
+    openLinkForm(item) {
       this.selectedItem = item
       this.linkForm = true
     },
-    closeLinkForm () {
+    closeLinkForm() {
       this.linkForm = false
       this.selectedItem = null
-      this.getItems()
+      this.$refs.table.filterTable()
     },
-    getItems (filters, sort, filtersUpdated) {
+    getItems(filters, options, filtersUpdated) {
       if (filters) {
         this.filters = filters
       }
       const params = filteringParameters.prepareParameters(
-        this.options, this.filters, sort, filtersUpdated)
-      this.$store.dispatch('crfs/fetchItems', params)
-    }
-  },
-  watch: {
-    options: {
-      handler () {
-        this.getItems()
-      },
-      deep: true
+        options,
+        filters,
+        filtersUpdated
+      )
+      this.fetchItems(params)
     },
-    elementProp (value) {
-      if (value.tab === 'items' && value.type === crfTypes.ITEM && value.uid) {
-        this.edit(value)
-      }
-    }
-  }
+  },
 }
 </script>

@@ -1,77 +1,83 @@
 <template>
-<div>
-  <n-n-table
-    :headers="headers"
-    :items="instances"
-    item-key="uid"
-    sort-by="start_date"
-    sort-desc
-    has-api
-    @filter="fetchInstances"
-    :options.sync="options"
-    :export-data-url="baseUrl"
-    v-bind="$attrs"
-    v-on="$listeners"
-    :filters-modify-function="updateHeaderFilters"
-    >
-    <template v-slot:[`item.${type}_template.name`]="{ item }">
-      <n-n-parameter-highlighter :name="item[`${type}_template`].name" default-color="orange" />
-    </template>
-    <template v-slot:item.name="{ item }">
-      <n-n-parameter-highlighter :name="item.name" :show-prefix-and-postfix="false" />
-    </template>
-    <template v-slot:item.start_date="{ item }">
-      {{ item.start_date | date }}
-    </template>
-    <template v-slot:item.status="{ item }">
-      <status-chip :status="item.status" />
-    </template>
-    <template v-slot:item.study_count="{ item }">
-      <v-chip small color="primary">{{ item.study_count }}</v-chip>
-    </template>
-    <template v-slot:item.actions="{ item }">
-      <actions-menu :actions="actions" :item="item" />
-    </template>
-  </n-n-table>
-  <v-dialog v-model="showHistory"
-            persistent
-            @keydown.esc="closeHistory"
-            :max-width="globalHistoryDialogMaxWidth"
-            :fullscreen="globalHistoryDialogFullscreen"
-            >
-    <history-table
-      :title="historyTitle"
-      @close="closeHistory"
+  <div>
+    <NNTable
       :headers="headers"
-      :items="historyItems"
-      :html-fields="historyHtmlFields"
+      :items="instances"
+      item-value="uid"
+      :export-data-url="baseUrl"
+      v-bind="$attrs"
+      :filters-modify-function="updateHeaderFilters"
+      @filter="fetchInstances"
+    >
+      <template #[`item.${type}_template.name`]="{ item }">
+        <NNParameterHighlighter
+          :name="item[`${type}_template`].name"
+          default-color="orange"
+        />
+      </template>
+      <template #[`item.name`]="{ item }">
+        <NNParameterHighlighter
+          :name="item.name"
+          :show-prefix-and-postfix="false"
+        />
+      </template>
+      <template #[`item.start_date`]="{ item }">
+        {{ $filters.date(item.start_date) }}
+      </template>
+      <template #[`item.status`]="{ item }">
+        <StatusChip :status="item.status" />
+      </template>
+      <template #[`item.study_count`]="{ item }">
+        <v-chip sizee="small" color="primary">
+          {{ item.study_count }}
+        </v-chip>
+      </template>
+      <template #[`item.actions`]="{ item }">
+        <ActionsMenu :actions="actions" :item="item" />
+      </template>
+    </NNTable>
+    <v-dialog
+      v-model="showHistory"
+      persistent
+      :max-width="$globals.historyDialogMaxWidth"
+      :fullscreen="$globals.historyDialogFullscreen"
+      @keydown.esc="closeHistory"
+    >
+      <HistoryTable
+        :title="historyTitle"
+        :headers="headers"
+        :items="historyItems"
+        :html-fields="historyHtmlFields"
+        @close="closeHistory"
       />
-  </v-dialog>
-  <v-dialog v-model="showStudies"
-            persistent
-            @keydown.esc="closeInstanceStudies"
-            max-width="1200px">
-    <instance-studies-dialog
-      v-if="selectedInstance"
-      :template="selectedInstance[`${type}_template`].name"
-      :text="selectedInstance.name"
-      :type="type"
-      :studies="studies"
-      @close="closeInstanceStudies"
+    </v-dialog>
+    <v-dialog
+      v-model="showStudies"
+      persistent
+      max-width="1200px"
+      @keydown.esc="closeInstanceStudies"
+    >
+      <InstanceStudiesDialog
+        v-if="selectedInstance"
+        :template="selectedInstance[`${type}_template`].name"
+        :text="selectedInstance.name"
+        :type="type"
+        :studies="studies"
+        @close="closeInstanceStudies"
       />
-  </v-dialog>
-</div>
+    </v-dialog>
+  </div>
 </template>
 
 <script>
-import ActionsMenu from '@/components/tools/ActionsMenu'
+import ActionsMenu from '@/components/tools/ActionsMenu.vue'
 import filteringParameters from '@/utils/filteringParameters'
-import HistoryTable from '@/components/tools/HistoryTable'
-import InstanceStudiesDialog from './InstanceStudiesDialog'
+import HistoryTable from '@/components/tools/HistoryTable.vue'
+import InstanceStudiesDialog from './InstanceStudiesDialog.vue'
 import libraryObjects from '@/api/libraryObjects'
-import NNParameterHighlighter from '@/components/tools/NNParameterHighlighter'
-import NNTable from '@/components/tools/NNTable'
-import StatusChip from '@/components/tools/StatusChip'
+import NNParameterHighlighter from '@/components/tools/NNParameterHighlighter.vue'
+import NNTable from '@/components/tools/NNTable.vue'
+import StatusChip from '@/components/tools/StatusChip.vue'
 
 export default {
   components: {
@@ -80,55 +86,76 @@ export default {
     InstanceStudiesDialog,
     NNParameterHighlighter,
     NNTable,
-    StatusChip
+    StatusChip,
   },
   props: {
-    instances: Array,
-    fetchInstancesActionName: String,
+    instances: {
+      type: Array,
+      default: null,
+    },
+    fetchInstancesActionName: {
+      type: String,
+      default: null,
+    },
+    fetchingFunction: {
+      type: Function,
+      default: null,
+    },
     fetchInstancesExtraFilters: {
       type: Object,
-      required: false
+      default: null,
+      required: false,
     },
-    type: String,
-    baseUrl: String,
-    instanceType: String
+    type: {
+      type: String,
+      default: null,
+    },
+    baseUrl: {
+      type: String,
+      default: null,
+    },
+    instanceType: {
+      type: String,
+      default: null,
+    },
   },
-  computed: {
-    historyTitle () {
-      if (this.selectedInstance) {
-        return this.$t('InstanceTable.item_history_title', { type: this.type, instance: this.selectedInstance.uid })
-      }
-      return ''
-    }
-  },
-  data () {
+  data() {
     return {
       actions: [
         {
           label: this.$t('_global.history'),
           icon: 'mdi-history',
-          click: this.openHistory
+          click: this.openHistory,
         },
         {
           label: this.$t('InstanceTable.show_studies', { type: this.type }),
           icon: 'mdi-dots-horizontal-circle-outline',
-          click: this.showInstanceStudies
-        }
+          click: this.showInstanceStudies,
+        },
       ],
       headers: [
         {
-          text: '',
-          value: 'actions',
+          title: '',
+          key: 'actions',
           sortable: false,
-          width: '5%'
+          width: '5%',
         },
-        { text: this.$t('_global.library'), value: 'library.name' },
-        { text: this.$t('_global.template'), value: `${this.type}_template.name`, width: '30%', filteringName: `${this.type}_template.name` },
-        { text: this.$t(`_global.${this.type}`), value: 'name', filteringName: 'name_plain' },
-        { text: this.$t('_global.modified'), value: 'start_date' },
-        { text: this.$t('_global.status'), value: 'status' },
-        { text: this.$t('_global.version'), value: 'version' },
-        { text: this.$t('ObjectiveTable.studies_count'), value: 'study_count' }
+        { title: this.$t('_global.library'), key: 'library.name' },
+        {
+          title: this.$t('_global.template'),
+          key: `${this.type}_template.name`,
+          width: '30%',
+          filteringName: `${this.type}_template.name`,
+        },
+        {
+          title: this.$t(`_global.${this.type}`),
+          key: 'name',
+          filteringName: 'name_plain',
+        },
+        { title: this.$t('_global.modified'), key: 'start_date' },
+        { title: this.$t('_global.status'), key: 'status' },
+        { title: this.$t('_global.version'), key: 'version' },
+        { title: this.$t('ObjectiveTable.studies_count'), key: 'study_count' },
       ],
       historyItems: [],
       historyHtmlFields: [`${this.type}_template.name`, 'name'],
@@ -136,50 +163,66 @@ export default {
       showStudies: false,
       showHistory: false,
       selectedInstance: null,
-      options: {}
     }
   },
+  computed: {
+    historyTitle() {
+      if (this.selectedInstance) {
+        return this.$t('InstanceTable.item_history_title', {
+          type: this.type,
+          instance: this.selectedInstance.uid,
+        })
+      }
+      return ''
+    },
+  },
+  mounted() {
+    this.api = libraryObjects(this.baseUrl)
+  },
   methods: {
-    closeHistory () {
+    closeHistory() {
       this.showHistory = false
     },
-    closeInstanceStudies () {
+    closeInstanceStudies() {
       this.showStudies = false
     },
-    fetchInstances (filters, sort, filtersUpdated) {
+    fetchInstances(filters, options, filtersUpdated) {
       const params = filteringParameters.prepareParameters(
-        this.options, filters, sort, filtersUpdated)
+        options,
+        filters,
+        filtersUpdated
+      )
       if (this.fetchInstancesExtraFilters) {
         if (params.filters) {
-          params.filters = { ...JSON.parse(params.filters), ...this.fetchInstancesExtraFilters }
+          params.filters = {
+            ...JSON.parse(params.filters),
+            ...this.fetchInstancesExtraFilters,
+          }
         } else {
           params.filters = this.fetchInstancesExtraFilters
         }
       }
-      this.$store.dispatch(this.fetchInstancesActionName, params)
+      this.fetchingFunction(params)
     },
-    updateHeaderFilters (jsonFilter, params) {
+    updateHeaderFilters(jsonFilter, params) {
       jsonFilter['criteria_template.type.term_uid'] = { v: [this.instanceType] }
       return {
-        jsonFilter, params
+        jsonFilter,
+        params,
       }
     },
-    async openHistory (instance) {
+    async openHistory(instance) {
       this.selectedInstance = instance
       const resp = await this.api.getVersions(instance.uid)
       this.historyItems = resp.data
       this.showHistory = true
     },
-    async showInstanceStudies (instance) {
+    async showInstanceStudies(instance) {
       this.selectedInstance = instance
       const resp = await this.api.getStudies(instance.uid)
       this.studies = resp.data
       this.showStudies = true
-    }
+    },
   },
-  mounted () {
-    this.api = libraryObjects(this.baseUrl)
-    this.fetchInstances()
-  }
 }
 </script>

@@ -20,7 +20,7 @@ class ActiveSubstance(VersionProperties):
     short_number: str | None = Field(None, nullable=True)
     long_number: str | None = Field(None, nullable=True)
     inn: str | None = Field(None, nullable=True)
-    prodex_id: str | None = Field(None, nullable=True)
+    external_id: str | None = Field(None, nullable=True)
     library_name: str
     unii: CompoundSubstance | None = Field(None, nullable=True)
     possible_actions: list[str] = Field(
@@ -51,7 +51,7 @@ class ActiveSubstance(VersionProperties):
             short_number=active_substance_ar.concept_vo.short_number,
             long_number=active_substance_ar.concept_vo.long_number,
             inn=active_substance_ar.concept_vo.inn,
-            prodex_id=active_substance_ar.concept_vo.prodex_id,
+            external_id=active_substance_ar.concept_vo.external_id,
             library_name=Library.from_library_vo(active_substance_ar.library).name,
             start_date=active_substance_ar.item_metadata.start_date,
             end_date=active_substance_ar.item_metadata.end_date,
@@ -66,7 +66,7 @@ class ActiveSubstance(VersionProperties):
 
 
 class ActiveSubstanceCreateInput(BaseModel):
-    prodex_id: str | None = None
+    external_id: str | None = None
     analyte_number: str | None = None
     short_number: str | None = None
     long_number: str | None = None
@@ -76,7 +76,7 @@ class ActiveSubstanceCreateInput(BaseModel):
 
 
 class ActiveSubstanceEditInput(BaseModel):
-    prodex_id: str | None = None
+    external_id: str | None = None
     analyte_number: str | None = None
     short_number: str | None = None
     long_number: str | None = None
@@ -103,7 +103,7 @@ class SimpleActiveSubstance(BaseModel):
     short_number: str | None = Field(None, nullable=True)
     long_number: str | None = Field(None, nullable=True)
     inn: str | None = Field(None, nullable=True)
-    prodex_id: str | None = Field(None, nullable=True)
+    external_id: str | None = Field(None, nullable=True)
     unii: CompoundSubstance | None = Field(None, nullable=True)
 
     @classmethod
@@ -125,7 +125,7 @@ class SimpleActiveSubstance(BaseModel):
                     short_number=val.concept_vo.short_number,
                     long_number=val.concept_vo.long_number,
                     inn=val.concept_vo.inn,
-                    prodex_id=val.concept_vo.prodex_id,
+                    external_id=val.concept_vo.external_id,
                     unii=CompoundSubstance.from_term_uid(
                         uid=val.concept_vo.unii_term_uid,
                         find_term_by_uid=find_dictionary_term_by_uid,

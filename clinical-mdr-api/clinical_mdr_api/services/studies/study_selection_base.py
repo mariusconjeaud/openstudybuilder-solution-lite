@@ -1,8 +1,12 @@
 """Base classes/mixins related to study selection."""
 
+from datetime import datetime
+
 from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
-from clinical_mdr_api.models.concepts.activities.activity import Activity
+from clinical_mdr_api.models.concepts.activities.activity import (
+    ActivityForStudyActivity,
+)
 from clinical_mdr_api.models.concepts.activities.activity_instance import (
     ActivityInstance,
 )
@@ -29,10 +33,11 @@ from clinical_mdr_api.models.syntax_templates.objective_template import (
 class StudySelectionMixin:
     def _transform_latest_endpoint_model(self, endpoint_uid: str) -> Endpoint:
         endpoint_repo = self._repos.endpoint_repository
-        endpoint = endpoint_repo.find_by_uid(
-            uid=endpoint_uid, status=LibraryItemStatus.FINAL
-        )
-        if endpoint is None:
+        try:
+            endpoint = endpoint_repo.find_by_uid(
+                uid=endpoint_uid, status=LibraryItemStatus.FINAL
+            )
+        except exceptions.NotFoundException:
             endpoint = endpoint_repo.find_by_uid(
                 uid=endpoint_uid, status=LibraryItemStatus.RETIRED
             )
@@ -51,10 +56,11 @@ class StudySelectionMixin:
         self, endpoint_template_uid: str
     ) -> EndpointTemplate:
         endpoint_template_repo = self._repos.endpoint_template_repository
-        endpoint_template = endpoint_template_repo.find_by_uid(
-            uid=endpoint_template_uid, status=LibraryItemStatus.FINAL
-        )
-        if endpoint_template is None:
+        try:
+            endpoint_template = endpoint_template_repo.find_by_uid(
+                uid=endpoint_template_uid, status=LibraryItemStatus.FINAL
+            )
+        except exceptions.NotFoundException:
             endpoint_template = endpoint_template_repo.find_by_uid(
                 uid=endpoint_template_uid, status=LibraryItemStatus.RETIRED
             )
@@ -87,10 +93,11 @@ class StudySelectionMixin:
         self, objective_template_uid: str
     ) -> ObjectiveTemplate:
         objective_template_repo = self._repos.objective_template_repository
-        objective_template = objective_template_repo.find_by_uid(
-            uid=objective_template_uid, status=LibraryItemStatus.FINAL
-        )
-        if objective_template is None:
+        try:
+            objective_template = objective_template_repo.find_by_uid(
+                uid=objective_template_uid, status=LibraryItemStatus.FINAL
+            )
+        except exceptions.NotFoundException:
             objective_template = objective_template_repo.find_by_uid(
                 uid=objective_template_uid, status=LibraryItemStatus.RETIRED
             )
@@ -107,10 +114,11 @@ class StudySelectionMixin:
 
     def _transform_latest_timeframe_model(self, timeframe_uid: str) -> Timeframe:
         timeframe_repo = self._repos.timeframe_repository
-        timeframe = timeframe_repo.find_by_uid(
-            uid=timeframe_uid, status=LibraryItemStatus.FINAL
-        )
-        if timeframe is None:
+        try:
+            timeframe = timeframe_repo.find_by_uid(
+                uid=timeframe_uid, status=LibraryItemStatus.FINAL
+            )
+        except exceptions.NotFoundException:
             timeframe = timeframe_repo.find_by_uid(
                 uid=timeframe_uid, status=LibraryItemStatus.RETIRED
             )
@@ -129,10 +137,11 @@ class StudySelectionMixin:
         self, criteria_template_uid: str
     ) -> CriteriaTemplate:
         criteria_template_repo = self._repos.criteria_template_repository
-        criteria_template = criteria_template_repo.find_by_uid(
-            uid=criteria_template_uid, status=LibraryItemStatus.FINAL
-        )
-        if criteria_template is None:
+        try:
+            criteria_template = criteria_template_repo.find_by_uid(
+                uid=criteria_template_uid, status=LibraryItemStatus.FINAL
+            )
+        except exceptions.NotFoundException:
             criteria_template = criteria_template_repo.find_by_uid(
                 uid=criteria_template_uid, status=LibraryItemStatus.RETIRED
             )
@@ -149,10 +158,11 @@ class StudySelectionMixin:
 
     def _transform_latest_criteria_model(self, criteria_uid: str) -> Criteria:
         criteria_repo = self._repos.criteria_repository
-        criteria = criteria_repo.find_by_uid(
-            uid=criteria_uid, status=LibraryItemStatus.FINAL
-        )
-        if criteria is None:
+        try:
+            criteria = criteria_repo.find_by_uid(
+                uid=criteria_uid, status=LibraryItemStatus.FINAL
+            )
+        except exceptions.NotFoundException:
             criteria = criteria_repo.find_by_uid(
                 uid=criteria_uid, status=LibraryItemStatus.RETIRED
             )
@@ -169,19 +179,23 @@ class StudySelectionMixin:
             criteria,
         )
 
-    def _transform_latest_activity_model(self, activity_uid: str) -> Activity:
+    def _transform_latest_activity_model(
+        self, activity_uid: str
+    ) -> ActivityForStudyActivity:
         """Finds the activity with a given UID."""
-        return Activity.from_activity_ar(
-            activity_ar=self._repos.activity_repository.find_by_uid_2(activity_uid),
-            find_activity_subgroup_by_uid=self._repos.activity_subgroup_repository.find_by_uid_2,
-            find_activity_group_by_uid=self._repos.activity_group_repository.find_by_uid_2,
+        return ActivityForStudyActivity.from_activity_ar(
+            activity_ar=self._repos.activity_repository.find_by_uid_optimized(
+                activity_uid
+            ),
+            find_activity_subgroup_by_uid=self._repos.activity_subgroup_repository.find_by_uid_optimized,
+            find_activity_group_by_uid=self._repos.activity_group_repository.find_by_uid_optimized,
         )
 
     def _transform_activity_model(
         self, activity_uid: str, activity_version: str
-    ) -> Activity:
+    ) -> ActivityForStudyActivity:
         """Finds the activity with given UID and version."""
-        return Activity.from_activity_ar(
+        return ActivityForStudyActivity.from_activity_ar(
             activity_ar=self._repos.activity_repository.find_by_uid_2(
                 activity_uid, version=activity_version
             ),
@@ -239,10 +253,12 @@ class StudySelectionMixin:
             find_compound_by_uid=self._repos.compound_repository.find_by_uid_2,
         )
 
-    def find_term_name_by_uid(self, uid):
+    def find_term_name_by_uid(self, uid, at_specific_date=None):
         """Helper function to find CT term names."""
         return SimpleTermModel.from_ct_code(
-            uid, self._repos.ct_term_name_repository.find_by_uid
+            uid,
+            self._repos.ct_term_name_repository.find_by_uid,
+            at_specific_date=at_specific_date,
         )
 
     def _find_by_uid_or_raise_not_found(
@@ -250,39 +266,21 @@ class StudySelectionMixin:
         term_uid: str,
         codelist_name: str | None = None,
         status: LibraryItemStatus | None = LibraryItemStatus.FINAL,
+        at_specific_date: datetime | None = None,
     ) -> CTTermName:
-        if not codelist_name:
-            item = self._repos.ct_term_name_repository.find_by_uid(
-                term_uid=term_uid,
-                at_specific_date=None,
-                version=None,
-                status=status,
-                for_update=False,
-            )
-            if item is None:
-                raise exceptions.NotFoundException(
-                    f"Term with uid {term_uid} does not exist, in final status."
-                )
-            return CTTermName.from_ct_term_ar(item)
-
-        # Specifying the codelist ensures that we get the properties
-        # such as "order" from the correct codelist.
-        filter_by = {"term_uid": {"v": [term_uid], "op": "eq"}}
-        if status:
-            filter_by["status"] = {"v": [status.value], "op": "eq"}
-        items = self._repos.ct_term_name_repository.find_all(
+        item = self._repos.ct_term_name_repository.find_by_uid(
+            term_uid=term_uid,
+            at_specific_date=at_specific_date,
+            version=None,
+            status=status,
+            for_update=False,
             codelist_name=codelist_name,
-            total_count=False,
-            filter_by=filter_by,
-            page_number=1,
-            page_size=10,
         )
-
-        if len(items.items) == 0:
+        if item is None:
             raise exceptions.NotFoundException(
-                f"Term with uid {term_uid} does not exist in codelist {codelist_name}, in final status."
+                f"Term with uid {term_uid} does not exist, in final status."
             )
-        return CTTermName.from_ct_term_ar(items.items[0])
+        return CTTermName.from_ct_term_ar(item)
 
     def _find_branch_arms_connected_to_arm_uid(
         self,
@@ -600,3 +598,28 @@ class StudySelectionMixin:
                 raise exceptions.NotFoundException(value_error.args[0])
         finally:
             repos.close()
+
+    def _extract_study_standards_effective_date(
+        self, study_uid, study_value_version: str = None
+    ):
+        repos = self._repos
+        study_standard_version = (
+            repos.study_standard_version_repository.find_standard_version_in_study(
+                study_uid=study_uid, study_value_version=study_value_version
+            )
+        )
+        terms_at_specific_datetime = None
+        if study_standard_version:
+            terms_at_specific_date = repos.ct_package_repository.find_by_uid(
+                study_standard_version[0].ct_package_uid
+            ).effective_date
+            terms_at_specific_datetime = datetime(
+                terms_at_specific_date.year,
+                terms_at_specific_date.month,
+                terms_at_specific_date.day,
+                23,
+                59,
+                59,
+                999999,
+            )
+        return terms_at_specific_datetime

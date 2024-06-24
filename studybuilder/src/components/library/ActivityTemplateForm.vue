@@ -1,51 +1,55 @@
 <template>
-<base-template-form
-  object-type="activity-instruction"
-  :template="template"
-  :prepare-payload-function="preparePayload"
-  :help-items="helpItems"
-  v-bind="$attrs"
-  v-on="$listeners"
+  <BaseTemplateForm
+    object-type="activity-instruction"
+    :template="template"
+    :prepare-indexing-payload-function="prepareIndexingPayload"
+    :help-items="helpItems"
+    v-bind="$attrs"
   >
-  <template v-slot:indexingTab="{ form }">
-    <activity-template-indexing-form
-      ref="indexingForm"
-      :form="form"
-      :template="template"
+    <template #indexingTab="{ form }">
+      <ActivityTemplateIndexingForm
+        ref="indexingForm"
+        :form="form"
+        :template="template"
       />
-  </template>
-</base-template-form>
+    </template>
+  </BaseTemplateForm>
 </template>
 
 <script>
-import ActivityTemplateIndexingForm from './ActivityTemplateIndexingForm'
-import BaseTemplateForm from './BaseTemplateForm'
+import ActivityTemplateIndexingForm from './ActivityTemplateIndexingForm.vue'
+import BaseTemplateForm from './BaseTemplateForm.vue'
 
 export default {
   components: {
     ActivityTemplateIndexingForm,
-    BaseTemplateForm
+    BaseTemplateForm,
   },
   props: {
-    template: Object
+    template: {
+      type: Object,
+      default: null,
+    },
   },
-  data () {
+  data() {
     return {
       activities: [],
       helpItems: [
-        'ActivityDescriptionTemplateForm.indications',
-        'ActivityDescriptionTemplateForm.group',
-        'ActivityDescriptionTemplateForm.sub_group',
-        'ActivityDescriptionTemplateForm.activity'
+        'ActivityInstructionTemplateForm.indications',
+        'ActivityInstructionTemplateForm.group',
+        'ActivityInstructionTemplateForm.sub_group',
+        'ActivityInstructionTemplateForm.activity',
       ],
       libraries: [],
-      parameterTypes: []
+      parameterTypes: [],
     }
   },
   methods: {
-    preparePayload (data) {
-      Object.assign(data, this.$refs.indexingForm.preparePayload(data))
-    }
-  }
+    prepareIndexingPayload(data) {
+      if (this.$refs.indexingForm) {
+        Object.assign(data, this.$refs.indexingForm.preparePayload(data))
+      }
+    },
+  },
 }
 </script>

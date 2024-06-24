@@ -156,7 +156,7 @@ class TestStudyService(unittest.TestCase):
                 study_definition_repository_property_mock.return_value = test_repo
 
                 # when
-                study_service = StudyService(user="PIWQ")
+                study_service = StudyService()
                 service_response = study_service.get_by_uid(
                     uid=sample_study_definition.uid,
                     include_sections=[StudyComponentEnum.STUDY_POPULATION],
@@ -388,7 +388,7 @@ class TestStudyService(unittest.TestCase):
         ct_term_name_repository_property_mock.find_by_uid.return_value = (
             create_random_ct_term_name_ar()
         )
-        study_service = StudyService(user="PIWQ")
+        study_service = StudyService()
         service_response = study_service.get_by_uid(
             uid=sample_study_definition.uid,
             include_sections=[StudyComponentEnum.STUDY_DESIGN],
@@ -534,7 +534,7 @@ class TestStudyService(unittest.TestCase):
         study_create_input = StudyCreateInput(
             study_acronym="ACRONYM", project_number="something"
         )
-        study_service = StudyService(user="PIWQ")
+        study_service = StudyService()
         study_service.post_study_preferred_time_unit = lambda study_uid, unit_definition_uid, for_protocol_soa=False: StudyPreferredTimeUnit(
             study_uid=study_uid,
             time_unit_uid="time_unit_uid",
@@ -608,7 +608,7 @@ class TestStudyService(unittest.TestCase):
             # pylint: disable=unnecessary-lambda
             create_random_clinical_programme(generate_uid_callback=lambda: random_str())
         )
-        study_service = StudyService(user="PIWQ")
+        study_service = StudyService()
         service_response = study_service.get_by_uid(sample_study_definition.uid)
 
         # then
@@ -704,7 +704,7 @@ class TestStudyService(unittest.TestCase):
             # pylint: disable=unnecessary-lambda
             create_random_clinical_programme(generate_uid_callback=lambda: random_str())
         )
-        study_service = StudyService(user="PIWQ")
+        study_service = StudyService()
         service_response = study_service.get_all().items
 
         # then
@@ -777,7 +777,7 @@ class TestStudyService(unittest.TestCase):
         )
 
         # When
-        study_service = StudyService(user="AZNG")
+        study_service = StudyService()
         result = study_service.get_protocol_title(sample_study_definition.uid)
 
         # Then
@@ -888,7 +888,7 @@ class TestStudyService(unittest.TestCase):
         study_definition_repository_property_mock.return_value = test_repo
 
         # when
-        study_service = StudyService(user="PIWQ")
+        study_service = StudyService()
         study_service.patch(
             uid=sample_study_definition.uid,
             dry=False,
@@ -1008,7 +1008,7 @@ class TestStudyService(unittest.TestCase):
         project_repository_property_mock.project_number_exists.return_value = True
 
         # when
-        study_service = StudyService(user="PIWQ")
+        study_service = StudyService()
         study_service.patch(
             uid=sample_study_definition.uid,
             dry=False,
@@ -1232,7 +1232,7 @@ class TestStudyService(unittest.TestCase):
         project_repository_property_mock.project_number_exists.return_value = True
 
         # when
-        study_service = StudyService(user="PIWQ")
+        study_service = StudyService()
         study_service.patch(
             uid=sample_study_definition.uid,
             dry=False,
@@ -1482,7 +1482,7 @@ class TestStudyService(unittest.TestCase):
         )
 
         # when
-        study_service = StudyService(user="PIWQ")
+        study_service = StudyService()
         study_service.patch(
             uid=sample_study_definition.uid,
             dry=False,
@@ -1636,7 +1636,7 @@ class TestStudyService(unittest.TestCase):
         )
 
         # when
-        study_service = StudyService(user="PIWQ")
+        study_service = StudyService()
         study_service.patch(
             uid=sample_study_definition.uid,
             dry=False,
@@ -1781,7 +1781,7 @@ class TestStudyService(unittest.TestCase):
         )
 
         # when
-        study_service = StudyService(user="PIWQ")
+        study_service = StudyService()
         study_service.patch(
             uid=sample_study_definition.uid,
             dry=False,

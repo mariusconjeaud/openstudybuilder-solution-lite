@@ -165,6 +165,6 @@ class TestSoftDelete(TestCase):
                 self.objective_template["uid"]
             )
         self.assertEqual(
-            "No Syntax Template with UID (ObjectiveTemplate_000001) found in given status and version.",
+            "No ObjectiveTemplateRoot with UID (ObjectiveTemplate_000001) found in given status, date and version.",
             str(message.exception),
         )

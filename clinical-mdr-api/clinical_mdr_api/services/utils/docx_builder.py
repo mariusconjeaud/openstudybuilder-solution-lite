@@ -17,6 +17,8 @@ from docx.shared import Inches
 from docx.table import Table, _Cell, _Row
 from docx.text.paragraph import Paragraph
 
+from clinical_mdr_api.telemetry import trace_calls
+
 BLOCK_ELEMENTS_TO_PARAGRAPH = {"p", "div", "li", "dd", "dt"}
 INLINE_ELEMENTS_TO_FONT_PROPERTIES = {"b", "em", "i", "sub", "sup", "s", "strong", "u"}
 
@@ -81,6 +83,7 @@ class DocxBuilder:
         self.document._element.body.clear_content()
 
     @staticmethod
+    @trace_calls(args=[0], kwargs=["template_filename"])
     def load_document(template_filename: str) -> Document:
         log.debug("Reading document: %s", template_filename)
         with open(template_filename, "rb") as file:

@@ -1,14 +1,14 @@
 """DictionaryCodelist router."""
 from typing import Any
 
-from fastapi import APIRouter, Body, Depends, Path, Query
+from fastapi import APIRouter, Body, Path, Query
 from pydantic.types import Json
 from starlette.requests import Request
 
 from clinical_mdr_api import config, models
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.oauth import get_current_user_id, rbac
+from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.dictionaries.dictionary_codelist_generic_service import (
@@ -97,9 +97,8 @@ def get_codelists(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    dictionary_codelist_service = DictionaryCodelistGenericService(user=current_user_id)
+    dictionary_codelist_service = DictionaryCodelistGenericService()
     results = dictionary_codelist_service.get_all_dictionary_codelists(
         library=library,
         sort_by=sort_by,
@@ -131,7 +130,6 @@ def get_codelists(
     },
 )
 def get_distinct_values_for_header(
-    current_user_id: str = Depends(get_current_user_id),
     library: str = DictionaryCodelistLibrary,
     field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
     search_string: str
@@ -146,7 +144,7 @@ def get_distinct_values_for_header(
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
 ):
-    dictionary_codelist_service = DictionaryCodelistGenericService(user=current_user_id)
+    dictionary_codelist_service = DictionaryCodelistGenericService()
     return dictionary_codelist_service.get_distinct_values_for_header(
         library=library,
         field_name=field_name,
@@ -184,9 +182,8 @@ def create(
     dictionary_codelist_input: models.DictionaryCodelistCreateInput = Body(
         description="Properties to create DictionaryCodelistValue node."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    dictionary_codelist_service = DictionaryCodelistGenericService(user=current_user_id)
+    dictionary_codelist_service = DictionaryCodelistGenericService()
     return dictionary_codelist_service.create(dictionary_codelist_input)
 
 
@@ -220,9 +217,8 @@ def get_codelist(
         "Only exact matches are considered. The version is specified in the following format:"
         "<major>.<minor> where <major> and <minor> are digits. E.g. '0.1', '0.2', '1.0',",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    dictionary_codelist_service = DictionaryCodelistGenericService(user=current_user_id)
+    dictionary_codelist_service = DictionaryCodelistGenericService()
     return dictionary_codelist_service.get_by_uid(codelist_uid=uid, version=version)
 
 
@@ -256,9 +252,8 @@ Possible errors:
 )
 def get_versions(
     uid: str = DictionaryCodelistUID,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    dictionary_codelist_service = DictionaryCodelistGenericService(user=current_user_id)
+    dictionary_codelist_service = DictionaryCodelistGenericService()
     return dictionary_codelist_service.get_version_history(codelist_uid=uid)
 
 
@@ -304,9 +299,8 @@ def edit(
     dictionary_codelist_input: models.DictionaryCodelistEditInput = Body(
         description="The new parameter terms for the dictionary codelist including the change description.",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    dictionary_codelist_service = DictionaryCodelistGenericService(user=current_user_id)
+    dictionary_codelist_service = DictionaryCodelistGenericService()
     return dictionary_codelist_service.edit_draft(
         codelist_uid=uid, codelist_input=dictionary_codelist_input
     )
@@ -356,9 +350,8 @@ Possible errors:
 )
 def create_new_version(
     uid: str = DictionaryCodelistUID,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    dictionary_codelist_service = DictionaryCodelistGenericService(user=current_user_id)
+    dictionary_codelist_service = DictionaryCodelistGenericService()
     return dictionary_codelist_service.create_new_version(codelist_uid=uid)
 
 
@@ -402,9 +395,8 @@ Possible errors:
 )
 def approve(
     uid: str = DictionaryCodelistUID,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    dictionary_codelist_service = DictionaryCodelistGenericService(user=current_user_id)
+    dictionary_codelist_service = DictionaryCodelistGenericService()
     return dictionary_codelist_service.approve(codelist_uid=uid)
 
 
@@ -447,9 +439,8 @@ def add_term(
     term_input: models.DictionaryCodelistTermInput = Body(
         description="UID of the DictionaryTermRoot node."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    dictionary_codelist_service = DictionaryCodelistGenericService(user=current_user_id)
+    dictionary_codelist_service = DictionaryCodelistGenericService()
     return dictionary_codelist_service.add_term(
         codelist_uid=uid, term_uid=term_input.term_uid
     )
@@ -496,9 +487,8 @@ Possible errors:
 def remove_term(
     codelist_uid: str = DictionaryCodelistUID,
     term_uid: str = TermUID,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    dictionary_codelist_service = DictionaryCodelistGenericService(user=current_user_id)
+    dictionary_codelist_service = DictionaryCodelistGenericService()
     return dictionary_codelist_service.remove_term(
         codelist_uid=codelist_uid, term_uid=term_uid
     )

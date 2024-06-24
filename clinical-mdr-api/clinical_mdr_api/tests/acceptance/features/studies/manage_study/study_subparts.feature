@@ -37,6 +37,12 @@ Feature: Maintaining Study Subparts for a Study Parent Part in Clinical MDR API
             Then the API must return an error code as a Study Subpart cannot be used as a Study Parent Part
 
 
+        @TestID:test_cannot_add_a_study_subpart_to_a_locked_study_parent_part
+        Scenario: Adding a Study Subpart to a locked Study Parent Part is not allowed
+            When a Study Subpart is added as to a Study Parent Part using the PATCH API endpoint '/studies/<uid>'
+            Then the API must return an error code as a Study Subpart cannot be added to a locked Study Parent Part
+
+
         @TestID:test_cannot_make_a_study_a_subpart_of_itself
         Scenario: Using a Study as a Study Subpart to itself is not allowed
             When a Study is added as a Study Subpart to itself using the POST API endpoint '/studies/<uid>'

@@ -18,15 +18,15 @@ from fastapi.testclient import TestClient
 from clinical_mdr_api import models
 from clinical_mdr_api.main import app
 from clinical_mdr_api.tests.integration.utils.api import (
-    drop_db,
     inject_and_clear_db,
     inject_base_data,
 )
-from clinical_mdr_api.tests.integration.utils.utils import TestUtils
+from clinical_mdr_api.tests.integration.utils.utils import CT_CODELIST_NAMES, TestUtils
 
 log = logging.getLogger(__name__)
 
 # Global variables shared between fixtures and tests
+rand: str
 compounds_all: list[models.Compound]
 compound_aliases_all: list[models.CompoundAlias]
 ct_term_dosage: models.CTTerm
@@ -55,6 +55,7 @@ def test_data():
     inject_and_clear_db(db_name)
     inject_base_data()
 
+    global rand
     global compounds_all
     global compound_aliases_all
     global ct_term_dosage
@@ -68,17 +69,49 @@ def test_data():
     global lag_time
     global half_life
 
+    rand = TestUtils.random_str(10)
+
+    # Get codelist UIDs
+    relevant_codelists = [
+        CT_CODELIST_NAMES.delivery_device,
+        CT_CODELIST_NAMES.dosage_form,
+        CT_CODELIST_NAMES.frequency,
+        CT_CODELIST_NAMES.roa,
+        CT_CODELIST_NAMES.dispenser,
+        CT_CODELIST_NAMES.adverse_events,
+    ]
+    codelists = TestUtils.get_codelists_by_names(relevant_codelists)
+
     # Create CT Terms
-    ct_term_dosage = TestUtils.create_ct_term(sponsor_preferred_name="dosage_form_1")
+    ct_term_dosage = TestUtils.create_ct_term(
+        sponsor_preferred_name="dosage_form_1",
+        codelist_uid=TestUtils.get_codelist_uid_by_name(
+            codelists, CT_CODELIST_NAMES.dosage_form
+        ),
+    )
     ct_term_delivery_device = TestUtils.create_ct_term(
-        sponsor_preferred_name="delivery_device_1"
+        sponsor_preferred_name="delivery_device_1",
+        codelist_uid=TestUtils.get_codelist_uid_by_name(
+            codelists, CT_CODELIST_NAMES.delivery_device
+        ),
     )
     ct_term_dose_frequency = TestUtils.create_ct_term(
-        sponsor_preferred_name="dose_frequency_1"
+        sponsor_preferred_name="dose_frequency_1",
+        codelist_uid=TestUtils.get_codelist_uid_by_name(
+            codelists, CT_CODELIST_NAMES.frequency
+        ),
     )
-    ct_term_dispenser = TestUtils.create_ct_term(sponsor_preferred_name="dispenser_1")
+    ct_term_dispenser = TestUtils.create_ct_term(
+        sponsor_preferred_name="dispenser_1",
+        codelist_uid=TestUtils.get_codelist_uid_by_name(
+            codelists, CT_CODELIST_NAMES.dispenser
+        ),
+    )
     ct_term_roa = TestUtils.create_ct_term(
-        sponsor_preferred_name="route_of_administration_1"
+        sponsor_preferred_name="route_of_administration_1",
+        codelist_uid=TestUtils.get_codelist_uid_by_name(
+            codelists, CT_CODELIST_NAMES.roa
+        ),
     )
 
     # Create Numeric values with unit
@@ -102,7 +135,7 @@ def test_data():
     compound_aliases_all = []
     compounds_all.append(
         TestUtils.create_compound(
-            name="Compound A",
+            name=f"Compound A {rand}",
             dosage_form_uids=[ct_term_dosage.term_uid],
             delivery_devices_uids=[ct_term_delivery_device.term_uid],
             dispensers_uids=[ct_term_dispenser.term_uid],
@@ -117,47 +150,43 @@ def test_data():
         )
     )
 
-    compounds_all.append(TestUtils.create_compound(name="name-AAA"))
-    compounds_all.append(TestUtils.create_compound(name="name-BBB"))
-    compounds_all.append(TestUtils.create_compound(definition="def-XXX"))
-    compounds_all.append(TestUtils.create_compound(definition="def-YYY"))
+    compounds_all.append(TestUtils.create_compound(name=f"name-AAA-{rand}"))
+    compounds_all.append(TestUtils.create_compound(name=f"name-BBB-{rand}"))
+    compounds_all.append(TestUtils.create_compound(definition=f"def-XXX-{rand}"))
+    compounds_all.append(TestUtils.create_compound(definition=f"def-YYY-{rand}"))
 
     for index in range(5):
-        compound_a = TestUtils.create_compound(name=f"name-AAA-{index}")
+        compound_a = TestUtils.create_compound(name=f"name-AAA-{rand}-{index}")
         compounds_all.append(compound_a)
         compound_aliases_all.append(
             TestUtils.create_compound_alias(
-                name=f"compAlias-AAA-{index}", compound_uid=compound_a.uid
+                name=f"compAlias-AAA-{rand}-{index}", compound_uid=compound_a.uid
             )
         )
 
-        compound_b = TestUtils.create_compound(name=f"name-BBB-{index}")
+        compound_b = TestUtils.create_compound(name=f"name-BBB-{rand}-{index}")
         compounds_all.append(compound_b)
         compound_aliases_all.append(
             TestUtils.create_compound_alias(
-                name=f"compAlias-BBB-{index}", compound_uid=compound_b.uid
+                name=f"compAlias-BBB-{rand}-{index}", compound_uid=compound_b.uid
             )
         )
 
-        compound_c = TestUtils.create_compound(definition=f"def-XXX-{index}")
+        compound_c = TestUtils.create_compound(definition=f"def-XXX-{rand}-{index}")
         compounds_all.append(compound_c)
         compound_aliases_all.append(
             TestUtils.create_compound_alias(
-                definition=f"def-XXX-{index}", compound_uid=compound_c.uid
+                definition=f"def-XXX-{rand}-{index}", compound_uid=compound_c.uid
             )
         )
 
-        compound_d = TestUtils.create_compound(definition=f"def-YYY-{index}")
+        compound_d = TestUtils.create_compound(definition=f"def-YYY-{rand}-{index}")
         compounds_all.append(compound_d)
         compound_aliases_all.append(
             TestUtils.create_compound_alias(
-                definition=f"def-YYY-{index}", compound_uid=compound_d.uid
+                definition=f"def-YYY-{rand}-{index}", compound_uid=compound_d.uid
             )
         )
-
-    yield
-
-    drop_db(db_name)
 
 
 COMPOUND_FIELDS_ALL = [
@@ -208,7 +237,7 @@ def test_get_compound(api_client):
         assert res[key] is not None
 
     assert res["uid"] == compounds_all[0].uid
-    assert res["name"] == "Compound A"
+    assert res["name"] == f"Compound A {rand}"
     assert res["version"] == "0.1"
     assert res["status"] == "Draft"
     assert list(res["possible_actions"]) == ["approve", "delete", "edit"]
@@ -387,9 +416,7 @@ def test_get_compounds_csv_xml_excel(api_client, export_format):
         pytest.param('{"*": {"v": ["aaa"]}}', "name", "name-AAA"),
         pytest.param('{"*": {"v": ["bBb"]}}', "name", "name-BBB"),
         pytest.param(
-            '{"*": {"v": ["initials"], "op": "co"}}',
-            "user_initials",
-            "TODO user initials",
+            '{"*": {"v": ["wn-us"], "op": "co"}}', "user_initials", "unknown-user"
         ),
         pytest.param('{"*": {"v": ["Draft"]}}', "status", "Draft"),
         pytest.param('{"*": {"v": ["0.1"]}}', "version", "0.1"),
@@ -416,17 +443,22 @@ def test_filtering_wildcard(
 @pytest.mark.parametrize(
     "filter_by, expected_matched_field, expected_result",
     [
-        pytest.param('{"name": {"v": ["name-AAA"]}}', "name", "name-AAA"),
-        pytest.param('{"name": {"v": ["name-BBB"]}}', "name", "name-BBB"),
+        pytest.param('{"name": {"v": ["name-AAA-{rand}"]}}', "name", "name-AAA-{rand}"),
+        pytest.param('{"name": {"v": ["name-BBB-{rand}"]}}', "name", "name-BBB-{rand}"),
         pytest.param('{"name": {"v": ["cc"]}}', None, None),
-        pytest.param('{"definition": {"v": ["def-XXX"]}}', "definition", "def-XXX"),
-        pytest.param('{"definition": {"v": ["def-YYY"]}}', "definition", "def-YYY"),
+        pytest.param(
+            '{"definition": {"v": ["def-XXX-{rand}"]}}', "definition", "def-XXX-{rand}"
+        ),
+        pytest.param(
+            '{"definition": {"v": ["def-YYY-{rand}"]}}', "definition", "def-YYY-{rand}"
+        ),
         pytest.param('{"definition": {"v": ["cc"]}}', None, None),
     ],
 )
 def test_filtering_exact(
     api_client, filter_by, expected_matched_field, expected_result
 ):
+    filter_by = filter_by.replace("{rand}", rand)
     url = f"/concepts/compounds?filters={filter_by}"
     response = api_client.get(url)
     res = response.json()
@@ -436,7 +468,9 @@ def test_filtering_exact(
         assert len(res["items"]) > 0
         # Each returned row has a field whose value is equal to the specified filter value
         for row in res["items"]:
-            assert row[expected_matched_field] == expected_result
+            assert row[expected_matched_field] == expected_result.replace(
+                "{rand}", rand
+            )
     else:
         assert len(res["items"]) == 0
 
@@ -546,9 +580,7 @@ def test_get_compound_aliases_csv_xml_excel(api_client, export_format):
         pytest.param('{"*": {"v": ["aaa"]}}', "name", "compAlias-AAA"),
         pytest.param('{"*": {"v": ["bBb"]}}', "name", "compAlias-BBB"),
         pytest.param(
-            '{"*": {"v": ["initials"], "op": "co"}}',
-            "user_initials",
-            "TODO user initials",
+            '{"*": {"v": ["wn-us"], "op": "co"}}', "user_initials", "unknown-user"
         ),
         pytest.param('{"*": {"v": ["Draft"]}}', "status", "Draft"),
         pytest.param('{"*": {"v": ["0.1"]}}', "version", "0.1"),
@@ -575,17 +607,34 @@ def test_compound_aliases_filtering_wildcard(
 @pytest.mark.parametrize(
     "filter_by, expected_matched_field, expected_result",
     [
-        pytest.param('{"name": {"v": ["compAlias-AAA-1"]}}', "name", "compAlias-AAA-1"),
-        pytest.param('{"name": {"v": ["compAlias-BBB-1"]}}', "name", "compAlias-BBB-1"),
+        pytest.param(
+            '{"name": {"v": ["compAlias-AAA-{rand}-1"]}}',
+            "name",
+            "compAlias-AAA-{rand}-1",
+        ),
+        pytest.param(
+            '{"name": {"v": ["compAlias-BBB-{rand}-1"]}}',
+            "name",
+            "compAlias-BBB-{rand}-1",
+        ),
         pytest.param('{"name": {"v": ["cc"]}}', None, None),
-        pytest.param('{"definition": {"v": ["def-XXX-1"]}}', "definition", "def-XXX-1"),
-        pytest.param('{"definition": {"v": ["def-YYY-1"]}}', "definition", "def-YYY-1"),
+        pytest.param(
+            '{"definition": {"v": ["def-XXX-{rand}-1"]}}',
+            "definition",
+            "def-XXX-{rand}-1",
+        ),
+        pytest.param(
+            '{"definition": {"v": ["def-YYY-{rand}-1"]}}',
+            "definition",
+            "def-YYY-{rand}-1",
+        ),
         pytest.param('{"definition": {"v": ["cc"]}}', None, None),
     ],
 )
 def test_compound_aliases_filtering_exact(
     api_client, filter_by, expected_matched_field, expected_result
 ):
+    filter_by = filter_by.replace("{rand}", rand)
     url = f"/concepts/compound-aliases?filters={filter_by}"
     response = api_client.get(url)
     res = response.json()
@@ -595,6 +644,8 @@ def test_compound_aliases_filtering_exact(
         assert len(res["items"]) > 0
         # Each returned row has a field whose value is equal to the specified filter value
         for row in res["items"]:
-            assert row[expected_matched_field] == expected_result
+            assert row[expected_matched_field] == expected_result.replace(
+                "{rand}", rand
+            )
     else:
         assert len(res["items"]) == 0

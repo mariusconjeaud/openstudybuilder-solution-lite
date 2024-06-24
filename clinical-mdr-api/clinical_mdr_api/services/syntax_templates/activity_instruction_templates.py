@@ -1,5 +1,3 @@
-from neomodel import db
-
 from clinical_mdr_api.domain_repositories.syntax_instances.activity_instruction_repository import (
     ActivityInstructionRepository,
 )
@@ -15,7 +13,6 @@ from clinical_mdr_api.domains.syntax_templates.activity_instruction_template imp
 from clinical_mdr_api.models.syntax_templates.activity_instruction_template import (
     ActivityInstructionTemplate,
     ActivityInstructionTemplateCreateInput,
-    ActivityInstructionTemplateEditIndexingsInput,
     ActivityInstructionTemplateVersion,
     ActivityInstructionTemplateWithCount,
 )
@@ -73,26 +70,3 @@ class ActivityInstructionTemplateService(
         )
 
         return item
-
-    @db.transaction
-    def patch_indexings(
-        self, uid: str, indexings: ActivityInstructionTemplateEditIndexingsInput
-    ) -> ActivityInstructionTemplate:
-        try:
-            self._find_by_uid_or_raise_not_found(uid)
-            if indexings.indication_uids is not None:
-                self.repository.patch_indications(uid, indexings.indication_uids)
-            if indexings.activity_uids is not None:
-                self.repository.patch_activities(uid, indexings.activity_uids)
-            if indexings.activity_group_uids is not None:
-                self.repository.patch_activity_groups(
-                    uid, indexings.activity_group_uids
-                )
-            if indexings.activity_subgroup_uids is not None:
-                self.repository.patch_activity_subgroups(
-                    uid, indexings.activity_subgroup_uids
-                )
-        finally:
-            self.repository.close()
-
-        return self.get_by_uid(uid)

@@ -63,7 +63,7 @@ export_study_event = """<?xml version="1.0" encoding="utf-8"?>
                                 <FormalExpression Context="context1" osb:version="0.1">expression1</FormalExpression>
                             </MethodDef>
                             <CodeList OID="submission_value1@oid1" Name="codelist_root1" DataType="string" SASFormatName="submission_value1" osb:version="1.0">
-                                <CodeListItem CodedValue="code_submission_value1" OrderNumber="1" Mandatory="False" osb:name="name1" osb:OID="term1" osb:version="1.0">
+                                <CodeListItem CodedValue="code_submission_value1" OrderNumber="1" osb:mandatory="False" osb:name="name1" osb:OID="term1" osb:version="1.0">
                                     <Decode>
                                         <TranslatedText xml:lang="en">custom text</TranslatedText>
                                     </Decode>
@@ -135,7 +135,7 @@ export_form = """<?xml version="1.0" encoding="utf-8"?>
                 <FormalExpression Context="context1" osb:version="0.1">expression1</FormalExpression>
             </MethodDef>            
             <CodeList OID="submission_value1@oid1" Name="codelist_root1" DataType="string" SASFormatName="submission_value1" osb:version="1.0">
-                <CodeListItem CodedValue="code_submission_value1" OrderNumber="1" Mandatory="False" osb:name="name1" osb:OID="term1" osb:version="1.0">
+                <CodeListItem CodedValue="code_submission_value1" OrderNumber="1" osb:mandatory="False" osb:name="name1" osb:OID="term1" osb:version="1.0">
                     <Decode>
                         <TranslatedText xml:lang="en">custom text</TranslatedText>
                     </Decode>
@@ -193,7 +193,7 @@ export_item_group = """<?xml version="1.0" encoding="utf-8"?>
                 <FormalExpression Context="context1" osb:version="0.1">expression1</FormalExpression>
             </MethodDef>
             <CodeList OID="submission_value1@oid1" Name="codelist_root1" DataType="string" SASFormatName="submission_value1" osb:version="1.0">
-                <CodeListItem CodedValue="code_submission_value1" OrderNumber="1" Mandatory="False" osb:name="name1" osb:OID="term1" osb:version="1.0">
+                <CodeListItem CodedValue="code_submission_value1" OrderNumber="1" osb:mandatory="False" osb:name="name1" osb:OID="term1" osb:version="1.0">
                     <Decode>
                         <TranslatedText xml:lang="en">custom text</TranslatedText>
                     </Decode>
@@ -232,7 +232,7 @@ export_item = """<?xml version="1.0" encoding="utf-8"?>
                                 <MeasurementUnitRef MeasurementUnitOID="name1" />
                             </ItemDef>
                             <CodeList OID="submission_value1@oid1" Name="codelist_root1" DataType="string" SASFormatName="submission_value1" osb:version="1.0">
-                                <CodeListItem CodedValue="code_submission_value1" OrderNumber="1" Mandatory="False" osb:name="name1" osb:OID="term1" osb:version="1.0">
+                                <CodeListItem CodedValue="code_submission_value1" OrderNumber="1" osb:mandatory="False" osb:name="name1" osb:OID="term1" osb:version="1.0">
                                     <Decode>
                                         <TranslatedText xml:lang="en">custom text</TranslatedText>
                                     </Decode>
@@ -310,7 +310,7 @@ export_with_csv = """<?xml version="1.0" encoding="utf-8"?>
                 <FormalExpression Context="context1" osb:version="0.1">expression1</FormalExpression>
             </MethodDef>
             <CodeList OID="submission_value1@oid1" Name="codelist_root1" DataType="string" SASFormatName="submission_value1" osb:version="1.0">
-                <CodeListItem CodedValue="code_submission_value1" OrderNumber="1" Mandatory="False" osb:name="name1" osb:OID="term1" osb:version="1.0">
+                <CodeListItem CodedValue="code_submission_value1" OrderNumber="1" osb:mandatory="False" osb:name="name1" osb:OID="term1" osb:version="1.0">
                     <Decode>
                         <TranslatedText xml:lang="en">custom text</TranslatedText>
                     </Decode>
@@ -380,7 +380,7 @@ export_with_namespace = """<?xml version="1.0" encoding="utf-8"?>
                 <FormalExpression Context="context1">expression1</FormalExpression>
             </MethodDef>
             <CodeList OID="submission_value1@oid1" Name="codelist_root1" DataType="string" SASFormatName="submission_value1">
-                <CodeListItem CodedValue="code_submission_value1" OrderNumber="1" Mandatory="False">
+                <CodeListItem CodedValue="code_submission_value1" OrderNumber="1">
                     <Decode>
                         <TranslatedText xml:lang="en">custom text</TranslatedText>
                     </Decode>
@@ -706,14 +706,14 @@ import_input1 = """<?xml version="1.0" encoding="utf-8"?>
                         <FormalExpression Context="XPath">Formal Expression 1</FormalExpression>
                     </MethodDef>
                     <CodeList OID="codelist submission value1@I.STUDYID" Name="editable_cr" DataType="string" SASFormatName="codelist submission value1" osb:version="1.0">
-                        <CodeListItem CodedValue="codeSubmissionValue" OrderNumber="2" Mandatory="True" osb:name="term_value_name1" osb:OID="term_root_final" osb:version="1.0">
+                        <CodeListItem CodedValue="codeSubmissionValue" OrderNumber="2" osb:mandatory="True" osb:name="term_value_name1" osb:OID="term_root_final" osb:version="1.0">
                             <Decode>
                                 <TranslatedText xml:lang="en">preferred_term</TranslatedText>
                             </Decode>
                         </CodeListItem>
                     </CodeList>
                     <CodeList OID="codelist submission value1@I.AGE" Name="editable_cr" DataType="string" SASFormatName="codelist submission value1" osb:version="1.0">
-                        <CodeListItem CodedValue="codeSubmissionValue" OrderNumber="1" Mandatory="False" osb:name="term_value_name1" osb:OID="term_root_final" osb:version="1.0">
+                        <CodeListItem CodedValue="codeSubmissionValue" OrderNumber="1" osb:mandatory="False" osb:name="term_value_name1" osb:OID="term_root_final" osb:version="1.0">
                             <Decode>
                                 <TranslatedText xml:lang="en">preferred_term</TranslatedText>
                             </Decode>

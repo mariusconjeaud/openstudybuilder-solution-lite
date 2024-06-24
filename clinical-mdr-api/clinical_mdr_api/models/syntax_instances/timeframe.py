@@ -103,10 +103,12 @@ class Timeframe(BaseModel):
             name=capitalize_first_letter_if_template_parameter(
                 timeframe_ar.name,
                 timeframe_ar.template_name_plain,
+                timeframe_ar._template.parameter_terms,
             ),
             name_plain=capitalize_first_letter_if_template_parameter(
                 timeframe_ar.name_plain,
                 timeframe_ar.template_name_plain,
+                timeframe_ar._template.parameter_terms,
             ),
             start_date=timeframe_ar.item_metadata.start_date,
             end_date=timeframe_ar.item_metadata.end_date,

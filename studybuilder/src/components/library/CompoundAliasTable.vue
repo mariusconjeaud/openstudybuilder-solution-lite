@@ -1,293 +1,320 @@
 <template>
-<div>
-  <n-n-table
-    :headers="headers"
-    :items="compoundAliases"
-    :server-items-length="total"
-    :options.sync="options"
-    item-key="uid"
-    dense
-    has-api
-    @filter="fetchItems"
-    column-data-resource="concepts/compound-aliases"
-    export-data-url="concepts/compound-aliases"
-    export-object-label="compound-aliases"
-    >
-    <template v-slot:actions="">
-      <v-btn
-        fab
-        small
-        color="primary"
-        @click.stop="showForm = true"
-        :title="$t('CompoundAliasForm.add_title')"
-        :disabled="!checkPermission($roles.LIBRARY_WRITE)"
-        >
-        <v-icon dark>
-          mdi-plus
-        </v-icon>
-      </v-btn>
-    </template>
-    <template v-slot:item.actions="{ item }">
-      <actions-menu
-        :actions="actions"
-        :item="item"
-        />
-    </template>
-    <template v-slot:item.is_preferred_synonym="{ item }">
-      {{ item.is_preferred_synonym|yesno }}
-    </template>
-    <template v-slot:item.name="{ item }">
-      <router-link :to="{ name: 'CompoundOverview', params: { id: item.compound.uid } }">
-        {{ item.name }}
-      </router-link>
-    </template>
-    <template v-slot:item.start_date="{ item }">
-      {{ item.start_date|date }}
-    </template>
-    <template v-slot:item.status="{ item }">
-      <status-chip :status="item.status" />
-    </template>
-  </n-n-table>
-  <v-dialog
-    v-model="showForm"
-    fullscreen
-    persistent
-    content-class="fullscreen-dialog"
-    >
-    <compound-alias-form
-      @close="closeForm"
-      @created="fetchItems"
-      @updated="fetchItems"
-      :compound-alias-uid="selectedItem ? selectedItem.uid : null"
-      :formShown="showForm"
-      />
-  </v-dialog>
-  <v-dialog
-    v-model="showHistory"
-    @keydown.esc="closeHistory"
-    persistent
-    :max-width="globalHistoryDialogMaxWidth"
-    :fullscreen="globalHistoryDialogFullscreen"
-    >
-    <history-table
-      :title="historyTitle"
-      @close="closeHistory"
+  <div>
+    <NNTable
       :headers="headers"
-      :items="historyItems"
+      :items="compoundAliases"
+      :items-length="total"
+      item-value="uid"
+      density="compact"
+      column-data-resource="concepts/compound-aliases"
+      export-data-url="concepts/compound-aliases"
+      export-object-label="compound-aliases"
+      @filter="fetchItems"
+    >
+      <template #actions="">
+        <v-btn
+          size="small"
+          color="primary"
+          :title="$t('CompoundAliasForm.add_title')"
+          :disabled="!checkPermission($roles.LIBRARY_WRITE)"
+          icon="mdi-plus"
+          @click.stop="showForm = true"
+        />
+      </template>
+      <template #[`item.actions`]="{ item }">
+        <ActionsMenu :actions="actions" :item="item" />
+      </template>
+      <template #[`item.is_preferred_synonym`]="{ item }">
+        {{ $filters.yesno(item.is_preferred_synonym) }}
+      </template>
+      <template #[`item.name`]="{ item }">
+        <router-link
+          :to="{ name: 'CompoundOverview', params: { id: item.compound.uid } }"
+        >
+          {{ item.name }}
+        </router-link>
+      </template>
+      <template #[`item.start_date`]="{ item }">
+        {{ $filters.date(item.start_date) }}
+      </template>
+      <template #[`item.status`]="{ item }">
+        <StatusChip :status="item.status" />
+      </template>
+    </NNTable>
+    <v-dialog
+      v-model="showForm"
+      fullscreen
+      persistent
+      content-class="fullscreen-dialog"
+    >
+      <CompoundAliasForm
+        :compound-alias-uid="selectedItem ? selectedItem.uid : null"
+        :form-shown="showForm"
+        @close="closeForm"
+        @created="fetchItems"
+        @updated="fetchItems"
       />
-  </v-dialog>
-  <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
-</div>
+    </v-dialog>
+    <v-dialog
+      v-model="showHistory"
+      persistent
+      :fullscreen="$globals.historyDialogFullscreen"
+      @keydown.esc="closeHistory"
+    >
+      <HistoryTable
+        :title="historyTitle"
+        :headers="headers"
+        :items="historyItems"
+        @close="closeHistory"
+      />
+    </v-dialog>
+    <ConfirmDialog ref="confirm" :text-cols="6" :action-cols="5" />
+  </div>
 </template>
 
 <script>
-import ActionsMenu from '@/components/tools/ActionsMenu'
-import { bus } from '@/main'
-import CompoundAliasForm from './CompoundAliasForm'
+import ActionsMenu from '@/components/tools/ActionsMenu.vue'
+import CompoundAliasForm from './CompoundAliasForm.vue'
 import compoundAliases from '@/api/concepts/compoundAliases'
-import ConfirmDialog from '@/components/tools/ConfirmDialog'
+import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
 import dataFormating from '@/utils/dataFormating'
-import HistoryTable from '@/components/tools/HistoryTable'
-import NNTable from '@/components/tools/NNTable'
-import StatusChip from '@/components/tools/StatusChip'
-import { accessGuard } from '@/mixins/accessRoleVerifier'
+import HistoryTable from '@/components/tools/HistoryTable.vue'
+import NNTable from '@/components/tools/NNTable.vue'
+import StatusChip from '@/components/tools/StatusChip.vue'
+import { useAccessGuard } from '@/composables/accessGuard'
+import filteringParameters from '@/utils/filteringParameters'
 
 export default {
-  mixins: [accessGuard],
   components: {
     ActionsMenu,
     CompoundAliasForm,
     ConfirmDialog,
     HistoryTable,
     NNTable,
-    StatusChip
+    StatusChip,
   },
+  inject: ['eventBusEmit'],
   props: {
-    tabClickedAt: Number
+    tabClickedAt: {
+      type: Number,
+      default: null,
+    },
   },
-  computed: {
-    historyTitle () {
-      if (this.selectedItem) {
-        return this.$t('CompoundAliasTable.history_title', { compoundAlias: this.selectedItem.uid })
-      }
-      return ''
+  setup() {
+    const accessGuard = useAccessGuard()
+    return {
+      ...accessGuard,
     }
   },
-  data () {
+  data() {
     return {
       actions: [
         {
           label: this.$t('_global.edit'),
           icon: 'mdi-pencil-outline',
           iconColor: 'primary',
-          condition: (item) => item.possible_actions.find(action => action === 'edit'),
+          condition: (item) =>
+            item.possible_actions.find((action) => action === 'edit'),
           accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.editItem
+          click: this.editItem,
         },
         {
           label: this.$t('_global.approve'),
           icon: 'mdi-check-decagram',
           iconColor: 'success',
-          condition: (item) => item.possible_actions.find(action => action === 'approve'),
+          condition: (item) =>
+            item.possible_actions.find((action) => action === 'approve'),
           accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.approveItem
+          click: this.approveItem,
         },
         {
           label: this.$t('_global.new_version'),
           icon: 'mdi-plus-circle-outline',
           iconColor: 'primary',
-          condition: (item) => item.possible_actions.find(action => action === 'new_version'),
+          condition: (item) =>
+            item.possible_actions.find((action) => action === 'new_version'),
           accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.createNewVersion
+          click: this.createNewVersion,
         },
         {
           label: this.$t('_global.inactivate'),
           icon: 'mdi-close-octagon-outline',
           iconColor: 'primary',
-          condition: (item) => item.possible_actions.find(action => action === 'inactivate'),
+          condition: (item) =>
+            item.possible_actions.find((action) => action === 'inactivate'),
           accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.inactivateItem
+          click: this.inactivateItem,
         },
         {
           label: this.$t('_global.reactivate'),
           icon: 'mdi-undo-variant',
           iconColor: 'primary',
-          condition: (item) => item.possible_actions.find(action => action === 'reactivate'),
+          condition: (item) =>
+            item.possible_actions.find((action) => action === 'reactivate'),
           accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.reactivateItem
+          click: this.reactivateItem,
         },
         {
           label: this.$t('_global.delete'),
           icon: 'mdi-delete-outline',
           iconColor: 'error',
-          condition: (item) => item.possible_actions.find(action => action === 'delete'),
+          condition: (item) =>
+            item.possible_actions.find((action) => action === 'delete'),
           accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.deleteItem
+          click: this.deleteItem,
         },
         {
           label: this.$t('_global.history'),
           icon: 'mdi-history',
-          click: this.openHistory
-        }
+          click: this.openHistory,
+        },
       ],
       compoundAliases: [],
       filters: {},
-      sort: {},
       headers: [
-        { text: '', value: 'actions', width: '5%' },
-        { text: this.$t('CompoundAliasTable.compound_name'), value: 'compound.name' },
-        { text: this.$t('_global.name'), value: 'name' },
-        { text: this.$t('_global.sentence_case_name'), value: 'name_sentence_case' },
-        { text: this.$t('CompoundAliasTable.is_preferred_synonym'), value: 'is_preferred_synonym' },
-        { text: this.$t('_global.definition'), value: 'definition' },
-        { text: this.$t('_global.modified'), value: 'start_date' },
-        { text: this.$t('_global.version'), value: 'version' },
-        { text: this.$t('_global.status'), value: 'status' }
+        { title: '', key: 'actions', width: '5%' },
+        {
+          title: this.$t('CompoundAliasTable.compound_name'),
+          key: 'compound.name',
+        },
+        { title: this.$t('_global.name'), key: 'name' },
+        {
+          title: this.$t('_global.sentence_case_name'),
+          key: 'name_sentence_case',
+        },
+        {
+          title: this.$t('CompoundAliasTable.is_preferred_synonym'),
+          key: 'is_preferred_synonym',
+        },
+        { title: this.$t('_global.definition'), key: 'definition' },
+        { title: this.$t('_global.modified'), key: 'start_date' },
+        { title: this.$t('_global.version'), key: 'version' },
+        { title: this.$t('_global.status'), key: 'status' },
       ],
       historyItems: [],
       options: {},
       selectedItem: null,
       showForm: false,
       showHistory: false,
-      total: 0
+      total: 0,
     }
   },
+  computed: {
+    historyTitle() {
+      if (this.selectedItem) {
+        return this.$t('CompoundAliasTable.history_title', {
+          compoundAlias: this.selectedItem.uid,
+        })
+      }
+      return ''
+    },
+  },
+  watch: {
+    tabClickedAt() {
+      this.fetchItems()
+    },
+    options: {
+      handler() {
+        this.fetchItems()
+      },
+      deep: true,
+    },
+  },
+  mounted() {
+    this.fetchItems()
+  },
   methods: {
-    fetchItems (filters, sort, filtersUpdated) {
+    fetchItems(filters, options, filtersUpdated) {
       if (filters !== undefined) {
         this.filters = filters
       }
-      if (sort !== undefined) {
-        this.sort = sort
-      }
-      if (filtersUpdated) {
-        this.options.page = 1
-      }
-      const params = {
-        page_number: (this.options.page),
-        page_size: this.options.itemsPerPage,
-        total_count: true
-      }
-      if (this.filters !== undefined) {
-        params.filters = this.filters
-      }
-      if (this.options.sortBy.length !== 0 && this.sort !== undefined) {
-        params.sort_by = `{"${this.options.sortBy[0]}":${!this.sort}}`
-      }
-      compoundAliases.getFiltered(params).then(resp => {
+      const params = filteringParameters.prepareParameters(
+        options,
+        filters,
+        filtersUpdated
+      )
+      compoundAliases.getFiltered(params).then((resp) => {
         this.compoundAliases = resp.data.items
         this.total = resp.data.total
       })
     },
-    closeForm () {
+    closeForm() {
       this.showForm = false
       this.selectedItem = null
     },
-    editItem (item) {
+    editItem(item) {
       this.selectedItem = item
       this.showForm = true
     },
-    approveItem (item) {
+    approveItem(item) {
       compoundAliases.approve(item.uid).then(() => {
         this.fetchItems()
-        bus.$emit('notification', { msg: this.$t('CompoundAliasTable.approve_success'), type: 'success' })
+        this.eventBusEmit('notification', {
+          msg: this.$t('CompoundAliasTable.approve_success'),
+          type: 'success',
+        })
       })
     },
-    async deleteItem (item) {
+    async deleteItem(item) {
       const options = { type: 'warning' }
       const compoundAlias = item.name
-      if (await this.$refs.confirm.open(this.$t('CompoundAliasTable.confirm_delete', { compoundAlias }), options)) {
+      if (
+        await this.$refs.confirm.open(
+          this.$t('CompoundAliasTable.confirm_delete', { compoundAlias }),
+          options
+        )
+      ) {
         await compoundAliases.deleteObject(item.uid)
         this.fetchItems()
-        bus.$emit('notification', { msg: this.$t('CompoundAliasTable.delete_success'), type: 'success' })
+        this.eventBusEmit('notification', {
+          msg: this.$t('CompoundAliasTable.delete_success'),
+          type: 'success',
+        })
       }
     },
-    createNewVersion (item) {
+    createNewVersion(item) {
       compoundAliases.newVersion(item.uid).then(() => {
         this.fetchItems()
-        bus.$emit('notification', { msg: this.$t('CompoundAliasTable.new_version_success'), type: 'success' })
+        this.eventBusEmit('notification', {
+          msg: this.$t('CompoundAliasTable.new_version_success'),
+          type: 'success',
+        })
       })
     },
-    inactivateItem (item) {
+    inactivateItem(item) {
       compoundAliases.inactivate(item.uid).then(() => {
         this.fetchItems()
-        bus.$emit('notification', { msg: this.$t('CompoundAliasTable.inactivate_success'), type: 'success' })
+        this.eventBusEmit('notification', {
+          msg: this.$t('CompoundAliasTable.inactivate_success'),
+          type: 'success',
+        })
       })
     },
-    reactivateItem (item) {
+    reactivateItem(item) {
       compoundAliases.reactivate(item.uid).then(() => {
         this.fetchItems()
-        bus.$emit('notification', { msg: this.$t('CompoundAliasTable.reactivate_success'), type: 'success' })
+        this.eventBusEmit('notification', {
+          msg: this.$t('CompoundAliasTable.reactivate_success'),
+          type: 'success',
+        })
       })
     },
-    async openHistory (item) {
+    async openHistory(item) {
       this.selectedItem = item
       const resp = await compoundAliases.getVersions(this.selectedItem.uid)
       this.historyItems = resp.data
       for (const historyItem of this.historyItems) {
         if (historyItem.is_preferred_synonym !== undefined) {
-          historyItem.is_preferred_synonym = dataFormating.yesno(historyItem.is_preferred_synonym)
+          historyItem.is_preferred_synonym = dataFormating.yesno(
+            historyItem.is_preferred_synonym
+          )
         }
       }
       this.showHistory = true
     },
-    closeHistory () {
+    closeHistory() {
       this.showHistory = false
-    }
-  },
-  mounted () {
-    this.fetchItems()
-  },
-  watch: {
-    tabClickedAt () {
-      this.fetchItems()
     },
-    options: {
-      handler () {
-        this.fetchItems()
-      },
-      deep: true
-    }
-  }
+  },
 }
 </script>

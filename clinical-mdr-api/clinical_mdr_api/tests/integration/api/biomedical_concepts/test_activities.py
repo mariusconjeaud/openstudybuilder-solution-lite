@@ -301,6 +301,8 @@ ACTIVITY_FIELDS_ALL = [
     "replaced_by_activity",
     "is_data_collected",
     "is_multiple_selection_allowed",
+    "is_finalized",
+    "is_used_by_legacy_instances",
     "library_name",
     "start_date",
     "end_date",
@@ -343,6 +345,7 @@ def test_get_activity(api_client):
     assert res["library_name"] == "Sponsor"
     assert res["definition"] is None
     assert res["is_multiple_selection_allowed"] is True
+    assert res["is_finalized"] is False
     assert res["version"] == "1.0"
     assert res["status"] == "Final"
     assert res["possible_actions"] == ["inactivate", "new_version"]

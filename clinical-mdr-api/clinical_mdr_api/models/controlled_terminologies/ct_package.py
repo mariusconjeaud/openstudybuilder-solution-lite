@@ -20,6 +20,7 @@ class CTPackage(BaseModel):
             href=ct_package_ar.href,
             registration_status=ct_package_ar.registration_status,
             source=ct_package_ar.source,
+            extends_package=ct_package_ar.extends_package,
             import_date=ct_package_ar.import_date,
             effective_date=ct_package_ar.effective_date,
             user_initials=ct_package_ar.user_initials,
@@ -50,6 +51,12 @@ class CTPackage(BaseModel):
         None, title="registration_status", description="", nullable=True
     )
     source: str | None = Field(None, title="source", description="", nullable=True)
+    extends_package: str | None = Field(
+        None,
+        title="extends_package",
+        description="CDISC CT Package extended by this sponsor package",
+        nullable=True,
+    )
     import_date: datetime = Field(
         ...,
         title="import_date",

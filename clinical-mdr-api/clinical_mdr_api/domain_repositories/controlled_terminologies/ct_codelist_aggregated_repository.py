@@ -30,36 +30,7 @@ from clinical_mdr_api.repositories._utils import (
 
 
 class CTCodelistAggregatedRepository:
-    generic_alias_clause = """
-        DISTINCT codelist_root, codelist_name_root, codelist_name_value, codelist_attributes_root, codelist_attributes_value
-        ORDER BY codelist_root.uid
-        WITH DISTINCT codelist_root, codelist_name_root, codelist_name_value, codelist_attributes_root, codelist_attributes_value, 
-        head([(cat:CTCatalogue)-[:HAS_CODELIST]->(codelist_root) | cat]) AS catalogue,
-        head([(lib)-[:CONTAINS_CODELIST]->(codelist_root) | lib]) AS library
-        CALL {
-                WITH codelist_attributes_root, codelist_attributes_value
-                MATCH (codelist_attributes_root)-[hv:HAS_VERSION]-(codelist_attributes_value)
-                WITH hv 
-                ORDER BY
-                    toInteger(split(hv.version, '.')[0]) ASC,
-                    toInteger(split(hv.version, '.')[1]) ASC,
-                    hv.end_date ASC,
-                    hv.start_date ASC
-                WITH collect(hv) as hvs
-                RETURN last(hvs) AS rel_data_attributes
-        }
-        CALL {
-                WITH codelist_name_root, codelist_name_value
-                MATCH (codelist_name_root)-[hv:HAS_VERSION]-(codelist_name_value)
-                WITH hv
-                ORDER BY
-                    toInteger(split(hv.version, '.')[0]) ASC,
-                    toInteger(split(hv.version, '.')[1]) ASC,
-                    hv.end_date ASC,
-                    hv.start_date ASC
-                WITH collect(hv) as hvs
-                RETURN last(hvs) AS rel_data_name
-        }
+    generic_final_alias_clause = """
         WITH 
             codelist_root.uid AS codelist_uid,
             head([(codelist_root)-[:HAS_PARENT_CODELIST]->(ccr:CTCodelistRoot) | ccr.uid]) AS parent_codelist_uid,
@@ -87,6 +58,47 @@ class CTCodelistAggregatedRepository:
                 user_initials: rel_data_name.user_initials
             } AS rel_data_name
     """
+    generic_alias_clause = f"""
+        DISTINCT codelist_root, codelist_name_root, codelist_name_value, codelist_attributes_root, codelist_attributes_value
+        ORDER BY codelist_root.uid
+        WITH DISTINCT codelist_root, codelist_name_root, codelist_name_value, codelist_attributes_root, codelist_attributes_value, 
+        head([(cat:CTCatalogue)-[:HAS_CODELIST]->(codelist_root) | cat]) AS catalogue,
+        head([(lib)-[:CONTAINS_CODELIST]->(codelist_root) | lib]) AS library
+        CALL {{
+                WITH codelist_attributes_root, codelist_attributes_value
+                MATCH (codelist_attributes_root)-[hv:HAS_VERSION]->(codelist_attributes_value)
+                WITH hv 
+                ORDER BY
+                    toInteger(split(hv.version, '.')[0]) ASC,
+                    toInteger(split(hv.version, '.')[1]) ASC,
+                    hv.end_date ASC,
+                    hv.start_date ASC
+                WITH collect(hv) as hvs
+                RETURN last(hvs) AS rel_data_attributes
+        }}
+        CALL {{
+                WITH codelist_name_root, codelist_name_value
+                MATCH (codelist_name_root)-[hv:HAS_VERSION]->(codelist_name_value)
+                WITH hv
+                ORDER BY
+                    toInteger(split(hv.version, '.')[0]) ASC,
+                    toInteger(split(hv.version, '.')[1]) ASC,
+                    hv.end_date ASC,
+                    hv.start_date ASC
+                WITH collect(hv) as hvs
+                RETURN last(hvs) AS rel_data_name
+        }}
+        {generic_final_alias_clause}
+    """
+    sponsor_alias_clause = f"""
+        DISTINCT codelist_root, codelist_name_root, codelist_name_value, codelist_attributes_root, codelist_attributes_value, attr_v_rel, name_v_rel
+        ORDER BY codelist_root.uid
+        WITH DISTINCT codelist_root, codelist_name_root, codelist_name_value, codelist_attributes_root, codelist_attributes_value,
+        attr_v_rel AS rel_data_attributes, name_v_rel AS rel_data_name,
+        head([(cat:CTCatalogue)-[:HAS_CODELIST]->(codelist_root) | cat]) AS catalogue,
+        head([(lib)-[:CONTAINS_CODELIST]->(codelist_root) | lib]) AS library
+        {generic_final_alias_clause}
+    """
 
     def _create_codelist_aggregate_instances_from_cypher_result(
         self, codelist_dict: dict
@@ -113,6 +125,7 @@ class CTCodelistAggregatedRepository:
         catalogue_name: str | None = None,
         library: str | None = None,
         package: str | None = None,
+        is_sponsor: bool = False,
         sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
@@ -145,15 +158,23 @@ class CTCodelistAggregatedRepository:
         # This is separate from generic filtering as the list of filters is predefined
         # We can therefore do this filtering in an efficient way in the Cypher MATCH clause
         filter_statements, filter_query_parameters = create_codelist_filter_statement(
-            catalogue_name=catalogue_name, library_name=library, package=package
+            catalogue_name=catalogue_name,
+            library_name=library,
+            package=package,
+            is_sponsor=is_sponsor,
         )
         match_clause = self._generate_generic_match_clause(
-            package=package, term_filter=term_filter
+            library_name=library,
+            package=package,
+            is_sponsor=is_sponsor,
+            term_filter=term_filter,
         )
         match_clause += filter_statements
 
         # Build alias_clause
-        alias_clause = self.generic_alias_clause
+        alias_clause = (
+            self.sponsor_alias_clause if is_sponsor else self.generic_alias_clause
+        )
 
         query = CypherQueryBuilder(
             match_clause=match_clause,
@@ -198,6 +219,7 @@ class CTCodelistAggregatedRepository:
         catalogue_name: str | None = None,
         library: str | None = None,
         package: str | None = None,
+        is_sponsor: bool = False,
         search_string: str | None = "",
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
@@ -222,13 +244,20 @@ class CTCodelistAggregatedRepository:
         # This is separate from generic filtering as the list of filters is predefined
         # We can therefore do this filtering in an efficient way in the Cypher MATCH clause
         filter_statements, filter_query_parameters = create_codelist_filter_statement(
-            catalogue_name=catalogue_name, library_name=library, package=package
+            catalogue_name=catalogue_name,
+            library_name=library,
+            package=package,
+            is_sponsor=is_sponsor,
         )
-        match_clause = self._generate_generic_match_clause(package=package)
+        match_clause = self._generate_generic_match_clause(
+            library_name=library, package=package, is_sponsor=is_sponsor
+        )
         match_clause += filter_statements
 
         # Build alias_clause
-        alias_clause = self.generic_alias_clause
+        alias_clause = (
+            self.sponsor_alias_clause if is_sponsor else self.generic_alias_clause
+        )
 
         # Add header field name to filter_by, to filter with a CONTAINS pattern
         if search_string != "":
@@ -265,38 +294,110 @@ class CTCodelistAggregatedRepository:
 
     def _generate_generic_match_clause(
         self,
+        library_name: str | None = None,
         package: str | None = None,
+        is_sponsor: bool = False,
         term_filter: dict | None = None,
     ):
-        match_clause = "MATCH(codelist_root:CTCodelistRoot)"
+        match_clause = ""
 
-        if term_filter:
-            if "term_uids" not in term_filter:
+        if is_sponsor:
+            if not package:
                 raise ValidationException(
-                    "term_uids must be provided for term filtering."
+                    "Package must be provided when fetching sponsor codelists."
                 )
+            if term_filter:
+                if "term_uids" not in term_filter:
+                    raise ValidationException(
+                        "term_uids must be provided for term filtering."
+                    )
 
-            operation_function = "all"
-            if "operator" in term_filter and term_filter["operator"] != "and":
-                operation_function = "any"
+                operation_function = "all"
+                if "operator" in term_filter and term_filter["operator"] != "and":
+                    operation_function = "any"
 
-            match_clause += f"""MATCH (codelist_root)-[:HAS_TERM]->(ct_term:CTTermRoot)
-            WHERE ct_term.uid IN {term_filter["term_uids"]}
-            WITH codelist_root, collect(ct_term.uid) as ct_term_uids
-            WHERE {operation_function}(term_uid IN {term_filter["term_uids"]} WHERE term_uid IN ct_term_uids)
-            """
+                match_clause += f"""MATCH (codelist_root:CTCodelistRoot)-[:HAS_TERM]->(ct_term:CTTermRoot)
+                WHERE ct_term.uid IN {term_filter["term_uids"]}
+                WITH codelist_root, collect(ct_term.uid) as ct_term_uids
+                WHERE {operation_function}(term_uid IN {term_filter["term_uids"]} WHERE term_uid IN ct_term_uids)
+                """
 
-        if package:
-            match_clause += """
-            MATCH (package:CTPackage)-[:CONTAINS_CODELIST]->(:CTPackageCodelist)-[:CONTAINS_ATTRIBUTES]->
-            (codelist_attributes_value:CTCodelistAttributesValue)<-[]-(codelist_attributes_root:CTCodelistAttributesRoot)<-[:HAS_ATTRIBUTES_ROOT]-
-            (codelist_root)-[:HAS_NAME_ROOT]->(codelist_name_root:CTCodelistNameRoot)-[:LATEST]->(codelist_name_value:CTCodelistNameValue)
+            match_clause += f"""
+                MATCH (package:CTPackage)-[:EXTENDS_PACKAGE]->(parent_package:CTPackage)
+                WITH package, parent_package, datetime(package.effective_date + "T23:59:59") AS exact_datetime
+                {"WHERE package.name=$package_name" if package else ""}
+                """
+
+            if library_name:
+                # We will look only in a specific library
+                if library_name == "Sponsor":
+                    match_clause += f"""
+                        MATCH (:Library {{name:"Sponsor"}})-->(codelist_root{":CTCodelistRoot" if not term_filter else ""})
+                            -[:HAS_ATTRIBUTES_ROOT]->(codelist_attributes_root:CTCodelistAttributesRoot)-[attr_v_rel:HAS_VERSION]->(codelist_attributes_value:CTCodelistAttributesValue)
+                        MATCH (codelist_root)-[:HAS_NAME_ROOT]->(codelist_name_root:CTCodelistNameRoot)-[name_v_rel:HAS_VERSION]->(codelist_name_value:CTCodelistNameValue)
+                        WHERE name_v_rel.start_date<= exact_datetime < name_v_rel.end_date OR (name_v_rel.end_date IS NULL AND name_v_rel.start_date <= exact_datetime)
+                            AND (attr_v_rel.start_date<= exact_datetime < attr_v_rel.end_date OR (attr_v_rel.end_date IS NULL AND attr_v_rel.start_date <= exact_datetime)) 
+                        WITH DISTINCT codelist_root, codelist_name_root, codelist_name_value, codelist_attributes_root, codelist_attributes_value, attr_v_rel, name_v_rel
+                    """
+                else:
+                    # We must look in the library and the parent package
+                    match_clause += f"""
+                        MATCH (parent_package:CTPackage)-[:CONTAINS_CODELIST]->(:CTPackageCodelist)-[:CONTAINS_ATTRIBUTES]->
+                            (codelist_attributes_value:CTCodelistAttributesValue)<-[attr_v_rel:HAS_VERSION]-(codelist_attributes_root:CTCodelistAttributesRoot)<-[:HAS_ATTRIBUTES_ROOT]-
+                            (codelist_root{":CTCodelistRoot" if not term_filter else ""})-[:HAS_NAME_ROOT]->(codelist_name_root:CTCodelistNameRoot)-[name_v_rel:HAS_VERSION]->(codelist_name_value:CTCodelistNameValue)
+                        WHERE name_v_rel.start_date<= exact_datetime < name_v_rel.end_date OR (name_v_rel.end_date IS NULL AND name_v_rel.start_date <= exact_datetime)
+                        MATCH (library:Library)-->(codelist_root)
+                        WITH DISTINCT codelist_root, codelist_name_root, codelist_name_value, codelist_attributes_root, codelist_attributes_value, attr_v_rel, name_v_rel
+                    """
+            else:
+                # Otherwise, we need to combine the sponsor terms with the terms in the parent package
+                match_clause += f"""
+                CALL {{
+                    WITH package, parent_package, exact_datetime
+                    MATCH (parent_package:CTPackage)-[:CONTAINS_CODELIST]->(:CTPackageCodelist)-[:CONTAINS_ATTRIBUTES]->
+                        (codelist_attributes_value:CTCodelistAttributesValue)<-[attr_v_rel:HAS_VERSION]-(codelist_attributes_root:CTCodelistAttributesRoot)<-[:HAS_ATTRIBUTES_ROOT]-
+                        (codelist_root{":CTCodelistRoot" if not term_filter else ""})-[:HAS_NAME_ROOT]->(codelist_name_root:CTCodelistNameRoot)-[name_v_rel:HAS_VERSION]->(codelist_name_value:CTCodelistNameValue)
+                    WHERE name_v_rel.start_date<= exact_datetime < name_v_rel.end_date OR (name_v_rel.end_date IS NULL AND name_v_rel.start_date <= exact_datetime)
+                    RETURN DISTINCT codelist_root, codelist_name_root, codelist_name_value, codelist_attributes_root, codelist_attributes_value, attr_v_rel, name_v_rel
+
+                    UNION
+                    WITH exact_datetime
+                    MATCH (:Library {{name:"Sponsor"}})-->(codelist_root{":CTCodelistRoot" if not term_filter else ""})
+                        -[:HAS_ATTRIBUTES_ROOT]->(codelist_attributes_root:CTCodelistAttributesRoot)-[attr_v_rel:HAS_VERSION]->(codelist_attributes_value:CTCodelistAttributesValue)
+                    MATCH (codelist_root)-[:HAS_NAME_ROOT]->(codelist_name_root:CTCodelistNameRoot)-[name_v_rel:HAS_VERSION]->(codelist_name_value:CTCodelistNameValue)
+                    WHERE (name_v_rel.start_date<= exact_datetime < name_v_rel.end_date OR (name_v_rel.end_date IS NULL AND name_v_rel.start_date <= exact_datetime))
+                        AND (attr_v_rel.start_date<= exact_datetime < attr_v_rel.end_date OR (attr_v_rel.end_date IS NULL AND attr_v_rel.start_date <= exact_datetime)) 
+                    RETURN DISTINCT codelist_root, codelist_name_root, codelist_name_value, codelist_attributes_root, codelist_attributes_value, attr_v_rel, name_v_rel
+                }}
             """
         else:
-            match_clause += """
-            MATCH (codelist_name_value:CTCodelistNameValue)<-[:LATEST]-(codelist_name_root:CTCodelistNameRoot)<-[:HAS_NAME_ROOT]-(codelist_root)
-            -[:HAS_ATTRIBUTES_ROOT]->(codelist_attributes_root:CTCodelistAttributesRoot)-[:LATEST]->(codelist_attributes_value:CTCodelistAttributesValue)
-            """
+            if term_filter:
+                if "term_uids" not in term_filter:
+                    raise ValidationException(
+                        "term_uids must be provided for term filtering."
+                    )
+
+                operation_function = "all"
+                if "operator" in term_filter and term_filter["operator"] != "and":
+                    operation_function = "any"
+
+                match_clause += f"""MATCH (codelist_root:CTCodelistRoot)-[:HAS_TERM]->(ct_term:CTTermRoot)
+                WHERE ct_term.uid IN {term_filter["term_uids"]}
+                WITH codelist_root, collect(ct_term.uid) as ct_term_uids
+                WHERE {operation_function}(term_uid IN {term_filter["term_uids"]} WHERE term_uid IN ct_term_uids)
+                """
+
+            if package:
+                match_clause += f"""
+                MATCH (package:CTPackage)-[:CONTAINS_CODELIST]->(:CTPackageCodelist)-[:CONTAINS_ATTRIBUTES]->
+                (codelist_attributes_value:CTCodelistAttributesValue)<-[]-(codelist_attributes_root:CTCodelistAttributesRoot)<-[:HAS_ATTRIBUTES_ROOT]-
+                (codelist_root{":CTCodelistRoot" if not term_filter else ""})-[:HAS_NAME_ROOT]->(codelist_name_root:CTCodelistNameRoot)-[:LATEST]->(codelist_name_value:CTCodelistNameValue)
+                """
+            else:
+                match_clause += f"""
+                MATCH (codelist_name_value:CTCodelistNameValue)<-[:LATEST]-(codelist_name_root:CTCodelistNameRoot)<-[:HAS_NAME_ROOT]-(codelist_root{":CTCodelistRoot" if not term_filter else ""})
+                -[:HAS_ATTRIBUTES_ROOT]->(codelist_attributes_root:CTCodelistAttributesRoot)-[:LATEST]->(codelist_attributes_value:CTCodelistAttributesValue)
+                """
 
         return match_clause
 

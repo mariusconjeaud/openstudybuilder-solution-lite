@@ -46,7 +46,7 @@ class StudyActivityScheduleTestCase(unittest.TestCase):
             time_unit_uid=self.day_uid,
         )
         sa1 = create_study_activity("study_root")
-        service = StudyActivityScheduleService("test")
+        service = StudyActivityScheduleService()
         schedule = service.create(
             "study_root",
             models.StudyActivityScheduleCreateInput(
@@ -82,7 +82,7 @@ class StudyActivityScheduleTestCase(unittest.TestCase):
             activity_subgroup_uid="activity_subgroup_root3",
             activity_group_uid="activity_group_root3",
         )
-        service = StudyActivityScheduleService("test")
+        service = StudyActivityScheduleService()
         service.handle_batch_operations(
             "study_root",
             [

@@ -61,10 +61,6 @@ def generate_default_input_data_for_visit():
     day_uid = get_unit_uid_by_name("day")
     week_uid = get_unit_uid_by_name("week")
     return {
-        "legacy_visit_id": "legacy_visit",
-        "legacy_visit_type_alias": "legacyVT",
-        "legacy_name": "legacyN",
-        "legacy_subname": "",
         "visit_sublabel_codelist_uid": "",
         "visit_sublabel_reference": "",
         "consecutive_visit_group": None,
@@ -135,9 +131,7 @@ def create_study_visit_codelists(
         library_name,
     )
     if create_unit_definitions:
-        unit_service = UnitDefinitionService(
-            user_id="some-user", meta_repository=MetaRepository()
-        )
+        unit_service = UnitDefinitionService(meta_repository=MetaRepository())
         unit_service.post(UnitDefinitionPostInput(**WEEK))
         unit_service.post(UnitDefinitionPostInput(**DAY))
 
@@ -307,7 +301,7 @@ def create_study_visit_codelists(
 
 
 def create_visit_with_update(study_uid="study_root", **inputs) -> StudyVisit:
-    visit_service: StudyVisitService = StudyVisitService()
+    visit_service: StudyVisitService = StudyVisitService(study_uid=study_uid)
     datadict = generate_default_input_data_for_visit().copy()
     datadict.update(inputs)
     visit_input = StudyVisitCreateInput(**datadict)
@@ -318,7 +312,7 @@ def create_visit_with_update(study_uid="study_root", **inputs) -> StudyVisit:
 def update_visit_with_update(
     visit_uid: str, study_uid="study_root", **inputs
 ) -> StudyVisit:
-    visit_service: StudyVisitService = StudyVisitService()
+    visit_service: StudyVisitService = StudyVisitService(study_uid=study_uid)
     datadict = generate_default_input_data_for_visit().copy()
     datadict.update(inputs)
     visit_input = StudyVisitEditInput(**datadict)
@@ -331,7 +325,7 @@ def update_visit_with_update(
 
 
 def preview_visit_with_update(study_uid, **inputs) -> StudyVisit:
-    visit_service: StudyVisitService = StudyVisitService()
+    visit_service: StudyVisitService = StudyVisitService(study_uid=study_uid)
     datadict = generate_default_input_data_for_visit().copy()
     datadict.update(inputs)
     del datadict["visit_window_unit_uid"]
@@ -422,7 +416,7 @@ def create_some_visits(
         version3.uid,
         study_uid=study_uid,
         uid=version3.uid,
-        study_epoch_uid=epoch1.uid,
+        study_epoch_uid=epoch2.uid,
         visit_type_uid="VisitType_0004",
         time_reference_uid="VisitSubType_0001",
         time_value=35,

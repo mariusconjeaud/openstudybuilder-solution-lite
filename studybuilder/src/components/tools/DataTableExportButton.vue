@@ -1,30 +1,27 @@
 <template>
-<v-menu rounded offset-y>
-  <template v-slot:activator="{ attrs, on }">
-    <v-btn
-      fab
-      small
-      color="nnGreen1"
-      class="ml-2 white--text"
-      v-bind="attrs"
-      v-on="on"
-      :title="$t('DataTableExportButton.export')"
-      data-cy="table-export-button"
+  <v-menu rounded offset-y>
+    <template #activator="{ props }">
+      <v-btn
+        size="small"
+        color="nnGreen1"
+        class="ml-2 white--text"
+        v-bind="props"
+        :title="$t('DataTableExportButton.export')"
+        data-cy="table-export-button"
+        icon="mdi-download-outline"
+      />
+    </template>
+    <v-list>
+      <v-list-item
+        v-for="(format, index) in downloadFormats"
+        :key="index"
+        link
+        @click="exportContent(format)"
       >
-      <v-icon>mdi-download-outline</v-icon>
-    </v-btn>
-  </template>
-  <v-list>
-    <v-list-item
-      v-for="(format, index) in downloadFormats"
-      :key="index"
-      link
-      @click="exportContent(format)"
-      >
-      <v-list-item-title>{{ format.name }}</v-list-item-title>
-    </v-list-item>
-  </v-list>
-</v-menu>
+        <v-list-item-title>{{ format.name }}</v-list-item-title>
+      </v-list-item>
+    </v-list>
+  </v-menu>
 </template>
 
 <script>
@@ -35,22 +32,31 @@ import exportLoader from '@/utils/exportLoader'
 
 export default {
   props: {
-    objectLabel: String,
-    dataUrl: String,
+    objectLabel: {
+      type: String,
+      default: '',
+    },
+    dataUrl: {
+      type: String,
+      default: '',
+    },
     dataUrlParams: {
       type: Object,
-      default: () => {}
+      default: () => {},
     },
     headers: {
       type: Array,
-      required: false
+      required: false,
+      default: () => [],
     },
     items: {
       type: Array,
-      required: false
-    }
+      required: false,
+      default: () => [],
+    },
   },
-  data () {
+  emits: ['export'],
+  data() {
     return {
       downloadFormats: [
         { name: 'CSV', mediaType: 'text/csv', extension: 'csv' },
@@ -58,21 +64,22 @@ export default {
         { name: 'XML', mediaType: 'text/xml', extension: 'xml' },
         {
           name: 'EXCEL',
-          mediaType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-          extension: 'xlsx'
-        }
-      ]
+          mediaType:
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          extension: 'xlsx',
+        },
+      ],
     }
   },
   methods: {
-    createDownloadLink (content, format) {
+    createDownloadLink(content, format) {
       const today = DateTime.local().toFormat('yyyyMMdd')
       const fileName = `MDRSB_Library_${this.objectLabel}_${today}.${format.extension}`
       exportLoader.downloadFile(content, format.mediaType, fileName)
     },
-    getValue (header, item) {
+    getValue(header, item) {
       let value = item
-      header.value.split('.').forEach(part => {
+      header.key.split('.').forEach((part) => {
         if (value !== undefined && value !== null) {
           value = value[part]
         }
@@ -85,16 +92,20 @@ export default {
       }
       return ''
     },
-    convertHeaderLabelToName (label) {
+    convertHeaderLabelToName(label) {
       return label.toLowerCase().replace(/\s/g, '-')
     },
-    exportToCSV () {
+    exportToCSV() {
       const delimiter = ';'
-      let csv = this.headers.filter(header => header.value !== 'actions').map(header => header.text).join(delimiter) + '\n'
-      this.items.forEach(item => {
+      let csv =
+        this.headers
+          .filter((header) => header.key !== 'actions')
+          .map((header) => header.title)
+          .join(delimiter) + '\n'
+      this.items.forEach((item) => {
         let row = ''
-        this.headers.forEach(header => {
-          if (header.value === 'actions') {
+        this.headers.forEach((header) => {
+          if (header.key === 'actions') {
             return
           }
           if (row !== '') {
@@ -109,18 +120,20 @@ export default {
       })
       return csv
     },
-    async exportToXSLX () {
+    async exportToXSLX() {
       const workbook = new ExcelJS.Workbook()
       const sheet = workbook.addWorksheet('Sheet 1')
-      const headers = this.headers.filter(header => header.value !== 'actions').map(header => {
-        return { header: header.text, key: header.value }
-      })
+      const headers = this.headers
+        .filter((header) => header.key !== 'actions')
+        .map((header) => {
+          return { header: header.title, key: header.key }
+        })
       const rows = []
       sheet.columns = headers
-      this.items.forEach(item => {
+      this.items.forEach((item) => {
         const row = []
-        this.headers.forEach(header => {
-          if (header.value === 'actions') {
+        this.headers.forEach((header) => {
+          if (header.key === 'actions') {
             return
           }
           row.push(this.getValue(header, item))
@@ -131,19 +144,19 @@ export default {
       return await workbook.xlsx.writeBuffer()
     },
     /*
-    ** Manual XML export.
-    ** We could have used a DOM element and then use XMLSerializer() but the output is not formatted properly so...
-    */
-    exportToXML () {
+     ** Manual XML export.
+     ** We could have used a DOM element and then use XMLSerializer() but the output is not formatted properly so...
+     */
+    exportToXML() {
       let result = '<items>\n'
-      this.items.forEach(item => {
+      this.items.forEach((item) => {
         result += '  <item>\n'
-        this.headers.forEach(header => {
-          if (header.value === 'actions') {
+        this.headers.forEach((header) => {
+          if (header.key === 'actions') {
             return
           }
           const value = this.getValue(header, item)
-          const name = this.convertHeaderLabelToName(header.text)
+          const name = this.convertHeaderLabelToName(header.title)
           result += `    <${name}>${value}</${name}>\n`
         })
         result += '  </item>\n'
@@ -151,23 +164,23 @@ export default {
       result += '</items>\n'
       return result
     },
-    exportToJSON () {
+    exportToJSON() {
       const result = []
-      this.items.forEach(item => {
+      this.items.forEach((item) => {
         const newItem = {}
-        this.headers.forEach(header => {
-          if (header.value === 'actions') {
+        this.headers.forEach((header) => {
+          if (header.key === 'actions') {
             return
           }
           const value = this.getValue(header, item)
-          const name = this.convertHeaderLabelToName(header.text)
+          const name = this.convertHeaderLabelToName(header.title)
           newItem[name] = value
         })
         result.push(newItem)
       })
       return JSON.stringify(result)
     },
-    async localExport (format) {
+    async localExport(format) {
       let content = ''
       if (format.name === 'CSV') {
         content = this.exportToCSV()
@@ -180,8 +193,10 @@ export default {
       }
       this.createDownloadLink(content, format)
     },
-    async exportContent (format) {
-      const result = await new Promise((resolve) => this.$emit('export', resolve))
+    async exportContent(format) {
+      const result = await new Promise((resolve) =>
+        this.$emit('export', resolve)
+      )
       if (!result) {
         return
       }
@@ -196,10 +211,12 @@ export default {
       if (params.page_size === undefined) {
         params.page_size = 0
       }
-      repository.get(this.dataUrl, { params, headers, responseType: 'blob' }).then(response => {
-        this.createDownloadLink(response.data, format)
-      })
-    }
-  }
+      repository
+        .get(this.dataUrl, { params, headers, responseType: 'blob' })
+        .then((response) => {
+          this.createDownloadLink(response.data, format)
+        })
+    },
+  },
 }
 </script>

@@ -1,128 +1,134 @@
 <template>
-<div>
-  <horizontal-stepper-form
+  <HorizontalStepperForm
     ref="stepper"
     :title="title"
     :steps="steps"
-    @close="close"
-    @save="submit"
     :form-observer-getter="getObserver"
     :extra-step-validation="extraStepValidation"
-    :helpItems="helpItems"
-    :editData="form"
-    >
-    <template v-slot:step.creationMode>
-      <v-radio-group
-        v-model="creationMode"
-        >
-        <v-radio data-cy="objective-from-template" :label="$t('StudyObjectiveForm.template_mode')" value="template" />
-        <v-radio data-cy="objective-from-select" :label="$t('StudyObjectiveForm.select_mode')" value="select" />
-        <v-radio data-cy="objective-from-scratch" :label="$t('StudyObjectiveForm.scratch_mode')" value="scratch" />
+    :help-items="helpItems"
+    :edit-data="form"
+    @close="close"
+    @save="submit"
+  >
+    <template #[`step.creationMode`]>
+      <v-radio-group v-model="creationMode" color="primary">
+        <v-radio
+          data-cy="objective-from-template"
+          :label="$t('StudyObjectiveForm.template_mode')"
+          value="template"
+        />
+        <v-radio
+          data-cy="objective-from-select"
+          :label="$t('StudyObjectiveForm.select_mode')"
+          value="select"
+        />
+        <v-radio
+          data-cy="objective-from-scratch"
+          :label="$t('StudyObjectiveForm.scratch_mode')"
+          value="scratch"
+        />
       </v-radio-group>
     </template>
-    <template v-slot:step.selectStudies="{ step }">
-      <validation-observer :ref="`observer_${step}`">
-        <validation-provider
-          v-slot="{ errors }"
-          rules="required"
-          >
-          <v-autocomplete
-            :data-cy="$t('StudySelectionTable.select_studies')"
-            v-model="selectedStudies"
-            :label="$t('StudySelectionTable.studies')"
-            :items="studies"
-            :error-messages="errors"
-            item-text="current_metadata.identification_metadata.study_id"
-            clearable
-            multiple
-            return-object
-            />
-        </validation-provider>
-      </validation-observer>
+    <template #[`step.selectStudies`]>
+      <v-form ref="studiesFormRef">
+        <v-autocomplete
+          v-model="selectedStudies"
+          :data-cy="$t('StudySelectionTable.select_studies')"
+          :label="$t('StudySelectionTable.studies')"
+          :items="studies"
+          :rules="[formRules.required]"
+          item-title="current_metadata.identification_metadata.study_id"
+          clearable
+          return-object
+          multiple
+          density="compact"
+        />
+      </v-form>
     </template>
-    <template v-slot:step.selectObjective>
-      <p class="grey--text text-subtitle-1 font-weight-bold">{{ $t('StudyObjectiveForm.selected_objectives') }}</p>
+    <template #[`step.selectObjective`]>
+      <p class="text-grey text-subtitle-1 font-weight-bold">
+        {{ $t('StudyObjectiveForm.selected_objectives') }}
+      </p>
       <v-data-table
         data-cy="selected-objectives-table"
         :headers="selectedObjectiveHeaders"
         :items="selectedStudyObjectives"
-        >
-        <template v-slot:item.objective.name="{ item }">
-          <n-n-parameter-highlighter :name="item.objective.name" />
+      >
+        <template #[`item.objective.name`]="{ item }">
+          <NNParameterHighlighter :name="item.objective.name" />
         </template>
-        <template v-slot:item.actions="{ item }">
+        <template #[`item.actions`]="{ item }">
           <v-btn
-            icon
+            icon="mdi-delete-outline"
             color="red"
+            variant="text"
             @click="unselectStudyObjective(item)"
-            >
-            <v-icon>mdi-delete-outline</v-icon>
-          </v-btn>
+          />
         </template>
       </v-data-table>
     </template>
-    <template v-slot:step.selectObjective.after>
-      <p class="grey--text text-subtitle-1 font-weight-bold mb-0 ml-3">{{ $t('StudyObjectiveForm.copy_instructions') }}</p>
-      <v-col cols="12" flat class="pt-0 mt-0">
-        <study-selection-table
+    <template #[`step.selectObjective.after`]>
+      <p class="text-grey text-subtitle-1 font-weight-bold mb-0 ml-3">
+        {{ $t('StudyObjectiveForm.copy_instructions') }}
+      </p>
+      <v-col cols="12" class="pt-0 mt-0">
+        <StudySelectionTable
           :headers="objectiveHeaders"
           data-fetcher-name="getAllStudyObjectives"
           :extra-data-fetcher-filters="extraStudyObjectiveFilters"
-          @item-selected="selectStudyObjective"
           :studies="selectedStudies"
           column-data-resource="study-objectives"
-          >
-          <template v-slot:item.objective.name="{ item }">
-            <n-n-parameter-highlighter :name="item.objective.name" />
+          @item-selected="selectStudyObjective"
+        >
+          <template #[`item.objective.name`]="{ item }">
+            <NNParameterHighlighter :name="item.objective.name" />
           </template>
-          <template v-slot:item.actions="{ item }">
+          <template #[`item.actions`]="{ item }">
             <v-btn
               :data-cy="$t('StudySelectionTable.copy_item')"
-              icon
+              icon="mdi-content-copy"
+              size="small"
+              variant="text"
               :color="getCopyButtonColor(item)"
               :disabled="isStudyObjectiveSelected(item)"
+              :title="$t('StudySelectionTable.copy_item')"
               @click="selectStudyObjective(item)"
-              :title="$t('StudySelectionTable.copy_item')">
-              <v-icon>mdi-content-copy</v-icon>
-            </v-btn>
+            />
           </template>
-        </study-selection-table>
+        </StudySelectionTable>
       </v-col>
     </template>
-    <template v-slot:step.selectTemplates>
-       <v-data-table
-         :headers="selectionHeaders"
-         :items="selectedTemplates"
-         >
-         <template v-slot:item.name="{ item }">
-           <n-n-parameter-highlighter
-             :name="item.name"
-             default-color="orange"
-             />
-         </template>
-         <template v-slot:item.actions="{ item }">
-           <v-btn
-             icon
-             color="red"
-             @click="unselectTemplate(item)"
-             >
-             <v-icon>mdi-delete-outline</v-icon>
-           </v-btn>
-         </template>
-       </v-data-table>
+    <template #[`step.selectTemplates`]>
+      <v-data-table :headers="selectionHeaders" :items="selectedTemplates">
+        <template #[`item.name`]="{ item }">
+          <NNParameterHighlighter :name="item.name" default-color="orange" />
+        </template>
+        <template #[`item.actions`]="{ item }">
+          <v-btn
+            color="red"
+            size="small"
+            icon="mdi-delete-outline"
+            variant="text"
+            @click="unselectTemplate(item)"
+          />
+        </template>
+      </v-data-table>
     </template>
-    <template v-slot:step.selectTemplates.after>
+    <template #[`step.selectTemplates.after`]>
       <div class="d-flex align-center">
-        <p class="grey--text text-subtitle-1 font-weight-bold mb-0 ml-3">{{ $t('StudyObjectiveForm.copy_instructions') }}</p>
+        <p class="text-grey text-subtitle-1 font-weight-bold mb-0 ml-3">
+          {{ $t('StudyObjectiveForm.copy_instructions') }}
+        </p>
         <v-switch
           v-model="preInstanceMode"
           :label="$t('StudyObjectiveForm.show_pre_instances')"
+          color="primary"
           hide-details
           class="ml-4"
-          />
+        />
       </div>
       <v-col cols="12" class="pt-0">
-        <n-n-table
+        <NNTable
           key="templatesTable"
           :headers="tplHeaders"
           :items="templates"
@@ -131,438 +137,485 @@
           :default-filters="defaultTplFilters"
           :items-per-page="15"
           elevation="0"
-          :options.sync="options"
-          :server-items-length="total"
-          has-api
-          :column-data-resource="`objective-templates`"
+          :items-length="total"
+          :column-data-resource="
+            preInstanceMode ? 'objective-pre-instances' : 'objective-templates'
+          "
           @filter="getObjectiveTemplates"
-          >
-          <template v-slot:item.categories.name.sponsor_preferred_name="{ item }">
+        >
+          <template #[`item.categories.name.sponsor_preferred_name`]="{ item }">
             <template v-if="item.categories">
-              {{ item.categories|terms }}
+              {{ $filters.terms(item.categories) }}
             </template>
             <template v-else>
               {{ $t('_global.not_applicable_long') }}
             </template>
           </template>
-          <template v-slot:item.is_confirmatory_testing="{ item }">
+          <template #[`item.is_confirmatory_testing`]="{ item }">
             <template v-if="item.is_confirmatory_testing !== null">
-              {{ item.is_confirmatory_testing|yesno }}
+              {{ $filters.yesno(item.is_confirmatory_testing) }}
             </template>
             <template v-else>
               {{ $t('_global.not_applicable_long') }}
             </template>
           </template>
-          <template v-slot:item.indications="{ item }">
+          <template #[`item.indications`]="{ item }">
             <template v-if="item.indications">
-              {{ item.indications|names }}
+              {{ $filters.names(item.indications) }}
             </template>
             <template v-else>
               {{ $t('_global.not_applicable_long') }}
             </template>
           </template>
-          <template v-slot:item.name="{ item }">
-            <n-n-parameter-highlighter
-              :name="item.name"
-              default-color="orange"
-              />
+          <template #[`item.name`]="{ item }">
+            <NNParameterHighlighter :name="item.name" default-color="orange" />
           </template>
-          <template v-slot:item.actions="{ item }">
+          <template #[`item.actions`]="{ item }">
             <v-btn
               :data-cy="$t('StudyObjectiveForm.copy_template')"
-              icon
               color="primary"
+              size="small"
+              :title="$t('StudyObjectiveForm.copy_template')"
+              icon="mdi-content-copy"
+              variant="text"
               @click="selectObjectiveTemplate(item)"
-              :title="$t('StudyObjectiveForm.copy_template')">
-              <v-icon>mdi-content-copy</v-icon>
-            </v-btn>
+            />
           </template>
-        </n-n-table>
+        </NNTable>
       </v-col>
     </template>
-    <template v-slot:step.createTemplate="{ step }">
-      <validation-observer :ref="`observer_${step}`">
-        <validation-provider
-          v-slot="{ errors }"
-          rules="required"
-          >
-          <n-n-template-input-field
-            :data-cy="$t('ObjectiveTemplateForm.name')"
-            v-model="templateForm.name"
-            :label="$t('ObjectiveTemplateForm.name')"
-            :items="parameterTypes"
-            :error-messages="errors"
-            :show-drop-down-early="true"
-            />
-        </validation-provider>
-      </validation-observer>
+    <template #[`step.createTemplate`]>
+      <v-form ref="templateFormRef">
+        <NNTemplateInputField
+          v-model="templateForm.name"
+          :data-cy="$t('ObjectiveTemplateForm.name')"
+          :label="$t('ObjectiveTemplateForm.name')"
+          :items="parameterTypes"
+          :rules="[formRules.required]"
+          :show-drop-down-early="true"
+        />
+      </v-form>
     </template>
-    <template v-slot:step.createObjective="{ step }">
-      <validation-observer :ref="`observer_${step}`">
+    <template #[`step.createObjective`]>
+      <v-form ref="objectiveFormRef">
         <v-progress-circular
           v-if="loadingParameters"
           indeterminate
           color="secondary"
-          />
+        />
 
         <template v-if="form.objective_template !== undefined">
-          <parameter-value-selector
+          <ParameterValueSelector
             ref="paramSelector"
-            :value="parameters"
+            :model-value="parameters"
             :template="form.objective_template.name"
             color="white"
             preview-text=" "
-            />
+          />
         </template>
-      </validation-observer>
+      </v-form>
     </template>
 
-    <template v-slot:step.objectiveLevel>
+    <template #[`step.objectiveLevel`]>
       <v-row>
         <v-col cols="11">
           <v-select
-            :data-cy="$t('StudyObjectiveForm.objective_level')"
             v-model="form.objective_level"
+            :data-cy="$t('StudyObjectiveForm.objective_level')"
             :label="$t('StudyObjectiveForm.objective_level')"
-            :items="objectiveLevels"
-            item-text="sponsor_preferred_name"
+            :items="studiesGeneralStore.objectiveLevels"
+            item-title="sponsor_preferred_name"
             return-object
-            dense
+            density="compact"
             clearable
             style="max-width: 400px"
-            />
+          />
         </v-col>
       </v-row>
     </template>
-  </horizontal-stepper-form>
-</div>
+  </HorizontalStepperForm>
 </template>
 
-<script>
-import { mapGetters } from 'vuex'
-import { bus } from '@/main'
-import { objectManagerMixin } from '@/mixins/objectManager'
-import instances from '@/utils/instances'
+<script setup>
+import { computed, inject, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import statuses from '@/constants/statuses'
 import objectiveTemplates from '@/api/objectiveTemplates'
 import templatePreInstances from '@/api/templatePreInstances'
 import templateParameterTypes from '@/api/templateParameterTypes'
-import HorizontalStepperForm from '@/components/tools/HorizontalStepperForm'
-import NNParameterHighlighter from '@/components/tools/NNParameterHighlighter'
-import NNTable from '@/components/tools/NNTable'
-import NNTemplateInputField from '@/components/tools/NNTemplateInputField'
-import ParameterValueSelector from '@/components/tools/ParameterValueSelector'
+import HorizontalStepperForm from '@/components/tools/HorizontalStepperForm.vue'
+import NNParameterHighlighter from '@/components/tools/NNParameterHighlighter.vue'
+import NNTable from '@/components/tools/NNTable.vue'
+import NNTemplateInputField from '@/components/tools/NNTemplateInputField.vue'
+import ParameterValueSelector from '@/components/tools/ParameterValueSelector.vue'
 import study from '@/api/study'
-import StudySelectionTable from './StudySelectionTable'
+import StudySelectionTable from './StudySelectionTable.vue'
 import filteringParameters from '@/utils/filteringParameters'
 import constants from '@/constants/libraries'
+import { useStudiesGeneralStore } from '@/stores/studies-general'
+import { useStudiesObjectivesStore } from '@/stores/studies-objectives'
 
-export default {
-  mixins: [objectManagerMixin],
-  components: {
-    HorizontalStepperForm,
-    NNParameterHighlighter,
-    NNTable,
-    NNTemplateInputField,
-    ParameterValueSelector,
-    StudySelectionTable
-  },
-  props: {
-    currentStudyObjectives: Array
-  },
-  computed: {
-    ...mapGetters({
-      objectiveLevels: 'studiesGeneral/objectiveLevels',
-      selectedStudy: 'studiesGeneral/selectedStudy'
-    }),
-    title () {
-      return this.$t('StudyObjectiveForm.add_title')
-    },
-    selectedTemplateName () {
-      return (this.form.objective_template) ? this.form.objective_template.name : ''
-    }
-  },
-  data () {
-    return {
-      apiEndpoint: null,
-      helpItems: [
-        'StudyObjectiveForm.add_title',
-        'StudyObjectiveForm.select_mode',
-        'StudyObjectiveForm.template_mode',
-        'StudyObjectiveForm.scratch_mode',
-        'StudyObjectiveForm.select_objective_tpl',
-        'StudyObjectiveForm.select_tpl_parameters_label',
-        'StudyObjectiveForm.select_studies',
-        'StudyObjectiveForm.study_objective',
-        'StudyObjectiveForm.objective_level'
-      ],
-      creationMode: 'template',
-      extraStudyObjectiveFilters: {
-        'objective.library.name': { v: [constants.LIBRARY_SPONSOR] }
-      },
-      form: {},
-      templateForm: {},
-      loadingParameters: false,
-      parameters: [],
-      parameterTypes: [],
-      alternateSteps: [
-        { name: 'creationMode', title: this.$t('StudyObjectiveForm.creation_mode_label') },
-        { name: 'selectStudies', title: this.$t('StudyObjectiveForm.select_studies') },
-        { name: 'selectObjective', title: this.$t('StudyObjectiveForm.select_objective') }
-      ],
-      scratchModeSteps: [
-        { name: 'creationMode', title: this.$t('StudyObjectiveForm.creation_mode_label') },
-        { name: 'createTemplate', title: this.$t('StudyObjectiveForm.create_template_title') },
-        { name: 'createObjective', title: this.$t('StudyObjectiveForm.step2_title') },
-        { name: 'objectiveLevel', title: this.$t('StudyObjectiveForm.step3_title') }
-      ],
-      preInstanceMode: true,
-      selectionHeaders: [
-        { text: '', value: 'actions', width: '5%' },
-        { text: this.$t('_global.template'), value: 'name', class: 'text-center' }
-      ],
-      selectedStudies: [],
-      selectedStudyObjectives: [],
-      selectedTemplates: [],
-      steps: this.getInitialSteps(),
-      studies: [],
-      templates: [],
-      tplHeaders: [
-        { text: '', value: 'actions', width: '5%' },
-        { text: this.$t('_global.sequence_number_short'), value: 'sequence_id', width: '5%' },
-        {
-          text: this.$t('_global.template'),
-          value: 'name',
-          filteringName: 'name_plain'
-        }
-      ],
-      defaultTplFilters: [
-        { text: this.$t('_global.sequence_number_short'), value: 'sequence_id' },
-        { text: this.$t('_global.indications'), value: 'indications', filteringName: 'indications.name' },
-        { text: this.$t('ObjectiveTemplateTable.objective_cat'), value: 'categories.name.sponsor_preferred_name' },
-        { text: this.$t('ObjectiveTemplateTable.confirmatory_testing'), value: 'is_confirmatory_testing' }
-      ],
-      objectiveHeaders: [
-        { text: '', value: 'actions', width: '5%' },
-        { text: this.$t('Study.study_id'), value: 'study_id', noFilter: true },
-        { text: this.$t('StudyObjectiveForm.study_objective'), value: 'objective.name', filteringName: 'objective.name_plain' },
-        { text: this.$t('StudyObjectiveForm.objective_level'), value: 'objective_level.sponsor_preferred_name' }
-      ],
-      selectedObjectiveHeaders: [
-        { text: '', value: 'actions', width: '5%' },
-        { text: this.$t('Study.study_id'), value: 'study_id' },
-        { text: this.$t('StudyObjectiveForm.study_objective'), value: 'objective.name' },
-        { text: this.$t('StudyObjectiveForm.objective_level'), value: 'objective_level.sponsor_preferred_name' }
-      ],
-      options: {},
-      total: 0
-    }
-  },
-  methods: {
-    close () {
-      this.creationMode = 'template'
-      this.form = {}
-      this.templateForm = {}
-      this.parameters = []
-      this.$refs.stepper.reset()
-      this.selectedStudyObjectives = []
-      this.selectedStudies = []
-      this.selectedTemplates = []
-      this.apiEndpoint = this.preInstanceApi
-      this.$emit('close')
-    },
-    getObserver (step) {
-      return this.$refs[`observer_${step}`]
-    },
-    getInitialSteps () {
-      return [
-        { name: 'creationMode', title: this.$t('StudyObjectiveForm.creation_mode_label') },
-        { name: 'selectTemplates', title: this.$t('StudyObjectiveForm.select_tpl_title') }
-      ]
-    },
-    getObjectiveTemplates (filters, sort, filtersUpdated) {
-      const params = filteringParameters.prepareParameters(
-        this.options, filters, sort, filtersUpdated)
-      params.status = statuses.FINAL
-      if (params.filters) {
-        params.filters = JSON.parse(params.filters)
-      } else {
-        params.filters = {}
-      }
-      Object.assign(params.filters, { 'library.name': { v: [constants.LIBRARY_SPONSOR] } })
-      this.apiEndpoint.get(params).then(resp => {
-        this.templates = resp.data.items
-        this.total = resp.data.total
-      })
-    },
-    async loadParameters (template) {
-      if (template) {
-        if (this.cloneMode) {
-          const parameters = this.$refs.paramSelector.getTemplateParametersFromTemplate(template.name_plain)
-          if (parameters.length === this.parameters.length) {
-            let differ = false
-            for (let index = 0; index < parameters.length; index++) {
-              if (parameters[index] !== this.parameters[index].name) {
-                differ = true
-                break
-              }
-            }
-            if (!differ) {
-              return
-            }
-          }
-        }
-        this.loadingParameters = true
-        const templateUid = (this.creationMode !== 'scratch' && this.preInstanceMode) ? template.template_uid : template.uid
-        const resp = await this.apiEndpoint.getParameters(templateUid, { study_uid: this.selectedStudy.uid })
-        this.parameters = resp.data
-        this.loadingParameters = false
-      } else {
-        this.parameters = []
-      }
-    },
-    selectObjectiveTemplate (template) {
-      this.selectedTemplates.push(template)
-    },
-    unselectTemplate (template) {
-      this.selectedTemplates = this.selectedTemplates.filter(item => item.name !== template.name)
-    },
-    selectStudyObjective (studyObjective) {
-      this.selectedStudyObjectives.push(studyObjective)
-      this.$set(this.form, 'objective_level', studyObjective.objective_level)
-    },
-    unselectStudyObjective (studyObjective) {
-      this.selectedStudyObjectives = this.selectedStudyObjectives.filter(item => item.objective.name !== studyObjective.objective.name)
-    },
-    isStudyObjectiveSelected (studyObjective) {
-      let selected = this.selectedStudyObjectives.find(item => item.objective.uid === studyObjective.objective.uid)
-      if (!selected && this.currentStudyObjectives.length) {
-        selected = this.currentStudyObjectives.find(item => item.objective.uid === studyObjective.objective.uid)
-      }
-      return selected !== undefined
-    },
-    getCopyButtonColor (item) {
-      return (!this.isStudyObjectiveSelected(item) ? 'primary' : '')
-    },
-    async extraStepValidation (step) {
-      if (this.creationMode === 'template' && step === 1) {
-        this.getObjectiveTemplates()
-      }
-      if (this.creationMode === 'template' && step === 2) {
-        if (this.form.objective_template === undefined || this.form.objective_template === null) {
-          bus.$emit('notification', { msg: this.$t('StudyObjectiveForm.template_not_selected'), type: 'error' })
-          return false
-        }
-        return true
-      }
-      if ((this.creationMode !== 'scratch' || step !== 2) &&
-          (this.creationMode !== 'clone' || step !== 1)) {
-        return true
-      }
-      if (this.form.objective_template && this.form.objective_template.name === this.templateForm.name) {
-        return true
-      }
-      const data = { ...this.templateForm, studyUid: this.selectedStudy.uid }
-      data.library_name = constants.LIBRARY_USER_DEFINED
-      try {
-        const resp = await objectiveTemplates.create(data)
-        if (resp.data.status === statuses.DRAFT) await objectiveTemplates.approve(resp.data.uid)
-        this.$set(this.form, 'objective_template', resp.data)
-      } catch (error) {
-        return false
-      }
-      this.loadParameters(this.form.objective_template)
-      return true
-    },
-    async getStudyObjectiveNamePreview () {
-      const objectiveData = {
-        objective_template_uid: this.form.objective.objective_template.uid,
-        parameter_terms: await instances.formatParameterValues(this.parameters),
-        library_name: this.form.objective_template ? this.form.objective_template.library.name : this.form.objective.library.name
-      }
-      const resp = await study.getStudyObjectivePreview(this.selectedStudy.uid, { objective_data: objectiveData })
-      return resp.data.objective.name
-    },
-    async submit () {
-      let args = null
+const { t } = useI18n()
+const eventBusEmit = inject('eventBusEmit')
+const formRules = inject('formRules')
 
-      if (this.creationMode === 'template') {
-        if (!this.selectedTemplates.length) {
-          bus.$emit('notification', { msg: this.$t('EligibilityCriteriaForm.no_template_error'), type: 'error' })
-          this.$refs.stepper.loading = false
-          return
-        }
-        const data = []
-        for (const template of this.selectedTemplates) {
-          data.push({
-            objective_template_uid: this.preInstanceMode ? template.template_uid : template.uid,
-            parameter_terms: this.preInstanceMode ? template.parameter_terms : [],
-            library_name: template.library.name
-          })
-        }
-        await study.batchCreateStudyObjectives(this.selectedStudy.uid, data)
-      } else if (this.creationMode === 'scratch') {
-        const data = JSON.parse(JSON.stringify(this.form))
-        if (this.preInstanceMode && this.creationMode !== 'scratch') {
-          data.objective_template.uid = data.objective_template.template_uid
-        }
-        args = {
-          studyUid: this.selectedStudy.uid,
-          form: data,
-          parameters: this.parameters
-        }
-        await this.$store.dispatch('studyObjectives/addStudyObjectiveFromTemplate', args)
-      } else {
-        for (const item of this.selectedStudyObjectives) {
-          args = {
-            studyUid: this.selectedStudy.uid,
-            objectiveUid: item.objective.uid
-          }
-          if (this.form.objective_level) {
-            args.objectiveLevelUid = this.form.objective_level.term_uid
-          }
-          await this.$store.dispatch('studyObjectives/addStudyObjective', args)
-        }
-      }
-      this.$emit('added')
-      bus.$emit('notification', { msg: this.$t('StudyObjectiveForm.objective_added') })
-      this.close()
+const props = defineProps({
+  currentStudyObjectives: {
+    type: Array,
+    default: () => [],
+  },
+})
+const emit = defineEmits(['close', 'added'])
+
+const studiesGeneralStore = useStudiesGeneralStore()
+const studiesObjectivesStore = useStudiesObjectivesStore()
+const preInstanceApi = templatePreInstances('objective')
+
+const creationMode = ref('template')
+const form = ref({})
+const templateForm = ref({})
+const loadingParameters = ref(false)
+const parameters = ref([])
+const parameterTypes = ref([])
+const preInstanceMode = ref(true)
+const selectedStudyObjectives = ref([])
+const selectedTemplates = ref([])
+const steps = ref(getInitialSteps())
+const studies = ref([])
+const templates = ref([])
+const total = ref(0)
+const stepper = ref()
+const paramSelector = ref()
+const selectedStudies = ref([])
+const studiesFormRef = ref()
+const templateFormRef = ref()
+const objectiveFormRef = ref()
+
+let apiEndpoint = preInstanceApi
+const alternateSteps = [
+  { name: 'creationMode', title: t('StudyObjectiveForm.creation_mode_label') },
+  { name: 'selectStudies', title: t('StudyObjectiveForm.select_studies') },
+  { name: 'selectObjective', title: t('StudyObjectiveForm.select_objective') },
+]
+const scratchModeSteps = [
+  { name: 'creationMode', title: t('StudyObjectiveForm.creation_mode_label') },
+  {
+    name: 'createTemplate',
+    title: t('StudyObjectiveForm.create_template_title'),
+  },
+  { name: 'createObjective', title: t('StudyObjectiveForm.step2_title') },
+  { name: 'objectiveLevel', title: t('StudyObjectiveForm.step3_title') },
+]
+const selectionHeaders = [
+  { title: '', key: 'actions', width: '5%' },
+  { title: t('_global.template'), key: 'name', class: 'text-center' },
+]
+const tplHeaders = [
+  { title: '', key: 'actions', width: '5%' },
+  {
+    title: t('_global.sequence_number_short'),
+    key: 'sequence_id',
+    width: '5%',
+  },
+  { title: t('_global.template'), key: 'name', filteringName: 'name_plain' },
+]
+const defaultTplFilters = [
+  { title: t('_global.sequence_number_short'), key: 'sequence_id' },
+  {
+    title: t('_global.indications'),
+    key: 'indications',
+    filteringName: 'indications.name',
+  },
+  {
+    title: t('ObjectiveTemplateTable.objective_cat'),
+    key: 'categories.name.sponsor_preferred_name',
+  },
+  {
+    title: t('ObjectiveTemplateTable.confirmatory_testing'),
+    key: 'is_confirmatory_testing',
+  },
+]
+const objectiveHeaders = [
+  { title: '', key: 'actions', width: '5%' },
+  { title: t('Study.study_id'), key: 'study_id', noFilter: true },
+  {
+    title: t('StudyObjectiveForm.study_objective'),
+    key: 'objective.name',
+    filteringName: 'objective.name_plain',
+  },
+  {
+    title: t('StudyObjectiveForm.objective_level'),
+    key: 'objective_level.sponsor_preferred_name',
+  },
+]
+const selectedObjectiveHeaders = [
+  { title: '', key: 'actions', width: '5%' },
+  { title: t('Study.study_id'), key: 'study_id' },
+  { title: t('StudyObjectiveForm.study_objective'), key: 'objective.name' },
+  {
+    title: t('StudyObjectiveForm.objective_level'),
+    key: 'objective_level.sponsor_preferred_name',
+  },
+]
+const extraStudyObjectiveFilters = {
+  objective_template: { v: [] },
+}
+
+const helpItems = [
+  'StudyObjectiveForm.add_title',
+  'StudyObjectiveForm.select_mode',
+  'StudyObjectiveForm.template_mode',
+  'StudyObjectiveForm.scratch_mode',
+  'StudyObjectiveForm.select_objective_tpl',
+  'StudyObjectiveForm.select_tpl_parameters_label',
+  'StudyObjectiveForm.select_studies',
+  'StudyObjectiveForm.study_objective',
+  'StudyObjectiveForm.objective_level',
+]
+
+const title = computed(() => {
+  return t('StudyObjectiveForm.add_title')
+})
+
+watch(creationMode, (value) => {
+  if (value === 'template') {
+    steps.value = getInitialSteps()
+  } else if (value === 'select') {
+    steps.value = alternateSteps
+  } else {
+    steps.value = scratchModeSteps
+  }
+})
+watch(preInstanceMode, (value) => {
+  apiEndpoint = value ? preInstanceApi : objectiveTemplates
+  getObjectiveTemplates()
+  selectedTemplates.value = []
+})
+
+onMounted(() => {
+  templateParameterTypes.getTypes().then((resp) => {
+    parameterTypes.value = resp.data
+  })
+  study.get({ has_study_objective: true, page_size: 0 }).then((resp) => {
+    studies.value = resp.data.items.filter(
+      (study) => study.uid !== studiesGeneralStore.selectedStudy.uid
+    )
+  })
+})
+
+function close() {
+  creationMode.value = 'template'
+  form.value = {}
+  templateForm.value = {}
+  parameters.value = []
+  stepper.value.reset()
+  selectedStudyObjectives.value = []
+  selectedTemplates.value = []
+  apiEndpoint = preInstanceApi
+  selectedStudies.value = []
+  emit('close')
+}
+
+function getObserver(step) {
+  if (creationMode.value === 'select' && step === 2) {
+    return studiesFormRef.value
+  }
+  if (creationMode.value === 'scratch') {
+    if (step === 2) {
+      return templateFormRef.value
     }
-  },
-  created () {
-    this.preInstanceApi = templatePreInstances('objective')
-    this.apiEndpoint = this.preInstanceApi
-  },
-  mounted () {
-    templateParameterTypes.getTypes().then(resp => {
-      this.parameterTypes = resp.data
-    })
-    study.get({ has_study_objective: true, page_size: 0 }).then(resp => {
-      this.studies = resp.data.items.filter(study => study.uid !== this.selectedStudy.uid)
-    })
-  },
-  watch: {
-    creationMode (value) {
-      if (value === 'template') {
-        this.steps = this.getInitialSteps()
-        this.getObjectiveTemplates()
-      } else if (value === 'select') {
-        this.steps = this.alternateSteps
-      } else {
-        this.steps = this.scratchModeSteps
-      }
-    },
-    preInstanceMode (value) {
-      this.apiEndpoint = value ? this.preInstanceApi : objectiveTemplates
-      this.getObjectiveTemplates()
-      this.selectedTemplates = []
+    if (step === 3) {
+      return objectiveFormRef.value
     }
   }
+  return null
+}
+
+function getInitialSteps() {
+  return [
+    {
+      name: 'creationMode',
+      title: t('StudyObjectiveForm.creation_mode_label'),
+    },
+    {
+      name: 'selectTemplates',
+      title: t('StudyObjectiveForm.select_tpl_title'),
+    },
+  ]
+}
+
+function getObjectiveTemplates(filters, options, filtersUpdated) {
+  const params = filteringParameters.prepareParameters(
+    options,
+    filters,
+    filtersUpdated
+  )
+  params.status = statuses.FINAL
+  if (params.filters) {
+    params.filters = JSON.parse(params.filters)
+  } else {
+    params.filters = {}
+  }
+  Object.assign(params.filters, {
+    'library.name': { v: [constants.LIBRARY_SPONSOR] },
+  })
+  apiEndpoint.get(params).then((resp) => {
+    templates.value = resp.data.items
+    total.value = resp.data.total
+  })
+}
+
+async function loadParameters(template) {
+  if (template) {
+    loadingParameters.value = true
+    const templateUid =
+      creationMode.value !== 'scratch' && preInstanceMode.value
+        ? template.template_uid
+        : template.uid
+    const resp = await apiEndpoint.getParameters(templateUid, {
+      study_uid: studiesGeneralStore.selectedStudy.uid,
+    })
+    parameters.value = resp.data
+    loadingParameters.value = false
+  } else {
+    parameters.value = []
+  }
+}
+
+function selectObjectiveTemplate(template) {
+  selectedTemplates.value.push(template)
+}
+function unselectTemplate(template) {
+  selectedTemplates.value = selectedTemplates.value.filter(
+    (item) => item.name !== template.name
+  )
+}
+function selectStudyObjective(studyObjective) {
+  selectedStudyObjectives.value.push(studyObjective)
+  form.value.objective_level = studyObjective.objective_level
+}
+function unselectStudyObjective(studyObjective) {
+  selectedStudyObjectives.value = selectedStudyObjectives.value.filter(
+    (item) => item.objective.name !== studyObjective.objective.name
+  )
+}
+function isStudyObjectiveSelected(studyObjective) {
+  let selected = selectedStudyObjectives.value.find(
+    (item) => item.objective.uid === studyObjective.objective.uid
+  )
+  if (!selected && props.currentStudyObjectives.length) {
+    selected = props.currentStudyObjectives.find(
+      (item) => item.objective.uid === studyObjective.objective.uid
+    )
+  }
+  return selected !== undefined
+}
+
+function getCopyButtonColor(item) {
+  return !isStudyObjectiveSelected(item) ? 'primary' : ''
+}
+
+async function extraStepValidation(step) {
+  if (creationMode.value === 'template' && step === 2) {
+    if (
+      form.value.objective_template === undefined ||
+      form.value.objective_template === null
+    ) {
+      eventBusEmit('notification', {
+        msg: t('StudyObjectiveForm.template_not_selected'),
+        type: 'error',
+      })
+      return false
+    }
+    return true
+  }
+  if (
+    (creationMode.value !== 'scratch' || step !== 2) &&
+    (creationMode.value !== 'clone' || step !== 1)
+  ) {
+    return true
+  }
+  if (
+    form.value.objective_template &&
+    form.value.objective_template.name === templateForm.value.name
+  ) {
+    return true
+  }
+  const data = {
+    ...templateForm.value,
+    studyUid: studiesGeneralStore.selectedStudy.uid,
+  }
+  data.library_name = constants.LIBRARY_USER_DEFINED
+  try {
+    const resp = await objectiveTemplates.create(data)
+    if (resp.data.status === statuses.DRAFT)
+      await objectiveTemplates.approve(resp.data.uid)
+    form.value.objective_template = resp.data
+  } catch (error) {
+    return false
+  }
+  loadParameters(form.value.objective_template)
+  return true
+}
+
+async function submit() {
+  let args = null
+
+  if (creationMode.value === 'template') {
+    if (!selectedTemplates.value.length) {
+      eventBusEmit('notification', {
+        msg: t('EligibilityCriteriaForm.no_template_error'),
+        type: 'error',
+      })
+      stepper.value.loading = false
+      return
+    }
+    const data = []
+    for (const template of selectedTemplates.value) {
+      data.push({
+        objective_template_uid: preInstanceMode.value
+          ? template.template_uid
+          : template.uid,
+        parameter_terms: preInstanceMode.value ? template.parameter_terms : [],
+        library_name: template.library.name,
+      })
+    }
+    await study.batchCreateStudyObjectives(
+      studiesGeneralStore.selectedStudy.uid,
+      data
+    )
+  } else if (creationMode.value === 'scratch') {
+    const data = JSON.parse(JSON.stringify(form.value))
+    if (preInstanceMode.value && creationMode.value !== 'scratch') {
+      data.objective_template.uid = data.objective_template.template_uid
+    }
+    args = {
+      studyUid: studiesGeneralStore.selectedStudy.uid,
+      form: data,
+      parameters: parameters.value,
+    }
+    await studiesObjectivesStore.addStudyObjectiveFromTemplate(args)
+  } else {
+    for (const item of selectedStudyObjectives.value) {
+      args = {
+        studyUid: studiesGeneralStore.selectedStudy.uid,
+        objectiveUid: item.objective.uid,
+      }
+      if (form.value.objective_level) {
+        args.objectiveLevelUid = form.value.objective_level.term_uid
+      }
+      await studiesObjectivesStore.addStudyObjective(args)
+    }
+  }
+  emit('added')
+  eventBusEmit('notification', { msg: t('StudyObjectiveForm.objective_added') })
+  close()
 }
 </script>
+
 <style scoped>
 .header-title {
-  color: var(--v-secondary-base) !important;
+  color: rgb(var(--v-theme-secondary)) !important;
   font-size: large;
 }
 </style>

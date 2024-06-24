@@ -22,9 +22,9 @@ def build_trace_context_id(
     return f"{version:02x}-{parent_id}-{trace_id}-{flags:02x}"
 
 
-def get_traceresponse_header(app_client, traceparent=None):
+def get_traceresponse_header(api_client, traceparent=None):
     headers = {"traceparent": traceparent} if traceparent else {}
-    response = app_client.get(TEST_PATH, headers=headers)
+    response = api_client.get(TEST_PATH, headers=headers)
     response.raise_for_status()
     traceresponse = response.headers.get("traceresponse")
     return traceresponse
@@ -42,15 +42,15 @@ def parse_trace_context_id(traceresponse):
     return version, trace_id, span_id, flags
 
 
-def test_returns_traceresponse_header(app_client):
+def test_returns_traceresponse_header(api_client):
     """Tests that a traceresponse header is returned for a request"""
-    traceresponse = get_traceresponse_header(app_client)
+    traceresponse = get_traceresponse_header(api_client)
     assert traceresponse, "Missing traceresponse response header"
 
 
-def test_build_valid_traceresponse_header(app_client):
+def test_build_valid_traceresponse_header(api_client):
     """Tests that if traceparent header was missing, a valid traceresponse header is built"""
-    traceresponse = get_traceresponse_header(app_client)
+    traceresponse = get_traceresponse_header(api_client)
     assert_traceresponse_syntax(traceresponse)
 
 
@@ -72,16 +72,16 @@ def assert_traceresponse_syntax(traceresponse):
     return version, trace_id, span_id, flags
 
 
-def test_builds_distinct_traceresponse_headers(app_client):
+def test_builds_distinct_traceresponse_headers(api_client):
     """Tests that the built traceresponse header is distinct between requests"""
-    traceresponse1 = get_traceresponse_header(app_client)
-    traceresponse2 = get_traceresponse_header(app_client)
+    traceresponse1 = get_traceresponse_header(api_client)
+    traceresponse2 = get_traceresponse_header(api_client)
     assert (
         traceresponse1 != traceresponse2
     ), "traceresponse header must be different for each request"
 
 
-def test_inherits_traceresponse_header_correctly(app_client):
+def test_inherits_traceresponse_header_correctly(api_client):
     """Tests traceresponse header when request has a traceparent header
 
     trace-id should be inherited but span-id must differ
@@ -89,7 +89,7 @@ def test_inherits_traceresponse_header_correctly(app_client):
     traceparent = build_trace_context_id()
     _, parent_trace_id, parent_span_id, _ = parse_trace_context_id(traceparent)
 
-    traceresponse = get_traceresponse_header(app_client, traceparent=traceparent)
+    traceresponse = get_traceresponse_header(api_client, traceparent=traceparent)
     log.info("traceparent: %s traceresponse: %s", traceparent, traceresponse)
     _, parent_id, span_id, _ = assert_traceresponse_syntax(traceresponse)
 

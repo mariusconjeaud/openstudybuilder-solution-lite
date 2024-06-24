@@ -1,4 +1,4 @@
-function extractStudyUidFromUrl (path) {
+function extractStudyUidFromUrl(path) {
   const studyUidMatch = path.match(/\/studies\/(Study_[0-9]+)/i)
   if (studyUidMatch) {
     return studyUidMatch[1]
@@ -7,7 +7,7 @@ function extractStudyUidFromUrl (path) {
   }
 }
 
-function extractStudyUidFromLocalStorage () {
+function extractStudyUidFromLocalStorage() {
   const selectedStudy = JSON.parse(localStorage.getItem('selectedStudy'))
   if (selectedStudy) {
     return selectedStudy.uid
@@ -18,5 +18,5 @@ function extractStudyUidFromLocalStorage () {
 
 export default {
   extractStudyUidFromUrl,
-  extractStudyUidFromLocalStorage
+  extractStudyUidFromLocalStorage,
 }

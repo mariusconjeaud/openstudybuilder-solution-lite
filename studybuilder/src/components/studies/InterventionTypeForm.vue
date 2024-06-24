@@ -1,219 +1,183 @@
 <template>
-<simple-form-dialog
-  ref="form"
-  :title="$t('StudyInterventionTypeForm.title')"
-  :help-items="helpItems"
-  :help-text="$t('_help.StudyInterventionTypeForm.general')"
-  @close="cancel"
-  @submit="submit"
-  :open="open"
+  <SimpleFormDialog
+    ref="form"
+    :title="$t('StudyInterventionTypeForm.title')"
+    :help-items="helpItems"
+    :help-text="$t('_help.StudyInterventionTypeForm.general')"
+    :open="open"
+    @close="cancel"
+    @submit="submit"
   >
-  <template v-slot:body>
-    <validation-observer ref="observer">
-      <v-row>
-        <v-col cols="11">
-          <validation-provider
-            v-slot="{ errors }"
-            name="InterventionType"
-            >
+    <template #body>
+      <v-form ref="observer">
+        <v-row>
+          <v-col cols="11">
             <v-autocomplete
-              :data-cy="$t('StudyInterventionTypeForm.intervention_type')"
               v-model="form.intervention_type_code"
+              :data-cy="$t('StudyInterventionTypeForm.intervention_type')"
               :label="$t('StudyInterventionTypeForm.intervention_type')"
-              :items="interventionTypes"
-              item-text="sponsor_preferred_name"
+              :items="studiesGeneralStore.interventionTypes"
+              item-title="sponsor_preferred_name"
               item-value="term_uid"
               return-object
-              :error-messages="errors"
-              dense
+              density="compact"
               clearable
-              ></v-autocomplete>
-          </validation-provider>
-        </v-col>
-      </v-row>
-      <not-applicable-field
-        :clean-function="setNullValueTrialIntentTypesCodes"
-        :checked="form.trial_intent_types_null_value_code ? true : false"
-        >
-        <template v-slot:mainField="{ notApplicable }">
-          <multiple-select
-            :data-cy="$t('StudyDefineForm.studyintent')"
-            v-model="form.trial_intent_types_codes"
-            :label="$t('StudyDefineForm.studyintent')"
-            :items="trialIntentTypes"
-            item-text="sponsor_preferred_name"
-            item-value="term_uid"
-            return-object
-            :disabled="notApplicable"
-            dense
-            clearable
             />
-        </template>
-      </not-applicable-field>
-      <v-row>
-        <v-col cols="11">
-          <validation-provider
-            v-slot="{ errors }"
-            name="ControlType"
-            >
-            <v-autocomplete
-              :data-cy="$t('StudyInterventionTypeForm.control_type')"
-              v-model="form.control_type_code"
-              :label="$t('StudyInterventionTypeForm.control_type')"
-              :items="controlTypes"
-              item-text="sponsor_preferred_name"
-              item-value="term_uid"
-              return-object
-              :error-messages="errors"
-              dense
-              clearable
-              ></v-autocomplete>
-          </validation-provider>
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col cols="11">
-          <validation-provider
-            v-slot="{ errors }"
-            name="InterventionModel"
-            >
-            <v-autocomplete
-              :data-cy="$t('StudyInterventionTypeForm.intervention_model')"
-              v-model="form.intervention_model_code"
-              :label="$t('StudyInterventionTypeForm.intervention_model')"
-              :items="interventionModels"
-              item-text="sponsor_preferred_name"
-              item-value="term_uid"
-              return-object
-              :error-messages="errors"
-              dense
-              clearable
-              ></v-autocomplete>
-          </validation-provider>
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col cols="5">
-          <validation-provider
-            v-slot="{ errors }"
-            name="Randomised"
-            >
-            <yes-no-field
-              :data-cy="$t('StudyInterventionTypeForm.randomised')"
-              v-model="form.is_trial_randomised"
-              :error-messages="errors"
-              :label="$t('StudyInterventionTypeForm.randomised')"
-              />
-          </validation-provider>
-        </v-col>
-        <v-col cols="5">
-          <validation-provider
-            v-slot="{ errors }"
-            name="AddedToExistingTreatments"
-            >
-            <yes-no-field
-              :data-cy="$t('StudyInterventionTypeForm.added_to_et')"
-              v-model="form.add_on_to_existing_treatments"
-              :error-messages="errors"
-              :label="$t('StudyInterventionTypeForm.added_to_et')"
-              />
-          </validation-provider>
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col cols="11">
-          <validation-provider
-            v-slot="{ errors }"
-            name="BlindingSchema"
-            >
-            <v-autocomplete
-              :data-cy="$t('StudyInterventionTypeForm.blinding_schema')"
-              v-model="form.trial_blinding_schema_code"
-              :label="$t('StudyInterventionTypeForm.blinding_schema')"
-              :items="trialBlindingSchemas"
-              item-text="sponsor_preferred_name"
-              item-value="term_uid"
-              return-object
-              :error-messages="errors"
-              dense
-              clearable
-              ></v-autocomplete>
-          </validation-provider>
-        </v-col>
-      </v-row>
-      <not-applicable-field
-        :clean-function="setNullValueStratificationFactor"
-        :checked="form.stratification_factor_null_value_code ? true : false"
+          </v-col>
+        </v-row>
+        <NotApplicableField
+          :clean-function="setNullValueTrialIntentTypesCodes"
+          :checked="form.trial_intent_types_null_value_code ? true : false"
         >
-        <template v-slot:mainField="{ notApplicable }">
-          <v-text-field
-            :data-cy="$t('StudyInterventionTypeForm.strfactor')"
-            :label="$t('StudyInterventionTypeForm.strfactor')"
-            :disabled="notApplicable"
-            v-model="form.stratification_factor"
-            dense
-            clearable
-            ></v-text-field>
-        </template>
-      </not-applicable-field>
-      <v-row>
-        <v-col cols="10">
-          <label class="v-label theme--light">{{ $t('StudyInterventionTypeForm.planned_st_length') }}</label>
-          <validation-provider
-            v-slot="{ errors }"
-            name="planned_study_length"
-            >
-            <duration-field
-              data-cy="planned-study-length"
+          <template #mainField="{ notApplicable }">
+            <MultipleSelect
+              v-model="form.trial_intent_types_codes"
+              :data-cy="$t('StudyDefineForm.studyintent')"
+              :label="$t('StudyDefineForm.studyintent')"
+              :items="studiesGeneralStore.trialIntentTypes"
+              item-title="sponsor_preferred_name"
+              item-value="term_uid"
+              return-object
+              :disabled="notApplicable"
+              density="compact"
+              clearable
+            />
+          </template>
+        </NotApplicableField>
+        <v-row>
+          <v-col cols="11">
+            <v-autocomplete
+              v-model="form.control_type_code"
+              :data-cy="$t('StudyInterventionTypeForm.control_type')"
+              :label="$t('StudyInterventionTypeForm.control_type')"
+              :items="studiesGeneralStore.controlTypes"
+              item-title="sponsor_preferred_name"
+              item-value="term_uid"
+              return-object
+              density="compact"
+              clearable
+            />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col cols="11">
+            <v-autocomplete
+              v-model="form.intervention_model_code"
+              :data-cy="$t('StudyInterventionTypeForm.intervention_model')"
+              :label="$t('StudyInterventionTypeForm.intervention_model')"
+              :items="studiesGeneralStore.interventionModels"
+              item-title="sponsor_preferred_name"
+              item-value="term_uid"
+              return-object
+              density="compact"
+              clearable
+            />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col cols="5">
+            <YesNoField
+              v-model="form.is_trial_randomised"
+              :data-cy="$t('StudyInterventionTypeForm.randomised')"
+              :label="$t('StudyInterventionTypeForm.randomised')"
+            />
+          </v-col>
+          <v-col cols="5">
+            <YesNoField
+              v-model="form.add_on_to_existing_treatments"
+              :data-cy="$t('StudyInterventionTypeForm.added_to_et')"
+              :label="$t('StudyInterventionTypeForm.added_to_et')"
+            />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col cols="11">
+            <v-autocomplete
+              v-model="form.trial_blinding_schema_code"
+              :data-cy="$t('StudyInterventionTypeForm.blinding_schema')"
+              :label="$t('StudyInterventionTypeForm.blinding_schema')"
+              :items="studiesGeneralStore.trialBlindingSchemas"
+              item-title="sponsor_preferred_name"
+              item-value="term_uid"
+              return-object
+              density="compact"
+              clearable
+            />
+          </v-col>
+        </v-row>
+        <NotApplicableField
+          :clean-function="setNullValueStratificationFactor"
+          :checked="form.stratification_factor_null_value_code ? true : false"
+        >
+          <template #mainField="{ notApplicable }">
+            <v-text-field
+              v-model="form.stratification_factor"
+              :data-cy="$t('StudyInterventionTypeForm.strfactor')"
+              :label="$t('StudyInterventionTypeForm.strfactor')"
+              :disabled="notApplicable"
+              density="compact"
+              clearable
+            />
+          </template>
+        </NotApplicableField>
+        <v-row>
+          <v-col cols="10">
+            <label class="v-label">{{
+              $t('StudyInterventionTypeForm.planned_st_length')
+            }}</label>
+            <DurationField
               v-model="form.planned_study_length"
-              :errors="errors"
-              numericFieldName="duration_value"
-              unitFieldName="duration_unit_code"
+              data-cy="planned-study-length"
+              numeric-field-name="duration_value"
+              unit-field-name="duration_unit_code"
               :max="1000"
-              />
-          </validation-provider>
-        </v-col>
-      </v-row>
-    </validation-observer>
-  </template>
-</simple-form-dialog>
+            />
+          </v-col>
+        </v-row>
+      </v-form>
+    </template>
+  </SimpleFormDialog>
 </template>
 
 <script>
-import _isEqual from 'lodash/isEqual'
-import { mapGetters } from 'vuex'
-import { bus } from '@/main'
-import { studyMetadataFormMixin } from '@/mixins/studyMetadataForm'
-import DurationField from '@/components/tools/DurationField'
-import MultipleSelect from '@/components/tools/MultipleSelect'
-import NotApplicableField from '@/components/tools/NotApplicableField'
-import SimpleFormDialog from '@/components/tools/SimpleFormDialog'
-import YesNoField from '@/components/tools/YesNoField'
+import DurationField from '@/components/tools/DurationField.vue'
+import MultipleSelect from '@/components/tools/MultipleSelect.vue'
+import NotApplicableField from '@/components/tools/NotApplicableField.vue'
+import SimpleFormDialog from '@/components/tools/SimpleFormDialog.vue'
+import YesNoField from '@/components/tools/YesNoField.vue'
+import { useStudiesGeneralStore } from '@/stores/studies-general'
+import { useStudiesManageStore } from '@/stores/studies-manage'
+import { useFormStore } from '@/stores/form'
+import studyMetadataForms from '@/utils/studyMetadataForms'
 
 export default {
-  mixins: [studyMetadataFormMixin],
   components: {
     DurationField,
     NotApplicableField,
     SimpleFormDialog,
     YesNoField,
-    MultipleSelect
+    MultipleSelect,
   },
+  inject: ['eventBusEmit'],
   props: {
-    metadata: Object,
-    open: Boolean
+    metadata: {
+      type: Object,
+      default: undefined,
+    },
+    open: Boolean,
   },
-  computed: {
-    ...mapGetters({
-      controlTypes: 'studiesGeneral/controlTypes',
-      interventionModels: 'studiesGeneral/interventionModels',
-      selectedStudy: 'studiesGeneral/selectedStudy',
-      trialBlindingSchemas: 'studiesGeneral/trialBlindingSchemas',
-      interventionTypes: 'studiesGeneral/interventionTypes',
-      trialIntentTypes: 'studiesGeneral/trialIntentTypes'
-    })
+  emits: ['close', 'updated'],
+  setup() {
+    const formStore = useFormStore()
+    const studiesGeneralStore = useStudiesGeneralStore()
+    const studiesManageStore = useStudiesManageStore()
+    return {
+      formStore,
+      studiesGeneralStore,
+      studiesManageStore,
+    }
   },
-  data () {
+  data() {
     return {
       form: {},
       helpItems: [
@@ -225,69 +189,9 @@ export default {
         'StudyInterventionTypeForm.randomised',
         'StudyInterventionTypeForm.strfactor',
         'StudyInterventionTypeForm.blinding_schema',
-        'StudyInterventionTypeForm.planned_st_length'
+        'StudyInterventionTypeForm.planned_st_length',
       ],
-      data: this.metadata
-    }
-  },
-  methods: {
-    setNullValueTrialIntentTypesCodes () {
-      this.$set(this.form, 'trial_intent_types_codes', [])
-      if (this.form.trial_intent_types_null_value_code) {
-        this.$set(this.form, 'trial_intent_types_null_value_code', null)
-      } else {
-        this.$set(this.form, 'trial_intent_types_null_value_code', { term_uid: this.$t('_global.na_uid'), name: this.$t('_global.not_applicable_full_name') })
-      }
-    },
-    setNullValueStratificationFactor () {
-      this.$set(this.form, 'stratification_factor', '')
-      if (this.form.stratification_factor_null_value_code) {
-        this.$set(this.form, 'stratification_factor_null_value_code', null)
-      } else {
-        this.$set(this.form, 'stratification_factor_null_value_code', { term_uid: this.$t('_global.na_uid'), name: this.$t('_global.not_applicable_full_name') })
-      }
-    },
-    close () {
-      this.$emit('close')
-      this.$store.commit('form/CLEAR_FORM')
-      this.$refs.observer.reset()
-    },
-    async cancel () {
-      if (this.$store.getters['form/form'] === '' || _isEqual(this.$store.getters['form/form'], JSON.stringify(this.form))) {
-        this.close()
-      } else {
-        const options = {
-          type: 'warning',
-          cancelLabel: this.$t('_global.cancel'),
-          agreeLabel: this.$t('_global.continue')
-        }
-        if (await this.$refs.form.confirm(this.$t('_global.cancel_changes'), options)) {
-          this.close()
-        }
-      }
-    },
-    prepareRequestPayload () {
-      const data = JSON.parse(JSON.stringify(this.form))
-      if (data.planned_study_length.duration_value === undefined) {
-        data.planned_study_length = null
-      }
-      data.control_type_code = this.getTermPayload('control_type_code')
-      data.intervention_model_code = this.getTermPayload('intervention_model_code')
-      data.trial_blinding_schema_code = this.getTermPayload('trial_blinding_schema_code')
-      data.intervention_type_code = this.getTermPayload('intervention_type_code')
-      data.trial_intent_types_codes = this.getTermsPayload('trial_intent_types_codes')
-      return data
-    },
-    async submit () {
-      const data = this.prepareRequestPayload()
-      try {
-        await this.$store.dispatch('manageStudies/updateStudyIntervention', [this.selectedStudy.uid, data])
-        this.$emit('updated', data)
-        bus.$emit('notification', { msg: this.$t('StudyInterventionTypeForm.update_success') })
-        this.close()
-      } finally {
-        this.$refs.form.working = false
-      }
+      data: this.metadata,
     }
   },
   watch: {
@@ -297,16 +201,120 @@ export default {
         if (!this.form.planned_study_length) {
           this.form.planned_study_length = {}
         }
-        if (!this.metadata.planned_study_length) {
-          this.metadata.planned_study_length = null
+        for (const prop of [
+          'intervention_type_code',
+          'control_type_code',
+          'intervention_model_code',
+          'trial_blinding_schema_code',
+        ]) {
+          if (this.form[prop]) {
+            this.form[prop].sponsor_preferred_name = this.form[prop].name
+          }
         }
-        this.$store.commit('form/SET_FORM', this.form)
+        if (this.form.trial_intent_types_codes) {
+          for (const item of this.form.trial_intent_types_codes) {
+            item.sponsor_preferred_name = item.name
+          }
+        }
+        this.formStore.save(this.form)
       },
-      immediate: true
+      immediate: true,
     },
-    metadata (value) {
+    metadata(value) {
       this.data = value
-    }
-  }
+    },
+  },
+  methods: {
+    setNullValueTrialIntentTypesCodes() {
+      this.form.trial_intent_types_codes = []
+      if (this.form.trial_intent_types_null_value_code) {
+        this.form.trial_intent_types_null_value_code = null
+      } else {
+        this.form.trial_intent_types_null_value_code = {
+          term_uid: this.$t('_global.na_uid'),
+          name: this.$t('_global.not_applicable_full_name'),
+        }
+      }
+    },
+    setNullValueStratificationFactor() {
+      this.form.stratification_factor = ''
+      if (this.form.stratification_factor_null_value_code) {
+        this.form.stratification_factor_null_value_code = null
+      } else {
+        this.form.stratification_factor_null_value_code = {
+          term_uid: this.$t('_global.na_uid'),
+          name: this.$t('_global.not_applicable_full_name'),
+        }
+      }
+    },
+    close() {
+      this.$emit('close')
+      this.formStore.reset()
+      this.$refs.observer.resetValidation()
+    },
+    async cancel() {
+      if (this.formStore.isEmpty || this.formStore.isEqual(this.form)) {
+        this.close()
+      } else {
+        const options = {
+          type: 'warning',
+          cancelLabel: this.$t('_global.cancel'),
+          agreeLabel: this.$t('_global.continue'),
+        }
+        if (
+          await this.$refs.form.confirm(
+            this.$t('_global.cancel_changes'),
+            options
+          )
+        ) {
+          this.close()
+        }
+      }
+    },
+    prepareRequestPayload() {
+      const data = JSON.parse(JSON.stringify(this.form))
+      const durationValue = data.planned_study_length.duration_value
+      if (durationValue === undefined || durationValue === '') {
+        data.planned_study_length = null
+      }
+      data.control_type_code = studyMetadataForms.getTermPayload(
+        data,
+        'control_type_code'
+      )
+      data.intervention_model_code = studyMetadataForms.getTermPayload(
+        data,
+        'intervention_model_code'
+      )
+      data.trial_blinding_schema_code = studyMetadataForms.getTermPayload(
+        data,
+        'trial_blinding_schema_code'
+      )
+      data.intervention_type_code = studyMetadataForms.getTermPayload(
+        data,
+        'intervention_type_code'
+      )
+      data.trial_intent_types_codes = studyMetadataForms.getTermsPayload(
+        data,
+        'trial_intent_types_codes'
+      )
+      return data
+    },
+    async submit() {
+      const data = this.prepareRequestPayload()
+      try {
+        await this.studiesManageStore.updateStudyIntervention(
+          this.studiesGeneralStore.selectedStudy.uid,
+          data
+        )
+        this.$emit('updated', data)
+        this.eventBusEmit('notification', {
+          msg: this.$t('StudyInterventionTypeForm.update_success'),
+        })
+        this.close()
+      } finally {
+        this.$refs.form.working = false
+      }
+    },
+  },
 }
 </script>

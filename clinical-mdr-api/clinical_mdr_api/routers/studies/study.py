@@ -1,14 +1,14 @@
 import os
 from typing import Any
 
-from fastapi import APIRouter, Body, Depends, Path, Query, Request, Response, status
+from fastapi import APIRouter, Body, Path, Query, Request, Response, status
 from fastapi.responses import HTMLResponse, StreamingResponse
 from pydantic.types import Json
 
 from clinical_mdr_api import config, models
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import CustomPage, GenericFilteringReturn
-from clinical_mdr_api.oauth import get_current_user_id, rbac
+from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.studies.study import StudyService
@@ -103,9 +103,8 @@ def get_all_selected_objectives_for_all_studies(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> CustomPage[models.StudySelectionObjective]:
-    service = StudyObjectiveSelectionService(author=current_user_id)
+    service = StudyObjectiveSelectionService()
     all_selections = service.get_all_selections_for_all_studies(
         no_brackets=no_brackets,
         project_name=project_name,
@@ -156,9 +155,8 @@ def get_distinct_objective_values_for_header(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    service = StudyObjectiveSelectionService(author=current_user_id)
+    service = StudyObjectiveSelectionService()
     return service.get_distinct_values_for_header(
         project_name=project_name,
         project_number=project_number,
@@ -215,7 +213,6 @@ def get_all_selected_objectives(
         description="Indicates whether brackets around Template Parameters in the Objective"
         "should be returned",
     ),
-    current_user_id: str = Depends(get_current_user_id),
     filters: Json
     | None = Query(
         None,
@@ -236,7 +233,7 @@ def get_all_selected_objectives(
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> GenericFilteringReturn[models.StudySelectionObjective]:
-    service = StudyObjectiveSelectionService(author=current_user_id)
+    service = StudyObjectiveSelectionService()
     return service.get_all_selection(
         study_uid=uid,
         no_brackets=no_brackets,
@@ -282,9 +279,8 @@ def get_distinct_values_for_header(
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    service = StudyObjectiveSelectionService(author=current_user_id)
+    service = StudyObjectiveSelectionService()
     return service.get_distinct_values_for_header(
         study_uid=uid,
         project_name=project_name,
@@ -321,9 +317,9 @@ The following values should be return for all study objectives.
     },
 )
 def get_all_objectives_audit_trail(
-    uid: str = studyUID, current_user_id: str = Depends(get_current_user_id)
+    uid: str = studyUID,
 ) -> list[models.StudySelectionObjectiveCore]:
-    service = StudyObjectiveSelectionService(author=current_user_id)
+    service = StudyObjectiveSelectionService()
     return service.get_all_selection_audit_trail(study_uid=uid)
 
 
@@ -346,9 +342,8 @@ def get_selected_objective(
     uid: str = studyUID,
     study_objective_uid: str = study_selection_uid,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionObjective:
-    service = StudyObjectiveSelectionService(author=current_user_id)
+    service = StudyObjectiveSelectionService()
     return service.get_specific_selection(
         study_uid=uid,
         study_selection_uid=study_objective_uid,
@@ -384,9 +379,8 @@ The following values should be return for selected study objective:
 def get_selected_objective_audit_trail(
     uid: str = studyUID,
     study_objective_uid: str = study_selection_uid,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionObjectiveCore:
-    service = StudyObjectiveSelectionService(author=current_user_id)
+    service = StudyObjectiveSelectionService()
     return service.get_specific_selection_audit_trail(
         study_uid=uid, study_selection_uid=study_objective_uid
     )
@@ -424,9 +418,8 @@ def post_new_objective_selection_create(
         "- If this parameter is set to `true`, a `StudySelectionObjectiveCreateInput` payload needs to be sent.\n"
         "- Otherwise, `StudySelectionObjectiveInput` payload should be sent, referencing an existing library objective by uid.",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionObjective:
-    service = StudyObjectiveSelectionService(author=current_user_id)
+    service = StudyObjectiveSelectionService()
 
     if create_objective:
         return service.make_selection_create_objective(
@@ -487,9 +480,8 @@ def post_batch_select_objective_template(
     ] = Body(
         description="List of objects with properties needed to identify the templates to select",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionObjective:
-    service = StudyObjectiveSelectionService(author=current_user_id)
+    service = StudyObjectiveSelectionService()
     return service.batch_select_objective_template(
         study_uid=uid, selection_create_input=selection
     )
@@ -520,9 +512,8 @@ def preview_new_objective_selection_create(
     selection: models.study_selections.study_selection.StudySelectionObjectiveCreateInput = Body(
         description="Related parameters of the selection that shall be previewed."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionObjective:
-    service = StudyObjectiveSelectionService(author=current_user_id)
+    service = StudyObjectiveSelectionService()
     return service.make_selection_preview_objective(
         study_uid=uid, selection_create_input=selection
     )
@@ -547,9 +538,8 @@ def preview_new_objective_selection_create(
 def delete_selected_objective(
     uid: str = studyUID,
     study_objective_uid: str = study_selection_uid,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    service = StudyObjectiveSelectionService(author=current_user_id)
+    service = StudyObjectiveSelectionService()
     service.delete_selection(study_uid=uid, study_selection_uid=study_objective_uid)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
@@ -576,9 +566,8 @@ def patch_new_objective_selection_order(
     new_order_input: models.StudySelectionObjectiveNewOrder = Body(
         description="Related parameters of the selection that shall be created."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionObjective:
-    service = StudyObjectiveSelectionService(author=current_user_id)
+    service = StudyObjectiveSelectionService()
     return service.set_new_order(
         study_uid=uid,
         study_selection_uid=study_objective_uid,
@@ -608,9 +597,8 @@ def patch_update_objective_selection(
     selection: models.StudySelectionObjectiveInput = Body(
         description="Related parameters of the selection that shall be created."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionObjective:
-    service = StudyObjectiveSelectionService(author=current_user_id)
+    service = StudyObjectiveSelectionService()
     return service.patch_selection(
         study_uid=uid,
         study_selection_uid=study_objective_uid,
@@ -637,9 +625,8 @@ def patch_update_objective_selection(
 def sync_latest_version(
     uid: str = studyUID,
     study_objective_uid: str = study_selection_uid,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionObjective:
-    service = StudyObjectiveSelectionService(author=current_user_id)
+    service = StudyObjectiveSelectionService()
     return service.update_selection_to_latest_version(
         study_uid=uid, study_selection_uid=study_objective_uid
     )
@@ -687,9 +674,8 @@ def get_all_selected_endpoints_for_all_studies(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> CustomPage[models.StudySelectionEndpoint]:
-    service = StudyEndpointSelectionService(author=current_user_id)
+    service = StudyEndpointSelectionService()
     all_selections = service.get_all_selections_for_all_studies(
         no_brackets=no_brackets,
         project_name=project_name,
@@ -740,9 +726,8 @@ def get_distinct_endpoint_values_for_header(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    service = StudyEndpointSelectionService(author=current_user_id)
+    service = StudyEndpointSelectionService()
     return service.get_distinct_values_for_header(
         project_name=project_name,
         project_number=project_number,
@@ -817,7 +802,6 @@ def get_all_selected_endpoints(
         description="Indicates whether brackets around Template Parameters in the Objective"
         "and Endpoint should be returned",
     ),
-    current_user_id: str = Depends(get_current_user_id),
     filters: Json
     | None = Query(
         None,
@@ -838,7 +822,7 @@ def get_all_selected_endpoints(
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> GenericFilteringReturn[models.StudySelectionEndpoint]:
-    service = StudyEndpointSelectionService(author=current_user_id)
+    service = StudyEndpointSelectionService()
     return service.get_all_selection(
         study_uid=uid,
         no_brackets=no_brackets,
@@ -884,9 +868,8 @@ def get_distinct_study_endpoint_values_for_header(
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    service = StudyEndpointSelectionService(author=current_user_id)
+    service = StudyEndpointSelectionService()
     return service.get_distinct_values_for_header(
         study_uid=uid,
         project_name=project_name,
@@ -935,9 +918,9 @@ Returned data:
     },
 )
 def get_all_endpoints_audit_trail(
-    uid: str = studyUID, current_user_id: str = Depends(get_current_user_id)
+    uid: str = studyUID,
 ) -> list[models.StudySelectionEndpoint]:
-    service = StudyEndpointSelectionService(author=current_user_id)
+    service = StudyEndpointSelectionService()
     return service.get_all_selection_audit_trail(study_uid=uid)
 
 
@@ -977,9 +960,8 @@ def get_selected_endpoint(
     uid: str = studyUID,
     study_endpoint_uid: str = study_selection_uid,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionEndpoint:
-    service = StudyEndpointSelectionService(author=current_user_id)
+    service = StudyEndpointSelectionService()
     return service.get_specific_selection(
         study_uid=uid,
         study_selection_uid=study_endpoint_uid,
@@ -1028,9 +1010,8 @@ Returned data:
 def get_selected_endpoint_audit_trail(
     uid: str = studyUID,
     study_endpoint_uid: str = study_selection_uid,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionEndpoint:
-    service = StudyEndpointSelectionService(author=current_user_id)
+    service = StudyEndpointSelectionService()
     return service.get_specific_selection_audit_trail(
         study_uid=uid, study_selection_uid=study_endpoint_uid
     )
@@ -1068,9 +1049,8 @@ def post_new_endpoint_selection_create(
         "- If this parameter is set to `true`, a `StudySelectionEndpointCreateInput` payload needs to be sent.\n"
         "- Otherwise, `StudySelectionEndpointInput` payload should be sent, referencing an existing library endpoint by uid.",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionEndpoint:
-    service = StudyEndpointSelectionService(author=current_user_id)
+    service = StudyEndpointSelectionService()
     if create_endpoint:
         return service.make_selection_create_endpoint(
             study_uid=uid, selection_create_input=selection
@@ -1130,9 +1110,8 @@ def post_batch_select_endpoint_template(
     ] = Body(
         description="List of objects with properties needed to identify the templates to select",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionEndpoint:
-    service = StudyEndpointSelectionService(author=current_user_id)
+    service = StudyEndpointSelectionService()
     return service.batch_select_endpoint_template(
         study_uid=uid, selection_create_input=selection
     )
@@ -1163,9 +1142,8 @@ def post_new_endpoint_selection_preview(
     selection: models.study_selections.study_selection.StudySelectionEndpointCreateInput = Body(
         description="Related parameters of the selection that shall be previewed."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionEndpoint:
-    service = StudyEndpointSelectionService(author=current_user_id)
+    service = StudyEndpointSelectionService()
     return service.make_selection_preview_endpoint(
         study_uid=uid, selection_create_input=selection
     )
@@ -1204,9 +1182,8 @@ State after:
 def delete_selected_endpoint(
     uid: str = studyUID,
     study_endpoint_uid: str = study_selection_uid,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    service = StudyEndpointSelectionService(author=current_user_id)
+    service = StudyEndpointSelectionService()
     service.delete_selection(study_uid=uid, study_selection_uid=study_endpoint_uid)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
@@ -1250,9 +1227,8 @@ def patch_new_endpoint_selection_order(
     new_order_input: models.StudySelectionEndpointNewOrder = Body(
         description="Related parameters of the selection that shall be created."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionEndpoint:
-    service = StudyEndpointSelectionService(author=current_user_id)
+    service = StudyEndpointSelectionService()
     return service.set_new_order(
         study_uid=uid,
         study_selection_uid=study_endpoint_uid,
@@ -1297,9 +1273,8 @@ def patch_update_endpoint_selection(
     selection: models.StudySelectionEndpointInput = Body(
         description="Related parameters of the selection that shall be created."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionEndpoint:
-    service = StudyEndpointSelectionService(author=current_user_id)
+    service = StudyEndpointSelectionService()
     return service.patch_selection(
         study_uid=uid,
         study_selection_uid=study_endpoint_uid,
@@ -1324,10 +1299,9 @@ def patch_update_endpoint_selection(
 def get_all_selected_objectives_and_endpoints_standard_docx(
     uid: str = studyUID,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> StreamingResponse:
     StudyService().check_if_study_exists(uid)
-    docx = StudyObjectivesService(user_id=current_user_id).get_standard_docx(
+    docx = StudyObjectivesService().get_standard_docx(
         study_uid=uid, study_value_version=study_value_version
     )
     stream = docx.get_document_stream()
@@ -1354,13 +1328,11 @@ def get_all_selected_objectives_and_endpoints_standard_docx(
     },
 )
 def get_all_selected_objectives_and_endpoints_standard_html(
-    uid: str = studyUID, current_user_id: str = Depends(get_current_user_id)
+    uid: str = studyUID,
 ) -> HTMLResponse:
     StudyService().check_if_study_exists(uid)
     return HTMLResponse(
-        content=StudyObjectivesService(user_id=current_user_id).get_standard_html(
-            study_uid=uid
-        )
+        content=StudyObjectivesService().get_standard_html(study_uid=uid)
     )
 
 
@@ -1401,9 +1373,8 @@ def get_all_selected_compounds_for_all_studies(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> CustomPage[models.StudySelectionCompound]:
-    service = StudyCompoundSelectionService(author=current_user_id)
+    service = StudyCompoundSelectionService()
     all_selections = service.get_all_selections_for_all_studies(
         project_name=project_name,
         project_number=project_number,
@@ -1453,9 +1424,8 @@ def get_distinct_compound_values_for_header(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    service = StudyCompoundSelectionService(author=current_user_id)
+    service = StudyCompoundSelectionService()
     return service.get_distinct_values_for_header(
         project_name=project_name,
         project_number=project_number,
@@ -1530,7 +1500,6 @@ def get_all_selected_compounds(
     request: Request,  # request is actually required by the allow_exports decorator
     uid: str = studyUID,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
-    current_user_id: str = Depends(get_current_user_id),
     filters: Json
     | None = Query(
         None,
@@ -1550,7 +1519,7 @@ def get_all_selected_compounds(
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
 ) -> GenericFilteringReturn[models.StudySelectionCompound]:
-    service = StudyCompoundSelectionService(author=current_user_id)
+    service = StudyCompoundSelectionService()
     return service.get_all_selection(
         study_uid=uid,
         study_value_version=study_value_version,
@@ -1595,9 +1564,8 @@ def get_distinct_compounds_values_for_header(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    service = StudyCompoundSelectionService(author=current_user_id)
+    service = StudyCompoundSelectionService()
     return service.get_distinct_values_for_header(
         study_uid=uid,
         study_value_version=study_value_version,
@@ -1646,9 +1614,9 @@ Returned data:
     },
 )
 def get_all_compounds_audit_trail(
-    uid: str = studyUID, current_user_id: str = Depends(get_current_user_id)
+    uid: str = studyUID,
 ) -> list[models.StudySelectionCompound]:
-    service = StudyCompoundSelectionService(author=current_user_id)
+    service = StudyCompoundSelectionService()
     return service.get_all_selection_audit_trail(study_uid=uid)
 
 
@@ -1693,9 +1661,8 @@ Returned data:
 def get_selected_compound_audit_trail(
     uid: str = studyUID,
     study_compound_uid: str = study_selection_uid,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionCompound:
-    service = StudyCompoundSelectionService(author=current_user_id)
+    service = StudyCompoundSelectionService()
     return service.get_specific_selection_audit_trail(
         study_uid=uid, study_selection_uid=study_compound_uid
     )
@@ -1735,9 +1702,8 @@ State after:
 def get_selected_compound(
     uid: str = studyUID,
     study_compound_uid: str = study_selection_uid,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionCompound:
-    service = StudyCompoundSelectionService(author=current_user_id)
+    service = StudyCompoundSelectionService()
     return service.get_specific_selection(
         study_uid=uid, study_selection_uid=study_compound_uid
     )
@@ -1795,9 +1761,8 @@ def post_new_compound_selection(
     selection: models.StudySelectionCompoundInput = Body(
         description="Related parameters of the selection that shall be created."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionCompound:
-    service = StudyCompoundSelectionService(author=current_user_id)
+    service = StudyCompoundSelectionService()
     return service.make_selection(study_uid=uid, selection_create_input=selection)
 
 
@@ -1833,9 +1798,8 @@ State after:
 def delete_selected_compound(
     uid: str = studyUID,
     study_compound_uid: str = study_selection_uid,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    service = StudyCompoundSelectionService(author=current_user_id)
+    service = StudyCompoundSelectionService()
     service.delete_selection(study_uid=uid, study_selection_uid=study_compound_uid)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
@@ -1875,9 +1839,8 @@ def patch_new_compound_selection_order(
     new_order_input: models.StudySelectionCompoundNewOrder = Body(
         description="Related parameters of the selection that shall be created."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionCompound:
-    service = StudyCompoundSelectionService(author=current_user_id)
+    service = StudyCompoundSelectionService()
     return service.set_new_order(
         study_uid=uid,
         study_selection_uid=study_compound_uid,
@@ -1933,9 +1896,8 @@ def patch_update_compound_selection(
     selection: models.StudySelectionCompoundInput = Body(
         description="Related parameters of the selection that shall be created."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionCompound:
-    service = StudyCompoundSelectionService(author=current_user_id)
+    service = StudyCompoundSelectionService()
     return service.patch_selection(
         study_uid=uid,
         study_selection_uid=study_compound_uid,
@@ -1976,9 +1938,8 @@ State after:
 def sync_latest_endpoint_version(
     uid: str = studyUID,
     study_endpoint_uid: str = study_selection_uid,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionObjective:
-    service = StudyEndpointSelectionService(author=current_user_id)
+    service = StudyEndpointSelectionService()
     return service.update_selection_to_latest_version_of_endpoint(
         study_uid=uid, study_selection_uid=study_endpoint_uid
     )
@@ -2017,9 +1978,8 @@ def sync_latest_endpoint_version(
 def sync_latest_timeframe_version(
     uid: str = studyUID,
     study_endpoint_uid: str = study_selection_uid,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionObjective:
-    service = StudyEndpointSelectionService(author=current_user_id)
+    service = StudyEndpointSelectionService()
     return service.update_selection_to_latest_version_of_timeframe(
         study_uid=uid, study_selection_uid=study_endpoint_uid
     )
@@ -2058,9 +2018,8 @@ def sync_latest_timeframe_version(
 def patch_endpoint_accept_version(
     uid: str = studyUID,
     study_endpoint_uid: str = study_selection_uid,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionObjective:
-    service = StudyEndpointSelectionService(author=current_user_id)
+    service = StudyEndpointSelectionService()
     return service.update_selection_accept_versions(
         study_uid=uid, study_selection_uid=study_endpoint_uid
     )
@@ -2099,9 +2058,8 @@ def patch_endpoint_accept_version(
 def patch_objective_accept_version(
     uid: str = studyUID,
     study_objective_uid: str = study_selection_uid,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionObjective:
-    service = StudyObjectiveSelectionService(author=current_user_id)
+    service = StudyObjectiveSelectionService()
     return service.update_selection_accept_version(
         study_uid=uid, study_selection_uid=study_objective_uid
     )
@@ -2149,9 +2107,8 @@ def get_all_selected_criteria_for_all_studies(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> CustomPage[models.StudySelectionCriteria]:
-    service = StudyCriteriaSelectionService(author=current_user_id)
+    service = StudyCriteriaSelectionService()
     all_selections = service.get_all_selections_for_all_studies(
         no_brackets=no_brackets,
         project_name=project_name,
@@ -2202,9 +2159,8 @@ def get_distinct_criteria_values_for_header(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    service = StudyCriteriaSelectionService(author=current_user_id)
+    service = StudyCriteriaSelectionService()
     return service.get_distinct_values_for_header(
         project_name=project_name,
         project_number=project_number,
@@ -2313,10 +2269,9 @@ def get_all_selected_criteria(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> CustomPage[models.StudySelectionCriteria]:
-    service = StudyCriteriaSelectionService(author=current_user_id)
+    service = StudyCriteriaSelectionService()
     all_items = service.get_all_selection(
         study_uid=uid,
         no_brackets=no_brackets,
@@ -2368,9 +2323,8 @@ def get_distinct_study_criteria_values_for_header(
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
     uid: str = studyUID,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    service = StudyCriteriaSelectionService(author=current_user_id)
+    service = StudyCriteriaSelectionService()
     return service.get_distinct_values_for_header(
         study_uid=uid,
         field_name=field_name,
@@ -2430,9 +2384,8 @@ def get_all_criteria_audit_trail(
         None,
         description="Optionally, the uid of the criteria_type for which to return study criteria audit trial.",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> list[models.StudySelectionCriteriaCore]:
-    service = StudyCriteriaSelectionService(author=current_user_id)
+    service = StudyCriteriaSelectionService()
     return service.get_all_selection_audit_trail(
         study_uid=uid, criteria_type_uid=criteria_type_uid
     )
@@ -2491,9 +2444,8 @@ def get_selected_criteria(
     uid: str = studyUID,
     study_criteria_uid: str = study_selection_uid,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionCriteria:
-    service = StudyCriteriaSelectionService(author=current_user_id)
+    service = StudyCriteriaSelectionService()
     return service.get_specific_selection(
         study_uid=uid,
         study_selection_uid=study_criteria_uid,
@@ -2548,9 +2500,8 @@ def get_selected_criteria(
 def get_selected_criteria_audit_trail(
     uid: str = studyUID,
     study_criteria_uid: str = study_selection_uid,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionCriteriaCore:
-    service = StudyCriteriaSelectionService(author=current_user_id)
+    service = StudyCriteriaSelectionService()
     return service.get_specific_selection_audit_trail(
         study_uid=uid, study_selection_uid=study_criteria_uid
     )
@@ -2617,9 +2568,8 @@ def post_new_criteria_selection_create(
         "- If this parameter is set to `true`, a `StudySelectionCriteriaCreateInput` payload needs to be sent.\n"
         "- Otherwise, `StudySelectionCriteriaInput` payload should be sent, referencing an existing library criteria by uid.",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionCriteria:
-    service = StudyCriteriaSelectionService(author=current_user_id)
+    service = StudyCriteriaSelectionService()
 
     if create_criteria:
         return service.make_selection_create_criteria(
@@ -2653,9 +2603,8 @@ def preview_new_criteria_selection_create(
     selection: models.study_selections.study_selection.StudySelectionCriteriaCreateInput = Body(
         description="Related parameters of the selection that shall be previewed."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionCriteria:
-    service = StudyCriteriaSelectionService(author=current_user_id)
+    service = StudyCriteriaSelectionService()
     return service.make_selection_preview_criteria(
         study_uid=uid, selection_create_input=selection
     )
@@ -2713,9 +2662,8 @@ def post_batch_select_criteria_template(
     ] = Body(
         description="List of objects with properties needed to identify the templates to select",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionCriteria:
-    service = StudyCriteriaSelectionService(author=current_user_id)
+    service = StudyCriteriaSelectionService()
     return service.batch_select_criteria_template(
         study_uid=uid, selection_create_input=selection
     )
@@ -2767,9 +2715,8 @@ def patch_update_criteria_selection(
     criteria_data: models.CriteriaUpdateWithCriteriaKeyInput = Body(
         description="Data necessary to create the criteria instance from the template",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionCriteria:
-    service = StudyCriteriaSelectionService(author=current_user_id)
+    service = StudyCriteriaSelectionService()
     return service.patch_selection(
         study_uid=uid,
         study_criteria_uid=study_criteria_uid,
@@ -2815,9 +2762,8 @@ def patch_update_criteria_selection(
 def delete_selected_criteria(
     uid: str = studyUID,
     study_criteria_uid: str = study_selection_uid,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    service = StudyCriteriaSelectionService(author=current_user_id)
+    service = StudyCriteriaSelectionService()
     service.delete_selection(study_uid=uid, study_selection_uid=study_criteria_uid)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
@@ -2844,9 +2790,8 @@ def patch_new_criteria_selection_order(
     new_order_input: models.StudySelectionCriteriaNewOrder = Body(
         description="New value to set for the order property of the selection"
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionCriteria:
-    service = StudyCriteriaSelectionService(author=current_user_id)
+    service = StudyCriteriaSelectionService()
     return service.set_new_order(
         study_uid=uid,
         study_selection_uid=study_criteria_uid,
@@ -2876,9 +2821,8 @@ def patch_criteria_selection_key_criteria_property(
     key_criteria_input: models.StudySelectionCriteriaKeyCriteria = Body(
         description="New value to set for the key-criteria property of the selection",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionCriteria:
-    service = StudyCriteriaSelectionService(author=current_user_id)
+    service = StudyCriteriaSelectionService()
     return service.set_key_criteria(
         study_uid=uid,
         study_selection_uid=study_criteria_uid,
@@ -2905,9 +2849,8 @@ def patch_criteria_selection_key_criteria_property(
 def sync_criteria_latest_version(
     uid: str = studyUID,
     study_criteria_uid: str = study_selection_uid,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionCriteria:
-    service = StudyCriteriaSelectionService(author=current_user_id)
+    service = StudyCriteriaSelectionService()
     return service.update_selection_to_latest_version(
         study_uid=uid, study_selection_uid=study_criteria_uid
     )
@@ -2936,9 +2879,8 @@ def sync_criteria_latest_version(
 def patch_criteria_accept_version(
     uid: str = studyUID,
     study_criteria_uid: str = study_selection_uid,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionCriteria:
-    service = StudyCriteriaSelectionService(author=current_user_id)
+    service = StudyCriteriaSelectionService()
     return service.update_selection_accept_version(
         study_uid=uid, study_selection_uid=study_criteria_uid
     )
@@ -3000,9 +2942,8 @@ def get_all_selected_activity_instances_for_all_studies(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> CustomPage[models.StudySelectionActivityInstance]:
-    service = StudyActivityInstanceSelectionService(author=current_user_id)
+    service = StudyActivityInstanceSelectionService()
     all_selections = service.get_all_selections_for_all_studies(
         project_name=project_name,
         project_number=project_number,
@@ -3116,9 +3057,8 @@ def get_all_selected_activity_instances(
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
     uid: str = studyUID,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> CustomPage[models.StudySelectionActivityInstance]:
-    service = StudyActivityInstanceSelectionService(author=current_user_id)
+    service = StudyActivityInstanceSelectionService()
     all_items = service.get_all_selection(
         study_uid=uid,
         activity_names=activity_names,
@@ -3172,9 +3112,8 @@ def get_distinct_study_activity_instances_values_for_header(
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
     uid: str = studyUID,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    service = StudyActivityInstanceSelectionService(author=current_user_id)
+    service = StudyActivityInstanceSelectionService()
     return service.get_distinct_values_for_header(
         study_uid=uid,
         field_name=field_name,
@@ -3205,9 +3144,8 @@ def get_distinct_study_activity_instances_values_for_header(
 def delete_study_activity_instance(
     uid: str = studyUID,
     study_activity_instance_uid: str = study_selection_uid,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    service = StudyActivityInstanceSelectionService(author=current_user_id)
+    service = StudyActivityInstanceSelectionService()
     service.delete_selection(
         study_uid=uid, study_selection_uid=study_activity_instance_uid
     )
@@ -3239,9 +3177,8 @@ def post_new_activity_instance_selection(
     selection: models.StudySelectionActivityInstanceCreateInput = Body(
         description="Related parameters of the selection that shall be created."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionActivityInstance:
-    service = StudyActivityInstanceSelectionService(author=current_user_id)
+    service = StudyActivityInstanceSelectionService()
     return service.make_selection(study_uid=uid, selection_create_input=selection)
 
 
@@ -3273,9 +3210,8 @@ def patch_update_study_activity_instance(
     selection: models.StudySelectionActivityInstanceEditInput = Body(
         description="Related parameters of the selection that shall be updated."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionActivity:
-    service = StudyActivityInstanceSelectionService(author=current_user_id)
+    service = StudyActivityInstanceSelectionService()
     return service.patch_selection(
         study_uid=uid,
         study_selection_uid=study_activity_instance_uid,
@@ -3306,9 +3242,9 @@ The following values should be returned for all study activity instances:
     },
 )
 def get_all_study_activity_instance_audit_trail(
-    uid: str = studyUID, current_user_id: str = Depends(get_current_user_id)
+    uid: str = studyUID,
 ) -> list[models.StudySelectionActivityInstance]:
-    service = StudyActivityInstanceSelectionService(author=current_user_id)
+    service = StudyActivityInstanceSelectionService()
     return service.get_all_selection_audit_trail(study_uid=uid)
 
 
@@ -3331,9 +3267,8 @@ def get_selected_activity_instance(
     uid: str = studyUID,
     study_activity_instance_uid: str = study_selection_uid,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionActivity:
-    service = StudyActivityInstanceSelectionService(author=current_user_id)
+    service = StudyActivityInstanceSelectionService()
     return service.get_specific_selection(
         study_uid=uid,
         study_selection_uid=study_activity_instance_uid,
@@ -3359,10 +3294,50 @@ def get_selected_activity_instance(
 def get_specific_study_activity_instance_audit_trail(
     uid: str = studyUID,
     study_activity_instance_uid: str = study_selection_uid,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionActivityInstance:
-    service = StudyActivityInstanceSelectionService(author=current_user_id)
+    service = StudyActivityInstanceSelectionService()
     return service.get_specific_selection_audit_trail(
+        study_uid=uid, study_selection_uid=study_activity_instance_uid
+    )
+
+
+@router.post(
+    "/studies/{uid}/study-activity-instances/{study_activity_instance_uid}/sync-latest-version",
+    dependencies=[rbac.STUDY_WRITE],
+    summary="update to latest activity instance version study selection",
+    description="""
+    State before:
+     - Study must exist
+     - StudyActivityInstance selection must exist
+     - Activity instance selected for study activity instance selection 
+     is not the latest available final version of the activity instance.
+
+    Business logic:
+     - Update specified activity instance study-selection to latest activity instance
+
+    State after:
+     - Study exists
+     - Study activity instance selection exists
+     - Activity instance version selected for study activity instance selection is changed.
+     - Added new entry in the audit trail for the update of the study-activity-instance.""",
+    response_model=models.StudySelectionActivityInstance,
+    response_model_exclude_unset=True,
+    status_code=201,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - There exist no selection between the study and study activity-instance",
+        },
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+@decorators.validate_if_study_is_not_locked("uid")
+def patch_study_activity_instance_sync_to_latest_activity_instance(
+    uid: str = studyUID,
+    study_activity_instance_uid: str = study_selection_uid,
+) -> models.StudySelectionActivityInstance:
+    service = StudyActivityInstanceSelectionService()
+    return service.update_selection_to_latest_version(
         study_uid=uid, study_selection_uid=study_activity_instance_uid
     )
 
@@ -3418,9 +3393,8 @@ def get_all_selected_activities_for_all_studies(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> CustomPage[models.StudySelectionEndpoint]:
-    service = StudyActivitySelectionService(author=current_user_id)
+    service = StudyActivitySelectionService()
     all_selections = service.get_all_selections_for_all_studies(
         project_name=project_name,
         project_number=project_number,
@@ -3517,9 +3491,8 @@ def get_all_selected_activities(
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
     uid: str = studyUID,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> CustomPage[models.StudySelectionActivity]:
-    service = StudyActivitySelectionService(author=current_user_id)
+    service = StudyActivitySelectionService()
     all_items = service.get_all_selection(
         study_uid=uid,
         activity_names=activity_names,
@@ -3572,9 +3545,8 @@ def get_distinct_activity_values_for_header(
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
     uid: str = studyUID,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    service = StudyActivitySelectionService(author=current_user_id)
+    service = StudyActivitySelectionService()
     return service.get_distinct_values_for_header(
         study_uid=uid,
         field_name=field_name,
@@ -3607,9 +3579,9 @@ The following values should be returned for all study activities:
     },
 )
 def get_all_activity_audit_trail(
-    uid: str = studyUID, current_user_id: str = Depends(get_current_user_id)
+    uid: str = studyUID,
 ) -> list[models.StudySelectionActivityCore]:
-    service = StudyActivitySelectionService(author=current_user_id)
+    service = StudyActivitySelectionService()
     return service.get_all_selection_audit_trail(study_uid=uid)
 
 
@@ -3632,9 +3604,8 @@ def get_selected_activity(
     uid: str = studyUID,
     study_activity_uid: str = study_selection_uid,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionActivity:
-    service = StudyActivitySelectionService(author=current_user_id)
+    service = StudyActivitySelectionService()
     return service.get_specific_selection(
         study_uid=uid,
         study_selection_uid=study_activity_uid,
@@ -3660,9 +3631,8 @@ def get_selected_activity(
 def get_selected_activity_audit_trail(
     uid: str = studyUID,
     study_activity_uid: str = study_selection_uid,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionActivityCore:
-    service = StudyActivitySelectionService(author=current_user_id)
+    service = StudyActivitySelectionService()
     return service.get_specific_selection_audit_trail(
         study_uid=uid, study_selection_uid=study_activity_uid
     )
@@ -3693,9 +3663,8 @@ def post_new_activity_selection_create(
     selection: models.StudySelectionActivityCreateInput = Body(
         description="Related parameters of the selection that shall be created."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionActivity:
-    service = StudyActivitySelectionService(author=current_user_id)
+    service = StudyActivitySelectionService()
     return service.make_selection(study_uid=uid, selection_create_input=selection)
 
 
@@ -3727,9 +3696,8 @@ def patch_update_activity_selection(
     selection: models.StudySelectionActivityInput = Body(
         description="Related parameters of the selection that shall be updated."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionActivity:
-    service = StudyActivitySelectionService(author=current_user_id)
+    service = StudyActivitySelectionService()
     return service.patch_selection(
         study_uid=uid,
         study_selection_uid=study_activity_uid,
@@ -3765,9 +3733,8 @@ def patch_update_activity_selection_request(
     selection: models.StudySelectionActivityRequestEditInput = Body(
         description="Related parameters of the selection that shall be updated."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionActivity:
-    service = StudyActivitySelectionService(author=current_user_id)
+    service = StudyActivitySelectionService()
     return service.patch_selection(
         study_uid=uid,
         study_selection_uid=study_activity_request_uid,
@@ -3800,9 +3767,8 @@ State after:
 def update_activity_request_with_sponsor_activity(
     uid: str = studyUID,
     study_activity_uid: str = study_selection_uid,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionActivity:
-    service = StudyActivitySelectionService(author=current_user_id)
+    service = StudyActivitySelectionService()
     return service.update_activity_request_with_sponsor_activity(
         study_uid=uid,
         study_selection_uid=study_activity_uid,
@@ -3828,9 +3794,8 @@ def update_activity_request_with_sponsor_activity(
 def delete_selected_activity(
     uid: str = studyUID,
     study_activity_uid: str = study_selection_uid,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    service = StudyActivitySelectionService(author=current_user_id)
+    service = StudyActivitySelectionService()
     service.delete_selection(study_uid=uid, study_selection_uid=study_activity_uid)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
@@ -3850,9 +3815,8 @@ def delete_selected_activity(
 def activity_selection_batch_operations(
     uid: str = studyUID,
     operations: list[models.StudySelectionActivityBatchInput] = Body(description=""),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> list[models.StudySelectionActivityBatchOutput]:
-    service = StudyActivitySelectionService(author=current_user_id)
+    service = StudyActivitySelectionService()
     return service.handle_batch_operations(uid, operations)
 
 
@@ -3878,9 +3842,8 @@ def patch_new_activity_selection_order(
     new_order_input: models.StudySelectionActivityNewOrder = Body(
         description="New value to set for the order property of the selection"
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionActivity:
-    service = StudyActivitySelectionService(author=current_user_id)
+    service = StudyActivitySelectionService()
     return service.set_new_order(
         study_uid=uid,
         study_selection_uid=study_activity_uid,
@@ -3968,10 +3931,9 @@ def get_all_selected_arms(
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
     uid: str = studyUID,
-    current_user_id: str = Depends(get_current_user_id),
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> CustomPage[models.StudySelectionArmWithConnectedBranchArms]:
-    service = StudyArmSelectionService(author=current_user_id)
+    service = StudyArmSelectionService()
     all_items = service.get_all_selection(
         study_uid=uid,
         page_number=page_number,
@@ -4021,9 +3983,8 @@ def get_distinct_arm_values_for_header(
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
     uid: str = studyUID,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    service = StudyArmSelectionService(author=current_user_id)
+    service = StudyArmSelectionService()
     return service.get_distinct_values_for_header(
         study_uid=uid,
         field_name=field_name,
@@ -4068,9 +4029,8 @@ def get_all_selected_arms_for_all_studies(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> CustomPage[models.StudySelectionArmWithConnectedBranchArms]:
-    service = StudyArmSelectionService(author=current_user_id)
+    service = StudyArmSelectionService()
     all_selections = service.get_all_selections_for_all_studies(
         project_name=project_name,
         project_number=project_number,
@@ -4119,9 +4079,8 @@ def patch_update_arm_selection(
     selection: models.StudySelectionArmInput = Body(
         description="Related parameters of the selection that shall be updated."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionArmWithConnectedBranchArms:
-    service = StudyArmSelectionService(author=current_user_id)
+    service = StudyArmSelectionService()
     return service.patch_selection(
         study_uid=uid,
         study_selection_uid=study_arm_uid,
@@ -4154,9 +4113,8 @@ def post_new_arm_selection_create(
     selection: models.study_selections.study_selection.StudySelectionArmCreateInput = Body(
         description="Related parameters of the selection that shall be created."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionArm:
-    service = StudyArmSelectionService(author=current_user_id)
+    service = StudyArmSelectionService()
     return service.make_selection(study_uid=uid, selection_create_input=selection)
 
 
@@ -4178,9 +4136,8 @@ def post_new_arm_selection_create(
 def get_selected_arm_audit_trail(
     uid: str = studyUID,
     study_arm_uid: str = study_selection_uid,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> list[models.StudySelectionArmVersion]:
-    service = StudyArmSelectionService(author=current_user_id)
+    service = StudyArmSelectionService()
     return service.get_specific_selection_audit_trail(
         study_uid=uid, study_selection_uid=study_arm_uid
     )
@@ -4200,9 +4157,8 @@ def get_selected_arm_audit_trail(
 )
 def get_all_arm_audit_trail(
     uid: str = studyUID,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> list[models.StudySelectionArmVersion]:
-    service = StudyArmSelectionService(author=current_user_id)
+    service = StudyArmSelectionService()
     return service.get_all_selection_audit_trail(study_uid=uid)
 
 
@@ -4224,10 +4180,9 @@ def get_all_arm_audit_trail(
 def get_selected_arm(
     uid: str = studyUID,
     study_arm_uid: str = study_selection_uid,
-    current_user_id: str = Depends(get_current_user_id),
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> models.StudySelectionArmWithConnectedBranchArms:
-    service = StudyArmSelectionService(author=current_user_id)
+    service = StudyArmSelectionService()
     return service.get_specific_selection(
         study_uid=uid,
         study_selection_uid=study_arm_uid,
@@ -4257,9 +4212,8 @@ def patch_new_arm_selection_order(
     new_order_input: models.StudySelectionArmNewOrder = Body(
         description="New value to set for the order property of the selection"
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionArmWithConnectedBranchArms:
-    service = StudyArmSelectionService(author=current_user_id)
+    service = StudyArmSelectionService()
     return service.set_new_order(
         study_uid=uid,
         study_selection_uid=study_arm_uid,
@@ -4286,9 +4240,8 @@ def patch_new_arm_selection_order(
 def delete_selected_arm(
     uid: str = studyUID,
     study_arm_uid: str = study_selection_uid,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    service = StudyArmSelectionService(author=current_user_id)
+    service = StudyArmSelectionService()
     service.delete_selection(study_uid=uid, study_selection_uid=study_arm_uid)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
@@ -4321,9 +4274,8 @@ def post_new_element_selection_create(
     selection: models.study_selections.study_selection.StudySelectionElementCreateInput = Body(
         description="Related parameters of the selection that shall be created."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionElement:
-    service = StudyElementSelectionService(author=current_user_id)
+    service = StudyElementSelectionService()
     return service.make_selection(study_uid=uid, selection_create_input=selection)
 
 
@@ -4399,9 +4351,8 @@ def get_all_selected_elements(
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> CustomPage[models.StudySelectionElement]:
-    service = StudyElementSelectionService(author=current_user_id)
+    service = StudyElementSelectionService()
     all_items = service.get_all_selection(
         study_uid=uid,
         page_number=page_number,
@@ -4452,9 +4403,8 @@ def get_distinct_element_values_for_header(
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
     uid: str = studyUID,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    service = StudyElementSelectionService(author=current_user_id)
+    service = StudyElementSelectionService()
     return service.get_distinct_values_for_header(
         study_uid=uid,
         field_name=field_name,
@@ -4484,10 +4434,9 @@ def get_distinct_element_values_for_header(
 def get_selected_element(
     uid: str = studyUID,
     study_element_uid: str = study_selection_uid,
-    current_user_id: str = Depends(get_current_user_id),
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> models.StudySelectionElement:
-    service = StudyElementSelectionService(author=current_user_id)
+    service = StudyElementSelectionService()
     return service.get_specific_selection(
         study_uid=uid,
         study_selection_uid=study_element_uid,
@@ -4523,9 +4472,8 @@ def patch_update_element_selection(
     selection: models.StudySelectionElementInput = Body(
         description="Related parameters of the selection that shall be updated."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionElement:
-    service = StudyElementSelectionService(author=current_user_id)
+    service = StudyElementSelectionService()
     return service.patch_selection(
         study_uid=uid,
         study_selection_uid=study_element_uid,
@@ -4551,9 +4499,8 @@ def patch_update_element_selection(
 def get_selected_element_audit_trail(
     uid: str = studyUID,
     study_element_uid: str = study_selection_uid,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> list[models.StudySelectionElementVersion]:
-    service = StudyElementSelectionService(author=current_user_id)
+    service = StudyElementSelectionService()
     return service.get_specific_selection_audit_trail(
         study_uid=uid, study_selection_uid=study_element_uid
     )
@@ -4573,9 +4520,8 @@ def get_selected_element_audit_trail(
 )
 def get_all_element_audit_trail(
     uid: str = studyUID,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> list[models.StudySelectionElementVersion]:
-    service = StudyElementSelectionService(author=current_user_id)
+    service = StudyElementSelectionService()
     return service.get_all_selection_audit_trail(study_uid=uid)
 
 
@@ -4598,9 +4544,8 @@ def get_all_element_audit_trail(
 def delete_selected_element(
     uid: str = studyUID,
     study_element_uid: str = study_selection_uid,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    service = StudyElementSelectionService(author=current_user_id)
+    service = StudyElementSelectionService()
     service.delete_selection(study_uid=uid, study_selection_uid=study_element_uid)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
@@ -4617,10 +4562,8 @@ def delete_selected_element(
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_all_configs(
-    current_user_id: str = Depends(get_current_user_id),
-) -> list[models.StudyElementTypes]:
-    service = StudyElementSelectionService(current_user_id)
+def get_all_configs() -> list[models.StudyElementTypes]:
+    service = StudyElementSelectionService()
     return service.get_allowed_configs()
 
 
@@ -4646,9 +4589,8 @@ def patch_new_element_selection_order(
     new_order_input: models.StudySelectionElementNewOrder = Body(
         description="New value to set for the order property of the selection"
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionElement:
-    service = StudyElementSelectionService(author=current_user_id)
+    service = StudyElementSelectionService()
     return service.set_new_order(
         study_uid=uid,
         study_selection_uid=study_element_uid,
@@ -4684,9 +4626,8 @@ def post_new_branch_arm_selection_create(
     selection: models.study_selections.study_selection.StudySelectionBranchArmCreateInput = Body(
         description="Related parameters of the selection that shall be created."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionBranchArm:
-    service = StudyBranchArmSelectionService(author=current_user_id)
+    service = StudyBranchArmSelectionService()
     return service.make_selection(study_uid=uid, selection_create_input=selection)
 
 
@@ -4749,10 +4690,9 @@ Possible errors:
 def get_all_selected_branch_arms(
     request: Request,  # request is actually required by the allow_exports decorator
     uid: str = studyUID,
-    current_user_id: str = Depends(get_current_user_id),
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> list[models.StudySelectionBranchArm]:
-    service = StudyBranchArmSelectionService(author=current_user_id)
+    service = StudyBranchArmSelectionService()
     return service.get_all_selection(
         study_uid=uid, study_value_version=study_value_version
     )
@@ -4776,10 +4716,9 @@ def get_all_selected_branch_arms(
 def get_selected_branch_arm(
     uid: str = studyUID,
     study_branch_arm_uid: str = study_selection_uid,
-    current_user_id: str = Depends(get_current_user_id),
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> models.StudySelectionBranchArm:
-    service = StudyBranchArmSelectionService(author=current_user_id)
+    service = StudyBranchArmSelectionService()
     return service.get_specific_selection(
         study_uid=uid,
         study_selection_uid=study_branch_arm_uid,
@@ -4815,9 +4754,8 @@ def patch_update_branch_arm_selection(
     selection: models.StudySelectionBranchArmEditInput = Body(
         description="Related parameters of the selection that shall be updated."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionBranchArm:
-    service = StudyBranchArmSelectionService(author=current_user_id)
+    service = StudyBranchArmSelectionService()
     selection.branch_arm_uid = study_branch_arm_uid
     return service.patch_selection(
         study_uid=uid,
@@ -4843,9 +4781,8 @@ def patch_update_branch_arm_selection(
 def get_selected_branch_arm_audit_trail(
     uid: str = studyUID,
     study_branch_arm_uid: str = study_selection_uid,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> list[models.StudySelectionBranchArmVersion]:
-    service = StudyBranchArmSelectionService(author=current_user_id)
+    service = StudyBranchArmSelectionService()
     return service.get_specific_selection_audit_trail(
         study_uid=uid, study_selection_uid=study_branch_arm_uid
     )
@@ -4865,9 +4802,8 @@ def get_selected_branch_arm_audit_trail(
 )
 def get_all_branch_arm_audit_trail(
     uid: str = studyUID,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> list[models.StudySelectionBranchArmVersion]:
-    service = StudyBranchArmSelectionService(author=current_user_id)
+    service = StudyBranchArmSelectionService()
     return service.get_all_selection_audit_trail(study_uid=uid)
 
 
@@ -4890,9 +4826,8 @@ def get_all_branch_arm_audit_trail(
 def delete_selected_branch_arm(
     uid: str = studyUID,
     study_branch_arm_uid: str = study_selection_uid,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    service = StudyBranchArmSelectionService(author=current_user_id)
+    service = StudyBranchArmSelectionService()
     service.delete_selection(study_uid=uid, study_selection_uid=study_branch_arm_uid)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
@@ -4919,9 +4854,8 @@ def patch_new_branch_arm_selection_order(
     new_order_input: models.StudySelectionBranchArmNewOrder = Body(
         description="New value to set for the order property of the selection"
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionBranchArm:
-    service = StudyBranchArmSelectionService(author=current_user_id)
+    service = StudyBranchArmSelectionService()
     return service.set_new_order(
         study_uid=uid,
         study_selection_uid=study_branch_arm_uid,
@@ -4961,10 +4895,9 @@ def patch_new_branch_arm_selection_order(
 def get_all_selected_branch_arms_within_arm(
     uid: str,
     arm_uid: str,
-    current_user_id: str = Depends(get_current_user_id),
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> list[models.StudySelectionBranchArm]:
-    service = StudyBranchArmSelectionService(author=current_user_id)
+    service = StudyBranchArmSelectionService()
     return service.get_all_selection_within_arm(
         study_uid=uid, study_arm_uid=arm_uid, study_value_version=study_value_version
     )
@@ -4998,9 +4931,8 @@ def post_new_cohort_selection_create(
     selection: models.StudySelectionCohortCreateInput = Body(
         description="Related parameters of the selection that shall be created."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionCohort:
-    service = StudyCohortSelectionService(author=current_user_id)
+    service = StudyCohortSelectionService()
     return service.make_selection(study_uid=uid, selection_create_input=selection)
 
 
@@ -5082,7 +5014,6 @@ def get_all_selected_cohorts(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
     arm_uid: str
     | None = Query(
         None,
@@ -5091,7 +5022,7 @@ def get_all_selected_cohorts(
     uid: str = studyUID,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> CustomPage[models.StudySelectionCohort]:
-    service = StudyCohortSelectionService(author=current_user_id)
+    service = StudyCohortSelectionService()
 
     all_selections = service.get_all_selection(
         page_number=page_number,
@@ -5130,10 +5061,9 @@ def get_all_selected_cohorts(
 def get_selected_cohort(
     uid: str = studyUID,
     study_cohort_uid: str = study_selection_uid,
-    current_user_id: str = Depends(get_current_user_id),
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> models.StudySelectionCohort:
-    service = StudyCohortSelectionService(author=current_user_id)
+    service = StudyCohortSelectionService()
     return service.get_specific_selection(
         study_uid=uid,
         study_selection_uid=study_cohort_uid,
@@ -5169,9 +5099,8 @@ def patch_update_cohort_selection(
     selection: models.StudySelectionCohortEditInput = Body(
         description="Related parameters of the selection that shall be updated."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionCohort:
-    service = StudyCohortSelectionService(author=current_user_id)
+    service = StudyCohortSelectionService()
     return service.patch_selection(
         study_uid=uid,
         study_selection_uid=study_cohort_uid,
@@ -5197,9 +5126,8 @@ def patch_update_cohort_selection(
 def get_selected_cohort_audit_trail(
     uid: str = studyUID,
     study_cohort_uid: str = study_selection_uid,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> list[models.StudySelectionCohortVersion]:
-    service = StudyCohortSelectionService(author=current_user_id)
+    service = StudyCohortSelectionService()
     return service.get_specific_selection_audit_trail(
         study_uid=uid, study_selection_uid=study_cohort_uid
     )
@@ -5219,9 +5147,8 @@ def get_selected_cohort_audit_trail(
 )
 def get_all_cohort_audit_trail(
     uid: str = studyUID,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> list[models.StudySelectionCohortVersion]:
-    service = StudyCohortSelectionService(author=current_user_id)
+    service = StudyCohortSelectionService()
     return service.get_all_selection_audit_trail(study_uid=uid)
 
 
@@ -5244,9 +5171,8 @@ def get_all_cohort_audit_trail(
 def delete_selected_cohort(
     uid: str = studyUID,
     study_cohort_uid: str = study_selection_uid,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    service = StudyCohortSelectionService(author=current_user_id)
+    service = StudyCohortSelectionService()
     service.delete_selection(study_uid=uid, study_selection_uid=study_cohort_uid)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
@@ -5273,9 +5199,8 @@ def patch_new_cohort_selection_order(
     new_order_input: models.StudySelectionCohortNewOrder = Body(
         description="New value to set for the order property of the selection"
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionCohort:
-    service = StudyCohortSelectionService(author=current_user_id)
+    service = StudyCohortSelectionService()
     return service.set_new_order(
         study_uid=uid,
         study_selection_uid=study_cohort_uid,

@@ -1,6 +1,14 @@
 import repository from './repository'
 
-function getAllPaginatedItems (path, pageSize = 100, params = {}, pageNumber = 1, total = 0, itemsAll = [], itemsFromPreviousPage = []) {
+function getAllPaginatedItems(
+  path,
+  pageSize = 100,
+  params = {},
+  pageNumber = 1,
+  total = 0,
+  itemsAll = [],
+  itemsFromPreviousPage = []
+) {
   /*
   Recursively issues http get requests in order to fetch all paginated items
   exposed by the {path} endpoint.
@@ -12,18 +20,28 @@ function getAllPaginatedItems (path, pageSize = 100, params = {}, pageNumber = 1
   Example usage:
     - getAllPaginatedItems('comment-threads', 10, { topic_path: '/foo/bar' })
   */
-  return new Promise(function (resolve, reject) {
+  return new Promise(function (resolve) {
     params.page_size = pageSize
     params.page_number = pageNumber
     params.total_count = true
     if ((pageNumber - 2) * pageSize + itemsFromPreviousPage.length < total) {
-      console.debug(`Fetching page ${pageNumber} of ${Math.ceil(total / pageSize)}`)
+      console.debug(
+        `Fetching page ${pageNumber} of ${Math.ceil(total / pageSize)}`
+      )
       if (itemsAll === undefined) {
         itemsAll = []
       }
-      repository.get(path, { params }).then(response => {
+      repository.get(path, { params }).then((response) => {
         itemsAll = itemsAll.concat(response.data.items)
-        getAllPaginatedItems(path, pageSize, params, pageNumber + 1, response.data.total, itemsAll, response.data.items).then(result => resolve(result))
+        getAllPaginatedItems(
+          path,
+          pageSize,
+          params,
+          pageNumber + 1,
+          response.data.total,
+          itemsAll,
+          response.data.items
+        ).then((result) => resolve(result))
       })
     } else {
       resolve(itemsAll)
@@ -32,5 +50,5 @@ function getAllPaginatedItems (path, pageSize = 100, params = {}, pageNumber = 1
 }
 
 export default {
-  getAllPaginatedItems
+  getAllPaginatedItems,
 }

@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Body, Depends, Query
+from fastapi import APIRouter, Body, Query
 from pydantic.types import Json
 
 from clinical_mdr_api import config, models
 from clinical_mdr_api.models.utils import GenericFilteringReturn
-from clinical_mdr_api.oauth import get_current_user_id, rbac
+from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions
 from clinical_mdr_api.services.clinical_programmes import (
@@ -74,6 +74,5 @@ def create(
     clinical_programme_create_input: models.ClinicalProgrammeInput = Body(
         description="Related parameters of the clinical programme that shall be created.",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.ClinicalProgramme:
     return clinical_programme_service.create(clinical_programme_create_input)

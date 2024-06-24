@@ -1,10 +1,10 @@
 import _isEqual from 'lodash/isEqual'
 
 /*
-** Compute differences between 2 forms, first form being considered as
-** the reference one. If any difference is found in form2, it will be returned in a new Object.
-*/
-function getDifferences (form1, form2) {
+ ** Compute differences between 2 forms, first form being considered as
+ ** the reference one. If any difference is found in form2, it will be returned in a new Object.
+ */
+function getDifferences(form1, form2) {
   const keys1 = Object.keys(form1).sort()
   const keys2 = Object.keys(form2).sort()
   const result = {}
@@ -23,5 +23,5 @@ function getDifferences (form1, form2) {
 }
 
 export default {
-  getDifferences
+  getDifferences,
 }

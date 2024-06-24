@@ -19,7 +19,7 @@ class ObjectivePreInstanceAR(PreInstanceAR):
     Implementation of ObjectivePreInstanceAR. Solely based on Parametrized Template.
     """
 
-    _is_confirmatory_testing: bool | None = None
+    _is_confirmatory_testing: bool = False
 
     _indications: list[SimpleTermModel] | None = None
 
@@ -46,7 +46,7 @@ class ObjectivePreInstanceAR(PreInstanceAR):
         item_metadata: LibraryItemMetadataVO,
         sequence_id: str,
         study_count: int = 0,
-        is_confirmatory_testing: bool | None = None,
+        is_confirmatory_testing: bool = False,
         indications: list[SimpleTermModel] | None = None,
         categories: list[SimpleCTTermNameAndAttributes] | None = None,
     ) -> Self:
@@ -72,7 +72,7 @@ class ObjectivePreInstanceAR(PreInstanceAR):
         next_available_sequence_id_callback: Callable[[str], str | None] = (
             lambda _: None
         ),
-        is_confirmatory_testing: bool | None = None,
+        is_confirmatory_testing: bool = False,
         indications: list[SimpleTermModel] | None = None,
         categories: list[SimpleCTTermNameAndAttributes] | None = None,
     ) -> Self:

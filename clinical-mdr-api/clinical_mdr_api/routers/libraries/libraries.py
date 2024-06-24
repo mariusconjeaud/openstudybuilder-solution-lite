@@ -1,10 +1,10 @@
 """Objective templates router."""
 
 
-from fastapi import APIRouter, Body, Depends, Query
+from fastapi import APIRouter, Body, Query
 
 from clinical_mdr_api import models
-from clinical_mdr_api.oauth import get_current_user_id, rbac
+from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.services.libraries import libraries as service
 
 # Prefixed with "/libraries"
@@ -25,7 +25,6 @@ def get_libraries(
         description="If specified, only those libraries are returned that are editable. \n"
         "Valid values are: 'true' or 'false'.",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
     return service.get_libraries(is_editable)
 
@@ -43,6 +42,5 @@ def get_libraries(
 # pylint: disable=unused-argument
 def create_library(
     library: models.Library = Body(description=""),
-    current_user_id: str = Depends(get_current_user_id),
 ):
     return service.create(library.name, library.is_editable)

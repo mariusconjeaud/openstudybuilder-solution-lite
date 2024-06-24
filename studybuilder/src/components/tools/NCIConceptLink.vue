@@ -1,5 +1,5 @@
 <template>
-  <a :href="this.termBrowserUrl" target='_blank' > {{ conceptId }} </a>
+  <a :href="termBrowserUrl" target="_blank"> {{ conceptId }} </a>
 </template>
 
 <script>
@@ -7,13 +7,16 @@ export default {
   props: {
     conceptId: {
       type: String,
-      default: ''
-    }
+      default: '',
+    },
   },
   computed: {
-    termBrowserUrl () {
-      return 'https://ncit.nci.nih.gov/ncitbrowser/ConceptReport.jsp?code=' + this.conceptId
-    }
-  }
+    termBrowserUrl() {
+      return (
+        'https://ncit.nci.nih.gov/ncitbrowser/ConceptReport.jsp?code=' +
+        this.conceptId
+      )
+    },
+  },
 }
 </script>

@@ -88,12 +88,18 @@ class LibraryItemMetadataVO:
     _minor_version: int
 
     @classmethod
-    def get_initial_item_metadata(cls, author: str) -> Self:
+    def get_initial_item_metadata(
+        cls,
+        author: str,
+        start_date: datetime.datetime | None = None,
+    ) -> Self:
         return cls(
             _change_description="Initial version",
             _status=LibraryItemStatus.DRAFT,
             _author=author,
-            _start_date=datetime.datetime.now(datetime.timezone.utc),
+            _start_date=start_date
+            if start_date
+            else datetime.datetime.now(datetime.timezone.utc),
             _end_date=None,
             _major_version=0,
             _minor_version=1,

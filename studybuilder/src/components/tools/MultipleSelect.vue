@@ -1,67 +1,61 @@
 <template>
-<v-autocomplete
-  multiple
-  data-cy="autocomplete-input-field"
-  :error-messages="errors"
-  :item-text="itemText"
-  :item-value="itemValue"
-  :return-object="returnObject"
-  @input="update"
-  :search-input.sync="search"
-  @change="search = ''"
-  dense
-  clearable
-  hide-no-data
-  v-bind="$attrs"
-  v-on="$listeners"
-  :value="value"
+  <v-autocomplete
+    v-model:search="search"
+    v-bind="$attrs"
+    v-model="value"
+    multiple
+    data-cy="autocomplete-input-field"
+    clearable
+    hide-no-data
+    @change="search = ''"
   >
-  <template v-slot:selection="{index}" v-if="shorterPreview">
-    <div v-if="index === 0">
-      <span>{{ value[0].name.length > 15 ? value[0].name.replace(/<\/?[^>]+(>)/g, '').substring(0, 15) + '...' : value[0].name.replace(/<\/?[^>]+(>)/g, '') }}</span>
-    </div>
-    <span
-      v-if="index === 1"
-      class="grey--text caption mr-1"
-    >
-      (+{{ value.length -1 }})
-    </span>
-  </template>
-</v-autocomplete>
+    <template v-if="shorterPreview" #selection="{ index }">
+      <div v-if="index === 0">
+        <span>{{
+          value[0].name.length > 15
+            ? value[0].name.replace(/<\/?[^>]+(>)/g, '').substring(0, 15) +
+              '...'
+            : value[0].name.replace(/<\/?[^>]+(>)/g, '')
+        }}</span>
+      </div>
+      <span v-if="index === 1" class="text-grey caption mr-1">
+        (+{{ value.length - 1 }})
+      </span>
+    </template>
+  </v-autocomplete>
 </template>
 
 <script>
 export default {
   props: {
-    errors: Array,
-    itemText: {
-      type: [String, Function],
-      default: 'name'
+    initialData: {
+      type: Array,
+      default: () => [],
     },
-    itemValue: {
-      type: String,
-      default: 'value'
-    },
-    returnObject: {
-      type: Boolean,
-      default: false
-    },
-    initialData: Array,
     shorterPreview: {
       type: Boolean,
-      default: false
+      default: false,
     },
-    value: Array
+    modelValue: {
+      type: Array,
+      default: () => [],
+    },
   },
-  data () {
+  emits: ['update:modelValue'],
+  data() {
     return {
-      search: ''
+      search: '',
     }
   },
-  methods: {
-    update (val) {
-      this.$emit('input', val)
-    }
-  }
+  computed: {
+    value: {
+      get() {
+        return this.modelValue
+      },
+      set(value) {
+        this.$emit('update:modelValue', value)
+      },
+    },
+  },
 }
 </script>

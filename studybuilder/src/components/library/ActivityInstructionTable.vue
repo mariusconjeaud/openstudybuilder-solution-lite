@@ -1,30 +1,37 @@
 <template>
-<div>
-  <instance-table
-    fetch-instances-action-name="activityInstructions/fetchFilteredActivityInstructions"
-    type="activity_instruction"
-    :instances="activityInstructions"
-    base-url="/activity-instructions"
-    export-object-label="ActivityInstructions"
-    column-data-resource="activityInstructions"
-    :server-items-length="total"
+  <div>
+    <InstanceTable
+      type="activity_instruction"
+      :instances="activityInstructions"
+      base-url="/activity-instructions"
+      export-object-label="ActivityInstructions"
+      column-data-resource="activityInstructions"
+      :items-length="total"
+      :fetching-function="fetchFilteredActivityInstructions"
     />
-</div>
+  </div>
 </template>
 
 <script>
-import InstanceTable from './InstanceTable'
-import { mapGetters } from 'vuex'
+import InstanceTable from './InstanceTable.vue'
+import { useActivityInstructionsStore } from '@/stores/library-activity-instructions'
+import { computed } from 'vue'
 
 export default {
   components: {
-    InstanceTable
+    InstanceTable,
   },
-  computed: {
-    ...mapGetters({
-      activityInstructions: 'activityInstructions/activityInstructions',
-      total: 'activityInstructions/total'
-    })
-  }
+  setup() {
+    const activityInstructionsStore = useActivityInstructionsStore()
+
+    return {
+      fetchFilteredActivityInstructions:
+        activityInstructionsStore.fetchFilteredActivityInstructions,
+      total: computed(() => activityInstructionsStore.total),
+      activityInstructions: computed(
+        () => activityInstructionsStore.activityInstructions
+      ),
+    }
+  },
 }
 </script>

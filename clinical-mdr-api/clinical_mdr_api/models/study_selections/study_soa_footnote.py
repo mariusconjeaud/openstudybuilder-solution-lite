@@ -55,6 +55,18 @@ class StudySoAFootnote(BaseModel):
     referenced_items: list[ReferencedItem] = Field([])
     footnote: Footnote | None = Field(None, nullable=True)
     footnote_template: FootnoteTemplate | None = Field(None, nullable=True)
+    accepted_version: bool | None = Field(
+        None,
+        title="Accepted Version",
+        description="Denotes if user accepted obsolete objective versions",
+        nullable=True,
+    )
+    latest_footnote: Footnote | None = Field(
+        None,
+        title="latest_footnote",
+        description="Latest version of footnote selected for study selection.",
+        nullable=True,
+    )
 
     @classmethod
     def from_study_soa_footnote_vo(
@@ -65,16 +77,29 @@ class StudySoAFootnote(BaseModel):
         study_value_version: str | None = None,
     ) -> Self:
         footnote = None
+        latest_footnote = None
         footnote_template = None
         if study_soa_footnote_vo.footnote_uid:
-            footnote = Footnote.from_footnote_ar(
-                find_footnote_by_uid(
-                    study_soa_footnote_vo.footnote_uid,
-                    version=study_soa_footnote_vo.footnote_version,
-                )
-                if study_soa_footnote_vo.footnote_version
-                else find_footnote_by_uid(study_soa_footnote_vo.footnote_uid)
+            latest_footnote = Footnote.from_footnote_ar(
+                find_footnote_by_uid(study_soa_footnote_vo.footnote_uid)
             )
+            if study_soa_footnote_vo.footnote_version:
+                if latest_footnote.version == study_soa_footnote_vo.footnote_version:
+                    footnote = latest_footnote
+                    latest_footnote = None
+                else:
+                    footnote = Footnote.from_footnote_ar(
+                        find_footnote_by_uid(
+                            study_soa_footnote_vo.footnote_uid,
+                            version=study_soa_footnote_vo.footnote_version,
+                        )
+                    )
+            else:
+                footnote = Footnote.from_footnote_ar(
+                    find_footnote_by_uid(
+                        study_soa_footnote_vo.footnote_uid,
+                    )
+                )
         elif study_soa_footnote_vo.footnote_template_uid:
             footnote_template = FootnoteTemplate.from_footnote_template_ar(
                 find_footnote_template_by_uid(
@@ -104,8 +129,10 @@ class StudySoAFootnote(BaseModel):
                 for ref_item in study_soa_footnote_vo.referenced_items
             ],
             footnote=footnote,
+            latest_footnote=latest_footnote,
             footnote_template=footnote_template,
             modified=study_soa_footnote_vo.modified,
+            accepted_version=study_soa_footnote_vo.accepted_version,
         )
 
 

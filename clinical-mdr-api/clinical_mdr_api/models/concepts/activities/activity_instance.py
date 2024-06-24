@@ -3,6 +3,7 @@ from typing import Callable, Self
 
 from pydantic import Field
 
+from clinical_mdr_api.domain_repositories.models._utils import convert_to_datetime
 from clinical_mdr_api.domains.concepts.activities.activity import ActivityAR
 from clinical_mdr_api.domains.concepts.activities.activity_group import ActivityGroupAR
 from clinical_mdr_api.domains.concepts.activities.activity_instance import (
@@ -111,6 +112,7 @@ class ActivityInstance(ActivityBase):
                 )
                 for activity_grouping in activity_ar.concept_vo.activity_groupings
             ],
+            activity_name=activity_ar.concept_vo.activity_name,
             activity_instance_class=CompactActivityInstanceClass(
                 uid=activity_ar.concept_vo.activity_instance_class_uid,
                 name=activity_ar.concept_vo.activity_instance_class_name,
@@ -151,6 +153,11 @@ class ActivityInstance(ActivityBase):
     activity_groupings: list[ActivityInstanceHierarchySimpleModel] = Field(
         ...,
         title="activity_groupings",
+    )
+    activity_name: str | None = Field(
+        None,
+        title="activity_name",
+        description="",
     )
     activity_instance_class: CompactActivityInstanceClass = Field(
         ...,
@@ -257,11 +264,11 @@ class ActivityInstanceEditInput(ConceptInput):
         title="adam_param_code",
         description="",
     )
-    is_required_for_activity: bool = Field(False)
-    is_default_selected_for_activity: bool = Field(False)
-    is_data_sharing: bool = Field(False)
-    is_legacy_usage: bool = Field(False)
-    is_derived: bool = Field(False)
+    is_required_for_activity: bool | None = Field(None)
+    is_default_selected_for_activity: bool | None = Field(None)
+    is_data_sharing: bool | None = Field(None)
+    is_legacy_usage: bool | None = Field(None)
+    is_derived: bool | None = Field(None)
     legacy_description: str | None = Field(
         None,
         title="legacy_description",
@@ -338,6 +345,8 @@ class SimpleActivity(BaseModel):
         title="name",
         description="",
     )
+    version: str | None = Field(None, title="version")
+    status: str | None = Field(None, title="status")
 
 
 class SimpleActivityItemClass(BaseModel):
@@ -367,6 +376,7 @@ class ActivityInstanceOverview(BaseModel):
     activity_groupings: list[SimpleActivityInstanceGrouping] = Field(...)
     activity_instance: SimpleActivityInstance = Field(...)
     activity_items: list[SimplifiedActivityItem] = Field(...)
+    all_versions: list[str] = Field(...)
 
     @classmethod
     def from_repository_input(cls, overview: dict):
@@ -417,6 +427,8 @@ class ActivityInstanceOverview(BaseModel):
                             "activity_value"
                         ).get("is_multiple_selection_allowed", True),
                         library_name=activity_grouping.get("activity_library_name"),
+                        version=activity_grouping.get("version", {}).get("version"),
+                        status=activity_grouping.get("version", {}).get("status"),
                     ),
                     activity_group=SimpleActivityGroup(
                         name=activity_grouping.get("activity_group_value").get("name"),
@@ -471,6 +483,15 @@ class ActivityInstanceOverview(BaseModel):
                 activity_instance_class=SimpleActivityInstanceClass(
                     name=overview.get("activity_instance_class").get("name")
                 ),
+                status=overview.get("has_version", {}).get("status"),
+                version=overview.get("has_version", {}).get("version"),
+                start_date=convert_to_datetime(
+                    overview.get("has_version", {}).get("start_date")
+                ),
+                end_date=convert_to_datetime(
+                    overview.get("has_version", {}).get("end_date")
+                ),
             ),
             activity_items=activity_items,
+            all_versions=overview.get("all_versions"),
         )

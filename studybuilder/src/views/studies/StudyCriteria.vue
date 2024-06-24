@@ -1,85 +1,92 @@
 <template>
-<div class="px-4">
-  <div class="page-title d-flex align-center">
-    {{ $t('Sidebar.study.study_criteria') }} ({{ studyId }})
-    <help-button-with-panels :items="helpItems" />
+  <div class="px-4">
+    <div class="page-title d-flex align-center">
+      {{ $t('Sidebar.study.study_criteria') }} ({{ studyId }})
+      <HelpButtonWithPanels :items="helpItems" />
+    </div>
+    <v-tabs v-model="tab" bg-color="white">
+      <v-tab
+        v-for="type in criteriaTypes"
+        :key="type.term_uid"
+        :value="type.name.sponsor_preferred_name"
+      >
+        {{ type.name.sponsor_preferred_name }}
+      </v-tab>
+    </v-tabs>
+    <v-window v-model="tab">
+      <v-window-item
+        v-for="type in criteriaTypes"
+        :key="type.term_uid"
+        :value="type.name.sponsor_preferred_name"
+      >
+        <EligibilityCriteriaTable :criteria-type="type" />
+      </v-window-item>
+    </v-window>
   </div>
-  <v-tabs v-model="tab">
-    <v-tab
-      v-for="type in criteriaTypes"
-      :key="type.term_uid"
-      :href="`#${type.sponsor_preferred_name}`"
-      >
-      {{ type.sponsor_preferred_name }}
-    </v-tab>
-  </v-tabs>
-  <v-tabs-items v-model="tab">
-    <v-tab-item
-      v-for="type in criteriaTypes"
-      :key="type.term_uid"
-      :id="type.sponsor_preferred_name"
-      >
-      <eligibility-criteria-table
-        :criteriaType="type"
-        />
-    </v-tab-item>
-  </v-tabs-items>
-</div>
 </template>
 
 <script>
-import { studySelectedNavigationGuard } from '@/mixins/studies'
-import EligibilityCriteriaTable from '@/components/studies/EligibilityCriteriaTable'
-import HelpButtonWithPanels from '@/components/tools/HelpButtonWithPanels'
+import { computed } from 'vue'
+import EligibilityCriteriaTable from '@/components/studies/EligibilityCriteriaTable.vue'
+import HelpButtonWithPanels from '@/components/tools/HelpButtonWithPanels.vue'
 import terms from '@/api/controlledTerminology/terms'
-import { mapActions } from 'vuex'
+import { useAppStore } from '@/stores/app'
+import { useStudiesGeneralStore } from '@/stores/studies-general'
 
 export default {
-  mixins: [studySelectedNavigationGuard],
   components: {
     EligibilityCriteriaTable,
-    HelpButtonWithPanels
+    HelpButtonWithPanels,
   },
-  data () {
+  setup() {
+    const appStore = useAppStore()
+    const studiesGeneralStore = useStudiesGeneralStore()
+    return {
+      addBreadcrumbsLevel: appStore.addBreadcrumbsLevel,
+      selectedStudy: computed(() => studiesGeneralStore.selectedStudy),
+      studyId: studiesGeneralStore.studyId,
+    }
+  },
+  data() {
     return {
       criteriaTypes: [],
       tab: null,
       helpItems: [
         'StudyCriteriaTable.general',
-        'StudyCriteriaTable.study_criteria'
-      ]
+        'StudyCriteriaTable.study_criteria',
+      ],
     }
-  },
-  mounted () {
-    terms.getByCodelist('criteriaTypes').then(resp => {
-      this.criteriaTypes = resp.data.items
-    })
-    this.tab = this.$route.params.tab
-  },
-  methods: {
-    ...mapActions({
-      addBreadcrumbsLevel: 'app/addBreadcrumbsLevel'
-    })
   },
   watch: {
-    tab (newValue) {
+    tab(newValue) {
       this.$router.push({
         name: 'StudySelectionCriteria',
-        params: { tab: newValue }
+        params: { study_id: this.selectedStudy.uid, tab: newValue },
       })
-      this.addBreadcrumbsLevel({
-        text: newValue,
-        to: { name: 'StudySelectionCriteria', params: { tab: newValue } },
-        index: 3,
-        replace: true
-      })
-    }
-  }
+      this.addBreadcrumbsLevel(
+        newValue,
+        {
+          name: 'StudySelectionCriteria',
+          params: { study_id: this.selectedStudy.uid, tab: newValue },
+        },
+        3,
+        true
+      )
+    },
+  },
+  mounted() {
+    terms.getByCodelist('criteriaTypes').then((resp) => {
+      this.criteriaTypes = resp.data.items
+      this.tab =
+        this.$route.params.tab ||
+        this.criteriaTypes[0].name.sponsor_preferred_name
+    })
+  },
 }
 </script>
 
 <style scoped>
-.v-tabs-items {
+.v-window {
   min-height: 50vh;
 }
 </style>

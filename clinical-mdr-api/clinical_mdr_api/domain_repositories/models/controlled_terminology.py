@@ -6,6 +6,7 @@ from neomodel import (
     RelationshipFrom,
     RelationshipTo,
     StringProperty,
+    ZeroOrOne,
 )
 
 from clinical_mdr_api.domain_repositories.models.generic import (
@@ -29,7 +30,10 @@ class CTPackage(ClinicalMdrNodeWithUID):
     effective_date = DateProperty()
     user_initials = StringProperty()
     contains_package = RelationshipFrom(
-        "CTCatalogue", "CONTAINS_PACKAGE", model=ClinicalMdrRel
+        "CTCatalogue", "CONTAINS_PACKAGE", model=ClinicalMdrRel, cardinality=ZeroOrOne
+    )
+    extends_package = RelationshipTo(
+        "CTPackage", "EXTENDS_PACKAGE", model=ClinicalMdrRel, cardinality=ZeroOrOne
     )
 
 

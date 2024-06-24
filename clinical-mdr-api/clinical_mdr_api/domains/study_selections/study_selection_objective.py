@@ -111,6 +111,10 @@ class StudySelectionObjectivesAR:
     def study_objectives_selection(self) -> tuple[StudySelectionObjectiveVO]:
         return self._study_objectives_selection
 
+    @study_objectives_selection.setter
+    def study_objectives_selection(self, value: Iterable[StudySelectionObjectiveVO]):
+        self._study_objectives_selection = tuple(value)
+
     def get_specific_objective_selection(
         self, study_selection_uid: str
     ) -> tuple[StudySelectionObjectiveVO, int]:

@@ -10,14 +10,15 @@ Figure 1: Overview of possible actions for managing visits
 
 ## Adding Visits
 
-The following visit categories are available:
+The following visit scheduling type are available:
 
-Visit Category | Description
+Visit category | Description
 -- | --
 Scheduled visit | A visit with a planned timing
-Unscheduled visit | A technical visit, where data can be put for unscheduled data collection, e.g., Adverse Events
-Non-visit | A technical visit for data collection for non-visit for
+Unscheduled visit | A technical visit, where data can be put for unscheduled data collection, e.g., extra lab samples
+Non-visit | A technical visit for non-visit data collection
 Special Visit | An event-driven visit, like early treatment discontinuation or repeated visits for observational studies
+Manually defined visit | A visit with Visit name, Visit short name as well as Visit number and Unique visit number defined fully manually by the user
 
 ### Planned Visit Schedule
 
@@ -82,6 +83,19 @@ The special visit is referencing to another existing visit. Example: Visit 10 is
 
 Figure 7: Example -  Visit 10 and visit 10A
 
+### Adding a Manually defined visit
+
+A manually defined visit is a type of visit for which the user must fully manually define the Visit name, Visit short name, Visit number and Unique visit number. 
+When creating a visit, it is important to note that none of these items can be duplicated with values that already exist. 
+Moreover, timing of such visit should not overlap with other entered visits. It is essential to ensure that newly created manually defined visit is placed in correct chronological order and that the defined visit names and numbers of this visit are reflecting that. 
+Manually defined visits can be utilized, for instance, due to a protocol amendment, to add a new visit after the first patient has been enrolled in the study (FPFV) and data collection has already begun. 
+In situation like this, addition of Scheduled visit type would cause a visit reordering and consequently changing their names, which may have serious consequences on data that were already collected. 
+The manually defined visit enables the addition of a visit with timing and a name defined manually by the user, thus not impacting the order and names of visits that were initially set up.
+
+![Example - Manually defined visit 2.1](~@source/images/user_guides/guide_visits_09.png)
+
+Figure 8: Example -  Manually defined visit 2.1
+
 ## Visit Table Specific Functionalities
 
 **Duplicate visit:** In the row actions it is possible to duplicate a visit if several visits are having the same attributes except for the timing. 
@@ -90,7 +104,7 @@ Figure 7: Example -  Visit 10 and visit 10A
  
 ![Example - Edit in table view including saving on row level and Close edit mode](~@source/images/user_guides/guide_visits_08.png)
 
-Figure 8: Example -  Edit in table view including saving on row level and Close edit mode
+Figure 9: Example -  Edit in table view including saving on row level and Close edit mode
 
 ## The Visit Table
 
@@ -100,17 +114,17 @@ Column | Description
 -- | --
 Epoch | The epoch, the visit is assigned to
 Visit Type | Based on the visit type codelist in the library. Example: Screening
-Visit Class | Single_visit
+Visit Class | Scheduled visit, Unscheduled visit, Non-visit, Special Visit, Manually defined visit
 Anchor visit in visit group | Indicator when visit is the anchor visit in a visit stretching across several days
 Visit group | The visit group where this visit is used as anchor visit for other vsits in same group
 Global anchor visit | Indicator if visit is global anchor visit (global reference) in the study
 Contact mode | CDISC Visit contact mode codelist
 Time Reference | Reference to typical global anchor visit or anchor visit in visit group
 Timing | Timing towards time reference point
-Visit number | Auto-numbered visit. Example: 2
-Unique visit number | 3-digit visit number. Example: 200
-Visit name | Visit as name. Example: Visit 2
-Visit short name | Visit short name. Example: V2
+Visit number | Auto-numbered visit. Example: 2. Defined manually for Manually defined visits
+Unique visit number | 3-digit visit number. Example: 200. Defined manually for Manually defined visits
+Visit name | Visit as name. Example: Visit 2. Defined manually for Manually defined visits
+Visit short name | Visit short name. Example: V2. Defined manually for Manually defined visits
 Study day label | Timing relative to the reference timing in days. Example: Day 1
 Study week label | Timing relative to the reference timing in weeks. Example: Week 1
 Visit window | The window for when the visit must take place relative to timing of visit. Example: -1/1

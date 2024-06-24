@@ -1,20 +1,19 @@
 <template>
-<div>
-  <v-autocomplete
-    :label="$t('UCUMUnitField.label')"
-    data-cy='ucum-unit-field'
-    :value="value"
-    :items="ucumUnits"
-    :item-text="getUcumDisplay"
-    return-object
-    dense
-    clearable
-    @update:search-input="searchForUnit"
-    v-bind="$attrs"
-    v-on="$listeners"
-    @change="update"
+  <div>
+    <v-autocomplete
+      :label="$t('UCUMUnitField.label')"
+      data-cy="ucum-unit-field"
+      :model-value="value"
+      :items="ucumUnits"
+      :item-title="getUcumDisplay"
+      return-object
+      clearable
+      v-bind="$attrs"
+      density="compact"
+      @update:search-input="searchForUnit"
+      @update:model-value="update"
     />
-</div>
+  </div>
 </template>
 
 <script>
@@ -23,14 +22,20 @@ import * as ucumlhc from '@lhncbc/ucum-lhc'
 const utils = ucumlhc.UcumLhcUtils.getInstance()
 
 export default {
-  props: ['value'],
-  data () {
+  props: {
+    modelValue: {
+      type: Object,
+      default: undefined,
+    },
+  },
+  emits: ['update:modelValue'],
+  data() {
     return {
-      ucumUnits: []
+      ucumUnits: [],
     }
   },
   methods: {
-    searchForUnit (value) {
+    searchForUnit(value) {
       if (!value) {
         value = ''
       }
@@ -39,13 +44,12 @@ export default {
         this.ucumUnits = result.units
       }
     },
-    getUcumDisplay (item) {
+    getUcumDisplay(item) {
       return `${item.code} (${item.name})`
     },
-    update (value) {
-      this.$emit('input', value)
-    }
-  }
-
+    update(value) {
+      this.$emit('update:modelValue', value)
+    },
+  },
 }
 </script>

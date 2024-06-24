@@ -2,14 +2,14 @@
 from datetime import datetime
 from typing import Any
 
-from fastapi import APIRouter, Body, Depends, Path, Query
+from fastapi import APIRouter, Body, Path, Query
 from pydantic.types import Json
 
 from clinical_mdr_api import config, models
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.oauth import get_current_user_id, rbac
+from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions
 from clinical_mdr_api.services.controlled_terminologies.ct_codelist_attributes import (
@@ -67,9 +67,8 @@ def get_codelists(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    ct_codelist_attribute_service = CTCodelistAttributesService(user=current_user_id)
+    ct_codelist_attribute_service = CTCodelistAttributesService()
     results = ct_codelist_attribute_service.get_all_ct_codelists(
         catalogue_name=catalogue_name,
         library=library,
@@ -103,7 +102,6 @@ def get_codelists(
     },
 )
 def get_distinct_values_for_header(
-    current_user_id: str = Depends(get_current_user_id),
     catalogue_name: str = Query(
         None,
         description="If specified, only codelists from given catalogue are returned.",
@@ -129,7 +127,7 @@ def get_distinct_values_for_header(
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
 ):
-    ct_codelist_attribute_service = CTCodelistAttributesService(user=current_user_id)
+    ct_codelist_attribute_service = CTCodelistAttributesService()
     return ct_codelist_attribute_service.get_distinct_values_for_header(
         catalogue_name=catalogue_name,
         library=library,
@@ -179,9 +177,8 @@ def get_codelist_attributes(
         "Only exact matches are considered. The version is specified in the following format:"
         "<major>.<minor> where <major> and <minor> are digits. E.g. '0.1', '0.2', '1.0',",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    ct_codelist_attribute_service = CTCodelistAttributesService(user=current_user_id)
+    ct_codelist_attribute_service = CTCodelistAttributesService()
     return ct_codelist_attribute_service.get_by_uid(
         codelist_uid=codelist_uid,
         at_specific_date=at_specified_date_time,
@@ -208,9 +205,8 @@ def get_codelist_attributes(
 )
 def get_versions(
     codelist_uid: str = CTCodelistUID,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    ct_codelist_attribute_service = CTCodelistAttributesService(user=current_user_id)
+    ct_codelist_attribute_service = CTCodelistAttributesService()
     return ct_codelist_attribute_service.get_version_history(codelist_uid=codelist_uid)
 
 
@@ -249,9 +245,8 @@ def edit(
     codelist_input: models.CTCodelistAttributesEditInput = Body(
         description="The new parameter terms for the codelist including the change description.",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    ct_codelist_attribute_service = CTCodelistAttributesService(user=current_user_id)
+    ct_codelist_attribute_service = CTCodelistAttributesService()
     return ct_codelist_attribute_service.edit_draft(
         codelist_uid=codelist_uid, codelist_input=codelist_input
     )
@@ -290,9 +285,8 @@ If the request succeeds:
 )
 def create(
     codelist_uid: str = CTCodelistUID,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    ct_codelist_attribute_service = CTCodelistAttributesService(user=current_user_id)
+    ct_codelist_attribute_service = CTCodelistAttributesService()
     return ct_codelist_attribute_service.create_new_version(codelist_uid=codelist_uid)
 
 
@@ -328,7 +322,6 @@ If the request succeeds:
 )
 def approve(
     codelist_uid: str = CTCodelistUID,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    ct_codelist_attribute_service = CTCodelistAttributesService(user=current_user_id)
+    ct_codelist_attribute_service = CTCodelistAttributesService()
     return ct_codelist_attribute_service.approve(codelist_uid=codelist_uid)

@@ -1,151 +1,161 @@
 <template>
-<studybuilder-template-table
-  ref="table"
-  :url-prefix="urlPrefix"
-  translation-type="ObjectiveTemplateTable"
-  object-type="objectiveTemplates"
-  :headers="headers"
-  has-api
-  column-data-resource="objective-templates"
-  :history-formating-func="formatHistoryItem"
-  :history-excluded-headers="historyExcludedHeaders"
-  fullscreen-form
-  :prepare-duplicate-payload-func="prepareDuplicatePayload"
-  @refresh="refreshTable"
-  :default-filters="defaultFilters"
+  <StudybuilderTemplateTable
+    ref="table"
+    :url-prefix="urlPrefix"
+    translation-type="ObjectiveTemplateTable"
+    object-type="objectiveTemplates"
+    :headers="headers"
+    column-data-resource="objective-templates"
+    :history-formating-func="formatHistoryItem"
+    :history-excluded-headers="historyExcludedHeaders"
+    fullscreen-form
+    :prepare-duplicate-payload-func="prepareDuplicatePayload"
+    :default-filters="defaultFilters"
+    @refresh="refreshTable"
   >
-  <template v-slot:editform="{ closeForm, selectedObject, preInstanceMode }">
-    <objective-template-pre-instance-form
-      v-if="preInstanceMode"
-      :pre-instance="selectedObject"
-      @close="closeForm"
-      @success="refreshTable()"
+    <template #editform="{ closeForm, selectedObject, preInstanceMode }">
+      <ObjectiveTemplatePreInstanceForm
+        v-if="preInstanceMode"
+        :pre-instance="selectedObject"
+        @close="closeForm"
+        @success="refreshTable()"
       />
-    <objective-template-form
-      v-else
-      @close="closeForm"
-      @templateAdded="refreshTable()"
-      @templateUpdated="refreshTable()"
-      :template="selectedObject"
+      <ObjectiveTemplateForm
+        v-else
+        :template="selectedObject"
+        @close="closeForm"
+        @template-added="refreshTable()"
+        @template-updated="refreshTable()"
       />
-  </template>
-  <template v-slot:item.is_confirmatory_testing="{ item }">
-    <template v-if="item.is_confirmatory_testing !== null">
-      {{ item.is_confirmatory_testing|yesno }}
     </template>
-    <template v-else>
-      {{ $t('_global.not_applicable_long') }}
-    </template>
-  </template>
-  <template v-slot:item.categories.name.sponsor_preferred_name="{ item }">
-    <template v-if="item.categories && item.categories.length">
-      {{ item.categories|terms }}
-    </template>
-    <template v-else>
-      {{ $t('_global.not_applicable_long') }}
-    </template>
-  </template>
-  <template v-slot:indexingDialog="{ closeDialog, template, show, preInstanceMode }">
-    <template-indexing-dialog
-      @close="closeDialog"
-      @updated="refreshTable"
-      :template="template"
-      :prepare-payload-func="prepareIndexingPayload"
-      :url-prefix="urlPrefix"
-      :show="show"
-      :pre-instance-mode="preInstanceMode"
-      >
-      <template v-slot:form="{ form }">
-        <objective-template-indexing-form
-          ref="indexingForm"
-          :form="form"
-          :template="template"
-          />
+    <template #[`item.is_confirmatory_testing`]="{ item }">
+      <template v-if="item.is_confirmatory_testing !== null">
+        {{ $filters.yesno(item.is_confirmatory_testing) }}
       </template>
-    </template-indexing-dialog>
-  </template>
-  <template v-slot:preInstanceForm="{ closeDialog, template }">
-    <objective-template-pre-instance-form
-      :template="template"
-      @close="closeDialog"
-      @success="refreshTable()"
+      <template v-else>
+        {{ $t('_global.not_applicable_long') }}
+      </template>
+    </template>
+    <template #[`item.categories.name.sponsor_preferred_name`]="{ item }">
+      <template v-if="item.categories && item.categories.length">
+        {{ $filters.terms(item.categories) }}
+      </template>
+      <template v-else>
+        {{ $t('_global.not_applicable_long') }}
+      </template>
+    </template>
+    <template
+      #indexingDialog="{ closeDialog, template, show, preInstanceMode }"
+    >
+      <TemplateIndexingDialog
+        :template="template"
+        :prepare-payload-func="prepareIndexingPayload"
+        :url-prefix="urlPrefix"
+        :show="show"
+        :pre-instance-mode="preInstanceMode"
+        @close="closeDialog"
+        @updated="refreshTable"
+      >
+        <template #form="{ form }">
+          <ObjectiveTemplateIndexingForm
+            ref="indexingForm"
+            :form="form"
+            :template="template"
+          />
+        </template>
+      </TemplateIndexingDialog>
+    </template>
+    <template #preInstanceForm="{ closeDialog, template }">
+      <ObjectiveTemplatePreInstanceForm
+        :template="template"
+        @close="closeDialog"
+        @success="refreshTable()"
       />
-  </template>
-</studybuilder-template-table>
+    </template>
+  </StudybuilderTemplateTable>
 </template>
 
-<script>
+<script setup>
+import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import dataFormating from '@/utils/dataFormating'
-import ObjectiveTemplateForm from '@/components/library/ObjectiveTemplateForm'
-import ObjectiveTemplateIndexingForm from './ObjectiveTemplateIndexingForm'
-import ObjectiveTemplatePreInstanceForm from './ObjectiveTemplatePreInstanceForm'
-import StudybuilderTemplateTable from '@/components/library/StudybuilderTemplateTable'
-import TemplateIndexingDialog from './TemplateIndexingDialog'
+import ObjectiveTemplateForm from '@/components/library/ObjectiveTemplateForm.vue'
+import ObjectiveTemplateIndexingForm from './ObjectiveTemplateIndexingForm.vue'
+import ObjectiveTemplatePreInstanceForm from './ObjectiveTemplatePreInstanceForm.vue'
+import StudybuilderTemplateTable from '@/components/library/StudybuilderTemplateTable.vue'
+import TemplateIndexingDialog from './TemplateIndexingDialog.vue'
 
-export default {
-  components: {
-    ObjectiveTemplateForm,
-    ObjectiveTemplateIndexingForm,
-    ObjectiveTemplatePreInstanceForm,
-    StudybuilderTemplateTable,
-    TemplateIndexingDialog
+const { t } = useI18n()
+const table = ref()
+const indexingForm = ref()
+
+const headers = ref([
+  {
+    title: '',
+    key: 'actions',
+    sortable: false,
+    width: '5%',
   },
-  data () {
-    return {
-      headers: [
-        {
-          text: '',
-          value: 'actions',
-          sortable: false,
-          width: '5%'
-        },
-        { text: this.$t('_global.sequence_number'), value: 'sequence_id' },
-        { text: this.$t('_global.parent_template'), value: 'name', width: '30%', filteringName: 'name_plain' },
-        { text: this.$t('_global.modified'), value: 'start_date' },
-        { text: this.$t('_global.status'), value: 'status' },
-        { text: this.$t('_global.version'), value: 'version' }
-      ],
-      defaultFilters: [
-        { text: this.$t('_global.indications'), value: 'indications.name' },
-        { text: this.$t('ObjectiveTemplateTable.objective_cat'), value: 'categories.name.sponsor_preferred_name' },
-        { text: this.$t('ObjectiveTemplateTable.confirmatory_testing'), value: 'is_confirmatory_testing' }
-      ],
-      historyExcludedHeaders: [
-        'indications.name',
-        'categories.name.sponsor_preferred_name',
-        'is_confirmatory_testing'
-      ],
-      urlPrefix: '/objective-templates'
+  { title: t('_global.sequence_number'), key: 'sequence_id' },
+  {
+    title: t('_global.parent_template'),
+    key: 'name',
+    width: '30%',
+    filteringName: 'name_plain',
+  },
+  { title: t('_global.modified'), key: 'start_date' },
+  { title: t('_global.status'), key: 'status' },
+  { title: t('_global.version'), key: 'version' },
+])
+const defaultFilters = ref([
+  { title: t('_global.indications'), key: 'indications.name' },
+  {
+    title: t('ObjectiveTemplateTable.objective_cat'),
+    key: 'categories.name.sponsor_preferred_name',
+  },
+  {
+    title: t('ObjectiveTemplateTable.confirmatory_testing'),
+    key: 'is_confirmatory_testing',
+  },
+])
+const historyExcludedHeaders = ref([
+  'indications.name',
+  'categories.name.sponsor_preferred_name',
+  'is_confirmatory_testing',
+])
+const urlPrefix = ref('/objective-templates')
+
+function prepareIndexingPayload(form) {
+  return indexingForm.value.preparePayload(form)
+}
+function prepareDuplicatePayload(payload, preInstance) {
+  if (preInstance?.categories?.length) {
+    payload.category_uids = preInstance.categories.map((item) => item.term_uid)
+  } else {
+    payload.category_uids = []
+  }
+}
+function refreshTable(tab) {
+  if (table.value.$refs.sponsorTable && (!tab || tab === 'parent')) {
+    table.value.$refs.sponsorTable.filter()
+  }
+  if (table.value.$refs.preInstanceTable && (!tab || tab === 'pre-instances')) {
+    table.value.$refs.preInstanceTable.filter()
+  }
+}
+function formatHistoryItem(item) {
+  if (item.is_confirmatory_testing !== null) {
+    item.is_confirmatory_testing = dataFormating.yesno(
+      item.is_confirmatory_testing
+    )
+  }
+  if (item?.categories?.length) {
+    item.categories = {
+      name: { sponsor_preferred_name: dataFormating.terms(item.categories) },
     }
-  },
-  methods: {
-    prepareIndexingPayload (form) {
-      return this.$refs.indexingForm.preparePayload(form)
-    },
-    prepareDuplicatePayload (payload, preInstance) {
-      if (preInstance?.categories?.length) {
-        payload.category_uids = preInstance.categories.map(item => item.term_uid)
-      } else {
-        payload.category_uids = []
-      }
-    },
-    refreshTable () {
-      if (this.$refs.table.$refs.sponsorTable) {
-        this.$refs.table.$refs.sponsorTable.filter()
-      }
-      if (this.$refs.table.$refs.preInstanceTable) {
-        this.$refs.table.$refs.preInstanceTable.filter()
-      }
-    },
-    formatHistoryItem (item) {
-      if (item.is_confirmatory_testing !== null) {
-        item.is_confirmatory_testing = dataFormating.yesno(item.is_confirmatory_testing)
-      }
-      if (item?.categories?.length) {
-        item.categories = { name: { sponsor_preferred_name: dataFormating.terms(item.categories) } }
-      } else {
-        item.categories = { name: { sponsor_preferred_name: this.$t('_global.not_applicable_long') } }
-      }
+  } else {
+    item.categories = {
+      name: { sponsor_preferred_name: t('_global.not_applicable_long') },
     }
   }
 }

@@ -45,7 +45,10 @@ class ActivitySubGroupRepository(ConceptGenericRepository[ActivitySubGroupAR]):
                 name_sentence_case=input_dict.get("name_sentence_case"),
                 definition=input_dict.get("definition"),
                 abbreviation=input_dict.get("abbreviation"),
-                activity_groups=input_dict.get("activity_groups"),
+                activity_groups=[
+                    activity_group["uid"]
+                    for activity_group in input_dict.get("activity_groups")
+                ],
             ),
             library=LibraryVO.from_input_values_2(
                 library_name=input_dict.get("library_name"),
@@ -62,6 +65,32 @@ class ActivitySubGroupRepository(ConceptGenericRepository[ActivitySubGroupAR]):
                 major_version=int(major),
                 minor_version=int(minor),
             ),
+        )
+
+    def _create_ar(
+        self,
+        root: VersionRoot,
+        library: Library | None,
+        relationship: VersionRelationship,
+        value: VersionValue,
+        **_kwargs,
+    ) -> ActivitySubGroupAR:
+        return ActivitySubGroupAR.from_repository_values(
+            uid=root.uid,
+            concept_vo=ActivitySubGroupVO.from_repository_values(
+                name=value.name,
+                name_sentence_case=value.name_sentence_case,
+                definition=value.definition,
+                abbreviation=value.abbreviation,
+                activity_groups=_kwargs["activity_subgroups_root"][
+                    "activity_groups_uids"
+                ],
+            ),
+            library=LibraryVO.from_input_values_2(
+                library_name=library.name,
+                is_library_editable_callback=(lambda _: library.is_editable),
+            ),
+            item_metadata=self._library_item_metadata_vo_from_relation(relationship),
         )
 
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
@@ -96,9 +125,6 @@ class ActivitySubGroupRepository(ConceptGenericRepository[ActivitySubGroupAR]):
             item_metadata=self._library_item_metadata_vo_from_relation(relationship),
         )
 
-    def specific_header_match_clause(self) -> str | None:
-        return "MATCH (concept_value)-[:HAS_GROUP]->()<-[:IN_SUBGROUP]-()<-[:HAS_GROUPING]-()"
-
     def specific_alias_clause(
         self, only_specific_status: str = ObjectStatus.LATEST.name
     ) -> str:
@@ -106,8 +132,8 @@ class ActivitySubGroupRepository(ConceptGenericRepository[ActivitySubGroupAR]):
         # which is specified in the activity_generic_repository_impl
         return """
         WITH *,
-            apoc.coll.toSet([(concept_value)-[:HAS_GROUP]->(:ActivityValidGroup)-[:IN_GROUP]-(:ActivityGroupValue)
-            <-[:HAS_VERSION]-(activity_group_root:ActivityGroupRoot) | activity_group_root.uid]) AS activity_groups
+            apoc.coll.toSet([(concept_value)-[:HAS_GROUP]->(:ActivityValidGroup)-[:IN_GROUP]-(activity_group_value:ActivityGroupValue)
+            <-[:HAS_VERSION]-(activity_group_root:ActivityGroupRoot) | {uid:activity_group_root.uid, name:activity_group_value.name}]) AS activity_groups
         """
 
     def create_query_filter_statement(

@@ -3,7 +3,7 @@ import repository from './repository'
 const resource = 'brands'
 
 export default {
-  getAll () {
+  getAll() {
     return repository.get(resource)
-  }
+  },
 }

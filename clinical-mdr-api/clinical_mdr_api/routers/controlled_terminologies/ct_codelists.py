@@ -1,14 +1,14 @@
 """CTCodelist router."""
 from typing import Any
 
-from fastapi import APIRouter, Body, Depends, Path, Query
+from fastapi import APIRouter, Body, Path, Query
 from pydantic.types import Json
 from starlette.requests import Request
 
 from clinical_mdr_api import config, models
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.oauth import get_current_user_id, rbac
+from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.controlled_terminologies.ct_codelist import (
@@ -51,9 +51,8 @@ def create(
     codelist_input: models.CTCodelistCreateInput = Body(
         description="Properties to create CTCodelistAttributes and CTCodelistName.",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    ct_codelist_service = CTCodelistService(user=current_user_id)
+    ct_codelist_service = CTCodelistService()
     return ct_codelist_service.create(codelist_input)
 
 
@@ -112,6 +111,11 @@ def get_codelists(
         None,
         description="If specified, only codelists from given package are returned.",
     ),
+    is_sponsor: bool
+    | None = Query(
+        False,
+        description="Boolean value to indicate desired package is a sponsor package. Defaults to False.",
+    ),
     sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
     page_number: int
     | None = Query(1, ge=1, description=_generic_descriptions.PAGE_NUMBER),
@@ -141,13 +145,13 @@ def get_codelists(
 `operator` specifies which logical operation - `and` or `or` - should be used in case multiple CT Term UIDs are provided. Default: `and`""",
         example="""{"term_uids": [""], "operator": "and"}""",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    ct_codelist_service = CTCodelistService(user=current_user_id)
+    ct_codelist_service = CTCodelistService()
     results = ct_codelist_service.get_all_codelists(
         catalogue_name=catalogue_name,
         library=library,
         package=package,
+        is_sponsor=is_sponsor,
         sort_by=sort_by,
         page_number=page_number,
         page_size=page_size,
@@ -196,9 +200,8 @@ def get_sub_codelists_that_have_given_terms(
     ),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    ct_codelist_service = CTCodelistService(user=current_user_id)
+    ct_codelist_service = CTCodelistService()
     results = ct_codelist_service.get_sub_codelists_that_have_given_terms(
         codelist_uid=codelist_uid,
         term_uids=term_uids,
@@ -230,7 +233,6 @@ def get_sub_codelists_that_have_given_terms(
     },
 )
 def get_distinct_values_for_header(
-    current_user_id: str = Depends(get_current_user_id),
     catalogue_name: str
     | None = Query(
         None,
@@ -243,6 +245,11 @@ def get_distinct_values_for_header(
     package: str
     | None = Query(
         None, description="If specified, only terms from given package are returned."
+    ),
+    is_sponsor: bool
+    | None = Query(
+        False,
+        description="Boolean value to indicate desired package is a sponsor package. Defaults to False.",
     ),
     field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
     search_string: str
@@ -257,11 +264,12 @@ def get_distinct_values_for_header(
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
 ):
-    ct_codelist_service = CTCodelistService(user=current_user_id)
+    ct_codelist_service = CTCodelistService()
     return ct_codelist_service.get_distinct_values_for_header(
         catalogue_name=catalogue_name,
         library=library,
         package=package,
+        is_sponsor=is_sponsor,
         field_name=field_name,
         search_string=search_string,
         filter_by=filters,
@@ -298,9 +306,8 @@ def add_term(
     term_input: models.CTCodelistTermInput = Body(
         description="UID of the CTTermRoot node."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    ct_codelist_service = CTCodelistService(user=current_user_id)
+    ct_codelist_service = CTCodelistService()
     return ct_codelist_service.add_term(
         codelist_uid=codelist_uid, term_uid=term_input.term_uid, order=term_input.order
     )
@@ -333,7 +340,6 @@ def add_term(
 def remove_term(
     codelist_uid: str = CTCodelistUID,
     term_uid: str = TermUID,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    ct_codelist_service = CTCodelistService(user=current_user_id)
+    ct_codelist_service = CTCodelistService()
     return ct_codelist_service.remove_term(codelist_uid=codelist_uid, term_uid=term_uid)

@@ -30,7 +30,7 @@ from clinical_mdr_api.models.utils import BaseModel
 
 
 class Ingredient(BaseModel):
-    prodex_id: str | None = None
+    external_id: str | None = None
     active_substance: SimpleActiveSubstance
     strength: SimpleNumericValueWithUnit | None = None
     half_life: SimpleNumericValueWithUnit | None = None
@@ -39,7 +39,7 @@ class Ingredient(BaseModel):
 
 class IngredientCreateInput(BaseModel):
     active_substance_uid: str
-    prodex_id: str | None = None
+    external_id: str | None = None
     strength_uid: str | None = None
     half_life_uid: str | None = None
     lag_time_uids: list[str] = []
@@ -47,26 +47,26 @@ class IngredientCreateInput(BaseModel):
 
 class IngredientEditInput(BaseModel):
     active_substance_uid: str | None = None
-    prodex_id: str | None = None
+    external_id: str | None = None
     strength_uid: str | None = None
     half_life_uid: str | None = None
     lag_time_uids: list[str] | None = None
 
 
 class Formulation(BaseModel):
-    prodex_id: str | None = None
+    external_id: str | None = None
     name: str
     ingredients: list[Ingredient] = []
 
 
 class FormulationCreateInput(BaseModel):
-    prodex_id: str | None = None
+    external_id: str | None = None
     name: str
     ingredients: list[IngredientCreateInput] | None = None
 
 
 class FormulationEditInput(BaseModel):
-    prodex_id: str | None = None
+    external_id: str | None = None
     name: str | None = None
     ingredients: list[IngredientEditInput] = []
 
@@ -74,7 +74,7 @@ class FormulationEditInput(BaseModel):
 class PharmaceuticalProduct(VersionProperties):
     uid: str
 
-    prodex_id: str | None = Field(None, nullable=True)
+    external_id: str | None = Field(None, nullable=True)
     library_name: str
 
     dosage_forms: list[SimpleTermModel] | None
@@ -103,7 +103,7 @@ class PharmaceuticalProduct(VersionProperties):
     ) -> Self:
         return cls(
             uid=pharmaceutical_product_ar.uid,
-            prodex_id=pharmaceutical_product_ar.concept_vo.prodex_id,
+            external_id=pharmaceutical_product_ar.concept_vo.external_id,
             dosage_forms=sorted(
                 [
                     SimpleTermModel.from_ct_code(
@@ -127,12 +127,12 @@ class PharmaceuticalProduct(VersionProperties):
             formulations=sorted(
                 [
                     Formulation(
-                        prodex_id=formulation.prodex_id,
+                        external_id=formulation.external_id,
                         name=formulation.name,
                         ingredients=sorted(
                             [
                                 Ingredient(
-                                    prodex_id=ingredient.prodex_id,
+                                    external_id=ingredient.external_id,
                                     active_substance=SimpleActiveSubstance.from_concept_uid(
                                         uid=ingredient.active_substance_uid,
                                         find_by_uid=find_active_substance_by_uid,
@@ -192,8 +192,32 @@ class PharmaceuticalProduct(VersionProperties):
         )
 
 
+class SimplePharmaceuticalProduct(BaseModel):
+    @classmethod
+    def from_uid(
+        cls, uid: str, find_by_uid: Callable[[str], PharmaceuticalProductAR | None]
+    ) -> Self | None:
+        item = None
+        if uid is not None:
+            item_ar: PharmaceuticalProductAR = find_by_uid(uid)
+            if item_ar is not None:
+                item = cls(uid=uid, external_id=item_ar.concept_vo.external_id)
+
+        return item
+
+    uid: str = Field(..., title="uid", description="")
+    external_id: str = Field(None, title="external_id", description="", nullable=True)
+
+    @classmethod
+    def from_item_ar(cls, item_ar: PharmaceuticalProductAR) -> Self:
+        return cls(
+            uid=item_ar.uid,
+            name=item_ar.name,
+        )
+
+
 class PharmaceuticalProductCreateInput(BaseModel):
-    prodex_id: str | None = None
+    external_id: str | None = None
     library_name: str
     dosage_form_uids: list[str] = []
     route_of_administration_uids: list[str] = []
@@ -201,7 +225,7 @@ class PharmaceuticalProductCreateInput(BaseModel):
 
 
 class PharmaceuticalProductEditInput(BaseModel):
-    prodex_id: str | None = None
+    external_id: str | None = None
     library_name: str | None = None
     dosage_form_uids: list[str] = []
     route_of_administration_uids: list[str] = []

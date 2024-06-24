@@ -1,14 +1,14 @@
 """Time points router."""
 from typing import Any
 
-from fastapi import APIRouter, Body, Depends, Path, Query
+from fastapi import APIRouter, Body, Path, Query
 from pydantic.types import Json
 
 from clinical_mdr_api import config
 from clinical_mdr_api.models.concepts.concept import TimePoint, TimePointInput
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.oauth import get_current_user_id, rbac
+from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions
 from clinical_mdr_api.services.concepts.simple_concepts.time_point import (
@@ -65,9 +65,8 @@ def get_time_points(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    time_point_service = TimePointService(user=current_user_id)
+    time_point_service = TimePointService()
     results = time_point_service.get_all_concepts(
         library=library,
         sort_by=sort_by,
@@ -99,7 +98,6 @@ def get_time_points(
     },
 )
 def get_distinct_values_for_header(
-    current_user_id: str = Depends(get_current_user_id),
     library: str | None = Query(None, description="The library name"),
     field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
     search_string: str
@@ -114,7 +112,7 @@ def get_distinct_values_for_header(
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
 ):
-    time_point_service = TimePointService(user=current_user_id)
+    time_point_service = TimePointService()
     return time_point_service.get_distinct_values_for_header(
         library=library,
         field_name=field_name,
@@ -146,10 +144,8 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_time_point(
-    uid: str = TimePointUID, current_user_id: str = Depends(get_current_user_id)
-):
-    time_point_service = TimePointService(user=current_user_id)
+def get_time_point(uid: str = TimePointUID):
+    time_point_service = TimePointService()
     return time_point_service.get_by_uid(uid=uid)
 
 
@@ -182,7 +178,6 @@ Possible errors:
 )
 def create(
     time_point_create_input: TimePointInput = Body(description=""),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    time_point_service = TimePointService(user=current_user_id)
+    time_point_service = TimePointService()
     return time_point_service.create(concept_input=time_point_create_input)

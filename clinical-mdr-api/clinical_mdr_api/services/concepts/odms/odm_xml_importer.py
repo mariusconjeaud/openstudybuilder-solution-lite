@@ -35,6 +35,7 @@ from clinical_mdr_api.models import (
 )
 from clinical_mdr_api.models.concepts.odms.odm_common_models import (
     OdmRefVendorPostInput,
+    OdmVendorElementRelationPostInput,
     OdmVendorRelationPostInput,
 )
 from clinical_mdr_api.models.concepts.odms.odm_condition import OdmCondition
@@ -63,7 +64,7 @@ from clinical_mdr_api.models.concepts.unit_definitions.unit_definition import (
 from clinical_mdr_api.models.controlled_terminologies.ct_term_attributes import (
     CTTermAttributes,
 )
-from clinical_mdr_api.oauth import get_current_user_id
+from clinical_mdr_api.oauth.user import user
 from clinical_mdr_api.services._meta_repository import MetaRepository
 from clinical_mdr_api.services._utils import is_library_editable, normalize_string
 from clinical_mdr_api.services.concepts.odms.odm_conditions import OdmConditionService
@@ -518,7 +519,7 @@ class OdmXmlImporterService:
         child_elements: minicompat.NodeList,
         repository: OdmGenericRepository,
     ):
-        odm_vendor_relations: list[OdmVendorRelationPostInput] = []
+        odm_vendor_relations: list[OdmVendorElementRelationPostInput] = []
         for child_element in child_elements:
             if (
                 not isinstance(child_element, minidom.Element)
@@ -542,7 +543,7 @@ class OdmXmlImporterService:
             )
 
             odm_vendor_relations.append(
-                OdmVendorRelationPostInput(
+                OdmVendorElementRelationPostInput(
                     uid=vendor_element_uid,
                     value=child_element.firstChild.nodeValue
                     if child_element.firstChild
@@ -1323,7 +1324,9 @@ class OdmXmlImporterService:
             input_terms = [
                 OdmItemTermRelationshipInput(
                     uid=codelist_item.getAttribute("osb:OID"),
-                    mandatory=codelist_item.getAttribute("Mandatory"),
+                    mandatory=codelist_item.getAttribute("osb:mandatory")
+                    if codelist_item.getAttribute("osb:mandatory") != ""
+                    else True,
                     order=codelist_item.getAttribute("OrderNumber"),
                     display_text=codelist_item.getElementsByTagName("TranslatedText")[
                         0
@@ -1472,7 +1475,7 @@ class OdmXmlImporterService:
     def _approve(self, repository, service, item):
         try:
             appr = service._find_by_uid_or_raise_not_found(item.uid, for_update=True)
-            appr.approve(author=get_current_user_id())
+            appr.approve(author=user().id())
             repository.save(appr)
         except VersioningException as e:
             raise exceptions.BusinessLogicException(e.msg)

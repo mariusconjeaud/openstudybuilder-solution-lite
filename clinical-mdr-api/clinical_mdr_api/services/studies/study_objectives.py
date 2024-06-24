@@ -3,7 +3,6 @@ from logging import getLogger
 from docx.enum.style import WD_STYLE_TYPE
 from yattag.doc import Doc
 
-from clinical_mdr_api.oauth import get_current_user_id
 from clinical_mdr_api.services.studies.study import StudyService
 from clinical_mdr_api.services.studies.study_endpoint_selection import (
     StudyEndpointSelectionService,
@@ -37,11 +36,8 @@ STYLES = {
 class StudyObjectivesService:
     """Assemble and visualize Study Protocol Flowchart data"""
 
-    def __init__(self, user_id: str) -> None:
-        self._current_user_id = user_id
-        self._study_endpoint_selection_service = StudyEndpointSelectionService(
-            author=self._current_user_id
-        )
+    def __init__(self) -> None:
+        self._study_endpoint_selection_service = StudyEndpointSelectionService()
 
     def _get_all_selection(
         self,
@@ -49,7 +45,7 @@ class StudyObjectivesService:
         study_value_version: str | None = None,
     ):
         # Check if study exists
-        StudyService(user=get_current_user_id()).get_by_uid(
+        StudyService().get_by_uid(
             uid=study_uid,
             study_value_version=study_value_version,
         )
@@ -228,7 +224,7 @@ class StudyObjectivesService:
                         for objective_level, study_objectives in sorted(
                             tree.values(),
                             key=lambda o: o[0].codelists[0].order
-                            if o[0].codelists
+                            if o[0].codelists and o[0].codelists[0].order is not None
                             else 0,
                         ):
                             with tag("tr"):
@@ -255,6 +251,7 @@ class StudyObjectivesService:
                                         endpoint_levels.values(),
                                         key=lambda o: o[0].codelists[0].order
                                         if o[0].codelists
+                                        and o[0].codelists[0].order is not None
                                         else 0,
                                     )
                                 ):

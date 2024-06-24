@@ -17,6 +17,7 @@ Clinical MDR (MIT) | Neo4j-mdr-db (does not include Neo4j database which is need
 Sponsor Data Import (MIT) | studybuilder-import
 Data Export (MIT) | studybuilder-export
 Standards Import (GPLv3) | Mdr-standards-import
+DB Schema Migration (MIT) | db-schema-migration
 
 ## License Terms (GPLv3)
 

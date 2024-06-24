@@ -24,7 +24,7 @@ from clinical_mdr_api.models.utils import (
 )
 
 IS_CONFIRMATORY_TESTING_DESC = (
-    "Indicates if pre-instance is related to confirmatory testing."
+    "Indicates if pre-instance is related to confirmatory testing. Defaults to false"
 )
 
 
@@ -90,10 +90,12 @@ class ObjectivePreInstance(BaseModel):
             name=capitalize_first_letter_if_template_parameter(
                 objective_pre_instance_ar.name,
                 objective_pre_instance_ar.template_name_plain,
+                objective_pre_instance_ar._template.parameter_terms,
             ),
             name_plain=capitalize_first_letter_if_template_parameter(
                 objective_pre_instance_ar.name_plain,
                 objective_pre_instance_ar.template_name_plain,
+                objective_pre_instance_ar._template.parameter_terms,
             ),
             start_date=objective_pre_instance_ar.item_metadata.start_date,
             end_date=objective_pre_instance_ar.item_metadata.end_date,
@@ -117,8 +119,8 @@ class ObjectivePreInstance(BaseModel):
 
 
 class ObjectivePreInstanceCreateInput(PreInstanceInput):
-    is_confirmatory_testing: bool | None = Field(
-        None, description=IS_CONFIRMATORY_TESTING_DESC
+    is_confirmatory_testing: bool = Field(
+        False, description=IS_CONFIRMATORY_TESTING_DESC
     )
     indication_uids: list[str]
     category_uids: list[str]
@@ -132,8 +134,8 @@ class ObjectivePreInstanceEditInput(PreInstanceInput):
 
 
 class ObjectivePreInstanceIndexingsInput(BaseModel):
-    is_confirmatory_testing: bool | None = Field(
-        None, description=IS_CONFIRMATORY_TESTING_DESC
+    is_confirmatory_testing: bool = Field(
+        False, description=IS_CONFIRMATORY_TESTING_DESC
     )
     indication_uids: list[str] | None = Field(
         None,

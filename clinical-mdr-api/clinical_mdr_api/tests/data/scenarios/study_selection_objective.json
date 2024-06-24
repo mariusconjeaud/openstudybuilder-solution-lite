@@ -59,7 +59,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                "study_version": null, 
+                "study_version": null,
                 "study_objective_uid": "StudyObjective_000001",
                 "order": 1,
                 "project_number": null,
@@ -143,7 +143,7 @@
             "result": {
                 "items": [
                     {
-                        "study_version": null, 
+                        "study_version": null,
                         "study_objective_uid": "StudyObjective_000001",
                         "order": 1,
                         "project_number": "123",
@@ -230,7 +230,7 @@
                 "size": 10,
                 "items": [
                     {
-                        "study_version": null, 
+                        "study_version": null,
                         "study_objective_uid": "StudyObjective_000001",
                         "order": 1,
                         "project_number": "123",
@@ -313,7 +313,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                        "study_version": null, 
+                "study_version": null,
                 "study_objective_uid": "StudyObjective_000002",
                 "order": 2,
                 "project_number": null,
@@ -375,7 +375,7 @@
             "result": {
                 "items": [
                     {
-                        "study_version": null, 
+                        "study_version": null,
                         "study_objective_uid": "StudyObjective_000001",
                         "order": 1,
                         "project_number": "123",
@@ -438,7 +438,7 @@
                         "endpoint_count": 0
                     },
                     {
-                        "study_version": null, 
+                        "study_version": null,
                         "study_objective_uid": "StudyObjective_000002",
                         "order": 2,
                         "project_number": "123",
@@ -498,7 +498,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                        "study_version": null, 
+                "study_version": null,
                 "study_objective_uid": "StudyObjective_000002",
                 "order": 2,
                 "project_number": null,
@@ -557,7 +557,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                        "study_version": null, 
+                "study_version": null,
                 "study_objective_uid": "StudyObjective_000002",
                 "order": 1,
                 "project_number": null,
@@ -616,7 +616,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                        "study_version": null, 
+                "study_version": null,
                 "study_objective_uid": "StudyObjective_000002",
                 "order": 2,
                 "project_number": null,
@@ -1059,7 +1059,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                "study_version": null, 
+                "study_version": null,
                 "study_objective_uid": "StudyObjective_000002",
                 "accepted_version": false,
                 "order": 2,
@@ -1192,7 +1192,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                "study_version": null, 
+                "study_version": null,
                 "study_objective_uid": "StudyObjective_000003",
                 "accepted_version": false,
                 "order": 3,
@@ -1284,7 +1284,7 @@
                         "status": "Final",
                         "version": "1.0",
                         "change_description": "Approved version",
-                        "user_initials": "TEST_USER",
+                        "user_initials": "unknown-user",
                         "possible_actions": [
                             "inactivate"
                         ],
@@ -1312,7 +1312,7 @@
                         "status": "Final",
                         "version": "1.0",
                         "change_description": "Approved version",
-                        "user_initials": "TEST_USER",
+                        "user_initials": "unknown-user",
                         "possible_actions": [
                             "inactivate"
                         ],

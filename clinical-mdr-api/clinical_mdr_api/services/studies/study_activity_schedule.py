@@ -14,99 +14,41 @@ from clinical_mdr_api.domain_repositories.study_selections.study_activity_schedu
 from clinical_mdr_api.domains.study_selections.study_activity_schedule import (
     StudyActivityScheduleVO,
 )
+from clinical_mdr_api.oauth.user import user
 from clinical_mdr_api.services._meta_repository import MetaRepository
 from clinical_mdr_api.services.studies.study_endpoint_selection import (
     StudySelectionMixin,
 )
+from clinical_mdr_api.telemetry import trace_calls
 
 
 class StudyActivityScheduleService(StudySelectionMixin):
     _repos: MetaRepository
 
-    def __init__(self, author: str):
+    def __init__(self):
         self._repos = MetaRepository()
-        self.author = author
+        self.author = user().id()
 
+    @trace_calls
     def get_all_schedules(
         self,
         study_uid: str,
         study_value_version: str | None = None,
-        detailed_soa: bool = True,
+        operational: bool = False,
     ) -> list[models.StudyActivitySchedule]:
-        if study_value_version:
-            filters = {
-                "study_value__has_version|version": study_value_version,
-                "study_visit__has_study_visit__has_version|version": study_value_version,
-                "study_value__has_version__uid": study_uid,
-                "study_visit__has_study_visit__has_version__uid": study_uid,
-            }
-            if detailed_soa:
-                filters.update(
-                    {
-                        "study_activity__has_study_activity__has_version|version": study_value_version,
-                        "study_activity__has_study_activity__has_version__uid": study_uid,
-                    }
-                )
-            else:
-                filters.update(
-                    {
-                        "study_activity_instance__has_study_activity_instance__has_version|version": study_value_version,
-                        "study_activity_instance__has_study_activity_instance__has_version__uid": study_uid,
-                    }
-                )
-        else:
-            filters = {
-                "study_value__latest_value__uid": study_uid,
-                "study_visit__has_study_visit__latest_value__uid": study_uid,
-            }
-            if detailed_soa:
-                filters.update(
-                    {
-                        "study_activity__has_study_activity__latest_value__uid": study_uid,
-                    }
-                )
-            else:
-                filters.update(
-                    {
-                        "study_activity_instance__has_study_activity_instance__latest_value__uid": study_uid,
-                    }
-                )
-        relations_to_fetch = [
-            "has_after__audit_trail",
-            "study_value__has_version",
-            "study_visit__has_visit_name__has_latest_value",
-        ]
-        if detailed_soa:
-            relations_to_fetch.append("study_activity__has_selected_activity")
-        else:
-            relations_to_fetch.append(
-                "study_activity_instance__has_selected_activity_instance"
+        study_activity_schedules = (
+            self._repos.study_activity_schedule_repository._get_all_schedules_in_study(
+                study_uid=study_uid,
+                study_value_version=study_value_version,
+                operational=operational,
             )
-        study_activity_schedules_ogm: list[models.StudyActivitySchedule] = [
-            models.StudyActivitySchedule.from_orm(sas_node)
-            for sas_node in to_relation_trees(
-                StudyActivityScheduleNeoModel.nodes.fetch_relations(*relations_to_fetch)
-                .filter(**filters)
-                .order_by("uid")
-            ).distinct()
-        ]
+        )
         study_activity_schedules_response_model = [
             models.StudyActivitySchedule.from_vo(
-                StudyActivityScheduleVO(
-                    study_uid=study_uid,
-                    study_activity_uid=i_study_activity_schedule_ogm.study_activity_uid,
-                    study_activity_name=i_study_activity_schedule_ogm.study_activity_name,
-                    study_activity_instance_uid=i_study_activity_schedule_ogm.study_activity_instance_uid,
-                    study_activity_instance_name=i_study_activity_schedule_ogm.study_activity_instance_name,
-                    study_visit_uid=i_study_activity_schedule_ogm.study_visit_uid,
-                    study_visit_name=i_study_activity_schedule_ogm.study_visit_name,
-                    start_date=i_study_activity_schedule_ogm.start_date,
-                    user_initials=i_study_activity_schedule_ogm.user_initials,
-                    uid=i_study_activity_schedule_ogm.study_activity_schedule_uid,
-                ),
+                i_study_activity_schedule_ogm,
                 study_value_version=study_value_version,
             )
-            for i_study_activity_schedule_ogm in study_activity_schedules_ogm
+            for i_study_activity_schedule_ogm in study_activity_schedules
         ]
         return study_activity_schedules_response_model
 
@@ -116,6 +58,7 @@ class StudyActivityScheduleService(StudySelectionMixin):
         relations_to_fetch = [
             "has_after__audit_trail",
             "study_visit__has_visit_name__has_latest_value",
+            "study_activity__has_selected_activity",
         ]
         filters = {
             "study_value__latest_value__uid": study_uid,
@@ -123,17 +66,16 @@ class StudyActivityScheduleService(StudySelectionMixin):
             "study_visit__has_study_visit__latest_value__uid": study_uid,
         }
         if detailed_soa:
-            relations_to_fetch.append("study_activity__has_selected_activity")
             filters.update(
                 {"study_activity__has_study_activity__latest_value__uid": study_uid}
             )
         else:
             relations_to_fetch.append(
-                "study_activity_instance__has_selected_activity_instance"
+                "study_activity__study_activity_has_study_activity_instance"
             )
             filters.update(
                 {
-                    "study_activity_instance__has_study_activity_instance__latest_value__uid": study_uid
+                    "study_activity__study_activity_has_study_activity_instance__has_study_activity_instance__latest_value__uid": study_uid
                 }
             )
         return [
@@ -167,53 +109,14 @@ class StudyActivityScheduleService(StudySelectionMixin):
             ).distinct()
         ]
 
-    def get_all_schedules_for_specific_activity_instance(
-        self, study_uid: str, study_activity_instance_uid: str
-    ) -> list[models.StudyActivitySchedule]:
-        return [
-            models.StudyActivitySchedule.from_orm(sas_node)
-            for sas_node in to_relation_trees(
-                StudyActivityScheduleNeoModel.nodes.fetch_relations(
-                    "has_after__audit_trail",
-                    "study_visit__has_visit_name__has_latest_value",
-                    "study_activity_instance__has_selected_activity_instance",
-                    "study_activity_instance__has_study_activity_instance",
-                )
-                .filter(
-                    study_value__latest_value__uid=study_uid,
-                    study_activity_instance__uid=study_activity_instance_uid,
-                    study_visit__has_study_visit__latest_value__uid=study_uid,
-                    study_activity_instance__has_study_activity_instance__latest_value__uid=study_uid,
-                )
-                .order_by("uid")
-            ).distinct()
-        ]
-
     def _from_input_values(
         self, study_uid: str, schedule_input: models.StudyActivityScheduleCreateInput
     ) -> StudyActivityScheduleVO:
-        if (
-            not schedule_input.study_activity_uid
-            and not schedule_input.study_activity_instance_uid
-        ):
-            raise exceptions.BusinessLogicException(
-                "None of StudyActivity uid and StudyActivityInstance uid are set"
-            )
-        if (
-            schedule_input.study_activity_uid
-            and schedule_input.study_activity_instance_uid
-        ):
-            raise exceptions.BusinessLogicException(
-                "Only one of StudyActivity uid or StudyActivityInstance uid must be set"
-            )
         return StudyActivityScheduleVO(
             study_uid=study_uid,
             study_activity_uid=schedule_input.study_activity_uid,
-            study_activity_name=None,
-            study_activity_instance_uid=schedule_input.study_activity_instance_uid,
-            study_activity_instance_name=None,
+            study_activity_instance_uid=None,
             study_visit_uid=schedule_input.study_visit_uid,
-            study_visit_name=None,
             user_initials=self.author,
             start_date=datetime.datetime.now(datetime.timezone.utc),
         )
@@ -265,7 +168,6 @@ class StudyActivityScheduleService(StudySelectionMixin):
                     study_uid=study_uid,
                     study_activity_schedule_uid=history.study_selection_uid,
                     study_activity_uid=history.study_activity_uid,
-                    study_activity_instance_uid=history.study_activity_instance_uid,
                     study_visit_uid=history.study_visit_uid,
                     modified=history.start_date,
                 )

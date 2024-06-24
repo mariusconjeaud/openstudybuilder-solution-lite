@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from neomodel import db
 
-from clinical_mdr_api import exceptions
+from clinical_mdr_api import config, exceptions
 from clinical_mdr_api.domain_repositories._utils import helpers
 from clinical_mdr_api.domain_repositories.models._utils import (
     convert_to_datetime,
@@ -23,9 +23,9 @@ from clinical_mdr_api.domains.study_selections.study_activity_schedule import (
 class SelectionHistory(base.SelectionHistory):
     """Class for selection history items."""
 
-    study_activity_uid: str | None
-    study_activity_instance_uid: str | None
+    study_activity_uid: str
     study_visit_uid: str
+    study_activity_instance_uid: str | None
 
 
 class StudyActivityScheduleRepository(base.StudySelectionRepository):
@@ -45,34 +45,19 @@ class StudyActivityScheduleRepository(base.StudySelectionRepository):
     ) -> StudyActivityScheduleVO:
         study_action = selection.has_after.all()[0]
         study_activity = selection.study_activity.single()
-        study_activity_instance = selection.study_activity_instance.single()
-        study_activity_instance_name = None
-        if study_activity_instance:
-            activity_instance = (
-                study_activity_instance.has_selected_activity_instance.get_or_none()
-            )
-            if activity_instance:
-                study_activity_instance_name = activity_instance.name
 
         study_visit = selection.study_visit.single()
-        study_visit_name = (
-            study_visit.has_visit_name.single().has_latest_value.single().name
+        study_activity_instance = (
+            study_activity.study_activity_has_study_activity_instance.single()
         )
         return StudyActivityScheduleVO(
             uid=selection.uid,
             study_uid=study_uid,
-            study_activity_uid=study_activity.uid if study_activity else None,
-            study_activity_name=study_activity.has_selected_activity.get().name
-            if study_activity
-            else None,
+            study_activity_uid=study_activity.uid,
             study_activity_instance_uid=study_activity_instance.uid
             if study_activity_instance
             else None,
-            study_activity_instance_name=study_activity_instance_name
-            if study_activity_instance
-            else None,
             study_visit_uid=study_visit.uid,
-            study_visit_name=study_visit_name,
             start_date=study_action.date,
             user_initials=study_action.user_initials,
         )
@@ -101,27 +86,14 @@ class StudyActivityScheduleRepository(base.StudySelectionRepository):
         schedule = StudyActivitySchedule(uid=selection_vo.uid)
         schedule.save()
 
-        if selection_vo.study_activity_uid:
-            study_activity_node = study_value_node.has_study_activity.get_or_none(
-                uid=selection_vo.study_activity_uid
+        study_activity_node = study_value_node.has_study_activity.get_or_none(
+            uid=selection_vo.study_activity_uid
+        )
+        if study_activity_node is None:
+            raise exceptions.NotFoundException(
+                f"The study activity with uid {selection_vo.study_activity_uid} was not found"
             )
-            if study_activity_node is None:
-                raise exceptions.NotFoundException(
-                    f"The study activity with uid {selection_vo.study_activity_uid} was not found"
-                )
-            schedule.study_activity.connect(study_activity_node)
-
-        if selection_vo.study_activity_instance_uid:
-            study_activity_instance_node = (
-                study_value_node.has_study_activity_instance.get_or_none(
-                    uid=selection_vo.study_activity_instance_uid
-                )
-            )
-            if study_activity_instance_node is None:
-                raise exceptions.NotFoundException(
-                    f"The study activity instance with uid {selection_vo.study_activity_instance_uid} was not found"
-                )
-            schedule.study_activity_instance.connect(study_activity_instance_node)
+        schedule.study_activity.connect(study_activity_node)
 
         study_visit_node = study_value_node.has_study_visit.get_or_none(
             uid=selection_vo.study_visit_uid
@@ -239,6 +211,79 @@ class StudyActivityScheduleRepository(base.StudySelectionRepository):
                     change_type=change_type,
                     start_date=convert_to_datetime(value=res["start_date"]),
                     end_date=end_date,
+                )
+            )
+        return result
+
+    def _get_all_schedules_in_study(
+        self,
+        study_uid: str,
+        study_value_version: str | None = None,
+        operational: bool = False,
+    ):
+        """
+        returns study activity schedules for a study_uid
+        """
+        query = ""
+        query_parameters = {}
+        query_parameters["library_name"] = config.REQUESTED_LIBRARY_NAME
+        if study_value_version:
+            query = "MATCH (sr:StudyRoot { uid: $uid})-[l:HAS_VERSION{status:'RELEASED', version:$study_value_version}]->(sv:StudyValue)"
+            query_parameters["study_value_version"] = study_value_version
+            query_parameters["uid"] = study_uid
+        else:
+            query = "MATCH (sr:StudyRoot { uid: $uid})-[l:LATEST]->(sv:StudyValue)"
+            query_parameters["uid"] = study_uid
+
+        query += """
+            WITH sr, sv
+            MATCH (sv)-[:HAS_STUDY_ACTIVITY_SCHEDULE]->(sas:StudyActivitySchedule)
+            MATCH (sas)<-[:AFTER]-(asa:StudyAction)
+        """
+        operational_match = ""
+        operational_return = ""
+        if operational:
+            operational_match = """
+            MATCH (sv)--(sa_instance)<-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_INSTANCE]-(sa)
+            MATCH (sa)-[:HAS_SELECTED_ACTIVITY]-(:ActivityValue)-[:HAS_VERSION]-(:ActivityRoot)-[:CONTAINS_CONCEPT]-(lib:Library)
+                WHERE lib.name <> $library_name
+            """
+            operational_return = """
+                sa_instance.uid AS study_activity_instance_uid,
+            """
+
+        query += f"""
+            MATCH (sas)<-[:STUDY_VISIT_HAS_SCHEDULE]-(svi:StudyVisit)--(sv)
+            MATCH (sas)<-[:STUDY_ACTIVITY_HAS_SCHEDULE]-(sa:StudyActivity)--(sv)
+            {operational_match}
+            WITH *
+            ORDER BY sas.uid, asa.date DESC
+            RETURN DISTINCT
+                sas.uid AS uid,
+                svi.uid AS study_visit_uid,
+                sa.uid AS study_activity_uid,
+                {operational_return}
+                asa.date AS start_date,
+                asa.user_initials AS user_initials
+        """
+
+        specific_schedules_audit_trail = db.cypher_query(
+            query,
+            query_parameters,
+        )
+        result = []
+        for res in helpers.db_result_to_list(specific_schedules_audit_trail):
+            result.append(
+                StudyActivityScheduleVO(
+                    study_uid=study_uid,
+                    uid=res["uid"],
+                    study_activity_uid=res["study_activity_uid"],
+                    study_activity_instance_uid=res["study_activity_instance_uid"]
+                    if operational
+                    else None,
+                    study_visit_uid=res["study_visit_uid"],
+                    user_initials=res["user_initials"],
+                    start_date=convert_to_datetime(value=res["start_date"]),
                 )
             )
         return result

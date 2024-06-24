@@ -1,61 +1,61 @@
 <template>
-<div>
-  <validation-observer ref="observer">
-    <validation-provider
-      v-slot="{ errors }"
-      :rules="`required|sameAs:${name}`"
-      data-cy="sentence-case-name-class"
-      >
-      <v-row>
-        <v-col>
-          <v-text-field
-            :label="$t('ActivityForms.name_sentence_case')"
-            data-cy="sentence-case-name-field"
-            v-model="sentenceCaseName"
-            :error-messages="errors"
-            dense
-            clearable
-            />
-        </v-col>
-      </v-row>
-    </validation-provider>
-  </validation-observer>
-</div>
+  <v-form ref="observer" data-cy="sentence-case-name-class">
+    <v-row>
+      <v-col>
+        <v-text-field
+          v-model="value"
+          :label="$t('ActivityForms.name_sentence_case')"
+          data-cy="sentence-case-name-field"
+          density="compact"
+          clearable
+          :rules="[
+            formRules.required,
+            (value) => formRules.sameAs(value, name),
+          ]"
+        />
+      </v-col>
+    </v-row>
+  </v-form>
 </template>
 
 <script>
 export default {
+  inject: ['formRules'],
   props: {
-    name: String,
-    initialName: String
+    modelValue: {
+      type: String,
+      default: '',
+    },
+    name: {
+      type: String,
+      default: '',
+    },
   },
-  data () {
-    return {
-      sentenceCaseName: ''
-    }
-  },
-  mounted () {
-    if (this.initialName) {
-      this.sentenceCaseName = this.initialName
-    }
-  },
-  methods: {
-    setSentenceCase () {
-      if (this.name) {
-        this.sentenceCaseName = this.name.toLowerCase()
-      }
-    }
+  emits: ['update:modelValue'],
+  computed: {
+    value: {
+      get() {
+        return this.modelValue
+      },
+      set(value) {
+        this.$emit('update:modelValue', value)
+      },
+    },
   },
   watch: {
-    name () {
-      this.setSentenceCase()
+    name(value) {
+      this.setSentenceCase(value)
     },
-    initialName () {
-      this.sentenceCaseName = this.initialName
+  },
+  mounted() {
+    this.setSentenceCase(this.name)
+  },
+  methods: {
+    setSentenceCase(value) {
+      if (value) {
+        this.$emit('update:modelValue', value.toLowerCase())
+      }
     },
-    sentenceCaseName (value) {
-      this.$emit('input', value)
-    }
-  }
+  },
 }
 </script>

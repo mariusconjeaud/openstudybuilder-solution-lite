@@ -211,13 +211,15 @@ class ActivityService(ConceptGenericService[ActivityAR]):
         self.repository.save(activity_request_ar)
         return self._transform_aggregate_root_to_pydantic_model(activity_request_ar)
 
-    def get_activity_overview(self, activity_uid: str) -> ActivityOverview:
+    def get_activity_overview(
+        self, activity_uid: str, version: str | None
+    ) -> ActivityOverview:
         if not self.repository.exists_by("uid", activity_uid, True):
             raise NotFoundException(
                 f"Cannot find Activity with the following uid ({activity_uid})"
             )
         overview = self._repos.activity_repository.get_activity_overview(
-            uid=activity_uid
+            uid=activity_uid, version=version
         )
         return ActivityOverview.from_repository_input(overview=overview)
 

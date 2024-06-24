@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 from typing import AbstractSet, Callable, Self
 
 from clinical_mdr_api import exceptions
@@ -131,9 +132,12 @@ class CTTermAttributesAR(LibraryItemAggregateRootBase):
         author: str,
         ct_term_attributes_vo: CTTermAttributesVO,
         library: LibraryVO,
+        start_date: datetime | None = None,
         generate_uid_callback: Callable[[], str | None] = (lambda: None),
     ) -> Self:
-        item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(author=author)
+        item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(
+            author=author, start_date=start_date
+        )
         if not library.is_editable:
             raise exceptions.BusinessLogicException(
                 f"The library with the name='{library.name}' does not allow to create objects."

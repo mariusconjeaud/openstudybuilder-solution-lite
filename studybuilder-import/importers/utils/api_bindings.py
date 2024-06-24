@@ -472,7 +472,7 @@ class ApiBinding:
             codelists_uids[res["name"]] = res["codelist_uid"]
         return codelists_uids
 
-    def get_all_activity_objects(self, object_type):
+    def get_all_activity_objects(self, object_type, filters=None):
         page_number = 1
         page_size = 100
         total_count = True
@@ -481,6 +481,8 @@ class ApiBinding:
             "page_size": page_size,
             "total_count": total_count,
         }
+        if filters:
+            params["filters"] = filters
         self.log.info(
             f"Getting {object_type} page_number:{page_number}, page_size:{page_size}"
         )
@@ -502,6 +504,8 @@ class ApiBinding:
                 "page_size": page_size,
                 "total_count": total_count,
             }
+            if filters:
+                params["filters"] = filters
             self.log.info(
                 f"Getting {object_type} page_number:{page_number}, page_size:{page_size}, total:{count}"
             )
@@ -707,8 +711,12 @@ class ApiBinding:
             if response.ok:
                 result = await response.json()
             else:
-                error_result = response.json()
-                self.log.warning(f"Failed to approve {url}, status: {status}, message: {get_error_message(error_result)}")
+                try:
+                    error_result = await response.json()
+                    error_message = get_error_message(error_result)
+                except aiohttp.ContentTypeError:
+                    error_message = await response.text()
+                self.log.warning(f"Failed to approve {url}, status: {status}, message: {error_message}")
                 result = {}
             return status, result
 
@@ -725,8 +733,12 @@ class ApiBinding:
             if response.ok:
                 result = await response.json()
             else:
-                error_result = await response.json()
-                self.log.warning(f"Failed to approve '{uid}', status: {status}, message: {get_error_message(error_result)}")
+                try:
+                    error_result = await response.json()
+                    error_message = get_error_message(error_result)
+                except aiohttp.ContentTypeError:
+                    error_message = await response.text()
+                self.log.warning(f"Failed to approve '{uid}', status: {status}, message: {error_message}")
                 result = {}
             if not response.ok:
                 self.metrics.icrement(url + "--ApproveError")

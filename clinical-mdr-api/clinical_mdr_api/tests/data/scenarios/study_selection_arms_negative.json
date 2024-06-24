@@ -269,7 +269,7 @@
             ]
           },
           "start_date": "2022-06-27T17:49:07.333064",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "end_date": null,
           "status": null,
           "change_type": "Edit",
@@ -310,7 +310,7 @@
             ]
           },
           "start_date": "2022-06-27T17:48:53.758950",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "end_date": "2022-06-27T17:49:07.333064",
           "status": null,
           "change_type": "Create",
@@ -370,7 +370,7 @@
           ]
         },
         "start_date": "2022-06-27T18:26:35.768985",
-        "user_initials": "TEST_USER",
+        "user_initials": "unknown-user",
         "end_date": null,
         "status": null,
         "change_type": null,

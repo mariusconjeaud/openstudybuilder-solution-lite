@@ -1,98 +1,112 @@
 <template>
-<div class="template-field">
-  <vue-editor
-    data-cy="input-field"
-    ref="editor"
-    id="editor"
-    :value="value"
-    @input="onInputChanged"
-    @blur="onBlur"
-    :editor-toolbar="customToolbar"
-    :placeholder="label"
-    >
-  </vue-editor>
-  <div v-if="!errorMessages.length" class="mt-1 v-messages theme--light">
-    <div class="v-messages__wrapper">
-      <div class="v-messages__message">
-        {{ hint }}
-      </div>
-    </div>
-  </div>
-  <div v-else class="mt-1 v-messages theme--light error--text">
-    <div class="v-messages__wrapper">
-      <div class="v-messages__message">
-        {{ errorMessages.join(', ') }}
-      </div>
-    </div>
-  </div>
-  <div
-    ref="types"
-    class="types"
-    data-cy="types-dropdown"
-    :style="`width: ${width}px;`"
-    v-if="showDropDown && filteredItems.length > 0"
-    >
-    <v-list
-      class="list"
+  <v-input
+    :hint="hint"
+    persistent-hint
+    :validation-value="textContent"
+    v-bind="$attrs"
+  >
+    <div class="editor-container">
+      <QuillEditor
+        id="editor"
+        ref="editor"
+        class="ql-container ql-snow"
+        style="height: calc(100% - 42px)"
+        data-cy="input-field"
+        content-type="html"
+        :content="modelValue"
+        :toolbar="customToolbar"
+        :placeholder="label"
+        theme="snow"
+        @update:content="onInputChanged"
+        @blur="onBlur"
+      />
+      <div
+        v-if="showDropDown && filteredItems.length > 0"
+        ref="types"
+        class="types"
+        data-cy="types-dropdown"
+        :style="`width: ${width}px;`"
       >
-      <v-list-item
-        v-for="(item, index) in filteredItems"
-        :key="index"
-        @click="selectItem(item)"
-        :class="selectionIndex === index ? 'selected' : ''"
-        >
-        {{ (encloseParametersInDropdown ? prefix + item.name + postfix : item.name) }}
-        <span
-          v-if="item.values !== undefined && item.values.length > 0"
-          >(e.g. {{ item.values.slice(0, 3).map(el => el.name).join(', ') }} ...)</span>
-      </v-list-item>
-    </v-list>
-  </div>
-</div>
+        <v-list class="list">
+          <v-list-item
+            v-for="(item, index) in filteredItems"
+            :key="index"
+            :class="selectionIndex === index ? 'selected' : ''"
+            @click="selectItem(item)"
+          >
+            {{
+              encloseParametersInDropdown
+                ? prefix + item.name + postfix
+                : item.name
+            }}
+            <span v-if="item.values !== undefined && item.values.length > 0"
+              >(e.g.
+              {{
+                item.values
+                  .slice(0, 3)
+                  .map((el) => el.name)
+                  .join(', ')
+              }}
+              ...)</span
+            >
+          </v-list-item>
+        </v-list>
+      </div>
+    </div>
+  </v-input>
 </template>
 
 <script>
-import i18n from '@/plugins/i18n'
-import { VueEditor, Quill } from 'vue2-editor'
+import { i18n } from '@/plugins/i18n'
+import { QuillEditor, Quill } from '@vueup/vue-quill'
+import '@vueup/vue-quill/dist/vue-quill.snow.css'
 
 const Delta = Quill.import('delta')
 
 export default {
   components: {
-    VueEditor
+    QuillEditor,
   },
   props: {
-    value: String,
-    label: String,
+    modelValue: {
+      type: String,
+      default: '',
+    },
+    label: {
+      type: String,
+      default: '',
+    },
     items: {
       type: Array,
-      default: () => []
+      default: () => [],
     },
     hint: {
       type: String,
-      default: () => i18n.t('NNTemplateInputField.default_hint')
+      default: () => i18n.t('NNTemplateInputField.default_hint'),
     },
     prefix: {
       type: String,
-      default: '['
+      default: '[',
     },
     postfix: {
       type: String,
-      default: ']'
+      default: ']',
     },
     showDropDownEarly: {
       type: Boolean,
-      default: true
+      default: true,
     },
     encloseParametersInDropdown: {
       type: Boolean,
-      default: true
+      default: true,
     },
     errorMessages: {
       type: Array,
-      required: false
-    }
+      required: false,
+      default: () => [],
+    },
   },
+  emits: ['update:modelValue'],
   data: () => ({
     searchTerm: null,
     // keeps track of the selected item from the drop down menu
@@ -104,46 +118,83 @@ export default {
     customToolbar: [
       ['bold', 'italic', 'underline'],
       [{ script: 'sub' }, { script: 'super' }],
-      [{ list: 'ordered' }, { list: 'bullet' }]
-    ]
+      [{ list: 'ordered' }, { list: 'bullet' }],
+    ],
+    textContent: '',
   }),
-  mounted () {
+  watch: {
+    searchTerm() {
+      this.updateFilteredItems()
+    },
+    modelValue(value) {
+      if (value) {
+        this.$root.$nextTick(() => {
+          this.textContent = this.$refs.editor.getText()
+        })
+      }
+    },
+  },
+  mounted() {
     this.focusInput()
-    this.$refs.editor.quill.root.addEventListener('dblclick', this.onDoubleClick)
+    const quill = this.$refs.editor.getQuill()
+    quill.root.addEventListener('dblclick', this.onDoubleClick)
+    this.initQuill(quill)
     window.addEventListener('resize', this.onResize)
   },
-  updated () {
+  updated() {
     this.$root.$nextTick(() => {
       this.updateMinWidthProperty()
     })
   },
-  watch: {
-    searchTerm (val) {
-      this.updateFilteredItems()
-    }
-  },
   methods: {
-    updateFilteredItems () {
-      if (this.searchTerm === null || this.searchTerm === undefined || this.searchTerm === '' || this.searchTerm === this.prefix || this.searchTerm === '\n') {
+    initQuill(quill) {
+      // Add matcher to remove any formatting when user pastes content
+      quill.clipboard.addMatcher(Node.ELEMENT_NODE, (node, delta) => {
+        let ops = []
+        delta.ops.forEach((op) => {
+          if (op.insert && typeof op.insert === 'string') {
+            ops.push({
+              insert: op.insert,
+            })
+          }
+        })
+        delta.ops = ops
+        return delta
+      })
+    },
+    updateFilteredItems() {
+      if (
+        this.searchTerm === null ||
+        this.searchTerm === undefined ||
+        this.searchTerm === '' ||
+        this.searchTerm === this.prefix ||
+        this.searchTerm === '\n'
+      ) {
         this.filteredItems = this.items
       } else {
-        this.filteredItems = this.items.filter(item => {
-          return item.name.toString().toLowerCase().indexOf(this.searchTerm.toLowerCase()) !== -1
+        this.filteredItems = this.items.filter((item) => {
+          return (
+            item.name
+              .toString()
+              .toLowerCase()
+              .indexOf(this.searchTerm.toLowerCase()) !== -1
+          )
         })
       }
     },
-    onInputChanged (input) {
+    onInputChanged() {
       setTimeout(() => {
-        const textContent = this.$refs.editor.quill.getText()
+        const textContent = this.$refs.editor.getText()
         // We receive HTML but we only want text content
         this.updateSearchTerm(textContent)
-        this.$emit('input', input)
+        this.textContent = textContent
+        this.$emit('update:modelValue', this.$refs.editor.getHTML())
       }, 100)
     },
-    getCaretPosition () {
+    getCaretPosition() {
       return this.getSelectionStart()
     },
-    setCaretPosition (pos) {
+    setCaretPosition(pos) {
       const newRange = document.createRange()
       const selection = window.getSelection()
       const node = this.$refs.input.childNodes[0]
@@ -152,8 +203,9 @@ export default {
       selection.removeAllRanges()
       selection.addRange(newRange)
     },
-    getPosition () {
-      const range = this.$refs.editor.quill.getSelection()
+    getPosition() {
+      const quill = this.$refs.editor.getQuill()
+      const range = quill.getSelection(true)
       const position = { start: 0, end: 0 }
       if (range) {
         position.start = range.index
@@ -165,13 +217,13 @@ export default {
       }
       return position
     },
-    getSelectionStart () {
+    getSelectionStart() {
       return this.getPosition().start
     },
-    getSelectionEnd () {
+    getSelectionEnd() {
       return this.getPosition().end
     },
-    updateSearchTerm (input) {
+    updateSearchTerm(input) {
       if (input === null || input === undefined || typeof input !== 'string') {
         return
       }
@@ -189,22 +241,28 @@ export default {
       this.selectionIndex = 0
       this.showDropDown = showDropDown
     },
-    getSearchTermFromString (s) {
+    getSearchTermFromString(s) {
       const textToCaret = s.substring(0, this.getCaretPosition())
 
       const lastCharacter = textToCaret.substring(textToCaret.length - 1)
-      const lastCharacterCode = lastCharacter.charCodeAt(lastCharacter.length - 1)
+      const lastCharacterCode = lastCharacter.charCodeAt(
+        lastCharacter.length - 1
+      )
 
       // 160 = non breaking 'space' character (cf. HTMLs &nbsp;)
       // 32 = the simple space character
-      if (lastCharacterCode === 160 || lastCharacterCode === 32 || lastCharacterCode === 10) {
+      if (
+        lastCharacterCode === 160 ||
+        lastCharacterCode === 32 ||
+        lastCharacterCode === 10
+      ) {
         return ''
       }
 
       const arr = textToCaret.split(' ')
       return arr[arr.length - 1]
     },
-    getWordRightFromCaret (s) {
+    getWordRightFromCaret(s) {
       const textRightFromCaret = s.substring(this.getCaretPosition())
 
       const firstCharacter = textRightFromCaret.substring(0, 1)
@@ -212,14 +270,18 @@ export default {
 
       // 160 = non breaking 'space' character (cf. HTMLs &nbsp;)
       // 32 = the simple space character
-      if (firstCharacterCode === 160 || firstCharacterCode === 32 || firstCharacterCode === 10) {
+      if (
+        firstCharacterCode === 160 ||
+        firstCharacterCode === 32 ||
+        firstCharacterCode === 10
+      ) {
         return ''
       }
 
       const arr = textRightFromCaret.split(/\s/)
       return arr[0]
     },
-    onKeyDown (e) {
+    onKeyDown(e) {
       const keyCode = e.keyCode
 
       if (keyCode === 40 || keyCode === 34) {
@@ -252,17 +314,23 @@ export default {
         }
       }
     },
-    onDoubleClick () {
+    onDoubleClick() {
       this.searchTerm = ''
       this.showDropDown = true
     },
-    onBlur () {
+    onBlur() {
       setTimeout(() => {
         this.showDropDown = false
       }, 200)
     },
-    selectItem (item) {
-      if (item === null || item === undefined || item.name === null || item.name === undefined || item.name === '') {
+    selectItem(item) {
+      if (
+        item === null ||
+        item === undefined ||
+        item.name === null ||
+        item.name === undefined ||
+        item.name === ''
+      ) {
         return
       }
 
@@ -275,7 +343,7 @@ export default {
 
       let start = this.getSelectionStart()
       let end = this.getSelectionEnd()
-      const text = this.$refs.editor.quill.getText()
+      const text = this.$refs.editor.getText()
       if (start === end) {
         // there is no selection
         const term = this.getSearchTermFromString(text)
@@ -285,75 +353,82 @@ export default {
         end += right.length
       } else {
         // there is something selected
-        const charsBeforeSelection = this.value.substring(start - this.prefix.length, start)
+        const charsBeforeSelection = this.modelValue.substring(
+          start - this.prefix.length,
+          start
+        )
         if (charsBeforeSelection === this.prefix) {
           start -= this.prefix.length
         }
-        const charsAfterSelection = this.value.substring(end, end + this.postfix.length)
+        const charsAfterSelection = this.modelValue.substring(
+          end,
+          end + this.postfix.length
+        )
         if (charsAfterSelection === this.postfix) {
           end += this.postfix.length
         }
       }
-      this.$refs.editor.quill.updateContents(
-        new Delta().retain(start).delete(end - start).insert(this.prefix + item.name + this.postfix)
-      )
-      this.$refs.editor.quill.setSelection(start + item.name.length + 2)
+      const quill = this.$refs.editor.getQuill()
+      const delta = new Delta()
+        .retain(start)
+        .delete(end - start)
+        .insert(this.prefix + item.name + this.postfix)
+      quill.updateContents(delta)
+      quill.setSelection(start + item.name.length + 2)
       this.showDropDown = false
-      this.$emit('input', this.$refs.editor.quill.root.innerHTML)
+      this.$emit('update:modelValue', this.$refs.editor.getHTML())
       this.$root.$nextTick(() => {
         this.focusInput()
       })
     },
-    focusInput () {
-      this.$refs.editor.quill.focus()
+    focusInput() {
+      this.$refs.editor.focus()
     },
-    increaseSelectionIndex () {
+    increaseSelectionIndex() {
       if (this.selectionIndex >= this.filteredItems.length - 1) {
         this.selectionIndex = 0
       } else {
         this.selectionIndex += 1
       }
     },
-    decreaseSelectionIndex () {
+    decreaseSelectionIndex() {
       if (this.selectionIndex <= 0) {
         this.selectionIndex = this.filteredItems.length - 1
       } else {
         this.selectionIndex -= 1
       }
     },
-    onResize () {
+    onResize() {
       this.updateMinWidthProperty()
     },
-    updateMinWidthProperty () {
+    updateMinWidthProperty() {
       if (this.$refs.editor) {
-        this.width = this.$refs.editor.quill.root.clientWidth
+        const quill = this.$refs.editor.getQuill()
+        this.width = quill.root.clientWidth
       }
-    }
-  }
+    },
+  },
 }
 </script>
 
 <style scoped>
-.editor {
-  border: 1px solid var(--v-dfltBackground-darken1) !important;
-  white-space: pre;
-}
 .selected {
   background-color: cornsilk;
 }
-.template-field {
+.editor-container {
   width: 100%;
   position: relative;
   display: inline-block;
   background-color: white;
+  height: 150px !important;
 }
 .types {
   display: inline-block;
   position: fixed;
-  margin-top: -40px;
+  margin-top: auto;
   max-height: 500px;
   padding: 5px 0;
-  box-shadow: 0 1px 5px 1px rgba(0,0,0,0.3);
+  box-shadow: 0 1px 5px 1px rgba(0, 0, 0, 0.3);
   overflow-y: auto;
   overflow-x: hidden;
   contain: content;
@@ -367,7 +442,7 @@ export default {
   padding: 0;
 }
 .list span {
-  font-family: "Roboto", sans-serif;
+  font-family: 'Roboto', sans-serif;
   font-size: 0.9em;
   padding-left: 10px;
   color: #787878;

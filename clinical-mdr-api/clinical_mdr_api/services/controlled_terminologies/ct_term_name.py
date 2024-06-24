@@ -49,6 +49,7 @@ class CTTermNameService(CTTermGenericService[CTTermNameAR]):
                     codelist_exists_callback=lambda _: True,
                     catalogue_exists_callback=lambda _: True,
                 ),
+                term_exists_by_name_in_codelists_callback=self._repos.ct_term_name_repository.term_specific_exists_by_name_in_codelists,
             )
             self.repository.save(item)
             return self._transform_aggregate_root_to_pydantic_model(item)

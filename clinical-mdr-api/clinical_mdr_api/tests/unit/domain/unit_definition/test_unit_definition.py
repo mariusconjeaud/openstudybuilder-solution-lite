@@ -600,7 +600,7 @@ def test__unit_definition_ar__from_input_values_another_master_unit__failure(
         )
 
 
-@settings(max_examples=int(max(10, settings.default.max_examples / 10)), deadline=None)
+@settings(suppress_health_check=(HealthCheck.too_slow,))
 @given(
     unit_definition_value=unit_definition_values(),
     library=libraries(),  # no matter, either editable or not this should fail

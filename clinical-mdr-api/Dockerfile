@@ -54,6 +54,8 @@ FROM common-stage as dev-stage
 RUN echo "Building dev-stage" 1>&2 ; \
     apt-get update \
     && apt-get -y install \
+        gcc \
+        python3-dev \
         git \
         curl \
         python3-cffi \

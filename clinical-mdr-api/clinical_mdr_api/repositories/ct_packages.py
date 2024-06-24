@@ -130,31 +130,15 @@ WITH old_items_map, new_items_map, old_items_uids, new_items_uids,
 apoc.coll.subtract(new_items_uids, old_items_uids) AS added_items,
 apoc.coll.subtract(old_items_uids, new_items_uids) AS removed_items,
 apoc.coll.intersection(old_items_uids, new_items_uids) AS common_items
-// The following section unwinds list with uids of added items to filter out added items from the map that contains
-// all elements from new package
-WITH *, old_items_map, new_items_map, added_items, removed_items, common_items
-UNWIND
-  CASE WHEN added_items=[] THEN [NULL]
-  ELSE added_items
-  END AS added_item
-WITH *, old_items_map, new_items_map,
-  CASE WHEN added_items <> [] THEN
-  collect(apoc.map.merge(apoc.map.fromValues(['uid',added_item]), new_items_map[added_item]))
-  ELSE collect(added_item)
-  END AS added_items,
-removed_items, common_items
-// The following section unwinds list with uids of removed items to filter out removed items from the map that contains
-// all elements from old package
-UNWIND
-  CASE WHEN removed_items=[] THEN [NULL]
-  ELSE removed_items
-  END as removed_item
-WITH *, old_items_map, new_items_map, added_items,
-  CASE WHEN removed_items <> [] THEN
-  collect(apoc.map.merge(apoc.map.fromValues(['uid', removed_item]), old_items_map[removed_item]))
-  ELSE collect(removed_item) END
-  AS removed_items,
-common_items
+
+// Collect uids of added items in the new package
+WITH old_items_map, new_items_map, removed_items, common_items,
+  [ added_item IN added_items | apoc.map.merge(apoc.map.fromValues(['uid',added_item]), new_items_map[added_item])] AS added_items
+
+// Collect uids of removed items in the new package
+WITH old_items_map, new_items_map, added_items, common_items,
+  [ removed_item IN removed_items | apoc.map.merge(apoc.map.fromValues(['uid', removed_item]), old_items_map[removed_item])] AS removed_items
+
 // The following section unwinds list with uids of items that are present in old package and new package
 // to filter out common items from the map that contains all elements from new package.
 UNWIND

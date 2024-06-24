@@ -1,6 +1,6 @@
 from typing import Any
 
-from fastapi import APIRouter, Body, Depends, Path, Query, Response
+from fastapi import APIRouter, Body, Path, Query, Response
 from fastapi import status as response_status
 from pydantic.types import Json
 from starlette.requests import Request
@@ -23,12 +23,14 @@ from clinical_mdr_api.models.study_selections.study import (
     StudyPreferredTimeUnit,
     StudyPreferredTimeUnitInput,
     StudyProtocolTitle,
+    StudySoaPreferences,
+    StudySoaPreferencesInput,
     StudySubpartAuditTrail,
     StudySubpartCreateInput,
     StudySubpartReorderingInput,
 )
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.oauth import get_current_user_id, rbac
+from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.routers._generic_descriptions import (
@@ -70,6 +72,7 @@ Allowed parameters include : filter on fields, sort by field name with sort dire
             "current_metadata.identification_metadata.study_number",
             "current_metadata.identification_metadata.study_id",
             "current_metadata.identification_metadata.study_acronym",
+            "current_metadata.identification_metadata.study_subpart_acronym",
             "current_metadata.study_description.study_title",
             "current_metadata.version_metadata.study_status",
             "current_metadata.version_metadata.version_timestamp",
@@ -115,27 +118,32 @@ def get_all(
     has_study_objective: bool
     | None = Query(
         default=None,
-        description="Optionaly, filter studies based on the existence of related study objectives or not",
+        description="Optionally, filter studies based on the existence of related Study Objectives or not",
+    ),
+    has_study_footnote: bool
+    | None = Query(
+        default=None,
+        description="Optionally, filter studies based on the existence of related Study SoA Footnotes or not",
     ),
     has_study_endpoint: bool
     | None = Query(
         default=None,
-        description="Optionaly, filter studies based on the existence of related study endpoints or not",
+        description="Optionally, filter studies based on the existence of related Study Endpoints or not",
     ),
     has_study_criteria: bool
     | None = Query(
         default=None,
-        description="Optionaly, filter studies based on the existence of related study criteria or not",
+        description="Optionally, filter studies based on the existence of related Study Criteria or not",
     ),
     has_study_activity: bool
     | None = Query(
         default=None,
-        description="Optionaly, filter studies based on the existence of related study activities or not",
+        description="Optionally, filter studies based on the existence of related Study Activities or not",
     ),
     has_study_activity_instruction: bool
     | None = Query(
         default=None,
-        description="Optionaly, filter studies based on the existence of related study activity instruction or not",
+        description="Optionally, filter studies based on the existence of related sTudy Activity Instruction or not",
     ),
     sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
     page_number: int
@@ -160,12 +168,12 @@ def get_all(
         default=False,
         description="Indicates whether to return 'Active' Studies or 'Deleted' ones.",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> CustomPage[CompactStudy]:
-    study_service = StudyService(user=current_user_id)
+    study_service = StudyService()
     results = study_service.get_all(
         include_sections=include_sections,
         exclude_sections=exclude_sections,
+        has_study_footnote=has_study_footnote,
         has_study_objective=has_study_objective,
         has_study_endpoint=has_study_endpoint,
         has_study_criteria=has_study_criteria,
@@ -202,7 +210,6 @@ def get_all(
     },
 )
 def get_distinct_values_for_header(
-    current_user_id: str = Depends(get_current_user_id),
     field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
     search_string: str
     | None = Query("", description=_generic_descriptions.HEADER_SEARCH_STRING),
@@ -216,7 +223,7 @@ def get_distinct_values_for_header(
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
 ):
-    study_service = StudyService(user=current_user_id)
+    study_service = StudyService()
     return study_service.get_distinct_values_for_header(
         field_name=field_name,
         search_string=search_string,
@@ -249,13 +256,12 @@ def get_distinct_values_for_header(
     },
 )
 def lock(
-    current_user_id: str = Depends(get_current_user_id),
     uid: str = StudyUID,
     lock_description: StatusChangeDescription = Body(
         description="The description of the locked version."
     ),
 ):
-    study_service = StudyService(user=current_user_id)
+    study_service = StudyService()
     return study_service.lock(
         uid=uid, change_description=lock_description.change_description
     )
@@ -282,10 +288,9 @@ def lock(
     },
 )
 def unlock(
-    current_user_id: str = Depends(get_current_user_id),
     uid: str = StudyUID,
 ):
-    study_service = StudyService(user=current_user_id)
+    study_service = StudyService()
     return study_service.unlock(uid=uid)
 
 
@@ -311,13 +316,12 @@ def unlock(
     },
 )
 def release(
-    current_user_id: str = Depends(get_current_user_id),
     uid: str = StudyUID,
     release_description: StatusChangeDescription = Body(
         description="The description of the release version."
     ),
 ):
-    study_service = StudyService(user=current_user_id)
+    study_service = StudyService()
     return study_service.release(
         uid=uid, change_description=release_description.change_description
     )
@@ -356,10 +360,8 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def delete_activity(
-    uid: str = StudyUID, current_user_id: str = Depends(get_current_user_id)
-):
-    study_service = StudyService(user=current_user_id)
+def delete_activity(uid: str = StudyUID):
+    study_service = StudyService()
     study_service.soft_delete(uid=uid)
     return Response(status_code=response_status.HTTP_204_NO_CONTENT)
 
@@ -388,7 +390,6 @@ def get(
     | None = Query(None, description=study_section_description("include")),
     exclude_sections: list[StudyComponentEnum]
     | None = Query(None, description=study_section_description("exclude")),
-    current_user_id: str = Depends(get_current_user_id),
     status: StudyStatus
     | None = Query(
         None,
@@ -397,7 +398,7 @@ def get(
     ),
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ):
-    study_service = StudyService(user=current_user_id)
+    study_service = StudyService()
     study_definition = study_service.get_by_uid(
         uid=uid,
         include_sections=include_sections,
@@ -451,9 +452,8 @@ def patch(
         description="The request with the structure similar to the GET /{uid} response. Carrying only those"
         "fields requested to change.",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> Study:
-    study_service = StudyService(user=current_user_id)
+    study_service = StudyService()
     if study_patch_request is None:
         raise exceptions.ValidationException("No data to patch was provided.")
     response = study_service.patch(uid, dry, study_patch_request)
@@ -499,9 +499,8 @@ def get_snapshot_history(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    study_service = StudyService(user=current_user_id)
+    study_service = StudyService()
     snapshot_history = study_service.get_study_snapshot_history(
         study_uid=uid,
         page_number=page_number,
@@ -546,9 +545,8 @@ def get_fields_audit_trail(
     | None = Query(
         None, description=study_fields_audit_trail_section_description("exclude")
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    study_service = StudyService(user=current_user_id)
+    study_service = StudyService()
     study_fields_audit_trail = study_service.get_fields_audit_trail_by_uid(
         uid=uid, include_sections=include_sections, exclude_sections=exclude_sections
     )
@@ -571,16 +569,9 @@ def get_fields_audit_trail(
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_study_subpart_audit_trail(
-    uid: str = StudyUID,
-    is_subpart: bool = False,
-    current_user_id: str = Depends(get_current_user_id),
-):
-    study_service = StudyService(user=current_user_id)
-    study_subpart_audit_trail = study_service.get_subpart_audit_trail_by_uid(
-        uid=uid, is_subpart=is_subpart
-    )
-    return study_subpart_audit_trail
+def get_study_subpart_audit_trail(uid: str = StudyUID, is_subpart: bool = False):
+    study_service = StudyService()
+    return study_service.get_subpart_audit_trail_by_uid(uid=uid, is_subpart=is_subpart)
 
 
 @router.post(
@@ -609,9 +600,8 @@ def create(
     | StudyCreateInput = Body(
         description="Related parameters of the objective that shall be created."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> Study:
-    study_service = StudyService(user=current_user_id)
+    study_service = StudyService()
     return study_service.create(study_create_input)
 
 
@@ -643,10 +633,9 @@ State after:
 )
 def get_protocol_title(
     uid: str = StudyUID,
-    current_user_id: str = Depends(get_current_user_id),
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ):
-    study_service = StudyService(user=current_user_id)
+    study_service = StudyService()
     return study_service.get_protocol_title(
         uid=uid, study_value_version=study_value_version
     )
@@ -693,9 +682,8 @@ def copy_simple_form_from_another_study(
         description="Indicates whether to overwrite the component of the study referenced by the uid"
         "or return a projection",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    study_service = StudyService(user=current_user_id)
+    study_service = StudyService()
     return study_service.copy_component_from_another_study(
         uid=uid,
         reference_study_uid=reference_study_uid,
@@ -725,10 +713,9 @@ def get_preferred_time_unit(
         False,
         description="Whether the preferred time unit is associated with Protocol SoA or not.",
     ),
-    current_user_id: str = Depends(get_current_user_id),
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ):
-    study_service = StudyService(user=current_user_id)
+    study_service = StudyService()
     return study_service.get_study_preferred_time_unit(
         study_uid=uid,
         for_protocol_soa=for_protocol_soa,
@@ -760,9 +747,8 @@ def patch_preferred_time_unit(
         False,
         description="Whether the preferred time unit is associated with Protocol Soa or not.",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    study_service = StudyService(user=current_user_id)
+    study_service = StudyService()
     return study_service.patch_study_preferred_time_unit(
         study_uid=uid,
         unit_definition_uid=preferred_time_unit_input.unit_definition_uid,
@@ -794,10 +780,63 @@ def reorder_study_subparts(
         description="Specify the Study Subpart to be reordered. "
         "If provided, the specified Study Subpart will be reordered; otherwise, any gaps in the order will be filled.",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    study_service = StudyService(user=current_user_id)
+    study_service = StudyService()
     return study_service.reorder_study_subparts(
         study_parent_part_uid=uid,
         study_subpart_reordering_input=study_subpart_reordering_input,
+    )
+
+
+@router.get(
+    "/{uid}/soa-preferences",
+    dependencies=[rbac.STUDY_READ],
+    summary="Get study SoA preferences",
+    response_model_by_alias=False,
+    response_model=StudySoaPreferences,
+    status_code=200,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - study with the specified 'uid' does not exist or has no SoA preferences set",
+        },
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+def get_soa_preferences(
+    uid: str = StudyUID,
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
+) -> StudySoaPreferences:
+    study_service = StudyService()
+    return study_service.get_study_soa_preferences(
+        study_uid=uid,
+        study_value_version=study_value_version,
+    )
+
+
+@router.patch(
+    "/{uid}/soa-preferences",
+    dependencies=[rbac.STUDY_WRITE],
+    summary="Update study SoA preferences",
+    response_model=StudySoaPreferences,
+    response_model_by_alias=False,
+    status_code=200,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - study with the specified 'uid' does not exist",
+        },
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+def patch_soa_preferences(
+    uid: str = StudyUID,
+    soa_preferences: StudySoaPreferencesInput = Body(
+        ..., description="SoA preferences data"
+    ),
+):
+    study_service = StudyService()
+    return study_service.patch_study_soa_preferences(
+        study_uid=uid,
+        soa_preferences=soa_preferences,
     )

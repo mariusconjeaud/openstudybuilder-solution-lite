@@ -19,11 +19,17 @@ from clinical_mdr_api.domains.study_selections.study_epoch import (
 from clinical_mdr_api.domains.study_selections.study_visit import (
     StudyVisitContactMode,
     StudyVisitEpochAllocation,
+    StudyVisitRepeatingFrequency,
     StudyVisitTimeReference,
     StudyVisitType,
     StudyVisitVO,
     VisitClass,
+    VisitContactModeNamedTuple,
+    VisitEpochAllocationNamedTuple,
+    VisitRepeatingFrequencyNamedTuple,
     VisitSubclass,
+    VisitTimeReferenceNamedTuple,
+    VisitTypeNamedTuple,
 )
 from clinical_mdr_api.models.utils import BaseModel
 
@@ -38,11 +44,6 @@ class StudyVisitCreateInput(BaseModel):
 
     visit_sublabel_codelist_uid: str | None
     visit_sublabel_reference: str | None
-
-    legacy_visit_id: str | None
-    legacy_visit_type_alias: str | None
-    legacy_name: str | None
-    legacy_subname: str | None
 
     consecutive_visit_group: str | None
 
@@ -61,6 +62,14 @@ class StudyVisitCreateInput(BaseModel):
     visit_class: str
     visit_subclass: str | None
     is_global_anchor_visit: bool
+    is_soa_milestone: bool = False
+    visit_name: str | None = None
+    visit_short_name: str | None = None
+    visit_number: float | None = None
+    unique_visit_number: int | None = None
+    repeating_frequency_uid: str | None = Field(
+        None, source="has_repeating_frequency.uid"
+    )
 
 
 class StudyVisitEditInput(StudyVisitCreateInput):
@@ -136,13 +145,15 @@ class TimePoint(BaseModel):
         description="Uid of time unit",
         source="has_timepoint.has_latest_value.has_unit_definition.uid",
     )
-    visit_timereference: StudyVisitTimeReference | None = Field(
+    visit_timereference: VisitTimeReferenceNamedTuple | None = Field(
         None, source="has_timepoint.has_latest_value.has_time_reference.uid"
     )
 
     @validator("visit_timereference", pre=True)
     # pylint: disable=no-self-argument,unused-argument
-    def instantiate_visit_timereference(cls, value, values):
+    def instantiate_visit_timereference(
+        cls, value, values
+    ) -> VisitTimeReferenceNamedTuple | None:
         if value:
             return StudyVisitTimeReference[value]
         return None
@@ -255,7 +266,7 @@ class VisitName(BaseModel):
         description="The uid of the visit name",
         source="has_visit_name.uid",
     )
-    value: str | None = Field(
+    name: str | None = Field(
         None,
         title="Visit name name",
         description="The name of the visit",
@@ -288,7 +299,7 @@ class StudyEpochSimpleOGM(BaseModel):
 
     @validator("epoch", pre=True)
     # pylint: disable=no-self-argument,unused-argument
-    def instantiate_epoch(cls, value, values):
+    def instantiate_epoch(cls, value, values) -> EpochNamedTuple:
         return StudyEpochEpoch[value]
 
     order: int = Field(
@@ -354,7 +365,7 @@ class StudyVisitOGM(BaseModel, StudyVisitVO):
         source="end_rule",
         nullable=True,
     )
-    visit_contact_mode: StudyVisitContactMode = Field(
+    visit_contact_mode: VisitContactModeNamedTuple = Field(
         ...,
         title="Visit contact mode",
         description="The contact mode of study visit",
@@ -363,10 +374,12 @@ class StudyVisitOGM(BaseModel, StudyVisitVO):
 
     @validator("visit_contact_mode", pre=True)
     # pylint: disable=no-self-argument,unused-argument
-    def instantiate_visit_contact_mode(cls, value, values):
+    def instantiate_visit_contact_mode(
+        cls, value, values
+    ) -> VisitContactModeNamedTuple:
         return StudyVisitContactMode[value]
 
-    epoch_allocation: StudyVisitEpochAllocation | None = Field(
+    epoch_allocation: VisitEpochAllocationNamedTuple | None = Field(
         None,
         title="Epoch allocation rule",
         description="Epoch allocation rule",
@@ -376,12 +389,14 @@ class StudyVisitOGM(BaseModel, StudyVisitVO):
 
     @validator("epoch_allocation", pre=True)
     # pylint: disable=no-self-argument,unused-argument
-    def instantiate_epoch_allocation(cls, value, values):
+    def instantiate_epoch_allocation(
+        cls, value, values
+    ) -> VisitEpochAllocationNamedTuple | None:
         if value:
             return StudyVisitEpochAllocation[value]
         return None
 
-    visit_type: StudyVisitType = Field(
+    visit_type: VisitTypeNamedTuple = Field(
         ...,
         title="visit_unit_uid",
         description="Uid of visit unit",
@@ -390,7 +405,7 @@ class StudyVisitOGM(BaseModel, StudyVisitVO):
 
     @validator("visit_type", pre=True)
     # pylint: disable=no-self-argument,unused-argument
-    def instantiate_visit_type(cls, value, values):
+    def instantiate_visit_type(cls, value, values) -> VisitTypeNamedTuple:
         return StudyVisitType[value]
 
     author: str = Field(
@@ -445,6 +460,27 @@ class StudyVisitOGM(BaseModel, StudyVisitVO):
         description="Is global anchor visit",
         source="is_global_anchor_visit",
     )
+    is_soa_milestone: bool = Field(
+        False,
+        title="Is soa milestone",
+        source="is_soa_milestone",
+    )
+
+    repeating_frequency: VisitRepeatingFrequencyNamedTuple | None = Field(
+        None,
+        title="Repeating Frequency",
+        description="Repeating Frequency",
+        source="has_repeating_frequency.uid",
+    )
+
+    @validator("repeating_frequency", pre=True)
+    # pylint: disable=no-self-argument,unused-argument
+    def instantiate_repeating_frequency(
+        cls, value, values
+    ) -> VisitRepeatingFrequencyNamedTuple:
+        if value:
+            return StudyVisitRepeatingFrequency[value]
+        return None
 
     timepoint: TimePoint | None = Field(None, nullable=True)
     study_day: StudyDay | None = Field(None, nullable=True)
@@ -454,29 +490,7 @@ class StudyVisitOGM(BaseModel, StudyVisitVO):
     week_in_study: WeekInStudy | None = Field(None, nullable=True)
     visit_name_sc: VisitName = Field(...)
 
-    legacy_visit_id: str | None = Field(
-        ...,
-        title="Legacy Visit Uid",
-        description="The uid of legacy visit",
-        source="legacy_visit_id",
-    )
-    legacy_visit_type_alias: str | None = Field(
-        ...,
-        title="Legacy Visit type alias",
-        description="Legacy Visit type alias",
-        source="legacy_visit_type_alias",
-    )
-    legacy_name: str | None = Field(
-        ..., title="Legacy name", description="Legacy name", source="legacy_name"
-    )
-    legacy_subname: str | None = Field(
-        ...,
-        title="Legacy sub name",
-        description="Legacy sub name",
-        source="legacy_subname",
-    )
-
-    visit_number: int = Field(
+    visit_number: float = Field(
         ...,
         title="Visit number",
         description="The number of the study visit",
@@ -540,6 +554,16 @@ class StudyVisitOGM(BaseModel, StudyVisitVO):
         title="Status",
         description="Study visit status",
         source="visit_sublabel_uid",
+    )
+    vis_unique_number: int | None = Field(
+        ...,
+        title="unique_visit_number",
+        source="unique_visit_number",
+    )
+    vis_short_name: str | None = Field(
+        ...,
+        title="visit_short_name",
+        source="short_visit_label",
     )
 
 
@@ -611,18 +635,23 @@ class StudyVisit(StudyVisitEditInput):
     epoch_allocation_uid: str | None
     epoch_allocation_name: str | None
 
+    repeating_frequency_uid: str | None
+    repeating_frequency_name: str | None
+
     duration_time: float | None
     duration_time_unit: str | None
 
     study_day_number: int | None
+    study_duration_days: int | None
     study_duration_days_label: str | None
     study_day_label: str | None
     study_week_number: int | None
+    study_duration_weeks: int | None
     study_duration_weeks_label: str | None
     study_week_label: str | None
     week_in_study_label: str | None
 
-    visit_number: int = Field(alias="visit_number")
+    visit_number: float = Field(alias="visit_number")
     visit_subnumber: int
 
     unique_visit_number: int = Field(alias="unique_visit_number")
@@ -636,6 +665,7 @@ class StudyVisit(StudyVisitEditInput):
     visit_class: str
     visit_subclass: str | None
     is_global_anchor_visit: bool
+    is_soa_milestone: bool
     status: str = Field(..., title="Status", description="Study Visit status")
     start_date: datetime = Field(
         ..., title="Creation Date", description="Study Visit creation date"

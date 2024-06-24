@@ -14,7 +14,12 @@ from clinical_mdr_api.domains.syntax_pre_instances.footnote_pre_instance import 
     FootnotePreInstanceAR,
 )
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryVO
-from clinical_mdr_api.models.controlled_terminologies.ct_term import SimpleTermModel
+from clinical_mdr_api.models.controlled_terminologies.ct_term import (
+    SimpleCTTermNameAndAttributes,
+    SimpleTermAttributes,
+    SimpleTermModel,
+    SimpleTermName,
+)
 from clinical_mdr_api.models.generic_models import SimpleNameModel
 
 
@@ -43,6 +48,21 @@ class FootnotePreInstanceRepository(
             ),
             item_metadata=self._library_item_metadata_vo_from_relation(relationship),
             template=self.get_template_vo(root, value, kwargs["instance_template"]),
+            footnote_type=SimpleCTTermNameAndAttributes(
+                term_uid=kwargs["template_type"]["term_uid"],
+                name=SimpleTermName(
+                    sponsor_preferred_name=kwargs["template_type"]["name"],
+                    sponsor_preferred_name_sentence_case=kwargs["template_type"][
+                        "name_sentence_case"
+                    ],
+                ),
+                attributes=SimpleTermAttributes(
+                    code_submission_value=kwargs["template_type"][
+                        "code_submission_value"
+                    ],
+                    nci_preferred_name=kwargs["template_type"]["preferred_term"],
+                ),
+            ),
             indications=sorted(
                 [
                     SimpleTermModel(

@@ -208,7 +208,7 @@ def test_data():
 
     endpoint = TestUtils.create_endpoint(library_name="Sponsor")
 
-    study_endpoint_selection_service = StudyEndpointSelectionService(author="test")
+    study_endpoint_selection_service = StudyEndpointSelectionService()
     for timeframe in timeframes:
         if timeframe.status == "Final":
             study_endpoint_selection_service.make_selection(
@@ -513,6 +513,44 @@ def test_create_timeframe(api_client):
     assert set(list(res.keys())) == set(TIMEFRAME_FIELDS_ALL)
     for key in TIMEFRAME_FIELDS_NOT_NULL:
         assert res[key] is not None
+
+
+def test_keep_original_case_of_unit_definition_parameter_if_it_is_in_the_start_of_timeframe(
+    api_client,
+):
+    TestUtils.create_template_parameter("Unit")
+    _unit = TestUtils.create_unit_definition("u/week", template_parameter=True)
+
+    _timeframe_template = TestUtils.create_timeframe_template(
+        name="[Unit] test ignore case",
+        guidance_text="Default guidance text",
+        library_name="Sponsor",
+    )
+
+    data = {
+        "timeframe_template_uid": _timeframe_template.uid,
+        "library_name": "Sponsor",
+        "parameter_terms": [
+            {
+                "position": 1,
+                "conjunction": "",
+                "terms": [
+                    {
+                        "index": 1,
+                        "name": _unit.name,
+                        "uid": _unit.uid,
+                        "type": "Unit",
+                    }
+                ],
+            }
+        ],
+    }
+    response = api_client.post(URL, json=data)
+    res = response.json()
+    log.info("Created Timeframe: %s", res)
+
+    assert response.status_code == 201
+    assert res["name"] == f"[{_unit.name}] test ignore case"
 
 
 def test_update_timeframe(api_client):

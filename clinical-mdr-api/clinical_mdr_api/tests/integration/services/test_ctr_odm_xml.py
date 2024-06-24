@@ -31,9 +31,9 @@ def test_database():
 
 
 # pylint: disable=unused-argument,redefined-outer-name
-def test_xml_response(app_client, test_database):
+def test_xml_response(api_client, test_database):
     study = generate_study_root()
-    response = app_client.get(f"/studies/{study.uid}/ctr/odm.xml")
+    response = api_client.get(f"/studies/{study.uid}/ctr/odm.xml")
     assert_response_status_code(response, 200)
     assert_response_content_type(response, "text/xml")
     root = ET.fromstring(response.text)

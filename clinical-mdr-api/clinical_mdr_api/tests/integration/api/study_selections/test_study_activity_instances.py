@@ -20,6 +20,9 @@ from clinical_mdr_api.domains.study_selections.study_selection_activity_instance
 )
 from clinical_mdr_api.main import app
 from clinical_mdr_api.models import ClinicalProgramme, Project
+from clinical_mdr_api.models.biomedical_concepts.activity_instance_class import (
+    ActivityInstanceClass,
+)
 from clinical_mdr_api.models.concepts.activities.activity import Activity
 from clinical_mdr_api.models.concepts.activities.activity_group import ActivityGroup
 from clinical_mdr_api.models.concepts.activities.activity_instance import (
@@ -71,6 +74,7 @@ body_mes_activity: Activity
 body_measurements_activity_subgroup: ActivitySubGroup
 weight_activity: Activity
 weight_activity_instance: ActivityInstance
+weight_activity_instance_class: ActivityInstanceClass
 body_mes_activity_instance: ActivityInstance
 clinical_programme: ClinicalProgramme
 project: Project
@@ -224,7 +228,7 @@ def test_data():
         library_name="Sponsor",
         is_data_collected=True,
     )
-
+    global weight_activity_instance_class
     weight_activity_instance_class = TestUtils.create_activity_instance_class(
         name="Weight activity instance class"
     )
@@ -257,6 +261,20 @@ def test_create_remove_study_activity_instance_when_study_activity_is_created_re
     api_client,
 ):
     test_study = TestUtils.create_study(project_number=project.project_number)
+
+    TestUtils.create_activity_instance(
+        name="Draft Activity Instance",
+        activity_instance_class_uid=weight_activity_instance_class.uid,
+        name_sentence_case="draft activity instance",
+        topic_code="draft activity instance topic code",
+        is_required_for_activity=True,
+        activities=[weight_activity.uid],
+        activity_subgroups=[body_measurements_activity_subgroup.uid],
+        activity_groups=[general_activity_group.uid],
+        activity_items=[],
+        approve=False,
+    )
+
     response = api_client.post(
         f"/studies/{test_study.uid}/study-activities",
         json={
@@ -643,26 +661,68 @@ def test_get_study_activity_instances_csv_xml_excel(api_client, export_format):
     TestUtils.verify_exported_data_format(api_client, export_format, url)
 
 
-def test_defaulted_study_activity_instance(api_client):
+@pytest.mark.parametrize(
+    "activity_name, activity_instance_name,is_required, is_defaulted, expected_state, is_data_collected",
+    [
+        pytest.param(
+            "Required activity",
+            "Required activity instance",
+            True,
+            False,
+            "Required",
+            True,
+        ),
+        pytest.param(
+            "Defaulted activity",
+            "Defaulted activity instance",
+            False,
+            True,
+            "Defaulted",
+            True,
+        ),
+        pytest.param(
+            "Suggestion activity",
+            "Suggestion activity instance",
+            False,
+            False,
+            "Suggestion",
+            True,
+        ),
+        pytest.param(
+            "Not collected activity",
+            "Not collected activity instance",
+            False,
+            False,
+            "Not required",
+            False,
+        ),
+    ],
+)
+def test_study_activity_instances_states(
+    api_client,
+    activity_name,
+    activity_instance_name,
+    is_required,
+    is_defaulted,
+    expected_state,
+    is_data_collected,
+):
     test_study = TestUtils.create_study(project_number=project.project_number)
     new_test_activity = TestUtils.create_activity(
-        name="New test activity",
+        name=activity_name,
         activity_subgroups=[body_measurements_activity_subgroup.uid],
         activity_groups=[general_activity_group.uid],
         library_name="Sponsor",
-        is_data_collected=True,
+        is_data_collected=is_data_collected,
     )
 
-    new_test_activity_instance_class = TestUtils.create_activity_instance_class(
-        name="New test activity instance class"
-    )
     new_test_activity_instance = TestUtils.create_activity_instance(
-        name="New test activity instance",
-        activity_instance_class_uid=new_test_activity_instance_class.uid,
-        name_sentence_case="new test activity instance",
+        name=activity_instance_name,
+        activity_instance_class_uid=weight_activity_instance_class.uid,
+        name_sentence_case=activity_instance_name.lower(),
         topic_code="new test activity instance topic code",
-        is_required_for_activity=False,
-        is_default_selected_for_activity=True,
+        is_required_for_activity=is_required,
+        is_default_selected_for_activity=is_defaulted,
         activities=[new_test_activity.uid],
         activity_subgroups=[body_measurements_activity_subgroup.uid],
         activity_groups=[general_activity_group.uid],
@@ -683,8 +743,215 @@ def test_defaulted_study_activity_instance(api_client):
     )
     assert response.status_code == 200
     res = response.json()["items"]
-    print(res)
+
     assert len(res) == 1
     assert res[0]["activity_instance"]["uid"] == new_test_activity_instance.uid
     assert res[0]["activity"]["uid"] == new_test_activity.uid
-    assert res[0]["state"] == StudyActivityInstanceState.DEFAULTED.value
+    assert res[0]["state"] == expected_state
+
+
+def test_sync_to_latest_version_activity_instance(api_client):
+    test_study = TestUtils.create_study(project_number=project.project_number)
+    new_test_activity = TestUtils.create_activity(
+        name="New activity for sync test",
+        activity_subgroups=[body_measurements_activity_subgroup.uid],
+        activity_groups=[general_activity_group.uid],
+        library_name="Sponsor",
+        is_data_collected=True,
+    )
+
+    new_test_activity_instance = TestUtils.create_activity_instance(
+        name="New activity instance for sync test",
+        activity_instance_class_uid=weight_activity_instance_class.uid,
+        name_sentence_case="new activity instance for sync test",
+        topic_code="new activity instance topic code for sync test",
+        is_required_for_activity=True,
+        is_default_selected_for_activity=True,
+        activities=[new_test_activity.uid],
+        activity_subgroups=[body_measurements_activity_subgroup.uid],
+        activity_groups=[general_activity_group.uid],
+        activity_items=[],
+    )
+    response = api_client.post(
+        f"/studies/{test_study.uid}/study-activities",
+        json={
+            "activity_uid": new_test_activity.uid,
+            "activity_subgroup_uid": body_measurements_activity_subgroup.uid,
+            "activity_group_uid": general_activity_group.uid,
+            "soa_group_term_uid": "term_efficacy_uid",
+        },
+    )
+    assert response.status_code == 201
+    response = api_client.get(
+        f"/studies/{test_study.uid}/study-activity-instances",
+    )
+    assert response.status_code == 200
+    study_activity_instances = response.json()["items"]
+    assert len(study_activity_instances) == 1
+    study_activity_instance_uid = study_activity_instances[0][
+        "study_activity_instance_uid"
+    ]
+    assert study_activity_instances[0]["activity_instance"]["version"] == "1.0"
+    assert (
+        study_activity_instances[0]["activity_instance"]["uid"]
+        == new_test_activity_instance.uid
+    )
+    assert study_activity_instances[0]["latest_activity_instance"] is None
+
+    response = api_client.post(
+        f"/concepts/activities/activity-instances/{new_test_activity_instance.uid}/versions",
+    )
+    assert response.status_code == 201
+    # PATCH underling activity-instance
+    response = api_client.patch(
+        f"/concepts/activities/activity-instances/{new_test_activity_instance.uid}",
+        json={
+            "definition": "new activity instance definition for sync test",
+            "change_description": "Sync to latest version test",
+        },
+    )
+    assert response.status_code == 200
+
+    response = api_client.post(
+        f"/concepts/activities/activity-instances/{new_test_activity_instance.uid}/approvals",
+    )
+    assert response.status_code == 201
+
+    # Fetch StudyActivityInstance after underlying ActivityInstance is edited
+    response = api_client.get(
+        f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}",
+    )
+    assert response.status_code == 200
+    study_activity_instance = response.json()
+    assert study_activity_instance["activity_instance"]["version"] == "1.0"
+    assert (
+        study_activity_instance["activity_instance"]["uid"]
+        == new_test_activity_instance.uid
+    )
+    assert study_activity_instance["latest_activity_instance"]["version"] == "2.0"
+    assert (
+        study_activity_instance["latest_activity_instance"]["uid"]
+        == new_test_activity_instance.uid
+    )
+
+    response = api_client.post(
+        f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}/sync-latest-version",
+    )
+    assert response.status_code == 201
+
+    # Fetch StudyActivityInstance after underlying ActivityInstance is synced to latest version
+    response = api_client.get(
+        f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}",
+    )
+    assert response.status_code == 200
+    study_activity_instance = response.json()
+    assert study_activity_instance["activity_instance"]["version"] == "2.0"
+    assert (
+        study_activity_instance["activity_instance"]["uid"]
+        == new_test_activity_instance.uid
+    )
+    assert study_activity_instance["latest_activity_instance"] is None
+
+
+def test_activity_activity_instance_relationship(api_client):
+    test_study = TestUtils.create_study(project_number=project.project_number)
+    new_test_activity = TestUtils.create_activity(
+        name="Activity to test activity-activity instance rel deletion.",
+        activity_subgroups=[body_measurements_activity_subgroup.uid],
+        activity_groups=[general_activity_group.uid],
+        library_name="Sponsor",
+        is_data_collected=True,
+    )
+    new_test_activity_instance = TestUtils.create_activity_instance(
+        name="Activity instance to test activity-activity instance rel deletion.",
+        activity_instance_class_uid=weight_activity_instance_class.uid,
+        name_sentence_case="activity instance to test activity-activity instance rel deletion.",
+        topic_code="topic code",
+        is_required_for_activity=False,
+        is_default_selected_for_activity=False,
+        activities=[new_test_activity.uid],
+        activity_subgroups=[body_measurements_activity_subgroup.uid],
+        activity_groups=[general_activity_group.uid],
+        activity_items=[],
+    )
+    study_activity = TestUtils.create_study_activity(
+        study_uid=test_study.uid,
+        soa_group_term_uid="term_efficacy_uid",
+        activity_uid=new_test_activity.uid,
+        activity_subgroup_uid=body_measurements_activity_subgroup.uid,
+        activity_group_uid=general_activity_group.uid,
+    )
+
+    response = api_client.get(
+        f"/studies/{test_study.uid}/study-activity-instances",
+    )
+    assert response.status_code == 200
+    study_activity_instances = response.json()["items"]
+    assert len(study_activity_instances) == 1
+    study_activity_instance_uid = study_activity_instances[0][
+        "study_activity_instance_uid"
+    ]
+
+    response = api_client.get(
+        f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}",
+    )
+    assert response.status_code == 200
+    study_activity_instance = response.json()
+    assert (
+        study_activity_instance["study_activity_uid"]
+        == study_activity.study_activity_uid
+    )
+    assert study_activity_instance["activity"]["uid"] == new_test_activity.uid
+    assert study_activity_instance["activity"]["name"] == new_test_activity.name
+    assert (
+        study_activity_instance["study_activity_subgroup"]["activity_subgroup_uid"]
+        == body_measurements_activity_subgroup.uid
+    )
+    assert (
+        study_activity_instance["study_activity_group"]["activity_group_uid"]
+        == general_activity_group.uid
+    )
+    assert (
+        study_activity_instance["activity_instance"]["uid"]
+        == new_test_activity_instance.uid
+    )
+    assert (
+        study_activity_instance["activity_instance"]["name"]
+        == new_test_activity_instance.name
+    )
+    assert (
+        study_activity_instance["state"] == StudyActivityInstanceState.SUGGESTION.value
+    )
+
+    # Delete Activity-ActivityInstance relationship
+    response = api_client.patch(
+        f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}",
+        json={
+            "activity_instance_uid": None,
+        },
+    )
+    assert response.status_code == 200
+    response = api_client.get(
+        f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}",
+    )
+    assert response.status_code == 200
+    study_activity_instance = response.json()
+    assert (
+        study_activity_instance["study_activity_uid"]
+        == study_activity.study_activity_uid
+    )
+    assert study_activity_instance["activity"]["uid"] == new_test_activity.uid
+    assert study_activity_instance["activity"]["name"] == new_test_activity.name
+    assert (
+        study_activity_instance["study_activity_subgroup"]["activity_subgroup_uid"]
+        == body_measurements_activity_subgroup.uid
+    )
+    assert (
+        study_activity_instance["study_activity_group"]["activity_group_uid"]
+        == general_activity_group.uid
+    )
+    assert study_activity_instance["activity_instance"] is None
+    assert (
+        study_activity_instance["state"]
+        == StudyActivityInstanceState.MISSING_SELECTION.value
+    )

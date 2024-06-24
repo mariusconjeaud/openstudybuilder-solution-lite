@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from neomodel import db
 
 from clinical_mdr_api import exceptions, models
@@ -12,6 +14,7 @@ from clinical_mdr_api.models.study_selections.study_selection import (
     StudyDesignCellBatchInput,
     StudyDesignCellEditInput,
 )
+from clinical_mdr_api.oauth.user import user
 from clinical_mdr_api.services._meta_repository import MetaRepository
 from clinical_mdr_api.services._utils import (
     calculate_diffs,
@@ -24,9 +27,9 @@ from clinical_mdr_api.services.studies.study_selection_base import StudySelectio
 class StudyBranchArmSelectionService(StudySelectionMixin):
     _repos: MetaRepository
 
-    def __init__(self, author):
+    def __init__(self):
         self._repos = MetaRepository()
-        self.author = author
+        self.author = user().id()
 
     def _transform_all_to_response_model(
         self,
@@ -34,6 +37,10 @@ class StudyBranchArmSelectionService(StudySelectionMixin):
         study_value_version: str | None = None,
     ) -> list[models.StudySelectionBranchArm]:
         result = []
+        terms_at_specific_datetime = self._extract_study_standards_effective_date(
+            study_uid=study_selection.study_uid,
+            study_value_version=study_value_version,
+        )
         for order, selection in enumerate(
             study_selection.study_branch_arms_selection, start=1
         ):
@@ -43,6 +50,7 @@ class StudyBranchArmSelectionService(StudySelectionMixin):
                     order=order,
                     study_uid=study_selection.study_uid,
                     study_value_version=study_value_version,
+                    terms_at_specific_datetime=terms_at_specific_datetime,
                 )
             )
         return result
@@ -53,6 +61,7 @@ class StudyBranchArmSelectionService(StudySelectionMixin):
         order: int,
         study_uid: str,
         study_value_version: str | None = None,
+        terms_at_specific_datetime: datetime | None = None,
     ) -> models.StudySelectionBranchArm:
         return models.StudySelectionBranchArm.from_study_selection_branch_arm_ar_and_order(
             study_uid,
@@ -60,6 +69,7 @@ class StudyBranchArmSelectionService(StudySelectionMixin):
             order,
             find_simple_term_branch_arm_root_by_term_uid=self._get_specific_arm_selection,
             study_value_version=study_value_version,
+            terms_at_specific_datetime=terms_at_specific_datetime,
         )
 
     @db.transaction
@@ -277,6 +287,7 @@ class StudyBranchArmSelectionService(StudySelectionMixin):
         study_uid: str,
         study_selection_uid: str,
         study_value_version: str | None = None,
+        terms_at_specific_datetime: datetime | None = None,
     ) -> models.StudySelectionArm:
         (
             _,
@@ -293,6 +304,7 @@ class StudyBranchArmSelectionService(StudySelectionMixin):
             selection=new_selection,
             order=order,
             find_simple_term_arm_type_by_term_uid=self._find_by_uid_or_raise_not_found,
+            terms_at_specific_datetime=terms_at_specific_datetime,
         )
 
     def _cascade_creation(
@@ -316,7 +328,7 @@ class StudyBranchArmSelectionService(StudySelectionMixin):
             for i_design_cell in design_cells_on_arm
         ]
 
-        design_cell_service = StudyDesignCellService(author=self.author)
+        design_cell_service = StudyDesignCellService()
         design_cells_updated = design_cell_service.handle_batch_operations(
             study_uid=study_uid, operations=inputs
         )
@@ -373,13 +385,16 @@ class StudyBranchArmSelectionService(StudySelectionMixin):
                 ) = selection_aggregate.get_specific_branch_arm_selection(
                     new_selection.study_selection_uid
                 )
-
+                terms_at_specific_datetime = (
+                    self._extract_study_standards_effective_date(study_uid=study_uid)
+                )
                 # add the Brancharm and return
                 return models.StudySelectionBranchArm.from_study_selection_branch_arm_ar_and_order(
                     study_uid=study_uid,
                     selection=new_selection,
                     order=order,
                     find_simple_term_branch_arm_root_by_term_uid=self._get_specific_arm_selection,
+                    terms_at_specific_datetime=terms_at_specific_datetime,
                 )
         finally:
             repos.close()
@@ -476,13 +491,16 @@ class StudyBranchArmSelectionService(StudySelectionMixin):
             new_selection, order = selection_aggregate.get_specific_object_selection(
                 study_selection_uid
             )
-
+            terms_at_specific_datetime = self._extract_study_standards_effective_date(
+                study_uid=study_uid
+            )
             # add the branch arm and return
             return models.StudySelectionBranchArm.from_study_selection_branch_arm_ar_and_order(
                 study_uid=study_uid,
                 selection=new_selection,
                 order=order,
                 find_simple_term_branch_arm_root_by_term_uid=self._get_specific_arm_selection,
+                terms_at_specific_datetime=terms_at_specific_datetime,
             )
         finally:
             repos.close()
@@ -501,10 +519,15 @@ class StudyBranchArmSelectionService(StudySelectionMixin):
         ) = self._get_specific_branch_arm_selection_by_uids(
             study_uid, study_selection_uid, study_value_version=study_value_version
         )
+        terms_at_specific_datetime = self._extract_study_standards_effective_date(
+            study_uid=study_uid,
+            study_value_version=study_value_version,
+        )
         return models.StudySelectionBranchArm.from_study_selection_branch_arm_ar_and_order(
             study_uid=study_uid,
             selection=new_selection,
             order=order,
             find_simple_term_branch_arm_root_by_term_uid=self._get_specific_arm_selection,
             study_value_version=study_value_version,
+            terms_at_specific_datetime=terms_at_specific_datetime,
         )

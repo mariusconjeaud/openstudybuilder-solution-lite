@@ -84,10 +84,12 @@ class EndpointPreInstance(BaseModel):
             name=capitalize_first_letter_if_template_parameter(
                 endpoint_pre_instance_ar.name,
                 endpoint_pre_instance_ar.template_name_plain,
+                endpoint_pre_instance_ar._template.parameter_terms,
             ),
             name_plain=capitalize_first_letter_if_template_parameter(
                 endpoint_pre_instance_ar.name_plain,
                 endpoint_pre_instance_ar.template_name_plain,
+                endpoint_pre_instance_ar._template.parameter_terms,
             ),
             start_date=endpoint_pre_instance_ar.item_metadata.start_date,
             end_date=endpoint_pre_instance_ar.item_metadata.end_date,

@@ -13,28 +13,37 @@ from clinical_mdr_api.config import STUDY_TIME_UNIT_SUBSET
 from clinical_mdr_api.domains.concepts.unit_definitions.unit_definition import (
     UnitDefinitionAR,
 )
+from clinical_mdr_api.domains.libraries.parameter_term import ParameterTermEntryVO
 
 EXCLUDE_PROPERTY_ATTRIBUTES_FROM_SCHEMA = {
     "remove_from_wildcard",
     "source",
     "exclude_from_orm",
+    "is_json",
 }
 
 
 def capitalize_first_letter_if_template_parameter(
-    name: str, template_plain_name: str
+    name: str,
+    template_plain_name: str,
+    parameters: list[ParameterTermEntryVO] | None = None,
 ) -> str:
     """
-    Capitalizes the first letter of `name` if the letter is part of a template parameter.
+    Capitalizes the first letter of `name` if the letter is part of a template parameter which is not a Unit Definition.
 
     Args:
         name (str): The input string that may have its first letter capitalized.
         template_plain_name (str): The plain name of the template used to determine if capitalization is needed.
 
     Returns:
-        str: `name` with the first letter capitalized if the letter is part of a template parameter; otherwise, it returns `name` without any changes.
+        str: `name` with the first letter capitalized if the letter is part of a template parameter which is not a Unit Definition.
+        Otherwise, it returns `name` without any changes.
     """
-    if template_plain_name.startswith("["):
+    if (
+        template_plain_name.startswith("[")
+        and parameters
+        and not parameters[0].parameters[0].uid.startswith("UnitDefinition_")
+    ):
         idx = name.find("[")
         first_letter = idx + 1
         second_letter = idx + 2

@@ -1,97 +1,95 @@
 <template>
-<simple-form-dialog
-  ref="form"
-  :title="$t('UCUMCodeForm.title')"
-  :help-items="helpItems"
-  @close="close"
-  @submit="submit"
-  :open="open"
+  <SimpleFormDialog
+    ref="form"
+    :title="$t('UCUMCodeForm.title')"
+    :help-items="helpItems"
+    :open="open"
+    @close="close"
+    @submit="submit"
   >
-  <template v-slot:body>
-    <validation-observer ref="observer">
-      <v-row>
-        <v-col cols="12">
-          <validation-provider
-            v-slot="{ errors }"
-            rules="required"
-            >
+    <template #body>
+      <v-form ref="observer">
+        <v-row>
+          <v-col cols="12">
             <v-text-field
               v-model="form.name"
               :label="$t('_global.name')"
-              :error-messages="errors"
-              dense
-              clearable/>
-          </validation-provider>
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col cols="12">
-          <validation-provider
-            v-slot="{ errors }"
-            rules=""
-            >
+              :rules="[formRules.required]"
+              density="compact"
+              clearable
+            />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col cols="12">
             <v-textarea
               v-model="form.definition"
               :label="$t('UCUM.description')"
-              :error-messages="errors"
-              dense
+              :rules="[formRules.required]"
+              density="compact"
               clearable
               auto-grow
               rows="1"
-              />
-          </validation-provider>
-        </v-col>
-      </v-row>
-    </validation-observer>
-  </template>
-</simple-form-dialog>
+            />
+          </v-col>
+        </v-row>
+      </v-form>
+    </template>
+  </SimpleFormDialog>
 </template>
 
 <script>
-import { bus } from '@/main'
 import dictionaries from '@/api/dictionaries'
-import SimpleFormDialog from '@/components/tools/SimpleFormDialog'
+import SimpleFormDialog from '@/components/tools/SimpleFormDialog.vue'
+import constants from '@/constants/libraries'
 
 export default {
   components: {
-    SimpleFormDialog
+    SimpleFormDialog,
   },
+  inject: ['eventBusEmit', 'formRules'],
   props: {
-    codelistUid: String,
-    open: Boolean
+    codelistUid: {
+      type: String,
+      default: null,
+    },
+    open: Boolean,
   },
-  data () {
+  emits: ['save', 'close'],
+  data() {
     return {
-      helpItems: [
-        'UCUM.code',
-        'UCUM.description'
-      ],
-      form: {}
+      helpItems: ['UCUM.code', 'UCUM.description'],
+      form: {},
     }
   },
+  watch: {
+    codelistUid() {
+      this.form.codelist_uid = this.codelistUid
+    },
+  },
   methods: {
-    close () {
+    close() {
       this.$refs.form.working = false
       this.form = {}
       this.$emit('close')
     },
-    async submit () {
-      this.$set(this.form, 'library_name', 'UCUM')
-      this.$set(this.form, 'name_sentence_case', this.form.name)
-      this.$set(this.form, 'dictionary_id', this.form.name)
-      dictionaries.create(this.form).then(resp => {
-        bus.$emit('notification', { msg: this.$t('DictionaryTermForm.create_success') })
-        this.$emit('save')
-        this.close()
-      }, _err => {
-        this.$refs.form.working = false
-      })
-    }
+    async submit() {
+      this.form.library_name = constants.LIBRARY_UCUM
+      this.form.name_sentence_case = this.form.name
+      this.form.dictionary_id = this.form.name
+      dictionaries.create(this.form).then(
+        () => {
+          this.eventBusEmit('notification', {
+            msg: this.$t('DictionaryTermForm.create_success'),
+          })
+          this.$emit('save')
+          this.close()
+        },
+        () => {
+          this.$refs.form.working = false
+        }
+      )
+    },
   },
-  watch: {
-    codelistUid () {
-      this.form.codelist_uid = this.codelistUid
-    }
-  }
 }
 </script>

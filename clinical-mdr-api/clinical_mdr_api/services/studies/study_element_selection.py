@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Callable
 
 from neomodel import db
@@ -16,6 +17,7 @@ from clinical_mdr_api.domains.study_selections.study_selection_element import (
 )
 from clinical_mdr_api.models.study_selections.study_selection import StudyElementTypes
 from clinical_mdr_api.models.utils import GenericFilteringReturn
+from clinical_mdr_api.oauth.user import user
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._meta_repository import MetaRepository
 from clinical_mdr_api.services._utils import (
@@ -37,9 +39,9 @@ class StudyElementSelectionService(
 ):
     _repos: MetaRepository
 
-    def __init__(self, author):
+    def __init__(self):
         self._repos = MetaRepository()
-        self.author = author
+        self.author = user().id()
 
     def _transform_all_to_response_model(
         self,
@@ -47,6 +49,10 @@ class StudyElementSelectionService(
         study_value_version: str | None = None,
     ) -> list[models.StudySelectionElement]:
         result = []
+        terms_at_specific_datetime = self._extract_study_standards_effective_date(
+            study_uid=study_selection.study_uid,
+            study_value_version=study_value_version,
+        )
         # go over each VO study element selection object
         for order, selection in enumerate(
             study_selection.study_elements_selection, start=1
@@ -57,6 +63,7 @@ class StudyElementSelectionService(
                     order=order,
                     study_uid=study_selection.study_uid,
                     study_value_version=study_value_version,
+                    terms_at_specific_datetime=terms_at_specific_datetime,
                 )
             )
         return result
@@ -66,6 +73,7 @@ class StudyElementSelectionService(
         study_selection: StudySelectionElementVO,
         order: int,
         study_uid: str,
+        terms_at_specific_datetime: datetime | None,
         study_value_version: str | None = None,
     ) -> models.StudySelectionElement:
         repos = self._repos
@@ -77,6 +85,7 @@ class StudyElementSelectionService(
             get_term_element_type_by_element_subtype=repos.study_element_repository.get_element_type_term_uid_by_element_subtype_term_uid,
             find_all_study_time_units=self._repos.unit_definition_repository.find_all,
             study_value_version=study_value_version,
+            terms_at_specific_datetime=terms_at_specific_datetime,
         )
 
     def _transform_each_history_to_response_model(
@@ -206,7 +215,9 @@ class StudyElementSelectionService(
                 ) = selection_aggregate.get_specific_element_selection(
                     new_selection.study_selection_uid
                 )
-
+                terms_at_specific_datetime = (
+                    self._extract_study_standards_effective_date(study_uid=study_uid)
+                )
                 # add the element and return
                 return models.StudySelectionElement.from_study_selection_element_ar_and_order(
                     study_uid=study_uid,
@@ -215,6 +226,7 @@ class StudyElementSelectionService(
                     find_simple_term_element_by_term_uid=self._find_by_uid_or_raise_not_found,
                     get_term_element_type_by_element_subtype=repos.study_element_repository.get_element_type_term_uid_by_element_subtype_term_uid,
                     find_all_study_time_units=self._repos.unit_definition_repository.find_all,
+                    terms_at_specific_datetime=terms_at_specific_datetime,
                 )
         finally:
             repos.close()
@@ -321,6 +333,10 @@ class StudyElementSelectionService(
         ) = self._get_specific_element_selection_by_uids(
             study_uid, study_selection_uid, study_value_version=study_value_version
         )
+        terms_at_specific_datetime = self._extract_study_standards_effective_date(
+            study_uid=study_uid,
+            study_value_version=study_value_version,
+        )
         return models.StudySelectionElement.from_study_selection_element_ar_and_order(
             study_uid=study_uid,
             selection=new_selection,
@@ -328,6 +344,7 @@ class StudyElementSelectionService(
             find_simple_term_element_by_term_uid=self._find_by_uid_or_raise_not_found,
             get_term_element_type_by_element_subtype=repos.study_element_repository.get_element_type_term_uid_by_element_subtype_term_uid,
             find_all_study_time_units=self._repos.unit_definition_repository.find_all,
+            terms_at_specific_datetime=terms_at_specific_datetime,
         )
 
     def _patch_prepare_new_study_element(
@@ -416,7 +433,9 @@ class StudyElementSelectionService(
             new_selection, order = selection_aggregate.get_specific_object_selection(
                 study_selection_uid
             )
-
+            terms_at_specific_datetime = self._extract_study_standards_effective_date(
+                study_uid=study_uid
+            )
             # add the element and return
             return models.StudySelectionElement.from_study_selection_element_ar_and_order(
                 study_uid=study_uid,
@@ -425,6 +444,7 @@ class StudyElementSelectionService(
                 find_simple_term_element_by_term_uid=self._find_by_uid_or_raise_not_found,
                 get_term_element_type_by_element_subtype=repos.study_element_repository.get_element_type_term_uid_by_element_subtype_term_uid,
                 find_all_study_time_units=self._repos.unit_definition_repository.find_all,
+                terms_at_specific_datetime=terms_at_specific_datetime,
             )
         finally:
             repos.close()
@@ -465,10 +485,15 @@ class StudyElementSelectionService(
             new_selection, order = selection_aggregate.get_specific_element_selection(
                 study_selection_uid
             )
-
+            terms_at_specific_datetime = self._extract_study_standards_effective_date(
+                study_uid=study_uid
+            )
             # add the objective and return
             return self._transform_single_to_response_model(
-                new_selection, order, study_uid
+                new_selection,
+                order,
+                study_uid,
+                terms_at_specific_datetime=terms_at_specific_datetime,
             )
         finally:
             repos.close()

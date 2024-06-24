@@ -1,11 +1,10 @@
-import Vue from 'vue'
 import concepts from '@/api/concepts'
 import pconstants from '@/constants/parameters'
 
 /*
-** Check if parameter is a constant (text or number) and format it properly
-*/
-async function formatConstantParameterValue (parameter) {
+ ** Check if parameter is a constant (text or number) and format it properly
+ */
+async function formatConstantParameterValue(parameter) {
   const result = { ...parameter }
   let resp = null
 
@@ -14,7 +13,7 @@ async function formatConstantParameterValue (parameter) {
       const numData = {
         value: parameter.selectedValues,
         library_name: 'Sponsor',
-        template_parameter: true
+        template_parameter: true,
       }
       resp = await concepts.create(numData, 'numeric-values')
     } else if (parameter.name === pconstants.TEXT_VALUE) {
@@ -22,7 +21,7 @@ async function formatConstantParameterValue (parameter) {
         name: parameter.selectedValues,
         name_sentence_case: parameter.selectedValues.toLowerCase(),
         library_name: 'Sponsor',
-        template_parameter: true
+        template_parameter: true,
       }
       resp = await concepts.create(textData, 'text-values')
     }
@@ -31,7 +30,7 @@ async function formatConstantParameterValue (parameter) {
       result.selectedValues[0] = {
         name: resp.data.name,
         type: result.name,
-        uid: resp.data.uid
+        uid: resp.data.uid,
       }
     }
   }
@@ -39,9 +38,9 @@ async function formatConstantParameterValue (parameter) {
 }
 
 /*
-** Format parameter values in a way compatible with what API expects.
-*/
-async function formatParameterValues (parameters, onlyDefaultValues) {
+ ** Format parameter values in a way compatible with what API expects.
+ */
+async function formatParameterValues(parameters, onlyDefaultValues) {
   const result = []
   let position = 1
 
@@ -60,12 +59,12 @@ async function formatParameterValues (parameters, onlyDefaultValues) {
 
     parameter = await formatConstantParameterValue(parameter)
     if (parameter.selectedValues.length || !onlyDefaultValues) {
-      parameter.selectedValues.forEach(value => {
+      parameter.selectedValues.forEach((value) => {
         values.push({
           index: index,
           type: parameter.name,
           name: value.name,
-          uid: value.uid
+          uid: value.uid,
         })
         index += 1
       })
@@ -73,7 +72,7 @@ async function formatParameterValues (parameters, onlyDefaultValues) {
         position: position,
         conjunction: conjunction,
         terms: values,
-        value: value
+        value: value,
       })
     }
     position += 1
@@ -81,7 +80,7 @@ async function formatParameterValues (parameters, onlyDefaultValues) {
   return result
 }
 
-function getSeparator (conjunction) {
+function getSeparator(conjunction) {
   if (conjunction === ',') {
     return ', '
   }
@@ -89,35 +88,44 @@ function getSeparator (conjunction) {
 }
 
 /*
-** Load parameter values received from the API
-*/
-function loadParameterValues (parameterValues, parameters) {
+ ** Load parameter values received from the API
+ */
+function loadParameterValues(parameterValues, parameters) {
   let index = 0
-  parameterValues.forEach(item => {
+  parameterValues.forEach((item) => {
     if (item.terms.length) {
-      item.terms.forEach(value => {
-        if (value.type === pconstants.NUM_VALUE || value.type === pconstants.TEXT_VALUE) {
-          Vue.set(parameters, index, { name: value.type, selectedSeparator: '', selectedValues: value.name })
+      item.terms.forEach((value) => {
+        if (
+          value.type === pconstants.NUM_VALUE ||
+          value.type === pconstants.TEXT_VALUE
+        ) {
+          parameters[index] = {
+            name: value.type,
+            selectedSeparator: '',
+            selectedValues: value.name,
+          }
         } else {
-          Vue.set(parameters[index], 'selectedSeparator', getSeparator(item.conjunction))
+          parameters[index].selectedSeparator = getSeparator(item.conjunction)
           if (parameters[index].selectedValues) {
             parameters[index].selectedValues.push({
               name: value.name,
               uid: value.uid,
-              type: value.type
+              type: value.type,
             })
           } else {
-            Vue.set(parameters[index], 'selectedValues', [{
-              name: value.name,
-              uid: value.uid,
-              type: value.type
-            }])
+            parameters[index].selectedValues = [
+              {
+                name: value.name,
+                uid: value.uid,
+                type: value.type,
+              },
+            ]
           }
         }
       })
     } else {
-      Vue.set(parameters[index], 'skip', true)
-      Vue.set(parameters[index], 'selectedValues', [])
+      parameters[index].skip = true
+      parameters[index].selectedValues = []
     }
     index += 1
   })
@@ -125,5 +133,5 @@ function loadParameterValues (parameterValues, parameters) {
 
 export default {
   formatParameterValues,
-  loadParameterValues
+  loadParameterValues,
 }

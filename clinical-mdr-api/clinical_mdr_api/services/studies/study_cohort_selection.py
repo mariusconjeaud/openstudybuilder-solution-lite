@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from neomodel import db
 
 from clinical_mdr_api import exceptions, models
@@ -9,6 +11,7 @@ from clinical_mdr_api.domains.study_selections.study_selection_cohort import (
     StudySelectionCohortVO,
 )
 from clinical_mdr_api.models.utils import GenericFilteringReturn
+from clinical_mdr_api.oauth.user import user
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._meta_repository import MetaRepository
 from clinical_mdr_api.services._utils import (
@@ -22,9 +25,9 @@ from clinical_mdr_api.services.studies.study_selection_base import StudySelectio
 class StudyCohortSelectionService(StudySelectionMixin):
     _repos: MetaRepository
 
-    def __init__(self, author):
+    def __init__(self):
         self._repos = MetaRepository()
-        self.author = author
+        self.author = user().id()
 
     def _transform_all_to_response_model(
         self,
@@ -32,6 +35,10 @@ class StudyCohortSelectionService(StudySelectionMixin):
         study_value_version: str | None = None,
     ) -> list[models.StudySelectionCohort]:
         result = []
+        terms_at_specific_datetime = self._extract_study_standards_effective_date(
+            study_uid=study_selection.study_uid,
+            study_value_version=study_value_version,
+        )
         for order, selection in enumerate(
             study_selection.study_cohorts_selection, start=1
         ):
@@ -41,6 +48,7 @@ class StudyCohortSelectionService(StudySelectionMixin):
                     order=order,
                     study_uid=study_selection.study_uid,
                     study_value_version=study_value_version,
+                    terms_at_specific_datetime=terms_at_specific_datetime,
                 )
             )
         return result
@@ -50,6 +58,7 @@ class StudyCohortSelectionService(StudySelectionMixin):
         study_selection: StudySelectionCohortVO,
         order: int,
         study_uid: str,
+        terms_at_specific_datetime: str | None,
         study_value_version: str | None = None,
     ) -> models.StudySelectionCohort:
         return models.StudySelectionCohort.from_study_selection_cohort_ar_and_order(
@@ -59,6 +68,7 @@ class StudyCohortSelectionService(StudySelectionMixin):
             find_arm_root_by_uid=self._get_specific_arm_selection,
             find_branch_arm_root_cohort_by_uid=self._get_specific_branch_arm_selection,
             study_value_version=study_value_version,
+            terms_at_specific_datetime=terms_at_specific_datetime,
         )
 
     @db.transaction
@@ -148,10 +158,16 @@ class StudyCohortSelectionService(StudySelectionMixin):
             new_selection, order = selection_aggregate.get_specific_cohort_selection(
                 study_selection_uid
             )
+            terms_at_specific_datetime = self._extract_study_standards_effective_date(
+                study_uid=study_uid,
+            )
 
             # add the objective and return
             return self._transform_single_to_response_model(
-                new_selection, order, study_uid
+                new_selection,
+                order,
+                study_uid,
+                terms_at_specific_datetime=terms_at_specific_datetime,
             )
         finally:
             repos.close()
@@ -224,6 +240,7 @@ class StudyCohortSelectionService(StudySelectionMixin):
         self,
         study_uid: str,
         study_selection_uid: str,
+        terms_at_specific_datetime: datetime | None = None,
         study_value_version: str | None = None,
     ) -> models.StudySelectionArm:
         (
@@ -233,12 +250,21 @@ class StudyCohortSelectionService(StudySelectionMixin):
         ) = self._get_specific_arm_selection_by_uids(
             study_uid, study_selection_uid, study_value_version=study_value_version
         )
+        terms_at_specific_datetime = (
+            self._extract_study_standards_effective_date(
+                study_uid=study_uid,
+                study_value_version=study_value_version,
+            )
+            if not terms_at_specific_datetime
+            else terms_at_specific_datetime
+        )
         # Without Connected BranchArms due to only is necessary to have the StudyArm
         return models.StudySelectionArm.from_study_selection_arm_ar_and_order(
             study_uid=study_uid,
             selection=new_selection,
             order=order,
             find_simple_term_arm_type_by_term_uid=self._find_by_uid_or_raise_not_found,
+            terms_at_specific_datetime=terms_at_specific_datetime,
         )
 
     def _get_specific_branch_arm_selection(
@@ -246,6 +272,7 @@ class StudyCohortSelectionService(StudySelectionMixin):
         study_uid: str,
         study_selection_uid: str,
         study_value_version: str | None = None,
+        terms_at_specific_datetime: datetime | None = None,
     ) -> models.StudySelectionBranchArm:
         (
             _,
@@ -256,12 +283,21 @@ class StudyCohortSelectionService(StudySelectionMixin):
             study_selection_uid,
             study_value_version=study_value_version,
         )
+        terms_at_specific_datetime = (
+            self._extract_study_standards_effective_date(
+                study_uid=study_uid,
+                study_value_version=study_value_version,
+            )
+            if not terms_at_specific_datetime
+            else terms_at_specific_datetime
+        )
         return models.StudySelectionBranchArm.from_study_selection_branch_arm_ar_and_order(
             study_uid=study_uid,
             selection=new_selection,
             order=order,
             find_simple_term_branch_arm_root_by_term_uid=self._get_specific_arm_selection,
             study_value_version=study_value_version,
+            terms_at_specific_datetime=terms_at_specific_datetime,
         )
 
     def make_selection(
@@ -313,6 +349,11 @@ class StudyCohortSelectionService(StudySelectionMixin):
                 ) = selection_aggregate.get_specific_cohort_selection(
                     new_selection.study_selection_uid
                 )
+                terms_at_specific_datetime = (
+                    self._extract_study_standards_effective_date(
+                        study_uid=study_uid,
+                    )
+                )
 
                 # add the Cohort and return
                 return models.StudySelectionCohort.from_study_selection_cohort_ar_and_order(
@@ -321,6 +362,7 @@ class StudyCohortSelectionService(StudySelectionMixin):
                     order=order,
                     find_arm_root_by_uid=self._get_specific_arm_selection,
                     find_branch_arm_root_cohort_by_uid=self._get_specific_branch_arm_selection,
+                    terms_at_specific_datetime=terms_at_specific_datetime,
                 )
         finally:
             repos.close()
@@ -406,6 +448,9 @@ class StudyCohortSelectionService(StudySelectionMixin):
             new_selection, order = selection_aggregate.get_specific_object_selection(
                 study_selection_uid
             )
+            terms_at_specific_datetime = self._extract_study_standards_effective_date(
+                study_uid=study_uid,
+            )
 
             # add the cohort and return
             return models.StudySelectionCohort.from_study_selection_cohort_ar_and_order(
@@ -414,6 +459,7 @@ class StudyCohortSelectionService(StudySelectionMixin):
                 order=order,
                 find_arm_root_by_uid=self._get_specific_arm_selection,
                 find_branch_arm_root_cohort_by_uid=self._get_specific_branch_arm_selection,
+                terms_at_specific_datetime=terms_at_specific_datetime,
             )
         finally:
             repos.close()
@@ -432,6 +478,10 @@ class StudyCohortSelectionService(StudySelectionMixin):
         ) = self._get_specific_cohort_selection_by_uids(
             study_uid, study_selection_uid, study_value_version=study_value_version
         )
+        terms_at_specific_datetime = self._extract_study_standards_effective_date(
+            study_uid=study_uid,
+            study_value_version=study_value_version,
+        )
         return models.StudySelectionCohort.from_study_selection_cohort_ar_and_order(
             study_uid=study_uid,
             selection=new_selection,
@@ -439,4 +489,5 @@ class StudyCohortSelectionService(StudySelectionMixin):
             find_arm_root_by_uid=self._get_specific_arm_selection,
             find_branch_arm_root_cohort_by_uid=self._get_specific_branch_arm_selection,
             study_value_version=study_value_version,
+            terms_at_specific_datetime=terms_at_specific_datetime,
         )

@@ -320,7 +320,7 @@ class OdmXmlExporterService:
                 elements[vendor_element.name] = Element(
                     _custom_element_name=f"{self.odm_data_extractor.odm_vendor_elements[vendor_element.uid]['vendor_namespace']['prefix']}"
                     f":{vendor_element.name}",
-                    _string=vendor_element.value,
+                    **{"_string": vendor_element.value} if vendor_element.value else {},
                     **{
                         vendor_element_attribute.name: Attribute(
                             # pylint: disable=line-too-long
@@ -867,12 +867,6 @@ class OdmXmlExporterService:
                                             "order"
                                         ),
                                     ),
-                                    mandatory=Attribute(
-                                        "Mandatory",
-                                        terms_by_uid.get(codelist_item["term_uid"]).get(
-                                            "mandatory"
-                                        ),
-                                    ),
                                     **self._get_vendor_attributes_or_empty_dict(
                                         {
                                             "name": Attribute(
@@ -880,6 +874,12 @@ class OdmXmlExporterService:
                                             ),
                                             "OID": Attribute(
                                                 "osb:OID", codelist_item["term_uid"]
+                                            ),
+                                            "mandatory": Attribute(
+                                                "osb:mandatory",
+                                                terms_by_uid.get(
+                                                    codelist_item["term_uid"]
+                                                ).get("mandatory"),
                                             ),
                                             "version": Attribute(
                                                 self.OSB_VERSION,
@@ -935,7 +935,7 @@ class OdmXmlExporterService:
 
             return unit_definitions
 
-        return ODM(
+        odm = ODM(
             odm_ns=Attribute("xmlns:odm", "http://www.cdisc.org/ns/odm/v1.3"),
             odm_version=Attribute("ODMVersion", "1.3.2"),
             file_type=Attribute("FileType", "Snapshot"),
@@ -981,3 +981,18 @@ class OdmXmlExporterService:
                 or used_vendor_namespace["prefix"] in self.allowed_namespaces
             },
         )
+
+        self.remove_none_attributes(odm)
+
+        return odm
+
+    def remove_none_attributes(self, obj):
+        if not isinstance(obj, list):
+            for key, value in list(vars(obj).items()):
+                if isinstance(value, Attribute) and (value.value in [None, "None", ""]):
+                    delattr(obj, key)
+                elif not isinstance(value, str | Attribute):
+                    self.remove_none_attributes(value)
+        else:
+            for item in obj:
+                self.remove_none_attributes(item)

@@ -1,5 +1,5 @@
-def test_get_system_information(app_client):
-    response = app_client.get("/system/information")
+def test_get_system_information(api_client):
+    response = api_client.get("/system/information")
     assert response.status_code == 200
     payload = response.json()
     assert payload.get(
@@ -11,12 +11,12 @@ def test_get_system_information(app_client):
     assert payload.get("build_id"), "missing build_id property of system information"
 
 
-def test_get_system_healthcheck(app_client):
-    response = app_client.get("/system/healthcheck")
+def test_get_system_healthcheck(api_client):
+    response = api_client.get("/system/healthcheck")
     assert response.status_code == 200
 
 
-def test_get_system_information_build_id(app_client):
-    response = app_client.get("/system/information/build-id")
+def test_get_system_information_build_id(api_client):
+    response = api_client.get("/system/information/build-id")
     assert response.status_code == 200
     assert response.text

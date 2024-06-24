@@ -1,191 +1,180 @@
 <template>
-<simple-form-dialog
-  ref="form"
-  :title="title"
-  :help-items="helpItems"
-  :help-text="$t('_help.StudyDefineForm.general')"
-  @close="cancel"
-  @submit="submit"
-  :open="open"
+  <SimpleFormDialog
+    ref="form"
+    :title="title"
+    :help-items="helpItems"
+    :help-text="$t('_help.StudyDefineForm.general')"
+    :open="open"
+    @close="cancel"
+    @submit="submit"
   >
-  <template v-slot:body>
-    <v-alert
-      v-if="studyEpoch && studyEpoch.study_visit_count > 0"
-      type="warning"
+    <template #body>
+      <v-alert
+        v-if="studyEpoch && studyEpoch.study_visit_count > 0"
+        type="warning"
       >
-      {{ $t('StudyEpochForm.epoch_linked_to_visits_warning', { epoch: studyEpoch.epoch_name }) }}
-    </v-alert>
-    <validation-observer ref="observer">
-      <v-row>
-        <v-col cols="6">
-          <validation-provider
-            v-slot="{ errors }"
-            rules="required"
-            >
+        {{
+          $t('StudyEpochForm.epoch_linked_to_visits_warning', {
+            epoch: studyEpoch.epoch_name,
+          })
+        }}
+      </v-alert>
+      <v-form ref="observer">
+        <v-row>
+          <v-col cols="6">
             <v-autocomplete
+              v-model="form.epoch_type"
               :label="$t('StudyEpochForm.epoch_type')"
-              :items="typeGroups"
-              item-text="type_name"
+              :items="uniqueTypeGroups"
+              item-title="type_name"
               item-value="type"
-              dense
-              :error-messages="errors"
+              density="compact"
+              :rules="[formRules.required]"
               clearable
               data-cy="epoch-type"
-              v-model="form.epoch_type"
-              @input="setEpochGroups()"
-              @click:clear="setEpochGroups()"
               :disabled="studyEpoch ? true : false"
               class="required"
-              />
-          </validation-provider>
-        </v-col>
-        <v-col cols="6">
-          <validation-provider
-            v-slot="{ errors }"
-            rules="required"
-            >
+              @update:model-value="setEpochGroups()"
+              @click:clear="setEpochGroups()"
+            />
+          </v-col>
+          <v-col cols="6">
             <v-autocomplete
+              v-model="form.epoch_subtype"
               :label="$t('StudyEpochForm.epoch_subtype')"
               :items="subtypeGroups"
-              item-text="subtype_name"
+              item-title="subtype_name"
               item-value="subtype"
-              dense
-              :error-messages="errors"
+              density="compact"
+              :rules="[formRules.required]"
               clearable
               data-cy="epoch-subtype"
-              v-model="form.epoch_subtype"
-              @input="setEpochGroups()"
-              @click:clear="setEpochGroups()"
               :disabled="studyEpoch ? true : false"
               class="required"
-              />
-          </validation-provider>
-        </v-col>
-      </v-row>
-      <validation-provider
-        v-slot="{ errors }"
-        >
+              @update:model-value="setEpochGroups()"
+              @click:clear="setEpochGroups()"
+            />
+          </v-col>
+        </v-row>
         <v-row>
           <v-col>
             <v-text-field
+              :key="typeTrigger"
+              v-model="epochDisplay"
               data-cy="select-epoch"
               :label="$t('StudyEpochForm.name')"
-              dense
+              density="compact"
               disabled
-              v-model="epochDisplay"
-              filled
-              :error-messages="errors"
-              :key="typeTrigger"
-              />
+              variant="filled"
+            />
           </v-col>
         </v-row>
-      </validation-provider>
-      <validation-provider
-        v-slot="{ errors }"
-        >
         <v-row>
           <v-col>
             <v-textarea
-              data-cy="epoch-start-rule"
               id="startRule"
-              :label="$t('StudyEpochForm.start_rule')"
               v-model="form.start_rule"
+              data-cy="epoch-start-rule"
+              :label="$t('StudyEpochForm.start_rule')"
               rows="1"
               auto-grow
-              :error-messages="errors"
-              />
+              density="compact"
+            />
           </v-col>
         </v-row>
-      </validation-provider>
-      <validation-provider
-        v-slot="{ errors }"
-        >
         <v-row>
           <v-col>
             <v-textarea
-              data-cy="epoch-end-rule"
               id="endRule"
-              :label="$t('StudyEpochForm.stop_rule')"
               v-model="form.end_rule"
+              data-cy="epoch-end-rule"
+              :label="$t('StudyEpochForm.stop_rule')"
               rows="1"
               auto-grow
-              :error-messages="errors"
-              />
+              density="compact"
+            />
           </v-col>
         </v-row>
-      </validation-provider>
-      <v-row>
-        <v-col>
+        <v-row>
+          <v-col>
+            <v-textarea
+              id="description"
+              v-model="form.description"
+              data-cy="description"
+              :label="$t('StudyEpochForm.description')"
+              rows="1"
+              auto-grow
+              density="compact"
+            />
+          </v-col>
+        </v-row>
+        <div v-if="studyEpoch">
+          <label class="v-label required">{{
+            $t('_global.change_description')
+          }}</label>
           <v-textarea
-            id="description"
-            data-cy="description"
-            :label="$t('StudyEpochForm.description')"
-            v-model="form.description"
+            v-model="form.change_description"
+            :rules="[formRules.required]"
+            density="compact"
+            clearable
             rows="1"
             auto-grow
-            />
-        </v-col>
-      </v-row>
-      <validation-provider
-        v-if="studyEpoch"
-        v-slot="{ errors }"
-        rules="required"
-        >
-        <label class="v-label required">{{ $t('_global.change_description') }}</label>
-        <v-textarea
-          v-model="form.change_description"
-          :error-messages="errors"
-          dense
-          clearable
-          rows="1"
-          auto-grow
           />
-      </validation-provider>
-      <div class="mt-4">
-        <label class="v-label">{{ $t('StudyEpochForm.color') }}</label>
-        <v-color-picker
-          data-cy="epoch-color-picker"
-          v-model="colorHash"
-          clearable
-          show-swatches
-          hide-canvas
-          hide-sliders
-          swatches-max-height="300px"
+        </div>
+        <div class="mt-4">
+          <label class="v-label">{{ $t('StudyEpochForm.color') }}</label>
+          <v-color-picker
+            v-model="colorHash"
+            data-cy="epoch-color-picker"
+            clearable
+            show-swatches
+            hide-canvas
+            hide-sliders
+            swatches-max-height="300px"
           />
-      </div>
-    </validation-observer>
-  </template>
-</simple-form-dialog>
+        </div>
+      </v-form>
+    </template>
+  </SimpleFormDialog>
 </template>
 
 <script>
 import _isEmpty from 'lodash/isEmpty'
 import _isEqual from 'lodash/isEqual'
-import { mapGetters } from 'vuex'
 import units from '@/api/units'
-import { bus } from '@/main'
-import SimpleFormDialog from '@/components/tools/SimpleFormDialog'
+import SimpleFormDialog from '@/components/tools/SimpleFormDialog.vue'
 import studyEpochs from '../../api/studyEpochs'
+import { useStudiesGeneralStore } from '@/stores/studies-general'
+import { useEpochsStore } from '@/stores/studies-epochs'
+import { computed } from 'vue'
 
 export default {
   components: {
-    SimpleFormDialog
+    SimpleFormDialog,
   },
+  inject: ['eventBusEmit', 'formRules'],
   props: {
-    studyEpoch: Object,
-    open: Boolean
-  },
-  computed: {
-    title () {
-      return (this.studyEpoch) ? this.$t('StudyEpochForm.edit_title') : this.$t('StudyEpochForm.add_title')
+    studyEpoch: {
+      type: Object,
+      default: undefined,
     },
-    ...mapGetters({
-      selectedStudy: 'studiesGeneral/selectedStudy',
-      studyEpochs: 'studyEpochs/studyEpochs',
-      groups: 'studyEpochs/allowedConfigs'
-    })
+    open: Boolean,
   },
-  data () {
+  emits: ['close'],
+  setup() {
+    const studiesGeneralStore = useStudiesGeneralStore()
+    const epochsStore = useEpochsStore()
+    return {
+      selectedStudy: studiesGeneralStore.selectedStudy,
+      studyEpochs: computed(() => epochsStore.studyEpochs),
+      groups: computed(() => epochsStore.allowedConfigs),
+      updateStudyEpoch: epochsStore.updateStudyEpoch,
+      fetchAllowedConfigs: epochsStore.fetchAllowedConfigs,
+      addStudyEpoch: epochsStore.addStudyEpoch,
+      fetchStudyEpochs: epochsStore.fetchStudyEpochs,
+    }
+  },
+  data() {
     return {
       colorHash: null,
       epochs: [],
@@ -199,24 +188,61 @@ export default {
         'StudyEpochForm.stop_rule',
         'StudyEpochForm.epoch_time_unit',
         'StudyEpochForm.expected_epoch_duration',
-        'StudyEpochForm.color'
+        'StudyEpochForm.color',
       ],
       timeUnits: [],
       typeTrigger: 0,
       typeGroups: [],
       subtypeGroups: [],
-      epochDisplay: ''
+      epochDisplay: '',
+    }
+  },
+  computed: {
+    uniqueTypeGroups() {
+      const result = []
+      for (let group of this.typeGroups) {
+        if (!result.find((item) => item.type === group.type)) {
+          result.push(group)
+        }
+      }
+      return result
+    },
+    title() {
+      return this.studyEpoch
+        ? this.$t('StudyEpochForm.edit_title')
+        : this.$t('StudyEpochForm.add_title')
+    },
+  },
+  watch: {
+    studyEpoch(value) {
+      if (value) {
+        this.loadFromStudyEpoch(value)
+      }
+    },
+    groups() {
+      this.typeGroups = this.groups
+      this.subtypeGroups = this.groups
+    },
+  },
+  mounted() {
+    this.fetchAllowedConfigs()
+    units.getByDimension('TIME').then((resp) => {
+      this.timeUnits = resp.data.items
+    })
+    if (this.studyEpoch) {
+      this.loadFromStudyEpoch(this.studyEpoch)
+      this.setEpochGroups()
     }
   },
   methods: {
-    createMapping (codelist) {
+    createMapping(codelist) {
       const returnValue = {}
-      codelist.forEach(item => {
+      codelist.forEach((item) => {
         returnValue[item.term_uid] = item.sponsor_preferred_name
       })
       return returnValue
     },
-    close () {
+    close() {
       this.$emit('close')
       this.form = {}
       this.colorHash = null
@@ -224,30 +250,38 @@ export default {
       this.typeGroups = this.groups
       this.subtypeGroups = this.groups
     },
-    async cancel () {
-      if ((!this.studyEpoch && !_isEmpty(this.form)) || (this.studyEpoch && !_isEqual(this.form, this.studyEpoch))) {
+    async cancel() {
+      if (
+        (!this.studyEpoch && !_isEmpty(this.form)) ||
+        (this.studyEpoch && !_isEqual(this.form, this.studyEpoch))
+      ) {
         const options = {
           type: 'warning',
           cancelLabel: this.$t('_global.cancel'),
-          agreeLabel: this.$t('_global.continue')
+          agreeLabel: this.$t('_global.continue'),
         }
-        if (await this.$refs.form.confirm(this.$t('_global.cancel_changes'), options)) {
+        if (
+          await this.$refs.form.confirm(
+            this.$t('_global.cancel_changes'),
+            options
+          )
+        ) {
           this.close()
         }
       } else {
         this.close()
       }
     },
-    setEpochGroups () {
+    setEpochGroups() {
       let type = ''
       let subtype = ''
       if (!this.form.epoch_subtype && !this.form.epoch_type) {
-        this.$set(this.form, 'epoch', '')
+        this.form.epoch = ''
         this.subtypeGroups = this.groups
         this.typeGroups = this.groups
         this.epochDisplay = ''
       } else if (!this.form.epoch_subtype) {
-        this.$set(this.form, 'epoch', '')
+        this.form.epoch = ''
         type = this.form.epoch_type
         this.subtypeGroups = this.groups
         this.typeGroups = this.groups
@@ -256,7 +290,7 @@ export default {
         })
         this.epochDisplay = ''
       } else if (!this.form.epoch_type) {
-        this.$set(this.form, 'epoch', '')
+        this.form.epoch = ''
         subtype = this.form.epoch_subtype
         this.typeGroups = this.groups
         this.subtypeGroups = this.groups
@@ -276,15 +310,17 @@ export default {
 
         const data = {
           study_uid: this.selectedStudy.uid,
-          epoch_subtype: subtype
+          epoch_subtype: subtype,
         }
-        studyEpochs.getPreviewEpoch(this.selectedStudy.uid, data).then(resp => {
-          this.$set(this.form, 'epoch', resp.data.epoch)
-          this.epochDisplay = resp.data.epoch_name
-        })
+        studyEpochs
+          .getPreviewEpoch(this.selectedStudy.uid, data)
+          .then((resp) => {
+            this.form.epoch = resp.data.epoch
+            this.epochDisplay = resp.data.epoch_name
+          })
       }
     },
-    async submit () {
+    async submit() {
       try {
         if (!this.studyEpoch) {
           await this.addObject()
@@ -296,59 +332,56 @@ export default {
         this.$refs.form.working = false
       }
     },
-    addObject () {
+    addObject() {
       const data = JSON.parse(JSON.stringify(this.form))
       if (this.colorHash) {
-        data.color_hash = this.colorHash.hexa
+        data.color_hash = this.colorHash
+      } else {
+        data.color_hash = '#BDBDBD'
       }
       data.study_uid = this.selectedStudy.uid
-      return this.$store.dispatch('studyEpochs/addStudyEpoch', { studyUid: this.selectedStudy.uid, input: data }).then(resp => {
-        this.$store.dispatch('studyEpochs/fetchStudyEpochs', { studyUid: this.selectedStudy.uid })
-        bus.$emit('notification', { msg: this.$t('StudyEpochForm.add_success') })
+      return this.addStudyEpoch({
+        studyUid: this.selectedStudy.uid,
+        input: data,
+      }).then(() => {
+        this.fetchStudyEpochs({ studyUid: this.selectedStudy.uid })
+        this.eventBusEmit('notification', {
+          msg: this.$t('StudyEpochForm.add_success'),
+        })
       })
     },
-    updateObject () {
+    updateObject() {
       const data = JSON.parse(JSON.stringify(this.form))
       if (this.colorHash) {
-        data.color_hash = this.colorHash.hexa !== undefined ? this.colorHash.hexa : this.colorHash
+        data.color_hash =
+          this.colorHash.hexa !== undefined
+            ? this.colorHash.hexa
+            : this.colorHash
+      } else {
+        data.color_hash = '#BDBDBD'
       }
-      return this.$store.dispatch('studyEpochs/updateStudyEpoch', { studyUid: this.selectedStudy.uid, studyEpochUid: this.studyEpoch.uid, input: data }).then(resp => {
-        this.$store.dispatch('studyEpochs/fetchStudyEpochs', { studyUid: this.selectedStudy.uid })
-        bus.$emit('notification', { msg: this.$t('StudyEpochForm.update_success') })
+      return this.updateStudyEpoch({
+        studyUid: this.selectedStudy.uid,
+        studyEpochUid: this.studyEpoch.uid,
+        input: data,
+      }).then(() => {
+        this.fetchStudyEpochs({ studyUid: this.selectedStudy.uid })
+        this.eventBusEmit('notification', {
+          msg: this.$t('StudyEpochForm.update_success'),
+        })
       })
     },
-    loadFromStudyEpoch (studyEpoch) {
+    loadFromStudyEpoch(studyEpoch) {
       this.form = { ...studyEpoch }
       if (studyEpoch.color_hash) {
         this.colorHash = studyEpoch.color_hash
       }
-    }
-  },
-  mounted () {
-    this.$store.dispatch('studyEpochs/fetchAllowedConfigs')
-    units.getByDimension('TIME').then(resp => {
-      this.timeUnits = resp.data.items
-    })
-    if (this.studyEpoch) {
-      this.loadFromStudyEpoch(this.studyEpoch)
-      this.setEpochGroups()
-    }
-  },
-  watch: {
-    studyEpoch (value) {
-      if (value) {
-        this.loadFromStudyEpoch(value)
-      }
     },
-    groups () {
-      this.typeGroups = this.groups
-      this.subtypeGroups = this.groups
-    }
-  }
+  },
 }
 </script>
 <style>
 .v-color-picker__controls {
-  display: none
+  display: none;
 }
 </style>

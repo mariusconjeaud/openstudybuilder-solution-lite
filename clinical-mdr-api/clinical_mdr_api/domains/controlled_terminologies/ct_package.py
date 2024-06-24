@@ -12,6 +12,7 @@ class CTPackageAR:
     href: str | None
     registration_status: str | None
     source: str | None
+    extends_package: str | None
     import_date: datetime
     effective_date: date
     user_initials: str
@@ -30,6 +31,7 @@ class CTPackageAR:
         href: str | None,
         registration_status: str | None,
         source: str | None,
+        extends_package: str | None,
         import_date: datetime,
         effective_date: date,
         user_initials: str,
@@ -43,6 +45,7 @@ class CTPackageAR:
             href=href,
             registration_status=registration_status,
             source=source,
+            extends_package=extends_package,
             import_date=import_date,
             effective_date=effective_date,
             user_initials=user_initials,

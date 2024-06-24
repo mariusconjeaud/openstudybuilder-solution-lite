@@ -48,7 +48,7 @@ class StudySelectionEndpointRepository:
 
     def _retrieves_all_data(
         self,
-        study_uid: str | None = None,
+        study_uids: str | list[str] | None = None,
         project_name: str | None = None,
         project_number: str | None = None,
         study_value_version: str | None = None,
@@ -56,14 +56,20 @@ class StudySelectionEndpointRepository:
         query = ""
         query_parameters = {}
 
-        if study_uid:
-            if study_value_version:
-                query = "MATCH (sr:StudyRoot { uid: $uid})-[l:HAS_VERSION{status:'RELEASED', version:$study_value_version}]->(sv:StudyValue)"
-                query_parameters["study_value_version"] = study_value_version
-                query_parameters["uid"] = study_uid
+        if study_uids:
+            if isinstance(study_uids, str):
+                study_uid_statement = "{uid: $uids}"
             else:
-                query = "MATCH (sr:StudyRoot { uid: $uid})-[l:LATEST]->(sv:StudyValue)"
-                query_parameters["uid"] = study_uid
+                study_uid_statement = "WHERE sr.uid IN $uids"
+            if study_value_version:
+                query = f"""
+                    MATCH (sr:StudyRoot {study_uid_statement})-[l:HAS_VERSION{{status:'RELEASED', version:$study_value_version}}]->(sv:StudyValue)
+                    """
+                query_parameters["study_value_version"] = study_value_version
+                query_parameters["uids"] = study_uids
+            else:
+                query = f"MATCH (sr:StudyRoot {study_uid_statement})-[l:LATEST]->(sv:StudyValue)"
+                query_parameters["uids"] = study_uids
         else:
             if study_value_version:
                 query = "MATCH (sr:StudyRoot)-[l:HAS_VERSION{status:'RELEASED', version:$study_value_version}]->(sv:StudyValue)"
@@ -211,6 +217,7 @@ class StudySelectionEndpointRepository:
         self,
         project_name: str | None = None,
         project_number: str | None = None,
+        study_uids: list[str] | None = None,
     ) -> list[StudySelectionEndpointsAR]:
         """
         Finds all the selected study endpoints for all studies, and create the aggregate
@@ -219,6 +226,7 @@ class StudySelectionEndpointRepository:
         all_selections = self._retrieves_all_data(
             project_name=project_name,
             project_number=project_number,
+            study_uids=study_uids,
         )
         # Create a dictionary, with study_uid as key, and list of selections as value
         selection_aggregate_dict = {}
@@ -698,3 +706,27 @@ class StudySelectionEndpointRepository:
         # Our repository guidelines state that repos should have a close method
         # But nothing needs to be done in this one
         pass
+
+    def quantity_of_study_endpoints_in_study_objective_uid(
+        self, study_uid: str, study_objective_uid: str, study_value_version: str = None
+    ) -> int:
+        if study_value_version:
+            root_match = "MATCH (sr:StudyRoot{uid:$study_uid})-[:HAS_VERSION{version:$study_value_version}]-(sv:StudyValue)"
+        else:
+            root_match = (
+                "MATCH (sr:StudyRoot{uid:$study_uid})-[:LATEST]-(sv:StudyValue)"
+            )
+        result = db.cypher_query(
+            root_match
+            + """
+                MATCH (sv)--(se:StudyEndpoint)-[:STUDY_ENDPOINT_HAS_STUDY_OBJECTIVE]->(so:StudyObjective{uid:$study_objective_uid})--(sv)
+                RETURN count(distinct se)
+            """,
+            {
+                "study_objective_uid": study_objective_uid,
+                "study_uid": study_uid,
+                "study_value_version": study_value_version,
+            },
+        )
+
+        return result[0][0][0]

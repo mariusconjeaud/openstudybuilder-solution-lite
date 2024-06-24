@@ -1,44 +1,51 @@
 <template>
-<pre-instance-form
-  object-type="criteriaTemplates"
-  :prepare-payload-function="preparePayload"
-  v-bind="$attrs"
-  v-on="$listeners"
+  <PreInstanceForm
+    object-type="criteriaTemplates"
+    :prepare-payload-function="preparePayload"
+    :prepare-indexing-payload-function="prepareIndexingPayload"
+    v-bind="$attrs"
   >
-  <template v-slot:indexingTab="{ form, template, preInstance }">
-    <criteria-template-indexing-form
-      v-if="template"
-      ref="indexingForm"
-      :form="form"
-      :template="template"
+    <template #indexingTab="{ form, template, preInstance }">
+      <CriteriaTemplateIndexingForm
+        v-if="template"
+        ref="indexingForm"
+        :form="form"
+        :template="template"
       />
-    <criteria-template-indexing-form
-      v-else
-      ref="indexingForm"
-      :form="form"
-      :template="preInstance"
+      <CriteriaTemplateIndexingForm
+        v-else
+        ref="indexingForm"
+        :form="form"
+        :template="preInstance"
       />
-  </template>
-</pre-instance-form>
+    </template>
+  </PreInstanceForm>
 </template>
 
 <script>
-import CriteriaTemplateIndexingForm from './CriteriaTemplateIndexingForm'
-import PreInstanceForm from '@/components/library/PreInstanceForm'
+import CriteriaTemplateIndexingForm from './CriteriaTemplateIndexingForm.vue'
+import PreInstanceForm from '@/components/library/PreInstanceForm.vue'
 
 export default {
   components: {
     CriteriaTemplateIndexingForm,
-    PreInstanceForm
+    PreInstanceForm,
   },
   props: {
-    criteriaType: Object
+    criteriaType: {
+      type: Object,
+      default: null,
+    },
   },
   methods: {
-    preparePayload (payload) {
+    preparePayload(payload) {
       payload.type_uid = this.criteriaType.term_uid
-      Object.assign(payload, this.$refs.indexingForm.preparePayload(payload))
-    }
-  }
+    },
+    prepareIndexingPayload(payload) {
+      if (this.$refs.indexingForm) {
+        Object.assign(payload, this.$refs.indexingForm.preparePayload(payload))
+      }
+    },
+  },
 }
 </script>

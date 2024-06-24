@@ -14,7 +14,7 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
 @dataclass(frozen=True)
 class IngredientVO:
     active_substance_uid: str
-    prodex_id: str | None = None
+    external_id: str | None = None
     strength_uid: str | None = None
     half_life_uid: str | None = None
     lag_time_uids: list[str] | None = None
@@ -23,13 +23,13 @@ class IngredientVO:
     def from_repository_values(
         cls,
         active_substance_uid: str,
-        prodex_id: str | None,
+        external_id: str | None,
         strength_uid: str | None = None,
         half_life_uid: str | None = None,
         lag_time_uids: list[str] | None = None,
     ) -> Self:
         ingredient_vo = cls(
-            prodex_id=prodex_id,
+            external_id=external_id,
             active_substance_uid=active_substance_uid,
             strength_uid=strength_uid,
             half_life_uid=half_life_uid,
@@ -71,18 +71,18 @@ class IngredientVO:
 @dataclass(frozen=True)
 class FormulationVO:
     name: str
-    prodex_id: str | None = None
+    external_id: str | None = None
     ingredients: list[IngredientVO] | None = None
 
     @classmethod
     def from_repository_values(
         cls,
         name: str,
-        prodex_id: str | None,
+        external_id: str | None,
         ingredients: list[IngredientVO] = None,
     ) -> Self:
         formulation_vo = cls(
-            prodex_id=prodex_id,
+            external_id=external_id,
             name=name,
             ingredients=ingredients if ingredients else [],
         )
@@ -109,7 +109,7 @@ class PharmaceuticalProductVO(ConceptVO):
     The PharmaceuticalProductVO acts as the single value object for PharmaceuticalProductAR aggregate.
     """
 
-    prodex_id: str | None
+    external_id: str | None
     dosage_form_uids: list[str] | None
     route_of_administration_uids: list[str] | None
     formulations: list[FormulationVO] | None
@@ -117,13 +117,13 @@ class PharmaceuticalProductVO(ConceptVO):
     @classmethod
     def from_repository_values(
         cls,
-        prodex_id: str | None,
+        external_id: str | None,
         dosage_form_uids: list[str] | None,
         route_of_administration_uids: list[str] | None,
         formulations: list[FormulationVO] | None,
     ) -> Self:
         pharmaceutical_product_vo = cls(
-            prodex_id=prodex_id,
+            external_id=external_id,
             dosage_form_uids=dosage_form_uids,
             route_of_administration_uids=route_of_administration_uids,
             formulations=formulations,
@@ -150,9 +150,9 @@ class PharmaceuticalProductVO(ConceptVO):
         self.validate_uniqueness(
             lookup_callback=pharmaceutical_product_uid_by_property_value_callback,
             uid=uid,
-            property_name="prodex_id",
-            value=self.prodex_id,
-            error_message=f"PharmaceuticalProduct with prodex_id ({self.prodex_id}) already exists",
+            property_name="external_id",
+            value=self.external_id,
+            error_message=f"PharmaceuticalProduct with external_id ({self.external_id}) already exists",
         )
 
         for dosage_form_uid in self.dosage_form_uids:
@@ -176,7 +176,7 @@ class PharmaceuticalProductVO(ConceptVO):
 
 
 class PharmaceuticalProductAR(ConceptARBase):
-    _prodex_id: str | None
+    _external_id: str | None
     _concept_vo: PharmaceuticalProductVO
 
     @property

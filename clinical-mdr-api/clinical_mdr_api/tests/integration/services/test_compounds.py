@@ -53,11 +53,7 @@ class TestCompoundsService(unittest.TestCase):
         [
             ({"*": {"v": ["aaa"]}}, "name", "name-AAA-"),
             ({"*": {"v": ["bBb"]}}, "name", "name-BBB-"),
-            (
-                {"*": {"v": ["initials"], "op": "co"}},
-                "user_initials",
-                "TODO user initials",
-            ),
+            ({"*": {"v": ["wn-us"], "op": "co"}}, "user_initials", "unknown-user"),
             ({"*": {"v": ["Draft"]}}, "status", "Draft"),
             ({"*": {"v": ["0.1"]}}, "version", "0.1"),
             ({"*": {"v": ["ccc"]}}, None, None),

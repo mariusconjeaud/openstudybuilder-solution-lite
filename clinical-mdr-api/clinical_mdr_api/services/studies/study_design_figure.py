@@ -8,7 +8,6 @@ from colour import Color
 from PIL import ImageFont
 
 from clinical_mdr_api import config, models
-from clinical_mdr_api.oauth import get_current_user_id
 from clinical_mdr_api.services.studies.study_arm_selection import (
     StudyArmSelectionService,
 )
@@ -134,7 +133,6 @@ class StudyDesignFigureService:
         # Although ImageFont.truetype() expects point size, it seems we need to scale it up for calculations in pixels
         self.font_size = int(round(FONT_SIZE * FONT_SIZE_POINT_TO_PIXELS_RATIO))
         self.font = ImageFont.truetype(font_path, self.font_size)
-        self._current_user_id = get_current_user_id()
 
     def get_svg_document(self, study_uid: str):
         """Fetches necessary data and returns the SVG drawing as text"""
@@ -174,7 +172,7 @@ class StudyDesignFigureService:
         self, study_uid
     ) -> Mapping[str, models.StudySelectionArmWithConnectedBranchArms]:
         """Returns Study Arms as an ordered dictionary of {uid: arm}"""
-        study_arms = StudyArmSelectionService(self._current_user_id).get_all_selection(
+        study_arms = StudyArmSelectionService().get_all_selection(
             study_uid=study_uid, sort_by={"order": True}
         )
         study_arms = OrderedDict((arm.arm_uid, arm) for arm in study_arms.items)
@@ -184,7 +182,7 @@ class StudyDesignFigureService:
         self, study_uid
     ) -> Mapping[str, models.study_selections.study_epoch.StudyEpoch]:
         """Returns Study Epochs as an ordered dictionary of {uid: epoch}"""
-        study_epochs = StudyEpochService(self._current_user_id).get_all_epochs(
+        study_epochs = StudyEpochService().get_all_epochs(
             study_uid=study_uid, sort_by={"order": True}
         )
         study_epochs = OrderedDict(
@@ -198,9 +196,9 @@ class StudyDesignFigureService:
         self, study_uid
     ) -> Mapping[str, models.StudySelectionElement]:
         """Returns Study Elements as an ordered dictionary of {uid: element}"""
-        study_elements = StudyElementSelectionService(
-            self._current_user_id
-        ).get_all_selection(study_uid=study_uid)
+        study_elements = StudyElementSelectionService().get_all_selection(
+            study_uid=study_uid
+        )
         study_elements = OrderedDict(
             (element.element_uid, element) for element in study_elements.items
         )
@@ -208,18 +206,14 @@ class StudyDesignFigureService:
 
     def _get_study_design_cells(self, study_uid) -> list[models.StudyDesignCell]:
         """Returns a list of Study Design Cells"""
-        study_design_cells = StudyDesignCellService(
-            self._current_user_id
-        ).get_all_design_cells(study_uid)
+        study_design_cells = StudyDesignCellService().get_all_design_cells(study_uid)
         return study_design_cells
 
     def _get_study_visits(
         self, study_uid: str
     ) -> Mapping[str, models.study_selections.study_visit.StudyVisit]:
         """Returns Study Visits as an ordered dictionary of {uid: visit}"""
-        study_visits = StudyVisitService(self._current_user_id).get_all_visits(
-            study_uid
-        )
+        study_visits = StudyVisitService(study_uid=study_uid).get_all_visits(study_uid)
         study_visits = OrderedDict((visit.uid, visit) for visit in study_visits.items)
         return study_visits
 
@@ -462,7 +456,9 @@ class StudyDesignFigureService:
                 self._flow_cell(cell, paddings, center=ELEMENT_CENTER)
 
             # maximum cell height is row height
-            row_height = max(cell.get("height", 0) for cell in row[1:])
+            row_height = (
+                max(cell.get("height", 0) for cell in row[1:]) if len(row) > 1 else 0
+            )
 
             # Arms
             arm = row[0]

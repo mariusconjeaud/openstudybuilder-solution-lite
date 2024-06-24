@@ -558,6 +558,22 @@ def test_inactivate_timeframe_template(api_client):
     assert res["status"] == "Retired"
 
 
+def test_current_final_timeframe_template(api_client):
+    response = api_client.get(
+        f"""{URL}?status=Final&filters={{"sequence_id": {{"v": ["T4"], "op": "eq"}}}}"""
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert not res["items"]
+
+    response = api_client.get(
+        f"""{URL}/headers?field_name=sequence_id&status=Final&filters={{"sequence_id": {{"v": ["T4"], "op": "eq"}}}}"""
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert not res
+
+
 def test_reactivate_timeframe_template(api_client):
     response = api_client.post(f"{URL}/{timeframe_templates[3].uid}/activations")
     res = response.json()

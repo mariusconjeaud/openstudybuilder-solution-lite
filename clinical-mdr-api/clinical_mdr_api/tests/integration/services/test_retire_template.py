@@ -45,21 +45,22 @@ class TestStudyObjectiveUpversion(unittest.TestCase):
     TPR_LABEL = "ParameterName"
     term_roots: list[Any] = []
     term_values: list[Any] = []
+    lib: Library
 
     def setUp(self):
         inject_and_clear_db("templateretire")
         db.cypher_query(STARTUP_PARAMETERS_CYPHER)
         db.cypher_query(STARTUP_STUDY_CYPHER)
 
-        lib = Library(name="Library", is_editable=True)
-        lib.save()
+        self.lib = Library(name="LibraryName", is_editable=True)
+        self.lib.save()
         self.tpr = TemplateParameter(name=self.TPR_LABEL)
         self.tpr.save()
         self.tfr = ObjectiveTemplateRepository()
         self.objective_service = ObjectiveService()
         self.objective_template_service = ObjectiveTemplateService()
 
-        self.library = LibraryVO(name="Library", is_editable=True)
+        self.library = LibraryVO(name="LibraryName", is_editable=True)
         self.template_vo = TemplateVO(
             name=f"Test [{self.TPR_LABEL}]",
             name_plain=f"Test {self.TPR_LABEL}",
@@ -93,6 +94,7 @@ class TestStudyObjectiveUpversion(unittest.TestCase):
             )
             template_parameter_term_value.save()
             template_parameter_term_root.has_parameter_term.connect(self.tpr)
+            template_parameter_term_root.has_library.connect(self.lib)
             template_parameter_term_root.latest_final.connect(
                 template_parameter_term_value
             )
@@ -120,7 +122,7 @@ class TestStudyObjectiveUpversion(unittest.TestCase):
             )
             template = ObjectiveCreateInput(
                 objective_template_uid=self.ar.uid,
-                library_name="Library",
+                library_name="LibraryName",
                 parameter_terms=[template_parameter],
             )
 
@@ -135,7 +137,7 @@ class TestStudyObjectiveUpversion(unittest.TestCase):
         self.create_template_parameters(count=2)
         self.create_objectives(count=2, approved=True)
 
-        study_service = StudyObjectiveSelectionService(author="TEST_USER")
+        study_service = StudyObjectiveSelectionService()
         study_selection_objective_input = StudySelectionObjectiveInput(
             objective_uid="Objective_000002"
         )

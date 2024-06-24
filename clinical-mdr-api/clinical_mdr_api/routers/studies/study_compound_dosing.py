@@ -1,12 +1,12 @@
 from typing import Any
 
-from fastapi import Body, Depends, Query, Request, Response, status
+from fastapi import Body, Query, Request, Response, status
 from pydantic.types import Json
 
 from clinical_mdr_api import config, models
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.oauth import get_current_user_id, rbac
+from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.routers import study_router as router
@@ -60,7 +60,6 @@ def get_all_selected_compound_dosings(
     request: Request,  # request is actually required by the allow_exports decorator
     uid: str = utils.studyUID,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
-    current_user_id: str = Depends(get_current_user_id),
     filters: Json
     | None = Query(
         None,
@@ -80,7 +79,7 @@ def get_all_selected_compound_dosings(
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
 ) -> CustomPage[models.StudyCompoundDosing]:
-    service = StudyCompoundDosingSelectionService(author=current_user_id)
+    service = StudyCompoundDosingSelectionService()
     all_items = service.get_all_compound_dosings(
         study_uid=uid,
         study_value_version=study_value_version,
@@ -129,9 +128,8 @@ def get_distinct_values_for_header(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    service = StudyCompoundDosingSelectionService(author=current_user_id)
+    service = StudyCompoundDosingSelectionService()
     return service.get_distinct_values_for_header(
         study_uid=uid,
         field_name=field_name,
@@ -171,9 +169,8 @@ def get_distinct_compound_dosings_values_for_header(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    service = StudyCompoundDosingSelectionService(author=current_user_id)
+    service = StudyCompoundDosingSelectionService()
     return service.get_distinct_values_for_header(
         field_name=field_name,
         search_string=search_string,
@@ -218,9 +215,9 @@ Returned data:
     },
 )
 def get_all_compound_dosings_audit_trail(
-    uid: str = utils.studyUID, current_user_id: str = Depends(get_current_user_id)
+    uid: str = utils.studyUID,
 ) -> list[models.StudyCompoundDosing]:
-    service = StudyCompoundDosingSelectionService(author=current_user_id)
+    service = StudyCompoundDosingSelectionService()
     return service.get_all_selection_audit_trail(study_uid=uid)
 
 
@@ -265,9 +262,8 @@ Returned data:
 def get_compound_dosing_audit_trail(
     uid: str = utils.studyUID,
     study_compound_dosing_uid: str = utils.study_compound_dosing_uid,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudyCompoundDosing:
-    service = StudyCompoundDosingSelectionService(author=current_user_id)
+    service = StudyCompoundDosingSelectionService()
     return service.get_compound_dosing_audit_trail(
         study_uid=uid, compound_dosing_uid=study_compound_dosing_uid
     )
@@ -298,9 +294,8 @@ def create_study_compound_dosing(
     selection: models.StudyCompoundDosingInput = Body(
         description="Related parameters of the compound dosing that shall be created.",
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudyCompoundDosing:
-    service = StudyCompoundDosingSelectionService(author=current_user_id)
+    service = StudyCompoundDosingSelectionService()
     return service.make_selection(study_uid=uid, selection_create_input=selection)
 
 
@@ -323,10 +318,9 @@ def create_study_compound_dosing(
 def delete_compound_dosing(
     uid: str = utils.studyUID,
     study_compound_dosing_uid: str = utils.study_compound_dosing_uid,
-    current_user_id: str = Depends(get_current_user_id),
 ):
     StudyService().check_if_study_exists(uid)
-    service = StudyCompoundDosingSelectionService(author=current_user_id)
+    service = StudyCompoundDosingSelectionService()
     service.delete_selection(
         study_uid=uid, study_selection_uid=study_compound_dosing_uid
     )
@@ -368,9 +362,8 @@ def update_compound_dosing(
     selection: models.StudyCompoundDosingInput = Body(
         description="Related parameters of the selection that shall be updated."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudyCompoundDosing:
-    service = StudyCompoundDosingSelectionService(author=current_user_id)
+    service = StudyCompoundDosingSelectionService()
     return service.patch_selection(
         study_uid=uid,
         study_selection_uid=study_compound_dosing_uid,

@@ -7,7 +7,10 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemMetadataVO,
     LibraryVO,
 )
-from clinical_mdr_api.models.controlled_terminologies.ct_term import SimpleTermModel
+from clinical_mdr_api.models.controlled_terminologies.ct_term import (
+    SimpleCTTermNameAndAttributes,
+    SimpleTermModel,
+)
 from clinical_mdr_api.models.generic_models import SimpleNameModel
 
 
@@ -24,6 +27,12 @@ class FootnotePreInstanceAR(PreInstanceAR):
     _activity_groups: list[SimpleNameModel] | None = None
 
     _activity_subgroups: list[SimpleNameModel] | None = None
+
+    _type: SimpleCTTermNameAndAttributes | None = None
+
+    @property
+    def type(self) -> SimpleCTTermNameAndAttributes | None:
+        return self._type
 
     @property
     def indications(self) -> list[SimpleTermModel]:
@@ -50,6 +59,7 @@ class FootnotePreInstanceAR(PreInstanceAR):
         item_metadata: LibraryItemMetadataVO,
         sequence_id: str,
         study_count: int = 0,
+        footnote_type: SimpleCTTermNameAndAttributes | None = None,
         indications: list[SimpleTermModel] | None = None,
         activities: list[SimpleNameModel] | None = None,
         activity_groups: list[SimpleNameModel] | None = None,
@@ -61,6 +71,7 @@ class FootnotePreInstanceAR(PreInstanceAR):
             _item_metadata=item_metadata,
             _library=library,
             _template=template,
+            _type=footnote_type,
             _indications=indications,
             _activities=activities,
             _activity_groups=activity_groups,
@@ -78,6 +89,7 @@ class FootnotePreInstanceAR(PreInstanceAR):
         next_available_sequence_id_callback: Callable[[str], str | None] = (
             lambda _: None
         ),
+        footnote_type: SimpleCTTermNameAndAttributes | None = None,
         indications: list[SimpleTermModel] | None = None,
         activities: list[SimpleNameModel] | None = None,
         activity_groups: list[SimpleNameModel] | None = None,
@@ -94,6 +106,7 @@ class FootnotePreInstanceAR(PreInstanceAR):
             _template=template,
             _item_metadata=item_metadata,
         )
+        ar._type = footnote_type
         ar._indications = indications
         ar._activities = activities
         ar._activity_groups = activity_groups

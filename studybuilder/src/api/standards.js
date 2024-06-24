@@ -3,25 +3,25 @@ import repository from './repository'
 const resource = 'standards'
 
 export default {
-  getAllModels (params) {
+  getAllModels(params) {
     return repository.get(`${resource}/data-models`, { params })
   },
-  getModelByUid (uid) {
+  getModelByUid(uid) {
     return repository.get(`${resource}/data-models/${uid}`)
   },
-  getDatasetClasses (params) {
+  getDatasetClasses(params) {
     return repository.get(`${resource}/dataset-classes`, { params })
   },
-  getClassVariables (params) {
+  getClassVariables(params) {
     return repository.get(`${resource}/class-variables`, { params })
   },
-  getAllGuides (params) {
+  getAllGuides(params) {
     return repository.get(`${resource}/data-model-igs`, { params })
   },
-  getDatasets (params) {
+  getDatasets(params) {
     return repository.get(`${resource}/datasets`, { params })
   },
-  getDatasetVariables (params) {
+  getDatasetVariables(params) {
     return repository.get(`${resource}/dataset-variables`, { params })
-  }
+  },
 }

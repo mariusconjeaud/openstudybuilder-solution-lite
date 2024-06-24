@@ -21,7 +21,7 @@ from clinical_mdr_api.models.concepts.unit_definitions.unit_definition import (
     UnitDefinitionPostInput,
 )
 from clinical_mdr_api.models.utils import BaseModel, GenericFilteringReturn
-from clinical_mdr_api.oauth import get_current_user_id
+from clinical_mdr_api.oauth.user import user
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._meta_repository import MetaRepository
 from clinical_mdr_api.services._utils import is_library_editable, validate_is_dict
@@ -32,14 +32,8 @@ from clinical_mdr_api.services.concepts.concept_generic_service import (
 NOT_FOUND_EXCEPTION = "Resource not found."
 
 
-def _get_current_user_id(current_user_id: str = Depends(get_current_user_id)) -> str:
-    return current_user_id
-
-
-def _get_meta_repository(
-    user_id: str = Depends(_get_current_user_id),
-) -> MetaRepository:
-    return MetaRepository(user=user_id)
+def _get_meta_repository() -> MetaRepository:
+    return MetaRepository(user=user().id())
 
 
 class UnitDefinitionService:
@@ -49,11 +43,10 @@ class UnitDefinitionService:
     def __init__(
         self,
         *,
-        user_id: str = Depends(_get_current_user_id),
         meta_repository: MetaRepository = Depends(_get_meta_repository),
     ):
         self._repos = meta_repository
-        self._user_id = user_id
+        self._user_id = user().id()
 
     @db.transaction
     def get_all(

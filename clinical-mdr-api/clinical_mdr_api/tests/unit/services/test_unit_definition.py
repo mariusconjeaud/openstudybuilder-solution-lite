@@ -176,9 +176,7 @@ def test__unit_definition__get_all__library_name__result(
     unit_definition_repository_property_mock.return_value = (
         UnitDefinitionRepositoryFake()
     )
-    service = UnitDefinitionService(
-        user_id="some-user", meta_repository=MetaRepository()
-    )
+    service = UnitDefinitionService(meta_repository=MetaRepository())
 
     # when
     service_result = service.get_all(library_name=a_library_name)
@@ -251,9 +249,7 @@ def test__unit_definition__get_by_uid__existing__result(
     )
     dictionary_term_repository_property_mock.find_by_uid.return_value = None
     ct_term_name_repository_property_mock.find_by_uid.return_value = None
-    service = UnitDefinitionService(
-        user_id="some-user", meta_repository=MetaRepository()
-    )
+    service = UnitDefinitionService(meta_repository=MetaRepository())
 
     # when
     service_result = service.get_by_uid(
@@ -314,9 +310,7 @@ def test__unit_definition__get_by_uid__non_existent__result(
     unit_definition_repository_property_mock.return_value = (
         UnitDefinitionRepositoryFake()
     )
-    service = UnitDefinitionService(
-        user_id="some-user", meta_repository=MetaRepository()
-    )
+    service = UnitDefinitionService(meta_repository=MetaRepository())
 
     # then
     with pytest.raises(NotFoundException):
@@ -354,9 +348,7 @@ def test__unit_definition__get_versions__existing_uid__result(
     unit_definition_repository_property_mock.return_value = (
         UnitDefinitionRepositoryFake()
     )
-    service = UnitDefinitionService(
-        user_id="some-user", meta_repository=MetaRepository()
-    )
+    service = UnitDefinitionService(meta_repository=MetaRepository())
 
     # when
     service_result = service.get_versions(uid=a_uid)
@@ -390,9 +382,7 @@ def test__unit_definition__get_versions__non_existent_uid__result(
     unit_definition_repository_property_mock.return_value = (
         UnitDefinitionRepositoryFake()
     )
-    service = UnitDefinitionService(
-        user_id="some-user", meta_repository=MetaRepository()
-    )
+    service = UnitDefinitionService(meta_repository=MetaRepository())
 
     # then
     with pytest.raises(NotFoundException):
@@ -479,9 +469,7 @@ def test__unit_definition_service__post__result(
         unit_definition_post_input.unit_dimension
     )
     ct_term_name_repository_property_mock.term_exists = lambda _: True
-    service = UnitDefinitionService(
-        user_id="some-user", meta_repository=MetaRepository()
-    )
+    service = UnitDefinitionService(meta_repository=MetaRepository())
 
     # when
     service_result = service.post(unit_definition_post_input)
@@ -596,9 +584,7 @@ def test__unit_definition_service__post_with_non_unique_name__result(
         unit_definition_post_input.unit_dimension
     )
     # get_mock_ct_item(unit_definition_post_input.unit_dimension)
-    service = UnitDefinitionService(
-        user_id="some-user", meta_repository=MetaRepository()
-    )
+    service = UnitDefinitionService(meta_repository=MetaRepository())
 
     # when
     with pytest.raises(BusinessLogicException):
@@ -666,9 +652,7 @@ def test__unit_definition_service__post_with_non_unique_legacy_code__result(
     library_repository_property_mock.return_value = LibraryRepositoryFake()
     dictionary_term_repository_property_mock.term_exists.return_value = True
     ct_term_name_repository_property_mock.term_exists.return_value = True
-    service = UnitDefinitionService(
-        user_id="some-user", meta_repository=MetaRepository()
-    )
+    service = UnitDefinitionService(meta_repository=MetaRepository())
 
     # when
     with pytest.raises(BusinessLogicException):
@@ -741,9 +725,7 @@ def test__unit_definition_service__post_another_master_unit__result(
     library_repository_property_mock.return_value = LibraryRepositoryFake()
     dictionary_term_repository_property_mock.term_exists.return_value = True
     ct_term_name_repository_property_mock.term_exists.return_value = True
-    service = UnitDefinitionService(
-        user_id="some-user", meta_repository=MetaRepository()
-    )
+    service = UnitDefinitionService(meta_repository=MetaRepository())
 
     # when
     with pytest.raises(BusinessLogicException):
@@ -791,9 +773,7 @@ def test__unit_definition_service__delete__result(
 
     repo_fake = UnitDefinitionRepositoryFake()
     unit_definition_repository_property_mock.return_value = repo_fake
-    service = UnitDefinitionService(
-        user_id="some-user", meta_repository=MetaRepository()
-    )
+    service = UnitDefinitionService(meta_repository=MetaRepository())
 
     # when
     service.delete(uid=unit_definition_ar.uid)
@@ -839,9 +819,7 @@ def test__unit_definition_service__approve__result(
 
     repo_fake = UnitDefinitionRepositoryFake()
     unit_definition_repository_property_mock.return_value = repo_fake
-    service = UnitDefinitionService(
-        user_id="some-user", meta_repository=MetaRepository()
-    )
+    service = UnitDefinitionService(meta_repository=MetaRepository())
 
     # when
     value_before = unit_definition_ar.concept_vo
@@ -894,9 +872,7 @@ def test__unit_definition_service__inactivate__result(
 
     repo_fake = UnitDefinitionRepositoryFake()
     unit_definition_repository_property_mock.return_value = repo_fake
-    service = UnitDefinitionService(
-        user_id="some-user", meta_repository=MetaRepository()
-    )
+    service = UnitDefinitionService(meta_repository=MetaRepository())
 
     # when
     value_before = unit_definition_ar.concept_vo
@@ -949,9 +925,7 @@ def test__unit_definition_service__reactivate__result(
 
     repo_fake = UnitDefinitionRepositoryFake()
     unit_definition_repository_property_mock.return_value = repo_fake
-    service = UnitDefinitionService(
-        user_id="some-user", meta_repository=MetaRepository()
-    )
+    service = UnitDefinitionService(meta_repository=MetaRepository())
 
     # when
     value_before = unit_definition_ar.concept_vo
@@ -1004,9 +978,7 @@ def test__unit_definition_service__new_version__result(
 
     repo_fake = UnitDefinitionRepositoryFake()
     unit_definition_repository_property_mock.return_value = repo_fake
-    service = UnitDefinitionService(
-        user_id="some-user", meta_repository=MetaRepository()
-    )
+    service = UnitDefinitionService(meta_repository=MetaRepository())
 
     # when
     value_before = unit_definition_ar.concept_vo
@@ -1147,9 +1119,7 @@ def test__unit_definition_service__patch__result(
     ct_term_name_repository_property_mock.term_exists.return_value = True
     dictionary_term_repository_property_mock.find_by_uid = get_mock_dictionary_item
     ct_term_name_repository_property_mock.find_by_uid = get_mock_ct_item
-    service = UnitDefinitionService(
-        user_id="some-user", meta_repository=MetaRepository()
-    )
+    service = UnitDefinitionService(meta_repository=MetaRepository())
 
     # when
     model_before = UnitDefinitionModel.from_unit_definition_ar(
@@ -1262,9 +1232,7 @@ def test__unit_definition_service__patch_to_non_unique_name__result(
     ct_term_name_repository_property_mock.term_exists.return_value = True
     dictionary_term_repository_property_mock.find_by_uid = get_mock_dictionary_item
     ct_term_name_repository_property_mock.find_by_uid = get_mock_ct_item
-    service = UnitDefinitionService(
-        user_id="some-user", meta_repository=MetaRepository()
-    )
+    service = UnitDefinitionService(meta_repository=MetaRepository())
 
     # then
     with pytest.raises(BusinessLogicException):
@@ -1342,9 +1310,7 @@ def test__unit_definition_service__patch_to_non_unique_legacy_code__result(
     ct_term_name_repository_property_mock.term_exists.return_value = True
     dictionary_term_repository_property_mock.find_by_uid = get_mock_dictionary_item
     ct_term_name_repository_property_mock.find_by_uid = get_mock_ct_item
-    service = UnitDefinitionService(
-        user_id="some-user", meta_repository=MetaRepository()
-    )
+    service = UnitDefinitionService(meta_repository=MetaRepository())
 
     # then
     with pytest.raises(BusinessLogicException):
@@ -1431,9 +1397,7 @@ def test__unit_definition_service__patch_to_another_master_unit__result(
     ct_term_name_repository_property_mock.term_exists.return_value = True
     dictionary_term_repository_property_mock.find_by_uid = get_mock_dictionary_item
     ct_term_name_repository_property_mock.find_by_uid = get_mock_ct_item
-    service = UnitDefinitionService(
-        user_id="some-user", meta_repository=MetaRepository()
-    )
+    service = UnitDefinitionService(meta_repository=MetaRepository())
 
     # then
     with pytest.raises(BusinessLogicException):

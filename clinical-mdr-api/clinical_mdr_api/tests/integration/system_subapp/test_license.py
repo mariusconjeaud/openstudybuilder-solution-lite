@@ -10,8 +10,8 @@ LICENSE_RE = re.compile(r"\blicense\b", re.I)
 GNU_RE = re.compile(r"\bGNU\b")
 
 
-def test_license(app_client):
-    response = app_client.request("GET", "/system/information/license.md")
+def test_license(api_client):
+    response = api_client.request("GET", "/system/information/license.md")
     assert_response_status_code(response, 200)
     assert_response_content_type(response, MARKDOWN_TEXT_CONTENT_TYPE)
     assert len(response.text) > 10

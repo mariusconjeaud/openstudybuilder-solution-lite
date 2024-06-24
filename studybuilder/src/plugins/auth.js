@@ -1,4 +1,4 @@
-import { bus } from '@/main'
+import { eventBusEmit } from './eventBus'
 import { UserManager } from 'oidc-client-ts'
 import roles from '@/constants/roles'
 import { Buffer } from 'buffer'
@@ -6,8 +6,8 @@ import { Buffer } from 'buffer'
 let manager = null
 
 const authInterface = {
-  validateAccess: function (to, from, next) {
-    manager.getUser().then(user => {
+  validateAccess: function (to) {
+    manager.getUser().then((user) => {
       if (!user || user.expired) {
         if (to.name !== 'Login') {
           sessionStorage.setItem('next', to.name)
@@ -19,14 +19,14 @@ const authInterface = {
   },
   oauthLoginCallback: function () {
     return manager.signinRedirectCallback().then(() => {
-      bus.$emit('userSignedIn')
+      eventBusEmit('userSignedIn')
     })
   },
   clear: function () {
     manager.clearStaleState()
   },
   getAccessToken: function () {
-    return manager.getUser().then(user => {
+    return manager.getUser().then((user) => {
       if (!user) {
         return null
       }
@@ -34,32 +34,36 @@ const authInterface = {
     })
   },
   getUserInfo: function () {
-    return manager.getUser()
-      .then(user => {
-        if (!user || user.expired) {
-          return null
-        }
-        return JSON.parse(Buffer.from(user.access_token.split('.')[1], 'base64').toString())
-      })
+    return manager.getUser().then((user) => {
+      if (!user || user.expired) {
+        return null
+      }
+      return JSON.parse(
+        Buffer.from(user.access_token.split('.')[1], 'base64').toString()
+      )
+    })
   },
   oauthLogout: async function () {
     return manager.signoutRedirect()
-  }
+  },
 }
 
 export default {
-  async install (Vue, options) {
+  install: (app, options) => {
     manager = new UserManager({
-      metadataUrl: Vue.prototype.$config.OAUTH_METADATA_URL,
+      metadataUrl: options.config.OAUTH_METADATA_URL,
       authority: 'studybuilder-frontend',
-      client_id: Vue.prototype.$config.OAUTH_UI_APP_ID,
+      client_id: options.config.OAUTH_UI_APP_ID,
       redirect_uri: location.origin + '/oauth-callback',
       response_type: 'code',
       response_mode: 'fragment',
       post_logout_redirect_uri: location.origin,
-      scope: `openid profile email offline_access api://${Vue.prototype.$config.OAUTH_API_APP_ID}/API.call`
+      scope: `openid profile email offline_access api://${options.config.OAUTH_API_APP_ID}/API.call`,
     })
-    Vue.prototype.$auth = authInterface
-    Vue.prototype.$roles = roles
-  }
+    app.config.globalProperties.$auth = authInterface
+    app.config.globalProperties.$roles = roles
+    app.provide('roles', roles)
+  },
 }
+
+export const auth = authInterface

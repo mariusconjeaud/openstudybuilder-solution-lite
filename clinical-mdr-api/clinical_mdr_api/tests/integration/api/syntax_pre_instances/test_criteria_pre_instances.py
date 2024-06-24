@@ -1018,6 +1018,38 @@ def test_change_criteria_pre_instance_indexings(api_client):
         assert res[key] is not None
 
 
+def test_remove_criteria_pre_instance_indexings(api_client):
+    data = {
+        "indication_uids": [],
+        "sub_category_uids": [],
+        "category_uids": [],
+    }
+    response = api_client.patch(
+        f"{URL}/{criteria_pre_instances[0].uid}/indexings",
+        json=data,
+    )
+    res = response.json()
+    log.info("Removed Criteria Pre-Instance indexings: %s", res)
+
+    assert response.status_code == 200
+    assert res["uid"]
+    assert res["sequence_id"]
+    assert res["template_uid"] == criteria_template.uid
+    assert res["template_name"] == criteria_template.name
+    assert res["template_type_uid"] == criteria_template.type.term_uid
+    assert res["template_type_uid"] == ct_term_inclusion.term_uid
+    assert res["name"] == f"Default name with [{text_value_1.name_sentence_case}]"
+    assert res["guidance_text"] == criteria_template.guidance_text
+    assert not res["indications"]
+    assert not res["categories"]
+    assert not res["sub_categories"]
+    assert res["version"] == "1.0"
+    assert res["status"] == "Final"
+    assert set(list(res.keys())) == set(CRITERIA_PRE_INSTANCE_FIELDS_ALL)
+    for key in CRITERIA_PRE_INSTANCE_FIELDS_NOT_NULL:
+        assert res[key] is not None
+
+
 def test_delete_criteria_pre_instance(api_client):
     response = api_client.delete(f"{URL}/{criteria_pre_instances[3].uid}")
     log.info("Deleted Criteria Pre-Instance: %s", criteria_pre_instances[3].uid)
@@ -1317,6 +1349,52 @@ def test_create_pre_instance_criteria_template(api_client):
     assert res["status"] == "Draft"
 
 
+def test_keep_original_case_of_unit_definition_parameter_if_it_is_in_the_start_of_criteria_pre_instance(
+    api_client,
+):
+    TestUtils.create_template_parameter("Unit")
+    _unit = TestUtils.create_unit_definition("u/week", template_parameter=True)
+
+    _criteria_template = TestUtils.create_criteria_template(
+        name="[Unit] test ignore case",
+        guidance_text="Default guidance text",
+        study_uid=None,
+        type_uid=ct_term_inclusion.term_uid,
+        library_name="Sponsor",
+        indication_uids=[],
+        category_uids=[],
+        sub_category_uids=[],
+    )
+    data = {
+        "library_name": "Sponsor",
+        "parameter_terms": [
+            {
+                "position": 1,
+                "conjunction": "",
+                "terms": [
+                    {
+                        "index": 1,
+                        "name": _unit.name,
+                        "uid": _unit.uid,
+                        "type": "Unit",
+                    }
+                ],
+            }
+        ],
+        "indication_uids": [],
+        "category_uids": [],
+        "sub_category_uids": [],
+    }
+    response = api_client.post(
+        f"criteria-templates/{_criteria_template.uid}/pre-instances", json=data
+    )
+    res = response.json()
+    log.info("Created Criteria Pre-Instance: %s", res)
+
+    assert response.status_code == 201
+    assert res["name"] == f"[{_unit.name}] test ignore case"
+
+
 def test_criteria_pre_instance_sequence_id_generation(api_client):
     ct_term = TestUtils.create_ct_term(sponsor_preferred_name="EXCLUSION CRITERIA")
     template = TestUtils.create_criteria_template(
@@ -1460,7 +1538,7 @@ def test_criteria_pre_instance_template_parameter_rules(api_client):
 
     assert response.status_code == 201
     assert "PreInstance" in res["uid"]
-    assert res["sequence_id"] == "CI2P1"
+    assert res["sequence_id"] == "CI3P1"
     assert res["template_uid"] == template.uid
     assert (
         res["name"]

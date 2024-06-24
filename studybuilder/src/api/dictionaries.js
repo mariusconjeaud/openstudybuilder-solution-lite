@@ -3,46 +3,45 @@ import repository from './repository'
 const resource = 'dictionaries'
 
 export default {
-  getSnomedCategories (options) {
-    return repository.get(`${resource}/codelists`, { params: { library: 'SOMED', ...options } })
+  getCodelists(library) {
+    return repository.get(`${resource}/codelists`, {
+      params: { library: library, page_size: 0 },
+    })
   },
-  getCodelists (library) {
-    return repository.get(`${resource}/codelists`, { params: { library: library, page_size: 0 } })
-  },
-  getTerms (options) {
+  getTerms(options) {
     const params = {
-      ...options
+      ...options,
     }
     return repository.get(`${resource}/terms`, { params })
   },
-  getSubstances (params) {
+  getSubstances(params) {
     return repository.get(`${resource}/substances`, { params })
   },
-  inactivate (uid) {
+  inactivate(uid) {
     return repository.delete(`${resource}/terms/${uid}/activations`)
   },
-  reactivate (uid) {
+  reactivate(uid) {
     return repository.post(`${resource}/terms/${uid}/activations`)
   },
-  delete (uid) {
+  delete(uid) {
     return repository.delete(`${resource}/terms/${uid}`)
   },
-  approve (uid) {
+  approve(uid) {
     return repository.post(`${resource}/terms/${uid}/approvals`)
   },
-  newVersion (uid) {
+  newVersion(uid) {
     return repository.post(`${resource}/terms/${uid}/versions`)
   },
-  edit (uid, term) {
+  edit(uid, term) {
     const params = {
-      ...term
+      ...term,
     }
     return repository.patch(`${resource}/terms/${uid}`, params)
   },
-  create (term) {
+  create(term) {
     const params = {
-      ...term
+      ...term,
     }
     return repository.post(`${resource}/terms`, params)
-  }
+  },
 }

@@ -1066,6 +1066,51 @@ def test_change_criteria_template_indexings(api_client):
         assert res[key] is not None
 
 
+def test_remove_criteria_template_indexings(api_client):
+    data = {
+        "indication_uids": [],
+        "sub_category_uids": [],
+        "category_uids": [],
+    }
+    response = api_client.patch(
+        f"{URL}/{criteria_templates[1].uid}/indexings",
+        json=data,
+    )
+    res = response.json()
+    log.info("Removed Criteria Template indexings: %s", res)
+
+    assert response.status_code == 200
+    assert res["uid"]
+    assert res["sequence_id"]
+    assert res["name"] == "Default-AAA name with [TextValue]"
+    assert res["guidance_text"] == "Default-AAA guidance text"
+    assert res["type"]["term_uid"] == ct_term_inclusion.term_uid
+    assert (
+        res["type"]["name"]["sponsor_preferred_name"]
+        == ct_term_inclusion.sponsor_preferred_name
+    )
+    assert (
+        res["type"]["name"]["sponsor_preferred_name_sentence_case"]
+        == ct_term_inclusion.sponsor_preferred_name_sentence_case
+    )
+    assert (
+        res["type"]["attributes"]["code_submission_value"]
+        == ct_term_inclusion.code_submission_value
+    )
+    assert (
+        res["type"]["attributes"]["nci_preferred_name"]
+        == ct_term_inclusion.nci_preferred_name
+    )
+    assert not res["indications"]
+    assert not res["categories"]
+    assert not res["sub_categories"]
+    assert res["version"] == "1.0"
+    assert res["status"] == "Final"
+    assert set(list(res.keys())) == set(CRITERIA_TEMPLATE_FIELDS_ALL)
+    for key in CRITERIA_TEMPLATE_FIELDS_NOT_NULL:
+        assert res[key] is not None
+
+
 def test_delete_criteria_template(api_client):
     response = api_client.delete(f"{URL}/{criteria_templates[2].uid}")
     log.info("Deleted Criteria Template: %s", criteria_templates[2].uid)
@@ -1332,6 +1377,22 @@ def test_inactivate_criteria_template(api_client):
     assert res["name"] == f"cascade check [{text_value_1.name_sentence_case}]"
     assert res["version"] == "2.0"
     assert res["status"] == "Retired"
+
+
+def test_current_final_criteria_template(api_client):
+    response = api_client.get(
+        f"""{URL}?status=Final&filters={{"sequence_id": {{"v": ["CI6"], "op": "eq"}}}}"""
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert not res["items"]
+
+    response = api_client.get(
+        f"""{URL}/headers?field_name=sequence_id&status=Final&filters={{"sequence_id": {{"v": ["CI6"], "op": "eq"}}}}"""
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert not res
 
 
 def test_reactivate_criteria_template(api_client):

@@ -1,45 +1,54 @@
 <template>
-<div>
-  <v-autocomplete
-    :label="$t('UCUMUnitField.label')"
-    :value="value"
-    :items="ucumUnits"
-    item-value="term_uid"
-    item-text="name"
-    return-object
-    dense
-    clearable
-    v-bind="$attrs"
-    v-on="$listeners"
-    @change="update"
+  <div>
+    <v-autocomplete
+      :label="$t('UCUMUnitField.label')"
+      :model-value="value"
+      :items="ucumUnits"
+      item-value="term_uid"
+      item-title="name"
+      return-object
+      density="compact"
+      clearable
+      v-bind="$attrs"
+      @update:model-value="update"
     />
-</div>
+  </div>
 </template>
 
 <script>
 import dictionaries from '@/api/dictionaries'
 
 export default {
-  props: ['value'],
-  data () {
+  props: {
+    modelValue: {
+      type: Object,
+      default: undefined,
+    },
+  },
+  emits: ['update:modelValue'],
+  data() {
     return {
-      ucumUnits: []
+      ucumUnits: [],
     }
   },
-  mounted () {
-    dictionaries.getCodelists('UCUM').then(resp => {
+  mounted() {
+    dictionaries.getCodelists('UCUM').then((resp) => {
       const params = {
-        codelist_uid: resp.data.items[0].codelist_uid
+        codelist_uid: resp.data.items[0].codelist_uid,
+        page_size: 0,
       }
-      dictionaries.getTerms(params).then(resp => {
+      dictionaries.getTerms(params).then((resp) => {
         this.ucumUnits = resp.data.items
+        this.value = this.ucumUnits.find(
+          (ucum) => ucum.term_uid === this.modelValue
+        )
       })
     })
   },
   methods: {
-    update (value) {
-      this.$emit('input', value)
-    }
-  }
+    update(value) {
+      this.$emit('update:modelValue', value)
+    },
+  },
 }
 </script>

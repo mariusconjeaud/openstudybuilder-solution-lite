@@ -67,7 +67,7 @@ def test_data():
     active_substances_all.append(
         TestUtils.create_active_substance(
             unii_term_uid=dictionary_term_unii.term_uid,
-            prodex_id="prodex_id_a",
+            external_id="external_id_a",
             analyte_number="analyte A",
             short_number="short number A",
             long_number="long number A",
@@ -126,7 +126,7 @@ ACTIVE_SUBSTANCE_FIELDS_ALL = [
     "short_number",
     "long_number",
     "inn",
-    "prodex_id",
+    "external_id",
     "unii",
 ]
 
@@ -151,7 +151,7 @@ def test_get_active_substance(api_client):
     assert res["short_number"] == "short number A"
     assert res["long_number"] == "long number A"
     assert res["inn"] == "inn A"
-    assert res["prodex_id"] == "prodex_id_a"
+    assert res["external_id"] == "external_id_a"
     assert res["unii"]["substance_term_uid"] == dictionary_term_unii.term_uid
     assert res["unii"]["substance_name"] == dictionary_term_unii.name
     assert res["unii"]["substance_unii"] == dictionary_term_unii.dictionary_id
@@ -183,7 +183,7 @@ def test_update_active_substance_property(api_client):
     assert res["short_number"] == active_substances_all[0].short_number
     assert res["long_number"] == active_substances_all[0].long_number
     assert res["inn"] == active_substances_all[0].inn
-    assert res["prodex_id"] == active_substances_all[0].prodex_id
+    assert res["external_id"] == active_substances_all[0].external_id
     assert res["unii"]["substance_term_uid"] == dictionary_term_unii.term_uid
     assert res["unii"]["substance_name"] == dictionary_term_unii.name
     assert res["unii"]["substance_unii"] == dictionary_term_unii.dictionary_id
@@ -209,7 +209,7 @@ def test_update_active_substance_property(api_client):
     assert res["short_number"] == active_substances_all[0].short_number
     assert res["long_number"] == active_substances_all[0].long_number
     assert res["inn"] == active_substances_all[0].inn
-    assert res["prodex_id"] == active_substances_all[0].prodex_id
+    assert res["external_id"] == active_substances_all[0].external_id
     assert res["unii"]["substance_term_uid"] == dictionary_term_unii.term_uid
     assert res["unii"]["substance_name"] == dictionary_term_unii.name
     assert res["unii"]["substance_unii"] == dictionary_term_unii.dictionary_id
@@ -239,7 +239,7 @@ def test_update_active_substance_property(api_client):
     assert res["short_number"] == active_substances_all[0].short_number
     assert res["long_number"] == active_substances_all[0].long_number
     assert res["inn"] == active_substances_all[0].inn
-    assert res["prodex_id"] == active_substances_all[0].prodex_id
+    assert res["external_id"] == active_substances_all[0].external_id
     assert res["unii"]["substance_term_uid"] == dictionary_term_unii.term_uid
     assert res["unii"]["substance_name"] == dictionary_term_unii.name
     assert res["unii"]["substance_unii"] == dictionary_term_unii.dictionary_id
@@ -270,7 +270,7 @@ def test_update_active_substance_property(api_client):
     assert res["short_number"] == active_substances_all[0].short_number
     assert res["long_number"] == active_substances_all[0].long_number
     assert res["inn"] is None
-    assert res["prodex_id"] == active_substances_all[0].prodex_id
+    assert res["external_id"] == active_substances_all[0].external_id
     assert res["unii"]["substance_term_uid"] == dictionary_term_unii.term_uid
     assert res["unii"]["substance_name"] == dictionary_term_unii.name
     assert res["unii"]["substance_unii"] == dictionary_term_unii.dictionary_id
@@ -309,7 +309,7 @@ def test_update_active_substance_unii(api_client):
     assert res["short_number"] == active_substances_all[1].short_number
     assert res["long_number"] == active_substances_all[1].long_number
     assert res["inn"] == active_substances_all[1].inn
-    assert res["prodex_id"] == active_substances_all[1].prodex_id
+    assert res["external_id"] == active_substances_all[1].external_id
     assert res["unii"]["substance_term_uid"] == unii_term_new.term_uid
     assert res["unii"]["substance_name"] == unii_term_new.name
     assert res["unii"]["substance_unii"] == unii_term_new.dictionary_id
@@ -523,9 +523,7 @@ def test_get_active_substances_csv_xml_excel(api_client, export_format):
         pytest.param('{"*": {"v": ["aaa"]}}', "analyte_number", "analyte_number-AAA"),
         pytest.param('{"*": {"v": ["bBb"]}}', "analyte_number", "analyte_number-BBB"),
         pytest.param(
-            '{"*": {"v": ["initials"], "op": "co"}}',
-            "user_initials",
-            "TODO user initials",
+            '{"*": {"v": ["wn-us"], "op": "co"}}', "user_initials", "unknown-user"
         ),
         pytest.param('{"*": {"v": ["Draft"]}}', "status", "Draft"),
         pytest.param('{"*": {"v": ["0.1"]}}', "version", "0.1"),
@@ -624,7 +622,7 @@ def test_create_and_delete_active_substance(api_client):
         "short_number": "short_number-NEW",
         "long_number": "long_number-NEW",
         "inn": "inn-NEW",
-        "prodex_id": "prodex_id-NEW",
+        "external_id": "external_id-NEW",
         "unii_term_uid": dictionary_term_unii.term_uid,
     }
     response = api_client.post(
@@ -637,7 +635,7 @@ def test_create_and_delete_active_substance(api_client):
     assert res["short_number"] == "short_number-NEW"
     assert res["long_number"] == "long_number-NEW"
     assert res["inn"] == "inn-NEW"
-    assert res["prodex_id"] == "prodex_id-NEW"
+    assert res["external_id"] == "external_id-NEW"
     assert res["unii"]["substance_term_uid"] == dictionary_term_unii.term_uid
     assert res["unii"]["substance_name"] == dictionary_term_unii.name
     assert res["unii"]["substance_unii"] == dictionary_term_unii.dictionary_id

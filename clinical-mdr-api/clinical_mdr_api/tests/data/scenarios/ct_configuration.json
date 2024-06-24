@@ -22,7 +22,7 @@
       "headers": {},
       "method": "POST",
       "request": {
-        "user_initials": "TEST_USER",
+        "user_initials": "unknown-user",
         "study_field_name": "unit1",
         "study_field_data_type": "string",
         "study_field_name_api": "unit1",
@@ -42,7 +42,7 @@
       },
       "result": {
         "uid": "CodelistConfig_000001",
-        "user_initials": "TEST_USER",
+        "user_initials": "unknown-user",
         "study_field_name": "unit1",
         "study_field_grouping": "sbtab",
         "start_date": "2021-04-03T17:39:29.387415",
@@ -73,7 +73,7 @@
       "result": [
         {
           "uid": "CodelistConfig_000001",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "study_field_name": "unit1",
           "study_field_grouping": "sbtab",
           "start_date": "2021-04-03T17:39:29.387415",
@@ -128,7 +128,7 @@
       "headers": {},
       "method": "POST",
       "request": {
-        "user_initials": "TEST_USER",
+        "user_initials": "unknown-user",
         "study_field_name": "unit1",
         "study_field_data_type": "string",
         "study_field_name_api": "unit1",
@@ -148,7 +148,7 @@
         "content-type": "application/json"
       },
       "result": {
-        "user_initials": "TEST_USER",
+        "user_initials": "unknown-user",
         "study_field_name": "unit1",
         "study_field_grouping": "sbtab",
         "start_date": "2021-04-03T17:39:29.387415",
@@ -239,7 +239,7 @@
       "headers": {},
       "result": [
         {
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "study_field_name": "unit1",
           "study_field_grouping": "sbtab",
           "start_date": "2021-04-03T17:39:29.387415",
@@ -270,7 +270,7 @@
       "code": 200,
       "headers": {},
       "result": {
-        "user_initials": "TEST_USER",
+        "user_initials": "unknown-user",
         "study_field_name": "unit1",
         "study_field_grouping": "sbtab",
         "start_date": "2021-04-03T17:39:29.387415",
@@ -300,7 +300,7 @@
       "code": 200,
       "headers": {},
       "result": {
-        "user_initials": "TEST_USER",
+        "user_initials": "unknown-user",
         "study_field_name": "unit1",
         "study_field_grouping": "sbtab",
         "start_date": "2021-04-03T17:39:29.387415",
@@ -330,7 +330,7 @@
       "code": 200,
       "headers": {},
       "result": {
-        "user_initials": "TEST_USER",
+        "user_initials": "unknown-user",
         "study_field_name": "unit1",
         "study_field_grouping": "sbtab",
         "start_date": "2021-04-03T17:39:29.387415",
@@ -360,7 +360,7 @@
       "code": 200,
       "headers": {},
       "result": {
-        "user_initials": "TEST_USER",
+        "user_initials": "unknown-user",
         "study_field_name": "unit1",
         "study_field_grouping": "sbtab",
         "start_date": "2021-04-03T17:39:29.387415",
@@ -459,7 +459,7 @@
       "code": 200,
       "headers": {},
       "result": {
-        "user_initials": "TEST_USER",
+        "user_initials": "unknown-user",
         "study_field_name": "unit1-patched",
         "study_field_grouping": "sbtab",
         "start_date": "2021-04-03T17:39:29.387415",
@@ -490,7 +490,7 @@
       "headers": {},
       "result": [
         {
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "study_field_name": "unit1-patched",
           "study_field_grouping": "sbtab",
           "start_date": "2021-04-03T17:39:29.387415",
@@ -521,7 +521,7 @@
       "code": 200,
       "headers": {},
       "result": {
-        "user_initials": "TEST_USER",
+        "user_initials": "unknown-user",
         "study_field_name": "unit1-patched",
         "study_field_grouping": "sbtab",
         "start_date": "2021-04-03T17:39:29.387415",
@@ -551,7 +551,7 @@
       "code": 200,
       "headers": {},
       "result": {
-        "user_initials": "TEST_USER",
+        "user_initials": "unknown-user",
         "study_field_name": "unit1-patched",
         "study_field_grouping": "sbtab",
         "start_date": "2021-04-03T17:39:29.387415",
@@ -581,7 +581,7 @@
       "code": 200,
       "headers": {},
       "result": {
-        "user_initials": "TEST_USER",
+        "user_initials": "unknown-user",
         "study_field_name": "unit1-patched",
         "study_field_grouping": "sbtab",
         "start_date": "2021-04-03T17:39:29.387415",
@@ -611,7 +611,7 @@
       "code": 200,
       "headers": {},
       "result": {
-        "user_initials": "TEST_USER",
+        "user_initials": "unknown-user",
         "study_field_name": "unit1-patched",
         "study_field_grouping": "sbtab",
         "start_date": "2021-04-03T17:39:29.387415",
@@ -641,7 +641,7 @@
       "code": 200,
       "headers": {},
       "result": {
-        "user_initials": "TEST_USER",
+        "user_initials": "unknown-user",
         "study_field_name": "unit1",
         "study_field_grouping": "sbtab",
         "start_date": "2021-04-03T17:39:29.387415",
@@ -713,7 +713,7 @@
       "code": 201,
       "headers": {},
       "result": {
-        "user_initials": "TEST_USER",
+        "user_initials": "unknown-user",
         "study_field_name": "unit1-patched",
         "study_field_grouping": "sbtab",
         "start_date": "2021-04-03T17:39:29.387415",
@@ -744,7 +744,7 @@
       "headers": {},
       "result": [
         {
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "study_field_name": "unit1-patched",
           "study_field_grouping": "sbtab",
           "start_date": "2021-04-03T17:39:29.387415",
@@ -775,7 +775,7 @@
       "code": 200,
       "headers": {},
       "result": {
-        "user_initials": "TEST_USER",
+        "user_initials": "unknown-user",
         "study_field_name": "unit1-patched",
         "study_field_grouping": "sbtab",
         "start_date": "2021-04-03T17:39:29.387415",
@@ -805,7 +805,7 @@
       "code": 200,
       "headers": {},
       "result": {
-        "user_initials": "TEST_USER",
+        "user_initials": "unknown-user",
         "study_field_name": "unit1-patched",
         "study_field_grouping": "sbtab",
         "start_date": "2021-04-03T17:39:29.387415",
@@ -835,7 +835,7 @@
       "code": 200,
       "headers": {},
       "result": {
-        "user_initials": "TEST_USER",
+        "user_initials": "unknown-user",
         "study_field_name": "unit1-patched",
         "study_field_grouping": "sbtab",
         "start_date": "2021-04-03T17:39:29.387415",
@@ -953,7 +953,7 @@
       "code": 200,
       "headers": {},
       "result": {
-        "user_initials": "TEST_USER",
+        "user_initials": "unknown-user",
         "study_field_name": "unit1-patched",
         "study_field_grouping": "sbtab",
         "start_date": "2021-04-03T17:39:29.387415",
@@ -1093,7 +1093,7 @@
       "code": 200,
       "headers": {},
       "result": {
-        "user_initials": "TEST_USER",
+        "user_initials": "unknown-user",
         "study_field_name": "unit1-patched",
         "study_field_grouping": "sbtab",
         "start_date": "2021-04-03T17:39:29.387415",
@@ -1213,7 +1213,7 @@
       "code": 201,
       "headers": {},
       "result": {
-        "user_initials": "TEST_USER",
+        "user_initials": "unknown-user",
         "study_field_name": "unit1-patched",
         "study_field_grouping": "sbtab",
         "start_date": "2021-04-03T17:39:29.387415",
@@ -1331,7 +1331,7 @@
       "result": {
         "start_date": "2021-04-03T17:39:29.387415",
         "end_date": null,
-        "user_initials": "TEST_USER",
+        "user_initials": "unknown-user",
         "change_description": "Patched version 2",
         "study_field_grouping": "sbtab",
         "status": "Draft",
@@ -1361,7 +1361,7 @@
       "result": {
         "start_date": "2021-04-03T17:39:29.387415",
         "end_date": null,
-        "user_initials": "TEST_USER",
+        "user_initials": "unknown-user",
         "change_description": "Patched version 2",
         "study_field_grouping": "sbtab",
         "status": "Draft",
@@ -1391,7 +1391,7 @@
       "result": {
         "start_date": "2021-04-03T17:39:29.387415",
         "end_date": null,
-        "user_initials": "TEST_USER",
+        "user_initials": "unknown-user",
         "change_description": "Reactivated version",
         "study_field_grouping": "sbtab",
         "status": "Final",
@@ -1420,7 +1420,7 @@
       "headers": {},
       "result": [
         {
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "study_field_name": "unit1-patched-2",
           "study_field_grouping": "sbtab",
           "start_date": "2021-04-03T17:39:29.387415",
@@ -1437,7 +1437,7 @@
           "is_dictionary_term": false
         },
         {
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "study_field_name": "unit1-patched",
           "study_field_grouping": "sbtab",
           "start_date": "2021-04-03T17:39:29.387415",
@@ -1454,7 +1454,7 @@
           "is_dictionary_term": false
         },
         {
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "study_field_name": "unit1-patched",
           "study_field_grouping": "sbtab",
           "start_date": "2021-04-03T17:39:29.387415",
@@ -1471,7 +1471,7 @@
           "is_dictionary_term": false
         },
         {
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "study_field_name": "unit1-patched",
           "study_field_grouping": "sbtab",
           "start_date": "2021-04-03T17:39:29.387415",
@@ -1488,7 +1488,7 @@
           "is_dictionary_term": false
         },
         {
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "study_field_name": "unit1-patched",
           "study_field_grouping": "sbtab",
           "start_date": "2021-04-03T17:39:29.387415",
@@ -1505,7 +1505,7 @@
           "is_dictionary_term": false
         },
         {
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "study_field_name": "unit1-patched",
           "study_field_grouping": "sbtab",
           "start_date": "2021-04-03T17:39:29.387415",
@@ -1522,7 +1522,7 @@
           "is_dictionary_term": false
         },
         {
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "study_field_name": "unit1",
           "study_field_grouping": "sbtab",
           "start_date": "2021-04-03T17:39:29.387415",

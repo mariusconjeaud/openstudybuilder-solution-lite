@@ -16,6 +16,7 @@ import pytest
 from fastapi.testclient import TestClient
 from neomodel import db
 
+from clinical_mdr_api.config import REQUESTED_LIBRARY_NAME
 from clinical_mdr_api.main import app
 from clinical_mdr_api.models import ClinicalProgramme, Project
 from clinical_mdr_api.models.concepts.activities.activity import Activity
@@ -199,8 +200,11 @@ def test_data():
     )
     weight_activity = TestUtils.create_activity(
         name="Weight",
-        activity_subgroups=[body_measurements_activity_subgroup.uid],
-        activity_groups=[general_activity_group.uid],
+        activity_subgroups=[
+            body_measurements_activity_subgroup.uid,
+            randomisation_activity_subgroup.uid,
+        ],
+        activity_groups=[general_activity_group.uid, general_activity_group.uid],
         library_name="Sponsor",
     )
     global clinical_programme
@@ -1168,8 +1172,8 @@ def test_protocol_soa_html_with_time_units_and_study_versioning(api_client):
     export_url = f"/studies/{study_for_export.uid}/flowchart.html"
     previous_locked_exported_data = TestUtils.verify_exported_data_format(
         api_client, export_format, export_url
-    )
-    assert "Study week" in str(previous_locked_exported_data.read())
+    ).text
+    assert "Study week" in str(previous_locked_exported_data)
 
     # update study title to be able to lock it
     response = api_client.patch(
@@ -1199,15 +1203,15 @@ def test_protocol_soa_html_with_time_units_and_study_versioning(api_client):
     export_url = f"/studies/{study_for_export.uid}/flowchart.html"
     exported_data = TestUtils.verify_exported_data_format(
         api_client, export_format, export_url
-    )
-    assert "Study day" in str(exported_data.read())
+    ).text
+    assert "Study day" in exported_data
 
     export_format = "text/html"
     export_url = f"/studies/{study_for_export.uid}/flowchart.html?study_value_version=1"
     exported_data = TestUtils.verify_exported_data_format(
         api_client, export_format, export_url
-    )
-    assert str(exported_data.read()) == str(previous_locked_exported_data.read())
+    ).text
+    assert exported_data == previous_locked_exported_data
 
 
 def test_protocol_soa_export(api_client):
@@ -1385,26 +1389,23 @@ def test_operational_soa_export(api_client):
     res = response.json()["items"]
     assert len(res) == 3
     assert res[0]["activity"]["uid"] == randomized_activity.uid
-    randomized_study_activity_instance_uid = res[0]["study_activity_instance_uid"]
     assert res[1]["activity"]["uid"] == body_mes_activity.uid
-    body_mes_study_activity_instance_uid = res[1]["study_activity_instance_uid"]
     assert res[2]["activity"]["uid"] == weight_activity.uid
-    weight_study_activity_instance_uid = res[2]["study_activity_instance_uid"]
 
     # Create schedules
     TestUtils.create_study_activity_schedule(
         study_uid=study_for_export.uid,
-        study_activity_instance_uid=randomized_study_activity_instance_uid,
+        study_activity_uid=sa_randomized.study_activity_uid,
         study_visit_uid=first_visit.uid,
     )
     TestUtils.create_study_activity_schedule(
         study_uid=study_for_export.uid,
-        study_activity_instance_uid=body_mes_study_activity_instance_uid,
+        study_activity_uid=sa_body_mes.study_activity_uid,
         study_visit_uid=first_visit.uid,
     )
     TestUtils.create_study_activity_schedule(
         study_uid=study_for_export.uid,
-        study_activity_instance_uid=weight_study_activity_instance_uid,
+        study_activity_uid=sa_weight.study_activity_uid,
         study_visit_uid=first_visit.uid,
     )
 
@@ -1421,7 +1422,7 @@ def test_operational_soa_export(api_client):
     assert res[0]["epoch"] == study_epoch.epoch_name
     assert res[0]["activity_instance"] == randomized_activity_instance.name
     assert res[0]["topic_code"] == randomized_activity_instance.topic_code
-    assert res[0]["param_cd"] == randomized_activity_instance.adam_param_code
+    assert res[0]["param_code"] == randomized_activity_instance.adam_param_code
     assert res[0]["activity"] == sa_randomized.activity.name
     assert (
         res[0]["activity_subgroup"]
@@ -1441,7 +1442,7 @@ def test_operational_soa_export(api_client):
     assert res[1]["activity"] == sa_body_mes.activity.name
     assert res[1]["activity_instance"] is None
     assert res[1]["topic_code"] is None
-    assert res[1]["param_cd"] is None
+    assert res[1]["param_code"] is None
     assert (
         res[1]["activity_subgroup"]
         == sa_body_mes.study_activity_subgroup.activity_subgroup_name
@@ -1459,7 +1460,7 @@ def test_operational_soa_export(api_client):
     assert res[2]["activity"] == sa_weight.activity.name
     assert res[2]["activity_instance"] is None
     assert res[2]["topic_code"] is None
-    assert res[2]["param_cd"] is None
+    assert res[2]["param_code"] is None
     assert (
         res[2]["activity_subgroup"]
         == sa_weight.study_activity_subgroup.activity_subgroup_name
@@ -1501,4 +1502,87 @@ def test_only_placeholder_study_activity_can_have_subgroup_and_group_not_specifi
     assert (
         response.json()["message"]
         == "Only StudyActivity placeholder can link to None ActivitySubGroup or None ActivityGroup"
+    )
+
+
+def test_delete_activity_placehodler_with_not_finalized_request_retires_the_request(
+    api_client,
+):
+    activity_request = TestUtils.create_activity(
+        name="Activity request for placeholder deletion",
+        activity_subgroups=[body_measurements_activity_subgroup.uid],
+        activity_groups=[general_activity_group.uid],
+        is_request_final=True,
+        library_name=REQUESTED_LIBRARY_NAME,
+    )
+    response = api_client.post(
+        f"/studies/{study.uid}/study-activities",
+        json={
+            "activity_uid": activity_request.uid,
+            "activity_subgroup_uid": body_measurements_activity_subgroup.uid,
+            "activity_group_uid": general_activity_group.uid,
+            "soa_group_term_uid": "term_efficacy_uid",
+        },
+    )
+    assert response.status_code == 201
+    res = response.json()
+    activity_placeholder_uid = res["study_activity_uid"]
+
+    response = api_client.delete(
+        f"/studies/{study.uid}/study-activities/{activity_placeholder_uid}",
+    )
+    assert response.status_code == 204
+
+    response = api_client.get(
+        f"/concepts/activities/activities/{activity_request.uid}",
+    )
+    assert response.status_code == 200
+    res = response.json()
+    assert res["status"] == "Retired"
+
+
+def test_get_study_activity_by_uid(api_client):
+    response = api_client.post(
+        f"/studies/{study.uid}/study-activities",
+        json={
+            "activity_uid": weight_activity.uid,
+            "activity_subgroup_uid": randomisation_activity_subgroup.uid,
+            "activity_group_uid": general_activity_group.uid,
+            "soa_group_term_uid": "term_efficacy_uid",
+        },
+    )
+    assert response.status_code == 201
+    res = response.json()
+    study_activity_uid = res["study_activity_uid"]
+
+    response = api_client.get(
+        f"/studies/{study.uid}/study-activities/{study_activity_uid}",
+    )
+    assert response.status_code == 200
+    res = response.json()
+    assert (
+        res["study_activity_subgroup"]["activity_subgroup_uid"]
+        == randomisation_activity_subgroup.uid
+    )
+    assert (
+        res["study_activity_group"]["activity_group_uid"] == general_activity_group.uid
+    )
+    assert res["study_soa_group"]["soa_group_term_uid"] == "term_efficacy_uid"
+    assert res["activity"]["uid"] == weight_activity.uid
+    assert len(res["activity"]["activity_groupings"]) == 2
+    assert (
+        res["activity"]["activity_groupings"][0]["activity_subgroup_uid"]
+        == body_measurements_activity_subgroup.uid
+    )
+    assert (
+        res["activity"]["activity_groupings"][0]["activity_group_uid"]
+        == general_activity_group.uid
+    )
+    assert (
+        res["activity"]["activity_groupings"][1]["activity_subgroup_uid"]
+        == randomisation_activity_subgroup.uid
+    )
+    assert (
+        res["activity"]["activity_groupings"][1]["activity_group_uid"]
+        == general_activity_group.uid
     )

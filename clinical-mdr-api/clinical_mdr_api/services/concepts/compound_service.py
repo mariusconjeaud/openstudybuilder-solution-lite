@@ -129,7 +129,7 @@ class CompoundService(ConceptGenericService[CompoundAR]):
                     compound_uid=uid,
                 )
             )
-            compound_alias_service = CompoundAliasService(user=self.user_initials)
+            compound_alias_service = CompoundAliasService()
             for alias_uid in aliases_uids:
                 compound_alias = compound_alias_service._find_by_uid_or_raise_not_found(
                     alias_uid, for_update=True

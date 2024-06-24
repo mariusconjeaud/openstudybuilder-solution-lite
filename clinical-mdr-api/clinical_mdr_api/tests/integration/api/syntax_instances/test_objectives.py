@@ -208,7 +208,7 @@ def test_data():
             )
         )
 
-    study_objective_selection_service = StudyObjectiveSelectionService(author="test")
+    study_objective_selection_service = StudyObjectiveSelectionService()
     for objective in objectives:
         if objective.status == "Final":
             study_objective_selection_service.make_selection(
@@ -521,6 +521,47 @@ def test_create_objective(api_client):
     assert set(list(res.keys())) == set(OBJECTIVE_FIELDS_ALL)
     for key in OBJECTIVE_FIELDS_NOT_NULL:
         assert res[key] is not None
+
+
+def test_keep_original_case_of_unit_definition_parameter_if_it_is_in_the_start_of_objective(
+    api_client,
+):
+    TestUtils.create_template_parameter("Unit")
+    _unit = TestUtils.create_unit_definition("u/week", template_parameter=True)
+
+    _objective_template = TestUtils.create_objective_template(
+        name="[Unit] test ignore case",
+        guidance_text="Default guidance text",
+        study_uid=None,
+        library_name="Sponsor",
+        indication_uids=[],
+        category_uids=[],
+    )
+
+    data = {
+        "objective_template_uid": _objective_template.uid,
+        "library_name": "Sponsor",
+        "parameter_terms": [
+            {
+                "position": 1,
+                "conjunction": "",
+                "terms": [
+                    {
+                        "index": 1,
+                        "name": _unit.name,
+                        "uid": _unit.uid,
+                        "type": "Unit",
+                    }
+                ],
+            }
+        ],
+    }
+    response = api_client.post(URL, json=data)
+    res = response.json()
+    log.info("Created Objective: %s", res)
+
+    assert response.status_code == 201
+    assert res["name"] == f"[{_unit.name}] test ignore case"
 
 
 def test_update_objective(api_client):

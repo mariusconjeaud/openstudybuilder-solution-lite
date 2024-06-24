@@ -3,6 +3,7 @@ import json
 import re
 from collections.abc import Hashable
 from dataclasses import dataclass
+from enum import Enum
 from time import time
 from typing import AbstractSet, Any, Callable, Mapping, MutableMapping, Self, TypeVar
 
@@ -28,6 +29,7 @@ from clinical_mdr_api.repositories._utils import (
     FilterDict,
     FilterOperator,
 )
+from clinical_mdr_api.telemetry import trace_calls
 
 
 def is_library_editable(name: str) -> bool:
@@ -420,6 +422,7 @@ def normalize_string(string: str | None) -> str | None:
     return string or None
 
 
+@trace_calls
 def service_level_generic_filtering(
     items: list[Any],
     filter_by: dict | None = None,
@@ -462,6 +465,60 @@ def service_level_generic_filtering(
                 total_count=True,
             )
         GenericFilteringReturn(items=[<__main__.Obj object at 0x7f58cfc4b310>], total=1)
+    """
+    filtered_items = generic_item_filtering(
+        items=items,
+        filter_by=filter_by,
+        filter_operator=filter_operator,
+        sort_by=sort_by,
+    )
+    # Do count
+    count = len(filtered_items) if total_count else 0
+    # Do pagination
+    filtered_items = generic_pagination(
+        items=filtered_items,
+        page_number=page_number,
+        page_size=page_size,
+    )
+    return GenericFilteringReturn.create(items=filtered_items, total=count)
+
+
+def generic_item_filtering(
+    items: list[Any],
+    filter_by: dict | None = None,
+    filter_operator: FilterOperator = FilterOperator.AND,
+    sort_by: dict | None = None,
+) -> list[Any]:
+    """
+    Filters and sorts a list of items based on the provided filter and sort criteria.
+
+    Args:
+        items (list[Any]): The list of items to filter and sort.
+        filter_by (dict | None, optional): A dictionary of filter criteria.
+        filter_operator (FilterOperator, optional): The operator to use when filtering elements.
+        sort_by (dict | None, optional): A dictionary of sort criteria.
+
+    Returns:
+        list[Any]: A list containing the filtered and sorted items.
+
+    Example:
+        >>> class Obj:
+            name: str
+            age: int
+            def __init__(self, name: str, age: int):
+                self.name = name
+                self.age = age
+        >>> generic_item_filtering(
+                items=[
+                    Obj(name="John", age=30),
+                    Obj(name="Jane", age=25),
+                    Obj(name="Doe", age=27),
+                ],
+                filter_by={"age": {"op": "gt", "v": ["27"]}},
+                sort_by={"name": True},
+                total_count=True,
+            )
+        [<__main__.Obj object at 0x7f58cfc4b310>]
     """
     if sort_by is None:
         sort_by = {}
@@ -525,16 +582,54 @@ def service_level_generic_filtering(
             ),
             reverse=not sort_order,
         )
-    # Do count
-    count = len(filtered_items) if total_count else 0
+    return filtered_items
+
+
+def generic_pagination(
+    items: list[Any],
+    page_number: int = 1,
+    page_size: int = 0,
+) -> list[Any]:
+    """
+    Applies pagination to a list of sorted and filtered items.
+
+    Args:
+        items (list[Any]): The list of items to filter and sort.
+        page_number (int, optional): The page number to retrieve, where the first page is number 1.
+        page_size (int, optional): The number of items to retrieve per page.
+
+    Returns:
+        list[Any]: A list containing the selected page of items.
+
+    Example:
+        >>> class Obj:
+            name: str
+            age: int
+            def __init__(self, name: str, age: int):
+                self.name = name
+                self.age = age
+        >>> generic_pagination(
+                items=[
+                    Obj(name="John", age=30),
+                    Obj(name="Jane", age=25),
+                    Obj(name="Joe", age=27),
+                    Obj(name="Doe", age=23),
+                ],
+                page_number=2,
+                page_size=2,
+            )
+        -> a list containing the "Joe" and "Doe" objects.
+    """
     # Do pagination
+    paged_items = items
     if page_size > 0:
-        filtered_items = filtered_items[
+        paged_items = paged_items[
             (page_number - 1) * page_size : page_number * page_size
         ]
-    return GenericFilteringReturn.create(items=filtered_items, total=count)
+    return paged_items
 
 
+@trace_calls
 def service_level_generic_header_filtering(
     items: list[Any],
     field_name: str,
@@ -727,6 +822,10 @@ def filter_aggregated_items(item, filter_key, filter_values, filter_operator):
             if apply_filter_operator(_val, filter_operator, filter_values):
                 return True
         return False
+    if isinstance(_item_value_for_key, Enum):
+        return apply_filter_operator(
+            _item_value_for_key.value, filter_operator, filter_values
+        )
     return apply_filter_operator(_item_value_for_key, filter_operator, filter_values)
 
 
@@ -802,6 +901,7 @@ def rgetattr(obj, attr, *args):
     return functools.reduce(_getattr, [obj] + attr.split("."))
 
 
+@trace_calls
 def process_complex_parameters(parameters, parameter_repository):
     return_parameters = []
     for _, item in enumerate(parameters):
@@ -844,6 +944,7 @@ def process_complex_parameters(parameters, parameter_repository):
     return return_parameters
 
 
+@trace_calls
 def calculate_diffs_history(
     get_all_object_versions: Callable,
     transform_all_to_history_model: Callable,
@@ -897,3 +998,47 @@ def validate_is_dict(object_label, value):
         raise exceptions.ValidationException(
             f"`{object_label}: {value}` is not a valid dictionary"
         )
+
+
+def extract_filtering_values(filters, parameter_name, single_value=False):
+    """
+    If the parameter_name is in the filters, with the default "eq" operator,
+    extract the value(s) and remove the parameter from the filters.
+    If single_value is True, check that there is only one value, and return it.
+    """
+    if filters and parameter_name in filters:
+        operator = filters[parameter_name].get("op", ComparisonOperator.EQUALS.value)
+        if operator == ComparisonOperator.EQUALS.value:
+            values = filters[parameter_name]["v"]
+            if single_value and len(values) > 1:
+                return None
+            values = values[0]
+            del filters[parameter_name]
+            return values
+    return None
+
+
+def build_simple_filters(
+    _vo_to_ar_filter_map: dict, filter_by: dict | None, sort_by: dict | None
+) -> dict | None:
+    if (
+        filter_by is None
+        or all(key in _vo_to_ar_filter_map.keys() for key in filter_by.keys())
+    ) and (
+        sort_by is None
+        or all(key in _vo_to_ar_filter_map.keys() for key in sort_by.keys())
+    ):
+        if filter_by is not None:
+            simple_filter_by = {
+                _vo_to_ar_filter_map[key]: value for key, value in filter_by.items()
+            }
+        else:
+            simple_filter_by = None
+        if sort_by is not None:
+            simple_sort_by = {
+                _vo_to_ar_filter_map[key]: value for key, value in sort_by.items()
+            }
+        else:
+            simple_sort_by = None
+        return {"filter_by": simple_filter_by, "sort_by": simple_sort_by}
+    return None

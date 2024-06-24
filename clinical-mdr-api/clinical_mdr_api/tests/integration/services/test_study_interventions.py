@@ -118,23 +118,21 @@ def test_get_table(
     )
 
     # Make a compound selection with another compound alias, while keeping all other details the same
-    study_compound_created2: StudySelectionCompound = StudyCompoundSelectionService(
-        "test"
-    ).make_selection(
-        study_uid=tst_study.uid,
-        selection_create_input=StudySelectionCompoundInput(
-            compound_alias_uid=compound_alias2a.uid,
-            dosage_form_uid=ct_term_dosage.term_uid,
-            device_uid=ct_term_delivery_device.term_uid,
-            dispensed_in_uid=ct_term_dispenser.term_uid,
-            route_of_administration_uid=ct_term_roa.term_uid,
-            strength_value_uid=strength_value.uid,
-        ),
+    study_compound_created2: StudySelectionCompound = (
+        StudyCompoundSelectionService().make_selection(
+            study_uid=tst_study.uid,
+            selection_create_input=StudySelectionCompoundInput(
+                compound_alias_uid=compound_alias2a.uid,
+                dosage_form_uid=ct_term_dosage.term_uid,
+                device_uid=ct_term_delivery_device.term_uid,
+                dispensed_in_uid=ct_term_dispenser.term_uid,
+                route_of_administration_uid=ct_term_roa.term_uid,
+                strength_value_uid=strength_value.uid,
+            ),
+        )
     )
 
-    study_compound_dosing_selection_service = StudyCompoundDosingSelectionService(
-        "test"
-    )
+    study_compound_dosing_selection_service = StudyCompoundDosingSelectionService()
 
     # Make a compound dosing selection with just-created study compound 'study_compound_created1'
     study_compound_dosing_selection_service.make_selection(
@@ -160,23 +158,31 @@ def test_get_table(
 
     table = StudyInterventionsService().get_table(tst_study.uid)
 
-    assert table.data.size == 14, "Incorrect number of rows"
-    assert table.data[0].size == 3, "Incorrect number of columns"
+    assert len(table.rows) == 14, "Incorrect number of rows"
+    assert len(table.rows[0].cells) == 3, "Incorrect number of columns"
     assert table.num_header_rows == 1, "Incorrect number of header rows"
-    assert table.num_header_columns == 1, "Incorrect number of header columns"
+    assert table.num_header_cols == 1, "Incorrect number of header columns"
 
-    for row in table.data:
-        assert row.size == 3
+    for row in table.rows:
+        assert len(row.cells) == 3
 
-    assert table.data[0][1] == study_arms[0].name, "arm name mismatch"
-    assert table.data[0][2] == study_arms[1].name, "arm name mismatch"
-    assert table.data[1][1] == compound1.name, "compound name mismatch"
-    assert table.data[1][2] == compound2.name, "compound name mismatch"
+    assert table.rows[0].cells[1].text == study_arms[0].name, "arm name mismatch"
+    assert table.rows[0].cells[2].text == study_arms[1].name, "arm name mismatch"
+    assert table.rows[1].cells[1].text == compound1.name, "compound name mismatch"
+    assert table.rows[1].cells[2].text == compound2.name, "compound name mismatch"
     # table.data[2] intervention type is missing from test data
     # table.data[3] is not implemented
-    assert table.data[4][1] == table.data[4][2] == ct_term_dosage.sponsor_preferred_name
-    assert table.data[5][1] == table.data[5][2] == ct_term_roa.sponsor_preferred_name
+    assert (
+        table.rows[4].cells[1].text
+        == table.rows[4].cells[2].text
+        == ct_term_dosage.sponsor_preferred_name
+    )
+    assert (
+        table.rows[5].cells[1].text
+        == table.rows[5].cells[2].text
+        == ct_term_roa.sponsor_preferred_name
+    )
 
-    assert ct_term_delivery_device.sponsor_preferred_name in table.data[6][1]
-    assert ct_term_dispenser.sponsor_preferred_name in table.data[6][1]
-    assert table.data[6][1] == table.data[6][2]
+    assert ct_term_delivery_device.sponsor_preferred_name in table.rows[6].cells[1].text
+    assert ct_term_dispenser.sponsor_preferred_name in table.rows[6].cells[1].text
+    assert table.rows[6].cells[1].text == table.rows[6].cells[2].text

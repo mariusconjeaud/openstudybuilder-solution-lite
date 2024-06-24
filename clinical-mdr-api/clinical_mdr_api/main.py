@@ -2,7 +2,7 @@
 import logging
 from typing import Any
 
-from fastapi import Depends, FastAPI, Request, Security, status
+from fastapi import FastAPI, Request, Security, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
@@ -14,22 +14,12 @@ from pydantic import ValidationError
 from starlette.middleware import Middleware
 from starlette_context.middleware import RawContextMiddleware
 
-from clinical_mdr_api import config, exceptions, routers
-from clinical_mdr_api.config import (
-    ALLOW_CREDENTIALS,
-    ALLOW_HEADERS,
-    ALLOW_METHODS,
-    ALLOW_ORIGIN_REGEX,
-)
+from clinical_mdr_api import config, exceptions
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.oauth.config import OAUTH_ENABLED, SWAGGER_UI_INIT_OAUTH
-from clinical_mdr_api.oauth.dependencies import (
-    get_authenticated_user_info,
-    validate_token,
-)
+from clinical_mdr_api.oauth.dependencies import dummy_user_auth, validate_token
 from clinical_mdr_api.oauth.discovery import reconfigure_with_openid_discovery
 from clinical_mdr_api.telemetry.traceback_middleware import ExceptionTracebackMiddleware
-from clinical_mdr_api.telemetry.tracing_middleware import TracingMiddleware
 from clinical_mdr_api.utils.api_version import get_api_version
 
 log = logging.getLogger(__name__)
@@ -38,9 +28,12 @@ log = logging.getLogger(__name__)
 global_dependencies = []
 if OAUTH_ENABLED:
     global_dependencies.append(Security(validate_token))
-    global_dependencies.append(Depends(get_authenticated_user_info))
 else:
-    log.warning("WARNING: Authentication is disabled.")
+    global_dependencies.append(Security(dummy_user_auth))
+    log.warning(
+        "WARNING: Authentication is disabled. "
+        "See OAUTH_ENABLED and OAUTH_RBAC_ENABLED environment variables."
+    )
 
 # Middlewares - please don't use app.add_middleware() as that inserts them to the beginning of the list
 middlewares = [
@@ -58,6 +51,9 @@ else:
 
 # Tracing middleware
 if not config.TRACING_DISABLED:
+    from clinical_mdr_api.telemetry.request_metrics import patch_neomodel_database
+    from clinical_mdr_api.telemetry.tracing_middleware import TracingMiddleware
+
     middlewares.append(
         Middleware(
             TracingMiddleware,
@@ -67,14 +63,16 @@ if not config.TRACING_DISABLED:
         )
     )
 
+    patch_neomodel_database()
+
 
 middlewares.append(
     Middleware(
         CORSMiddleware,
-        allow_origin_regex=ALLOW_ORIGIN_REGEX,
-        allow_credentials=ALLOW_CREDENTIALS,
-        allow_methods=ALLOW_METHODS,
-        allow_headers=ALLOW_HEADERS,
+        allow_origin_regex=config.ALLOW_ORIGIN_REGEX,
+        allow_credentials=config.ALLOW_CREDENTIALS,
+        allow_methods=config.ALLOW_METHODS,
+        allow_headers=config.ALLOW_HEADERS,
         expose_headers=["traceresponse"],
     )
 )
@@ -146,7 +144,11 @@ def mdr_api_exception_handler(
     request: Request, exception: exceptions.MDRApiBaseException
 ):
     """Returns an HTTP error code associated to given exception."""
+
     log.info("Error response %s: %s", exception.status_code, exception.msg)
+
+    ExceptionTracebackMiddleware.add_traceback_attributes(exception)
+
     return JSONResponse(
         status_code=exception.status_code,
         content=jsonable_encoder(ErrorResponse(request, exception)),
@@ -158,11 +160,18 @@ def mdr_api_exception_handler(
 def pydantic_validation_error_handler(request: Request, exception: ValidationError):
     """Returns `400 Bad Request` http error status code in case Pydantic detects validation issues
     with supplied payloads or parameters."""
+
+    ExceptionTracebackMiddleware.add_traceback_attributes(exception)
+
     return JSONResponse(
         status_code=status.HTTP_400_BAD_REQUEST,
         content=jsonable_encoder(ErrorResponse(request, exception)),
     )
 
+
+# Late import of routers, because they do run code on import, and we want monkey-patching like tracing to work
+# pylint: disable=wrong-import-position
+from clinical_mdr_api import routers
 
 # Include routers here
 app.include_router(
@@ -341,6 +350,11 @@ app.include_router(
     tags=["Pharmaceutical Products"],
 )
 app.include_router(
+    routers.medicinal_products_router,
+    prefix="/concepts",
+    tags=["Medicinal Products"],
+)
+app.include_router(
     routers.compound_aliases_router, prefix="/concepts", tags=["Compound Aliases"]
 )
 app.include_router(
@@ -499,6 +513,7 @@ app.include_router(
     prefix="/integrations/ms-graph",
     tags=["MS Graph API integrations"],
 )
+app.include_router(routers.ddf_router, prefix="/ddf/v3", tags=["DDF endpoints"])
 
 system_app = FastAPI(
     middleware=None,

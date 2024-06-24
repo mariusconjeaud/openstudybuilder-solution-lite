@@ -1,4 +1,4 @@
-function getTemplateParametersFromTemplate (template) {
+function getTemplateParametersFromTemplate(template) {
   const result = []
   let currentParam = null
 
@@ -18,5 +18,5 @@ function getTemplateParametersFromTemplate (template) {
 }
 
 export default {
-  getTemplateParametersFromTemplate
+  getTemplateParametersFromTemplate,
 }

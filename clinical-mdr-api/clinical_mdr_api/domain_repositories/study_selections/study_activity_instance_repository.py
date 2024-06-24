@@ -40,7 +40,6 @@ class SelectionHistory:
     activity_instance_name: str | None
     activity_instance_version: str | None
     show_activity_instance_in_protocol_flowchart: bool
-    order: int
     user_initials: str
     change_type: str
     start_date: datetime.datetime
@@ -78,7 +77,6 @@ class StudySelectionActivityInstanceRepository(
             show_activity_instance_in_protocol_flowchart=selection[
                 "show_activity_instance_in_protocol_flowchart"
             ],
-            order=selection["order"],
             start_date=convert_to_datetime(value=selection["start_date"]),
             user_initials=selection["user_initials"],
             accepted_version=acv,
@@ -110,6 +108,13 @@ class StudySelectionActivityInstanceRepository(
                 "soa_group_name"
             ),
         )
+
+    def _order_by_query(self):
+        return """
+            WITH DISTINCT *
+            ORDER BY sa.uid ASC
+            MATCH (sa)<-[:AFTER]-(sac:StudyAction)
+        """
 
     def _versioning_query(self) -> str:
         return ""
@@ -168,15 +173,22 @@ class StudySelectionActivityInstanceRepository(
     def _return_clause(self) -> str:
         return """RETURN DISTINCT
                 sr.uid AS study_uid,
-                sa.order AS order,
                 sa.uid AS study_selection_uid,
                 coalesce(sa.show_activity_instance_in_protocol_flowchart, false) AS show_activity_instance_in_protocol_flowchart,
                 study_activity.uid AS study_activity_uid,
                 head([(study_activity)-[:HAS_SELECTED_ACTIVITY]->(activity_value:ActivityValue)<-[has_version:HAS_VERSION]
-                -(activity_root:ActivityRoot) | {uid: activity_root.uid, activity_version: has_version.version}]) AS activity,
+                -(activity_root:ActivityRoot) WHERE has_version.status IN ['Final', 'Retired'] | 
+                    {
+                        uid: activity_root.uid, 
+                        activity_version: has_version.version
+                    }]) AS activity,
                 head([(sa)-[:HAS_SELECTED_ACTIVITY_INSTANCE]->(activity_instance_name:ActivityInstanceValue)<-[has_version:HAS_VERSION]
-                -(activity_instance_root:ActivityInstanceRoot) | 
-                { uid: activity_instance_root.uid, name:activity_instance_name.name, activity_instance_version: has_version.version}]) AS activity_instance,
+                -(activity_instance_root:ActivityInstanceRoot) WHERE has_version.status IN ['Final', 'Retired'] |  
+                    { 
+                        uid: activity_instance_root.uid, 
+                        name:activity_instance_name.name, 
+                        activity_instance_version: has_version.version
+                    }]) AS activity_instance,
                 head([(study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]->(study_activity_subgroup_selection)
                     -[:HAS_SELECTED_ACTIVITY_SUBGROUP]->(activity_subgroup_value:ActivitySubGroupValue)<-[:HAS_VERSION]-(activity_subgroup_root:ActivitySubGroupRoot) | 
                     {
@@ -211,12 +223,17 @@ class StudySelectionActivityInstanceRepository(
             activity_version=selection.get("study_activity", {}).get(
                 "activity_version"
             ),
-            activity_instance_uid=selection.get("activity_instance", {}).get("uid"),
-            activity_instance_name=selection.get("activity_instance", {}).get("name"),
+            activity_instance_uid=selection.get("activity_instance", {}).get("uid")
+            if selection.get("activity_instance")
+            else None,
+            activity_instance_name=selection.get("activity_instance", {}).get("name")
+            if selection.get("activity_instance")
+            else None,
             activity_instance_version=selection.get("activity_instance", {}).get(
                 "activity_instance_version"
-            ),
-            order=selection["order"],
+            )
+            if selection.get("activity_instance")
+            else None,
             user_initials=selection["user_initials"],
             change_type=change_type,
             start_date=convert_to_datetime(value=selection["start_date"]),
@@ -242,13 +259,12 @@ class StudySelectionActivityInstanceRepository(
         audit_trail_cypher += """
 
                     WITH DISTINCT all_sa
-                    ORDER BY all_sa.order ASC
+                    ORDER BY all_sa.uid ASC
                     MATCH (all_sa)<-[:AFTER]-(asa:StudyAction)
                     OPTIONAL MATCH (all_sa)<-[:BEFORE]-(bsa:StudyAction)
                     WITH all_sa, asa, bsa
                     ORDER BY all_sa.uid, asa.date DESC
                     RETURN
-                        all_sa.order AS order,
                         all_sa.uid AS study_selection_uid,
                         head([(all_sa)<-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_INSTANCE]-(study_activity:StudyActivity)
                         -[:HAS_SELECTED_ACTIVITY]->(activity_value:ActivityValue)<-[has_version:HAS_VERSION]-(activity_root:ActivityRoot) | 
@@ -282,7 +298,6 @@ class StudySelectionActivityInstanceRepository(
     ):
         # Create new activity selection
         study_activity_instance_selection_node = StudyActivityInstance(
-            order=order,
             show_activity_instance_in_protocol_flowchart=selection.show_activity_instance_in_protocol_flowchart,
         )
         study_activity_instance_selection_node.uid = selection.study_selection_uid

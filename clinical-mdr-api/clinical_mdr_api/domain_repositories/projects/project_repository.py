@@ -1,3 +1,4 @@
+from threading import Lock
 from typing import Collection
 
 from cachetools import TTLCache, cached
@@ -21,12 +22,15 @@ class ProjectRepository:
     cache_store_item_by_uid = TTLCache(
         maxsize=config.CACHE_MAX_SIZE, ttl=config.CACHE_TTL
     )
+    lock_store_item_by_uid = Lock()
     cache_store_item_by_study_uid = TTLCache(
         maxsize=config.CACHE_MAX_SIZE, ttl=config.CACHE_TTL
     )
+    lock_store_item_by_study_uid = Lock()
     cache_store_item_by_project_number = TTLCache(
         maxsize=config.CACHE_MAX_SIZE, ttl=config.CACHE_TTL
     )
+    lock_store_item_by_project_number = Lock()
 
     def project_number_exists(self, project_number: str) -> bool:
         project = Project.nodes.first_or_none(project_number=project_number)
@@ -48,7 +52,7 @@ class ProjectRepository:
             uid,
         )
 
-    @cached(cache=cache_store_item_by_uid, key=get_hashkey)
+    @cached(cache=cache_store_item_by_uid, key=get_hashkey, lock=lock_store_item_by_uid)
     def find_by_uid(self, uid: str) -> ProjectAR | None:
         project = Project.nodes.get_or_none(uid=uid)
         if project is not None:
@@ -63,7 +67,11 @@ class ProjectRepository:
             return project
         return None
 
-    @cached(cache=cache_store_item_by_project_number, key=get_hashkey)
+    @cached(
+        cache=cache_store_item_by_project_number,
+        key=get_hashkey,
+        lock=lock_store_item_by_project_number,
+    )
     def find_by_project_number(self, project_number: str) -> ProjectAR | None:
         project = Project.nodes.first_or_none(project_number=project_number)
         if project is not None:
@@ -78,7 +86,11 @@ class ProjectRepository:
             return project
         return None
 
-    @cached(cache=cache_store_item_by_study_uid, key=get_hashkey)
+    @cached(
+        cache=cache_store_item_by_study_uid,
+        key=get_hashkey,
+        lock=lock_store_item_by_study_uid,
+    )
     def find_by_study_uid(self, uid: str) -> ProjectAR:
         """
         Returns data from the project to which the study with provided uid belongs.

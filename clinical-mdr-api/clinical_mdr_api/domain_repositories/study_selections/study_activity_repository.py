@@ -85,6 +85,7 @@ class StudySelectionActivityRepository(
             activity_uid=selection["activity_uid"],
             activity_name=selection["activity_name"],
             activity_version=selection["activity_version"],
+            activity_library_name=selection["activity_library_name"],
             soa_group_term_uid=selection["soa_group_term_uid"],
             study_soa_group_uid=selection["study_soa_group_uid"],
             activity_order=selection["activity_order"],
@@ -111,6 +112,7 @@ class StudySelectionActivityRepository(
             MATCH (sv)-[:HAS_STUDY_ACTIVITY]->(sa:StudyActivity)-[:HAS_SELECTED_ACTIVITY]->(av:ActivityValue)<-[ver:HAS_VERSION]-(ar:ActivityRoot)
             MATCH (sa)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(soa_group:StudySoAGroup)-[:HAS_FLOWCHART_GROUP]->(elr:CTTermRoot)<-[:HAS_TERM]-(:CTCodelistRoot)
             -[:HAS_NAME_ROOT]->(:CTCodelistNameRoot)-[:LATEST_FINAL]->(:CTCodelistNameValue {name: "Flowchart Group"})
+            MATCH (ar)<-[:CONTAINS_CONCEPT]-(lib:Library)
         """
 
     def _filter_clause(self, query_parameters: dict, **kwargs) -> str:
@@ -170,7 +172,8 @@ class StudySelectionActivityRepository(
                 av.name AS activity_name,
                 sac.date AS start_date,
                 sac.user_initials AS user_initials,
-                hv_ver.version AS activity_version"""
+                hv_ver.version AS activity_version,
+                lib.name as activity_library_name"""
 
     def get_selection_history(
         self, selection: dict, change_type: str, end_date: datetime

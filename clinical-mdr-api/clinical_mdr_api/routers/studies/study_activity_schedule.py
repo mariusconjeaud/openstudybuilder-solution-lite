@@ -1,8 +1,8 @@
-from fastapi import Body, Depends, Response, status
+from fastapi import Body, Query, Response, status
 
 from clinical_mdr_api import models
 from clinical_mdr_api.models.error import ErrorResponse
-from clinical_mdr_api.oauth import get_current_user_id, rbac
+from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.routers import _generic_descriptions
 from clinical_mdr_api.routers import study_router as router
 from clinical_mdr_api.routers.studies import utils
@@ -29,11 +29,15 @@ from clinical_mdr_api.services.studies.study_activity_schedule import (
 def get_all_selected_activities(
     uid: str = utils.studyUID,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
-    current_user_id: str = Depends(get_current_user_id),
+    operational: bool
+    | None = Query(
+        False,
+        description="List scheduled study activity instances instead of study activities",
+    ),
 ) -> list[models.StudyActivitySchedule]:
-    service = StudyActivityScheduleService(author=current_user_id)
+    service = StudyActivityScheduleService()
     return service.get_all_schedules(
-        study_uid=uid, study_value_version=study_value_version
+        study_uid=uid, study_value_version=study_value_version, operational=operational
     )
 
 
@@ -61,9 +65,8 @@ def post_new_activity_schedule_create(
     selection: models.StudyActivityScheduleCreateInput = Body(
         description="Related parameters of the schedule that shall be created."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudyActivitySchedule:
-    service = StudyActivityScheduleService(author=current_user_id)
+    service = StudyActivityScheduleService()
     return service.create(study_uid=uid, schedule_input=selection)
 
 
@@ -85,9 +88,8 @@ def post_new_activity_schedule_create(
 def delete_activity_schedule(
     uid: str = utils.studyUID,
     study_activity_schedule_uid: str = utils.study_activity_schedule_uid,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    service = StudyActivityScheduleService(author=current_user_id)
+    service = StudyActivityScheduleService()
     service.delete(study_uid=uid, schedule_uid=study_activity_schedule_uid)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
@@ -113,9 +115,9 @@ The following values should be returned for all study activities:
     },
 )
 def get_all_schedules_audit_trail(
-    uid: str = utils.studyUID, current_user_id: str = Depends(get_current_user_id)
+    uid: str = utils.studyUID,
 ) -> list[models.StudyActivityScheduleHistory]:
-    service = StudyActivityScheduleService(author=current_user_id)
+    service = StudyActivityScheduleService()
     return service.get_all_schedules_audit_trail(study_uid=uid)
 
 
@@ -135,7 +137,6 @@ def activity_schedule_batch_operations(
     operations: list[models.StudyActivityScheduleBatchInput] = Body(
         description="List of operation to perform"
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> list[models.StudyActivityScheduleBatchOutput]:
-    service = StudyActivityScheduleService(author=current_user_id)
+    service = StudyActivityScheduleService()
     return service.handle_batch_operations(uid, operations)

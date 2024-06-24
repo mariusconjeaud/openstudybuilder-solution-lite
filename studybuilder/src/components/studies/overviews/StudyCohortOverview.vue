@@ -1,146 +1,194 @@
 <template>
-<div>
-  <div class="d-flex page-title">
-    {{ $t('StudyCohorts.study_cohort') + ': ' + cohort.name }} <v-chip :color="cohort.colour_code" small class="mt-2 ml-2"/>
-    <v-spacer />
-    <v-btn
-      fab
-      small
-      @click="close"
-      :title="$t('_global.close')"
-      class="ml-2"
-      >
-      <v-icon>{{ 'mdi-close' }}</v-icon>
-    </v-btn>
+  <div>
+    <div class="d-flex page-title">
+      {{ $t('StudyCohorts.study_cohort') + ': ' + cohort.name }}
+      <v-chip
+        :color="cohort.colour_code"
+        size="small"
+        class="mt-2 ml-2"
+        variant="flat"
+      />
+      <v-spacer />
+      <v-btn
+        size="small"
+        :title="$t('_global.close')"
+        class="ml-2"
+        variant="text"
+        icon="mdi-close"
+        @click="close"
+      />
+    </div>
+    <v-card elevation="0" class="rounded-0">
+      <v-card-text>
+        <v-row>
+          <v-col cols="2" class="font-weight-bold">
+            {{ $t('StudyCohorts.cohort_short_name') }}
+          </v-col>
+          <v-col cols="2">
+            {{ cohort.short_name }}
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col cols="2" class="font-weight-bold">
+            {{ $t('StudyCohorts.cohort_code') }}
+          </v-col>
+          <v-col cols="2">
+            {{ cohort.code }}
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col cols="2" class="font-weight-bold">
+            {{ $t('StudyCohorts.number_of_subjects') }}
+          </v-col>
+          <v-col cols="2">
+            {{ cohort.number_of_subjects }}
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col cols="2" class="font-weight-bold">
+            {{ $t('StudyCohorts.description') }}
+          </v-col>
+          <v-col cols="2">
+            {{ cohort.description }}
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col cols="2" class="font-weight-bold">
+            {{ $t('StudyCohorts.connected_arms') }}
+          </v-col>
+          <v-col cols="10">
+            <v-data-table
+              class="elevation-0"
+              :headers="armsHeaders"
+              :items="cohort.arm_roots"
+              item-value="arm_uid"
+            >
+              <template #bottom />
+              <template #[`item.name`]="{ item }">
+                <router-link
+                  :to="{
+                    name: 'StudyArmOverview',
+                    params: {
+                      study_id: selectedStudy.uid,
+                      id: item.arm_uid,
+                      root_tab: $route.params.root_tab,
+                    },
+                  }"
+                >
+                  {{ item.name }}
+                </router-link>
+              </template>
+            </v-data-table>
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col cols="2" class="font-weight-bold">
+            {{ $t('StudyCohorts.connected_branches') }}
+          </v-col>
+          <v-col cols="10">
+            <v-data-table
+              class="elevation-0"
+              :headers="branchesHeaders"
+              :items="cohort.branch_arm_roots || []"
+              item-value="branch_arm_uid"
+            >
+              <template #bottom />
+              <template #[`item.name`]="{ item }">
+                <router-link
+                  :to="{
+                    name: 'StudyBranchArmOverview',
+                    params: {
+                      study_id: selectedStudy.uid,
+                      id: item.branch_arm_uid,
+                      root_tab: $route.params.root_tab,
+                    },
+                  }"
+                >
+                  {{ item.name }}
+                </router-link>
+              </template>
+              <template #[`item.arm_root.name`]="{ item }">
+                <router-link
+                  :to="{
+                    name: 'StudyArmOverview',
+                    params: {
+                      study_id: selectedStudy.uid,
+                      id: item.arm_root.arm_uid,
+                      root_tab: $route.params.root_tab,
+                    },
+                  }"
+                >
+                  {{ item.arm_root.name }}
+                </router-link>
+              </template>
+            </v-data-table>
+          </v-col>
+        </v-row>
+      </v-card-text>
+    </v-card>
   </div>
-  <v-card elevation="0" class="rounded-0">
-    <v-card-text>
-      <v-row>
-        <v-col cols="2" class="font-weight-bold">
-          {{ $t('StudyCohorts.cohort_short_name') }}
-        </v-col>
-        <v-col cols="2">
-          {{ cohort.short_name }}
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col cols="2" class="font-weight-bold">
-          {{ $t('StudyCohorts.cohort_code') }}
-        </v-col>
-        <v-col cols="2">
-          {{ cohort.code }}
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col cols="2" class="font-weight-bold">
-          {{ $t('StudyCohorts.number_of_subjects') }}
-        </v-col>
-        <v-col cols="2">
-          {{ cohort.number_of_subjects }}
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col cols="2" class="font-weight-bold">
-          {{ $t('StudyCohorts.description') }}
-        </v-col>
-        <v-col cols="2">
-          {{ cohort.description }}
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col cols="2" class="font-weight-bold">
-          {{ $t('StudyCohorts.connected_arms') }}
-        </v-col>
-        <v-col cols="10">
-          <v-data-table
-            class="elevation-0"
-            :headers="armsHeaders"
-            :items="cohort.arm_roots"
-            item-key="arm_uid"
-            light
-            hide-default-footer
-            >
-            <template v-slot:item.name="{ item }">
-              <router-link :to="{ name: 'StudyArmOverview', params: { study_id: selectedStudy.uid, id: item.arm_uid, root_tab: $route.params.root_tab } }">
-                {{ item.name }}
-              </router-link>
-            </template>
-          </v-data-table>
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col cols="2" class="font-weight-bold">
-          {{ $t('StudyCohorts.connected_branches') }}
-        </v-col>
-        <v-col cols="10">
-          <v-data-table
-            class="elevation-0"
-            :headers="branchesHeaders"
-            :items="cohort.branch_arm_roots"
-            item-key="branch_arm_uid"
-            light
-            hide-default-footer
-            >
-            <template v-slot:item.name="{ item }">
-              <router-link :to="{ name: 'StudyBranchArmOverview', params: { study_id: selectedStudy.uid, id: item.branch_arm_uid, root_tab: $route.params.root_tab } }">
-                {{ item.name }}
-              </router-link>
-            </template>
-            <template v-slot:item.arm_root.name="{ item }">
-              <router-link :to="{ name: 'StudyArmOverview', params: { study_id: selectedStudy.uid, id: item.arm_root.arm_uid, root_tab: $route.params.root_tab } }">
-                {{ item.arm_root.name }}
-              </router-link>
-            </template>
-          </v-data-table>
-        </v-col>
-      </v-row>
-    </v-card-text>
-  </v-card>
-</div>
 </template>
 
 <script>
 import arms from '@/api/arms'
-import { mapGetters } from 'vuex'
+import { computed } from 'vue'
+import { useStudiesGeneralStore } from '@/stores/studies-general'
 
 export default {
-  computed: {
-    ...mapGetters({
-      selectedStudy: 'studiesGeneral/selectedStudy'
-    })
+  setup() {
+    const studiesGeneralStore = useStudiesGeneralStore()
+    return {
+      selectedStudy: computed(() => studiesGeneralStore.selectedStudy),
+    }
   },
-  mounted () {
-    arms.getStudyCohort(this.$route.params.study_id, this.$route.params.id).then(resp => {
-      this.cohort = resp.data
-    })
-  },
-  data () {
+  data() {
     return {
       cohort: {},
       armsHeaders: [
-        { text: '#', value: 'order', width: '5%' },
-        { text: this.$t('StudyArmsTable.type'), value: 'arm_type.sponsor_preferred_name', width: '7%' },
-        { text: this.$t('StudyArmsTable.name'), value: 'name' },
-        { text: this.$t('StudyArmsTable.short_name'), value: 'short_name' },
-        { text: this.$t('StudyArmsTable.randomisation_group'), value: 'randomization_group' },
-        { text: this.$t('StudyArmsTable.code'), value: 'code' },
-        { text: this.$t('StudyArmsTable.description'), value: 'description' }
+        { title: '#', key: 'order', width: '5%' },
+        {
+          title: this.$t('StudyArmsTable.type'),
+          key: 'arm_type.sponsor_preferred_name',
+          width: '7%',
+        },
+        { title: this.$t('StudyArmsTable.name'), key: 'name' },
+        { title: this.$t('StudyArmsTable.short_name'), key: 'short_name' },
+        {
+          title: this.$t('StudyArmsTable.randomisation_group'),
+          key: 'randomization_group',
+        },
+        { title: this.$t('StudyArmsTable.code'), key: 'code' },
+        { title: this.$t('StudyArmsTable.description'), key: 'description' },
       ],
       branchesHeaders: [
-        { text: '#', value: 'order', width: '5%' },
-        { text: this.$t('StudyBranchArms.arm_name'), value: 'arm_root.name', historyHeader: 'arm_root_uid' },
-        { text: this.$t('StudyBranchArms.name'), value: 'name' },
-        { text: this.$t('StudyBranchArms.short_name'), value: 'short_name' },
-        { text: this.$t('StudyBranchArms.randomisation_group'), value: 'randomization_group' },
-        { text: this.$t('StudyBranchArms.code'), value: 'code' },
-        { text: this.$t('StudyBranchArms.description'), value: 'description' }
-      ]
+        { title: '#', key: 'order', width: '5%' },
+        {
+          title: this.$t('StudyBranchArms.arm_name'),
+          key: 'arm_root.name',
+          historyHeader: 'arm_root_uid',
+        },
+        { title: this.$t('StudyBranchArms.name'), key: 'name' },
+        { title: this.$t('StudyBranchArms.short_name'), key: 'short_name' },
+        {
+          title: this.$t('StudyBranchArms.randomisation_group'),
+          key: 'randomization_group',
+        },
+        { title: this.$t('StudyBranchArms.code'), key: 'code' },
+        { title: this.$t('StudyBranchArms.description'), key: 'description' },
+      ],
     }
   },
+  mounted() {
+    arms
+      .getStudyCohort(this.$route.params.study_id, this.$route.params.id)
+      .then((resp) => {
+        this.cohort = resp.data
+      })
+  },
   methods: {
-    close () {
+    close() {
       this.$router.push({ name: 'StudyStructure', params: { tab: 'cohorts' } })
-    }
-  }
+    },
+  },
 }
 </script>

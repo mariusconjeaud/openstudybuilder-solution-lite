@@ -39,7 +39,7 @@
         "study_count": null,
         "version": "0.1",
         "change_description": "Initial version",
-        "user_initials": "TEST_USER",
+        "user_initials": "unknown-user",
         "possible_actions": [
           "approve",
           "delete",
@@ -119,7 +119,7 @@
         "study_count": null,
         "version": "0.1",
         "change_description": "Initial version",
-        "user_initials": "TEST_USER",
+        "user_initials": "unknown-user",
         "possible_actions": [
           "approve",
           "delete",
@@ -212,7 +212,7 @@
         "study_count": null,
         "version": "0.1",
         "change_description": "Initial version",
-        "user_initials": "TEST_USER",
+        "user_initials": "unknown-user",
         "possible_actions": [
           "approve",
           "delete",
@@ -317,7 +317,7 @@
         "study_count": null,
         "version": "0.1",
         "change_description": "Initial version",
-        "user_initials": "TEST_USER",
+        "user_initials": "unknown-user",
         "possible_actions": [
           "approve",
           "delete",
@@ -416,7 +416,7 @@
         "study_count": null,
         "version": "0.1",
         "change_description": "Initial version",
-        "user_initials": "TEST_USER",
+        "user_initials": "unknown-user",
         "possible_actions": [
           "approve",
           "delete",
@@ -510,7 +510,7 @@
         "study_count": null,
         "version": "0.1",
         "change_description": "Initial version",
-        "user_initials": "TEST_USER",
+        "user_initials": "unknown-user",
         "possible_actions": [
           "approve",
           "delete",
@@ -617,7 +617,7 @@
         "study_count": null,
         "version": "0.1",
         "change_description": "Initial version",
-        "user_initials": "TEST_USER",
+        "user_initials": "unknown-user",
         "possible_actions": [
           "approve",
           "delete",
@@ -736,7 +736,7 @@
         "study_count": null,
         "version": "0.1",
         "change_description": "Initial version",
-        "user_initials": "TEST_USER",
+        "user_initials": "unknown-user",
         "possible_actions": [
           "approve",
           "delete",

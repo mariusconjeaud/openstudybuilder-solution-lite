@@ -1,73 +1,78 @@
 <template>
-<v-tooltip top content-class="tooltip" v-if="tooltip && name.length > tooltipLength">
-  <template v-slot:activator="{ on }">
-    <span v-on="on">
-      <div class="template-readonly"
-          v-html="getShortVersion()"
-          />
+  <v-tooltip
+    v-if="tooltip && name.length > tooltipLength"
+    location="top"
+    content-class="tooltip"
+  >
+    <template #activator="{ props }">
+      <span v-bind="props">
+        <div class="template-readonly" v-html="getShortVersion()" />
+      </span>
+    </template>
+    <span>
+      <div class="template-readonly" v-html="getFormatedParts()" />
     </span>
-  </template>
-  <span>
-    <div class="template-readonly"
-        v-html="getFormatedParts()"
-        />
-  </span>
-</v-tooltip>
-<div v-else class="template-readonly"
-        v-html="getFormatedParts()"
-        />
+  </v-tooltip>
+  <div v-else class="template-readonly" v-html="getFormatedParts()" />
 </template>
 
 <script>
 export default {
   props: {
-    value: Array,
+    value: {
+      type: Array,
+      default: () => [],
+    },
     // the name including the parameters
     name: {
       type: String,
-      default: ''
+      default: '',
     },
     prefix: {
       type: String,
-      default: '['
+      default: '[',
     },
     postfix: {
       type: String,
-      default: ']'
+      default: ']',
     },
     showPrefixAndPostfix: {
       type: Boolean,
-      default: true
+      default: true,
     },
     parameters: {
       type: Array,
-      default: () => []
+      default: () => [],
     },
     editionMode: {
       type: Boolean,
-      default: false
+      default: false,
     },
     defaultColor: {
       type: String,
-      default: 'green'
+      default: 'green',
     },
     tooltip: {
       type: Boolean,
-      default: true
+      default: true,
     },
     tooltipLength: {
       type: Number,
-      default: 200
-    }
+      default: 200,
+    },
   },
   data: () => ({
-    selectedParams: null
+    selectedParams: null,
   }),
   computed: {
-    computedPostfix () {
-      return this.postfix === '' || this.postfix === null || this.postfix === undefined ? ' ' : this.postfix
+    computedPostfix() {
+      return this.postfix === '' ||
+        this.postfix === null ||
+        this.postfix === undefined
+        ? ' '
+        : this.postfix
     },
-    nameParts () {
+    nameParts() {
       const nameArray = []
       let parameterIndex = 0
 
@@ -76,7 +81,7 @@ export default {
         if (char === this.prefix) {
           nameArray.push({
             isParameter: false,
-            value: chars
+            value: chars,
           })
           if (this.showPrefixAndPostfix) {
             chars = char
@@ -90,7 +95,7 @@ export default {
           nameArray.push({
             isParameter: true,
             index: parameterIndex,
-            value: chars
+            value: chars,
           })
           parameterIndex++
           chars = ''
@@ -100,46 +105,53 @@ export default {
       }
       nameArray.push({
         isParameter: false,
-        value: chars
+        value: chars,
       })
       return nameArray
-    }
+    },
   },
   methods: {
-    getNamePartClass (namePart) {
+    getNamePartClass(namePart) {
       if (!namePart.isParameter) {
-        return 'preview-text black--text'
+        return 'preview-text text-black'
       }
       if (this.editionMode && this.parameters[namePart.index]) {
-        if (!this.parameters.length || !this.parameters[namePart.index].selectedValues || !this.parameters[namePart.index].selectedValues.length) {
+        if (
+          !this.parameters.length ||
+          !this.parameters[namePart.index].selectedValues ||
+          !this.parameters[namePart.index].selectedValues.length
+        ) {
           return 'preview-parameter'
         }
         return 'preview-parameter--selected'
       }
       return `parameter--${this.defaultColor}`
     },
-    getFormatedParts () {
+    getFormatedParts() {
       let result = ''
       this.nameParts.forEach((namePart, index) => {
         if (namePart.isParameter) {
-          result += `<span class="${this.getNamePartClass(namePart, index)}">${namePart.value}</span>`
+          result += `<span class="${this.getNamePartClass(namePart, index)}">${namePart.value.charAt(0).toUpperCase() + namePart.value.slice(1)}</span>`
         } else {
           result += namePart.value
         }
       })
       return result
     },
-    getShortVersion () {
+    getShortVersion() {
       const long = this.getFormatedParts()
       let short = ''
       let length = 0
-      while (short.replace(/<\/?[^>]+(>|$)/g, '').length <= this.tooltipLength) {
+      while (
+        short.replace(/<\/?[^>]+(>|$)/g, '').length <= this.tooltipLength &&
+        length < long.length
+      ) {
         short += long[length]
         length++
       }
       return short + '<l>...'
-    }
-  }
+    },
+  },
 }
 </script>
 
@@ -152,21 +164,21 @@ export default {
   }
 }
 .preview-parameter {
-  color: var(--v-orange-base);
+  color: rgb(var(--v-theme-orange));
 
   &--selected {
-    color: var(--v-green-base);
+    color: rgb(var(--v-theme-green));
   }
 }
 .parameter {
   &--orange {
-    color: var(--v-orange-base);
+    color: rgb(var(--v-theme-orange));
   }
   &--green {
-    color: var(--v-green-base);
+    color: rgb(var(--v-theme-green));
   }
   &--primary {
-    color: var(--v-primary-base);
+    color: rgb(var(--v-theme-primary));
   }
 }
 .param-dropdown {

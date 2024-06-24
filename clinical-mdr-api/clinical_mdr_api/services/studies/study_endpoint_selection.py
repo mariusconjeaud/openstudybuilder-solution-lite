@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from neomodel import db
 
 from clinical_mdr_api import exceptions, models
@@ -18,10 +20,15 @@ from clinical_mdr_api.models.study_selections.study_selection import (
 )
 from clinical_mdr_api.models.syntax_instances.endpoint import EndpointCreateInput
 from clinical_mdr_api.models.utils import GenericFilteringReturn
+from clinical_mdr_api.oauth.user import user
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._meta_repository import MetaRepository
 from clinical_mdr_api.services._utils import (
+    build_simple_filters,
+    extract_filtering_values,
     fill_missing_values_in_base_model_from_reference_base_model,
+    generic_item_filtering,
+    generic_pagination,
     service_level_generic_filtering,
     service_level_generic_header_filtering,
 )
@@ -32,14 +39,21 @@ from clinical_mdr_api.services.syntax_instances.endpoints import EndpointService
 class StudyEndpointSelectionService(StudySelectionMixin):
     _repos: MetaRepository
 
-    def __init__(self, author):
+    _vo_to_ar_filter_map = {
+        "order": "endpoint_level_order",
+        "start_date": "start_date",
+        "user_initials": "user_initials",
+    }
+
+    def __init__(self):
         self._repos = MetaRepository()
-        self.author = author
+        self.author = user().id()
 
     def _transform_single_study_objective_to_model(
         self,
         study_uid: str,
         study_selection_uid: str,
+        terms_at_specific_datetime: datetime | None,
         no_brackets: bool = False,
         study_value_version: str | None = None,
     ) -> models.StudySelectionObjective:
@@ -57,12 +71,11 @@ class StudyEndpointSelectionService(StudySelectionMixin):
             get_objective_by_uid_callback=self._transform_latest_objective_model,
             get_objective_by_uid_version_callback=self._transform_objective_model,
             get_ct_term_by_uid=self._find_by_uid_or_raise_not_found,
-            get_study_selection_endpoints_ar_by_study_uid_callback=(
-                repos.study_endpoint_repository.find_by_study
-            ),
+            get_study_endpoint_count_callback=self._repos.study_endpoint_repository.quantity_of_study_endpoints_in_study_objective_uid,
             no_brackets=no_brackets,
             find_project_by_study_uid=self._repos.project_repository.find_by_study_uid,
             study_value_version=study_value_version,
+            terms_at_specific_datetime=terms_at_specific_datetime,
         )
         return result
 
@@ -73,6 +86,10 @@ class StudyEndpointSelectionService(StudySelectionMixin):
         study_value_version: str | None = None,
     ) -> list[models.StudySelectionEndpoint]:
         result = []
+        terms_at_specific_datetime = self._extract_study_standards_effective_date(
+            study_uid=study_selection.study_uid,
+            study_value_version=study_value_version,
+        )
         for order, selection in enumerate(
             study_selection.study_endpoints_selection, start=1
         ):
@@ -83,6 +100,7 @@ class StudyEndpointSelectionService(StudySelectionMixin):
                     study_uid=study_selection.study_uid,
                     no_brackets=no_brackets,
                     study_value_version=study_value_version,
+                    terms_at_specific_datetime=terms_at_specific_datetime,
                 )
             )
         return result
@@ -92,6 +110,7 @@ class StudyEndpointSelectionService(StudySelectionMixin):
         study_selection: StudySelectionEndpointVO,
         order: int,
         study_uid: str,
+        terms_at_specific_datetime: datetime | None,
         no_brackets: bool = False,
         get_latest_endpoint_by_uid=None,
         get_endpoint_by_uid_and_version=None,
@@ -119,8 +138,7 @@ class StudyEndpointSelectionService(StudySelectionMixin):
                 if get_latest_endpoint_by_uid is None
                 else get_endpoint_by_uid_and_version
             )
-
-        return models.StudySelectionEndpoint.from_study_selection_endpoint(  # StudySelectionEndpoint.from_study_selection_endpoint(
+        return models.StudySelectionEndpoint.from_study_selection_endpoint(
             study_selection=study_selection,
             study_uid=study_uid,
             get_endpoint_by_uid_and_version=get_endpoint_by_uid_and_version,
@@ -134,6 +152,7 @@ class StudyEndpointSelectionService(StudySelectionMixin):
             no_brackets=no_brackets,
             find_project_by_study_uid=self._repos.project_repository.find_by_study_uid,
             study_value_version=study_value_version,
+            terms_at_specific_datetime=terms_at_specific_datetime,
         )
 
     @db.transaction
@@ -247,9 +266,15 @@ class StudyEndpointSelectionService(StudySelectionMixin):
             new_selection, order = selection_aggregate.get_specific_endpoint_selection(
                 new_selection.study_selection_uid
             )
+            terms_at_specific_datetime = self._extract_study_standards_effective_date(
+                study_uid=study_uid
+            )
             # add the objective and return
             return self._transform_single_to_response_model(
-                new_selection, order, study_uid
+                new_selection,
+                order,
+                study_uid,
+                terms_at_specific_datetime=terms_at_specific_datetime,
             )
         finally:
             repos.close()
@@ -373,8 +398,14 @@ class StudyEndpointSelectionService(StudySelectionMixin):
             ) = selection_aggregate.get_specific_endpoint_selection(
                 new_selection.study_selection_uid
             )
+            terms_at_specific_datetime = self._extract_study_standards_effective_date(
+                study_uid=study_uid
+            )
             return self._transform_single_to_response_model(
-                new_selection, order, study_uid
+                new_selection,
+                order,
+                study_uid,
+                terms_at_specific_datetime=terms_at_specific_datetime,
             )
         finally:
             repos.close()
@@ -588,6 +619,9 @@ class StudyEndpointSelectionService(StudySelectionMixin):
                 ) = selection_aggregate.get_specific_endpoint_selection(
                     new_selection.study_selection_uid
                 )
+                terms_at_specific_datetime = (
+                    self._extract_study_standards_effective_date(study_uid=study_uid)
+                )
                 return self._transform_single_to_response_model(
                     new_selection,
                     order,
@@ -598,6 +632,7 @@ class StudyEndpointSelectionService(StudySelectionMixin):
                     get_endpoint_by_uid_and_version=(
                         lambda a, b: models.Endpoint.from_endpoint_ar(endpoint_ar)
                     ),
+                    terms_at_specific_datetime=terms_at_specific_datetime,
                 )
         finally:
             repos.close()
@@ -615,14 +650,23 @@ class StudyEndpointSelectionService(StudySelectionMixin):
         filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[models.StudySelectionEndpoint]:
+        # Extract the study uids to use database level filtering for these
+        # instead of service level filtering
+        if filter_operator is None or filter_operator == FilterOperator.AND:
+            study_uids = extract_filtering_values(filter_by, "study_uid")
+        else:
+            study_uids = None
+
         repos = self._repos
         endpoint_selection_ars = repos.study_endpoint_repository.find_all(
             project_name=project_name,
             project_number=project_number,
+            study_uids=study_uids,
         )
 
         # In order for filtering to work, we need to unwind the aggregated AR object first
         # Unwind ARs
+        # TODO check if filtering can be done before unwinding
         selections = []
         for ar in endpoint_selection_ars:
             parsed_selections = self._transform_all_to_response_model(
@@ -663,6 +707,39 @@ class StudyEndpointSelectionService(StudySelectionMixin):
                 study_uid, study_value_version=study_value_version
             )
 
+            simple_filters = build_simple_filters(
+                self._vo_to_ar_filter_map, filter_by, None
+            )
+            if simple_filters:
+                # Filtering only needs data that is already available in the AR
+                if field_name not in self._vo_to_ar_filter_map:
+                    # We can filter using data only fromt he AR,
+                    # but we need to transform all to response model to be able to get header values
+                    items = list(endpoint_selection_ars.study_endpoints_selection)
+                    filtered_items = generic_item_filtering(
+                        items=items,
+                        filter_by=simple_filters["filter_by"],
+                        filter_operator=filter_operator,
+                        sort_by=None,
+                    )
+                    endpoint_selection_ars.study_endpoints_selection = filtered_items
+                    filtered_items = self._transform_all_to_response_model(
+                        endpoint_selection_ars, no_brackets=False
+                    )
+
+                else:
+                    # Both filtering and header values can be done using data from the AR
+                    field_name = self._vo_to_ar_filter_map[field_name]
+                    filter_by = simple_filters["filter_by"]
+                    filtered_items = list(
+                        endpoint_selection_ars.study_endpoints_selection
+                    )
+            else:
+                # We need to transform all to response model to filter
+                filtered_items = self._transform_all_to_response_model(
+                    endpoint_selection_ars, no_brackets=False
+                )
+
             header_values = service_level_generic_header_filtering(
                 items=self._transform_all_to_response_model(
                     endpoint_selection_ars, no_brackets=False
@@ -676,13 +753,22 @@ class StudyEndpointSelectionService(StudySelectionMixin):
 
             return header_values
 
+        # Extract the study uids to use database level filtering for these
+        # instead of service level filtering
+        if filter_operator is None or filter_operator == FilterOperator.AND:
+            study_uids = extract_filtering_values(filter_by, "study_uid")
+        else:
+            study_uids = None
+
         endpoint_selection_ars = repos.study_endpoint_repository.find_all(
             project_name=project_name,
             project_number=project_number,
+            study_uids=study_uids,
         )
 
         # In order for filtering to work, we need to unwind the aggregated AR object first
         # Unwind ARs
+        # TODO check if filtering can be done before unwinding
         selections = []
         for ar in endpoint_selection_ars:
             parsed_selections = self._transform_all_to_response_model(
@@ -720,6 +806,38 @@ class StudyEndpointSelectionService(StudySelectionMixin):
             endpoint_selection_ar = repos.study_endpoint_repository.find_by_study(
                 study_uid, study_value_version=study_value_version
             )
+            simple_filters = build_simple_filters(
+                self._vo_to_ar_filter_map, filter_by, None
+            )
+            if simple_filters:
+                # Filtering only needs data that is already available in the AR
+                items = list(endpoint_selection_ar.study_endpoints_selection)
+                filtered_items = generic_item_filtering(
+                    items=items,
+                    filter_by=simple_filters["filter_by"],
+                    filter_operator=filter_operator,
+                    sort_by=simple_filters["sort_by"],
+                )
+
+                # Do count
+                count = len(filtered_items) if total_count else 0
+
+                # Do pagination
+                filtered_items = generic_pagination(
+                    items=filtered_items,
+                    page_number=page_number,
+                    page_size=page_size,
+                )
+                # Put the sorted and filtered items back into the AR and transform them to the response model
+                endpoint_selection_ar.study_endpoints_selection = filtered_items
+                filtered_items = self._transform_all_to_response_model(
+                    endpoint_selection_ar,
+                    no_brackets=no_brackets,
+                    study_value_version=study_value_version,
+                )
+                return GenericFilteringReturn.create(filtered_items, count)
+
+            # Fall back to full generic filtering
             selection = self._transform_all_to_response_model(
                 endpoint_selection_ar,
                 no_brackets=no_brackets,
@@ -757,8 +875,16 @@ class StudyEndpointSelectionService(StudySelectionMixin):
                 new_selection,
                 order,
             ) = selection_aggregate.get_specific_endpoint_selection(study_selection_uid)
+            terms_at_specific_datetime = self._extract_study_standards_effective_date(
+                study_uid=study_uid,
+                study_value_version=study_value_version,
+            )
             return self._transform_single_to_response_model(
-                new_selection, order, study_uid, study_value_version=study_value_version
+                new_selection,
+                order,
+                study_uid,
+                study_value_version=study_value_version,
+                terms_at_specific_datetime=terms_at_specific_datetime,
             )
         finally:
             repos.close()
@@ -811,10 +937,15 @@ class StudyEndpointSelectionService(StudySelectionMixin):
             new_selection, order = selection_aggregate.get_specific_endpoint_selection(
                 study_selection_uid
             )
-
+            terms_at_specific_datetime = self._extract_study_standards_effective_date(
+                study_uid=study_uid
+            )
             # add the objective and return
             return self._transform_single_to_response_model(
-                new_selection, order, study_uid
+                new_selection,
+                order,
+                study_uid,
+                terms_at_specific_datetime=terms_at_specific_datetime,
             )
         finally:
             repos.close()
@@ -947,10 +1078,15 @@ class StudyEndpointSelectionService(StudySelectionMixin):
             new_selection, order = selection_aggregate.get_specific_endpoint_selection(
                 study_selection_uid
             )
-
+            terms_at_specific_datetime = self._extract_study_standards_effective_date(
+                study_uid=study_uid
+            )
             # add the objective and return
             return self._transform_single_to_response_model(
-                new_selection, order, study_uid
+                new_selection,
+                order,
+                study_uid,
+                terms_at_specific_datetime=terms_at_specific_datetime,
             )
         finally:
             repos.close()
@@ -978,8 +1114,15 @@ class StudyEndpointSelectionService(StudySelectionMixin):
             new_selection, endpoint_exist_callback=lambda x: True
         )
         self._repos.study_endpoint_repository.save(selection_ar, self.author)
-
-        return self._transform_single_to_response_model(new_selection, order, study_uid)
+        terms_at_specific_datetime = self._extract_study_standards_effective_date(
+            study_uid=study_uid
+        )
+        return self._transform_single_to_response_model(
+            new_selection,
+            order,
+            study_uid,
+            terms_at_specific_datetime=terms_at_specific_datetime,
+        )
 
     @db.transaction
     def update_selection_to_latest_version_of_timeframe(
@@ -1004,8 +1147,15 @@ class StudyEndpointSelectionService(StudySelectionMixin):
             new_selection, timeframe_exist_callback=lambda x: True
         )
         self._repos.study_endpoint_repository.save(selection_ar, self.author)
-
-        return self._transform_single_to_response_model(new_selection, order, study_uid)
+        terms_at_specific_datetime = self._extract_study_standards_effective_date(
+            study_uid=study_uid
+        )
+        return self._transform_single_to_response_model(
+            new_selection,
+            order,
+            study_uid,
+            terms_at_specific_datetime=terms_at_specific_datetime,
+        )
 
     @db.transaction
     def update_selection_accept_versions(
@@ -1029,8 +1179,15 @@ class StudyEndpointSelectionService(StudySelectionMixin):
             new_selection, endpoint_exist_callback=lambda x: True
         )
         self._repos.study_endpoint_repository.save(selection_ar, self.author)
-
-        return self._transform_single_to_response_model(new_selection, order, study_uid)
+        terms_at_specific_datetime = self._extract_study_standards_effective_date(
+            study_uid=study_uid
+        )
+        return self._transform_single_to_response_model(
+            new_selection,
+            order,
+            study_uid,
+            terms_at_specific_datetime=terms_at_specific_datetime,
+        )
 
     def _transform_history_to_response_model(
         self,

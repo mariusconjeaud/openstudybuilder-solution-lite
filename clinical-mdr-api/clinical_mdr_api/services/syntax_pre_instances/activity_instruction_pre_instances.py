@@ -10,7 +10,6 @@ from clinical_mdr_api.domains.versioned_object_aggregate import VersioningExcept
 from clinical_mdr_api.exceptions import BusinessLogicException
 from clinical_mdr_api.models.syntax_pre_instances.activity_instruction_pre_instance import (
     ActivityInstructionPreInstance,
-    ActivityInstructionPreInstanceIndexingsInput,
     ActivityInstructionPreInstanceVersion,
 )
 from clinical_mdr_api.services.syntax_instances.activity_instructions import (
@@ -66,29 +65,6 @@ class ActivityInstructionPreInstanceService(
         item_ar._activity_subgroups = activity_subgroups
 
         return item_ar
-
-    @db.transaction
-    def patch_indexings(
-        self, uid: str, indexings: ActivityInstructionPreInstanceIndexingsInput
-    ) -> ActivityInstructionPreInstance:
-        try:
-            self._find_by_uid_or_raise_not_found(uid)
-            if getattr(indexings, "indication_uids", None):
-                self.repository.patch_indications(uid, indexings.indication_uids)
-            if getattr(indexings, "activity_uids", None):
-                self.repository.patch_activities(uid, indexings.activity_uids)
-            if getattr(indexings, "activity_group_uids", None):
-                self.repository.patch_activity_groups(
-                    uid, indexings.activity_group_uids
-                )
-            if getattr(indexings, "activity_subgroup_uids", None):
-                self.repository.patch_activity_subgroups(
-                    uid, indexings.activity_subgroup_uids
-                )
-        finally:
-            self.repository.close()
-
-        return self.get_by_uid(uid)
 
     @db.transaction
     def create_new_version(self, uid: str) -> ActivityInstructionPreInstance:

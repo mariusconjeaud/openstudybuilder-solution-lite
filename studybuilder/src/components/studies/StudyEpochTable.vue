@@ -1,205 +1,194 @@
 <template>
-<div>
-  <n-n-table
-    :headers="headers"
-    :defaultHeaders="headers"
-    :items="studyEpochs"
-    item-key="uid"
-    :options.sync="options"
-    :export-data-url="exportDataUrl"
-    export-object-label="StudyEpochs"
-    @filter="fetchEpochs"
-    has-api
-    :column-data-resource="`studies/${selectedStudy.uid}/study-epochs`"
-    :history-data-fetcher="fetchEpochsHistory"
-    :history-title="$t('StudyEpochTable.global_history_title')"
-    >
-    <template v-slot:item.color_hash="{ item }">
-      <v-chip :data-cy="'color='+item.color_hash" :color="item.color_hash" small />
-    </template>
-    <template v-slot:afterSwitches>
-      <div :title="$t('NNTableTooltips.reorder_content')">
-        <v-switch
-          v-model="sortMode"
-          :label="$t('NNTable.reorder_content')"
-          hide-details
-          class="mr-6"
-          @change="switchSort"
-          />
-      </div>
-    </template>
-    <template v-slot:body="props" v-if="sortMode">
-      <draggable
-        :list="props.items"
-        tag="tbody"
-        @change="onOrderChange($event)"
-        >
-        <tr
-          v-for="(item, index) in props.items"
-          :key="index"
-          >
-          <td v-if="props.showSelectBoxes">
-            <v-checkbox
-              :value="item.uid"
-              hide-details
-              @change="props.select(!props.isSelected(item))"
-              />
-          </td>
-          <td>
-            <actions-menu :actions="actions" :item="item" />
-          </td>
-          <td></td>
-          <td>
-            <v-icon
-              small
-              class="page__grab-icon"
-              >
-              mdi-sort
-            </v-icon>
-            {{ item.order }}
-          </td>
-          <td>{{ item.epoch_name }}</td>
-          <td>{{ item.epoch_type_name }}</td>
-          <td>{{ item.epoch_subtype_name }}</td>
-          <td>{{ item.start_rule }}</td>
-          <td>{{ item.end_rule }}</td>
-          <td>{{ item.description }}</td>
-          <td>{{ item.study_visit_count }}</td>
-          <td><v-chip :data-cy="'color='+item.color_hash" :color="item.color_hash" small /></td>
-        </tr>
-      </draggable>
-    </template>
-    <template v-slot:item.epoch_name="{ item }">
-      <router-link :to="{ name: 'StudyEpochOverview', params: { study_id: selectedStudy.uid, id: item.uid } }">
-        {{ item.epoch_name }}
-      </router-link>
-    </template>
-    <template v-slot:item.actions="{ item }">
-      <actions-menu :actions="actions" :item="item" />
-    </template>
-    <template v-slot:actions="">
-      <v-btn
-        data-cy="create-epoch"
-        fab
-        small
-        color="primary"
-        @click="createEpoch()"
-        :title="$t('StudyEpochForm.add_title')"
-        :disabled="!checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
-        >
-        <v-icon dark>
-          mdi-plus
-        </v-icon>
-      </v-btn>
-    </template>
-  </n-n-table>
-  <study-epoch-form
-    :open="showForm"
-    :studyEpoch="selectedStudyEpoch"
-    @close="closeForm"
-    />
-  <v-dialog
-    v-model="showEpochHistory"
-    @keydown.esc="closeEpochHistory"
-    persistent
-    :max-width="globalHistoryDialogMaxWidth"
-    :fullscreen="globalHistoryDialogFullscreen"
-    >
-    <history-table
-      :title="studyEpochHistoryTitle"
-      @close="closeEpochHistory"
+  <div>
+    <NNTable
       :headers="headers"
-      :items="epochHistoryItems"
+      :default-headers="headers"
+      :items="studyEpochs"
+      item-value="uid"
+      :export-data-url="exportDataUrl"
+      export-object-label="StudyEpochs"
+      :items-length="studyEpochs.length"
+      :column-data-resource="`studies/${selectedStudy.uid}/study-epochs`"
+      :history-data-fetcher="fetchEpochsHistory"
+      :history-title="$t('StudyEpochTable.global_history_title')"
+      @filter="fetchEpochs"
+    >
+      <template #[`item.color_hash`]="{ item }">
+        <v-chip
+          :data-cy="'color=' + item.color_hash"
+          :color="item.color_hash"
+          size="small"
+          variant="flat"
+        >
+          <span>&nbsp;</span>
+          <span>&nbsp;</span>
+        </v-chip>
+      </template>
+      <template #[`item.epoch_name`]="{ item }">
+        <router-link
+          :to="{
+            name: 'StudyEpochOverview',
+            params: { study_id: selectedStudy.uid, id: item.uid },
+          }"
+        >
+          {{ item.epoch_name }}
+        </router-link>
+      </template>
+      <template #[`item.actions`]="{ item }">
+        <ActionsMenu :actions="actions" :item="item" />
+      </template>
+      <template #actions="">
+        <v-btn
+          data-cy="create-epoch"
+          size="small"
+          color="primary"
+          :title="$t('StudyEpochForm.add_title')"
+          :disabled="
+            !checkPermission($roles.STUDY_WRITE) ||
+            selectedStudyVersion !== null
+          "
+          icon="mdi-plus"
+          @click="createEpoch()"
+        />
+      </template>
+    </NNTable>
+    <StudyEpochForm
+      :open="showForm"
+      :study-epoch="selectedStudyEpoch"
+      @close="closeForm"
+    />
+    <v-dialog
+      v-model="showEpochHistory"
+      persistent
+      :fullscreen="$globals.historyDialogFullscreen"
+      @keydown.esc="closeEpochHistory"
+    >
+      <HistoryTable
+        :title="studyEpochHistoryTitle"
+        :headers="headers"
+        :items="epochHistoryItems"
+        @close="closeEpochHistory"
       />
-  </v-dialog>
-</div>
+    </v-dialog>
+    <SelectionOrderUpdateForm
+      v-if="selectedStudyEpoch"
+      ref="orderForm"
+      :initial-value="selectedStudyEpoch.order"
+      :open="showOrderForm"
+      @close="closeOrderForm"
+      @submit="submitOrder"
+    />
+  </div>
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
-import ActionsMenu from '@/components/tools/ActionsMenu'
-import NNTable from '@/components/tools/NNTable'
-import StudyEpochForm from './StudyEpochForm'
-import { bus } from '@/main'
+import ActionsMenu from '@/components/tools/ActionsMenu.vue'
+import NNTable from '@/components/tools/NNTable.vue'
+import StudyEpochForm from './StudyEpochForm.vue'
 import epochs from '@/api/studyEpochs'
-import draggable from 'vuedraggable'
 import filteringParameters from '@/utils/filteringParameters'
-import { accessGuard } from '@/mixins/accessRoleVerifier'
-import HistoryTable from '@/components/tools/HistoryTable'
+import HistoryTable from '@/components/tools/HistoryTable.vue'
+import { useAccessGuard } from '@/composables/accessGuard'
+import { useStudiesGeneralStore } from '@/stores/studies-general'
+import { useEpochsStore } from '@/stores/studies-epochs'
+import { useUnitsStore } from '@/stores/units'
+import { computed } from 'vue'
+import SelectionOrderUpdateForm from '@/components/studies/SelectionOrderUpdateForm.vue'
 
 export default {
-  mixins: [accessGuard],
   components: {
     ActionsMenu,
     NNTable,
     StudyEpochForm,
     HistoryTable,
-    draggable
+    SelectionOrderUpdateForm,
   },
-  computed: {
-    ...mapGetters({
-      selectedStudy: 'studiesGeneral/selectedStudy',
-      selectedStudyVersion: 'studiesGeneral/selectedStudyVersion',
-      studyEpochs: 'studyEpochs/studyEpochs'
-    }),
-    exportDataUrl () {
-      return `studies/${this.selectedStudy.uid}/study-epochs`
-    },
-    studyEpochHistoryTitle () {
-      if (this.selectedStudyEpoch) {
-        return this.$t(
-          'StudyEpochTable.study_epoch_history_title',
-          { epochUid: this.selectedStudyEpoch.uid })
-      }
-      return ''
+  inject: ['eventBusEmit'],
+  setup() {
+    const studiesGeneralStore = useStudiesGeneralStore()
+    const epochsStore = useEpochsStore()
+    const unitsStore = useUnitsStore()
+    return {
+      selectedStudy: studiesGeneralStore.selectedStudy,
+      selectedStudyVersion: studiesGeneralStore.selectedStudyVersion,
+      studyEpochs: computed(() => epochsStore.studyEpochs),
+      fetchUnits: unitsStore.fetchUnits,
+      fetchFilteredStudyEpochs: epochsStore.fetchFilteredStudyEpochs,
+      deleteStudyEpoch: epochsStore.deleteStudyEpoch,
+      ...useAccessGuard(),
     }
   },
-  data () {
+  data() {
     return {
       actions: [
         {
           label: this.$t('_global.edit'),
           icon: 'mdi-pencil-outline',
           iconColor: 'primary',
-          condition: (item) => item.possible_actions.find(action => action === 'edit') && !this.selectedStudyVersion,
+          condition: (item) =>
+            item.possible_actions.find((action) => action === 'edit') &&
+            !this.selectedStudyVersion,
           click: this.editEpoch,
-          accessRole: this.$roles.STUDY_WRITE
+          accessRole: this.$roles.STUDY_WRITE,
+        },
+        {
+          label: this.$t('_global.change_order'),
+          icon: 'mdi-pencil-outline',
+          iconColor: 'primary',
+          condition: () => !this.selectedStudyVersion,
+          click: this.changeOrder,
+          accessRole: this.$roles.STUDY_WRITE,
         },
         {
           label: this.$t('_global.delete'),
           icon: 'mdi-delete-outline',
           iconColor: 'error',
-          condition: (item) => item.possible_actions.find(action => action === 'delete') && !this.selectedStudyVersion,
+          condition: (item) =>
+            item.possible_actions.find((action) => action === 'delete') &&
+            !this.selectedStudyVersion,
           click: this.deleteEpoch,
-          accessRole: this.$roles.STUDY_WRITE
+          accessRole: this.$roles.STUDY_WRITE,
         },
         {
           label: this.$t('_global.history'),
           icon: 'mdi-history',
-          click: this.openEpochHistory
-        }
+          click: this.openEpochHistory,
+        },
       ],
       headers: [
-        { text: '', value: 'actions', width: '5%' },
-        { text: this.$t('StudyEpochTable.number'), value: 'order', width: '5%' },
-        { text: this.$t('StudyEpochTable.name'), value: 'epoch_name' },
-        { text: this.$t('StudyEpochTable.type'), value: 'epoch_type_name' },
-        { text: this.$t('StudyEpochTable.sub_type'), value: 'epoch_subtype_name' },
-        { text: this.$t('StudyEpochTable.start_rule'), value: 'start_rule' },
-        { text: this.$t('StudyEpochTable.end_rule'), value: 'end_rule' },
-        { text: this.$t('StudyEpochTable.description'), value: 'description', width: '20%' },
-        { text: this.$t('StudyEpochTable.visit_count'), value: 'study_visit_count' },
-        { text: this.$t('StudyEpochTable.colour'), value: 'color_hash' }
+        { title: '', key: 'actions', width: '5%' },
+        { title: this.$t('StudyEpochTable.number'), key: 'order', width: '5%' },
+        { title: this.$t('StudyEpochTable.name'), key: 'epoch_name' },
+        { title: this.$t('StudyEpochTable.type'), key: 'epoch_type_name' },
+        {
+          title: this.$t('StudyEpochTable.sub_type'),
+          key: 'epoch_subtype_name',
+        },
+        { title: this.$t('StudyEpochTable.start_rule'), key: 'start_rule' },
+        { title: this.$t('StudyEpochTable.end_rule'), key: 'end_rule' },
+        {
+          title: this.$t('StudyEpochTable.description'),
+          key: 'description',
+          width: '20%',
+        },
+        {
+          title: this.$t('StudyEpochTable.visit_count'),
+          key: 'study_visit_count',
+        },
+        { title: this.$t('StudyEpochTable.colour'), key: 'color_hash' },
       ],
       defaultColums: [
-        { text: '', value: 'actions', width: '5%' },
-        { text: this.$t('StudyEpochTable.number'), value: 'order', width: '3%' },
-        { text: this.$t('StudyEpochTable.name'), value: 'epoch_name' },
-        { text: this.$t('StudyEpochTable.sub_type'), value: 'epoch_subtype_name' },
-        { text: this.$t('StudyEpochTable.type'), value: 'epoch_type_name' },
-        { text: this.$t('StudyEpochTable.start_rule'), value: 'start_rule' },
-        { text: this.$t('StudyEpochTable.end_rule'), value: 'end_rule' },
-        { text: this.$t('StudyEpochTable.description'), value: 'description' }
+        { title: '', key: 'actions', width: '5%' },
+        { title: this.$t('StudyEpochTable.number'), key: 'order', width: '3%' },
+        { title: this.$t('StudyEpochTable.name'), key: 'epoch_name' },
+        {
+          title: this.$t('StudyEpochTable.sub_type'),
+          key: 'epoch_subtype_name',
+        },
+        { title: this.$t('StudyEpochTable.type'), key: 'epoch_type_name' },
+        { title: this.$t('StudyEpochTable.start_rule'), key: 'start_rule' },
+        { title: this.$t('StudyEpochTable.end_rule'), key: 'end_rule' },
+        { title: this.$t('StudyEpochTable.description'), key: 'description' },
       ],
       selectedStudyEpoch: null,
       showForm: false,
@@ -207,96 +196,119 @@ export default {
       epochHistoryItems: [],
       componentKey: 0,
       showStudyEpochsHistory: false,
-      sortMode: false,
+      showOrderForm: false,
       selectMode: false,
-      options: {},
-      total: 0
+      total: 0,
     }
   },
+  computed: {
+    exportDataUrl() {
+      return `studies/${this.selectedStudy.uid}/study-epochs`
+    },
+    studyEpochHistoryTitle() {
+      if (this.selectedStudyEpoch) {
+        return this.$t('StudyEpochTable.study_epoch_history_title', {
+          epochUid: this.selectedStudyEpoch.uid,
+        })
+      }
+      return ''
+    },
+  },
+  mounted() {
+    this.fetchUnits()
+  },
   methods: {
-    async fetchEpochsHistory () {
+    async fetchEpochsHistory() {
       const resp = await epochs.getStudyEpochsVersions(this.selectedStudy.uid)
       return resp.data
     },
-    fetchEpochs (filters, sort, filtersUpdated) {
+    fetchEpochs(filters, options, filtersUpdated) {
       const params = filteringParameters.prepareParameters(
-        this.options, filters, sort, filtersUpdated)
+        options,
+        filters,
+        filtersUpdated
+      )
       params.study_uid = this.selectedStudy.uid
-      params.study_value_version = this.selectedStudyVersion
-      this.$store.dispatch('studyEpochs/fetchFilteredStudyEpochs', params)
+      this.fetchFilteredStudyEpochs(params)
     },
-    switchSort () {
-      if (this.selectMode && this.sortMode) {
-        this.selectMode = false
-      } else if (this.sortMode) {
-        this.headers.unshift({ text: '', value: 'order', sortable: false, width: '5px' })
-      } else {
-        this.headers.shift()
-      }
-    },
-    switchSelect () {
-      if (this.sortMode && this.selectMode) {
-        this.sortMode = false
-      }
-    },
-    createMapping (codelist) {
+    createMapping(codelist) {
       const returnValue = {}
-      codelist.forEach(item => {
+      codelist.forEach((item) => {
         returnValue[item.term_uid] = item.sponsor_preferred_name
       })
       return returnValue
     },
-    editEpoch (item) {
+    editEpoch(item) {
       this.selectedStudyEpoch = item
       this.showForm = true
     },
-    onOrderChange (event) {
-      const params = {
-        study_value_version: this.selectedStudyVersion
-      }
-      epochs.reorderStudyEpoch(this.selectedStudy.uid, this.studyEpochs[event.moved.oldIndex].uid, event.moved.newIndex).then(() => {
-        this.$store.dispatch('studyEpochs/fetchStudyEpochs', { studyUid: this.selectedStudy.uid, data: params })
-      }).catch(err => {
-        console.log(err)
-        this.$store.dispatch('studyEpochs/fetchStudyEpochs', { studyUid: this.selectedStudy.uid, data: params })
-      })
+    submitOrder(value) {
+      epochs
+        .reorderStudyEpoch(
+          this.selectedStudyEpoch.study_uid,
+          this.selectedStudyEpoch.uid,
+          parseInt(value) - 1
+        )
+        .then(() => {
+          this.fetchEpochs()
+          this.closeOrderForm()
+          this.eventBusEmit('notification', {
+            msg: this.$t('_global.order_updated'),
+          })
+        })
+        .catch((err) => {
+          console.log(err)
+          this.fetchEpochs()
+        })
     },
-    createEpoch () {
+    changeOrder(studyEpoch) {
+      this.selectedStudyEpoch = studyEpoch
+      this.showOrderForm = true
+    },
+    closeOrderForm() {
+      this.showOrderForm = false
+    },
+    createEpoch() {
       this.selectedStudyEpoch = null
       this.showForm = true
     },
-    closeForm () {
+    closeForm() {
       this.selectedStudyEpoch = null
       this.showForm = false
     },
-    deleteEpoch (item) {
+    deleteEpoch(item) {
       if (item.study_visit_count > 0) {
         const epoch = item.epoch_name
-        bus.$emit('notification', { type: 'warning', msg: this.$t('StudyEpochTable.epoch_linked_to_visits_warning', { epoch }) })
+        this.eventBusEmit('notification', {
+          type: 'warning',
+          msg: this.$t('StudyEpochTable.epoch_linked_to_visits_warning', {
+            epoch,
+          }),
+        })
         return
       }
-      this.$store.dispatch('studyEpochs/deleteStudyEpoch', { studyUid: this.selectedStudy.uid, studyEpochUid: item.uid }).then(resp => {
-        bus.$emit('notification', { msg: this.$t('StudyEpochTable.delete_success') })
+      this.deleteStudyEpoch({
+        studyUid: this.selectedStudy.uid,
+        studyEpochUid: item.uid,
+      }).then(() => {
+        this.eventBusEmit('notification', {
+          msg: this.$t('StudyEpochTable.delete_success'),
+        })
       })
     },
-    async openEpochHistory (epoch) {
+    async openEpochHistory(epoch) {
       this.selectedStudyEpoch = epoch
-      const resp = await epochs.getStudyEpochVersions(this.selectedStudy.uid, epoch.uid)
+      const resp = await epochs.getStudyEpochVersions(
+        this.selectedStudy.uid,
+        epoch.uid
+      )
       this.epochHistoryItems = resp.data
       this.showEpochHistory = true
     },
-    closeEpochHistory () {
+    closeEpochHistory() {
       this.selectedStudyEpoch = null
       this.showEpochHistory = false
-    }
+    },
   },
-  mounted () {
-    this.$store.dispatch('studiesGeneral/fetchUnits')
-  },
-  watch: {
-    options () {
-      this.fetchEpochs()
-    }
-  }
 }
 </script>

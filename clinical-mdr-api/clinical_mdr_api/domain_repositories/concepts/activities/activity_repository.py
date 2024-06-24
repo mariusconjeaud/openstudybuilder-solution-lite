@@ -36,6 +36,35 @@ from clinical_mdr_api.exceptions import BusinessLogicException
 from clinical_mdr_api.models.concepts.activities.activity import Activity
 
 
+def _version_to_number(version: str) -> float:
+    major, minor = version.split(".")
+    return 1000 * float(major) + float(minor)
+
+
+def _get_display_version(versions: list[dict]) -> dict | None:
+    if len(versions) == 1:
+        return versions[0]
+    sorted_versions = sorted(
+        versions, key=lambda x: _version_to_number(x["version"]), reverse=True
+    )
+    for status in [
+        LibraryItemStatus.FINAL,
+        LibraryItemStatus.RETIRED,
+        LibraryItemStatus.DRAFT,
+    ]:
+        latest_ver = next(
+            (
+                version
+                for version in sorted_versions
+                if version["status"] == status.value
+            ),
+            None,
+        )
+        if latest_ver:
+            return latest_ver
+    return None
+
+
 class ActivityRepository(ConceptGenericRepository[ActivityAR]):
     root_class = ActivityRoot
     value_class = ActivityValue
@@ -74,6 +103,10 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
                 is_multiple_selection_allowed=input_dict.get(
                     "is_multiple_selection_allowed"
                 ),
+                is_finalized=input_dict.get("is_finalized"),
+                is_used_by_legacy_instances=input_dict.get(
+                    "is_used_by_legacy_instances"
+                ),
             ),
             library=LibraryVO.from_input_values_2(
                 library_name=input_dict.get("library_name"),
@@ -92,6 +125,70 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
             ),
         )
 
+    def _create_ar(
+        self,
+        root: VersionRoot,
+        library: Library | None,
+        relationship: VersionRelationship,
+        value: VersionValue,
+        **_kwargs,
+    ) -> ActivityAR:
+        requester_study_id = None
+        # We are only interested in the StudyId of the Activity Requests
+        if library.name == REQUESTED_LIBRARY_NAME:
+            if study_activity := value.has_selected_activity.single():
+                if activity := study_activity.has_study_activity.single():
+                    requester_study_id = (
+                        f"{activity.study_id_prefix}-{activity.study_number}"
+                    )
+        return ActivityAR.from_repository_values(
+            uid=root.uid,
+            concept_vo=ActivityVO.from_repository_values(
+                nci_concept_id=value.nci_concept_id,
+                name=value.name,
+                name_sentence_case=value.name_sentence_case,
+                definition=value.definition,
+                abbreviation=value.abbreviation,
+                activity_groupings=[
+                    ActivityGroupingVO(
+                        activity_group_uid=activity_grouping.get("activity_group_uid"),
+                        activity_subgroup_uid=activity_grouping.get(
+                            "activity_subgroup_uid"
+                        ),
+                    )
+                    for activity_grouping in _kwargs["activity_root"][
+                        "activity_groupings"
+                    ]
+                ],
+                request_rationale=value.request_rationale,
+                is_request_final=value.is_request_final
+                if value.is_request_final
+                else False,
+                requester_study_id=requester_study_id,
+                replaced_by_activity=_kwargs["activity_root"]["replaced_activity_uid"],
+                reason_for_rejecting=value.reason_for_rejecting,
+                contact_person=value.contact_person,
+                is_request_rejected=value.is_request_rejected
+                if value.is_request_rejected
+                else False,
+                is_data_collected=value.is_data_collected
+                if value.is_data_collected
+                else False,
+                is_multiple_selection_allowed=value.is_multiple_selection_allowed
+                if value.is_multiple_selection_allowed is not None
+                else True,
+                is_finalized=bool(
+                    value.is_request_rejected
+                    or _kwargs["activity_root"]["replaced_activity_uid"]
+                ),
+            ),
+            library=LibraryVO.from_input_values_2(
+                library_name=library.name,
+                is_library_editable_callback=(lambda _: library.is_editable),
+            ),
+            item_metadata=self._library_item_metadata_vo_from_relation(relationship),
+        )
+
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
         root: VersionRoot,
@@ -103,7 +200,12 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
         replaced_activity = value.replaced_by_activity.get_or_none()
         activity_groupings_nodes = value.has_grouping.all()
         activity_groupings = []
+        activity_instances_legacy_codes = []
         for activity_grouping in activity_groupings_nodes:
+            activity_instances_legacy_codes.extend(
+                activity_instance_value.is_legacy_usage
+                for activity_instance_value in activity_grouping.has_activity.all()
+            )
             activity_valid_groups = activity_grouping.in_subgroup.all()
             for activity_valid_group in activity_valid_groups:
                 activity_groupings.append(
@@ -121,7 +223,9 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
         if library.name == REQUESTED_LIBRARY_NAME:
             if study_activity := value.has_selected_activity.single():
                 if activity := study_activity.has_study_activity.single():
-                    requester_study_id = activity.study_id_prefix
+                    requester_study_id = (
+                        f"{activity.study_id_prefix}-{activity.study_number}"
+                    )
         return ActivityAR.from_repository_values(
             uid=root.uid,
             concept_vo=ActivityVO.from_repository_values(
@@ -158,6 +262,10 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
                 is_multiple_selection_allowed=value.is_multiple_selection_allowed
                 if value.is_multiple_selection_allowed is not None
                 else True,
+                is_finalized=bool(value.is_request_rejected or replaced_activity),
+                is_used_by_legacy_instances=all(activity_instances_legacy_codes)
+                if activity_instances_legacy_codes
+                else False,
             ),
             library=LibraryVO.from_input_values_2(
                 library_name=library.name,
@@ -314,8 +422,12 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
             coalesce(concept_value.is_request_rejected, false) AS is_request_rejected,
             concept_value.contact_person AS contact_person,
             concept_value.reason_for_rejecting AS reason_for_rejecting,
-            head([(concept_value)<-[:HAS_SELECTED_ACTIVITY]->(:StudyActivity)<-[:HAS_STUDY_ACTIVITY]-(study_value:StudyValue) 
-                | study_value.study_id_prefix]) AS requester_study_id,
+            CASE
+                WHEN library_name='Requested'
+                THEN head([(concept_root)-[:HAS_VERSION]->(:{self.value_class.__label__})<-[:HAS_SELECTED_ACTIVITY]->(:StudyActivity)<-[:HAS_STUDY_ACTIVITY]-(study_value:StudyValue)
+                   | coalesce(study_value.study_id_prefix, "") + "-" + toString(study_value.study_number)])
+                ELSE NULL
+            END AS requester_study_id,
             coalesce(concept_value.is_data_collected, False) AS is_data_collected,
             coalesce(concept_value.is_multiple_selection_allowed, True) AS is_multiple_selection_allowed,
             apoc.coll.toSet([(concept_value)-[:HAS_GROUPING]->(:ActivityGrouping)-[:IN_SUBGROUP]->(activity_valid_group:ActivityValidGroup)
@@ -324,12 +436,27 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
             {'' if activity_subgroup_names and activity_group_names else 'WHERE' if not activity_subgroup_names and activity_group_names else ''}
             {'size([(activity_valid_group)-[:IN_GROUP]-(activity_group_value) WHERE activity_group_value.name in $activity_group_names | activity_group_value.name]) > 0 ' if activity_group_names else ''}
              | {{
-                 activity_subgroup_uid:head([(activity_valid_group)<-[:HAS_GROUP]-(activity_subgroup_value:ActivitySubGroupValue)
+                 activity_subgroup_uid: head([(activity_valid_group)<-[:HAS_GROUP]-(activity_subgroup_value:ActivitySubGroupValue)
                  <-[:HAS_VERSION]-(activity_subgroup_root:ActivitySubGroupRoot) | activity_subgroup_root.uid]), 
+                 activity_subgroup_name: head([(activity_valid_group)<-[:HAS_GROUP]-(activity_subgroup_value:ActivitySubGroupValue)
+                   | activity_subgroup_value.name]), 
                  activity_group_uid: head([(activity_valid_group)-[:IN_GROUP]-(activity_group_value:ActivityGroupValue)
-                 <-[:HAS_VERSION]-(activity_group_root:ActivityGroupRoot) | activity_group_root.uid])
+                 <-[:HAS_VERSION]-(activity_group_root:ActivityGroupRoot) | activity_group_root.uid]),
+                 activity_group_name: head([(activity_valid_group)-[:IN_GROUP]-(activity_group_value:ActivityGroupValue)
+                   | activity_group_value.name])
              }}]) AS activity_groupings,
-            head([(concept_value)-[:REPLACED_BY_ACTIVITY]->(replacing_activity_root:ActivityRoot) | replacing_activity_root.uid]) AS replaced_by_activity
+            head([(concept_value)-[:REPLACED_BY_ACTIVITY]->(replacing_activity_root:ActivityRoot) | replacing_activity_root.uid]) AS replaced_by_activity,
+            [(concept_value)-[:HAS_GROUPING]->(:ActivityGrouping)<-[:HAS_ACTIVITY]-(activity_instance_value:ActivityInstanceValue) | activity_instance_value.is_legacy_usage] AS all_legacy_codes
+
+            WITH *, 
+                CASE
+                WHEN NOT is_request_rejected and replaced_by_activity IS NULL THEN false
+                ELSE true
+                END as is_finalized,
+                CASE WHEN size(all_legacy_codes) > 0
+                    THEN all(is_legacy_usage IN all_legacy_codes where is_legacy_usage=true and is_legacy_usage IS NOT NULL)
+                    ELSE false
+                END as is_used_by_legacy_instances
         """
 
     def replace_request_with_sponsor_activity(
@@ -366,11 +493,48 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
             exists = len(result) > 0 and len(result[0]) > 0
         return exists
 
-    def get_activity_overview(self, uid: str) -> dict:
-        query = """
-        MATCH (activity_root:ActivityRoot {uid:$uid})-[:LATEST]->(activity_value:ActivityValue)
-        WITH DISTINCT activity_root,activity_value,
+    def get_activity_overview(self, uid: str, version: str | None = None) -> dict:
+        if version:
+            params = {"uid": uid, "version": version}
+            match = """
+                MATCH (activity_root:ActivityRoot {uid:$uid})
+                CALL {
+                        WITH activity_root
+                        MATCH (activity_root)-[hv:HAS_VERSION {version:$version}]->(av:ActivityValue)
+                        WITH hv, av
+                        ORDER BY
+                            toInteger(split(hv.version, '.')[0]) ASC,
+                            toInteger(split(hv.version, '.')[1]) ASC,
+                            hv.end_date ASC,
+                            hv.start_date ASC
+                        WITH collect(hv) as hvs, collect (av) as avs
+                        RETURN last(hvs) as has_version, last(avs) as activity_value
+                    }
+                """
+        else:
+            params = {"uid": uid}
+            match = """
+                    MATCH (activity_root:ActivityRoot {uid:$uid})-[:LATEST]->(activity_value:ActivityValue)
+                    CALL {
+                        WITH activity_root, activity_value
+                        MATCH (activity_root)-[hv:HAS_VERSION]-(activity_value)
+                        WITH hv
+                        ORDER BY
+                            toInteger(split(hv.version, '.')[0]) ASC,
+                            toInteger(split(hv.version, '.')[1]) ASC,
+                            hv.end_date ASC,
+                            hv.start_date ASC
+                        WITH collect(hv) as hvs
+                        RETURN last(hvs) as has_version
+                    }
+                    """
+
+        query = (
+            match
+            + """
+        WITH DISTINCT activity_root,activity_value, has_version,
             head([(library)-[:CONTAINS_CONCEPT]->(activity_root) | library.name]) AS activity_library_name,
+            [(activity_root)-[versions:HAS_VERSION]->(:ActivityValue) | versions.version] as all_versions,
             apoc.coll.toSet([(activity_value)-[:HAS_GROUPING]->(:ActivityGrouping)<-[:HAS_ACTIVITY]-
             (activity_instance_value:ActivityInstanceValue)-[:ACTIVITY_INSTANCE_CLASS]->
             (activity_instance_class_root:ActivityInstanceClassRoot)-[:LATEST]->(activity_instance_class_value:ActivityInstanceClassValue)
@@ -378,6 +542,7 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
                 activity_instance_library_name: head([(library)-[:CONTAINS_CONCEPT]->
                 (activity_instance_root:ActivityInstanceRoot)-[:HAS_VERSION]->(activity_instance_value) | library.name]),
                 uid: head([(activity_instance_value)<-[:HAS_VERSION]-(activity_instance_root:ActivityInstanceRoot) | activity_instance_root.uid]),
+                versions: [(activity_instance_value)<-[aihv:HAS_VERSION]-(activity_instance_root:ActivityInstanceRoot) | aihv { .version, .status, .start_date, .end_date }],
                 name:activity_instance_value.name,
                 name_sentence_case:activity_instance_value.name_sentence_case,
                 abbreviation:activity_instance_value.abbreviation,
@@ -392,10 +557,9 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
                 activity_instance_class: activity_instance_class_value
             }]) AS activity_instances,
             [(activity_value)-[:HAS_GROUPING]->(:ActivityGrouping)-[:IN_SUBGROUP]->(activity_valid_group:ActivityValidGroup)
-            <-[:HAS_GROUP]-(activity_subgroup_value:ActivitySubGroupValue) | 
-                {
-                    activity_subgroup_value:activity_subgroup_value, 
-                    activity_group_value:head([(activity_valid_group)-[:IN_GROUP]->(activity_group_value) | activity_group_value])
+                <-[:HAS_GROUP]-(activity_subgroup_value:ActivitySubGroupValue) | {
+                    activity_subgroup_value: activity_subgroup_value, 
+                    activity_group_value: head([(activity_valid_group)-[:IN_GROUP]->(activity_group_value) | activity_group_value])
                 }
             ] AS hierarchy
         WITH *,
@@ -405,11 +569,12 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
             activity_root,
             activity_value,
             activity_library_name,
-            activity_instances
+            activity_instances,
+            has_version,
+            apoc.coll.dropDuplicateNeighbors(apoc.coll.sort(all_versions)) AS all_versions
         """
-        result_array, attribute_names = db.cypher_query(
-            query=query, params={"uid": uid}
         )
+        result_array, attribute_names = db.cypher_query(query=query, params=params)
         if len(result_array) != 1:
             raise exceptions.BusinessLogicException(
                 f"The overview query returned broken data: {result_array}"
@@ -418,6 +583,8 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
         overview_dict = {}
         for overview_prop, attribute_name in zip(overview, attribute_names):
             overview_dict[attribute_name] = overview_prop
+        for item in overview_dict["activity_instances"]:
+            item["version"] = _get_display_version(item["versions"])
         return overview_dict
 
     def get_cosmos_activity_overview(self, uid: str) -> dict:

@@ -10,6 +10,7 @@ from clinical_mdr_api.domains.study_selections.study_selection_compound import (
 )
 from clinical_mdr_api.models import StudySelectionCompoundInput
 from clinical_mdr_api.models.utils import GenericFilteringReturn
+from clinical_mdr_api.oauth.user import user
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._meta_repository import MetaRepository
 from clinical_mdr_api.services._utils import (
@@ -26,9 +27,9 @@ from clinical_mdr_api.services.studies.study_selection_base import StudySelectio
 class StudyCompoundSelectionService(
     StudyCompoundDosingRelationMixin, StudySelectionMixin
 ):
-    def __init__(self, author):
+    def __init__(self):
         self._repos = MetaRepository()
-        self.author = author
+        self.author = user().id()
 
     def _transform_all_to_response_model(
         self,
@@ -36,6 +37,10 @@ class StudyCompoundSelectionService(
         study_value_version: str | None = None,
     ) -> list[models.StudySelectionCompound]:
         result = []
+        terms_at_specific_datetime = self._extract_study_standards_effective_date(
+            study_uid=study_selection.study_uid,
+            study_value_version=study_value_version,
+        )
         for order, selection in enumerate(
             study_selection.study_compounds_selection, start=1
         ):
@@ -65,6 +70,7 @@ class StudyCompoundSelectionService(
                     find_numeric_value_by_uid=self._repos.numeric_value_with_unit_repository.find_by_uid_2,
                     find_unit_by_uid=self._repos.unit_definition_repository.find_by_uid_2,
                     study_value_version=study_value_version,
+                    terms_at_specific_datetime=terms_at_specific_datetime,
                 )
             )
         return result
@@ -85,7 +91,9 @@ class StudyCompoundSelectionService(
             compound_alias_model = self._transform_compound_alias_model(
                 study_selection.compound_alias_uid
             )
-
+        terms_at_specific_datetime = self._extract_study_standards_effective_date(
+            study_uid=study_uid,
+        )
         result = models.StudySelectionCompound.from_study_compound_ar(
             study_uid=study_uid,
             selection=study_selection,
@@ -96,6 +104,7 @@ class StudyCompoundSelectionService(
             find_project_by_study_uid=self._repos.project_repository.find_by_study_uid,
             find_numeric_value_by_uid=self._repos.numeric_value_with_unit_repository.find_by_uid_2,
             find_unit_by_uid=self._repos.unit_definition_repository.find_by_uid_2,
+            terms_at_specific_datetime=terms_at_specific_datetime,
         )
         return result
 

@@ -1,8 +1,8 @@
 import copy
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 from datetime import datetime, timezone
 from decimal import Decimal
-from typing import Any, Mapping, MutableSequence, cast
+from typing import Any, Mapping, MutableSequence, Sequence, cast
 
 from neomodel import NodeMeta, db
 from neomodel.exceptions import DoesNotExist
@@ -13,6 +13,7 @@ from clinical_mdr_api.config import (
     CT_UID_BOOLEAN_YES,
     STUDY_FIELD_PREFERRED_TIME_UNIT_NAME,
     STUDY_FIELD_SOA_PREFERRED_TIME_UNIT_NAME,
+    STUDY_SOA_PREFERENCES_FIELDS,
 )
 from clinical_mdr_api.domain_repositories._utils import helpers
 from clinical_mdr_api.domain_repositories.generic_repository import RepositoryImpl
@@ -50,6 +51,9 @@ from clinical_mdr_api.domain_repositories.models.study_field import (
 from clinical_mdr_api.domain_repositories.study_definitions.study_definition_repository import (
     StudyDefinitionRepository,
 )
+from clinical_mdr_api.domains.study_definition_aggregates.registry_identifiers import (
+    RegistryIdentifiersVO,
+)
 from clinical_mdr_api.domains.study_definition_aggregates.root import (
     StudyDefinitionSnapshot,
 )
@@ -58,20 +62,20 @@ from clinical_mdr_api.domains.study_definition_aggregates.study_configuration im
     StudyFieldType,
 )
 from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import (
+    HighLevelStudyDesignVO,
+    StudyDescriptionVO,
     StudyFieldAuditTrailActionVO,
     StudyFieldAuditTrailEntryAR,
+    StudyIdentificationMetadataVO,
+    StudyInterventionVO,
+    StudyPopulationVO,
     StudyStatus,
+    StudyVersionMetadataVO,
 )
 from clinical_mdr_api.exceptions import BusinessLogicException
 from clinical_mdr_api.models.study_selections.study import (
-    HighLevelStudyDesignJsonModel,
-    RegistryIdentifiersJsonModel,
-    StudyDescriptionJsonModel,
-    StudyIdentificationMetadataJsonModel,
-    StudyInterventionJsonModel,
-    StudyPopulationJsonModel,
+    StudySoaPreferencesInput,
     StudySubpartAuditTrail,
-    StudyVersionMetadataJsonModel,
 )
 from clinical_mdr_api.models.utils import GenericFilteringReturn
 from clinical_mdr_api.repositories._utils import (
@@ -79,6 +83,7 @@ from clinical_mdr_api.repositories._utils import (
     FilterDict,
     FilterOperator,
 )
+from clinical_mdr_api.services._utils import calculate_diffs
 
 
 def _is_metadata_snapshot_and_status_equal_comparing_study_value_properties(
@@ -95,6 +100,8 @@ def _is_metadata_snapshot_and_status_equal_comparing_study_value_properties(
         and current.current_metadata.subpart_id == previous.current_metadata.subpart_id
         and current.current_metadata.study_acronym
         == previous.current_metadata.study_acronym
+        and current.current_metadata.study_subpart_acronym
+        == previous.current_metadata.study_subpart_acronym
         and current.current_metadata.study_id_prefix
         == previous.current_metadata.study_id_prefix
         and current.current_metadata.description
@@ -373,12 +380,6 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
 
         # now we just build snapshot of the aggregate instance
 
-        study_subpart_uids = []
-        for ssp in root.study_subpart.all():
-            sspv = ssp.latest_value.get_or_none()
-            if sspv and not isinstance(sspv.has_before.get_or_none(), Delete):
-                study_subpart_uids.append(ssp.uid)
-
         snapshot = StudyDefinitionSnapshot(
             deleted=False,
             current_metadata=current_metadata_snapshot,
@@ -387,10 +388,8 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
             specific_metadata=specific_metadata_snapshot,
             locked_metadata_versions=locked_metadata_snapshots,
             uid=root.uid,
-            study_parent_part_uid=spp.uid
-            if (spp := root.study_parent_part.get_or_none())
-            else None,
-            study_subpart_uids=study_subpart_uids,
+            study_parent_part_uid=cls._get_parent_part_uid(root.uid),
+            study_subpart_uids=cls._get_subpart_uids(root.uid),
             # since we do not have study definition status stored directly in DB we need to derive it
             # from information we have directly accessible
             study_status=(
@@ -409,6 +408,31 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
             latest_locked=latest_locked_relationship,
             previous_snapshot=copy.deepcopy(snapshot),
         )
+
+    @staticmethod
+    def _get_parent_part_uid(uid: str) -> str | None:
+        rs = db.cypher_query(
+            """
+                MATCH (sr:StudyRoot)-[:LATEST]->(sv:StudyValue)-[:HAS_STUDY_SUBPART]->(sub_sv:StudyValue)<-[:LATEST]-(sub_sr:StudyRoot {uid: $uid})
+                RETURN sr.uid
+            """,
+            params={"uid": uid},
+        )
+
+        return rs[0][0][0] if rs[0] else None
+
+    @staticmethod
+    def _get_subpart_uids(uid: str) -> list[str]:
+        rs = db.cypher_query(
+            """
+                MATCH (sr:StudyRoot {uid: $uid})-[:LATEST]->(sv:StudyValue)-[:HAS_STUDY_SUBPART]->(sub_sv:StudyValue)<-[:LATEST]-(sub_sr:StudyRoot)
+                WHERE NOT EXISTS((sub_sr)-[:AUDIT_TRAIL]->(:StudyAction:`Delete`)-[:BEFORE]->(sub_sv))
+                RETURN sub_sr.uid
+            """,
+            params={"uid": uid},
+        )
+
+        return [uid[0] for uid in rs[0]]
 
     @staticmethod
     def _ensure_transaction() -> None:
@@ -458,7 +482,12 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
 
         return snapshot, (model_data if for_update else None)
 
-    def _save(self, snapshot: StudyDefinitionSnapshot, additional_closure: Any) -> None:
+    def _save(
+        self,
+        snapshot: StudyDefinitionSnapshot,
+        additional_closure: Any,
+        is_subpart_relationship_update: bool = False,
+    ) -> None:
         self._ensure_transaction()  # raises an error if we are not inside transaction
 
         assert isinstance(
@@ -477,8 +506,8 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
         root: StudyRoot = additional_closure.root
         date = datetime.now(timezone.utc)
 
-        # we do nothing if nothing changed in the state of the aggregate
-        if previous_snapshot == current_snapshot:
+        # we do nothing if nothing changed
+        if previous_snapshot == current_snapshot and not is_subpart_relationship_update:
             return
 
         # generate :StudyAction:Delete node
@@ -499,11 +528,6 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
             current_snapshot.current_metadata is not None
         )  # there must be some current value
         assert previous_snapshot.current_metadata  # in previous snapshot as well
-        # version_author in metadata (if present) must match self.audit_info.user
-        assert (
-            current_snapshot.current_metadata.version_author is None
-            or current_snapshot.current_metadata.version_author == self.audit_info.user
-        )
         # there are only two possible permanent current states of the aggregate
         assert current_snapshot.study_status in (
             StudyStatus.DRAFT.value,
@@ -542,6 +566,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
             previous_value=previous_value,
             root=root,
             date=date,
+            is_subpart_relationship_update=is_subpart_relationship_update,
         )
 
         # now we maintain all types of relationship we have in DB to the study.
@@ -627,12 +652,18 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
             "has_study_compound",
             "has_study_compound_dosing",
             "has_study_disease_milestone",
+            "has_study_standard_version",
             "has_study_footnote",
+            "has_study_subpart",
+            "belongs_to_study_parent_part",
         ]:
             self._maintain_study_relationship_on_save(
                 rel, expected_latest_value, previous_value
             )
         self._maintain_study_pref_time_unit_relationship_on_save(
+            expected_latest_value=expected_latest_value, previous_value=previous_value
+        )
+        self._maintain_study_soa_preferences_relationship_on_save(
             expected_latest_value=expected_latest_value, previous_value=previous_value
         )
 
@@ -663,7 +694,10 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                 "has_study_compound",
                 "has_study_compound_dosing",
                 "has_study_disease_milestone",
+                "has_study_standard_version",
                 "has_study_footnote",
+                "has_study_subpart",
+                "belongs_to_study_parent_part",
             ]:
                 # remove the relation from the old value node
                 getattr(previous_value, relation_name).disconnect_all()
@@ -695,6 +729,19 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                     soa_preferred_time_unit_node
                 )
 
+    def _maintain_study_soa_preferences_relationship_on_save(
+        self, expected_latest_value: StudyValue, previous_value: StudyValue
+    ):
+        # if new value node is created
+        if expected_latest_value is not previous_value:
+            nodes = previous_value.has_boolean_field.filter(
+                field_name__in=STUDY_SOA_PREFERENCES_FIELDS
+            )
+
+            for node in nodes:
+                # add the relation to the new node
+                expected_latest_value.has_boolean_field.connect(node)
+
     def _maintain_latest_value_and_relationship_on_save(
         self,
         current_snapshot: StudyDefinitionSnapshot,
@@ -702,6 +749,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
         previous_value: StudyValue,
         root: StudyRoot,
         date: datetime,
+        is_subpart_relationship_update: bool = False,
     ):
         assert (
             current_snapshot.current_metadata is not None
@@ -722,7 +770,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                 # we don't wan't to create new StudyValue node if we've just LOCKED a Study
             )
             and current_snapshot.study_status != StudyStatus.LOCKED.value
-        ):
+        ) or is_subpart_relationship_update:
             # we need a new node (for a new value)
             expected_latest_value = self._study_value_from_study_metadata_snapshot(
                 current_snapshot.current_metadata
@@ -1147,9 +1195,16 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                 study_field_node = None
                 # check if the study field needs to be deleted
                 to_delete = False
-                if study_field_value is None and prev_study_field_value is not None:
-                    study_field_value = prev_study_field_value
-                    to_delete = True
+                if study_field_value is None and study_field_null_value_code is None:
+                    if study_field_value is None and prev_study_field_value is not None:
+                        study_field_value = prev_study_field_value
+                        to_delete = True
+                    elif (
+                        study_field_null_value_code is None
+                        and prev_study_field_null_value_code is not None
+                    ):
+                        study_field_null_value_code = prev_study_field_null_value_code
+                        to_delete = True
                 if (
                     study_field_value is not None
                     or study_field_null_value_code is not None
@@ -1237,11 +1292,12 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                                 study_field_value=study_field_value,
                                 term_root_node=ct_term_root_node,
                                 null_value_code=study_field_null_value_code,
+                                to_delete=to_delete,
                             )
-
-                            expected_latest_value.has_text_field.connect(
-                                study_field_node
-                            )
+                            if not to_delete:
+                                expected_latest_value.has_text_field.connect(
+                                    study_field_node
+                                )
                         elif config_item.study_field_data_type == StudyFieldType.BOOL:
                             study_field_node = self._get_or_create_study_field_node(
                                 study_field=StudyBooleanField,
@@ -1250,11 +1306,12 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                                 study_field_value=study_field_value,
                                 term_root_node=ct_term_root_node,
                                 null_value_code=study_field_null_value_code,
+                                to_delete=to_delete,
                             )
-
-                            expected_latest_value.has_boolean_field.connect(
-                                study_field_node
-                            )
+                            if not to_delete:
+                                expected_latest_value.has_boolean_field.connect(
+                                    study_field_node
+                                )
                         elif config_item.study_field_data_type == StudyFieldType.TIME:
                             study_field_node = self._get_or_create_study_field_node(
                                 study_field=StudyTimeField,
@@ -1263,11 +1320,12 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                                 study_field_value=study_field_value,
                                 term_root_node=ct_term_root_node,
                                 null_value_code=study_field_null_value_code,
+                                to_delete=to_delete,
                             )
-
-                            expected_latest_value.has_time_field.connect(
-                                study_field_node
-                            )
+                            if not to_delete:
+                                expected_latest_value.has_time_field.connect(
+                                    study_field_node
+                                )
                         elif config_item.study_field_data_type == StudyFieldType.INT:
                             study_field_node = self._get_or_create_study_field_node(
                                 study_field=StudyIntField,
@@ -1276,11 +1334,12 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                                 study_field_value=study_field_value,
                                 term_root_node=ct_term_root_node,
                                 null_value_code=study_field_null_value_code,
+                                to_delete=to_delete,
                             )
-
-                            expected_latest_value.has_int_field.connect(
-                                study_field_node
-                            )
+                            if not to_delete:
+                                expected_latest_value.has_int_field.connect(
+                                    study_field_node
+                                )
                 if (
                     prev_study_field_node is not None
                     and (prev_study_field_node != study_field_node)
@@ -1365,6 +1424,33 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                 )
 
                 study_array_field_node = None
+                # check if the study field needs to be deleted
+                to_delete = False
+                if (
+                    not study_array_field_value
+                    and study_array_field_null_value_code is None
+                ):
+                    if (
+                        not (
+                            study_array_field_value
+                            or study_array_field_null_value_code is not None
+                        )
+                        and prev_study_array_field_value
+                    ):
+                        study_array_field_value = prev_study_array_field_value
+                        to_delete = True
+                    elif (
+                        not (
+                            not study_array_field_value
+                            and study_array_field_null_value_code is not None
+                        )
+                        and prev_study_array_field_null_value_code is not None
+                    ):
+                        study_array_field_null_value_code = (
+                            prev_study_array_field_null_value_code
+                        )
+                        to_delete = True
+
                 if (
                     study_array_field_value
                     or study_array_field_null_value_code is not None
@@ -1389,7 +1475,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                                 value=study_array_field_value,
                             )
                         )
-                        if study_array_field_node is None:
+                        if study_array_field_node is None or to_delete:
                             study_array_field_node = StudyArrayField.create(
                                 {
                                     "value": study_array_field_value,
@@ -1403,9 +1489,10 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                                 study_array_field_node.has_dictionary_type.connect(
                                     term_root_node
                                 )
-                        expected_latest_value.has_array_field.connect(
-                            study_array_field_node
-                        )
+                        if not to_delete:
+                            expected_latest_value.has_array_field.connect(
+                                study_array_field_node
+                            )
                     elif (
                         not study_array_field_value
                         and study_array_field_null_value_code is not None
@@ -1418,7 +1505,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                                 null_value_code=study_array_field_null_value_code,
                             )
                         )
-                        if study_array_field_node is None:
+                        if study_array_field_node is None or to_delete:
                             study_array_field_node = StudyArrayField.create(
                                 {"value": [], "field_name": study_array_field_name}
                             )[0]
@@ -1431,9 +1518,10 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                         study_array_field_node.has_reason_for_null_value.connect(
                             null_value_reason_node
                         )
-                        expected_latest_value.has_array_field.connect(
-                            study_array_field_node
-                        )
+                        if not to_delete:
+                            expected_latest_value.has_array_field.connect(
+                                study_array_field_node
+                            )
 
                 if (
                     prev_study_array_field_node is not None
@@ -1451,6 +1539,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                         change_status=None,
                         user_initials=self.audit_info.user,
                         date=date,
+                        to_delete=to_delete,
                     )
 
     def _maintain_study_registry_id_fields_relationships(
@@ -1507,6 +1596,26 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                         null_value_code=null_value_code,
                     )
                 )
+                # check if the study field needs to be deleted
+                to_delete = False
+                if (
+                    study_registry_id_value is None
+                    and study_registry_null_value_code is None
+                ):
+                    if (
+                        study_registry_id_value is None
+                        and prev_study_registry_id_value is not None
+                    ):
+                        study_registry_id_value = prev_study_registry_id_value
+                        to_delete = True
+                    elif (
+                        study_registry_null_value_code is None
+                        and prev_study_registry_null_value_code is not None
+                    ):
+                        study_registry_null_value_code = (
+                            prev_study_registry_null_value_code
+                        )
+                        to_delete = True
 
                 if study_registry_id_value is not None:
                     study_registry_id_text_field_node = (
@@ -1516,11 +1625,13 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                             study_field_name=study_registry_id_name,
                             study_field_value=study_registry_id_value,
                             term_root_node=None,
+                            to_delete=to_delete,
                         )
                     )
-                    expected_latest_value.has_text_field.connect(
-                        study_registry_id_text_field_node
-                    )
+                    if not to_delete:
+                        expected_latest_value.has_text_field.connect(
+                            study_registry_id_text_field_node
+                        )
 
                 elif study_registry_null_value_code is not None:
                     study_registry_id_text_field_node = (
@@ -1531,11 +1642,13 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                             study_field_value=study_registry_id_value,
                             term_root_node=None,
                             null_value_code=study_registry_null_value_code,
+                            to_delete=to_delete,
                         )
                     )
-                    expected_latest_value.has_text_field.connect(
-                        study_registry_id_text_field_node
-                    )
+                    if not to_delete:
+                        expected_latest_value.has_text_field.connect(
+                            study_registry_id_text_field_node
+                        )
                 if (
                     prev_study_registry_id_text_field_node is not None
                     and (
@@ -1558,6 +1671,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                         change_status=None,
                         user_initials=self.audit_info.user,
                         date=date,
+                        to_delete=to_delete,
                     )
 
     @classmethod
@@ -1732,6 +1846,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
             "study_number": metadata_section["study_number"],
             "subpart_id": metadata_section["subpart_id"],
             "study_acronym": metadata_section["study_acronym"],
+            "study_subpart_acronym": metadata_section["study_subpart_acronym"],
             "study_id_prefix": metadata_section["study_id_prefix"],
             "project_number": metadata_section["project_number"],
             "description": metadata_section["description"],
@@ -1774,6 +1889,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
             study_number=metadata_snapshot.study_number,
             subpart_id=metadata_snapshot.subpart_id,
             study_acronym=metadata_snapshot.study_acronym,
+            study_subpart_acronym=metadata_snapshot.study_subpart_acronym,
             description=metadata_snapshot.description,
             study_id_prefix=metadata_snapshot.study_id_prefix,
         )
@@ -1901,41 +2017,47 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
             action.user_initials as user_initials,
             CASE
                 WHEN before is NULL THEN NULL
-                WHEN (before:StudyValue) THEN ["study_acronym", "study_id", "study_number"]
+                WHEN (before:StudyValue) THEN ["study_acronym", "study_subpart_acronym", "study_id", "study_number"]
                 WHEN (before:StudyProjectField) THEN ["project_number"]
                 WHEN (before:StudyField) THEN [before.field_name]
                 ELSE ["Unknown"]
             END as before_field, 
             CASE
-                WHEN before is NULL THEN [NULL,NULL,NULL]
-                WHEN (before:StudyValue) THEN [before.study_acronym, before.study_id_prefix, before.study_number, before.description]
+                WHEN before is NULL THEN [NULL,NULL,NULL,NULL]
+                WHEN (before:StudyValue) THEN [before.study_acronym, before.study_subpart_acronym, before.study_id_prefix,
+                before.study_number, before.description]
                 WHEN (before:StudyProjectField) THEN [head([(before)<-[:HAS_FIELD]-(p) | p.project_number])]
                 WHEN (before:StudyArrayField) THEN [apoc.text.join(before.value, ', ')]
-                WHEN (NOT before.field_name in ["study_acronym", "study_id", "study_number"]) THEN [before.value]
+                WHEN (NOT before.field_name in ["study_acronym", "study_subpart_acronym", "study_id", "study_number"]) THEN [before.value]
             END as before_value, 
             CASE
-                WHEN ("Delete" in labels(action) AND "StudyField" in labels(after)) OR (after is NULL) THEN [NULL,NULL,NULL]
-                WHEN (after:StudyValue) THEN ["study_acronym", "study_id", "study_number"]
+                //WHEN ("Delete" in labels(action) AND "StudyField" in labels(after)) OR (after is NULL) THEN [NULL,NULL,NULL,NULL]
+                WHEN (after:StudyValue) THEN ["study_acronym", "study_subpart_acronym", "study_id", "study_number"]
                 WHEN (after:StudyProjectField) THEN ["project_number"]
                 WHEN (after:StudyField) THEN [after.field_name]
                 ELSE ["Unknown"]
             END as after_field, 
             CASE
-                WHEN ("Delete" in labels(action) AND "StudyField" in labels(after)) OR (after is NULL) THEN [NULL]
-                WHEN (after:StudyValue) THEN [after.study_acronym, after.study_id_prefix, after.study_number, after.description]
+                //WHEN ("Delete" in labels(action) AND "StudyField" in labels(after)) OR (after is NULL) THEN [NULL]
+                WHEN (after:StudyValue) THEN [after.study_acronym, after.study_subpart_acronym, after.study_id_prefix, after.study_number, after.description]
                 WHEN (after:StudyProjectField) THEN [head([(after)<-[:HAS_FIELD]-(p) | p.project_number])]
                 WHEN (after:StudyArrayField) THEN [apoc.text.join(after.value, ', ')]
-                WHEN (NOT after.field_name in ["study_acronym", "study_id", "study_number"]) THEN [after.value]
+                WHEN (NOT after.field_name in ["study_acronym", "study_subpart_acronym", "study_id", "study_number"]) THEN [after.value]
             END as after_value
         WITH study_uid, date, user_initials, action, coalesce(before_field,after_field) as field, before_value as before, after_value as after 
         ORDER BY field ASC
         WITH study_uid, date, user_initials, action, apoc.coll.zip(field, apoc.coll.zip(before,after)) as field_with_values_array
         UNWIND field_with_values_array as field_with_value
         WITH *
-        WHERE NOT (field_with_value[1][0] IS NOT NULL AND field_with_value[1][1] IS NOT NULL AND field_with_value[1][0] = field_with_value[1][1])
-            AND NOT (field_with_value[1][0] IS NULL AND field_with_value[1][1] IS NULL)
+        WHERE NOT (field_with_value[1][0] IS NOT NULL 
+                    AND field_with_value[1][1] IS NOT NULL 
+                    AND (field_with_value[1][0] = field_with_value[1][1] and not action = 'Delete')
+                )
+            AND NOT (field_with_value[1][0] IS NULL 
+                    AND field_with_value[1][1] IS NULL
+                )
         RETURN study_uid, toString(date) as date, user_initials, collect(
-             distinct {action:action, 
+            distinct  {action:action, 
              field:field_with_value[0], 
              before:toString(field_with_value[1][0]),  
              after:toString(field_with_value[1][1])
@@ -1992,19 +2114,22 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
         """
         For a given field name, find what logical section of the study properties it belongs to.
         """
-        if field in StudyIdentificationMetadataJsonModel.__fields__:
+        if (
+            field in [field.name for field in fields(StudyIdentificationMetadataVO)]
+            or field == "study_id"
+        ):
             return "identification_metadata"
-        if field in RegistryIdentifiersJsonModel.__fields__:
+        if field in [field.name for field in fields(RegistryIdentifiersVO)]:
             return "registry_identifiers"
-        if field in StudyVersionMetadataJsonModel.__fields__:
+        if field in [field.name for field in fields(StudyVersionMetadataVO)]:
             return "version_metadata"
-        if field in HighLevelStudyDesignJsonModel.__fields__:
+        if field in [field.name for field in fields(HighLevelStudyDesignVO)]:
             return "high_level_study_design"
-        if field in StudyPopulationJsonModel.__fields__:
+        if field in [field.name for field in fields(StudyPopulationVO)]:
             return "study_population"
-        if field in StudyInterventionJsonModel.__fields__:
+        if field in [field.name for field in fields(StudyInterventionVO)]:
             return "study_intervention"
-        if field in StudyDescriptionJsonModel.__fields__:
+        if field in [field.name for field in fields(StudyDescriptionVO)]:
             return "study_description"
         # A study field was found in the audit trail that does not belong to any sections:
         return "Unknown"
@@ -2037,18 +2162,35 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                     head([(sr)-[lr:LATEST_RELEASED]->(lrn) | {lrr:lr, svr: lrn}]) AS released,
                     head([(sr)-[ld:LATEST_DRAFT]->(sdr) | {ldr:ld, sdr: sdr}]) AS draft,
                     head([(sr)-[hv:HAS_VERSION {status: 'LOCKED'}]->(hvn) | {has_version:hv, svlh:hvn}]) AS locked,
-                    head([(sr)<-[:STUDY_SUBPART]-(parent:StudyRoot) | parent.uid]) AS study_parent_part_uid,
-                    [(sr)-[:STUDY_SUBPART]->(sub:StudyRoot) WHERE NOT (sub)-[:AUDIT_TRAIL]->(:`Delete`) | sub.uid] AS study_subpart_uids,
+                    head([(sv)<-[:HAS_STUDY_SUBPART]-(:StudyValue)<-[:LATEST]-(parent:StudyRoot) | parent.uid]) AS study_parent_part_uid,
+                    [(sv)-[:HAS_STUDY_SUBPART]->(:StudyValue)<-[:LATEST]-(sub:StudyRoot)
+                     | sub.uid] AS study_subpart_uids,
                     exists((sr)-[:LATEST_LOCKED]->()) AS has_latest_locked,
                     exists((sr)-[:LATEST_DRAFT]->()) AS has_latest_draft,
                     exists((sr)-[:LATEST_RELEASED]->()) AS has_latest_released,
+                    exists((sv)-[:HAS_STUDY_FOOTNOTE]->()) AS has_study_footnote,
                     exists((sv)-[:HAS_STUDY_OBJECTIVE]->()) AS has_study_objective,
                     exists((sv)-[:HAS_STUDY_ENDPOINT]->()) AS has_study_endpoint,
                     exists((sv)-[:HAS_STUDY_CRITERIA]->()) AS has_study_criteria,
                     exists((sv)-[:HAS_STUDY_ACTIVITY]->()) AS has_study_activity,
                     exists((sv)-[:HAS_STUDY_ACTIVITY_INSTRUCTION]->()) AS has_study_activity_instruction
-                    WITH sr, sv, study_parent_part_uid, study_subpart_uids, llr, released, draft, locked, has_latest_locked, has_latest_draft, has_latest_released,
-                    has_study_objective, has_study_endpoint, has_study_criteria, has_study_activity, has_study_activity_instruction,
+                    WITH sr,
+                    sv,
+                    study_parent_part_uid,
+                    study_subpart_uids,
+                    llr,
+                    released,
+                    draft,
+                    locked,
+                    has_latest_locked,
+                    has_latest_draft,
+                    has_latest_released,
+                    has_study_footnote,
+                    has_study_objective,
+                    has_study_endpoint,
+                    has_study_criteria,
+                    has_study_activity,
+                    has_study_activity_instruction,
                     locked.svlh AS svlh,
                     locked.has_version AS has_version,
                     released.lrr AS lrr,
@@ -2064,13 +2206,15 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                             study_number: sv.study_number,
                             subpart_id: sv.subpart_id,
                             study_acronym: sv.study_acronym,
+                            study_subpart_acronym: sv.study_subpart_acronym,
                             study_id_prefix: sv.study_id_prefix,
                             description: sv.description,
                             project_number: head([(sv)-[:HAS_PROJECT]->(:StudyProjectField)<-[:HAS_FIELD]-(p:Project) | p.project_number]),
                             study_title: head([(sv)-[:HAS_TEXT_FIELD]->(t:StudyTextField) WHERE t.field_name = "study_title" | t.value]),
                             study_short_title: head([(sv)-[:HAS_TEXT_FIELD]->(st:StudyTextField) WHERE st.field_name = "study_short_title" | st.value]),
                             version_timestamp: CASE WHEN ldr.end_date IS NULL THEN ldr.start_date ELSE llr.start_date END,
-                            version_number: CASE WHEN ldr.end_date IS NULL THEN ldr.version ELSE llr.version END
+                            version_number: CASE WHEN ldr.end_date IS NULL THEN ldr.version ELSE llr.version END,
+                            version_author: CASE WHEN ldr.end_date IS NULL THEN ldr.user_initials ELSE llr.user_initials END
                         } AS current_metadata,
                         CASE WHEN has_latest_locked THEN
                         {
@@ -2080,13 +2224,15 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                                     study_number: svlh.study_number,
                                     subpart_id: svlh.subpart_id,
                                     study_acronym: svlh.study_acronym,
+                                    study_subpart_acronym: svlh.study_subpart_acronym,
                                     study_id_prefix: svlh.study_id_prefix,
                                     description: svlh.description,
                                     project_number: head([(svlh)-[:HAS_PROJECT]->(:StudyProjectField)<-[:HAS_FIELD]-(p:Project) | p.project_number]),
                                     study_title: head([(svlh)-[:HAS_TEXT_FIELD]->(t:StudyTextField) WHERE t.field_name = "study_title" | t.value]),
                                     study_short_title: head([(svlh)-[:HAS_TEXT_FIELD]->(st:StudyTextField) WHERE st.field_name = "study_short_title" | st.value]),
                                     version_timestamp: has_version.start_date,
-                                    version_number: has_version.version
+                                    version_number: has_version.version,
+                                    version_author: has_version.user_initials
                                 })
                             ]
                         }  END AS locked_metadata_versions,
@@ -2096,13 +2242,15 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                             study_number: svr.study_number,
                             subpart_id: svr.subpart_id,
                             study_acronym: svr.study_acronym,
+                            study_subpart_acronym: svr.study_subpart_acronym,
                             study_id_prefix: svr.study_id_prefix,
                             description: svr.description,
                             project_number: head([(svr)-[:HAS_PROJECT]->(:StudyProjectField)<-[:HAS_FIELD]-(p:Project) | p.project_number]),
                             study_title: head([(svr)-[:HAS_TEXT_FIELD]->(t:StudyTextField) WHERE t.field_name = "study_title" | t.value]),
                             study_short_title: head([(svr)-[:HAS_TEXT_FIELD]->(st:StudyTextField) WHERE st.field_name = "study_short_title" | st.value]),
                             version_timestamp: lrr.start_date,
-                            version_number: lrr.version_number
+                            version_number: lrr.version_number,
+                            version_author: lrr.user_initials
                         }  END AS released_metadata,
                         CASE WHEN has_latest_draft THEN
                         {
@@ -2110,27 +2258,37 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                             study_number: sdr.study_number,
                             subpart_id: sdr.subpart_id,
                             study_acronym: sdr.study_acronym,
+                            study_subpart_acronym: sdr.study_subpart_acronym,
                             study_id_prefix: sdr.study_id_prefix,
                             description: sdr.description,
                             project_number: head([(sdr)-[:HAS_PROJECT]->(:StudyProjectField)<-[:HAS_FIELD]-(p:Project) | p.project_number]),
                             study_title: head([(sdr)-[:HAS_TEXT_FIELD]->(t:StudyTextField) WHERE t.field_name = "study_title" | t.value]),
                             study_short_title: head([(sdr)-[:HAS_TEXT_FIELD]->(st:StudyTextField) WHERE st.field_name = "study_short_title" | st.value]),
                             version_timestamp: ldr.start_date,
-                            version_number: ldr.version_number
+                            version_number: ldr.version_number,
+                            version_author: ldr.user_initials
                         }  END AS draft_metadata,
-                        has_study_objective, has_study_endpoint, has_study_criteria, has_study_activity, has_study_activity_instruction
+                        has_study_footnote,
+                        has_study_objective,
+                        has_study_endpoint,
+                        has_study_criteria,
+                        has_study_activity,
+                        has_study_activity_instruction
                     """
         return alias_clause
 
     def _update_snapshot_filter_by(
         self,
         filter_by: dict,
+        has_study_footnote: bool | None = None,
         has_study_objective: bool | None = None,
         has_study_endpoint: bool | None = None,
         has_study_criteria: bool | None = None,
         has_study_activity: bool | None = None,
         has_study_activity_instruction: bool | None = None,
     ) -> dict:
+        if has_study_footnote is not None:
+            filter_by["has_study_footnote"] = {"v": [has_study_footnote]}
         if has_study_objective is not None:
             filter_by["has_study_objective"] = {"v": [has_study_objective]}
         if has_study_endpoint is not None:
@@ -2147,6 +2305,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
 
     def _retrieve_all_snapshots(
         self,
+        has_study_footnote: bool | None = None,
         has_study_objective: bool | None = None,
         has_study_endpoint: bool | None = None,
         has_study_criteria: bool | None = None,
@@ -2190,6 +2349,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
         alias_clause = self._build_snapshot_alias_clause()
         filter_by = self._update_snapshot_filter_by(
             filter_by,
+            has_study_footnote,
             has_study_objective,
             has_study_endpoint,
             has_study_criteria,
@@ -2264,8 +2424,9 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
         # Aliases clause
         alias_clause = """
                     sr, sv, has_version,
-                    head([(sr)<-[:STUDY_SUBPART]-(parent:StudyRoot) | parent.uid]) AS study_parent_part_uid,
-                    [(sr)-[:STUDY_SUBPART]->(sub:StudyRoot) WHERE NOT (sub)-[:AUDIT_TRAIL]->(:`Delete`) | sub.uid] AS study_subpart_uids
+                    head([(sv)<-[:HAS_STUDY_SUBPART]-(:StudyValue)<-[:LATEST]-(parent:StudyRoot) | parent.uid]) AS study_parent_part_uid,
+                    [(sv)-[:HAS_STUDY_SUBPART]->(:StudyValue)<-[:LATEST]-(sub:StudyRoot)
+                     | sub.uid] AS study_subpart_uids
                     ORDER BY has_version.start_date DESC, has_version.status
                     WITH
                         sr.uid as uid,
@@ -2277,6 +2438,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                             study_number: sv.study_number,
                             subpart_id: sv.subpart_id,
                             study_acronym: sv.study_acronym,
+                            study_subpart_acronym: sv.study_subpart_acronym,
                             study_id_prefix: sv.study_id_prefix,
                             description: sv.description,
                             project_number: head([(sv)-[:HAS_PROJECT]->(:StudyProjectField)<-[:HAS_FIELD]-(p:Project) | p.project_number]),
@@ -2296,6 +2458,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                                     study_number: sv.study_number,
                                     subpart_id: sv.subpart_id,
                                     study_acronym: sv.study_acronym,
+                                    study_subpart_acronym: sv.study_subpart_acronym,
                                     study_id_prefix: sv.study_id_prefix,
                                     description: sv.description,
                                     project_number: head([(sv)-[:HAS_PROJECT]->(:StudyProjectField)<-[:HAS_FIELD]-(p:Project) | p.project_number]),
@@ -2314,6 +2477,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                             study_number: sv.study_number,
                             subpart_id: sv.subpart_id,
                             study_acronym: sv.study_acronym,
+                            study_subpart_acronym: sv.study_subpart_acronym,
                             study_id_prefix: sv.study_id_prefix,
                             description: sv.description,
                             project_number: head([(sv)-[:HAS_PROJECT]->(:StudyProjectField)<-[:HAS_FIELD]-(p:Project) | p.project_number]),
@@ -2330,6 +2494,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                             study_number: sv.study_number,
                             subpart_id: sv.subpart_id,
                             study_acronym: sv.study_acronym,
+                            study_subpart_acronym: sv.study_subpart_acronym,
                             study_id_prefix: sv.study_id_prefix,
                             description: sv.description,
                             project_number: head([(sv)-[:HAS_PROJECT]->(:StudyProjectField)<-[:HAS_FIELD]-(p:Project) | p.project_number]),
@@ -2614,55 +2779,210 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
         latest_version_relationship = version_relationships[0]
         return latest_version_relationship[2].version
 
-    def _retrieve_study_subpart_with_history(self, uid: str, is_subpart: bool = False):
+    def _retrieve_study_subpart_with_history(
+        self, uid: str, is_subpart: bool = False
+    ) -> list:
         """
         returns the audit trail for all study subparts of the study
         """
         if not is_subpart:
-            query = """
-            MATCH (StudyRoot {uid: $study_uid})-[:STUDY_SUBPART]->(sr:StudyRoot)-[:AUDIT_TRAIL]->(:StudyAction)-[:BEFORE|AFTER]->(sv:StudyValue)
-            """
-        else:
-            query = "MATCH (sr:StudyRoot {uid: $study_uid})-[:AUDIT_TRAIL]->(:StudyAction)-[:BEFORE|AFTER]->(sv:StudyValue)"
-
-        subpart_audit_trail = db.cypher_query(
-            query
-            + """
-            WITH DISTINCT sr, sv
-            MATCH (sv)<-[:AFTER]-(asa:StudyAction)
-            OPTIONAL MATCH (sv)<-[:BEFORE]-(bsa:StudyAction)
-            WITH sr, sv, asa, bsa
-            ORDER BY sr.uid, asa.date DESC
-            RETURN
-                sr.uid AS subpart_uid,
-                sv.subpart_id AS subpart_id,
-                sv.study_acronym AS study_acronym,
-                asa.date AS start_date,
-                asa.user_initials AS user_initials,
-                labels(asa) AS change_type,
-                bsa.date AS end_date
+            subpart_uids = db.cypher_query(
+                """
+            MATCH (:StudyRoot {uid: $study_uid})-[:HAS_VERSION]->(:StudyValue)
+            -[:HAS_STUDY_SUBPART]->(:StudyValue)<-[:HAS_VERSION]-(ssr:StudyRoot)
+            RETURN DISTINCT ssr.uid
             """,
-            {"study_uid": uid},
+                params={"study_uid": uid},
+            )
+            subpart_uids = [subpart_uid[0] for subpart_uid in subpart_uids[0]]
+        else:
+            subpart_uids = [uid]
+
+        rs = db.cypher_query(
+            """
+            MATCH (ssr:StudyRoot)-[h_rel:HAS_VERSION]->(ssv:StudyValue)
+            WHERE ssr.uid IN $subpart_uids
+            OPTIONAL MATCH (ssv)<-[:AFTER]-(asa:StudyAction)
+            OPTIONAL MATCH (ssv)<-[:BEFORE]-(bsa:StudyAction)
+            OPTIONAL MATCH (ssv)<-[:HAS_STUDY_SUBPART]-(psv:StudyValue)<-[p_h_rel:HAS_VERSION]-(psr:StudyRoot)
+            RETURN DISTINCT
+                psr.uid AS parent_uid,
+                ssr.uid AS subpart_uid,
+                ssv.subpart_id AS subpart_id,
+                ssv.study_acronym AS study_acronym,
+                ssv.study_subpart_acronym AS study_subpart_acronym,
+                h_rel.user_initials AS user_initials,
+                h_rel.start_date AS start_date,
+                h_rel.end_date AS end_date,
+                labels(asa) AS change_type
+                ORDER BY start_date DESC
+            """,
+            params={"subpart_uids": subpart_uids},
         )
+        rs = helpers.db_result_to_list(rs)
+        rs.reverse()
 
         result = []
-        for res in helpers.db_result_to_list(subpart_audit_trail):
-            for action in res["change_type"]:
-                if "StudyAction" not in action:
-                    change_type = action
-            if res["end_date"]:
-                end_date = convert_to_datetime(value=res["end_date"])
-            else:
-                end_date = None
-            result.append(
-                StudySubpartAuditTrail(
-                    subpart_uid=res["subpart_uid"],
-                    subpart_id=res["subpart_id"],
-                    study_acronym=res["study_acronym"],
-                    start_date=convert_to_datetime(value=res["start_date"]),
-                    end_date=end_date,
-                    user_initials=res["user_initials"],
-                    change_type=change_type,
+        if not is_subpart:
+            subpart_status = set()
+            for item in rs:
+                if item["parent_uid"] is not None and item["parent_uid"] != uid:
+                    continue
+                if item["subpart_uid"] not in subpart_status and not item["parent_uid"]:
+                    continue
+
+                if item["parent_uid"]:
+                    subpart_status.add(item["subpart_uid"])
+                    remove = False
+                else:
+                    remove = True
+
+                for action in item["change_type"]:
+                    if "StudyAction" not in action:
+                        change_type = action
+
+                if item["subpart_uid"] in subpart_status:
+                    result.append(
+                        {
+                            "subpart_uid": item["subpart_uid"],
+                            "subpart_id": item["subpart_id"]
+                            if item["parent_uid"]
+                            else None,
+                            "study_acronym": item["study_acronym"]
+                            if item["parent_uid"]
+                            else None,
+                            "study_subpart_acronym": item["study_subpart_acronym"]
+                            if item["parent_uid"]
+                            else None,
+                            "start_date": convert_to_datetime(value=item["start_date"]),
+                            "end_date": convert_to_datetime(value=item["end_date"])
+                            if item["end_date"]
+                            else None,
+                            "user_initials": item["user_initials"],
+                            "change_type": change_type
+                            if item["parent_uid"]
+                            else "Delete",
+                        }
+                    )
+
+                    if remove:
+                        subpart_status.remove(item["subpart_uid"])
+        else:
+            for item in rs:
+                for action in item["change_type"]:
+                    if "StudyAction" not in action:
+                        change_type = action
+
+                result.append(
+                    {
+                        "subpart_uid": item["subpart_uid"],
+                        "subpart_id": item["subpart_id"],
+                        "study_acronym": item["study_acronym"],
+                        "study_subpart_acronym": item["study_subpart_acronym"],
+                        "start_date": convert_to_datetime(value=item["start_date"]),
+                        "end_date": convert_to_datetime(value=item["end_date"])
+                        if item["end_date"]
+                        else None,
+                        "user_initials": item["user_initials"],
+                        "change_type": change_type,
+                    }
                 )
+
+        result.reverse()
+
+        return calculate_diffs(result, StudySubpartAuditTrail)
+
+    def get_soa_preferences(
+        self,
+        study_uid: str,
+        study_value_version: str | None = None,
+        field_names: Sequence[str] | None = None,
+    ) -> list[StudyBooleanField]:
+        """Gets StudyBooleanField nodes related to SoA preferences"""
+
+        if field_names is None:
+            field_names = STUDY_SOA_PREFERENCES_FIELDS
+
+        if study_value_version:
+            filters = {
+                "has_boolean_field__has_version__uid": study_uid,
+                "has_boolean_field__has_version|version": study_value_version,
+            }
+        else:
+            filters = {
+                "has_boolean_field__latest_value__uid": study_uid,
+            }
+
+        filters["field_name__in"] = field_names
+        nodes = to_relation_trees(
+            StudyBooleanField.nodes.fetch_relations(
+                "has_after__audit_trail",
+            ).filter(**filters)
+        )
+        return nodes
+
+    def post_soa_preferences(
+        self, study_uid: str, soa_preferences: StudySoaPreferencesInput
+    ) -> list[StudyBooleanField]:
+        """Creates StudyBooleanField nodes of SoA preferences if none are present"""
+
+        if self.get_soa_preferences(study_uid=study_uid):
+            raise BusinessLogicException(
+                f"SoA preferences already exist for study ({study_uid})"
             )
-        return result
+
+        study_root = StudyRoot.nodes.get(uid=study_uid)
+        latest_study_value = study_root.latest_value.single()
+
+        for name, value in soa_preferences.dict(by_alias=True).items():
+            field_sf = StudyBooleanField.create({"field_name": name, "value": value})[0]
+            latest_study_value.has_boolean_field.connect(field_sf)
+
+            self._generate_study_field_audit_node(
+                study_root_node=study_root,
+                study_field_node_after=field_sf,
+                study_field_node_before=None,
+                change_status=None,
+                user_initials=self.audit_info.user,
+                date=datetime.now(timezone.utc),
+            )
+
+        return self.get_soa_preferences(study_uid=study_uid)
+
+    def edit_soa_preferences(
+        self,
+        study_uid: str,
+        soa_preferences: StudySoaPreferencesInput,
+    ) -> list[StudyBooleanField]:
+        """Replaces StudyBooleanField nodes of SoA preferences for the supplied show_* parameters only"""
+
+        # exclude_unset skips properties that were not provided on init, also won't use defaults
+        prefs = soa_preferences.dict(by_alias=True, exclude_unset=True)
+
+        study_root = StudyRoot.nodes.get(uid=study_uid)
+        latest_study_value = study_root.latest_value.single()
+
+        nodes = self.get_soa_preferences(
+            study_uid=study_uid, field_names=tuple(prefs.keys())
+        )
+
+        # disconnect the previous version from StudyValue
+        for node in nodes:
+            latest_study_value.has_boolean_field.disconnect(node)
+
+        nodes = {node.field_name: node for node in nodes}
+
+        for name, value in prefs.items():
+            field_sf = StudyBooleanField.create({"field_name": name, "value": value})[0]
+            latest_study_value.has_boolean_field.connect(field_sf)
+
+            self._generate_study_field_audit_node(
+                study_root_node=study_root,
+                study_field_node_after=field_sf,
+                study_field_node_before=nodes.get(name),
+                change_status=None,
+                user_initials=self.audit_info.user,
+                date=datetime.now(timezone.utc),
+            )
+
+        return self.get_soa_preferences(study_uid=study_uid)

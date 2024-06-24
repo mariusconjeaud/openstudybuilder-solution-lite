@@ -1,13 +1,13 @@
 from typing import Any
 
-from fastapi import Body, Depends, Path, Query, Request, Response, status
+from fastapi import Body, Path, Query, Request, Response, status
 from pydantic.types import Json
 
 from clinical_mdr_api import config
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.study_selections import study_disease_milestone
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.oauth import get_current_user_id, rbac
+from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.routers import study_router as router
@@ -103,9 +103,8 @@ def get_all(
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
     uid: str = Path(description="the study"),
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> CustomPage[study_disease_milestone.StudyDiseaseMilestone]:
-    disease_milestone_service = StudyDiseaseMilestoneService(current_user_id)
+    disease_milestone_service = StudyDiseaseMilestoneService()
     all_items = disease_milestone_service.get_all_disease_milestones(
         study_uid=uid,
         page_number=page_number,
@@ -157,9 +156,8 @@ def get_distinct_values_for_header(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    service = StudyDiseaseMilestoneService(author=current_user_id)
+    service = StudyDiseaseMilestoneService()
     return service.get_distinct_values_for_header(
         field_name=field_name,
         search_string=search_string,
@@ -200,9 +198,8 @@ Possible errors:
 )
 def get_study_disease_milestones_all_audit_trail(
     uid: str = studyUID,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> list[study_disease_milestone.StudyDiseaseMilestoneVersion]:
-    service = StudyDiseaseMilestoneService(current_user_id)
+    service = StudyDiseaseMilestoneService()
     return service.audit_trail_all_disease_milestones(uid)
 
 
@@ -244,9 +241,8 @@ Possible errors:
 def get_study_disease_milestone(
     uid: str = studyUID,
     study_disease_milestone_uid: str = study_disease_milestone_uid_description,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> study_disease_milestone.StudyDiseaseMilestone:
-    service = StudyDiseaseMilestoneService(current_user_id)
+    service = StudyDiseaseMilestoneService()
     return service.find_by_uid(study_disease_milestone_uid)
 
 
@@ -282,9 +278,8 @@ Possible errors:
 def get_study_disease_milestone_audit_trail(
     uid: str = studyUID,
     study_disease_milestone_uid: str = study_disease_milestone_uid_description,
-    current_user_id: str = Depends(get_current_user_id),
 ) -> list[study_disease_milestone.StudyDiseaseMilestoneVersion]:
-    service = StudyDiseaseMilestoneService(current_user_id)
+    service = StudyDiseaseMilestoneService()
     return service.audit_trail(
         study_uid=uid, disease_milestone_uid=study_disease_milestone_uid
     )
@@ -330,9 +325,8 @@ def post_new_disease_milestone_create(
     selection: study_disease_milestone.StudyDiseaseMilestoneCreateInput = Body(
         description="Related parameters of the selection that shall be created."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> study_disease_milestone.StudyDiseaseMilestone:
-    service = StudyDiseaseMilestoneService(current_user_id)
+    service = StudyDiseaseMilestoneService()
     return service.create(study_uid=uid, study_disease_milestone_input=selection)
 
 
@@ -373,9 +367,8 @@ Possible errors:
 def delete_study_disease_milestone(
     uid: str = studyUID,  # TODO: Use this argument!
     study_disease_milestone_uid: str = study_disease_milestone_uid_description,
-    current_user_id: str = Depends(get_current_user_id),
 ):
-    service = StudyDiseaseMilestoneService(author=current_user_id)
+    service = StudyDiseaseMilestoneService()
 
     service.delete(study_disease_milestone_uid=study_disease_milestone_uid)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
@@ -430,9 +423,8 @@ def patch_reorder(
     new_order_input: study_disease_milestone.StudySelectionDiseaseMilestoneNewOrder = Body(
         description="New value to set for the order property of the selection"
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> study_disease_milestone.StudyDiseaseMilestone:
-    service = StudyDiseaseMilestoneService(current_user_id)
+    service = StudyDiseaseMilestoneService()
     return service.reorder(
         study_disease_milestone_uid=study_disease_milestone_uid,
         new_order=new_order_input.new_order,
@@ -479,9 +471,8 @@ def patch_update_disease_milestone(
     selection: study_disease_milestone.StudyDiseaseMilestoneEditInput = Body(
         description="Related parameters of the selection that shall be created."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> study_disease_milestone.StudyDiseaseMilestone:
-    service = StudyDiseaseMilestoneService(current_user_id)
+    service = StudyDiseaseMilestoneService()
     return service.edit(
         study_disease_milestone_uid=study_disease_milestone_uid,
         study_disease_milestone_input=selection,

@@ -39,12 +39,26 @@ class CTTermNameRepository(CTTermGenericRepository[CTTermNameAR]):
     value_class = CTTermNameValue
     relationship_from_root = "has_name_root"
 
-    def term_specific_exists_by_name(self, term_name: str) -> bool:
+    def term_specific_exists_by_name_in_codelists(
+        self, term_name: str, codelist_uids: list[str]
+    ) -> bool:
+        """
+        We allow duplicates in the following scenarios:
+            - the conflicting term is retired
+            - the conflicting term belongs to another codelist
+        """
         query = """
             MATCH (term_ver_root:CTTermNameRoot)-[:LATEST]->(term_ver_value:CTTermNameValue {name: $term_name})
+            OPTIONAL MATCH (term_ver_root)-[retired:HAS_VERSION {status: 'Retired'}]-(term_ver_value)
+            WITH * WHERE NOT (retired IS NOT NULL AND retired.end_date IS NULL)
+            MATCH (codelist_root:CTCodelistRoot)-[:HAS_TERM]-(term_root:CTTermRoot)-[:HAS_NAME_ROOT]-(term_ver_root)
+            WHERE codelist_root.uid IN $codelist_uids
             RETURN term_ver_value
             """
-        result, _ = db.cypher_query(query, {"term_name": term_name})
+        result, _ = db.cypher_query(
+            query, {"term_name": term_name, "codelist_uids": codelist_uids}
+        )
+
         return len(result) > 0
 
     def _create_aggregate_root_instance_from_cypher_result(
@@ -52,6 +66,39 @@ class CTTermNameRepository(CTTermGenericRepository[CTTermNameAR]):
     ) -> CTTermNameAR:
         return create_term_name_aggregate_instances_from_cypher_result(
             term_dict=term_dict, is_aggregated_query=False
+        )
+
+    def _create_ar(
+        self,
+        root: CTTermNameRoot,
+        library: Library | None,
+        relationship: VersionRelationship,
+        value: CTTermNameValue,
+        **_kwargs,
+    ) -> CTTermNameAR:
+        codelists: list[CTTermCodelistVO] = []
+
+        for codelist_root in _kwargs["ctterm_names"]["codelists"]:
+            codelists.append(
+                CTTermCodelistVO(
+                    codelist_uid=codelist_root["uid"],
+                    order=codelist_root["order"],
+                )
+            )
+
+        return CTTermNameAR.from_repository_values(
+            uid=_kwargs["ctterm_names"]["ctterm_root_uid"],
+            ct_term_name_vo=CTTermNameVO.from_repository_values(
+                codelists=codelists,
+                name=value.name,
+                name_sentence_case=value.name_sentence_case,
+                catalogue_name=_kwargs["ctterm_names"]["catalogue"],
+            ),
+            library=LibraryVO.from_input_values_2(
+                library_name=library.name,
+                is_library_editable_callback=(lambda _: library.is_editable),
+            ),
+            item_metadata=self._library_item_metadata_vo_from_relation(relationship),
         )
 
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(

@@ -1,219 +1,228 @@
 <template>
-<div>
-  <n-n-table
+  <NNTable
     :headers="actualHeaders"
     :export-object-label="dictionaryName"
     :export-data-url="columnDataResource"
     :export-data-url-params="exportUrlParams"
-    item-key="term_uid"
-    :server-items-length="total"
-    :options.sync="options"
-    has-api
+    item-value="term_uid"
+    :items-length="total"
     :items="items"
-    @filter="fetchTerms"
     :column-data-resource="columnDataResource"
-    :codelistUid="codelistUid"
-    >
-    <template v-slot:actions="">
+    :codelist-uid="codelistUid"
+    @filter="fetchTerms"
+  >
+    <template #actions="">
       <v-btn
-        fab
-        small
+        size="small"
         color="primary"
-        @click="createTerm()"
         :title="$t('DictionaryTermTable.add_title')"
         :disabled="!checkPermission($roles.LIBRARY_WRITE)"
-        >
-        <v-icon dark>
-          mdi-plus
-        </v-icon>
-      </v-btn>
-    </template>
-    <template v-slot:item.status="{ item }">
-      <status-chip :status="item.status" />
-    </template>
-    <template v-slot:item.start_date="{ item }">
-      {{ item.start_date | date }}
-    </template>
-    <template v-slot:item.actions="{ item }">
-      <actions-menu :actions="actions" :item="item"/>
-    </template>
-  </n-n-table>
-  <slot name="termForm" :closeForm="closeForm" :open="showTermForm">
-    <dictionary-term-form
-      :open="showTermForm"
-      @close="closeForm"
-      :dictionaryName="dictionaryName"
-      :editedTerm="formToEdit"
-      :editedTermCategory="codelistUid"
-      @save="fetchTerms"
+        icon="mdi-plus"
+        @click="createTerm()"
       />
+    </template>
+    <template #[`item.status`]="{ item }">
+      <StatusChip :status="item.status" />
+    </template>
+    <template #[`item.start_date`]="{ item }">
+      {{ $filters.date(item.start_date) }}
+    </template>
+    <template #[`item.actions`]="{ item }">
+      <ActionsMenu :actions="actions" :item="item" />
+    </template>
+  </NNTable>
+  <slot name="termForm" :close-form="closeForm" :open="showTermForm">
+    <DictionaryTermForm
+      :open="showTermForm"
+      :dictionary-name="dictionaryName"
+      :edited-term="formToEdit"
+      :edited-term-category="codelistUid"
+      @close="closeForm"
+      @save="fetchTerms"
+    />
   </slot>
-</div>
 </template>
 
 <script>
 import dictionaries from '@/api/dictionaries'
-import ActionsMenu from '@/components/tools/ActionsMenu'
-import DictionaryTermForm from '@/components/library/DictionaryTermForm'
-import NNTable from '@/components/tools/NNTable'
-import StatusChip from '@/components/tools/StatusChip'
+import ActionsMenu from '@/components/tools/ActionsMenu.vue'
+import DictionaryTermForm from '@/components/library/DictionaryTermForm.vue'
+import NNTable from '@/components/tools/NNTable.vue'
+import StatusChip from '@/components/tools/StatusChip.vue'
 import filteringParameters from '@/utils/filteringParameters'
-import { accessGuard } from '@/mixins/accessRoleVerifier'
+import { useAccessGuard } from '@/composables/accessGuard'
 
 export default {
-  mixins: [accessGuard],
   components: {
     ActionsMenu,
     DictionaryTermForm,
     NNTable,
-    StatusChip
+    StatusChip,
   },
-  data () {
+  props: {
+    codelistUid: {
+      type: String,
+      default: null,
+    },
+    columnDataResource: {
+      type: String,
+      default: null,
+    },
+    dictionaryName: {
+      type: String,
+      default: null,
+    },
+    headers: {
+      type: Array,
+      default: null,
+      required: false,
+    },
+  },
+  setup() {
+    return {
+      ...useAccessGuard(),
+    }
+  },
+  data() {
     return {
       actions: [
         {
           label: this.$t('_global.approve'),
           icon: 'mdi-check-decagram',
           iconColor: 'success',
-          condition: (item) => item.possible_actions.find(action => action === 'approve'),
+          condition: (item) =>
+            item.possible_actions.find((action) => action === 'approve'),
           accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.approveTerm
+          click: this.approveTerm,
         },
         {
           label: this.$t('_global.edit'),
           icon: 'mdi-pencil-outline',
           iconColor: 'primary',
-          condition: (item) => item.possible_actions.find(action => action === 'edit'),
+          condition: (item) =>
+            item.possible_actions.find((action) => action === 'edit'),
           accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.editTerm
+          click: this.editTerm,
         },
         {
           label: this.$t('_global.new_version'),
           icon: 'mdi-plus-circle-outline',
           iconColor: 'primary',
-          condition: (item) => item.possible_actions.find(action => action === 'new_version'),
+          condition: (item) =>
+            item.possible_actions.find((action) => action === 'new_version'),
           accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.newTermVersion
+          click: this.newTermVersion,
         },
         {
           label: this.$t('_global.inactivate'),
           icon: 'mdi-close-octagon-outline',
           iconColor: 'primary',
-          condition: (item) => item.possible_actions.find(action => action === 'inactivate'),
+          condition: (item) =>
+            item.possible_actions.find((action) => action === 'inactivate'),
           accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.inactivateTerm
+          click: this.inactivateTerm,
         },
         {
           label: this.$t('_global.reactivate'),
           icon: 'mdi-undo-variant',
           iconColor: 'primary',
-          condition: (item) => item.possible_actions.find(action => action === 'reactivate'),
+          condition: (item) =>
+            item.possible_actions.find((action) => action === 'reactivate'),
           accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.reactivateTerm
+          click: this.reactivateTerm,
         },
         {
           label: this.$t('_global.delete'),
           icon: 'mdi-delete-outline',
           iconColor: 'error',
-          condition: (item) => item.possible_actions.find(action => action === 'delete'),
+          condition: (item) =>
+            item.possible_actions.find((action) => action === 'delete'),
           accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.deleteTerm
-        }
+          click: this.deleteTerm,
+        },
       ],
       defaultHeaders: [
-        { text: '', value: 'actions', width: '5%' },
-        { text: this.dictionaryName, value: 'dictionary_id' },
-        { text: this.$t('_global.name'), value: 'name' },
-        { text: this.$t('DictionaryTermTable.lower_case_name'), value: 'name_sentence_case' },
-        { text: this.$t('DictionaryTermTable.abbreviation'), value: 'abbreviation' },
-        { text: this.$t('_global.status'), value: 'status' },
-        { text: this.$t('_global.version'), value: 'version' },
-        { text: this.$t('_global.modified'), value: 'start_date' }
+        { title: '', key: 'actions', width: '5%' },
+        { title: this.dictionaryName, key: 'dictionary_id' },
+        { title: this.$t('_global.name'), key: 'name' },
+        {
+          title: this.$t('DictionaryTermTable.lower_case_name'),
+          key: 'name_sentence_case',
+        },
+        {
+          title: this.$t('DictionaryTermTable.abbreviation'),
+          key: 'abbreviation',
+        },
+        { title: this.$t('_global.status'), key: 'status' },
+        { title: this.$t('_global.version'), key: 'version' },
+        { title: this.$t('_global.modified'), key: 'start_date' },
       ],
       total: 0,
-      options: {},
       items: [],
       showTermForm: false,
-      formToEdit: {}
-    }
-  },
-  props: {
-    codelistUid: String,
-    columnDataResource: String,
-    dictionaryName: String,
-    headers: {
-      type: Array,
-      required: false
+      formToEdit: {},
     }
   },
   computed: {
-    actualHeaders () {
-      return (this.headers) ? this.headers : this.defaultHeaders
+    actualHeaders() {
+      return this.headers ? this.headers : this.defaultHeaders
     },
-    exportUrlParams () {
+    exportUrlParams() {
       return { codelist_uid: this.codelistUid }
-    }
+    },
   },
   methods: {
-    fetchTerms (filters, sort, filtersUpdated) {
+    fetchTerms(filters, options, filtersUpdated) {
       const params = filteringParameters.prepareParameters(
-        this.options, filters, sort, filtersUpdated)
+        options,
+        filters,
+        filtersUpdated
+      )
       params.codelist_uid = this.codelistUid
       if (params.codelist_uid !== null) {
-        dictionaries.getTerms(params).then(resp => {
+        dictionaries.getTerms(params).then((resp) => {
           this.items = resp.data.items
           this.total = resp.data.total
         })
       }
     },
-    inactivateTerm (item) {
-      dictionaries.inactivate(item.term_uid).then(resp => {
+    inactivateTerm(item) {
+      dictionaries.inactivate(item.term_uid).then(() => {
         this.fetchTerms()
       })
     },
-    reactivateTerm (item) {
-      dictionaries.reactivate(item.term_uid).then(resp => {
+    reactivateTerm(item) {
+      dictionaries.reactivate(item.term_uid).then(() => {
         this.fetchTerms()
       })
     },
-    deleteTerm (item) {
-      dictionaries.delete(item.term_uid).then(resp => {
+    deleteTerm(item) {
+      dictionaries.delete(item.term_uid).then(() => {
         this.fetchTerms()
       })
     },
-    approveTerm (item) {
-      dictionaries.approve(item.term_uid).then(resp => {
+    approveTerm(item) {
+      dictionaries.approve(item.term_uid).then(() => {
         this.fetchTerms()
       })
     },
-    newTermVersion (item) {
-      dictionaries.newVersion(item.term_uid).then(resp => {
+    newTermVersion(item) {
+      dictionaries.newVersion(item.term_uid).then(() => {
         this.fetchTerms()
       })
     },
-    editTerm (item) {
+    editTerm(item) {
       this.formToEdit = item
       this.showTermForm = true
     },
-    createTerm () {
+    createTerm() {
       this.formToEdit = null
       this.showTermForm = true
     },
-    closeForm () {
+    closeForm() {
       this.formToEdit = null
       this.showTermForm = false
-    }
-  },
-  watch: {
-    options: {
-      handler () {
-        this.fetchTerms()
-      },
-      deep: true
     },
-    codelistUid () {
-      this.fetchTerms()
-    }
-  }
+  },
 }
 </script>

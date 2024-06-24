@@ -35,6 +35,7 @@ class ActivityInstanceVO(ConceptVO):
     is_legacy_usage: bool
     is_derived: bool
     legacy_description: str | None
+    activity_name: str | None
     activity_groupings: list[ActivityInstanceGroupingVO]
     activity_instance_class_uid: str
     activity_instance_class_name: str | None
@@ -60,6 +61,7 @@ class ActivityInstanceVO(ConceptVO):
         activity_instance_class_uid: str,
         activity_instance_class_name: str | None,
         activity_items: list[ActivityItemVO],
+        activity_name: str | None = None,
     ) -> Self:
         activity_instance_vo = cls(
             nci_concept_id=nci_concept_id,
@@ -82,6 +84,7 @@ class ActivityInstanceVO(ConceptVO):
             if activity_groupings is not None
             else [],
             activity_items=activity_items if activity_items is not None else [],
+            activity_name=activity_name,
         )
 
         return activity_instance_vo

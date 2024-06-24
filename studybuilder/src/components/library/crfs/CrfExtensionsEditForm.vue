@@ -1,159 +1,156 @@
 <template>
-<div>
-  <simple-form-dialog
-    ref="form"
-    :title="title"
-    :help-items="helpItems"
-    @close="cancel"
-    :open="open"
-    max-width="1200px"
-    no-saving
+  <div>
+    <SimpleFormDialog
+      ref="form"
+      :title="title"
+      :open="open"
+      max-width="1200px"
+      no-saving
+      @close="cancel"
     >
-    <template v-slot:body>
-      <n-n-table
-        :headers="headers"
-        item-key="uid"
-        :options.sync="options"
-        :server-items-length="total"
-        :items="elements"
-        hide-default-switches
-        show-expand
-        light
-        sort-by="name"
-        disable-filtering
-        hide-export-button
-        :modifiableTable="false"
+      <template #body>
+        <NNTable
+          :headers="headers"
+          item-value="uid"
+          :items-length="total"
+          :items="elements"
+          table-height="auto"
+          hide-default-switches
+          light
+          disable-filtering
+          hide-export-button
+          :modifiable-table="false"
         >
-        <template v-slot:item="{ item, expand, isExpanded }">
-          <tr style="background-color: var(--v-dfltBackgroundLight1-base)">
-            <td width="1%">
-              <v-btn @click="expand(!isExpanded)" v-if="isExpanded" icon>
-                <v-icon dark>
-                  mdi-chevron-down
-                </v-icon>
-              </v-btn>
-              <v-btn @click="expand(!isExpanded)" v-else-if="item.attributes" icon>
-                <v-icon dark>
-                  mdi-chevron-right
-                </v-icon>
-              </v-btn>
+          <template #item="{ item, internalItem, toggleExpand, isExpanded }">
+            <tr :class="item.type ? '' : 'elementBackground'">
+              <td width="25%">
+                <v-row>
+                  <v-btn
+                    v-if="isExpanded(internalItem)"
+                    icon="mdi-chevron-down"
+                    variant="text"
+                    @click="toggleExpand(internalItem)"
+                  />
+                  <v-btn
+                    v-else-if="item.attributes"
+                    icon="mdi-chevron-right"
+                    variant="text"
+                    @click="toggleExpand(internalItem)"
+                  />
+                  <v-btn v-else icon variant="text" />
+                  <ActionsMenu :actions="actions" :item="item" />
+                  <div class="mt-3">
+                    {{
+                      item.type
+                        ? $t('CrfExtensions.attribute')
+                        : $t('CrfExtensions.element')
+                    }}
+                  </div>
+                </v-row>
+              </td>
+              <td width="25%">
+                {{ item.name }}
+              </td>
+              <td width="25%">
+                {{ item.version }}
+              </td>
+              <td width="25%">
+                <StatusChip :status="item.status" />
+              </td>
+            </tr>
+          </template>
+          <template #expanded-row="{ columns, item }">
+            <td :colspan="columns.length" class="pa-0">
+              <v-data-table
+                :headers="columns"
+                item-value="uid"
+                :items-length="total"
+                :items="item.attributes"
+                hide-default-switches
+                disable-filtering
+                hide-export-button
+                :modifiable-table="false"
+                hide-default-footer
+                hide-default-header
+              >
+                <template #headers />
+                <template #bottom />
+                <template #item="{ item }">
+                  <tr style="background-color: #d8eaf8">
+                    <td width="25%">
+                      <v-row>
+                        <v-btn icon variant="text" />
+                        <ActionsMenu :actions="actions" :item="item" />
+                        <div class="mt-3">
+                          {{ $t('CrfExtensions.attribute') }}
+                        </div>
+                      </v-row>
+                    </td>
+                    <td width="25%">
+                      {{ item.name }}
+                    </td>
+                    <td width="25%">
+                      {{ item.version }}
+                    </td>
+                    <td width="25%">
+                      <StatusChip :status="item.status" />
+                    </td>
+                  </tr>
+                </template>
+              </v-data-table>
             </td>
-            <td width="10%">
-              <v-row class="mt-1">
-                <actions-menu :actions="actions" :item="item"/>
-                {{item.type ? $t('CrfExtensions.attribute') : $t('CrfExtensions.element')}}
-              </v-row>
-            </td>
-            <td width="10%">
-              {{item.name}}
-            </td>
-            <td width="10%">
-              {{item.version}}
-            </td>
-            <td width="10%">
-              <status-chip :status="item.status" />
-            </td>
-          </tr>
-        </template>
-        <template v-slot:expanded-item="{ headers, item }">
-          <td :colspan="headers.length" class="pa-0">
-          <v-data-table
-            :headers="headers"
-            item-key="uid"
-            :options.sync="options"
-            :server-items-length="total"
-            :items="item.attributes"
-            hide-default-switches
-            sort-by="name"
-            disable-filtering
-            hide-export-button
-            :modifiableTable="false"
-            hide-default-footer
-            hide-default-header
+          </template>
+          <template #actions="">
+            <v-btn
+              class="ml-2 mb-2"
+              dark
+              color="crfGroup"
+              rounded
+              @click="addElement"
             >
-            <template v-slot:item="{ item }">
-              <tr style="background-color: var(--v-dfltBackgroundLight2-base)">
-                <td width="1%">
-                  <v-btn icon>
-                  </v-btn>
-                </td>
-                <td width="10%">
-                  <v-row class="mt-1">
-                    <actions-menu :actions="actions" :item="item"/>
-                    {{ $t('CrfExtensions.attribute') }}
-                  </v-row>
-                </td>
-                <td width="10%">
-                  {{item.name}}
-                </td>
-                <td width="10%">
-                  {{item.version}}
-                </td>
-                <td width="10%">
-                  <status-chip :status="item.status" />
-                </td>
-              </tr>
-            </template>
-          </v-data-table>
-        </td>
-        </template>
-        <template v-slot:actions="">
-          <v-btn
-            class="ml-2"
-            dark
-            small
-            color="crfGroup"
-            rounded
-            @click="addElement"
+              <v-icon dark> mdi-plus </v-icon>
+              {{ $t('CrfExtensions.element') }}
+            </v-btn>
+            <v-btn
+              class="ml-2 mb-2"
+              dark
+              color="crfItem"
+              rounded
+              @click="addAttribute"
             >
-            <v-icon dark>
-              mdi-plus
-            </v-icon>
-            {{ $t('CrfExtensions.element') }}
-          </v-btn>
-          <v-btn
-            class="ml-2"
-            dark
-            small
-            color="crfItem"
-            rounded
-            @click="addAttribute"
-            >
-            <v-icon dark>
-              mdi-plus
-            </v-icon>
-            {{ $t('CrfExtensions.attribute') }}
-          </v-btn>
-        </template>
-      </n-n-table>
-    </template>
-  </simple-form-dialog>
-  <crf-attribute-form
-    :open="showAttributeForm"
-    @close="closeAttributeForm"
-    :editItem="elementToEdit"
-    :parent-uid="parentUid"
-    :parent-type="parentType"
+              <v-icon dark> mdi-plus </v-icon>
+              {{ $t('CrfExtensions.attribute') }}
+            </v-btn>
+          </template>
+        </NNTable>
+      </template>
+    </SimpleFormDialog>
+    <CrfAttributeForm
+      :open="showAttributeForm"
+      :edit-item="elementToEdit"
+      :parent-uid="parentUid"
+      :parent-type="parentType"
+      @close="closeAttributeForm"
     />
-  <crf-element-form
-    :parentUid="editItem.uid"
-    :open="showElementForm"
-    @close="closeElementForm"
-    :attributes="attributes"
-    :editItem="elementToEdit"
+    <CrfElementForm
+      :parent-uid="editItem.uid"
+      :open="showElementForm"
+      :attributes="attributes"
+      :edit-item="elementToEdit"
+      @close="closeElementForm"
     />
-</div>
+  </div>
 </template>
 
 <script>
-import SimpleFormDialog from '@/components/tools/SimpleFormDialog'
-import NNTable from '@/components/tools/NNTable'
-import CrfAttributeForm from '@/components/library/crfs/CrfAttributeForm'
-import CrfElementForm from '@/components/library/crfs/CrfElementForm'
+import SimpleFormDialog from '@/components/tools/SimpleFormDialog.vue'
+import NNTable from '@/components/tools/NNTable.vue'
+import CrfAttributeForm from '@/components/library/crfs/CrfAttributeForm.vue'
+import CrfElementForm from '@/components/library/crfs/CrfElementForm.vue'
 import crfs from '@/api/crfs'
-import ActionsMenu from '@/components/tools/ActionsMenu'
+import ActionsMenu from '@/components/tools/ActionsMenu.vue'
 import constants from '@/constants/statuses'
-import StatusChip from '@/components/tools/StatusChip'
+import StatusChip from '@/components/tools/StatusChip.vue'
 import crfTypes from '@/constants/crfTypes'
 
 export default {
@@ -163,31 +160,25 @@ export default {
     CrfAttributeForm,
     CrfElementForm,
     ActionsMenu,
-    StatusChip
+    StatusChip,
   },
   props: {
     open: Boolean,
-    editItem: Object
+    editItem: {
+      type: Object,
+      default: null,
+    },
   },
-  computed: {
-    title () {
-      return this.$t('CrfExtensions.extension') + this.editItem.name
-    }
-  },
-  created () {
-    this.constants = constants
-  },
-  data () {
+  emits: ['close'],
+  data() {
     return {
-      helpItems: [],
       elements: [],
       total: 0,
-      options: {},
       headers: [
-        { text: this.$t('_global.type'), value: 'type' },
-        { text: this.$t('_global.name'), value: 'name' },
-        { text: this.$t('_global.version'), value: 'version' },
-        { text: this.$t('_global.status'), value: 'status' }
+        { title: this.$t('_global.type'), key: 'type' },
+        { title: this.$t('_global.name'), key: 'name' },
+        { title: this.$t('_global.version'), key: 'version' },
+        { title: this.$t('_global.status'), key: 'status' },
       ],
       showAttributeForm: false,
       showElementForm: false,
@@ -198,7 +189,7 @@ export default {
           icon: 'mdi-pencil-outline',
           iconColor: 'primary',
           accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.editElement
+          click: this.editElement,
         },
         {
           label: this.$t('CrfExtensions.add_new_attr'),
@@ -206,91 +197,113 @@ export default {
           iconColor: 'primary',
           condition: (item) => !item.type,
           accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.addAttribute
+          click: this.addAttribute,
         },
         {
           label: this.$t('_global.approve'),
           icon: 'mdi-check-decagram',
           iconColor: 'success',
-          condition: (item) => item.possible_actions.find(action => action === 'approve'),
+          condition: (item) =>
+            item.possible_actions.find((action) => action === 'approve'),
           accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.approve
+          click: this.approve,
         },
         {
           label: this.$t('_global.new_version'),
           icon: 'mdi-plus-circle-outline',
           iconColor: 'primary',
-          condition: (item) => item.possible_actions.find(action => action === 'new_version'),
+          condition: (item) =>
+            item.possible_actions.find((action) => action === 'new_version'),
           accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.newVersion
+          click: this.newVersion,
         },
         {
           label: this.$t('_global.inactivate'),
           icon: 'mdi-close-octagon-outline',
           iconColor: 'primary',
-          condition: (item) => item.possible_actions.find(action => action === 'inactivate'),
+          condition: (item) =>
+            item.possible_actions.find((action) => action === 'inactivate'),
           accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.inactivate
+          click: this.inactivate,
         },
         {
           label: this.$t('_global.reactivate'),
           icon: 'mdi-undo-variant',
           iconColor: 'primary',
-          condition: (item) => item.possible_actions.find(action => action === 'reactivate'),
+          condition: (item) =>
+            item.possible_actions.find((action) => action === 'reactivate'),
           accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.reactivate
+          click: this.reactivate,
         },
         {
           label: this.$t('_global.delete'),
           icon: 'mdi-delete-outline',
           iconColor: 'error',
-          condition: (item) => item.possible_actions.find(action => action === 'delete'),
+          condition: (item) =>
+            item.possible_actions.find((action) => action === 'delete'),
           accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.delete
-        }
+          click: this.delete,
+        },
       ],
       elementToEdit: {},
       parentType: '',
-      parentUid: ''
+      parentUid: '',
     }
   },
-  mounted () {
+  computed: {
+    title() {
+      return this.$t('CrfExtensions.extension') + this.editItem.name
+    },
+  },
+  watch: {
+    editItem() {
+      this.getNamespaceData()
+    },
+  },
+  created() {
+    this.constants = constants
+  },
+  mounted() {
     this.getNamespaceData()
   },
   methods: {
-    approve (item) {
-      const type = item.type === 'attr' ? 'vendor-attributes' : 'vendor-elements'
+    approve(item) {
+      const type =
+        item.type === 'attr' ? 'vendor-attributes' : 'vendor-elements'
       crfs.approve(type, item.uid).then(() => {
         this.getNamespaceData()
       })
     },
-    inactivate (item) {
-      const type = item.type === 'attr' ? 'vendor-attributes' : 'vendor-elements'
+    inactivate(item) {
+      const type =
+        item.type === 'attr' ? 'vendor-attributes' : 'vendor-elements'
       crfs.inactivate(type, item.uid).then(() => {
         this.getNamespaceData()
       })
     },
-    reactivate (item) {
-      const type = item.type === 'attr' ? 'vendor-attributes' : 'vendor-elements'
+    reactivate(item) {
+      const type =
+        item.type === 'attr' ? 'vendor-attributes' : 'vendor-elements'
       crfs.reactivate(type, item.uid).then(() => {
         this.getNamespaceData()
       })
     },
-    async newVersion (item) {
-      const type = item.type === 'attr' ? 'vendor-attributes' : 'vendor-elements'
+    async newVersion(item) {
+      const type =
+        item.type === 'attr' ? 'vendor-attributes' : 'vendor-elements'
       crfs.newVersion(type, item.uid).then(() => {
         this.getNamespaceData()
       })
     },
-    addElement () {
+    addElement() {
       this.showElementForm = true
     },
-    closeElementForm () {
+    closeElementForm() {
       this.showElementForm = false
       this.elementToEdit = {}
       this.getNamespaceData()
     },
-    addAttribute (item) {
+    addAttribute(item) {
       if (item.uid) {
         this.parentType = crfTypes.ELEMENT
         this.parentUid = item.uid
@@ -300,23 +313,25 @@ export default {
       }
       this.showAttributeForm = true
     },
-    closeAttributeForm () {
+    closeAttributeForm() {
       this.showAttributeForm = false
       this.parentType = ''
       this.parentUid = ''
       this.elementToEdit = {}
       this.getNamespaceData()
     },
-    editElement (item) {
+    editElement(item) {
       this.elementToEdit = item
       if (item.type === 'attr') {
-        this.parentType = item.vendor_namespace ? crfTypes.NAMESPACE : crfTypes.ELEMENT
+        this.parentType = item.vendor_namespace
+          ? crfTypes.NAMESPACE
+          : crfTypes.ELEMENT
         this.showAttributeForm = true
       } else {
         this.showElementForm = true
       }
     },
-    delete (item) {
+    delete(item) {
       if (item.type) {
         crfs.delete('vendor-attributes', item.uid).then(() => {
           this.getNamespaceData()
@@ -327,39 +342,46 @@ export default {
         })
       }
     },
-    cancel () {
+    cancel() {
       this.close()
     },
-    close () {
+    close() {
       this.$emit('close')
     },
-    async getAllAttributes () {
+    async getAllAttributes() {
       const params = {
-        page_size: 0
+        page_size: 0,
       }
-      await crfs.getAllAttributes(params).then(resp => {
+      await crfs.getAllAttributes(params).then((resp) => {
         this.attributes = resp.data.items
-        this.attributes.forEach(attr => {
+        this.attributes.forEach((attr) => {
           attr.type = 'attr'
         })
       })
     },
-    async getNamespaceData () {
+    async getNamespaceData() {
       await this.getAllAttributes()
       if (this.editItem.uid) {
         crfs.getNamespace(this.editItem.uid).then((resp) => {
           if (resp.data.vendor_attributes || resp.data.vendor_elements) {
             this.elements = []
-            resp.data.vendor_attributes = resp.data.vendor_attributes.map(attr => this.attributes.find(el => attr.uid === el.uid))
-            resp.data.vendor_attributes.forEach(attr => {
+            resp.data.vendor_attributes = resp.data.vendor_attributes.map(
+              (attr) => this.attributes.find((el) => attr.uid === el.uid)
+            )
+            resp.data.vendor_attributes.forEach((attr) => {
               attr.type = 'attr'
             })
-            this.elements.push(...resp.data.vendor_attributes, ...resp.data.vendor_elements)
+            this.elements.push(
+              ...resp.data.vendor_attributes,
+              ...resp.data.vendor_elements
+            )
             this.total = this.elements.length
           }
           for (const attr of this.attributes) {
             if (attr.vendor_element) {
-              const index = this.elements.indexOf(this.elements.find(ele => ele.uid === attr.vendor_element.uid))
+              const index = this.elements.indexOf(
+                this.elements.find((ele) => ele.uid === attr.vendor_element.uid)
+              )
               if (this.elements[index]) {
                 if (!this.elements[index].attributes) {
                   this.elements[index].attributes = []
@@ -370,12 +392,16 @@ export default {
           }
         })
       }
-    }
+    },
   },
-  watch: {
-    editItem () {
-      this.getNamespaceData()
-    }
-  }
 }
 </script>
+
+<style scoped>
+#attr .v-table__wrapper > table > thead > tr {
+  visibility: collapse;
+}
+.elementBackground {
+  background-color: #b1d5f2;
+}
+</style>

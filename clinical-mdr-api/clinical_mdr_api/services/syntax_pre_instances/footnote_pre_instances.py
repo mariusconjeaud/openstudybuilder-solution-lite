@@ -10,7 +10,6 @@ from clinical_mdr_api.domains.versioned_object_aggregate import VersioningExcept
 from clinical_mdr_api.exceptions import BusinessLogicException
 from clinical_mdr_api.models.syntax_pre_instances.footnote_pre_instance import (
     FootnotePreInstance,
-    FootnotePreInstanceIndexingsInput,
     FootnotePreInstanceVersion,
 )
 from clinical_mdr_api.services.syntax_instances.footnotes import FootnoteService
@@ -25,15 +24,7 @@ class FootnotePreInstanceService(FootnoteService[FootnotePreInstanceAR]):
     def _transform_aggregate_root_to_pydantic_model(
         self, item_ar: FootnotePreInstanceAR
     ) -> FootnotePreInstance:
-        item = FootnotePreInstance.from_footnote_pre_instance_ar(item_ar)
-        item.template_type_uid = (
-            self._repos.footnote_template_repository.get_template_type_uid(
-                self._repos.footnote_template_repository.root_class.nodes.get(
-                    uid=item.template_uid
-                )
-            )
-        )
-        return item
+        return FootnotePreInstance.from_footnote_pre_instance_ar(item_ar)
 
     def create_ar_from_input_values(
         self,
@@ -59,9 +50,17 @@ class FootnotePreInstanceService(FootnoteService[FootnotePreInstanceAR]):
             activities,
             activity_groups,
             activity_subgroups,
-            _,
-        ) = self._get_indexings(template)
+            template_type,
+        ) = self._get_indexings(
+            template,
+            self.repository.get_template_type_uid(
+                self._repos.footnote_template_repository.root_class.nodes.get_or_none(
+                    uid=template_uid
+                )
+            ),
+        )
 
+        item_ar._type = template_type
         item_ar._indications = indications
         item_ar._activities = activities
         item_ar._activity_groups = activity_groups
@@ -78,26 +77,3 @@ class FootnotePreInstanceService(FootnoteService[FootnotePreInstanceAR]):
             return self._transform_aggregate_root_to_pydantic_model(item)
         except VersioningException as e:
             raise BusinessLogicException(e.msg) from e
-
-    @db.transaction
-    def patch_indexings(
-        self, uid: str, indexings: FootnotePreInstanceIndexingsInput
-    ) -> FootnotePreInstance:
-        try:
-            self._find_by_uid_or_raise_not_found(uid)
-            if getattr(indexings, "indication_uids", None):
-                self.repository.patch_indications(uid, indexings.indication_uids)
-            if getattr(indexings, "activity_uids", None):
-                self.repository.patch_activities(uid, indexings.activity_uids)
-            if getattr(indexings, "activity_group_uids", None):
-                self.repository.patch_activity_groups(
-                    uid, indexings.activity_group_uids
-                )
-            if getattr(indexings, "activity_subgroup_uids", None):
-                self.repository.patch_activity_subgroups(
-                    uid, indexings.activity_subgroup_uids
-                )
-        finally:
-            self.repository.close()
-
-        return self.get_by_uid(uid)

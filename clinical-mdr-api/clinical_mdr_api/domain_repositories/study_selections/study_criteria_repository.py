@@ -56,21 +56,28 @@ class StudySelectionCriteriaRepository:
 
     def _retrieves_all_data(
         self,
-        study_uid: str | None = None,
+        study_uids: str | list[str] | None = None,
+        criteria_type_name: str | None = None,
         project_name: str | None = None,
         project_number: str | None = None,
         study_value_version: str | None = None,
     ) -> tuple[StudySelectionCriteriaVO]:
         query = ""
         query_parameters = {}
-        if study_uid:
-            if study_value_version:
-                query = "MATCH (sr:StudyRoot { uid: $uid})-[l:HAS_VERSION{status:'RELEASED', version:$study_value_version}]->(sv:StudyValue)"
-                query_parameters["study_value_version"] = study_value_version
-                query_parameters["uid"] = study_uid
+        if study_uids:
+            if isinstance(study_uids, str):
+                study_uid_statement = "{uid: $uids}"
             else:
-                query = "MATCH (sr:StudyRoot { uid: $uid})-[l:LATEST]->(sv:StudyValue)"
-                query_parameters["uid"] = study_uid
+                study_uid_statement = "WHERE sr.uid IN $uids"
+            if study_value_version:
+                query = f"""
+                    MATCH (sr:StudyRoot {study_uid_statement})-[l:HAS_VERSION{{status:'RELEASED', version:$study_value_version}}]->(sv:StudyValue)
+                    """
+                query_parameters["study_value_version"] = study_value_version
+                query_parameters["uids"] = study_uids
+            else:
+                query = f"MATCH (sr:StudyRoot {study_uid_statement})-[l:LATEST]->(sv:StudyValue)"
+                query_parameters["uids"] = study_uids
         else:
             if study_value_version:
                 query = "MATCH (sr:StudyRoot)-[l:HAS_VERSION{status:'RELEASED', version:$study_value_version}]->(sv:StudyValue)"
@@ -92,24 +99,31 @@ class StudySelectionCriteriaRepository:
             query += " WHERE "
             query += " AND ".join(filter_list)
 
-        query += """
+        if criteria_type_name:
+            criteria_type_query = f"""
+                AND (term)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(:CTTermNameValue {{name_sentence_case: '{criteria_type_name}'}})
+                """
+        else:
+            criteria_type_query = ""
+
+        query += f"""
             WITH sr, sv
             MATCH (sv)-[:HAS_STUDY_CRITERIA]->(sc:StudyCriteria)
-            CALL {
+            CALL {{
                 WITH sc
                 MATCH (sc)-[:HAS_SELECTED_CRITERIA]->(:CriteriaValue)<-[ver]-(cr:CriteriaRoot)<-[:HAS_CRITERIA]-(:CriteriaTemplateRoot)-[:HAS_TYPE]->(term:CTTermRoot)
-                WHERE ver.status = "Final"
+                WHERE ver.status = "Final" {criteria_type_query} 
                 RETURN ver as ver, cr as obj, term.uid as term_uid, true as is_instance
                 ORDER BY ver.start_date DESC
                 LIMIT 1
             UNION
                 WITH sc
                 MATCH (sc)-[:HAS_SELECTED_CRITERIA_TEMPLATE]->(:CriteriaTemplateValue)<-[ver]-(ctr:CriteriaTemplateRoot)-[:HAS_TYPE]->(term:CTTermRoot)
-                WHERE ver.status = "Final"
+                WHERE ver.status = "Final" {criteria_type_query} 
                 RETURN ver as ver, ctr as obj, term.uid as term_uid, false as is_instance
                 ORDER BY ver.start_date DESC
                 LIMIT 1
-            }
+            }}
             WITH DISTINCT sr, term_uid, sc, obj, ver, is_instance
             ORDER BY term_uid, sc.order ASC
             MATCH (sc)<-[:AFTER]-(sa:StudyAction)
@@ -153,6 +167,7 @@ class StudySelectionCriteriaRepository:
         self,
         project_name: str | None = None,
         project_number: str | None = None,
+        study_uids: list[str] | None = None,
     ) -> list[StudySelectionCriteriaAR]:
         """
         Finds all the selected study criteria for all studies, and create the aggregate
@@ -161,6 +176,7 @@ class StudySelectionCriteriaRepository:
         all_selections = self._retrieves_all_data(
             project_name=project_name,
             project_number=project_number,
+            study_uids=study_uids,
         )
         # Create a dictionary, with study_uid as key, and list of selections as value
         selection_aggregate_dict = {}
@@ -185,6 +201,7 @@ class StudySelectionCriteriaRepository:
         study_uid: str,
         for_update: bool = False,
         study_value_version: str | None = None,
+        criteria_type_name: str | None = None,
     ) -> StudySelectionCriteriaAR | None:
         """
         Finds all the selected study criteria for a given study, and creates the aggregate
@@ -196,7 +213,9 @@ class StudySelectionCriteriaRepository:
         if for_update:
             self._acquire_write_lock_study_value(study_uid)
         all_selections = self._retrieves_all_data(
-            study_uid, study_value_version=study_value_version
+            study_uid,
+            study_value_version=study_value_version,
+            criteria_type_name=criteria_type_name,
         )
         selection_aggregate = StudySelectionCriteriaAR.from_repository_values(
             study_uid=study_uid, study_criteria_selection=all_selections

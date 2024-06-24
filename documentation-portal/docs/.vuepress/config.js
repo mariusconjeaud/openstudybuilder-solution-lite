@@ -21,6 +21,8 @@ module.exports = {
                         'userguide/studies/manage_studies',
                         'userguide/studies/guide_study_structure',
                         'userguide/studies/guide_visits',
+                        'userguide/studies/userguide_activities',
+                        'userguide/studies/data_specifications',
                         'userguide/reports/userguides_reports'
                     ]
                 },
@@ -40,7 +42,8 @@ module.exports = {
 						'architecture/mdr_data_architecture',
 						'architecture/authentication_authorisation_architecture'
                     ]
-                }
+                },
+                'glossary/glossary.md'
             ],
             '/': [ // Your fallback (this is your landing page)
                 '' // this is your README.md (main)

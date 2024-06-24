@@ -18,7 +18,7 @@
             },
             "result": {
                 "type": "NotFoundException",
-                "message": "No Syntax Template with UID (Objective_000001_does_not_exists) found in given status and version.",
+                "message": "No ObjectiveRoot with UID (Objective_000001_does_not_exists) found in given status, date and version.",
                 "time": "2024-02-14T12:14:30.722911",
                 "path": "http://testserver/studies/study_root/study-objectives",
                 "method": "POST"
@@ -43,7 +43,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "No Syntax Template with UID (Objective_000005) found in given status and version.",
+                "message": "No ObjectiveRoot with UID (Objective_000005) found in given status, date and version.",
                 "method": "POST",
                 "path": "http://testserver/studies/study_root/study-objectives",
                 "time": "2020-11-03T23:42:41.518146",

@@ -8,6 +8,7 @@ from clinical_mdr_api.domains.concepts.odms.item import OdmItemAR, OdmItemVO
 from clinical_mdr_api.domains.concepts.utils import RelationType, VendorCompatibleType
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
 from clinical_mdr_api.models.concepts.odms.odm_common_models import (
+    OdmVendorElementRelationPostInput,
     OdmVendorRelationPostInput,
     OdmVendorsPostInput,
 )
@@ -371,7 +372,7 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
     def add_vendor_elements(
         self,
         uid: str,
-        odm_vendor_relation_post_input: list[OdmVendorRelationPostInput],
+        odm_vendor_relation_post_input: list[OdmVendorElementRelationPostInput],
         override: bool = False,
     ) -> OdmItem:
         odm_item_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))

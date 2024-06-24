@@ -1,155 +1,180 @@
 <template>
-<studybuilder-template-table
-  ref="table"
-  :url-prefix="urlPrefix"
-  translation-type="EndpointTemplateTable"
-  object-type="endpointTemplates"
-  :headers="headers"
-  has-api
-  column-data-resource="endpoint-templates"
-  fullscreen-form
-  :history-formating-func="formatHistoryItem"
-  :history-excluded-headers="historyExcludedHeaders"
-  :prepare-duplicate-payload-func="prepareDuplicatePayload"
-  :default-filters="defaultFilters"
+  <StudybuilderTemplateTable
+    ref="table"
+    :url-prefix="urlPrefix"
+    translation-type="EndpointTemplateTable"
+    object-type="endpointTemplates"
+    :headers="headers"
+    column-data-resource="endpoint-templates"
+    fullscreen-form
+    :history-formating-func="formatHistoryItem"
+    :history-excluded-headers="historyExcludedHeaders"
+    :prepare-duplicate-payload-func="prepareDuplicatePayload"
+    :default-filters="defaultFilters"
   >
-  <template v-slot:editform="{ closeForm, selectedObject, preInstanceMode }">
-    <endpoint-template-pre-instance-form
-      v-if="preInstanceMode"
-      :pre-instance="selectedObject"
-      @close="closeForm"
-      @success="refreshTable()"
+    <template #editform="{ closeForm, selectedObject, preInstanceMode }">
+      <EndpointTemplatePreInstanceForm
+        v-if="preInstanceMode"
+        :pre-instance="selectedObject"
+        @close="closeForm"
+        @success="refreshTable()"
       />
-    <endpoint-template-form
-      v-else
-      @close="closeForm"
-      @templateAdded="refreshTable"
-      @templateUpdated="refreshTable"
-      :template="selectedObject"
+      <EndpointTemplateForm
+        v-else
+        :template="selectedObject"
+        @close="closeForm"
+        @template-added="refreshTable"
+        @template-updated="refreshTable"
       />
-  </template>
-  <template v-slot:item.categories.name.sponsor_preferred_name="{ item }">
-    <template v-if="item.categories && item.categories.length">
-      {{ item.categories|terms }}
     </template>
-    <template v-else>
-      {{ $t('_global.not_applicable_long') }}
-    </template>
-  </template>
-  <template v-slot:item.sub_categories.name.sponsor_preferred_name="{ item }">
-    <template v-if="item.sub_categories && item.sub_categories.length">
-      {{ item.sub_categories|terms }}
-    </template>
-    <template v-else>
-      {{ $t('_global.not_applicable_long') }}
-    </template>
-  </template>
-  <template v-slot:indexingDialog="{ closeDialog, template, show, preInstanceMode }">
-    <template-indexing-dialog
-      @close="closeDialog"
-      @updated="refreshTable"
-      :show="show"
-      :template="template"
-      :prepare-payload-func="prepareIndexingPayload"
-      :url-prefix="urlPrefix"
-      :pre-instance-mode="preInstanceMode"
-      >
-      <template v-slot:form="{ form }">
-        <endpoint-template-indexing-form
-          ref="indexingForm"
-          :form="form"
-          :template="template"
-          />
+    <template #[`item.categories.name.sponsor_preferred_name`]="{ item }">
+      <template v-if="item.categories && item.categories.length">
+        {{ $filters.terms(item.categories) }}
       </template>
-    </template-indexing-dialog>
-  </template>
-  <template v-slot:preInstanceForm="{ closeDialog, template }">
-    <endpoint-template-pre-instance-form
-      :template="template"
-      @close="closeDialog"
-      @success="refreshTable"
+      <template v-else>
+        {{ $t('_global.not_applicable_long') }}
+      </template>
+    </template>
+    <template #[`item.sub_categories.name.sponsor_preferred_name`]="{ item }">
+      <template v-if="item.sub_categories && item.sub_categories.length">
+        {{ $filters.terms(item.sub_categories) }}
+      </template>
+      <template v-else>
+        {{ $t('_global.not_applicable_long') }}
+      </template>
+    </template>
+    <template
+      #indexingDialog="{ closeDialog, template, show, preInstanceMode }"
+    >
+      <TemplateIndexingDialog
+        :show="show"
+        :template="template"
+        :prepare-payload-func="prepareIndexingPayload"
+        :url-prefix="urlPrefix"
+        :pre-instance-mode="preInstanceMode"
+        @close="closeDialog"
+        @updated="refreshTable"
+      >
+        <template #form="{ form }">
+          <EndpointTemplateIndexingForm
+            ref="indexingForm"
+            :form="form"
+            :template="template"
+          />
+        </template>
+      </TemplateIndexingDialog>
+    </template>
+    <template #preInstanceForm="{ closeDialog, template }">
+      <EndpointTemplatePreInstanceForm
+        :template="template"
+        @close="closeDialog"
+        @success="refreshTable"
       />
-  </template>
-</studybuilder-template-table>
+    </template>
+  </StudybuilderTemplateTable>
 </template>
 
-<script>
+<script setup>
+import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import dataFormating from '@/utils/dataFormating'
-import EndpointTemplateForm from '@/components/library/EndpointTemplateForm'
-import EndpointTemplateIndexingForm from './EndpointTemplateIndexingForm'
-import EndpointTemplatePreInstanceForm from './EndpointTemplatePreInstanceForm'
-import StudybuilderTemplateTable from '@/components/library/StudybuilderTemplateTable'
-import TemplateIndexingDialog from './TemplateIndexingDialog'
+import EndpointTemplateForm from '@/components/library/EndpointTemplateForm.vue'
+import EndpointTemplateIndexingForm from './EndpointTemplateIndexingForm.vue'
+import EndpointTemplatePreInstanceForm from './EndpointTemplatePreInstanceForm.vue'
+import StudybuilderTemplateTable from '@/components/library/StudybuilderTemplateTable.vue'
+import TemplateIndexingDialog from './TemplateIndexingDialog.vue'
 
-export default {
-  components: {
-    EndpointTemplateForm,
-    EndpointTemplateIndexingForm,
-    EndpointTemplatePreInstanceForm,
-    StudybuilderTemplateTable,
-    TemplateIndexingDialog
+const { t } = useI18n()
+
+const indexingForm = ref()
+const table = ref()
+
+const headers = [
+  {
+    title: '',
+    key: 'actions',
+    sortable: false,
+    width: '5%',
   },
-  data () {
-    return {
-      headers: [
-        {
-          text: '',
-          value: 'actions',
-          sortable: false,
-          width: '5%'
-        },
-        { text: this.$t('_global.sequence_number'), value: 'sequence_id' },
-        { text: this.$t('_global.parent_template'), value: 'name', width: '30%', filteringName: 'name_plain' },
-        { text: this.$t('_global.modified'), value: 'start_date' },
-        { text: this.$t('_global.status'), value: 'status' },
-        { text: this.$t('_global.version'), value: 'version' }
-      ],
-      defaultFilters: [
-        { text: this.$t('_global.indications'), value: 'indications.name' },
-        { text: this.$t('EndpointTemplateTable.endpoint_cat'), value: 'categories.name.sponsor_preferred_name' },
-        { text: this.$t('EndpointTemplateTable.endpoint_sub_cat'), value: 'sub_categories.name.sponsor_preferred_name' }
-      ],
-      historyExcludedHeaders: [
-        'indications.name',
-        'categories.name.sponsor_preferred_name',
-        'sub_categories.name.sponsor_preferred_name'
-      ],
-      urlPrefix: '/endpoint-templates'
+  { title: t('_global.sequence_number'), key: 'sequence_id' },
+  {
+    title: t('_global.parent_template'),
+    key: 'name',
+    width: '30%',
+    filteringName: 'name_plain',
+  },
+  { title: t('_global.modified'), key: 'start_date' },
+  { title: t('_global.status'), key: 'status' },
+  { title: t('_global.version'), key: 'version' },
+]
+const defaultFilters = [
+  { title: t('_global.indications'), key: 'indications.name' },
+  {
+    title: t('EndpointTemplateTable.endpoint_cat'),
+    key: 'categories.name.sponsor_preferred_name',
+  },
+  {
+    title: t('EndpointTemplateTable.endpoint_sub_cat'),
+    key: 'sub_categories.name.sponsor_preferred_name',
+  },
+]
+const historyExcludedHeaders = [
+  'indications.name',
+  'categories.name.sponsor_preferred_name',
+  'sub_categories.name.sponsor_preferred_name',
+]
+const urlPrefix = '/endpoint-templates'
+
+function prepareIndexingPayload(form) {
+  return indexingForm.value.preparePayload(form)
+}
+function prepareDuplicatePayload(payload, preInstance) {
+  if (preInstance.categories && preInstance.categories.length) {
+    payload.category_uids = preInstance.categories.map((item) => item.term_uid)
+  } else {
+    payload.category_uids = []
+  }
+  if (preInstance.sub_categories && preInstance.sub_categories.length) {
+    payload.sub_category_uids = preInstance.sub_categories.map(
+      (item) => item.term_uid
+    )
+  } else {
+    payload.sub_category_uids = []
+  }
+}
+function refreshTable() {
+  if (table.value.sponsorTable) {
+    table.value.sponsorTable.filter()
+  }
+  if (table.value.preInstanceTable) {
+    table.value.preInstanceTable.filter()
+  }
+}
+function formatHistoryItem(item) {
+  if (item.categories) {
+    item.categories = {
+      name: {
+        sponsor_preferred_name: dataFormating.terms(item.categories),
+      },
     }
-  },
-  methods: {
-    prepareIndexingPayload (form) {
-      return this.$refs.indexingForm.preparePayload(form)
-    },
-    prepareDuplicatePayload (payload, preInstance) {
-      if (preInstance.categories && preInstance.categories.length) {
-        payload.category_uids = preInstance.categories.map(item => item.term_uid)
-      } else {
-        payload.category_uids = []
-      }
-      if (preInstance.sub_categories && preInstance.sub_categories.length) {
-        payload.sub_category_uids = preInstance.sub_categories.map(item => item.term_uid)
-      } else {
-        payload.sub_category_uids = []
-      }
-    },
-    refreshTable () {
-      this.$refs.table.$refs.sponsorTable.filter()
-      if (this.$refs.table.$refs.preInstanceTable) {
-        this.$refs.table.$refs.preInstanceTable.filter()
-      }
-    },
-    formatHistoryItem (item) {
-      if (item.categories) {
-        item.categories = { name: { sponsor_preferred_name: dataFormating.terms(item.categories) } }
-      } else {
-        item.categories = { name: { sponsor_preferred_name: this.$t('_global.not_applicable_long') } }
-      }
-      if (item.sub_categories) {
-        item.sub_categories = { name: { sponsor_preferred_name: dataFormating.terms(item.sub_categories) } }
-      } else {
-        item.sub_categories = { name: { sponsor_preferred_name: this.$t('_global.not_applicable_long') } }
-      }
+  } else {
+    item.categories = {
+      name: {
+        sponsor_preferred_name: t('_global.not_applicable_long'),
+      },
+    }
+  }
+  if (item.sub_categories) {
+    item.sub_categories = {
+      name: {
+        sponsor_preferred_name: dataFormating.terms(item.sub_categories),
+      },
+    }
+  } else {
+    item.sub_categories = {
+      name: {
+        sponsor_preferred_name: t('_global.not_applicable_long'),
+      },
     }
   }
 }

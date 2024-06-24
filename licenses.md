@@ -23,12 +23,10 @@ The OpenStudyBuilder App frontend can be released under GPLv3 License.
 
 | Package | License | Can be combined |
 |---|---|-|
-| certifi (2023.7.22) | MPL v. 2.0 | OK |
+| certifi (2024.2.2) | MPL v. 2.0 | OK |
 | hypothesis (6.54.6) | MPL v. 2.0 | OK |
-| hypothesis-jsonschema (0.22.1) | MPL v. 2.0 | OK |
-| pathspec (0.11.2) | MPL v. 2.0 | OK |
 | portalocker (2.7.0) | Python License | OK |
-| typing_extensions (4.7.1) | Python License | OK |
+| typing_extensions (4.9.0) | Python License | OK |
 | Pillow (9.3.0) | Historical Permission | OK |
 | yattag (1.14.0) | LGPL 3.0 | OK |
 
@@ -59,7 +57,7 @@ The Neo4j MDR DB can be released under GPLv3 License.
 | Package | License | Can be combined |
 |---|---|-|
 | certifi 2022.12.7 | MPL v. 2.0 | OK |
-| packaging 23.0 | Dual-licensed as BSD-2-Clause or Apache-2.0 | OK |
+| packaging 23.2 | Dual-licensed as BSD-2-Clause or Apache-2.0 | OK |
 
 As the licenses is using MPL version 2.0 it is assessed that it poses no issue to release in combination with GPL and GPL derivatives since version 2.0 of the MPL license was rewritten to allow for combination with the GPL versions as well as derivatives of GPL. 
 The `packaging` has the possibility for dual-licensing, where Apache-2.0 is preferrable.
@@ -70,7 +68,7 @@ The MDR Standards Import can be released under GPLv3 License.
 
 | Package | License | Can be combined |
 |---|---|-|
-| certifi 2022.12.7 | MPL v. 2.0 | OK |
+| certifi 2023.11.17 | MPL v. 2.0 | OK |
 
 As the licenses is using MPL version 2.0 it is assessed that it poses no issue to release in combination with GPL and GPL derivatives since version 2.0 of the MPL license was rewritten to allow for combination with the GPL versions as well as derivatives of GPL. 
 **Conclusion**  
@@ -85,6 +83,15 @@ The Data Import can be released under GPLv3 License.
 As the licenses is using MPL version 2.0 it is assessed that it poses no issue to release in combination with GPL and GPL derivatives since version 2.0 of the MPL license was rewritten to allow for combination with the GPL versions as well as derivatives of GPL.
 **Conclusion**  
 The StudyBuilder Export can be released under GPLv3 License.
+
+## DB Schema Migration
+| Package | License | Can be combined |
+|---|---|-|
+| certifi 2024.2.2 | MPL v. 2.0 | OK |
+
+As the licenses is using MPL version 2.0 it is assessed that it poses no issue to release in combination with GPL and GPL derivatives since version 2.0 of the MPL license was rewritten to allow for combination with the GPL versions as well as derivatives of GPL.
+**Conclusion**  
+The DB Schema Migration can be released under GPLv3 License.
 
 
 ## Overall conclusion
@@ -101,8 +108,9 @@ It is determined to be in the best interest of the project to release the above 
 | Documentation Portal | Markdown based documentation portal with OpenStudyBuilder Introduction, User Guides, System Documentation, Data Models and more. | GPLv3 |
 | Neo4j MDR DB | Python tools for Neo4j MDR DB. | GPLv3 |
 | MDR Standards Import | Python tools for import of standards. | GPLv3 |
-| Data Import | Python tools for data imports. | GPLv3 |
+| StudyBuilder Import | Python tools for data imports. | GPLv3 |
 | StudyBuilder Export | Python tools for data exports. | GPLv3 |
+| DB Schema Migration | Python tool for schema migration. | GPLv3 |
 
 The goal of the project is to ensure collaboration within the community on a set standard of defining the mapping tables between documents used in Clinical Studies within developing medicine and the project has collaborated with [COSA](https://www.cdisc.org/cosa) from [CDISC](https://www.cdisc.org/about). It is deemed to be in the best interest of Novo Nordisk, as well as the broader community doing Clinical Studies, that an alignment on data standards are in place, which is what the project hopes to achieve by the current project and which is also why it has been decided to be beneficial to Open Source the code in the hopes of a community driven approach to standardise on the mapping of data standards.  
 

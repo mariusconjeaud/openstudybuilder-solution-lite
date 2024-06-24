@@ -1,30 +1,20 @@
 <template>
-<div>
-  <instance-table
-    fetch-instances-action-name="timeframes/fetchFilteredTimeframes"
-    type="timeframe"
-    :instances="timeframes"
-    base-url="/timeframes"
-    export-object-label="Timeframes"
-    column-data-resource="timeframes"
-    :server-items-length="total"
+  <div>
+    <InstanceTable
+      type="timeframe"
+      :instances="timeframesStore.timeframes"
+      base-url="/timeframes"
+      export-object-label="Timeframes"
+      column-data-resource="timeframes"
+      :items-length="timeframesStore.total"
+      :fetching-function="timeframesStore.fetchFilteredTimeframes"
     />
-</div>
+  </div>
 </template>
 
-<script>
-import InstanceTable from './InstanceTable'
-import { mapGetters } from 'vuex'
+<script setup>
+import InstanceTable from './InstanceTable.vue'
+import { useTimeframesStore } from '@/stores/library-timeframes'
 
-export default {
-  components: {
-    InstanceTable
-  },
-  computed: {
-    ...mapGetters({
-      timeframes: 'timeframes/timeframes',
-      total: 'timeframes/total'
-    })
-  }
-}
+const timeframesStore = useTimeframesStore()
 </script>

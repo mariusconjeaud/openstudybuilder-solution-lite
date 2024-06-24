@@ -1,116 +1,98 @@
 <template>
-<div>
-  <n-n-table
-    :headers="headers"
-    :items="formatedStudyCompoudDosings"
-    item-key="study_compound_dosing_uid"
-    export-object-label="StudyCompoundDosings"
-    :export-data-url="exportDataUrl"
-    column-data-resource="study-compound-dosings"
-    :history-data-fetcher="fetchCompoundDosingsHistory"
-    :history-title="$t('StudyCompoundDosingTable.global_history_title')"
-    >
-    <template v-slot:actions="">
-      <v-btn
-        data-cy="add-study-compound-dosing"
-        fab
-        small
-        color="primary"
-        @click.stop="showForm = true"
-        :title="$t('StudyCompoundForm.add_title')"
-        :disabled="!checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null"
-        >
-        <v-icon>
-          mdi-plus
-        </v-icon>
-      </v-btn>
-    </template>
-    <template v-slot:item.actions="{ item }">
-      <actions-menu :actions="actions" :item="item" />
-    </template>
-    <template v-slot:item.study_element.name="{ item }">
-      <router-link :to="{ name: 'StudyElementOverview', params: { study_id: selectedStudy.uid, id: item.study_element.element_uid } }">
-        {{ item.study_element.name }}
-      </router-link>
-    </template>
-    <template v-slot:item.study_compound.compound.name="{ item }">
-      <router-link :to="{ name: 'StudyCompoundOverview', params: { study_id: selectedStudy.uid, id: item.study_compound.study_compound_uid } }">
-        {{ item.study_compound.compound.name }}
-      </router-link>
-    </template>
-  </n-n-table>
-  <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
-  <v-dialog
-    v-model="showForm"
-    persistent
-    fullscreen
-    content-class="fullscreen-dialog"
-    >
-    <compound-dosing-form
-      @close="closeForm"
-      :study-compound-dosing="selectedStudyCompoundDosing"
-      />
-  </v-dialog>
-  <v-dialog
-    v-model="showHistory"
-    @keydown.esc="closeHistory"
-    persistent
-    :max-width="globalHistoryDialogMaxWidth"
-    :fullscreen="globalHistoryDialogFullscreen"
-    >
-    <history-table
-      @close="closeHistory"
-      :title="studyCompoundDosingHistoryTitle"
+  <div>
+    <NNTable
       :headers="headers"
-      :items="compoundDosingHistoryItems"
+      :items="formatedStudyCompoudDosings"
+      :items-length="studiesCompoundsStore.studyCompoundDosingTotal"
+      item-value="study_compound_dosing_uid"
+      export-object-label="StudyCompoundDosings"
+      :export-data-url="exportDataUrl"
+      column-data-resource="study-compound-dosings"
+      :history-data-fetcher="fetchCompoundDosingsHistory"
+      :history-title="$t('StudyCompoundDosingTable.global_history_title')"
+    >
+      <template #actions="">
+        <v-btn
+          data-cy="add-study-compound-dosing"
+          size="small"
+          color="primary"
+          :title="$t('StudyCompoundForm.add_title')"
+          :disabled="
+            !checkPermission($roles.STUDY_WRITE) ||
+            selectedStudyVersion !== null
+          "
+          icon="mdi-plus"
+          @click.stop="showForm = true"
+        />
+      </template>
+      <template #[`item.actions`]="{ item }">
+        <ActionsMenu :actions="actions" :item="item" />
+      </template>
+    </NNTable>
+    <ConfirmDialog ref="confirm" :text-cols="6" :action-cols="5" />
+    <v-dialog
+      v-model="showForm"
+      persistent
+      fullscreen
+      content-class="fullscreen-dialog"
+    >
+      <CompoundDosingForm
+        :study-compound-dosing="selectedStudyCompoundDosing"
+        @close="closeForm"
       />
-  </v-dialog>
-</div>
+    </v-dialog>
+    <v-dialog
+      v-model="showHistory"
+      persistent
+      :fullscreen="$globals.historyDialogFullscreen"
+      @keydown.esc="closeHistory"
+    >
+      <HistoryTable
+        :title="studyCompoundDosingHistoryTitle"
+        :headers="headers"
+        :items="compoundDosingHistoryItems"
+        @close="closeHistory"
+      />
+    </v-dialog>
+  </div>
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
-import { bus } from '@/main'
-import ActionsMenu from '@/components/tools/ActionsMenu'
-import CompoundDosingForm from './CompoundDosingForm'
-import ConfirmDialog from '@/components/tools/ConfirmDialog'
-import HistoryTable from '@/components/tools/HistoryTable'
+import { computed } from 'vue'
+import ActionsMenu from '@/components/tools/ActionsMenu.vue'
+import CompoundDosingForm from './CompoundDosingForm.vue'
+import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
+import HistoryTable from '@/components/tools/HistoryTable.vue'
 import dataFormating from '@/utils/dataFormating'
-import NNTable from '@/components/tools/NNTable'
+import NNTable from '@/components/tools/NNTable.vue'
 import study from '@/api/study'
-import { accessGuard } from '@/mixins/accessRoleVerifier'
+import { useAccessGuard } from '@/composables/accessGuard'
+import { useStudiesCompoundsStore } from '@/stores/studies-compounds'
+import { useStudiesGeneralStore } from '@/stores/studies-general'
 
 export default {
-  mixins: [accessGuard],
   components: {
     ActionsMenu,
     CompoundDosingForm,
     ConfirmDialog,
     HistoryTable,
-    NNTable
+    NNTable,
   },
-  computed: {
-    ...mapGetters({
-      selectedStudy: 'studiesGeneral/selectedStudy',
-      selectedStudyVersion: 'studiesGeneral/selectedStudyVersion',
-      studyCompoundDosings: 'studyCompounds/studyCompoundDosings'
-    }),
-    exportDataUrl () {
-      return `studies/${this.selectedStudy.uid}/study-compound-dosings`
-    },
-    formatedStudyCompoudDosings () {
-      return this.transformItems(this.studyCompoundDosings)
-    },
-    studyCompoundDosingHistoryTitle () {
-      if (this.selectedStudyCompoundDosing) {
-        return this.$t(
-          'StudyCompoundDosingTable.study_compound_dosing_history_title',
-          { studyCompoundDosingUid: this.selectedStudyCompoundDosing.study_compound_dosing_uid })
-      }
-      return ''
+  inject: ['eventBusEmit'],
+  setup() {
+    const accessGuard = useAccessGuard()
+    const studiesCompoundsStore = useStudiesCompoundsStore()
+    const studiesGeneralStore = useStudiesGeneralStore()
+    return {
+      selectedStudy: computed(() => studiesGeneralStore.selectedStudy),
+      selectedStudyVersion: computed(
+        () => studiesGeneralStore.selectedStudyVersion
+      ),
+      studiesCompoundsStore,
+      ...accessGuard,
     }
   },
-  data () {
+  data() {
     return {
       actions: [
         {
@@ -119,7 +101,7 @@ export default {
           iconColor: 'primary',
           condition: () => !this.selectedStudyVersion,
           click: this.editStudyCompoundDosing,
-          accessRole: this.$roles.STUDY_WRITE
+          accessRole: this.$roles.STUDY_WRITE,
         },
         {
           label: this.$t('_global.delete'),
@@ -127,74 +109,134 @@ export default {
           iconColor: 'error',
           condition: () => !this.selectedStudyVersion,
           click: this.deleteStudyCompoundDosing,
-          accessRole: this.$roles.STUDY_WRITE
+          accessRole: this.$roles.STUDY_WRITE,
         },
         {
           label: this.$t('_global.history'),
           icon: 'mdi-history',
-          click: this.openHistory
-        }
+          click: this.openHistory,
+        },
       ],
       headers: [
-        { text: '', value: 'actions', width: '5%' },
-        { text: '#', value: 'order' },
-        { text: this.$t('StudyCompoundDosingTable.element'), value: 'study_element.name' },
-        { text: this.$t('StudyCompoundDosingTable.compound'), value: 'study_compound.compound.name' },
-        { text: this.$t('StudyCompoundDosingTable.compound_alias'), value: 'study_compound.compound_alias.name' },
-        { text: this.$t('StudyCompoundDosingTable.preferred_alias'), value: 'study_compound.compound_alias.is_preferred_synonym' },
-        { text: this.$t('StudyCompoundDosingTable.dose_value'), value: 'dose_value' },
-        { text: this.$t('StudyCompoundDosingTable.dose_frequency'), value: 'dose_frequency.name' }
+        { title: '', key: 'actions', width: '5%' },
+        { title: '#', key: 'order' },
+        {
+          title: this.$t('StudyCompoundDosingTable.element'),
+          key: 'study_element.name',
+        },
+        {
+          title: this.$t('StudyCompoundDosingTable.compound'),
+          key: 'study_compound.compound.name',
+        },
+        {
+          title: this.$t('StudyCompoundDosingTable.compound_alias'),
+          key: 'study_compound.compound_alias.name',
+        },
+        {
+          title: this.$t('StudyCompoundDosingTable.preferred_alias'),
+          key: 'study_compound.compound_alias.is_preferred_synonym',
+        },
+        {
+          title: this.$t('StudyCompoundDosingTable.dose_value'),
+          key: 'dose_value',
+        },
+        {
+          title: this.$t('StudyCompoundDosingTable.dose_frequency'),
+          key: 'dose_frequency.name',
+        },
       ],
       selectedStudyCompoundDosing: null,
       showForm: false,
       showHistory: false,
-      compoundDosingHistoryItems: []
+      compoundDosingHistoryItems: [],
     }
   },
+  computed: {
+    exportDataUrl() {
+      return `studies/${this.selectedStudy.uid}/study-compound-dosings`
+    },
+    formatedStudyCompoudDosings() {
+      return this.transformItems(
+        this.studiesCompoundsStore.studyCompoundDosings
+      )
+    },
+    studyCompoundDosingHistoryTitle() {
+      if (this.selectedStudyCompoundDosing) {
+        return this.$t(
+          'StudyCompoundDosingTable.study_compound_dosing_history_title',
+          {
+            studyCompoundDosingUid:
+              this.selectedStudyCompoundDosing.study_compound_dosing_uid,
+          }
+        )
+      }
+      return ''
+    },
+  },
+  mounted() {
+    this.studiesCompoundsStore.fetchStudyCompoundDosings(
+      this.selectedStudy.uid
+    )
+  },
   methods: {
-    async deleteStudyCompoundDosing (studyCompoundDosing) {
+    async deleteStudyCompoundDosing(studyCompoundDosing) {
       const options = { type: 'warning' }
       const compound = studyCompoundDosing.study_compound.compound_alias.name
       const element = studyCompoundDosing.study_element.name
-      const msg = this.$t('StudyCompoundDosingTable.confirm_delete', { compound, element })
-      if (!await this.$refs.confirm.open(msg, options)) {
+      const msg = this.$t('StudyCompoundDosingTable.confirm_delete', {
+        compound,
+        element,
+      })
+      if (!(await this.$refs.confirm.open(msg, options))) {
         return
       }
-      this.$store.dispatch('studyCompounds/deleteStudyCompoundDosing', {
-        studyUid: this.selectedStudy.uid,
-        studyCompoundDosingUid: studyCompoundDosing.study_compound_dosing_uid
-      }).then(resp => {
-        bus.$emit('notification', { msg: this.$t('StudyCompoundDosingTable.delete_success') })
-      })
+      this.studiesCompoundsStore
+        .deleteStudyCompoundDosing(
+          this.selectedStudy.uid,
+          studyCompoundDosing.study_compound_dosing_uid
+        )
+        .then(() => {
+          this.eventBusEmit('notification', {
+            msg: this.$t('StudyCompoundDosingTable.delete_success'),
+          })
+        })
     },
-    editStudyCompoundDosing (studyCompoundDosing) {
+    editStudyCompoundDosing(studyCompoundDosing) {
       this.selectedStudyCompoundDosing = studyCompoundDosing
       this.showForm = true
     },
-    async fetchCompoundDosingsHistory () {
-      const resp = await study.getStudyCompoundDosingsAuditTrail(this.selectedStudy.uid)
+    async fetchCompoundDosingsHistory() {
+      const resp = await study.getStudyCompoundDosingsAuditTrail(
+        this.selectedStudy.uid
+      )
       return this.transformItems(resp.data)
     },
-    async openHistory (studyCompoundDosing) {
+    async openHistory(studyCompoundDosing) {
       this.selectedStudyCompoundDosing = studyCompoundDosing
-      const resp = await study.getStudyCompoundDosingAuditTrail(this.selectedStudy.uid, studyCompoundDosing.study_compound_dosing_uid)
+      const resp = await study.getStudyCompoundDosingAuditTrail(
+        this.selectedStudy.uid,
+        studyCompoundDosing.study_compound_dosing_uid
+      )
       this.compoundDosingHistoryItems = this.transformItems(resp.data)
       this.showHistory = true
     },
-    closeHistory () {
+    closeHistory() {
       this.selectedStudyCompoundDosing = null
       this.showHistory = false
     },
-    closeForm () {
+    closeForm() {
       this.showForm = false
       this.selectedStudyCompoundDosing = null
     },
-    transformItems (items) {
+    transformItems(items) {
       const result = []
       for (const item of items) {
         const newItem = { ...item }
         if (newItem.study_compound.compound_alias) {
-          newItem.study_compound.compound_alias.is_preferred_synonym = dataFormating.yesno(newItem.study_compound.compound_alias.is_preferred_synonym)
+          newItem.study_compound.compound_alias.is_preferred_synonym =
+            dataFormating.yesno(
+              newItem.study_compound.compound_alias.is_preferred_synonym
+            )
         }
         if (newItem.dose_value) {
           newItem.dose_value = dataFormating.numericValue(newItem.dose_value)
@@ -202,10 +244,7 @@ export default {
         result.push(newItem)
       }
       return result
-    }
+    },
   },
-  mounted () {
-    this.$store.dispatch('studyCompounds/fetchStudyCompoundDosings', { studyUid: this.selectedStudy.uid, studyValueVersion: this.selectedStudyVersion })
-  }
 }
 </script>

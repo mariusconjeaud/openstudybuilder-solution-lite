@@ -53,6 +53,7 @@
             "study_number": "007",
             "subpart_id": null,
             "study_acronym": "Study-007",
+            "study_subpart_acronym": null,
             "project_number": "123",
             "description": null,
             "project_name": "Project ABC",
@@ -89,7 +90,7 @@
             "study_status": "DRAFT",
             "version_number": null,
             "version_timestamp": "2021-04-06T13:51:58.468263",
-            "version_author": null,
+            "version_author": "unknown-user",
             "version_description": null
           },
           "study_description": null
@@ -139,6 +140,7 @@
             "project_name": "Project ABC",
             "clinical_programme_name": "CP",
             "study_id": "123-007",
+            "study_subpart_acronym": null,
             "registry_identifiers": {
               "ct_gov_id": null,
               "eudract_id": null,
@@ -170,7 +172,7 @@
             "study_status": "DRAFT",
             "version_number": null,
             "version_timestamp": "2021-04-06T13:51:58.468263",
-            "version_author": null,
+            "version_author": "unknown-user",
             "version_description": null
           },
           "study_description": null
@@ -217,6 +219,7 @@
             "project_name": "Project ABC",
             "clinical_programme_name": "CP",
             "study_id": "123-007",
+            "study_subpart_acronym": null,
             "registry_identifiers": {
               "ct_gov_id": null,
               "eudract_id": null,
@@ -248,7 +251,7 @@
             "study_status": "DRAFT",
             "version_number": null,
             "version_timestamp": "2021-04-06T13:51:58.468263",
-            "version_author": null,
+            "version_author": "unknown-user",
             "version_description": null
           },
           "study_description": null
@@ -295,6 +298,7 @@
             "project_name": "Project ABC",
             "clinical_programme_name": "CP",
             "study_id": "123-007",
+            "study_subpart_acronym": null,
             "registry_identifiers": {
               "ct_gov_id": null,
               "eudract_id": null,
@@ -326,7 +330,7 @@
             "study_status": "DRAFT",
             "version_number": null,
             "version_timestamp": "2021-04-06T13:51:58.468263",
-            "version_author": null,
+            "version_author": "unknown-user",
             "version_description": null
           },
           "study_description": null
@@ -398,6 +402,7 @@
             "project_name": "Project DEF",
             "clinical_programme_name": "CP",
             "study_id": "456-007",
+            "study_subpart_acronym": null,
             "registry_identifiers": {
               "ct_gov_id": null,
               "eudract_id": null,
@@ -429,7 +434,7 @@
             "study_status": "DRAFT",
             "version_number": null,
             "version_timestamp": "2021-04-06T13:51:58.468263",
-            "version_author": null,
+            "version_author": "unknown-user",
             "version_description": null
           },
           "study_description": null
@@ -507,6 +512,7 @@
             "project_name": "Project DEF",
             "clinical_programme_name": "CP",
             "study_id": "456-007",
+            "study_subpart_acronym": null,
             "registry_identifiers": {
               "ct_gov_id": null,
               "eudract_id": null,
@@ -538,7 +544,7 @@
             "study_status": "DRAFT",
             "version_number": null,
             "version_timestamp": "2021-04-06T13:51:58.468263",
-            "version_author": null,
+            "version_author": "unknown-user",
             "version_description": null
           },
           "study_description": null
@@ -580,6 +586,7 @@
             "study_number": "007",
             "subpart_id": null,
             "study_acronym": "Study-007",
+            "study_subpart_acronym": null,
             "project_number": "456",
             "description": null,
             "project_name": "Project DEF",
@@ -616,7 +623,7 @@
             "study_status": "DRAFT",
             "version_number": null,
             "version_timestamp": "2023-09-14T20:56:22.962488+00:00",
-            "version_author": null,
+            "version_author": "unknown-user",
             "version_description": null
           },
           "study_description": null
@@ -691,6 +698,7 @@
             "study_number": "007",
             "subpart_id": null,
             "study_acronym": "new acronym",
+            "study_subpart_acronym": null,
             "project_number": "456",
             "description": null,
             "project_name": "Project DEF",
@@ -727,7 +735,7 @@
             "study_status": "DRAFT",
             "version_number": null,
             "version_timestamp": "2021-04-06T13:51:58.468263",
-            "version_author": null,
+            "version_author": "unknown-user",
             "version_description": null
           },
           "study_description": null
@@ -746,13 +754,13 @@
     "response": {
       "code": 200,
       "headers": {
-        "content-length": "340",
+        "content-length": "0",
         "content-type": "application/json"
       },
       "result": [
         {
           "study_uid": "Study_000001",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "date": "2023-09-14T21:10:13.955105Z",
           "actions": [
             {
@@ -772,7 +780,7 @@
         },
         {
           "study_uid": "Study_000001",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "date": "2023-09-14T21:10:12.600548Z",
           "actions": [
             {
@@ -789,7 +797,7 @@
         },
         {
           "study_uid": "Study_000001",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "date": "2023-09-14T21:10:12.304231Z",
           "actions": [
             {
@@ -868,7 +876,7 @@
               "action": "Edit"
             },
             {
-              "section": "Unknown",
+              "section": "study_intervention",
               "field": "trial_intent_type_null_value_code",
               "before_value": {
                 "term_uid": "A good reason",
@@ -907,7 +915,7 @@
         },
         {
           "study_uid": "Study_000001",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "date": "2023-09-14T21:10:11.319582Z",
           "actions": [
             {
@@ -997,7 +1005,7 @@
               "action": "Create"
             },
             {
-              "section": "Unknown",
+              "section": "study_intervention",
               "field": "trial_intent_type_null_value_code",
               "before_value": null,
               "after_value": {
@@ -1030,7 +1038,7 @@
         },
         {
           "study_uid": "Study_000001",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "date": "2023-09-14T21:10:11.200893Z",
           "actions": [
             {
@@ -1047,7 +1055,7 @@
         },
         {
           "study_uid": "Study_000001",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "date": "2023-09-14T21:10:11.070014Z",
           "actions": [
             {
@@ -1067,7 +1075,7 @@
         },
         {
           "study_uid": "Study_000001",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "date": "2023-09-14T21:10:10.884935Z",
           "actions": [
             {
@@ -1084,7 +1092,58 @@
         },
         {
           "study_uid": "Study_000001",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
+          "date": "2024-04-23T15:03:42.132476Z",
+          "actions": [
+            {
+              "section": "Unknown",
+              "field": "baseline_as_time_zero",
+              "before_value": null,
+              "after_value": {
+                "term_uid": "true",
+                "name": null
+              },
+              "action": "Create"
+            }
+          ]
+        },
+        {
+          "study_uid": "Study_000001",
+          "user_initials": "unknown-user",
+          "date": "2024-04-23T15:03:42.132476Z",
+          "actions": [
+            {
+              "section": "Unknown",
+              "field": "soa_show_milestones",
+              "before_value": null,
+              "after_value": {
+                "term_uid": "false",
+                "name": null
+              },
+              "action": "Create"
+            }
+          ]
+        },
+        {
+          "study_uid": "Study_000001",
+          "user_initials": "unknown-user",
+          "date": "2024-04-23T15:03:42.102782Z",
+          "actions": [
+            {
+              "section": "Unknown",
+              "field": "soa_show_epochs",
+              "before_value": null,
+              "after_value": {
+                "term_uid": "true",
+                "name": null
+              },
+              "action": "Create"
+            }
+          ]
+        },
+        {
+          "study_uid": "Study_000001",
+          "user_initials": "unknown-user",
           "date": "2023-09-14T21:10:10.608381Z",
           "actions": [
             {
@@ -1101,7 +1160,7 @@
         },
         {
           "study_uid": "Study_000001",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "date": "2023-09-14T21:10:10.608381Z",
           "actions": [
             {
@@ -1118,7 +1177,7 @@
         },
         {
           "study_uid": "Study_000001",
-          "user_initials": "TEST_USER",
+          "user_initials": "unknown-user",
           "date": "2023-09-14T21:10:10.362325Z",
           "actions": [
             {
@@ -1341,6 +1400,7 @@
             "study_number": "1910",
             "subpart_id": null,
             "study_acronym": null,
+            "study_subpart_acronym": null,
             "project_number": "123",
             "description": null,
             "project_name": "Project ABC",
@@ -1377,7 +1437,7 @@
             "study_status": "DRAFT",
             "version_number": null,
             "version_timestamp": "2021-04-06T13:51:58.468263",
-            "version_author": null,
+            "version_author": "unknown-user",
             "version_description": null
           },
           "study_description": null
@@ -1412,6 +1472,7 @@
             "study_number": "1910",
             "subpart_id": null,
             "study_acronym": null,
+            "study_subpart_acronym": null,
             "project_number": "123",
             "description": null,
             "project_name": "Project ABC",
@@ -1448,7 +1509,7 @@
             "study_status": "DRAFT",
             "version_number": null,
             "version_timestamp": "2021-04-06T13:51:58.468263",
-            "version_author": null,
+            "version_author": "unknown-user",
             "version_description": null
           },
           "high_level_study_design": {
@@ -1509,6 +1570,7 @@
             "study_number": "1910",
             "subpart_id": null,
             "study_acronym": null,
+            "study_subpart_acronym": null,
             "project_number": "123",
             "description": null,
             "project_name": "Project ABC",
@@ -1545,7 +1607,7 @@
             "study_status": "DRAFT",
             "version_number": null,
             "version_timestamp": "2021-04-06T13:51:58.468263",
-            "version_author": null,
+            "version_author": "unknown-user",
             "version_description": null
           },
           "high_level_study_design": null,
@@ -1624,6 +1686,7 @@
             "study_number": "1910",
             "subpart_id": null,
             "study_acronym": null,
+            "study_subpart_acronym": null,
             "project_number": "123",
             "description": null,
             "project_name": "Project ABC",
@@ -1660,7 +1723,7 @@
             "study_status": "DRAFT",
             "version_number": null,
             "version_timestamp": "2021-04-06T13:51:58.468263",
-            "version_author": null,
+            "version_author": "unknown-user",
             "version_description": null
           },
           "high_level_study_design": null,

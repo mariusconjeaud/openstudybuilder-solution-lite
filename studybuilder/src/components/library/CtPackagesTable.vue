@@ -1,91 +1,79 @@
 <template>
-<package-timeline
-  :catalogue-name="catalogueName"
-  :package-name="packageName"
-  @catalogueChanged="updateUrl"
-  @packageChanged="updateUrl"
+  <PackageTimelines
+    :catalogue-name="catalogueName"
+    :package-name="packageName"
+    @catalogue-changed="updateUrl"
+    @package-changed="updateUrl"
   >
-  <template v-slot:default="{ catalogue_name, selectedPackage }">
-    <codelist-table
-      :catalogue="catalogue_name"
-      :package="selectedPackage"
-      table-height="50vh"
-      read-only
-      @openCodelistTerms="openCodelistTerms"
-      column-data-resource="ct/codelists"
-      :terms="terms"
-      :loading="loading"
+    <template #default="{ catalogue_name, selectedPackage }">
+      <CodelistTable
+        ref="table"
+        :catalogue="catalogue_name"
+        :package="selectedPackage"
+        read-only
+        column-data-resource="ct/codelists"
+        @open-codelist-terms="openCodelistTerms"
       >
-      <template v-slot:extraActions>
-        <v-btn
-          class="mx-2"
-          fab
-          small
-          @click="goToPackagesHistory(catalogue_name)"
-          :title="$t('CtPackageHistory.ct_packages_history')"
-          >
-          <v-icon>mdi-calendar-clock</v-icon>
-        </v-btn>
-      </template>
-    </codelist-table>
-  </template>
-</package-timeline>
+        <template #extraActions>
+          <v-btn
+            class="mx-2"
+            size="small"
+            :title="$t('CtPackageHistory.ct_packages_history')"
+            icon="mdi-calendar-clock"
+            @click="goToPackagesHistory(catalogue_name)"
+          />
+        </template>
+      </CodelistTable>
+    </template>
+  </PackageTimelines>
 </template>
 
-<script>
-import CodelistTable from './CodelistTable'
-import PackageTimeline from './PackageTimeline'
-import controlledTerminology from '@/api/controlledTerminology'
+<script setup>
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import CodelistTable from './CodelistTable.vue'
+import PackageTimelines from './PackageTimelines.vue'
 
-export default {
-  props: ['catalogueName', 'packageName'],
-  components: {
-    CodelistTable,
-    PackageTimeline
+const props = defineProps({
+  catalogueName: {
+    type: String,
+    default: null,
   },
-  data () {
-    return {
-      terms: [],
-      loading: false
-    }
+  packageName: {
+    type: String,
+    default: null,
   },
-  methods: {
-    openCodelistTerms ({ codelist, catalogueName, packageName }) {
-      this.$router.push({
-        name: 'CtPackageTerms',
-        params: {
-          codelist_id: codelist.codelist_uid,
-          catalogue_name: catalogueName,
-          package_name: packageName
-        }
-      })
+})
+const router = useRouter()
+
+const table = ref()
+
+function openCodelistTerms({ codelist, catalogueName, packageName }) {
+  router.push({
+    name: 'CtPackageTerms',
+    params: {
+      codelist_id: codelist.codelist_uid,
+      catalogue_name: catalogueName,
+      package_name: packageName,
     },
-    updateUrl (catalogueName, packageName) {
-      this.$router.push({
-        name: 'CtPackages',
-        params: { catalogue_name: catalogueName, package_name: packageName }
-      })
+  })
+}
+
+function updateUrl(catalogueName, pkg) {
+  router.push({
+    name: 'CtPackages',
+    params: {
+      catalogue_name: catalogueName,
+      package_name: pkg ? pkg.name : null,
     },
-    goToPackagesHistory (catalogueName) {
-      this.$router.push({
-        name: 'CtPackagesHistory',
-        params: { catalogue_name: catalogueName }
-      })
-    },
-    fetchTerms  () {
-      this.loading = true
-      const params = {
-        page_size: 0,
-        compact_response: true
-      }
-      controlledTerminology.getCodelistTermsNames(params).then(resp => {
-        this.terms = resp.data.items
-        this.loading = false
-      })
-    }
-  },
-  mounted () {
-    this.fetchTerms()
-  }
+  })
+  table.value.refresh()
+}
+
+function goToPackagesHistory(catalogueName) {
+  router.push({
+    name: 'CtPackagesHistory',
+    params: { catalogue_name: catalogueName },
+  })
 }
 </script>

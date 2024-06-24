@@ -1,7 +1,9 @@
+import datetime
 from typing import Callable, Self
 
 from pydantic import Field, validator
 
+from clinical_mdr_api.domain_repositories.models._utils import convert_to_datetime
 from clinical_mdr_api.domains.concepts.activities.activity import ActivityAR
 from clinical_mdr_api.domains.concepts.activities.activity_group import ActivityGroupAR
 from clinical_mdr_api.domains.concepts.activities.activity_sub_group import (
@@ -140,7 +142,10 @@ class Activity(ActivityBase):
             abbreviation=activity_ar.concept_vo.abbreviation,
             activity_groupings=sorted(
                 activity_groupings,
-                key=lambda item: (item.activity_subgroup_uid, item.activity_group_uid),
+                key=lambda item: (
+                    item.activity_subgroup_name,
+                    item.activity_group_name,
+                ),
             ),
             library_name=Library.from_library_vo(activity_ar.library).name,
             start_date=activity_ar.item_metadata.start_date,
@@ -165,6 +170,8 @@ class Activity(ActivityBase):
             is_multiple_selection_allowed=activity_ar.concept_vo.is_multiple_selection_allowed
             if activity_ar.concept_vo.is_multiple_selection_allowed is not None
             else True,
+            is_finalized=activity_ar.concept_vo.is_finalized,
+            is_used_by_legacy_instances=activity_ar.concept_vo.is_used_by_legacy_instances,
         )
 
     activity_groupings: list[ActivityGroupingHierarchySimpleModel] = Field(
@@ -229,6 +236,26 @@ class Activity(ActivityBase):
         title="Boolean flag indicating whether multiple selections are allowed for this activity",
         description="Boolean flag indicating whether multiple selections are allowed for this activity",
         nullable=False,
+    )
+    is_finalized: bool = Field(
+        False,
+        title="Computed boolean value based on is_request_rejected and replaced_by_activity",
+        description="Evaluates to false, if is_request_rejected is false and replaced_by_activity is null else true",
+        nullable=False,
+    )
+    is_used_by_legacy_instances: bool = Field(
+        False,
+        title="True if all instances linked to given Activity are legacy_used.",
+        nullable=False,
+    )
+
+
+class ActivityForStudyActivity(Activity):
+    activity_groupings: list[ActivityGroupingHierarchySimpleModel] = Field(
+        [],
+        title="Activity Groupings",
+        description="Activity Groupings",
+        remove_from_wildcard=True,
     )
 
 
@@ -334,6 +361,10 @@ class SimpleActivity(BaseModel):
         title="library_name",
         description="",
     )
+    version: str | None = Field(None, title="version")
+    status: str | None = Field(None, title="status")
+    start_date: datetime.datetime | None = Field(None, title="start date")
+    end_date: datetime.datetime | None = Field(None, title="end date")
 
 
 class SimpleActivitySubGroup(BaseModel):
@@ -375,12 +406,17 @@ class SimpleActivityInstance(BaseModel):
     topic_code: str | None = Field(None, title="name", description="")
     library_name: str = Field(..., title="name", description="")
     activity_instance_class: SimpleActivityInstanceClass = Field(...)
+    version: str | None = Field(None, title="version")
+    status: str | None = Field(None, title="status")
+    start_date: datetime.datetime | None = Field(None, title="start date")
+    end_date: datetime.datetime | None = Field(None, title="end date")
 
 
 class ActivityOverview(BaseModel):
     activity: SimpleActivity = Field(...)
     activity_groupings: list[SimpleActivityGrouping] = Field(...)
     activity_instances: list[SimpleActivityInstance] = Field(...)
+    all_versions: list[str] = Field(...)
 
     @classmethod
     def from_repository_input(cls, overview: dict):
@@ -400,6 +436,14 @@ class ActivityOverview(BaseModel):
                     "is_multiple_selection_allowed", True
                 ),
                 library_name=overview.get("activity_library_name"),
+                version=overview.get("has_version", {}).get("version"),
+                status=overview.get("has_version", {}).get("status"),
+                start_date=convert_to_datetime(
+                    overview.get("has_version", {}).get("start_date")
+                ),
+                end_date=convert_to_datetime(
+                    overview.get("has_version", {}).get("end_date")
+                ),
             ),
             activity_groupings=[
                 SimpleActivityGrouping(
@@ -447,7 +491,10 @@ class ActivityOverview(BaseModel):
                             "name"
                         )
                     ),
+                    version=activity_instance.get("version", {}).get("version"),
+                    status=activity_instance.get("version", {}).get("status"),
                 )
                 for activity_instance in overview.get("activity_instances")
             ],
+            all_versions=overview.get("all_versions"),
         )

@@ -18,19 +18,40 @@ const knownCodelists = {
   objectiveLevels: { attribute: 'codelist_name', value: 'Objective Level' },
   units: { attribute: 'codelist_uid', value: 'C71620' },
   visitTypes: { attribute: 'codelist_name', value: 'VisitType' },
-  timepointReferences: { attribute: 'codelist_name', value: 'Time Point Reference' },
+  timepointReferences: {
+    attribute: 'codelist_name',
+    value: 'Time Point Reference',
+  },
   epochs: { attribute: 'codelist_uid', value: 'C99079' },
   epochTypes: { attribute: 'codelist_name', value: 'Epoch Type' },
   epochSubTypes: { attribute: 'codelist_name', value: 'Epoch Sub Type' },
   sexOfParticipants: { attribute: 'codelist_uid', value: 'C66732' },
-  objectiveCategories: { attribute: 'codelist_name', value: 'Objective Category' },
+  objectiveCategories: {
+    attribute: 'codelist_name',
+    value: 'Objective Category',
+  },
   endpointLevels: { attribute: 'codelist_name', value: 'Endpoint Level' },
-  endpointSubLevels: { attribute: 'codelist_name', value: 'Endpoint Sub Level' },
-  endpointCategories: { attribute: 'codelist_name', value: 'Endpoint Category' },
-  endpointSubCategories: { attribute: 'codelist_name', value: 'Endpoint Sub Category' },
+  endpointSubLevels: {
+    attribute: 'codelist_name',
+    value: 'Endpoint Sub Level',
+  },
+  endpointCategories: {
+    attribute: 'codelist_name',
+    value: 'Endpoint Category',
+  },
+  endpointSubCategories: {
+    attribute: 'codelist_name',
+    value: 'Endpoint Sub Category',
+  },
   criteriaTypes: { attribute: 'codelist_name', value: 'Criteria Type' },
-  criteriaCategories: { attribute: 'codelist_name', value: 'Criteria Category' },
-  criteriaSubCategories: { attribute: 'codelist_name', value: 'Criteria Sub Category' },
+  criteriaCategories: {
+    attribute: 'codelist_name',
+    value: 'Criteria Category',
+  },
+  criteriaSubCategories: {
+    attribute: 'codelist_name',
+    value: 'Criteria Sub Category',
+  },
   typeOfTreatment: { attribute: 'codelist_name', value: 'Type of Treatment' },
   routeOfAdministration: { attribute: 'codelist_uid', value: 'C66729' },
   dosageForm: { attribute: 'codelist_uid', value: 'C66726' },
@@ -50,26 +71,44 @@ const knownCodelists = {
   deliveryDevice: { attribute: 'codelist_name', value: 'Delivery Device' },
   dispensedIn: { attribute: 'codelist_name', value: 'Compound Dispensed In' },
   adverseEvents: { attribute: 'codelist_uid', value: 'C66734' },
-  diseaseMilestoneTypes: { attribute: 'codelist_name', value: 'Disease Milestone Type' },
+  diseaseMilestoneTypes: {
+    attribute: 'codelist_name',
+    value: 'Disease Milestone Type',
+  },
   footnoteTypes: { attribute: 'codelist_name', value: 'Footnote Type' },
-  footnoteCategories: { attribute: 'codelist_name', value: 'Footnote Category' },
-  footnoteSubCategories: { attribute: 'codelist_name', value: 'Footnoe Sub Category' }
+  footnoteCategories: {
+    attribute: 'codelist_name',
+    value: 'Footnote Category',
+  },
+  footnoteSubCategories: {
+    attribute: 'codelist_name',
+    value: 'Footnoe Sub Category',
+  },
 }
 
 export default {
-  getAll (params) {
+  getAll(params) {
     return repository.get(resource, { params })
   },
-  getByCodelist (name, getAll) {
+  getByCodelist(name, getAll) {
     const codelist = knownCodelists[name]
     if (codelist !== undefined) {
       const params = { page_size: getAll ? 0 : 100 }
+      params[codelist.attribute] = codelist.value
+      return repository.get(`${resource}`, { params })
+    }
+    throw new Error(`Provided codelist (${name}) is unknown`)
+  },
+  getNamesByCodelist(name) {
+    const codelist = knownCodelists[name]
+    if (codelist !== undefined) {
+      const params = { page_size: 100 }
       params[codelist.attribute] = codelist.value
       return repository.get(`${resource}/names`, { params })
     }
     throw new Error(`Provided codelist (${name}) is unknown`)
   },
-  getAttributesByCodelist (name) {
+  getAttributesByCodelist(name) {
     const codelist = knownCodelists[name]
     if (codelist !== undefined) {
       const params = { page_size: 100 }
@@ -78,10 +117,10 @@ export default {
     }
     throw new Error(`Provided codelist (${name}) is unknown`)
   },
-  getTermByUid (termUid) {
+  getTermByUid(termUid) {
     return repository.get(`${resource}/${termUid}/names`)
   },
-  getTermsByCodelistUid (params) {
+  getTermsByCodelistUid(params) {
     return repository.get(`${resource}`, { params })
-  }
+  },
 }

@@ -1,120 +1,154 @@
 <template>
-<v-card class="pl-6 pr-6 pb-4" color="dfltBackground">
-  <v-card-title class="pl-0">
-    <span class="dialog-title">{{ title }}</span>
-    <help-button-with-panels :title="$t('_global.help')" :items="helpItems" />
-  </v-card-title>
-  <v-card-text class="mt-4 white">
-    <v-stepper
-      v-model="currentStep"
-      vertical
-      >
-      <template v-for="(step, index) in steps">
-        <v-stepper-step
-          :key="`stepper-${index}`"
-          :complete="currentStep > index + 1 || editable"
-          :step="index + 1"
-          color="secondary"
-          :editable="editable"
-          :edit-icon="editable ? '$complete' : '$edit'"
-          >
-          <span class="text-h6" :class="{ 'step-title': currentStep >= index + 1 }">{{ step.title }}</span>
-        </v-stepper-step>
-        <v-stepper-content
-          :key="`content-${index}`"
-          :step="index + 1"
-          >
-          <v-sheet v-if="!step.noStyle" class="ma-2 pa-4" :rounded="false">
-            <slot :name="`step.${step.name}`" v-bind:step="index + 1" />
-          </v-sheet>
-          <template v-else>
-            <slot :name="`step.${step.name}`" v-bind:step="index + 1" />
-          </template>
-          <div class="mx-2 mt-6 mb-1">
-            <v-btn
-              class="secondary-btn"
-              @click="cancel"
-              outlined
-              elevation="2"
-              width="120px"
-              >
-              {{ $t('_global.cancel') }}
-            </v-btn>
-            <v-btn
-              v-if="currentStep > 1"
-              class="secondary-btn ml-2"
-              @click="currentStep = index"
-              outlined
-              elevation="2"
-              width="120px"
-              >
-              {{ $t('_global.previous') }}
-            </v-btn>
-            <v-btn
-              v-if="currentStep < steps.length"
-              :data-cy="step.name + '-continue-button'"
+  <v-card class="pl-6 pr-6 pb-4" color="dfltBackground">
+    <v-card-title>
+      <v-row>
+        <span class="dialog-title mt-1">{{ title }}</span>
+        <HelpButtonWithPanels :title="$t('_global.help')" :items="helpItems" />
+      </v-row>
+    </v-card-title>
+    <v-card-text class="mt-4 white">
+      <v-stepper v-model="currentStep">
+        <template v-for="(step, index) in steps" :key="`stepper-${index}`">
+          <v-stepper-header>
+            <v-stepper-item
+              :complete="currentStep > index + 1 || editable"
+              :title="step.title"
+              :value="index + 1"
               color="secondary"
-              class="ml-2"
-              @click="goToStep(index + 1, index + 2)"
-              elevation="2"
-              width="120px"
-              >
-              {{ $t('_global.continue') }}
-            </v-btn>
-            <v-btn
-              :data-cy="step.name + '-save-button'"
-              v-if="currentStep >= steps.length || editable"
-              color="secondary"
-              class="ml-2"
-              @click="submit"
-              :loading="loading"
-              elevation="2"
-              width="120px"
-              >
-              {{ $t('_global.save') }}
-            </v-btn>
-          </div>
-        </v-stepper-content>
-      </template>
-    </v-stepper>
-  </v-card-text>
-  <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
-</v-card>
+              :editable="editable"
+              :edit-icon="editable ? '$complete' : '$edit'"
+            />
+          </v-stepper-header>
+          <v-stepper-window
+            v-show="currentStep === index + 1"
+            direction="vertical"
+          >
+            <v-stepper-window-item :value="index + 1">
+              <v-sheet v-if="!step.noStyle" class="ma-2 pa-4" :rounded="false">
+                <slot :name="`step.${step.name}`" :step="index + 1" />
+              </v-sheet>
+              <template v-else>
+                <slot :name="`step.${step.name}`" :step="index + 1" />
+              </template>
+              <div class="mx-2 mt-6 mb-1">
+                <v-row class="pl-3 pb-3">
+                  <v-spacer />
+                  <v-btn
+                    class="secondary-btn"
+                    variant="outlined"
+                    elevation="2"
+                    width="120px"
+                    @click="cancel"
+                  >
+                    {{ $t('_global.cancel') }}
+                  </v-btn>
+                  <v-btn
+                    v-if="currentStep > 1"
+                    class="secondary-btn ml-2"
+                    variant="outlined"
+                    elevation="2"
+                    width="120px"
+                    @click="currentStep = index"
+                  >
+                    {{ $t('_global.previous') }}
+                  </v-btn>
+                  <slot name="extraActions" />
+                  <v-btn
+                    v-if="currentStep < steps.length"
+                    :data-cy="`step.${step.name}` + '-continue-button'"
+                    color="secondary"
+                    class="ml-2 mr-2"
+                    elevation="2"
+                    width="120px"
+                    @click="goToStep(index + 1, index + 2)"
+                  >
+                    {{ $t('_global.continue') }}
+                  </v-btn>
+                  <v-btn
+                    v-if="currentStep >= steps.length || editable"
+                    :data-cy="`step.${step.name}` + '-continue-button'"
+                    color="secondary"
+                    class="ml-2"
+                    :loading="loading"
+                    elevation="2"
+                    width="120px"
+                    @click="submit"
+                  >
+                    {{ $t('_global.save') }}
+                  </v-btn>
+                </v-row>
+              </div>
+            </v-stepper-window-item>
+          </v-stepper-window>
+        </template>
+      </v-stepper>
+    </v-card-text>
+    <ConfirmDialog ref="confirm" :text-cols="6" :action-cols="5" />
+  </v-card>
 </template>
 
 <script>
-import HelpButtonWithPanels from './HelpButtonWithPanels'
-import ConfirmDialog from '@/components/tools/ConfirmDialog'
+import HelpButtonWithPanels from './HelpButtonWithPanels.vue'
+import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
 import _isEqual from 'lodash/isEqual'
+import { useFormStore } from '@/stores/form'
 
 export default {
   components: {
     HelpButtonWithPanels,
-    ConfirmDialog
+    ConfirmDialog,
   },
   props: {
-    title: String,
-    steps: Array,
-    formObserverGetter: Function,
+    title: {
+      type: String,
+      default: '',
+    },
+    steps: {
+      type: Array,
+      default: () => [],
+    },
+    formObserverGetter: {
+      type: Function,
+      default: undefined,
+    },
     editable: {
       type: Boolean,
-      default: false
+      default: false,
     },
     extraStepValidation: {
       type: Function,
-      required: false
+      required: false,
+      default: undefined,
     },
-    helpItems: Array,
-    editData: Object
+    helpItems: {
+      type: Array,
+      default: () => [],
+    },
+    editData: {
+      type: Object,
+      default: undefined,
+    },
   },
-  data () {
+  emits: ['change', 'close', 'save'],
+  setup() {
+    const formStore = useFormStore()
     return {
-      currentStep: 1,
-      loading: false
+      formStore,
     }
   },
-  mounted () {
-    this.$store.commit('form/SET_FORM', this.editData)
+  data() {
+    return {
+      currentStep: 1,
+      loading: false,
+    }
+  },
+  watch: {
+    currentStep(value) {
+      this.$emit('change', value)
+    },
+  },
+  mounted() {
+    this.formStore.save(this.editData)
     document.addEventListener('keydown', (evt) => {
       if (evt.code === 'Escape') {
         this.cancel()
@@ -122,26 +156,34 @@ export default {
     })
   },
   methods: {
-    async cancel () {
-      if (this.$store.getters['form/form'] === '' || _isEqual(this.$store.getters['form/form'], JSON.stringify(this.editData))) {
+    async cancel() {
+      if (
+        this.storedForm === '' ||
+        _isEqual(this.storedForm, JSON.stringify(this.editData))
+      ) {
         this.close()
       } else {
         const options = {
           type: 'warning',
           cancelLabel: this.$t('_global.cancel'),
-          agreeLabel: this.$t('_global.continue')
+          agreeLabel: this.$t('_global.continue'),
         }
-        if (await this.$refs.confirm.open(this.$t('_global.cancel_changes'), options)) {
+        if (
+          await this.$refs.confirm.open(
+            this.$t('_global.cancel_changes'),
+            options
+          )
+        ) {
           this.close()
         }
       }
     },
-    close () {
+    close() {
       this.$emit('close')
-      this.$store.commit('form/CLEAR_FORM')
+      this.formStore.reset()
       this.reset()
     },
-    reset () {
+    reset() {
       this.currentStep = 1
       this.steps.forEach((item, index) => {
         const observer = this.formObserverGetter(index + 1)
@@ -151,51 +193,52 @@ export default {
       })
       this.loading = false
     },
-    async validateStepObserver (step) {
+    async validateStepObserver(step) {
       const observer = this.formObserverGetter(step)
       if (observer !== undefined) {
-        return await observer.validate()
+        const { valid } = await observer.validate()
+        return valid
       }
       return true
     },
-    async goToStep (currentStep, nextStep) {
-      if (!await this.validateStepObserver(currentStep)) {
+    async goToStep(currentStep, nextStep) {
+      if (!(await this.validateStepObserver(currentStep))) {
         return
       }
       if (this.extraStepValidation) {
-        if (!await this.extraStepValidation(currentStep)) {
+        if (!(await this.extraStepValidation(currentStep))) {
           return
         }
       }
       this.currentStep = nextStep
     },
-    setCurrentStep (value) {
+    setCurrentStep(value) {
       this.currentStep = value
     },
-    async submit () {
-      if (!await this.validateStepObserver(this.currentStep)) {
+    async submit() {
+      if (!(await this.validateStepObserver(this.currentStep))) {
         return
       }
       this.loading = true
       this.$emit('save')
-    }
+    },
   },
-  watch: {
-    currentStep (value) {
-      this.$emit('change', value)
-    }
-  }
 }
 </script>
 
 <style scoped lang="scss">
 .v-stepper {
-  box-shadow: none;
-  background-color: var(--v-dltBackground-base);
+  box-shadow: none !important;
+  background-color: white;
 }
 
-.step-title {
-  color: var(--v-secondary-base) !important;
-  font-size: 16px;
+.v-stepper-header {
+  box-shadow: none !important;
+}
+
+.v-stepper-item {
+  color: #0066f8 !important;
+  font-size: 18px;
+  font-weight: 600;
 }
 </style>

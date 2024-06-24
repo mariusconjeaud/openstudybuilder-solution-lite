@@ -1,6 +1,7 @@
 """
 Tests for /concepts/activities/activities endpoints
 """
+
 import json
 import logging
 from functools import reduce
@@ -9,6 +10,9 @@ import pytest
 from fastapi.testclient import TestClient
 
 from clinical_mdr_api.config import REQUESTED_LIBRARY_NAME
+from clinical_mdr_api.domains.study_selections.study_selection_activity_instance import (
+    StudyActivityInstanceState,
+)
 from clinical_mdr_api.main import app
 from clinical_mdr_api.models import Activity, CTTerm
 from clinical_mdr_api.models.concepts.activities.activity_group import ActivityGroup
@@ -57,7 +61,6 @@ def test_data():
     inject_and_clear_db(db_name)
     global study_uid
     study_uid = inject_base_data().uid
-    TestUtils.create_library(name=REQUESTED_LIBRARY_NAME, is_editable=True)
 
     catalogue_name = TestUtils.create_ct_catalogue()
     flowchart_codelist = TestUtils.create_ct_codelist(
@@ -167,6 +170,8 @@ ACTIVITY_REQUEST_FIELDS_ALL = [
     "replaced_by_activity",
     "is_data_collected",
     "is_multiple_selection_allowed",
+    "is_finalized",
+    "is_used_by_legacy_instances",
     "library_name",
     "start_date",
     "end_date",
@@ -535,6 +540,7 @@ def test_update_activity_request_to_sponsor_in_study_activity(api_client):
             "name_sentence_case": "new sponsor activity from activity request used in study activity",
             "definition": "definition",
             "abbreviation": "abbreviation",
+            "is_data_collected": True,
             "activity_groupings": [
                 {
                     "activity_subgroup_uid": activity_subgroup.uid,
@@ -575,6 +581,27 @@ def test_update_activity_request_to_sponsor_in_study_activity(api_client):
         == "New Sponsor Activity from Activity Request used in Study Activity"
     )
     assert res["activity"]["library_name"] == "Sponsor"
+    assert (
+        res["study_activity_subgroup"]["activity_subgroup_uid"] == activity_subgroup.uid
+    )
+    assert res["study_activity_group"]["activity_group_uid"] == activity_group.uid
+
+    # Assert StudyActivityInstance was created when ActivityRequest was substituted to Sponsor Activity
+    response = api_client.get(
+        f"/studies/{study_uid}/study-activity-instances/",
+    )
+    assert response.status_code == 200
+    study_activity_instances = response.json()["items"]
+    created_sai = []
+    for sai in study_activity_instances:
+        if sai["study_activity_uid"] == study_activity.study_activity_uid:
+            created_sai.append(sai)
+    assert (
+        len(created_sai) == 1
+    ), "There should be exactly just one StudyActivityInstance created when Request is substituted to the Sponsor Activity"
+    created_sai = created_sai[0]
+    assert created_sai["study_activity_uid"] == study_activity.study_activity_uid
+    assert created_sai["state"] == StudyActivityInstanceState.MISSING_SELECTION.value
 
 
 def test_edit_study_activity_request(api_client):
@@ -631,7 +658,7 @@ def test_edit_study_activity_request(api_client):
     assert response.status_code == 200
     res = response.json()
     assert res["activity"]["uid"] == activity_request.uid
-    assert res["activity"]["version"] == "1.0"
+    assert res["activity"]["version"] == "2.0"
     assert (
         res["study_activity_subgroup"]["activity_subgroup_uid"]
         == general_activity_subgroup.uid
@@ -658,7 +685,7 @@ def test_edit_study_activity_request(api_client):
     assert response.status_code == 200
     res = response.json()
     assert res["activity"]["uid"] == activity_request.uid
-    assert res["activity"]["version"] == "2.0"
+    assert res["activity"]["version"] == "3.0"
     assert res["activity"]["request_rationale"] == "New rationale"
     assert res["activity"]["name"] == "New request name"
     assert res["activity"]["is_request_final"] is True

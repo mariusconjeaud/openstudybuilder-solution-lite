@@ -38,7 +38,6 @@ class ActiveSubstanceRepository(ConceptGenericRepository):
         value_node.short_number = ar.concept_vo.short_number
         value_node.long_number = ar.concept_vo.long_number
         value_node.inn = ar.concept_vo.inn
-        value_node.prodex_id = ar.concept_vo.prodex_id
         value_node.save()
 
         if ar.concept_vo.unii_term_uid:
@@ -56,7 +55,6 @@ class ActiveSubstanceRepository(ConceptGenericRepository):
             or ar.concept_vo.short_number != value.short_number
             or ar.concept_vo.long_number != value.long_number
             or ar.concept_vo.inn != value.inn
-            or ar.concept_vo.prodex_id != value.prodex_id
         )
 
         are_rels_changed = False
@@ -89,7 +87,7 @@ class ActiveSubstanceRepository(ConceptGenericRepository):
                 unii_term_uid=input_dict.get("unii_data").get("unii_term_uid")
                 if input_dict.get("unii_data")
                 else None,
-                prodex_id=input_dict.get("prodex_id"),
+                external_id=input_dict.get("external_id"),
             ),
             library=LibraryVO.from_input_values_2(
                 library_name=input_dict.get("library_name"),
@@ -125,7 +123,7 @@ class ActiveSubstanceRepository(ConceptGenericRepository):
                 short_number=value.short_number,
                 long_number=value.long_number,
                 inn=value.inn,
-                prodex_id=value.prodex_id,
+                external_id=value.external_id,
                 unii_term_uid=unii_term.uid if unii_term else None,
             ),
             library=LibraryVO.from_input_values_2(
@@ -141,7 +139,6 @@ class ActiveSubstanceRepository(ConceptGenericRepository):
     ) -> str:
         return """
             WITH *,
-                concept_value.prodex_id AS prodex_id,            
                 concept_value.analyte_number AS analyte_number,
                 concept_value.short_number AS short_number,
                 concept_value.long_number AS long_number,

@@ -1,69 +1,67 @@
 <template>
-<div class="px-4">
-  <div class="page-title">{{ $t('CtPackagesHistoryView.title') }}</div>
-  <v-tabs v-model="tab" background-color="dfltBackground">
-    <v-tab v-for="catalogue in catalogues"
-           :key="catalogue.name"
-           :href="`#${catalogue.name}`"
-           :data-cy="catalogue.name"
-           >
-      {{ catalogue.name }}
-    </v-tab>
-  </v-tabs>
-  <v-tabs-items v-model="tab">
-    <v-tab-item
-      v-for="catalogue in catalogues"
-      :key="catalogue.name"
-      :id="catalogue.name"
+  <div class="px-4">
+    <div class="page-title">
+      {{ $t('CtPackagesHistoryView.title') }}
+    </div>
+    <v-tabs v-model="tab" bg-color="dfltBackground">
+      <v-tab
+        v-for="catalogue in catalogues"
+        :key="catalogue.name"
+        :value="catalogue.name"
+        :data-cy="catalogue.name"
       >
-      <ct-package-history :catalogue="catalogue" />
-    </v-tab-item>
-  </v-tabs-items>
-</div>
+        {{ catalogue.name }}
+      </v-tab>
+    </v-tabs>
+    <v-window v-model="tab">
+      <v-window-item
+        v-for="catalogue in catalogues"
+        :id="catalogue.name"
+        :key="catalogue.name"
+        :value="catalogue.name"
+      >
+        <CtPackageHistory :catalogue="catalogue" />
+      </v-window-item>
+    </v-window>
+  </div>
 </template>
 
-<script>
-import { mapActions } from 'vuex'
+<script setup>
+import { onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import { useAppStore } from '@/stores/app'
 import controlledTerminology from '@/api/controlledTerminology'
-import CtPackageHistory from '@/components/library/CtPackageHistory'
+import CtPackageHistory from '@/components/library/CtPackageHistory.vue'
 
-export default {
-  components: {
-    CtPackageHistory
-  },
-  data () {
-    return {
-      catalogues: [],
-      tab: this.$route.params.catalogue_name
-    }
-  },
-  methods: {
-    ...mapActions({
-      addBreadcrumbsLevel: 'app/addBreadcrumbsLevel'
-    })
-  },
-  mounted () {
-    this.addBreadcrumbsLevel({
-      text: this.$route.params.catalogue_name,
-      to: { name: 'CtPackages', params: this.$route.params },
-      index: 3
-    })
-    this.addBreadcrumbsLevel({
-      text: this.$t('_global.history'),
-      to: { name: 'CtPackagesHistory', params: this.$route.params }
-    })
+const appStore = useAppStore()
+const route = useRoute()
+const router = useRouter()
+const { t } = useI18n()
 
-    controlledTerminology.getCatalogues().then(resp => {
-      this.catalogues = resp.data
-    })
-  },
-  watch: {
-    tab (newValue) {
-      this.$router.push({
-        name: 'CtPackagesHistory',
-        params: { catalogue_name: newValue }
-      })
-    }
-  }
-}
+const catalogues = ref([])
+const tab = ref(route.params.catalogue_name)
+
+watch(tab, (newValue) => {
+  router.push({
+    name: 'CtPackagesHistory',
+    params: { catalogue_name: newValue },
+  })
+})
+
+onMounted(() => {
+  appStore.addBreadcrumbsLevel(
+    route.params.catalogue_name,
+    { name: 'CtPackages', params: route.params },
+    3
+  )
+  appStore.addBreadcrumbsLevel(t('_global.history'), {
+    name: 'CtPackagesHistory',
+    params: route.params,
+  })
+
+  controlledTerminology.getCatalogues().then((resp) => {
+    catalogues.value = resp.data
+  })
+})
 </script>

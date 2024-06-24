@@ -7,5 +7,5 @@ export default {
   LIBRARY_READ,
   LIBRARY_WRITE,
   STUDY_READ,
-  STUDY_WRITE
+  STUDY_WRITE,
 }

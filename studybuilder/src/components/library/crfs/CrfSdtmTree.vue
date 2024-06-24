@@ -1,6 +1,6 @@
 <template>
   <div>
-    <under-construction />
+    <UnderConstruction />
   </div>
 </template>
 
@@ -9,7 +9,7 @@ import UnderConstruction from '@/components/layout/UnderConstruction'
 
 export default {
   components: {
-    UnderConstruction
-  }
+    UnderConstruction,
+  },
 }
 </script>

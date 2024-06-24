@@ -1,12 +1,12 @@
 from typing import Any
 
-from fastapi import APIRouter, Body, Depends, Query
+from fastapi import APIRouter, Body, Query
 from pydantic.types import Json
 
 from clinical_mdr_api import config, models
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import GenericFilteringReturn
-from clinical_mdr_api.oauth import get_current_user_id, rbac
+from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions
 from clinical_mdr_api.services.projects.project import ProjectService
@@ -83,9 +83,8 @@ def create(
     project_create_input: models.ProjectCreateInput = Body(
         description="Related parameters of the project that shall be created."
     ),
-    current_user_id: str = Depends(get_current_user_id),
 ) -> models.Project:
-    service = ProjectService(user=current_user_id)
+    service = ProjectService()
     return service.create(project_create_input)
 
 

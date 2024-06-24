@@ -5,17 +5,23 @@
 import logging
 
 import pytest
+from neomodel import db
 
 from clinical_mdr_api.domain_repositories.models.study import StudyRoot
+from clinical_mdr_api.models import ClinicalProgramme, Project
 from clinical_mdr_api.models.study_selections.study import Study
 from clinical_mdr_api.models.study_selections.study_epoch import StudyEpoch
 from clinical_mdr_api.models.study_selections.study_selection import (
     StudyDesignCell,
+    StudySelectionActivity,
     StudySelectionArm,
     StudySelectionElement,
 )
-from clinical_mdr_api.tests.fixtures.database import tst_database
-from clinical_mdr_api.tests.integration.utils.data_library import inject_base_data
+from clinical_mdr_api.tests.integration.utils import data_library
+from clinical_mdr_api.tests.integration.utils.data_library import (
+    get_codelist_with_term_cypher,
+    inject_base_data,
+)
 from clinical_mdr_api.tests.integration.utils.factory_controlled_terminology import (
     create_codelist,
     get_catalogue_name_library_name,
@@ -25,16 +31,48 @@ from clinical_mdr_api.tests.integration.utils.factory_epoch import (
 )
 from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 
+__all__ = [
+    "tst_study",
+    "tst_project",
+    "study_epochs",
+    "study_arms",
+    "study_elements",
+    "study_design_cells",
+    "study_activities",
+]
+
 log = logging.getLogger(__name__)
 
 
 @pytest.fixture(scope="module")
-def tst_study(request, tst_database) -> Study:
+def tst_study(request, temp_database) -> Study:
     """fixture creates and returns a test study, with static id-s"""
+
     log.info("%s: injecting test study: inject_base_data", request.fixturename)
     study = inject_base_data()
+
     StudyRoot.generate_node_uids_if_not_present()
+
     return study
+
+
+@pytest.fixture(scope="module")
+def tst_project(request, temp_database) -> Project:
+    """fixture creates a Project required for crating studies"""
+
+    log.info("%s fixture: creating project", request.fixturename)
+
+    programme = TestUtils.create_clinical_programme(
+        name=TestUtils.random_str(8, "test_")
+    )
+
+    project = TestUtils.create_project(
+        name=TestUtils.random_str(8, "test_"),
+        project_number=TestUtils.random_str(8),
+        clinical_programme_uid=programme.uid,
+    )
+
+    return project
 
 
 @pytest.fixture(scope="module")
@@ -147,4 +185,49 @@ def study_design_cells(
             order=i + 1,
         )
         for i in range(5)
+    ]
+
+
+@pytest.fixture(scope="module")
+def study_activities(request, tst_study) -> list[StudySelectionActivity]:
+    log.info("%s fixture: creating study activities", request.fixturename)
+
+    db.cypher_query(data_library.STARTUP_ACTIVITY_GROUPS)
+    db.cypher_query(data_library.STARTUP_ACTIVITY_SUB_GROUPS)
+    db.cypher_query(data_library.STARTUP_ACTIVITIES)
+    db.cypher_query(
+        data_library.get_codelist_with_term_cypher("EFFICACY", "Flowchart Group")
+    )
+    db.cypher_query(data_library.STARTUP_STUDY_ACTIVITY_CYPHER)
+    db.cypher_query(
+        get_codelist_with_term_cypher(
+            "EFFICACY", "Flowchart Group", term_uid="term_efficacy_uid"
+        )
+    )
+
+    activity_group = TestUtils.create_activity_group(name="activity_group_test")
+
+    activity_subgroup = TestUtils.create_activity_subgroup(
+        name="activity_subgroup_test", activity_groups=[activity_group.uid]
+    )
+
+    activities_all = []
+    for i in range(5):
+        activities_all.append(
+            TestUtils.create_activity(
+                name=f"Activity-{i}",
+                activity_subgroups=[activity_subgroup.uid],
+                activity_groups=[activity_group.uid],
+            )
+        )
+
+    return [
+        TestUtils.create_study_activity(
+            study_uid=tst_study.uid,
+            activity_uid=activity.uid,
+            activity_subgroup_uid=activity_subgroup.uid,
+            activity_group_uid=activity_group.uid,
+            soa_group_term_uid="term_efficacy_uid",
+        )
+        for activity in activities_all
     ]

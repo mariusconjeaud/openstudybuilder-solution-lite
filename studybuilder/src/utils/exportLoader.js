@@ -1,4 +1,4 @@
-function generateDownload (blobData, fileName) {
+function generateDownload(blobData, fileName) {
   const link = document.createElement('a')
   link.href = URL.createObjectURL(blobData)
   link.download = fileName
@@ -6,12 +6,12 @@ function generateDownload (blobData, fileName) {
   URL.revokeObjectURL(link.href)
 }
 
-function downloadFile (data, type, fileName) {
+function downloadFile(data, type, fileName) {
   const blob = new Blob([data], { type: type })
   generateDownload(blob, fileName)
 }
 
 export default {
   generateDownload,
-  downloadFile
+  downloadFile,
 }

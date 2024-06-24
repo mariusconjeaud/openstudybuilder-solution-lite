@@ -5,6 +5,10 @@ from parameterized import parameterized
 from pydantic import BaseModel
 
 import clinical_mdr_api.utils
+from clinical_mdr_api.domains.libraries.parameter_term import (
+    ParameterTermEntryVO,
+    ParameterTermVO,
+)
 from clinical_mdr_api.models import utils
 
 
@@ -55,7 +59,9 @@ class TestModelUtils(unittest.TestCase):
     ):
         assert (
             utils.capitalize_first_letter_if_template_parameter(
-                name, template_plain_name
+                name,
+                template_plain_name,
+                [ParameterTermEntryVO([ParameterTermVO("good"), "", ""], "", "")],
             )
             == expected
         )

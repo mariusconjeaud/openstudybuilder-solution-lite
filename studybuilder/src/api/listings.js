@@ -3,13 +3,15 @@ import repository from './repository'
 const resource = 'listings/studies'
 
 export default {
-  getAllSdtm (uid, options, type) {
+  getAllSdtm(uid, options, type) {
     const params = {
-      ...options
+      ...options,
     }
-    return repository.get(`${resource}/${uid}/sdtm/${type.toLowerCase()}`, { params })
+    return repository.get(`${resource}/${uid}/sdtm/${type.toLowerCase()}`, {
+      params,
+    })
   },
-  getAllAdam (studyUid, type, params) {
+  getAllAdam(studyUid, type, params) {
     return repository.get(`${resource}/${studyUid}/adam/${type}`, { params })
-  }
+  },
 }

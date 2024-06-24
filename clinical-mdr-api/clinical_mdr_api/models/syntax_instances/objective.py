@@ -75,10 +75,12 @@ class Objective(BaseModel):
             name=capitalize_first_letter_if_template_parameter(
                 objective_ar.name,
                 objective_ar.template_name_plain,
+                objective_ar._template.parameter_terms,
             ),
             name_plain=capitalize_first_letter_if_template_parameter(
                 objective_ar.name_plain,
                 objective_ar.template_name_plain,
+                objective_ar._template.parameter_terms,
             ),
             start_date=objective_ar.item_metadata.start_date,
             end_date=objective_ar.item_metadata.end_date,

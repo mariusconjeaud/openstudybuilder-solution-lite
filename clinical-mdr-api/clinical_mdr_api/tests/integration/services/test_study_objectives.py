@@ -35,9 +35,9 @@ def test_database():
 
 
 # pylint: disable=unused-argument,redefined-outer-name
-def test_docx_response(app_client, test_database):
+def test_docx_response(api_client, test_database):
     study = generate_study_root()
-    response = app_client.get(f"/studies/{study.uid}/study-objectives.docx")
+    response = api_client.get(f"/studies/{study.uid}/study-objectives.docx")
     assert_response_status_code(response, 200)
     assert_response_content_type(
         response,
@@ -50,19 +50,19 @@ def test_docx_response(app_client, test_database):
     assert len(table.rows) == 1, "expected 1 row of table"
 
     # update study title to be able to lock it
-    response = app_client.patch(
+    response = api_client.patch(
         f"/studies/{study.uid}",
         json={"current_metadata": {"study_description": {"study_title": "new title"}}},
     )
     assert response.status_code == 200
     # Lock
-    response = app_client.post(
+    response = api_client.post(
         f"/studies/{study.uid}/locks",
         json={"change_description": "Lock 1"},
     )
     assert response.status_code == 201
     # Unlock
-    response = app_client.delete(f"/studies/{study.uid}/locks")
+    response = api_client.delete(f"/studies/{study.uid}/locks")
     assert response.status_code == 200
 
     study_objective = TestUtils.create_study_objective(
@@ -93,7 +93,7 @@ def test_docx_response(app_client, test_database):
         timeframe_uid=timeframe.uid,
     )
 
-    response = app_client.get(
+    response = api_client.get(
         f"/studies/{study.uid}/study-objectives.docx?study_value_version=1"
     )
     assert_response_status_code(response, 200)
@@ -107,7 +107,7 @@ def test_docx_response(app_client, test_database):
     assert len(table.columns) == 4, "expected 4 columns of table"
     assert len(table.rows) == 1, "expected 1 row of table"
 
-    response = app_client.get(f"/studies/{study.uid}/study-objectives.docx")
+    response = api_client.get(f"/studies/{study.uid}/study-objectives.docx")
     assert_response_status_code(response, 200)
     assert_response_content_type(
         response,
@@ -121,9 +121,9 @@ def test_docx_response(app_client, test_database):
 
 
 # pylint: disable=unused-argument,redefined-outer-name
-def test_html_response(app_client, test_database):
+def test_html_response(api_client, test_database):
     study = generate_study_root()
-    response = app_client.get(f"/studies/{study.uid}/study-objectives.html")
+    response = api_client.get(f"/studies/{study.uid}/study-objectives.html")
     assert_response_status_code(response, 200)
     assert_response_content_type(response, "text/html")
     doc = BeautifulSoup(response.content, features="lxml")

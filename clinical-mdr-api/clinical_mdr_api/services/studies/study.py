@@ -1,8 +1,10 @@
+import functools
+from copy import copy
 from datetime import datetime
 from string import ascii_lowercase
 from typing import Any, Callable, Collection, Iterable
 
-from neomodel import db  # type: ignore
+from neomodel import NodeSet, db  # type: ignore
 
 from clinical_mdr_api import exceptions
 from clinical_mdr_api.config import (
@@ -24,7 +26,10 @@ from clinical_mdr_api.domains.projects.project import ProjectAR
 from clinical_mdr_api.domains.study_definition_aggregates.registry_identifiers import (
     RegistryIdentifiersVO,
 )
-from clinical_mdr_api.domains.study_definition_aggregates.root import StudyDefinitionAR
+from clinical_mdr_api.domains.study_definition_aggregates.root import (
+    _DEF_INITIAL_STUDY_DESCRIPTION,
+    StudyDefinitionAR,
+)
 from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import (
     HighLevelStudyDesignVO,
     StudyComponentEnum,
@@ -51,11 +56,14 @@ from clinical_mdr_api.models.study_selections.study import (
     StudyPopulationJsonModel,
     StudyPreferredTimeUnit,
     StudyProtocolTitle,
+    StudySoaPreferences,
+    StudySoaPreferencesInput,
     StudySubpartAuditTrail,
     StudySubpartCreateInput,
     StudySubpartReorderingInput,
 )
 from clinical_mdr_api.models.utils import GenericFilteringReturn
+from clinical_mdr_api.oauth.user import user
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._meta_repository import MetaRepository  # type: ignore
 from clinical_mdr_api.services._utils import (  # type: ignore
@@ -70,13 +78,39 @@ from clinical_mdr_api.services._utils import (  # type: ignore
 )
 
 
+def validate_if_study_is_not_locked(
+    study_uid_arg_name: str, study_uid_arg_index: int = 0
+):
+    """Decorator ensures a Study with given study_uid is not locked, else raises ValidationException."""
+
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            # pylint: disable=consider-using-get
+            if study_uid_arg_name in kwargs:
+                study_uid = kwargs[study_uid_arg_name]
+            else:
+                study_uid = args[study_uid_arg_index]
+
+            is_study_locked = StudyService().check_if_study_is_locked(
+                study_uid=study_uid
+            )
+            if is_study_locked:
+                raise exceptions.ValidationException(
+                    f"Study with specified uid '{study_uid}' is locked."
+                )
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
 class StudyService:
     _repos: MetaRepository
 
-    def __init__(self, user=None):
-        self.user = user
-        if user is None:
-            self.user = "TODO Initials"
+    def __init__(self):
+        self.user = user().id()
         self._repos = MetaRepository(self.user)
 
     # and convenience method to close all repos
@@ -140,7 +174,6 @@ class StudyService:
         study_value_version: str | None = None,
         status: StudyStatus | None = None,
         history_endpoint: bool = False,
-        is_subpart: bool = False,
     ) -> Study:
         result = Study.from_study_definition_ar(
             study_definition_ar=study_definition_ar,
@@ -154,7 +187,6 @@ class StudyService:
             study_value_version=study_value_version,
             status=status,
             history_endpoint=history_endpoint,
-            is_subpart=is_subpart,
         )
         return (
             StudyService.filter_result_by_requested_fields(
@@ -262,7 +294,6 @@ class StudyService:
                 at_specified_date_time=at_specified_date_time,
                 study_value_version=study_value_version,
                 status=status,
-                is_subpart=study_definition.study_parent_part_uid is not None,
             )
         finally:
             self._close_all_repos()
@@ -306,7 +337,6 @@ class StudyService:
                 find_study_parent_part_by_uid=self._repos.study_definition_repository.find_by_uid,
                 find_term_by_uid=self._repos.ct_term_name_repository.find_by_uid,
                 find_dictionary_term_by_uid=self._repos.dictionary_term_generic_repository.find_by_uid,
-                is_subpart=study_definition.study_parent_part_uid is not None,
             )
         finally:
             self._close_all_repos()
@@ -344,7 +374,6 @@ class StudyService:
                 find_study_parent_part_by_uid=self._repos.study_definition_repository.find_by_uid,
                 find_term_by_uid=self._repos.ct_term_name_repository.find_by_uid,
                 find_dictionary_term_by_uid=self._repos.dictionary_term_generic_repository.find_by_uid,
-                is_subpart=study_definition.study_parent_part_uid is not None,
             )
         finally:
             self._close_all_repos()
@@ -382,7 +411,6 @@ class StudyService:
                 find_study_parent_part_by_uid=self._repos.study_definition_repository.find_by_uid,
                 find_term_by_uid=self._repos.ct_term_name_repository.find_by_uid,
                 find_dictionary_term_by_uid=self._repos.dictionary_term_generic_repository.find_by_uid,
-                is_subpart=study_definition.study_parent_part_uid is not None,
             )
         finally:
             self._close_all_repos()
@@ -398,9 +426,16 @@ class StudyService:
                     f"StudyDefinition '{uid}' not found."
                 )
             study_definition.mark_deleted()
+
+            is_subpart = bool(study_definition.study_parent_part_uid)
+
             self._repos.study_definition_repository.save(study_definition)
 
-            if study_definition.study_parent_part_uid:
+            self._repos.study_definition_repository.update_subpart_relationship(
+                study_definition
+            )
+
+            if is_subpart:
                 self.non_transactional_reorder_study_subparts(
                     study_definition.study_parent_part_uid
                 )
@@ -479,18 +514,13 @@ class StudyService:
     @db.transaction
     def get_subpart_audit_trail_by_uid(
         self, uid: str, is_subpart: bool = False
-    ) -> list[StudySubpartAuditTrail] | None:
+    ) -> list[StudySubpartAuditTrail]:
         try:
-            study_subpart_audit_trail = (
+            return (
                 self._repos.study_definition_repository.get_subpart_audit_trail_by_uid(
                     uid, is_subpart
                 )
             )
-
-            if study_subpart_audit_trail is None:
-                raise exceptions.NotFoundException(f"The study '{uid}' was not found.")
-
-            return study_subpart_audit_trail
         finally:
             self._close_all_repos()
 
@@ -498,6 +528,7 @@ class StudyService:
         self,
         include_sections: list[StudyComponentEnum] | None = None,
         exclude_sections: list[StudyComponentEnum] | None = None,
+        has_study_footnote: bool | None = None,
         has_study_objective: bool | None = None,
         has_study_endpoint: bool | None = None,
         has_study_criteria: bool | None = None,
@@ -517,6 +548,7 @@ class StudyService:
             # This logic prevents us from doing the filtering, sorting, and pagination on the Cypher side
             # Consequently, this has to be done here in the service layer
             all_items = self._repos.study_definition_repository.find_all(
+                has_study_footnote=has_study_footnote,
                 has_study_objective=has_study_objective,
                 has_study_endpoint=has_study_endpoint,
                 has_study_criteria=has_study_criteria,
@@ -625,7 +657,6 @@ class StudyService:
                 find_all_study_time_units=self._repos.unit_definition_repository.find_all,
                 find_study_parent_part_by_uid=self._repos.study_definition_repository.find_by_uid,
                 find_term_by_uid=self._repos.ct_term_name_repository.find_by_uid,
-                is_subpart=item.study_parent_part_uid is not None,
             )
             for item in all_items.items
         ]
@@ -701,6 +732,11 @@ class StudyService:
     def create(
         self, study_create_input: StudySubpartCreateInput | StudyCreateInput
     ) -> Study:
+        return self.non_transactional_create(study_create_input)
+
+    def non_transactional_create(
+        self, study_create_input: StudySubpartCreateInput | StudyCreateInput
+    ) -> Study:
         try:
             study_number = None
             subpart_id = None
@@ -722,9 +758,44 @@ class StudyService:
                 project_number = (
                     parent_part_ar.current_metadata.id_metadata.project_number
                 )
+                study_number = parent_part_ar.current_metadata.id_metadata.study_number
+                initial_study_description = StudyDescriptionVO.from_input_values(
+                    study_title=parent_part_ar.current_metadata.study_description.study_title,
+                    study_short_title=parent_part_ar.current_metadata.study_description.study_short_title,
+                )
+                registry_identifiers = (
+                    parent_part_ar.current_metadata.id_metadata.registry_identifiers
+                )
             else:
                 study_number = study_create_input.study_number
                 project_number = study_create_input.project_number
+                initial_study_description = _DEF_INITIAL_STUDY_DESCRIPTION
+                registry_identifiers = RegistryIdentifiersVO(
+                    ct_gov_id=None,
+                    ct_gov_id_null_value_code=None,
+                    eudract_id=None,
+                    eudract_id_null_value_code=None,
+                    universal_trial_number_utn=None,
+                    universal_trial_number_utn_null_value_code=None,
+                    japanese_trial_registry_id_japic=None,
+                    japanese_trial_registry_id_japic_null_value_code=None,
+                    investigational_new_drug_application_number_ind=None,
+                    investigational_new_drug_application_number_ind_null_value_code=None,
+                    eu_trial_number=None,
+                    eu_trial_number_null_value_code=None,
+                    civ_id_sin_number=None,
+                    civ_id_sin_number_null_value_code=None,
+                    national_clinical_trial_number=None,
+                    national_clinical_trial_number_null_value_code=None,
+                    japanese_trial_registry_number_jrct=None,
+                    japanese_trial_registry_number_jrct_null_value_code=None,
+                    national_medical_products_administration_nmpa_number=None,
+                    national_medical_products_administration_nmpa_number_null_value_code=None,
+                    eudamed_srn_number=None,
+                    eudamed_srn_number_null_value_code=None,
+                    investigational_device_exemption_ide_number=None,
+                    investigational_device_exemption_ide_number_null_value_code=None,
+                )
 
             # now we invoke our domain layer
             study_definition = StudyDefinitionAR.from_initial_values(
@@ -738,35 +809,14 @@ class StudyService:
                     study_number=study_number,
                     subpart_id=subpart_id,
                     study_acronym=study_create_input.study_acronym,
-                    description=study_create_input.description,
-                    # Not added on study create
-                    registry_identifiers=RegistryIdentifiersVO(
-                        ct_gov_id=None,
-                        ct_gov_id_null_value_code=None,
-                        eudract_id=None,
-                        eudract_id_null_value_code=None,
-                        universal_trial_number_utn=None,
-                        universal_trial_number_utn_null_value_code=None,
-                        japanese_trial_registry_id_japic=None,
-                        japanese_trial_registry_id_japic_null_value_code=None,
-                        investigational_new_drug_application_number_ind=None,
-                        investigational_new_drug_application_number_ind_null_value_code=None,
-                        eu_trial_number=None,
-                        eu_trial_number_null_value_code=None,
-                        civ_id_sin_number=None,
-                        civ_id_sin_number_null_value_code=None,
-                        national_clinical_trial_number=None,
-                        national_clinical_trial_number_null_value_code=None,
-                        japanese_trial_registry_number_jrct=None,
-                        japanese_trial_registry_number_jrct_null_value_code=None,
-                        national_medical_products_administration_nmpa_number=None,
-                        national_medical_products_administration_nmpa_number_null_value_code=None,
-                        eudamed_srn_number=None,
-                        eudamed_srn_number_null_value_code=None,
-                        investigational_device_exemption_ide_number=None,
-                        investigational_device_exemption_ide_number_null_value_code=None,
+                    study_subpart_acronym=getattr(
+                        study_create_input, "study_subpart_acronym", None
                     ),
+                    description=study_create_input.description,
+                    registry_identifiers=registry_identifiers,
                 ),
+                initial_study_description=initial_study_description,
+                author=self.user,
                 is_subpart=is_subpart,
             )
 
@@ -774,12 +824,8 @@ class StudyService:
             self._repos.study_definition_repository.save(study_definition)
 
             if is_subpart:
-                self._repos.study_definition_repository.connect_study_parent_part(
-                    study_definition.uid, study_create_input.study_parent_part_uid
-                )
-
-                study_definition.study_parent_part_uid = (
-                    study_create_input.study_parent_part_uid
+                self._repos.study_definition_repository.update_subpart_relationship(
+                    study_definition, study_create_input.study_parent_part_uid, False
                 )
 
             # create default preferred time unit pointing to 'Day' Unit Definition
@@ -798,15 +844,22 @@ class StudyService:
                 for_protocol_soa=True,
             )
 
+            # create SoA preferences by StudySoaPreferencesInput defaults
+            self._repos.study_definition_repository.post_soa_preferences(
+                study_uid=study_definition.uid,
+                soa_preferences=StudySoaPreferencesInput(baseline_as_time_zero=True),
+            )
+
             # then prepare and return our response
             return_item = self._models_study_from_study_definition_ar(
-                study_definition,
+                self._repos.study_definition_repository.find_by_uid(
+                    study_definition.uid
+                ),
                 find_project_by_project_number=self._repos.project_repository.find_by_project_number,
                 find_clinical_programme_by_uid=self._repos.clinical_programme_repository.find_by_uid,
                 find_all_study_time_units=self._repos.unit_definition_repository.find_all,
                 find_study_parent_part_by_uid=self._repos.study_definition_repository.find_by_uid,
                 find_term_by_uid=self._repos.ct_term_name_repository.find_by_uid,
-                is_subpart=study_definition.study_parent_part_uid is not None,
             )
             return return_item
         finally:
@@ -1110,7 +1163,6 @@ class StudyService:
         request_id_metadata: StudyIdentificationMetadataJsonModel,
         find_project_by_project_number: Callable[[str], ProjectAR],
         find_clinical_programme_by_uid: Callable[[str], ClinicalProgrammeAR],
-        is_subpart: bool = False,
     ) -> StudyIdentificationMetadataVO:
         fill_missing_values_in_base_model_from_reference_base_model(
             base_model_with_missing_values=request_id_metadata,
@@ -1128,9 +1180,9 @@ class StudyService:
             study_number=request_id_metadata.study_number,
             subpart_id=request_id_metadata.subpart_id,
             study_acronym=request_id_metadata.study_acronym,
+            study_subpart_acronym=request_id_metadata.study_subpart_acronym,
             description=request_id_metadata.description,
             registry_identifiers=RegistryIdentifiersVO.from_input_values(
-                is_subpart=is_subpart,
                 ct_gov_id=request_id_metadata.registry_identifiers.ct_gov_id,
                 ct_gov_id_null_value_code=get_term_uid_or_none(
                     request_id_metadata.registry_identifiers.ct_gov_id_null_value_code
@@ -1226,10 +1278,24 @@ class StudyService:
         dry: bool,
         study_patch_request: StudyPatchRequestJsonModel,
     ) -> Study:
+        _study_number = None
+        _study_acronym = None
+        if (
+            study_patch_request.current_metadata
+            and study_patch_request.current_metadata.identification_metadata
+        ):
+            _study_number = (
+                study_patch_request.current_metadata.identification_metadata.study_number
+            )
+            _study_acronym = (
+                study_patch_request.current_metadata.identification_metadata.study_acronym
+            )
         try:
             study_definition_ar = self._repos.study_definition_repository.find_by_uid(
                 uid, for_update=not dry
             )
+
+            initial_study_definition_ar = copy(study_definition_ar)
 
             if study_definition_ar is None:
                 raise exceptions.NotFoundException(
@@ -1257,33 +1323,16 @@ class StudyService:
                     "A Study cannot be a Study Parent Part for itself."
                 )
 
-            subpart = (
-                self._repos.study_definition_repository.disconnect_study_parent_parts(
-                    uid
-                )
-            )
-            if subpart and study_patch_request.study_parent_part_uid:
-                if not study_patch_request.current_metadata:
-                    study_patch_request.current_metadata = StudyMetadataJsonModel(
-                        identification_metadata=StudyIdentificationMetadataJsonModel()
-                    )
-                if not study_patch_request.current_metadata.identification_metadata:
-                    study_patch_request.current_metadata.identification_metadata = (
-                        StudyIdentificationMetadataJsonModel()
-                    )
-
-                study_patch_request.current_metadata.identification_metadata.study_number = (
-                    None
-                )
-                study_patch_request.current_metadata.identification_metadata.subpart_id = self._get_next_available_study_subpart_id(
-                    study_patch_request.study_parent_part_uid
-                )
+            if study_patch_request.study_parent_part_uid:
                 parent_part_ar = self._repos.study_definition_repository.find_by_uid(
                     study_patch_request.study_parent_part_uid
                 )
-                if not parent_part_ar:
+                if (
+                    not parent_part_ar
+                    or parent_part_ar.study_status == StudyStatus.LOCKED
+                ):
                     raise exceptions.BusinessLogicException(
-                        f"Study Parent Part with uid ({study_patch_request.study_parent_part_uid}) not found."
+                        f"Study Parent Part with UID ({study_patch_request.study_parent_part_uid}) is locked or doesn't exist."
                     )
                 if parent_part_ar.study_parent_part_uid:
                     raise exceptions.BusinessLogicException(
@@ -1293,11 +1342,36 @@ class StudyService:
                     raise exceptions.BusinessLogicException(
                         f"Cannot use Study Parent Part with UID ({study_definition_ar.uid}) as a Study Subpart."
                     )
+                if (
+                    study_definition_ar.current_metadata.id_metadata.project_number
+                    != parent_part_ar.current_metadata.id_metadata.project_number
+                ):
+                    raise exceptions.BusinessLogicException(
+                        "Project number of Study Parent Part and Study Subpart must be same."
+                    )
 
-                self._repos.study_definition_repository.connect_study_parent_part(
-                    subpart, study_patch_request.study_parent_part_uid
+                if not study_patch_request.current_metadata:
+                    study_patch_request.current_metadata = StudyMetadataJsonModel(
+                        identification_metadata=StudyIdentificationMetadataJsonModel()
+                    )
+                if not study_patch_request.current_metadata.identification_metadata:
+                    study_patch_request.current_metadata.identification_metadata = (
+                        StudyIdentificationMetadataJsonModel()
+                    )
+                if not study_patch_request.current_metadata.study_description:
+                    study_patch_request.current_metadata.study_description = (
+                        StudyDescriptionJsonModel()
+                    )
+
+                study_patch_request.current_metadata.identification_metadata.study_number = (
+                    parent_part_ar.current_metadata.id_metadata.study_number
                 )
+                study_patch_request.current_metadata.identification_metadata.subpart_id = self._get_next_available_study_subpart_id(
+                    study_patch_request.study_parent_part_uid
+                )
+
             previous_is_subpart = study_definition_ar.study_parent_part_uid is not None
+            previous_study_parent_part_uid = study_definition_ar.study_parent_part_uid
             study_definition_ar.study_parent_part_uid = (
                 study_patch_request.study_parent_part_uid
             )
@@ -1313,12 +1387,18 @@ class StudyService:
                 and study_patch_request.current_metadata.identification_metadata
                 is not None
             ):
+                if study_patch_request.study_parent_part_uid:
+                    # pylint: disable=line-too-long
+                    study_patch_request.current_metadata.identification_metadata.registry_identifiers = RegistryIdentifiersJsonModel.from_study_registry_identifiers_vo(
+                        parent_part_ar.current_metadata.id_metadata.registry_identifiers,
+                        self._repos.ct_term_name_repository.find_by_uid,
+                    )
+
                 new_id_metadata = self._patch_prepare_new_id_metadata(
                     current_id_metadata=study_definition_ar.current_metadata.id_metadata,
                     request_id_metadata=study_patch_request.current_metadata.identification_metadata,
                     find_project_by_project_number=self._repos.project_repository.find_by_project_number,
                     find_clinical_programme_by_uid=self._repos.clinical_programme_repository.find_by_uid,
-                    is_subpart=study_definition_ar.study_parent_part_uid is not None,
                 )
 
             if (
@@ -1359,27 +1439,37 @@ class StudyService:
                 study_patch_request.current_metadata is not None
                 and study_patch_request.current_metadata.study_description is not None
             ):
+                if study_patch_request.study_parent_part_uid:
+                    study_patch_request.current_metadata.study_description.study_title = (
+                        parent_part_ar.current_metadata.study_description.study_title
+                    )
+                    study_patch_request.current_metadata.study_description.study_short_title = (
+                        parent_part_ar.current_metadata.study_description.study_short_title
+                    )
+
                 new_study_description = self._patch_prepare_new_study_description_metadata(
                     current_study_description_metadata=study_definition_ar.current_metadata.study_description,
                     request_study_description_metadata=study_patch_request.current_metadata.study_description,
                 )
 
             if (
-                not dry
-                and study_patch_request.current_metadata.identification_metadata
-                and study_patch_request.current_metadata.identification_metadata.project_number
-                and study_patch_request.current_metadata.identification_metadata.project_number
-                != study_definition_ar.current_metadata.id_metadata.project_number
-                and study_definition_ar.study_subpart_uids
+                previous_is_subpart
+                and study_definition_ar.study_parent_part_uid is None
             ):
-                self._update_subpart_relation_with_project(
-                    study_patch_request.current_metadata.identification_metadata.project_number,
-                    study_definition_ar,
+                new_id_metadata = StudyIdentificationMetadataVO.from_input_values(
+                    project_number=new_id_metadata.project_number,
+                    study_number=_study_number,
+                    subpart_id=None,
+                    study_acronym=_study_acronym,
+                    study_subpart_acronym=None,
+                    description=new_id_metadata.description,
+                    registry_identifiers=new_id_metadata.registry_identifiers,
                 )
 
             study_definition_ar.edit_metadata(
                 new_id_metadata=new_id_metadata,
                 project_exists_callback=self._repos.project_repository.project_number_exists,
+                study_number_exists_callback=self._repos.study_definition_repository.study_number_exists,
                 new_high_level_study_design=new_high_level_study_design,
                 study_type_exists_callback=self._repos.ct_term_name_repository.term_exists,
                 trial_type_exists_callback=self._repos.ct_term_name_repository.term_exists,
@@ -1401,12 +1491,27 @@ class StudyService:
                 intervention_model_exists_callback=self._repos.ct_term_name_repository.term_exists,
                 trial_blinding_schema_exists_callback=self._repos.ct_term_name_repository.term_exists,
                 is_subpart=study_definition_ar.study_parent_part_uid is not None,
+                author=self.user,
                 previous_is_subpart=previous_is_subpart,
             )
 
             # now if we are not running in dry mode we can save the instance
             if not dry:
                 self._repos.study_definition_repository.save(study_definition_ar)
+                self._cascade_update_subparts(study_definition_ar)
+
+                self._repos.study_definition_repository.update_subpart_relationship(
+                    initial_study_definition_ar,
+                    study_patch_request.study_parent_part_uid,
+                )
+
+                if (
+                    previous_is_subpart
+                    and not study_patch_request.study_parent_part_uid
+                ):
+                    self.non_transactional_reorder_study_subparts(
+                        previous_study_parent_part_uid
+                    )
 
             return self._models_study_from_study_definition_ar(
                 study_definition_ar,
@@ -1415,50 +1520,50 @@ class StudyService:
                 find_all_study_time_units=self._repos.unit_definition_repository.find_all,
                 find_study_parent_part_by_uid=self._repos.study_definition_repository.find_by_uid,
                 find_term_by_uid=self._repos.ct_term_name_repository.find_by_uid,
-                is_subpart=study_definition_ar.study_parent_part_uid is not None,
             )
         finally:
             self._close_all_repos()
 
-    def _update_subpart_relation_with_project(
-        self, project_number: str, study_definition_ar
-    ):
+    def _cascade_update_subparts(self, study_definition_ar: StudyDefinitionAR):
+        if not study_definition_ar.study_subpart_uids:
+            return
+
         for study_subpart_uid in study_definition_ar.study_subpart_uids:
             subpart_ar = self._repos.study_definition_repository.find_by_uid(
                 study_subpart_uid, for_update=True
             )
+
             subpart_ar.edit_metadata(
                 new_id_metadata=self._patch_prepare_new_id_metadata(
                     current_id_metadata=subpart_ar.current_metadata.id_metadata,
                     request_id_metadata=StudyIdentificationMetadataJsonModel(
-                        project_number=project_number,
-                        study_number=subpart_ar.current_metadata.id_metadata.study_number,
+                        project_number=study_definition_ar.current_metadata.id_metadata.project_number,
+                        study_number=study_definition_ar.current_metadata.id_metadata.study_number,
                         study_acronym=subpart_ar.current_metadata.id_metadata.study_acronym,
+                        study_subpart_acronym=subpart_ar.current_metadata.id_metadata.study_subpart_acronym,
                         description=subpart_ar.current_metadata.id_metadata.description,
-                        registry_identifiers=RegistryIdentifiersJsonModel(
-                            **vars(
-                                subpart_ar.current_metadata.id_metadata.registry_identifiers
-                            )
+                        registry_identifiers=RegistryIdentifiersJsonModel.from_study_registry_identifiers_vo(
+                            study_definition_ar.current_metadata.id_metadata.registry_identifiers,
+                            self._repos.ct_term_name_repository.find_by_uid,
                         ),
                     ),
                     find_project_by_project_number=self._repos.project_repository.find_by_project_number,
                     find_clinical_programme_by_uid=self._repos.clinical_programme_repository.find_by_uid,
-                    is_subpart=subpart_ar.study_parent_part_uid is not None,
                 ),
                 project_exists_callback=self._repos.project_repository.project_number_exists,
-                new_high_level_study_design=HighLevelStudyDesignVO(),
+                new_high_level_study_design=subpart_ar.current_metadata.high_level_study_design,
                 study_type_exists_callback=self._repos.ct_term_name_repository.term_exists,
                 trial_type_exists_callback=self._repos.ct_term_name_repository.term_exists,
                 trial_intent_type_exists_callback=self._repos.ct_term_name_repository.term_exists,
                 trial_phase_exists_callback=self._repos.ct_term_name_repository.term_exists,
                 null_value_exists_callback=self._repos.ct_term_name_repository.term_exists,
-                new_study_population=StudyPopulationVO(),
+                new_study_population=subpart_ar.current_metadata.study_population,
                 therapeutic_area_exists_callback=self._repos.dictionary_term_generic_repository.term_exists,
                 disease_condition_or_indication_exists_callback=self._repos.dictionary_term_generic_repository.term_exists,
                 diagnosis_group_exists_callback=self._repos.dictionary_term_generic_repository.term_exists,
                 sex_of_participants_exists_callback=self._repos.ct_term_name_repository.term_exists,
-                new_study_intervention=StudyInterventionVO(),
-                new_study_description=StudyDescriptionVO(),
+                new_study_intervention=subpart_ar.current_metadata.study_intervention,
+                new_study_description=study_definition_ar.current_metadata.study_description,
                 study_title_exists_callback=self._repos.study_title_repository.study_title_exists,
                 study_short_title_exists_callback=self._repos.study_title_repository.study_short_title_exists,
                 # add here valid callbacks
@@ -1594,6 +1699,7 @@ class StudyService:
         )
         return StudyPreferredTimeUnit.from_orm(return_node)
 
+    @validate_if_study_is_not_locked("study_uid", 1)
     def post_study_preferred_time_unit(
         self, study_uid: str, unit_definition_uid: str, for_protocol_soa: bool = False
     ):
@@ -1610,6 +1716,7 @@ class StudyService:
         return StudyPreferredTimeUnit.from_orm(return_node)
 
     @db.transaction
+    @validate_if_study_is_not_locked("study_uid", 1)
     def patch_study_preferred_time_unit(
         self, study_uid: str, unit_definition_uid: str, for_protocol_soa: bool = False
     ) -> StudyPreferredTimeUnit:
@@ -1639,7 +1746,10 @@ class StudyService:
                 f"Study identified by UID ({study_parent_part_uid}) doesn't exist."
             )
 
-        if study_parent_part.latest_released_or_locked_metadata:
+        if (
+            study_parent_part.current_metadata.ver_metadata.study_status
+            != StudyStatus.DRAFT
+        ):
             raise exceptions.BusinessLogicException(
                 "Cannot reorder Study Subparts of a non-draft Study Parent Part."
             )
@@ -1668,7 +1778,7 @@ class StudyService:
                 not in study_parent_part.study_subpart_uids
             ):
                 raise exceptions.BusinessLogicException(
-                    f"Study Subparts identified by {study_subpart_reordering_input.uid} "
+                    f"Study Subparts identified by ({study_subpart_reordering_input.uid}) "
                     f"don't belong to the Study Parent Part identified by ({study_parent_part_uid})."
                 )
 
@@ -1708,7 +1818,6 @@ class StudyService:
             ),
             find_project_by_project_number=self._repos.project_repository.find_by_project_number,
             find_clinical_programme_by_uid=self._repos.clinical_programme_repository.find_by_uid,
-            is_subpart=True,
         )
 
         study.edit_metadata(
@@ -1763,3 +1872,58 @@ class StudyService:
                     self._update_study_subpart_id(study_subpart, new_subpart_id)
                 )
         return studies
+
+    @db.transaction
+    def get_study_soa_preferences(
+        self, study_uid: str, study_value_version: str | None = None
+    ) -> StudySoaPreferences:
+        """Gets StudySoaPreferences using defaults for missing properties or NotFoundException if none defined"""
+
+        self.check_if_study_exists(study_uid=study_uid)
+
+        nodes = self._repos.study_definition_repository.get_soa_preferences(
+            study_uid=study_uid, study_value_version=study_value_version
+        )
+
+        return self._study_fields_to_study_soa_preferences(study_uid, nodes)
+
+    @db.transaction
+    @validate_if_study_is_not_locked("study_uid", 1)
+    def post_study_soa_preferences(
+        self,
+        study_uid: str,
+        soa_preferences: StudySoaPreferencesInput,
+    ) -> StudySoaPreferences:
+        """Creates study StudySoaPreferences from StudySoaPreferencesInput, honoring it's defaults"""
+
+        self.check_if_study_exists(study_uid=study_uid)
+
+        nodes = self._repos.study_definition_repository.post_soa_preferences(
+            study_uid=study_uid, soa_preferences=soa_preferences
+        )
+
+        return self._study_fields_to_study_soa_preferences(study_uid, nodes)
+
+    @db.transaction
+    @validate_if_study_is_not_locked("study_uid", 1)
+    def patch_study_soa_preferences(
+        self, study_uid: str, soa_preferences: StudySoaPreferencesInput
+    ) -> StudySoaPreferences:
+        """Updates StudySoaPreferences from StudySoaPreferencesInput only from set properties, ignoring defaults"""
+
+        self.check_if_study_exists(study_uid=study_uid)
+
+        nodes = self._repos.study_definition_repository.edit_soa_preferences(
+            study_uid=study_uid, soa_preferences=soa_preferences
+        )
+
+        return self._study_fields_to_study_soa_preferences(study_uid, nodes)
+
+    @staticmethod
+    def _study_fields_to_study_soa_preferences(
+        study_uid: str, nodes: NodeSet
+    ) -> StudySoaPreferences:
+        """Converts a set of StudyField nodes to a StudySoaPreferences"""
+
+        preferences = {node.field_name: node.value for node in nodes}
+        return StudySoaPreferences(study_uid=study_uid, **preferences)

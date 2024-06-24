@@ -83,14 +83,16 @@ class CriteriaPreInstance(BaseModel):
             sequence_id=criteria_pre_instance_ar.sequence_id,
             template_uid=criteria_pre_instance_ar.template_uid,
             template_name=criteria_pre_instance_ar.template_name,
-            template_type_uid=None,
+            template_type_uid=criteria_pre_instance_ar.type.term_uid,
             name=capitalize_first_letter_if_template_parameter(
                 criteria_pre_instance_ar.name,
                 criteria_pre_instance_ar.template_name_plain,
+                criteria_pre_instance_ar._template.parameter_terms,
             ),
             name_plain=capitalize_first_letter_if_template_parameter(
                 criteria_pre_instance_ar.name_plain,
                 criteria_pre_instance_ar.template_name_plain,
+                criteria_pre_instance_ar._template.parameter_terms,
             ),
             guidance_text=(
                 criteria_pre_instance_ar._template.guidance_text

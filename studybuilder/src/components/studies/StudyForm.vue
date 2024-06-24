@@ -1,253 +1,268 @@
 <template>
-<simple-form-dialog
-  ref="form"
-  :title="title"
-  :help-items="helpItems"
-  @close="close"
-  @submit="submit"
-  :open="open"
+  <SimpleFormDialog
+    ref="formRef"
+    :title="title"
+    :help-items="helpItems"
+    :open="open"
+    :scrollable="false"
+    @close="close"
+    @submit="submit"
   >
-  <template v-slot:body>
-    <validation-observer ref="observer">
-      <v-row>
-        <v-col cols="12">
-          <validation-provider
-            v-slot="{ errors }"
-            name="Project"
-            vid="project"
-            rules="required"
-            >
-            <v-select
+    <template #body>
+      <v-form ref="observer">
+        <v-row>
+          <v-col cols="12">
+            <v-autocomplete
               v-model="form.project_number"
               :label="$t('StudyForm.project_id')"
-              :items="projects"
-              item-text="project_number"
-              @change="updateProject($event)"
+              :items="studiesManageStore.projects"
+              item-title="project_number"
               return-object
-              :error-messages="errors"
-              dense
+              :rules="[formRules.required]"
+              density="compact"
               clearable
               data-cy="project-id"
-              ></v-select>
-          </validation-provider>
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col cols="12">
-          <v-text-field
-            :label="$t('StudyForm.project_name')"
-            :value="project.name"
-            disabled
-            filled
-            hide-details
-            data-cy="project-name"
-            ></v-text-field>
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col cols="12">
-          <v-text-field
-            :label="$t('StudyForm.brand_name')"
-            :value="project.brand_name"
-            disabled
-            filled
-            hide-details
-            data-cy="brand-name"
-            ></v-text-field>
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col cols="12">
-          <validation-provider
-            v-slot="{ errors }"
-            name="Number"
-            :rules="`numeric|max:${userData.studyNumberLength}`"
-            >
+              @update:model-value="updateProject"
+            />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col cols="12">
+            <v-text-field
+              :label="$t('StudyForm.project_name')"
+              :model-value="project.name"
+              disabled
+              variant="filled"
+              hide-details
+              data-cy="project-name"
+            />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col cols="12">
+            <v-text-field
+              :label="$t('StudyForm.brand_name')"
+              :model-value="project.brand_name"
+              disabled
+              variant="filled"
+              hide-details
+              data-cy="brand-name"
+            />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col cols="12">
             <v-text-field
               id="studyNumber"
-              :label="$t('StudyForm.number')"
               v-model="form.study_number"
-              :error-messages="errors"
-              dense
+              :label="$t('StudyForm.number')"
+              :rules="[
+                formRules.numeric,
+                (value) =>
+                  formRules.max(value, appStore.userData.studyNumberLength),
+              ]"
+              density="compact"
               clearable
               data-cy="study-number"
-              />
-          </validation-provider>
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col cols="12">
-          <validation-provider
-            v-slot="{ errors }"
-            name="Acronym"
-            rules=""
-            >
+            />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col cols="12">
             <v-text-field
               id="studyAcronym"
-              :label="$t('StudyForm.acronym')"
               v-model="form.study_acronym"
-              :error-messages="errors"
-              dense
+              :label="$t('StudyForm.acronym')"
+              density="compact"
               clearable
               data-cy="study-acronym"
-              />
-          </validation-provider>
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col cols="12">
-          <v-text-field
-            :label="$t('StudyForm.study_id')"
-            :value="studyId"
-            disabled
-            filled
-            hide-details
-            data-cy="study-id"
             />
-        </v-col>
-      </v-row>
-    </validation-observer>
-  </template>
-</simple-form-dialog>
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col cols="12">
+            <v-text-field
+              :label="$t('StudyForm.study_id')"
+              :value="studyId"
+              disabled
+              variant="filled"
+              hide-details
+              data-cy="study-id"
+            />
+          </v-col>
+        </v-row>
+      </v-form>
+    </template>
+  </SimpleFormDialog>
 </template>
 
-<script>
-import { mapGetters } from 'vuex'
-import { bus } from '@/main'
+<script setup>
+import { computed, onMounted, inject, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 import _isEqual from 'lodash/isEqual'
 import _isEmpty from 'lodash/isEmpty'
-import SimpleFormDialog from '@/components/tools/SimpleFormDialog'
+import SimpleFormDialog from '@/components/tools/SimpleFormDialog.vue'
+import { useAppStore } from '@/stores/app'
+import { useStudiesGeneralStore } from '@/stores/studies-general'
+import { useStudiesManageStore } from '@/stores/studies-manage'
 
-export default {
-  components: {
-    SimpleFormDialog
+const props = defineProps({
+  editedStudy: {
+    type: Object,
+    default: undefined,
   },
-  props: {
-    editedStudy: Object,
-    open: Boolean
-  },
-  data () {
-    return {
-      form: {},
-      helpItems: [
-        'StudyForm.project_id',
-        'StudyForm.project_name',
-        'StudyForm.brand_name',
-        'StudyForm.study_id',
-        { key: 'StudyForm.number', context: this.getNumberTranslationContext },
-        'StudyForm.acronym'
-      ],
-      project: {}
+  open: Boolean,
+})
+
+const { t } = useI18n()
+const router = useRouter()
+const eventBusEmit = inject('eventBusEmit')
+const formRules = inject('formRules')
+const emit = defineEmits(['close', 'updated'])
+const studiesManageStore = useStudiesManageStore()
+const studiesGeneralStore = useStudiesGeneralStore()
+const appStore = useAppStore()
+const formRef = ref()
+
+const form = ref({})
+const project = ref({})
+const helpItems = [
+  'StudyForm.project_id',
+  'StudyForm.project_name',
+  'StudyForm.brand_name',
+  'StudyForm.study_id',
+  { key: 'StudyForm.number', context: getNumberTranslationContext },
+  'StudyForm.acronym',
+]
+
+const title = computed(() => {
+  return props.editedStudy
+    ? t('StudyForm.edit_title')
+    : t('StudyForm.add_title')
+})
+const studyId = computed(() => {
+  if (project.value.project_number && form.value.study_number) {
+    return `${project.value.project_number}-${form.value.study_number}`
+  }
+  return ''
+})
+
+watch(
+  () => props.editedStudy,
+  (value) => {
+    if (value) {
+      initForm(value)
     }
-  },
-  computed: {
-    ...mapGetters({
-      getProjectByNumber: 'manageStudies/getProjectByNumber',
-      projects: 'manageStudies/projects',
-      selectedStudy: 'studiesGeneral/selectedStudy',
-      userData: 'app/userData'
-    }),
-    title () {
-      return (this.editedStudy) ? this.$t('StudyForm.edit_title') : this.$t('StudyForm.add_title')
-    },
-    studyId () {
-      if (this.project.project_number && this.form.study_number) {
-        return `${this.project.project_number}-${this.form.study_number}`
-      }
-      return ''
+  }
+)
+
+onMounted(() => {
+  if (props.editedStudy) {
+    initForm(props.editedStudy)
+  }
+})
+
+async function close() {
+  if (hasChanged()) {
+    const options = {
+      type: 'warning',
+      cancelLabel: t('_global.cancel'),
+      agreeLabel: t('_global.continue'),
     }
-  },
-  methods: {
-    async close () {
-      if (this.hasChanged()) {
-        const options = {
-          type: 'warning',
-          cancelLabel: this.$t('_global.cancel'),
-          agreeLabel: this.$t('_global.continue')
-        }
-        if (await this.$refs.form.confirm(this.$t('_global.cancel_changes'), options)) {
-          this.$emit('close')
-        }
-      } else {
-        this.$emit('close')
-      }
-    },
-    initForm (value) {
-      this.form = {
-        project_number: value.current_metadata.identification_metadata.project_number,
-        study_number: value.current_metadata.identification_metadata.study_number,
-        study_acronym: value.current_metadata.identification_metadata.study_acronym
-      }
-      this.project = this.getProjectByNumber(this.form.project_number)
-    },
-    updateProject (target) {
-      this.project = target
-    },
-    addStudy () {
-      const data = JSON.parse(JSON.stringify(this.form))
-      data.project_number = this.project.project_number
-      return this.$store.dispatch('manageStudies/addStudy', data).then(resp => {
-        bus.$emit('notification', { msg: this.$t('StudyForm.add_success') })
-        this.$store.dispatch('studiesGeneral/selectStudy', { studyObj: resp.data })
-        this.$router.push({ name: 'SelectOrAddStudy' })
-        this.$router.go()
-      })
-    },
-    hasChanged () {
-      if ((!_isEmpty(this.form) && this.editedStudy === null) || (!_isEmpty(this.form) && (this.editedStudy && (!_isEqual(this.form.project_number, this.editedStudy.project_number) || !_isEqual(this.form.study_acronym, this.editedStudy.study_acronym) || !_isEqual(this.form.study_number, this.editedStudy.study_number))))) {
-        return true
-      } else {
-        return false
-      }
-    },
-    updateStudy () {
-      if (!this.hasChanged()) {
-        bus.$emit('notification', { msg: this.$t('_global.no_changes'), type: 'info' })
-        return
-      }
-      const data = JSON.parse(JSON.stringify(this.form))
-      data.project_number = this.project.project_number
-      return this.$store.dispatch('manageStudies/editStudyIdentification', [this.editedStudy.uid, data]).then(resp => {
-        if (this.selectedStudy && (this.editedStudy.uid === this.selectedStudy.uid)) {
-          this.$store.dispatch('studiesGeneral/selectStudy', { studyObj: resp.data })
-        }
-        this.$emit('updated', resp.data)
-        bus.$emit('notification', { msg: this.$t('StudyForm.update_success') })
-      })
-    },
-    getNumberTranslationContext () {
-      return { length: this.userData.studyNumberLength }
-    },
-    async submit () {
-      try {
-        if (!this.editedStudy) {
-          await this.addStudy()
-        } else {
-          await this.updateStudy()
-        }
-        this.project = {}
-        this.$emit('close')
-      } finally {
-        this.$refs.form.working = false
-      }
+    if (await formRef.value.confirm(t('_global.cancel_changes'), options)) {
+      form.value = {}
+      emit('close')
     }
-  },
-  mounted () {
-    if (this.editedStudy) {
-      this.initForm(this.editedStudy)
+  } else {
+    form.value = {}
+    emit('close')
+  }
+}
+
+function initForm(value) {
+  form.value = {
+    project_number:
+      value.current_metadata.identification_metadata.project_number,
+    study_number: value.current_metadata.identification_metadata.study_number,
+    study_acronym: value.current_metadata.identification_metadata.study_acronym,
+  }
+  if (value.study_parent_part) {
+    form.value.study_subpart_acronym =
+      value.current_metadata.identification_metadata.study_subpart_acronym
+    form.value.study_parent_part_uid = value.study_parent_part.uid
+  }
+  project.value = studiesManageStore.getProjectByNumber(
+    form.value.project_number
+  )
+}
+
+function updateProject(value) {
+  project.value = value
+}
+
+function addStudy() {
+  const data = JSON.parse(JSON.stringify(form.value))
+  data.project_number = project.value.project_number
+  return studiesManageStore.addStudy(data).then((resp) => {
+    eventBusEmit('notification', { msg: t('StudyForm.add_success') })
+    studiesGeneralStore.selectStudy(resp.data)
+    router.push({ name: 'SelectOrAddStudy' })
+    router.go()
+  })
+}
+
+function hasChanged() {
+  if (
+    (!_isEmpty(form.value) && props.editedStudy === null) ||
+    (!_isEmpty(form.value) &&
+      props.editedStudy &&
+      (!_isEqual(form.value.project_number, props.editedStudy.project_number) ||
+        !_isEqual(form.value.study_acronym, props.editedStudy.study_acronym) ||
+        !_isEqual(form.value.study_number, props.editedStudy.study_number)))
+  ) {
+    return true
+  } else {
+    return false
+  }
+}
+
+function updateStudy() {
+  if (!hasChanged()) {
+    eventBusEmit('notification', { msg: t('_global.no_changes'), type: 'info' })
+    return
+  }
+  const data = JSON.parse(JSON.stringify(form.value))
+  data.project_number = project.value.project_number
+  return studiesManageStore
+    .editStudyIdentification(props.editedStudy.uid, data)
+    .then((resp) => {
+      if (
+        studiesGeneralStore.selectedStudy &&
+        props.editedStudy.uid === studiesGeneralStore.selectedStudy.uid
+      ) {
+        studiesGeneralStore.selectStudy(resp.data)
+      }
+      emit('updated', resp.data)
+      eventBusEmit('notification', { msg: t('StudyForm.update_success') })
+    })
+}
+
+function getNumberTranslationContext() {
+  return { length: appStore.userData.studyNumberLength }
+}
+
+async function submit() {
+  try {
+    if (!props.editedStudy) {
+      await addStudy()
+    } else {
+      await updateStudy()
     }
-    this.$store.dispatch('manageStudies/fetchProjects')
-    this.$store.dispatch('manageStudies/fetchStudies')
-  },
-  watch: {
-    editedStudy: {
-      handler (value) {
-        if (value) {
-          this.initForm(value)
-        }
-      },
-      immediate: true
-    }
+    project.value = {}
+    emit('close')
+  } finally {
+    formRef.value.working = false
   }
 }
 </script>

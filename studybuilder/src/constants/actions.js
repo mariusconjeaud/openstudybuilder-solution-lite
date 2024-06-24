@@ -11,5 +11,5 @@ export default {
   DELETE,
   EDIT,
   INACTIVATE,
-  REACTIVATE
+  REACTIVATE,
 }

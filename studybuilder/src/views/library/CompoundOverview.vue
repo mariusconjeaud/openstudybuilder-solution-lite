@@ -1,40 +1,41 @@
 <template>
-<div class="px-4">
-  <div class="d-flex page-title">
-    {{ compound.name }}
+  <div class="px-4">
+    <div class="d-flex page-title">
+      {{ compound.name }}
+    </div>
+    <CompoundOverview :compound="compound" />
   </div>
-  <compound-overview :compound="compound" />
-</div>
 </template>
 
 <script>
-import CompoundOverview from '@/components/library/CompoundOverview'
+import CompoundOverview from '@/components/library/CompoundOverview.vue'
 import compounds from '@/api/concepts/compounds'
-import { mapActions } from 'vuex'
+import { useAppStore } from '@/stores/app'
 
 export default {
   components: {
-    CompoundOverview
+    CompoundOverview,
   },
-  data () {
+  setup() {
+    const appStore = useAppStore()
     return {
-      compound: {}
+      addBreadcrumbsLevel: appStore.addBreadcrumbsLevel,
     }
   },
-  methods: {
-    ...mapActions({
-      addBreadcrumbsLevel: 'app/addBreadcrumbsLevel'
+  data() {
+    return {
+      compound: {},
+    }
+  },
+  created() {
+    compounds.getObject(this.$route.params.id).then((resp) => {
+      this.compound = resp.data
+      this.addBreadcrumbsLevel(
+        this.compound.name,
+        { name: 'CompoundOverview', params: this.$route.params },
+        4
+      )
     })
   },
-  created () {
-    compounds.getObject(this.$route.params.id).then(resp => {
-      this.compound = resp.data
-      this.addBreadcrumbsLevel({
-        text: this.compound.name,
-        to: { name: 'CompoundOverview', params: this.$route.params },
-        index: 3
-      })
-    })
-  }
 }
 </script>

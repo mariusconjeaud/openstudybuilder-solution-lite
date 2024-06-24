@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/bin/bash
 set -e
 if [ $# -lt 3 ]; then
 	cat 1>&2 <<- EOF

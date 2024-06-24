@@ -370,12 +370,6 @@ class StudyActivityInstance(StudySelection):
         model=ClinicalMdrRel,
         cardinality=One,
     )
-    study_activity_schedule = RelationshipTo(
-        "StudyActivitySchedule",
-        "STUDY_ACTIVITY_INSTANCE_HAS_SCHEDULE",
-        model=ClinicalMdrRel,
-        cardinality=ZeroOrMore,
-    )
     show_activity_instance_in_protocol_flowchart = BooleanProperty(default=False)
 
 
@@ -389,12 +383,6 @@ class StudyActivitySchedule(StudySelection):
     study_activity = RelationshipFrom(
         StudyActivity,
         "STUDY_ACTIVITY_HAS_SCHEDULE",
-        model=ClinicalMdrRel,
-        cardinality=ZeroOrMore,
-    )
-    study_activity_instance = RelationshipFrom(
-        StudyActivityInstance,
-        "STUDY_ACTIVITY_INSTANCE_HAS_SCHEDULE",
         model=ClinicalMdrRel,
         cardinality=ZeroOrMore,
     )
