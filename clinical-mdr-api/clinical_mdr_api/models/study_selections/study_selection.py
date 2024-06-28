@@ -53,11 +53,17 @@ from clinical_mdr_api.domains.study_selections.study_design_cell import (
     StudyDesignCellVO,
 )
 from clinical_mdr_api.domains.study_selections.study_selection_activity import (
-    StudySelectionActivityAR,
+    StudySelectionActivityVO,
+)
+from clinical_mdr_api.domains.study_selections.study_selection_activity_group import (
+    StudySelectionActivityGroupVO,
 )
 from clinical_mdr_api.domains.study_selections.study_selection_activity_instance import (
     StudyActivityInstanceState,
-    StudySelectionActivityInstanceAR,
+    StudySelectionActivityInstanceVO,
+)
+from clinical_mdr_api.domains.study_selections.study_selection_activity_subgroup import (
+    StudySelectionActivitySubGroupVO,
 )
 from clinical_mdr_api.domains.study_selections.study_selection_arm import (
     StudySelectionArmVO,
@@ -87,6 +93,9 @@ from clinical_mdr_api.domains.study_selections.study_selection_endpoint import (
 )
 from clinical_mdr_api.domains.study_selections.study_selection_objective import (
     StudySelectionObjectivesAR,
+)
+from clinical_mdr_api.domains.study_selections.study_soa_group_selection import (
+    StudySoAGroupVO,
 )
 from clinical_mdr_api.models.concepts.activities.activity import (
     Activity,
@@ -1949,9 +1958,10 @@ class StudySelectionActivity(StudySelectionActivityCore):
     )
 
     @classmethod
-    def from_study_selection_activity_ar_and_order(
+    def from_study_selection_activity_vo_and_order(
         cls,
-        study_selection_activity_ar: StudySelectionActivityAR,
+        study_uid: str,
+        specific_selection: StudySelectionActivityVO,
         activity_order: int,
         get_activity_by_uid_callback: Callable[[str], ActivityForStudyActivity],
         get_activity_by_uid_version_callback: Callable[[str], ActivityForStudyActivity],
@@ -1960,10 +1970,8 @@ class StudySelectionActivity(StudySelectionActivityCore):
         accepted_version: bool = False,
         study_value_version: str | None = None,
     ) -> Self:
-        study_activity_selection = study_selection_activity_ar.study_objects_selection
-        study_uid = study_selection_activity_ar.study_uid
-        single_study_selection = study_activity_selection[activity_order - 1]
-        study_activity_uid = single_study_selection.study_selection_uid
+        single_study_selection = specific_selection
+        study_activity_uid = specific_selection.study_selection_uid
         activity_uid = single_study_selection.activity_uid
 
         flowchart_group = get_ct_term_flowchart_group(
@@ -1983,24 +1991,8 @@ class StudySelectionActivity(StudySelectionActivityCore):
             selected_activity = get_activity_by_uid_version_callback(
                 activity_uid, single_study_selection.activity_version
             )
-        activity_subgroup_name = next(
-            (
-                activity_grouping.activity_subgroup_name
-                for activity_grouping in selected_activity.activity_groupings
-                if activity_grouping.activity_subgroup_uid
-                == single_study_selection.activity_subgroup_uid
-            ),
-            None,
-        )
-        activity_group_name = next(
-            (
-                activity_grouping.activity_group_name
-                for activity_grouping in selected_activity.activity_groupings
-                if activity_grouping.activity_group_uid
-                == single_study_selection.activity_group_uid
-            ),
-            None,
-        )
+        activity_subgroup_name = single_study_selection.activity_subgroup_name
+        activity_group_name = single_study_selection.activity_group_name
         return cls(
             study_activity_uid=study_activity_uid,
             study_activity_subgroup=SimpleStudyActivitySubGroup(
@@ -2135,6 +2127,117 @@ class StudySelectionActivityBatchOutput(BaseModel):
     content: StudySelectionActivity | None | BatchErrorResponse
 
 
+class StudyActivitySubGroupEditInput(BaseModel):
+    show_activity_subgroup_in_protocol_flowchart: bool | None = (
+        SHOW_ACTIVITY_SUBGROUP_IN_PROTOCOL_FLOWCHART_FIELD
+    )
+
+
+class StudyActivitySubGroup(BaseModel):
+    show_activity_subgroup_in_protocol_flowchart: bool | None = (
+        SHOW_ACTIVITY_SUBGROUP_IN_PROTOCOL_FLOWCHART_FIELD
+    )
+    study_uid: str | None = Field(
+        ...,
+        title="study_uid",
+        description=STUDY_UID_DESC,
+    )
+    study_activity_subgroup_uid: str = Field(
+        ...,
+        title="study_activity_subgroup_uid",
+        source="uid",
+    )
+
+    @classmethod
+    def from_study_selection_activity_vo(
+        cls,
+        study_uid: str,
+        specific_selection: StudySelectionActivitySubGroupVO,
+    ) -> Self:
+        single_study_selection = specific_selection
+        study_activity_subgroup_uid = single_study_selection.study_selection_uid
+
+        return cls(
+            study_activity_subgroup_uid=study_activity_subgroup_uid,
+            show_activity_subgroup_in_protocol_flowchart=single_study_selection.show_activity_subgroup_in_protocol_flowchart,
+            study_uid=study_uid,
+        )
+
+
+class StudyActivityGroupEditInput(BaseModel):
+    show_activity_group_in_protocol_flowchart: bool | None = (
+        SHOW_ACTIVITY_GROUP_IN_PROTOCOL_FLOWCHART_FIELD
+    )
+
+
+class StudyActivityGroup(BaseModel):
+    show_activity_group_in_protocol_flowchart: bool | None = (
+        SHOW_ACTIVITY_GROUP_IN_PROTOCOL_FLOWCHART_FIELD
+    )
+    study_uid: str | None = Field(
+        ...,
+        title="study_uid",
+        description=STUDY_UID_DESC,
+    )
+    study_activity_group_uid: str = Field(
+        ...,
+        title="study_activity_group_uid",
+        source="uid",
+    )
+
+    @classmethod
+    def from_study_selection_activity_vo(
+        cls,
+        study_uid: str,
+        specific_selection: StudySelectionActivityGroupVO,
+    ) -> Self:
+        single_study_selection = specific_selection
+        study_activity_group_uid = single_study_selection.study_selection_uid
+
+        return cls(
+            study_activity_group_uid=study_activity_group_uid,
+            show_activity_group_in_protocol_flowchart=single_study_selection.show_activity_group_in_protocol_flowchart,
+            study_uid=study_uid,
+        )
+
+
+class StudySoAGroupEditInput(BaseModel):
+    show_soa_group_in_protocol_flowchart: bool = (
+        SHOW_SOA_GROUP_IN_PROTOCOL_FLOWCHART_FIELD
+    )
+
+
+class StudySoAGroup(BaseModel):
+    show_soa_group_in_protocol_flowchart: bool = (
+        SHOW_SOA_GROUP_IN_PROTOCOL_FLOWCHART_FIELD
+    )
+    study_uid: str | None = Field(
+        ...,
+        title="study_uid",
+        description=STUDY_UID_DESC,
+    )
+    study_soa_group_uid: str = Field(
+        ...,
+        title="study_soa_group_uid",
+        source="uid",
+    )
+
+    @classmethod
+    def from_study_selection_activity_vo(
+        cls,
+        study_uid: str,
+        specific_selection: StudySoAGroupVO,
+    ) -> Self:
+        single_study_selection = specific_selection
+        study_soa_group_uid = single_study_selection.study_selection_uid
+
+        return cls(
+            study_soa_group_uid=study_soa_group_uid,
+            show_soa_group_in_protocol_flowchart=single_study_selection.show_soa_group_in_protocol_flowchart,
+            study_uid=study_uid,
+        )
+
+
 #
 # Study Activity Instance
 #
@@ -2246,24 +2349,18 @@ class StudySelectionActivityInstance(BaseModel):
         )
 
     @classmethod
-    def from_study_selection_activity_instance_ar_and_order(
+    def from_study_selection_activity_instance_vo_and_order(
         cls,
-        study_selection_activity_instance_ar: StudySelectionActivityInstanceAR,
+        study_uid: str,
+        specific_selection: StudySelectionActivityInstanceVO,
         get_activity_by_uid_callback: Callable[[str], Activity],
         get_activity_by_uid_version_callback: Callable[[str, str], Activity],
-        activity_instance_order: int,
         get_activity_instance_by_uid_callback: Callable[[str], ActivityInstance],
         get_activity_instance_by_uid_version_callback: Callable[
             [str, str], ActivityInstance
         ],
     ) -> Self:
-        study_activity_instance_selection = (
-            study_selection_activity_instance_ar.study_objects_selection
-        )
-        study_uid = study_selection_activity_instance_ar.study_uid
-        single_study_selection = study_activity_instance_selection[
-            activity_instance_order - 1
-        ]
+        single_study_selection = specific_selection
         study_activity_instance_uid = single_study_selection.study_selection_uid
         activity_uid = single_study_selection.activity_uid
         activity_instance_uid = single_study_selection.activity_instance_uid

@@ -2068,6 +2068,9 @@ def test_get_flowchart_item_uid_coordinates(
             study_visit.uid, None
         ), f"Missing coordinates of StudyVisit[{study_visit.uid}]"
 
+    shared_soa_groups = []
+    shared_study_activity_groups = []
+    shared_study_activity_subgroups = []
     study_selection_activity: models.StudySelectionActivity
     for study_selection_activity in (
         StudyActivitySelectionService()
@@ -2079,17 +2082,27 @@ def test_get_flowchart_item_uid_coordinates(
             f"Missing coordinates of StudySelectionActivity[{study_selection_activity.study_activity_uid}]: "
             + study_selection_activity.study_activity_uid
         )
+        if (
+            study_selection_activity.study_soa_group.study_soa_group_uid
+            not in shared_soa_groups
+        ):
+            # THEN all StudySoAGroups have coordinates
+            assert results.pop(
+                study_selection_activity.study_soa_group.study_soa_group_uid, None
+            ), (
+                f"Missing coordinates of StudySelectionActivity[{study_selection_activity.study_activity_uid}]: "
+                + study_selection_activity.study_soa_group.study_soa_group_uid
+            )
+            shared_soa_groups.append(
+                study_selection_activity.study_soa_group.study_soa_group_uid
+            )
 
-        # THEN all StudySoAGroups have coordinates
-        assert results.pop(
-            study_selection_activity.study_soa_group.study_soa_group_uid, None
-        ), (
-            f"Missing coordinates of StudySelectionActivity[{study_selection_activity.study_activity_uid}]: "
-            + study_selection_activity.study_soa_group.study_soa_group_uid
-        )
-
-        # THEN all StudyActivityGroups have coordinates
-        if study_selection_activity.study_activity_group.study_activity_group_uid:
+        if (
+            study_selection_activity.study_activity_group.study_activity_group_uid
+            and study_selection_activity.study_activity_group.study_activity_group_uid
+            not in shared_study_activity_groups
+        ):
+            # THEN all StudyActivityGroups have coordinates
             assert results.pop(
                 study_selection_activity.study_activity_group.study_activity_group_uid,
                 None,
@@ -2097,15 +2110,25 @@ def test_get_flowchart_item_uid_coordinates(
                 f"Missing coordinates of StudySelectionActivity[{study_selection_activity.study_activity_uid}]: "
                 + study_selection_activity.study_activity_group.study_activity_group_uid
             )
+            shared_study_activity_groups.append(
+                study_selection_activity.study_activity_group.study_activity_group_uid
+            )
 
         # THEN all StudyActivitySubGroups have coordinates
-        if study_selection_activity.study_activity_subgroup.study_activity_subgroup_uid:
+        if (
+            study_selection_activity.study_activity_subgroup.study_activity_subgroup_uid
+            and study_selection_activity.study_activity_subgroup.study_activity_subgroup_uid
+            not in shared_study_activity_subgroups
+        ):
             assert results.pop(
                 study_selection_activity.study_activity_subgroup.study_activity_subgroup_uid,
                 None,
             ), (
                 f"Missing coordinates of StudySelectionActivity[{study_selection_activity.study_activity_uid}]: "
                 + study_selection_activity.study_activity_subgroup.study_activity_subgroup_uid
+            )
+            shared_study_activity_subgroups.append(
+                study_selection_activity.study_activity_subgroup.study_activity_subgroup_uid
             )
 
     # THEN all StudyActivitySchedules have coordinates

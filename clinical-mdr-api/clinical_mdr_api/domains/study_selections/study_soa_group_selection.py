@@ -17,6 +17,7 @@ class StudySoAGroupVO(study_selection_base.StudySelectionBaseVO):
     study_uid: str
     study_selection_uid: str
     soa_group_term_uid: str
+    show_soa_group_in_protocol_flowchart: bool
     # Study selection Versioning
     start_date: datetime.datetime
     user_initials: str | None
@@ -28,6 +29,7 @@ class StudySoAGroupVO(study_selection_base.StudySelectionBaseVO):
         study_uid: str,
         soa_group_term_uid: str,
         user_initials: str,
+        show_soa_group_in_protocol_flowchart: bool = False,
         study_selection_uid: str | None = None,
         start_date: datetime.datetime | None = None,
         accepted_version: bool = False,
@@ -42,6 +44,7 @@ class StudySoAGroupVO(study_selection_base.StudySelectionBaseVO):
         return cls(
             study_uid=normalize_string(study_uid),
             soa_group_term_uid=normalize_string(soa_group_term_uid),
+            show_soa_group_in_protocol_flowchart=show_soa_group_in_protocol_flowchart,
             start_date=start_date,
             study_selection_uid=normalize_string(study_selection_uid),
             user_initials=normalize_string(user_initials),

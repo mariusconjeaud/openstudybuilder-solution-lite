@@ -28,6 +28,19 @@ def db_result_to_list(result) -> list[dict]:
     return data
 
 
+def unpack_list_of_lists(result: list) -> list:
+    """
+    Converts a list of embedded lists into a list containing items from internal list.
+    An exemplary result parameter passed to the funciton looks as follows [['A'], ['B]]
+    The following method would translate it into ['A', 'B']
+    """
+    return [
+        item_in_internal_list
+        for internal_list in result
+        for item_in_internal_list in internal_list
+    ]
+
+
 def acquire_write_lock_study_value(uid: str) -> None:
     db.cypher_query(
         """

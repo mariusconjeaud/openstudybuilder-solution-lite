@@ -242,6 +242,7 @@ class StudySelectionMetadata(ClinicalMdrNodeWithUID, AuditTrailMixin):
 
 
 class StudySoAGroup(StudySelectionMetadata):
+    show_soa_group_in_protocol_flowchart = BooleanProperty(default=False)
     has_flowchart_group = RelationshipTo(
         CTTermRoot,
         "HAS_FLOWCHART_GROUP",
@@ -263,6 +264,7 @@ class StudySoAGroup(StudySelectionMetadata):
 
 
 class StudyActivitySubGroup(StudySelectionMetadata):
+    show_activity_subgroup_in_protocol_flowchart = BooleanProperty(default=True)
     study_activity_has_study_activity_subgroup = RelationshipFrom(
         "StudyActivity", "STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP"
     )
@@ -278,6 +280,7 @@ class StudyActivitySubGroup(StudySelectionMetadata):
 
 
 class StudyActivityGroup(StudySelectionMetadata):
+    show_activity_group_in_protocol_flowchart = BooleanProperty(default=True)
     study_activity_has_study_activity_group = RelationshipFrom(
         "StudyActivity", "STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP"
     )
@@ -328,10 +331,7 @@ class StudyActivity(StudySelection):
         model=ClinicalMdrRel,
         cardinality=ZeroOrMore,
     )
-    show_activity_group_in_protocol_flowchart = BooleanProperty(default=True)
-    show_activity_subgroup_in_protocol_flowchart = BooleanProperty(default=True)
     show_activity_in_protocol_flowchart = BooleanProperty(default=False)
-    show_soa_group_in_protocol_flowchart = BooleanProperty(default=False)
     study_activity_schedule = RelationshipTo(
         "StudyActivitySchedule",
         "STUDY_ACTIVITY_HAS_SCHEDULE",

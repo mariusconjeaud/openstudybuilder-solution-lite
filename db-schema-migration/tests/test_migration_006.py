@@ -6,6 +6,7 @@ from migrations import migration_006
 from migrations.utils.utils import (
     api_get,
     api_get_paged,
+    api_patch,
     execute_statements,
     get_db_connection,
     get_db_driver,
@@ -148,46 +149,6 @@ def test_repeat_migrate_study_activity_instances(migration):
     ), "The second run for migration shouldn't return anything"
 
 
-# def test_remove_study_activities_with_the_same_groupings(migration):
-#     studies, _ = run_cypher_query(
-#         DB_DRIVER,
-#         """
-#         MATCH (study_root:StudyRoot) return study_root.uid
-#         """,
-#     )
-#     for study in studies:
-#         study_uid = study[0]
-#         logger.info(
-#             "Verifying that there are no duplicated StudyActivities for the following Study (%s)",
-#             study_uid,
-#         )
-#         query = """
-#                 MATCH (r:StudyRoot{uid:$study_uid})-[:LATEST]->(v:StudyValue)-[:HAS_STUDY_ACTIVITY]->(sa:StudyActivity)-[:HAS_SELECTED_ACTIVITY]->(activity_value)
-#                 MATCH (sa)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]->(sg:StudyActivityGroup)-[:HAS_SELECTED_ACTIVITY_GROUP]->(activity_group_value)
-#                 MATCH (sa)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]->(ssg:StudyActivitySubGroup)-[:HAS_SELECTED_ACTIVITY_SUBGROUP]->(activity_subgroup_value)
-#                 WITH sa,
-#                     head([(activity_value)<-[:HAS_VERSION]-(activity_root) | activity_root]) as activity_root,
-#                     head([(activity_subgroup_value)<-[:HAS_VERSION]-(activity_subgroup_root) | activity_subgroup_root]) as activity_subgroup_root,
-#                     head([(activity_group_value)<-[:HAS_VERSION]-(activity_group_root) | activity_group_root]) as activity_group_root
-#                 WITH collect(distinct sa) as duplicated_study_activities, activity_root, activity_subgroup_root, activity_group_root
-#                 WHERE size(duplicated_study_activities) > 1
-#             RETURN *
-#         """
-#         result = run_cypher_query(DB_DRIVER, query, params={"study_uid": study_uid})
-#         assert (
-#             len(result[0]) == 0
-#         ), f"Study {study_uid} contains StudyActivities with the same ActivityGroupings"
-
-
-# @pytest.mark.order(after="test_remove_study_activities_with_the_same_groupings")
-# def test_repeat_remove_study_activities_with_the_same_groupings(migration):
-#     assert not any(
-#         migration_006.remove_duplicated_study_activities_with_the_same_groupings(
-#             DB_DRIVER, logger
-#         )
-#     ), "The second run for migration shouldn't return anything"
-
-
 def test_update_insertion_visit_to_manually_defined(migration):
     query = """
         MATCH (study_visit:StudyVisit) 
@@ -320,3 +281,525 @@ def test_repeat_fix_duration_properties_for_visits_with_negative_timings(migrati
     assert not migration_006.fix_duration_properties_for_visits_with_negative_timings(
         DB_DRIVER, logger, migration_006.MIGRATION_DESC
     ), "The second run for migration shouldn't return anything"
+
+
+def test_merge_reuse_study_selection_metadata(migration):
+    studies, _ = run_cypher_query(
+        DB_DRIVER,
+        """
+        MATCH (study_root:StudyRoot) return study_root.uid
+        """,
+    )
+    for study in studies:
+        study_uid = study[0]
+        logger.info(
+            "Verifying successful StudySelectionMetadata merge for the following Study (%s)",
+            study_uid,
+        )
+
+        # GET all study-activities
+        res = api_get(f"/studies/{study_uid}/study-activities", params={"page_size": 0})
+        assert res.status_code == 200
+        study_activities = res.json()["items"]
+        study_soa_groups = {}
+        study_activity_groups = {}
+        study_activity_subgroups = {}
+
+        for study_activity in study_activities:
+            study_soa_groups.setdefault(
+                study_activity["study_soa_group"]["soa_group_term_uid"],
+                study_activity["study_soa_group"]["study_soa_group_uid"],
+            )
+            if (
+                study_activity["study_activity_group"]["study_activity_group_uid"]
+                is not None
+            ):
+                study_activity_groups.setdefault(
+                    study_activity["study_soa_group"]["soa_group_term_uid"], {}
+                ).setdefault(
+                    study_activity["study_activity_group"]["activity_group_uid"],
+                    study_activity["study_activity_group"]["study_activity_group_uid"],
+                )
+            if (
+                study_activity["study_activity_subgroup"]["study_activity_subgroup_uid"]
+                is not None
+            ):
+                study_activity_subgroups.setdefault(
+                    study_activity["study_soa_group"]["soa_group_term_uid"], {}
+                ).setdefault(
+                    study_activity["study_activity_group"]["activity_group_uid"], {}
+                ).setdefault(
+                    study_activity["study_activity_subgroup"]["activity_subgroup_uid"],
+                    study_activity["study_activity_subgroup"][
+                        "study_activity_subgroup_uid"
+                    ],
+                )
+
+        for study_activity in study_activities:
+            # assert each StudyActivity with the same SoAGroup CTTerm selected should have same SoAGroup selection
+            assert (
+                study_activity["study_soa_group"]["study_soa_group_uid"]
+                == study_soa_groups[
+                    study_activity["study_soa_group"]["soa_group_term_uid"]
+                ]
+            )
+
+            if (
+                study_activity["study_activity_group"]["study_activity_group_uid"]
+                is not None
+            ):
+                # assert each StudyActivity with the same SoAGroup CTTerm and ActivityGroup selected should have same StudyActivityGroup
+                assert (
+                    study_activity["study_activity_group"]["study_activity_group_uid"]
+                    == study_activity_groups[
+                        study_activity["study_soa_group"]["soa_group_term_uid"]
+                    ][study_activity["study_activity_group"]["activity_group_uid"]]
+                )
+
+            if (
+                study_activity["study_activity_subgroup"]["study_activity_subgroup_uid"]
+                is not None
+            ):
+                # assert each StudyActivity with the same SoAGroup CTTerm, ActivityGroup and ActivitySubGroup selected should have same StudyActivitySubGroup
+                assert (
+                    study_activity["study_activity_subgroup"][
+                        "study_activity_subgroup_uid"
+                    ]
+                    == study_activity_subgroups[
+                        study_activity["study_soa_group"]["soa_group_term_uid"]
+                    ][study_activity["study_activity_group"]["activity_group_uid"]][
+                        study_activity["study_activity_subgroup"][
+                            "activity_subgroup_uid"
+                        ]
+                    ]
+                )
+
+        # StudySoAGroup
+        _result, _ = run_cypher_query(
+            DB_DRIVER,
+            """
+            MATCH (study_root:StudyRoot {uid: $study_uid})-[:LATEST]->(study_value:StudyValue)
+            WITH DISTINCT study_root, study_value
+            MATCH (study_value)-[:HAS_STUDY_ACTIVITY]->(study_activity:StudyActivity)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->
+                (study_soa_group:StudySoAGroup)-[:HAS_FLOWCHART_GROUP]->(flowchart_group_term_root:CTTermRoot)
+            WHERE NOT (study_soa_group)<-[:BEFORE]-() AND NOT (study_soa_group)<-[]-(:Delete)
+
+            // leave only a few rows that will represent distinct CTTermRoots that represent chosen SoA/Flowchart group
+            WITH DISTINCT flowchart_group_term_root
+            RETURN flowchart_group_term_root
+            """,
+            params={"study_uid": study_uid},
+        )
+        amount_of_soa_group_nodes = len(_result) if _result else 0
+        assert amount_of_soa_group_nodes == len(study_soa_groups.keys())
+
+        # StudyActivityGroup
+        _result, _ = run_cypher_query(
+            DB_DRIVER,
+            """
+            MATCH (study_root:StudyRoot {uid: $study_uid})-[:LATEST]->(study_value:StudyValue)
+            WITH DISTINCT study_root, study_value
+            MATCH (study_value)-[:HAS_STUDY_ACTIVITY]->(study_activity:StudyActivity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]->
+                (study_activity_group:StudyActivityGroup)-[:HAS_SELECTED_ACTIVITY_GROUP]->(:ActivityGroupValue)<-[:HAS_VERSION]-(activity_group_root:ActivityGroupRoot)
+            MATCH (study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(study_soa_group:StudySoAGroup)
+            WHERE NOT (study_activity_group)<-[:BEFORE]-() AND NOT (study_activity_group)<-[]-(:Delete)
+
+            // leave only a few rows that will represent distinct ActivityGroups in a specific StudySoAGroup
+            WITH DISTINCT activity_group_root, study_soa_group
+            RETURN activity_group_root, study_soa_group
+            """,
+            params={"study_uid": study_uid},
+        )
+        amount_of_study_activity_group_nodes = len(_result) if _result else 0
+        all_group_nodes = 0
+        for study_activity_group_dict in study_activity_groups.values():
+            all_group_nodes += len(study_activity_group_dict.keys())
+        assert amount_of_study_activity_group_nodes == all_group_nodes
+
+        # StudyActivitySubGroup
+        _result, _ = run_cypher_query(
+            DB_DRIVER,
+            """
+            MATCH (study_root:StudyRoot {uid: $study_uid})-[:LATEST]->(study_value:StudyValue)
+            WITH DISTINCT study_root, study_value
+            MATCH (study_value)-[:HAS_STUDY_ACTIVITY]->(study_activity:StudyActivity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]->
+                (study_activity_subgroup:StudyActivitySubGroup)-[:HAS_SELECTED_ACTIVITY_SUBGROUP]->(:ActivitySubGroupValue)<-[:HAS_VERSION]-(activity_subgroup_root:ActivitySubGroupRoot)
+            MATCH (study_activity_group:StudyActivityGroup)<-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]-(study_activity)
+                -[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(study_soa_group:StudySoAGroup)
+            WHERE NOT (study_activity_subgroup)<-[:BEFORE]-() AND NOT (study_activity_subgroup)<-[]-(:Delete)
+
+            // leave only a few rows that will represent distinct ActivitySubGroups in a specific StudySoAGroup and StudyActivityGroup
+            WITH DISTINCT activity_subgroup_root, study_soa_group, study_activity_group
+            RETURN activity_subgroup_root, study_soa_group, study_activity_group
+            """,
+            params={"study_uid": study_uid},
+        )
+        amount_of_study_activity_sub_group_nodes = len(_result) if _result else 0
+        all_subgroup_nodes = 0
+        for study_activity_group_dict in study_activity_subgroups.values():
+            for study_activity_subgroup_dict in study_activity_group_dict.values():
+                all_subgroup_nodes += len(study_activity_subgroup_dict.keys())
+        assert amount_of_study_activity_sub_group_nodes == all_subgroup_nodes
+
+
+@pytest.mark.order(after="test_merge_reuse_study_selection_metadata")
+def test_repeat_merge_reuse_study_selection_metadata(migration):
+    assert not any(
+        migration_006.migrate_study_selection_metadata_merge(
+            DB_DRIVER, logger, migration_006.MIGRATION_DESC
+        )
+    ), "The second run for migration shouldn't return anything"
+
+
+def test_patch_visibility_flags_after_study_selection_reuse_migration(migration):
+    studies, _ = run_cypher_query(
+        DB_DRIVER,
+        """
+        MATCH (study_root:StudyRoot) return study_root.uid
+        """,
+    )
+    for study in studies:
+        study_uid = study[0]
+        logger.info(
+            "Verifying successful StudySelectionMetadata merge for the following Study (%s)",
+            study_uid,
+        )
+
+        # GET all study-activities
+        res = api_get(f"/studies/{study_uid}/study-activities", params={"page_size": 0})
+        assert res.status_code == 200
+        study_activities = res.json()["items"]
+        if study_activities:
+            # PATCH protocol-flowchart soa-group visibility flags
+            soa_group_to_edit = study_activities[0]["study_soa_group"][
+                "study_soa_group_uid"
+            ]
+            current_show_soa_group = study_activities[0][
+                "show_soa_group_in_protocol_flowchart"
+            ]
+            api_patch(
+                path=f"/studies/{study_uid}/study-soa-groups/{soa_group_to_edit}",
+                payload={
+                    "show_soa_group_in_protocol_flowchart": not current_show_soa_group
+                },
+                params={"page_size": 0},
+            )
+            res = api_get(
+                f"/studies/{study_uid}/study-activities", params={"page_size": 0}
+            )
+            study_activities = res.json()["items"]
+            for study_activity in study_activities:
+                if (
+                    study_activity["study_soa_group"]["study_soa_group_uid"]
+                    == soa_group_to_edit
+                ):
+                    assert (
+                        study_activity["show_soa_group_in_protocol_flowchart"]
+                        is not current_show_soa_group
+                    )
+
+            api_patch(
+                path=f"/studies/{study_uid}/study-soa-groups/{soa_group_to_edit}",
+                payload={
+                    "show_soa_group_in_protocol_flowchart": current_show_soa_group
+                },
+                params={"page_size": 0},
+            )
+            res = api_get(
+                f"/studies/{study_uid}/study-activities", params={"page_size": 0}
+            )
+            study_activities = res.json()["items"]
+            for study_activity in study_activities:
+                if (
+                    study_activity["study_soa_group"]["study_soa_group_uid"]
+                    == soa_group_to_edit
+                ):
+                    assert (
+                        study_activity["show_soa_group_in_protocol_flowchart"]
+                        is current_show_soa_group
+                    )
+
+            # PATCH protocol-flowchart study-activity-group visibility flags
+            study_activity_group_to_edit = study_activities[0]["study_activity_group"][
+                "study_activity_group_uid"
+            ]
+            current_show_activity_group = study_activities[0][
+                "show_activity_group_in_protocol_flowchart"
+            ]
+            api_patch(
+                path=f"/studies/{study_uid}/study-activity-groups/{study_activity_group_to_edit}",
+                payload={
+                    "show_activity_group_in_protocol_flowchart": not current_show_activity_group
+                },
+                params={"page_size": 0},
+            )
+            res = api_get(
+                f"/studies/{study_uid}/study-activities", params={"page_size": 0}
+            )
+            study_activities = res.json()["items"]
+            for study_activity in study_activities:
+                if (
+                    study_activity["study_activity_group"]["study_activity_group_uid"]
+                    == study_activity_group_to_edit
+                ):
+                    assert (
+                        study_activity["show_activity_group_in_protocol_flowchart"]
+                        is not current_show_activity_group
+                    )
+
+            api_patch(
+                path=f"/studies/{study_uid}/study-activity-groups/{study_activity_group_to_edit}",
+                payload={
+                    "show_activity_group_in_protocol_flowchart": current_show_activity_group
+                },
+                params={"page_size": 0},
+            )
+            res = api_get(
+                f"/studies/{study_uid}/study-activities", params={"page_size": 0}
+            )
+            study_activities = res.json()["items"]
+            for study_activity in study_activities:
+                if (
+                    study_activity["study_activity_group"]["study_activity_group_uid"]
+                    == study_activity_group_to_edit
+                ):
+                    assert (
+                        study_activity["show_activity_group_in_protocol_flowchart"]
+                        is current_show_activity_group
+                    )
+
+            # PATCH protocol-flowchart study-activity-subgroup visibility flags
+            study_activity_subgroup_to_edit = study_activities[0][
+                "study_activity_subgroup"
+            ]["study_activity_subgroup_uid"]
+            current_show_activity_subgroup = study_activities[0][
+                "show_activity_subgroup_in_protocol_flowchart"
+            ]
+            api_patch(
+                path=f"/studies/{study_uid}/study-activity-subgroups/{study_activity_subgroup_to_edit}",
+                payload={
+                    "show_activity_subgroup_in_protocol_flowchart": not current_show_activity_subgroup
+                },
+                params={"page_size": 0},
+            )
+            res = api_get(
+                f"/studies/{study_uid}/study-activities", params={"page_size": 0}
+            )
+            study_activities = res.json()["items"]
+            for study_activity in study_activities:
+                if (
+                    study_activity["study_activity_subgroup"][
+                        "study_activity_subgroup_uid"
+                    ]
+                    == study_activity_subgroup_to_edit
+                ):
+                    assert (
+                        study_activity["show_activity_subgroup_in_protocol_flowchart"]
+                        is not current_show_activity_subgroup
+                    )
+
+            api_patch(
+                path=f"/studies/{study_uid}/study-activity-subgroups/{study_activity_subgroup_to_edit}",
+                payload={
+                    "show_activity_subgroup_in_protocol_flowchart": current_show_activity_subgroup
+                },
+                params={"page_size": 0},
+            )
+            res = api_get(
+                f"/studies/{study_uid}/study-activities", params={"page_size": 0}
+            )
+            study_activities = res.json()["items"]
+            for study_activity in study_activities:
+                if (
+                    study_activity["study_activity_subgroup"][
+                        "study_activity_subgroup_uid"
+                    ]
+                    == study_activity_subgroup_to_edit
+                ):
+                    assert (
+                        study_activity["show_activity_subgroup_in_protocol_flowchart"]
+                        is current_show_activity_subgroup
+                    )
+
+
+def test_merge_multiple_study_activity_subgroup_and_group_nodes(migration):
+    logger.info("Check for multiple group/subgroup relationships for StudyActivities")
+    # StudyActivityGroup
+    result = run_cypher_query(
+        DB_DRIVER,
+        """
+        MATCH (study_activity:StudyActivity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]->(study_activity_group:StudyActivityGroup)
+        WITH study_activity, collect(study_activity_group) as sag
+        WHERE size(sag) > 1
+        RETURN study_activity
+        """,
+    )
+    assert (
+        len(result[0]) == 0
+    ), f"StudyActivity {result[0]} contains multiple StudyActivityGroups"
+
+    result = run_cypher_query(
+        DB_DRIVER,
+        """
+        MATCH (study_activity_group:StudyActivityGroup)
+        WHERE NOT ((study_activity_group)-[:BEFORE]-() or (study_activity_group)-[:AFTER]-())
+        RETURN study_activity_group
+        """,
+    )
+    assert (
+        len(result[0]) == 0
+    ), f"There exist StudyActivityGroup {result[0]} which doesn't have StudyAction relationship"
+    result = run_cypher_query(
+        DB_DRIVER,
+        """
+        MATCH (study_activity:StudyActivity)-[:HAS_SELECTED_ACTIVITY]->(:ActivityValue)<-[:HAS_VERSION]-(:ActivityRoot)<-[:CONTAINS_CONCEPT]-(activity_library)
+        WHERE activity_library.name <> 'Requested' AND NOT (study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]-(:StudyActivityGroup)
+        RETURN study_activity
+        """,
+    )
+    assert (
+        len(result[0]) == 0
+    ), f"Study_activity {result[0]} is missing StudyActivityGroup node"
+
+    # StudyActivitySubGroup
+    result = run_cypher_query(
+        DB_DRIVER,
+        """
+        MATCH (study_activity:StudyActivity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]->(study_activity_subgroup:StudyActivitySubGroup)
+        WITH study_activity, collect(study_activity_subgroup) as sags
+        WHERE size(sags) > 1
+        RETURN study_activity
+        """,
+    )
+    assert (
+        len(result[0]) == 0
+    ), f"StudyActivity {result[0]} contains multiple StudyActivitySubGroups"
+    result = run_cypher_query(
+        DB_DRIVER,
+        """
+        MATCH (study_activity_subgroup:StudyActivitySubGroup)
+        WHERE NOT ((study_activity_subgroup)-[:BEFORE]-() or (study_activity_subgroup)-[:AFTER]-())
+        RETURN study_activity_subgroup
+        """,
+    )
+    assert (
+        len(result[0]) == 0
+    ), f"There exist StudyActivitySubGroup {result[0]} which doesn't have StudyAction relationship"
+    result = run_cypher_query(
+        DB_DRIVER,
+        """
+        MATCH (study_activity:StudyActivity)-[:HAS_SELECTED_ACTIVITY]->(:ActivityValue)<-[:HAS_VERSION]-(:ActivityRoot)<-[:CONTAINS_CONCEPT]-(activity_library)
+        WHERE activity_library.name <> 'Requested' AND NOT (study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]-(:StudyActivitySubGroup)
+        RETURN study_activity
+        """,
+    )
+    assert (
+        len(result[0]) == 0
+    ), f"Study_activity {result[0]} is missing StudyActivitySubGroup node"
+
+    studies = migration_006.get_correct_groupings()
+    for study_number, activities_to_migrate in studies.items():
+        for study_activity_uid, correct_groupings in activities_to_migrate.items():
+            study_activity_exists, _ = run_cypher_query(
+                DB_DRIVER,
+                """
+                    MATCH (sr:StudyRoot)-[:LATEST]->(sv:StudyValue {study_number: $study_number})-[:HAS_STUDY_ACTIVITY]->(study_activity:StudyActivity {uid:$study_activity_uid})
+                    RETURN sr.uid
+                        """,
+                params={
+                    "study_activity_uid": study_activity_uid,
+                    "study_number": study_number
+                    },
+            )
+
+            # StudyActivity has to exists in the test database
+            if len(study_activity_exists) > 0:
+                study_uid = study_activity_exists[0][0]
+                response = api_get(
+                    f"/studies/{study_uid}/study-activities/{study_activity_uid}"
+                )
+                assert response.status_code == 200
+                study_activity = response.json()
+                # StudyActivityGroup
+                corrected_group = correct_groupings.get("correct_group")
+                if corrected_group:
+                    result, _ = run_cypher_query(
+                        DB_DRIVER,
+                        """
+                        MATCH (study_activity:StudyActivity {uid:$study_activity_uid})-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]-(:StudyActivityGroup)-
+                            [:HAS_SELECTED_ACTIVITY_GROUP]->(agv:ActivityGroupValue)
+                        RETURN agv.name
+                        """,
+                        params={"study_activity_uid": study_activity_uid},
+                    )
+                    assert (
+                        result[0][0] == corrected_group
+                    ), f"Study_activity {study_activity_uid} doesn't have a correct group {corrected_group}"
+                    assert (
+                        study_activity["study_activity_group"]["activity_group_name"]
+                        == corrected_group
+                    )
+
+                # StudyActivitySubGroup
+                corrected_subgroup = correct_groupings.get("correct_subgroup")
+                if corrected_subgroup:
+                    result, _ = run_cypher_query(
+                        DB_DRIVER,
+                        """
+                        MATCH (study_activity:StudyActivity {uid:$study_activity_uid})-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]-(:StudyActivitySubGroup)-
+                            [:HAS_SELECTED_ACTIVITY_SUBGROUP]->(asgv:ActivitySubGroupValue)
+                        RETURN asgv.name
+                        """,
+                        params={"study_activity_uid": study_activity_uid},
+                    )
+                    assert (
+                        result[0][0] == corrected_subgroup
+                    ), f"Study_activity {study_activity_uid} doesn't have a correct group {corrected_subgroup}"
+                    assert (
+                        study_activity["study_activity_subgroup"]["activity_subgroup_name"]
+                        == corrected_subgroup
+                    )
+
+
+@pytest.mark.order(after="test_merge_multiple_study_activity_subgroup_and_group_nodes")
+def test_repeat_merge_multiple_study_activity_subgroup_and_group_nodes(migration):
+    assert not any(
+        migration_006.merge_multiple_study_activity_subgroup_and_group_nodes(
+            DB_DRIVER, logger, migration_006.MIGRATION_DESC
+        )
+    ), "The second run for migration shouldn't return anything"
+
+
+def test_fix_not_migrated_study_soa_groups(migration):
+    logger.info("Check for not migrated StudySoAGroup nodes")
+    records, _ = run_cypher_query(
+        DB_DRIVER,
+        """
+        MATCH (study_activity:StudyActivity)
+        WHERE NOT (study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(:StudySoAGroup) OR (study_activity)-[:HAS_FLOWCHART_GROUP]->(:CTTermRoot)
+        RETURN study_activity
+        """,
+    )
+    assert (
+        len(records) == 0
+    ), f"Found {len(records)} StudyActivities having SoAGroup defined in the old way - without :StudySoAGroup node"
+
+    records, _ = run_cypher_query(
+        DB_DRIVER,
+        """
+        MATCH (study_activity:StudyActivity)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(study_soa_group:StudySoAGroup)
+        WITH study_activity, collect(study_soa_group) as ct
+        WHERE size(ct) > 1
+        RETURN study_activity
+        """,
+    )
+    assert (
+        len(records) == 0
+    ), f"Found {len(records)} StudyActivities having more than one StudySoAGroup"
+
+
+@pytest.mark.order(after="test_fix_not_migrated_study_soa_groups")
+def test_repeat_fix_not_migrated_study_soa_groups(migration):
+    assert not migration_006.fix_not_migrated_study_soa_groups(
+        DB_DRIVER, logger, migration_006.MIGRATION_DESC
+    )

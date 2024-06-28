@@ -77,9 +77,9 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
             # find related ActivityGrouping node
             activity_grouping_node = to_relation_trees(
                 ActivityGrouping.nodes.filter(
-                    in_subgroup__in_group__has_latest_value__uid=activity_grouping.activity_group_uid,
-                    in_subgroup__has_group__has_latest_value__uid=activity_grouping.activity_subgroup_uid,
-                    has_grouping__has_latest_value__uid=activity_grouping.activity_uid,
+                    in_subgroup__in_group__has_version__uid=activity_grouping.activity_group_uid,
+                    in_subgroup__has_group__has_version__uid=activity_grouping.activity_subgroup_uid,
+                    has_grouping__has_version__uid=activity_grouping.activity_uid,
                 )
             ).distinct()
             if len(activity_grouping_node) == 0:

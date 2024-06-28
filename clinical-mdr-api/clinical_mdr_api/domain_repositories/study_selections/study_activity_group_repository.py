@@ -1,6 +1,8 @@
 import datetime
 from dataclasses import dataclass
 
+from neomodel import db
+
 from clinical_mdr_api.domain_repositories.generic_repository import (
     manage_previous_connected_study_selection_relationships,
 )
@@ -34,6 +36,7 @@ class SelectionHistory:
 
     study_selection_uid: str
     activity_group_uid: str
+    show_activity_group_in_protocol_flowchart: bool
     user_initials: str
     change_type: str
     start_date: datetime.datetime
@@ -57,6 +60,9 @@ class StudySelectionActivityGroupRepository(
             study_uid=selection["study_uid"],
             activity_group_uid=selection["activity_group_uid"],
             activity_group_version=selection["activity_group_version"],
+            show_activity_group_in_protocol_flowchart=selection[
+                "show_activity_group_in_protocol_flowchart"
+            ],
             start_date=convert_to_datetime(value=selection["start_date"]),
             user_initials=selection["user_initials"],
             accepted_version=acv,
@@ -84,6 +90,7 @@ class StudySelectionActivityGroupRepository(
                 sr.uid AS study_uid,
                 sa.uid AS study_selection_uid,
                 sa.accepted_version AS accepted_version,
+                sa.show_activity_group_in_protocol_flowchart AS show_activity_group_in_protocol_flowchart,
                 ar.uid AS activity_group_uid,
                 sac.date AS start_date,
                 sac.user_initials AS user_initials,
@@ -96,6 +103,9 @@ class StudySelectionActivityGroupRepository(
             study_selection_uid=selection["study_selection_uid"],
             activity_group_uid=selection["activity_group_uid"],
             activity_group_version=selection["activity_group_version"],
+            show_activity_group_in_protocol_flowchart=selection[
+                "show_activity_group_in_protocol_flowchart"
+            ],
             user_initials=selection["user_initials"],
             change_type=change_type,
             start_date=convert_to_datetime(value=selection["start_date"]),
@@ -136,7 +146,7 @@ class StudySelectionActivityGroupRepository(
                     WITH all_sa, ar, asa, bsa, ver, fgr
                     ORDER BY all_sa.uid, asa.date DESC
                     RETURN
-                        study_activity_subgroup.uid AS study_activity_subgroup_selection_uid,
+                        all_sa.show_activity_group_in_protocol_flowchart AS show_activity_group_in_protocol_flowchart,
                         all_sa.uid AS study_selection_uid,
                         ar.uid AS activity_group_uid,
                         asa.date AS start_date,
@@ -173,7 +183,9 @@ class StudySelectionActivityGroupRepository(
             )
         )
         # Create new activity group selection
-        study_activity_group_selection_node = StudyActivityGroup()
+        study_activity_group_selection_node = StudyActivityGroup(
+            show_activity_group_in_protocol_flowchart=selection.show_activity_group_in_protocol_flowchart
+        )
         study_activity_group_selection_node.uid = selection.study_selection_uid
         study_activity_group_selection_node.accepted_version = (
             selection.accepted_version
@@ -207,10 +219,32 @@ class StudySelectionActivityGroupRepository(
     def get_all_study_activity_groups_for_study_activity(
         self, study_uid: str, study_activity_uid: str
     ) -> list[StudyActivityGroup]:
+        query = """
+            MATCH (study_activity_group:StudyActivityGroup)<-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]-(study_activity:StudyActivity)
+                <-[:HAS_STUDY_ACTIVITY]-(study_value:StudyValue)<-[:LATEST]-(study_root:StudyRoot)
+            WITH study_root, study_activity_group, collect(study_activity.uid) as all_sa_using_study_activity_group
+            WHERE NOT (study_activity_group)<-[:BEFORE]-() 
+                AND study_root.uid=$study_uid 
+                AND all_sa_using_study_activity_group=[$study_activity_uid]
+            RETURN study_activity_group
+        """
+        study_activity_groups, _ = db.cypher_query(
+            query,
+            params={"study_uid": study_uid, "study_activity_uid": study_activity_uid},
+            resolve_objects=True,
+        )
+        if len(study_activity_groups) > 0:
+            return study_activity_groups[0]
+        return []
+
+    def find_study_activity_group_with_same_groupings(
+        self, study_uid: str, activity_group_uid: str, soa_group_term_uid: str
+    ) -> StudyActivityGroup | None:
         study_activity_groups = to_relation_trees(
             StudyActivityGroup.nodes.filter(
-                study_activity_has_study_activity_group__uid=study_activity_uid,
+                has_selected_activity_group__has_version__uid=activity_group_uid,
+                study_activity_has_study_activity_group__has_soa_group_selection__has_flowchart_group__uid=soa_group_term_uid,
                 study_activity_has_study_activity_group__has_study_activity__latest_value__uid=study_uid,
             ).has(has_before=False)
         ).distinct()
-        return study_activity_groups
+        return study_activity_groups[0] if len(study_activity_groups) > 0 else None

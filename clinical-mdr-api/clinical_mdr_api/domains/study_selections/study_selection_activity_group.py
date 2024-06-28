@@ -17,6 +17,7 @@ class StudySelectionActivityGroupVO(study_selection_base.StudySelectionBaseVO):
     study_uid: str
     activity_group_uid: str
     activity_group_version: str | None
+    show_activity_group_in_protocol_flowchart: bool
     # Study selection Versioning
     start_date: datetime.datetime
     user_initials: str | None
@@ -29,6 +30,7 @@ class StudySelectionActivityGroupVO(study_selection_base.StudySelectionBaseVO):
         activity_group_uid: str,
         activity_group_version: str,
         user_initials: str,
+        show_activity_group_in_protocol_flowchart: bool = True,
         study_selection_uid: str | None = None,
         start_date: datetime.datetime | None = None,
         accepted_version: bool = False,
@@ -44,6 +46,7 @@ class StudySelectionActivityGroupVO(study_selection_base.StudySelectionBaseVO):
             study_uid=normalize_string(study_uid),
             activity_group_uid=normalize_string(activity_group_uid),
             activity_group_version=activity_group_version,
+            show_activity_group_in_protocol_flowchart=show_activity_group_in_protocol_flowchart,
             start_date=start_date,
             study_selection_uid=normalize_string(study_selection_uid),
             user_initials=normalize_string(user_initials),
@@ -78,4 +81,5 @@ class StudySelectionActivityGroupAR(study_selection_base.StudySelectionBaseAR):
 
     _object_type = "activity_group"
     _object_uid_field = "activity_group_uid"
+    _object_name_field = ""
     _order_field_name = "activity_group_order"

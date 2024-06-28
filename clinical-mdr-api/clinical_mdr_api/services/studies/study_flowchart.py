@@ -1157,7 +1157,7 @@ class StudyFlowchartService:
             ):
                 update_row = None
 
-                if activity_group_row and not activity_subgroup_row.hide:
+                if activity_subgroup_row and not activity_subgroup_row.hide:
                     update_row = activity_subgroup_row
                 elif activity_group_row and not activity_group_row.hide:
                     update_row = activity_group_row

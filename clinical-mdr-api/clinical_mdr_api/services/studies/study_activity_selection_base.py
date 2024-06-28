@@ -51,11 +51,10 @@ class StudyActivitySelectionBaseService(StudySelectionMixin):
         assert self._repos is not None
         return self.selected_object_repository_interface()
 
-    @abc.abstractmethod
     def _get_selected_object_exist_check(
         self,
     ) -> Callable[[str], bool]:
-        raise NotImplementedError
+        return self.selected_object_repository.final_concept_exists
 
     @abc.abstractmethod
     def _transform_all_to_response_model(
@@ -66,9 +65,10 @@ class StudyActivitySelectionBaseService(StudySelectionMixin):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def _transform_from_ar_and_order_to_response_model(
+    def _transform_from_vo_to_response_model(
         self,
-        study_selection_ar: _AggregateRootType,
+        study_uid: str,
+        specific_selection: _VOType,
         order: int,
         terms_at_specific_datetime: datetime | None,
         accepted_version: bool | None = None,
@@ -88,6 +88,10 @@ class StudyActivitySelectionBaseService(StudySelectionMixin):
         selection_create_input: BaseModel,
         **kwargs,
     ):
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def update_study_activities(self, study_uid: str, study_selection_uid: str):
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -259,7 +263,7 @@ class StudyActivitySelectionBaseService(StudySelectionMixin):
         study_value_version: str | None = None,
     ) -> BaseModel:
         (
-            selection_aggregate,
+            _,
             new_selection,
             order,
         ) = self._get_specific_activity_selection_by_uids(
@@ -269,8 +273,9 @@ class StudyActivitySelectionBaseService(StudySelectionMixin):
             study_uid=study_uid,
             study_value_version=study_value_version,
         )
-        return self._transform_from_ar_and_order_to_response_model(
-            study_selection_ar=selection_aggregate,
+        return self._transform_from_vo_to_response_model(
+            study_uid=study_uid,
+            specific_selection=new_selection,
             order=order,
             accepted_version=new_selection.accepted_version,
             terms_at_specific_datetime=terms_at_specific_datetime,
@@ -313,18 +318,25 @@ class StudyActivitySelectionBaseService(StudySelectionMixin):
             # sync with DB and save the update
             self.repository.save(selection_aggregate, self.author)
 
-            # Fetch the new selection which was just updated
-            _, order = selection_aggregate.get_specific_object_selection(
-                study_selection_uid
+            # sync related nodes
+            self.update_study_activities(
+                study_uid=study_uid, study_selection_uid=study_selection_uid
             )
+
+            # Fetch the new selection which was just updated
+            (
+                updated_selection,
+                order,
+            ) = selection_aggregate.get_specific_object_selection(study_selection_uid)
             terms_at_specific_datetime = self._extract_study_standards_effective_date(
                 study_uid=study_uid
             )
 
             # add the activity and return
-            return self._transform_from_ar_and_order_to_response_model(
-                selection_aggregate,
-                order,
+            return self._transform_from_vo_to_response_model(
+                study_uid=selection_aggregate.study_uid,
+                specific_selection=updated_selection,
+                order=order,
                 terms_at_specific_datetime=terms_at_specific_datetime,
             )
         finally:
@@ -399,16 +411,18 @@ class StudyActivitySelectionBaseService(StudySelectionMixin):
             self.repository.save(selection_aggregate, self.author)
 
             # Fetch the new selection which was just added
-            _, order = selection_aggregate.get_specific_object_selection(
-                study_selection_uid
-            )
+            (
+                specific_selection,
+                order,
+            ) = selection_aggregate.get_specific_object_selection(study_selection_uid)
             terms_at_specific_datetime = self._extract_study_standards_effective_date(
                 study_uid=study_uid
             )
 
             # add the activity and return
-            return self._transform_from_ar_and_order_to_response_model(
-                study_selection_ar=selection_aggregate,
+            return self._transform_from_vo_to_response_model(
+                study_uid=study_uid,
+                specific_selection=specific_selection,
                 order=order,
                 terms_at_specific_datetime=terms_at_specific_datetime,
             )

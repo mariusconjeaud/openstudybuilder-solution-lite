@@ -584,7 +584,12 @@ def test_update_activity_request_to_sponsor_in_study_activity(api_client):
     assert (
         res["study_activity_subgroup"]["activity_subgroup_uid"] == activity_subgroup.uid
     )
+    assert (
+        res["study_activity_subgroup"]["activity_subgroup_name"]
+        == activity_subgroup.name
+    )
     assert res["study_activity_group"]["activity_group_uid"] == activity_group.uid
+    assert res["study_activity_group"]["activity_group_name"] == activity_group.name
 
     # Assert StudyActivityInstance was created when ActivityRequest was substituted to Sponsor Activity
     response = api_client.get(

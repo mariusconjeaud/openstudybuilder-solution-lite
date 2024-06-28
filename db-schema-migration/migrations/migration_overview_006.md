@@ -62,3 +62,56 @@
 
 ### Nodes Affected
 - `StudyWeek`
+
+
+## 7. Merge StudyActivitySubGroup, StudyActivityGroup and StudySoAGroup nodes to be reused if possible
+-------------------------------------  
+### Change Description
+- If a StudyActivity is using the same ActivitySubGroup, ActivityGroup or SoAGroup, theirs corresponding StudyMetadataSelections
+- should be reused between different StudyActivities
+
+- [Related PR](https://dev.azure.com/novonordiskit/Clinical-MDR/_git/clinical-mdr-api/pullrequest/107866).
+
+### Nodes Affected
+  - `StudyActivity`
+  - `StudyActivitySubGroup`
+  - `StudyActivityGroup`
+  - `StudySoAGroup`
+
+
+## 8. Remove unwanted extra STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP/STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP relationships
+-------------------------------------  
+### Change Description
+- At some point, an API bug caused to create StudyActivities for all possible groupings of the Activity selected by the user.
+- For instance if 'Albumin' Activity has 3 possible groupings, we were creating StudyActivity for each specific grouping.
+- The correct behaviour should be, to create only one StudyActivity for the grouping that was selected by the user during the StudyActivity creation time.
+
+### Nodes Affected
+  - `StudyActivity`
+  - `StudyActivitySubGroup`
+  - `StudyActivityGroup`
+
+### Relationships Affected
+  - `STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP`
+  - `STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP`
+
+
+## 9. Correct SoAGroup information represented in the old format.
+
+### Change Description
+- At some point we decided to change schema of SoAGroup representation within StudyActivity nodes.
+- Previous representation was (:StudyActivity)-[:HAS_FLOWCHART_GROUP]->(:CTTermRoot)
+- The current representation should be (:StudyActivity)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(:StudySoAGroup)-[:HAS_FLOWCHART_GROUP]->(:CTTermRoot)
+- This schema change was implemented in the migration_004 but the list of StudyActivity nodes to be migrated was only containining these StudyActivity ndoes 
+- that were at that time linked to StudyValue. It means that we only updated last versions of given StudyActivities nodes and past versions were untouched.
+- The correction is separated into 2 parts.
+- Part one reuses already existing StudySoAGroup nodes if the latest version of a specific StudyActivity is using the same soa_group CTTermRoot node.
+- Part two creates new StudySoAGroup node if the latest version of a specific StudyActivity is using the different soa_group CTTermRoot node.
+### Nodes Affected
+  - `StudyActivity`
+  - `StudySoAGroup`
+  - `StudyActivityGroup`
+
+### Relationships Affected
+  - `STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP`
+  - `HAS_FLOWCHART_GROUP`
