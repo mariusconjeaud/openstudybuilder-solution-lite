@@ -972,6 +972,17 @@ ALL_ROUTES_METHODS_ROLES = (
         "PATCH",
         {"Study.Write"},
     ),
+    (
+        "/studies/{uid}/study-activity-subgroups/{study_activity_subgroup_uid}",
+        "PATCH",
+        {"Study.Write"},
+    ),
+    (
+        "/studies/{uid}/study-activity-groups/{study_activity_group_uid}",
+        "PATCH",
+        {"Study.Write"},
+    ),
+    ("/studies/{uid}/study-soa-groups/{study_soa_group_uid}", "PATCH", {"Study.Write"}),
     ("/study-activity-instances", "GET", {"Study.Read"}),
     ("/studies/{uid}/study-activity-instances", "GET", {"Study.Read"}),
     ("/studies/{uid}/study-activity-instances/headers", "GET", {"Study.Read"}),

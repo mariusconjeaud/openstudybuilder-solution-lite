@@ -17,8 +17,10 @@ class StudySelectionActivityVO(study_selection_base.StudySelectionBaseVO):
     study_selection_uid: str
     study_activity_subgroup_uid: str | None
     activity_subgroup_uid: str | None
+    activity_subgroup_name: str | None
     study_activity_group_uid: str | None
     activity_group_uid: str | None
+    activity_group_name: str | None
     study_uid: str
     activity_uid: str
     activity_version: str | None
@@ -48,8 +50,10 @@ class StudySelectionActivityVO(study_selection_base.StudySelectionBaseVO):
         activity_library_name: str | None = None,
         study_activity_subgroup_uid: str | None = None,
         activity_subgroup_uid: str | None = None,
+        activity_subgroup_name: str | None = None,
         study_activity_group_uid: str | None = None,
         activity_group_uid: str | None = None,
+        activity_group_name: str | None = None,
         show_activity_in_protocol_flowchart: bool | None = False,
         show_activity_group_in_protocol_flowchart: bool | None = True,
         show_activity_subgroup_in_protocol_flowchart: bool | None = True,
@@ -83,8 +87,10 @@ class StudySelectionActivityVO(study_selection_base.StudySelectionBaseVO):
             study_selection_uid=normalize_string(study_selection_uid),
             study_activity_subgroup_uid=normalize_string(study_activity_subgroup_uid),
             activity_subgroup_uid=normalize_string(activity_subgroup_uid),
+            activity_subgroup_name=normalize_string(activity_subgroup_name),
             study_activity_group_uid=normalize_string(study_activity_group_uid),
             activity_group_uid=normalize_string(activity_group_uid),
+            activity_group_name=normalize_string(activity_group_name),
             activity_order=activity_order,
             user_initials=normalize_string(user_initials),
             accepted_version=accepted_version,

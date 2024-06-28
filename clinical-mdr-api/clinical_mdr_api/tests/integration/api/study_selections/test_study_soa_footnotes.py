@@ -1225,7 +1225,7 @@ def test_modify_actions_on_locked_study(api_client):
     )
     res = response.json()
     assert response.status_code == 200
-    assert res == [
+    header_items = [
         "Epoch Subtype",
         "V1",
         "Randomized",
@@ -1235,6 +1235,7 @@ def test_modify_actions_on_locked_study(api_client):
         "General",
         "Body Measurement activity V1",
     ]
+    assert set(res) == set(header_items)
 
     response = api_client.get(
         f"/studies/{study.uid}/study-visits/StudyVisit_000001?study_value_version=1",

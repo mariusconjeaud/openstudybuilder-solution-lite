@@ -1,5 +1,32 @@
 # OpenStudyBuilder Commits changelog
 
+## V 0.9.1
+
+New Features and Enhancements
+============
+No new features and/or enhancements are added
+
+Solved Bugs
+============
+
+### Library
+
+#### Concepts -> Activities -> Activities Instances
+
+- Not able to change the Activity group / activity subgroup combination on an activity instance
+
+### Studies
+
+#### Define Study -> Study Activities -> Study Activities
+
+- Not able to view History page - Results in 404 error
+- Issue with creating manually defined visit
+- Study Activities are having wrong order when navigating to next page
+
+#### Define Study -> Study Purpose -> Study Objectives
+
+- Can select Requested activities as template parameters
+
 ## V 0.9
 
 New Features and Enhancements

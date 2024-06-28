@@ -1,6 +1,9 @@
 import datetime
 from dataclasses import dataclass
 
+from neomodel import db
+
+from clinical_mdr_api.domain_repositories._utils.helpers import unpack_list_of_lists
 from clinical_mdr_api.domain_repositories.generic_repository import (
     manage_previous_connected_study_selection_relationships,
 )
@@ -71,6 +74,11 @@ class StudySelectionActivityRepository(
             )
             if selection.get("study_activity_subgroup")
             else None,
+            activity_subgroup_name=selection.get("study_activity_subgroup", {}).get(
+                "activity_subgroup_name"
+            )
+            if selection.get("study_activity_subgroup")
+            else None,
             study_activity_group_uid=selection.get("study_activity_group", {}).get(
                 "selection_uid"
             )
@@ -78,6 +86,11 @@ class StudySelectionActivityRepository(
             else None,
             activity_group_uid=selection.get("study_activity_group", {}).get(
                 "activity_group_uid"
+            )
+            if selection.get("study_activity_group")
+            else None,
+            activity_group_name=selection.get("study_activity_group", {}).get(
+                "activity_group_name"
             )
             if selection.get("study_activity_group")
             else None,
@@ -92,12 +105,16 @@ class StudySelectionActivityRepository(
             show_activity_in_protocol_flowchart=selection[
                 "show_activity_in_protocol_flowchart"
             ],
-            show_activity_subgroup_in_protocol_flowchart=selection[
-                "show_activity_subgroup_in_protocol_flowchart"
-            ],
-            show_activity_group_in_protocol_flowchart=selection[
-                "show_activity_group_in_protocol_flowchart"
-            ],
+            show_activity_group_in_protocol_flowchart=selection.get(
+                "study_activity_group", {}
+            ).get("show_activity_group_in_protocol_flowchart")
+            if selection.get("study_activity_group")
+            else None,
+            show_activity_subgroup_in_protocol_flowchart=selection.get(
+                "study_activity_subgroup", {}
+            ).get("show_activity_subgroup_in_protocol_flowchart")
+            if selection.get("study_activity_subgroup")
+            else None,
             show_soa_group_in_protocol_flowchart=selection[
                 "show_soa_group_in_protocol_flowchart"
             ],
@@ -156,15 +173,23 @@ class StudySelectionActivityRepository(
                 sa.order AS activity_order,
                 sa.uid AS study_selection_uid,
                 head([(sa)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]->(study_activity_subgroup_selection)
-                    -[:HAS_SELECTED_ACTIVITY_SUBGROUP]->(:ActivitySubGroupValue)<-[:HAS_VERSION]-(activity_subgroup_root:ActivitySubGroupRoot) | 
-                    {selection_uid: study_activity_subgroup_selection.uid, activity_subgroup_uid:activity_subgroup_root.uid}]) AS study_activity_subgroup,
+                -[:HAS_SELECTED_ACTIVITY_SUBGROUP]->(activity_subgroup_value:ActivitySubGroupValue)<-[:HAS_VERSION]-(activity_subgroup_root:ActivitySubGroupRoot) | 
+                    {
+                        selection_uid: study_activity_subgroup_selection.uid, 
+                        activity_subgroup_uid:activity_subgroup_root.uid,
+                        activity_subgroup_name:activity_subgroup_value.name,
+                        show_activity_subgroup_in_protocol_flowchart:study_activity_subgroup_selection.show_activity_subgroup_in_protocol_flowchart
+                    }]) AS study_activity_subgroup,
                 head([(sa)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]->(study_activity_group_selection)
-                    -[:HAS_SELECTED_ACTIVITY_GROUP]->(:ActivityGroupValue)<-[:HAS_VERSION]-(activity_group_root:ActivityGroupRoot) | 
-                    {selection_uid: study_activity_group_selection.uid, activity_group_uid: activity_group_root.uid}]) AS study_activity_group,
+                    -[:HAS_SELECTED_ACTIVITY_GROUP]->(activity_group_value:ActivityGroupValue)<-[:HAS_VERSION]-(activity_group_root:ActivityGroupRoot) | 
+                    {
+                        selection_uid: study_activity_group_selection.uid, 
+                        activity_group_uid: activity_group_root.uid,
+                        activity_group_name:activity_group_value.name,
+                        show_activity_group_in_protocol_flowchart: study_activity_group_selection.show_activity_group_in_protocol_flowchart
+                    }]) AS study_activity_group,
                 sa.show_activity_in_protocol_flowchart AS show_activity_in_protocol_flowchart,
-                sa.show_activity_subgroup_in_protocol_flowchart AS show_activity_subgroup_in_protocol_flowchart,
-                sa.show_activity_group_in_protocol_flowchart AS show_activity_group_in_protocol_flowchart,
-                coalesce(sa.show_soa_group_in_protocol_flowchart, false) AS show_soa_group_in_protocol_flowchart,
+                coalesce(soa_group.show_soa_group_in_protocol_flowchart, false) AS show_soa_group_in_protocol_flowchart,
                 elr.uid AS soa_group_term_uid,
                 soa_group.uid AS study_soa_group_uid,
                 sa.accepted_version AS accepted_version,
@@ -211,12 +236,16 @@ class StudySelectionActivityRepository(
             show_activity_in_protocol_flowchart=selection[
                 "show_activity_in_protocol_flowchart"
             ],
-            show_activity_group_in_protocol_flowchart=selection[
-                "show_activity_group_in_protocol_flowchart"
-            ],
-            show_activity_subgroup_in_protocol_flowchart=selection[
-                "show_activity_subgroup_in_protocol_flowchart"
-            ],
+            show_activity_group_in_protocol_flowchart=selection.get(
+                "study_activity_group", {}
+            ).get("show_activity_group_in_protocol_flowchart")
+            if selection.get("study_activity_group")
+            else None,
+            show_activity_subgroup_in_protocol_flowchart=selection.get(
+                "study_activity_subgroup", {}
+            ).get("show_activity_subgroup_in_protocol_flowchart")
+            if selection.get("study_activity_subgroup")
+            else None,
             show_soa_group_in_protocol_flowchart=selection[
                 "show_soa_group_in_protocol_flowchart"
             ],
@@ -261,14 +290,20 @@ class StudySelectionActivityRepository(
                         all_sa.uid AS study_selection_uid,
                         head([(all_sa)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]->(study_activity_subgroup_selection)
                             -[:HAS_SELECTED_ACTIVITY_SUBGROUP]->(:ActivitySubGroupValue)<-[:HAS_VERSION]-(activity_subgroup_root:ActivitySubGroupRoot) | 
-                            {selection_uid: study_activity_subgroup_selection.uid, activity_subgroup_uid:activity_subgroup_root.uid}]) AS study_activity_subgroup,
+                            {
+                                selection_uid: study_activity_subgroup_selection.uid, 
+                                activity_subgroup_uid:activity_subgroup_root.uid,
+                                show_activity_subgroup_in_protocol_flowchart:study_activity_subgroup_selection.show_activity_subgroup_in_protocol_flowchart
+                            }]) AS study_activity_subgroup,
                         head([(all_sa)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]->(study_activity_group_selection)
                             -[:HAS_SELECTED_ACTIVITY_GROUP]->(:ActivityGroupValue)<-[:HAS_VERSION]-(activity_group_root:ActivityGroupRoot) | 
-                            {selection_uid: study_activity_group_selection.uid, activity_group_uid: activity_group_root.uid}]) AS study_activity_group,
+                            {
+                                selection_uid: study_activity_group_selection.uid, 
+                                activity_group_uid: activity_group_root.uid,
+                                show_activity_group_in_protocol_flowchart:study_activity_group_selection.show_activity_group_in_protocol_flowchart
+                            }]) AS study_activity_group,
                         all_sa.show_activity_in_protocol_flowchart AS show_activity_in_protocol_flowchart,
-                        all_sa.show_activity_subgroup_in_protocol_flowchart AS show_activity_subgroup_in_protocol_flowchart,
-                        all_sa.show_activity_group_in_protocol_flowchart AS show_activity_group_in_protocol_flowchart,
-                        coalesce(all_sa.show_soa_group_in_protocol_flowchart, false) AS show_soa_group_in_protocol_flowchart,
+                        coalesce(soa_group.show_soa_group_in_protocol_flowchart, false) AS show_soa_group_in_protocol_flowchart,
                         ar.uid AS activity_uid,
                         fgr.uid AS soa_group_term_uid,
                         soa_group.uid AS study_soa_group_uid,
@@ -306,10 +341,7 @@ class StudySelectionActivityRepository(
         # Create new activity selection
         study_activity_selection_node = StudyActivity(
             order=order,
-            show_activity_group_in_protocol_flowchart=selection.show_activity_group_in_protocol_flowchart,
-            show_activity_subgroup_in_protocol_flowchart=selection.show_activity_subgroup_in_protocol_flowchart,
             show_activity_in_protocol_flowchart=selection.show_activity_in_protocol_flowchart,
-            show_soa_group_in_protocol_flowchart=selection.show_soa_group_in_protocol_flowchart,
         )
         study_activity_selection_node.uid = selection.study_selection_uid
         study_activity_selection_node.accepted_version = selection.accepted_version
@@ -369,3 +401,57 @@ class StudySelectionActivityRepository(
         # Our repository guidelines state that repos should have a close method
         # But nothing needs to be done in this one
         pass
+
+    def get_all_study_activities_for_study_activity_subgroup(
+        self, study_activity_subgroup_uid: str
+    ) -> list[StudyActivity]:
+        query = """
+            MATCH (study_activity:StudyActivity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]->(study_activity_subgroup:StudyActivitySubGroup)
+            WHERE NOT (study_activity)<-[:BEFORE]-() AND NOT (study_activity)<-[]-(:Delete)
+                AND study_activity_subgroup.uid=$study_activity_subgroup_uid 
+            RETURN study_activity
+        """
+        study_activities, _ = db.cypher_query(
+            query,
+            params={"study_activity_subgroup_uid": study_activity_subgroup_uid},
+            resolve_objects=True,
+        )
+        if len(study_activities) > 0:
+            return unpack_list_of_lists(study_activities)
+        return []
+
+    def get_all_study_activities_for_study_activity_group(
+        self, study_activity_group_uid: str
+    ) -> list[StudyActivity]:
+        query = """
+            MATCH (study_activity:StudyActivity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]->(study_activity_group:StudyActivityGroup)
+            WHERE NOT (study_activity)<-[:BEFORE]-() AND NOT (study_activity)<-[]-(:Delete)
+                AND study_activity_group.uid=$study_activity_group_uid 
+            RETURN study_activity
+        """
+        study_activities, _ = db.cypher_query(
+            query,
+            params={"study_activity_group_uid": study_activity_group_uid},
+            resolve_objects=True,
+        )
+        if len(study_activities) > 0:
+            return unpack_list_of_lists(study_activities)
+        return []
+
+    def get_all_study_activities_for_study_soa_group(
+        self, study_soa_group_uid: str
+    ) -> list[StudyActivity]:
+        query = """
+            MATCH (study_activity:StudyActivity)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(study_soa_group:StudySoAGroup)
+            WHERE NOT (study_activity)<-[:BEFORE]-() AND NOT (study_activity)<-[]-(:Delete)
+                AND study_soa_group.uid=$study_soa_group_uid 
+            RETURN study_activity
+        """
+        study_activities, _ = db.cypher_query(
+            query,
+            params={"study_soa_group_uid": study_soa_group_uid},
+            resolve_objects=True,
+        )
+        if len(study_activities) > 0:
+            return unpack_list_of_lists(study_activities)
+        return []

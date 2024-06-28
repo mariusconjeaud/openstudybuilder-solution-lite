@@ -12,11 +12,17 @@ from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.studies.study import StudyService
+from clinical_mdr_api.services.studies.study_activity_group import (
+    StudyActivityGroupService,
+)
 from clinical_mdr_api.services.studies.study_activity_instance_selection import (
     StudyActivityInstanceSelectionService,
 )
 from clinical_mdr_api.services.studies.study_activity_selection import (
     StudyActivitySelectionService,
+)
+from clinical_mdr_api.services.studies.study_activity_subgroup import (
+    StudyActivitySubGroupService,
 )
 from clinical_mdr_api.services.studies.study_arm_selection import (
     StudyArmSelectionService,
@@ -43,6 +49,7 @@ from clinical_mdr_api.services.studies.study_objective_selection import (
     StudyObjectiveSelectionService,
 )
 from clinical_mdr_api.services.studies.study_objectives import StudyObjectivesService
+from clinical_mdr_api.services.studies.study_soa_group import StudySoAGroupService
 
 # Mounted without a path-prefix
 router = APIRouter()
@@ -2907,21 +2914,27 @@ def get_all_selected_activity_instances_for_all_studies(
     project_number: str | None = PROJECT_NUMBER,
     activity_names: list[str]
     | None = Query(
-        None, description="A list of activity names to use as a specific filter"
+        None,
+        description="A list of activity names to use as a specific filter",
+        alias="activity_names[]",
     ),
     activity_subgroup_names: list[str]
     | None = Query(
         None,
         description="A list of activity sub group names to use as a specific filter",
+        alias="activity_subgroup_names[]",
     ),
     activity_group_names: list[str]
     | None = Query(
-        None, description="A list of activity group names to use as a specific filter"
+        None,
+        description="A list of activity group names to use as a specific filter",
+        alias="activity_group_names[]",
     ),
     activity_instance_names: list[str]
     | None = Query(
         None,
         description="A list of activity instance names to use as a specific filter",
+        alias="activity_instance_names[]",
     ),
     sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
     page_number: int
@@ -3020,21 +3033,27 @@ def get_all_selected_activity_instances(
     request: Request,  # request is actually required by the allow_exports decorator
     activity_names: list[str]
     | None = Query(
-        None, description="A list of activity names to use as a specific filter"
+        None,
+        description="A list of activity names to use as a specific filter",
+        alias="activity_names[]",
     ),
     activity_subgroup_names: list[str]
     | None = Query(
         None,
         description="A list of activity sub group names to use as a specific filter",
+        alias="activity_subgroup_names[]",
     ),
     activity_group_names: list[str]
     | None = Query(
-        None, description="A list of activity group names to use as a specific filter"
+        None,
+        description="A list of activity group names to use as a specific filter",
+        alias="activity_group_names[]",
     ),
     activity_instance_names: list[str]
     | None = Query(
         None,
         description="A list of activity instance names to use as a specific filter",
+        alias="activity_instance_names[]",
     ),
     sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
     page_number: int
@@ -3363,16 +3382,21 @@ def get_all_selected_activities_for_all_studies(
     project_number: str | None = PROJECT_NUMBER,
     activity_names: list[str]
     | None = Query(
-        None, description="A list of activity names to use as a specific filter"
+        None,
+        description="A list of activity names to use as a specific filter",
+        alias="activity_names[]",
     ),
     activity_subgroup_names: list[str]
     | None = Query(
         None,
         description="A list of activity sub group names to use as a specific filter",
+        alias="activity_subgroup_names[]",
     ),
     activity_group_names: list[str]
     | None = Query(
-        None, description="A list of activity group names to use as a specific filter"
+        None,
+        description="A list of activity group names to use as a specific filter",
+        alias="activity_group_names[]",
     ),
     sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
     page_number: int
@@ -3459,16 +3483,21 @@ def get_all_selected_activities(
     request: Request,  # request is actually required by the allow_exports decorator
     activity_names: list[str]
     | None = Query(
-        None, description="A list of activity names to use as a specific filter"
+        None,
+        description="A list of activity names to use as a specific filter",
+        alias="activity_names[]",
     ),
     activity_subgroup_names: list[str]
     | None = Query(
         None,
         description="A list of activity sub group names to use as a specific filter",
+        alias="activity_subgroup_names[]",
     ),
     activity_group_names: list[str]
     | None = Query(
-        None, description="A list of activity group names to use as a specific filter"
+        None,
+        description="A list of activity group names to use as a specific filter",
+        alias="activity_group_names[]",
     ),
     sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
     page_number: int
@@ -3701,6 +3730,117 @@ def patch_update_activity_selection(
     return service.patch_selection(
         study_uid=uid,
         study_selection_uid=study_activity_uid,
+        selection_update_input=selection,
+    )
+
+
+@router.patch(
+    "/studies/{uid}/study-activity-subgroups/{study_activity_subgroup_uid}",
+    dependencies=[rbac.STUDY_WRITE],
+    summary="Edit a study activity subgroup protocol visibility flag",
+    description="""
+State before:
+ - Study must exist and be in status draft
+Business logic:
+State after:
+ - Added new entry in the audit trail for the update of the study-activity-subgroup.""",
+    response_model=models.StudyActivitySubGroup,
+    response_model_exclude_unset=True,
+    status_code=200,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - There exist no selection between the study-activity and study-activity-subgroup.",
+        },
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+@decorators.validate_if_study_is_not_locked("uid")
+def patch_update_activity_subgroup_selection(
+    uid: str = studyUID,
+    study_activity_subgroup_uid: str = study_selection_uid,
+    selection: models.StudyActivitySubGroupEditInput = Body(
+        description="Related parameters of the selection that shall be updated."
+    ),
+) -> models.StudyActivitySubGroup:
+    service = StudyActivitySubGroupService()
+    return service.patch_selection(
+        study_uid=uid,
+        study_selection_uid=study_activity_subgroup_uid,
+        selection_update_input=selection,
+    )
+
+
+@router.patch(
+    "/studies/{uid}/study-activity-groups/{study_activity_group_uid}",
+    dependencies=[rbac.STUDY_WRITE],
+    summary="Edit a study activity group protocol visibility flag",
+    description="""
+State before:
+ - Study must exist and be in status draft
+Business logic:
+State after:
+ - Added new entry in the audit trail for the update of the study-activity-group.""",
+    response_model=models.StudyActivityGroup,
+    response_model_exclude_unset=True,
+    status_code=200,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - There exist no selection between the study-activity and study-activity-group.",
+        },
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+@decorators.validate_if_study_is_not_locked("uid")
+def patch_update_activity_group_selection(
+    uid: str = studyUID,
+    study_activity_group_uid: str = study_selection_uid,
+    selection: models.StudyActivityGroupEditInput = Body(
+        description="Related parameters of the selection that shall be updated."
+    ),
+) -> models.StudyActivityGroup:
+    service = StudyActivityGroupService()
+    return service.patch_selection(
+        study_uid=uid,
+        study_selection_uid=study_activity_group_uid,
+        selection_update_input=selection,
+    )
+
+
+@router.patch(
+    "/studies/{uid}/study-soa-groups/{study_soa_group_uid}",
+    dependencies=[rbac.STUDY_WRITE],
+    summary="Edit a study soa group protocol visibility flag",
+    description="""
+State before:
+ - Study must exist and be in status draft
+Business logic:
+State after:
+ - Added new entry in the audit trail for the update of the study-soa-group.""",
+    response_model=models.StudySoAGroup,
+    response_model_exclude_unset=True,
+    status_code=200,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - There exist no selection between the study-activity and study-soa-group.",
+        },
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+@decorators.validate_if_study_is_not_locked("uid")
+def patch_update_soa_group_selection(
+    uid: str = studyUID,
+    study_soa_group_uid: str = study_selection_uid,
+    selection: models.StudySoAGroupEditInput = Body(
+        description="Related parameters of the selection that shall be updated."
+    ),
+) -> models.StudyActivityGroup:
+    service = StudySoAGroupService()
+    return service.patch_selection(
+        study_uid=uid,
+        study_selection_uid=study_soa_group_uid,
         selection_update_input=selection,
     )
 

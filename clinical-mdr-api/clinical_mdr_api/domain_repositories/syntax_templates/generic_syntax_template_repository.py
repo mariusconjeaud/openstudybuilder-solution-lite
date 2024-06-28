@@ -188,10 +188,11 @@ class GenericSyntaxTemplateRepository(
                             OPTIONAL MATCH (pt)<-[:HAS_PARENT_PARAMETER*0..]-(pt_parents)-[:HAS_PARAMETER_TERM]->(pr)-[:LATEST_FINAL]->(pv)
                                 WHERE pt.name <> "{OPERATOR_PARAMETER_NAME}" 
                                 // Filter out the child template parameter values if theirs parent contains the same value.
-                                // This ensures that the terms response will contain unique values
-                                AND pt=pt_parents OR NOT ((pt_parents)-[:HAS_PARAMETER_TERM]->(pr) AND (pt)-[:HAS_PARAMETER_TERM]->(pr))
-                            OPTIONAL MATCH (lib:Library)-->(pr)
-                                WHERE pt_parents.name <> "Activity" OR (lib.name = "Sponsor" AND pt_parents.name = "Activity")
+                                // This ensures that the terms response will contain unique values.
+                                // Also filter out the values that are part of the Requested library.
+                                AND (pt=pt_parents OR NOT ((pt_parents)-[:HAS_PARAMETER_TERM]->(pr)
+                                    AND (pt)-[:HAS_PARAMETER_TERM]->(pr)))
+                                AND NOT (pr)<-[:CONTAINS_CONCEPT]-(:Library {{name: "Requested"}})
                             CALL apoc.case(
                             [
                                 pv.name_sentence_case IS NOT NULL, 'RETURN pv.name_sentence_case AS name',

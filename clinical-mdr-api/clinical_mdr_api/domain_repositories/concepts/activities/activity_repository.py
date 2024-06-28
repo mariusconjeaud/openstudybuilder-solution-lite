@@ -349,8 +349,8 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
             # find related ActivityValidGroup node
             activity_valid_group_node = to_relation_trees(
                 ActivityValidGroup.nodes.filter(
-                    in_group__has_latest_value__uid=activity_grouping.activity_group_uid,
-                    has_group__has_latest_value__uid=activity_grouping.activity_subgroup_uid,
+                    in_group__has_version__uid=activity_grouping.activity_group_uid,
+                    has_group__has_version__uid=activity_grouping.activity_subgroup_uid,
                 )
             ).distinct()
             if len(activity_valid_group_node) == 0:

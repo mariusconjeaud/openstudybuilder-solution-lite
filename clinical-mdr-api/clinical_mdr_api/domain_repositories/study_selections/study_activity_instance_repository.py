@@ -62,6 +62,7 @@ class StudySelectionActivityInstanceRepository(
             study_selection_uid=selection["study_selection_uid"],
             study_activity_uid=selection["study_activity_uid"],
             activity_uid=selection.get("activity", {}).get("uid"),
+            activity_name=selection.get("activity", {}).get("name"),
             activity_version=selection.get("activity", {}).get("activity_version"),
             activity_instance_uid=selection.get("activity_instance", {}).get("uid")
             if selection.get("activity_instance")
@@ -179,7 +180,8 @@ class StudySelectionActivityInstanceRepository(
                 head([(study_activity)-[:HAS_SELECTED_ACTIVITY]->(activity_value:ActivityValue)<-[has_version:HAS_VERSION]
                 -(activity_root:ActivityRoot) WHERE has_version.status IN ['Final', 'Retired'] | 
                     {
-                        uid: activity_root.uid, 
+                        uid: activity_root.uid,
+                        name: activity_value.name,
                         activity_version: has_version.version
                     }]) AS activity,
                 head([(sa)-[:HAS_SELECTED_ACTIVITY_INSTANCE]->(activity_instance_name:ActivityInstanceValue)<-[has_version:HAS_VERSION]

@@ -306,7 +306,10 @@ class TimelineAR:
                     amount_of_subvisits_for_visit.get(visit.visit_sublabel_reference, 0)
                     + 1
                 )
-            elif visit.visit_class != VisitClass.MANUALLY_DEFINED_VISIT:
+            elif visit.visit_class not in [
+                VisitClass.MANUALLY_DEFINED_VISIT,
+                VisitClass.SPECIAL_VISIT,
+            ]:
                 last_visit_num += 1
             order += 1
 

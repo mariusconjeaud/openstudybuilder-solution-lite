@@ -188,7 +188,7 @@ class ActivityInstanceValue(ConceptValue):
     is_default_selected_for_activity = BooleanProperty()
     is_data_sharing = BooleanProperty()
     is_legacy_usage = BooleanProperty()
-    is_derived = BooleanProperty()
+    is_derived = BooleanProperty(default=False)
     legacy_description = StringProperty()
 
     has_activity = RelationshipTo(

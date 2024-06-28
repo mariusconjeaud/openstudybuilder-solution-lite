@@ -257,6 +257,18 @@ def api_post(path: str, payload: dict, params: Optional[Any] = None):
     return res
 
 
+def api_patch(path: str, payload: dict, params: Optional[Any] = None):
+    """Issues http PATCH request with specified payload.
+    Returns the response."""
+    url = API_BASE_URL + path
+    logger.info("PATCH %s", url)
+    res = requests.patch(
+        url, json=payload, params=params, timeout=30, headers=API_HEADERS
+    )
+    assert res.status_code in [200], f"Response status {res.status_code} is not 200."
+    return res
+
+
 def parse_db_url(db_url):
     auth_info = re.search(r"//(.+?)@", db_url).group(1)
     username, password = auth_info.split(":")

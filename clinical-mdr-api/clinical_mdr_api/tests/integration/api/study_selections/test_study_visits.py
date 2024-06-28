@@ -346,6 +346,31 @@ def test_manually_defined_visit(api_client):
         res = response.json()
         assert res["time_value"] == visit_timing
 
+    # create SpecialVisit after ScheduledVisits
+    response = api_client.get(
+        f"/studies/{study_for_i_visit.uid}/study-visits",
+    )
+    assert response.status_code == 200
+    res = response.json()
+    last_scheduled_visit_uid = res["items"][5]["uid"]
+    special_visit_input = {
+        "visit_sublabel_reference": last_scheduled_visit_uid,
+        "study_epoch_uid": study_epoch.uid,
+        "visit_type_uid": "VisitType_0002",
+        "time_reference_uid": "VisitSubType_0005",
+        "time_unit_uid": DAYUID,
+        "visit_class": "SPECIAL_VISIT",
+        "visit_subclass": "SINGLE_VISIT",
+        "is_global_anchor_visit": False,
+    }
+    datadict = visits_basic_data.copy()
+    datadict.update(special_visit_input)
+    response = api_client.post(
+        f"/studies/{study_for_i_visit.uid}/study-visits",
+        json=datadict,
+    )
+    assert response.status_code == 201
+
     # Given Study Visits is defined as a "Manually defined visit"
     # Create Manually defined Visit
     manually_defined_name = "Visit 5"
@@ -524,11 +549,17 @@ def test_manually_defined_visit(api_client):
     assert response.status_code == 200
     study_visits = response.json()["items"]
     for idx, study_visit in enumerate(study_visits[1:], 1):
-        assert study_visit["time_value"] > study_visits[idx - 1]["time_value"]
-        if VisitClass.MANUALLY_DEFINED_VISIT.name not in [
+        two_consecutive_visit_classes = [
             study_visit["visit_class"],
             study_visits[idx - 1]["visit_class"],
-        ]:
+        ]
+        # SpecialVisit doesn't contain timing
+        if VisitClass.SPECIAL_VISIT.name not in two_consecutive_visit_classes:
+            assert study_visit["time_value"] > study_visits[idx - 1]["time_value"]
+        if (
+            VisitClass.MANUALLY_DEFINED_VISIT.name not in two_consecutive_visit_classes
+            and VisitClass.SPECIAL_VISIT.name not in two_consecutive_visit_classes
+        ):
             assert study_visit["visit_number"] > study_visits[idx - 1]["visit_number"]
 
 

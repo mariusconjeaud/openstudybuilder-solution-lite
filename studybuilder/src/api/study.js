@@ -404,6 +404,24 @@ export default {
       data
     )
   },
+  async updateStudySoaGroup(studyUid, studySoaGroupUid, data) {
+    return repository.patch(
+      `studies/${studyUid}/study-soa-groups/${studySoaGroupUid}`,
+      data
+    )
+  },
+  async updateStudyActivityGroup(studyUid, studyActivityGroupUid, data) {
+    return repository.patch(
+      `studies/${studyUid}/study-activity-groups/${studyActivityGroupUid}`,
+      data
+    )
+  },
+  async updateStudyActivitySubGroup(studyUid, studyActivitySubGroupUid, data) {
+    return repository.patch(
+      `studies/${studyUid}/study-activity-subgroups/${studyActivitySubGroupUid}`,
+      data
+    )
+  },
   updateToApprovedActivity(studyUid, studyActivityUid) {
     return repository.patch(
       `studies/${studyUid}/study-activities/${studyActivityUid}/activity-requests-approvals`
@@ -563,7 +581,7 @@ export default {
       current_metadata: {
         study_population: data,
       },
-      study_parent_part_uid: parentUid
+      study_parent_part_uid: parentUid,
     }
     return repository.patch(`${resource}/${uid}`, payload)
   },

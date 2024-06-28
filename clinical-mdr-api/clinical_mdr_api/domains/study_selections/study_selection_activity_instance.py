@@ -27,6 +27,7 @@ class StudySelectionActivityInstanceVO(study_selection_base.StudySelectionBaseVO
     study_selection_uid: str
     study_activity_uid: str
     activity_uid: str
+    activity_name: str | None
     activity_version: str
     activity_instance_uid: str | None
     activity_instance_name: str | None
@@ -53,6 +54,7 @@ class StudySelectionActivityInstanceVO(study_selection_base.StudySelectionBaseVO
         user_initials: str,
         study_activity_uid: str,
         activity_uid: str | None = None,
+        activity_name: str | None = None,
         activity_version: str | None = None,
         activity_instance_uid: str | None = None,
         activity_instance_name: str | None = None,
@@ -85,6 +87,7 @@ class StudySelectionActivityInstanceVO(study_selection_base.StudySelectionBaseVO
             activity_instance_name=normalize_string(activity_instance_name),
             activity_instance_version=normalize_string(activity_instance_version),
             activity_uid=normalize_string(activity_uid),
+            activity_name=normalize_string(activity_name),
             activity_version=normalize_string(activity_version),
             show_activity_instance_in_protocol_flowchart=show_activity_instance_in_protocol_flowchart,
             start_date=start_date,

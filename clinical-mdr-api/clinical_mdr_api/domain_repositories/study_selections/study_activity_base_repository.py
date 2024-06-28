@@ -429,12 +429,12 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
             -[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(fgr_value:CTTermNameValue)
         MATCH (study_soa_group:StudySoAGroup)<-[:AFTER]-(asa:StudyAction)
         OPTIONAL MATCH (study_soa_group:StudySoAGroup)<-[:BEFORE]-(bsa:StudyAction)
-        WITH DISTINCT all_sa, fgr_value, asa, bsa
+        WITH DISTINCT all_sa, fgr_value, asa, bsa, study_soa_group
         ORDER BY asa.date DESC
         RETURN
             all_sa.uid as sa_uid,
             'visibility flag' AS object_type,
-            fgr_value.name + ' ' + coalesce(all_sa.show_soa_group_in_protocol_flowchart, false)  AS description,
+            fgr_value.name + ' ' + coalesce(study_soa_group.show_soa_group_in_protocol_flowchart, false)  AS description,
             asa.date AS start_date,
             asa.user_initials AS user_initials,
             labels(asa) AS change_type,
@@ -447,12 +447,12 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
             -[:HAS_FLOWCHART_GROUP]->(fgr:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(fgr_value:CTTermNameValue)
         MATCH (study_activity_group:StudyActivityGroup)<-[:AFTER]-(asa:StudyAction)
         OPTIONAL MATCH (study_activity_group:StudyActivityGroup)<-[:BEFORE]-(bsa:StudyAction)
-        WITH DISTINCT all_sa, fgr_value, activity_group_value, asa, bsa
+        WITH DISTINCT all_sa, fgr_value, activity_group_value, asa, bsa, study_activity_group
         ORDER BY asa.date DESC
         RETURN DISTINCT
             all_sa.uid as sa_uid,
             'visibility flag' AS object_type,
-            fgr_value.name + '/' + activity_group_value.name + ' ' +  all_sa.show_activity_group_in_protocol_flowchart  AS description,
+            fgr_value.name + '/' + activity_group_value.name + ' ' +  study_activity_group.show_activity_group_in_protocol_flowchart  AS description,
             asa.date AS start_date,
             asa.user_initials AS user_initials,
             labels(asa) AS change_type,
@@ -467,12 +467,12 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
             -[:HAS_FLOWCHART_GROUP]->(fgr:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(fgr_value:CTTermNameValue)
         MATCH (study_activity_subgroup:StudyActivitySubGroup)<-[:AFTER]-(asa:StudyAction)
         OPTIONAL MATCH (study_activity_subgroup:StudyActivitySubGroup)<-[:BEFORE]-(bsa:StudyAction)
-        WITH DISTINCT all_sa, fgr_value, activity_group_value, activity_subgroup_value, asa, bsa
+        WITH DISTINCT all_sa, fgr_value, activity_group_value, activity_subgroup_value, asa, bsa, study_activity_subgroup
         ORDER BY asa.date DESC
         RETURN DISTINCT
             all_sa.uid as sa_uid,
             'visibility flag' AS object_type,
-            fgr_value.name + '/' + activity_group_value.name+ '/' + activity_subgroup_value.name + ' ' +  all_sa.show_activity_subgroup_in_protocol_flowchart  AS description,
+            fgr_value.name + '/' + activity_group_value.name+ '/' + activity_subgroup_value.name + ' ' +  study_activity_subgroup.show_activity_subgroup_in_protocol_flowchart  AS description,
             asa.date AS start_date,
             asa.user_initials AS user_initials,
             labels(asa) AS change_type,

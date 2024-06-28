@@ -1586,3 +1586,434 @@ def test_get_study_activity_by_uid(api_client):
         res["activity"]["activity_groupings"][1]["activity_group_uid"]
         == general_activity_group.uid
     )
+
+
+def test_reusing_study_activity_group_study_activity_subgroup_study_soa_group(
+    api_client,
+):
+    activity_group_1 = TestUtils.create_activity_group(name="activity_group_1")
+    activity_group_2 = TestUtils.create_activity_group(name="activity_group_2")
+    activity_subgroup_1 = TestUtils.create_activity_subgroup(
+        name="activity_subgroup_1", activity_groups=[activity_group_1.uid]
+    )
+    activity_subgroup_2 = TestUtils.create_activity_subgroup(
+        name="activity_subgroup_2",
+        activity_groups=[activity_group_1.uid, activity_group_2.uid],
+    )
+    activity_1 = TestUtils.create_activity(
+        name="activity_1",
+        library_name="Sponsor",
+        activity_groups=[activity_group_1.uid],
+        activity_subgroups=[activity_subgroup_1.uid],
+    )
+    response = api_client.post(
+        f"/studies/{study.uid}/study-activities",
+        json={
+            "activity_uid": activity_1.uid,
+            "activity_subgroup_uid": activity_subgroup_1.uid,
+            "activity_group_uid": activity_group_1.uid,
+            "soa_group_term_uid": "term_efficacy_uid",
+        },
+    )
+    assert response.status_code == 201
+    res = response.json()
+    study_activity_1_uid = res["study_activity_uid"]
+
+    activity_2 = TestUtils.create_activity(
+        name="activity_2",
+        library_name="Sponsor",
+        activity_groups=[activity_group_1.uid],
+        activity_subgroups=[activity_subgroup_1.uid],
+    )
+    response = api_client.post(
+        f"/studies/{study.uid}/study-activities",
+        json={
+            "activity_uid": activity_2.uid,
+            "activity_subgroup_uid": activity_subgroup_1.uid,
+            "activity_group_uid": activity_group_1.uid,
+            "soa_group_term_uid": "term_efficacy_uid",
+        },
+    )
+    assert response.status_code == 201
+    res = response.json()
+    study_activity_2_uid = res["study_activity_uid"]
+
+    activity_3 = TestUtils.create_activity(
+        name="activity_3",
+        library_name="Sponsor",
+        activity_groups=[activity_group_1.uid],
+        activity_subgroups=[activity_subgroup_2.uid],
+    )
+    response = api_client.post(
+        f"/studies/{study.uid}/study-activities",
+        json={
+            "activity_uid": activity_3.uid,
+            "activity_subgroup_uid": activity_subgroup_2.uid,
+            "activity_group_uid": activity_group_1.uid,
+            "soa_group_term_uid": "term_efficacy_uid",
+        },
+    )
+    assert response.status_code == 201
+    res = response.json()
+    study_activity_3_uid = res["study_activity_uid"]
+
+    activity_4 = TestUtils.create_activity(
+        name="activity_4",
+        library_name="Sponsor",
+        activity_groups=[activity_group_2.uid],
+        activity_subgroups=[activity_subgroup_2.uid],
+    )
+    response = api_client.post(
+        f"/studies/{study.uid}/study-activities",
+        json={
+            "activity_uid": activity_4.uid,
+            "activity_subgroup_uid": activity_subgroup_2.uid,
+            "activity_group_uid": activity_group_2.uid,
+            "soa_group_term_uid": "term_efficacy_uid",
+        },
+    )
+    assert response.status_code == 201
+    res = response.json()
+    study_activity_4_uid = res["study_activity_uid"]
+
+    activity_5 = TestUtils.create_activity(
+        name="activity_5",
+        library_name="Sponsor",
+        activity_groups=[activity_group_2.uid],
+        activity_subgroups=[activity_subgroup_2.uid],
+    )
+    response = api_client.post(
+        f"/studies/{study.uid}/study-activities",
+        json={
+            "activity_uid": activity_5.uid,
+            "activity_subgroup_uid": activity_subgroup_2.uid,
+            "activity_group_uid": activity_group_2.uid,
+            "soa_group_term_uid": "informed_consent_uid",
+        },
+    )
+    assert response.status_code == 201
+    res = response.json()
+    study_activity_5_uid = res["study_activity_uid"]
+
+    response = api_client.get(
+        f"/studies/{study.uid}/study-activities/{study_activity_1_uid}",
+    )
+    assert response.status_code == 200
+    study_activity_1 = response.json()
+
+    response = api_client.get(
+        f"/studies/{study.uid}/study-activities/{study_activity_2_uid}",
+    )
+    assert response.status_code == 200
+    study_activity_2 = response.json()
+
+    response = api_client.get(
+        f"/studies/{study.uid}/study-activities/{study_activity_3_uid}",
+    )
+    assert response.status_code == 200
+    study_activity_3 = response.json()
+
+    response = api_client.get(
+        f"/studies/{study.uid}/study-activities/{study_activity_4_uid}",
+    )
+    assert response.status_code == 200
+    study_activity_4 = response.json()
+
+    response = api_client.get(
+        f"/studies/{study.uid}/study-activities/{study_activity_5_uid}",
+    )
+    assert response.status_code == 200
+    study_activity_5 = response.json()
+
+    # Compare SA1 and SA2
+    # test reusing groups
+    assert (
+        study_activity_1["study_activity_group"]
+        == study_activity_2["study_activity_group"]
+    )
+    # test reusing subgroups
+    assert (
+        study_activity_1["study_activity_subgroup"]
+        == study_activity_2["study_activity_subgroup"]
+    )
+    # test reusing soa_group
+    assert study_activity_1["study_soa_group"] == study_activity_2["study_soa_group"]
+
+    # Compare SA2 and SA3
+    # test reusing group
+    assert (
+        study_activity_2["study_activity_group"]
+        == study_activity_3["study_activity_group"]
+    )
+    # test reusing soa_group
+    assert study_activity_2["study_soa_group"] == study_activity_3["study_soa_group"]
+
+    # test different subgroups
+    assert (
+        study_activity_2["study_activity_subgroup"]
+        != study_activity_3["study_activity_subgroup"]
+    )
+
+    # Compare SA3 and SA4
+    # test reuse soa_group
+    assert study_activity_3["study_soa_group"] == study_activity_4["study_soa_group"]
+    # test different groups
+    assert (
+        study_activity_3["study_activity_group"]
+        != study_activity_4["study_activity_group"]
+    )
+    # test different subgroups
+    assert (
+        study_activity_3["study_activity_subgroup"]
+        != study_activity_4["study_activity_subgroup"]
+    )
+
+    # Compare SA4 and SA5
+    # test different soa_group
+    assert study_activity_4["study_soa_group"] != study_activity_5["study_soa_group"]
+    # test different groups
+    assert (
+        study_activity_4["study_activity_group"]
+        != study_activity_5["study_activity_group"]
+    )
+    # test different subgroups
+    assert (
+        study_activity_4["study_activity_subgroup"]
+        != study_activity_5["study_activity_subgroup"]
+    )
+
+    response = api_client.delete(
+        f"/studies/{study.uid}/study-activities/{study_activity_1_uid}",
+    )
+    assert response.status_code == 204
+
+    response = api_client.get(
+        f"/studies/{study.uid}/study-activities/{study_activity_2_uid}",
+    )
+    assert response.status_code == 200
+    study_activity_2 = response.json()
+    assert (
+        study_activity_2["study_activity_group"]["activity_group_uid"]
+        == activity_group_1.uid
+    )
+    assert (
+        study_activity_2["study_activity_subgroup"]["activity_subgroup_uid"]
+        == activity_subgroup_1.uid
+    )
+    response = api_client.patch(
+        f"/studies/{study.uid}/study-activity-subgroups/{study_activity_2['study_activity_subgroup']['study_activity_subgroup_uid']}",
+        json={
+            "show_activity_subgroup_in_protocol_flowchart": False,
+        },
+    )
+    assert response.status_code == 200
+    response = api_client.patch(
+        f"/studies/{study.uid}/study-activity-groups/{study_activity_2['study_activity_group']['study_activity_group_uid']}",
+        json={
+            "show_activity_group_in_protocol_flowchart": False,
+        },
+    )
+    assert response.status_code == 200
+
+
+def test_modify_visibility_flag_in_protocol_flowchart(
+    api_client,
+):
+    activity_group = TestUtils.create_activity_group(name="AG")
+    activity_subgroup = TestUtils.create_activity_subgroup(
+        name="AS", activity_groups=[activity_group.uid]
+    )
+    activity = TestUtils.create_activity(
+        name="Act",
+        library_name="Sponsor",
+        activity_groups=[activity_group.uid],
+        activity_subgroups=[activity_subgroup.uid],
+    )
+    response = api_client.post(
+        f"/studies/{study.uid}/study-activities",
+        json={
+            "activity_uid": activity.uid,
+            "activity_subgroup_uid": activity_subgroup.uid,
+            "activity_group_uid": activity_group.uid,
+            "soa_group_term_uid": "term_efficacy_uid",
+        },
+    )
+    assert response.status_code == 201
+    res = response.json()
+    study_activity_uid = res["study_activity_uid"]
+    study_activity_subgroup_uid = res["study_activity_subgroup"][
+        "study_activity_subgroup_uid"
+    ]
+    study_activity_group_uid = res["study_activity_group"]["study_activity_group_uid"]
+    study_soa_group_uid = res["study_soa_group"]["study_soa_group_uid"]
+    assert res["show_activity_in_protocol_flowchart"] is False
+    assert res["show_activity_subgroup_in_protocol_flowchart"] is True
+    assert res["show_activity_group_in_protocol_flowchart"] is True
+    assert res["show_soa_group_in_protocol_flowchart"] is False
+
+    response = api_client.patch(
+        f"/studies/{study.uid}/study-activities/{study_activity_uid}",
+        json={
+            "show_activity_in_protocol_flowchart": True,
+        },
+    )
+    assert response.status_code == 200
+    res = response.json()
+    assert res["show_activity_in_protocol_flowchart"] is True
+
+    response = api_client.patch(
+        f"/studies/{study.uid}/study-activity-subgroups/{study_activity_subgroup_uid}",
+        json={
+            "show_activity_subgroup_in_protocol_flowchart": False,
+        },
+    )
+    assert response.status_code == 200
+    res = response.json()
+    assert res["show_activity_subgroup_in_protocol_flowchart"] is False
+
+    response = api_client.patch(
+        f"/studies/{study.uid}/study-activity-groups/{study_activity_group_uid}",
+        json={
+            "show_activity_group_in_protocol_flowchart": False,
+        },
+    )
+    assert response.status_code == 200
+    res = response.json()
+    assert res["show_activity_group_in_protocol_flowchart"] is False
+
+    response = api_client.patch(
+        f"/studies/{study.uid}/study-soa-groups/{study_soa_group_uid}",
+        json={
+            "show_soa_group_in_protocol_flowchart": True,
+        },
+    )
+    assert response.status_code == 200
+    res = response.json()
+    assert res["show_soa_group_in_protocol_flowchart"] is True
+
+    response = api_client.get(
+        f"/studies/{study.uid}/study-activities/{study_activity_uid}",
+    )
+    assert response.status_code == 200
+    res = response.json()
+    assert res["show_activity_in_protocol_flowchart"] is True
+    assert res["show_activity_subgroup_in_protocol_flowchart"] is False
+    assert res["show_activity_group_in_protocol_flowchart"] is False
+    assert res["show_soa_group_in_protocol_flowchart"] is True
+
+
+def test_study_activity_delete_underlying_objects(
+    api_client,
+):
+    study_for_sa_delete = TestUtils.create_study(project_number=project.project_number)
+    second_weight_activity = TestUtils.create_activity(
+        name="Second weight",
+        activity_subgroups=[body_measurements_activity_subgroup.uid],
+        activity_groups=[general_activity_group.uid],
+        library_name="Sponsor",
+    )
+    response = api_client.post(
+        f"/studies/{study_for_sa_delete.uid}/study-activities",
+        json={
+            "activity_uid": weight_activity.uid,
+            "activity_subgroup_uid": body_measurements_activity_subgroup.uid,
+            "activity_group_uid": general_activity_group.uid,
+            "soa_group_term_uid": "term_efficacy_uid",
+        },
+    )
+    assert response.status_code == 201
+    weight_sa = response.json()
+
+    response = api_client.post(
+        f"/studies/{study_for_sa_delete.uid}/study-activities",
+        json={
+            "activity_uid": second_weight_activity.uid,
+            "activity_subgroup_uid": body_measurements_activity_subgroup.uid,
+            "activity_group_uid": general_activity_group.uid,
+            "soa_group_term_uid": "term_efficacy_uid",
+        },
+    )
+    assert response.status_code == 201
+    second_weight_sa = response.json()
+
+    response = api_client.delete(
+        f"/studies/{study_for_sa_delete.uid}/study-activities/{weight_sa['study_activity_uid']}",
+    )
+    assert response.status_code == 204
+    response = api_client.get(
+        f"/studies/{study_for_sa_delete.uid}/study-activities/{weight_sa['study_activity_uid']}",
+    )
+    assert response.status_code == 404
+
+    response = api_client.patch(
+        f"/studies/{study_for_sa_delete.uid}/study-activity-groups/{weight_sa['study_activity_group']['study_activity_group_uid']}",
+        json={
+            "show_activity_group_in_protocol_flowchart": False,
+        },
+    )
+    assert response.status_code == 200
+    res = response.json()
+    assert res["show_activity_group_in_protocol_flowchart"] is False
+
+    response = api_client.patch(
+        f"/studies/{study_for_sa_delete.uid}/study-activity-subgroups/{weight_sa['study_activity_subgroup']['study_activity_subgroup_uid']}",
+        json={
+            "show_activity_subgroup_in_protocol_flowchart": False,
+        },
+    )
+    assert response.status_code == 200
+    res = response.json()
+    assert res["show_activity_subgroup_in_protocol_flowchart"] is False
+
+    response = api_client.get(
+        f"/studies/{study_for_sa_delete.uid}/study-activities/{second_weight_sa['study_activity_uid']}",
+    )
+    assert response.status_code == 200
+    res = response.json()
+    assert res["show_activity_group_in_protocol_flowchart"] is False
+    assert res["show_activity_subgroup_in_protocol_flowchart"] is False
+
+    response = api_client.patch(
+        f"/studies/{study_for_sa_delete.uid}/study-activity-groups/{weight_sa['study_activity_group']['study_activity_group_uid']}",
+        json={
+            "show_activity_group_in_protocol_flowchart": True,
+        },
+    )
+    assert response.status_code == 200
+    res = response.json()
+    assert res["show_activity_group_in_protocol_flowchart"] is True
+
+    response = api_client.patch(
+        f"/studies/{study_for_sa_delete.uid}/study-activity-subgroups/{weight_sa['study_activity_subgroup']['study_activity_subgroup_uid']}",
+        json={
+            "show_activity_subgroup_in_protocol_flowchart": True,
+        },
+    )
+    assert response.status_code == 200
+    res = response.json()
+    assert res["show_activity_subgroup_in_protocol_flowchart"] is True
+
+    response = api_client.get(
+        f"/studies/{study_for_sa_delete.uid}/study-activities/{second_weight_sa['study_activity_uid']}",
+    )
+    assert response.status_code == 200
+    res = response.json()
+    assert res["show_activity_group_in_protocol_flowchart"] is True
+    assert res["show_activity_subgroup_in_protocol_flowchart"] is True
+
+    response = api_client.delete(
+        f"/studies/{study_for_sa_delete.uid}/study-activities/{second_weight_sa['study_activity_uid']}",
+    )
+    assert response.status_code == 204
+    response = api_client.get(
+        f"/studies/{study_for_sa_delete.uid}/study-activities/{second_weight_sa['study_activity_uid']}",
+    )
+    assert response.status_code == 404
+
+    response = api_client.patch(
+        f"/studies/{study_for_sa_delete.uid}/study-activity-subgroups/{second_weight_sa['study_activity_subgroup']['study_activity_subgroup_uid']}",
+        json={
+            "show_activity_subgroup_in_protocol_flowchart": True,
+        },
+    )
+    assert response.status_code == 404

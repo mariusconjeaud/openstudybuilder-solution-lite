@@ -854,7 +854,7 @@
                "activity_group_name": "name3"
             },
             "study_soa_group": {
-               "study_soa_group_uid": "StudySoAGroup_000002",
+               "study_soa_group_uid": "StudySoAGroup_000001",
                "soa_group_term_uid": "term_efficacy_uid",
                "soa_group_name": "EFFICACY"
             },

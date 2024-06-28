@@ -2019,7 +2019,7 @@ class LibraryItemRepositoryImplBase(
         match_stmt = """
             CALL{
                 WITH *
-                OPTIONAL MATCH (root)-[:LATEST]->(:ActivitySubGroupValue)-[:HAS_GROUP]->(:ActivityValidGroup)-[:IN_GROUP]->(:ActivityGroupValue)<-[:LATEST]-(activity_group:ActivityGroupRoot)
+                OPTIONAL MATCH (root)-[:LATEST]->(:ActivitySubGroupValue)-[:HAS_GROUP]->(:ActivityValidGroup)-[:IN_GROUP]->(:ActivityGroupValue)<-[:HAS_VERSION]-(activity_group:ActivityGroupRoot)
                 RETURN collect(DISTINCT activity_group.uid) as activity_groups_uids
             }
         """

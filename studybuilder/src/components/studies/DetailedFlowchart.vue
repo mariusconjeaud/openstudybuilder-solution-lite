@@ -1194,41 +1194,29 @@ export default {
     },
     async toggleLevelDisplay(row) {
       const firstCell = row.cells[0]
-      let activityCells
+      let action
       let field
 
       if (firstCell.style === 'activity') {
-        activityCells = [firstCell]
         field = 'show_activity_in_protocol_flowchart'
+        action = 'updateStudyActivity'
       } else if (firstCell.style === 'subGroup') {
-        activityCells = this.getStudyActivitiesForSubgroup(
-          firstCell.refs?.[0]?.uid
-        )
         field = 'show_activity_subgroup_in_protocol_flowchart'
+        action = 'updateStudyActivitySubGroup'
       } else if (firstCell.style === 'group') {
-        activityCells = this.getStudyActivitiesForGroup(
-          firstCell.refs?.[0]?.uid
-        )
         field = 'show_activity_group_in_protocol_flowchart'
+        action = 'updateStudyActivityGroup'
       } else if (firstCell.style === 'soaGroup') {
-        activityCells = this.getStudyActivitiesForSoaGroup(
-          firstCell.refs?.[0]?.uid
-        )
         field = 'show_soa_group_in_protocol_flowchart'
+        action = 'updateStudySoaGroup'
       }
-      const payload = []
-      for (const cell of activityCells) {
-        const operation = {
-          method: 'PATCH',
-          content: {
-            study_activity_uid: cell.refs[0].uid,
-            content: {},
-          },
-        }
-        operation.content.content[field] = row.hide
-        payload.push(operation)
-      }
-      await study.studyActivityBatchOperations(this.selectedStudy.uid, payload)
+      const payload = {}
+      payload[field] = row.hide
+      await study[action](
+        this.selectedStudy.uid,
+        firstCell.refs[0].uid,
+        payload
+      )
       row.hide = !row.hide
     },
     updateGroupedSchedule(value, studyActivityUid, studyVisitCell) {

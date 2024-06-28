@@ -36,10 +36,14 @@ class StudyActivityInstanceSelectionService(StudyActivitySelectionBaseService):
     repository_interface = StudySelectionActivityInstanceRepository
     selected_object_repository_interface = ActivityInstanceRepository
 
+    def update_study_activities(self, study_uid: str, study_selection_uid: str):
+        pass
+
     _vo_to_ar_filter_map = {
         "order": "activity_order",
         "start_date": "start_date",
         "user_initials": "user_initials",
+        "activity.name": "activity_name",
         "activity_instance.name": "activity_instance_name",
         "study_soa_group.soa_group_name": "soa_group_term_name",
         "study_activity_subgroup.activity_subgroup_name": "activity_subgroup_name",
@@ -49,16 +53,17 @@ class StudyActivityInstanceSelectionService(StudyActivitySelectionBaseService):
     def _get_selected_object_exist_check(self) -> Callable[[str], bool]:
         return self.selected_object_repository.final_concept_exists
 
-    def _transform_from_ar_and_order_to_response_model(
+    def _transform_from_vo_to_response_model(
         self,
-        study_selection_ar: StudySelectionActivityInstanceAR,
+        study_uid: str,
+        specific_selection: StudySelectionActivityInstanceVO,
         order: int,
         terms_at_specific_datetime: datetime | None = None,
         accepted_version: bool = False,
     ) -> models.StudySelectionActivityInstance:
-        return models.StudySelectionActivityInstance.from_study_selection_activity_instance_ar_and_order(
-            study_selection_activity_instance_ar=study_selection_ar,
-            activity_instance_order=order,
+        return models.StudySelectionActivityInstance.from_study_selection_activity_instance_vo_and_order(
+            study_uid=study_uid,
+            specific_selection=specific_selection,
             get_activity_by_uid_callback=self._transform_latest_activity_model,
             get_activity_by_uid_version_callback=self._transform_activity_model,
             get_activity_instance_by_uid_callback=self._transform_latest_activity_instance_model,
@@ -71,10 +76,13 @@ class StudyActivityInstanceSelectionService(StudyActivitySelectionBaseService):
         study_value_version: str | None = None,
     ) -> list[models.StudySelectionActivityInstance]:
         result = []
-        for order, _ in enumerate(study_selection.study_objects_selection, start=1):
+        for order, specific_selection in enumerate(
+            study_selection.study_objects_selection, start=1
+        ):
             result.append(
-                self._transform_from_ar_and_order_to_response_model(
-                    study_selection_ar=study_selection,
+                self._transform_from_vo_to_response_model(
+                    study_uid=study_selection.study_uid,
+                    specific_selection=specific_selection,
                     order=order,
                 )
             )
@@ -202,15 +210,16 @@ class StudyActivityInstanceSelectionService(StudyActivitySelectionBaseService):
                 )
                 # Fetch the new selection which was just added
                 (
-                    _,
+                    specific_selection,
                     order,
                 ) = study_activity_instance_aggregate.get_specific_object_selection(
                     study_activity_instance_selection.study_selection_uid
                 )
 
                 # add the activity and return
-                return self._transform_from_ar_and_order_to_response_model(
-                    study_selection_ar=study_activity_instance_aggregate,
+                return self._transform_from_vo_to_response_model(
+                    study_uid=study_activity_instance_aggregate.study_uid,
+                    specific_selection=specific_selection,
                     order=order,
                 )
         finally:
@@ -294,14 +303,15 @@ class StudyActivityInstanceSelectionService(StudyActivitySelectionBaseService):
         study_value_version: str | None = None,
     ) -> models.StudySelectionActivityInstance:
         (
-            selection_aggregate,
             _,
+            specific_selection,
             order,
         ) = self._get_specific_activity_instance_selection_by_uids(
             study_uid, study_selection_uid, study_value_version=study_value_version
         )
-        return self._transform_from_ar_and_order_to_response_model(
-            study_selection_ar=selection_aggregate,
+        return self._transform_from_vo_to_response_model(
+            study_uid=study_uid,
+            specific_selection=specific_selection,
             order=order,
         )
 
@@ -335,7 +345,8 @@ class StudyActivityInstanceSelectionService(StudyActivitySelectionBaseService):
         selection_ar.update_selection(new_selection)
         self._repos.study_activity_instance_repository.save(selection_ar, self.author)
 
-        return self._transform_from_ar_and_order_to_response_model(
-            study_selection_ar=selection_ar,
+        return self._transform_from_vo_to_response_model(
+            study_uid=study_uid,
+            specific_selection=new_selection,
             order=order,
         )
