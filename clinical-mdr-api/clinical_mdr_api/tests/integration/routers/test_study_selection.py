@@ -22,15 +22,12 @@ from clinical_mdr_api.tests.integration.utils.data_library import (
     CREATE_BASE_TEMPLATE_PARAMETER_TREE,
     STARTUP_ACTIVITIES,
     STARTUP_ACTIVITY_GROUPS,
-    STARTUP_ACTIVITY_INSTANCES_CT_INIT,
     STARTUP_ACTIVITY_SUB_GROUPS,
     STARTUP_CT_CATALOGUE_CYPHER,
     STARTUP_CT_TERM_NAME_CYPHER,
-    STARTUP_NUMERIC_VALUES_WITH_UNITS,
     STARTUP_STUDY_ACTIVITY_CYPHER,
     STARTUP_STUDY_ARM_CYPHER,
     STARTUP_STUDY_BRANCH_ARM_CYPHER,
-    STARTUP_STUDY_COMPOUND_CYPHER,
     STARTUP_STUDY_ENDPOINT_CYPHER,
     STARTUP_STUDY_LIST_CYPHER,
     STARTUP_STUDY_OBJECTIVE_CYPHER,
@@ -190,68 +187,6 @@ class StudyEndpointsNegativeTest(api.APITest):
 
     def ignored_fields(self):
         return ["start_date", "end_date", "time", "uid"]
-
-
-class StudyCompoundsTest(api.APITest):
-    TEST_DB_NAME = "studyselection"
-    SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "study_selection_compound.json")]
-
-    def setUp(self):
-        inject_and_clear_db(self.TEST_DB_NAME)
-        db.cypher_query(STARTUP_ACTIVITY_INSTANCES_CT_INIT)
-        db.cypher_query(STARTUP_NUMERIC_VALUES_WITH_UNITS)
-        TestUtils.create_library(name="UCUM", is_editable=True)
-        TestUtils.create_ct_catalogue()
-        TestUtils.create_study_ct_data_map(
-            codelist_uid="CTCodelist_000001", ct_data_map=initialize_ct_data_map
-        )
-        TestUtils.create_study_fields_configuration()
-        db.cypher_query(STARTUP_STUDY_COMPOUND_CYPHER)
-
-        from clinical_mdr_api import main
-
-        self.test_client = TestClient(main.app)
-
-    def ignored_fields(self):
-        return [
-            "start_date",
-            "end_date",
-            "modified_date",
-            "time",
-            "uid",
-            "nnc_id",
-            "UNII",
-            "PClass",
-            "change_description",
-            "user_initials",
-            "version_timestamp",
-            "study_version",
-        ]
-
-
-class StudyCompoundsNegativeTest(api.APITest):
-    TEST_DB_NAME = "studyselection"
-
-    def setUp(self):
-        inject_and_clear_db(self.TEST_DB_NAME)
-        db.cypher_query(STARTUP_ACTIVITY_INSTANCES_CT_INIT)
-        db.cypher_query(STARTUP_NUMERIC_VALUES_WITH_UNITS)
-        TestUtils.create_library(name="UCUM", is_editable=True)
-        TestUtils.create_ct_catalogue()
-        TestUtils.create_study_ct_data_map(
-            codelist_uid="CTCodelist_000001", ct_data_map=initialize_ct_data_map
-        )
-        db.cypher_query(STARTUP_STUDY_COMPOUND_CYPHER)
-        from clinical_mdr_api import main
-
-        self.test_client = TestClient(main.app)
-
-    SCENARIO_PATHS = [
-        os.path.join(BASE_SCENARIO_PATH, "study_selection_compound_negative.json")
-    ]
-
-    def ignored_fields(self):
-        return ["start_date", "end_date", "modified_date", "time", "uid"]
 
 
 class StudyActivityTest(api.APITest):

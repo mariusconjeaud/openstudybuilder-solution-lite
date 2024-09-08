@@ -27,19 +27,34 @@
           data-cy="create-placeholder"
         />
       </v-radio-group>
-    </template>
-    <template #[`step.selectStudies`]>
       <v-form ref="selectStudiesForm">
-        <v-autocomplete
-          v-model="selectedStudy"
-          :label="$t('StudySelectionTable.studies')"
-          data-cy="select-study-for-activity"
-          :items="studies"
-          :rules="[formRules.required]"
-          item-title="current_metadata.identification_metadata.study_id"
-          clearable
-          return-object
-        />
+        <v-row v-if="creationMode === 'selectFromStudies'">
+          <v-col cols="3">
+            <v-autocomplete
+              v-model="selectedStudy"
+              :label="$t('StudySelectionTable.study_ids')"
+              :items="studies"
+              item-title="current_metadata.identification_metadata.study_id"
+              return-object
+              :rules="[formRules.required]"
+              clearable
+            />
+          </v-col>
+          <div class="mt-8">
+            {{ $t('_global.and_or') }}
+          </div>
+          <v-col cols="3">
+            <v-autocomplete
+              v-model="selectedStudy"
+              :label="$t('StudySelectionTable.study_acronyms')"
+              :items="studies"
+              item-title="current_metadata.identification_metadata.study_acronym"
+              return-object
+              :rules="[formRules.required]"
+              clearable
+            />
+          </v-col>
+        </v-row>
       </v-form>
     </template>
     <template #[`step.selectFlowchartGroup`]>
@@ -92,7 +107,7 @@
           :headers="studyActivityHeaders"
           :items="activities"
           hide-default-switches
-          hide-actions-menu
+          hide-export-button
           show-filter-bar-by-default
           :items-per-page="15"
           elevation="0"
@@ -105,7 +120,7 @@
             <div class="row">
               <v-btn
                 icon="mdi-content-copy"
-                color="primary"
+                color="nnWhite"
                 :title="$t('StudyActivityForm.copy_all_activities')"
                 variant="text"
                 @click="selectAllStudyActivities()"
@@ -117,7 +132,9 @@
               icon="mdi-content-copy"
               :color="getCopyButtonColor(item)"
               :disabled="
-                isStudyActivitySelected(item) || isStudyActivityRequested(item)
+                isStudyActivitySelected(item) ||
+                isStudyActivityRequested(item) ||
+                !isGroupingValid(item)
               "
               data-cy="copy-activity"
               :title="$t('StudyActivityForm.copy_activity')"
@@ -159,7 +176,7 @@
           :headers="activityHeaders"
           :items="activities"
           hide-default-switches
-          hide-actions-menu
+          hide-export-button
           show-filter-bar-by-default
           :items-per-page="15"
           elevation="0"
@@ -188,7 +205,7 @@
             <div class="row">
               <v-btn
                 icon="mdi-content-copy"
-                color="primary"
+                color="nnWhite"
                 :title="$t('StudyActivityForm.copy_all_activities')"
                 variant="text"
                 @click="selectAllActivities()"
@@ -342,7 +359,7 @@ const createPlaceholderForm = ref()
 const selectionTable = ref()
 
 const activityHeaders = [
-  { title: '', key: 'actions', width: '5%' },
+  { title: '', key: 'actions', width: '1%' },
   { title: t('_global.library'), key: 'library_name', noFilter: true },
   {
     title: t('StudyActivity.activity_group'),
@@ -362,7 +379,6 @@ const activityHeaders = [
 ]
 const selectFromStudiesSteps = [
   { name: 'creationMode', title: t('StudyActivityForm.creation_mode_title') },
-  { name: 'selectStudies', title: t('StudyActivityForm.select_studies') },
   {
     name: 'selectFromStudies',
     title: t('StudyActivityForm.select_from_studies_title'),
@@ -392,7 +408,7 @@ const createPlaceholderSteps = [
   },
 ]
 const selectionFromLibraryHeaders = [
-  { title: '', key: 'actions', width: '5%' },
+  { title: '', key: 'actions', width: '1%' },
   { title: t('_global.library'), key: 'library_name' },
   { title: t('StudyActivity.activity_group'), key: 'activity_group.name' },
   {
@@ -402,7 +418,7 @@ const selectionFromLibraryHeaders = [
   { title: t('StudyActivity.activity'), key: 'name' },
 ]
 const selectionFromStudiesHeaders = [
-  { title: '', key: 'actions', width: '5%' },
+  { title: '', key: 'actions', width: '1%' },
   { title: t('_global.library'), key: 'activity.library_name' },
   {
     title: t('StudyActivityForm.flowchart_group'),
@@ -419,7 +435,7 @@ const selectionFromStudiesHeaders = [
   { title: t('StudyActivity.activity'), key: 'name' },
 ]
 const studyActivityHeaders = [
-  { title: '', key: 'actions', width: '5%' },
+  { title: '', key: 'actions', width: '1%' },
   { title: t('StudyActivityForm.study_id'), key: 'study_id', noFilter: true },
   { title: t('_global.library'), key: 'activity.library_name', noFilter: true },
   {
@@ -528,12 +544,10 @@ function close() {
 }
 
 function getObserver(step) {
-  if (step === 2) {
-    if (creationMode.value === 'selectFromStudies') {
-      return selectStudiesForm.value
-    } else {
-      return flowchartGroupForm.value
-    }
+  if (step === 1 && creationMode.value === 'selectFromStudies') {
+    return selectStudiesForm.value
+  } else if (step === 2) {
+    return flowchartGroupForm.value
   } else if (step === 3) {
     return createPlaceholderForm.value
   }
@@ -606,6 +620,9 @@ function getActivities(filters, options) {
     params.filters.study_uid = { v: [selectedStudy.value.uid] }
     params.filters['activity.library_name'] = {
       v: [libConstants.LIBRARY_SPONSOR],
+    }
+    params.filters['activity.status'] = {
+      v: [statuses.FINAL],
     }
     study.getAllStudyActivities(params).then((resp) => {
       const items = resp.data.items
@@ -744,7 +761,7 @@ function getActivities(filters, options) {
   })
 }
 
-function modifyFilters(jsonFilter, params) {
+function modifyFilters(jsonFilter, params, externalFilterSource) {
   if (jsonFilter['activity_group.name']) {
     params.activity_group_names = []
     jsonFilter['activity_group.name'].v.forEach((value) => {
@@ -770,6 +787,9 @@ function modifyFilters(jsonFilter, params) {
     jsonFilter.library_name = { v: [libConstants.LIBRARY_SPONSOR] }
   } else {
     jsonFilter['activity.library_name'] = { v: [libConstants.LIBRARY_SPONSOR] }
+  }
+  if (!externalFilterSource) {
+    jsonFilter['is_used_by_legacy_instances'] = { v: [false], op: 'eq' }
   }
   const filters = {
     jsonFilter: jsonFilter,
@@ -804,14 +824,37 @@ function selectAllActivities() {
   }
 }
 
+function isGroupingValid(studyActivity) {
+  if (!studyActivity.latest_activity) {
+    return true
+  }
+  let found = false
+  for (const grouping of studyActivity.latest_activity.activity_groupings) {
+    if (
+      studyActivity.study_activity_group.activity_group_uid ===
+        grouping.activity_group_uid &&
+      studyActivity.study_activity_subgroup.activity_subgroup_uid ===
+        grouping.activity_subgroup_uid
+    ) {
+      found = true
+      break
+    }
+  }
+  return found
+}
+
 function selectStudyActivity(studyActivity) {
   const copy = { ...studyActivity }
   selectedActivities.value.push(copy)
 }
 
-function selectAllStudyActivities() {
+async function selectAllStudyActivities() {
   for (const studyActivity of activities.value) {
-    if (!isStudyActivitySelected(studyActivity)) {
+    if (
+      !isStudyActivitySelected(studyActivity) &&
+      !isStudyActivityRequested(studyActivity) &&
+      isGroupingValid(studyActivity)
+    ) {
       const copy = { ...studyActivity }
       selectedActivities.value.push(copy)
     }

@@ -665,6 +665,52 @@ compound = {
     "half_life_uid": "string",
 }
 
+active_substance = {
+    "external_id": "string",
+    "analyte_number": "string",
+    "short_number": "string",
+    "long_number": "string",
+    "inn": "string",
+    "library_name": "string",
+    "unii_term_uid": "string",
+}
+
+pharmaceutical_product = {
+    "external_id": "string",
+    "library_name": "string",
+    "dosage_form_uids": [],
+    "route_of_administration_uids": [],
+    "formulations": [],
+}
+
+formulation = {
+    "external_id": "string",
+    "name": "string",
+    "ingredients": [],
+}
+
+ingredient = {
+    "active_substance_uid": "string",
+    "formulation_name": "string",
+    "external_id": "string",
+    "strength_uid": "string",
+    "half_life_uid": "string",
+    "lag_time_uids": [],
+}
+
+medicinal_product = {
+    "external_id": "string",
+    "name": "string",
+    "name_sentence_case": "string",
+    "library_name": "string",
+    "dose_value_uids": [],
+    "dose_frequency_uid": "string",
+    "delivery_device_uid": "string",
+    "dispenser_uid": "string",
+    "compound_uid": "string",
+    "pharmaceutical_product_uids": [],
+}
+
 numeric_value = {
     "name": "string",
     "name_sentence_case": "string",
@@ -771,12 +817,7 @@ lag_time = {
 study_compound = {
     "compound_alias_uid": "string",
     "type_of_treatment_uid": "string",
-    "route_of_administration_uid": "string",
-    "strength_value_uid": "string",
-    "dosage_form_uid": "string",
-    "dispensed_in_uid": "string",
-    "device_uid": "string",
-    "formulation_uid": "string",
+    "medicinal_product_uid": "string",
     "other_info": "string",
     "reason_for_missing_null_value_uid": "string",
 }

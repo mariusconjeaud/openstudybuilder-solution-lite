@@ -18,10 +18,7 @@ from clinical_mdr_api.models.syntax_templates.template_parameter_term import (
     IndexedTemplateParameterTerm,
     MultiTemplateParameterTerm,
 )
-from clinical_mdr_api.models.utils import (
-    BaseModel,
-    capitalize_first_letter_if_template_parameter,
-)
+from clinical_mdr_api.models.utils import BaseModel
 
 
 class CriteriaTemplateWithType(CriteriaTemplateNameUidLibrary):
@@ -48,7 +45,7 @@ class Criteria(BaseModel):
         ),
     )
 
-    criteria_template: CriteriaTemplateNameUidLibrary | None
+    template: CriteriaTemplateNameUidLibrary | None
     parameter_terms: list[MultiTemplateParameterTerm] | None = Field(
         None,
         description="Holds the parameter terms that are used within the criteria. The terms are ordered as they occur in the criteria name.",
@@ -82,16 +79,8 @@ class Criteria(BaseModel):
             )
         return cls(
             uid=criteria_ar.uid,
-            name=capitalize_first_letter_if_template_parameter(
-                criteria_ar.name,
-                criteria_ar.template_name_plain,
-                criteria_ar._template.parameter_terms,
-            ),
-            name_plain=capitalize_first_letter_if_template_parameter(
-                criteria_ar.name_plain,
-                criteria_ar.template_name_plain,
-                criteria_ar._template.parameter_terms,
-            ),
+            name=criteria_ar.name,
+            name_plain=criteria_ar.name_plain,
             start_date=criteria_ar.item_metadata.start_date,
             end_date=criteria_ar.item_metadata.end_date,
             status=criteria_ar.item_metadata.status.value,
@@ -101,7 +90,7 @@ class Criteria(BaseModel):
             possible_actions=sorted(
                 {_.value for _ in criteria_ar.get_possible_actions()}
             ),
-            criteria_template=CriteriaTemplateNameUidLibrary(
+            template=CriteriaTemplateNameUidLibrary(
                 name=criteria_ar.template_name,
                 name_plain=criteria_ar.template_name_plain,
                 uid=criteria_ar.template_uid,
@@ -116,7 +105,7 @@ class Criteria(BaseModel):
 
 
 class CriteriaWithType(Criteria):
-    criteria_template: CriteriaTemplateWithType | None
+    template: CriteriaTemplateWithType | None
 
     @classmethod
     def from_criteria_ar(cls, criteria_ar: CriteriaAR) -> Self:
@@ -140,16 +129,8 @@ class CriteriaWithType(Criteria):
             )
         return cls(
             uid=criteria_ar.uid,
-            name=capitalize_first_letter_if_template_parameter(
-                criteria_ar.name,
-                criteria_ar.template_name_plain,
-                criteria_ar._template.parameter_terms,
-            ),
-            name_plain=capitalize_first_letter_if_template_parameter(
-                criteria_ar.name_plain,
-                criteria_ar.template_name_plain,
-                criteria_ar._template.parameter_terms,
-            ),
+            name=criteria_ar.name,
+            name_plain=criteria_ar.name_plain,
             start_date=criteria_ar.item_metadata.start_date,
             end_date=criteria_ar.item_metadata.end_date,
             status=criteria_ar.item_metadata.status.value,
@@ -159,7 +140,7 @@ class CriteriaWithType(Criteria):
             possible_actions=sorted(
                 {_.value for _ in criteria_ar.get_possible_actions()}
             ),
-            criteria_template=CriteriaTemplateWithType(
+            template=CriteriaTemplateWithType(
                 name=criteria_ar.template_name,
                 name_plain=criteria_ar.template_name_plain,
                 uid=criteria_ar.template_uid,

@@ -151,7 +151,6 @@ export default {
           }
         )
       }
-      this.close()
     },
     initForm(item) {
       this.form = item

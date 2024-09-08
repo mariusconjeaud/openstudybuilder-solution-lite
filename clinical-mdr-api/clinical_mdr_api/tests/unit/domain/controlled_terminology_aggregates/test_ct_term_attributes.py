@@ -16,7 +16,9 @@ def create_random_ct_term_attributes_vo(
     codelist_uid: str = random_str(),
 ) -> CTTermAttributesVO:
     random_ct_term_attributes_vo = CTTermAttributesVO.from_repository_values(
-        codelists=[CTTermCodelistVO(codelist_uid=codelist_uid, order=1)],
+        codelists=[
+            CTTermCodelistVO(codelist_uid=codelist_uid, order=1, library_name="Sponsor")
+        ],
         catalogue_name=random_str(),
         concept_id=random_opt_str(),
         code_submission_value=random_opt_str(),

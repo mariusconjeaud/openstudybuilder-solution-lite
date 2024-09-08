@@ -2,6 +2,7 @@ import collections
 import csv
 import functools
 import io
+from copy import copy
 from typing import Any
 
 import yaml
@@ -189,6 +190,16 @@ def export(export_format: str, data: dict, export_definition: dict, *args, **kwa
     if export_format in REGISTERED_EXPORT_FORMATS:
         if isinstance(data, utils.CustomPage | utils.GenericFilteringReturn):
             data = data.items
+        extra_headers = export_definition.get("include_if_exists")
+        headers = copy(headers)
+        if extra_headers:
+            if data:
+                headers += [
+                    extra_header
+                    for extra_header in extra_headers
+                    if extra_header in data[0]
+                ]
+
         result = REGISTERED_EXPORT_FORMATS[export_format](
             data, headers, *args, **kwargs
         )

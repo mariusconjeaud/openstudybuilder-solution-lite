@@ -27,7 +27,7 @@ export default {
       codelistUid: null,
       dictionaryName: 'SNOMED',
       headers: [
-        { title: '', key: 'actions', width: '5%' },
+        { title: '', key: 'actions', width: '1%' },
         {
           title: this.$t('DictionaryTermTable.snomed_id'),
           key: 'dictionary_id',

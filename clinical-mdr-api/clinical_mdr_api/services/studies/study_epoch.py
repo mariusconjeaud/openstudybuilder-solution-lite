@@ -56,14 +56,14 @@ from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._meta_repository import MetaRepository
 from clinical_mdr_api.services._utils import (
     calculate_diffs,
-    calculate_diffs_history,
     fill_missing_values_in_base_model_from_reference_base_model,
     service_level_generic_filtering,
     service_level_generic_header_filtering,
 )
+from clinical_mdr_api.services.studies.study_selection_base import StudySelectionMixin
 
 
-class StudyEpochService:
+class StudyEpochService(StudySelectionMixin):
     def __init__(
         self,
         study_uid: str | None = None,
@@ -476,12 +476,21 @@ class StudyEpochService:
                     library_name=lib.library_name,
                     is_library_editable_callback=lambda _: lib.is_editable,
                 )
+
+                ct_codelist_name_ar = (
+                    self._repos.ct_codelist_name_repository.find_by_uid(
+                        STUDY_EPOCH_EPOCH_UID
+                    )
+                )
+
                 ct_term_attributes_ar = CTTermAttributesAR.from_input_values(
                     author=self.author,
                     ct_term_attributes_vo=CTTermAttributesVO.from_input_values(
                         codelists=[
                             CTTermCodelistVO(
-                                codelist_uid=STUDY_EPOCH_EPOCH_UID, order=None
+                                codelist_uid=STUDY_EPOCH_EPOCH_UID,
+                                order=None,
+                                library_name=ct_codelist_name_ar.library.name,
                             )
                         ],
                         catalogue_name=epoch_subtype_term.ct_term_vo.catalogue_name,
@@ -946,14 +955,16 @@ class StudyEpochService:
         epoch_uid: str,
         study_uid: str,
     ) -> list[StudyEpochVersion]:
-        all_versions = self.repo.get_all_versions(uid=epoch_uid, study_uid=study_uid)
-        study_visits = self.visit_repo.find_all_visits_by_study_uid(study_uid)
-        timeline = TimelineAR(study_uid, _visits=study_visits)
-        visits = timeline.collect_visits_to_epochs(all_versions)
+        all_versions = self.repo.get_all_versions(
+            uid=epoch_uid,
+            study_uid=study_uid,
+            get_ct_terms_for_epoch=self._find_by_uid_or_raise_not_found,
+            extract_multiple_version_study_standards_effective_date=self._extract_multiple_version_study_standards_effective_date,
+        )
 
         versions = [
             self._transform_all_to_response_history_model(
-                _, study_visit_count=len(visits[_.uid])
+                _, study_visit_count=_.study_visit_count
             ).dict()
             for _ in all_versions
         ]
@@ -966,18 +977,34 @@ class StudyEpochService:
         study_uid: str,
     ) -> list[StudyEpochVersion]:
         study_epochs = self.repo.find_all_epochs_by_study(study_uid=study_uid)
+        unique_list_uids = list({x.uid for x in study_epochs})
+        unique_list_uids.sort()
+        # list of all study_elements
+        data = []
+        ith_selection_history = []
+        for i_unique in unique_list_uids:
+            ith_selection_history = []
+            ith_selection_history = self.repo.get_all_versions(
+                uid=i_unique,
+                study_uid=study_uid,
+                get_ct_terms_for_epoch=self._find_by_uid_or_raise_not_found,
+                extract_multiple_version_study_standards_effective_date=self._extract_multiple_version_study_standards_effective_date,
+            )
+            ith_selection_history.sort(
+                key=lambda ith_selection: ith_selection.start_date,
+                reverse=True,
+            )
+            versions = [
+                self._transform_all_to_response_history_model(
+                    _, study_visit_count=_.study_visit_count
+                ).dict()
+                for _ in ith_selection_history
+            ]
 
-        study_visits = self.visit_repo.find_all_visits_by_study_uid(study_uid)
-        timeline = TimelineAR(study_uid, _visits=study_visits)
-        visits = timeline.collect_visits_to_epochs(study_epochs)
-
-        data = calculate_diffs_history(
-            get_all_object_versions=self.repo.get_all_epoch_versions,
-            transform_all_to_history_model=self._transform_all_to_response_history_model,
-            study_uid=study_uid,
-            version_object_class=StudyEpochVersion,
-            study_visits=visits,
-        )
+            if not data:
+                data = calculate_diffs(versions, StudyEpochVersion)
+            else:
+                data.extend(calculate_diffs(versions, StudyEpochVersion))
         return data
 
     def get_distinct_values_for_header(

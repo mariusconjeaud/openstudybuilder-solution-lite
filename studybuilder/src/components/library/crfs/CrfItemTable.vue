@@ -15,7 +15,8 @@
         <v-btn
           class="ml-2"
           size="small"
-          color="primary"
+          variant="outlined"
+          color="nnBaseBlue"
           :title="$t('CRFItems.add_title')"
           data-cy="add-crf-item"
           :disabled="!checkPermission($roles.LIBRARY_WRITE)"
@@ -80,7 +81,6 @@
     <v-dialog v-model="showForm" persistent content-class="fullscreen-dialog">
       <CrfItemForm
         :selected-item="selectedItem"
-        class="fullscreen-dialog"
         :read-only-prop="
           selectedItem && selectedItem.status === constants.FINAL
         "
@@ -241,12 +241,20 @@ export default {
         { title: '', key: 'actions', width: '1%' },
         { title: this.$t('CRFItems.oid'), key: 'oid' },
         { title: this.$t('_global.name'), key: 'name' },
-        { title: this.$t('_global.description'), key: 'description' },
-        { title: this.$t('CRFItems.impl_notes'), key: 'notes' },
+        {
+          title: this.$t('_global.description'),
+          key: 'description',
+          filteringName: 'descriptions.description',
+        },
+        {
+          title: this.$t('CRFItems.impl_notes'),
+          key: 'notes',
+          filteringName: 'descriptions.sponsor_instruction',
+        },
         { title: this.$t('CRFItems.type'), key: 'datatype', width: '1%' },
         { title: this.$t('CRFItems.length'), key: 'length', width: '1%' },
-        { title: this.$t('CRFItems.sds_name'), key: 'sdsVarName' },
-        { title: this.$t('_global.links'), key: 'activities' },
+        { title: this.$t('CRFItems.sds_name'), key: 'sds_var_name' },
+        { title: this.$t('_global.links'), key: 'activity.name' },
         { title: this.$t('_global.version'), key: 'version', width: '1%' },
         { title: this.$t('_global.status'), key: 'status', width: '1%' },
       ],

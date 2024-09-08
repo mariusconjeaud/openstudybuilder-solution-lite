@@ -5,12 +5,12 @@
     :headers="headers"
     :items="studyActivitiesInstances"
     :items-length="total"
-    :items-per-page="100"
     item-value="activity_instance.uid"
     :export-data-url="exportDataUrl"
     :column-data-resource="`studies/${studiesGeneralStore.selectedStudy.uid}/study-activity-instances`"
     :history-data-fetcher="fetchStudyActivityInstancesHistory"
     :history-title="$t('StudyActivityTable.global_history_title')"
+    :filters-modify-function="modifyFilters"
     :default-filters="defaultFilters"
     @filter="getStudyActivityInstances"
   >
@@ -22,15 +22,31 @@
       />
     </template>
     <template #[`footer.prepend`]>
-      <v-chip class="instanceAvailable" variant="flat" :text="$t('StudyActivityInstances.no_action_needed')" />
-      <v-chip class="ml-2 suggestion" variant="flat" :text="$t('StudyActivityInstances.notification')" />
-      <v-chip class="ml-2 noInstance" variant="flat" :text="$t('StudyActivityInstances.action_needed')" />
+      <v-chip
+        class="instanceAvailable"
+        variant="flat"
+        :text="$t('StudyActivityInstances.no_action_needed')"
+      />
+      <v-chip
+        class="ml-2 suggestion"
+        variant="flat"
+        :text="$t('StudyActivityInstances.notification')"
+      />
+      <v-chip
+        class="ml-2 noInstance"
+        variant="flat"
+        :text="$t('StudyActivityInstances.action_needed')"
+      />
       <v-spacer />
     </template>
     <template #[`item.activity_instance.name`]="{ item }">
       <div
         :class="getInstanceCssClass(item)"
-        @click="item.activity_instance ? redirectToActivityInstance(item.activity_instance.uid) : editRelationship(item)"
+        @click="
+          item.activity_instance
+            ? redirectToActivityInstance(item.activity_instance.uid)
+            : editRelationship(item)
+        "
       >
         {{
           item.activity_instance
@@ -88,7 +104,7 @@ const confirmRef = ref()
 const router = useRouter()
 
 const headers = [
-  { title: '', key: 'actions' },
+  { title: '', key: 'actions', width: '1%' },
   { title: t('_global.library'), key: 'activity.library_name' },
   {
     title: t('StudyActivity.flowchart_group'),
@@ -187,14 +203,16 @@ onMounted(() => {
 })
 
 function getInstanceCssClass(item) {
-  if(item.activity_instance) {
-    if(item.state === statuses.SUGGESTION) {
+  if (item.activity_instance) {
+    if (item.state === statuses.SUGGESTION) {
       return 'px-1 suggestion row-pointer'
     } else {
       return 'px-1 instanceAvailable row-pointer'
     }
-  } 
-  return !item.activity.is_data_collected ? 'px-1 instanceAvailable row-pointer' : 'px-1 noInstance row-pointer'
+  }
+  return !item.activity.is_data_collected
+    ? 'px-1 instanceAvailable row-pointer'
+    : 'px-1 noInstance row-pointer'
 }
 
 function getStudyActivityInstances(filters, options, filtersUpdated) {
@@ -203,11 +221,82 @@ function getStudyActivityInstances(filters, options, filtersUpdated) {
     filters,
     filtersUpdated
   )
+  if (params.filters) {
+    const filtersObj = JSON.parse(params.filters)
+    if (filtersObj['activity_group.name']) {
+      params.activity_group_names = []
+      filtersObj['activity_group.name'].v.forEach((value) => {
+        params.activity_group_names.push(value)
+      })
+      delete filtersObj['activity_group.name']
+    }
+    if (filtersObj['activity_subgroup.name']) {
+      params.activity_subgroup_names = []
+      filtersObj['activity_subgroup.name'].v.forEach((value) => {
+        params.activity_subgroup_names.push(value)
+      })
+      delete filtersObj['activity_subgroup.name']
+    }
+    if (filtersObj['activity.name']) {
+      params.activity_names = []
+      filtersObj['activity.name'].v.forEach((value) => {
+        params.activity_names.push(value)
+      })
+      delete filtersObj['activity.name']
+    }
+    if (Object.keys(filtersObj).length !== 0) {
+      params.filters = JSON.stringify(filtersObj)
+    } else {
+      delete params.filters
+    }
+  }
   params.studyUid = studiesGeneralStore.selectedStudy.uid
   activitiesStore.fetchStudyActivityInstances(params).then((resp) => {
     studyActivitiesInstances.value = resp.data.items
     total.value = resp.data.total
   })
+}
+
+function modifyFilters(jsonFilter, params) {
+  if (jsonFilter['activity_group.name']) {
+    params.activity_group_names = []
+    jsonFilter['activity_group.name'].v.forEach((value) => {
+      params.activity_group_names.push(value)
+    })
+    delete jsonFilter['activity_group.name']
+  }
+  if (jsonFilter.activity_groups) {
+    params.activity_group_names = []
+    jsonFilter.activity_groups.v.forEach((value) => {
+      params.activity_group_names.push(value)
+    })
+    delete jsonFilter.activity_groups
+  }
+  if (jsonFilter['activity_subgroup.name']) {
+    params.activity_subgroup_names = []
+    jsonFilter['activity_subgroup.name'].v.forEach((value) => {
+      params.activity_subgroup_names.push(value)
+    })
+    delete jsonFilter['activity_subgroup.name']
+  }
+  if (jsonFilter.name) {
+    params.activity_names = []
+    jsonFilter.name.v.forEach((value) => {
+      params.activity_names.push(value)
+    })
+    delete jsonFilter.name
+  }
+  if (jsonFilter['activity.name']) {
+    params.activity_names = []
+    jsonFilter['activity.name'].v.forEach((value) => {
+      params.activity_names.push(value)
+    })
+    delete jsonFilter['activity.name']
+  }
+  return {
+    jsonFilter: jsonFilter,
+    params: params,
+  }
 }
 
 async function redirectToActivityInstance(instanceUid) {

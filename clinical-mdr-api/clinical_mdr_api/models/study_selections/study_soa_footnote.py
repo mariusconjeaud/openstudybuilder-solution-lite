@@ -54,7 +54,7 @@ class StudySoAFootnote(BaseModel):
     )
     referenced_items: list[ReferencedItem] = Field([])
     footnote: Footnote | None = Field(None, nullable=True)
-    footnote_template: FootnoteTemplate | None = Field(None, nullable=True)
+    template: FootnoteTemplate | None = Field(None, nullable=True)
     accepted_version: bool | None = Field(
         None,
         title="Accepted Version",
@@ -130,7 +130,7 @@ class StudySoAFootnote(BaseModel):
             ],
             footnote=footnote,
             latest_footnote=latest_footnote,
-            footnote_template=footnote_template,
+            template=footnote_template,
             modified=study_soa_footnote_vo.modified,
             accepted_version=study_soa_footnote_vo.accepted_version,
         )
@@ -225,7 +225,7 @@ class StudySoAFootnoteHistory(StudySoAFootnote):
                 for ref_item in study_soa_footnote_vo.referenced_items
             ],
             footnote=footnote,
-            footnote_template=footnote_template,
+            template=footnote_template,
             start_date=study_soa_footnote_vo.start_date,
             end_date=study_soa_footnote_vo.end_date,
             change_type=study_soa_footnote_vo.change_type,

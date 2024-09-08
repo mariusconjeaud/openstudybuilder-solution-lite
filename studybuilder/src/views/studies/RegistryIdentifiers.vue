@@ -12,25 +12,15 @@
   </div>
 </template>
 
-<script>
+<script setup>
 import { computed } from 'vue'
 import RegistryIdentifiersSummary from '@/components/studies/RegistryIdentifiersSummary.vue'
 import HelpButton from '@/components/tools/HelpButton.vue'
 import CommentThreadList from '@/components/tools/CommentThreadList.vue'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
 
-export default {
-  components: {
-    RegistryIdentifiersSummary,
-    CommentThreadList,
-    HelpButton,
-  },
-  setup() {
-    const studiesGeneralStore = useStudiesGeneralStore()
-    return {
-      selectedStudy: computed(() => studiesGeneralStore.selectedStudy),
-      studyId: studiesGeneralStore.studyId,
-    }
-  },
-}
+const studiesGeneralStore = useStudiesGeneralStore()
+
+const selectedStudy = computed(() => studiesGeneralStore.selectedStudy)
+const studyId = computed(() => studiesGeneralStore.studyId)
 </script>

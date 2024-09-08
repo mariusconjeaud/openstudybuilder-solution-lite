@@ -24,7 +24,8 @@
             {{ $t('ActivityForms.activity_groupings') }}
           </v-card-title>
           <v-btn
-            color="primary"
+            variant="outlined"
+            color="nnBaseBlue"
             position="absolute"
             location="top right"
             icon="mdi-plus"
@@ -210,7 +211,7 @@ const helpItems = [
   'ActivityForms.activity_name',
 ]
 const editing = ref(false)
-      
+
 const title = computed(() => {
   return !_isEmpty(props.editedActivity)
     ? t('ActivityForms.edit_activity')
@@ -221,7 +222,9 @@ watch(
   () => props.editedActivity,
   (value) => {
     if (!_isEmpty(value)) {
-      initForm(value)
+      activities.getObject('activities', value.uid).then((resp) => {
+        initForm(resp.data)
+      })
     }
   }
 )
@@ -231,7 +234,7 @@ onMounted(() => {
     initForm(props.editedActivity)
   }
 })
-  
+
 function filteredSubGroups(index) {
   if (!form.value.activity_groupings[index].activity_group_uid) {
     return []
@@ -239,8 +242,7 @@ function filteredSubGroups(index) {
   return activitiesStore.activitySubGroups.filter(
     (el) =>
       el.activity_groups.find(
-        (o) =>
-          o.uid === form.value.activity_groupings[index].activity_group_uid
+        (o) => o.uid === form.value.activity_groupings[index].activity_group_uid
       ) !== undefined
   )
 }
@@ -265,7 +267,7 @@ function initForm(value) {
 }
 
 function close() {
-  emit('close')
+  observer.value.reset()
   form.value = {
     library_name: constants.LIBRARY_SPONSOR,
     activity_groupings: [{}],
@@ -273,7 +275,7 @@ function close() {
   }
   editing.value = false
   formStore.reset()
-  observer.value.reset()
+  emit('close')
 }
 
 async function submit() {
@@ -290,19 +292,17 @@ async function submit() {
       }
     )
   } else {
-    activities
-      .update(props.editedActivity.uid, form.value, 'activities')
-      .then(
-        () => {
-          eventBusEmit('notification', {
-            msg: t('ActivityForms.activity_updated'),
-          })
-          close()
-        },
-        () => {
-          formRef.value.working = false
-        }
-      )
+    activities.update(props.editedActivity.uid, form.value, 'activities').then(
+      () => {
+        eventBusEmit('notification', {
+          msg: t('ActivityForms.activity_updated'),
+        })
+        close()
+      },
+      () => {
+        formRef.value.working = false
+      }
+    )
   }
 }
 
@@ -313,7 +313,6 @@ function addGrouping() {
 function removeGrouping(index) {
   form.value.activity_groupings.splice(index, 1)
 }
-    
 </script>
 <style>
 .sub-v-card {

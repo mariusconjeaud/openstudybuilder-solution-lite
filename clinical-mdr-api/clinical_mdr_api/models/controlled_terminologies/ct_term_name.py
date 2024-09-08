@@ -21,6 +21,7 @@ class CTTermName(BaseModel):
                 CTTermCodelist(
                     codelist_uid=x.codelist_uid,
                     order=x.order,
+                    library_name=x.library_name,
                 )
                 for x in ct_term_name_ar.ct_term_vo.codelists
             ],
@@ -36,6 +37,8 @@ class CTTermName(BaseModel):
             version=ct_term_name_ar.item_metadata.version,
             change_description=ct_term_name_ar.item_metadata.change_description,
             user_initials=ct_term_name_ar.item_metadata.user_initials,
+            queried_effective_date=ct_term_name_ar.ct_term_vo.queried_effective_date,
+            date_conflict=ct_term_name_ar.ct_term_vo.date_conflict,
         )
 
     @classmethod
@@ -49,6 +52,7 @@ class CTTermName(BaseModel):
                 CTTermCodelist(
                     codelist_uid=x.codelist_uid,
                     order=x.order,
+                    library_name=x.library_name,
                 )
                 for x in ct_term_name_ar.ct_term_vo.codelists
             ],
@@ -61,6 +65,8 @@ class CTTermName(BaseModel):
             version=ct_term_name_ar.item_metadata.version,
             change_description=ct_term_name_ar.item_metadata.change_description,
             user_initials=ct_term_name_ar.item_metadata.user_initials,
+            queried_effective_date=ct_term_name_ar.ct_term_vo.queried_effective_date,
+            date_conflict=ct_term_name_ar.ct_term_vo.date_conflict,
         )
 
     term_uid: str | None = Field(
@@ -102,6 +108,15 @@ class CTTermName(BaseModel):
     version: str | None = Field(None, nullable=True)
     change_description: str | None = Field(None, nullable=True)
     user_initials: str | None = Field(None, nullable=True)
+    queried_effective_date: datetime | None = Field(
+        None,
+        nullable=True,
+        description="Indicates the actual date at which the term was queried.",
+    )
+    date_conflict: bool = Field(
+        False,
+        description="Indicates if the term had a date conflict upon retrieval. If True, then the Latest Final was returned.",
+    )
     possible_actions: list[str] = Field(
         [],
         description=(

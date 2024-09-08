@@ -29,6 +29,7 @@ Within the "Studies" part of the OpenStudyBuilder, metadata for the studies can 
 | ------------ | -------------------------------|
 | **Create Study** <br> Creates a new study definition, or study sub part. | User must have 'Study Set-up User' access permission. <br> The related 'Clinical Programme' and 'Project' codes must be defined within the administrative module. |
 | **Select Study** <br> Select the study to be defined. | Study must exist. |
+| **List Studies** <br> List all draft, released and locked studies in one table and deleted studies on a seperate. | Studies in draft, released or locked state can be selected. <br> Core attributes for studies in draft status can be edited (same edit of core attributes as under manage study). |
 
 ### Manage Study
 

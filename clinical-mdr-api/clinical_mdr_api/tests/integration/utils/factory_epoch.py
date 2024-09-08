@@ -110,7 +110,17 @@ def create_study_epoch_codelists_ret_cat_and_lib(use_test_utils: bool = False):
         parent_uid=type1.uid,
         relationship_type="type",
     )
-
+    information_subtype = create_ct_term(
+        codelist.codelist_uid,
+        "Information",
+        "information_epoch_subtype_uid",
+        6,
+        catalogue_name,
+        library_name,
+    )
+    ct_term_service.add_parent(
+        term_uid=information_subtype.uid, parent_uid=type1.uid, relationship_type="type"
+    )
     codelist = create_codelist("Epoch", "C99079", catalogue_name, library_name)
 
     ep1 = create_ct_term(

@@ -7,7 +7,10 @@
         size="small"
         class="mt-2 ml-2"
         variant="flat"
-      />
+      >
+        <span>&nbsp;</span>
+        <span>&nbsp;</span>
+      </v-chip>
       <v-spacer />
       <v-btn
         size="small"
@@ -33,11 +36,7 @@
             {{ $t('StudyElements.el_type') }}
           </v-col>
           <v-col cols="2">
-            {{
-              element.element_type
-                ? element.element_type.sponsor_preferred_name
-                : ''
-            }}
+            <CTTermDisplay :term="element.element_type" />
           </v-col>
         </v-row>
         <v-row>
@@ -45,11 +44,7 @@
             {{ $t('StudyElements.el_sub_type') }}
           </v-col>
           <v-col cols="2">
-            {{
-              element.element_subtype
-                ? element.element_subtype.sponsor_preferred_name
-                : ''
-            }}
+            <CTTermDisplay :term="element.element_subtype" />
           </v-col>
         </v-row>
         <v-row v-if="element.planned_duration">
@@ -93,26 +88,24 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { onMounted, ref } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import arms from '@/api/arms'
+import CTTermDisplay from '@/components/tools/CTTermDisplay.vue'
 
-export default {
-  data() {
-    return {
-      element: {},
-    }
-  },
-  mounted() {
-    arms
-      .getStudyElement(this.$route.params.study_id, this.$route.params.id)
-      .then((resp) => {
-        this.element = resp.data
-      })
-  },
-  methods: {
-    close() {
-      this.$router.push({ name: 'StudyStructure', params: { tab: 'elements' } })
-    },
-  },
+const router = useRouter()
+const route = useRoute()
+
+const element = ref({})
+
+onMounted(() => {
+  arms.getStudyElement(route.params.study_id, route.params.id).then((resp) => {
+    element.value = resp.data
+  })
+})
+
+function close() {
+  router.push({ name: 'StudyStructure', params: { tab: 'elements' } })
 }
 </script>

@@ -21,7 +21,7 @@
       >
         <div :id="item.id" class="text-white item-content">
           <v-menu location="bottom" offset-y>
-            <template #activator="{ attrs }">
+            <template #activator="{ props }">
               <div class="d-flex align-center pa-1">
                 <v-icon color="white">
                   {{ item.icon }}
@@ -34,7 +34,7 @@
                   icon="mdi-menu"
                   color="white"
                   variant="text"
-                  v-bind="attrs"
+                  v-bind="props"
                 />
               </div>
             </template>

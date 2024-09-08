@@ -137,6 +137,8 @@ class OdmVendorAttributeSimpleModel(BaseModel):
                 simple_odm_vendor_attribute_model = cls(
                     uid=uid,
                     name=odm_vendor_attribute.concept_vo.name,
+                    data_type=odm_vendor_attribute.concept_vo.data_type,
+                    compatible_types=odm_vendor_attribute.concept_vo.compatible_types,
                     status=odm_vendor_attribute.item_metadata.status.value,
                     version=odm_vendor_attribute.item_metadata.version,
                     possible_actions=sorted(
@@ -153,6 +155,10 @@ class OdmVendorAttributeSimpleModel(BaseModel):
 
     uid: str = Field(..., title="uid", description="")
     name: str | None = Field(None, title="name", description="")
+    data_type: str | None = Field(None, title="data_type", description="")
+    compatible_types: list | None = Field(
+        None, title="compatible_types", description=""
+    )
     status: str | None = Field(None, title="status", description="")
     version: str | None = Field(None, title="version", description="")
     possible_actions: list[str] = Field(None, title="possible_actions", description="")
@@ -172,6 +178,7 @@ class OdmVendorElementSimpleModel(BaseModel):
                 simple_odm_vendor_element_model = cls(
                     uid=uid,
                     name=odm_vendor_element.concept_vo.name,
+                    compatible_types=odm_vendor_element.concept_vo.compatible_types,
                     status=odm_vendor_element.item_metadata.status.value,
                     version=odm_vendor_element.item_metadata.version,
                     possible_actions=sorted(
@@ -188,6 +195,9 @@ class OdmVendorElementSimpleModel(BaseModel):
 
     uid: str = Field(..., title="uid", description="")
     name: str | None = Field(None, title="name", description="")
+    compatible_types: list | None = Field(
+        None, title="compatible_types", description=""
+    )
     status: str | None = Field(None, title="status", description="")
     version: str | None = Field(None, title="version", description="")
     possible_actions: list[str] = Field(None, title="possible_actions", description="")

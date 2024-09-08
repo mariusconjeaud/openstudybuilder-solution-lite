@@ -29,6 +29,7 @@ class CTTerm(BaseModel):
                 CTTermCodelist(
                     codelist_uid=x.codelist_uid,
                     order=x.order,
+                    library_name=x.library_name,
                 )
                 for x in ct_term_name_ar.ct_term_vo.codelists
             ],
@@ -191,6 +192,7 @@ class CTTermNameAndAttributes(BaseModel):
             CTTermCodelist(
                 codelist_uid=x.codelist_uid,
                 order=x.order,
+                library_name=x.library_name,
             )
             for x in ct_term_name_ar.ct_term_vo.codelists
         ]

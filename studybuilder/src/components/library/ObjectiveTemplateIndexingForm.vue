@@ -31,8 +31,6 @@
         v-model="localForm.is_confirmatory_testing"
         :label="$t('ObjectiveTemplateForm.confirmatory_testing')"
         data-cy="template-confirmatory-testing"
-        :disabled="notApplicable"
-        :rules="[(value) => formRules.requiredIfNotNA(value, notApplicable)]"
       />
     </template>
   </TemplateIndexingForm>

@@ -7,7 +7,10 @@
         size="small"
         class="mt-2 ml-2"
         variant="flat"
-      />
+      >
+        <span>&nbsp;</span>
+        <span>&nbsp;</span>
+      </v-chip>
       <v-spacer />
       <v-btn
         size="small"
@@ -34,7 +37,7 @@
             {{ $t('StudyArmsForm.arm_type') }}
           </v-col>
           <v-col cols="2">
-            {{ arm.arm_type.sponsor_preferred_name }}
+            <CTTermDisplay :term="arm.arm_type" />
           </v-col>
         </v-row>
         <v-row>
@@ -107,45 +110,42 @@
   </div>
 </template>
 
-<script>
-import { computed } from 'vue'
+<script setup>
+import { computed, onMounted, ref } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import arms from '@/api/arms'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
+import CTTermDisplay from '@/components/tools/CTTermDisplay.vue'
 
-export default {
-  setup() {
-    const studiesGeneralStore = useStudiesGeneralStore()
-    return {
-      selectedStudy: computed(() => studiesGeneralStore.selectedStudy),
-    }
+const router = useRouter()
+const route = useRoute()
+const { t } = useI18n()
+
+const studiesGeneralStore = useStudiesGeneralStore()
+
+const selectedStudy = computed(() => studiesGeneralStore.selectedStudy)
+
+const arm = ref({})
+const branchesHeaders = [
+  { title: '#', key: 'order', width: '5%' },
+  { title: t('StudyBranchArms.name'), key: 'name' },
+  { title: t('StudyBranchArms.short_name'), key: 'short_name' },
+  {
+    title: t('StudyBranchArms.randomisation_group'),
+    key: 'randomization_group',
   },
-  data() {
-    return {
-      arm: {},
-      branchesHeaders: [
-        { title: '#', key: 'order', width: '5%' },
-        { title: this.$t('StudyBranchArms.name'), key: 'name' },
-        { title: this.$t('StudyBranchArms.short_name'), key: 'short_name' },
-        {
-          title: this.$t('StudyBranchArms.randomisation_group'),
-          key: 'randomization_group',
-        },
-        { title: this.$t('StudyBranchArms.code'), key: 'code' },
-        { title: this.$t('StudyBranchArms.description'), key: 'description' },
-      ],
-    }
-  },
-  mounted() {
-    arms
-      .getStudyArm(this.$route.params.study_id, this.$route.params.id)
-      .then((resp) => {
-        this.arm = resp.data
-      })
-  },
-  methods: {
-    close() {
-      this.$router.push({ name: 'StudyStructure', params: { tab: 'arms' } })
-    },
-  },
+  { title: t('StudyBranchArms.code'), key: 'code' },
+  { title: t('StudyBranchArms.description'), key: 'description' },
+]
+
+onMounted(() => {
+  arms.getStudyArm(route.params.study_id, route.params.id).then((resp) => {
+    arm.value = resp.data
+  })
+})
+
+function close() {
+  router.push({ name: 'StudyStructure', params: { tab: 'arms' } })
 }
 </script>

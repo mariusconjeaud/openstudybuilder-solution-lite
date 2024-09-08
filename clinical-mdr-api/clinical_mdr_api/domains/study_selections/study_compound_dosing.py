@@ -4,7 +4,7 @@ from typing import Any, Callable, Iterable, Self
 
 from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains._utils import normalize_string
-from clinical_mdr_api.domains.concepts.compound import CompoundAR
+from clinical_mdr_api.domains.concepts.medicinal_product import MedicinalProductAR
 from clinical_mdr_api.exceptions import BusinessLogicException
 
 
@@ -26,6 +26,7 @@ class StudyCompoundDosingVO:
     # Optional information
     compound_uid: str | None = None
     compound_alias_uid: str | None = None
+    medicinal_product_uid: str | None = None
     dose_frequency_uid: str | None = None
     dose_value_uid: str | None = None
 
@@ -40,6 +41,7 @@ class StudyCompoundDosingVO:
         study_uid: str | None = None,
         compound_uid: str | None = None,
         compound_alias_uid: str | None = None,
+        medicinal_product_uid: str | None = None,
         study_selection_uid: str | None = None,
         start_date: datetime.datetime | None = None,
         generate_uid_callback: Callable[[], str] = (
@@ -60,6 +62,7 @@ class StudyCompoundDosingVO:
             study_compound_uid=normalize_string(study_compound_uid),
             compound_uid=normalize_string(compound_uid),
             compound_alias_uid=normalize_string(compound_alias_uid),
+            medicinal_product_uid=normalize_string(medicinal_product_uid),
             study_element_uid=normalize_string(study_element_uid),
             dose_value_uid=normalize_string(dose_value_uid),
             dose_frequency_uid=normalize_string(dose_frequency_uid),
@@ -70,38 +73,34 @@ class StudyCompoundDosingVO:
     def validate(
         self,
         selection_uid_by_compound_dose_and_frequency_callback: Callable[[Self], str],
-        compound_callback: Callable[[str], CompoundAR] = (lambda _: None),
+        medicinal_product_callback: Callable[[str], MedicinalProductAR] = (
+            lambda _: None
+        ),
     ) -> None:
         """
         Raises ValueError or BusinessLogicException if values do not comply with relevant business rules.
 
         """
-        # Find a compound dosing selection with the same compound, dose value, dose frequency
+        # Find a compound dosing selection with the same medicinal product, dose value, dose frequency
         exisiting_uid = selection_uid_by_compound_dose_and_frequency_callback(self)
         if exisiting_uid and self.study_selection_uid != exisiting_uid:
             raise BusinessLogicException(
                 "Compound dosing selection with the specified compound, dose value and dose frequency already exists."
             )
 
-        # Validate that each of these selections is actually defined on the selected library compound:
+        # Validate that each of these selections is actually defined on the selected library compound (i.e. medicinal product):
         #   - dose value
-        #   - dose frequency
-        compound: CompoundAR = compound_callback(self.compound_uid)
-        if compound:
+        medicinal_product: MedicinalProductAR = medicinal_product_callback(
+            self.medicinal_product_uid
+        )
+        if medicinal_product:
             if (
                 self.dose_value_uid is not None
-                and self.dose_value_uid not in compound.concept_vo.dose_values_uids
+                and self.dose_value_uid
+                not in medicinal_product.concept_vo.dose_value_uids
             ):
                 raise BusinessLogicException(
-                    f"Selected dose value is not valid for compound '{compound.concept_vo.name}'."
-                )
-            if (
-                self.dose_frequency_uid is not None
-                and self.dose_frequency_uid
-                not in compound.concept_vo.dose_frequency_uids
-            ):
-                raise BusinessLogicException(
-                    f"Selected dose frequency is not valid for compound '{compound.concept_vo.name}'."
+                    f"Selected dose value is not valid for medicinal product '{medicinal_product.concept_vo.name}'."
                 )
 
 
@@ -144,7 +143,9 @@ class StudySelectionCompoundDosingsAR:
         selection_uid_by_compound_dose_and_frequency_callback: Callable[
             [StudyCompoundDosingVO], str
         ],
-        compound_callback: Callable[[str], CompoundAR] = (lambda _: None),
+        medicinal_product_callback: Callable[[str], MedicinalProductAR] = (
+            lambda _: None
+        ),
     ) -> None:
         """
         Adding a new study compound to the _study_compound_selection
@@ -152,7 +153,7 @@ class StudySelectionCompoundDosingsAR:
         # validate VO before adding
         study_compound_dosing_selection.validate(
             selection_uid_by_compound_dose_and_frequency_callback=selection_uid_by_compound_dose_and_frequency_callback,
-            compound_callback=compound_callback,
+            medicinal_product_callback=medicinal_product_callback,
         )
         self._study_compound_dosings_selection = (
             self._study_compound_dosings_selection + [study_compound_dosing_selection]
@@ -235,14 +236,16 @@ class StudySelectionCompoundDosingsAR:
         selection_uid_by_compound_dose_and_frequency_callback: Callable[
             [StudyCompoundDosingVO], str
         ],
-        compound_callback: Callable[[str], CompoundAR] = (lambda _: None),
+        medicinal_product_callback: Callable[[str], MedicinalProductAR] = (
+            lambda _: None
+        ),
     ) -> None:
         """
         Used when a study compound is updated
         """
         updated_study_compound_dosing_selection.validate(
             selection_uid_by_compound_dose_and_frequency_callback=selection_uid_by_compound_dose_and_frequency_callback,
-            compound_callback=compound_callback,
+            medicinal_product_callback=medicinal_product_callback,
         )
         updated_selection = []
         for selection in self.study_compound_dosings_selection:

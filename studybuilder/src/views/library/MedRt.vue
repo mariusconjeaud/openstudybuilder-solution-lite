@@ -28,7 +28,7 @@ export default {
       codelistUid: null,
       dictionaryName: 'MED-RT',
       headers: [
-        { title: '', key: 'actions', width: '5%' },
+        { title: '', key: 'actions', width: '1%' },
         {
           title: this.$t('DictionaryTermTable.medrt_id'),
           key: 'dictionary_id',

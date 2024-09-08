@@ -15,23 +15,8 @@ def create_random_compound_vo() -> CompoundVO:
         name_sentence_case=random_str(),
         definition=random_str(),
         abbreviation=random_str(),
-        dose_values_uids=[random_str()],
-        strength_values_uids=[random_str()],
-        lag_time_uids=[random_str()],
-        delivery_devices_uids=[random_str()],
-        dispensers_uids=[random_str()],
-        projects_uids=[random_str()],
-        brands_uids=[random_str()],
-        dose_frequency_uids=[random_str()],
-        dosage_form_uids=[random_str()],
-        route_of_administration_uids=[random_str()],
-        half_life_uid=random_str(),
-        analyte_number=random_str(),
-        nnc_short_number=random_str(),
-        nnc_long_number=random_str(),
         is_sponsor_compound=True,
-        is_name_inn=True,
-        substance_terms_uids=[random_str(), random_str()],
+        external_id=random_str(),
     )
     return random_compound_vo
 
@@ -50,12 +35,6 @@ def create_random_compound_ar(
         ),
         author="TODO Initials",
         compound_uid_by_property_value_callback=lambda _, __: False,
-        ct_term_exists_callback=lambda _: True,
-        numeric_value_exists_callback=lambda _: True,
-        lag_time_exists_callback=lambda _: True,
-        dictionary_term_exists_callback=lambda _: True,
-        project_exists_callback=lambda _: True,
-        brand_exists_callback=lambda _: True,
     )
 
     return random_compound_ar
@@ -155,12 +134,6 @@ class TestCompound(unittest.TestCase):
             change_description="Test",
             concept_vo=compound_vo,
             compound_uid_by_property_value_callback=lambda _, __: False,
-            ct_term_exists_callback=lambda _: True,
-            numeric_value_exists_callback=lambda _: True,
-            lag_time_exists_callback=lambda _: True,
-            dictionary_term_exists_callback=lambda _: True,
-            project_exists_callback=lambda _: True,
-            brand_exists_callback=lambda _: True,
         )
         # then
         self.assertIsNone(compound_ar.item_metadata.end_date)
@@ -175,55 +148,7 @@ class TestCompound(unittest.TestCase):
             compound_vo.name_sentence_case,
         )
         self.assertEqual(compound_ar.concept_vo.definition, compound_vo.definition)
-        self.assertEqual(
-            compound_ar.concept_vo.dose_values_uids, compound_vo.dose_values_uids
-        )
-        self.assertEqual(
-            compound_ar.concept_vo.delivery_devices_uids,
-            compound_vo.delivery_devices_uids,
-        )
-        self.assertEqual(
-            compound_ar.concept_vo.dispensers_uids, compound_vo.dispensers_uids
-        )
-        self.assertEqual(
-            compound_ar.concept_vo.projects_uids, compound_vo.projects_uids
-        )
-        self.assertEqual(compound_ar.concept_vo.brands_uids, compound_vo.brands_uids)
-        self.assertEqual(
-            compound_ar.concept_vo.strength_values_uids,
-            compound_vo.strength_values_uids,
-        )
-        self.assertEqual(
-            compound_ar.concept_vo.lag_time_uids, compound_vo.lag_time_uids
-        )
-        self.assertEqual(
-            compound_ar.concept_vo.dose_frequency_uids,
-            compound_vo.dose_frequency_uids,
-        )
-        self.assertEqual(
-            compound_ar.concept_vo.dosage_form_uids, compound_vo.dosage_form_uids
-        )
-        self.assertEqual(
-            compound_ar.concept_vo.half_life_uid, compound_vo.half_life_uid
-        )
-        self.assertEqual(
-            compound_ar.concept_vo.route_of_administration_uids,
-            compound_vo.route_of_administration_uids,
-        )
-        self.assertEqual(
-            compound_ar.concept_vo.analyte_number, compound_vo.analyte_number
-        )
-        self.assertEqual(
-            compound_ar.concept_vo.nnc_short_number, compound_vo.nnc_short_number
-        )
-        self.assertEqual(
-            compound_ar.concept_vo.nnc_long_number, compound_vo.nnc_long_number
-        )
+
         self.assertEqual(
             compound_ar.concept_vo.is_sponsor_compound, compound_vo.is_sponsor_compound
-        )
-        self.assertEqual(compound_ar.concept_vo.is_name_inn, compound_vo.is_name_inn)
-        self.assertEqual(
-            compound_ar.concept_vo.substance_terms_uids,
-            compound_vo.substance_terms_uids,
         )

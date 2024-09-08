@@ -47,7 +47,7 @@ class Project(BaseModel):
     def from_uid(
         cls,
         uid: str,
-        find_by_uid: Callable[[str], ProjectAR | None],
+        find_by_uid: Callable[[str], ProjectAR],
         find_clinical_programme_by_uid: Callable[[str], ClinicalProgrammeAR],
     ) -> Self | None:
         project = None
@@ -85,7 +85,6 @@ class ProjectCreateInput(BaseModel):
         title="project_number",
         description="",
     )
-
     name: str | None = Field(
         ...,
         title="name",
@@ -93,6 +92,26 @@ class ProjectCreateInput(BaseModel):
     )
 
     description: str | None = Field(
+        ...,
+        title="description",
+        description="",
+    )
+
+    clinical_programme_uid: str = Field(
+        ...,
+        title="clinical_programme_uid",
+        description="",
+    )
+
+
+class ProjectEditInput(BaseModel):
+    name: str = Field(
+        ...,
+        title="name",
+        description="",
+    )
+
+    description: str = Field(
         ...,
         title="description",
         description="",

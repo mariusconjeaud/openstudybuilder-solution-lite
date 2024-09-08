@@ -1,12 +1,26 @@
+"""
+This script serves as the entry point for the pipeline step 'Import CDISC CT into CDISC DB'.
+
+This script is meant to be called e.g. via:
+
+> `python -m pipenv run import_cdisc_ct_into_cdisc_db <user initials> <JSON directory name>`
+
+The script expects the following parameters:
+
+1. <user initials> - The username of the person who started the process: String, e.g. "MT", "TKQT", ...
+2. <JSON directory name> - Optional, default "". The directory name where the JSON files are stored. It can be absolute or relative.
+    If relative (or empty), the passed directory name will be appended to the content of the environment variable 'CDISC_DATA_DIR'.
+    String, E.g. "", "subset-1", "/my/absoulte/path/to/json-files"
+"""
+
 from os import environ
 
-from mdr_standards_import.scripts.download_json_data_from_cdisc_api import (
-    download_ct_json_data_from_cdisc_api,
-)
 from mdr_standards_import.scripts.import_scripts.cdisc_ct.import_json_data_into_cdisc_db import (
     import_json_data_into_cdisc_db,
 )
 from mdr_standards_import.scripts.utils import (
+    get_directory_name,
+    get_user_initials,
     get_cdisc_neo4j_driver,
     get_ordered_package_dates,
 )
@@ -16,18 +30,12 @@ CDISC_IMPORT_DATABASE = environ.get("NEO4J_CDISC_IMPORT_DATABASE", "cdisc")
 
 
 def wrapper_import_cdisc_ct_into_cdisc_db(
-    user_initials: str, json_data_directory: str = "", skip_download_step: bool = False
+    user_initials: str, json_data_directory: str = ""
 ):
     """
-    Downloads the CDISC CT packages from the CDISC REST API
-    and calls the import step to transform the JSON files into the CDISC CT graph structure.
+    Calls the import step to transform the JSON files into the CDISC CT graph structure.
     """
     cdisc_neo4j_driver = get_cdisc_neo4j_driver()
-
-    if skip_download_step:
-        print(f"Skipping CDISC download step for CT.")
-    else:
-        download_ct_json_data_from_cdisc_api(json_data_directory)
 
     package_dates = get_ordered_package_dates(json_data_directory)
     print(f"Found the following dates: {str(package_dates)}")
@@ -46,3 +54,7 @@ def wrapper_import_cdisc_ct_into_cdisc_db(
         )
 
     cdisc_neo4j_driver.close()
+
+
+if __name__ == "__main__":
+    wrapper_import_cdisc_ct_into_cdisc_db(get_user_initials(1), get_directory_name(2, "cdisc_ct"))

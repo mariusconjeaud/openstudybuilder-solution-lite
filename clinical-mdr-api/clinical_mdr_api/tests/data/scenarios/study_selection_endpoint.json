@@ -72,7 +72,7 @@
                 "endpoint": {
                     "change_description": "Approved version",
                     "end_date": null,
-                    "endpoint_template": {
+                    "template": {
                         "name": "endpoint_1",
                         "name_plain": "endpoint_1",
                         "uid": null,
@@ -102,7 +102,8 @@
                     "codelists": [
                         {
                             "codelist_uid": "ct_codelist_root_endpoint",
-                            "order": 1
+                            "order": 1,
+                            "library_name": "Sponsor"
                         }
                     ],
                     "sponsor_preferred_name": "term_value_name1",
@@ -114,6 +115,8 @@
                     "version": "1.0",
                     "change_description": "Approved version",
                     "user_initials": "TODO initials",
+                    "queried_effective_date": null,
+                    "date_conflict": false,
                     "possible_actions": [
                         "inactivate",
                         "new_version"
@@ -125,7 +128,8 @@
                     "codelists": [
                         {
                             "codelist_uid": "ct_codelist_root_endpoint_sub",
-                            "order": 1
+                            "order": 3,
+                            "library_name": "CDISC"
                         }
                     ],
                     "sponsor_preferred_name": "term_value_name3",
@@ -137,6 +141,8 @@
                     "version": "1.0",
                     "change_description": "Approved version",
                     "user_initials": "TODO initials",
+                    "queried_effective_date": null,
+                    "date_conflict": false,
                     "possible_actions": [
                         "inactivate",
                         "new_version"
@@ -175,7 +181,7 @@
                         },
                         "name": "objective_1",
                         "name_plain": "objective_1",
-                        "objective_template": {
+                        "template": {
                             "name": "objective_1",
                             "name_plain": "objective_1",
                             "uid": null,
@@ -221,7 +227,7 @@
                     ],
                     "start_date": "2021-03-02T11:44:54.690000",
                     "status": "Final",
-                    "timeframe_template": {
+                    "template": {
                         "name": "timeframe_1",
                         "name_plain": "timeframe_1",
                         "uid": null,
@@ -260,7 +266,7 @@
                         "endpoint": {
                             "change_description": "Approved version",
                             "end_date": null,
-                            "endpoint_template": {
+                            "template": {
                                 "name": "endpoint_1",
                                 "name_plain": "endpoint_1",
                                 "uid": null,
@@ -290,7 +296,8 @@
                             "codelists": [
                                 {
                                     "codelist_uid": "ct_codelist_root_endpoint",
-                                    "order": 1
+                                    "order": 1,
+                                    "library_name": "Sponsor"
                                 }
                             ],
                             "sponsor_preferred_name": "term_value_name1",
@@ -302,6 +309,8 @@
                             "version": "1.0",
                             "change_description": "Approved version",
                             "user_initials": "TODO initials",
+                            "queried_effective_date": null,
+                            "date_conflict": false,
                             "possible_actions": [
                                 "inactivate",
                                 "new_version"
@@ -313,7 +322,8 @@
                             "codelists": [
                                 {
                                     "codelist_uid": "ct_codelist_root_endpoint_sub",
-                                    "order": 1
+                                    "order": 3,
+                                    "library_name": "CDISC"
                                 }
                             ],
                             "sponsor_preferred_name": "term_value_name3",
@@ -325,6 +335,8 @@
                             "version": "1.0",
                             "change_description": "Approved version",
                             "user_initials": "TODO initials",
+                            "queried_effective_date": null,
+                            "date_conflict": false,
                             "possible_actions": [
                                 "inactivate",
                                 "new_version"
@@ -367,7 +379,7 @@
                                 },
                                 "name": "objective_1",
                                 "name_plain": "objective_1",
-                                "objective_template": {
+                                "template": {
                                     "name": "objective_1",
                                     "name_plain": "objective_1",
                                     "uid": null,
@@ -410,7 +422,7 @@
                             ],
                             "start_date": "2021-03-02T11:44:54.690000",
                             "status": "Final",
-                            "timeframe_template": {
+                            "template": {
                                 "name": "timeframe_1",
                                 "name_plain": "timeframe_1",
                                 "uid": null,
@@ -474,7 +486,7 @@
                                 "possible_actions": [
                                     "inactivate"
                                 ],
-                                "objective_template": {
+                                "template": {
                                     "name": "objective_1",
                                     "name_plain": "objective_1",
                                     "uid": "ObjectiveTemplate_000001",
@@ -500,7 +512,8 @@
                             "codelists": [
                                 {
                                     "codelist_uid": "ct_codelist_root_endpoint",
-                                    "order": 1
+                                    "order": 1,
+                                    "library_name": "Sponsor"
                                 }
                             ],
                             "sponsor_preferred_name": "term_value_name1",
@@ -512,6 +525,8 @@
                             "version": "1.0",
                             "change_description": "Approved version",
                             "user_initials": "TODO initials",
+                            "queried_effective_date": null,
+                            "date_conflict": false,
                             "possible_actions": [
                                 "inactivate",
                                 "new_version"
@@ -523,7 +538,8 @@
                             "codelists": [
                                 {
                                     "codelist_uid": "ct_codelist_root_endpoint_sub",
-                                    "order": 1
+                                    "order": 3,
+                                    "library_name": "CDISC"
                                 }
                             ],
                             "sponsor_preferred_name": "term_value_name3",
@@ -535,6 +551,8 @@
                             "version": "1.0",
                             "change_description": "Approved version",
                             "user_initials": "TODO initials",
+                            "queried_effective_date": null,
+                            "date_conflict": false,
                             "possible_actions": [
                                 "inactivate",
                                 "new_version"
@@ -566,7 +584,7 @@
                             "possible_actions": [
                                 "inactivate"
                             ],
-                            "endpoint_template": {
+                            "template": {
                                 "name": "endpoint_1",
                                 "name_plain": "endpoint_1",
                                 "uid": "EndpointTemplate_000001",
@@ -594,7 +612,7 @@
                             "possible_actions": [
                                 "inactivate"
                             ],
-                            "timeframe_template": {
+                            "template": {
                                 "name": "timeframe_1",
                                 "name_plain": "timeframe_1",
                                 "uid": "TimeframeTemplate_000001",
@@ -636,7 +654,7 @@
                     "endpoint": {
                         "change_description": "Approved version",
                         "end_date": null,
-                        "endpoint_template": {
+                        "template": {
                             "name": "endpoint_1",
                             "name_plain": "endpoint_1",
                             "uid": null,
@@ -666,7 +684,8 @@
                         "codelists": [
                             {
                                 "codelist_uid": "ct_codelist_root_endpoint",
-                                "order": 1
+                                "order": 1,
+                                "library_name": "Sponsor"
                             }
                         ],
                         "sponsor_preferred_name": "term_value_name1",
@@ -678,6 +697,8 @@
                         "version": "1.0",
                         "change_description": "Approved version",
                         "user_initials": "TODO initials",
+                        "queried_effective_date": null,
+                        "date_conflict": false,
                         "possible_actions": [
                             "inactivate",
                             "new_version"
@@ -689,7 +710,8 @@
                         "codelists": [
                             {
                                 "codelist_uid": "ct_codelist_root_endpoint_sub",
-                                "order": 1
+                                "order": 3,
+                                "library_name": "CDISC"
                             }
                         ],
                         "sponsor_preferred_name": "term_value_name3",
@@ -701,6 +723,8 @@
                         "version": "1.0",
                         "change_description": "Approved version",
                         "user_initials": "TODO initials",
+                        "queried_effective_date": null,
+                        "date_conflict": false,
                         "possible_actions": [
                             "inactivate",
                             "new_version"
@@ -741,7 +765,7 @@
                             },
                             "name": "objective_1",
                             "name_plain": "objective_1",
-                            "objective_template": {
+                            "template": {
                                 "name": "objective_1",
                                 "name_plain": "objective_1",
                                 "uid": null,
@@ -784,7 +808,7 @@
                         ],
                         "start_date": "2021-03-02T11:44:54.690000",
                         "status": "Final",
-                        "timeframe_template": {
+                        "template": {
                             "name": "timeframe_1",
                             "name_plain": "timeframe_1",
                             "uid": null,
@@ -822,7 +846,7 @@
                 "endpoint": {
                     "change_description": "Approved version",
                     "end_date": null,
-                    "endpoint_template": {
+                    "template": {
                         "name": "endpoint_1",
                         "name_plain": "endpoint_1",
                         "uid": null,
@@ -871,7 +895,7 @@
                         },
                         "name": "objective_1",
                         "name_plain": "objective_1",
-                        "objective_template": {
+                        "template": {
                             "name": "objective_1",
                             "name_plain": "objective_1",
                             "uid": null,
@@ -929,7 +953,7 @@
                         "endpoint": {
                             "change_description": "Approved version",
                             "end_date": null,
-                            "endpoint_template": {
+                            "template": {
                                 "name": "endpoint_1",
                                 "name_plain": "endpoint_1",
                                 "uid": null,
@@ -959,7 +983,8 @@
                             "codelists": [
                                 {
                                     "codelist_uid": "ct_codelist_root_endpoint",
-                                    "order": 1
+                                    "order": 1,
+                                    "library_name": "Sponsor"
                                 }
                             ],
                             "sponsor_preferred_name": "term_value_name1",
@@ -971,6 +996,8 @@
                             "version": "1.0",
                             "change_description": "Approved version",
                             "user_initials": "TODO initials",
+                            "queried_effective_date": null,
+                            "date_conflict": false,
                             "possible_actions": [
                                 "inactivate",
                                 "new_version"
@@ -982,7 +1009,8 @@
                             "codelists": [
                                 {
                                     "codelist_uid": "ct_codelist_root_endpoint_sub",
-                                    "order": 1
+                                    "order": 3,
+                                    "library_name": "CDISC"
                                 }
                             ],
                             "sponsor_preferred_name": "term_value_name3",
@@ -994,6 +1022,8 @@
                             "version": "1.0",
                             "change_description": "Approved version",
                             "user_initials": "TODO initials",
+                            "queried_effective_date": null,
+                            "date_conflict": false,
                             "possible_actions": [
                                 "inactivate",
                                 "new_version"
@@ -1033,7 +1063,7 @@
                                 },
                                 "name": "objective_1",
                                 "name_plain": "objective_1",
-                                "objective_template": {
+                                "template": {
                                     "name": "objective_1",
                                     "name_plain": "objective_1",
                                     "uid": null,
@@ -1077,7 +1107,7 @@
                             ],
                             "start_date": "2021-03-02T11:44:54.690000",
                             "status": "Final",
-                            "timeframe_template": {
+                            "template": {
                                 "name": "timeframe_1",
                                 "name_plain": "timeframe_1",
                                 "uid": null,
@@ -1095,7 +1125,7 @@
                         "endpoint": {
                             "change_description": "Approved version",
                             "end_date": null,
-                            "endpoint_template": {
+                            "template": {
                                 "name": "endpoint_1",
                                 "name_plain": "endpoint_1",
                                 "uid": null,
@@ -1144,7 +1174,7 @@
                                 },
                                 "name": "objective_1",
                                 "name_plain": "objective_1",
-                                "objective_template": {
+                                "template": {
                                     "name": "objective_1",
                                     "name_plain": "objective_1",
                                     "uid": null,
@@ -1277,7 +1307,8 @@
                     "codelists": [
                         {
                             "codelist_uid": "ct_codelist_root_endpoint",
-                            "order": 1
+                            "order": 1,
+                            "library_name": "Sponsor"
                         }
                     ],
                     "sponsor_preferred_name": "term_value_name1",
@@ -1289,6 +1320,8 @@
                     "version": "1.0",
                     "change_description": "Approved version",
                     "user_initials": "TODO initials",
+                    "queried_effective_date": null,
+                    "date_conflict": false,
                     "possible_actions": [
                         "inactivate",
                         "new_version"
@@ -1336,7 +1369,8 @@
                     "codelists": [
                         {
                             "codelist_uid": "ct_codelist_root_endpoint",
-                            "order": 1
+                            "order": 1,
+                            "library_name": "Sponsor"
                         }
                     ],
                     "sponsor_preferred_name": "term_value_name1",
@@ -1348,6 +1382,8 @@
                     "version": "1.0",
                     "change_description": "Approved version",
                     "user_initials": "TODO initials",
+                    "queried_effective_date": null,
+                    "date_conflict": false,
                     "possible_actions": [
                         "inactivate",
                         "new_version"
@@ -1378,7 +1414,7 @@
                         },
                         "name": "objective_1",
                         "name_plain": "objective_1",
-                        "objective_template": {
+                        "template": {
                             "name": "objective_1",
                             "name_plain": "objective_1",
                             "uid": null,
@@ -1435,7 +1471,8 @@
                     "codelists": [
                         {
                             "codelist_uid": "ct_codelist_root_endpoint",
-                            "order": 1
+                            "order": 1,
+                            "library_name": "Sponsor"
                         }
                     ],
                     "sponsor_preferred_name": "term_value_name1",
@@ -1447,6 +1484,8 @@
                     "version": "1.0",
                     "change_description": "Approved version",
                     "user_initials": "TODO initials",
+                    "queried_effective_date": null,
+                    "date_conflict": false,
                     "possible_actions": [
                         "inactivate",
                         "new_version"
@@ -1497,7 +1536,7 @@
                         "possible_actions": [
                             "inactivate"
                         ],
-                        "endpoint_template": {
+                        "template": {
                             "name": "endpoint_1",
                             "name_plain": "endpoint_1",
                             "guidance_text": null,
@@ -1563,7 +1602,7 @@
                 "endpoint": {
                     "change_description": "Approved version",
                     "end_date": null,
-                    "endpoint_template": {
+                    "template": {
                         "name": "endpoint_template_2",
                         "name_plain": "endpoint_template_2",
                         "uid": "EndpointTemplate_000022",
@@ -1603,7 +1642,7 @@
                     ],
                     "start_date": "2021-03-02T11:44:54.690000",
                     "status": "Final",
-                    "timeframe_template": {
+                    "template": {
                         "name": "timeframe_1",
                         "name_plain": "timeframe_1",
                         "uid": null,
@@ -1676,7 +1715,7 @@
                         },
                         "name": "objective_1",
                         "name_plain": "objective_1",
-                        "objective_template": {
+                        "template": {
                             "name": "objective_1",
                             "name_plain": "objective_1",
                             "uid": "ObjectiveTemplate_000001",
@@ -1709,7 +1748,8 @@
                     "codelists": [
                         {
                             "codelist_uid": "ct_codelist_root_endpoint",
-                            "order": 1
+                            "order": 1,
+                            "library_name": "Sponsor"
                         }
                     ],
                     "sponsor_preferred_name": "term_value_name1",
@@ -1721,6 +1761,8 @@
                     "version": "1.0",
                     "change_description": "Approved version",
                     "user_initials": "TODO initials",
+                    "queried_effective_date": null,
+                    "date_conflict": false,
                     "possible_actions": [
                         "inactivate",
                         "new_version"
@@ -1743,7 +1785,7 @@
                 "endpoint": {
                     "change_description": "Approved version",
                     "end_date": null,
-                    "endpoint_template": {
+                    "template": {
                         "name": "endpoint_template_2",
                         "name_plain": "endpoint_template_2",
                         "uid": "EndpointTemplate_000022",
@@ -1783,7 +1825,7 @@
                     ],
                     "start_date": "2021-03-02T11:44:54.690000",
                     "status": "Final",
-                    "timeframe_template": {
+                    "template": {
                         "name": "timeframe_1",
                         "name_plain": "timeframe_1",
                         "uid": null,

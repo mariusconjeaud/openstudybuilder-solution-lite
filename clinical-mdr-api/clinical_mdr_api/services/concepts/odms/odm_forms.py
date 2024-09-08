@@ -5,7 +5,10 @@ from clinical_mdr_api.domain_repositories.concepts.odms.form_repository import (
     FormRepository,
 )
 from clinical_mdr_api.domains.concepts.odms.form import OdmFormAR, OdmFormVO
-from clinical_mdr_api.domains.concepts.utils import RelationType, VendorCompatibleType
+from clinical_mdr_api.domains.concepts.utils import (
+    RelationType,
+    VendorAttributeCompatibleType,
+)
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
 from clinical_mdr_api.models.concepts.odms.odm_common_models import (
     OdmVendorElementRelationPostInput,
@@ -247,13 +250,13 @@ class OdmFormService(OdmGenericService[OdmFormAR]):
                 for attribute in input_attribute.vendor.attributes
             ]
         )
-        self.is_vendor_compatible(
+        self.are_attributes_vendor_compatible(
             [
                 vendor_attribute
                 for item_group in odm_form_item_group_post_input
                 for vendor_attribute in item_group.vendor.attributes
             ],
-            VendorCompatibleType.ITEM_GROUP_REF,
+            VendorAttributeCompatibleType.ITEM_GROUP_REF,
         )
 
         for item_group in odm_form_item_group_post_input:
@@ -291,6 +294,10 @@ class OdmFormService(OdmGenericService[OdmFormAR]):
 
         if odm_form_ar.item_metadata.status == LibraryItemStatus.RETIRED:
             raise exceptions.BusinessLogicException(self.OBJECT_IS_INACTIVE)
+
+        self.are_elements_vendor_compatible(
+            odm_vendor_relation_post_input, VendorAttributeCompatibleType.FORM_DEF
+        )
 
         if override:
             self.fail_if_non_present_vendor_elements_are_used_by_current_odm_element_attributes(
@@ -333,7 +340,7 @@ class OdmFormService(OdmGenericService[OdmFormAR]):
 
         self.fail_if_these_attributes_cannot_be_added(
             input_attributes=odm_vendor_relation_post_input,
-            compatible_type=VendorCompatibleType.FORM_DEF,
+            compatible_type=VendorAttributeCompatibleType.FORM_DEF,
         )
 
         if override:

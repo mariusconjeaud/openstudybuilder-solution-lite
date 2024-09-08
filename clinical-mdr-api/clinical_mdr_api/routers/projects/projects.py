@@ -1,6 +1,6 @@
 from typing import Any
 
-from fastapi import APIRouter, Body, Query
+from fastapi import APIRouter, Body, Path, Query, Request
 from pydantic.types import Json
 
 from clinical_mdr_api import config, models
@@ -8,7 +8,7 @@ from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import GenericFilteringReturn
 from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
-from clinical_mdr_api.routers import _generic_descriptions
+from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.projects.project import ProjectService
 
 # Prefixed with "/projects"
@@ -16,8 +16,7 @@ router = APIRouter()
 
 
 # Argument definitions
-# ProjectUID = Path(
-#     None, description="The unique id of the project.")
+ProjectUID = Path(description="The unique id of the project.")
 
 
 @router.get(
@@ -31,7 +30,26 @@ router = APIRouter()
         500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.allow_exports(
+    {
+        "defaults": [
+            "uid",
+            "project_number",
+            "name",
+            "description",
+            "clinical_programme=clinical_programme.name",
+        ],
+        "formats": [
+            "text/csv",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "text/xml",
+            "application/json",
+        ],
+    }
+)
+# pylint: disable=unused-argument
 def get_projects(
+    request: Request,  # request is actually required by the allow_exports decorator
     sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
     page_number: int
     | None = Query(1, ge=1, description=_generic_descriptions.PAGE_NUMBER),
@@ -61,31 +79,6 @@ def get_projects(
         filter_operator=FilterOperator.from_str(operator),
         total_count=total_count,
     )
-
-
-@router.post(
-    "",
-    dependencies=[rbac.LIBRARY_WRITE],
-    summary="Creates a new project.",
-    response_model=models.Project,
-    status_code=201,
-    responses={
-        201: {"description": "Created - The project was successfully created."},
-        400: {
-            "model": ErrorResponse,
-            "description": "Some application/business rules forbid to process the request. Expect more detailed"
-            " information in response body.",
-        },
-        500: _generic_descriptions.ERROR_500,
-    },
-)
-def create(
-    project_create_input: models.ProjectCreateInput = Body(
-        description="Related parameters of the project that shall be created."
-    ),
-) -> models.Project:
-    service = ProjectService()
-    return service.create(project_create_input)
 
 
 @router.get(
@@ -123,3 +116,87 @@ def get_distinct_adam_listing_values_for_header(
         filter_operator=FilterOperator.from_str(operator),
         result_count=result_count,
     )
+
+
+@router.get(
+    "/{uid}",
+    dependencies=[rbac.LIBRARY_READ],
+    summary="Get a project.",
+    response_model=models.Project,
+    status_code=200,
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+def get(uid: str = ProjectUID) -> models.Project:
+    service = ProjectService()
+    return service.get_project_by_uid(uid)
+
+
+@router.post(
+    "",
+    dependencies=[rbac.LIBRARY_WRITE],
+    summary="Creates a new project.",
+    response_model=models.Project,
+    status_code=201,
+    responses={
+        201: {"description": "Created - The project was successfully created."},
+        400: {
+            "model": ErrorResponse,
+            "description": "Some application/business rules forbid to process the request. Expect more detailed"
+            " information in response body.",
+        },
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+def create(
+    project_create_input: models.ProjectCreateInput = Body(
+        description="Related parameters of the project that shall be created."
+    ),
+) -> models.Project:
+    service = ProjectService()
+    return service.create(project_create_input)
+
+
+@router.patch(
+    "/{uid}",
+    dependencies=[rbac.LIBRARY_WRITE],
+    summary="Edit a project.",
+    response_model=models.Project,
+    status_code=200,
+    responses={
+        400: {
+            "model": ErrorResponse,
+            "description": "Some application/business rules forbid to process the request. Expect more detailed"
+            " information in response body.",
+        },
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+def edit(
+    uid: str = ProjectUID,
+    project_edit_input: models.ProjectEditInput = Body(description=""),
+) -> models.Project:
+    service = ProjectService()
+    return service.edit(uid, project_edit_input)
+
+
+@router.delete(
+    "/{uid}",
+    dependencies=[rbac.LIBRARY_WRITE],
+    summary="Delete a project.",
+    status_code=204,
+    responses={
+        400: {
+            "model": ErrorResponse,
+            "description": "Some application/business rules forbid to process the request. Expect more detailed"
+            " information in response body.",
+        },
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+def delete(uid: str = ProjectUID):
+    service = ProjectService()
+    return service.delete(uid)

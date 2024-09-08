@@ -38,6 +38,30 @@ body {
   white-space: nowrap;
 }
 
+.v-data-table__thead tr {
+  white-space: nowrap;
+}
+
+.v-data-table__th {
+  white-space: inherit;
+  vertical-align: middle;
+  padding-top: 20px !important;
+  padding-bottom: 16px !important;
+  background-color: rgb(var(--v-theme-nnTrueBlue)) !important;
+  color: rgb(var(--v-theme-nnWhite)) !important;
+  text-align: start;
+  font-weight: 500;
+  font-size: 12px;
+  font-weight: bold !important;
+}
+
+.v-data-table__td {
+  border-left-style: outset;
+  border-bottom-style: outset;
+  border-width: 1px !important;
+  border-color: rgb(var(--v-theme-nnFadedBlue200)) !important;
+}
+
 .v-data-table {
   &__wrapper {
     td {
@@ -46,7 +70,7 @@ body {
       vertical-align: top;
     }
   }
-  border-radius: 0px;
+  border-radius: 12px;
 }
 
 thead.v-data-table-header {
@@ -87,6 +111,10 @@ thead.v-data-table-header {
 }
 
 // Selects & inputs
+.v-switch__track {
+  opacity: unset;
+}
+
 .v-field__overlay {
   background-color: transparent !important;
 }

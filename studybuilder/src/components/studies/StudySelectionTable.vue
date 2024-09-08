@@ -4,7 +4,7 @@
     :headers="headers"
     :items="studySelectionItems"
     hide-default-switches
-    hide-actions-menu
+    hide-export-button
     :items-per-page="15"
     elevation="0"
     :items-length="total"

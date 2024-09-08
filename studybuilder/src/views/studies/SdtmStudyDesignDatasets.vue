@@ -11,22 +11,22 @@
     </v-tabs>
     <v-window v-model="tab">
       <v-window-item value="tab-0">
-        <SdtmDesignTable type="TA" />
+        <SdtmDesignTable :key="`tab-0-${tabKeys['tab-0']}`" type="TA" />
       </v-window-item>
       <v-window-item value="tab-1">
-        <SdtmDesignTable type="TE" />
+        <SdtmDesignTable :key="`tab-1-${tabKeys['tab-1']}`" type="TE" />
       </v-window-item>
       <v-window-item value="tab-2">
-        <SdtmDesignTable type="TV" />
+        <SdtmDesignTable :key="`tab-2-${tabKeys['tab-2']}`" type="TV" />
       </v-window-item>
       <v-window-item value="tab-3">
-        <SdtmDesignTable type="TI" />
+        <SdtmDesignTable :key="`tab-3-${tabKeys['tab-3']}`" type="TI" />
       </v-window-item>
       <v-window-item value="tab-4">
-        <SdtmDesignTable type="TDM" />
+        <SdtmDesignTable :key="`tab-4-${tabKeys['tab-4']}`" type="TDM" />
       </v-window-item>
       <v-window-item value="tab-5">
-        <SdtmDesignTable type="TS" />
+        <SdtmDesignTable :key="`tab-5-${tabKeys['tab-5']}`" type="TS" />
       </v-window-item>
     </v-window>
   </div>
@@ -42,6 +42,7 @@ import UnderConstruction from '@/components/layout/UnderConstruction.vue'
 import { useAppStore } from '@/stores/app'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
 import { computed } from 'vue'
+import { useTabKeys } from '@/composables/tabKeys'
 
 export default {
   components: {
@@ -58,6 +59,7 @@ export default {
         () => studiesGeneralStore.selectedStudyVersion
       ),
       selectedStudy: computed(() => studiesGeneralStore.selectedStudy),
+      ...useTabKeys(),
     }
   },
   data() {
@@ -88,6 +90,7 @@ export default {
         3,
         true
       )
+      this.updateTabKey(newValue)
     },
   },
   mounted() {

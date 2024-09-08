@@ -1,0 +1,72 @@
+import os
+import urllib.parse
+
+from neomodel.core import db
+from pydantic import BaseModel, Field
+
+
+class SystemInformation(BaseModel):
+    api_version: str = Field(
+        ..., title="API version", description="Version of the API specification"
+    )
+    db_version: str | None = Field(
+        None,
+        title="Database version",
+        description="Version information from the Neo4j database the application is using",
+    )
+    db_name: str | None = Field(
+        None,
+        title="Database name",
+        description="Name of the database the application is using",
+    )
+    build_id: str = Field(
+        ...,
+        title="Build identifier",
+        description="The Build.BuildNumber identifier from the pipeline run",
+    )
+    commit_id: str | None = Field(
+        None,
+        title="VCS commit identifier",
+        description="The reference to the repository state: the id of the last commit to the branch at build",
+    )
+    branch_name: str | None = Field(
+        None,
+        title="Repository branch name",
+        description="Name of the VCS repository branch the app was built from",
+    )
+
+
+def get_system_information():
+    # avoid circular import
+    from consumer_api.consumer_api import app
+
+    return SystemInformation(
+        api_version=app.version,
+        db_version=get_neo4j_version(),
+        db_name=get_database_name(),
+        build_id=get_build_id(),
+        commit_id=os.environ.get("BUILD_COMMIT"),
+        branch_name=os.environ.get("BUILD_BRANCH"),
+    )
+
+
+def get_build_id() -> str:
+    return os.environ.get("BUILD_NUMBER") or "unknown"
+
+
+def get_database_name() -> str | None:
+    """Returns database name part of neomodel config database URL"""
+    if db.url is None:
+        return None
+    return urllib.parse.urlparse(db.url).path.split("/", 1)[-1]
+
+
+def get_neo4j_version():
+    get_neo4j_version_query = """
+        CALL dbms.components()
+        YIELD versions
+        UNWIND versions as version
+        RETURN version
+        """
+    result, _ = db.cypher_query(query=get_neo4j_version_query)
+    return result[0][0]

@@ -12,7 +12,8 @@ from clinical_mdr_api.domains._utils import get_iso_lang_data
 from clinical_mdr_api.domains.concepts.utils import (
     ENG_LANGUAGE,
     RelationType,
-    VendorCompatibleType,
+    VendorAttributeCompatibleType,
+    VendorElementCompatibleType,
 )
 from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryVO,
@@ -138,7 +139,6 @@ class OdmXmlImporterService:
     db_methods: list[OdmMethod]
     db_ct_term_attributes: list[CTTermAttributes]
     db_unit_definitions: list[UnitDefinitionModel]
-    unit_definition_uids_by: dict[str, str]
     measurement_unit_names_by_oid: dict[str, str]
 
     mapper_file: UploadFile | None = None
@@ -184,8 +184,6 @@ class OdmXmlImporterService:
         self.db_methods = []
         self.db_ct_term_attributes = []
         self.db_unit_definitions = []
-        self.unit_definition_uids_by = {}
-        self.measurement_unit_names_by_oid = {}
 
         self.mapper_file = mapper_file
 
@@ -203,8 +201,6 @@ class OdmXmlImporterService:
         self._set_vendor_elements()
         if not self.db_unit_definitions:
             self._set_unit_definitions()
-        self._set_unit_definition_uids_by()
-        self._set_measurement_unit_names_by_oid()
         self._set_ct_term_attributes()
         self._create_methods_with_relations()
         self._create_conditions_with_relations()
@@ -381,6 +377,7 @@ class OdmXmlImporterService:
                     new_vendor_elements,
                     OdmVendorElementPostInput(
                         name=element.localName,
+                        compatible_types=[element.parentNode.localName],
                         vendor_namespace_uid=next(
                             db_vendor_namespace.uid
                             for db_vendor_namespace in self.db_vendor_namespaces
@@ -442,13 +439,14 @@ class OdmXmlImporterService:
         uid: str,
         def_element: minidom.Element,
         repo: OdmGenericRepository,
-        compatible_type: VendorCompatibleType | None = None,
+        attribute_compatible_type: VendorAttributeCompatibleType | None = None,
+        element_compatible_type: VendorElementCompatibleType | None = None,
     ):
         self._create_relationship_with_vendor_attributes(
-            uid, def_element.attributes.values(), repo, compatible_type
+            uid, def_element.attributes.values(), repo, attribute_compatible_type
         )
         self._create_relationship_with_vendor_elements(
-            uid, def_element.childNodes, repo
+            uid, def_element.childNodes, repo, element_compatible_type
         )
         self._create_relationship_with_vendor_element_attributes(
             uid, def_element.childNodes, repo
@@ -459,7 +457,7 @@ class OdmXmlImporterService:
         uid: str,
         elm_attributes,
         repository: OdmGenericRepository,
-        compatible_type: VendorCompatibleType | None = None,
+        compatible_type: VendorAttributeCompatibleType | None = None,
     ):
         odm_vendor_relations: list[OdmVendorRelationPostInput] = []
         for elm_attribute in elm_attributes:
@@ -501,7 +499,7 @@ class OdmXmlImporterService:
             self.odm_vendor_attribute_service.attribute_values_matches_their_regex(
                 odm_vendor_relations, vendor_attribute_patterns
             )
-            self.odm_vendor_attribute_service.is_vendor_compatible(
+            self.odm_vendor_attribute_service.are_attributes_vendor_compatible(
                 odm_vendor_relations, compatible_type
             )
 
@@ -518,6 +516,7 @@ class OdmXmlImporterService:
         uid: str,
         child_elements: minicompat.NodeList,
         repository: OdmGenericRepository,
+        compatible_type: VendorElementCompatibleType | None = None,
     ):
         odm_vendor_relations: list[OdmVendorElementRelationPostInput] = []
         for child_element in child_elements:
@@ -549,6 +548,10 @@ class OdmXmlImporterService:
                     if child_element.firstChild
                     else "",
                 )
+            )
+
+            self.odm_vendor_element_service.are_elements_vendor_compatible(
+                odm_vendor_relations, compatible_type
             )
 
         for odm_vendor_relation in odm_vendor_relations:
@@ -684,12 +687,12 @@ class OdmXmlImporterService:
         }
 
         rs, _ = self._repos.unit_definition_repository.find_all(
-            filter_by={"name": {"v": measurement_unit_oids, "op": "eq"}},
+            filter_by={"uid": {"v": measurement_unit_oids, "op": "eq"}},
         )
 
-        rs_names = {item.name for item in rs}
+        rs_uids = {item.uid for item in rs}
 
-        non_existent_measurement_unit_oids = measurement_unit_oids - rs_names
+        non_existent_measurement_unit_oids = measurement_unit_oids - rs_uids
 
         if non_existent_measurement_unit_oids:
             raise exceptions.BusinessLogicException(
@@ -704,19 +707,6 @@ class OdmXmlImporterService:
             )
             for unit_definition_ar in rs
         ]
-
-    def _set_unit_definition_uids_by(self):
-        self.unit_definition_uids_by = {
-            db_unit_definition.ucum.term_uid: db_unit_definition.uid
-            for db_unit_definition in self.db_unit_definitions
-            if db_unit_definition.ucum
-        }
-
-    def _set_measurement_unit_names_by_oid(self):
-        self.measurement_unit_names_by_oid = {
-            measurement_unit.getAttribute("OID"): measurement_unit.getAttribute("Name")
-            for measurement_unit in self.measurement_units
-        }
 
     def _set_ct_term_attributes(self):
         rs = self._repos.ct_term_attributes_repository.find_all(
@@ -851,7 +841,8 @@ class OdmXmlImporterService:
                 rs.uid,
                 item_def,
                 self._repos.odm_item_repository,
-                VendorCompatibleType.ITEM_DEF,
+                VendorAttributeCompatibleType.ITEM_DEF,
+                VendorElementCompatibleType.ITEM_DEF,
             )
             self._approve(self._repos.odm_item_repository, self.odm_item_service, rs)
 
@@ -870,7 +861,8 @@ class OdmXmlImporterService:
                 rs.uid,
                 item_group_def,
                 self._repos.odm_item_group_repository,
-                VendorCompatibleType.ITEM_GROUP_DEF,
+                VendorAttributeCompatibleType.ITEM_GROUP_DEF,
+                VendorElementCompatibleType.ITEM_GROUP_DEF,
             )
 
             odm_item_group_items: list[OdmItemGroupItemPostInput] = []
@@ -928,7 +920,8 @@ class OdmXmlImporterService:
                 rs.uid,
                 form_def,
                 self._repos.odm_form_repository,
-                VendorCompatibleType.FORM_DEF,
+                VendorAttributeCompatibleType.FORM_DEF,
+                VendorElementCompatibleType.FORM_DEF,
             )
             odm_form_item_groups: list[OdmFormItemGroupPostInput] = []
             for item_group_ref in form_def.getElementsByTagName("ItemGroupRef"):
@@ -1426,11 +1419,7 @@ class OdmXmlImporterService:
         try:
             return [
                 OdmItemUnitDefinitionRelationshipInput(
-                    uid=self.unit_definition_uids_by[
-                        self.measurement_unit_names_by_oid[
-                            measurement_unit_ref.getAttribute("MeasurementUnitOID")
-                        ]
-                    ]
+                    uid=measurement_unit_ref.getAttribute("MeasurementUnitOID")
                 )
                 for measurement_unit_ref in item_def.getElementsByTagName(
                     "MeasurementUnitRef"

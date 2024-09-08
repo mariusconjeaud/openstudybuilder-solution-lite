@@ -24,7 +24,6 @@ from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import 
     StudyStatus,
     StudyVersionMetadataVO,
 )
-from clinical_mdr_api.exceptions import BusinessLogicException
 
 
 @dataclass
@@ -423,16 +422,6 @@ class StudyDefinitionAR:
 
         # otherwise the call is pointless
         if new_id_metadata is not None:
-            if (
-                self.current_metadata.id_metadata.study_number
-                != new_id_metadata.study_number
-                and not self.study_parent_part_uid
-                and not previous_is_subpart
-            ):
-                raise BusinessLogicException(
-                    f"The study number for a study {self.uid} can't be changed."
-                )
-
             if self.latest_locked_metadata is None:
                 # if the study has no locked versions study_id_prefix is set after project_number
                 new_id_metadata = StudyIdentificationMetadataVO(
@@ -492,7 +481,7 @@ class StudyDefinitionAR:
                     _study_id_prefix=self.current_metadata.id_metadata.study_id_prefix,  # here comes the substitution
                     project_number=new_id_metadata.project_number,
                     study_number=new_id_metadata.study_number
-                    if is_subpart
+                    if is_subpart or previous_is_subpart
                     else self.current_metadata.id_metadata.study_number,
                     subpart_id=new_id_metadata.subpart_id,
                     study_acronym=new_id_metadata.study_acronym,

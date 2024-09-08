@@ -27,7 +27,8 @@
                 "codelists": [
                     {
                         "codelist_uid": "editable_cr",
-                        "order": 7
+                        "order": 7,
+                        "library_name": "Sponsor"
                     }
                 ],
                 "concept_id": null,
@@ -69,7 +70,8 @@
                 "codelists": [
                     {
                         "codelist_uid": "editable_cr",
-                        "order": 2
+                        "order": 2,
+                        "library_name": "Sponsor"
                     }
                 ],
                 "concept_id": null,
@@ -109,7 +111,8 @@
                 "codelists": [
                     {
                         "codelist_uid": "editable_cr",
-                        "order": 2
+                        "order": 2,
+                        "library_name": "Sponsor"
                     }
                 ],
                 "concept_id": null,
@@ -148,7 +151,8 @@
                 "codelists": [
                     {
                         "codelist_uid": "editable_cr",
-                        "order": 2
+                        "order": 2,
+                        "library_name": "Sponsor"
                     }
                 ],
                 "concept_id": null,
@@ -186,7 +190,8 @@
                 "codelists": [
                     {
                         "codelist_uid": "editable_cr",
-                        "order": 2
+                        "order": 2,
+                        "library_name": "Sponsor"
                     }
                 ],
                 "concept_id": null,
@@ -225,7 +230,8 @@
                 "codelists": [
                     {
                         "codelist_uid": "editable_cr",
-                        "order": 2
+                        "order": 2,
+                        "library_name": "Sponsor"
                     }
                 ],
                 "concept_id": null,
@@ -263,7 +269,8 @@
                 "codelists": [
                     {
                         "codelist_uid": "editable_cr",
-                        "order": 1
+                        "order": 1,
+                        "library_name": "Sponsor"
                     }
                 ],
                 "concept_id": null,
@@ -297,7 +304,8 @@
                 "codelists": [
                     {
                         "codelist_uid": "editable_cr",
-                        "order": 1
+                        "order": 1,
+                        "library_name": "Sponsor"
                     }
                 ],
                 "concept_id": null,
@@ -331,7 +339,8 @@
                 "codelists": [
                     {
                         "codelist_uid": "editable_cr",
-                        "order": 1
+                        "order": 1,
+                        "library_name": "Sponsor"
                     }
                 ],
                 "concept_id": null,

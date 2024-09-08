@@ -241,3 +241,36 @@ def are_floats_equal(float_1: float, float_2: float) -> bool:
     """
     epsilon = 1e-6
     return abs(float_1 - float_2) < epsilon
+
+
+def capitalize_first_letter_if_template_parameter(
+    name: str,
+    template_plain_name: str,
+    parameters: list["ParameterTermEntryVO"] | None = None,
+) -> str:
+    """
+    Capitalizes the first letter of `name` if the letter is part of a template parameter which is not a Unit Definition.
+
+    Args:
+        name (str): The input string that may have its first letter capitalized.
+        template_plain_name (str): The plain name of the template used to determine if capitalization is needed.
+
+    Returns:
+        str: `name` with the first letter capitalized if the letter is part of a template parameter which is not a Unit Definition.
+        Otherwise, it returns `name` without any changes.
+    """
+    if (
+        template_plain_name.startswith("[")
+        and parameters
+        and "UnitDefinitionRoot" not in parameters[0].parameters[0].labels
+    ):
+        idx = name.find("[")
+        first_letter = idx + 1
+        second_letter = idx + 2
+
+        return (
+            name[:first_letter]
+            + name[first_letter:second_letter].upper()
+            + name[second_letter:]
+        )
+    return name

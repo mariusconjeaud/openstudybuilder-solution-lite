@@ -125,31 +125,5 @@
             "type": "BusinessLogicException"
          }
       }
-   },
-   {
-      "name": "Test patch study number",
-      "request": {
-         "headers": {},
-         "method": "PATCH",
-         "request": {
-            "current_metadata": {
-               "identification_metadata": {
-                  "study_number": "008"
-               }
-            }
-         },
-         "url": "/studies/Study_000001"
-      },
-      "response": {
-         "code": 400,
-         "headers": {},
-         "result": {
-            "message": "The study number for a study Study_000001 can't be changed.",
-            "method": "PATCH",
-            "path": "http://testserver/studies/Study_000001",
-            "time": "2021-11-03T23:42:41.518146",
-            "type": "BusinessLogicException"
-         }
-      }
    }
 ]

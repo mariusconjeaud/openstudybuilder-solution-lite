@@ -249,10 +249,10 @@ def run_novo_nordisk_adjustments(
 
     with mdr_neo4j_driver.session(database=mdr_db_name) as session:
         with session.begin_transaction() as tx:
-            print("    - Updating the Novo Nordisk managed codelist names.")
+            print("    - Updating the sponsor codelist names.")
             update_codelist_names_managed_by_novo_nordisk(tx, csv_import_directory)
 
-            print("    - Updating the Novo Nordisk managed term names.")
+            print("    - Updating the sponsor term names.")
             update_term_names_managed_by_novo_nordisk(tx, csv_import_directory)
 
             # print("    - Flagging selected codelists as parameters.")

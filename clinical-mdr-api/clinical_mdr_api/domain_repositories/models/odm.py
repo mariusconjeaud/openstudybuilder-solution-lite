@@ -470,7 +470,7 @@ class OdmVendorAttributeRoot(ConceptRoot):
 
 
 class OdmVendorElementValue(ConceptValue):
-    ...
+    compatible_types = JSONProperty()
 
 
 class OdmVendorElementRoot(ConceptRoot):

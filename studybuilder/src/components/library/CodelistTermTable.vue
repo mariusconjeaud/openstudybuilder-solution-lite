@@ -19,9 +19,10 @@
     <template #actions>
       <v-btn
         v-if="codelistAttributes.extensible"
-        fab
+        class="ml-2"
         size="small"
-        color="primary"
+        variant="outlined"
+        color="nnBaseBlue"
         data-cy="add-term-button"
         :title="$t('CodelistTermCreationForm.title')"
         :disabled="!accessGuard.checkPermission($roles.LIBRARY_WRITE)"
@@ -141,19 +142,18 @@ const codelistNames = ref({})
 const codelistAttributes = ref({})
 
 const headers = [
-  { title: '', key: 'actions', width: '5%' },
+  { title: '', key: 'actions', width: '1%' },
   { title: t('_global.library'), key: 'library_name' },
   {
     title: t('CodelistTermsView.sponsor_name'),
     key: 'name.sponsor_preferred_name',
   },
-  { title: t('_global.order'), key: '_order' },
   { title: t('CodelistTermsView.name_status'), key: 'name.status' },
   {
     title: t('CodelistTermsView.name_date'),
     key: 'name.start_date',
   },
-  { title: t('CtCatalogueTable.concept_id'), key: '_concept_id' },
+  { title: t('CtCatalogueTable.concept_id'), key: 'attributes.concept_id' },
   {
     title: t('CodelistTermsView.code_submission_value'),
     key: 'attributes.code_submission_value',

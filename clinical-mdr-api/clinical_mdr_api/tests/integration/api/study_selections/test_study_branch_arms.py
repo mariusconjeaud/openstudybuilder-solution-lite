@@ -45,9 +45,9 @@ def test_data():
     """Initialize test data"""
     db_name = "studybrancharmapi"
     inject_and_clear_db(db_name)
-    inject_base_data()
+
     global study
-    study = TestUtils.create_study()
+    study = inject_base_data()
 
     global study_arm
     study_arm = TestUtils.create_study_arm(

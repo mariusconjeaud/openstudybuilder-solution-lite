@@ -152,7 +152,12 @@ export default {
     editedGroupOrSubgroup: {
       handler(value) {
         if (!_isEmpty(value)) {
-          this.initForm(value)
+          const source = this.subgroup
+            ? 'activity-sub-groups'
+            : 'activity-groups'
+          activities.getObject(source, value.uid).then((resp) => {
+            this.initForm(resp.data)
+          })
         }
       },
       immediate: true,

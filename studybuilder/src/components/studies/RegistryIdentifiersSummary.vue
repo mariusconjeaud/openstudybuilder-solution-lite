@@ -10,10 +10,10 @@
     component="registry_identifiers"
     :disable-edit="studiesGeneralStore.selectedStudy.study_parent_part"
   >
-    <template #form="{ closeHandler, openHandler }">
+    <template #form="{ closeHandler, openHandler, formKey }">
       <RegistryIdentifiersForm
+        :key="formKey"
         :open="openHandler"
-        :identifiers="identifiers"
         @close="closeHandler"
         @updated="onIdentifiersUpdated"
       />
@@ -46,20 +46,19 @@ const params = computed(() => {
   return result
 })
 
-function onIdentifiersUpdated(value) {
-  identifiers.value = value
+function onIdentifiersUpdated() {
+  fetchIdentifiers()
 }
 
 onMounted(() => {
   studiesGeneralStore.fetchNullValues()
-  const studyUid = studiesGeneralStore.selectedStudy.study_parent_part
-    ? studiesGeneralStore.selectedStudy.study_parent_part.uid
-    : studiesGeneralStore.selectedStudy.uid
-  study
-    .getStudy(studyUid, false)
-    .then((resp) => {
-      identifiers.value =
-        resp.data.current_metadata.identification_metadata.registry_identifiers
-    })
+  fetchIdentifiers()
 })
+
+function fetchIdentifiers() {
+  study.getStudy(studiesGeneralStore.studyUid, false).then((resp) => {
+    identifiers.value =
+      resp.data.current_metadata.identification_metadata.registry_identifiers
+  })
+}
 </script>

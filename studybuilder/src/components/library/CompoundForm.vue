@@ -92,7 +92,8 @@
             {{ $t('CompoundForm.substances') }}
           </v-card-title>
           <v-btn
-            color="primary"
+            variant="outlined"
+            color="nnBaseBlue"
             position="absolute"
             location="top right"
             size="x-small"
@@ -130,7 +131,8 @@
                 {{ $t('CompoundForm.doses') }}
               </v-card-title>
               <v-btn
-                color="primary"
+                variant="outlined"
+                color="nnBaseBlue"
                 position="absolute"
                 location="top right"
                 size="x-small"
@@ -169,7 +171,8 @@
                 {{ $t('CompoundForm.strengths') }}
               </v-card-title>
               <v-btn
-                color="primary"
+                variant="outlined"
+                color="nnBaseBlue"
                 position="absolute"
                 location="top right"
                 size="x-small"
@@ -277,7 +280,8 @@
             {{ $t('CompoundForm.lag_times') }}
           </v-card-title>
           <v-btn
-            color="primary"
+            variant="outlined"
+            color="nnBaseBlue"
             position="absolute"
             location="top right"
             size="x-small"
@@ -587,22 +591,22 @@ export default {
     this.fetchSubstances().then(() => {
       this.transformSubstances()
     })
-    terms.getByCodelist('frequency', true).then((resp) => {
+    terms.getByCodelist('frequency', { all: true }).then((resp) => {
       this.frequencies = resp.data.items
     })
-    terms.getByCodelist('routeOfAdministration', true).then((resp) => {
+    terms.getByCodelist('routeOfAdministration', { all: true }).then((resp) => {
       this.routesOfAdmin = resp.data.items
     })
-    terms.getByCodelist('dosageForm', true).then((resp) => {
+    terms.getByCodelist('dosageForm', { all: true }).then((resp) => {
       this.dosageForms = resp.data.items
     })
-    terms.getByCodelist('dispensedIn', true).then((resp) => {
+    terms.getByCodelist('dispensedIn', { all: true }).then((resp) => {
       this.dispensers = resp.data.items
     })
-    terms.getByCodelist('deliveryDevice', true).then((resp) => {
+    terms.getByCodelist('deliveryDevice', { all: true }).then((resp) => {
       this.devices = resp.data.items
     })
-    terms.getByCodelist('adverseEvents', true).then((resp) => {
+    terms.getByCodelist('adverseEvents', { all: true }).then((resp) => {
       this.adverseEvents = resp.data.items
     })
     brands.getAll().then((resp) => {

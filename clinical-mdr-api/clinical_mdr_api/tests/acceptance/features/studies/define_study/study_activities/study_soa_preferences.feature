@@ -13,7 +13,7 @@ Feature: Manage and Maintain Study SOA preferences functionality in Clinical MDR
 
             Test Coverage:
             |TestFile                                                        | TestID                               |
-            |/tests/integration/api/service/test_study_flowchart.py | @TestID:test_get_flowchart_table              |
+            |/tests/integration/api/service/test_study_flowchart.py          | @TestID:test_get_flowchart_table     |
             |/tests/integration/api/study_selections/test_study_flowchart.py | @TestID:test_flowchart               |
             |/tests/integration/api/study_selections/test_study_flowchart.py | @TestID:test_flowchart_docx          |
             |/tests/integration/api/study_selections/test_study_flowchart.py | @TestID:test_flowchart_html          |
@@ -24,13 +24,7 @@ Feature: Manage and Maintain Study SOA preferences functionality in Clinical MDR
 
             Test Coverage:
             |TestFile                                                        | TestID                               |
-            |/tests/integration/api/service/test_study_flowchart.py | @TestID:test_get_flowchart_table              |
+            |/tests/integration/api/service/test_study_flowchart.py          | @TestID:test_get_flowchart_table     |
             |/tests/integration/api/study_selections/test_study_flowchart.py | @TestID:test_flowchart               |
             |/tests/integration/api/study_selections/test_study_flowchart.py | @TestID:test_flowchart_docx          |
             |/tests/integration/api/study_selections/test_study_flowchart.py | @TestID:test_flowchart_html          | 
-
-    #The following scenaio was tested manually in the current release, and the test scripts will be implemented in the later release
-    @manual_test
-    Scenario Outline: User must be able to request for the flowchart (SoA) with "baseline shown as time 0"
-        When The user requests for the flowchart (SoA) with "Baseline shown as time 0"
-        Then The user receives the flowchart with "study baseline shown as time 0" view

@@ -28,7 +28,7 @@ export default {
       codelistUid: null,
       dictionaryName: 'UNII',
       headers: [
-        { title: '', key: 'actions', width: '5%' },
+        { title: '', key: 'actions', width: '1%' },
         { title: this.$t('DictionaryTermTable.unii_id'), key: 'dictionary_id' },
         { title: this.$t('DictionaryTermTable.substance_name'), key: 'name' },
         {

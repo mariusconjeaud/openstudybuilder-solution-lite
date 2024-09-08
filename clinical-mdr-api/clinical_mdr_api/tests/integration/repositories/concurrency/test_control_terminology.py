@@ -176,7 +176,13 @@ class ControlTerminologyConcurrencyTest(unittest.TestCase):
         )
 
         ct_term_attributes_vo = CTTermAttributesVO.from_repository_values(
-            codelists=[CTTermCodelistVO(codelist_uid=self.codelist_uid, order=1)],
+            codelists=[
+                CTTermCodelistVO(
+                    codelist_uid=self.codelist_uid,
+                    order=1,
+                    library_name=self.library_name,
+                )
+            ],
             catalogue_name="SDTM CT",
             concept_id=None,
             code_submission_value="code_submission_value",
@@ -193,7 +199,13 @@ class ControlTerminologyConcurrencyTest(unittest.TestCase):
         )
 
         ct_term_name_vo = CTTermNameVO.from_repository_values(
-            codelists=[CTTermCodelistVO(codelist_uid=self.codelist_uid, order=1)],
+            codelists=[
+                CTTermCodelistVO(
+                    codelist_uid=self.codelist_uid,
+                    order=1,
+                    library_name=self.library_name,
+                )
+            ],
             catalogue_name="SDTM CT",
             name="term XYZ",
             name_sentence_case="term XYZ",

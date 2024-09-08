@@ -93,13 +93,17 @@ watch(
   () => props.modelValue,
   (val) => {
     if (val) {
-      form.value = {
-        name_submission_value: val.name_submission_value,
-        code_submission_value: val.code_submission_value,
-        nci_preferred_name: val.nci_preferred_name,
-        definition: val.definition,
-      }
-      formStore.save(form.value)
+      controlledTerminology
+        .getCodelistTermAttributes(val.term_uid)
+        .then((resp) => {
+          form.value = {
+            name_submission_value: resp.data.name_submission_value,
+            code_submission_value: resp.data.code_submission_value,
+            nci_preferred_name: resp.data.nci_preferred_name,
+            definition: resp.data.definition,
+          }
+          formStore.save(form.value)
+        })
     }
   },
   { immediate: true }

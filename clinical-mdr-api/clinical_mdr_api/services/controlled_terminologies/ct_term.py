@@ -94,12 +94,15 @@ class CTTermService:
             library_name=term_input.library_name,
             is_library_editable_callback=is_library_editable,
         )
+
         ct_term_attributes_ar = CTTermAttributesAR.from_input_values(
             author=self.user_initials,
             ct_term_attributes_vo=CTTermAttributesVO.from_input_values(
                 codelists=[
                     CTTermCodelistVO(
-                        codelist_uid=term_input.codelist_uid, order=term_input.order
+                        codelist_uid=term_input.codelist_uid,
+                        order=term_input.order,
+                        library_name=ct_codelist_name_ar.library.name,
                     )
                 ],
                 catalogue_name=term_input.catalogue_name,
@@ -126,7 +129,9 @@ class CTTermService:
             ct_term_name_vo=CTTermNameVO.from_input_values(
                 codelists=[
                     CTTermCodelistVO(
-                        codelist_uid=term_input.codelist_uid, order=term_input.order
+                        codelist_uid=term_input.codelist_uid,
+                        order=term_input.order,
+                        library_name=ct_codelist_name_ar.library.name,
                     )
                 ],
                 catalogue_name=term_input.catalogue_name,
@@ -347,9 +352,11 @@ class CTTermService:
             )
 
     def set_new_order(self, term_uid: str, codelist_uid: str, new_order: int) -> CTTerm:
-        if not self._repos.ct_codelist_name_repository.codelist_exists(
-            normalize_string(codelist_uid)
-        ):
+        ct_codelist_name_ar = self._repos.ct_codelist_name_repository.find_by_uid(
+            codelist_uid=codelist_uid
+        )
+
+        if not ct_codelist_name_ar:
             raise exceptions.BusinessLogicException(
                 f"There is no CTCodelistRoot identified by provided codelist_uid ({codelist_uid})"
             )
@@ -363,7 +370,11 @@ class CTTermService:
                 f"There is no CTTermRoot identified by provided term_uid ({term_uid})"
             )
 
-        ct_term_name_ar.set_new_order(codelist_uid=codelist_uid, new_order=new_order)
+        ct_term_name_ar.set_new_order(
+            codelist_uid=codelist_uid,
+            new_order=new_order,
+            codelist_library_name=ct_codelist_name_ar.library.name,
+        )
 
         self._repos.ct_term_name_repository.save(ct_term_name_ar)
 

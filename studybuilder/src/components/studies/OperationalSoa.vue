@@ -189,6 +189,7 @@ import { useAccessGuard } from '@/composables/accessGuard'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
 import { useSoaContentLoadingStore } from '@/stores/soa-content-loading'
 import exportLoader from '@/utils/exportLoader'
+import soaDownloads from '@/utils/soaDownloads'
 
 export default {
   props: {
@@ -349,7 +350,7 @@ export default {
       this.soaContentLoadingStore.changeLoadingState()
       const resp = await study.getStudyProtocolFlowchart(
         this.selectedStudy.uid,
-        true
+        { operational: true }
       )
       let currentSoaGroup
       let currentGroup
@@ -450,59 +451,29 @@ export default {
       const currentValue = this.getCurrentDisplayValue(rowKey)
       this.rowsDisplayState[rowKey].value = !currentValue
     },
-    downloadCSV() {
+    async downloadCSV() {
       this.soaContentLoadingStore.changeLoadingState()
-      study
-        .exportStudyOperationalSoa(
-          this.selectedStudy.uid
-        )
-        .then((response) => {
-          const filename =
-            this.selectedStudy.current_metadata.identification_metadata
-              .study_id + ' operational SoA.csv'
-          exportLoader.downloadFile(
-            response.data,
-            response.headers['content-type'],
-            filename
-          )
-          this.soaContentLoadingStore.changeLoadingState()
-        })
+      try {
+        await soaDownloads.csvDownload('operational')
+      } finally {
+        this.soaContentLoadingStore.changeLoadingState()
+      }
     },
-    downloadEXCEL() {
+    async downloadEXCEL() {
       this.soaContentLoadingStore.changeLoadingState()
-      study
-        .exportStudyOperationalSoaExcel(
-          this.selectedStudy.uid
-        )
-        .then((response) => {
-          const filename =
-            this.selectedStudy.current_metadata.identification_metadata
-              .study_id + ' operational SoA.xlsx'
-          exportLoader.downloadFile(
-            response.data,
-            response.headers['content-type'],
-            filename
-          )
-          this.soaContentLoadingStore.changeLoadingState()
-        })
+      try {
+        await soaDownloads.excelDownload('operational')
+      } finally {
+        this.soaContentLoadingStore.changeLoadingState()
+      }
     },
-    downloadDOCX() {
+    async downloadDOCX() {
       this.soaContentLoadingStore.changeLoadingState()
-      study
-        .getStudyProtocolFlowchartDocx(this.selectedStudy.uid, {
-          operational: true,
-        })
-        .then((response) => {
-          const filename =
-            this.selectedStudy.current_metadata.identification_metadata
-              .study_id + ' operational SoA.docx'
-          exportLoader.downloadFile(
-            response.data,
-            response.headers['content-type'],
-            filename
-          )
-          this.soaContentLoadingStore.changeLoadingState()
-        })
+      try {
+        await soaDownloads.docxDownload('operational')
+      } finally {
+        this.soaContentLoadingStore.changeLoadingState()
+      }
     },
   },
 }

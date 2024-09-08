@@ -9,6 +9,7 @@ Tests for /studies/{uid}/study-visits endpoints
 # pytest fixture functions have other fixture functions as arguments,
 # which pylint interprets as unused arguments
 
+from datetime import datetime, timezone
 from unittest import mock
 
 import pytest
@@ -18,6 +19,7 @@ from neomodel import db
 from clinical_mdr_api import config, main
 from clinical_mdr_api.domains.study_selections.study_visit import VisitClass
 from clinical_mdr_api.models import ClinicalProgramme, Project
+from clinical_mdr_api.models.controlled_terminologies.ct_term_name import CTTermName
 from clinical_mdr_api.models.study_selections.study import Study
 from clinical_mdr_api.tests.integration.utils.api import (
     drop_db,
@@ -27,6 +29,9 @@ from clinical_mdr_api.tests.integration.utils.api import (
 from clinical_mdr_api.tests.integration.utils.data_library import (
     STARTUP_CT_CATALOGUE_CYPHER,
     STARTUP_STUDY_LIST_CYPHER,
+)
+from clinical_mdr_api.tests.integration.utils.factory_controlled_terminology import (
+    get_catalogue_name_library_name,
 )
 from clinical_mdr_api.tests.integration.utils.factory_visit import (
     generate_default_input_data_for_visit,
@@ -47,6 +52,8 @@ DAYUID: str
 visits_basic_data: dict
 clinical_programme: ClinicalProgramme
 project: Project
+initial_ct_term_study_standard_test: CTTermName
+initial_ct_term_study_standard_test_uid: str
 
 
 @pytest.fixture(scope="module")
@@ -84,6 +91,49 @@ def test_data():
         project_number="1234",
         description="Base project",
         clinical_programme_uid=clinical_programme.uid,
+    )
+
+    catalogue_name, library_name = get_catalogue_name_library_name(use_test_utils=True)
+    # Create a study selection
+    ct_term_codelist_name = "VisitType"
+    ct_term_name = ct_term_codelist_name + " Name For StudyStandardVersioning test"
+    ct_term_start_date = datetime(2020, 3, 25, tzinfo=timezone.utc)
+
+    global initial_ct_term_study_standard_test_uid
+    initial_ct_term_study_standard_test_uid = "VisitType_0000"
+    global initial_ct_term_study_standard_test
+    initial_ct_term_study_standard_test = TestUtils.create_ct_term(
+        codelist_uid="CTCodelist_00004",
+        name_submission_value=ct_term_name,
+        sponsor_preferred_name=ct_term_name,
+        order=0,
+        catalogue_name=catalogue_name,
+        library_name=library_name,
+        effective_date=ct_term_start_date,
+        approve=True,
+    )
+
+    cdisc_package_name = "SDTM CT 2020-03-27"
+    TestUtils.create_ct_package(
+        catalogue=catalogue_name,
+        name=cdisc_package_name,
+        approve_elements=False,
+        effective_date=datetime(2020, 3, 27, tzinfo=timezone.utc),
+    )
+    # patch the date of the latest HAS_VERSION FINAL relationship so it can be detected by the selected study_standard_Version
+    params = {
+        "uids": [initial_ct_term_study_standard_test_uid],
+        "date": datetime(2020, 3, 26, tzinfo=timezone.utc),
+    }
+    db.cypher_query(
+        """
+                    MATCH (n)-[:HAS_NAME_ROOT]-(ct_name:CTTermNameRoot)-[has_version:HAS_VERSION]-(val) 
+                    where 
+                        EXISTS((ct_name)-[:LATEST]-(val)) 
+                        AND has_version.status ='Final' 
+                    SET has_version.start_date = $date
+                """,
+        params=params,
     )
 
     yield
@@ -456,6 +506,7 @@ def test_manually_defined_visit(api_client):
             "visit_short_name": "Manually defined visit short name",
             "visit_number": "11",
             "unique_visit_number": "1100",
+            "time_value": 105,
         }
     )
     response = api_client.post(
@@ -830,7 +881,7 @@ def test_manually_defined_visit_in_chronological_order_by_visit_timing(api_clien
         "study_epoch_uid": study_epoch.uid,
         "visit_type_uid": "VisitType_0002",
         "time_reference_uid": "VisitSubType_0005",
-        "time_value": 30,
+        "time_value": 35,
         "time_unit_uid": DAYUID,
         "visit_class": "MANUALLY_DEFINED_VISIT",
         "visit_subclass": "SINGLE_VISIT",
@@ -859,7 +910,7 @@ def test_manually_defined_visit_in_chronological_order_by_visit_timing(api_clien
         "study_epoch_uid": study_epoch.uid,
         "visit_type_uid": "VisitType_0002",
         "time_reference_uid": "VisitSubType_0005",
-        "time_value": 30,
+        "time_value": 35,
         "time_unit_uid": DAYUID,
         "visit_class": "MANUALLY_DEFINED_VISIT",
         "visit_subclass": "SINGLE_VISIT",
@@ -1009,9 +1060,9 @@ def test_create_repeating_visit(api_client):
     assert response.status_code == 201
     assert res["repeating_frequency_uid"] == _term.term_uid
     assert res["repeating_frequency_name"] == _term.sponsor_preferred_name
-    assert res["visit_name"] == "Visit 1.N"
-    assert res["visit_subname"] == "Visit 1.N"
-    assert res["visit_short_name"] == "V1.N"
+    assert res["visit_name"] == "Visit 1.n"
+    assert res["visit_subname"] == "Visit 1.n"
+    assert res["visit_short_name"] == "V1.n"
     assert res["visit_subclass"] == "REPEATING_VISIT"
 
     response = api_client.get(f"/studies/{_study.uid}/study-visits/{res['uid']}")
@@ -1019,7 +1070,640 @@ def test_create_repeating_visit(api_client):
     assert response.status_code == 200
     assert res["repeating_frequency_uid"] == _term.term_uid
     assert res["repeating_frequency_name"] == _term.sponsor_preferred_name
-    assert res["visit_name"] == "Visit 1.N"
-    assert res["visit_subname"] == "Visit 1.N"
-    assert res["visit_short_name"] == "V1.N"
+    assert res["visit_name"] == "Visit 1.n"
+    assert res["visit_subname"] == "Visit 1.n"
+    assert res["visit_short_name"] == "V1.n"
     assert res["visit_subclass"] == "REPEATING_VISIT"
+
+    # When A new repeating visit is created
+    inputs = {
+        "study_epoch_uid": _study_epoch.uid,
+        "visit_type_uid": "VisitType_0001",
+        "show_visit": True,
+        "time_reference_uid": "VisitSubType_0001",
+        "time_value": -2,
+        "time_unit_uid": DAYUID,
+        "visit_class": "SINGLE_VISIT",
+        "visit_subclass": "REPEATING_VISIT",
+        "is_global_anchor_visit": False,
+        "repeating_frequency_uid": _term.term_uid,
+    }
+    datadict = visits_basic_data.copy()
+    datadict.update(inputs)
+    response = api_client.post(
+        f"/studies/{_study.uid}/study-visits",
+        json=datadict,
+    )
+    res = response.json()
+    assert response.status_code == 201
+    assert res["repeating_frequency_uid"] == _term.term_uid
+    assert res["repeating_frequency_name"] == _term.sponsor_preferred_name
+    assert res["visit_name"] == "Visit 1.n"
+    assert res["visit_number"] == 1.0
+    assert res["visit_short_name"] == "V1.n"
+    assert res["visit_subclass"] == "REPEATING_VISIT"
+
+    # Then The visit number should be chronological
+    # And The visit name and visit short name should follow visit naming rules
+    response = api_client.get(f"/studies/{_study.uid}/study-visits/{res['uid']}")
+    res = response.json()
+    assert response.status_code == 200
+    assert res["repeating_frequency_uid"] == _term.term_uid
+    assert res["repeating_frequency_name"] == _term.sponsor_preferred_name
+    assert res["visit_name"] == "Visit 1.n"
+    assert res["visit_number"] == 1.0
+    assert res["visit_short_name"] == "V1.n"
+    assert res["visit_subclass"] == "REPEATING_VISIT"
+
+
+def test_create_visit_0(api_client):
+    _study = TestUtils.create_study()
+    study_epoch1 = create_study_epoch(
+        "information_epoch_subtype_uid", study_uid=_study.uid
+    )
+    study_epoch2 = create_study_epoch("Basic_uid", study_uid=_study.uid)
+
+    inputs = {
+        "study_epoch_uid": study_epoch1.uid,
+        "visit_type_uid": "VisitType_0000",
+        "show_visit": True,
+        "time_reference_uid": "VisitSubType_0005",
+        "time_value": -1,
+        "time_unit_uid": DAYUID,
+        "visit_class": "SINGLE_VISIT",
+        "visit_subclass": "SINGLE_VISIT",
+        "is_global_anchor_visit": True,
+    }
+    datadict = visits_basic_data
+    datadict.update(inputs)
+    response = api_client.post(
+        f"/studies/{_study.uid}/study-visits",
+        json=datadict,
+    )
+    res = response.json()
+    assert response.status_code == 201
+    assert res["visit_name"] == "Visit 0"
+    assert res["visit_subname"] == "Visit 0"
+    assert res["visit_short_name"] == "V0"
+    assert res["visit_subclass"] == "SINGLE_VISIT"
+    study_visit0_uid = res["uid"]
+
+    response = api_client.get(f"/studies/{_study.uid}/study-visits/{study_visit0_uid}")
+    res = response.json()
+    assert response.status_code == 200
+    assert res["visit_name"] == "Visit 0"
+    assert res["visit_subname"] == "Visit 0"
+    assert res["visit_short_name"] == "V0"
+    assert res["visit_subclass"] == "SINGLE_VISIT"
+
+    inputs = {
+        "study_epoch_uid": study_epoch2.uid,
+        "visit_type_uid": "VisitType_0001",
+        "show_visit": True,
+        "time_reference_uid": "VisitSubType_0005",
+        "time_value": 0,
+        "time_unit_uid": DAYUID,
+        "visit_class": "SINGLE_VISIT",
+        "visit_subclass": "SINGLE_VISIT",
+        "is_global_anchor_visit": False,
+    }
+    datadict = visits_basic_data
+    datadict.update(inputs)
+    response = api_client.post(
+        f"/studies/{_study.uid}/study-visits",
+        json=datadict,
+    )
+    res = response.json()
+    assert response.status_code == 201
+    assert res["visit_name"] == "Visit 1"
+    assert res["visit_subname"] == "Visit 1"
+    assert res["visit_short_name"] == "V1"
+    assert res["visit_subclass"] == "SINGLE_VISIT"
+
+    study_visit1_uid = res["uid"]
+
+    # Verify the information visit 0 can be removed successfully
+    response = api_client.delete(
+        f"/studies/{_study.uid}/study-visits/{study_visit0_uid}"
+    )
+    assert response.status_code == 204
+
+    # Verify that the orinigal visit was not re-ordered
+    response = api_client.get(f"/studies/{_study.uid}/study-visits/{study_visit1_uid}")
+    res = response.json()
+    assert response.status_code == 200
+    assert res["visit_name"] == "Visit 1"
+    assert res["visit_number"] == 1.0
+    assert res["visit_short_name"] == "V1"
+
+
+def test_visit_0_created_chronologically(api_client):
+    _study = TestUtils.create_study()
+    study_epoch1 = create_study_epoch(
+        "information_epoch_subtype_uid", study_uid=_study.uid
+    )
+    study_epoch2 = create_study_epoch("Basic_uid", study_uid=_study.uid)
+
+    # Test pre-conditions: create two normal visits with different time value
+    input1 = {
+        "study_epoch_uid": study_epoch2.uid,
+        "visit_type_uid": "VisitType_0001",
+        "show_visit": True,
+        "time_reference_uid": "VisitSubType_0005",
+        "time_value": 10,
+        "time_unit_uid": DAYUID,
+        "visit_class": "SINGLE_VISIT",
+        "visit_subclass": "SINGLE_VISIT",
+        "is_global_anchor_visit": False,
+    }
+    datadict = visits_basic_data
+    datadict.update(input1)
+    response = api_client.post(
+        f"/studies/{_study.uid}/study-visits",
+        json=datadict,
+    )
+    res = response.json()
+    assert response.status_code == 201
+    assert res["visit_name"] == "Visit 1"
+    assert res["visit_number"] == 1.0
+    assert res["visit_short_name"] == "V1"
+
+    input2 = {
+        "study_epoch_uid": study_epoch2.uid,
+        "visit_type_uid": "VisitType_0001",
+        "show_visit": True,
+        "time_reference_uid": "VisitSubType_0005",
+        "time_value": 20,
+        "time_unit_uid": DAYUID,
+        "visit_class": "SINGLE_VISIT",
+        "visit_subclass": "SINGLE_VISIT",
+        "is_global_anchor_visit": False,
+    }
+    datadict = visits_basic_data
+    datadict.update(input2)
+    response = api_client.post(
+        f"/studies/{_study.uid}/study-visits",
+        json=datadict,
+    )
+    res = response.json()
+    assert response.status_code == 201
+    assert res["visit_name"] == "Visit 2"
+    assert res["visit_number"] == 2.0
+    assert res["visit_short_name"] == "V2"
+
+    study_visit2_uid = res["uid"]
+
+    # Scenario: User must be able to create an information visit without visit 0 if the time value is not the lowest
+    # Create an information visit with non-first timing
+    inputs = {
+        "study_epoch_uid": study_epoch1.uid,
+        "visit_type_uid": "VisitType_0000",
+        "show_visit": True,
+        "time_reference_uid": "VisitSubType_0005",
+        "time_value": 15,
+        "time_unit_uid": DAYUID,
+        "visit_class": "SINGLE_VISIT",
+        "visit_subclass": "SINGLE_VISIT",
+        "is_global_anchor_visit": False,
+    }
+    datadict = visits_basic_data
+    datadict.update(inputs)
+    response = api_client.post(
+        f"/studies/{_study.uid}/study-visits",
+        json=datadict,
+    )
+    res = response.json()
+    assert response.status_code == 201
+
+    # The name and number of the newly created information visit should follow the regular naming and numbering rules
+    assert res["visit_name"] == "Visit 2"
+    assert res["visit_number"] == 2.0
+    assert res["visit_short_name"] == "V2"
+
+    study_visit0_uid = res["uid"]
+
+    # The original Visit 2 should be re-named and re-numbered
+    response = api_client.get(f"/studies/{_study.uid}/study-visits/{study_visit2_uid}")
+    res = response.json()
+    assert response.status_code == 200
+    assert res["visit_name"] == "Visit 3"
+    assert res["visit_number"] == 3.0
+    assert res["visit_short_name"] == "V3"
+
+    # Scenario: User must be able to delete the study information visit without visit 0
+    # Delete the information visit without 0
+    response = api_client.delete(
+        f"/studies/{_study.uid}/study-visits/{study_visit0_uid}"
+    )
+    assert response.status_code == 204
+
+    # Then The reordering of other visits will occur
+    response = api_client.get(f"/studies/{_study.uid}/study-visits/{study_visit2_uid}")
+    res = response.json()
+    assert response.status_code == 200
+    assert res["visit_name"] == "Visit 2"
+    assert res["visit_number"] == 2.0
+    assert res["visit_short_name"] == "V2"
+
+    # Scenario: User must be able to create an information visit with visit 0 if the time value is the lowest
+    # Create an information visit with first timing
+    inputs = {
+        "study_epoch_uid": study_epoch1.uid,
+        "visit_type_uid": "VisitType_0000",
+        "show_visit": True,
+        "time_reference_uid": "VisitSubType_0005",
+        "time_value": 5,
+        "time_unit_uid": DAYUID,
+        "visit_class": "SINGLE_VISIT",
+        "visit_subclass": "SINGLE_VISIT",
+        "is_global_anchor_visit": False,
+    }
+    datadict = visits_basic_data
+    datadict.update(inputs)
+    response = api_client.post(
+        f"/studies/{_study.uid}/study-visits",
+        json=datadict,
+    )
+    res = response.json()
+    assert response.status_code == 201
+    # Verify that newly created information visit should be Visit 0
+    assert res["visit_name"] == "Visit 0"
+    assert res["visit_number"] == 0.0
+    assert res["visit_short_name"] == "V0"
+
+    study_visit0_uid = res["uid"]
+
+    # The previous Visit 3 should not be changed
+    response = api_client.get(f"/studies/{_study.uid}/study-visits/{study_visit2_uid}")
+    res = response.json()
+    assert response.status_code == 200
+    assert res["visit_name"] == "Visit 2"
+    assert res["visit_number"] == 2.0
+    assert res["visit_short_name"] == "V2"
+
+    # Scenario: User must be able to indirectly edit the existing information visit 0 when a new visit is added with a lower time value
+    # When create a new non-information visit with first timing
+    input3 = {
+        "study_epoch_uid": study_epoch2.uid,
+        "visit_type_uid": "VisitType_0001",
+        "show_visit": True,
+        "time_reference_uid": "VisitSubType_0005",
+        "time_value": 3,
+        "time_unit_uid": DAYUID,
+        "visit_class": "SINGLE_VISIT",
+        "visit_subclass": "SINGLE_VISIT",
+        "is_global_anchor_visit": False,
+    }
+    datadict = visits_basic_data
+    datadict.update(input3)
+    response = api_client.post(
+        f"/studies/{_study.uid}/study-visits",
+        json=datadict,
+    )
+    res = response.json()
+    assert response.status_code == 201
+    assert res["visit_name"] == "Visit 1"
+    assert res["visit_number"] == 1.0
+    assert res["visit_short_name"] == "V1"
+
+    # The existing visit 0 was re-named and re-numbered
+    response = api_client.get(f"/studies/{_study.uid}/study-visits/{study_visit0_uid}")
+    res = response.json()
+    assert response.status_code == 200
+    assert res["visit_name"] == "Visit 2"
+    assert res["visit_number"] == 2.0
+    assert res["visit_short_name"] == "V2"
+
+    # The previous Visit 3 should be changed as well
+    response = api_client.get(f"/studies/{_study.uid}/study-visits/{study_visit2_uid}")
+    res = response.json()
+    assert response.status_code == 200
+    assert res["visit_name"] == "Visit 4"
+    assert res["visit_number"] == 4.0
+    assert res["visit_short_name"] == "V4"
+
+
+def test_visit_0_edited_chronologically(api_client):
+    # Scenario: User must be able to edit the study information visit with visit 0 to same visit type
+    _study = TestUtils.create_study()
+    study_epoch1 = create_study_epoch(
+        "information_epoch_subtype_uid", study_uid=_study.uid
+    )
+    study_epoch2 = create_study_epoch("Basic_uid", study_uid=_study.uid)
+    # Create a normal visit
+    input1 = {
+        "study_epoch_uid": study_epoch2.uid,
+        "visit_type_uid": "VisitType_0001",
+        "show_visit": True,
+        "time_reference_uid": "VisitSubType_0005",
+        "time_value": 10,
+        "time_unit_uid": DAYUID,
+        "visit_class": "SINGLE_VISIT",
+        "visit_subclass": "SINGLE_VISIT",
+        "is_global_anchor_visit": False,
+    }
+    datadict = visits_basic_data
+    datadict.update(input1)
+    response = api_client.post(
+        f"/studies/{_study.uid}/study-visits",
+        json=datadict,
+    )
+    res = response.json()
+    assert response.status_code == 201
+    assert res["visit_name"] == "Visit 1"
+    assert res["visit_number"] == 1.0
+    assert res["visit_short_name"] == "V1"
+    study_visit1_uid = res["uid"]
+
+    # Create an information visit with first timing
+    inputs = {
+        "study_epoch_uid": study_epoch1.uid,
+        "visit_type_uid": "VisitType_0000",
+        "show_visit": True,
+        "time_reference_uid": "VisitSubType_0005",
+        "time_value": 2,
+        "time_unit_uid": DAYUID,
+        "visit_class": "SINGLE_VISIT",
+        "visit_subclass": "SINGLE_VISIT",
+        "is_global_anchor_visit": True,
+        "description": "test",
+    }
+    datadict = visits_basic_data.copy()
+    datadict.update(inputs)
+    response = api_client.post(
+        f"/studies/{_study.uid}/study-visits",
+        json=datadict,
+    )
+    res = response.json()
+
+    assert response.status_code == 201
+    # Verify that newly created information visit should be Visit 0
+    assert res["visit_name"] == "Visit 0"
+    assert res["visit_number"] == 0.0
+    assert res["visit_short_name"] == "V0"
+    study_visit0_uid = res["uid"]
+
+    # When This study information visit is edited to the same visit type
+    response = api_client.patch(
+        f"/studies/{_study.uid}/study-visits/{study_visit0_uid}",
+        json={
+            "show_visit": True,
+            "time_unit_uid": "UnitDefinition_000001",
+            "time_value": 2,
+            "visit_contact_mode_uid": "VisitContactMode_0001",
+            "visit_type_uid": "VisitType_0000",
+            "time_reference_uid": "VisitSubType_0005",
+            "is_global_anchor_visit": True,
+            "visit_class": "SINGLE_VISIT",
+            "study_epoch_uid": study_epoch1.uid,
+            "uid": study_visit0_uid,
+            "study_uid": _study.uid,
+            "description": "Visit 0 update",
+        },
+    )
+    assert response.status_code == 200
+
+    # Then This visit should be given the visit number of 0
+    response = api_client.get(f"/studies/{_study.uid}/study-visits/{study_visit0_uid}")
+    res = response.json()
+    assert response.status_code == 200
+    assert res["visit_name"] == "Visit 0"
+    assert res["visit_number"] == 0.0
+    assert res["visit_short_name"] == "V0"
+
+    # When This visit is edited to higher visit timing compare to the Global Anchor time reference
+    response = api_client.patch(
+        f"/studies/{_study.uid}/study-visits/{study_visit0_uid}",
+        json={
+            "show_visit": True,
+            "time_unit_uid": "UnitDefinition_000001",
+            "time_value": 14,
+            "visit_contact_mode_uid": "VisitContactMode_0001",
+            "visit_type_uid": "VisitType_0000",
+            "time_reference_uid": "VisitSubType_0005",
+            "is_global_anchor_visit": True,
+            "visit_class": "SINGLE_VISIT",
+            "study_epoch_uid": study_epoch1.uid,
+            "uid": study_visit0_uid,
+            "study_uid": _study.uid,
+        },
+    )
+    assert response.status_code == 200
+
+    # Then This information visit should Not be given the visit number of 0
+    response = api_client.get(f"/studies/{_study.uid}/study-visits/{study_visit0_uid}")
+    res = response.json()
+    assert response.status_code == 200
+    assert res["visit_name"] == "Visit 2"
+    assert res["visit_number"] == 2.0
+    assert res["visit_short_name"] == "V2"
+
+    # Scenario: User must be able to edit the study information visit with visit 0 to other visit type
+    # Given A study inforamtion visit with visit 0 is created
+    inputs = {
+        "study_epoch_uid": study_epoch1.uid,
+        "visit_type_uid": "VisitType_0000",
+        "show_visit": True,
+        "time_reference_uid": "VisitSubType_0005",
+        "time_value": 2,
+        "time_unit_uid": DAYUID,
+        "visit_class": "SINGLE_VISIT",
+        "visit_subclass": "SINGLE_VISIT",
+        "is_global_anchor_visit": False,
+    }
+    datadict = visits_basic_data
+    datadict.update(inputs)
+    response = api_client.post(
+        f"/studies/{_study.uid}/study-visits",
+        json=datadict,
+    )
+    res = response.json()
+    assert response.status_code == 201
+    # Verify that newly created information visit should be Visit 0
+    assert res["visit_name"] == "Visit 0"
+    assert res["visit_number"] == 0.0
+    assert res["visit_short_name"] == "V0"
+    study_visit0_uid = res["uid"]
+
+    # When This study information visit is edited to be a different visit type
+    response = api_client.patch(
+        f"/studies/{_study.uid}/study-visits/{study_visit0_uid}",
+        json={
+            "show_visit": True,
+            "time_unit_uid": "UnitDefinition_000001",
+            "time_value": 2,
+            "visit_contact_mode_uid": "VisitContactMode_0001",
+            "visit_type_uid": "VisitType_0001",
+            "time_reference_uid": "VisitSubType_0005",
+            "is_global_anchor_visit": False,
+            "visit_class": "SINGLE_VISIT",
+            "study_epoch_uid": study_epoch1.uid,
+            "uid": study_visit0_uid,
+            "study_uid": _study.uid,
+        },
+    )
+    assert response.status_code == 200
+
+    # Then This visit can no longer be Visit 0
+    response = api_client.get(f"/studies/{_study.uid}/study-visits/{study_visit0_uid}")
+    res = response.json()
+    assert response.status_code == 200
+    assert res["visit_name"] == "Visit 1"
+    assert res["visit_number"] == 1.0
+    assert res["visit_short_name"] == "V1"
+
+    # And Reordering of other visits will occur
+    response = api_client.get(f"/studies/{_study.uid}/study-visits/{study_visit1_uid}")
+    res = response.json()
+    assert response.status_code == 200
+    assert res["visit_name"] == "Visit 2"
+    assert res["visit_number"] == 2.0
+    assert res["visit_short_name"] == "V2"
+
+
+def test_study_visist_version_selecting_ct_package(api_client):
+    """change the name of a CTTerm, and verify that the study selection is still set to the old name of the CTTerm when the Sponsor Standard version is set"""
+    # patch the date of the latest HAS_VERSION FINAL relationship so it can be detected by the selected study_standard_Version
+    params = {
+        "uids": [initial_ct_term_study_standard_test_uid],
+        "date": datetime(2020, 3, 26, tzinfo=timezone.utc),
+    }
+    db.cypher_query(
+        """
+                    MATCH (n)-[:HAS_NAME_ROOT]-(ct_name:CTTermNameRoot)-[has_version:HAS_VERSION]-(val) 
+                    where 
+                        EXISTS((ct_name)-[:LATEST]-(val)) 
+                        AND has_version.status ='Final' 
+                    SET has_version.start_date = $date
+                """,
+        params=params,
+    )
+    study_selection_breadcrumb = "study-visits"
+    study_selection_ctterm_uid_input_key = "visit_type_uid"
+    study_selection_ctterm_name_key = "visit_type_name"
+    study_for_ctterm_versioning = TestUtils.create_study()
+
+    study_epoch1 = create_study_epoch(
+        "information_epoch_subtype_uid", study_uid=study_for_ctterm_versioning.uid
+    )
+
+    inputs = {
+        "study_epoch_uid": study_epoch1.uid,
+        study_selection_ctterm_uid_input_key: initial_ct_term_study_standard_test.term_uid,
+        "show_visit": True,
+        "time_reference_uid": "VisitSubType_0005",
+        "time_value": 0,
+        "time_unit_uid": DAYUID,
+        "visit_class": "SINGLE_VISIT",
+        "visit_subclass": "SINGLE_VISIT",
+        "is_global_anchor_visit": True,
+    }
+    datadict = visits_basic_data
+    datadict.update(inputs)
+    response = api_client.post(
+        f"/studies/{study_for_ctterm_versioning.uid}/{study_selection_breadcrumb}",
+        json=datadict,
+    )
+
+    res = response.json()
+    assert response.status_code == 201
+    study_selection_uid_study_standard_test = res["uid"]
+    assert res["order"] == 1
+    assert (
+        res[study_selection_ctterm_name_key]
+        == initial_ct_term_study_standard_test.sponsor_preferred_name
+    )
+
+    # edit ctterm
+    new_ctterm_name = "new ctterm name"
+    ctterm_uid = initial_ct_term_study_standard_test.term_uid
+    response = api_client.post(
+        f"/ct/terms/{ctterm_uid}/names/versions",
+    )
+    assert response.status_code == 201
+    response = api_client.patch(
+        f"/ct/terms/{ctterm_uid}/names",
+        json={
+            "sponsor_preferred_name": new_ctterm_name,
+            "sponsor_preferred_name_sentence_case": new_ctterm_name,
+            "change_description": "string",
+        },
+    )
+    response = api_client.post(f"/ct/terms/{ctterm_uid}/names/approvals")
+    assert response.status_code == 201
+
+    response = api_client.get(
+        f"/studies/{study_for_ctterm_versioning.uid}/{study_selection_breadcrumb}/{study_selection_uid_study_standard_test}"
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res[study_selection_ctterm_name_key] == new_ctterm_name
+
+    # get ct_packages
+    response = api_client.get(
+        "/ct/packages",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    ct_package_uid = res[0]["uid"]
+
+    # create study standard version
+    response = api_client.post(
+        f"/studies/{study_for_ctterm_versioning.uid}/study-standard-versions",
+        json={
+            "ct_package_uid": ct_package_uid,
+        },
+    )
+    res = response.json()
+    assert response.status_code == 201
+    assert res["ct_package"]["uid"] == ct_package_uid
+
+    # get study selection with previous ctterm
+    response = api_client.get(
+        f"/studies/{study_for_ctterm_versioning.uid}/{study_selection_breadcrumb}/{study_selection_uid_study_standard_test}",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert (
+        res[study_selection_ctterm_name_key]
+        == initial_ct_term_study_standard_test.sponsor_preferred_name
+    )
+
+    # edit selection
+    datadict.update(
+        {"description": "New_Visit", "uid": study_selection_uid_study_standard_test}
+    )
+    response = api_client.patch(
+        f"/studies/{study_for_ctterm_versioning.uid}/{study_selection_breadcrumb}/{study_selection_uid_study_standard_test}",
+        json=datadict,
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert (
+        res[study_selection_ctterm_name_key]
+        == initial_ct_term_study_standard_test.sponsor_preferred_name
+    )
+
+    # get versions of selection
+    response = api_client.get(
+        f"/studies/{study_for_ctterm_versioning.uid}/{study_selection_breadcrumb}/{study_selection_uid_study_standard_test}/audit-trail/",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert (
+        res[0][study_selection_ctterm_name_key]
+        == initial_ct_term_study_standard_test.sponsor_preferred_name
+    )
+    assert res[1][study_selection_ctterm_name_key] == new_ctterm_name
+
+    # get all versions
+    response = api_client.get(
+        f"/studies/{study_for_ctterm_versioning.uid}/{study_selection_breadcrumb[:-1]}/audit-trail/",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert (
+        res[0][study_selection_ctterm_name_key]
+        == initial_ct_term_study_standard_test.sponsor_preferred_name
+    )
+    assert res[1][study_selection_ctterm_name_key] == new_ctterm_name

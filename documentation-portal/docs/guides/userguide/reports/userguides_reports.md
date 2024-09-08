@@ -2,27 +2,22 @@
 
 Beside the table listing and download option generally available in the StudyBuilder application the system also support NeoDash reports and dashboards.
 
-> Note: In the current release NeoDash must be opened manually, described in next section. From next release, links to the NeoDash reports will be embedded into the StudyBuilder app.
-
 ## Open NeoDash
 
-The URL to access the NeoDash report will follow this pattern, where text in '[ ]' is optional and *italic* text is replaced by environment specific values:
-
-> [open]studybuilder[.*environment*].*domain*/neodash/
-
-A simple way to get the URL for the NeoDash reports is:
-
-1. Click on the StudyBuilder application logo in the top left corner.
-2. Copy the URL from the address line
-3. Open a new tab in the browser, paste the URL, and add: /neodash/
-4. The NeoDash login page should be displayed <br>
+To open NeoDash reports:
+1. Click on the Reports button placed on the main StudyBuilder page <br>
+![Reports button](~@source/images/user_guides/neodash_button.png) <br>
+2. The NeoDash login page should be displayed <br>
 ![Study Builder](~@source/images/user_guides/neodash_sso_screen.png) <br>
-5. Select to use 'SSO' and then click the 'Sign in' button.<br>
+3. Select to use 'SSO' and then click the 'Sign in' button.<br>
 
 > Note: Select the database in which the neodash report is stored. Typically the mdr and not neo4j.
 
-6. If requested to select a browser account, select your Microsoft identity account you use for the application.
-7. The NeoDash report should open
+4. If requested to select a browser account, select your Microsoft identity account you use for the application.
+5. The NeoDash report should open
+
+> Note: The URL to access the NeoDash report will follow this pattern, where text in '[ ]' is optional and *italic* text is replaced by environment specific values:
+> [open]studybuilder[.*environment*].*domain*/neodash/
 
 ### Select Neodash report
 

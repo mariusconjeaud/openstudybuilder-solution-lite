@@ -9,7 +9,7 @@
     @close="close"
     @save="submit"
   >
-    <template #[`step.creation_mode`]>
+    <template #[`step.creation_mode`]="{ step }">
       <v-radio-group v-model="creationMode" color="primary">
         <v-radio
           data-cy="criteria-from-template"
@@ -27,20 +27,37 @@
           value="scratch"
         />
       </v-radio-group>
-    </template>
-    <template #[`step.selectStudies`]="{ step }">
       <v-form :ref="`observer_${step}`">
-        <v-autocomplete
-          v-model="selectedStudies"
-          :data-cy="$t('StudySelectionTable.select_studies')"
-          :label="$t('StudySelectionTable.studies')"
-          :items="studies"
-          :rules="[formRules.required]"
-          item-title="current_metadata.identification_metadata.study_id"
-          clearable
-          multiple
-          return-object
-        />
+        <v-row v-if="creationMode === 'select'">
+          <v-col cols="3">
+            <v-autocomplete
+              v-model="selectedStudies"
+              :data-cy="$t('StudySelectionTable.select_studies')"
+              :label="$t('StudySelectionTable.study_ids')"
+              :items="studies"
+              :rules="[formRules.required]"
+              item-title="current_metadata.identification_metadata.study_id"
+              clearable
+              multiple
+              return-object
+            />
+          </v-col>
+          <div class="mt-8">
+            {{ $t('_global.and_or') }}
+          </div>
+          <v-col cols="3">
+            <v-autocomplete
+              v-model="selectedStudies"
+              :label="$t('StudySelectionTable.study_acronyms')"
+              :items="studies"
+              item-title="current_metadata.identification_metadata.study_acronym"
+              return-object
+              :rules="[formRules.required]"
+              multiple
+              clearable
+            />
+          </v-col>
+        </v-row>
       </v-form>
     </template>
     <template #[`step.select`]>
@@ -156,7 +173,7 @@
           :items="criteriaTemplates"
           :items-per-page="15"
           hide-default-switches
-          hide-actions-menu
+          hide-export-button
           elevation="0"
           :items-length="total"
           :column-data-resource="
@@ -213,6 +230,7 @@
               color="primary"
               :title="$t('StudyObjectiveForm.copy_template')"
               variant="text"
+              :disabled="loadingTemplates"
               @click="selectTemplate(item)"
             />
           </template>
@@ -327,9 +345,10 @@ export default {
         'criteria_type.sponsor_preferred_name': {
           v: [this.criteriaType.name.sponsor_preferred_name],
         },
+        'criteria.status': { v: [statuses.FINAL] },
       },
       tplHeaders: [
-        { title: '', key: 'actions', width: '5%' },
+        { title: '', key: 'actions', width: '1%' },
         {
           title: this.$t('_global.number'),
           key: 'sequence_id',
@@ -365,6 +384,7 @@ export default {
       criteriaTemplates: [],
       form: {},
       loadingParameters: false,
+      loadingTemplates: false,
       parameters: [],
       parameterTypes: [],
       preInstanceMode: true,
@@ -393,16 +413,12 @@ export default {
           title: this.$t('EligibilityCriteriaForm.creation_mode_label'),
         },
         {
-          name: 'selectStudies',
-          title: this.$t('EligibilityCriteriaForm.select_studies'),
-        },
-        {
           name: 'select',
           title: this.$t('EligibilityCriteriaForm.select_criteria'),
         },
       ],
       selectionHeaders: [
-        { title: '', key: 'actions', width: '5%' },
+        { title: '', key: 'actions', width: '1%' },
         {
           title: this.$t('EligibilityCriteriaForm.criteria_text'),
           key: 'name',
@@ -414,7 +430,7 @@ export default {
         },
       ],
       stdHeaders: [
-        { title: '', key: 'actions', width: '5%' },
+        { title: '', key: 'actions', width: '1%' },
         { title: this.$t('Study.study_id'), key: 'studyUid' },
         {
           title: this.$t('EligibilityCriteriaForm.criteria_text'),
@@ -497,7 +513,7 @@ export default {
     getObserver(step) {
       return this.$refs[`observer_${step}`]
     },
-    getCriteriaTemplates(filters, options, filtersUpdated) {
+    async getCriteriaTemplates(filters, options, filtersUpdated) {
       const params = filteringParameters.prepareParameters(
         options,
         filters,
@@ -523,10 +539,14 @@ export default {
           },
         })
       }
-      this.apiEndpoint.get(params).then((resp) => {
+      this.loadingTemplates = true
+      try {
+        const resp = await this.apiEndpoint.get(params)
         this.criteriaTemplates = resp.data.items
         this.total = resp.data.total
-      })
+      } finally {
+        this.loadingTemplates = false
+      }
     },
     addTypeFilterToHeader(jsonFilter, params) {
       if (!this.preInstanceMode) {
@@ -538,6 +558,7 @@ export default {
           v: [this.criteriaType.term_uid],
         }
       }
+      jsonFilter['library.name'] = { v: [libraries.LIBRARY_SPONSOR] }
       return {
         jsonFilter,
         params,
@@ -634,7 +655,7 @@ export default {
                 criteria_data: {
                   parameter_terms: studyCriteria.criteria.parameter_terms,
                   criteria_template_uid:
-                    studyCriteria.criteria.criteria_template.uid,
+                    studyCriteria.criteria.template.uid,
                   library_name: studyCriteria.criteria.library.name,
                 },
               }

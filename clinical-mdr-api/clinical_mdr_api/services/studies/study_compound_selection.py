@@ -1,14 +1,15 @@
 from neomodel import db
 
-from clinical_mdr_api import models
+from clinical_mdr_api import exceptions, models
 from clinical_mdr_api.domain_repositories.study_selections.study_compound_repository import (
     StudyCompoundSelectionHistory,
 )
+from clinical_mdr_api.domains.concepts.medicinal_product import MedicinalProductAR
 from clinical_mdr_api.domains.study_selections.study_selection_compound import (
     StudySelectionCompoundsAR,
     StudySelectionCompoundVO,
 )
-from clinical_mdr_api.models import StudySelectionCompoundInput
+from clinical_mdr_api.models import StudySelectionCompoundEditInput
 from clinical_mdr_api.models.utils import GenericFilteringReturn
 from clinical_mdr_api.oauth.user import user
 from clinical_mdr_api.repositories._utils import FilterOperator
@@ -58,6 +59,13 @@ class StudyCompoundSelectionService(
                     selection.compound_alias_uid
                 )
 
+            if selection.medicinal_product_uid is None:
+                medicinal_product_model = None
+            else:
+                medicinal_product_model = self._transform_medicinal_product_model(
+                    selection.medicinal_product_uid
+                )
+
             result.append(
                 models.StudySelectionCompound.from_study_compound_ar(
                     study_uid=study_selection.study_uid,
@@ -65,10 +73,9 @@ class StudyCompoundSelectionService(
                     order=order,
                     compound_model=compound_model,
                     compound_alias_model=compound_alias_model,
+                    medicinal_product_model=medicinal_product_model,
                     find_simple_term_model_name_by_term_uid=self.find_term_name_by_uid,
                     find_project_by_study_uid=self._repos.project_repository.find_by_study_uid,
-                    find_numeric_value_by_uid=self._repos.numeric_value_with_unit_repository.find_by_uid_2,
-                    find_unit_by_uid=self._repos.unit_definition_repository.find_by_uid_2,
                     study_value_version=study_value_version,
                     terms_at_specific_datetime=terms_at_specific_datetime,
                 )
@@ -94,16 +101,23 @@ class StudyCompoundSelectionService(
         terms_at_specific_datetime = self._extract_study_standards_effective_date(
             study_uid=study_uid,
         )
+
+        if study_selection.medicinal_product_uid is None:
+            medicinal_product_model = None
+        else:
+            medicinal_product_model = self._transform_medicinal_product_model(
+                study_selection.medicinal_product_uid
+            )
+
         result = models.StudySelectionCompound.from_study_compound_ar(
             study_uid=study_uid,
             selection=study_selection,
             order=order,
             compound_model=compound_model,
             compound_alias_model=compound_alias_model,
+            medicinal_product_model=medicinal_product_model,
             find_simple_term_model_name_by_term_uid=self.find_term_name_by_uid,
             find_project_by_study_uid=self._repos.project_repository.find_by_study_uid,
-            find_numeric_value_by_uid=self._repos.numeric_value_with_unit_repository.find_by_uid_2,
-            find_unit_by_uid=self._repos.unit_definition_repository.find_by_uid_2,
             terms_at_specific_datetime=terms_at_specific_datetime,
         )
         return result
@@ -112,7 +126,7 @@ class StudyCompoundSelectionService(
     def make_selection(
         self,
         study_uid: str,
-        selection_create_input: models.StudySelectionCompoundInput,
+        selection_create_input: models.StudySelectionCompoundCreateInput,
     ) -> models.StudySelectionCompound:
         repos = MetaRepository()
         try:
@@ -121,19 +135,28 @@ class StudyCompoundSelectionService(
                 study_uid=study_uid, for_update=True
             )
 
+            medicinal_product: MedicinalProductAR = (
+                repos.medicinal_product_repository.find_by_uid_2(
+                    selection_create_input.medicinal_product_uid
+                )
+            )
+
+            if not medicinal_product:
+                raise exceptions.ValidationException(
+                    f"There is no approved medicinal product identified by provided uid ({selection_create_input.medicinal_product_uid})"
+                )
+
             new_selection = StudySelectionCompoundVO.from_input_values(
                 compound_uid=repos.compound_alias_repository.get_compound_uid_by_alias_uid(
                     selection_create_input.compound_alias_uid
                 ),
                 study_uid=study_uid,
                 compound_alias_uid=selection_create_input.compound_alias_uid,
+                medicinal_product_uid=selection_create_input.medicinal_product_uid,
                 type_of_treatment_uid=selection_create_input.type_of_treatment_uid,
-                route_of_administration_uid=selection_create_input.route_of_administration_uid,
-                strength_value_uid=selection_create_input.strength_value_uid,
-                dosage_form_uid=selection_create_input.dosage_form_uid,
-                dispensed_in_uid=selection_create_input.dispensed_in_uid,
-                device_uid=selection_create_input.device_uid,
-                formulation_uid=selection_create_input.formulation_uid,
+                dose_frequency_uid=medicinal_product.concept_vo.dose_frequency_uid,
+                dispenser_uid=medicinal_product.concept_vo.dispenser_uid,
+                delivery_device_uid=medicinal_product.concept_vo.delivery_device_uid,
                 other_info=selection_create_input.other_info,
                 reason_for_missing_value_uid=selection_create_input.reason_for_missing_null_value_uid,
                 study_compound_dosing_count=0,
@@ -147,7 +170,8 @@ class StudyCompoundSelectionService(
                 reason_for_missing_callback=repos.ct_term_name_repository.term_exists,
                 compound_exist_callback=repos.compound_repository.final_concept_exists,
                 compound_alias_exist_callback=repos.compound_alias_repository.final_concept_exists,
-                compound_callback=repos.compound_repository.find_by_uid_2,
+                medicinal_product_exist_callback=repos.medicinal_product_repository.final_concept_exists,
+                medicinal_product_callback=repos.medicinal_product_repository.find_by_uid_2,
             )
 
             # sync with DB and save the update
@@ -365,20 +389,18 @@ class StudyCompoundSelectionService(
         finally:
             repos.close()
 
-    def _patch_prepare_new_study_endpoint(
+    def _patch_prepare_new_study_compound(
         self,
-        request_study_compound: StudySelectionCompoundInput,
+        request_study_compound: StudySelectionCompoundEditInput,
         current_study_compound: StudySelectionCompoundVO,
     ) -> StudySelectionCompoundVO:
+        repos = MetaRepository()
+
         # transform current to input model
-        transformed_current = StudySelectionCompoundInput(
-            compound_uid=current_study_compound.compound_uid,
+        transformed_current = StudySelectionCompoundEditInput(
+            compound_alias_uid=current_study_compound.compound_alias_uid,
+            medicinal_product_uid=current_study_compound.medicinal_product_uid,
             type_of_treatment_uid=current_study_compound.type_of_treatment_uid,
-            route_of_administration_uid=current_study_compound.route_of_administration_uid,
-            dosage_form_uid=current_study_compound.dosage_form_uid,
-            dispensed_in_uid=current_study_compound.dispensed_in_uid,
-            device_uid=current_study_compound.device_uid,
-            formulation_uid=current_study_compound.formulation_uid,
             other_info=current_study_compound.other_info,
             reason_for_missing_null_value_uid=current_study_compound.reason_for_missing_value_uid,
         )
@@ -389,18 +411,27 @@ class StudyCompoundSelectionService(
             reference_base_model=transformed_current,
         )
 
+        medicinal_product: MedicinalProductAR = (
+            repos.medicinal_product_repository.find_by_uid_2(
+                request_study_compound.medicinal_product_uid
+            )
+        )
+
+        if not medicinal_product:
+            raise exceptions.ValidationException(
+                f"There is no approved medicinal product identified by provided uid ({request_study_compound.medicinal_product_uid})"
+            )
+
         return StudySelectionCompoundVO.from_input_values(
             compound_uid=self._repos.compound_alias_repository.get_compound_uid_by_alias_uid(
                 request_study_compound.compound_alias_uid
             ),
             compound_alias_uid=request_study_compound.compound_alias_uid,
+            medicinal_product_uid=request_study_compound.medicinal_product_uid,
             type_of_treatment_uid=request_study_compound.type_of_treatment_uid,
-            route_of_administration_uid=request_study_compound.route_of_administration_uid,
-            strength_value_uid=request_study_compound.strength_value_uid,
-            dosage_form_uid=request_study_compound.dosage_form_uid,
-            dispensed_in_uid=request_study_compound.dispensed_in_uid,
-            device_uid=request_study_compound.device_uid,
-            formulation_uid=request_study_compound.formulation_uid,
+            dose_frequency_uid=medicinal_product.concept_vo.dose_frequency_uid,
+            dispenser_uid=medicinal_product.concept_vo.dispenser_uid,
+            delivery_device_uid=medicinal_product.concept_vo.delivery_device_uid,
             other_info=request_study_compound.other_info,
             reason_for_missing_value_uid=request_study_compound.reason_for_missing_null_value_uid,
             study_compound_dosing_count=current_study_compound.study_compound_dosing_count,
@@ -413,7 +444,7 @@ class StudyCompoundSelectionService(
         self,
         study_uid: str,
         study_selection_uid: str,
-        selection_update_input: models.StudySelectionCompoundInput,
+        selection_update_input: models.StudySelectionCompoundEditInput,
     ) -> models.StudySelectionCompound:
         repos = MetaRepository()
         try:
@@ -428,7 +459,7 @@ class StudyCompoundSelectionService(
             )
 
             # merge current with updates
-            updated_selection = self._patch_prepare_new_study_endpoint(
+            updated_selection = self._patch_prepare_new_study_compound(
                 request_study_compound=selection_update_input,
                 current_study_compound=current_vo,
             )
@@ -440,6 +471,7 @@ class StudyCompoundSelectionService(
                 reason_for_missing_callback=repos.ct_term_name_repository.term_exists,
                 compound_exist_callback=repos.compound_repository.final_concept_exists,
                 compound_alias_exist_callback=repos.compound_alias_repository.final_concept_exists,
+                medicinal_product_exist_callback=repos.medicinal_product_repository.final_concept_exists,
             )
 
             # sync with DB and save the update
@@ -470,9 +502,8 @@ class StudyCompoundSelectionService(
                     study_uid=study_uid,
                     get_compound_by_uid=self._transform_compound_model,
                     get_compound_alias_by_uid=self._transform_compound_alias_model,
+                    get_medicinal_product_by_uid=self._transform_medicinal_product_model,
                     find_simple_term_model_name_by_term_uid=self.find_term_name_by_uid,
-                    find_numeric_value_by_uid=self._repos.numeric_value_with_unit_repository.find_by_uid_2,
-                    find_unit_by_uid=self._repos.unit_definition_repository.find_by_uid_2,
                 )
             )
         return result

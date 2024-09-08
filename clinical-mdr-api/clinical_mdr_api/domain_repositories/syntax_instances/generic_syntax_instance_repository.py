@@ -213,7 +213,7 @@ class GenericSyntaxInstanceRepository(
         value.tptv_name AS tptv_name
         OPTIONAL MATCH (ptv: ParameterTemplateValue)<-[:LATEST_FINAL]-(td: ParameterTemplateRoot)-[:HAS_COMPLEX_VALUE]->(tptr)
         WHERE tptv_name iS NOT NULL AND tp is NOT NULL
-        WITH pre_instance_value, position, parameter, collect(DISTINCT {{set_number: 0, position: rel.position, index: rel.index, parameter_name: tp.name, parameter_term: tptv_name, parameter_uid: tptr.uid,definition: td.uid, template: ptv.template_string }}) as data
+        WITH pre_instance_value, position, parameter, collect(DISTINCT {{set_number: 0, position: rel.position, index: rel.index, parameter_name: tp.name, parameter_term: tptv_name, parameter_uid: tptr.uid,definition: td.uid, template: ptv.template_string, labels: labels(tptr) }}) as data
         OPTIONAL MATCH (pre_instance_value)-[con_rel:HAS_CONJUNCTION]->(con:Conjunction)
         WHERE con_rel.position=position
         WITH position, parameter, data, coalesce(con.string, "") AS conjunction
@@ -266,7 +266,7 @@ class GenericSyntaxInstanceRepository(
         OPTIONAL MATCH (tpvv: ParameterTemplateValue)<-[:LATEST_FINAL]-(td: ParameterTemplateRoot)-[:HAS_COMPLEX_VALUE]->(tptr)
         WHERE tpv iS NOT NULL AND tp is NOT NULL
         
-        WITH vv, position, parameter, collect(DISTINCT {{set_number: 0, position: rel.position, index: rel.index, parameter_name: tp.name, parameter_term: tpv, parameter_uid: tptr.uid,  definition: td.uid, template: tpvv.template_string }}) as data
+        WITH vv, position, parameter, collect(DISTINCT {{set_number: 0, position: rel.position, index: rel.index, parameter_name: tp.name, parameter_term: tpv, parameter_uid: tptr.uid,  definition: td.uid, template: tpvv.template_string, labels: labels(tptr) }}) as data
         OPTIONAL MATCH (vv)-[con_rel:HAS_CONJUNCTION]->(con:Conjunction)
         WHERE con_rel.position=position
         WITH position, parameter, data, coalesce(con.string, "") AS conjunction

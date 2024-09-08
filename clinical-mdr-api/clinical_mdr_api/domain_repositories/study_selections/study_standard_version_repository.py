@@ -221,6 +221,7 @@ class StudyStandardVersionRepository:
         new_study_standard_version = StudyStandardVersion(
             uid=item.uid,
             status=item.study_status.value,
+            description=item.description,
         )
         if item.uid is not None:
             new_study_standard_version.uid = item.uid

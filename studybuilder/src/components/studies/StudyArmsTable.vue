@@ -1,6 +1,7 @@
 <template>
   <div>
     <NNTable
+      ref="table"
       :headers="headers"
       item-value="arm_uid"
       :items-length="total"
@@ -49,13 +50,18 @@
           <span>&nbsp;</span>
         </v-chip>
       </template>
+      <template #[`item.arm_type.sponsor_preferred_name`]="{ item }">
+        <CTTermDisplay :term="item.arm_type" />
+      </template>
       <template #[`item.actions`]="{ item }">
         <ActionsMenu :actions="actions" :item="item" />
       </template>
       <template #actions="">
         <v-btn
+          class="ml-2"
           size="small"
-          color="primary"
+          variant="outlined"
+          color="nnBaseBlue"
           :title="$t('StudyArmsForm.add_arm')"
           data-cy="add-study-arm"
           :disabled="
@@ -82,6 +88,7 @@
         :title="studyArmHistoryTitle"
         :headers="headers"
         :items="armHistoryItems"
+        :items-total="armHistoryItems.length"
         @close="closeArmHistory"
       />
     </v-dialog>
@@ -100,6 +107,7 @@
 <script>
 import NNTable from '@/components/tools/NNTable.vue'
 import arms from '@/api/arms'
+import CTTermDisplay from '@/components/tools/CTTermDisplay.vue'
 import StudyArmsForm from '@/components/studies/StudyArmsForm.vue'
 import ActionsMenu from '@/components/tools/ActionsMenu.vue'
 import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
@@ -112,6 +120,7 @@ import { useStudiesGeneralStore } from '@/stores/studies-general'
 
 export default {
   components: {
+    CTTermDisplay,
     NNTable,
     StudyArmsForm,
     ActionsMenu,
@@ -131,7 +140,7 @@ export default {
   data() {
     return {
       headers: [
-        { title: '', key: 'actions', width: '5%' },
+        { title: '', key: 'actions', width: '1%' },
         { title: '#', key: 'order', width: '5%' },
         {
           title: this.$t('StudyArmsTable.type'),
@@ -198,6 +207,7 @@ export default {
       armHistoryItems: [],
       selectedArm: null,
       showStudyArmsHistory: false,
+      showOrderForm: false,
     }
   },
   computed: {
@@ -235,7 +245,7 @@ export default {
     closeForm() {
       this.armToEdit = {}
       this.showArmsForm = false
-      this.fetchStudyArms()
+      this.$refs.table.filterTable()
     },
     editArm(item) {
       this.armToEdit = item
@@ -281,7 +291,7 @@ export default {
           this.eventBusEmit('notification', {
             msg: this.$t('StudyArmsTable.arm_deleted'),
           })
-          this.fetchStudyArms()
+          this.$refs.table.filterTable()
         })
       } else if (
         await this.$refs.confirm.open(
@@ -293,7 +303,7 @@ export default {
           this.eventBusEmit('notification', {
             msg: this.$t('StudyArmsTable.arm_deleted'),
           })
-          this.fetchStudyArms()
+          this.$refs.table.filterTable()
         })
       }
     },
@@ -305,7 +315,7 @@ export default {
       arms
         .updateArmOrder(this.selectedStudy.uid, arm.arm_uid, newOrder)
         .then(() => {
-          this.fetchStudyArms()
+          this.$refs.table.filterTable()
         })
     },
     submitOrder(value) {
@@ -316,7 +326,7 @@ export default {
           value
         )
         .then(() => {
-          this.fetchStudyArms()
+          this.$refs.table.filterTable()
           this.closeOrderForm()
           this.eventBusEmit('notification', {
             msg: this.$t('_global.order_updated'),

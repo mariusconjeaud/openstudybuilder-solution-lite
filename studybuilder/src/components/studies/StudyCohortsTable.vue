@@ -1,6 +1,7 @@
 <template>
   <div>
     <NNTable
+      ref="table"
       :headers="headers"
       item-value="cohort_uid"
       :items-length="total"
@@ -14,8 +15,10 @@
     >
       <template #actions="">
         <v-btn
+          class="ml-2"
           size="small"
-          color="primary"
+          variant="outlined"
+          color="nnBaseBlue"
           :title="$t('StudyCohorts.add_study_cohort')"
           data-cy="add-study-cohort"
           :disabled="
@@ -100,6 +103,7 @@
         :title="studyCohortHistoryTitle"
         :headers="headers"
         :items="cohortHistoryItems"
+        :items-total="cohortHistoryItems.length"
         @close="closeCohortHistory"
       />
     </v-dialog>
@@ -148,7 +152,7 @@ export default {
   data() {
     return {
       headers: [
-        { title: '', key: 'actions', width: '5%' },
+        { title: '', key: 'actions', width: '1%' },
         { title: '#', key: 'order', width: '5%' },
         {
           title: this.$t('StudyCohorts.arm_name'),
@@ -159,6 +163,7 @@ export default {
           title: this.$t('StudyCohorts.branch_arm_name'),
           key: 'branch_arm_roots',
           historyHeader: 'branch_arm_roots_uids',
+          filteringName: 'branch_arm_roots.name',
         },
         { title: this.$t('StudyCohorts.cohort_name'), key: 'name' },
         { title: this.$t('StudyCohorts.cohort_short_name'), key: 'short_name' },
@@ -267,7 +272,7 @@ export default {
     closeForm() {
       this.form = false
       this.cohortToEdit = {}
-      this.fetchStudyCohorts()
+      this.$refs.table.filterTable()
     },
     editCohort(item) {
       this.cohortToEdit = item
@@ -288,7 +293,7 @@ export default {
     },
     deleteCohort(item) {
       arms.deleteCohort(this.selectedStudy.uid, item.cohort_uid).then(() => {
-        this.fetchStudyCohorts()
+        this.$refs.table.filterTable()
         this.eventBusEmit('notification', {
           msg: this.$t('StudyCohorts.cohort_deleted'),
         })
@@ -302,7 +307,7 @@ export default {
           value
         )
         .then(() => {
-          this.fetchStudyCohorts()
+          this.$refs.table.filterTable()
           this.closeOrderForm()
           this.eventBusEmit('notification', {
             msg: this.$t('_global.order_updated'),

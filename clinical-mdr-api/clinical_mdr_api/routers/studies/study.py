@@ -215,6 +215,7 @@ def get_distinct_objective_values_for_header(
 def get_all_selected_objectives(
     request: Request,  # request is actually required by the allow_exports decorator
     uid: str = studyUID,
+    sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
     no_brackets: bool = Query(
         False,
         description="Indicates whether brackets around Template Parameters in the Objective"
@@ -243,6 +244,7 @@ def get_all_selected_objectives(
     service = StudyObjectiveSelectionService()
     return service.get_all_selection(
         study_uid=uid,
+        sort_by=sort_by,
         no_brackets=no_brackets,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
@@ -809,6 +811,7 @@ def get_all_selected_endpoints(
         description="Indicates whether brackets around Template Parameters in the Objective"
         "and Endpoint should be returned",
     ),
+    sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
     filters: Json
     | None = Query(
         None,
@@ -833,6 +836,7 @@ def get_all_selected_endpoints(
     return service.get_all_selection(
         study_uid=uid,
         no_brackets=no_brackets,
+        sort_by=sort_by,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
         page_number=page_number,
@@ -1484,11 +1488,10 @@ State after:
             "substance_names=compound.unii_substance_name",
             "unii_codes=compound.unii_substance_cd",
             "type_of_treatment=type_of_treatment.name",
-            "route_of_admin=route_of_administration.name",
-            "dosage_form=dosage_form.name",
-            "dispensed_in=dispensed_in",
-            "device=device",
-            "formulation=formulation",
+            "dose_frequency=dose_frequency.name",
+            "dose_value=dose_value",
+            "dispenser=dispenser.name",
+            "delivery_device=delivery_device.name",
             "other=other_info",
             "reason_for_missing=reason_for_missing_null_value_code",
             "study_uid",
@@ -1765,7 +1768,7 @@ State after:
 @decorators.validate_if_study_is_not_locked("uid")
 def post_new_compound_selection(
     uid: str = studyUID,
-    selection: models.StudySelectionCompoundInput = Body(
+    selection: models.StudySelectionCompoundCreateInput = Body(
         description="Related parameters of the selection that shall be created."
     ),
 ) -> models.StudySelectionCompound:
@@ -1900,7 +1903,7 @@ State after:
 def patch_update_compound_selection(
     uid: str = studyUID,
     study_compound_uid: str = study_selection_uid,
-    selection: models.StudySelectionCompoundInput = Body(
+    selection: models.StudySelectionCompoundEditInput = Body(
         description="Related parameters of the selection that shall be created."
     ),
 ) -> models.StudySelectionCompound:

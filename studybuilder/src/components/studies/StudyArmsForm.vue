@@ -180,18 +180,20 @@ export default {
   watch: {
     editedArm(value) {
       if (Object.keys(value).length !== 0) {
-        this.form = JSON.parse(JSON.stringify(value))
-        if (this.form.arm_connected_branch_arms) {
-          this.branches = this.form.arm_connected_branch_arms.map(
-            (el) => el.name
-          )
-          delete this.form.arm_connected_branch_arms
-        }
-        this.form.arm_type_uid = value.arm_type.term_uid
-        if (value.arm_colour) {
-          this.colorHash = this.editedArm.arm_colour
-        }
-        this.formStore.save(this.form)
+        arms.getStudyArm(this.selectedStudy.uid, value.arm_uid).then((resp) => {
+          this.form = JSON.parse(JSON.stringify(resp.data))
+          if (this.form.arm_connected_branch_arms) {
+            this.branches = this.form.arm_connected_branch_arms.map(
+              (el) => el.name
+            )
+            delete this.form.arm_connected_branch_arms
+          }
+          this.form.arm_type_uid = value.arm_type.term_uid
+          if (value.arm_colour) {
+            this.colorHash = this.editedArm.arm_colour
+          }
+          this.formStore.save(this.form)
+        })
       }
     },
   },

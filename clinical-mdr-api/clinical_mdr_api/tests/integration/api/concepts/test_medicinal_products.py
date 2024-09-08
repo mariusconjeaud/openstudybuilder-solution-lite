@@ -149,17 +149,6 @@ def test_data():
     # Create a compound
     compound = TestUtils.create_compound(
         name=f"Compound A-{rand}",
-        dosage_form_uids=[ct_term_dose_form.term_uid],
-        delivery_devices_uids=[ct_term_delivery_device.term_uid],
-        dispensers_uids=[ct_term_dispenser.term_uid],
-        route_of_administration_uids=[ct_term_roa.term_uid],
-        strength_values_uids=[strength.uid],
-        dose_frequency_uids=[ct_term_dose_frequency.term_uid],
-        dose_values_uids=[dose_value.uid],
-        lag_times_uids=[lag_time.uid],
-        half_life_uid=half_life.uid,
-        substance_terms_uids=[],
-        brands_uids=[],
     )
 
     # Create some active substances
@@ -185,6 +174,7 @@ def test_data():
     # Create some pharmaceutical products
     ingredient_1 = {
         "external_id": f"ingredient-prodex-id-a-{rand}",
+        "formulation_name": "formulation-name-a",
         "active_substance_uid": active_substances_all[0].uid,
         "strength_uid": strength.uid,
         "half_life_uid": half_life.uid,
@@ -192,6 +182,7 @@ def test_data():
     }
     ingredient_2 = {
         "external_id": f"ingredient-prodex-id-b-{rand}",
+        "formulation_name": "formulation-name-b",
         "active_substance_uid": active_substances_all[1].uid,
         "strength_uid": strength.uid,
         "half_life_uid": half_life.uid,
@@ -200,7 +191,6 @@ def test_data():
 
     formulation_1 = {
         "external_id": f"formulation-prodex-id-a-{rand}",
-        "name": "formulation-name-a",
         "ingredients": [ingredient_1, ingredient_2],
     }
 
@@ -232,9 +222,9 @@ def test_data():
             name_sentence_case=f"name_a-{rand}",
             pharmaceutical_product_uids=[x.uid for x in pharmaceutical_products_all],
             dose_value_uids=[dose_value.uid],
-            dose_frequency_uids=[ct_term_dose_frequency.term_uid],
-            delivery_device_uids=[ct_term_delivery_device.term_uid],
-            dispenser_uids=[ct_term_dispenser.term_uid],
+            dose_frequency_uid=ct_term_dose_frequency.term_uid,
+            delivery_device_uid=ct_term_delivery_device.term_uid,
+            dispenser_uid=ct_term_dispenser.term_uid,
         )
     )
     medicinal_products_all.append(
@@ -245,9 +235,9 @@ def test_data():
             name_sentence_case=f"name_b-{rand}",
             pharmaceutical_product_uids=[x.uid for x in pharmaceutical_products_all],
             dose_value_uids=[dose_value.uid],
-            dose_frequency_uids=[ct_term_dose_frequency.term_uid],
-            delivery_device_uids=[ct_term_delivery_device.term_uid],
-            dispenser_uids=[ct_term_dispenser.term_uid],
+            dose_frequency_uid=ct_term_dose_frequency.term_uid,
+            delivery_device_uid=ct_term_delivery_device.term_uid,
+            dispenser_uid=ct_term_dispenser.term_uid,
         )
     )
 
@@ -259,9 +249,9 @@ def test_data():
             name_sentence_case=f"name_aaa-{rand}_{index}",
             pharmaceutical_product_uids=[x.uid for x in pharmaceutical_products_all],
             dose_value_uids=[dose_value.uid],
-            dose_frequency_uids=[ct_term_dose_frequency.term_uid],
-            delivery_device_uids=[ct_term_delivery_device.term_uid],
-            dispenser_uids=[ct_term_dispenser.term_uid],
+            dose_frequency_uid=ct_term_dose_frequency.term_uid,
+            delivery_device_uid=ct_term_delivery_device.term_uid,
+            dispenser_uid=ct_term_dispenser.term_uid,
         )
         medicinal_products_all.append(medicinal_product_a)
 
@@ -272,9 +262,9 @@ def test_data():
             name_sentence_case=f"name_bbb-{rand}_{index}",
             pharmaceutical_product_uids=[x.uid for x in pharmaceutical_products_all],
             dose_value_uids=[dose_value.uid],
-            dose_frequency_uids=[ct_term_dose_frequency.term_uid],
-            delivery_device_uids=[ct_term_delivery_device.term_uid],
-            dispenser_uids=[ct_term_dispenser.term_uid],
+            dose_frequency_uid=ct_term_dose_frequency.term_uid,
+            delivery_device_uid=ct_term_delivery_device.term_uid,
+            dispenser_uid=ct_term_dispenser.term_uid,
         )
         medicinal_products_all.append(medicinal_product_b)
 
@@ -301,10 +291,10 @@ def test_data():
         "name_sentence_case": f"name-new-{rand}",
         "compound_uid": compound.uid,
         "pharmaceutical_product_uids": [pharmaceutical_products_all[0].uid],
-        "dose_frequency_uids": [ct_term_dose_frequency.term_uid],
-        "delivery_device_uids": [ct_term_delivery_device.term_uid],
+        "dose_frequency_uid": ct_term_dose_frequency.term_uid,
+        "delivery_device_uid": ct_term_delivery_device.term_uid,
         "dose_value_uids": [dose_value.uid],
-        "dispenser_uids": [ct_term_dispenser.term_uid],
+        "dispenser_uid": ct_term_dispenser.term_uid,
     }
 
     yield
@@ -326,9 +316,9 @@ MEDICINAL_PRODUCT_FIELDS_ALL = [
     "pharmaceutical_products",
     "compound",
     "dose_values",
-    "dose_frequencies",
-    "delivery_devices",
-    "dispensers",
+    "dose_frequency",
+    "delivery_device",
+    "dispenser",
 ]
 
 MEDICINAL_PRODUCT_FIELDS_NOT_NULL = [
@@ -339,9 +329,6 @@ MEDICINAL_PRODUCT_FIELDS_NOT_NULL = [
     "version",
     "possible_actions",
     "dose_values",
-    "dose_frequencies",
-    "delivery_devices",
-    "dispensers",
     "compound",
     "pharmaceutical_products",
     "name",
@@ -388,21 +375,18 @@ def test_get_medicinal_product(api_client):
     assert res["dose_values"][0]["value"] == dose_value.value
     assert res["dose_values"][0]["unit_label"] == dose_value.unit_label
 
-    assert res["dose_frequencies"][0]["term_uid"] == ct_term_dose_frequency.term_uid
+    assert res["dose_frequency"]["term_uid"] == ct_term_dose_frequency.term_uid
     assert (
-        res["dose_frequencies"][0]["name"]
-        == ct_term_dose_frequency.sponsor_preferred_name
+        res["dose_frequency"]["name"] == ct_term_dose_frequency.sponsor_preferred_name
     )
 
-    assert res["delivery_devices"][0]["term_uid"] == ct_term_delivery_device.term_uid
+    assert res["delivery_device"]["term_uid"] == ct_term_delivery_device.term_uid
     assert (
-        res["delivery_devices"][0]["name"]
-        == ct_term_delivery_device.sponsor_preferred_name
+        res["delivery_device"]["name"] == ct_term_delivery_device.sponsor_preferred_name
     )
-    assert res["dose_frequencies"][0]["term_uid"] == ct_term_dose_frequency.term_uid
+    assert res["dose_frequency"]["term_uid"] == ct_term_dose_frequency.term_uid
     assert (
-        res["dose_frequencies"][0]["name"]
-        == ct_term_dose_frequency.sponsor_preferred_name
+        res["dose_frequency"]["name"] == ct_term_dose_frequency.sponsor_preferred_name
     )
 
     assert res["version"] == "0.1"
@@ -417,8 +401,8 @@ def test_update_medicinal_product_property(api_client):
     # First try a dummy patch with no new property values in the payload
     payload = {
         "change_description": "dummy update",
-        "dose_frequency_uids": [ct_term_dose_frequency.term_uid],
-        "delivery_device_uids": [ct_term_delivery_device.term_uid],
+        "dose_frequency_uid": ct_term_dose_frequency.term_uid,
+        "delivery_device_uid": ct_term_delivery_device.term_uid,
         "formulations": [formulation_1],
     }
     response = api_client.patch(
@@ -431,15 +415,13 @@ def test_update_medicinal_product_property(api_client):
     assert response.status_code == 200
     assert res["uid"] == medicinal_products_all[0].uid
     assert res["external_id"] == medicinal_products_all[0].external_id
-    assert res["delivery_devices"][0]["term_uid"] == ct_term_delivery_device.term_uid
+    assert res["delivery_device"]["term_uid"] == ct_term_delivery_device.term_uid
     assert (
-        res["delivery_devices"][0]["name"]
-        == ct_term_delivery_device.sponsor_preferred_name
+        res["delivery_device"]["name"] == ct_term_delivery_device.sponsor_preferred_name
     )
-    assert res["dose_frequencies"][0]["term_uid"] == ct_term_dose_frequency.term_uid
+    assert res["dose_frequency"]["term_uid"] == ct_term_dose_frequency.term_uid
     assert (
-        res["dose_frequencies"][0]["name"]
-        == ct_term_dose_frequency.sponsor_preferred_name
+        res["dose_frequency"]["name"] == ct_term_dose_frequency.sponsor_preferred_name
     )
 
     assert res["version"] == "0.1"
@@ -460,15 +442,13 @@ def test_update_medicinal_product_property(api_client):
     assert response.status_code == 200
     assert res["uid"] == medicinal_products_all[0].uid
     assert res["external_id"] == medicinal_products_all[0].external_id
-    assert res["delivery_devices"][0]["term_uid"] == ct_term_delivery_device.term_uid
+    assert res["delivery_device"]["term_uid"] == ct_term_delivery_device.term_uid
     assert (
-        res["delivery_devices"][0]["name"]
-        == ct_term_delivery_device.sponsor_preferred_name
+        res["delivery_device"]["name"] == ct_term_delivery_device.sponsor_preferred_name
     )
-    assert res["dose_frequencies"][0]["term_uid"] == ct_term_dose_frequency.term_uid
+    assert res["dose_frequency"]["term_uid"] == ct_term_dose_frequency.term_uid
     assert (
-        res["dose_frequencies"][0]["name"]
-        == ct_term_dose_frequency.sponsor_preferred_name
+        res["dose_frequency"]["name"] == ct_term_dose_frequency.sponsor_preferred_name
     )
 
     assert res["version"] == "0.1"
@@ -479,8 +459,8 @@ def test_update_medicinal_product_property(api_client):
     external_id_new = f"{medicinal_products_all[0].external_id}-updated"
     payload = {
         "external_id": external_id_new,
-        "dose_frequency_uids": [ct_term_dose_frequency.term_uid],
-        "delivery_device_uids": [ct_term_delivery_device.term_uid],
+        "dose_frequency_uid": ct_term_dose_frequency.term_uid,
+        "delivery_device_uid": ct_term_delivery_device.term_uid,
         "formulations": [formulation_1],
         "change_description": "external_id updated",
     }
@@ -495,15 +475,13 @@ def test_update_medicinal_product_property(api_client):
 
     assert res["uid"] == medicinal_products_all[0].uid
     assert res["external_id"] == external_id_new
-    assert res["delivery_devices"][0]["term_uid"] == ct_term_delivery_device.term_uid
+    assert res["delivery_device"]["term_uid"] == ct_term_delivery_device.term_uid
     assert (
-        res["delivery_devices"][0]["name"]
-        == ct_term_delivery_device.sponsor_preferred_name
+        res["delivery_device"]["name"] == ct_term_delivery_device.sponsor_preferred_name
     )
-    assert res["dose_frequencies"][0]["term_uid"] == ct_term_dose_frequency.term_uid
+    assert res["dose_frequency"]["term_uid"] == ct_term_dose_frequency.term_uid
     assert (
-        res["dose_frequencies"][0]["name"]
-        == ct_term_dose_frequency.sponsor_preferred_name
+        res["dose_frequency"]["name"] == ct_term_dose_frequency.sponsor_preferred_name
     )
 
     assert res["version"] == "0.2"
@@ -529,15 +507,13 @@ def test_update_medicinal_product_property(api_client):
 
     assert res["uid"] == medicinal_products_all[0].uid
     assert res["external_id"] is None
-    assert res["delivery_devices"][0]["term_uid"] == ct_term_delivery_device.term_uid
+    assert res["delivery_device"]["term_uid"] == ct_term_delivery_device.term_uid
     assert (
-        res["delivery_devices"][0]["name"]
-        == ct_term_delivery_device.sponsor_preferred_name
+        res["delivery_device"]["name"] == ct_term_delivery_device.sponsor_preferred_name
     )
-    assert res["dose_frequencies"][0]["term_uid"] == ct_term_dose_frequency.term_uid
+    assert res["dose_frequency"]["term_uid"] == ct_term_dose_frequency.term_uid
     assert (
-        res["dose_frequencies"][0]["name"]
-        == ct_term_dose_frequency.sponsor_preferred_name
+        res["dose_frequency"]["name"] == ct_term_dose_frequency.sponsor_preferred_name
     )
 
     assert res["version"] == "0.3"
@@ -555,8 +531,8 @@ def test_update_medicinal_product_delivery_device(api_client):
 
     # Change delivery device
     payload = {
-        "delivery_device_uids": [ct_term_delivery_device_new.term_uid],
-        "dose_frequency_uids": [ct_term_dose_frequency.term_uid],
+        "delivery_device_uid": ct_term_delivery_device_new.term_uid,
+        "dose_frequency_uid": ct_term_dose_frequency.term_uid,
         "change_description": "delivery_device updated",
     }
     response = api_client.patch(
@@ -570,17 +546,14 @@ def test_update_medicinal_product_delivery_device(api_client):
 
     assert res["uid"] == medicinal_products_all[1].uid
     assert res["external_id"] == f"external_id_b-{rand}"
+    assert res["delivery_device"]["term_uid"] == ct_term_delivery_device_new.term_uid
     assert (
-        res["delivery_devices"][0]["term_uid"] == ct_term_delivery_device_new.term_uid
-    )
-    assert (
-        res["delivery_devices"][0]["name"]
+        res["delivery_device"]["name"]
         == ct_term_delivery_device_new.sponsor_preferred_name
     )
-    assert res["dose_frequencies"][0]["term_uid"] == ct_term_dose_frequency.term_uid
+    assert res["dose_frequency"]["term_uid"] == ct_term_dose_frequency.term_uid
     assert (
-        res["dose_frequencies"][0]["name"]
-        == ct_term_dose_frequency.sponsor_preferred_name
+        res["dose_frequency"]["name"] == ct_term_dose_frequency.sponsor_preferred_name
     )
 
     assert res["version"] == "0.2"
@@ -592,8 +565,8 @@ def test_update_medicinal_product_delivery_device(api_client):
 
     # Nullify delivery device and dose frequency values
     payload = {
-        "delivery_device_uids": [],
-        "dose_frequency_uids": [],
+        "delivery_device_uid": None,
+        "dose_frequency_uid": None,
         "change_description": "delivery device and dose frequency updated",
     }
     response = api_client.patch(
@@ -606,8 +579,8 @@ def test_update_medicinal_product_delivery_device(api_client):
     assert response.status_code == 200
 
     assert res["uid"] == medicinal_products_all[1].uid
-    assert res["delivery_devices"] == []
-    assert res["dose_frequencies"] == []
+    assert res["delivery_device"] is None
+    assert res["dose_frequency"] is None
 
     assert res["version"] == "0.3"
     assert res["status"] == "Draft"
@@ -881,25 +854,23 @@ def test_create_and_delete_medicinal_product(api_client):
         "name_sentence_case": "name-new",
         "compound_uid": compound.uid,
         "pharmaceutical_product_uids": [pharmaceutical_products_all[0].uid],
-        "dose_frequency_uids": [ct_term_dose_frequency.term_uid],
-        "delivery_device_uids": [ct_term_delivery_device.term_uid],
+        "dose_frequency_uid": ct_term_dose_frequency.term_uid,
+        "delivery_device_uid": ct_term_delivery_device.term_uid,
         "dose_value_uids": [dose_value.uid],
-        "dispenser_uids": [ct_term_dispenser.term_uid],
+        "dispenser_uid": ct_term_dispenser.term_uid,
     }
     response = api_client.post(BASE_URL, data=json.dumps(payload), headers=HEADERS)
     res = response.json()
 
     assert response.status_code == 201
     assert res["external_id"] == "external_id-NEW"
-    assert res["delivery_devices"][0]["term_uid"] == ct_term_delivery_device.term_uid
+    assert res["delivery_device"]["term_uid"] == ct_term_delivery_device.term_uid
     assert (
-        res["delivery_devices"][0]["name"]
-        == ct_term_delivery_device.sponsor_preferred_name
+        res["delivery_device"]["name"] == ct_term_delivery_device.sponsor_preferred_name
     )
-    assert res["dose_frequencies"][0]["term_uid"] == ct_term_dose_frequency.term_uid
+    assert res["dose_frequency"]["term_uid"] == ct_term_dose_frequency.term_uid
     assert (
-        res["dose_frequencies"][0]["name"]
-        == ct_term_dose_frequency.sponsor_preferred_name
+        res["dose_frequency"]["name"] == ct_term_dose_frequency.sponsor_preferred_name
     )
 
     assert res["version"] == "0.1"
@@ -922,20 +893,20 @@ def test_create_and_delete_medicinal_product_with_missing_values(api_client):
     # Create new medicinal product
     payload = copy.deepcopy(CREATE_MEDICINAL_PRODUCT_PAYLOAD_OK)
     del payload["pharmaceutical_product_uids"]
-    del payload["dose_frequency_uids"]
-    del payload["delivery_device_uids"]
+    del payload["dose_frequency_uid"]
+    del payload["delivery_device_uid"]
     del payload["dose_value_uids"]
-    del payload["dispenser_uids"]
+    del payload["dispenser_uid"]
 
     response = api_client.post(BASE_URL, data=json.dumps(payload), headers=HEADERS)
     res = response.json()
 
     assert response.status_code == 201
     assert res["external_id"] == f"external_id-NEW-{rand}"
-    assert res["delivery_devices"] == []
-    assert res["dose_frequencies"] == []
+    assert res["delivery_device"] is None
+    assert res["dose_frequency"] is None
     assert res["dose_values"] == []
-    assert res["dispensers"] == []
+    assert res["dispenser"] is None
     assert res["pharmaceutical_products"] == []
 
     assert res["version"] == "0.1"
@@ -957,7 +928,7 @@ def test_create_and_delete_medicinal_product_with_missing_values(api_client):
 def test_negative_create_medicinal_product_wrong_links(api_client):
     # Try to create new medicinal product with non-existing dose frequency
     payload = copy.deepcopy(CREATE_MEDICINAL_PRODUCT_PAYLOAD_OK)
-    payload["dose_frequency_uids"] = ["NON_EXISTING_UID"]
+    payload["dose_frequency_uid"] = "NON_EXISTING_UID"
     response = api_client.post(BASE_URL, data=json.dumps(payload), headers=HEADERS)
     res = response.json()
 
@@ -981,7 +952,7 @@ def test_negative_create_medicinal_product_wrong_links(api_client):
 
     # Try to create new medicinal product with non-existing dispenser
     payload = copy.deepcopy(CREATE_MEDICINAL_PRODUCT_PAYLOAD_OK)
-    payload["dispenser_uids"] = ["NON_EXISTING_UID"]
+    payload["dispenser_uid"] = "NON_EXISTING_UID"
     response = api_client.post(BASE_URL, data=json.dumps(payload), headers=HEADERS)
     res = response.json()
 
@@ -993,7 +964,7 @@ def test_negative_create_medicinal_product_wrong_links(api_client):
 
     # Try to create new medicinal product with non-existing delivery device
     payload = copy.deepcopy(CREATE_MEDICINAL_PRODUCT_PAYLOAD_OK)
-    payload["delivery_device_uids"] = ["NON_EXISTING_UID"]
+    payload["delivery_device_uid"] = "NON_EXISTING_UID"
     response = api_client.post(BASE_URL, data=json.dumps(payload), headers=HEADERS)
     res = response.json()
 

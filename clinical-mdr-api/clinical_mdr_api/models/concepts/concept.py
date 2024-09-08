@@ -321,6 +321,7 @@ class LagTimeInput(NumericValueWithUnitInput):
 
 
 class SimpleLagTime(BaseModel):
+    uid: str
     value: float
     unit_definition_uid: str
     unit_label: str
@@ -349,6 +350,7 @@ class SimpleLagTime(BaseModel):
                 )
 
                 concept = cls(
+                    uid=val.uid,
                     value=val.concept_vo.value,
                     unit_definition_uid=val.concept_vo.unit_definition_uid,
                     unit_label=unit.concept_vo.name,

@@ -23,6 +23,7 @@ class CTTermAttributes(BaseModel):
                 CTTermCodelist(
                     codelist_uid=x.codelist_uid,
                     order=x.order,
+                    library_name=x.library_name,
                 )
                 for x in ct_term_attributes_ar.ct_term_vo.codelists
             ],

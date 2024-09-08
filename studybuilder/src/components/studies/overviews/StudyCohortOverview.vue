@@ -7,7 +7,10 @@
         size="small"
         class="mt-2 ml-2"
         variant="flat"
-      />
+      >
+        <span>&nbsp;</span>
+        <span>&nbsp;</span>
+      </v-chip>
       <v-spacer />
       <v-btn
         size="small"
@@ -78,6 +81,9 @@
                   {{ item.name }}
                 </router-link>
               </template>
+              <template #[`item.arm_type.sponsor_preferred_name`]="{ item }">
+                <CTTermDisplay :term="item.arm_type" />
+              </template>
             </v-data-table>
           </v-col>
         </v-row>
@@ -129,66 +135,64 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { computed, onMounted, ref } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import arms from '@/api/arms'
-import { computed } from 'vue'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
+import CTTermDisplay from '@/components/tools/CTTermDisplay.vue'
 
-export default {
-  setup() {
-    const studiesGeneralStore = useStudiesGeneralStore()
-    return {
-      selectedStudy: computed(() => studiesGeneralStore.selectedStudy),
-    }
+const router = useRouter()
+const route = useRoute()
+const { t } = useI18n()
+
+const studiesGeneralStore = useStudiesGeneralStore()
+
+const selectedStudy = computed(() => studiesGeneralStore.selectedStudy)
+
+const cohort = ref({})
+
+const armsHeaders = [
+  { title: '#', key: 'order', width: '5%' },
+  {
+    title: t('StudyArmsTable.type'),
+    key: 'arm_type.sponsor_preferred_name',
+    width: '7%',
   },
-  data() {
-    return {
-      cohort: {},
-      armsHeaders: [
-        { title: '#', key: 'order', width: '5%' },
-        {
-          title: this.$t('StudyArmsTable.type'),
-          key: 'arm_type.sponsor_preferred_name',
-          width: '7%',
-        },
-        { title: this.$t('StudyArmsTable.name'), key: 'name' },
-        { title: this.$t('StudyArmsTable.short_name'), key: 'short_name' },
-        {
-          title: this.$t('StudyArmsTable.randomisation_group'),
-          key: 'randomization_group',
-        },
-        { title: this.$t('StudyArmsTable.code'), key: 'code' },
-        { title: this.$t('StudyArmsTable.description'), key: 'description' },
-      ],
-      branchesHeaders: [
-        { title: '#', key: 'order', width: '5%' },
-        {
-          title: this.$t('StudyBranchArms.arm_name'),
-          key: 'arm_root.name',
-          historyHeader: 'arm_root_uid',
-        },
-        { title: this.$t('StudyBranchArms.name'), key: 'name' },
-        { title: this.$t('StudyBranchArms.short_name'), key: 'short_name' },
-        {
-          title: this.$t('StudyBranchArms.randomisation_group'),
-          key: 'randomization_group',
-        },
-        { title: this.$t('StudyBranchArms.code'), key: 'code' },
-        { title: this.$t('StudyBranchArms.description'), key: 'description' },
-      ],
-    }
+  { title: t('StudyArmsTable.name'), key: 'name' },
+  { title: t('StudyArmsTable.short_name'), key: 'short_name' },
+  {
+    title: t('StudyArmsTable.randomisation_group'),
+    key: 'randomization_group',
   },
-  mounted() {
-    arms
-      .getStudyCohort(this.$route.params.study_id, this.$route.params.id)
-      .then((resp) => {
-        this.cohort = resp.data
-      })
+  { title: t('StudyArmsTable.code'), key: 'code' },
+  { title: t('StudyArmsTable.description'), key: 'description' },
+]
+const branchesHeaders = [
+  { title: '#', key: 'order', width: '5%' },
+  {
+    title: t('StudyBranchArms.arm_name'),
+    key: 'arm_root.name',
+    historyHeader: 'arm_root_uid',
   },
-  methods: {
-    close() {
-      this.$router.push({ name: 'StudyStructure', params: { tab: 'cohorts' } })
-    },
+  { title: t('StudyBranchArms.name'), key: 'name' },
+  { title: t('StudyBranchArms.short_name'), key: 'short_name' },
+  {
+    title: t('StudyBranchArms.randomisation_group'),
+    key: 'randomization_group',
   },
+  { title: t('StudyBranchArms.code'), key: 'code' },
+  { title: t('StudyBranchArms.description'), key: 'description' },
+]
+
+onMounted(() => {
+  arms.getStudyCohort(route.params.study_id, route.params.id).then((resp) => {
+    cohort.value = resp.data
+  })
+})
+
+function close() {
+  router.push({ name: 'StudyStructure', params: { tab: 'cohorts' } })
 }
 </script>

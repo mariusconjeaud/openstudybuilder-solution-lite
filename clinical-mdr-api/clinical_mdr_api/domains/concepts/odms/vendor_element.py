@@ -12,6 +12,7 @@ from clinical_mdr_api.exceptions import BusinessLogicException
 
 @dataclass(frozen=True)
 class OdmVendorElementVO(ConceptVO):
+    compatible_types: list[str]
     vendor_namespace_uid: str
     vendor_attribute_uids: list[str]
 
@@ -19,11 +20,13 @@ class OdmVendorElementVO(ConceptVO):
     def from_repository_values(
         cls,
         name: str,
+        compatible_types: list[str],
         vendor_namespace_uid: str,
         vendor_attribute_uids: list[str],
     ) -> Self:
         return cls(
             name=name,
+            compatible_types=compatible_types,
             vendor_namespace_uid=vendor_namespace_uid,
             vendor_attribute_uids=vendor_attribute_uids,
             name_sentence_case=None,
@@ -50,6 +53,12 @@ class OdmVendorElementVO(ConceptVO):
                 ],
                 "ODM Vendor Element",
             )
+
+            if not find_odm_vendor_element_callback(self.vendor_namespace_uid):
+                raise BusinessLogicException(
+                    "ODM Vendor Element tried to connect to non-existent concepts "
+                    f"[('Concept Name: ODM Vendor Namespace', 'uids: ({self.vendor_namespace_uid})')]."
+                )
 
         odm_vendor_element, _ = find_odm_vendor_element_callback(
             filter_by={
@@ -141,6 +150,7 @@ class OdmVendorElementRelationVO:
     uid: str
     name: str
     value: str
+    compatible_types: list[str]
 
     @classmethod
     def from_repository_values(
@@ -148,9 +158,11 @@ class OdmVendorElementRelationVO:
         uid: str,
         name: str,
         value: str,
+        compatible_types: list[str],
     ) -> Self:
         return cls(
             uid=uid,
             name=name,
             value=value,
+            compatible_types=compatible_types,
         )

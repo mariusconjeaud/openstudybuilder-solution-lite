@@ -21,7 +21,7 @@ class RelationType(Enum):
     VENDOR_ELEMENT_ATTRIBUTE = "vendor_element_attribute"
 
 
-class VendorCompatibleType(Enum):
+class VendorAttributeCompatibleType(Enum):
     """
     Enum for types (e.g. FormDef, ItemRef) that are compatible with Vendor Attribute
     """
@@ -31,6 +31,16 @@ class VendorCompatibleType(Enum):
     ITEM_DEF = "ItemDef"
     ITEM_GROUP_REF = "ItemGroupRef"
     ITEM_REF = "ItemRef"
+
+
+class VendorElementCompatibleType(Enum):
+    """
+    Enum for types (e.g. FormDef, ItemDef) that are compatible with Vendor Element
+    """
+
+    FORM_DEF = "FormDef"
+    ITEM_GROUP_DEF = "ItemGroupDef"
+    ITEM_DEF = "ItemDef"
 
 
 class TargetType(Enum):

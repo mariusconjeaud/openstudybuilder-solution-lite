@@ -20,10 +20,10 @@ class MedicinalProductVO(ConceptVO):
     compound_uid: str
     external_id: str | None
     pharmaceutical_product_uids: list[str] | None = None
-    delivery_device_uids: list[str] | None = None
-    dispenser_uids: list[str] | None = None
+    delivery_device_uid: str | None = None
+    dispenser_uid: str | None = None
     dose_value_uids: list[str] | None = None
-    dose_frequency_uids: list[str] | None = None
+    dose_frequency_uid: str | None = None
 
     @classmethod
     def from_repository_values(
@@ -33,19 +33,19 @@ class MedicinalProductVO(ConceptVO):
         external_id: str | None,
         compound_uid: str | None,
         pharmaceutical_product_uids: list[str] | None,
-        delivery_device_uids: list[str] | None,
-        dispenser_uids: list[str] | None,
+        delivery_device_uid: str | None,
+        dispenser_uid: str | None,
         dose_value_uids: list[str] | None,
-        dose_frequency_uids: list[str] | None,
+        dose_frequency_uid: str | None,
     ) -> Self:
         medicinal_product_vo = cls(
             external_id=external_id,
             compound_uid=compound_uid,
             pharmaceutical_product_uids=pharmaceutical_product_uids,
-            delivery_device_uids=delivery_device_uids,
-            dispenser_uids=dispenser_uids,
+            delivery_device_uid=delivery_device_uid,
+            dispenser_uid=dispenser_uid,
             dose_value_uids=dose_value_uids,
-            dose_frequency_uids=dose_frequency_uids,
+            dose_frequency_uid=dose_frequency_uid,
             name=name,
             name_sentence_case=name_sentence_case,
             definition="",
@@ -81,26 +81,28 @@ class MedicinalProductVO(ConceptVO):
                     f"{type(self).__name__} tried to connect to non-existent pharmaceutical product identified by uid ({p_uid})"
                 )
 
-        for device_uid in self.delivery_device_uids:
-            if not ct_term_exists_callback(device_uid):
-                raise exceptions.ValidationException(
-                    f"{type(self).__name__} tried to connect to non-existent delivery device identified by uid ({device_uid})"
-                )
-        for dispenser_uid in self.dispenser_uids:
-            if not ct_term_exists_callback(dispenser_uid):
-                raise exceptions.ValidationException(
-                    f"{type(self).__name__} tried to connect to non-existent dispenser identified by uid ({dispenser_uid})"
-                )
+        if self.delivery_device_uid and not ct_term_exists_callback(
+            self.delivery_device_uid
+        ):
+            raise exceptions.ValidationException(
+                f"{type(self).__name__} tried to connect to non-existent delivery device identified by uid ({self.delivery_device_uid})"
+            )
+
+        if self.dispenser_uid and not ct_term_exists_callback(self.dispenser_uid):
+            raise exceptions.ValidationException(
+                f"{type(self).__name__} tried to connect to non-existent dispenser identified by uid ({self.dispenser_uid})"
+            )
         for dose_value_uid in self.dose_value_uids:
             if not numeric_value_exists_callback(dose_value_uid):
                 raise exceptions.ValidationException(
                     f"{type(self).__name__} tried to connect to non-existent dose value identified by uid ({dose_value_uid})"
                 )
-        for dose_frequency_uid in self.dose_frequency_uids:
-            if not ct_term_exists_callback(dose_frequency_uid):
-                raise exceptions.ValidationException(
-                    f"{type(self).__name__} tried to connect to non-existent dose frequency identified by uid ({dose_frequency_uid})"
-                )
+        if self.dose_frequency_uid and not ct_term_exists_callback(
+            self.dose_frequency_uid
+        ):
+            raise exceptions.ValidationException(
+                f"{type(self).__name__} tried to connect to non-existent dose frequency identified by uid ({self.dose_frequency_uid})"
+            )
 
 
 class MedicinalProductAR(ConceptARBase):

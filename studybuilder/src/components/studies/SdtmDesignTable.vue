@@ -12,6 +12,7 @@
 </template>
 
 <script>
+import _isEmpty from 'lodash/isEmpty'
 import NNTable from '@/components/tools/NNTable.vue'
 import listings from '@/api/listings'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
@@ -189,8 +190,8 @@ export default {
         filters,
         filtersUpdated
       )
-      if (this.type === 'TV') {
-        params.sort_by = { VISITNUM: true }
+      if (this.type === 'TV' && _isEmpty(options.sortBy)) {
+        params.sort_by = JSON.stringify({ VISITNUM: true })
       }
       listings
         .getAllSdtm(this.selectedStudy.uid, params, this.type)

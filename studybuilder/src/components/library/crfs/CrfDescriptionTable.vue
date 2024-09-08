@@ -10,10 +10,10 @@
     <template #actions="">
       <v-btn
         class="ml-2"
-        fab
         size="small"
+        variant="outlined"
+        color="nnBaseBlue"
         icon="mdi-plus"
-        color="primary"
         :label="$t('CRFForms.new_translation')"
         data-cy="form-new-translation"
         :disabled="readOnly || !checkPermission($roles.LIBRARY_WRITE)"

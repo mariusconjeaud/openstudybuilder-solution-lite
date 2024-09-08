@@ -27,7 +27,6 @@ from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import 
     StudyStatus,
     StudyVersionMetadataVO,
 )
-from clinical_mdr_api.exceptions import BusinessLogicException
 from clinical_mdr_api.tests.unit.domain.study_definition_aggregate.test_study_metadata import (
     random_valid_high_level_study_design,
     random_valid_id_metadata,
@@ -1271,80 +1270,6 @@ class TestStudyDefinitionAR(unittest.TestCase):
                     study.edit_metadata(
                         new_id_metadata=new_id_metadata,
                         project_exists_callback=(lambda _: False),
-                    )
-
-    def test__edit_metadata__changing_study_number__failure(self):
-        for study in prepare_random_study_sequence(
-            count=10,
-            generate_uid_callback=_test_uid_generator,
-            condition=lambda s: s.current_metadata.ver_metadata.study_status
-            == StudyStatus.DRAFT,
-        ):
-            with self.subTest():
-                # given
-                new_id_metadata = StudyIdentificationMetadataVO.from_input_values(
-                    study_number=random_str(),
-                    subpart_id=None,
-                    study_acronym=study.current_metadata.id_metadata.study_acronym,
-                    description=study.current_metadata.id_metadata.description,
-                    registry_identifiers=RegistryIdentifiersVO(
-                        ct_gov_id=study.current_metadata.id_metadata.registry_identifiers.ct_gov_id,
-                        eudract_id=study.current_metadata.id_metadata.registry_identifiers.eudract_id,
-                        universal_trial_number_utn=study.current_metadata.id_metadata.registry_identifiers.universal_trial_number_utn,
-                        japanese_trial_registry_id_japic=study.current_metadata.id_metadata.registry_identifiers.japanese_trial_registry_id_japic,
-                        investigational_new_drug_application_number_ind=(
-                            study.current_metadata.id_metadata.registry_identifiers.investigational_new_drug_application_number_ind
-                        ),
-                        eu_trial_number=study.current_metadata.id_metadata.registry_identifiers.eu_trial_number,
-                        civ_id_sin_number=study.current_metadata.id_metadata.registry_identifiers.civ_id_sin_number,
-                        national_clinical_trial_number=study.current_metadata.id_metadata.registry_identifiers.national_clinical_trial_number,
-                        japanese_trial_registry_number_jrct=(
-                            study.current_metadata.id_metadata.registry_identifiers.japanese_trial_registry_number_jrct
-                        ),
-                        national_medical_products_administration_nmpa_number=(
-                            study.current_metadata.id_metadata.registry_identifiers.national_medical_products_administration_nmpa_number
-                        ),
-                        eudamed_srn_number=study.current_metadata.id_metadata.registry_identifiers.eudamed_srn_number,
-                        investigational_device_exemption_ide_number=(
-                            study.current_metadata.id_metadata.registry_identifiers.investigational_device_exemption_ide_number
-                        ),
-                        ct_gov_id_null_value_code=study.current_metadata.id_metadata.registry_identifiers.ct_gov_id_null_value_code,
-                        eudract_id_null_value_code=study.current_metadata.id_metadata.registry_identifiers.eudract_id_null_value_code,
-                        universal_trial_number_utn_null_value_code=(
-                            study.current_metadata.id_metadata.registry_identifiers.universal_trial_number_utn_null_value_code
-                        ),
-                        japanese_trial_registry_id_japic_null_value_code=(
-                            study.current_metadata.id_metadata.registry_identifiers.japanese_trial_registry_id_japic_null_value_code
-                        ),
-                        investigational_new_drug_application_number_ind_null_value_code=(
-                            study.current_metadata.id_metadata.registry_identifiers.investigational_new_drug_application_number_ind_null_value_code
-                        ),
-                        eu_trial_number_null_value_code=study.current_metadata.id_metadata.registry_identifiers.eu_trial_number_null_value_code,
-                        civ_id_sin_number_null_value_code=study.current_metadata.id_metadata.registry_identifiers.civ_id_sin_number_null_value_code,
-                        national_clinical_trial_number_null_value_code=(
-                            study.current_metadata.id_metadata.registry_identifiers.national_clinical_trial_number_null_value_code
-                        ),
-                        japanese_trial_registry_number_jrct_null_value_code=(
-                            study.current_metadata.id_metadata.registry_identifiers.japanese_trial_registry_number_jrct_null_value_code
-                        ),
-                        national_medical_products_administration_nmpa_number_null_value_code=(
-                            # pylint: disable=line-too-long
-                            study.current_metadata.id_metadata.registry_identifiers.national_medical_products_administration_nmpa_number_null_value_code
-                        ),
-                        eudamed_srn_number_null_value_code=study.current_metadata.id_metadata.registry_identifiers.eudamed_srn_number_null_value_code,
-                        investigational_device_exemption_ide_number_null_value_code=(
-                            study.current_metadata.id_metadata.registry_identifiers.investigational_device_exemption_ide_number_null_value_code
-                        ),
-                    ),
-                    project_number=study.current_metadata.id_metadata.project_number,
-                )
-
-                # then
-                with self.assertRaises(BusinessLogicException):
-                    # when
-                    study.edit_metadata(
-                        new_id_metadata=new_id_metadata,
-                        project_exists_callback=(lambda _: True),
                     )
 
     def test__mark_deleted__deleting_once_locked__failure(self):

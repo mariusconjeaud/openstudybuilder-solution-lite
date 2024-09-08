@@ -1,6 +1,7 @@
 <template>
   <div>
     <NNTable
+      ref="table"
       :headers="headers"
       item-value="branch_arm_uid"
       :items-length="total"
@@ -17,8 +18,10 @@
     >
       <template #actions="">
         <v-btn
+          class="ml-2"
           size="small"
-          color="primary"
+          variant="outlined"
+          color="nnBaseBlue"
           :title="$t('StudyBranchArms.add_branch')"
           data-cy="add-study-branch-arm"
           :disabled="
@@ -83,6 +86,7 @@
         :title="studyBranchHistoryTitle"
         :headers="headers"
         :items="branchHistoryItems"
+        :items-total="branchHistoryItems.length"
         @close="closeBranchHistory"
       />
     </v-dialog>
@@ -121,12 +125,6 @@ export default {
     SelectionOrderUpdateForm,
   },
   inject: ['eventBusEmit'],
-  props: {
-    refresh: {
-      type: Number,
-      default: 0,
-    },
-  },
   setup() {
     const studiesGeneralStore = useStudiesGeneralStore()
     return {
@@ -138,7 +136,7 @@ export default {
   data() {
     return {
       headers: [
-        { title: '', key: 'actions', width: '5%' },
+        { title: '', key: 'actions', width: '1%' },
         { title: '#', key: 'order', width: '5%' },
         {
           title: this.$t('StudyBranchArms.arm_name'),
@@ -217,11 +215,6 @@ export default {
       return ''
     },
   },
-  watch: {
-    refresh() {
-      this.fetchStudyArms()
-    },
-  },
   mounted() {
     this.fetchStudyArms()
   },
@@ -256,7 +249,7 @@ export default {
     closeForm() {
       this.branchArmToEdit = {}
       this.showBranchArmsForm = false
-      this.fetchStudyBranchArms()
+      this.$refs.table.filterTable()
     },
     editBranchArm(item) {
       this.branchArmToEdit = item
@@ -278,10 +271,7 @@ export default {
     async deleteBranchArm(item) {
       let cellsInBranch = 0
       await arms
-        .getAllCellsForBranch(
-          this.selectedStudy.uid,
-          item.branch_arm_uid
-        )
+        .getAllCellsForBranch(this.selectedStudy.uid, item.branch_arm_uid)
         .then((resp) => {
           cellsInBranch = resp.data.length
         })
@@ -294,7 +284,7 @@ export default {
         arms
           .deleteBranchArm(this.selectedStudy.uid, item.branch_arm_uid)
           .then(() => {
-            this.fetchStudyBranchArms()
+            this.$refs.table.filterTable()
             this.eventBusEmit('notification', {
               msg: this.$t('StudyBranchArms.branch_deleted'),
             })
@@ -308,7 +298,7 @@ export default {
         arms
           .deleteBranchArm(this.selectedStudy.uid, item.branch_arm_uid)
           .then(() => {
-            this.fetchStudyBranchArms()
+            this.$refs.table.filterTable()
             this.eventBusEmit('notification', {
               msg: this.$t('StudyBranchArms.branch_deleted'),
             })
@@ -343,7 +333,7 @@ export default {
           value
         )
         .then(() => {
-          this.fetchStudyBranchArms()
+          this.$refs.table.filterTable()
           this.closeOrderForm()
           this.eventBusEmit('notification', {
             msg: this.$t('_global.order_updated'),

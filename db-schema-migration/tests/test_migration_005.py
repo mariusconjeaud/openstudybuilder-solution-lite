@@ -11,6 +11,7 @@ from migrations.utils.utils import (
     get_logger,
 )
 from tests import common
+
 try:
     from tests.data.db_before_migration_005 import TEST_DATA
 except ImportError:
@@ -219,8 +220,12 @@ def test_migrate_study_activity_instances(migration):
                     study_activity_instance["study_activity_instance_uid"]
                 ] = (
                     study_activity_instance["activity"]["uid"],
-                    study_activity_instance["study_activity_subgroup"]["activity_subgroup_uid"],
-                    study_activity_instance["study_activity_group"]["activity_group_uid"],
+                    study_activity_instance["study_activity_subgroup"][
+                        "activity_subgroup_uid"
+                    ],
+                    study_activity_instance["study_activity_group"][
+                        "activity_group_uid"
+                    ],
                     study_activity_instance["activity_instance"]["uid"]
                     if study_activity_instance["activity_instance"]
                     else None,

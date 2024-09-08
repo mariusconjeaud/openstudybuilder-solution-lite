@@ -26,7 +26,7 @@ export const useFootnotesStore = defineStore('footnotes', {
      ** we select it, otherwise we create a new footnote in Final state
      ** and select if.
      */
-    async addStudyFootnoteFromTemplate({ studyUid, form, parameters }) {
+    async addStudyFootnoteFromTemplate({ studyUid, form, parameters, referencedItems }) {
       const footnote = {
         footnote_template_uid: form.footnote_template.uid,
         parameter_terms: await instances.formatParameterValues(parameters),
@@ -34,11 +34,12 @@ export const useFootnotesStore = defineStore('footnotes', {
       }
       const data = {
         footnote_data: footnote,
+        referenced_items: referencedItems
       }
       return study.createStudyFootnote(studyUid, data, true)
     },
-    selectFromStudyFootnote({ studyUid, footnoteUid }) {
-      return study.selectStudyFootnote(studyUid, footnoteUid)
+    selectFromStudyFootnote({ studyUid, footnoteUid, referencedItems }) {
+      return study.selectStudyFootnote(studyUid, footnoteUid, referencedItems)
     },
     async updateStudyFootnote({
       studyUid,

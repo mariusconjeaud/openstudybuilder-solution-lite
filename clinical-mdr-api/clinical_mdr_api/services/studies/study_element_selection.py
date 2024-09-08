@@ -89,7 +89,10 @@ class StudyElementSelectionService(
         )
 
     def _transform_each_history_to_response_model(
-        self, study_selection_history: SelectionHistoryElement, study_uid: str
+        self,
+        study_selection_history: SelectionHistoryElement,
+        study_uid: str,
+        effective_date: datetime = None,
     ) -> models.StudySelectionElement:
         repos = self._repos
         return models.StudySelectionElement.from_study_selection_history(
@@ -98,6 +101,7 @@ class StudyElementSelectionService(
             get_ct_term_element_subtype=self._find_by_uid_or_raise_not_found,
             get_term_element_type_by_element_subtype=repos.study_element_repository.get_element_type_term_uid_by_element_subtype_term_uid,
             find_all_study_time_units=self._repos.unit_definition_repository.find_all,
+            effective_date=effective_date,
         )
 
     @db.transaction
@@ -122,10 +126,25 @@ class StudyElementSelectionService(
                 for selection in selection_history:
                     if selection.study_selection_uid == i_unique:
                         ith_selection_history.append(selection)
-                # get the versions and compare
+
+                # Extract start dates from the selection history
+                start_dates = [history.start_date for history in ith_selection_history]
+
+                # Extract effective dates for each version based on the start dates
+                effective_dates = (
+                    self._extract_multiple_version_study_standards_effective_date(
+                        study_uid=study_uid, list_of_start_dates=start_dates
+                    )
+                )
+
+                # Transform each history to the response model and convert to dictionary format
                 versions = [
-                    self._transform_each_history_to_response_model(_, study_uid).dict()
-                    for _ in ith_selection_history
+                    self._transform_each_history_to_response_model(
+                        history, study_uid, effective_date
+                    ).dict()
+                    for history, effective_date in zip(
+                        ith_selection_history, effective_dates
+                    )
                 ]
                 if not data:
                     data = calculate_diffs(
@@ -148,9 +167,22 @@ class StudyElementSelectionService(
             selection_history = repos.study_element_repository.find_selection_history(
                 study_uid, study_selection_uid
             )
+            # Extract start dates from the selection history
+            start_dates = [history.start_date for history in selection_history]
+
+            # Extract effective dates for each version based on the start dates
+            effective_dates = (
+                self._extract_multiple_version_study_standards_effective_date(
+                    study_uid=study_uid, list_of_start_dates=start_dates
+                )
+            )
+
+            # Transform each history to the response model and convert to dictionary format
             versions = [
-                self._transform_each_history_to_response_model(_, study_uid).dict()
-                for _ in selection_history
+                self._transform_each_history_to_response_model(
+                    history, study_uid, effective_date
+                ).dict()
+                for history, effective_date in zip(selection_history, effective_dates)
             ]
             data = calculate_diffs(versions, models.StudySelectionElementVersion)
             return data

@@ -309,14 +309,14 @@ ENDPOINT_FIELDS_ALL = [
     "possible_actions",
     "parameter_terms",
     "library",
-    "endpoint_template",
+    "template",
     "study_count",
 ]
 
 ENDPOINT_FIELDS_NOT_NULL = [
     "uid",
     "name",
-    "endpoint_template",
+    "template",
 ]
 
 
@@ -340,8 +340,8 @@ def test_operator_parameter(api_client):
     assert (
         res["name_plain"] == f"Default name with {operator_parameter_terms[0]['name']}"
     )
-    assert res["endpoint_template"]["uid"] == endpoint_template_operator.uid
-    assert res["endpoint_template"]["sequence_id"] == "E2"
+    assert res["template"]["uid"] == endpoint_template_operator.uid
+    assert res["template"]["sequence_id"] == "E2"
     assert (
         res["parameter_terms"][0]["terms"][0]["uid"]
         == operator_parameter_terms[0]["uid"]
@@ -364,8 +364,8 @@ def test_operator_parameter(api_client):
     assert (
         res["name_plain"] == f"Default name with {operator_parameter_terms[1]['name']}"
     )
-    assert res["endpoint_template"]["uid"] == endpoint_template_operator.uid
-    assert res["endpoint_template"]["sequence_id"] == "E2"
+    assert res["template"]["uid"] == endpoint_template_operator.uid
+    assert res["template"]["sequence_id"] == "E2"
     assert (
         res["parameter_terms"][0]["terms"][0]["uid"]
         == operator_parameter_terms[1]["uid"]
@@ -393,8 +393,8 @@ def test_get_endpoint(api_client):
 
     assert res["uid"] == endpoints[0].uid
     assert res["name"] == f"Default name with [{text_value_1.name_sentence_case}]"
-    assert res["endpoint_template"]["uid"] == endpoint_template.uid
-    assert res["endpoint_template"]["sequence_id"] == "E1"
+    assert res["template"]["uid"] == endpoint_template.uid
+    assert res["template"]["sequence_id"] == "E1"
     assert res["parameter_terms"][0]["terms"][0]["uid"] == text_value_1.uid
     assert (
         res["parameter_terms"][0]["terms"][0]["name"] == text_value_1.name_sentence_case
@@ -642,8 +642,8 @@ def test_create_endpoint(api_client):
     assert response.status_code == 201
     assert res["uid"]
     assert res["name"] == f"Default name with [{text_value.name_sentence_case}]"
-    assert res["endpoint_template"]["uid"] == endpoint_template.uid
-    assert res["endpoint_template"]["sequence_id"] == "E1"
+    assert res["template"]["uid"] == endpoint_template.uid
+    assert res["template"]["sequence_id"] == "E1"
     assert res["parameter_terms"][0]["terms"][0]["uid"] == text_value.uid
     assert (
         res["parameter_terms"][0]["terms"][0]["name"] == text_value.name_sentence_case
@@ -723,8 +723,8 @@ def test_update_endpoint(api_client):
     assert response.status_code == 200
     assert res["uid"]
     assert res["name"] == f"Default name with [{text_value_2.name_sentence_case}]"
-    assert res["endpoint_template"]["uid"] == endpoint_template.uid
-    assert res["endpoint_template"]["sequence_id"] == "E1"
+    assert res["template"]["uid"] == endpoint_template.uid
+    assert res["template"]["sequence_id"] == "E1"
     assert res["parameter_terms"][0]["terms"][0]["uid"] == text_value_2.uid
     assert (
         res["parameter_terms"][0]["terms"][0]["name"] == text_value_2.name_sentence_case
@@ -801,8 +801,8 @@ def test_preview_endpoint(api_client):
     assert response.status_code == 200
     assert res["uid"]
     assert res["name"] == f"Default name with [{text_value.name_sentence_case}]"
-    assert res["endpoint_template"]["uid"] == endpoint_template.uid
-    assert res["endpoint_template"]["sequence_id"] == "E1"
+    assert res["template"]["uid"] == endpoint_template.uid
+    assert res["template"]["sequence_id"] == "E1"
     assert res["parameter_terms"][0]["terms"][0]["uid"] == text_value.uid
     assert (
         res["parameter_terms"][0]["terms"][0]["name"] == text_value.name_sentence_case

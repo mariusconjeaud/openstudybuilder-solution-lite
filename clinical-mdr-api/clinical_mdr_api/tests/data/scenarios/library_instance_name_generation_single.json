@@ -41,7 +41,7 @@
           "delete",
           "edit"
         ],
-        "objective_template": {
+        "template": {
           "name": "To investigate [Indication]",
           "name_plain": "To investigate [Indication]",
           "guidance_text": null,
@@ -111,7 +111,7 @@
           "delete",
           "edit"
         ],
-        "objective_template": {
+        "template": {
           "name": "To investigate [Indication]",
           "name_plain": "To investigate [Indication]",
           "guidance_text": null,
@@ -194,7 +194,7 @@
           "delete",
           "edit"
         ],
-        "objective_template": {
+        "template": {
           "name": "To investigate [Indication]",
           "name_plain": "To investigate [Indication]",
           "guidance_text": null,
@@ -289,7 +289,7 @@
           "delete",
           "edit"
         ],
-        "objective_template": {
+        "template": {
           "name": "To investigate [Indication]",
           "name_plain": "To investigate [Indication]",
           "guidance_text": null,

@@ -29,6 +29,9 @@
             "request": {
                 "library_name": "Sponsor",
                 "name": "nameTwo",
+                "compatible_types": [
+                    "FormDef"
+                ],
                 "vendor_namespace_uid": "odm_vendor_namespace1"
             },
             "url": "concepts/odms/vendor-elements"
@@ -40,6 +43,9 @@
                 "content-type": "application/json"
             },
             "result": {
+                "compatible_types": [
+                    "FormDef"
+                ],
                 "uid": "OdmVendorElement_000001",
                 "library_name": "Sponsor",
                 "name": "nameTwo",
@@ -78,6 +84,9 @@
             "request": {
                 "library_name": "Sponsor",
                 "name": "nameThree",
+                "compatible_types": [
+                    "FormDef"
+                ],
                 "vendor_namespace_uid": "odm_vendor_namespace1"
             },
             "url": "concepts/odms/vendor-elements"
@@ -89,6 +98,9 @@
                 "content-type": "application/json"
             },
             "result": {
+                "compatible_types": [
+                    "FormDef"
+                ],
                 "uid": "OdmVendorElement_000002",
                 "library_name": "Sponsor",
                 "name": "nameThree",
@@ -136,6 +148,9 @@
             "result": {
                 "items": [
                     {
+                        "compatible_types": [
+                            "FormDef"
+                        ],
                         "uid": "OdmVendorElement_000001",
                         "library_name": "Sponsor",
                         "name": "nameTwo",
@@ -165,6 +180,9 @@
                         ]
                     },
                     {
+                        "compatible_types": [
+                            "FormDef"
+                        ],
                         "start_date": "2022-10-06T14:20:10.279384",
                         "end_date": null,
                         "status": "Draft",
@@ -235,6 +253,9 @@
                 "content-type": "application/json"
             },
             "result": {
+                "compatible_types": [
+                    "FormDef"
+                ],
                 "uid": "OdmVendorElement_000001",
                 "library_name": "Sponsor",
                 "name": "nameTwo",
@@ -281,6 +302,9 @@
             },
             "result": [
                 {
+                    "compatible_types": [
+                        "FormDef"
+                    ],
                     "uid": "OdmVendorElement_000001",
                     "library_name": "Sponsor",
                     "name": "nameTwo",
@@ -320,6 +344,9 @@
             "request": {
                 "library_name": "Sponsor",
                 "name": "new name",
+                "compatible_types": [
+                    "ItemDef"
+                ],
                 "vendor_namespace_uid": "odm_vendor_namespace1",
                 "change_description": "name changed to new name"
             },
@@ -332,6 +359,9 @@
                 "content-type": "application/json"
             },
             "result": {
+                "compatible_types": [
+                    "ItemDef"
+                ],
                 "uid": "OdmVendorElement_000001",
                 "library_name": "Sponsor",
                 "name": "new name",
@@ -377,6 +407,9 @@
                 "content-type": "application/json"
             },
             "result": {
+                "compatible_types": [
+                    "ItemDef"
+                ],
                 "uid": "OdmVendorElement_000001",
                 "library_name": "Sponsor",
                 "name": "new name",
@@ -421,6 +454,9 @@
                 "content-type": "application/json"
             },
             "result": {
+                "compatible_types": [
+                    "ItemDef"
+                ],
                 "uid": "OdmVendorElement_000001",
                 "library_name": "Sponsor",
                 "name": "new name",
@@ -465,6 +501,9 @@
                 "content-type": "application/json"
             },
             "result": {
+                "compatible_types": [
+                    "ItemDef"
+                ],
                 "uid": "OdmVendorElement_000001",
                 "library_name": "Sponsor",
                 "name": "new name",
@@ -509,6 +548,9 @@
                 "content-type": "application/json"
             },
             "result": {
+                "compatible_types": [
+                    "ItemDef"
+                ],
                 "uid": "OdmVendorElement_000001",
                 "library_name": "Sponsor",
                 "name": "new name",
@@ -546,6 +588,9 @@
             "request": {
                 "library_name": "Sponsor",
                 "name": "nameDelete",
+                "compatible_types": [
+                    "FormDef"
+                ],
                 "vendor_namespace_uid": "odm_vendor_namespace1"
             },
             "url": "concepts/odms/vendor-elements"
@@ -557,6 +602,9 @@
                 "content-type": "application/json"
             },
             "result": {
+                "compatible_types": [
+                    "FormDef"
+                ],
                 "uid": "OdmVendorElement_000003",
                 "name": "nameDelete",
                 "library_name": "Sponsor",
@@ -642,6 +690,9 @@
                 "vendor_element": {
                     "uid": "OdmVendorElement_000001",
                     "name": "new name",
+                    "compatible_types": [
+                        "ItemDef"
+                    ],
                     "status": "Draft",
                     "version": "1.1",
                     "possible_actions": [

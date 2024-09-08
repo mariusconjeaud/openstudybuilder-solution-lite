@@ -55,10 +55,10 @@ class PharmaceuticalProductService(ConceptGenericService[PharmaceuticalProductAR
                 formulations=[
                     FormulationVO.from_repository_values(
                         external_id=formulation_input.external_id,
-                        name=formulation_input.name,
                         ingredients=[
                             IngredientVO.from_repository_values(
                                 active_substance_uid=ingredient_input.active_substance_uid,
+                                formulation_name=ingredient_input.formulation_name,
                                 external_id=ingredient_input.external_id,
                                 strength_uid=ingredient_input.strength_uid,
                                 half_life_uid=ingredient_input.half_life_uid,
@@ -93,13 +93,13 @@ class PharmaceuticalProductService(ConceptGenericService[PharmaceuticalProductAR
                 route_of_administration_uids=concept_edit_input.route_of_administration_uids,
                 formulations=[
                     FormulationVO.from_repository_values(
-                        name=getattr(x, "name", None),
                         external_id=getattr(x, "external_id", None),
                         ingredients=[
                             IngredientVO.from_repository_values(
                                 active_substance_uid=getattr(
                                     y, "active_substance_uid", None
                                 ),
+                                formulation_name=getattr(y, "formulation_name", None),
                                 external_id=getattr(y, "external_id", None),
                                 strength_uid=getattr(y, "strength_uid", None),
                                 half_life_uid=getattr(y, "half_life_uid", None),

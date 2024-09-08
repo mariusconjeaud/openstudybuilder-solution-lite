@@ -178,7 +178,9 @@ export default {
     editedActivity: {
       handler(value) {
         if (value) {
-          this.initForm(value)
+          activities.getObject('activities', value.uid).then((resp) => {
+            this.initForm(resp.data)
+          })
         }
       },
       immediate: true,

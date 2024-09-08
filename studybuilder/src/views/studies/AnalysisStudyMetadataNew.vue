@@ -13,14 +13,14 @@
       </v-tab>
     </v-tabs>
     <v-window v-model="tab">
-      <v-window-item value="mdvisit">
+      <v-window-item :key="`mdvisit-${tabKeys.mdvisit}`" value="mdvisit">
         <AnalysisMetadataTable
           key="mdvisit"
           type="mdvisit"
           :headers="mdVisitHeaders"
         />
       </v-window-item>
-      <v-window-item value="mdendpnt">
+      <v-window-item :key="`mdendpnt-${tabKeys.mdendpnt}`" value="mdendpnt">
         <AnalysisMetadataTable
           key="mdendpnt"
           type="mdendpnt"
@@ -52,6 +52,7 @@ import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { useAppStore } from '@/stores/app'
+import { useTabKeys } from '@/composables/tabKeys'
 import AnalysisMetadataTable from '@/components/studies/AnalysisMetadataTable.vue'
 import HelpButton from '@/components/tools/HelpButton.vue'
 
@@ -59,6 +60,7 @@ const appStore = useAppStore()
 const { t } = useI18n()
 const router = useRouter()
 const route = useRoute()
+const { tabKeys, updateTabKey } = useTabKeys()
 const mdEndpntHeaders = ref([
   { title: t('AnalysisMetadataTable.study_id'), key: 'STUDYID' },
   { title: t('AnalysisMetadataTable.objective_level'), key: 'OBJTVLVL' },
@@ -108,6 +110,7 @@ watch(tab, (newValue) => {
     params: { tab: newValue },
   })
   appStore.addBreadcrumbsLevel(label, undefined, 3, true)
+  updateTabKey(newValue)
 })
 
 tab.value = route.params.tab || 'mdvisit'

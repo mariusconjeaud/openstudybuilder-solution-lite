@@ -489,20 +489,10 @@ class ActivityInstructionRoot(SyntaxInstanceRoot):
 
 
 class TimeframeValue(SyntaxInstanceValue):
+    ROOT_NODE_LABEL = "TimeframeRoot"
+    VALUE_NODE_LABEL = "TimeframeValue"
     STUDY_SELECTION_REL_LABEL = "HAS_SELECTED_TIMEFRAME"
-    STUDY_VALUE_REL_LABEL = "HAS_SELECTED_TIMEFRAME"
-
-    # Timeframes are not directly used by Study, they are used indirectly by StudyEndpoints that are linked to Study
-    # This is why we need to modify the default get study count function
-    def get_study_count(self) -> int:
-        cypher_query = f"""
-        MATCH (n)<-[:{self.STUDY_SELECTION_REL_LABEL}]-(:StudyEndpoint)<-[:{EndpointValue.STUDY_VALUE_REL_LABEL}]-(:StudyValue)<--(sr:StudyRoot)
-        WHERE elementId(n)=$elementId
-        RETURN count(DISTINCT sr)
-        """
-
-        count, _ = db.cypher_query(cypher_query, {"elementId": self.element_id})
-        return count[0][0]
+    STUDY_VALUE_REL_LABEL = "HAS_STUDY_ENDPOINT"
 
 
 class TimeframeRoot(SyntaxInstanceRoot):

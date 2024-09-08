@@ -11,18 +11,14 @@ class ClinicalProgrammeAR:
     )
 
     _uid: str
-    _name: str
+    name: str
 
     @property
     def uid(self) -> str:
         return self._uid
 
-    @property
-    def name(self) -> str:
-        return self._name
-
     @staticmethod
     def from_input_values(name: str, generate_uid_callback: Callable[[], str]):
         uid = generate_uid_callback()
 
-        return ClinicalProgrammeAR(_uid=uid, _name=normalize_string(name))
+        return ClinicalProgrammeAR(_uid=uid, name=normalize_string(name))

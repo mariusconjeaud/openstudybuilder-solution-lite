@@ -48,9 +48,9 @@ def test_data():
     """Initialize test data"""
     db_name = "studystandardversionapi"
     inject_and_clear_db(db_name)
-    inject_base_data()
+
     global study
-    study = TestUtils.create_study()
+    study = inject_base_data()
 
     catalogue = "SDTM CT"
     cdisc_package_name = "SDTM CT 2020-03-27"
@@ -78,24 +78,23 @@ def test_study_standard_version_crud_operations(api_client):
     global ct_package_uid_2
     ct_package_uid = res[0]["uid"]
     ct_package_uid_2 = res[1]["uid"]
+    description = "My description"
+    description2 = "Other description"
 
     global standard_version_uid
     response = api_client.post(
         f"/studies/{study.uid}/study-standard-versions",
-        json={
-            "ct_package_uid": ct_package_uid,
-        },
+        json={"ct_package_uid": ct_package_uid, "description": description},
     )
     res = response.json()
     assert response.status_code == 201
     assert res["ct_package"]["uid"] == ct_package_uid
+    assert res["description"] == description
     standard_version_uid = res["uid"]
 
     response = api_client.post(
         f"/studies/{study.uid}/study-standard-versions",
-        json={
-            "ct_package_uid": ct_package_uid_2,
-        },
+        json={"ct_package_uid": ct_package_uid_2, "description": description2},
     )
     res = response.json()
     assert response.status_code == 400
@@ -110,6 +109,9 @@ def test_study_standard_version_crud_operations(api_client):
     )
     res = response.json()
     assert response.status_code == 200
+    assert len(res) == 1
+    assert res[0]["uid"] == standard_version_uid
+    assert res[0]["description"] == description
 
     # # get specific standard versions audit trail
     response = api_client.get(
@@ -118,6 +120,8 @@ def test_study_standard_version_crud_operations(api_client):
     res = response.json()
     assert response.status_code == 200
 
+    # Test patch ct package uid
+    # And description not removed - patch and not put
     response = api_client.patch(
         f"/studies/{study.uid}/study-standard-versions/{standard_version_uid}",
         json={
@@ -127,6 +131,20 @@ def test_study_standard_version_crud_operations(api_client):
     res = response.json()
     assert response.status_code == 200
     assert res["ct_package"]["uid"] == ct_package_uid_2
+    assert res["description"] == description
+
+    # Test patch description
+    # And ct package uid not removed - patch and not put
+    response = api_client.patch(
+        f"/studies/{study.uid}/study-standard-versions/{standard_version_uid}",
+        json={
+            "description": description2,
+        },
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert res["ct_package"]["uid"] == ct_package_uid_2
+    assert res["description"] == description2
 
     # test delete
     response = api_client.delete(

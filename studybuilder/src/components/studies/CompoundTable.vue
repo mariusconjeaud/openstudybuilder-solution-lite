@@ -14,8 +14,10 @@
     <template #actions="">
       <v-btn
         data-cy="add-study-compound"
+        class="ml-2"
         size="small"
-        color="primary"
+        variant="outlined"
+        color="nnBaseBlue"
         :title="$t('StudyCompoundForm.add_title')"
         :disabled="
           !checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null
@@ -130,7 +132,7 @@ export default {
       ],
       compoundHistoryItems: [],
       headers: [
-        { title: '', key: 'actions', width: '5%' },
+        { title: '', key: 'actions', width: '1%' },
         { title: '#', key: 'order' },
         { title: '', key: 'overview', width: '5%' },
         {

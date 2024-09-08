@@ -252,7 +252,8 @@
                 "codelists": [
                     {
                         "codelist_uid": "editable_cr",
-                        "order": 1
+                        "order": 1,
+                        "library_name": "Sponsor"
                     }
                 ],
                 "concept_id": null,

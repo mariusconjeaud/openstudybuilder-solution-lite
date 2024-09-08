@@ -48,9 +48,9 @@ class MedicinalProductService(ConceptGenericService[MedicinalProductAR]):
                 name=concept_input.name,
                 name_sentence_case=concept_input.name_sentence_case,
                 dose_value_uids=concept_input.dose_value_uids,
-                dose_frequency_uids=concept_input.dose_frequency_uids,
-                delivery_device_uids=concept_input.delivery_device_uids,
-                dispenser_uids=concept_input.dispenser_uids,
+                dose_frequency_uid=concept_input.dose_frequency_uid,
+                delivery_device_uid=concept_input.delivery_device_uid,
+                dispenser_uid=concept_input.dispenser_uid,
                 compound_uid=concept_input.compound_uid,
                 pharmaceutical_product_uids=concept_input.pharmaceutical_product_uids,
             ),
@@ -76,9 +76,9 @@ class MedicinalProductService(ConceptGenericService[MedicinalProductAR]):
                 name=concept_edit_input.name,
                 name_sentence_case=concept_edit_input.name_sentence_case,
                 dose_value_uids=concept_edit_input.dose_value_uids,
-                dose_frequency_uids=concept_edit_input.dose_frequency_uids,
-                delivery_device_uids=concept_edit_input.delivery_device_uids,
-                dispenser_uids=concept_edit_input.dispenser_uids,
+                dose_frequency_uid=concept_edit_input.dose_frequency_uid,
+                delivery_device_uid=concept_edit_input.delivery_device_uid,
+                dispenser_uid=concept_edit_input.dispenser_uid,
                 compound_uid=concept_edit_input.compound_uid,
                 pharmaceutical_product_uids=concept_edit_input.pharmaceutical_product_uids,
             ),
@@ -109,17 +109,17 @@ class MedicinalProductService(ConceptGenericService[MedicinalProductAR]):
         """
         This method preserves values of these fields in case they are not explicitly sent in the PATCH payload:
             - dose_value_uids
-            - dose_frequency_uids
-            - dispenser_uids
-            - delivery_device_uids
+            - dose_frequency_uid
+            - dispenser_uid
+            - delivery_device_uid
             - pharmaceutical_product_uids
             - compound_uid
         """
         for field in [
             "dose_value_uids",
-            "dose_frequency_uids",
-            "dispenser_uids",
-            "delivery_device_uids",
+            "dose_frequency_uid",
+            "dispenser_uid",
+            "delivery_device_uid",
             "pharmaceutical_product_uids",
             "compound_uid",
         ]:

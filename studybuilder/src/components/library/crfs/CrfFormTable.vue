@@ -15,7 +15,8 @@
         <v-btn
           class="ml-2"
           size="small"
-          color="primary"
+          variant="outlined"
+          color="nnBaseBlue"
           :title="$t('CRFForms.add_form')"
           data-cy="add-crf-form"
           :disabled="!checkPermission($roles.LIBRARY_WRITE)"
@@ -125,7 +126,6 @@ import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
 import crfTypes from '@/constants/crfTypes'
 import parameters from '@/constants/parameters'
 import dataFormating from '@/utils/dataFormating'
-import _isEmpty from 'lodash/isEmpty'
 import { useAccessGuard } from '@/composables/accessGuard'
 import { useCrfsStore } from '@/stores/crfs'
 import { computed } from 'vue'
@@ -239,14 +239,22 @@ export default {
         { title: '', key: 'actions', width: '1%' },
         { title: this.$t('CRFForms.oid'), key: 'oid' },
         { title: this.$t('_global.name'), key: 'name' },
-        { title: this.$t('_global.description'), key: 'description' },
-        { title: this.$t('CRFItems.impl_notes'), key: 'notes' },
+        {
+          title: this.$t('_global.description'),
+          key: 'description',
+          filteringName: 'descriptions.description',
+        },
+        {
+          title: this.$t('CRFItems.impl_notes'),
+          key: 'notes',
+          filteringName: 'descriptions.sponsor_instruction',
+        },
         {
           title: this.$t('CrfFormTable.repeating'),
           key: 'repeating',
           width: '1%',
         },
-        { title: this.$t('_global.links'), key: 'activity_groups' },
+        { title: this.$t('_global.links'), key: 'activity_groups', filteringName: 'activity_groups.name' },
         { title: this.$t('_global.version'), key: 'version', width: '1%' },
         { title: this.$t('_global.status'), key: 'status', width: '1%' },
       ],

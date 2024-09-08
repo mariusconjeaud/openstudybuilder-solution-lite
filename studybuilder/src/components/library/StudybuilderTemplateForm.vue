@@ -212,14 +212,24 @@ export default {
     },
   },
   watch: {
-    template(value) {
-      if (value) {
-        this.loadFormFromTemplate()
-      }
+    template: {
+      handler: function (value) {
+        if (value) {
+          if (!this.api) {
+            this.api = templatesApi(this.urlPrefix)
+          }
+          this.api.getTemplate(value.uid).then((resp) => {
+            this.loadFormFromTemplate(resp.data)
+          })
+        }
+      },
+      immediate: true,
     },
   },
   created() {
-    this.api = templatesApi(this.urlPrefix)
+    if (!this.api) {
+      this.api = templatesApi(this.urlPrefix)
+    }
     libraries.get(1).then((resp) => {
       this.libraries = resp.data
     })
@@ -366,13 +376,13 @@ export default {
     /**
      * Do a step by step loading of the form using the given template because we don't want to include every fields.
      */
-    loadFormFromTemplate() {
+    loadFormFromTemplate(template) {
       this.form = {
-        name: this.template ? this.template.name : null,
-        library: this.template ? this.template.library : { name: 'Sponsor' },
-        indications: this.template ? this.template.indications : null,
+        name: template ? template.name : null,
+        library: template ? template.library : { name: 'Sponsor' },
+        indications: template ? template.indications : null,
       }
-      if (this.template.status === statuses.DRAFT) {
+      if (template.status === statuses.DRAFT) {
         this.form.change_description = this.$t('_global.work_in_progress')
       }
       if (this.loadFormFunction) {

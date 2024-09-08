@@ -168,12 +168,13 @@ class ItemRepository(OdmGenericRepository[OdmItemAR]):
         [(concept_value)<-[:{only_specific_status}]-(:OdmItemRoot)-[hud:HAS_UNIT_DEFINITION]->(udr:UnitDefinitionRoot)-[:LATEST]->(udv:UnitDefinitionValue) | {{uid: udr.uid, name: udv.name, mandatory: hud.mandatory, order: hud.order}}] AS unit_definitions,
         head([(concept_value)<-[:{only_specific_status}]-(:OdmItemRoot)-[:HAS_CODELIST]->(ctcr:CTCodelistRoot)-[:HAS_ATTRIBUTES_ROOT]->(:CTCodelistAttributesRoot)-[:LATEST]->(ctcav:CTCodelistAttributesValue) | ctcr.uid]) AS codelist_uid,
         [(concept_value)<-[:{only_specific_status}]-(:OdmItemRoot)-[hct:HAS_CODELIST_TERM]->(cttr:CTTermRoot)-[:HAS_NAME_ROOT]->(cttnr:CTTermNameRoot)-[:LATEST]->(cttnv:CTTermNameValue) | {{uid: cttr.uid, name: cttnv.name, mandatory: hct.mandatory, order: hct.order}}] AS terms,
-        head([(concept_value)<-[:{only_specific_status}]-(:OdmItemRoot)-[:HAS_ACTIVITY]->(ar:ActivityRoot)-[:LATEST]->(av:ActivityValue) | ar.uid]) AS activity_uid,
+        head([(concept_value)<-[:{only_specific_status}]-(:OdmItemRoot)-[:HAS_ACTIVITY]->(ar:ActivityRoot)-[:LATEST]->(av:ActivityValue) | {{uid: ar.uid, name: av.name}}]) AS activity,
         [(concept_value)<-[:{only_specific_status}]-(:OdmItemRoot)-[hve:HAS_VENDOR_ELEMENT]->(ver:OdmVendorElementRoot)-[:LATEST]->(vev:OdmVendorElementValue) | {{uid: ver.uid, name: vev.name, value: hve.value}}] AS vendor_elements,
         [(concept_value)<-[:{only_specific_status}]-(:OdmItemRoot)-[hva:HAS_VENDOR_ATTRIBUTE]->(var:OdmVendorAttributeRoot)-[:LATEST]->(vav:OdmVendorAttributeValue) | {{uid: var.uid, name: vav.name, value: hva.value}}] AS vendor_attributes,
         [(concept_value)<-[:{only_specific_status}]-(:OdmItemRoot)-[hvea:HAS_VENDOR_ELEMENT_ATTRIBUTE]->(var:OdmVendorAttributeRoot)-[:LATEST]->(vav:OdmVendorAttributeValue) | {{uid: var.uid, name: vav.name, value: hvea.value}}] AS vendor_element_attributes
 
         WITH *,
+        activity.uid AS activity_uid,
         apoc.coll.toSet([description in descriptions | description.uid]) AS description_uids,
         apoc.coll.toSet([alias in aliases | alias.uid]) AS alias_uids,
         apoc.coll.toSet([unit_definition in unit_definitions | unit_definition.uid]) AS unit_definition_uids,

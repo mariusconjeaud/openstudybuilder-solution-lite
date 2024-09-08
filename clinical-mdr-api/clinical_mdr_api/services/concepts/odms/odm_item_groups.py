@@ -8,7 +8,11 @@ from clinical_mdr_api.domains.concepts.odms.item_group import (
     OdmItemGroupAR,
     OdmItemGroupVO,
 )
-from clinical_mdr_api.domains.concepts.utils import RelationType, VendorCompatibleType
+from clinical_mdr_api.domains.concepts.utils import (
+    RelationType,
+    VendorAttributeCompatibleType,
+    VendorElementCompatibleType,
+)
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
 from clinical_mdr_api.models.concepts.odms.odm_common_models import (
     OdmVendorElementRelationPostInput,
@@ -270,13 +274,13 @@ class OdmItemGroupService(OdmGenericService[OdmItemGroupAR]):
                 for attribute in input_attribute.vendor.attributes
             ]
         )
-        self.is_vendor_compatible(
+        self.are_attributes_vendor_compatible(
             [
                 vendor_attribute
                 for item in odm_item_group_item_post_input
                 for vendor_attribute in item.vendor.attributes
             ],
-            VendorCompatibleType.ITEM_REF,
+            VendorAttributeCompatibleType.ITEM_REF,
         )
 
         for item in odm_item_group_item_post_input:
@@ -320,6 +324,10 @@ class OdmItemGroupService(OdmGenericService[OdmItemGroupAR]):
         if odm_item_group_ar.item_metadata.status == LibraryItemStatus.RETIRED:
             raise exceptions.BusinessLogicException(self.OBJECT_IS_INACTIVE)
 
+        self.are_elements_vendor_compatible(
+            odm_vendor_relation_post_input, VendorElementCompatibleType.ITEM_DEF
+        )
+
         if override:
             self.fail_if_non_present_vendor_elements_are_used_by_current_odm_element_attributes(
                 odm_item_group_ar._concept_vo.vendor_element_attribute_uids,
@@ -361,7 +369,7 @@ class OdmItemGroupService(OdmGenericService[OdmItemGroupAR]):
 
         self.fail_if_these_attributes_cannot_be_added(
             odm_vendor_relation_post_input,
-            compatible_type=VendorCompatibleType.ITEM_GROUP_DEF,
+            compatible_type=VendorAttributeCompatibleType.ITEM_GROUP_DEF,
         )
 
         if override:

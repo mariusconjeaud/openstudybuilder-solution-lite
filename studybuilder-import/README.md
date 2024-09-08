@@ -483,15 +483,21 @@ $ pipenv run codelistterms1
 ```
 
 This creates all sponsor codelists, as well as imports the first set of sponsor codelist terms.
+It is possible to limit what codelists are imported
+by giving a comma-separated list of codelist names.
+Enclose the list in quotes, and add no spaces around the comma:
+```sh
+$ pipenv run codelistterms1 "Epoch,Objectivel Level"
+```
+This imports only the listed codelists (codelist definitions and terms).
 
 After this, run the `codelistterms2` Pipenv command:
 ```sh
 $ pipenv run codelistterms2
 ```
 This imports all sponsor codelists.
-It is possible to limit what codelists are imported
-by giving a comma-separated list of codelist names.
-Enclose the list in quites, and add no spaces around the comma:
+Also here it is possible to limit what codelists are imported
+by giving a comma-separated list of codelist names:
 ```sh
 $ pipenv run codelistterms2 "Unit Subset,Footnote Type"
 ```

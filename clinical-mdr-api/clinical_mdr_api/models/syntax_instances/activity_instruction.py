@@ -17,10 +17,7 @@ from clinical_mdr_api.models.syntax_templates.template_parameter_term import (
     IndexedTemplateParameterTerm,
     MultiTemplateParameterTerm,
 )
-from clinical_mdr_api.models.utils import (
-    BaseModel,
-    capitalize_first_letter_if_template_parameter,
-)
+from clinical_mdr_api.models.utils import BaseModel
 
 
 class ActivityInstructionNameUid(BaseModel):
@@ -36,7 +33,7 @@ class ActivityInstruction(ActivityInstructionNameUid):
     version: str | None = Field(None, nullable=True)
     change_description: str | None = Field(None, nullable=True)
     user_initials: str | None = Field(None, nullable=True)
-    activity_instruction_template: ActivityInstructionTemplateNameUidLibrary | None
+    template: ActivityInstructionTemplateNameUidLibrary | None
     parameter_terms: list[MultiTemplateParameterTerm] = Field(
         [],
         description="""Holds the parameter terms that are used within the activity
@@ -79,23 +76,15 @@ class ActivityInstruction(ActivityInstructionNameUid):
             )
         return cls(
             uid=activity_instruction_ar.uid,
-            name=capitalize_first_letter_if_template_parameter(
-                activity_instruction_ar.name,
-                activity_instruction_ar.template_name_plain,
-                activity_instruction_ar._template.parameter_terms,
-            ),
-            name_plain=capitalize_first_letter_if_template_parameter(
-                activity_instruction_ar.name_plain,
-                activity_instruction_ar.template_name_plain,
-                activity_instruction_ar._template.parameter_terms,
-            ),
+            name=activity_instruction_ar.name,
+            name_plain=activity_instruction_ar.name_plain,
             start_date=activity_instruction_ar.item_metadata.start_date,
             end_date=activity_instruction_ar.item_metadata.end_date,
             status=activity_instruction_ar.item_metadata.status.value,
             version=activity_instruction_ar.item_metadata.version,
             change_description=activity_instruction_ar.item_metadata.change_description,
             user_initials=activity_instruction_ar.item_metadata.user_initials,
-            activity_instruction_template=ActivityInstructionTemplateNameUidLibrary(
+            template=ActivityInstructionTemplateNameUidLibrary(
                 name=activity_instruction_ar.template_name,
                 name_plain=activity_instruction_ar.template_name_plain,
                 uid=activity_instruction_ar.template_uid,

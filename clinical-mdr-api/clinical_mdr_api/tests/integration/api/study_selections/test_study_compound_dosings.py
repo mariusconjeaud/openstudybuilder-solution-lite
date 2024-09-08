@@ -16,9 +16,19 @@ from unittest import mock
 import pytest
 from fastapi.testclient import TestClient
 
+from clinical_mdr_api import models
 from clinical_mdr_api.main import app
 from clinical_mdr_api.models.concepts.compound import Compound
+from clinical_mdr_api.models.concepts.compound_alias import CompoundAlias
+from clinical_mdr_api.models.concepts.medicinal_product import MedicinalProduct
+from clinical_mdr_api.models.concepts.pharmaceutical_product import (
+    PharmaceuticalProduct,
+)
 from clinical_mdr_api.models.study_selections.study import Study
+from clinical_mdr_api.models.study_selections.study_selection import (
+    StudySelectionCompound,
+    StudySelectionElement,
+)
 from clinical_mdr_api.tests.integration.utils.api import (
     drop_db,
     inject_and_clear_db,
@@ -35,10 +45,18 @@ from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 
 log = logging.getLogger(__name__)
 
+HEADERS = {"content-type": "application/json"}
+BASE_URL = "/studies/{study_uid}/study-compound-dosings"
+
 study: Study
-study_compound: Compound
-study_compound2: Compound
-study_elements: Sequence
+compound: Compound
+compound_alias: CompoundAlias
+study_compound: StudySelectionCompound
+study_compound2: StudySelectionCompound
+study_elements: Sequence[StudySelectionElement]
+pharmaceutical_product1: PharmaceuticalProduct
+medicinal_product1: MedicinalProduct
+dose_value: models.NumericValueWithUnit
 
 initialize_ct_data_map = {
     "TypeOfTreatment": [("CTTerm_000001", "CTTerm_000001")],
@@ -49,6 +67,29 @@ initialize_ct_data_map = {
     "Formulation": [("CTTerm_000006", "CTTerm_000006")],
     "ReasonForMissingNullValue": [("CTTerm_000007", "CTTerm_000007")],
 }
+
+STUDY_COMPOUND_DOSING_FIELDS_ALL = [
+    "study_uid",
+    "study_version",
+    "order",
+    "study_element",
+    "study_compound_dosing_uid",
+    "study_compound",
+    "dose_value",
+    "start_date",
+    "user_initials",
+]
+
+STUDY_COMPOUND_DOSING_FIELDS_NOT_NULL = [
+    "study_uid",
+    "study_version",
+    "order",
+    "study_element",
+    "study_compound_dosing_uid",
+    "study_compound",
+    "start_date",
+    "user_initials",
+]
 
 
 @pytest.fixture(scope="module")
@@ -68,10 +109,32 @@ def test_data():
     codelist = TestUtils.create_ct_codelist()
     TestUtils.create_study_ct_data_map(codelist_uid=codelist.codelist_uid)
 
+    global BASE_URL
     global study
+    global compound
+    global compound_alias
     global study_compound
     global study_compound2
     global study_elements
+    global pharmaceutical_product1
+    global medicinal_product1
+    global dose_value
+
+    # Create CT Terms
+    ct_term_dosage = TestUtils.create_ct_term(sponsor_preferred_name="dosage_form_1")
+    ct_term_delivery_device = TestUtils.create_ct_term(
+        sponsor_preferred_name="delivery_device_1"
+    )
+    ct_term_dose_frequency = TestUtils.create_ct_term(
+        sponsor_preferred_name="dose_frequency_1"
+    )
+    ct_term_dispenser = TestUtils.create_ct_term(sponsor_preferred_name="dispenser_1")
+    ct_term_roa = TestUtils.create_ct_term(
+        sponsor_preferred_name="route_of_administration_1"
+    )
+
+    # Create Numeric values with unit
+    dose_value = TestUtils.create_numeric_value_with_unit(value=10, unit="mg")
 
     compound = TestUtils.create_compound(name="name-AAA", approve=True)
     compound2 = TestUtils.create_compound(name="name-BBB", approve=True)
@@ -83,19 +146,52 @@ def test_data():
         name="compAlias-BBB", compound_uid=compound2.uid, approve=True
     )
 
+    pharmaceutical_product1 = TestUtils.create_pharmaceutical_product(
+        external_id="external_id1",
+        dosage_form_uids=[ct_term_dosage.term_uid],
+        route_of_administration_uids=[ct_term_roa.term_uid],
+        formulations=[],
+        approve=True,
+    )
+    medicinal_product1 = TestUtils.create_medicinal_product(
+        name="medicinal_product1",
+        external_id="external_id1",
+        dose_value_uids=[dose_value.uid],
+        dose_frequency_uid=ct_term_dose_frequency.term_uid,
+        delivery_device_uid=ct_term_delivery_device.term_uid,
+        dispenser_uid=ct_term_dispenser.term_uid,
+        pharmaceutical_product_uids=[pharmaceutical_product1.uid],
+        compound_uid=compound.uid,
+        approve=True,
+    )
+    medicinal_product2 = TestUtils.create_medicinal_product(
+        name="medicinal_product2",
+        external_id="external_id2",
+        dose_value_uids=[dose_value.uid],
+        dose_frequency_uid=ct_term_dose_frequency.term_uid,
+        delivery_device_uid=ct_term_delivery_device.term_uid,
+        dispenser_uid=ct_term_dispenser.term_uid,
+        pharmaceutical_product_uids=[pharmaceutical_product1.uid],
+        compound_uid=compound2.uid,
+        approve=True,
+    )
+
     # Create study
     study = TestUtils.create_study()
+    BASE_URL = BASE_URL.replace("{study_uid}", study.uid)
 
     # Create study compounds
     study_compound = TestUtils.create_study_compound(
         study_uid=study.uid,
         compound_alias_uid=compound_alias.uid,
+        medicinal_product_uid=medicinal_product1.uid,
         other_info="some info",
     )
 
     study_compound2 = TestUtils.create_study_compound(
         study_uid=study.uid,
         compound_alias_uid=compound_alias2.uid,
+        medicinal_product_uid=medicinal_product2.uid,
         other_info="some info 2",
     )
 
@@ -130,12 +226,48 @@ def test_data():
     drop_db(db_name)
 
 
+def test_create_and_remove_study_compound_dosing_selection(api_client):
+    response = api_client.post(
+        f"{BASE_URL}",
+        json={
+            "study_compound_uid": study_compound.study_compound_uid,
+            "study_element_uid": study_elements[0].element_uid,
+            "dose_value_uid": medicinal_product1.dose_values[0].uid,
+        },
+    )
+    res = response.json()
+    assert response.status_code == 201
+
+    # Check fields included in the response
+    TestUtils.assert_response_shape_ok(
+        res, STUDY_COMPOUND_DOSING_FIELDS_ALL, STUDY_COMPOUND_DOSING_FIELDS_NOT_NULL
+    )
+
+    response = api_client.get(BASE_URL)
+    res = response.json()
+
+    assert response.status_code == 200
+    assert len(res["items"]) == 1
+
+    # Delete the created study compound
+    response = api_client.delete(
+        f"{BASE_URL}/{res['items'][0]['study_compound_dosing_uid']}"
+    )
+    assert response.status_code == 204
+
+    # Check that the study compound has been deleted
+    response = api_client.get(BASE_URL)
+    assert response.status_code == 200
+    assert len(response.json()["items"]) == 0
+
+
 def test_compound_dosing_modify_actions_on_locked_study(api_client):
     response = api_client.post(
         f"/studies/{study.uid}/study-compound-dosings",
         json={
             "study_compound_uid": study_compound.study_compound_uid,
             "study_element_uid": study_elements[0].element_uid,
+            "dose_value_uid": dose_value.uid,
         },
     )
     res = response.json()
@@ -171,6 +303,7 @@ def test_compound_dosing_modify_actions_on_locked_study(api_client):
         json={
             "study_compound_uid": study_compound2.study_compound_uid,
             "study_element_uid": study_elements[1].element_uid,
+            "dose_value_uid": dose_value.uid,
         },
     )
     res = response.json()
@@ -183,6 +316,7 @@ def test_compound_dosing_modify_actions_on_locked_study(api_client):
         json={
             "study_compound_uid": study_compound2.study_compound_uid,
             "study_element_uid": study_elements[1].element_uid,
+            "dose_value_uid": dose_value.uid,
         },
     )
     res = response.json()
@@ -246,6 +380,7 @@ def test_get_compound_doings_data_for_specific_study_version(api_client):
         json={
             "study_compound_uid": study_compound2.study_compound_uid,
             "study_element_uid": study_elements[1].element_uid,
+            "dose_value_uid": dose_value.uid,
         },
     )
     res = response.json()

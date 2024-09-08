@@ -13,7 +13,7 @@
     <v-window v-model="tab">
       <v-window-item
         v-for="catalogue in allCatalogues"
-        :key="catalogue.name"
+        :key="`${catalogue.name}-${tabKeys[catalogue.name]}`"
         :value="catalogue.name"
       >
         <CodelistTable
@@ -31,6 +31,7 @@ import { useCtCataloguesStore } from '@/stores/library-ctcatalogues'
 import { ref, onMounted, watch, watchEffect } from 'vue'
 import CodelistTable from './CodelistTable.vue'
 import { useRouter } from 'vue-router'
+import { useTabKeys } from '@/composables/tabKeys'
 
 const props = defineProps({
   // eslint-disable-next-line vue/prop-name-casing
@@ -42,6 +43,8 @@ const props = defineProps({
 const emit = defineEmits(['catalogueChanged'])
 const router = useRouter()
 const ctCataloguesStore = useCtCataloguesStore()
+const { tabKeys, updateTabKey } = useTabKeys()
+
 const allCatalogues = ref([])
 const tab = ref(null)
 const originalCatalogue = ref(null)
@@ -64,6 +67,7 @@ watch(tab, (newValue) => {
   if (newValue !== originalCatalogue.value) {
     ctCataloguesStore.currentCataloguePage = 1
   }
+  updateTabKey(newValue)
   emit('catalogueChanged', newValue)
 })
 

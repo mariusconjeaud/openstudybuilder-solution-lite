@@ -16,10 +16,7 @@ from clinical_mdr_api.models.syntax_templates.template_parameter_term import (
     IndexedTemplateParameterTerm,
     MultiTemplateParameterTerm,
 )
-from clinical_mdr_api.models.utils import (
-    BaseModel,
-    capitalize_first_letter_if_template_parameter,
-)
+from clinical_mdr_api.models.utils import BaseModel
 
 
 class ActivityInstructionPreInstance(BaseModel):
@@ -87,16 +84,8 @@ class ActivityInstructionPreInstance(BaseModel):
             sequence_id=activity_instruction_pre_instance_ar.sequence_id,
             template_uid=activity_instruction_pre_instance_ar.template_uid,
             template_name=activity_instruction_pre_instance_ar.template_name,
-            name=capitalize_first_letter_if_template_parameter(
-                activity_instruction_pre_instance_ar.name,
-                activity_instruction_pre_instance_ar.template_name_plain,
-                activity_instruction_pre_instance_ar._template.parameter_terms,
-            ),
-            name_plain=capitalize_first_letter_if_template_parameter(
-                activity_instruction_pre_instance_ar.name_plain,
-                activity_instruction_pre_instance_ar.template_name_plain,
-                activity_instruction_pre_instance_ar._template.parameter_terms,
-            ),
+            name=activity_instruction_pre_instance_ar.name,
+            name_plain=activity_instruction_pre_instance_ar.name_plain,
             start_date=activity_instruction_pre_instance_ar.item_metadata.start_date,
             end_date=activity_instruction_pre_instance_ar.item_metadata.end_date,
             status=activity_instruction_pre_instance_ar.item_metadata.status.value,

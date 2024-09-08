@@ -6,7 +6,7 @@
       </v-tab>
     </v-tabs>
     <v-window v-model="tab">
-      <v-window-item value="parent">
+      <v-window-item :key="`parent-${tabKeys.parent}`" value="parent">
         <GenericSponsorTemplateTable
           ref="sponsorTable"
           key="sponsorTable"
@@ -22,7 +22,10 @@
           </template>
         </GenericSponsorTemplateTable>
       </v-window-item>
-      <v-window-item value="pre-instances">
+      <v-window-item
+        :key="`pre-instances-${tabKeys['pre-instances']}`"
+        value="pre-instances"
+      >
         <GenericSponsorTemplateTable
           ref="preInstanceTable"
           key="preInstanceTable"
@@ -39,7 +42,7 @@
           </template>
         </GenericSponsorTemplateTable>
       </v-window-item>
-      <v-window-item value="user">
+      <v-window-item :key="`user-${tabKeys.user}`" value="user">
         <GenericUserTemplateTable :url-prefix="urlPrefix" v-bind="$attrs" />
       </v-window-item>
     </v-window>
@@ -50,6 +53,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
+import { useTabKeys } from '@/composables/tabKeys'
 import GenericSponsorTemplateTable from './GenericSponsorTemplateTable.vue'
 import GenericUserTemplateTable from './GenericUserTemplateTable.vue'
 import { useAppStore } from '@/stores/app'
@@ -57,6 +61,7 @@ import { useAppStore } from '@/stores/app'
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
+const { tabKeys, updateTabKey } = useTabKeys()
 const props = defineProps({
   headers: {
     type: Array,
@@ -66,8 +71,7 @@ const props = defineProps({
         {
           title: '',
           key: 'actions',
-          sortable: false,
-          width: '5%',
+          width: '1%',
         },
         { title: t('_global.sequence_number'), key: 'sequence_id' },
         {
@@ -145,6 +149,7 @@ watch(tab, (newValue) => {
     name: route.name,
     params,
   })
+  updateTabKey(newValue)
   if (!props.doubleBreadcrumb) {
     const tabName = newValue
       ? tabs.value.find((el) => el.tab === newValue).name

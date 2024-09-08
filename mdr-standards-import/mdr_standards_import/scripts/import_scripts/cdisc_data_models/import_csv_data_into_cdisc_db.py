@@ -166,9 +166,13 @@ def import_data_model_csv_data_into_cdisc_db(
                 catalogue=catalogue,
                 version_number=version_number
             )
+            if "-" in catalogue:
+                ig_catalogue_name = f"{catalogue}-IG"
+            else:
+                ig_catalogue_name = f"{catalogue}IG"
             dm_import_ig = DataModelImport(
                 library=library,
-                catalogue=f"{catalogue}IG",
+                catalogue=ig_catalogue_name,
                 version_number=version_number,
                 user_initials=user_initials,
             )
@@ -180,7 +184,7 @@ def import_data_model_csv_data_into_cdisc_db(
                 dm_import=dm_import_ig,
                 data_model_type = DataModelType.IMPLEMENTATION,
                 catalogue=catalogue,
-                ig_catalogue=f"{catalogue}IG",
+                ig_catalogue=ig_catalogue_name,
                 version_number=version_number
             )
 

@@ -117,7 +117,7 @@
               />
             </v-col>
             <v-col cols="9">
-              <div class="subtitle-2 text--disabled">
+              <div class="subtitle-2 text-disabled">
                 {{ $t('CRFForms.compl_instructions') }}
               </div>
               <div v-show="readOnly">
@@ -205,7 +205,6 @@
           clearable
           :item-title="getAliasDisplay"
           item-value="uid"
-          :error-messages="errors"
           :readonly="readOnly"
         >
           <template #selection="{ item, index }">
@@ -648,20 +647,26 @@ export default {
       this.selectedExtensions = extensions
     },
     async linkExtensions(uid) {
-      const elements = this.selectedExtensions.filter(
-        (el) => el.type === 'Element'
-      )
-      const elementAttributes = this.selectedExtensions.filter(
-        (el) => el.vendor_element
-      )
-      const namespaceAttributes = this.selectedExtensions.filter(
-        (el) =>
-          el.type === 'Attribute' && el.vendor_namespace && !el.vendor_element
-      )
+      let elements = []
+      let attributes = []
+      let eleAttributes = []
+      this.selectedExtensions = this.selectedExtensions.filter((ex) => {
+        return ex.library_name
+      })
+      this.selectedExtensions.forEach((ex) => {
+        if (ex.type) {
+          attributes.push(ex)
+        } else {
+          elements.push(ex)
+          if (ex.vendor_attributes) {
+            eleAttributes = [...eleAttributes, ...ex.vendor_attributes]
+          }
+        }
+      })
       const data = {
         elements: elements,
-        element_attributes: elementAttributes,
-        attributes: namespaceAttributes,
+        element_attributes: eleAttributes,
+        attributes: attributes,
       }
       await crfs.setExtensions('forms', uid, data)
     },
@@ -677,48 +682,12 @@ export default {
       this.desc = item.descriptions.filter(
         (el) => el.language !== parameters.ENG
       )
-      const params = {}
-      if (
-        item.vendor_attributes.length > 0 ||
-        item.vendor_element_attributes.length > 0
-      ) {
-        params.filters = {
-          uid: {
-            v: [
-              ...item.vendor_attributes.map((attr) => attr.uid),
-              ...item.vendor_element_attributes.map((attr) => attr.uid),
-            ],
-            op: 'co',
-          },
-        }
-        await crfs.getAllAttributes(params).then((resp) => {
-          resp.data.items.forEach((el) => {
-            el.type = 'Attribute'
-            el.value = [
-              ...item.vendor_attributes,
-              ...item.vendor_element_attributes,
-            ].find((attr) => attr.uid === el.uid).value
-          })
-          this.selectedExtensions = resp.data.items
-        })
-      }
-      if (item.vendor_elements.length > 0) {
-        params.filters = {
-          uid: { v: item.vendor_elements.map((attr) => attr.uid), op: 'co' },
-        }
-        await crfs.getAllElements(params).then((resp) => {
-          resp.data.items.forEach((el) => {
-            el.type = 'Element'
-            el.value = item.vendor_elements.find(
-              (attr) => attr.uid === el.uid
-            ).value
-          })
-          this.selectedExtensions = [
-            ...resp.data.items,
-            ...this.selectedExtensions,
-          ]
-        })
-      }
+      item.vendor_attributes.forEach((attr) => (attr.type = 'attr'))
+      this.selectedExtensions = [
+        ...item.vendor_attributes,
+        ...item.vendor_element_attributes,
+        ...item.vendor_elements,
+      ]
     },
     getAliasDisplay(item) {
       return `${item.context} - ${item.name}`

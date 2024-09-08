@@ -7,7 +7,7 @@ name = "pypi"
 fastapi = "~=0.92.0"
 uvicorn = "~=0.17.6"
 pydantic = "~=1.10.0"
-requests = "~=2.28.1"
+requests = "*"
 openpyxl = "~=3.0.10"
 dict2xml = "~=1.7.1"
 GitPython = "~=3.1.27"
@@ -16,7 +16,6 @@ hypothesis = "~=6.54.4"
 python-jose = "~=3.3.0"
 python-dateutil="~=2.8.2"
 neomodel="~=5.1.0"
-Jinja2="~=3.1.2"
 yattag = "~=1.14.0"
 python-docx = "~=1.1.2"
 colour = "~=0.1.5"
@@ -31,11 +30,10 @@ opencensus-ext-azure = "~=1.1.7"
 pyyaml = "~=6.0"
 xsdata = "==22.9"
 weasyprint = "~=57.1"
-deepdiff = "~=6.2.1"
-pillow = "~=9.3.0"
+deepdiff = "~=7.0.1"
 asyncache = "~=0.3.1"
 cachetools = "~=5.3.1"
-usdm = "==0.39.0"
+usdm = "==0.51.0"
 
 [dev-packages]
 pytest = "~=7.1.2"
@@ -65,16 +63,16 @@ prod = "uvicorn --host=0.0.0.0 --port=8000 --limit-concurrency=120 --workers=4 -
 test = "pytest -s"
 dist = "python setup.py bdist_wheel"
 package = "pip wheel -r requirements.txt -w dist"
-testunit = "pytest -s --cov-report html:reports/coverage-unit --cov-report xml:reports/coverage.xml --cov-append --cov=clinical_mdr_api  --junitxml=reports/unit_report.xml clinical_mdr_api/tests/unit/"
-testint = "pytest -s -n 4 --dist loadfile --cov-report html:reports/coverage-int --cov-report xml:reports/coverage.xml --cov-append --cov=clinical_mdr_api --junitxml=reports/int_report.xml clinical_mdr_api/tests/integration"
-testauth = "pytest -s --cov-report html:reports/coverage-auth --cov-report xml:reports/coverage.xml --cov-append --cov=clinical_mdr_api --junitxml=reports/auth_report.xml clinical_mdr_api/tests/oauth/"
-test-telemetry = "pytest -s --cov-report html:reports/coverage-telemetry --cov-report xml:reports/coverage.xml --cov-append --cov=clinical_mdr_api --junitxml=reports/telemetry_report.xml clinical_mdr_api/tests/telemetry/"
-lint = "pylint clinical_mdr_api"
-black = "python -m black clinical_mdr_api"
-isort = "python -m isort clinical_mdr_api"
+testunit = "pytest -s --cov-report html:reports/coverage-unit-html --cov-report xml:reports/coverage.xml --cov-append --cov  --junitxml=reports/unit_report.xml clinical_mdr_api/tests/unit/"
+testint = "pytest -s -n 4 --dist loadfile --cov-report html:reports/coverage-int-html --cov-report xml:reports/coverage.xml --cov-append --cov --junitxml=reports/int_report.xml clinical_mdr_api/tests/integration/"
+testauth = "pytest -s --cov-report html:reports/coverage-auth-html --cov-report xml:reports/coverage.xml --cov-append --cov --junitxml=reports/auth_report.xml clinical_mdr_api/tests/oauth/"
+test-telemetry = "pytest -s --cov-report html:reports/coverage-telemetry-html --cov-report xml:reports/coverage.xml --cov-append --cov --junitxml=reports/telemetry_report.xml clinical_mdr_api/tests/telemetry/"
+lint = "pylint clinical_mdr_api consumer_api"
+black = "python -m black clinical_mdr_api consumer_api"
+isort = "python -m isort clinical_mdr_api consumer_api"
 format = """sh -c "
-    python -m isort clinical_mdr_api \
-    && python -m black clinical_mdr_api \
+    python -m isort clinical_mdr_api consumer_api \
+    && python -m black clinical_mdr_api consumer_api \
 "
 """
 openapi = "python generate_openapi_json.py"
@@ -96,3 +94,26 @@ schemathesis = """
 """
 build-sbom = "pipelines/scripts/build-sbom.sh"
 schemathesis-help = "schemathesis run --help"
+
+
+consumer-api-dev = "uvicorn --host=0.0.0.0 --port=8008 consumer_api.consumer_api:app --reload"
+consumer-api-lint = "pylint consumer_api"
+consumer-api-test = "pytest -s -n 1 --dist loadfile --cov-report html:consumer_api/reports/coverage-int-html --cov-report xml:consumer_api/reports/coverage.xml --cov-append --cov --junitxml=consumer_api/reports/test_report.xml --ignore=consumer_api/tests/auth consumer_api/tests"
+consumer-api-testauth = "pytest -s -n 1 --dist loadfile --cov-report html:consumer_api/reports/coverage-auth-html --cov-report xml:consumer_api/reports/coverage.xml --cov-append --cov --junitxml=consumer_api/reports/auth_report.xml consumer_api/tests/auth"
+consumer-openapi = "python generate_openapi.py consumer_api.consumer_api:app consumer_api/openapi.json consumer_api/apiVersion"
+consumer-api-schemathesis = """
+    schemathesis
+        --pre-run=clinical_mdr_api.hooks.schemathesis_hooks
+        run
+        --checks=all
+        --base-url=http://localhost:8008
+        --request-timeout=30000
+        --hypothesis-max-examples=50
+        --hypothesis-verbosity=normal
+        --hypothesis-deadline=None
+        --hypothesis-suppress-health-check=too_slow,filter_too_much,data_too_large
+        --junit-xml=consumer_api/reports/schemathesis_report.xml
+        --report=consumer_api/reports/schemathesis_report.tgz
+        --show-errors-tracebacks
+        consumer_api/openapi.json
+"""

@@ -12,6 +12,7 @@
     <v-window v-model="tab" class="bg-white">
       <v-window-item value="models">
         <DataExchangeStandardsModelsView
+          :key="`models-${tabKeys.models}`"
           :headers="modelsHeaders"
           uid="CDASH"
           :redirect-model="redirectModel"
@@ -20,6 +21,7 @@
       </v-window-item>
       <v-window-item value="guide">
         <DataExchangeStandardsGuideView
+          :key="`guide-${tabKeys.guide}`"
           :headers="igHeaders"
           uid="CDASHIG"
           :redirect-guide="redirectGuide"
@@ -35,6 +37,7 @@ import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { useAppStore } from '@/stores/app'
+import { useTabKeys } from '@/composables/tabKeys'
 import DataExchangeStandardsModelsView from '@/components/library/DataExchangeStandardsModelsView.vue'
 import DataExchangeStandardsGuideView from '@/components/library/DataExchangeStandardsGuideView.vue'
 import HelpButton from '@/components/tools/HelpButton.vue'
@@ -43,6 +46,7 @@ const appStore = useAppStore()
 const { t } = useI18n()
 const router = useRouter()
 const route = useRoute()
+const { tabKeys, updateTabKey } = useTabKeys()
 
 const tab = ref(0)
 const tabs = ref([
@@ -86,6 +90,7 @@ watch(tab, (newValue) => {
     name: 'Cdash',
     params: { tab: newValue },
   })
+  updateTabKey(newValue)
   appStore.addBreadcrumbsLevel(
     tabName,
     { name: 'Cdash', params: { tab: tabName } },

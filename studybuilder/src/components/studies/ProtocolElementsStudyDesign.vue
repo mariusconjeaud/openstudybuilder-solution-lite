@@ -14,7 +14,7 @@
           :disabled="Boolean(loadingMessage)"
           @click="downloadSvg($event)"
         >
-          {{ $t('_global.download_docx') }}
+          {{ $t('_global.download_svg') }}
         </v-btn>
       </div>
     </div>
@@ -100,8 +100,3 @@ export default {
   },
 }
 </script>
-<style>
-tspan {
-  font-family: 'Open Sans', serif !important;
-}
-</style>

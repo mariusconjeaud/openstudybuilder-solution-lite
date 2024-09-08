@@ -1,3 +1,18 @@
+"""
+This script serves as the entry point for the pipeline step 'Import CDISC Data Models into CDISC DB'.
+
+This script is meant to be called e.g. via:
+
+> `python -m pipenv run import_cdisc_data_models_into_cdisc_db <user initials> <JSON directory name>`
+
+The script expects the following parameters:
+
+1. <user initials> - The username of the person who started the process: String, e.g. "MT", "TKQT", ...
+2. <JSON directory name> - Optional, default "". The directory name where the JSON files are stored. It can be absolute or relative.
+    If relative (or empty), the passed directory name will be appended to the content of the environment variable 'CDISC_DATA_DIR'.
+    String, E.g. "", "subset-1", "/my/absoulte/path/to/json-files"
+"""
+
 from os import environ
 
 from mdr_standards_import.scripts.download_json_data_from_cdisc_api import (
@@ -10,6 +25,8 @@ from mdr_standards_import.scripts.import_scripts.cdisc_data_models.import_csv_da
     import_data_model_csv_data_into_cdisc_db,
 )
 from mdr_standards_import.scripts.utils import (
+    get_directory_name,
+    get_user_initials,
     get_cdisc_neo4j_driver,
     get_ordered_data_model_versions,
 )
@@ -19,19 +36,13 @@ CDISC_IMPORT_DATABASE = environ.get("NEO4J_CDISC_IMPORT_DATABASE", "cdisc")
 
 
 def wrapper_import_cdisc_data_models_into_cdisc_db(
-    user_initials: str, json_data_directory: str = "", skip_download_step: bool = False
+    user_initials: str, json_data_directory: str = ""
 ):
     """
-    Downloads the CDISC Standards Data Model versions from the CDISC REST API
-    and calls the import step to transform the JSON files into the CDISC graph structure.
+    Calls the import step to transform the JSON files into the CDISC graph structure.
     It also calls the import step to load the lab specifications data into the CDISC graph structure.
     """
     cdisc_neo4j_driver = get_cdisc_neo4j_driver()
-
-    if skip_download_step:
-        print(f"Skipping CDISC download step for Data models and IG.")
-    else:
-        download_data_model_json_data_from_cdisc_api(json_data_directory)
 
     versions = get_ordered_data_model_versions(json_data_directory)
     print(f"============================================")
@@ -44,7 +55,7 @@ def wrapper_import_cdisc_data_models_into_cdisc_db(
         for version_number in versions[catalogue]:
             print(f"==== Importing version {version_number}.")
 
-            if catalogue in ["FBDE"]:
+            if catalogue in ["FBDE", "NN-VEEVA-EDC"]:
                 import_data_model_csv_data_into_cdisc_db(
                     library="Sponsor",
                     catalogue=catalogue,
@@ -54,7 +65,7 @@ def wrapper_import_cdisc_data_models_into_cdisc_db(
                     cdisc_import_db_name=CDISC_IMPORT_DATABASE,
                     user_initials=user_initials,
                 )
-            elif catalogue in ["FBDEIG"]:
+            elif catalogue in ["FBDEIG", "NN-VEEVA-EDC-IG"]:
                 # Already imported by above condition
                 pass
             else:
@@ -69,3 +80,7 @@ def wrapper_import_cdisc_data_models_into_cdisc_db(
                 )
 
     cdisc_neo4j_driver.close()
+
+
+if __name__ == "__main__":
+    wrapper_import_cdisc_data_models_into_cdisc_db(get_user_initials(1), get_directory_name(2, "cdisc_data_models"))

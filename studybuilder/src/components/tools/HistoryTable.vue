@@ -3,19 +3,13 @@
     <v-card-title class="d-flex align-center">
       <span class="dialog-title">{{ title }}</span>
       <v-spacer />
-      <DataTableExportButton
-        v-if="withExport"
-        :headers="cleanedHeaders"
-        :items="items"
-        :object-label="exportFullName"
-        @export="(resolve) => resolve(true)"
-      />
     </v-card-title>
     <v-card-text>
       <v-data-table-server
         :headers="cleanedHeaders"
         :items="items"
         :items-length="itemsTotal"
+        data-cy="data-table"
         density="compact"
         @update:options="(options) => emit('refresh', options)"
       >
@@ -57,12 +51,34 @@
         </v-col>
       </v-row>
     </v-card-actions>
-    <v-card-actions>
+    <v-card-actions class="bg-white fixed-actions py-6 border-t-thin">
       <v-spacer />
+      <DataTableExportButton
+        v-if="withExport"
+        :headers="cleanedHeaders"
+        :items="items"
+        :object-label="exportFullName"
+        @export="(resolve) => resolve(true)"
+      >
+        <template #button="{ props }">
+          <v-btn
+            class="ml-4"
+            color="nnBaseBlue"
+            prepend-icon="mdi-download-outline"
+            v-bind="props"
+            :title="$t('DataTableExportButton.export')"
+            data-cy="table-export-button"
+          >
+            {{ $t('_global.download') }}
+          </v-btn>
+        </template>
+      </DataTableExportButton>
+
       <v-btn
         color="secondary"
         data-cy="close-button"
-        variant="flat"
+        variant="outlined"
+        rounded
         @click="emit('close')"
       >
         {{ $t('_global.close') }}
@@ -243,3 +259,12 @@ function getDisplay(item, accessor) {
   }
 }
 </script>
+
+<style scoped>
+.fixed-actions {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  z-index: 10;
+}
+</style>

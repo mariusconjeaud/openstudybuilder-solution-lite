@@ -1,53 +1,28 @@
 <template>
   <v-slide-group-item>
-    <div class="mr-4">
+    <div class="mr-2">
       <v-menu v-if="isDate(item.key)" :close-on-content-click="false">
         <template #activator="{ props }">
           <v-text-field
-            :label="
-              data.length === 0
-                ? item.title
-                : data.length === 1
-                  ? data[0]
-                  : `${data[0]} - ${data[1]}`
-            "
-            append-icon="mdi-calendar-outline"
+            :label="data.length <= 0 ? item.title : `${formatDate(data[0])} - ${formatDate(data.length - 1)}`"
+            prepend-inner-icon="mdi-calendar-outline"
             readonly
-            rounded
-            class="mt-1 calendar filterAutocompleteLabel"
+            class="select filterAutocompleteLabel ml-2"
             density="compact"
             hide-details
-            variant="plain"
+            single-line
+            clearable
+            variant="outlined"
+            bg-color="nnWhite"
             v-bind="props"
           />
         </template>
         <v-date-picker
-          v-show="!monthPicker"
           v-model="data"
+          multiple="range"
           :selected-items-text="$t('FilterAutocomplete.range_selected')"
-          @input="filterDate()"
+          @update:model-value="filterDate()"
         >
-          <v-btn variant="text" color="primary" @click="clear()">
-            {{ $t('FilterAutocomplete.clear') }}
-          </v-btn>
-          <v-btn variant="text" color="primary" @click="switchCalendar()">
-            {{ $t('FilterAutocomplete.month_picker') }}
-          </v-btn>
-        </v-date-picker>
-        <v-date-picker
-          v-show="monthPicker"
-          v-model="data"
-          month
-          range
-          :selected-items-text="$t('FilterAutocomplete.range_selected')"
-          @input="filterDate()"
-        >
-          <v-btn variant="text" color="primary" @click="clear()">
-            {{ $t('FilterAutocomplete.clear') }}
-          </v-btn>
-          <v-btn variant="text" color="primary" @click="switchCalendar()">
-            {{ $t('FilterAutocomplete.day_picker') }}
-          </v-btn>
         </v-date-picker>
       </v-menu>
       <v-select
@@ -57,13 +32,14 @@
         density="compact"
         clearable
         multiple
-        variant="plain"
+        variant="outlined"
         :label="item.title"
-        :class="isEmpty(item.key) ? 'autocomplete empty' : 'autocomplete full'"
-        item-title=""
+        color="nnBaseBlue"
+        bg-color="nnWhite"
         :items="items"
         hide-details
-        class="mt-4 select filterAutocompleteLabel"
+        single-line
+        class="select filterAutocompleteLabel ml-1"
         @input="getColumnData(item.key)"
         @update:model-value="filterTable"
       >
@@ -79,7 +55,7 @@
               </v-list-item-action>
             </template>
             <template #title>
-              {{ props.title.replace(/<\/?[^>]+(>)/g, '') }}
+              {{ typeof props.title === 'number' ? props.title : props.title.replace(/<\/?[^>]+(>)/g, '') }}
             </template>
             <v-tooltip activator="parent" location="bottom">
               {{ props.title.replace(/<\/?[^>]+(>)/g, '') }}
@@ -105,7 +81,7 @@
         <template #selection="{ index }">
           <div v-if="index === 0">
             <span class="items-font-size">{{
-              typeof data[0] !== 'boolean'
+              typeof data[0] !== 'boolean' && typeof data[0] !== 'number' && data[0].length > 12
                 ? data[0].substring(0, 12) + '...'
                 : data[0]
             }}</span>
@@ -123,6 +99,7 @@
 import { ref, watch } from 'vue'
 import _isEmpty from 'lodash/isEmpty'
 import columnData from '@/api/columnData'
+import { useDate } from 'vuetify'
 
 const props = defineProps({
   item: {
@@ -179,9 +156,9 @@ const emit = defineEmits(['filter'])
 const data = ref([])
 const items = ref([])
 const searchString = ref('')
-const monthPicker = ref(false)
 const select = ref()
 const timeout = ref(null)
+const adapter = useDate()
 
 watch(searchString, () => {
   if (timeout.value) clearTimeout(timeout.value)
@@ -197,19 +174,14 @@ watch(
 )
 watch(
   () => props.tableItems,
-  (newValue, oldValue) => {
-    if (_isEmpty(oldValue)) {
-      getColumnData(props.item.key)
-    }
+  () => {
+    getColumnData(props.item.key)
   }
 )
 
 function close() {
   searchString.value = ''
   select.value.blur()
-}
-function switchCalendar() {
-  monthPicker.value = !monthPicker.value
 }
 
 function clear() {
@@ -223,13 +195,6 @@ function isDate() {
   } else {
     return false
   }
-}
-
-function isEmpty() {
-  if (data.value.length > 0) {
-    return false
-  }
-  return true
 }
 
 function getColumnData(value) {
@@ -252,13 +217,17 @@ function getColumnData(value) {
         ? props.item.filteringName
         : value,
     search_string: searchString.value,
-    result_count: 20,
+    result_count: 50,
   }
   if (props.parameters) {
     params = Object.assign(params, props.parameters)
   }
   if (props.filtersModifyFunction) {
-    const filters = props.filtersModifyFunction(jsonFilter, params)
+    const filters = props.filtersModifyFunction(
+      jsonFilter,
+      params,
+      props.item.externalFilterSource
+    )
     jsonFilter = filters.jsonFilter
     params = filters.params
   }
@@ -309,20 +278,15 @@ function getColumnData(value) {
 
 function filterDate() {
   let dateData = []
-  if (data.value[0].length === 7) {
-    if (data.value.length === 1) {
-      dateData = [data.value[0] + '-01', getSecondDay(data.value[0], 30)]
-    } else {
-      dateData = [data.value[0] + '-01', getSecondDay(data.value[1], 30)]
-    }
-  } else {
-    if (data.value.length === 1) {
-      dateData = [data.value[0], getSecondDay(data.value[0], 1)]
-    } else {
-      dateData = [data.value[0], getSecondDay(data.value[1], 1)]
-    }
+  if (data.value.length <= 1) {
+    return
   }
+  dateData = [formatDate(data.value[0]), formatDate(data.value[data.value.length - 1])]
   emit('filter', { column: props.item.key, data: dateData })
+}
+
+function formatDate(date) {
+  return adapter.format(date, 'keyboardDate').replace(/(..).(..).(....)/, "$3-$1-$2")
 }
 
 function booleanConverter(value) {
@@ -369,13 +333,6 @@ function filterTable() {
   }
 }
 
-function getSecondDay(day, days) {
-  const date = new Date(Date.parse(day))
-  return new Date(date.setDate(date.getDate() + days))
-    .toISOString()
-    .split('T')[0]
-}
-
 if (!props.initialData && props.tableItems && props.tableItems.length) {
   getColumnData(props.item.key)
 } else if (props.initialData) {
@@ -392,7 +349,7 @@ if (props.selectedData) {
   max-width: 300px !important;
 }
 .select {
-  width: 300px !important;
+  min-width: 200px !important;
 }
 .fixed-width {
   max-width: 250px !important;

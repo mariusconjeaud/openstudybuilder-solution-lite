@@ -1,7 +1,9 @@
+import copy
+import json
 import logging
 import time
 from collections.abc import Callable
-from functools import wraps
+from functools import lru_cache, wraps
 from typing import Dict
 
 import aiohttp
@@ -9,7 +11,13 @@ import requests
 
 from ..functions.caselessdict import CaselessDict
 from ..functions.utils import create_logger, load_env
-from .api_bindings import ApiBinding
+from ..utils import import_templates
+from .api_bindings import (
+    CODELIST_NAME_MAP,
+    CODELIST_SDTM_DOMAIN_ABBREVIATION,
+    UNIT_SUBSET_AGE,
+    ApiBinding,
+)
 from .metrics import Metrics
 
 logger = logging.getLogger("legacy_mdr_migrations - utils")
@@ -417,3 +425,221 @@ class BaseImporter:
                 )
                 time.sleep(retry_delay)
                 retry_delay = 2 * retry_delay
+
+    @lru_cache(maxsize=10000)
+    def lookup_concept_uid(self, name, endpoint, subset=None):
+        self.log.info(f"Looking up concept {endpoint} with name '{name}'")
+        filt = {"name": {"v": [name], "op": "eq"}}
+        path = f"/concepts/{endpoint}"
+        params = {"filters": json.dumps(filt)}
+        if subset:
+            params["subset"] = subset
+        items = self.api.get_all_from_api(path, params={"filters": json.dumps(filt)})
+        if items is not None and len(items) > 0:
+            uid = items[0].get("uid", None)
+            self.log.info(
+                f"Found concept {endpoint} with name '{name}' and uid '{uid}'"
+            )
+            return uid
+        self.log.warning(f"Could not find concept {endpoint} with name '{name}'")
+
+    @lru_cache(maxsize=10000)
+    def lookup_ct_term_uid(
+        self, codelist_name, value, key="sponsor_preferred_name", uid_key="term_uid"
+    ):
+        filt = {key: {"v": [value], "op": "eq"}}
+        if codelist_name in CODELIST_NAME_MAP:
+            self.log.info(
+                f"Looking up term with '{key}' == '{value}' in codelist '{codelist_name}': {CODELIST_NAME_MAP[codelist_name]}, returning uid from '{uid_key}'"
+            )
+            params = {
+                "codelist_uid": CODELIST_NAME_MAP[codelist_name],
+                "page_size": 1,
+                "filters": json.dumps(filt),
+            }
+        else:
+            self.log.info(
+                f"Looking up term with '{key}' == '{value}' in codelist '{codelist_name}', returning uid from '{uid_key}'"
+            )
+            params = {
+                "codelist_name": codelist_name,
+                "page_size": 1,
+                "filters": json.dumps(filt),
+            }
+        data = self.api.get_all_identifiers(
+            self.api.get_all_from_api("/ct/terms/names", params=params),
+            identifier=key,
+            value=uid_key,
+        )
+        uid = data.get(value, None)
+        if uid:
+            self.log.debug(
+                f"Found term with '{key}' == '{value}' in codelist '{codelist_name}', uid '{uid}'"
+            )
+            return uid
+        self.log.warning(
+            f"Could not find term with '{key}' == '{value}' in codelist '{codelist_name}'"
+        )
+
+    def lookup_unit_uid(self, name, subset=None):
+        uid = self.lookup_concept_uid(name, "unit-definitions", subset=subset)
+        if uid is None:
+            self.log.info(
+                f"Unit name '{name}' not found, trying again with lowercase '{name.lower()}'"
+            )
+            uid = self.lookup_concept_uid(
+                name.lower(), "unit-definitions", subset=subset
+            )
+        if uid is None:
+            self.log.info(
+                f"Unit name '{name}' not found, trying again with uppercase '{name.upper()}'"
+            )
+            uid = self.lookup_concept_uid(
+                name.upper(), "unit-definitions", subset=subset
+            )
+        self.log.info(f"Looked up unit name '{name}', found uid '{uid}'")
+        return uid
+
+    @lru_cache(maxsize=10000)
+    def lookup_codelist_term_uid(self, codelist_name, sponsor_preferred_name):
+        self.log.info(
+            f"Looking up term with name '{sponsor_preferred_name}' from dictionary '{codelist_name}'"
+        )
+        terms = self.fetch_codelist_terms(codelist_name)
+        if terms is not None:
+            for term in terms:
+                if term["name"]["sponsor_preferred_name"] == sponsor_preferred_name:
+                    uid = term["term_uid"]
+                    self.log.debug(
+                        f"Found term with sponsor preferred name '{sponsor_preferred_name}' and uid '{uid}'"
+                    )
+                    return uid
+        self.log.warning(
+            f"Could not find term with sponsor preferred name '{sponsor_preferred_name}'"
+        )
+
+    @lru_cache(maxsize=10000)
+    def fetch_codelist_terms(self, name):
+        if name in CODELIST_NAME_MAP:
+            self.log.info(
+                f"Fetching terms for codelist with name '{name}', id {CODELIST_NAME_MAP[name]}"
+            )
+            params = {"codelist_uid": CODELIST_NAME_MAP[name]}
+        else:
+            self.log.info(f"Fetching terms for codelist with name '{name}'")
+            params = {"codelist_name": name}
+        items = self.api.get_all_from_api("/ct/terms", params=params)
+        if items is None:
+            items = []
+        self.log.debug(f"Got {len(items)} terms from codelist with name '{name}'")
+        return items
+
+    def create_or_get_numeric_value(self, value, subset):
+        if value is None:
+            return None
+        data = copy.deepcopy(import_templates.numeric_value_with_unit)
+        for key in data.keys():
+            if not key.lower().endswith("uid"):
+                data[key] = value.get(key, data[key])
+        data["unit_definition_uid"] = self.lookup_unit_uid(
+            value["unit_label"], subset=subset
+        )
+        data["library_name"] = "Sponsor"
+        for key, val in data.items():
+            if val == "string":
+                data[key] = None
+        val = self.api.simple_post_to_api("/concepts/numeric-values-with-unit", data)
+        if val is not None:
+            return val.get("uid", None)
+
+    def create_or_get_lag_time(self, value):
+        data = copy.deepcopy(import_templates.lag_time)
+        for key in data.keys():
+            if not key.lower().endswith("uid"):
+                data[key] = value.get(key, data[key])
+        data["unit_definition_uid"] = self.lookup_unit_uid(
+            value["unit_label"], subset=UNIT_SUBSET_AGE
+        )
+        data["sdtm_domain_uid"] = self.lookup_ct_term_uid(
+            CODELIST_SDTM_DOMAIN_ABBREVIATION, value["sdtm_domain_label"]
+        )
+        data["library_name"] = "Sponsor"
+        for key, val in data.items():
+            if val == "string":
+                data[key] = None
+        # print(json.dumps(data, indent=2))
+        val = self.api.simple_post_to_api("/concepts/lag-times", data)
+        if val is not None:
+            return val.get("uid", None)
+
+    @lru_cache(maxsize=10000)
+    def lookup_dictionary_uid(self, name):
+        self.log.info(f"Looking up dictionary with name '{name}'")
+        items = self.api.get_all_from_api(
+            f"/dictionaries/codelists", params={"library": name}
+        )
+        if items is not None and len(items) > 0:
+            uid = items[0].get("codelist_uid", None)
+            self.log.debug(f"Found dictionary with name '{name}' and uid '{uid}'")
+            return uid
+        self.log.warning(f"Could not find dictionary with name '{name}'")
+
+    @lru_cache(maxsize=10000)
+    def lookup_ct_codelist_uid(self, name):
+        self.log.info(f"Looking up ct codelist with name '{name}'")
+        filt = {"name": {"v": [name], "op": "eq"}}
+        items = self.api.get_all_from_api(
+            "/ct/codelists/names", params={"filters": json.dumps(filt)}
+        )
+        if items is not None and len(items) > 0:
+            uid = items[0].get("codelist_uid", None)
+            self.log.debug(f"Found ct codelist with name '{name}' and uid '{uid}'")
+            return uid
+        self.log.warning(f"Could not find ct codelist with name '{name}'")
+
+    @lru_cache(maxsize=10000)
+    def fetch_dictionary_terms(self, name):
+        uid = self.lookup_dictionary_uid(name)
+        self.log.info(f"Fetching terms for dictionary with name '{name}'")
+        items = self.api.get_all_from_api(
+            "/dictionaries/terms", params={"codelist_uid": uid}
+        )
+        if items is None:
+            items = []
+        self.log.debug(f"Got {len(items)} terms from dictionary with name '{name}'")
+        return items
+
+    @lru_cache(maxsize=10000)
+    def lookup_dictionary_term_uid(self, dictionary_name, term_name):
+        self.log.info(
+            f"Looking up term with name '{term_name}' from dictionary '{dictionary_name}'"
+        )
+        snomed_uid = self.lookup_dictionary_uid(dictionary_name)
+        filt = {"name": {"v": [term_name], "op": "eq"}}
+        items = self.api.get_all_from_api(
+            "/dictionaries/terms",
+            params={"codelist_uid": snomed_uid, "filters": json.dumps(filt)},
+        )
+        if items is not None and len(items) > 0:
+            uid = items[0].get("term_uid", None)
+            self.log.debug(f"Found term with name '{term_name}' and uid '{uid}'")
+            return uid
+        self.log.warning(f"Could not find term with name '{term_name}'")
+
+    @lru_cache(maxsize=10000)
+    def lookup_codelist_term_name_from_concept_id(self, codelist_name, concept_id):
+        self.log.info(
+            f"Looking up term with concept id '{concept_id}' from codelist '{codelist_name}'"
+        )
+        terms = self.fetch_codelist_terms(codelist_name)
+        if terms is not None:
+            for term in terms:
+                if term["attributes"]["concept_id"] == concept_id:
+                    name = term["name"]["sponsor_preferred_name"]
+                    self.log.debug(
+                        f"Found term with concept id '{concept_id}' and name '{name}'"
+                    )
+                    return name
+        self.log.warning(
+            f"Could not find term with concept id '{concept_id}' in codelist '{codelist_name}'"
+        )

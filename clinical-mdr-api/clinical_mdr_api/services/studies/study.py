@@ -174,6 +174,7 @@ class StudyService:
         study_value_version: str | None = None,
         status: StudyStatus | None = None,
         history_endpoint: bool = False,
+        terms_at_specific_datetime: datetime | None = None,
     ) -> Study:
         result = Study.from_study_definition_ar(
             study_definition_ar=study_definition_ar,
@@ -187,6 +188,7 @@ class StudyService:
             study_value_version=study_value_version,
             status=status,
             history_endpoint=history_endpoint,
+            terms_at_specific_datetime=terms_at_specific_datetime,
         )
         return (
             StudyService.filter_result_by_requested_fields(
@@ -277,6 +279,10 @@ class StudyService:
                 uid=uid,
                 study_value_version=study_value_version,
             )
+            terms_at_specific_datetime = self._extract_terms_at_date(
+                study_uid=uid,
+                study_value_version=study_value_version,
+            )
             if study_definition is None:
                 raise exceptions.NotFoundException(
                     f"StudyDefinition '{uid}' not found."
@@ -294,9 +300,34 @@ class StudyService:
                 at_specified_date_time=at_specified_date_time,
                 study_value_version=study_value_version,
                 status=status,
+                terms_at_specific_datetime=terms_at_specific_datetime,
             )
         finally:
             self._close_all_repos()
+
+    def _extract_terms_at_date(self, study_uid, study_value_version: str = None):
+        study_standard_version = self._repos.study_standard_version_repository.find_standard_version_in_study(
+            study_uid=study_uid,
+            study_value_version=study_value_version,
+        )
+        terms_at_specific_date = None
+        if study_standard_version:
+            terms_at_specific_date = self._repos.ct_package_repository.find_by_uid(
+                study_standard_version[0].ct_package_uid
+            ).effective_date
+        return (
+            datetime(
+                terms_at_specific_date.year,
+                terms_at_specific_date.month,
+                terms_at_specific_date.day,
+                23,
+                59,
+                59,
+                999999,
+            )
+            if terms_at_specific_date
+            else None
+        )
 
     @db.transaction
     def lock(self, uid: str, change_description: str) -> Study:
@@ -513,12 +544,12 @@ class StudyService:
 
     @db.transaction
     def get_subpart_audit_trail_by_uid(
-        self, uid: str, is_subpart: bool = False
+        self, uid: str, is_subpart: bool = False, study_value_version: str | None = None
     ) -> list[StudySubpartAuditTrail]:
         try:
             return (
                 self._repos.study_definition_repository.get_subpart_audit_trail_by_uid(
-                    uid, is_subpart
+                    uid, is_subpart, study_value_version=study_value_version
                 )
             )
         finally:

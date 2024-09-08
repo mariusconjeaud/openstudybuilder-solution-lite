@@ -13,8 +13,10 @@
   >
     <template #actions="">
       <v-btn
+        class="ml-2"
         size="small"
-        color="primary"
+        variant="outlined"
+        color="nnBaseBlue"
         :title="$t('DictionaryTermTable.add_title')"
         :disabled="!checkPermission($roles.LIBRARY_WRITE)"
         icon="mdi-plus"
@@ -31,7 +33,12 @@
       <ActionsMenu :actions="actions" :item="item" />
     </template>
   </NNTable>
-  <slot name="termForm" :close-form="closeForm" :open="showTermForm">
+  <slot
+    name="termForm"
+    :close-form="closeForm"
+    :open="showTermForm"
+    :edited-term="formToEdit"
+  >
     <DictionaryTermForm
       :open="showTermForm"
       :dictionary-name="dictionaryName"
@@ -142,7 +149,7 @@ export default {
         },
       ],
       defaultHeaders: [
-        { title: '', key: 'actions', width: '5%' },
+        { title: '', key: 'actions', width: '1%' },
         { title: this.dictionaryName, key: 'dictionary_id' },
         { title: this.$t('_global.name'), key: 'name' },
         {

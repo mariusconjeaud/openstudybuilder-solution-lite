@@ -18,8 +18,9 @@
         @click.stop="deleteStudy"
       />
     </template>
-    <template #form="{ closeHandler, openHandler }">
+    <template #form="{ closeHandler, openHandler, formKey }">
       <StudyForm
+        :key="formKey"
         :open="openHandler"
         :edited-study="study"
         @close="close(closeHandler)"
@@ -30,97 +31,88 @@
   <ConfirmDialog ref="confirm" :text-cols="6" :action-cols="5" />
 </template>
 
-<script>
+<script setup>
+import { inject, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
 import api from '@/api/study'
 import StudyForm from './StudyForm.vue'
 import StudyMetadataSummary from './StudyMetadataSummary.vue'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
 
-export default {
-  components: {
-    ConfirmDialog,
-    StudyForm,
-    StudyMetadataSummary,
-  },
-  inject: ['eventBusEmit'],
-  setup() {
-    const studiesGeneralStore = useStudiesGeneralStore()
+const { t } = useI18n()
+const router = useRouter()
+const eventBusEmit = inject('eventBusEmit')
+const studiesGeneralStore = useStudiesGeneralStore()
 
-    return {
-      studiesGeneralStore,
-    }
+const identification = ref({})
+
+const params = [
+  {
+    label: t('Study.clinical_programme'),
+    name: 'clinical_programme_name',
   },
-  data() {
-    return {
-      identification: {},
-      params: [
-        {
-          label: this.$t('Study.clinical_programme'),
-          name: 'clinical_programme_name',
-        },
-        {
-          label: this.$t('Study.project_number'),
-          name: 'project_number',
-        },
-        {
-          label: this.$t('Study.project_name'),
-          name: 'project_name',
-        },
-        {
-          label: this.$t('Study.study_id'),
-          name: 'study_id',
-        },
-        {
-          label: this.$t('Study.study_number'),
-          name: 'study_number',
-        },
-        {
-          label: this.$t('Study.study_acronym'),
-          name: 'study_acronym',
-        },
-      ],
-      study: null,
-    }
+  {
+    label: t('Study.project_number'),
+    name: 'project_number',
   },
-  mounted() {
-    api.getStudy(this.studiesGeneralStore.selectedStudy.uid).then((resp) => {
-      this.study = resp.data
-      this.identification = resp.data.current_metadata.identification_metadata
+  {
+    label: t('Study.project_name'),
+    name: 'project_name',
+  },
+  {
+    label: t('Study.study_id'),
+    name: 'study_id',
+  },
+  {
+    label: t('Study.study_number'),
+    name: 'study_number',
+  },
+  {
+    label: t('Study.study_acronym'),
+    name: 'study_acronym',
+  },
+]
+const study = ref(null)
+const confirm = ref()
+
+onMounted(() => {
+  api.getStudy(studiesGeneralStore.selectedStudy.uid).then((resp) => {
+    study.value = resp.data
+    identification.value = resp.data.current_metadata.identification_metadata
+  })
+})
+
+function canDeleteSelectedStudy() {
+  return (
+    study.value &&
+    study.value.possible_actions.find((action) => action === 'delete')
+  )
+}
+async function deleteStudy() {
+  const options = { type: 'warning' }
+  const studyId = study.value.current_metadata.identification_metadata.study_id
+  if (
+    await confirm.value.open(
+      t('StudyStatusTable.confirm_delete', { studyId }),
+      options
+    )
+  ) {
+    await api.deleteStudy(studiesGeneralStore.selectedStudy.uid)
+    eventBusEmit('notification', {
+      msg: t('StudyStatusTable.delete_success'),
+      type: 'success',
     })
-  },
-  methods: {
-    canDeleteSelectedStudy() {
-      return (
-        this.study &&
-        this.study.possible_actions.find((action) => action === 'delete')
-      )
-    },
-    async deleteStudy() {
-      const options = { type: 'warning' }
-      const study = this.study.current_metadata.identification_metadata.study_id
-      if (
-        await this.$refs.confirm.open(
-          this.$t('StudyStatusTable.confirm_delete', { study }),
-          options
-        )
-      ) {
-        await api.deleteStudy(this.studiesGeneralStore.selectedStudy.uid)
-        this.eventBusEmit('notification', {
-          msg: this.$t('StudyStatusTable.delete_success'),
-          type: 'success',
-        })
-        this.studiesGeneralStore.unselectStudy()
-        this.$router.push({ name: 'SelectOrAddStudy' })
-      }
-    },
-    close(closeHandler) {
-      closeHandler()
-    },
-    onIdentificationUpdated(data) {
-      this.study = data
-      this.identification = data.current_metadata.identification_metadata
-    },
-  },
+    studiesGeneralStore.unselectStudy()
+    router.push({ name: 'SelectOrAddStudy' })
+  }
+}
+function close(closeHandler) {
+  closeHandler()
+}
+function onIdentificationUpdated(data) {
+  study.value = data
+  identification.value = data.current_metadata.identification_metadata
 }
 </script>

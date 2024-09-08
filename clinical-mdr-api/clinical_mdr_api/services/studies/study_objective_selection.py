@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from neomodel import db
 
 from clinical_mdr_api import exceptions, models
@@ -700,6 +702,7 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
         self,
         study_uid: str,
         no_brackets: bool,
+        sort_by: dict | None = None,
         filter_by: dict | None = None,
         filter_operator: FilterOperator | None = FilterOperator.AND,
         page_number: int = 1,
@@ -715,7 +718,7 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
             assert objective_selection_ar is not None
 
             simple_filters = build_simple_filters(
-                self._vo_to_ar_filter_map, filter_by, None
+                self._vo_to_ar_filter_map, filter_by, sort_by
             )
             if simple_filters:
                 # Filtering only needs data that is already available in the AR
@@ -758,6 +761,7 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
             # Do filtering, sorting, pagination and count
             filtered_items = service_level_generic_filtering(
                 items=selections,
+                sort_by=sort_by,
                 filter_by=filter_by,
                 filter_operator=filter_operator,
                 total_count=total_count,
@@ -769,16 +773,21 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
             repos.close()
 
     def _transform_history_to_response_model(
-        self, study_selection_history: list[SelectionHistory], study_uid: str
+        self,
+        study_selection_history: list[SelectionHistory],
+        study_uid: str,
+        effective_dates: datetime | None = None,
     ) -> list[models.StudySelectionObjectiveCore]:
+        # Transform each history to the response model
         result = []
-        for history in study_selection_history:
+        for history, effective_date in zip(study_selection_history, effective_dates):
             result.append(
                 models.StudySelectionObjectiveCore.from_study_selection_history(
                     study_selection_history=history,
                     study_uid=study_uid,
                     get_objective_by_uid_version_callback=self._transform_objective_model,
                     get_ct_term_objective_level=self._find_by_uid_or_raise_not_found,
+                    effective_date=effective_date,
                 )
             )
         return result
@@ -793,11 +802,22 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
                 selection_history = (
                     repos.study_objective_repository.find_selection_history(study_uid)
                 )
+                # Extract start dates from the selection history
+                start_dates = [history.start_date for history in selection_history]
+
+                # Extract effective dates for each version based on the start dates
+                effective_dates = (
+                    self._extract_multiple_version_study_standards_effective_date(
+                        study_uid=study_uid, list_of_start_dates=start_dates
+                    )
+                )
             except ValueError as value_error:
                 raise exceptions.NotFoundException(value_error.args[0])
 
             return self._transform_history_to_response_model(
-                selection_history, study_uid
+                selection_history,
+                study_uid,
+                effective_dates=effective_dates,
             )
         finally:
             repos.close()
@@ -811,9 +831,20 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
             selection_history = repos.study_objective_repository.find_selection_history(
                 study_uid, study_selection_uid
             )
+            # Extract start dates from the selection history
+            start_dates = [history.start_date for history in selection_history]
+
+            # Extract effective dates for each version based on the start dates
+            effective_dates = (
+                self._extract_multiple_version_study_standards_effective_date(
+                    study_uid=study_uid, list_of_start_dates=start_dates
+                )
+            )
 
             return self._transform_history_to_response_model(
-                selection_history, study_uid
+                selection_history,
+                study_uid,
+                effective_dates=effective_dates,
             )
         finally:
             repos.close()

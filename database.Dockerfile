@@ -10,18 +10,18 @@ ARG NEO4J_CHECKSUM=a2ab866be05d2decef558b3e711c4b4403f3a35be6b87f7b94c618bb83b8f
 ## Install required system packages, for clinical-mdr-api as well
 RUN apt-get update \
     && apt-get -y install \
-        ca-certificates-java \
-        openjdk-17-jre-headless \
-        git \
-        curl \
-        python3-cffi \
-        python3-brotli \
-        libpango-1.0-0 \
-        libharfbuzz0b \
-        libpangoft2-1.0-0 \
-        jq \
-        gcc \
-        net-tools \ 
+    ca-certificates-java \
+    openjdk-17-jre-headless \
+    git \
+    curl \
+    python3-cffi \
+    python3-brotli \
+    libpango-1.0-0 \
+    libharfbuzz0b \
+    libpangoft2-1.0-0 \
+    jq \
+    gcc \
+    net-tools \ 
     && pip install --upgrade pip pipenv wheel \
     && apt-get clean && rm -rf /var/lib/apt/lists && rm -rf ~/.cache
 
@@ -118,11 +118,11 @@ RUN /neo4j/bin/neo4j-admin dbms set-initial-password "$NEO4J_MDR_AUTH_PASSWORD" 
     && mkdir -p neodash_reports/import && FILES="neodash/neodash_reports/*.json" \
     && for f in $FILES; do echo "Processing $f file..."; filename=`basename $f` content=`cat $f` ; \
     title=`jq -r .title $f`; uuid=`jq -r .uuid $f`; version=`jq -r .version $f`; echo "$title" "$uuid" "$version"; \
-    jq -n --slurpfile content $f --arg title "$title" --arg uuid "$uuid" --arg version "$version" --arg date "$reportDate" '. += {"content": $content, "title": $title, "uuid": $uuid, "version": $version, "date": $date, "user": "kwl@novonordisk.com"}' > neodash_reports/import/$filename; \
+    jq -n --slurpfile content $f --arg title "$title" --arg uuid "$uuid" --arg version "$version" --arg date "$reportDate" '. += {"content": $content, "title": $title, "uuid": $uuid, "version": $version, "date": $date, "user": "OpenStudyBuilder@gmail.com"}' > neodash_reports/import/$filename; \
     done \
     && python -m pipenv run import_reports neodash_reports/import \
     # imports
-    && cd ../mdr-standards-import && pipenv run pipeline_bulk_import "IMPORT" "packages" true \
+    && cd ../mdr-standards-import && pipenv run bulk_import "IMPORT" "packages" \
     # update CT package stats
     && cd ../neo4j-mdr-db && pipenv run update_ct_stats \
     # start API
@@ -131,7 +131,7 @@ RUN /neo4j/bin/neo4j-admin dbms set-initial-password "$NEO4J_MDR_AUTH_PASSWORD" 
     && while ! netstat -tna | grep 'LISTEN\>' | grep -q '8000\>'; do sleep 2; done \
     && set -x \
     # imports
-    && sleep 10 && cd ../studybuilder-import && pipenv run import_all \
+    && sleep 10 && cd ../studybuilder-import && pipenv run import_all && pipenv run import_dummydata \
     # stop the api
     && sleep 10 && kill -TERM $api_pid && wait $api_pid \
     # stop neo4j server gently, but first wait a little for recent transactions to finish
@@ -150,9 +150,9 @@ ARG GROUP=neo4j
 # Match id of neo4j user with the current user on the host for correct premissions of db dumps mounted folder
 ARG UID=1000
 RUN [ "x$UID" = "x1000" ] || { \
-        echo "Changing uid & gid of neo4j user to $UID" \
-        && usermod --uid "$UID" "neo4j" \
-        && groupmod --gid "$UID" "neo4j" \
+    echo "Changing uid & gid of neo4j user to $UID" \
+    && usermod --uid "$UID" "neo4j" \
+    && groupmod --gid "$UID" "neo4j" \
     ;}
 
 # Install APOC plugin
@@ -175,3 +175,4 @@ USER $USER
 
 HEALTHCHECK --start-period=60s --timeout=3s --interval=10s --retries=3 \
     CMD wget --quiet --spider --timeout 2 --tries 1 "http://localhost:7474/" || exit 1
+

@@ -3,7 +3,7 @@
     v-if="studyEndpoint"
     ref="formRef"
     :title="$t('StudyEndpointEditForm.title')"
-    :study-selection="studyEndpoint"
+    :study-selection="editedObject"
     :template="template"
     :library-name="library.name"
     object-type="endpoint"
@@ -77,22 +77,6 @@
             />
           </template>
         </div>
-        <p class="mt-6 text-secondary text-h6">
-          {{ $t('StudyEndpointEditForm.unformatted_preview_section') }}
-        </p>
-        <v-card flat class="bg-parameterBackground">
-          <v-card-text>
-            <template v-if="$refs.form && $refs.form.$refs.paramSelector">
-              {{ $refs.form.$refs.paramSelector.namePlainPreview }} ({{
-                unitsDisplay(form.endpoint_units.units)
-              }}).
-            </template>
-            <template v-if="$refs.timeframeParamSelector">
-              {{ $t('StudyEndpointEditForm.timeframe') }}:
-              {{ $refs.timeframeParamSelector.namePlainPreview }}.
-            </template>
-          </v-card-text>
-        </v-card>
         <p class="mt-6 text-secondary text-h6">
           {{ $t('StudyEndpointEditForm.level_section') }}
         </p>
@@ -181,16 +165,17 @@ const timeframeTemplateParameters = ref([])
 const separators = ref([' and ', ' or ', ' and/or '])
 const formRef = ref()
 const observer = ref()
+const editedObject = ref({})
 
 const template = computed(() => {
-  return props.studyEndpoint.endpoint
-    ? props.studyEndpoint.endpoint.endpoint_template
-    : props.studyEndpoint.endpoint_template
+  return editedObject.value.endpoint
+    ? editedObject.value.endpoint.template
+    : editedObject.value.template
 })
 const library = computed(() => {
-  return props.studyEndpoint.endpoint
-    ? props.studyEndpoint.endpoint.library
-    : props.studyEndpoint.endpoint_template.library
+  return editedObject.value.endpoint
+    ? editedObject.value.endpoint.library
+    : editedObject.value.template.library
 })
 
 watch(timeframeTemplate, (value) => {
@@ -198,8 +183,8 @@ watch(timeframeTemplate, (value) => {
     return
   }
   if (
-    props.studyEndpoint.timeframe &&
-    props.studyEndpoint.timeframe.timeframe_template.uid === value.uid
+    editedObject.value.timeframe &&
+    editedObject.value.timeframe.template.uid === value.uid
   ) {
     return
   }
@@ -214,12 +199,29 @@ watch(timeframeTemplate, (value) => {
     })
 })
 
+watch(
+  () => props.studyEndpoint,
+  (value) => {
+    if (value) {
+      study
+        .getStudyEndpoint(
+          studiesGeneralStore.selectedStudy.uid,
+          value.study_endpoint_uid
+        )
+        .then((resp) => {
+          editedObject.value = resp.data
+        })
+    }
+  },
+  { immediate: true }
+)
+
 onMounted(() => {
   getTimeframeTemplates()
   study
     .getStudyObjectives(studiesGeneralStore.selectedStudy.uid)
     .then((resp) => {
-      studyObjectives.value = resp.data.items
+      studyObjectives.value = resp.data.items.filter(obj => obj.objective)
     })
 })
 
@@ -229,34 +231,34 @@ function close() {
 }
 
 function initForm(form) {
-  form.endpoint_units = props.studyEndpoint.endpoint_units
-  form.endpoint_level = props.studyEndpoint.endpoint_level
-  form.endpoint_sublevel = props.studyEndpoint.endpoint_sublevel
-  if (props.studyEndpoint.timeframe) {
-    timeframeTemplate.value = props.studyEndpoint.timeframe.timeframe_template
+  form.endpoint_units = editedObject.value.endpoint_units
+  form.endpoint_level = editedObject.value.endpoint_level
+  form.endpoint_sublevel = editedObject.value.endpoint_sublevel
+  if (editedObject.value.timeframe) {
+    timeframeTemplate.value = editedObject.value.timeframe.template
     timeframes
-      .getObjectParameters(props.studyEndpoint.timeframe.uid, {
+      .getObjectParameters(editedObject.value.timeframe.uid, {
         study_uid: studiesGeneralStore.selectedStudy.uid,
       })
       .then((resp) => {
         timeframeTemplateParameters.value = resp.data
         instances.loadParameterValues(
-          props.studyEndpoint.timeframe.parameter_terms,
+          editedObject.value.timeframe.parameter_terms,
           timeframeTemplateParameters.value
         )
       })
   }
-  if (props.studyEndpoint.study_objective) {
-    form.study_objective = props.studyEndpoint.study_objective
+  if (editedObject.value.study_objective) {
+    form.study_objective = editedObject.value.study_objective
   }
   originalForm.value = JSON.parse(JSON.stringify(form))
 }
 
 async function getStudyEndpointNamePreview(parameters) {
   const endpointData = {
-    endpoint_template_uid: props.studyEndpoint.endpoint.endpoint_template.uid,
+    endpoint_template_uid: editedObject.value.endpoint.template.uid,
     parameter_terms: await instances.formatParameterValues(parameters),
-    library_name: props.studyEndpoint.endpoint.library.name,
+    library_name: editedObject.value.endpoint.library.name,
   }
   const resp = await study.getStudyEndpointPreview(
     studiesGeneralStore.selectedStudy.uid,
@@ -267,10 +269,9 @@ async function getStudyEndpointNamePreview(parameters) {
 
 async function getTimeframeNamePreview(parameters) {
   const data = {
-    timeframe_template_uid:
-      props.studyEndpoint.timeframe.timeframe_template.uid,
+    timeframe_template_uid: editedObject.value.timeframe.template.uid,
     parameter_terms: await instances.formatParameterValues(parameters),
-    library_name: props.studyEndpoint.timeframe.library.name,
+    library_name: editedObject.value.timeframe.library.name,
   }
   const resp = await timeframes.getPreview(data)
   return resp.data.name
@@ -287,17 +288,6 @@ function getTimeframeTemplates() {
   })
 }
 
-function unitsDisplay(units) {
-  let result = ''
-  if (units) {
-    units.forEach((unit) => {
-      result +=
-        studiesGeneralStore.allUnits.find((u) => u.uid === unit.uid).name + ', '
-    })
-  }
-  return result.slice(0, -2)
-}
-
 async function submit(newTemplate, form, parameters) {
   const { valid } = await observer.value.validate()
   if (!valid) {
@@ -309,13 +299,13 @@ async function submit(newTemplate, form, parameters) {
   if (newTemplate) {
     data.endpoint_template = newTemplate
     data.endpoint_parameters = parameters
-  } else if (!props.studyEndpoint.endpoint) {
-    data.endpoint_template = props.studyEndpoint.endpoint_template
+  } else if (!editedObject.value.endpoint) {
+    data.endpoint_template = editedObject.value.template
     data.endpoint_parameters = parameters
   } else {
     const namePreview = await getStudyEndpointNamePreview(parameters)
-    if (namePreview !== props.studyEndpoint.endpoint.name) {
-      data.endpoint_template = props.studyEndpoint.endpoint.endpoint_template
+    if (namePreview !== editedObject.value.endpoint.name) {
+      data.endpoint_template = editedObject.value.endpoint.endpoint_template ? editedObject.value.endpoint.endpoint_template : editedObject.value.endpoint.template
       // Hotfix because we don't have the template library here...
       data.endpoint_template.library = {
         name: constants.LIBRARY_SPONSOR,
@@ -323,20 +313,23 @@ async function submit(newTemplate, form, parameters) {
       data.endpoint_parameters = parameters
     }
   }
-  if (!props.studyEndpoint.timeframe) {
+  if (!editedObject.value.timeframe) {
     if (timeframeTemplate.value) {
       data.timeframe_template = timeframeTemplate.value
       data.timeframe_parameters = timeframeTemplateParameters.value
+      data.timeframe_template.library = {
+        name: constants.LIBRARY_USER_DEFINED,
+      }
     }
   } else {
     const namePreview = await getTimeframeNamePreview(
       timeframeTemplateParameters.value
     )
-    if (namePreview !== props.studyEndpoint.timeframe.name) {
+    if (namePreview !== editedObject.value.timeframe.name) {
       data.timeframe_template = timeframeTemplate.value
       // Hotfix because we don't have the template library here...
       data.timeframe_template.library = {
-        name: constants.LIBRARY_SPONSOR,
+        name: constants.LIBRARY_USER_DEFINED,
       }
       data.timeframe_parameters = timeframeTemplateParameters.value
     }
@@ -348,8 +341,9 @@ async function submit(newTemplate, form, parameters) {
   }
   const args = {
     studyUid: studiesGeneralStore.selectedStudy.uid,
-    studyEndpointUid: props.studyEndpoint.study_endpoint_uid,
+    studyEndpointUid: editedObject.value.study_endpoint_uid,
     form: data,
+    library_name: constants.LIBRARY_USER_DEFINED,
   }
   studiesEndpointsStore
     .updateStudyEndpoint(args)

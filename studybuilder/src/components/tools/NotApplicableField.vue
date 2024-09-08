@@ -1,69 +1,59 @@
 <template>
-  <div>
-    <label v-if="label" class="v-label">{{ label }}</label>
-    <v-row class="align-center">
-      <v-col cols="10">
-        <slot name="mainField" :not-applicable="notApplicable" />
-      </v-col>
-      <v-col cols="2">
-        <v-checkbox
-          v-model="notApplicable"
-          color="primary"
-          data-cy="not-applicable-checkbox"
-          :label="naLabel"
-          hide-details
-          :disabled="disabled"
-          @change="cleanFunction"
-        />
-      </v-col>
-    </v-row>
-  </div>
+  <label v-if="label" class="v-label">{{ label }}</label>
+  <v-row class="align-center">
+    <v-col cols="10">
+      <slot name="mainField" :not-applicable="notApplicable" />
+    </v-col>
+    <v-col cols="2">
+      <v-checkbox
+        v-model="notApplicable"
+        color="primary"
+        data-cy="not-applicable-checkbox"
+        :label="naLabel"
+        hide-details
+        :disabled="disabled"
+        @change="cleanFunction"
+      />
+    </v-col>
+  </v-row>
 </template>
 
-<script>
+<script setup>
+import { ref, watch } from 'vue'
 import { i18n } from '@/plugins/i18n'
 
-export default {
-  props: {
-    label: {
-      type: String,
-      default: '',
-    },
-    hint: {
-      type: String,
-      default: '',
-    },
-    naLabel: {
-      type: String,
-      default: () => i18n.t('_global.not_applicable'),
-    },
-    cleanFunction: {
-      type: Function,
-      default: undefined,
-    },
-    checked: Boolean,
-    disabled: {
-      type: Boolean,
-      default: false,
-    },
+const props = defineProps({
+  label: {
+    type: String,
+    default: '',
   },
-  data() {
-    return {
-      notApplicable: false,
-    }
+  hint: {
+    type: String,
+    default: '',
   },
-  watch: {
-    checked() {
-      this.notApplicable = this.checked
-    },
+  naLabel: {
+    type: String,
+    default: () => i18n.t('_global.not_applicable'),
   },
-  created() {
-    this.notApplicable = this.checked
+  cleanFunction: {
+    type: Function,
+    default: undefined,
   },
-  methods: {
-    reset() {
-      this.notApplicable = false
-    },
+  checked: Boolean,
+  disabled: {
+    type: Boolean,
+    default: false,
   },
-}
+})
+
+const notApplicable = ref(false)
+
+watch(
+  () => props.checked,
+  (value) => {
+    notApplicable.value = value
+  }
+)
+
+notApplicable.value = props.checked
 </script>

@@ -1,3 +1,5 @@
+import json
+
 from clinical_mdr_api.domain_repositories._generic_repository_interface import (
     _AggregateRootType,
 )
@@ -54,6 +56,7 @@ class VendorElementRepository(OdmGenericRepository[OdmVendorElementAR]):
             uid=root.uid,
             concept_vo=OdmVendorElementVO.from_repository_values(
                 name=value.name,
+                compatible_types=value.compatible_types,
                 vendor_namespace_uid=vendor_namespace.uid if vendor_namespace else None,
                 vendor_attribute_uids=[
                     vendor_attribute.uid
@@ -75,6 +78,7 @@ class VendorElementRepository(OdmGenericRepository[OdmVendorElementAR]):
             uid=input_dict.get("uid"),
             concept_vo=OdmVendorElementVO.from_repository_values(
                 name=input_dict.get("name"),
+                compatible_types=json.loads(input_dict.get("compatible_types") or "[]"),
                 vendor_namespace_uid=input_dict.get("vendor_namespace_uid"),
                 vendor_attribute_uids=input_dict.get("vendor_attribute_uids"),
             ),
@@ -102,6 +106,7 @@ class VendorElementRepository(OdmGenericRepository[OdmVendorElementAR]):
     ) -> str:
         return f"""
         WITH *,
+        concept_value.compatible_types AS compatible_types,
 
         head([(concept_value)<-[:{only_specific_status}]-(:OdmVendorElementRoot)<-[:HAS_VENDOR_ELEMENT]-(vnr:OdmVendorNamespaceRoot)-[:LATEST]->(vnv:OdmVendorNamespaceValue) | {{uid: vnr.uid, name: vnv.name, prefix: vnv.prefix, url: vnv.url}}]) AS vendor_namespace,
         [(concept_value)<-[:{only_specific_status}]-(:OdmVendorElementRoot)-[:HAS_VENDOR_ATTRIBUTE]->(var:OdmVendorAttributeRoot)-[:LATEST]->(vav:OdmVendorAttributeValue) | {{uid: var.uid, name: vav.name}}] AS vendor_attributes
@@ -126,6 +131,15 @@ class VendorElementRepository(OdmGenericRepository[OdmVendorElementAR]):
 
         return new_value
 
+    def _create_new_value_node(self, ar: OdmVendorElementAR) -> OdmVendorElementValue:
+        value_node = super()._create_new_value_node(ar=ar)
+
+        value_node.save()
+
+        value_node.compatible_types = ar.concept_vo.compatible_types
+
+        return value_node
+
     def _has_data_changed(
         self, ar: OdmVendorElementAR, value: OdmVendorElementValue
     ) -> bool:
@@ -141,7 +155,11 @@ class VendorElementRepository(OdmGenericRepository[OdmVendorElementAR]):
 
         are_rels_changed = ar.concept_vo.vendor_namespace_uid != vendor_namespace_uid
 
-        return are_concept_properties_changed or are_rels_changed
+        return (
+            are_concept_properties_changed
+            or are_rels_changed
+            or ar.concept_vo.compatible_types != value.compatible_types
+        )
 
     def find_by_uid_with_odm_element_relation(
         self, uid: str, odm_element_uid: str, odm_element_type: RelationType
@@ -165,6 +183,7 @@ class VendorElementRepository(OdmGenericRepository[OdmVendorElementAR]):
 
         return OdmVendorElementRelationVO.from_repository_values(
             uid=uid,
+            compatible_types=vendor_element_value.compatible_types,
             name=vendor_element_value.name,
             value=rel.value,
         )

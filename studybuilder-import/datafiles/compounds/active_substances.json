@@ -1,0 +1,22 @@
+[
+  {
+    "external_id": "METFORMIN",
+    "analyte_number": null,
+    "short_number": null,
+    "long_number": null,
+    "inn": "Metformin",
+    "unii": {
+      "substance_unii": "9100L32L2N"
+    }
+  },
+  {
+    "external_id": "NPH INSULIN",
+    "analyte_number": "AN000045",
+    "short_number": "NNC0121",
+    "long_number": "NNC0121-0000-0308",
+    "inn": "NPH Insulin",
+    "unii": {
+      "substance_unii": "1Y17CTI5SR"
+    }
+  }
+]

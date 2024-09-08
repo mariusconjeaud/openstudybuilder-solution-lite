@@ -31,6 +31,7 @@ from clinical_mdr_api.models.utils import BaseModel
 
 class Ingredient(BaseModel):
     external_id: str | None = None
+    formulation_name: str | None = None
     active_substance: SimpleActiveSubstance
     strength: SimpleNumericValueWithUnit | None = None
     half_life: SimpleNumericValueWithUnit | None = None
@@ -39,6 +40,7 @@ class Ingredient(BaseModel):
 
 class IngredientCreateInput(BaseModel):
     active_substance_uid: str
+    formulation_name: str | None = None
     external_id: str | None = None
     strength_uid: str | None = None
     half_life_uid: str | None = None
@@ -47,6 +49,7 @@ class IngredientCreateInput(BaseModel):
 
 class IngredientEditInput(BaseModel):
     active_substance_uid: str | None = None
+    formulation_name: str | None = None
     external_id: str | None = None
     strength_uid: str | None = None
     half_life_uid: str | None = None
@@ -55,19 +58,16 @@ class IngredientEditInput(BaseModel):
 
 class Formulation(BaseModel):
     external_id: str | None = None
-    name: str
     ingredients: list[Ingredient] = []
 
 
 class FormulationCreateInput(BaseModel):
     external_id: str | None = None
-    name: str
     ingredients: list[IngredientCreateInput] | None = None
 
 
 class FormulationEditInput(BaseModel):
     external_id: str | None = None
-    name: str | None = None
     ingredients: list[IngredientEditInput] = []
 
 
@@ -128,11 +128,11 @@ class PharmaceuticalProduct(VersionProperties):
                 [
                     Formulation(
                         external_id=formulation.external_id,
-                        name=formulation.name,
                         ingredients=sorted(
                             [
                                 Ingredient(
                                     external_id=ingredient.external_id,
+                                    formulation_name=ingredient.formulation_name,
                                     active_substance=SimpleActiveSubstance.from_concept_uid(
                                         uid=ingredient.active_substance_uid,
                                         find_by_uid=find_active_substance_by_uid,
@@ -175,7 +175,7 @@ class PharmaceuticalProduct(VersionProperties):
                     )
                     for formulation in pharmaceutical_product_ar.concept_vo.formulations
                 ],
-                key=lambda item: item.name,
+                key=lambda item: item.external_id if item.external_id else "",
             ),
             library_name=Library.from_library_vo(
                 pharmaceutical_product_ar.library

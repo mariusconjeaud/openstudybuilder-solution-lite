@@ -187,19 +187,23 @@ export default {
     },
   },
   watch: {
-    metadata() {
-      if (this.metadata) {
-        this.form = this.metadata
-        if (this.form.element_colour) {
-          this.colorHash = this.form.element_colour
-        }
-        if (!this.form.planned_duration) {
-          this.form.planned_duration = {}
-        }
-        if (this.metadata.element_subtype) {
-          this.form.element_subtype_uid = this.metadata.element_subtype.term_uid
-        }
-        this.formStore.save(this.form)
+    metadata(value) {
+      if (value) {
+        arms
+          .getStudyElement(this.selectedStudy.uid, value.element_uid)
+          .then((resp) => {
+            this.form = resp.data
+            if (this.form.element_colour) {
+              this.colorHash = this.form.element_colour
+            }
+            if (!this.form.planned_duration) {
+              this.form.planned_duration = {}
+            }
+            if (resp.data.element_subtype) {
+              this.form.element_subtype_uid = resp.data.element_subtype.term_uid
+            }
+            this.formStore.save(this.form)
+          })
       }
     },
   },

@@ -4,6 +4,7 @@ from datetime import datetime
 from threading import Lock
 from typing import Any, Iterable, Mapping, TypeVar
 
+import neo4j
 from cachetools import TTLCache, cached
 from cachetools.keys import hashkey
 from neomodel import (
@@ -22,6 +23,7 @@ from clinical_mdr_api.domain_repositories._generic_repository_interface import (
 )
 from clinical_mdr_api.domain_repositories._utils.helpers import validate_dict
 from clinical_mdr_api.domain_repositories.generic_repository import RepositoryImpl
+from clinical_mdr_api.domain_repositories.models._utils import convert_to_datetime
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
     ControlledTerminology,
     CTTermNameRoot,
@@ -1104,7 +1106,7 @@ class LibraryItemRepositoryImplBase(
     ) -> _AggregateRootType:
         raise NotImplementedError
 
-    def hashkey_library_item_with_metadata(
+    def hashkey_library_item_with_metadata_find_by_uid(
         self,
         uid: str,
         for_update=False,
@@ -1125,7 +1127,7 @@ class LibraryItemRepositoryImplBase(
         If this custom hashkey function is not defined, most invocations of find_by_uid_optimized method will be misses.
         """
         return hashkey(
-            str(self),
+            self.make_hashable(type(self)),
             uid,
             for_update,
             library_name,
@@ -1138,14 +1140,14 @@ class LibraryItemRepositoryImplBase(
 
     @cached(
         cache=cache_store_item_by_uid,
-        key=hashkey_library_item_with_metadata,
+        key=hashkey_library_item_with_metadata_find_by_uid,
         lock=lock_store_item_by_uid,
     )
     def find_by_uid_optimized(
         self,
         uid: str,
-        for_update=False,
         *,
+        for_update: bool = False,
         library_name: str | None = None,
         status: LibraryItemStatus | None = None,
         version: str | None = None,
@@ -1181,9 +1183,29 @@ class LibraryItemRepositoryImplBase(
         if at_specific_date:
             params["at_specific_date"] = at_specific_date
 
+        cypher_query = match_stmt + return_stmt
+
+        # If a CTTermName is requested at a specific date and we do not want to raise an exception if not found,
+        # We retrieve both this version if available and the latest
+        # Then we return the latest if there is no available version at the given date
+        # This is for returning Terms in the context of a study with a StudyStandardVersion
+        if issubclass(self.root_class, CTTermNameRoot) and at_specific_date is not None:
+            latest_match_stmt, latest_return_stmt = self._find_cypher_query_optimized(
+                get_latest_final=True,
+                return_study_count=return_study_count,
+                uid=uid,
+                for_audit_trail=for_audit_trail,
+            )
+            cypher_query += (
+                ", false AS is_latest_fallback UNION ALL "
+                + latest_match_stmt
+                + latest_return_stmt
+                + ", true AS is_latest_fallback"
+            )
+
         try:
             result, _ = db.cypher_query(
-                match_stmt + return_stmt,
+                cypher_query,
                 params=params,
                 resolve_objects=True,
             )
@@ -1193,9 +1215,31 @@ class LibraryItemRepositoryImplBase(
             ) from exc
 
         if not result:
+            if issubclass(self.root_class, CTTermNameRoot):
+                raise NotFoundException(
+                    f"No {self.root_class.__label__} with UID ({uid}) found in given status, date and version ; nor was a latest final one found."
+                )
             raise NotFoundException(
                 f"No {self.root_class.__label__} with UID ({uid}) found in given status, date and version."
             )
+
+        queried_effective_date = None
+        date_conflict = False
+        if issubclass(self.root_class, CTTermNameRoot) and at_specific_date is not None:
+            # Last entry in each result row is a boolean
+            # indicating if the returned value is the requested one for date
+            # or the default latest final one
+            # Drop that last column once it has been used
+            non_latest_results = [r[:-1] for r in result if r[-1] is False]
+            if len(non_latest_results) > 0:
+                # Keep only non latest results if any
+                result = non_latest_results
+                queried_effective_date = at_specific_date
+            else:
+                # Keep only latest results if no results at date
+                # And raise date conflict flag
+                result = [r[:-1] for r in result if r[-1] is True]
+                date_conflict = True
 
         for (
             library,
@@ -1204,6 +1248,7 @@ class LibraryItemRepositoryImplBase(
             value,
             study_count,
             ctterm_names,
+            activity_instance_root,
             activity_root,
             activity_subgroups_root,
             unit_definition,
@@ -1226,6 +1271,7 @@ class LibraryItemRepositoryImplBase(
                 value=value,
                 study_count=study_count,
                 ctterm_names=ctterm_names,
+                activity_instance_root=activity_instance_root,
                 activity_root=activity_root,
                 activity_subgroups_root=activity_subgroups_root,
                 unit_definition=unit_definition,
@@ -1237,6 +1283,8 @@ class LibraryItemRepositoryImplBase(
                 activity_groups=activity_groups[0] if activity_groups else [],
                 activity_subgroups=activity_subgroups[0] if activity_subgroups else [],
                 instance_template=instance_template,
+                queried_effective_date=queried_effective_date,
+                date_conflict=date_conflict,
             )
 
             if value and relationship:
@@ -1256,6 +1304,66 @@ class LibraryItemRepositoryImplBase(
 
         return aggregates
 
+    def make_hashable(self, object_to_hash):
+        if object_to_hash is None:
+            return "None"
+        if isinstance(object_to_hash, dict):
+            return tuple(
+                sorted((k, self.make_hashable(v)) for k, v in object_to_hash.items())
+            )
+        if isinstance(object_to_hash, list):
+            return tuple(self.make_hashable(i) for i in object_to_hash)
+        if isinstance(object_to_hash, set):
+            return tuple(sorted(self.make_hashable(i) for i in object_to_hash))
+        return object_to_hash
+
+    def hashkey_library_item_with_metadata_get_all(
+        self,
+        *,
+        status: LibraryItemStatus | None = None,
+        library_name: str | None = None,
+        return_study_count: bool | None = False,
+        sort_by: dict | None = None,
+        page_number: int = 1,
+        page_size: int = 0,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
+        total_count: bool = False,
+        for_audit_trail: bool = False,
+        version_specific_uids: dict | None = None,
+        at_specific_date: datetime | None = None,
+        include_retired_versions: bool = False,
+    ):
+        """
+        Returns a hash key that will be used for mapping objects stored in cache,
+        which ultimately determines whether a method invocation is a hit or miss.
+
+        We need to define this custom hashing function with the same signature as the method we wish to cache (find_by_uid_optimized),
+        since the target method contains optional/default parameters.
+        If this custom hashkey function is not defined, most invocations of find_by_uid_optimized method will be misses.
+        """
+        return hashkey(
+            self.make_hashable(type(self)),
+            status,
+            library_name,
+            return_study_count,
+            self.make_hashable(sort_by),
+            page_number,
+            page_size,
+            self.make_hashable(filter_by),
+            filter_operator,
+            total_count,
+            for_audit_trail,
+            self.make_hashable(version_specific_uids),
+            at_specific_date,
+            include_retired_versions,
+        )
+
+    @cached(
+        cache=cache_store_item_by_uid,
+        key=hashkey_library_item_with_metadata_get_all,
+        lock=lock_store_item_by_uid,
+    )
     def get_all_optimized(
         self,
         *,
@@ -1269,6 +1377,9 @@ class LibraryItemRepositoryImplBase(
         filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
         for_audit_trail: bool = False,
+        version_specific_uids: dict | None = None,
+        at_specific_date: datetime | None = None,
+        include_retired_versions: bool = False,
     ) -> tuple[list, int]:
         validate_dict(filter_by, "filters")
         validate_dict(sort_by, "sort_by")
@@ -1276,15 +1387,20 @@ class LibraryItemRepositoryImplBase(
 
         aggregates = []
 
-        where_stmt, params = self._where_stmt_optimized(filter_by, filter_operator)
+        where_stmt, params = self._where_stmt_optimized(
+            filter_by, filter_operator, version_specific_uids=version_specific_uids
+        )
 
         match_stmt, return_stmt = self._find_cypher_query_optimized(
             with_status=bool(status),
             with_pagination=bool(page_size),
+            with_versions_in_where=bool(version_specific_uids),
+            with_at_specific_date=bool(at_specific_date),
             return_study_count=return_study_count,
             where_stmt=where_stmt,
             sort_by=sort_by,
             for_audit_trail=for_audit_trail,
+            include_retired_versions=include_retired_versions,
         )
 
         if status:
@@ -1293,6 +1409,9 @@ class LibraryItemRepositoryImplBase(
         if page_size > 0:
             params["page_number"] = page_number - 1
             params["page_size"] = page_size
+
+        if at_specific_date:
+            params["at_specific_date"] = at_specific_date
 
         result, _ = db.cypher_query(
             match_stmt + return_stmt,
@@ -1307,6 +1426,7 @@ class LibraryItemRepositoryImplBase(
             value,
             study_count,
             ctterm_names,
+            activity_instance_root,
             activity_root,
             activity_subgroups_root,
             unit_definition,
@@ -1329,6 +1449,7 @@ class LibraryItemRepositoryImplBase(
                 value=value,
                 study_count=study_count,
                 ctterm_names=ctterm_names,
+                activity_instance_root=activity_instance_root,
                 activity_root=activity_root,
                 activity_subgroups_root=activity_subgroups_root,
                 unit_definition=unit_definition,
@@ -1387,9 +1508,7 @@ class LibraryItemRepositoryImplBase(
                 "op": ComparisonOperator.CONTAINS.value,
             }
 
-        where_stmt, params = self._where_stmt_optimized(
-            filter_by, filter_operator, True
-        )
+        where_stmt, params = self._where_stmt_optimized(filter_by, filter_operator)
 
         match_stmt, return_stmt = self._headers_cypher_query(
             cypher_field_name=cypher_field_name,
@@ -1409,11 +1528,14 @@ class LibraryItemRepositoryImplBase(
         rs = []
         for item in result:
             if item[0]:
-                rs.append(item[0])
+                elm = item[0]
+                if isinstance(elm, neo4j.time.DateTime):
+                    elm = convert_to_datetime(elm)
+                rs.append(elm)
 
         return rs
 
-    def basemodel_to_cypher_mapping_optimized(self, header_query: bool = False):
+    def basemodel_to_cypher_mapping_optimized(self):
         # Mapping between BaseModel attribute names and their corresponding
         # cypher query (as returned by _find_cypher_query() and _headers_cypher_query()) variables for filtering, sorting and headers
         mapping = {
@@ -1423,38 +1545,36 @@ class LibraryItemRepositoryImplBase(
             "name": "value.name",
             "name_plain": "value.name_plain",
             "status": "ver_rel.status",
+            "user_initials": "ver_rel.user_initials",
             "version": "ver_rel.version",
             "start_date": "ver_rel.start_date",
             "end_date": "ver_rel.end_date",
         }
 
-        if (
-            "SyntaxTemplateRoot"
-            in [
-                ith_class.__label__ if hasattr(ith_class, "__label__") else None
-                for ith_class in self.root_class.mro()
-            ]
-            or "SyntaxInstanceRoot"
-            in [
-                ith_class.__label__ if hasattr(ith_class, "__label__") else None
-                for ith_class in self.root_class.mro()
-            ]
-            and not header_query
-        ):
+        if "SyntaxTemplateRoot" in [
+            ith_class.__label__ if hasattr(ith_class, "__label__") else None
+            for ith_class in self.root_class.mro()
+        ] or "SyntaxInstanceRoot" in [
+            ith_class.__label__ if hasattr(ith_class, "__label__") else None
+            for ith_class in self.root_class.mro()
+        ]:
             mapping |= {"study_count": "study_count"}
 
         if hasattr(self.root_class, "is_confirmatory_testing"):
             mapping |= {"is_confirmatory_testing": "root.is_confirmatory_testing"}
 
         # pylint: disable=no-member
-        if hasattr(self, "template_class") and hasattr(self.template_class, "has_type"):
-            mapping |= {
-                "template_uid": "template_root.uid",
-                "template_name": "template_value.name",
-                "template_type_uid": "type_root.uid",
-                "type.term_uid": "type_root.uid",
-                "criteria_template.type.term_uid": "type_root.uid",
-            }
+        if hasattr(self, "template_class"):
+            mapping |= {"template.name": "template_value.name"}
+
+            if hasattr(self.template_class, "has_type"):
+                mapping |= {
+                    "template_uid": "template_root.uid",
+                    "template_name": "template_value.name",
+                    "template_type_uid": "type_root.uid",
+                    "type.term_uid": "type_root.uid",
+                    "template.type.term_uid": "type_root.uid",
+                }
 
         if hasattr(self.value_class, "guidance_text"):
             mapping |= {"guidance_text": "value.guidance_text"}
@@ -1540,73 +1660,128 @@ class LibraryItemRepositoryImplBase(
         self,
         filter_by: dict | None = None,
         filter_operator: FilterOperator = FilterOperator.AND,
-        header_query: bool = False,
+        version_specific_uids: dict | None = None,
     ):
-        if not filter_by:
+        def date_stmt(name: str):
+            if name in filter_by:
+                if (
+                    "op" not in filter_by[name]
+                    or filter_by[name]["op"] in ComparisonOperator.EQUALS.value
+                ):
+                    for idx, val in enumerate(filter_by[name]["v"]):
+                        fields_non_generic.append(
+                            f" date({mapping[name]}) = date(${name}_eq_{idx}) "
+                        )
+                        params[f"{name}_eq_{idx}"] = val
+                        filter_by.pop(name, None)
+                elif filter_by[name]["op"] == ComparisonOperator.BETWEEN.value:
+                    fields_non_generic.append(
+                        f" date({mapping[name]}) >= date(${name}_bw_1) and date({mapping[name]}) <= date(${name}_bw_2) "
+                    )
+                    params[f"{name}_bw_1"] = filter_by[name]["v"][0]
+                    params[f"{name}_bw_2"] = filter_by[name]["v"][1]
+                    filter_by.pop(name, None)
+
+        if not filter_by and not version_specific_uids:
             return "", {}
 
-        mapping = self.basemodel_to_cypher_mapping_optimized(header_query)
+        mapping = self.basemodel_to_cypher_mapping_optimized()
 
         fields_generic = []
         fields_non_generic = []
         params = {}
         where_stmt = ""
 
-        if "*" in filter_by:
-            for _, cypher_name in mapping.items():
-                if (
-                    "op" in filter_by["*"]
-                    and filter_by["*"]["op"] == ComparisonOperator.EQUALS.value
-                ):
+        if filter_by:
+            if "*" in filter_by:
+                for _, cypher_name in mapping.items():
+                    if (
+                        "op" in filter_by["*"]
+                        and filter_by["*"]["op"] == ComparisonOperator.EQUALS.value
+                    ):
+                        operator = "="
+                    else:
+                        operator = "CONTAINS"
+
+                    if any(not isinstance(value, str) for value in filter_by["*"]["v"]):
+                        operator = "="
+
+                    for idx, value in enumerate(filter_by["*"]["v"]):
+                        param_variable = f"{cypher_name}_generic_{idx}".replace(
+                            ".", "_"
+                        )
+                        params[param_variable] = value
+                        fields_generic.append(
+                            f" {cypher_name} {operator} ${param_variable} "
+                        )
+
+                where_stmt += "(" + " OR ".join(fields_generic) + ")"
+
+            if issubclass(self.root_class, CTTermNameRoot) and "uid" in filter_by:
+                fields_non_generic.append(" elementID(root) IN $uids ")
+                params["uids"] = filter_by["uid"]["v"]
+                filter_by.pop("uid", None)
+
+            date_stmt("start_date")
+            date_stmt("end_date")
+
+            filter_by.pop("*", None)
+            for filter_name, items in filter_by.items():
+                if filter_name not in mapping:
+                    raise BusinessLogicException(
+                        f"Unsupported filtering parameter: {filter_name}. "
+                        f"Supported parameters are: {list(self.basemodel_to_cypher_mapping_optimized())}"
+                    )
+
+                if "op" in items and items["op"] == ComparisonOperator.EQUALS.value:
                     operator = "="
                 else:
                     operator = "CONTAINS"
 
-                if any(not isinstance(value, str) for value in filter_by["*"]["v"]):
+                if any(not isinstance(value, str) for value in items["v"]):
                     operator = "="
 
-                for idx, value in enumerate(filter_by["*"]["v"]):
-                    param_variable = f"{cypher_name}_generic_{idx}".replace(".", "_")
+                for idx, value in enumerate(items["v"]):
+                    param_variable = (
+                        f"{mapping[filter_name]}_non_generic_{idx}".replace(".", "_")
+                    )
                     params[param_variable] = value
-                    fields_generic.append(
-                        f" {cypher_name} {operator} ${param_variable} "
+                    fields_non_generic.append(
+                        f" {mapping[filter_name]} {operator} ${param_variable} "
                     )
 
-            where_stmt += "(" + " OR ".join(fields_generic) + ")"
-
-        filter_by.pop("*", None)
-        for filter_name, items in filter_by.items():
-            if filter_name not in mapping:
-                raise BusinessLogicException(
-                    f"Unsupported filtering parameter: {filter_name}. "
-                    f"Supported parameters are: {list(self.basemodel_to_cypher_mapping_optimized(header_query))}"
+            if not where_stmt:
+                where_stmt += f" {filter_operator.value} ".join(fields_non_generic)
+            elif fields_non_generic:
+                where_stmt += (
+                    f" {filter_operator.value} ("
+                    + f" {filter_operator.value} ".join(fields_non_generic)
+                    + ")"
                 )
 
-            if "op" in items and items["op"] == ComparisonOperator.EQUALS.value:
-                operator = "="
+        version_spec_uids_where_stmt_list = []
+        if version_specific_uids:
+            for uid, versions in version_specific_uids.items():
+                specific_versions = []
+                for version in versions:
+                    if version == "LATEST":
+                        version_spec_uids_where_stmt_list.append(
+                            f""" (root.uid = "{uid}" AND ver_rel.version = latest_version.version ) """
+                        )
+                    else:
+                        specific_versions.append(version)
+                if specific_versions:
+                    version_spec_uids_where_stmt_list.append(
+                        f""" (root.uid = "{uid}" AND ver_rel.version in {list(specific_versions)}  ) """
+                    )
+
+        if version_spec_uids_where_stmt_list:
+            if not where_stmt:
+                where_stmt += " OR ".join(version_spec_uids_where_stmt_list)
             else:
-                operator = "CONTAINS"
-
-            if any(not isinstance(value, str) for value in items["v"]):
-                operator = "="
-
-            for idx, value in enumerate(items["v"]):
-                param_variable = f"{mapping[filter_name]}_non_generic_{idx}".replace(
-                    ".", "_"
+                where_stmt += (
+                    " AND (" + " OR ".join(version_spec_uids_where_stmt_list) + ")"
                 )
-                params[param_variable] = value
-                fields_non_generic.append(
-                    f" {mapping[filter_name]} {operator} ${param_variable} "
-                )
-
-        if not where_stmt:
-            where_stmt += f" {filter_operator.value} ".join(fields_non_generic)
-        elif fields_non_generic:
-            where_stmt += (
-                f" {filter_operator.value} ("
-                + f" {filter_operator.value} ".join(fields_non_generic)
-                + ")"
-            )
 
         return "WHERE " + where_stmt, params
 
@@ -1669,6 +1844,10 @@ class LibraryItemRepositoryImplBase(
         ]:
             match_stmt += self._only_instances_with_studies()
 
+            match_stmt += """
+                OPTIONAL MATCH (value)<--(:StudySelection)<--(:StudyValue)<-[:HAS_VERSION|LATEST_DRAFT|LATEST_FINAL|LATEST_RETIRED]-(sr:StudyRoot)
+            """
+
         if "SyntaxInstanceRoot" in [
             ith_class.__label__ if hasattr(ith_class, "__label__") else None
             for ith_class in self.root_class.mro()
@@ -1718,8 +1897,17 @@ class LibraryItemRepositoryImplBase(
 
             match_stmt += stmt
 
-        if where_stmt:
-            match_stmt += f"WITH * {where_stmt} "
+        with_agg_study_count = (
+            ", COUNT(DISTINCT sr) as study_count "
+            if "SyntaxInstanceRoot"
+            in [
+                ith_class.__label__ if hasattr(ith_class, "__label__") else None
+                for ith_class in self.root_class.mro()
+            ]
+            else ", 0 as study_count "
+        )
+
+        match_stmt += f"WITH * {with_agg_study_count} {where_stmt} "
 
         return_stmt = f"""
             RETURN DISTINCT {cypher_field_name}
@@ -1731,59 +1919,128 @@ class LibraryItemRepositoryImplBase(
     # pylint: disable=too-many-statements
     def _find_cypher_query_optimized(
         self,
+        get_latest_final: bool = False,
         with_status: bool = False,
         with_version: bool = False,
         with_pagination: bool = True,
         with_at_specific_date: bool = False,
+        with_versions_in_where: bool = False,
         return_study_count: bool = False,
         where_stmt: str = "",
         sort_by: dict | None = None,
         uid: str | None = None,
         for_audit_trail: bool = False,
+        include_retired_versions: bool = False,
     ):
+        """
+        Default behavior
+            with_status
+                options:
+                    - DRAFT -- return the latest draft version
+                    - RETIRED -- return the latest retired version
+                    - FINAL -- return the latest final if the current version is not retired, if the current version is retired then it won't be retrieved
+            with_version
+                options:
+                    - version number
+                - will give the specific version
+            with_at_specific_date
+                options:
+                    - date
+                - will match the version that the range between the start date and the end date matches the queried date,
+                    if the end date is null then it will look at the start date to be less than the queried date
+            combination of with_status, with_version and with_at_specific_date method parameters is an AND operator between them
+                with_versions_in_where:
+                    (status = Final and version AND at_specific_date)
+            status parameter is provider
+                - Final
+                    will be excluded those Root that their current status is RETIRED
+
+        Specific behavior
+            get_latest_final
+                - True : will return the latest final version, without the need to pass parameters
+                This allows you to UNION a query getting a term at a date with a specific status,
+                with a second query which returns the latest final regardless of status.
+
+
+
+
+        """
         version_where_stmt = ""
         retire_exclusion = "WITH root as _root"
-        if with_status:
-            version_where_stmt += "WHERE ver_rel.status = $status"
+        if get_latest_final:
+            version_where_stmt += "WHERE ver_rel.status = 'Final'"
             retire_exclusion = """
             CALL {
-                WITH root, value
+                WITH root
                 MATCH (root)-[ver_rel:HAS_VERSION]->()
                 WITH * ORDER BY ver_rel.start_date DESC LIMIT 1
-                WHERE $status <> "Final" OR (ver_rel.status <> "Retired" AND $status = "Final")
+                WHERE ver_rel.status = "Final"
                 MATCH (_root)-[ver_rel]->()
                 RETURN _root
             }
             """
-        if with_version:
-            if version_where_stmt:
-                version_where_stmt += " AND ver_rel.version = $version"
-            else:
-                version_where_stmt += "WHERE ver_rel.version = $version"
-        if with_at_specific_date:
-            if version_where_stmt:
-                version_where_stmt += " AND"
-            else:
-                version_where_stmt += "WHERE"
-            version_where_stmt += """(ver_rel.start_date<= datetime($at_specific_date) < datetime(ver_rel.end_date))
-                                        OR (ver_rel.end_date IS NULL AND (ver_rel.start_date <= datetime($at_specific_date)))"""
+        else:
+            if with_status:
+                version_where_stmt += "WHERE ver_rel.status = $status"
+                retire_exclusion = """
+                CALL {
+                    WITH root
+                    MATCH (root)-[ver_rel:HAS_VERSION]->()
+                    WITH * ORDER BY ver_rel.start_date DESC LIMIT 1
+                    WHERE $status <> "Final" OR (ver_rel.status <> "Retired" AND $status = "Final")
+                    MATCH (_root)-[ver_rel]->()
+                    RETURN _root
+                }
+                """
+            if with_version:
+                if version_where_stmt:
+                    version_where_stmt += " AND ver_rel.version = $version"
+                else:
+                    version_where_stmt += "WHERE ver_rel.version = $version"
+            if with_at_specific_date:
+                if version_where_stmt:
+                    version_where_stmt += " AND"
+                else:
+                    version_where_stmt += "WHERE"
+                version_where_stmt += """(ver_rel.start_date<= datetime($at_specific_date) < datetime(ver_rel.end_date))
+                                            OR (ver_rel.end_date IS NULL AND (ver_rel.start_date <= datetime($at_specific_date)))"""
+        if with_versions_in_where:
+            ver_rel_filtering = f"""
+                CALL{{
+                    WITH _root
+                    MATCH (_root)-[max_ver_rel:HAS_VERSION]->() 
+                        {'WHERE max_ver_rel.status <> "Retired"' if not include_retired_versions else ''}
+                    WITH _root, max_ver_rel ORDER BY max_ver_rel.start_date DESC LIMIT 1
+                    RETURN max_ver_rel as latest_version
+                }}
+                RETURN _root, _value, ver_rel, latest_version 
+            """
+        else:
+            ver_rel_filtering = """
+                WITH *, NULL as latest_version
+                RETURN _root, _value, ver_rel, latest_version ORDER BY ver_rel.start_date DESC LIMIT 1
+            """
         version_call = f"""
             CALL {{
-                WITH root, value
+                WITH root
                 {retire_exclusion}
                 MATCH (_root)-[ver_rel:HAS_VERSION]->(_value)
-                WITH ver_rel, _root, _value
                 {version_where_stmt}
-                RETURN _root, _value, ver_rel ORDER BY ver_rel.start_date DESC LIMIT 1
+                {ver_rel_filtering}
+                
             }}
-            WITH _root AS root, _value AS value, library, ver_rel
+            WITH _root AS root, _value AS value, library, ver_rel, latest_version
         """
         version_rel = "ver_rel:HAS_VERSION"
 
         if for_audit_trail and not with_status:
             version_call = ""
         else:
-            version_rel = ":LATEST" if not with_version and not with_status else ""
+            version_rel = (
+                "ver_rel:LATEST"
+                if not with_version and not with_status and not with_versions_in_where
+                else "ver_rel:HAS_VERSION"
+            )
 
         if uid:
             if issubclass(self.root_class, CTTermNameRoot):
@@ -1793,11 +2050,19 @@ class LibraryItemRepositoryImplBase(
                 uid_where_stmt = "WHERE root.uid = $uid"
                 library__stmt = f"MATCH (library:Library)-[:{self.root_class.LIBRARY_REL_LABEL}]->(root)"
         else:
-            uid_where_stmt = ""
-            library__stmt = f"MATCH (library:Library)-[:{self.root_class.LIBRARY_REL_LABEL}]->(root)"
-
+            if issubclass(self.root_class, CTTermNameRoot):
+                uid_where_stmt = ""
+                library__stmt = "MATCH (library:Library)-[:CONTAINS_TERM]->(ctterm_root:CTTermRoot)-[:HAS_NAME_ROOT]->(root)"
+            else:
+                uid_where_stmt = ""
+                library__stmt = f"MATCH (library:Library)-[:{self.root_class.LIBRARY_REL_LABEL}]->(root)"
+        value_matching = (
+            f"-[{version_rel}]->(value:{self.value_class.__label__})"
+            if not version_call
+            else ""
+        )
         match_stmt = f"""
-            MATCH (root:{self.root_class.__label__})-[{version_rel}]->(value:{self.value_class.__label__})
+            MATCH (root:{self.root_class.__label__}){value_matching}
             {uid_where_stmt}
             {library__stmt}
             {version_call}
@@ -1827,6 +2092,7 @@ class LibraryItemRepositoryImplBase(
             """
 
         ctterm_names_return = ", null as ctterm_name"
+        activity_instance_root_return = ", null as activity_instance_root"
         activity_root_return = ", null as activity_root"
         activity_subgroups_root_return = ", null as activity_subgroups_root"
         unit_definition_return = ", null as unit_definition"
@@ -1841,6 +2107,14 @@ class LibraryItemRepositoryImplBase(
 
         if issubclass(self.root_class, CTTermNameRoot):
             stmt, ctterm_names_return = self._ctterm_name_match_return_stmt()
+            match_stmt += stmt
+
+        if self.root_class.__label__ == "ActivityInstanceRoot":
+            (
+                stmt,
+                activity_instance_root_return,
+            ) = self._activity_instance_root_match_return_stmt()
+
             match_stmt += stmt
 
         if self.root_class.__label__ == "ActivityRoot":
@@ -1934,6 +2208,7 @@ class LibraryItemRepositoryImplBase(
             """, collect(DISTINCT {
                 uid: ctcodelist_root.uid
                 ,order: ctterm_root__ct_codelist_root.order
+                ,codelist_library_name: codelist_library.name
             }) as codelists"""
             if self._is_repository_related_to_ct()
             else ""
@@ -1945,13 +2220,14 @@ class LibraryItemRepositoryImplBase(
             match_stmt += f" {where_stmt} "
 
         return_stmt = f"""
-            RETURN
+            RETURN DISTINCT
                 library
                 ,root
                 ,ver_rel
                 ,value
                 ,study_count
                 {ctterm_names_return}
+                {activity_instance_root_return}
                 {activity_root_return}
                 {activity_subgroups_root_return}
                 {unit_definition_return}
@@ -1984,7 +2260,8 @@ class LibraryItemRepositoryImplBase(
 
     def _ctterm_name_match_return_stmt(self):
         match_stmt = """
-            MATCH (root)--(ctterm_root)-[ctterm_root__ct_codelist_root]-(ctcodelist_root:CTCodelistRoot)--(ct_catalogue:CTCatalogue)
+            MATCH (root)<-[:HAS_NAME_ROOT]-(ctterm_root)<-[ctterm_root__ct_codelist_root]-(ctcodelist_root:CTCodelistRoot)<-[:HAS_CODELIST]-(ct_catalogue:CTCatalogue)
+            MATCH (ctcodelist_root)<-[:CONTAINS_CODELIST]-(codelist_library:Library)
         """
         ctterm_names_return = """,
             {
@@ -1995,13 +2272,82 @@ class LibraryItemRepositoryImplBase(
         """
         return match_stmt, ctterm_names_return
 
+    def _activity_instance_root_match_return_stmt(self):
+        match_stmt = """
+            MATCH (root)-[ver_rel]->(activity_instance_value:ActivityInstanceValue)
+            // ACTIVITY_INSTANCE_CLASS
+            CALL{
+               WITH root,ver_rel,activity_instance_value
+               MATCH (activity_instance_value:ActivityInstanceValue)-[:ACTIVITY_INSTANCE_CLASS]->(activity_instance_class_root:ActivityInstanceClassRoot)
+               MATCH (activity_instance_class_root:ActivityInstanceClassRoot)-[:LATEST]-(activity_instance_class_root_latest_value:ActivityInstanceClassValue)
+               RETURN  distinct {activity_instance_class_uid: activity_instance_class_root.uid, activity_instance_class_name: activity_instance_class_root_latest_value.name} as activity_instance_class
+            }
+            // ACTIVITY INSTANCE GROUPINGS
+            CALL{
+                WITH root,ver_rel,activity_instance_value
+                MATCH (root)-[ver_rel]->(activity_instance_value)-[:HAS_ACTIVITY]->(activity_instance_grouping:ActivityGrouping)
+                MATCH (activity_instance_grouping)-[:HAS_GROUPING]-(:ActivityValue)<-[:HAS_VERSION]-(activity_instance_grouping_activity:ActivityRoot)
+                //ACTIVITY INSTANCE GROUPINGS VALID GROUPS
+                CALL{
+                    WITH activity_instance_grouping
+                    MATCH (activity_instance_grouping)-[:IN_SUBGROUP]->(activity_valid_group:ActivityValidGroup)
+                    MATCH (activity_instance_grouping_activity_sub_group_value:ActivitySubGroupValue)-[:HAS_GROUP]->(activity_valid_group:ActivityValidGroup)-[:IN_GROUP]->(activity_instance_grouping_activity_group_value:ActivityGroupValue)
+                    MATCH (activity_instance_grouping_activity_sub_group_value)<-[:HAS_VERSION]-(activity_instance_grouping_activity_sub_group_root:ActivitySubGroupRoot)
+                    MATCH (activity_instance_grouping_activity_group_value)<-[:HAS_VERSION]-(activity_instance_grouping_activity_group_root:ActivityGroupRoot)
+                    RETURN collect(DISTINCT {subgroup_uid:activity_instance_grouping_activity_sub_group_root.uid, group_uid:activity_instance_grouping_activity_group_root.uid }) as activity_instance_valid_groups
+                }
+                RETURN  COLLECT( distinct {
+                    activity_instance_valid_groups: activity_instance_valid_groups, 
+                    activity_instance_grouping_activity_uid: activity_instance_grouping_activity.uid
+                }) as activity_instance_groupings
+            }
+            // ACTIVITY ITEMS
+            CALL{
+                WITH root,ver_rel,activity_instance_value
+                MATCH (root)-[ver_rel]->(activity_instance_value)-[:CONTAINS_ACTIVITY_ITEM]-(activity_item:ActivityItem)
+                // ACTIVITY ITEM ACTIVITY ITEM CLASS VALUE
+                MATCH (activity_item:ActivityItem)-[:HAS_ACTIVITY_ITEM]-(activity_item_class_root:ActivityItemClassRoot)-[:LATEST]->(activity_item_class_value:ActivityItemClassValue)
+                //ACTIVITY ITEM CTTERMS
+                CALL{
+                    WITH activity_item
+                    MATCH (activity_item)-[:HAS_CT_TERM]->(activity_item_ctterm_root:CTTermRoot)
+                    MATCH (activity_item_ctterm_root)-->(:CTTermNameRoot)-[:LATEST_FINAL]->(ct_name_value:CTTermNameValue)
+                    RETURN collect(DISTINCT {uid:activity_item_ctterm_root.uid, name:ct_name_value.name }) as ct_terms
+                }
+                // ACTIVITY ITEM UNIT DEFINITIONS
+                CALL{
+                    WITH activity_item
+                    MATCH (activity_item)-[:HAS_UNIT_DEFINITION]->(activity_item_unit_definition_root:UnitDefinitionRoot)
+                    MATCH (activity_item_unit_definition_root)-[:LATEST]->(activity_item_unit_definition_value:UnitDefinitionValue)
+                    RETURN collect(DISTINCT {uid:activity_item_unit_definition_root.uid, name:activity_item_unit_definition_value.name }) as unit_definitions
+                }
+                RETURN  COLLECT( distinct {
+                    activity_item_class_uid: activity_item_class_root.uid, 
+                    activity_item_class_name: activity_item_class_value.name, 
+                    ct_terms:ct_terms, 
+                    unit_definitions: unit_definitions
+                }) as activity_items
+            }
+        """
+
+        activity_instance_root_return = """,
+            {
+                activity_instance_class: activity_instance_class,
+                activity_items:activity_items,
+                activity_instance_groupings: activity_instance_groupings
+            } as activity_instance_root
+        """
+
+        return match_stmt, activity_instance_root_return
+
     def _activity_root_match_return_stmt(self):
         match_stmt = """
-            OPTIONAL MATCH (root)-[:LATEST]-(:ActivityValue)-[:REPLACED_BY_ACTIVITY]-(replaced_by_activity:ActivityRoot)
+            MATCH (root)-[ver_rel]->(activity_value:ActivityValue)
+            OPTIONAL MATCH (activity_value)-[:REPLACED_BY_ACTIVITY]->(replaced_by_activity:ActivityRoot)
             CALL{
-                WITH *
-                MATCH (root)-[:LATEST]->(:ActivityValue)-[:HAS_GROUPING]->(:ActivityGrouping)-[:IN_SUBGROUP]->(activity_valid_group:ActivityValidGroup)
-                MATCH (activity_group_root:ActivityGroupRoot)-[:HAS_VERSION]->(:ActivityGroupValue)-[:IN_GROUP]-(activity_valid_group)-[:HAS_GROUP]-(:ActivitySubGroupValue)<-[:HAS_VERSION]-(activity_sub_group_root:ActivitySubGroupRoot)
+                WITH root,activity_value,ver_rel
+                MATCH (root)-[ver_rel]->(activity_value:ActivityValue)-[:HAS_GROUPING]->(:ActivityGrouping)-[:IN_SUBGROUP]->(activity_valid_group:ActivityValidGroup)
+                MATCH (activity_group_root:ActivityGroupRoot)-[:HAS_VERSION]->(:ActivityGroupValue)<-[:IN_GROUP]-(activity_valid_group)<-[:HAS_GROUP]-(:ActivitySubGroupValue)<-[:HAS_VERSION]-(activity_sub_group_root:ActivitySubGroupRoot)
                 RETURN collect(distinct {activity_group_uid: activity_group_root.uid, activity_subgroup_uid: activity_sub_group_root.uid}) as activity_groupings
             }
         """
@@ -2018,7 +2364,7 @@ class LibraryItemRepositoryImplBase(
     def _activity_subgroup_root_match_return_stmt(self):
         match_stmt = """
             CALL{
-                WITH *
+                WITH root
                 OPTIONAL MATCH (root)-[:LATEST]->(:ActivitySubGroupValue)-[:HAS_GROUP]->(:ActivityValidGroup)-[:IN_GROUP]->(:ActivityGroupValue)<-[:HAS_VERSION]-(activity_group:ActivityGroupRoot)
                 RETURN collect(DISTINCT activity_group.uid) as activity_groups_uids
             }

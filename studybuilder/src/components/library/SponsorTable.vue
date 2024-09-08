@@ -12,7 +12,7 @@
     <v-window v-model="tab" class="bg-white">
       <v-window-item
         v-for="catalogue in allCatalogues"
-        :key="catalogue.name"
+        :key="`${catalogue.name}-${tabKeys[catalogue.name]}`"
         :value="catalogue.name"
       >
         <CodelistTable
@@ -31,6 +31,7 @@ import { useCtCataloguesStore } from '@/stores/library-ctcatalogues'
 import { ref, watch, watchEffect, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAppStore } from '@/stores/app'
+import { useTabKeys } from '@/composables/tabKeys'
 import CodelistTable from './CodelistTable.vue'
 
 const route = useRoute()
@@ -38,6 +39,7 @@ const router = useRouter()
 const appStore = useAppStore()
 const ctCataloguesStore = useCtCataloguesStore()
 const allCatalogues = ref([])
+const { tabKeys, updateTabKey } = useTabKeys()
 
 watchEffect(() => {
   allCatalogues.value = [{ name: 'All' }].concat(ctCataloguesStore.catalogues)
@@ -60,6 +62,7 @@ watch(tab, (newValue) => {
     name: 'Sponsor',
     params: { tab: newValue },
   })
+  updateTabKey(newValue)
   appStore.addBreadcrumbsLevel(newValue, undefined, 3, true)
 })
 

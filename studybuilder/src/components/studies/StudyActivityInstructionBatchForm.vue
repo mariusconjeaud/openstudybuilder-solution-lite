@@ -373,7 +373,7 @@ export default {
       templatesFilters: {},
       templatesOptions: {},
       tplHeaders: [
-        { title: '', key: 'actions', width: '5%' },
+        { title: '', key: 'actions', width: '1%' },
         { title: this.$t('_global.sequence_number'), key: 'sequence_id' },
         { title: this.$t('_global.indications'), key: 'indications.name' },
         {

@@ -55,6 +55,7 @@ class StudyCompoundDosingSelectionService(StudySelectionMixin):
         study_compound_uid: str,
         compound_uid: str,
         compound_alias_uid: str,
+        medicinal_product_uid: str,
         terms_at_specific_datetime: datetime.datetime | None,
         study_value_version: str | None = None,
     ) -> models.StudySelectionCompound:
@@ -68,16 +69,19 @@ class StudyCompoundDosingSelectionService(StudySelectionMixin):
         )
         compound = self._transform_compound_model(compound_uid)
         compound_alias = self._transform_compound_alias_model(compound_alias_uid)
+        medicinal_product = self._transform_medicinal_product_model(
+            medicinal_product_uid
+        )
+
         return models.StudySelectionCompound.from_study_compound_ar(
             study_uid=study_uid,
             selection=study_compound,
             order=order,
             compound_model=compound,
             compound_alias_model=compound_alias,
+            medicinal_product_model=medicinal_product,
             find_simple_term_model_name_by_term_uid=self.find_term_name_by_uid,
             find_project_by_study_uid=self._repos.project_repository.find_by_study_uid,
-            find_numeric_value_by_uid=self._repos.numeric_value_with_unit_repository.find_by_uid_2,
-            find_unit_by_uid=self._repos.unit_definition_repository.find_by_uid_2,
             study_value_version=study_value_version,
             terms_at_specific_datetime=terms_at_specific_datetime,
         )
@@ -124,6 +128,7 @@ class StudyCompoundDosingSelectionService(StudySelectionMixin):
                 compound_dosing_vo.study_compound_uid,
                 compound_dosing_vo.compound_uid,
                 compound_dosing_vo.compound_alias_uid,
+                compound_dosing_vo.medicinal_product_uid,
                 study_value_version=study_value_version,
                 terms_at_specific_datetime=terms_at_specific_datetime,
             ),
@@ -262,6 +267,7 @@ class StudyCompoundDosingSelectionService(StudySelectionMixin):
                         history.study_compound_uid,
                         history.compound_uid,
                         history.compound_alias_uid,
+                        history.medicinal_product_uid,
                         terms_at_specific_datetime=None,
                     ),
                     self._transform_study_element_model(
@@ -329,7 +335,8 @@ class StudyCompoundDosingSelectionService(StudySelectionMixin):
                 study_compound_uid=selection_create_input.study_compound_uid,
                 compound_uid=study_compound_vo.compound_uid,
                 compound_alias_uid=study_compound_vo.compound_alias_uid,
-                dose_frequency_uid=selection_create_input.dose_frequency_uid,
+                medicinal_product_uid=study_compound_vo.medicinal_product_uid,
+                dose_frequency_uid=study_compound_vo.dose_frequency_uid,
                 dose_value_uid=selection_create_input.dose_value_uid,
                 user_initials=self.author,
                 start_date=datetime.datetime.now(datetime.timezone.utc),
@@ -341,7 +348,7 @@ class StudyCompoundDosingSelectionService(StudySelectionMixin):
                 selection_uid_by_compound_dose_and_frequency_callback=(
                     repos.study_compound_dosing_repository.get_selection_uid_by_compound_dose_and_frequency
                 ),
-                compound_callback=repos.compound_repository.find_by_uid_2,
+                medicinal_product_callback=repos.medicinal_product_repository.find_by_uid_2,
             )
 
             # sync with DB and save the update
@@ -403,7 +410,6 @@ class StudyCompoundDosingSelectionService(StudySelectionMixin):
             study_compound_uid=current_study_compound_dosing.study_compound_uid,
             study_element_uid=current_study_compound_dosing.study_element_uid,
             dose_value_uid=current_study_compound_dosing.dose_value_uid,
-            dose_frequency_uid=current_study_compound_dosing.dose_frequency_uid,
         )
 
         # fill the missing from the inputs
@@ -412,17 +418,28 @@ class StudyCompoundDosingSelectionService(StudySelectionMixin):
             reference_base_model=transformed_current,
         )
 
+        # Load study_compound_vo
+        repos = MetaRepository()
+        (
+            study_compound_vo,
+            _order,
+        ) = repos.study_compound_repository.find_by_uid(
+            study_uid=current_study_compound_dosing.study_uid,
+            study_compound_uid=request_study_compound_dosing.study_compound_uid,
+        )
+
         return StudyCompoundDosingVO(
             study_uid=current_study_compound_dosing.study_uid,
             study_selection_uid=current_study_compound_dosing.study_selection_uid,
             study_element_uid=request_study_compound_dosing.study_element_uid,
             study_compound_uid=request_study_compound_dosing.study_compound_uid,
-            dose_frequency_uid=request_study_compound_dosing.dose_frequency_uid,
+            dose_frequency_uid=study_compound_vo.dose_frequency_uid,
             dose_value_uid=request_study_compound_dosing.dose_value_uid,
             user_initials=self.author,
             start_date=datetime.datetime.now(datetime.timezone.utc),
             compound_uid=current_study_compound_dosing.compound_uid,
             compound_alias_uid=current_study_compound_dosing.compound_alias_uid,
+            medicinal_product_uid=current_study_compound_dosing.medicinal_product_uid,
         )
 
     @db.transaction
@@ -459,7 +476,7 @@ class StudyCompoundDosingSelectionService(StudySelectionMixin):
                 selection_uid_by_compound_dose_and_frequency_callback=(
                     repos.study_compound_dosing_repository.get_selection_uid_by_compound_dose_and_frequency
                 ),
-                compound_callback=repos.compound_repository.find_by_uid_2,
+                medicinal_product_callback=repos.medicinal_product_repository.find_by_uid_2,
             )
 
             # sync with DB and save the update

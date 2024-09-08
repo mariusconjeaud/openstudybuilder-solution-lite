@@ -12,7 +12,7 @@ tags:
 > Feature: [Library of Sponsor Defined Objectives and Endpoints #169075](https://novonordiskit.visualstudio.com/Clinical-MDR/_workitems/edit/169075)<br/>
 > User Story: [Create and Manage Objective Template #203159](https://novonordiskit.visualstudio.com/Clinical-MDR/_workitems/edit/203159)<br/>
 > Enable: [API Endpoints/Objectives-templates #203153](https://novonordiskit.visualstudio.com/Clinical-MDR/_workitems/edit/203153)<br/>
-> API Specification: [Objective Templates Endpoints](https://api.cmdr.novonordisk.com/docs#/Objective%20Templates)
+> API Specification: [Objective Templates Endpoints]
 
 This page is dedicated to the management of the *Endpoint Templates*. It will allow a **Standard Developer** to create and manage the *Endpoint Templates* needed to define the Endpoints using Template Parameters (see the [Shared / Endpoints](./library/shared/endpoints.md) submenu).
 

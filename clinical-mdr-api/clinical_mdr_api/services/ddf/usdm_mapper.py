@@ -1,11 +1,13 @@
 import uuid
 from typing import Callable
 
+from neomodel import db
 from usdm_model import Activity as USDMActivity
 from usdm_model import AliasCode as USDMAliasCode
 from usdm_model import Code as USDMCode
 from usdm_model import Encounter as USDMEncounter
 from usdm_model import Endpoint as USDMEndpoint
+from usdm_model import Indication as USDMIndication
 from usdm_model import Objective as USDMObjective
 from usdm_model import Organization as USDMOrganization
 from usdm_model import Procedure as USDMProcedure
@@ -20,41 +22,37 @@ from usdm_model import StudyElement as USDMStudyElement
 from usdm_model import StudyEpoch
 from usdm_model import StudyIdentifier as USDMStudyIdentifier
 from usdm_model import StudyIntervention as USDMStudyIntervention
+from usdm_model import StudyProtocolDocument as USDMStudyProtocolDocument
+from usdm_model import StudyProtocolDocumentVersion as USDMStudyProtocolDocumentVersion
+from usdm_model import StudyTitle as USDMStudyTitle
 from usdm_model import StudyVersion as USDMStudyVersion
 from usdm_model import Timing as USDMTiming
 from usdm_model import TransitionRule as USDMTransitionRule
 
+from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import (
+    StudyStatus,
+)
 from clinical_mdr_api.models.study_selections.study import Study as OSBStudy
 
-
-def get_ddf_timing_type_code_before():
-    return USDMCode(
-        id=str(uuid.uuid4()),
-        code="C201264",
-        codeSystem="http://www.cdisc.org",
-        codeSystemVersion="2023-09-29",
-        decode="Before",
-    )
+DDF_CT_PACKAGE_EFFECTIVE_DATE = "2023-12-15"
+DDF_STUDY_PROTOCOL_STATUS_DRAFT = "C85255"
+DDF_STUDY_PROTOCOL_STATUS_FINAL = "C25508"
+DDF_TIMING_TYPE_AFTER = "C201356"
+DDF_TIMING_TYPE_BEFORE = "C201357"
+DDF_TIMING_TYPE_FIXED = "C201358"
+DDF_TIME_RELATIVE_TO_FROM_START_TO_START = "C201355"
 
 
 def get_ddf_timing_type_code_after():
-    return USDMCode(
-        id=str(uuid.uuid4()),
-        code="C201264",
-        codeSystem="http://www.cdisc.org",
-        codeSystemVersion="2023-09-29",
-        decode="After",
-    )
+    return get_ct_package_term_as_usdm_code(DDF_TIMING_TYPE_AFTER)
+
+
+def get_ddf_timing_type_code_before():
+    return get_ct_package_term_as_usdm_code(DDF_TIMING_TYPE_BEFORE)
 
 
 def get_ddf_timing_type_code_fixed():
-    return USDMCode(
-        id=str(uuid.uuid4()),
-        code="C201264",
-        codeSystem="http://www.cdisc.org",
-        codeSystemVersion="2023-09-29",
-        decode="Fixed Reference",
-    )
+    return get_ct_package_term_as_usdm_code(DDF_TIMING_TYPE_FIXED)
 
 
 def get_ddf_timing_iso_duration_value(time_value: int, time_unit_name: str) -> str:
@@ -70,13 +68,55 @@ def get_ddf_timing_iso_duration_value(time_value: int, time_unit_name: str) -> s
 
 
 def get_ddf_timing_relative_to_from():
+    return get_ct_package_term_as_usdm_code(DDF_TIME_RELATIVE_TO_FROM_START_TO_START)
+
+
+def get_void_usdm_code():
     return USDMCode(
         id=str(uuid.uuid4()),
-        code="C201265",
-        codeSystem="http://www.cdisc.org",
-        codeSystemVersion="2023-09-29",
-        decode="Start to Start",
+        code="",
+        codeSystem="openstudybuilder.org",
+        codeSystemVersion="",
+        decode="",
     )
+
+
+def get_ct_package_term_as_usdm_code(concept_id: str):
+    query = """
+        MATCH (ctp:CTPackage)-[:CONTAINS_CODELIST]->()-[:CONTAINS_TERM]->()-[:CONTAINS_ATTRIBUTES]->
+        (cttav:CTTermAttributesValue) 
+        WHERE ctp.name CONTAINS "DDF" 
+        AND ctp.effective_date = date($ddf_ct_package_date) 
+        AND cttav.concept_id = $concept_id 
+        RETURN ctp as package, cttav as term
+    """
+    result, _ = db.cypher_query(
+        query,
+        {
+            "ddf_ct_package_date": DDF_CT_PACKAGE_EFFECTIVE_DATE,
+            "concept_id": concept_id,
+        },
+    )
+    if len(result) == 0:
+        return None
+    package = result[0][0]
+    term = result[0][1]
+    code = USDMCode(
+        id=str(uuid.uuid4()),
+        code=concept_id,
+        codeSystem=package["name"],
+        codeSystemVersion=DDF_CT_PACKAGE_EFFECTIVE_DATE,
+        decode=term["code_submission_value"],
+    )
+    return code
+
+
+def get_ddf_study_protocol_status_draft():
+    return get_ct_package_term_as_usdm_code(DDF_STUDY_PROTOCOL_STATUS_DRAFT)
+
+
+def get_ddf_study_protocol_status_final():
+    return get_ct_package_term_as_usdm_code(DDF_STUDY_PROTOCOL_STATUS_FINAL)
 
 
 class USDMMapper:
@@ -108,18 +148,29 @@ class USDMMapper:
 
         # Set DDF study description
         usdm_study.description = self._get_study_description(study)
+
+        # Set DDF study protocol document
+        ddf_study_protocol_document = self._get_study_protocol_document(study)
+        usdm_study.documentedBy = ddf_study_protocol_document
+
+        # Set DDF study title in version
+        ddf_study_title = USDMStudyTitle(
+            id=str(uuid.uuid4()),
+            text=self._get_study_title(study),
+            type=get_void_usdm_code(),
+            instanceType="StudyTitle",
+        )
+
         usdm_version = USDMStudyVersion(
             id=str(uuid.uuid4()),
-            studyTitle="",
+            titles=[ddf_study_title],
             versionIdentifier="",
             rationale="",
             studyAcronym="",
         )
 
-        # Set DDF study title in version
-        usdm_version.studyTitle = self._get_study_title(study)
         # Set DDF study type in version
-        usdm_version.type = self._get_study_type(study)
+        usdm_version.studyType = self._get_study_type(study)
         # Set DDF study version identifier
         usdm_version.versionIdentifier = self._get_study_version(study)
         # Set DDF study identifier in version
@@ -168,13 +219,7 @@ class USDMMapper:
                     decode="",
                 ),
                 dataOriginDescription="",
-                dataOriginType=USDMCode(
-                    id=str(uuid.uuid4()),
-                    code="",
-                    codeSystem="openstudybuilder.org",
-                    codeSystemVersion="",
-                    decode="",
-                ),
+                dataOriginType=get_void_usdm_code(),
             )
             for sa in osb_study_arms
         ]
@@ -227,6 +272,9 @@ class USDMMapper:
         # Set study elements
         ddf_study_design.elements = self._get_study_elements(study)
 
+        # Set study indications
+        ddf_study_design.indications = self._get_study_indications(study)
+
         # Set study arms
         ddf_study_design.arms = self._get_study_arms(study)
 
@@ -266,13 +314,7 @@ class USDMMapper:
                         id=str(uuid.uuid4()),
                         name=a.activity.name,
                         procedureType="",
-                        code=USDMCode(
-                            id=str(uuid.uuid4()),
-                            code="",
-                            codeSystem="openstudybuilder.org",
-                            codeSystemVersion="",
-                            decode="",
-                        ),
+                        code=get_void_usdm_code(),
                         isConditional=False,  # TODO hardcoded
                     )
                 ]
@@ -331,34 +373,56 @@ class USDMMapper:
         osb_identification_metadata = getattr(
             getattr(study, "current_metadata", None), "identification_metadata", None
         )
-        osb_registry_identifiers = getattr(
-            osb_identification_metadata, "registry_identifiers", None
-        )
-        osb_study_identifier_id = str(
-            getattr(osb_registry_identifiers, "eudract_id", "")
-        )
-        osb_organization_id = getattr(osb_registry_identifiers, "ct_gov_id", " ")
-        if osb_study_identifier_id is None or osb_organization_id is None:
-            return []
+        osb_study_id = getattr(osb_identification_metadata, "study_id", "")
+
         organization = USDMOrganization(
-            id=str(uuid.uuid4()),
-            name=osb_organization_id,
-            identifier=osb_organization_id,
-            identifierScheme="",
-            type=USDMCode(
-                id=str(uuid.uuid4()),
-                code="",
-                codeSystem="openstudybuilder.org",
-                codeSystemVersion="",
-                decode="",
-            ),
+            id="NOVO NORDISK",
+            name="NOVO NORDISK",
+            identifier="NOVO NORDISK",
+            identifierScheme="OpenStudyBuilder",
+            label="Novo Nordisk A/S is a Danish multinational pharmaceutical company headquartered in Bagsværd with "
+            "production facilities in nine countries and affiliates or offices in five countries.",
+            organizationType=get_void_usdm_code(),
         )
         study_identifier = USDMStudyIdentifier(
-            id=str(uuid.uuid4()),
-            studyIdentifier=osb_study_identifier_id,
+            id=osb_study_id,
+            studyIdentifier=osb_study_id,
             studyIdentifierScope=organization,
         )
         return [study_identifier]
+
+    def _get_study_indications(self, study: OSBStudy):
+        osb_study_population = getattr(
+            getattr(study, "current_metadata", None), "study_population", None
+        )
+        if osb_study_population is None:
+            return []
+        osb_study_population_disease_condition_or_indication_codes = getattr(
+            osb_study_population, "disease_condition_or_indication_codes", []
+        )
+        osb_study_population_rare_disease_indicator = getattr(
+            osb_study_population, "rare_disease_indicator", None
+        )
+
+        ddf_study_indications = []
+        for (
+            osb_disease_or_indication
+        ) in osb_study_population_disease_condition_or_indication_codes:
+            osb_disease_or_indication_name = getattr(
+                osb_disease_or_indication, "name", None
+            )
+            if (
+                osb_disease_or_indication_name is not None
+                and osb_study_population_rare_disease_indicator is not None
+            ):
+                ddf_study_indication = USDMIndication(
+                    id=osb_disease_or_indication_name,
+                    name=osb_disease_or_indication_name,
+                    label=osb_disease_or_indication_name,
+                    isRareDisease=osb_study_population_rare_disease_indicator,
+                )
+                ddf_study_indications.append(ddf_study_indication)
+        return ddf_study_indications
 
     def _get_study_interventions(self, study: OSBStudy):
         osb_study_intervention = study.current_metadata.study_intervention
@@ -515,8 +579,52 @@ class USDMMapper:
                     else "",
                 )
             ],
+            includesHealthySubjects=False,
         )
         return population
+
+    def _get_study_protocol_document(self, study: OSBStudy):
+        ddf_study_protocol_document = USDMStudyProtocolDocument(
+            id=str(uuid.uuid4()),
+            name="Study Protocol Document",
+            instanceType="StudyProtocolDocument",
+        )
+
+        osb_current_metadata = getattr(study, "current_metadata", None)
+        osb_study_status = getattr(
+            getattr(osb_current_metadata, "version_metadata", None),
+            "study_status",
+            None,
+        )
+        osb_version_number = getattr(
+            getattr(osb_current_metadata, "version_metadata", None),
+            "version_number",
+            None,
+        )
+
+        if osb_study_status == StudyStatus.DRAFT.value:
+            ddf_protocol_status = (
+                get_ddf_study_protocol_status_draft() or get_void_usdm_code()
+            )
+        elif osb_study_status == StudyStatus.LOCKED.value:
+            ddf_protocol_status = (
+                get_ddf_study_protocol_status_final() or get_void_usdm_code()
+            )
+        else:
+            # TODO raise exception if not draft or locked status
+            ddf_protocol_status = get_void_usdm_code()
+
+        ddf_study_protocol_document_version = USDMStudyProtocolDocumentVersion(
+            id=str(uuid.uuid4()),
+            instanceType="StudyProtocolDocumentVersion",
+            protocolStatus=ddf_protocol_status,
+            protocolVersion="DRAFT"
+            if osb_study_status == "DRAFT"
+            else str(osb_version_number),
+        )
+
+        ddf_study_protocol_document.versions = [ddf_study_protocol_document_version]
+        return ddf_study_protocol_document
 
     def _get_study_schedule_timelines(self, study):
         osb_study_activity_schedules = self._get_osb_activity_schedules(study.uid)
@@ -535,6 +643,7 @@ class USDMMapper:
 
         # Create scheduled instances
         timeline_instances = []
+        usdm_timings = []
         osb_global_anchor_visit = next(
             (v for v in osb_study_visits if v.is_global_anchor_visit is True), None
         )
@@ -542,7 +651,7 @@ class USDMMapper:
             (
                 sas
                 for sas in osb_study_activity_schedules
-                if sas.study_visit_uid == osb_global_anchor_visit.uid
+                if sas.study_visit_uid == getattr(osb_global_anchor_visit, "uid", None)
             ),
             None,
         )
@@ -558,6 +667,7 @@ class USDMMapper:
             ):
                 timeline_instance = ScheduledActivityInstance(
                     id=osb_schedule.study_activity_schedule_uid,
+                    name="Activity Instance",
                     timelineId=usdm_timeline_id,
                     instanceType="ACTIVITY",
                     encounterId=osb_schedule.study_visit_uid,
@@ -571,6 +681,9 @@ class USDMMapper:
                     ddf_timing_code = get_ddf_timing_type_code_after()
                 else:
                     ddf_timing_code = get_ddf_timing_type_code_fixed()
+                if ddf_timing_code is None:
+                    # No timing concept term in db
+                    ddf_timing_code = get_void_usdm_code()
 
                 ddf_timing_id = str(uuid.uuid4())
                 ddf_timing_window_available = all(
@@ -587,10 +700,12 @@ class USDMMapper:
                     label=osb_visit.study_epoch_name,
                     description=osb_visit.study_epoch_name,
                     type=ddf_timing_code,
-                    relativeToFrom=get_ddf_timing_relative_to_from(),
+                    relativeToFrom=get_ddf_timing_relative_to_from()
+                    or get_void_usdm_code(),
                     value=get_ddf_timing_iso_duration_value(
                         osb_visit.time_value, osb_visit.time_unit_name
                     ),
+                    valueLabel=f"{str(abs(osb_visit.time_value))} {osb_visit.time_unit_name}",
                     relativeFromScheduledInstanceId=osb_schedule.study_activity_schedule_uid,
                     relativeToScheduledInstanceId=osb_global_anchor_study_activity_schedule.study_activity_schedule_uid,
                     windowLower=get_ddf_timing_iso_duration_value(
@@ -609,9 +724,9 @@ class USDMMapper:
                     if ddf_timing_window_available
                     else None,
                 )
-                timeline_instance.timings = [ddf_timing]
                 timeline_instances.append(timeline_instance)
-
+                usdm_timings.append(ddf_timing)
+        usdm_timeline.timings = usdm_timings
         usdm_timeline.instances = timeline_instances
         return [usdm_timeline]
 

@@ -13,9 +13,9 @@
       <template #actions="">
         <v-btn
           class="ml-2"
-          fab
           size="small"
-          color="primary"
+          variant="outlined"
+          color="nnBaseBlue"
           icon="mdi-plus"
           :title="$t('CrfAliases.add_alias')"
           :disabled="!checkPermission($roles.LIBRARY_WRITE)"
@@ -76,7 +76,7 @@ export default {
         },
       ],
       headers: [
-        { title: '', key: 'actions' },
+        { title: '', key: 'actions', width: '1%' },
         { title: this.$t('CrfAliases.context'), key: 'context' },
         { title: this.$t('_global.name'), key: 'name' },
       ],

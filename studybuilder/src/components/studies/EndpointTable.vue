@@ -1,6 +1,7 @@
 <template>
   <div>
     <NNTable
+      ref="table"
       key="endpointTable1"
       :headers="headers"
       :items="formatedStudyEndpoints"
@@ -18,21 +19,23 @@
       <template #actions="">
         <slot name="extraActions" />
         <v-btn
+          class="ml-2"
           size="small"
-          icon="mdi-plus"
-          color="primary"
+          variant="outlined"
+          color="nnBaseBlue"
           :title="$t('StudyEndpointsTable.add_endpoint')"
           :disabled="
             !checkPermission($roles.STUDY_WRITE) ||
             selectedStudyVersion !== null
           "
+          icon="mdi-plus"
           @click.stop="showForm = true"
         />
       </template>
       <template #[`item.name`]="{ item }">
-        <template v-if="item.endpoint_template">
+        <template v-if="item.template">
           <NNParameterHighlighter
-            :name="item.endpoint_template.name"
+            :name="item.template.name"
             default-color="orange"
           />
         </template>
@@ -42,6 +45,12 @@
             :show-prefix-and-postfix="false"
           />
         </template>
+      </template>
+      <template #[`item.endpoint_level.sponsor_preferred_name`]="{ item }">
+        <CTTermDisplay :term="item.endpoint_level" />
+      </template>
+      <template #[`item.endpoint_sublevel.sponsor_preferred_name`]="{ item }">
+        <CTTermDisplay :term="item.endpoint_sublevel" />
       </template>
       <template #[`item.actions`]="{ item }">
         <ActionsMenu
@@ -62,7 +71,7 @@
           />
           <NNParameterHighlighter
             v-else
-            :name="item.endpoint_template.name"
+            :name="item.template.name"
             :show-prefix-and-postfix="false"
           />
           <v-tooltip
@@ -109,14 +118,12 @@
         :current-study-endpoints="studyEndpoints"
         class="fullscreen-dialog"
         @close="closeForm"
-        @added="fetchEndpoints"
       />
     </v-dialog>
     <EndpointEditForm
       :open="showEditForm"
       :study-endpoint="selectedStudyEndpoint"
       @close="closeEditForm"
-      @updated="fetchEndpoints"
     />
     <v-dialog
       v-model="showHistory"
@@ -128,6 +135,7 @@
         :title="studyEndpointHistoryTitle"
         :headers="headers"
         :items="endpointHistoryItems"
+        :items-total="endpointHistoryItems.length"
         :html-fields="historyHtmlFields"
         @close="closeHistory"
       />
@@ -150,6 +158,7 @@
 <script>
 import study from '@/api/study'
 import ActionsMenu from '@/components/tools/ActionsMenu.vue'
+import CTTermDisplay from '@/components/tools/CTTermDisplay.vue'
 import NNParameterHighlighter from '@/components/tools/NNParameterHighlighter.vue'
 import EndpointEditForm from '@/components/studies/EndpointEditForm.vue'
 import EndpointForm from '@/components/studies/EndpointForm.vue'
@@ -167,6 +176,7 @@ import { computed } from 'vue'
 export default {
   components: {
     ActionsMenu,
+    CTTermDisplay,
     NNParameterHighlighter,
     EndpointEditForm,
     EndpointForm,
@@ -270,7 +280,7 @@ export default {
       actionsMenu: false,
       endpointHistoryItems: [],
       headers: [
-        { title: '', key: 'actions', width: '5%' },
+        { title: '', key: 'actions', width: '1%' },
         {
           title: this.$t('StudyEndpointsTable.order'),
           key: 'order',
@@ -325,7 +335,7 @@ export default {
       snackbar: false,
       sortBy: 'start_date',
       endpoints: [],
-      loading: false
+      loading: false,
     }
   },
   computed: {
@@ -382,8 +392,8 @@ export default {
       }
       if (
         !item.endpoint &&
-        item.endpoint_template &&
-        item.endpoint_template.parameters.length > 0
+        item.template &&
+        item.template.parameters.length > 0
       ) {
         return {
           color: 'error',
@@ -500,11 +510,12 @@ export default {
     closeForm() {
       this.showForm = false
       this.selectedStudyEndpoint = null
-      this.fetchEndpoints()
+      this.$refs.table.filterTable()
     },
     closeEditForm() {
       this.showEditForm = false
       this.selectedStudyEndpoint = null
+      this.$refs.table.filterTable()
     },
     getHeaderLabel(value) {
       return this.headers.filter((item) => item.value === value)[0].text
@@ -541,7 +552,7 @@ export default {
           this.eventBusEmit('notification', {
             msg: this.$t('StudyEndpointsTable.delete_success'),
           })
-          this.fetchEndpoints()
+          this.$refs.table.filterTable()
         })
       }
     },
@@ -566,7 +577,7 @@ export default {
           value
         )
         .then(() => {
-          this.fetchEndpoints()
+          this.$refs.table.filterTable()
           this.closeOrderForm()
           this.eventBusEmit('notification', {
             msg: this.$t('_global.order_updated'),

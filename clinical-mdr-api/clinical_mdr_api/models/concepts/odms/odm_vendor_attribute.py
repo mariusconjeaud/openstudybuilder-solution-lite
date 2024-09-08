@@ -10,7 +10,10 @@ from clinical_mdr_api.domains.concepts.odms.vendor_attribute import (
 )
 from clinical_mdr_api.domains.concepts.odms.vendor_element import OdmVendorElementAR
 from clinical_mdr_api.domains.concepts.odms.vendor_namespace import OdmVendorNamespaceAR
-from clinical_mdr_api.domains.concepts.utils import RelationType, VendorCompatibleType
+from clinical_mdr_api.domains.concepts.utils import (
+    RelationType,
+    VendorAttributeCompatibleType,
+)
 from clinical_mdr_api.models.concepts.concept import (
     ConceptModel,
     ConceptPatchInput,
@@ -166,7 +169,7 @@ class OdmVendorElementAttributeRelationModel(BaseModel):
 
 
 class OdmVendorAttributePostInput(ConceptPostInput):
-    compatible_types: list[VendorCompatibleType] = []
+    compatible_types: list[VendorAttributeCompatibleType] = []
     data_type: str = "string"
     value_regex: str | None = None
     vendor_namespace_uid: str | None = None
@@ -193,7 +196,7 @@ class OdmVendorAttributePostInput(ConceptPostInput):
 
 
 class OdmVendorAttributePatchInput(ConceptPatchInput):
-    compatible_types: list[VendorCompatibleType]
+    compatible_types: list[VendorAttributeCompatibleType]
     data_type: str | None
     value_regex: str | None
 

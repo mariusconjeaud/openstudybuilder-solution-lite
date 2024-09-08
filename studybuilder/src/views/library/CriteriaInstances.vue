@@ -19,59 +19,46 @@
         :key="type.term_uid"
         :value="type.name.sponsor_preferred_name"
       >
-        <CriteriaTable :key="type.refreshKey" :criteria-type="type" />
+        <CriteriaTable
+          :key="`${type.name.sponsor_preferred_name}-${tabKeys[type.name.sponsor_preferred_name]}`"
+          :criteria-type="type"
+        />
       </v-window-item>
     </v-window>
   </div>
 </template>
 
-<script>
+<script setup>
+import { onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import CriteriaTable from '@/components/library/CriteriaTable.vue'
 import HelpButton from '@/components/tools/HelpButton.vue'
 import terms from '@/api/controlledTerminology/terms'
 import { useAppStore } from '@/stores/app'
+import { useTabKeys } from '@/composables/tabKeys'
 
-export default {
-  components: {
-    CriteriaTable,
-    HelpButton,
-  },
-  setup() {
-    const appStore = useAppStore()
-    return {
-      addBreadcrumbsLevel: appStore.addBreadcrumbsLevel,
-    }
-  },
-  data() {
-    return {
-      criteriaTypes: [],
-      tab: 0,
-    }
-  },
-  watch: {
-    tab(newValue) {
-      for (const type of this.criteriaTypes) {
-        if (type.name.sponsor_preferred_name === newValue) {
-          type.refreshKey++
-          break
-        }
-      }
-      this.$router.push({
-        name: 'CriteriaInstances',
-        params: { tab: newValue },
-      })
-      this.addBreadcrumbsLevel(newValue, undefined, 3, true)
-    },
-  },
-  mounted() {
-    terms.getByCodelist('criteriaTypes').then((resp) => {
-      this.criteriaTypes = resp.data.items.map((item) => {
-        return { ...item, refreshKey: 1 }
-      })
-      this.tab =
-        this.$route.params.tab ||
-        this.criteriaTypes[0].name.sponsor_preferred_name
-    })
-  },
-}
+const router = useRouter()
+const route = useRoute()
+const appStore = useAppStore()
+const { tabKeys, updateTabKey } = useTabKeys()
+
+const criteriaTypes = ref([])
+const tab = ref(null)
+
+watch(tab, (newValue) => {
+  router.push({
+    name: 'CriteriaInstances',
+    params: { tab: newValue },
+  })
+  updateTabKey(newValue)
+  appStore.addBreadcrumbsLevel(newValue, undefined, 3, true)
+})
+
+onMounted(() => {
+  terms.getByCodelist('criteriaTypes', { unSorted: true }).then((resp) => {
+    criteriaTypes.value = resp.data.items
+    tab.value =
+      route.params.tab || criteriaTypes.value[0].name.sponsor_preferred_name
+  })
+})
 </script>

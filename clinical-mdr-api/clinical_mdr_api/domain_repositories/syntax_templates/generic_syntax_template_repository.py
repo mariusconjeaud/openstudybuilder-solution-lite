@@ -190,9 +190,7 @@ class GenericSyntaxTemplateRepository(
                                 // Filter out the child template parameter values if theirs parent contains the same value.
                                 // This ensures that the terms response will contain unique values.
                                 // Also filter out the values that are part of the Requested library.
-                                AND (pt=pt_parents OR NOT ((pt_parents)-[:HAS_PARAMETER_TERM]->(pr)
-                                    AND (pt)-[:HAS_PARAMETER_TERM]->(pr)))
-                                AND NOT (pr)<-[:CONTAINS_CONCEPT]-(:Library {{name: "Requested"}})
+                                AND (pt=pt_parents OR NOT ((pt_parents)-[:HAS_PARAMETER_TERM]->(pr) AND (pt)-[:HAS_PARAMETER_TERM]->(pr))) AND NOT (pr)<-[:CONTAINS_CONCEPT]-(:Library {{name: "Requested"}})
                             CALL apoc.case(
                             [
                                 pv.name_sentence_case IS NOT NULL, 'RETURN pv.name_sentence_case AS name',
@@ -209,7 +207,7 @@ class GenericSyntaxTemplateRepository(
                                     WHEN "NumericValue" IN labels(pv) THEN pv.value 
                                 ELSE value END ASC
                             WITH pr ,value,pt_parents
-                            RETURN pr.uid as uid, value, pt_parents.name as data_type
+                            RETURN pr.uid as uid, value, pt_parents.name as data_type, labels(pr) as labels
                         union
                             WITH pt
                             OPTIONAL MATCH (pt)-[:HAS_PARAMETER_TERM]->(pr_op)-[:LATEST_FINAL]->(pv_op)
@@ -218,12 +216,12 @@ class GenericSyntaxTemplateRepository(
                             WITH pt, pv_op.name as value, pr_op, pv_op
                             ORDER BY value ASC
                             WITH  pr_op , value, pt
-                            RETURN pr_op.uid as uid, value, pt.name as data_type
+                            RETURN pr_op.uid as uid, value, pt.name as data_type, labels(pr_op) as labels
                     }}
-                    WITH uid,value,data_type
+                    WITH labels,uid,value,data_type
                         WHERE uid IS NOT NULL
                     RETURN  
-                            collect({{uid: uid, name: value, type: data_type }}) AS terms
+                            collect({{uid: uid, name: value, type: data_type, labels: labels}}) AS terms
             }}
             RETURN
                 pt.name AS name, tpd.uid as definition, tpv.template_string as template,
@@ -271,9 +269,9 @@ class GenericSyntaxTemplateRepository(
                         WITH unit_names, co
                         RETURN apoc.text.join(unit_names, " " + coalesce(co.string, "") + " ") AS unit
                     }}
-                    WITH pr.uid AS puid, ev.name + coalesce(" " + unit, "") + coalesce(" " + tv.name, "") AS pname
+                    WITH pr.uid AS puid, ev.name + coalesce(" " + unit, "") + coalesce(" " + tv.name, "") AS pname, labels(pr) as labels
                     ORDER BY pname ASC
-                    RETURN collect({{uid: puid, name: pname, type: $pt_name}}) AS terms
+                    RETURN collect({{uid: puid, name: pname, type: $pt_name, labels: labels}}) AS terms
                 }}
 
                 RETURN

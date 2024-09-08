@@ -1,7 +1,9 @@
 <template>
   <div class="px-4">
     <div class="page-title d-flex align-center">
-      {{ $t('Sidebar.study.study_criteria') }} ({{ studyId }})
+      {{ $t('Sidebar.study.study_criteria') }} ({{
+        studiesGeneralStore.studyId
+      }})
       <HelpButtonWithPanels :items="helpItems" />
     </div>
     <v-tabs v-model="tab" bg-color="white">
@@ -19,70 +21,65 @@
         :key="type.term_uid"
         :value="type.name.sponsor_preferred_name"
       >
-        <EligibilityCriteriaTable :criteria-type="type" />
+        <EligibilityCriteriaTable
+          :key="`${type.name.sponsor_preferred_name}-${tabKeys[type.name.sponsor_preferred_name]}`"
+          :criteria-type="type"
+        />
       </v-window-item>
     </v-window>
   </div>
 </template>
 
-<script>
-import { computed } from 'vue'
+<script setup>
+import { computed, onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import EligibilityCriteriaTable from '@/components/studies/EligibilityCriteriaTable.vue'
 import HelpButtonWithPanels from '@/components/tools/HelpButtonWithPanels.vue'
 import terms from '@/api/controlledTerminology/terms'
 import { useAppStore } from '@/stores/app'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
+import { useTabKeys } from '@/composables/tabKeys'
 
-export default {
-  components: {
-    EligibilityCriteriaTable,
-    HelpButtonWithPanels,
-  },
-  setup() {
-    const appStore = useAppStore()
-    const studiesGeneralStore = useStudiesGeneralStore()
-    return {
-      addBreadcrumbsLevel: appStore.addBreadcrumbsLevel,
-      selectedStudy: computed(() => studiesGeneralStore.selectedStudy),
-      studyId: studiesGeneralStore.studyId,
-    }
-  },
-  data() {
-    return {
-      criteriaTypes: [],
-      tab: null,
-      helpItems: [
-        'StudyCriteriaTable.general',
-        'StudyCriteriaTable.study_criteria',
-      ],
-    }
-  },
-  watch: {
-    tab(newValue) {
-      this.$router.push({
-        name: 'StudySelectionCriteria',
-        params: { study_id: this.selectedStudy.uid, tab: newValue },
-      })
-      this.addBreadcrumbsLevel(
-        newValue,
-        {
-          name: 'StudySelectionCriteria',
-          params: { study_id: this.selectedStudy.uid, tab: newValue },
-        },
-        3,
-        true
-      )
+const router = useRouter()
+const route = useRoute()
+const appStore = useAppStore()
+const studiesGeneralStore = useStudiesGeneralStore()
+const { tabKeys, updateTabKey } = useTabKeys()
+
+const selectedStudy = computed(() => studiesGeneralStore.selectedStudy)
+
+const criteriaTypes = ref([])
+const tab = ref(null)
+
+const helpItems = [
+  'StudyCriteriaTable.general',
+  'StudyCriteriaTable.study_criteria',
+]
+
+watch(tab, (newValue) => {
+  router.push({
+    name: 'StudySelectionCriteria',
+    params: { study_id: selectedStudy.value.uid, tab: newValue },
+  })
+  appStore.addBreadcrumbsLevel(
+    newValue,
+    {
+      name: 'StudySelectionCriteria',
+      params: { study_id: selectedStudy.value.uid, tab: newValue },
     },
-  },
-  mounted() {
-    terms.getByCodelist('criteriaTypes').then((resp) => {
-      this.criteriaTypes = resp.data.items
-      this.tab =
-        this.$route.params.tab ||
-        this.criteriaTypes[0].name.sponsor_preferred_name
-    })
-  },
-}
+    3,
+    true
+  )
+  updateTabKey(newValue)
+})
+
+onMounted(() => {
+  terms.getByCodelist('criteriaTypes', { unSorted: true }).then((resp) => {
+    criteriaTypes.value = resp.data.items
+    tab.value =
+      route.params.tab || criteriaTypes.value[0].name.sponsor_preferred_name
+  })
+})
 </script>
 
 <style scoped>

@@ -8,9 +8,11 @@
       <slot name="topActions" />
       <v-btn
         v-if="copyFromStudy"
-        color="primary"
         data-cy="copy-from-study"
+        class="ml-2"
         size="small"
+        variant="outlined"
+        color="nnBaseBlue"
         :title="$t('NNTableTooltips.copy_from_study')"
         :disabled="
           !checkPermission($roles.STUDY_WRITE) ||
@@ -20,9 +22,10 @@
         @click.stop="openCopyForm"
       />
       <v-btn
-        size="small"
         class="ml-2"
-        color="primary"
+        size="small"
+        variant="outlined"
+        color="nnBaseBlue"
         :title="$t('NNTableTooltips.edit_content')"
         :disabled="
           !checkPermission($roles.STUDY_WRITE) ||
@@ -35,8 +38,9 @@
       />
       <v-btn
         class="ml-2"
-        color="secondary"
         size="small"
+        variant="outlined"
+        color="nnBaseBlue"
         :title="$t('NNTableTooltips.history')"
         icon="mdi-history"
         @click="openHistory"
@@ -48,6 +52,7 @@
         :items="computedParams"
         item-value="name"
         :items-per-page="15"
+        :items-per-page-options="itemsPerPageOptions"
       />
       <slot
         name="form"
@@ -55,6 +60,7 @@
         :close-handler="closeForm"
         :data="metadata"
         :data-to-copy="dataToCopy"
+        :form-key="formKey"
       />
 
       <v-dialog
@@ -79,6 +85,7 @@
         <HistoryTable
           :headers="historyHeaders"
           :items="historyItems"
+          :items-total="historyItems.length"
           :title="historyTitle"
           :export-name="component"
           start-date-header="date"
@@ -95,6 +102,7 @@
 import CopyFromStudyForm from '@/components/tools/CopyFromStudyForm.vue'
 import HistoryTable from '@/components/tools/HistoryTable.vue'
 import study from '@/api/study'
+import tablesConstants from '@/constants/tables'
 import { useAccessGuard } from '@/composables/accessGuard'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
 
@@ -179,6 +187,7 @@ export default {
       historyItems: [],
       showHistory: false,
       showForm: false,
+      formKey: 0,
       showCopyForm: false,
       dataToCopy: {},
     }
@@ -193,9 +202,13 @@ export default {
     exportDataUrl() {
       return `studies/${this.studiesGeneralStore.selectedStudy.uid}`
     },
+    itemsPerPageOptions() {
+      return tablesConstants.ITEMS_PER_PAGE_OPIONS
+    },
   },
   methods: {
     openForm() {
+      this.formKey++
       this.showForm = true
     },
     closeForm() {
@@ -203,6 +216,7 @@ export default {
     },
     openFormToCopy(data) {
       this.dataToCopy = data
+      this.formKey++
       this.showForm = true
       this.showCopyForm = false
     },

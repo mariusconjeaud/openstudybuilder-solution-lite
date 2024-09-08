@@ -134,7 +134,7 @@
                       :loading="loading"
                       elevation="2"
                       width="120px"
-                      @click="submit"
+                      @click.stop="submit"
                     >
                       {{ $t('_global.save') }}
                     </v-btn>

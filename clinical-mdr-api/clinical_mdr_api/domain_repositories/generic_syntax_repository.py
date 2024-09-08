@@ -49,7 +49,7 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemStatus,
 )
 from clinical_mdr_api.exceptions import NotFoundException
-from clinical_mdr_api.repositories._utils import FilterOperator
+from clinical_mdr_api.repositories._utils import FilterOperator, sb_clear_cache
 
 _AggregateRootType = TypeVar("_AggregateRootType", bound=LibraryItemAggregateRootBase)
 
@@ -232,6 +232,7 @@ class GenericSyntaxRepository(
                         "parameter_uid": None,
                         "parameter_term": None,
                         "parameter_name": param_name,
+                        "labels": [],
                     }
                 )
 
@@ -248,6 +249,7 @@ class GenericSyntaxRepository(
                         "parameter_uid": parameter["parameter_uid"],
                         "definition": parameter["definition"],
                         "template": parameter["template"],
+                        "labels": parameter["labels"],
                     }
                 )
 
@@ -277,6 +279,7 @@ class GenericSyntaxRepository(
                         instance_parameters,
                     )
                 )[3],
+                "labels": param["labels"],
             }
 
         # Then, unwind to create the third level, like:
@@ -290,6 +293,7 @@ class GenericSyntaxRepository(
                     "parameter_uid": param["parameter_uid"],
                     "parameter_name": param["parameter_name"],
                     "parameter_term": param["parameter_term"],
+                    "labels": param["labels"],
                 }
             )
 
@@ -350,6 +354,7 @@ class GenericSyntaxRepository(
                         parameters=term_list,
                         parameter_name=item["parameter_name"],
                         conjunction=item.get("conjunction", ""),
+                        labels=item.get("labels", []),
                     )
                     parameter_list.append(pve)
             return_dict[set_number] = parameter_list
@@ -357,7 +362,9 @@ class GenericSyntaxRepository(
 
     def _parameter_from_repository_values(self, value):
         simple_parameter_term_vo = SimpleParameterTermVO.from_repository_values(
-            uid=value["parameter_uid"], value=value["parameter_term"]
+            uid=value["parameter_uid"],
+            value=value["parameter_term"],
+            labels=value["labels"],
         )
         return simple_parameter_term_vo
 
@@ -406,6 +413,7 @@ class GenericSyntaxRepository(
         # Finds template type in database based on root node uid
         return CTTermRoot.nodes.get(uid=uid)
 
+    @sb_clear_cache(caches=["cache_store_item_by_uid"])
     def patch_indications(self, uid: str, indication_uids: list[str] | None) -> None:
         root = self.root_class.nodes.get(uid=uid)
         root.has_indication.disconnect_all()
@@ -413,6 +421,7 @@ class GenericSyntaxRepository(
             indication = self._get_indication(indication)
             root.has_indication.connect(indication)
 
+    @sb_clear_cache(caches=["cache_store_item_by_uid"])
     def patch_categories(self, uid: str, category_uids: list[str] | None) -> None:
         root = self.root_class.nodes.get(uid=uid)
         root.has_category.disconnect_all()
@@ -420,6 +429,7 @@ class GenericSyntaxRepository(
             category = self._get_category(category)
             root.has_category.connect(category)
 
+    @sb_clear_cache(caches=["cache_store_item_by_uid"])
     def patch_subcategories(
         self, uid: str, sub_category_uids: list[str] | None
     ) -> None:
@@ -429,6 +439,7 @@ class GenericSyntaxRepository(
             sub_category = self._get_category(sub_category)
             root.has_subcategory.connect(sub_category)
 
+    @sb_clear_cache(caches=["cache_store_item_by_uid"])
     def patch_activities(self, uid: str, activity_uids: list[str] | None) -> None:
         root = self.root_class.nodes.get(uid=uid)
         root.has_activity.disconnect_all()
@@ -436,6 +447,7 @@ class GenericSyntaxRepository(
             activity = self._get_activity(activity)
             root.has_activity.connect(activity)
 
+    @sb_clear_cache(caches=["cache_store_item_by_uid"])
     def patch_activity_groups(
         self, uid: str, activity_group_uids: list[str] | None
     ) -> None:
@@ -445,6 +457,7 @@ class GenericSyntaxRepository(
             group = self._get_activity_group(group)
             root.has_activity_group.connect(group)
 
+    @sb_clear_cache(caches=["cache_store_item_by_uid"])
     def patch_activity_subgroups(
         self, uid: str, activity_subgroup_uids: list[str] | None
     ) -> None:
@@ -459,7 +472,6 @@ class GenericSyntaxRepository(
     ) -> None:
         root = self.root_class.nodes.get(uid=uid)
         root.is_confirmatory_testing = is_confirmatory_testing
-
         self._db_save_node(root)
 
     def _create(self, item: _AggregateRootType):

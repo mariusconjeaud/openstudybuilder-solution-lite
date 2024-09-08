@@ -143,12 +143,19 @@ class ActiveSubstanceRepository(ConceptGenericRepository):
                 concept_value.short_number AS short_number,
                 concept_value.long_number AS long_number,
                 concept_value.inn AS inn,
-                head([(concept_value)-[:HAS_UNII_VALUE]->(unii:DictionaryTermRoot)-[:LATEST]->(unii_value:DictionaryTermValue)-[:HAS_PCLASS]->(pclass_root:DictionaryTermRoot)-[:LATEST]->(pclass_value:DictionaryTermValue) |
+                head([(concept_value)-[:HAS_UNII_VALUE]->(unii:DictionaryTermRoot)-[:LATEST]->(unii_value:DictionaryTermValue) |
                 {
                     unii_term_uid:unii.uid, 
-                    unii_term_name:unii_value.name,
-                    pharmacological_class:pclass_value.name
+                    unii_term_unii:unii_value.dictionary_id,
+                    unii_term_name:unii_value.name
                 }
-                ]) AS unii_data
+                ]) AS unii_data,
+                head([(concept_value)-[:HAS_UNII_VALUE]->(unii:DictionaryTermRoot)-[:LATEST]->(unii_value:DictionaryTermValue)-[:HAS_PCLASS]->(pclass_root:DictionaryTermRoot)-[:LATEST]->(pclass_value:DictionaryTermValue) |
+                {
+                    pclass_name:pclass_value.name,
+                    pclass_id:pclass_value.dictionary_id,
+                    pclass_uid:pclass_root.uid
+                }
+                ]) AS pclass_data
 
                 """

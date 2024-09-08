@@ -9,9 +9,9 @@
       :filters-modify-function="updateHeaderFilters"
       @filter="fetchInstances"
     >
-      <template #[`item.${type}_template.name`]="{ item }">
+      <template #[`item.template.name`]="{ item }">
         <NNParameterHighlighter
-          :name="item[`${type}_template`].name"
+          :name="item.template.name"
           default-color="orange"
         />
       </template>
@@ -39,7 +39,6 @@
     <v-dialog
       v-model="showHistory"
       persistent
-      :max-width="$globals.historyDialogMaxWidth"
       :fullscreen="$globals.historyDialogFullscreen"
       @keydown.esc="closeHistory"
     >
@@ -47,6 +46,7 @@
         :title="historyTitle"
         :headers="headers"
         :items="historyItems"
+        :items-total="historyItems.length"
         :html-fields="historyHtmlFields"
         @close="closeHistory"
       />
@@ -59,7 +59,7 @@
     >
       <InstanceStudiesDialog
         v-if="selectedInstance"
-        :template="selectedInstance[`${type}_template`].name"
+        :template="selectedInstance.template.name"
         :text="selectedInstance.name"
         :type="type"
         :studies="studies"
@@ -137,15 +137,14 @@ export default {
         {
           title: '',
           key: 'actions',
-          sortable: false,
-          width: '5%',
+          width: '1%',
         },
         { title: this.$t('_global.library'), key: 'library.name' },
         {
           title: this.$t('_global.template'),
-          key: `${this.type}_template.name`,
+          key: 'template.name',
           width: '30%',
-          filteringName: `${this.type}_template.name`,
+          filteringName: 'template.name',
         },
         {
           title: this.$t(`_global.${this.type}`),
@@ -205,7 +204,9 @@ export default {
       this.fetchingFunction(params)
     },
     updateHeaderFilters(jsonFilter, params) {
-      jsonFilter['criteria_template.type.term_uid'] = { v: [this.instanceType] }
+      if (this.instanceType) {
+        jsonFilter['template.type.term_uid'] = { v: [this.instanceType] }
+      }
       return {
         jsonFilter,
         params,

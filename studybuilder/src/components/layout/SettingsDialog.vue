@@ -16,9 +16,7 @@
         <v-select
           v-model="form.rows"
           :label="$t('Settings.rows')"
-          :items="rows"
-          item-title="name"
-          item-value="value"
+          :items="tablesConstants.ITEMS_PER_PAGE_OPIONS"
           clearable
         />
         <v-text-field
@@ -53,69 +51,38 @@
   </v-card>
 </template>
 
-<script>
+<script setup>
+import { ref, watch } from 'vue'
 import { useAppStore } from '@/stores/app'
+import tablesConstants from '@/constants/tables'
 import HelpButtonWithPanels from '@/components/tools/HelpButtonWithPanels.vue'
 
-export default {
-  components: {
-    HelpButtonWithPanels,
+const emit = defineEmits(['close'])
+const appStore = useAppStore()
+
+const helpItems = ['Settings.rows', 'Settings.study_number_length']
+const form = ref({})
+const working = ref(false)
+
+watch(
+  () => appStore.userData,
+  (val) => {
+    form.value = JSON.parse(JSON.stringify(val))
   },
-  emits: ['close'],
-  setup() {
-    const appStore = useAppStore()
-    return {
-      appStore,
-    }
-  },
-  data() {
-    return {
-      darkTheme: localStorage.getItem('userData.darkTheme') || false,
-      helpItems: ['Settings.rows', 'Settings.study_number_length'],
-      rows: [
-        {
-          value: 5,
-          name: '5',
-        },
-        {
-          value: 10,
-          name: '10',
-        },
-        {
-          value: 15,
-          name: '15',
-        },
-        {
-          value: 0,
-          name: this.$t('_global.all'),
-        },
-      ],
-      title: this.$t('Settings.title'),
-      form: {},
-      working: false,
-    }
-  },
-  watch: {
-    'appStore.userData': {
-      handler: function (val) {
-        this.form = JSON.parse(JSON.stringify(val))
-      },
-      immediate: true,
-    },
-  },
-  methods: {
-    close() {
-      this.$emit('close')
-    },
-    save() {
-      this.working = true
-      this.appStore.saveUserData(this.form)
-      this.close()
-      this.working = false
-    },
-    toggleDarkTheme() {
-      this.$vuetify.theme.dark = !this.$vuetify.theme.dark
-    },
-  },
+  { immediate: true }
+)
+
+function close() {
+  emit('close')
+}
+function save() {
+  working.value = true
+  appStore.saveUserData(form.value)
+  close()
+  working.value = false
+}
+function toggleDarkTheme() {
+  // FIXME: should we leave this?
+  // this.$vuetify.theme.dark = !this.$vuetify.theme.dark
 }
 </script>

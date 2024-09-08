@@ -126,6 +126,7 @@
 
 <script>
 import _isEqual from 'lodash/isEqual'
+import _isEmpty from 'lodash/isEmpty'
 import DurationField from '@/components/tools/DurationField.vue'
 import MultipleSelect from '@/components/tools/MultipleSelect.vue'
 import NotApplicableField from '@/components/tools/NotApplicableField.vue'
@@ -135,6 +136,7 @@ import YesNoField from '@/components/tools/YesNoField.vue'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
 import { useStudiesManageStore } from '@/stores/studies-manage'
 import studyMetadataForms from '@/utils/studyMetadataForms'
+import study from '@/api/study'
 
 export default {
   components: {
@@ -146,9 +148,9 @@ export default {
   },
   inject: ['eventBusEmit', 'formRules'],
   props: {
-    metadata: {
+    initialData: {
       type: Object,
-      default: undefined,
+      default: () => {},
     },
     open: Boolean,
   },
@@ -178,45 +180,52 @@ export default {
       stopRulesNone: false,
     }
   },
-  watch: {
-    metadata: {
-      handler(value) {
-        this.form = { ...value }
-        // The API does not return the exact same properties when data
-        // is coming from study metadata. It includes a 'name' property
-        // while we use 'sponsor_preferred_name' in lists (data is
-        // coming from codelist names)
-        if (this.form.study_type_code) {
-          this.form.study_type_code.sponsor_preferred_name =
-            this.form.study_type_code.name
-        }
-        if (this.form.trial_type_codes) {
-          for (let code of this.form.trial_type_codes) {
-            code.sponsor_preferred_name = code.name
-          }
-        }
-        if (this.form.trial_phase_code) {
-          this.form.trial_phase_code.sponsor_preferred_name_sentence_case =
-            this.form.trial_phase_code.name
-        }
-        if (!this.form.confirmed_response_minimum_duration) {
-          this.form.confirmed_response_minimum_duration = {}
-        }
-        if (
-          this.form.study_stop_rules == null ||
-          this.form.study_stop_rules === studyConstants.STOP_RULE_NONE
-        ) {
-          this.stopRulesNone = true
-          this.form.study_stop_rules = null
-        } else {
-          this.stopRulesNone = false
-        }
-      },
-      immediate: true,
-      deep: true,
-    },
+  mounted() {
+    if (_isEmpty(this.initialData)) {
+      study
+        .getHighLevelStudyDesignMetadata(
+          this.studiesGeneralStore.selectedStudy.uid
+        )
+        .then((resp) => {
+          this.initForm(resp.data.current_metadata.high_level_study_design)
+        })
+    } else {
+      this.initForm(this.initialData)
+    }
   },
   methods: {
+    initForm(data) {
+      this.form = { ...data }
+      // The API does not return the exact same properties when data
+      // is coming from study metadata. It includes a 'name' property
+      // while we use 'sponsor_preferred_name' in lists (data is
+      // coming from codelist names)
+      if (this.form.study_type_code) {
+        this.form.study_type_code.sponsor_preferred_name =
+          this.form.study_type_code.name
+      }
+      if (this.form.trial_type_codes) {
+        for (let code of this.form.trial_type_codes) {
+          code.sponsor_preferred_name = code.name
+        }
+      }
+      if (this.form.trial_phase_code) {
+        this.form.trial_phase_code.sponsor_preferred_name_sentence_case =
+          this.form.trial_phase_code.name
+      }
+      if (!this.form.confirmed_response_minimum_duration) {
+        this.form.confirmed_response_minimum_duration = {}
+      }
+      if (
+        this.form.study_stop_rules == null ||
+        this.form.study_stop_rules === studyConstants.STOP_RULE_NONE
+      ) {
+        this.stopRulesNone = true
+        this.form.study_stop_rules = null
+      } else {
+        this.stopRulesNone = false
+      }
+    },
     setNullValueConfirmedDuration() {
       this.form.confirmed_response_minimum_duration = {}
       if (this.form.confirmed_response_minimum_duration_null_value_code) {

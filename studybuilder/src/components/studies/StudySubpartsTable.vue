@@ -24,8 +24,10 @@
   >
     <template #actions="">
       <v-btn
+        class="ml-2"
         size="small"
-        color="primary"
+        variant="outlined"
+        color="nnBaseBlue"
         :title="$t('StudySubparts.add_subpart')"
         :disabled="
           !accessGuard.checkPermission($roles.STUDY_WRITE) ||
@@ -114,7 +116,7 @@ const studiesGeneralStore = useStudiesGeneralStore()
 const items = ref([])
 const total = ref(0)
 const headers = [
-  { title: '', key: 'actions', width: '5' },
+  { title: '', key: 'actions', width: '1%' },
   { title: t('StudySubparts.study_id'), key: 'study_parent_part.study_id' },
   {
     title: t('StudySubparts.study_acronym'),

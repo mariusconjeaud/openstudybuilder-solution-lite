@@ -43,7 +43,8 @@
               "codelists": [
                 {
                   "codelist_uid": "CTCodelist_00004",
-                  "order": 1
+                  "order": 1,
+                  "library_name": "Sponsor"
                 }
               ],
               "sponsor_preferred_name": "Arm Type",
@@ -55,6 +56,8 @@
               "version": "1.0",
               "change_description": "Approved version",
               "user_initials": "TODO user initials",
+              "queried_effective_date": null,
+              "date_conflict": false,
               "possible_actions": [
                 "inactivate",
                 "new_version"
@@ -144,7 +147,8 @@
             "codelists": [
               {
                 "codelist_uid": "CTCodelist_00004",
-                "order": 1
+                "order": 1,
+                "library_name": "Sponsor"
               }
             ],
             "sponsor_preferred_name": "Arm Type",
@@ -156,6 +160,8 @@
             "version": "1.0",
             "change_description": "Approved version",
             "user_initials": "TODO user initials",
+            "queried_effective_date": null,
+            "date_conflict": false,
             "possible_actions": [
               "inactivate",
               "new_version"
@@ -450,7 +456,8 @@
             "codelists": [
               {
                 "codelist_uid": "CTCodelist_00004",
-                "order": 1
+                "order": 1,
+                "library_name": "Sponsor"
               }
             ],
             "sponsor_preferred_name": "Arm Type",
@@ -462,6 +469,8 @@
             "version": "1.0",
             "change_description": "Approved version",
             "user_initials": "TODO user initials",
+            "queried_effective_date": null,
+            "date_conflict": false,
             "possible_actions": [
               "inactivate",
               "new_version"
@@ -1027,7 +1036,8 @@
           "codelists": [
             {
               "codelist_uid": "CTCodelist_ElementType",
-              "order": 1
+              "order": 1,
+              "library_name": "Sponsor"
             }
           ],
           "sponsor_preferred_name": "Element Type",
@@ -1039,6 +1049,8 @@
           "version": "1.0",
           "change_description": "Approved version",
           "user_initials": "TODO user initials",
+          "queried_effective_date": null,
+          "date_conflict": false,
           "possible_actions": [
             "inactivate",
             "new_version"
@@ -1107,7 +1119,8 @@
             "codelists": [
               {
                 "codelist_uid": "CTCodelist_00004",
-                "order": 1
+                "order": 1,
+                "library_name": "Sponsor"
               }
             ],
             "sponsor_preferred_name": "Arm Type",
@@ -1119,6 +1132,8 @@
             "version": "1.0",
             "change_description": "Approved version",
             "user_initials": "TODO user initials",
+            "queried_effective_date": null,
+            "date_conflict": false,
             "possible_actions": [
               "inactivate",
               "new_version"
@@ -1228,7 +1243,8 @@
           "codelists": [
             {
               "codelist_uid": "CTCodelist_00004",
-              "order": 1
+              "order": 1,
+              "library_name": "Sponsor"
             }
           ],
           "sponsor_preferred_name": "Arm Type",
@@ -1240,6 +1256,8 @@
           "version": "1.0",
           "change_description": "Approved version",
           "user_initials": "TODO user initials",
+          "queried_effective_date": null,
+          "date_conflict": false,
           "possible_actions": [
             "inactivate",
             "new_version"
@@ -3274,7 +3292,8 @@
             "codelists": [
               {
                 "codelist_uid": "CTCodelist_00004",
-                "order": 1
+                "order": 1,
+                "library_name": "Sponsor"
               }
             ],
             "sponsor_preferred_name": "Arm Type",
@@ -3286,6 +3305,8 @@
             "version": "1.0",
             "change_description": "Approved version",
             "user_initials": "TODO user initials",
+            "queried_effective_date": null,
+            "date_conflict": false,
             "possible_actions": [
               "inactivate",
               "new_version"

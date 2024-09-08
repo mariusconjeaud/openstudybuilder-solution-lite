@@ -3,6 +3,7 @@ from typing import Collection
 
 from cachetools import TTLCache, cached
 from cachetools.keys import hashkey
+from neomodel import db
 
 from clinical_mdr_api import config
 from clinical_mdr_api.domain_repositories.generic_repository import (
@@ -14,6 +15,7 @@ from clinical_mdr_api.domain_repositories.models.clinical_programme import (
 from clinical_mdr_api.domains.clinical_programmes.clinical_programme import (
     ClinicalProgrammeAR,
 )
+from clinical_mdr_api.exceptions import BusinessLogicException, NotFoundException
 from clinical_mdr_api.repositories._utils import sb_clear_cache
 
 
@@ -46,37 +48,69 @@ class ClinicalProgrammeRepository:
         )
 
     @cached(cache=cache_store_item_by_uid, key=get_hashkey, lock=lock_store_item_by_uid)
-    def find_by_uid(self, uid: str) -> ClinicalProgrammeAR | None:
+    def find_by_uid(self, uid: str) -> ClinicalProgrammeAR:
         clinical_programme = ClinicalProgramme.nodes.get_or_none(uid=uid)
-        if clinical_programme is not None:
-            clinical_programme = ClinicalProgrammeAR.from_input_values(
+        if clinical_programme:
+            return ClinicalProgrammeAR.from_input_values(
                 name=clinical_programme.name,
                 generate_uid_callback=lambda: clinical_programme.uid,
             )
-            return clinical_programme
-        return None
+
+        raise NotFoundException(f"Clinical Programme with UID ({uid}) doesn't exist.")
+
+    def delete_by_uid(self, uid: str) -> None:
+        clinical_programme: ClinicalProgramme = ClinicalProgramme.nodes.get_or_none(
+            uid=uid
+        )
+
+        if clinical_programme:
+            if self.is_used_in_projects(uid):
+                raise BusinessLogicException(
+                    f"Cannot delete Clinical Programme with UID ({uid}) because it is used by projects."
+                )
+
+            clinical_programme.delete()
 
     @sb_clear_cache(caches=["cache_store_item_by_uid"])
-    def save(self, clinical_programme: ClinicalProgrammeAR) -> None:
+    def save(
+        self, clinical_programme_ar: ClinicalProgrammeAR, update: bool = False
+    ) -> None:
         """
-        Public repository method for persisting a (possibly modified) state of the Clinical Programme instance into the underlying
-        DB. Provided instance can be brand new instance (never persisted before) or an instance which has been
-        retrieved with find_by_uid(...).
+        Create or update a Clinical Programme in the database.
 
-        :param clinical_programme: an instance of a clinical programme aggregate (ClinicalProgrammeAR class) to persist
+        This method handles the creation of a new Clinical Programme or updating an existing one based on the `update` flag.
+
+        Args:
+            clinical_programme_ar
+            update (bool): A flag indicating whether to update an existing Clinical Programme (if True) or create a new one (if False).
+            Default is False.
+
+        Raises:
+            NotFoundException: If the Clinical Programme with the given UID does not exist.
+            BusinessLogicException: If the Clinical Programme with the given UID is used in projects.
         """
-        repository_closure_data = clinical_programme.repository_closure_data
-
-        if repository_closure_data is None:
-            # if save gets an object without a closure - it's a new object.
-            # object should already have a UID.
-            clinical_programme = ClinicalProgramme(
-                uid=clinical_programme.uid, name=clinical_programme.name
+        if not update:
+            clinical_programme_ar = ClinicalProgramme(
+                uid=clinical_programme_ar.uid, name=clinical_programme_ar.name
             )
-            clinical_programme.save()
+            clinical_programme_ar.save()
         else:
-            # if save gets an object with a closure, it's a modified existing object.
-            raise NotImplementedError
+            clinical_programme = ClinicalProgramme.nodes.get_or_none(
+                uid=clinical_programme_ar.uid
+            )
+
+            if not clinical_programme:
+                raise NotFoundException(
+                    f"Clinical Programme with UID ({clinical_programme_ar.uid}) doesn't exist."
+                )
+
+            if self.is_used_in_projects(clinical_programme_ar.uid):
+                raise BusinessLogicException(
+                    f"Cannot update Clinical Programme with UID ({clinical_programme_ar.uid}) because it is used by projects."
+                )
+
+            clinical_programme.name = clinical_programme_ar.name
+            clinical_programme.save()
 
     def close(self) -> None:
         # Our repository guidelines state that repos should have a close method
@@ -101,3 +135,14 @@ class ClinicalProgrammeRepository:
             clinical_programme.repository_closure_data = repository_closure_data
 
         return clinical_programmes
+
+    def is_used_in_projects(self, uid: str) -> bool:
+        rs = db.cypher_query(
+            """
+            MATCH (c:ClinicalProgramme {uid: $uid})-[:HOLDS_PROJECT]->(:Project)
+            RETURN DISTINCT COUNT(c)
+            """,
+            params={"uid": uid},
+        )
+
+        return bool(rs[0][0][0])

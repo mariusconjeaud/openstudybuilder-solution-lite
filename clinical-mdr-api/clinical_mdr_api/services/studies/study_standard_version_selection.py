@@ -14,6 +14,7 @@ from clinical_mdr_api.domains.study_selections.study_selection_standard_version 
 )
 from clinical_mdr_api.models.study_selections.study_standard_version import (
     StudyStandardVersion,
+    StudyStandardVersionEditInput,
     StudyStandardVersionInput,
     StudyStandardVersionVersion,
 )
@@ -133,6 +134,7 @@ class StudyStandardVersionService:
             study_uid=study_uid,
             start_date=datetime.datetime.now(datetime.timezone.utc),
             study_status=StudyStatus.DRAFT,
+            description=study_standard_version_create_input.description,
             author=self.author,
             ct_package_uid=study_standard_version_create_input.ct_package_uid,
         )
@@ -145,9 +147,16 @@ class StudyStandardVersionService:
         if (
             study_standard_version_to_edit.ct_package_uid
             != study_standard_version_edit_input.ct_package_uid
+            or study_standard_version_to_edit.description
+            != study_standard_version_edit_input.description
         ):
             study_standard_version_to_edit.edit_core_properties(
                 ct_package_uid=study_standard_version_edit_input.ct_package_uid
+                if study_standard_version_edit_input.ct_package_uid
+                else study_standard_version_to_edit.ct_package_uid,
+                description=study_standard_version_edit_input.description
+                if study_standard_version_edit_input.description
+                else study_standard_version_to_edit.description,
             )
 
     @db.transaction
@@ -182,38 +191,45 @@ class StudyStandardVersionService:
         self,
         study_uid: str,
         study_standard_version_uid: str,
-        study_standard_version_input: StudyStandardVersionInput,
+        study_standard_version_input: StudyStandardVersionEditInput,
     ):
         study_standard_version = self.repo.find_by_uid(
             study_uid=study_uid, study_standard_version_uid=study_standard_version_uid
         )
         if (
-            not study_standard_version_input.ct_package_uid
-            or study_standard_version_input.ct_package_uid
-            == study_standard_version.ct_package_uid
+            study_standard_version_input.ct_package_uid is not None
+            and study_standard_version_input.ct_package_uid
+            != study_standard_version.ct_package_uid
+        ) or (
+            study_standard_version_input.description is not None
+            and study_standard_version_input.description
+            != study_standard_version.description
         ):
-            raise exceptions.BusinessLogicException("There's nothing to change")
-        if not self._repos.ct_package_repository.package_exists(
-            study_standard_version_input.ct_package_uid
-        ):
-            raise exceptions.NotFoundException(
-                f"Could not find CTPackage with uid {study_standard_version_input.ct_package_uid}"
+            if (
+                study_standard_version_input.ct_package_uid is not None
+                and not self._repos.ct_package_repository.package_exists(
+                    study_standard_version_input.ct_package_uid
+                )
+            ):
+                raise exceptions.NotFoundException(
+                    f"Could not find CTPackage with uid {study_standard_version_input.ct_package_uid}"
+                )
+
+            fill_missing_values_in_base_model_from_reference_base_model(
+                base_model_with_missing_values=study_standard_version_input,
+                reference_base_model=self._transform_all_to_response_model(
+                    study_standard_version
+                ),
+            )
+            self._edit_study_standard_version_vo(
+                study_standard_version_to_edit=study_standard_version,
+                study_standard_version_edit_input=study_standard_version_input,
             )
 
-        fill_missing_values_in_base_model_from_reference_base_model(
-            base_model_with_missing_values=study_standard_version_input,
-            reference_base_model=self._transform_all_to_response_model(
-                study_standard_version
-            ),
-        )
-        self._edit_study_standard_version_vo(
-            study_standard_version_to_edit=study_standard_version,
-            study_standard_version_edit_input=study_standard_version_input,
-        )
+            updated_item = self.repo.save(study_standard_version)
 
-        updated_item = self.repo.save(study_standard_version)
-
-        return self._transform_all_to_response_model(updated_item)
+            return self._transform_all_to_response_model(updated_item)
+        raise exceptions.BusinessLogicException("There's nothing to change")
 
     @db.transaction
     def delete(self, study_uid: str, study_standard_version_uid: str):

@@ -21,15 +21,17 @@
       <v-btn
         v-if="!readOnly"
         data-cy="add-sponsor-codelist"
+        class="ml-2"
         size="small"
-        color="primary"
+        variant="outlined"
+        color="nnBaseBlue"
         :title="$t('CodelistCreationForm.title')"
         :disabled="!accessGuard.checkPermission($roles.LIBRARY_WRITE)"
         icon="mdi-plus"
         @click.stop="showCreationForm = true"
       />
     </template>
-    <template #afterFilter="">
+    <template #beforeSwitches="">
       <v-autocomplete
         v-model="selectedTerms"
         v-model:search-input="search"
@@ -38,7 +40,10 @@
         item-title="sponsor_preferred_name"
         item-value="term_uid"
         density="compact"
-        class="mt-5 max-width-300"
+        class="max-width-300 mt-6"
+        variant="outlined"
+        bg-color="nnWhite"
+        single-line
         clearable
         return-object
         multiple
@@ -60,8 +65,11 @@
       <v-select
         v-model="termsFilterOperator"
         :items="operators"
+        variant="outlined"
+        bg-color="nnWhite"
+        single-line
         :label="$t('_global.operator')"
-        class="mt-5 max-width-100"
+        class="ml-1 max-width-100 mt-6 mr-2"
         density="compact"
       />
     </template>
@@ -111,6 +119,7 @@
       :title="historyTitle"
       :headers="historyHeaders"
       :items="historyItems"
+      :items-total="historyItems.length"
       @close="closeHistory"
     />
   </v-dialog>
@@ -180,7 +189,7 @@ const router = useRouter()
 
 const codelists = ref([])
 const headers = ref([
-  { title: '', key: 'actions', width: '5%', sortable: false },
+  { title: '', key: 'actions', width: '1%' },
   { title: t('_global.library'), key: 'library_name' },
   {
     title: t('CtCatalogueTable.sponsor_pref_name'),
@@ -371,7 +380,7 @@ const updateTerms = _debounce(function (value) {
   if (value) {
     loading.value = true
     const filters = { '*': { v: [value] } }
-    termsStore.fetchTerms(filters).then(() => {
+    termsStore.fetchTerms(filters, true).then(() => {
       loading.value = false
     })
   }

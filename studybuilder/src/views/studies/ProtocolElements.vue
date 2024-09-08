@@ -3,10 +3,12 @@
     <div class="page-title d-flex align-center">
       {{ $t('StudyProtocolElementsView.title') }} ({{ studyId }})
       <HelpButton :help-text="$t('_help.ProtocolElementsTable.general')" />
-      <v-spacer/>
+      <v-spacer />
       <v-btn
-        color="primary"
+        class="ml-2"
         size="small"
+        variant="outlined"
+        color="nnBaseBlue"
         icon="mdi-cog-outline"
         :disabled="lockSettings"
         :loading="soaContentLoadingStore.loading"
@@ -20,43 +22,49 @@
     </v-tabs>
     <v-window v-model="tab" class="bg-white">
       <v-window-item value="tab-0">
-        <ProtocolTitlePage />
+        <ProtocolTitlePage :key="`tab-0-${tabKeys['tab-0']}`" />
       </v-window-item>
       <v-window-item value="tab-1">
         <ProtocolFlowchart
+          :key="`tab-1-${tabKeys['tab-1']}`"
           :study-uid="selectedStudy.uid"
           :update="updateFlowchart"
         />
       </v-window-item>
       <v-window-item value="tab-2">
         <ProtocolElementsObjectiveTable
+          :key="`tab-2-${tabKeys['tab-2']}`"
           :study-uid="selectedStudy.uid"
           :update="updateObjectives"
         />
       </v-window-item>
       <v-window-item value="tab-3">
         <ProtocolElementsStudyDesign
+          :key="`tab-3-${tabKeys['tab-3']}`"
           :study-uid="selectedStudy.uid"
           :update="updateDesign"
         />
       </v-window-item>
       <v-window-item value="tab-4">
-        <ProtocolElementsStudyPopulationSummary />
+        <ProtocolElementsStudyPopulationSummary
+          :key="`tab-4-${tabKeys['tab-4']}`"
+        />
       </v-window-item>
       <v-window-item value="tab-5">
         <ProtocolElementsStudyInterventions
+          :key="`tab-5-${tabKeys['tab-5']}`"
           :study-uid="selectedStudy.uid"
           :update="updateInterventions"
         />
       </v-window-item>
       <v-window-item value="tab-6">
-        <ProtocolElementsProceduresAndActivities />
+        <ProtocolElementsProceduresAndActivities
+          :key="`tab-6-${tabKeys['tab-6']}`"
+        />
       </v-window-item>
     </v-window>
     <v-dialog v-model="showSoaSettings" max-width="800px">
-      <SoaSettingsForm
-        @close="closeSoaSettings"
-      />
+      <SoaSettingsForm @close="closeSoaSettings" />
     </v-dialog>
   </div>
 </template>
@@ -76,6 +84,7 @@ import { useAppStore } from '@/stores/app'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
 import { useSoaContentLoadingStore } from '@/stores/soa-content-loading'
 import { useAccessGuard } from '@/composables/accessGuard'
+import { useTabKeys } from '@/composables/tabKeys'
 
 export default {
   components: {
@@ -103,6 +112,7 @@ export default {
       studyId: computed(() => studiesGeneralStore.studyId),
       soaContentLoadingStore,
       ...accessGuard,
+      ...useTabKeys(),
     }
   },
   data() {
@@ -135,7 +145,10 @@ export default {
   },
   computed: {
     lockSettings() {
-      if(!this.checkPermission(this.$roles.STUDY_WRITE) || this.selectedStudyVersion !== null) {
+      if (
+        !this.checkPermission(this.$roles.STUDY_WRITE) ||
+        this.selectedStudyVersion !== null
+      ) {
         return true
       }
       return false
@@ -174,6 +187,7 @@ export default {
           this.updateInterventions++
           break
       }
+      this.updateTabKey(value)
     },
   },
   mounted() {
@@ -200,7 +214,7 @@ export default {
     closeSoaSettings() {
       this.updateFlowchart++
       this.showSoaSettings = false
-    }
-  }
+    },
+  },
 }
 </script>

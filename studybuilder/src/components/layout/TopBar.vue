@@ -28,6 +28,19 @@
         <v-icon :icon="app.icon" />
         {{ app.name }}
       </v-btn>
+      <v-btn
+        v-if="isAuthenticated"
+        class="text-capitalize"
+        href="/neodash/"
+        target="_blank"
+        variant="text"
+      >
+        <v-icon icon="mdi-file-chart-outline" />
+        {{ $t('_global.reports') }}
+        <template #append>
+          <v-icon icon="mdi-open-in-new" />
+        </template>
+      </v-btn>
     </v-toolbar-items>
     <v-spacer />
     <div v-if="isAuthenticated">
@@ -194,17 +207,16 @@
     <ConfirmDialog ref="confirm" :text-cols="5" :action-cols="6">
       <template #actions>
         <v-btn
-          color="white"
-          variant="outlined"
-          class="mr-2"
+          color="nnBaseBlue"
+          rounded="xl"
           elevation="2"
           @click="openSelectStudyDialog"
         >
           {{ $t('_global.select_study') }}
         </v-btn>
         <v-btn
-          color="white"
-          outlined
+          color="nnBaseBlue"
+          rounded="xl"
           elevation="2"
           @click="redirectToStudyTable"
         >

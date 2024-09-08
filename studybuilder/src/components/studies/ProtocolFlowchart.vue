@@ -1,54 +1,39 @@
 <template>
   <div class="pa-4 bg-white">
     <v-row>
-      <v-col cols="4" class="d-flex align-center">
-        <span class="text-h6">{{ $t('ProtocolFlowchart.title') }}</span>
-        <span class="text-center font-italic flex-grow-1">{{
-          loadingMessage
-        }}</span>
+      <v-col cols="4">
       </v-col>
       <v-col cols="8" class="d-flex align-center">
-        <v-spacer />
-        <v-select
-          v-model="layout"
-          :label="$t('ProtocolFlowchart.layout')"
-          :items="layouts"
-          item-title="title"
-          item-value="value"
-          density="compact"
-          :disabled="Boolean(loadingMessage)"
-          class="layoutSelect mt-3 mr-4"
-        />
+        <v-spacer/>
         <v-switch
+          v-show="switchIsEnabled(['protocol'])"
           v-model="soaPreferences.show_epochs"
           :label="$t('ProtocolFlowchart.show_epochs')"
           hide-details
           class="mr-4"
           color="primary"
-          :disabled="disableSwitches"
           :readonly="soaContentLoadingStore.loading"
           :loading="soaContentLoadingStore.loading ? 'warning' : null"
           @update:model-value="updateSoaPreferences('show_epochs')"
         />
-        <!-- <v-switch  // OFF for Release 1.6 ENABLE when Milestones get implemented
+        <v-switch
+          v-show="switchIsEnabled(['protocol'])"
           v-model="soaPreferences.show_milestones"
           :label="$t('ProtocolFlowchart.show_milestones')"
           hide-details
           class="mr-4"
           color="primary"
-          :disabled="disableSwitches ||
-            selectedStudyVersion !== null
-          "
           :readonly="soaContentLoadingStore.loading"
           :loading="soaContentLoadingStore.loading ? 'warning' : null"
           @update:model-value="updateSoaPreferences('show_milestones')"
-        /> -->
+        />
         <v-menu rounded location="bottom">
           <template #activator="{ props }">
             <v-btn
+              class="ml-2"
               size="small"
-              color="nnGreen1"
-              class="ml-2 text-white"
+              variant="outlined"
+              color="nnBaseBlue"
               v-bind="props"
               :title="$t('DataTableExportButton.export')"
               icon="mdi-download-outline"
@@ -58,6 +43,9 @@
           <v-list>
             <v-list-item link @click="downloadCSV">
               <v-list-item-title>CSV</v-list-item-title>
+            </v-list-item>
+            <v-list-item link @click="downloadEXCEL">
+              <v-list-item-title>EXCEL</v-list-item-title>
             </v-list-item>
             <v-list-item link @click="downloadDocx">
               <v-list-item-title>DOCX</v-list-item-title>
@@ -73,7 +61,7 @@
 <script>
 import { computed } from 'vue'
 import study from '@/api/study'
-import exportLoader from '@/utils/exportLoader'
+import soaDownloads from '@/utils/soaDownloads'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
 import { useSoaContentLoadingStore } from '@/stores/soa-content-loading'
 import unitConstants from '@/constants/units'
@@ -86,6 +74,10 @@ export default {
       type: Number,
       default: 0,
     },
+    layout: {
+      type: String,
+      default: 'protocol'
+    }
   },
   setup() {
     const studiesGeneralStore = useStudiesGeneralStore()
@@ -108,24 +100,8 @@ export default {
     return {
       protocolFlowchart: '',
       loadingMessage: '',
-      layout: 'compact',
-      layouts: [
-        { value: 'compact', title: this.$t('ProtocolFlowchart.compact') },
-        { value: 'detailed', title: this.$t('ProtocolFlowchart.detailed') },
-        {
-          value: 'operational',
-          title: this.$t('ProtocolFlowchart.operational'),
-        },
-      ],
-      preferredTimeUnit: null,
       preferredTimeUnits: [],
     }
-  },
-  computed: {
-    disableSwitches() {
-      if ((this.layout === 'compact' && this.checkPermission(this.$roles.STUDY_WRITE)) && !this.selectedStudyVersion) return false
-      return true
-    },
   },
   watch: {
     layout(newVal, oldVal) {
@@ -142,11 +118,15 @@ export default {
       .then((resp) => {
         this.preferredTimeUnits = resp.data.items
       })
-    if (this.soaPreferredTimeUnit) {
-      this.preferredTimeUnit = this.soaPreferredTimeUnit.time_unit_name
-    }
   },
   methods: {
+    switchIsEnabled(layouts = []) {
+      return (
+        !this.selectedStudyVersion &&
+        this.checkPermission(this.$roles.STUDY_WRITE) &&
+        (!layouts || layouts.includes(this.layout))
+      )
+    },
     updateSoaPreferences(key) {
       this.setSoaPreferences({ [key]: this.soaPreferences[key] }).then(() => {
         this.updateFlowchart()
@@ -155,13 +135,9 @@ export default {
     updateFlowchart() {
       this.loadingMessage = this.$t('ProtocolFlowchart.loading')
       this.soaContentLoadingStore.changeLoadingState()
-      if (this.soaPreferredTimeUnit) {
-        this.preferredTimeUnit = this.soaPreferredTimeUnit.time_unit_name
-      }
       const params = {
         detailed: this.layout === 'detailed' ? true : null,
         operational: this.layout === 'operational' ? true : null,
-        time_unit: this.preferredTimeUnit,
       }
       study
         .getStudyProtocolFlowchartHtml(this.selectedStudy.uid, params)
@@ -171,67 +147,34 @@ export default {
         .then(this.finally)
         .catch(this.finally)
     },
-    downloadDocx() {
+    async downloadDocx() {
       this.loadingMessage = this.$t('ProtocolFlowchart.downloading')
       this.soaContentLoadingStore.changeLoadingState()
-      const params = {
-        detailed: this.layout === 'detailed' ? true : null,
-        operational: this.layout === 'operational' ? true : null,
+      try {
+        await soaDownloads.docxDownload(this.layout)
+      } finally {
+        this.finally()
       }
-      study
-        .getStudyProtocolFlowchartDocx(this.selectedStudy.uid, params)
-        .then((response) => {
-          let filename =
-            this.selectedStudy.current_metadata.identification_metadata.study_id
-          filename += ` ${this.layout} SoA.docx`
-          exportLoader.downloadFile(
-            response.data,
-            response.headers['content-type'] ||
-              'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            filename
-          )
-        })
-        .then(this.finally)
-        .catch(this.finally)
     },
-    downloadCSV() {
+    async downloadCSV() {
       this.soaContentLoadingStore.changeLoadingState()
-      if (this.layout == 'operational') {
-        study
-          .exportStudyProtocolSoa(this.selectedStudy.uid)
-          .then((response) => {
-            const filename =
-              this.selectedStudy.current_metadata.identification_metadata
-                .study_id + ' protocol SoA.csv'
-            exportLoader.downloadFile(
-              response.data,
-              response.headers['content-type'],
-              filename
-            )
-          })
-          .then(this.finally)
-          .catch(this.finally)
-      } else {
-        study
-          .exportStudyOperationalSoa(this.selectedStudy.uid)
-          .then((response) => {
-            const filename =
-              this.selectedStudy.current_metadata.identification_metadata
-                .study_id + ' operational SoA.csv'
-            exportLoader.downloadFile(
-              response.data,
-              response.headers['content-type'],
-              filename
-            )
-          })
-          .then(this.finally)
-          .catch(this.finally)
+      try {
+        await soaDownloads.csvDownload(this.layout)
+      } finally {
+        this.finally()
       }
     },
-    finally(error) {
+    async downloadEXCEL() {
+      this.soaContentLoadingStore.changeLoadingState()
+      try {
+        await soaDownloads.excelDownload(this.layout)
+      } finally {
+        this.finally()
+      }
+    },
+    finally() {
       this.loadingMessage = ''
       this.soaContentLoadingStore.changeLoadingState()
-      if (error) throw error
     },
   },
 }

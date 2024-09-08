@@ -3,7 +3,7 @@
     v-if="studyObjective"
     ref="form"
     :title="$t('StudyObjectiveEditForm.title')"
-    :study-selection="studyObjective"
+    :study-selection="editedObject"
     :template="template"
     :library-name="library.name"
     object-type="objective"
@@ -42,6 +42,7 @@ import formUtils from '@/utils/forms'
 import instances from '@/utils/instances'
 import study from '@/api/study'
 import StudySelectionEditForm from './StudySelectionEditForm.vue'
+import constants from '@/constants/libraries'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
 import { useStudiesObjectivesStore } from '@/stores/studies-objectives'
 import { computed } from 'vue'
@@ -68,31 +69,50 @@ export default {
       updateStudyObjective: studiesObjectivesStore.updateStudyObjective,
     }
   },
+  data() {
+    return {
+      editedObject: {},
+    }
+  },
   computed: {
     template() {
-      return this.studyObjective.objective
-        ? this.studyObjective.objective.objective_template
-        : this.studyObjective.objective_template
+      return this.editedObject.objective
+        ? this.editedObject.objective.template
+        : this.editedObject.template
     },
     library() {
-      return this.studyObjective.objective
-        ? {
-            name: this.studyObjective.objective.objective_template.library_name,
+      return {
+            name: constants.LIBRARY_USER_DEFINED,
           }
-        : this.studyObjective.objective_template.library
+    },
+  },
+  watch: {
+    studyObjective: {
+      handler: function (value) {
+        if (value) {
+          study
+            .getStudyObjective(
+              this.selectedStudy.uid,
+              value.study_objective_uid
+            )
+            .then((resp) => {
+              this.editedObject = resp.data
+            })
+        }
+      },
+      immediate: true,
     },
   },
   methods: {
     initForm(form) {
-      form.objective_level = this.studyObjective.objective_level
+      form.objective_level = this.editedObject.objective_level
       this.originalForm = JSON.parse(JSON.stringify(form))
     },
     async getStudyObjectiveNamePreview(parameters) {
       const objectiveData = {
-        objective_template_uid:
-          this.studyObjective.objective.objective_template.uid,
+        objective_template_uid: this.editedObject.objective.template.uid,
         parameter_terms: await instances.formatParameterValues(parameters),
-        library_name: this.studyObjective.objective.library.name,
+        library_name: this.editedObject.objective.library.name,
       }
       const resp = await study.getStudyObjectivePreview(
         this.selectedStudy.uid,
@@ -105,11 +125,11 @@ export default {
 
       if (newTemplate) {
         data.parameters = parameters
-      } else if (!this.studyObjective.objective) {
+      } else if (!this.editedObject.objective) {
         data.parameters = parameters
       } else {
         const namePreview = await this.getStudyObjectiveNamePreview(parameters)
-        if (namePreview !== this.studyObjective.objective.name) {
+        if (namePreview !== this.editedObject.objective.name) {
           data.parameters = parameters
         }
       }
@@ -123,7 +143,7 @@ export default {
       }
       const args = {
         studyUid: this.selectedStudy.uid,
-        studyObjectiveUid: this.studyObjective.study_objective_uid,
+        studyObjectiveUid: this.editedObject.study_objective_uid,
         form: data,
         library: this.library,
       }

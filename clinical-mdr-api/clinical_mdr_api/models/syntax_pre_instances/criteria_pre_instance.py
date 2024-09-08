@@ -18,10 +18,7 @@ from clinical_mdr_api.models.syntax_templates.template_parameter_term import (
     IndexedTemplateParameterTerm,
     MultiTemplateParameterTerm,
 )
-from clinical_mdr_api.models.utils import (
-    BaseModel,
-    capitalize_first_letter_if_template_parameter,
-)
+from clinical_mdr_api.models.utils import BaseModel
 
 
 class CriteriaPreInstance(BaseModel):
@@ -84,16 +81,8 @@ class CriteriaPreInstance(BaseModel):
             template_uid=criteria_pre_instance_ar.template_uid,
             template_name=criteria_pre_instance_ar.template_name,
             template_type_uid=criteria_pre_instance_ar.type.term_uid,
-            name=capitalize_first_letter_if_template_parameter(
-                criteria_pre_instance_ar.name,
-                criteria_pre_instance_ar.template_name_plain,
-                criteria_pre_instance_ar._template.parameter_terms,
-            ),
-            name_plain=capitalize_first_letter_if_template_parameter(
-                criteria_pre_instance_ar.name_plain,
-                criteria_pre_instance_ar.template_name_plain,
-                criteria_pre_instance_ar._template.parameter_terms,
-            ),
+            name=criteria_pre_instance_ar.name,
+            name_plain=criteria_pre_instance_ar.name_plain,
             guidance_text=(
                 criteria_pre_instance_ar._template.guidance_text
                 if criteria_pre_instance_ar.guidance_text is None

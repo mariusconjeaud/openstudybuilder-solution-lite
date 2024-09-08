@@ -10,9 +10,10 @@
       :headers="headers"
       column-data-resource="dictionaries/terms"
     >
-      <template #termForm="{ closeForm, open }">
+      <template #termForm="{ closeForm, open, editedTerm }">
         <UcumCodeForm
           :open="open"
+          :edited-term="editedTerm"
           :codelist-uid="codelistUid"
           @close="closeForm"
         />
@@ -38,7 +39,7 @@ export default {
       codelistUid: null,
       dictionaryName: 'UCUM',
       headers: [
-        { title: '', key: 'actions', width: '5%' },
+        { title: '', key: 'actions', width: '1%' },
         { title: this.$t('UCUM.code'), key: 'name' },
         { title: this.$t('UCUM.description'), key: 'definition' },
         { title: this.$t('_global.status'), key: 'status' },

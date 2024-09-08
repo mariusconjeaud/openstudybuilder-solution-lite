@@ -25,10 +25,10 @@
       "neodash_studyaction_uid": "",
       "neodash_studyaction_uid_display": "",
       "neodash_action_id_number": "",
-      "neodash_start_date": "2015-01-01",
-      "neodash_end_date": "2024-05-01",
-      "neodash_studyaction_user_initials": "unknown-user",
-      "neodash_studyaction_user_initials_display": "unknown-user",
+      "neodash_start_date": "2023-12-01",
+      "neodash_end_date": "2024-06-01",
+      "neodash_studyaction_user_initials": "",
+      "neodash_studyaction_user_initials_display": "",
       "neodash_studyroot_uid": "Study_000002",
       "neodash_idaction": "1177045",
       "neodash_action_id": "2975961"
@@ -533,6 +533,13 @@
                 "value": "N/A",
                 "customization": "cell color",
                 "customizationValue": "#FF11116E"
+              },
+              {
+                "field": "Action Type",
+                "condition": "=",
+                "value": "Delete",
+                "customization": "cell color",
+                "customizationValue": "#FF11116E"
               }
             ],
             "wrapContent": true
@@ -624,7 +631,7 @@
         {
           "id": "da42d518-f7a4-4a0d-b0ea-63cb1a1185c4",
           "title": "Select Study UID",
-          "query": "//get root nodes\nwith $neodash_studyaction_user_initials as user_initials\n  ,case \n  WHEN $neodash_start_date <> \"\" \n    THEN CASE \n      WHEN $neodash_start_date =~ \"\\d{4,}-\\d{2,}-\\d{2,}\" THEN Date($neodash_start_date)\n      ELSE Date(\"IS NOT A VALID DATE OF YYYY-MM-DD FORMAT\")\n    END\n    ELSE \"2015-01-01\"\n  end as init_start_date\n  ,case \n  WHEN $neodash_end_date  <> \"\"  \n    THEN CASE \n      WHEN $neodash_end_date =~ \"\\d{4,}-\\d{2,}-\\d{2,}\" THEN Date($neodash_end_date)\n      ELSE Date(\"IS NOT A VALID DATE OF YYYY-MM-DD FORMAT\")\n    END\n    ELSE Date(datetime())+duration({days:1})\n  END  AS init_last_start_date\n\nmatch (val:StudyValue)--(sr:StudyRoot)-[at:AUDIT_TRAIL]->(all_study_action:StudyAction)-[:AFTER]-(component)\nWHERE (all_study_action.user_initials = user_initials)\n  and date(all_study_action.date) >= date(init_start_date) \n  and date(all_study_action.date) <= date(init_last_start_date)\n  and val.study_acronym IS NOT NULL\n\nreturn distinct val.study_acronym AS `Study Name`\n  ,sr.uid AS `Study UID`\n",
+          "query": "//get root nodes\nwith $neodash_studyaction_user_initials as user_initials\n  ,case \n  WHEN $neodash_start_date <> \"\" \n    THEN CASE \n      WHEN $neodash_start_date =~ \"\\d{4,}-\\d{2,}-\\d{2,}\" THEN Date($neodash_start_date)\n      ELSE Date(\"IS NOT A VALID DATE OF YYYY-MM-DD FORMAT\")\n    END\n    ELSE \"2015-01-01\"\n  end as init_start_date\n  ,case \n  WHEN $neodash_end_date  <> \"\"  \n    THEN CASE \n      WHEN $neodash_end_date =~ \"\\d{4,}-\\d{2,}-\\d{2,}\" THEN Date($neodash_end_date)\n      ELSE Date(\"IS NOT A VALID DATE OF YYYY-MM-DD FORMAT\")\n    END\n    ELSE Date(datetime())+duration({days:1})\n  END  AS init_last_start_date\n\nmatch (val:StudyValue)--(sr:StudyRoot)-[at:AUDIT_TRAIL]->(all_study_action:StudyAction)-[:AFTER]-(component)\nWHERE (all_study_action.user_initials = user_initials)\n  and date(all_study_action.date) >= date(init_start_date) \n  and date(all_study_action.date) <= date(init_last_start_date)\n\nreturn distinct val.study_acronym AS `Study Name`\n  ,sr.uid AS `Study UID`\n",
           "width": 5,
           "height": 4,
           "x": 0,

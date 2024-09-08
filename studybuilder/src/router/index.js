@@ -534,6 +534,16 @@ const routes = [
         },
       },
       // {
+      //   path: ':study_id/data_standard_versions/:tab?',
+      //   name: 'StudyDataStandardVersions',
+      //   component: () =>
+      //     import('../views/studies/StudyDataStandardVersions.vue'),
+      //   meta: {
+      //     studyRequired: true,
+      //     authRequired: true,
+      //   },
+      // },
+      // {
       //   path: '/studies/:study_id/specification_dashboard',
       //   name: 'SpecificationDashboard',
       //   component: () => import('../views/studies/SpecificationDashboard.vue'),
@@ -790,6 +800,15 @@ const routes = [
           authRequired: true,
         },
       },
+      {
+        path: ':study_id/usdm',
+        name: 'Usdm',
+        component: () => import('../views/studies/UsdmPage.vue'),
+        meta: {
+          studyRequired: true,
+          authRequired: true,
+        },
+      },
       // {
       //   path: 'adam_specification',
       //   name: 'AdamSpecification',
@@ -1035,6 +1054,43 @@ router.beforeEach(async (to, from, next) => {
     appStore.resetBreadcrumbs()
     appStore.setSection(to.meta.section ? to.meta.section : to.name)
   }
+  const basePath = '/' + to.path.split('/')[1]
+  const baseRoute = router.resolve(basePath)
+  const section = baseRoute.name
+  if (
+    (appStore.section !== section || from.path === '/') &&
+    to.path !== '/' &&
+    to.path !== '/oauth-callback'
+  ) {
+    appStore.setSection(to.matched[0].name)
+    if (section && ['Logout', 'Home'].indexOf(section) === -1) {
+      appStore.setSection(section)
+      const currentRoute = router.resolve(to.path)
+      if (appStore.menuItems[section].items) {
+        for (const item of appStore.menuItems[section].items) {
+          if (item.children) {
+            let found = false
+            for (const subitem of item.children) {
+              if (subitem.url.name === currentRoute.name) {
+                appStore.addBreadcrumbsLevel(item.title, item.url, 1)
+                appStore.addBreadcrumbsLevel(subitem.title, subitem.url, 2)
+                found = true
+                break
+              }
+            }
+            if (found) {
+              break
+            }
+          } else {
+            if (item.url.name === currentRoute.name) {
+              appStore.addBreadcrumbsLevel(item.title, item.url, 1)
+              break
+            }
+          }
+        }
+      }
+    }
+  }
   if (to.path !== '/' && to.path !== '/oauth-callback' && !appStore.section) {
     /* We are probably doing a full refresh of the page, let's guess
      * the breadcrumbs based on current url */
@@ -1050,7 +1106,7 @@ router.beforeEach(async (to, from, next) => {
           for (const subitem of item.children) {
             if (subitem.url.name === currentRoute.name) {
               appStore.addBreadcrumbsLevel(item.title, item.url, 1)
-              appStore.addBreadcrumbsLevel(subitem.title, subitem.url)
+              appStore.addBreadcrumbsLevel(subitem.title, subitem.url, 2)
               found = true
               break
             }

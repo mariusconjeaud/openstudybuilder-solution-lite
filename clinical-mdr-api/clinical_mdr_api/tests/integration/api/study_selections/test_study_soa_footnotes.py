@@ -340,7 +340,7 @@ STUDY_FOOTNOTE_FIELDS_ALL = [
     "study_uid",
     "order",
     "footnote",
-    "footnote_template",
+    "template",
     "referenced_items",
     "modified",
     "study_version",
@@ -383,7 +383,7 @@ def test_get_study_soa_footnote(api_client):
         res["referenced_items"][0]["item_type"]
         == SoAItemType.STUDY_ACTIVITY_SCHEDULE.value
     )
-    assert res["footnote_template"]["uid"] == footnote_templates[0].uid
+    assert res["template"]["uid"] == footnote_templates[0].uid
 
 
 def test_get_soa_footnotes_pagination(api_client):
@@ -484,7 +484,7 @@ def test_get_study_soa_footnotes(
     [
         pytest.param(
             '{"*": {"v": ["FootnoteTemplate_000001"]}}',
-            "footnote_template.uid",
+            "template.uid",
             "FootnoteTemplate_000001",
         ),
         pytest.param('{"*": {"v": ["ccc"]}}', None, None),
@@ -528,8 +528,8 @@ def test_filtering_wildcard(
     "filter_by, expected_matched_field, expected_result",
     [
         pytest.param(
-            '{"footnote_template.uid": {"v": ["FootnoteTemplate_000001"]}}',
-            "footnote_template.uid",
+            '{"template.uid": {"v": ["FootnoteTemplate_000001"]}}',
+            "template.uid",
             "FootnoteTemplate_000001",
         ),
         pytest.param(
@@ -591,7 +591,7 @@ def test_footnote_reordering_when_adding_new_footnote(api_client):
         == SoAItemType.STUDY_ACTIVITY_SCHEDULE.value
     )
     assert res[0]["order"] == 1
-    assert res[0]["footnote_template"]["uid"] == footnote_templates[0].uid
+    assert res[0]["template"]["uid"] == footnote_templates[0].uid
 
     assert (
         res[1]["referenced_items"][0]["item_uid"]
@@ -602,7 +602,7 @@ def test_footnote_reordering_when_adding_new_footnote(api_client):
         == SoAItemType.STUDY_ACTIVITY_SCHEDULE.value
     )
     assert res[1]["order"] == 2
-    assert res[1]["footnote_template"]["uid"] == footnote_templates[1].uid
+    assert res[1]["template"]["uid"] == footnote_templates[1].uid
 
     body_mes_sas_footnote = TestUtils.create_study_soa_footnote(
         study_uid=study.uid,
@@ -640,7 +640,7 @@ def test_footnote_reordering_when_adding_new_footnote(api_client):
         res[0]["referenced_items"][0]["item_name"]
         == f"{sa_randomized.activity.name} {first_visit.visit_short_name}"
     )
-    assert res[0]["footnote_template"]["uid"] == footnote_templates[0].uid
+    assert res[0]["template"]["uid"] == footnote_templates[0].uid
     assert res[0]["order"] == 1
 
     assert (
@@ -655,7 +655,7 @@ def test_footnote_reordering_when_adding_new_footnote(api_client):
         res[1]["referenced_items"][0]["item_name"]
         == f"{sa_body_mes.activity.name} {first_visit.visit_short_name}"
     )
-    assert res[1]["footnote_template"]["uid"] == footnote_templates[0].uid
+    assert res[1]["template"]["uid"] == footnote_templates[0].uid
     assert res[1]["order"] == 2
 
     assert (
@@ -670,7 +670,7 @@ def test_footnote_reordering_when_adding_new_footnote(api_client):
         res[2]["referenced_items"][0]["item_name"]
         == f"{sa_weight.activity.name} {second_visit.visit_short_name}"
     )
-    assert res[2]["footnote_template"]["uid"] == footnote_templates[1].uid
+    assert res[2]["template"]["uid"] == footnote_templates[1].uid
     assert res[2]["order"] == 3
 
 
@@ -686,7 +686,7 @@ def test_edit(api_client):
     )
     assert response.status_code == 200
     res = response.json()
-    assert res["footnote_template"]["uid"] == footnote_templates[1].uid
+    assert res["template"]["uid"] == footnote_templates[1].uid
 
     response = api_client.get(
         f"/studies/{study.uid}/study-soa-footnotes/{soa_footnotes[1].uid}"
@@ -839,13 +839,6 @@ def test_get_all_across_studies(api_client):
     res = response.json()
     total_in_first_study = res["total"]
 
-    api_client.post(
-        f"/studies/{second_study.uid}/study-soa-footnotes/batch-select",
-        json={
-            "footnote_template_uid": footnote_templates[0].uid,
-            "referenced_items": [],
-        },
-    )
     response = api_client.get(
         f"/studies/{second_study.uid}/study-soa-footnotes?total_count=True"
     )
@@ -889,9 +882,9 @@ def test_preview_study_soa_footnote(api_client):
     assert response.status_code == 200
     res = response.json()
     assert res["footnote"]["parameter_terms"][0]["terms"][0]["uid"] == text_value1.uid
-    assert res["footnote"]["footnote_template"]["uid"] == footnote_templates[0].uid
-    assert res["footnote"]["footnote_template"]["name"] == footnote_templates[0].name
-    assert res["footnote"]["footnote_template"]["name_plain"] == footnote_templates[
+    assert res["footnote"]["template"]["uid"] == footnote_templates[0].uid
+    assert res["footnote"]["template"]["name"] == footnote_templates[0].name
+    assert res["footnote"]["template"]["name_plain"] == footnote_templates[
         0
     ].name.replace("[TextValue]", text_value1.name_sentence_case)
 
@@ -901,7 +894,7 @@ def test_preview_study_soa_footnote(api_client):
     [
         pytest.param("order"),
         pytest.param("footnote.uid"),
-        pytest.param("footnote_template.uid"),
+        pytest.param("template.uid"),
     ],
 )
 def test_headers(api_client, field_name):
@@ -997,8 +990,10 @@ def test_audit_trail_specific_soa_footnote(api_client):
     )
     assert response.status_code == 200
     res = response.json()
-    assert res[0]["changes"]["referenced_items"] is True
+
+    assert len(res) == 3
     assert res[0]["changes"]["order"] is True
+    assert res[1]["changes"]["referenced_items"] is True
     assert res[-1]["changes"] == {}
 
 
@@ -1313,8 +1308,8 @@ def test_update_footnote_library_items_of_relationship_to_value_nodes(api_client
     )
     res = response.json()
     assert response.status_code == 200
-    library_template_footnote_uid = res["footnote"]["footnote_template"]["uid"]
-    initial_footnote_name = res["footnote"]["footnote_template"]["name"]
+    library_template_footnote_uid = res["footnote"]["template"]["uid"]
+    initial_footnote_name = res["footnote"]["template"]["name"]
 
     text_value_2_name = "3rdname"
     # change footnote name and approve the version
@@ -1342,7 +1337,7 @@ def test_update_footnote_library_items_of_relationship_to_value_nodes(api_client
     )
     res = response.json()
     assert response.status_code == 200
-    assert res["footnote"]["footnote_template"]["name"] == initial_footnote_name
+    assert res["footnote"]["template"]["name"] == initial_footnote_name
 
     # check that the StudySelection can approve the current version
     response = api_client.post(
@@ -1351,8 +1346,8 @@ def test_update_footnote_library_items_of_relationship_to_value_nodes(api_client
     res = response.json()
     assert response.status_code == 200
     assert res["accepted_version"] is True
-    assert res["footnote"]["footnote_template"]["name"] == initial_footnote_name
-    assert res["latest_footnote"]["footnote_template"]["name"] == text_value_2_name
+    assert res["footnote"]["template"]["name"] == initial_footnote_name
+    assert res["latest_footnote"]["template"]["name"] == text_value_2_name
 
     response = api_client.get(
         f"/studies/{study.uid}/study-soa-footnotes/{study_soa_footnote_uid}/audit-trail"
@@ -1367,7 +1362,7 @@ def test_update_footnote_library_items_of_relationship_to_value_nodes(api_client
     )
     res = response.json()
     assert response.status_code == 200
-    assert res["footnote"]["footnote_template"]["name"] == text_value_2_name
+    assert res["footnote"]["template"]["name"] == text_value_2_name
 
     response = api_client.get(
         f"/studies/{study.uid}/study-soa-footnotes/{study_soa_footnote_uid}/audit-trail"

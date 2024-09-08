@@ -9,6 +9,7 @@ Tests for /studies endpoints
 # pytest fixture functions have other fixture functions as arguments,
 # which pylint interprets as unused arguments
 
+import datetime
 import json
 import logging
 import random
@@ -16,10 +17,19 @@ from string import ascii_lowercase
 
 import pytest
 from fastapi.testclient import TestClient
+from neomodel import db
 
 from clinical_mdr_api.main import app
 from clinical_mdr_api.models import UnitDefinitionModel
-from clinical_mdr_api.models.study_selections.study import Study, StudyCreateInput
+from clinical_mdr_api.models.controlled_terminologies import ct_term
+from clinical_mdr_api.models.study_selections.study import (
+    RegistryIdentifiersJsonModel,
+    Study,
+    StudyCreateInput,
+    StudyIdentificationMetadataJsonModel,
+    StudyMetadataJsonModel,
+    StudyPatchRequestJsonModel,
+)
 from clinical_mdr_api.services.studies.study import StudyService
 from clinical_mdr_api.tests.integration.utils.api import (
     inject_and_clear_db,
@@ -40,6 +50,7 @@ study: Study
 
 day_unit_definition: UnitDefinitionModel
 week_unit_definition: UnitDefinitionModel
+ct_term_study_standard_test: ct_term.CTTerm
 
 
 @pytest.fixture(scope="module")
@@ -66,6 +77,53 @@ def test_data():
 
     global study
     study = TestUtils.create_study()
+
+    catalogue_name, library_name = get_catalogue_name_library_name(use_test_utils=True)
+    # Create a study selection
+    ct_term_codelist = create_codelist(
+        name="Null Flavor",
+        uid="CTCodelist",
+        catalogue=catalogue_name,
+        library=library_name,
+    )
+
+    global ct_term_study_standard_test
+    ct_term_name = "Not Applicable"
+    ct_term_study_standard_test = TestUtils.create_ct_term(
+        codelist_uid=ct_term_codelist.codelist_uid,
+        name_submission_value=ct_term_name,
+        sponsor_preferred_name=ct_term_name,
+        order=1,
+        catalogue_name=catalogue_name,
+        library_name=library_name,
+        effective_date=datetime.datetime(2020, 3, 25, tzinfo=datetime.timezone.utc),
+        approve=True,
+    )
+
+    cdisc_package_name = "SDTM CT 2020-03-27"
+
+    TestUtils.create_ct_package(
+        catalogue=catalogue_name,
+        name=cdisc_package_name,
+        approve_elements=False,
+        effective_date=datetime.datetime(2020, 3, 27, tzinfo=datetime.timezone.utc),
+    )
+
+    # patch the date of the latest HAS_VERSION FINAL relationship so it can be detected by the selected study_standard_Version
+    params = {
+        "uid": ct_term_study_standard_test.term_uid,
+        "date": datetime.datetime(2020, 3, 26, tzinfo=datetime.timezone.utc),
+    }
+    db.cypher_query(
+        """
+                    MATCH (n)-[:HAS_NAME_ROOT]-(ct_name:CTTermNameRoot)-[has_version:HAS_VERSION]-(val) 
+                    where 
+                        n.uid =$uid AND EXISTS((ct_name)-[:LATEST]-(val)) 
+                        AND has_version.status ='Final' 
+                    SET has_version.start_date = $date
+                """,
+        params=params,
+    )
 
 
 def test_get_study_by_uid(api_client):
@@ -556,6 +614,23 @@ def test_get_protocol_title_for_specific_version(api_client):
     TestUtils.create_library(name="UCUM", is_editable=True)
     codelist = TestUtils.create_ct_codelist()
     TestUtils.create_study_ct_data_map(codelist_uid=codelist.codelist_uid)
+
+    # Create CT Terms
+    ct_term_dosage = TestUtils.create_ct_term(sponsor_preferred_name="dosage_form_1")
+    ct_term_delivery_device = TestUtils.create_ct_term(
+        sponsor_preferred_name="delivery_device_1"
+    )
+    ct_term_dose_frequency = TestUtils.create_ct_term(
+        sponsor_preferred_name="dose_frequency_1"
+    )
+    ct_term_dispenser = TestUtils.create_ct_term(sponsor_preferred_name="dispenser_1")
+    ct_term_roa = TestUtils.create_ct_term(
+        sponsor_preferred_name="route_of_administration_1"
+    )
+
+    # Create Numeric values with unit
+    dose_value = TestUtils.create_numeric_value_with_unit(value=10, unit="mg")
+
     compound = TestUtils.create_compound(name="name-AAA", approve=True)
     compound_alias = TestUtils.create_compound_alias(
         name="compAlias-AAA", compound_uid=compound.uid, approve=True
@@ -580,6 +655,25 @@ def test_get_protocol_title_for_specific_version(api_client):
         library_name=library_name,
     )
 
+    pharmaceutical_product1 = TestUtils.create_pharmaceutical_product(
+        external_id="external_id1",
+        dosage_form_uids=[ct_term_dosage.term_uid],
+        route_of_administration_uids=[ct_term_roa.term_uid],
+        formulations=[],
+        approve=True,
+    )
+    medicinal_product1 = TestUtils.create_medicinal_product(
+        name="medicinal_product1",
+        external_id="external_id1",
+        dose_value_uids=[dose_value.uid],
+        dose_frequency_uid=ct_term_dose_frequency.term_uid,
+        delivery_device_uid=ct_term_delivery_device.term_uid,
+        dispenser_uid=ct_term_dispenser.term_uid,
+        pharmaceutical_product_uids=[pharmaceutical_product1.uid],
+        compound_uid=compound.uid,
+        approve=True,
+    )
+
     # add some metadata to study
     input_metadata_in_study(study.uid)
 
@@ -588,6 +682,7 @@ def test_get_protocol_title_for_specific_version(api_client):
         f"/studies/{study.uid}/study-compounds",
         json={
             "compound_alias_uid": compound_alias.uid,
+            "medicinal_product_uid": medicinal_product1.uid,
             "type_of_treatment_uid": type_of_treatment.uid,
         },
     )
@@ -1546,6 +1641,7 @@ def test_remove_study_subpart_from_parent_part(api_client):
     assert res["current_metadata"]["version_metadata"]["version_description"] is None
 
 
+# pylint: disable=too-many-statements
 def test_get_audit_trail_of_all_study_subparts_of_study(api_client):
     response = api_client.get("/studies/Study_000025/audit-trail")
     assert response.status_code == 200
@@ -1638,6 +1734,61 @@ def test_get_audit_trail_of_all_study_subparts_of_study(api_client):
     assert res[35]["subpart_id"] == "a"
     assert res[35]["subpart_uid"] == "Study_000026"
 
+    # update study title to be able to lock it
+    response = api_client.patch(
+        "/studies/Study_000025",
+        json={"current_metadata": {"study_description": {"study_title": "new title"}}},
+    )
+    assert response.status_code == 200
+
+    # Lock
+    response = api_client.post(
+        "/studies/Study_000025/locks", json={"change_description": "version Lock"}
+    )
+    assert response.status_code == 201
+
+    # Unlock
+    response = api_client.delete("/studies/Study_000025/locks")
+    assert response.status_code == 200
+
+    response = api_client.patch(
+        "/studies/Study_000026",
+        json={
+            "study_parent_part_uid": None,
+            "current_metadata": {
+                "identification_metadata": {
+                    "study_number": "3333",
+                }
+            },
+        },
+    )
+    assert response.status_code == 200
+
+    # Lock
+    response = api_client.post(
+        "/studies/Study_000025/locks", json={"change_description": "version Lock"}
+    )
+    assert response.status_code == 201
+
+    # Unlock
+    response = api_client.delete("/studies/Study_000025/locks")
+    assert response.status_code == 200
+
+    response = api_client.get("/studies/Study_000025/audit-trail?study_value_version=1")
+    assert response.status_code == 200
+    res = response.json()
+    assert all(i["end_date"] for i in res if i["subpart_uid"] == "Study_000026")
+
+    response = api_client.get("/studies/Study_000025/audit-trail")
+    assert response.status_code == 200
+    res = response.json()
+    assert all(i["end_date"] for i in res if i["subpart_uid"] == "Study_000026")
+
+    response = api_client.get("/studies/Study_000025/audit-trail?study_value_version=2")
+    assert response.status_code == 200
+    res = response.json()
+    assert all(i["end_date"] for i in res if i["subpart_uid"] == "Study_000026")
+
 
 def test_get_audit_trail_of_study_subpart(api_client):
     response = api_client.get("/studies/Study_000030/audit-trail?is_subpart=true")
@@ -1656,16 +1807,30 @@ def test_get_audit_trail_of_study_subpart(api_client):
     ]:
         assert i in res[0]
 
-    assert len(res) == 4
+    assert len(res) == 11
 
-    assert res[0]["subpart_id"] == "f"
+    assert res[0]["subpart_id"] == "e"
     assert res[0]["subpart_uid"] == "Study_000030"
-    assert res[1]["subpart_id"] == "g"
+    assert res[1]["subpart_id"] == "e"
     assert res[1]["subpart_uid"] == "Study_000030"
-    assert res[2]["subpart_id"] == "f"
+    assert res[2]["subpart_id"] == "e"
     assert res[2]["subpart_uid"] == "Study_000030"
     assert res[3]["subpart_id"] == "e"
     assert res[3]["subpart_uid"] == "Study_000030"
+    assert res[4]["subpart_id"] == "f"
+    assert res[4]["subpart_uid"] == "Study_000030"
+    assert res[5]["subpart_id"] == "f"
+    assert res[5]["subpart_uid"] == "Study_000030"
+    assert res[6]["subpart_id"] == "f"
+    assert res[6]["subpart_uid"] == "Study_000030"
+    assert res[7]["subpart_id"] == "f"
+    assert res[7]["subpart_uid"] == "Study_000030"
+    assert res[8]["subpart_id"] == "g"
+    assert res[8]["subpart_uid"] == "Study_000030"
+    assert res[9]["subpart_id"] == "f"
+    assert res[9]["subpart_uid"] == "Study_000030"
+    assert res[10]["subpart_id"] == "e"
+    assert res[10]["subpart_uid"] == "Study_000030"
 
 
 def test_cannot_use_a_study_parent_part_as_study_subpart(api_client):
@@ -1968,4 +2133,225 @@ def test_cannot_remove_study_subpart_from_parent_part_and_provide_an_existing_st
     assert (
         res["message"]
         == "The following study number already exists in the database (1111)"
+    )
+
+
+def test_study_metadata_version_selecting_ct_package(api_client):
+    """change the name of a CTTerm, and verify that the study selection is still set to the old name of the CTTerm when the Sponsor Standard version is set"""
+    _study = TestUtils.create_study()
+
+    # edit ctterm
+    # change name and approve the version
+    new_ctterm_name = "new ctterm name"
+    response = api_client.post(
+        f"/ct/terms/{ct_term_study_standard_test.term_uid}/names/versions",
+    )
+    res = response.json()
+    assert response.status_code == 201
+    response = api_client.patch(
+        f"/ct/terms/{ct_term_study_standard_test.term_uid}/names",
+        json={
+            "sponsor_preferred_name": new_ctterm_name,
+            "sponsor_preferred_name_sentence_case": new_ctterm_name,
+            "change_description": "string",
+        },
+    )
+    response = api_client.post(
+        f"/ct/terms/{ct_term_study_standard_test.term_uid}/names/approvals"
+    )
+    res = response.json()
+    assert response.status_code == 201
+
+    # get study with ctterm latest
+    def payload_creation(
+        _study: StudyPatchRequestJsonModel, new_name_ctterm: ct_term.SimpleTermModel
+    ):
+        return StudyPatchRequestJsonModel(
+            current_metadata=StudyMetadataJsonModel(
+                identification_metadata=StudyIdentificationMetadataJsonModel(
+                    study_number=_study.current_metadata.identification_metadata.study_number,
+                    subpart_id=_study.current_metadata.identification_metadata.subpart_id,
+                    study_acronym=_study.current_metadata.identification_metadata.study_acronym,
+                    study_subpart_acronym=_study.current_metadata.identification_metadata.study_subpart_acronym,
+                    project_number=_study.current_metadata.identification_metadata.project_number,
+                    project_name=_study.current_metadata.identification_metadata.project_name,
+                    description=_study.current_metadata.identification_metadata.description,
+                    clinical_programme_name=_study.current_metadata.identification_metadata.clinical_programme_name,
+                    study_id=_study.current_metadata.identification_metadata.study_id,
+                    registry_identifiers=RegistryIdentifiersJsonModel(
+                        ct_gov_id=None,
+                        ct_gov_id_null_value_code=new_name_ctterm,
+                        eudract_id=None,
+                        eudract_id_null_value_code=new_name_ctterm,
+                        universal_trial_number_utn=None,
+                        universal_trial_number_utn_null_value_code=new_name_ctterm,
+                        japanese_trial_registry_id_japic=None,
+                        japanese_trial_registry_id_japic_null_value_code=new_name_ctterm,
+                        investigational_new_drug_application_number_ind=None,
+                        investigational_new_drug_application_number_ind_null_value_code=new_name_ctterm,
+                        eu_trial_number=None,
+                        eu_trial_number_null_value_code=new_name_ctterm,
+                        civ_id_sin_number=None,
+                        civ_id_sin_number_null_value_code=new_name_ctterm,
+                        national_clinical_trial_number=None,
+                        national_clinical_trial_number_null_value_code=new_name_ctterm,
+                        japanese_trial_registry_number_jrct=None,
+                        japanese_trial_registry_number_jrct_null_value_code=new_name_ctterm,
+                        national_medical_products_administration_nmpa_number=None,
+                        national_medical_products_administration_nmpa_number_null_value_code=new_name_ctterm,
+                        eudamed_srn_number=None,
+                        eudamed_srn_number_null_value_code=new_name_ctterm,
+                        investigational_device_exemption_ide_number=None,
+                        investigational_device_exemption_ide_number_null_value_code=new_name_ctterm,
+                    ),
+                )
+            )
+        )
+
+    new_named_ctterm = ct_term.SimpleTermModel(
+        term_uid=ct_term_study_standard_test.term_uid, name=new_ctterm_name
+    )
+    old_named_ctterm = ct_term.SimpleTermModel(
+        term_uid=ct_term_study_standard_test.term_uid,
+        name=ct_term_study_standard_test.sponsor_preferred_name,
+    )
+    new_named_study_payload = payload_creation(_study, new_named_ctterm)
+    old_named_study_payload = payload_creation(_study, old_named_ctterm)
+    response = api_client.patch(
+        f"/studies/{_study.uid}", json=new_named_study_payload.dict()
+    )
+    assert response.status_code == 200
+    res = response.json()
+    assert (
+        res["current_metadata"]["identification_metadata"]
+        == new_named_study_payload.current_metadata.identification_metadata.dict()
+    )
+    assert (
+        new_named_study_payload.current_metadata.identification_metadata.dict()
+        != old_named_study_payload.current_metadata.identification_metadata.dict()
+    )
+
+    # get ct_packages
+    response = api_client.get(
+        "/ct/packages",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    ct_package_uid = res[0]["uid"]
+
+    # create study standard version
+    response = api_client.post(
+        f"/studies/{_study.uid}/study-standard-versions",
+        json={
+            "ct_package_uid": ct_package_uid,
+        },
+    )
+    res = response.json()
+    assert response.status_code == 201
+    assert res["ct_package"]["uid"] == ct_package_uid
+
+    # get study with previous ctterm
+    response = api_client.get(
+        f"/studies/{_study.uid}",
+    )
+    assert response.status_code == 200
+    res = response.json()
+    assert (
+        res["current_metadata"]["identification_metadata"]
+        == old_named_study_payload.current_metadata.identification_metadata.dict()
+    )
+    assert (
+        old_named_study_payload.current_metadata.identification_metadata.dict()
+        != new_named_study_payload.current_metadata.identification_metadata.dict()
+    )
+
+
+def test_study_copy_component(api_client):
+    reference_study = TestUtils.create_study()
+    relapse_criteria_ref = "Relapse criteria reference study"
+    number_of_expected_subjects_ref = 10
+    response = api_client.patch(
+        f"/studies/{reference_study.uid}",
+        json={
+            "current_metadata": {
+                "study_population": {
+                    "relapse_criteria": relapse_criteria_ref,
+                    "number_of_expected_subjects": number_of_expected_subjects_ref,
+                }
+            }
+        },
+    )
+    assert response.status_code == 200
+
+    response = api_client.get(
+        f"/studies/{reference_study.uid}",
+        params={"include_sections": ["study_population"]},
+    )
+    assert response.status_code == 200
+    res = response.json()
+    assert (
+        res["current_metadata"]["study_population"]["relapse_criteria"]
+        == relapse_criteria_ref
+    )
+    assert (
+        res["current_metadata"]["study_population"]["number_of_expected_subjects"]
+        == number_of_expected_subjects_ref
+    )
+
+    relapse_criteria_target = "Relapse criteria target"
+    response = api_client.patch(
+        f"/studies/{study.uid}",
+        json={
+            "current_metadata": {
+                "study_population": {"relapse_criteria": relapse_criteria_target}
+            }
+        },
+    )
+    assert response.status_code == 200
+    response = api_client.get(
+        f"/studies/{study.uid}", params={"include_sections": ["study_population"]}
+    )
+    assert response.status_code == 200
+    res = response.json()
+    assert (
+        res["current_metadata"]["study_population"]["relapse_criteria"]
+        == relapse_criteria_target
+    )
+
+    response = api_client.get(
+        f"/studies/{study.uid}/copy-component",
+        params={
+            "reference_study_uid": reference_study.uid,
+            "component_to_copy": "study_population",
+            "overwrite": False,
+        },
+    )
+    assert response.status_code == 200
+    res = response.json()
+    assert (
+        res["current_metadata"]["study_population"]["relapse_criteria"]
+        == relapse_criteria_target
+    )
+    assert (
+        res["current_metadata"]["study_population"]["number_of_expected_subjects"]
+        == number_of_expected_subjects_ref
+    )
+
+    response = api_client.get(
+        f"/studies/{study.uid}/copy-component",
+        params={
+            "reference_study_uid": reference_study.uid,
+            "component_to_copy": "study_population",
+            "overwrite": True,
+        },
+    )
+    assert response.status_code == 200
+    res = response.json()
+    assert (
+        res["current_metadata"]["study_population"]["relapse_criteria"]
+        == relapse_criteria_ref
+    )
+    assert (
+        res["current_metadata"]["study_population"]["number_of_expected_subjects"]
+        == number_of_expected_subjects_ref
     )

@@ -45,7 +45,7 @@
           "delete",
           "edit"
         ],
-        "objective_template": {
+        "template": {
           "name": "{otname}",
           "name_plain": "{otname}",
           "guidance_text": null,
@@ -125,7 +125,7 @@
           "delete",
           "edit"
         ],
-        "objective_template": {
+        "template": {
           "name": "{otname}",
           "name_plain": "{otname}",
           "guidance_text": null,
@@ -218,7 +218,7 @@
           "delete",
           "edit"
         ],
-        "objective_template": {
+        "template": {
           "name": "{otname}",
           "name_plain": "{otname}",
           "guidance_text": null,
@@ -323,7 +323,7 @@
           "delete",
           "edit"
         ],
-        "objective_template": {
+        "template": {
           "name": "{otname}",
           "name_plain": "{otname}",
           "guidance_text": null,
@@ -422,7 +422,7 @@
           "delete",
           "edit"
         ],
-        "objective_template": {
+        "template": {
           "name": "{otname}",
           "name_plain": "{otname}",
           "guidance_text": null,
@@ -516,7 +516,7 @@
           "delete",
           "edit"
         ],
-        "objective_template": {
+        "template": {
           "name": "{otname}",
           "name_plain": "{otname}",
           "guidance_text": null,
@@ -623,7 +623,7 @@
           "delete",
           "edit"
         ],
-        "objective_template": {
+        "template": {
           "name": "{otname}",
           "name_plain": "{otname}",
           "guidance_text": null,
@@ -742,7 +742,7 @@
           "delete",
           "edit"
         ],
-        "objective_template": {
+        "template": {
           "name": "{otname}",
           "name_plain": "{otname}",
           "guidance_text": null,

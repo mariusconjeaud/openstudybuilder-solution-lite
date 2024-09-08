@@ -16,7 +16,7 @@
     <v-window v-model="tab">
       <v-window-item
         v-for="type in criteriaTypes"
-        :key="type.term_uid"
+        :key="`${type.term_uid}-${tabKeys[type.name.sponsor_preferred_name]}`"
         :value="type.name.sponsor_preferred_name"
       >
         <CriteriaTemplateTable
@@ -36,10 +36,12 @@ import CriteriaTemplateTable from '@/components/library/CriteriaTemplateTable.vu
 import HelpButton from '@/components/tools/HelpButton.vue'
 import terms from '@/api/controlledTerminology/terms'
 import { useAppStore } from '@/stores/app'
+import { useTabKeys } from '@/composables/tabKeys'
 
 const appStore = useAppStore()
 const route = useRoute()
 const router = useRouter()
+const { tabKeys, updateTabKey } = useTabKeys()
 
 const criteriaTypes = ref([])
 const tab = ref(null)
@@ -51,6 +53,7 @@ watch(tab, (newValue) => {
     name: 'CriteriaTemplates',
     params,
   })
+  updateTabKey(newValue)
   appStore.addBreadcrumbsLevel(newValue, undefined, 3, true)
 })
 
@@ -66,7 +69,7 @@ watch(
   }
 )
 
-terms.getByCodelist('criteriaTypes').then((resp) => {
+terms.getByCodelist('criteriaTypes', { unSorted: true }).then((resp) => {
   criteriaTypes.value = resp.data.items
   criteriaTypes.value.forEach((type) => {
     type.name.sponsor_preferred_name = type.name.sponsor_preferred_name.replace(

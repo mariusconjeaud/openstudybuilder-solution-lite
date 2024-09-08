@@ -5,7 +5,7 @@
       :instances="activityInstructions"
       base-url="/activity-instructions"
       export-object-label="ActivityInstructions"
-      column-data-resource="activityInstructions"
+      column-data-resource="activity-instructions"
       :items-length="total"
       :fetching-function="fetchFilteredActivityInstructions"
     />

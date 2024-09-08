@@ -40,7 +40,8 @@
           "codelists": [
             {
               "codelist_uid": "editable_cr",
-              "order": 1
+              "order": 1,
+              "library_name": "Sponsor"
             }
           ],
           "sponsor_preferred_name": "term_value_name1",
@@ -52,6 +53,8 @@
           "version": "1.0",
           "change_description": "Approved version",
           "user_initials": "TODO initials",
+          "queried_effective_date": null,
+          "date_conflict": false,
           "possible_actions": [
             "inactivate",
             "new_version"
@@ -70,7 +73,7 @@
           "possible_actions": [
             "inactivate"
           ],
-          "objective_template": {
+          "template": {
             "name": "To investigate [Indication]",
             "name_plain": "To investigate [Indication]",
             "uid": "ObjectiveTemplate_000001",
@@ -146,7 +149,8 @@
           "codelists": [
             {
               "codelist_uid": "editable_cr",
-              "order": 1
+              "order": 1,
+              "library_name": "Sponsor"
             }
           ],
           "sponsor_preferred_name": "term_value_name1",
@@ -158,6 +162,8 @@
           "version": "1.0",
           "change_description": "Approved version",
           "user_initials": "TODO initials",
+          "queried_effective_date": null,
+          "date_conflict": false,
           "possible_actions": [
             "inactivate",
             "new_version"
@@ -176,7 +182,7 @@
           "possible_actions": [
             "inactivate"
           ],
-          "objective_template": {
+          "template": {
             "name": "To investigate [Indication]",
             "name_plain": "To investigate [Indication]",
             "uid": "ObjectiveTemplate_000001",
@@ -265,7 +271,8 @@
           "codelists": [
             {
               "codelist_uid": "editable_cr",
-              "order": 1
+              "order": 1,
+              "library_name": "Sponsor"
             }
           ],
           "sponsor_preferred_name": "term_value_name1",
@@ -277,6 +284,8 @@
           "version": "1.0",
           "change_description": "Approved version",
           "user_initials": "TODO initials",
+          "queried_effective_date": null,
+          "date_conflict": false,
           "possible_actions": [
             "inactivate",
             "new_version"
@@ -295,7 +304,7 @@
           "possible_actions": [
             "inactivate"
           ],
-          "objective_template": {
+          "template": {
             "name": "To investigate [Indication]",
             "name_plain": "To investigate [Indication]",
             "uid": "ObjectiveTemplate_000001",
@@ -396,7 +405,8 @@
           "codelists": [
             {
               "codelist_uid": "editable_cr",
-              "order": 1
+              "order": 1,
+              "library_name": "Sponsor"
             }
           ],
           "sponsor_preferred_name": "term_value_name1",
@@ -408,6 +418,8 @@
           "version": "1.0",
           "change_description": "Approved version",
           "user_initials": "TODO initials",
+          "queried_effective_date": null,
+          "date_conflict": false,
           "possible_actions": [
             "inactivate",
             "new_version"
@@ -426,7 +438,7 @@
           "possible_actions": [
             "inactivate"
           ],
-          "objective_template": {
+          "template": {
             "name": "To investigate [Indication]",
             "name_plain": "To investigate [Indication]",
             "uid": "ObjectiveTemplate_000001",

@@ -56,6 +56,11 @@ def get_terms(
         False,
         description="If true, only `term_uid` and `sponsor_prefered_name` fields are returned for each item.",
     ),
+    in_codelist: bool = Query(
+        False,
+        description="If false, all terms are returned even those not connected to a codelist. "
+        "If true, only terms connected to at least one codelist are returned.",
+    ),
     sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
     page_number: int
     | None = Query(1, ge=1, description=_generic_descriptions.PAGE_NUMBER),
@@ -80,6 +85,7 @@ def get_terms(
     results = ct_term_name_service.get_all_ct_terms(
         codelist_uid=codelist_uid,
         codelist_name=codelist_name,
+        in_codelist=in_codelist,
         library=library,
         package=package,
         sort_by=sort_by,

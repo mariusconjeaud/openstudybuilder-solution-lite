@@ -51,7 +51,7 @@
                 },
                 "name": "Test_Name_Template",
                 "name_plain": "Test_Name_Template",
-                "timeframe_template": {
+                "template": {
                     "name": "Test_Name_Template",
                     "name_plain": "Test_Name_Template",
                     "guidance_text": null,
@@ -104,7 +104,7 @@
                 "possible_actions": [
                     "inactivate"
                 ],
-                "timeframe_template": {
+                "template": {
                     "name": "Test_Name_Template",
                     "name_plain": "Test_Name_Template",
                     "guidance_text": null,
@@ -207,7 +207,7 @@
                     "possible_actions": [
                         "inactivate"
                     ],
-                    "timeframe_template": {
+                    "template": {
                         "name": "Test_Name_Template",
                         "name_plain": "Test_Name_Template",
                         "guidance_text": null,
@@ -231,7 +231,7 @@
                         "change_description": true,
                         "user_initials": false,
                         "possible_actions": true,
-                        "timeframe_template": false,
+                        "template": false,
                         "library": false,
                         "parameter_terms": false,
                         "study_count": false
@@ -253,7 +253,7 @@
                         "delete",
                         "edit"
                     ],
-                    "timeframe_template": {
+                    "template": {
                         "name": "Test_Name_Template",
                         "name_plain": "Test_Name_Template",
                         "guidance_text": null,

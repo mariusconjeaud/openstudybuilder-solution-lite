@@ -52,6 +52,11 @@ def get_terms(
     | None = Query(
         None, description="If specified, only terms from given package are returned."
     ),
+    in_codelist: bool = Query(
+        False,
+        description="If false, all terms are returned even those not connected to a codelist. "
+        "If true, only terms connected to at least one codelist are returned.",
+    ),
     sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
     page_number: int
     | None = Query(1, ge=1, description=_generic_descriptions.PAGE_NUMBER),
@@ -78,6 +83,7 @@ def get_terms(
         codelist_name=codelist_name,
         library=library,
         package=package,
+        in_codelist=in_codelist,
         sort_by=sort_by,
         page_number=page_number,
         page_size=page_size,

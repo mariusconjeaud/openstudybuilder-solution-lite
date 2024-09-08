@@ -6,6 +6,7 @@ from typing import AbstractSet, Callable, Self
 
 from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains._utils import (
+    capitalize_first_letter_if_template_parameter,
     convert_to_plain,
     extract_parameters,
     strip_html,
@@ -157,7 +158,10 @@ class ParametrizedTemplateVO:
 
             # Clean up extra spacing, unneeded brackets, etc.
             name = ParametrizedTemplateVO.clean_instantiation_name(name)
-        return name
+
+        return capitalize_first_letter_if_template_parameter(
+            name, strip_html(template_name), parameter_terms
+        )
 
     @staticmethod
     def clean_instantiation_name(name):

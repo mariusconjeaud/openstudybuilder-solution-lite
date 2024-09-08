@@ -7,10 +7,11 @@ export const useTermsStore = defineStore('terms', {
   }),
 
   actions: {
-    async fetchTerms(filters) {
+    async fetchTerms(filters, inCodelist) {
       const params = {
         page_size: 40,
         compact_response: true,
+        in_codelist: inCodelist
       }
       if (filters) {
         params.filters = filters

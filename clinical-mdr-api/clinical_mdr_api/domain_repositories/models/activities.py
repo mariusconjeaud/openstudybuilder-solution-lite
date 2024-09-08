@@ -203,6 +203,9 @@ class ActivityInstanceValue(ConceptValue):
     contains_activity_item = RelationshipTo(
         ActivityItem, "CONTAINS_ACTIVITY_ITEM", model=ClinicalMdrRel
     )
+    has_version = RelationshipFrom(
+        "ActivityInstanceRoot", "HAS_VERSION", model=VersionRelationship
+    )
 
 
 class ActivityInstanceRoot(ConceptRoot):

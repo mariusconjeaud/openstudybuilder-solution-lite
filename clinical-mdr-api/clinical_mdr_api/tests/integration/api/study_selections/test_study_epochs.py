@@ -9,13 +9,16 @@ Tests for /studies/{uid}/study-epochs endpoints
 # pytest fixture functions have other fixture functions as arguments,
 # which pylint interprets as unused arguments
 
+from datetime import datetime, timezone
 from unittest import mock
 
 import pytest
 from fastapi.testclient import TestClient
 from neomodel import db
 
+from clinical_mdr_api import config as settings
 from clinical_mdr_api import main
+from clinical_mdr_api.models.controlled_terminologies import ct_term
 from clinical_mdr_api.models.study_selections.study import Study
 from clinical_mdr_api.tests.integration.utils.api import (
     drop_db,
@@ -25,6 +28,9 @@ from clinical_mdr_api.tests.integration.utils.api import (
 from clinical_mdr_api.tests.integration.utils.data_library import (
     STARTUP_CT_CATALOGUE_CYPHER,
     STARTUP_STUDY_LIST_CYPHER,
+)
+from clinical_mdr_api.tests.integration.utils.factory_controlled_terminology import (
+    get_catalogue_name_library_name,
 )
 from clinical_mdr_api.tests.integration.utils.method_library import (
     create_study_epoch_codelists_ret_cat_and_lib,
@@ -36,6 +42,9 @@ study: Study
 study_epoch_uid: str
 epoch_subtype_uid: str
 epoch_subtype2_uid: str
+
+initial_ct_term_study_standard_test: ct_term.CTTerm
+epoch_epoch: ct_term.CTTerm
 
 
 @pytest.fixture(scope="module")
@@ -61,6 +70,88 @@ def test_data():
 
     epoch_subtype_uid = "EpochSubType_0001"
     epoch_subtype2_uid = "EpochSubType_0002"
+
+    catalogue_name, library_name = get_catalogue_name_library_name(use_test_utils=True)
+    # Create a study selection
+    ct_term_codelist_name = settings.STUDY_EPOCH_SUBTYPE_NAME
+    ct_term_name = ct_term_codelist_name + " Name For StudyStandardVersioning test"
+    ct_term_start_date = datetime(2020, 3, 25, tzinfo=timezone.utc)
+
+    epoch_type_term_name = "Epoch Type for StudyStandardVersion"
+    epoch_type_standard_version = TestUtils.create_ct_term(
+        codelist_uid="CTCodelist_00002",
+        name_submission_value=epoch_type_term_name,
+        sponsor_preferred_name=epoch_type_term_name,
+        order=1,
+        catalogue_name=catalogue_name,
+        library_name=library_name,
+        effective_date=ct_term_start_date,
+        approve=True,
+    )
+
+    global initial_ct_term_study_standard_test
+    initial_ct_term_study_standard_test = TestUtils.create_ct_term(
+        codelist_uid="CTCodelist_00003",  # ct_term_codelist.codelist_uid,
+        name_submission_value=ct_term_name,
+        sponsor_preferred_name=ct_term_name,
+        order=2,
+        catalogue_name=catalogue_name,
+        library_name=library_name,
+        effective_date=ct_term_start_date,
+        approve=True,
+    )
+
+    TestUtils.add_ct_term_parent(
+        term=initial_ct_term_study_standard_test,
+        parent_uid=epoch_type_standard_version.term_uid,
+        relationship_type="type",
+    )
+
+    epoch_term_name = "Epoch Epoch for StudyStandardVersion"
+    global epoch_epoch
+    epoch_epoch = TestUtils.create_ct_term(
+        codelist_uid="C99079",
+        name_submission_value=epoch_term_name,
+        sponsor_preferred_name=epoch_term_name,
+        order=3,
+        catalogue_name=catalogue_name,
+        library_name=library_name,
+        effective_date=ct_term_start_date,
+        approve=True,
+    )
+    TestUtils.add_ct_term_parent(
+        term=epoch_epoch,
+        parent_uid=initial_ct_term_study_standard_test.term_uid,
+        relationship_type="subtype",
+    )
+
+    cdisc_package_name = "SDTM CT 2020-03-27"
+    TestUtils.create_ct_package(
+        catalogue=catalogue_name,
+        name=cdisc_package_name,
+        approve_elements=False,
+        effective_date=datetime(2020, 3, 27, tzinfo=timezone.utc),
+    )
+    # patch the date of the latest HAS_VERSION FINAL relationship so it can be detected by the selected study_standard_Version
+    params = {
+        "uids": [
+            initial_ct_term_study_standard_test.term_uid,
+            epoch_epoch.term_uid,
+            epoch_type_standard_version.term_uid,
+        ],
+        "date": datetime(2020, 3, 26, tzinfo=timezone.utc),
+    }
+    db.cypher_query(
+        """
+                    MATCH (n)-[:HAS_NAME_ROOT]-(ct_name:CTTermNameRoot)-[has_version:HAS_VERSION]-(val) 
+                    where 
+                        n.uid IN $uids AND EXISTS((ct_name)-[:LATEST]-(val)) 
+                        AND has_version.status ='Final' 
+                    SET has_version.start_date = $date
+                """,
+        params=params,
+    )
+
     yield
     drop_db(db_name)
 
@@ -370,3 +461,140 @@ def test_study_epoch_order_when_epoch_get_deleted_or_modified(api_client):
     assert all_epochs[1]["order"] == 2
     assert all_epochs[2]["uid"] == epoch_subtype_2_1["uid"]
     assert all_epochs[2]["order"] == 3
+
+
+def test_study_epoch_version_selecting_ct_package(api_client):
+    """change the name of a CTTerm, and verify that the study selection is still set to the old name of the CTTerm when the Sponsor Standard version is set"""
+    study_selection_breadcrumb = "study-epochs"
+    study_selection_ctterm_uid_input_key = "epoch_subtype"
+    # study_selection_ctterm_keys =
+    # study_selection_ctterm_uid_key =
+    study_selection_ctterm_name_key = "epoch_subtype_name"
+    study_for_ctterm_versioning = TestUtils.create_study()
+    response = api_client.post(
+        f"/studies/{study_for_ctterm_versioning.uid}/{study_selection_breadcrumb}",
+        json={
+            "study_uid": study_for_ctterm_versioning.uid,
+            study_selection_ctterm_uid_input_key: epoch_subtype_uid,
+        },
+    )
+    res = response.json()
+    assert response.status_code == 201
+    study_selection_uid_study_standard_test = res["uid"]
+    assert res["order"] == 1
+    assert res[study_selection_ctterm_name_key] == "Epoch Subtype"
+
+    # edit ctterm
+    new_ctterm_name = "new ctterm name"
+    ctterm_uid = initial_ct_term_study_standard_test.term_uid
+    # change ctterm name and approve the version
+    response = api_client.post(
+        f"/ct/terms/{ctterm_uid}/names/versions",
+    )
+    assert response.status_code == 201
+    response = api_client.patch(
+        f"/ct/terms/{ctterm_uid}/names",
+        json={
+            "sponsor_preferred_name": new_ctterm_name,
+            "sponsor_preferred_name_sentence_case": new_ctterm_name,
+            "change_description": "string",
+        },
+    )
+    response = api_client.post(f"/ct/terms/{ctterm_uid}/names/approvals")
+    assert response.status_code == 201
+
+    # get study selection with ctterm latest
+    response = api_client.patch(
+        f"/studies/{study_for_ctterm_versioning.uid}/{study_selection_breadcrumb}/{study_selection_uid_study_standard_test}",
+        json={
+            "study_uid": study_for_ctterm_versioning.uid,
+            "change_description": "this is a changing test",
+            study_selection_ctterm_uid_input_key: ctterm_uid,
+            "epoch": epoch_epoch.term_uid,
+        },
+    )
+    res = response.json()
+    assert response.status_code == 200
+    # assert res[study_selection_ctterm_name_key] == ctterm_uid
+    assert res[study_selection_ctterm_name_key] == new_ctterm_name
+
+    # get ct_packages
+    response = api_client.get(
+        "/ct/packages",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    ct_package_uid = res[0]["uid"]
+
+    # create study standard version
+    response = api_client.post(
+        f"/studies/{study_for_ctterm_versioning.uid}/study-standard-versions",
+        json={
+            "ct_package_uid": ct_package_uid,
+        },
+    )
+    res = response.json()
+    assert response.status_code == 201
+    assert res["ct_package"]["uid"] == ct_package_uid
+
+    # get study selection with previous ctterm
+    response = api_client.get(
+        f"/studies/{study_for_ctterm_versioning.uid}/{study_selection_breadcrumb}/{study_selection_uid_study_standard_test}",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    # assert res[study_selection_ctterm_uid_key] == ctterm_uid
+    assert (
+        res[study_selection_ctterm_name_key]
+        == initial_ct_term_study_standard_test.sponsor_preferred_name
+    )
+
+    # edit epoch
+    response = api_client.patch(
+        f"/studies/{study_for_ctterm_versioning.uid}/{study_selection_breadcrumb}/{study_selection_uid_study_standard_test}",
+        json={
+            "study_uid": study_for_ctterm_versioning.uid,
+            "name": "New_epoch_Name_1",
+            "change_description": "this is a changing test",
+        },
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert (
+        res[study_selection_ctterm_name_key]
+        == initial_ct_term_study_standard_test.sponsor_preferred_name
+    )
+
+    # get versions of objective
+    response = api_client.get(
+        f"/studies/{study_for_ctterm_versioning.uid}/{study_selection_breadcrumb}/{study_selection_uid_study_standard_test}/audit-trail/",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert (
+        res[0][study_selection_ctterm_name_key]
+        == initial_ct_term_study_standard_test.sponsor_preferred_name
+    )
+    assert res[1][study_selection_ctterm_name_key] == new_ctterm_name
+
+    # get all objectives
+    response = api_client.get(
+        f"/studies/{study_for_ctterm_versioning.uid}/{study_selection_breadcrumb[:-1]}/audit-trail/",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert (
+        res[0][study_selection_ctterm_name_key]
+        == initial_ct_term_study_standard_test.sponsor_preferred_name
+    )
+    assert res[1][study_selection_ctterm_name_key] == new_ctterm_name
+
+
+def test_study_epoch_audit_trail(api_client):
+    # get specific study epoch audit trail
+    response = api_client.get(
+        f"/studies/{study.uid}/study-epochs/{study_epoch_uid}/audit-trail",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert len(res) == 4

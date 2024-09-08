@@ -703,9 +703,18 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                 getattr(previous_value, relation_name).disconnect_all()
             # add the relation to the new node
             for study_selection_node in study_selection_nodes:
-                getattr(expected_latest_value, relation_name).connect(
-                    study_selection_node
-                )
+                if relation_name in [
+                    "has_study_subpart",
+                    "belongs_to_study_parent_part",
+                ]:
+                    if study_selection_node.latest_value.single():
+                        getattr(expected_latest_value, relation_name).connect(
+                            study_selection_node
+                        )
+                else:
+                    getattr(expected_latest_value, relation_name).connect(
+                        study_selection_node
+                    )
 
     def _maintain_study_pref_time_unit_relationship_on_save(
         self, expected_latest_value: StudyValue, previous_value: StudyValue
@@ -2780,27 +2789,47 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
         return latest_version_relationship[2].version
 
     def _retrieve_study_subpart_with_history(
-        self, uid: str, is_subpart: bool = False
+        self, uid: str, is_subpart: bool = False, study_value_version: str | None = None
     ) -> list:
         """
         returns the audit trail for all study subparts of the study
         """
         if not is_subpart:
+            params = {"study_uid": uid}
+            if study_value_version:
+                version = "{version: $study_value_version}"
+                params["study_value_version"] = study_value_version
+            else:
+                version = ""
+
             subpart_uids = db.cypher_query(
-                """
-            MATCH (:StudyRoot {uid: $study_uid})-[:HAS_VERSION]->(:StudyValue)
-            -[:HAS_STUDY_SUBPART]->(:StudyValue)<-[:HAS_VERSION]-(ssr:StudyRoot)
-            RETURN DISTINCT ssr.uid
-            """,
-                params={"study_uid": uid},
+                f"""
+                MATCH (:StudyRoot {{uid: $study_uid}})-[:HAS_VERSION{version}]->(:StudyValue)
+                -[:HAS_STUDY_SUBPART]->(:StudyValue)<-[:HAS_VERSION]-(ssr:StudyRoot)
+                RETURN DISTINCT ssr.uid
+                """,
+                params=params,
             )
             subpart_uids = [subpart_uid[0] for subpart_uid in subpart_uids[0]]
         else:
             subpart_uids = [uid]
 
+        params = {"subpart_uids": subpart_uids, "uid": uid}
+        if study_value_version:
+            version = "{version: $study_value_version}"
+            params["study_value_version"] = study_value_version
+        else:
+            version = ""
+
+        if not is_subpart:
+            parent_in_version = f"<-[:HAS_STUDY_SUBPART]-(:StudyValue)<-[:HAS_VERSION{version}]-(:StudyRoot {{uid: $uid}})"
+        else:
+            parent_in_version = ""
+
         rs = db.cypher_query(
-            """
+            f"""
             MATCH (ssr:StudyRoot)-[h_rel:HAS_VERSION]->(ssv:StudyValue)
+            {parent_in_version}
             WHERE ssr.uid IN $subpart_uids
             OPTIONAL MATCH (ssv)<-[:AFTER]-(asa:StudyAction)
             OPTIONAL MATCH (ssv)<-[:BEFORE]-(bsa:StudyAction)
@@ -2817,7 +2846,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                 labels(asa) AS change_type
                 ORDER BY start_date DESC
             """,
-            params={"subpart_uids": subpart_uids},
+            params=params,
         )
         rs = helpers.db_result_to_list(rs)
         rs.reverse()

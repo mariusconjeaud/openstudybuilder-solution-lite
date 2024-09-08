@@ -3,7 +3,6 @@
     ref="formRef"
     :title="$t('StudySubparts.edit_subpart')"
     :help-items="helpItems"
-    :open="open"
     @close="cancel"
     @submit="submit"
   >
@@ -83,27 +82,31 @@ const studiesGeneralStore = useStudiesGeneralStore()
 const form = ref({})
 const formRef = ref()
 const observer = ref()
+
 let payload = {}
+const helpItems = []
 
 watch(
   () => props.editedSubpart,
-  () => {
-    initForm()
+  (value) => {
+    if (!_isEmpty(value)) {
+      studies.getStudy(value.uid).then((resp) => {
+        initForm(resp.data)
+      })
+    }
   }
 )
 
-function initForm() {
-  if (!_isEmpty(props.editedSubpart)) {
-    form.value.study_number =
-      props.editedSubpart.current_metadata.identification_metadata.study_number
-    form.value.study_acronym =
-      props.editedSubpart.current_metadata.identification_metadata.study_acronym
-    form.value.study_subpart_acronym =
-      props.editedSubpart.current_metadata.identification_metadata.study_subpart_acronym
-    form.value.description =
-      props.editedSubpart.current_metadata.identification_metadata.description
-    payload = props.editedSubpart
-  }
+function initForm(subpart) {
+  form.value.study_number =
+    subpart.current_metadata.identification_metadata.study_number
+  form.value.study_acronym =
+    subpart.current_metadata.identification_metadata.study_acronym
+  form.value.study_subpart_acronym =
+    subpart.current_metadata.identification_metadata.study_subpart_acronym
+  form.value.description =
+    subpart.current_metadata.identification_metadata.description
+  payload = subpart
 }
 
 function submit() {

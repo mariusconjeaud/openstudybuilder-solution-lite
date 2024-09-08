@@ -1,6 +1,6 @@
 from typing import Callable, Self
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, conlist, validator
 
 from clinical_mdr_api.domains.concepts.odms.vendor_attribute import OdmVendorAttributeAR
 from clinical_mdr_api.domains.concepts.odms.vendor_element import (
@@ -8,7 +8,10 @@ from clinical_mdr_api.domains.concepts.odms.vendor_element import (
     OdmVendorElementRelationVO,
 )
 from clinical_mdr_api.domains.concepts.odms.vendor_namespace import OdmVendorNamespaceAR
-from clinical_mdr_api.domains.concepts.utils import RelationType
+from clinical_mdr_api.domains.concepts.utils import (
+    RelationType,
+    VendorElementCompatibleType,
+)
 from clinical_mdr_api.models.concepts.concept import (
     ConceptModel,
     ConceptPatchInput,
@@ -22,6 +25,7 @@ from clinical_mdr_api.models.validators import validate_name_only_contains_lette
 
 
 class OdmVendorElement(ConceptModel):
+    compatible_types: list[str] = Field(..., is_json=True)
     vendor_namespace: OdmVendorNamespaceSimpleModel
     vendor_attributes: list[OdmVendorAttributeSimpleModel]
     possible_actions: list[str]
@@ -35,6 +39,7 @@ class OdmVendorElement(ConceptModel):
     ) -> Self:
         return cls(
             uid=odm_vendor_element_ar._uid,
+            compatible_types=odm_vendor_element_ar.concept_vo.compatible_types,
             name=odm_vendor_element_ar.concept_vo.name,
             library_name=odm_vendor_element_ar.library.name,
             start_date=odm_vendor_element_ar.item_metadata.start_date,
@@ -100,6 +105,7 @@ class OdmVendorElementRelationModel(BaseModel):
 
 
 class OdmVendorElementPostInput(ConceptPostInput):
+    compatible_types: conlist(VendorElementCompatibleType, min_items=1)
     vendor_namespace_uid: str
 
     _validate_name_only_contains_letters = validator(
@@ -108,7 +114,7 @@ class OdmVendorElementPostInput(ConceptPostInput):
 
 
 class OdmVendorElementPatchInput(ConceptPatchInput):
-    ...
+    compatible_types: conlist(VendorElementCompatibleType, min_items=1)
 
 
 class OdmVendorElementVersion(OdmVendorElement):

@@ -232,12 +232,21 @@ def retrieve_audit_trail(
         le=config.MAX_PAGE_SIZE,
         description=_generic_descriptions.PAGE_SIZE,
     ),
+    filters: Json
+    | None = Query(
+        None,
+        description=_generic_descriptions.SYNTAX_FILTERS,
+        example=_generic_descriptions.FILTERS_EXAMPLE,
+    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
 ):
     results = Service().get_all(
         page_number=page_number,
         page_size=page_size,
+        filter_by=filters,
+        filter_operator=FilterOperator.from_str(operator),
         total_count=total_count,
         for_audit_trail=True,
     )

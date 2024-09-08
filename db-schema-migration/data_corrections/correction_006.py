@@ -32,7 +32,9 @@ def main(run_label="correction"):
     adjust_late_end_dates(DB_DRIVER, LOGGER, run_label)
     adjust_cdisc_has_had_terms(DB_DRIVER, LOGGER, run_label)
     remove_duplicated_terms_in_objective_cat(DB_DRIVER, LOGGER, run_label)
-
+    capitalize_first_letter_of_syntax_instance_and_pre_instance_if_template_parameter(
+        DB_DRIVER, LOGGER, run_label
+    )
 
 @capture_changes(task_level=1)
 def delete_unwanted_study(db_driver, log, run_label, study_number):
@@ -397,6 +399,53 @@ def remove_duplicated_terms_in_objective_cat(db_driver, log, run_label):
     print_counters_table(counters)
     return counters.contains_updates
 
+
+@capture_changes(
+    verify_func=correction_verification_006.test_capitalize_first_letter_of_syntax_instance_and_pre_instance_if_template_parameter
+)
+def capitalize_first_letter_of_syntax_instance_and_pre_instance_if_template_parameter(
+    db_driver, log, run_label
+):
+    """
+    ## Capitalize first letter of name/name_plain if the word is a non-Unit Template Parameter.
+
+    ### When the first word of the `name` property of any `SyntaxInstanceValue`/`SyntaxPreInstanceValue` is a Template Parameter other than a Unit,
+    then its first letter should be in uppercase, in which case its `name_plain` property's first letter also should be in uppercase.
+
+    ### Nodes Affected
+    - `SyntaxInstanceValue`
+    - `SyntaxPreInstanceValue`
+    """
+    log.info(
+        f"Run: {run_label}, Capitalizing first letter of name/name_plain of SyntaxInstances/SyntaxPreInstances if it is a non-Unit Template Parameter."
+    )
+
+    _, summary = run_cypher_query(
+        db_driver,
+        """
+        MATCH (tptr:TemplateParameterTermRoot)<-[:USES_VALUE {index: 1, position: 1}]-(i_v:SyntaxInstanceValue)<--(:SyntaxInstanceRoot)
+        WHERE NOT tptr.uid STARTS WITH "UnitDefinition_" AND i_v.name STARTS WITH "<p>[" AND substring(i_v.name, 4, 1) =~ "[a-z]"
+        SET i_v.name = "<p>[" + toUpper(substring(i_v.name, 4, 1)) + substring(i_v.name, 5)
+        SET i_v.name_plain = toUpper(substring(i_v.name_plain, 0, 1)) + substring(i_v.name_plain, 1)
+        """,
+    )
+    counters1 = summary.counters
+    print_counters_table(counters1)
+
+    _, summary = run_cypher_query(
+        db_driver,
+        """
+        MATCH (tptr:TemplateParameterTermRoot)-->(:TemplateParameterTermValue)<-[:USES_VALUE {index: 1, position: 1}]-(p_v:SyntaxPreInstanceValue)<--(:SyntaxPreInstanceRoot)
+        WHERE NOT tptr.uid STARTS WITH "UnitDefinition_" AND p_v.name STARTS WITH "<p>[" AND substring(p_v.name, 4, 1) =~ "[a-z]"
+        SET p_v.name = "<p>[" + toUpper(substring(p_v.name, 4, 1)) + substring(p_v.name, 5)
+        SET p_v.name_plain = toUpper(substring(p_v.name_plain, 0, 1)) + substring(p_v.name_plain, 1)
+        """,
+    )
+
+    counters2 = summary.counters
+    print_counters_table(counters2)
+
+    return counters1.contains_updates or counters2.contains_updates
 
 if __name__ == "__main__":
     main()

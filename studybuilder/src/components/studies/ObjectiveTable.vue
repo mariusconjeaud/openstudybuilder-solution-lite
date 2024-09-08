@@ -1,5 +1,6 @@
 <template>
   <NNTable
+    ref="table"
     key="objectiveTable"
     :headers="headers"
     :items="studiesObjectivesStore.studyObjectives"
@@ -16,8 +17,10 @@
     <template #actions>
       <v-btn
         data-cy="add-study-objective"
+        class="ml-2"
         size="small"
-        color="primary"
+        variant="outlined"
+        color="nnBaseBlue"
         :title="$t('StudyObjectiveForm.add_title')"
         :disabled="
           !accessGuard.checkPermission($roles.STUDY_WRITE) ||
@@ -29,8 +32,8 @@
     </template>
     <template #[`item.name`]="{ item }">
       <NNParameterHighlighter
-        v-if="item.objective_template"
-        :name="item.objective_template.name"
+        v-if="item.template"
+        :name="item.template.name"
         default-color="orange"
       />
       <NNParameterHighlighter
@@ -38,6 +41,9 @@
         :name="item.objective.name"
         :show-prefix-and-postfix="false"
       />
+    </template>
+    <template #[`item.objective_level.sponsor_preferred_name`]="{ item }">
+      <CTTermDisplay :term="item.objective_level" />
     </template>
     <template #[`item.start_date`]="{ item }">
       {{ $filters.date(item.start_date) }}
@@ -61,14 +67,14 @@
       :study-objective="selectedObjective"
       class="fullscreen-dialog"
       @close="closeForm"
-      @added="fetchObjectives"
+      @added="table.filterTable()"
     />
   </v-dialog>
   <ObjectiveEditForm
     :open="showEditForm"
     :study-objective="selectedObjective"
     @close="closeEditForm"
-    @updated="fetchObjectives"
+    @updated="table.filterTable()"
   />
   <v-dialog
     v-model="showHistory"
@@ -80,6 +86,7 @@
       :title="studyObjectiveHistoryTitle"
       :headers="headers"
       :items="objectiveHistoryItems"
+      :items-total="objectiveHistoryItems.length"
       :html-fields="historyHtmlFields"
       @close="closeHistory"
     />
@@ -103,6 +110,7 @@
 import { useI18n } from 'vue-i18n'
 import study from '@/api/study'
 import ActionsMenu from '@/components/tools/ActionsMenu.vue'
+import CTTermDisplay from '@/components/tools/CTTermDisplay.vue'
 import NNParameterHighlighter from '@/components/tools/NNParameterHighlighter.vue'
 import NNTable from '@/components/tools/NNTable.vue'
 import ObjectiveEditForm from '@/components/studies/ObjectiveEditForm.vue'
@@ -174,7 +182,7 @@ const actions = [
   },
 ]
 const headers = [
-  { title: '', key: 'actions', width: '5%' },
+  { title: '', key: 'actions', width: '1%' },
   { title: t('StudyObjectivesTable.order'), key: 'order', width: '3%' },
   {
     title: t('StudyObjectivesTable.objective_level'),
@@ -197,6 +205,7 @@ const snackbar = ref(false)
 const showHistory = ref(false)
 const abortConfirm = ref(false)
 const confirm = ref()
+const table = ref()
 
 const exportDataUrl = computed(() => {
   return `studies/${studiesGeneralStore.selectedStudy.uid}/study-objectives`
@@ -258,7 +267,7 @@ function actionsMenuBadge(item) {
   }
   if (
     !item.objective &&
-    item.objective_template.parameters.length > 0 &&
+    item.template.parameters.length > 0 &&
     !studiesGeneralStore.selectedStudyVersion
   ) {
     return {
@@ -361,7 +370,7 @@ async function deleteObjective(studyObjective) {
         studyObjectiveUid: studyObjective.study_objective_uid,
       })
       .then(() => {
-        fetchObjectives()
+        table.value.filterTable()
         eventBusEmit('notification', {
           msg: t('StudyObjectivesTable.delete_objective_success'),
         })
@@ -397,7 +406,7 @@ function submitOrder(value) {
       value
     )
     .then(() => {
-      fetchObjectives()
+      table.value.filterTable()
       closeOrderForm()
       eventBusEmit('notification', { msg: t('_global.order_updated') })
     })

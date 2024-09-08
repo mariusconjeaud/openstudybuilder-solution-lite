@@ -63,12 +63,15 @@ class PharmaceuticalProductRepository(ConceptGenericRepository):
 
         for formulation in ar.concept_vo.formulations:
             formulation_node = IngredientFormulation(
-                external_id=formulation.external_id, name=formulation.name
+                external_id=formulation.external_id
             )
             formulation_node.save()
 
             for ingredient in formulation.ingredients:
-                ingredient_node = Ingredient(external_id=ingredient.external_id)
+                ingredient_node = Ingredient(
+                    external_id=ingredient.external_id,
+                    formulation_name=ingredient.formulation_name,
+                )
                 ingredient_node.save()
                 formulation_node.has_ingredient.connect(ingredient_node)
 
@@ -123,10 +126,10 @@ class PharmaceuticalProductRepository(ConceptGenericRepository):
         return [
             FormulationVO.from_repository_values(
                 external_id=form.external_id,
-                name=form.name,
                 ingredients=[
                     IngredientVO.from_repository_values(
                         active_substance_uid=ingredient.has_substance.get().uid,
+                        formulation_name=ingredient.formulation_name,
                         external_id=ingredient.external_id,
                         strength_uid=getattr(
                             ingredient.has_strength_value.get_or_none(), "uid", None
@@ -170,6 +173,7 @@ class PharmaceuticalProductRepository(ConceptGenericRepository):
                     ),
                     None,
                 ),
+                formulation_name=ingredient_node.get("formulation_name"),
                 external_id=ingredient_node.get("external_id"),
                 strength_uid=next(
                     (
@@ -220,7 +224,6 @@ class PharmaceuticalProductRepository(ConceptGenericRepository):
                     map(
                         lambda x: FormulationVO.from_repository_values(
                             external_id=x.get("external_id"),
-                            name=x.get("name"),
                             ingredients=self._get_formulation_ingredients(
                                 formulation=x,
                                 formulation_ingredients=input_dict.get(
@@ -284,7 +287,6 @@ class PharmaceuticalProductRepository(ConceptGenericRepository):
                     map(
                         lambda x: FormulationVO.from_repository_values(
                             external_id=x.external_id,
-                            name=x.name,
                             ingredients=[
                                 IngredientVO.from_repository_values(
                                     active_substance_uid=getattr(
@@ -292,6 +294,7 @@ class PharmaceuticalProductRepository(ConceptGenericRepository):
                                         "uid",
                                         None,
                                     ),
+                                    formulation_name=ingredient.formulation_name,
                                     external_id=ingredient.external_id,
                                     strength_uid=getattr(
                                         ingredient.has_strength_value.get_or_none(),

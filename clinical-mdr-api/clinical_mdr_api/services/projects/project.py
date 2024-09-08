@@ -2,7 +2,7 @@ from neomodel import db  # type: ignore
 
 from clinical_mdr_api import models
 from clinical_mdr_api.domains.projects.project import ProjectAR
-from clinical_mdr_api.models import ProjectCreateInput
+from clinical_mdr_api.models import ProjectCreateInput, ProjectEditInput
 from clinical_mdr_api.models.utils import GenericFilteringReturn
 from clinical_mdr_api.oauth.user import user
 from clinical_mdr_api.repositories._utils import FilterOperator
@@ -87,6 +87,14 @@ class ProjectService:
             project_ar, repos.clinical_programme_repository.find_by_uid
         )
 
+    def get_project_by_uid(self, uid: str) -> models.Project:
+        repos = MetaRepository()
+        project_ar = repos.project_repository.find_by_uid(uid)
+
+        return models.Project.from_project_ar(
+            project_ar, repos.clinical_programme_repository.find_by_uid
+        )
+
     @db.transaction
     def create(self, project_create_input: ProjectCreateInput) -> models.Project:
         repos = MetaRepository()
@@ -106,5 +114,34 @@ class ProjectService:
                 find_by_uid=repos.project_repository.find_by_uid,
                 find_clinical_programme_by_uid=repos.clinical_programme_repository.find_by_uid,
             )
+        finally:
+            repos.close()
+
+    @db.transaction
+    def edit(self, uid: str, project_edit_input: ProjectEditInput) -> models.Project:
+        repos = MetaRepository()
+        try:
+            project_ar = repos.project_repository.find_by_uid(uid)
+
+            project_ar.name = project_edit_input.name
+            project_ar.description = project_edit_input.description
+            project_ar.clinical_programme_uid = (
+                project_edit_input.clinical_programme_uid
+            )
+
+            repos.project_repository.save(project_ar, update=True)
+            return models.Project.from_uid(
+                uid=project_ar.uid,
+                find_by_uid=repos.project_repository.find_by_uid,
+                find_clinical_programme_by_uid=repos.clinical_programme_repository.find_by_uid,
+            )
+        finally:
+            repos.close()
+
+    @db.transaction
+    def delete(self, uid: str) -> None:
+        repos = MetaRepository()
+        try:
+            repos.project_repository.delete_by_uid(uid)
         finally:
             repos.close()

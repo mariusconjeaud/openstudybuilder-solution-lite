@@ -18,6 +18,6 @@
 "TIMELB","No treatment","no treatment","NO TRT VISIT TYPE","No treatment visit","","NO TREATMENT EPOCH TYPE"
 "TIMELB","Non-visit","non-visit","NONVISIT VISIT TYPE","Non-visit related recordings, like Adverse event or hypoglycaemic episodes","","PRE TREATMENT EPOCH TYPE,TREATMENT,NO TREATMENT EPOCH TYPE,POST TREATMENT EPOCH TYPE"
 "TIMELB","Unscheduled","unscheduled","UNSCHED VISIT TYPE","Unscheduled visit","","PRE TREATMENT EPOCH TYPE,TREATMENT,NO TREATMENT EPOCH TYPE,POST TREATMENT EPOCH TYPE"
-"TIMELB","Information","information","INFO VISIT TYPE","Information visit","","NO TREATMENT EPOCH TYPE"
+"TIMELB","Information","information","INFO VISIT TYPE","Information visit","","PRE TREATMENT EPOCH TYPE,TREATMENT,NO TREATMENT EPOCH TYPE,POST TREATMENT EPOCH TYPE"
 "TIMELB","Early discontinuation","early discontinuation","EARLY DISCON VISIT TYPE","Early discontinuation visit","","TREATMENT,POST TREATMENT EPOCH TYPE"
 "TIMELB","Visit with no fixed study day","visit with no fixed study day","NO FIXED STUDY DAY VISIT TYPE","Visit with no fixed study day","","PRE TREATMENT EPOCH TYPE,TREATMENT,NO TREATMENT EPOCH TYPE,POST TREATMENT EPOCH TYPE"

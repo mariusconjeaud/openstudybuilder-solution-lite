@@ -50,14 +50,20 @@ class MedicinalProductRepository(ConceptGenericRepository):
                 NumericValueWithUnitRoot.nodes.get(uid=uid)
             )
 
-        for uid in ar.concept_vo.dose_frequency_uids:
-            value_node.has_dose_frequency.connect(CTTermRoot.nodes.get(uid=uid))
+        if ar.concept_vo.dose_frequency_uid is not None:
+            value_node.has_dose_frequency.connect(
+                CTTermRoot.nodes.get(uid=ar.concept_vo.dose_frequency_uid)
+            )
 
-        for uid in ar.concept_vo.delivery_device_uids:
-            value_node.has_delivery_device.connect(CTTermRoot.nodes.get(uid=uid))
+        if ar.concept_vo.delivery_device_uid is not None:
+            value_node.has_delivery_device.connect(
+                CTTermRoot.nodes.get(uid=ar.concept_vo.delivery_device_uid)
+            )
 
-        for uid in ar.concept_vo.dispenser_uids:
-            value_node.has_dispenser.connect(CTTermRoot.nodes.get(uid=uid))
+        if ar.concept_vo.dispenser_uid is not None:
+            value_node.has_dispenser.connect(
+                CTTermRoot.nodes.get(uid=ar.concept_vo.dispenser_uid)
+            )
 
         for uid in ar.concept_vo.pharmaceutical_product_uids:
             value_node.has_pharmaceutical_product.connect(
@@ -75,18 +81,26 @@ class MedicinalProductRepository(ConceptGenericRepository):
 
         are_props_changed = False
 
+        old_dose_freq = value.has_dose_frequency.get_or_none()
+        old_dose_freq_uid = old_dose_freq.uid if old_dose_freq else None
+
+        old_delivery_device = value.has_delivery_device.get_or_none()
+        old_delivery_device_uid = (
+            old_delivery_device.uid if old_delivery_device else None
+        )
+
+        old_dispenser = value.has_dispenser.get_or_none()
+        old_dispenser_uid = old_dispenser.uid if old_dispenser else None
+
         are_rels_changed = (
             sorted(ar.concept_vo.dose_value_uids)
             != sorted([val.uid for val in value.has_dose_value.all()])
-            or sorted(ar.concept_vo.dose_frequency_uids)
-            != sorted([val.uid for val in value.has_dose_frequency.all()])
-            or sorted(ar.concept_vo.delivery_device_uids)
-            != sorted([val.uid for val in value.has_delivery_device.all()])
-            or sorted(ar.concept_vo.dispenser_uids)
-            != sorted([val.uid for val in value.has_dispenser.all()])
+            or (ar.concept_vo.dose_frequency_uid != old_dose_freq_uid)
+            or (ar.concept_vo.delivery_device_uid != old_delivery_device_uid)
+            or (ar.concept_vo.dispenser_uid != old_dispenser_uid)
             or sorted(ar.concept_vo.pharmaceutical_product_uids)
             != sorted([val.uid for val in value.has_pharmaceutical_product.all()])
-            or ar.concept_vo.compound_uid != value.is_compound.get().uid
+            or (ar.concept_vo.compound_uid != value.is_compound.get().uid)
         )
 
         return was_parent_data_modified or are_props_changed or are_rels_changed
@@ -104,21 +118,19 @@ class MedicinalProductRepository(ConceptGenericRepository):
                 dose_value_uids=list(
                     map(lambda x: x.get("uid"), input_dict.get("dose_values"))
                 ),
-                dose_frequency_uids=list(
-                    map(
-                        lambda x: x.get("uid"),
-                        input_dict.get("dose_frequencies"),
-                    )
-                ),
-                delivery_device_uids=list(
-                    map(
-                        lambda x: x.get("uid"),
-                        input_dict.get("delivery_devices"),
-                    )
-                ),
-                dispenser_uids=list(
-                    map(lambda x: x.get("uid"), input_dict.get("dispensers"))
-                ),
+                dose_frequency_uid=input_dict.get("dose_frequency")._properties.get(
+                    "uid"
+                )
+                if input_dict.get("dose_frequency")
+                else None,
+                delivery_device_uid=input_dict.get("delivery_device")._properties.get(
+                    "uid"
+                )
+                if input_dict.get("delivery_device")
+                else None,
+                dispenser_uid=input_dict.get("dispenser")._properties.get("uid")
+                if input_dict.get("dispenser")
+                else None,
                 pharmaceutical_product_uids=list(
                     map(
                         lambda x: x.get("uid"),
@@ -153,6 +165,10 @@ class MedicinalProductRepository(ConceptGenericRepository):
         value: VersionValue,
         **_kwargs,
     ) -> MedicinalProductAR:
+        dose_frequency = value.has_dose_frequency.get_or_none()
+        delivery_device = value.has_delivery_device.get_or_none()
+        dispenser = value.has_dispenser.get_or_none()
+
         ar = MedicinalProductAR.from_repository_values(
             uid=root.uid,
             concept_vo=MedicinalProductVO.from_repository_values(
@@ -164,9 +180,9 @@ class MedicinalProductRepository(ConceptGenericRepository):
                     x.uid for x in value.has_pharmaceutical_product.all()
                 ],
                 dose_value_uids=[x.uid for x in value.has_dose_value.all()],
-                dose_frequency_uids=[x.uid for x in value.has_dose_frequency.all()],
-                delivery_device_uids=[x.uid for x in value.has_delivery_device.all()],
-                dispenser_uids=[x.uid for x in value.has_dispenser.all()],
+                dose_frequency_uid=dose_frequency.uid if dose_frequency else None,
+                delivery_device_uid=delivery_device.uid if delivery_device else None,
+                dispenser_uid=dispenser.uid if dispenser else None,
             ),
             library=LibraryVO.from_input_values_2(
                 library_name=library.name,
@@ -184,7 +200,7 @@ class MedicinalProductRepository(ConceptGenericRepository):
                 head([(concept_value)-[:IS_COMPOUND]->(compound:CompoundRoot) | compound.uid]) AS compound_uid,
                 [(concept_value)-[:HAS_PHARMACEUTICAL_PRODUCT]->(pp:PharmaceuticalProductRoot) | pp] AS pharmaceutical_products,
                 [(concept_value)-[:HAS_DOSE_VALUE]->(dv:NumericValueWithUnitRoot) | dv] AS dose_values,
-                [(concept_value)-[:HAS_DOSE_FREQUENCY]->(df:CTTermRoot) | df] AS dose_frequencies,
-                [(concept_value)-[:HAS_DISPENSER]->(disp:CTTermRoot) | disp] AS dispensers,
-                [(concept_value)-[:HAS_DELIVERY_DEVICE]->(device:CTTermRoot) | device] AS delivery_devices
+                head([(concept_value)-[:HAS_DOSE_FREQUENCY]->(df:CTTermRoot) | df]) AS dose_frequency,
+                head([(concept_value)-[:HAS_DISPENSER]->(disp:CTTermRoot) | disp]) AS dispenser,
+                head([(concept_value)-[:HAS_DELIVERY_DEVICE]->(device:CTTermRoot) | device]) AS delivery_device
                 """

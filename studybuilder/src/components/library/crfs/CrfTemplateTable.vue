@@ -16,7 +16,8 @@
         <v-btn
           class="ml-2"
           size="small"
-          color="primary"
+          variant="outlined"
+          color="nnBaseBlue"
           :title="$t('CrfTemplates.add_template')"
           data-cy="add-crf-template"
           :disabled="!checkPermission($roles.LIBRARY_WRITE)"
@@ -166,7 +167,7 @@ export default {
         },
       ],
       headers: [
-        { title: '', key: 'actions', width: '5%' },
+        { title: '', key: 'actions', width: '1%' },
         { title: this.$t('CrfTemplates.oid'), key: 'oid' },
         { title: this.$t('_global.name'), key: 'name' },
         {

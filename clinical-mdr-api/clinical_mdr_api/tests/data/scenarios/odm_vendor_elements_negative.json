@@ -7,6 +7,9 @@
             "request": {
                 "library_name": "Sponsor",
                 "name": "nameTwo",
+                "compatible_types": [
+                    "FormDef"
+                ],
                 "vendor_namespace_uid": "odm_vendor_namespace1"
             },
             "url": "concepts/odms/vendor-elements"
@@ -18,6 +21,9 @@
                 "content-type": "application/json"
             },
             "result": {
+                "compatible_types": [
+                    "FormDef"
+                ],
                 "uid": "OdmVendorElement_000001",
                 "library_name": "Sponsor",
                 "name": "nameTwo",
@@ -72,6 +78,42 @@
         }
     },
     {
+        "name": "Test cannot create a new ODM Vendor Element without providing compatible_types",
+        "request": {
+            "headers": {},
+            "method": "POST",
+            "request": {
+                "library_name": "Sponsor",
+                "name": "nameTwo",
+                "compatible_types": [],
+                "vendor_namespace_uid": "odm_vendor_namespace1"
+            },
+            "url": "concepts/odms/vendor-elements"
+        },
+        "response": {
+            "code": 422,
+            "headers": {
+                "content-length": "459",
+                "content-type": "application/json"
+            },
+            "result": {
+                "detail": [
+                    {
+                        "loc": [
+                            "body",
+                            "compatible_types"
+                        ],
+                        "msg": "ensure this value has at least 1 items",
+                        "type": "value_error.list.min_items",
+                        "ctx": {
+                            "limit_value": 1
+                        }
+                    }
+                ]
+            }
+        }
+    },
+    {
         "name": "Test cannot create a new ODM Vendor Element if ODM Vendor Namespace doesn't exist",
         "request": {
             "headers": {},
@@ -79,6 +121,9 @@
             "request": {
                 "library_name": "Sponsor",
                 "name": "nameTwo",
+                "compatible_types": [
+                    "FormDef"
+                ],
                 "vendor_namespace_uid": "wrong_uid"
             },
             "url": "concepts/odms/vendor-elements"
@@ -106,6 +151,9 @@
             "request": {
                 "library_name": "Sponsor",
                 "name": "nameTwo",
+                "compatible_types": [
+                    "FormDef"
+                ],
                 "vendor_namespace_uid": "odm_vendor_namespace1"
             },
             "url": "concepts/odms/vendor-elements"

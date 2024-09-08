@@ -1449,7 +1449,7 @@
     "name": "Test copy study high level design",
     "request": {
       "headers": {},
-      "method": "PATCH",
+      "method": "GET",
       "url": "/studies/Study_000002/copy-component?reference_study_uid=Study_000001&component_to_copy=high_level_study_design&overwrite=true"
     },
     "response": {
@@ -1547,7 +1547,7 @@
     "name": "Test copy study intervention",
     "request": {
       "headers": {},
-      "method": "PATCH",
+      "method": "GET",
       "url": "/studies/Study_000002/copy-component?reference_study_uid=Study_000001&component_to_copy=study_intervention&overwrite=true"
     },
     "response": {
@@ -1663,7 +1663,7 @@
     "name": "Test copy study population",
     "request": {
       "headers": {},
-      "method": "PATCH",
+      "method": "GET",
       "url": "/studies/Study_000002/copy-component?reference_study_uid=Study_000001&component_to_copy=study_population&overwrite=true"
     },
     "response": {

@@ -1,6 +1,7 @@
 <template>
   <div>
     <BaseActivityOverview
+      ref="overview"
       :transform-func="transformItem"
       :navigate-to-version="changeVersion"
       :history-headers="historyHeaders"
@@ -304,9 +305,9 @@
       </template>
       <template #itemForm="{ show, item, close }">
         <v-dialog
-          :value="show"
+          :model-value="show"
           persistent
-          max-width="800px"
+          fullscreen
           content-class="top-dialog"
         >
           <ActivitiesInstantiationsForm
@@ -324,7 +325,7 @@ import ActivitiesInstantiationsForm from '@/components/library/ActivitiesInstant
 import BaseActivityOverview from './BaseActivityOverview.vue'
 import StatusChip from '@/components/tools/StatusChip.vue'
 import NCIConceptLink from '@/components//tools/NCIConceptLink.vue'
-
+import { useAppStore } from '@/stores/app'
 
 export default {
   components: {
@@ -334,6 +335,12 @@ export default {
     NCIConceptLink,
   },
   emits: ['refresh'],
+  setup() {
+    const appStore = useAppStore()
+    return {
+      appStore,
+    }
+  },
   data() {
     return {
       historyHeaders: [
@@ -384,6 +391,32 @@ export default {
       ],
     }
   },
+  mounted() {
+    this.appStore.addBreadcrumbsLevel(
+      this.$t('Sidebar.library.concepts'),
+      { name: 'Activities' },
+      1,
+      false
+    )
+    this.appStore.addBreadcrumbsLevel(
+      this.$t('Sidebar.library.activities'),
+      { name: 'Activities' },
+      2,
+      true
+    )
+    this.appStore.addBreadcrumbsLevel(
+      this.$t('Sidebar.library.activities_instances'),
+      { name: 'Activities' },
+      3,
+      true
+    )
+    this.appStore.addBreadcrumbsLevel(
+      this.$refs.overview.itemOverview.activity_instance.name,
+      { name: 'Activities' },
+      4,
+      true
+    )
+  },
   methods: {
     allVersions(item) {
       var all_versions = [...item.all_versions].sort().reverse()
@@ -419,6 +452,7 @@ export default {
     },
     transformItem(item) {
       if (item.activity_groupings.length > 0) {
+        item.activities = [item.activity_groupings[0].activity]
         const groups = []
         const subgroups = []
         item.activity = { name: item.activity_groupings[0].activity.name }

@@ -17,10 +17,7 @@ from clinical_mdr_api.models.syntax_templates.template_parameter_term import (
 from clinical_mdr_api.models.syntax_templates.timeframe_template import (
     TimeframeTemplateNameUidLibrary,
 )
-from clinical_mdr_api.models.utils import (
-    BaseModel,
-    capitalize_first_letter_if_template_parameter,
-)
+from clinical_mdr_api.models.utils import BaseModel
 
 
 class Timeframe(BaseModel):
@@ -43,7 +40,7 @@ class Timeframe(BaseModel):
         ),
     )
 
-    timeframe_template: TimeframeTemplateNameUidLibrary | None
+    template: TimeframeTemplateNameUidLibrary | None
     parameter_terms: list[MultiTemplateParameterTerm] = Field(
         [],
         description="Holds the parameter terms that are used within the timeframe. The terms are ordered as they occur in the timeframe name.",
@@ -100,16 +97,8 @@ class Timeframe(BaseModel):
                 )
         return cls(
             uid=timeframe_ar.uid,
-            name=capitalize_first_letter_if_template_parameter(
-                timeframe_ar.name,
-                timeframe_ar.template_name_plain,
-                timeframe_ar._template.parameter_terms,
-            ),
-            name_plain=capitalize_first_letter_if_template_parameter(
-                timeframe_ar.name_plain,
-                timeframe_ar.template_name_plain,
-                timeframe_ar._template.parameter_terms,
-            ),
+            name=timeframe_ar.name,
+            name_plain=timeframe_ar.name_plain,
             start_date=timeframe_ar.item_metadata.start_date,
             end_date=timeframe_ar.item_metadata.end_date,
             status=timeframe_ar.item_metadata.status.value,
@@ -119,7 +108,7 @@ class Timeframe(BaseModel):
             possible_actions=sorted(
                 {_.value for _ in timeframe_ar.get_possible_actions()}
             ),
-            timeframe_template=TimeframeTemplateNameUidLibrary(
+            template=TimeframeTemplateNameUidLibrary(
                 name=timeframe_ar.template_name,
                 name_plain=timeframe_ar.template_name_plain,
                 uid=timeframe_ar.template_uid,

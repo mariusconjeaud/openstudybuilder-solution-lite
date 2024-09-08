@@ -12,7 +12,7 @@
   <v-window v-model="tab">
     <v-window-item
       v-for="(cataloguePackages, catalogue) in packages"
-      :key="catalogue"
+      :key="`${catalogue}-${tabKeys[catalogue]}`"
       :value="catalogue"
     >
       <PackageTimeline
@@ -31,6 +31,7 @@
 <script setup>
 import { nextTick, ref, onMounted, watch } from 'vue'
 import { useCtCataloguesStore } from '@/stores/library-ctcatalogues'
+import { useTabKeys } from '@/composables/tabKeys'
 import { DateTime } from 'luxon'
 import controlledTerminology from '@/api/controlledTerminology'
 import PackageTimeline from './PackageTimeline.vue'
@@ -53,6 +54,7 @@ const props = defineProps({
 })
 const emit = defineEmits(['catalogueChanged', 'packageChanged'])
 const ctCataloguesStore = useCtCataloguesStore()
+const { tabKeys, updateTabKey } = useTabKeys()
 
 const packages = ref([])
 const tab = ref(null)
@@ -65,6 +67,7 @@ watch(tab, (newValue, oldValue) => {
   if (newValue !== props.catalogueName) {
     ctCataloguesStore.currentCataloguePage = 1
   }
+  updateTabKey(newValue)
   nextTick(() => {
     if (timelineRefs.value[newValue]) {
       timelineRefs.value[newValue].restorePackage()

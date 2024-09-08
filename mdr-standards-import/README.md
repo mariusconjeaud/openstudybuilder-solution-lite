@@ -14,7 +14,7 @@ Later on, other imports like UNII, SNOMED, etc. might be added.
 ---
 ## Setup environment variables
 
-Create `.env` file (in the root of the repository) with the following content (adjust accodingly):
+Create `.env` file (in the root of the repository) with the following content (adjust accordingly):
 
 ```
 #
@@ -46,7 +46,7 @@ CDISC_AUTH_TOKEN="<<Insert secret here>>"
 CDISC_DATA_DIR="cdisc_data/packages"
 ```
 
-**Note:** Bolt port number might need to be changed for different cutomised setup, but the above could do the trick for basic setup. 
+**Note:** Bolt port number might need to be changed for different customised setup, but the above could do the trick for basic setup. 
 
 ---
 
@@ -58,7 +58,7 @@ The CDISC DB will be created automatically including the index configuration. No
 
 ### MDR DB
 
-The MDR DB needs to be present and need to have the correct index configuration. See the instructions in the `neo4j-mdr-db` repository 
+The MDR DB needs to be present and have the correct index configuration. See the instructions in the `neo4j-mdr-db` repository 
 [README](https://dev.azure.com/novonordiskit/Clinical-MDR/_git/neo4j-mdr-db?path=/README.md&_a=preview) 
 , after the step of `Initiate neo4j database` should do the trick basically.
 
@@ -66,60 +66,64 @@ The MDR DB needs to be present and need to have the correct index configuration.
 
 * Download CT Packages from the CDISC REST API by running:
 ```shell
-pipenv run python -m mdr_standards_import.scripts.dev_scripts.cdisc_ct.download_json_data_from_cdisc_api 'your-sub-directory'
+pipenv run download_ct_json_data_from_cdisc_api 'your-sub-directory'
 ```
 
 * Download Data Model Versions from the CDISC REST API by running:
 ```shell
-pipenv run python -m mdr_standards_import.scripts.dev_scripts.cdisc_data_models.download_json_data_from_cdisc_api 'your-sub-directory'
+pipenv run download_data_models_json_data_from_cdisc_api 'your-sub-directory'
 ```
 
 **Note:** These steps can be skipped as the JSON package files is now placed in the repository and will be downloaded when you clone the repository.
-This is to avoid high usage of the CDISC API, as there is a rate-limit in place..
+This is to avoid high usage of the CDISC API, as there is a rate-limit in place.
 ---
 
-## Development Entrypoints
+## Importing Entrypoints - Available for pipelines
 
 ### Import data to both CDISC and MDR databases
 The following command will:
-* skips the download from the CDISC REST API
-* triggers the import into the CDISC DB
-* triggers the import into the MDR DB
-* It will do so for both CT and Data Models
+* trigger the import into the CDISC DB
+* trigger the import into the MDR DB
+* It will do so for both CT and Data Models, for all available packages
 
 ```shell
-pipenv run python -m mdr_standards_import.scripts.dev_scripts.bulk_import 'TEST' '' true
+pipenv run bulk_import 'TEST' '' # Second argument is to specify a different data directory
+```
+
+You also have the option to separately bulk import CT and Data Models:
+
+```shell
+pipenv run bulk_import_ct 'TEST' ''
+pipenv run bulk_import_data_models 'TEST' ''
 ```
 
 
 ### Import CT data to CDISC database only
 
 The following command will:
-* skips the download from the CDISC REST API and
-* triggers the import into the CDISC DB
+* trigger the import of CT into the CDISC DB
 
 ```shell
-pipenv run import_cdisc_ct_into_cdisc_db 'TEST' '' true
+pipenv run import_cdisc_ct_into_cdisc_db 'TEST' '' # Second argument is to specify a different data directory
 ```
 
 
 ### Import Data Models data to CDISC database only
 
 The following command will:
-* skips the download from the CDISC REST API and
-* triggers the import into the CDISC DB
+* trigger the import of Data Models into the CDISC DB
 
 ```shell
-pipenv run import_cdisc_data_models_into_cdisc_db 'TEST' '' true
+pipenv run import_cdisc_data_models_into_cdisc_db 'TEST' ''  # Second argument is to specify a different data directory
 ```
 
 ### Import CT data to only MDR database
 
 The following command will:
-* triggers the import into the MDR DB
+* trigger the import of a single CT package into the MDR DB
 
 ```shell
-pipenv run python -m mdr_standards_import.scripts.pipelines.cdisc_ct.pipeline_step_import_from_cdisc_db_into_mdr 'TEST' '2021-09-24'
+pipenv run import_ct_from_cdisc_db_into_mdr 'TEST' '2021-09-24'
 ```
 
 ### Import Data Models data to only MDR database
@@ -128,7 +132,7 @@ The following command will:
 * triggers the import into the MDR DB
 
 ```shell
-pipenv run python -m mdr_standards_import.scripts.pipelines.cdisc_data_models.pipeline_step_import_from_cdisc_db_into_mdr 'TEST' ''
+pipenv run import_data_models_from_cdisc_db_into_mdr 'TEST' ''  # Second argument is to specify a different data directory
 ```
 
 ---
@@ -168,30 +172,10 @@ name	                count
 
 For more information on pipeline configuration, see the `*.yml` files in the root of the repository.
 
-For more information on on the overall setup, see the section `CDISC CT Integration` in the documentation portal.
+For more information on the overall setup, see the section `CDISC CT Integration` in the documentation portal.
 
 For more information on scripts definitions, see the [Pipfile](./Pipfile).
 
-
-## Pipeline Steps
-### CDISC CT
-
-```shell
-pipenv run import_cdisc_ct_into_cdisc_db <user initials> <JSON directory name> <skip download step>
-```
-
-```shell
-pipenv run import_ct_from_cdisc_db_into_mdr <user initials> <effective date>
-```
-### CDISC Data Models
-
-```shell
-pipenv run import_cdisc_data_models_into_cdisc_db <user initials> <JSON directory name> <skip download step>
-```
-
-```shell
-pipenv run import_data_models_from_cdisc_db_into_mdr <user initials> <JSON directory name>
-```
 ---
 
 ## Further Development Commands
@@ -203,6 +187,6 @@ DROP DATABASE `cdisc` IF EXISTS
 
 - deletes everything in the currently selected DB
 ```cypher
-CALL apoc.periodic.iterate('MATCH ()-[r]->() RETURN id(r) AS id', 'MATCH ()-[r]->() WHERE id(r)=id DELETE r', {batchSize: 50000});
-CALL apoc.periodic.iterate('MATCH (n) RETURN id(n) AS id', 'MATCH (n) WHERE id(n)=id DELETE n', {batchSize: 50000});
+:auto MATCH ()-[r]-() CALL { WITH r DELETE r } IN TRANSACTIONS OF 50000 ROWS;
+:auto MATCH (n) CALL { WITH n DELETE n } IN TRANSACTIONS OF 50000 ROWS;
 ```

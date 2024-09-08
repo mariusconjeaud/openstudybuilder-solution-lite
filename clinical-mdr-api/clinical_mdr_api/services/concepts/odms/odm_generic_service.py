@@ -14,7 +14,11 @@ from clinical_mdr_api.domains.concepts.odms.form import OdmFormAR
 from clinical_mdr_api.domains.concepts.odms.item import OdmItemAR
 from clinical_mdr_api.domains.concepts.odms.item_group import OdmItemGroupAR
 from clinical_mdr_api.domains.concepts.odms.vendor_attribute import OdmVendorAttributeAR
-from clinical_mdr_api.domains.concepts.utils import RelationType, VendorCompatibleType
+from clinical_mdr_api.domains.concepts.utils import (
+    RelationType,
+    VendorAttributeCompatibleType,
+    VendorElementCompatibleType,
+)
 from clinical_mdr_api.exceptions import BusinessLogicException
 from clinical_mdr_api.models.concepts.odms.odm_common_models import (
     OdmVendorElementRelationPostInput,
@@ -71,7 +75,7 @@ class OdmGenericService(ConceptGenericService[_AggregateRootType], ABC):
         self,
         input_attributes: list[OdmVendorRelationPostInput],
         element_uids: list[str] | None = None,
-        compatible_type: VendorCompatibleType | None = None,
+        compatible_type: VendorAttributeCompatibleType | None = None,
     ):
         """
         Raises an error if any of the given ODM vendor attributes cannot be added as vendor attributes or vendor element attributes.
@@ -79,7 +83,7 @@ class OdmGenericService(ConceptGenericService[_AggregateRootType], ABC):
         Args:
             input_attributes (list[OdmVendorRelationPostInput]): The input ODM vendor attributes.
             element_uids (list[str] | None, optional): The uids of the vendor elements to which the attributes can be added.
-            compatible_type (VendorCompatibleType | None, optional): The vendor compatible type of the attributes.
+            compatible_type (VendorAttributeCompatibleType | None, optional): The vendor compatible type of the attributes.
 
         Returns:
             None
@@ -116,7 +120,7 @@ class OdmGenericService(ConceptGenericService[_AggregateRootType], ABC):
                         f"ODM Vendor Attribute identified by ({odm_vendor_attribute_ar.uid}) cannot not be added as an Vendor Attribute."
                     )
 
-        self.is_vendor_compatible(odm_vendor_attribute_ars, compatible_type)
+        self.are_attributes_vendor_compatible(odm_vendor_attribute_ars, compatible_type)
 
     def can_connect_vendor_attributes(
         self, attributes: list[OdmVendorRelationPostInput]
@@ -194,18 +198,56 @@ class OdmGenericService(ConceptGenericService[_AggregateRootType], ABC):
             attribute.uid: attribute.concept_vo.value_regex for attribute in attributes
         }
 
-    def is_vendor_compatible(
+    def are_elements_vendor_compatible(
+        self,
+        odm_vendor_elements: list[OdmVendorElementRelationPostInput],
+        compatible_type: VendorElementCompatibleType | None = None,
+    ):
+        """
+        Determines whether the given ODM vendor elements are compatible with the specified vendor compatible type.
+
+        Args:
+            odm_vendor_elements (list[OdmVendorElementRelationPostInput]: The ODM vendor elements.
+            compatible_type (VendorElementCompatibleType | None, optional): The vendor compatible type to check for compatibility.
+
+        Returns:
+            bool: True if the given ODM vendor elements are compatible with the specified vendor compatible type.
+
+        Raises:
+            BusinessLogicException: If any of the given ODM vendor elements are not compatible with the specified vendor compatible type.
+        """
+        errors = {}
+
+        odm_vendor_elements = self._get_odm_vendor_elements(odm_vendor_elements)
+
+        for odm_vendor_element in odm_vendor_elements:
+            if (
+                compatible_type
+                and compatible_type.value
+                not in odm_vendor_element.concept_vo.compatible_types
+            ):
+                errors[
+                    odm_vendor_element.uid
+                ] = odm_vendor_element.concept_vo.compatible_types
+        if errors:
+            raise BusinessLogicException(
+                f"Trying to add non-compatible ODM Vendor:\n\n{errors}"
+            )
+
+        return True
+
+    def are_attributes_vendor_compatible(
         self,
         odm_vendor_attributes: list[OdmVendorRelationPostInput]
         | list[OdmVendorAttributeAR],
-        compatible_type: VendorCompatibleType | None = None,
+        compatible_type: VendorAttributeCompatibleType | None = None,
     ):
         """
         Determines whether the given ODM vendor attributes are compatible with the specified vendor compatible type.
 
         Args:
             odm_vendor_attributes (list[OdmVendorRelationPostInput] | list[OdmVendorAttributeAR]): The ODM vendor attributes.
-            compatible_type (VendorCompatibleType | None, optional): The vendor compatible type to check for compatibility.
+            compatible_type (VendorAttributeCompatibleType | None, optional): The vendor compatible type to check for compatibility.
 
         Returns:
             bool: True if the given ODM vendor attributes are compatible with the specified vendor compatible type.
@@ -238,6 +280,18 @@ class OdmGenericService(ConceptGenericService[_AggregateRootType], ABC):
             )
 
         return True
+
+    def _get_odm_vendor_elements(
+        self, input_elements: list[OdmVendorElementRelationPostInput]
+    ):
+        return self._repos.odm_vendor_element_repository.find_all(
+            filter_by={
+                "uid": {
+                    "v": [input_element.uid for input_element in input_elements],
+                    "op": "eq",
+                }
+            }
+        )[0]
 
     def _get_odm_vendor_attributes(
         self, input_attributes: list[OdmVendorRelationPostInput]

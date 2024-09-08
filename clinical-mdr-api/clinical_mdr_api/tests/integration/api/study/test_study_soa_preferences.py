@@ -26,9 +26,7 @@ log = logging.getLogger(__name__)
 def dummy_study(request, base_data, tst_project) -> Study:
     """Creates a dummy Study for testing, with the intention to be reused over test parameters iterations"""
 
-    study = TestUtils.create_study(
-        TestUtils.random_str(4), project_number=tst_project.project_number
-    )
+    study = TestUtils.create_study(project_number=tst_project.project_number)
 
     log.info("%s: created dummy Study: %s", request.fixturename, study.uid)
 
@@ -76,9 +74,7 @@ def test_get_soa_preferences(
 ):
     """Verify getting SoA Preferences before update (after Study creation) and after update"""
 
-    study = TestUtils.create_study(
-        TestUtils.random_str(4), project_number=tst_project.project_number
-    )
+    study = TestUtils.create_study(project_number=tst_project.project_number)
 
     # WHEN Study is recently created
     # THEN Study SoA preferences show_epochs is on

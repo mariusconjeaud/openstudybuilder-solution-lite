@@ -1,8 +1,10 @@
 """Base classes/mixins related to study selection."""
 
 from datetime import datetime
+from typing import Sequence
 
 from clinical_mdr_api import exceptions
+from clinical_mdr_api.domain_repositories.models.controlled_terminology import CTPackage
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
 from clinical_mdr_api.models.concepts.activities.activity import (
     ActivityForStudyActivity,
@@ -12,12 +14,16 @@ from clinical_mdr_api.models.concepts.activities.activity_instance import (
 )
 from clinical_mdr_api.models.concepts.compound import Compound
 from clinical_mdr_api.models.concepts.compound_alias import CompoundAlias
+from clinical_mdr_api.models.concepts.medicinal_product import MedicinalProduct
 from clinical_mdr_api.models.controlled_terminologies.ct_term import (
     CTTermName,
     SimpleTermModel,
 )
 from clinical_mdr_api.models.study_selections.study_selection import (
     StudySelectionBranchArmWithoutStudyArm,
+)
+from clinical_mdr_api.models.study_selections.study_standard_version import (
+    StudyStandardVersionOGMVer,
 )
 from clinical_mdr_api.models.syntax_instances.criteria import Criteria
 from clinical_mdr_api.models.syntax_instances.endpoint import Endpoint
@@ -196,11 +202,11 @@ class StudySelectionMixin:
     ) -> ActivityForStudyActivity:
         """Finds the activity with given UID and version."""
         return ActivityForStudyActivity.from_activity_ar(
-            activity_ar=self._repos.activity_repository.find_by_uid_2(
+            activity_ar=self._repos.activity_repository.find_by_uid_optimized(
                 activity_uid, version=activity_version
             ),
-            find_activity_subgroup_by_uid=self._repos.activity_subgroup_repository.find_by_uid_2,
-            find_activity_group_by_uid=self._repos.activity_group_repository.find_by_uid_2,
+            find_activity_subgroup_by_uid=self._repos.activity_subgroup_repository.find_by_uid_optimized,
+            find_activity_group_by_uid=self._repos.activity_group_repository.find_by_uid_optimized,
         )
 
     def _transform_latest_activity_instance_model(
@@ -209,12 +215,12 @@ class StudySelectionMixin:
         """Finds the activity instance with a given UID."""
 
         return ActivityInstance.from_activity_ar(
-            activity_ar=self._repos.activity_instance_repository.find_by_uid_2(
+            activity_ar=self._repos.activity_instance_repository.find_by_uid_optimized(
                 activity_instance_uid
             ),
-            find_activity_hierarchy_by_uid=self._repos.activity_repository.find_by_uid_2,
-            find_activity_subgroup_by_uid=self._repos.activity_subgroup_repository.find_by_uid_2,
-            find_activity_group_by_uid=self._repos.activity_group_repository.find_by_uid_2,
+            find_activity_hierarchy_by_uid=self._repos.activity_repository.find_by_uid_optimized,
+            find_activity_subgroup_by_uid=self._repos.activity_subgroup_repository.find_by_uid_optimized,
+            find_activity_group_by_uid=self._repos.activity_group_repository.find_by_uid_optimized,
         )
 
     def _transform_activity_instance_model(
@@ -222,12 +228,12 @@ class StudySelectionMixin:
     ) -> ActivityInstance:
         """Finds the activity instance with given UID and version."""
         return ActivityInstance.from_activity_ar(
-            activity_ar=self._repos.activity_instance_repository.find_by_uid_2(
+            activity_ar=self._repos.activity_instance_repository.find_by_uid_optimized(
                 activity_instance_uid, version=activity_instance_version
             ),
-            find_activity_hierarchy_by_uid=self._repos.activity_repository.find_by_uid_2,
-            find_activity_subgroup_by_uid=self._repos.activity_subgroup_repository.find_by_uid_2,
-            find_activity_group_by_uid=self._repos.activity_group_repository.find_by_uid_2,
+            find_activity_hierarchy_by_uid=self._repos.activity_repository.find_by_uid_optimized,
+            find_activity_subgroup_by_uid=self._repos.activity_subgroup_repository.find_by_uid_optimized,
+            find_activity_group_by_uid=self._repos.activity_group_repository.find_by_uid_optimized,
         )
 
     def _transform_compound_model(self, compound_uid: str) -> Compound:
@@ -236,21 +242,29 @@ class StudySelectionMixin:
         """
         return Compound.from_compound_ar(
             compound_ar=self._repos.compound_repository.find_by_uid_2(compound_uid),
-            find_term_by_uid=self._repos.ct_term_name_repository.find_by_uid,
-            find_dictionary_term_by_uid=self._repos.dictionary_term_generic_repository.find_by_uid_2,
-            find_substance_term_by_uid=self._repos.dictionary_term_substance_repository.find_by_uid_2,
-            find_numeric_value_by_uid=self._repos.numeric_value_with_unit_repository.find_by_uid_2,
-            find_lag_time_by_uid=self._repos.lag_time_repository.find_by_uid_2,
-            find_unit_by_uid=self._repos.unit_definition_repository.find_by_uid_2,
-            find_project_by_uid=self._repos.project_repository.find_by_uid,
-            find_brand_by_uid=self._repos.brand_repository.find_by_uid,
-            find_clinical_programme_by_uid=self._repos.clinical_programme_repository.find_by_uid,
         )
 
     def _transform_compound_alias_model(self, uid: str) -> CompoundAlias:
         return CompoundAlias.from_ar(
             ar=self._repos.compound_alias_repository.find_by_uid_2(uid),
             find_compound_by_uid=self._repos.compound_repository.find_by_uid_2,
+        )
+
+    def _transform_medicinal_product_model(
+        self, uid: str | None
+    ) -> MedicinalProduct | None:
+        """Finds the medicinal product with a given UID."""
+        if not uid:
+            return None
+        return MedicinalProduct.from_medicinal_product_ar(
+            medicinal_product_ar=self._repos.medicinal_product_repository.find_by_uid_2(
+                uid
+            ),
+            find_term_by_uid=self._repos.ct_term_name_repository.find_by_uid,
+            find_numeric_value_by_uid=self._repos.numeric_value_with_unit_repository.find_by_uid_2,
+            find_unit_by_uid=self._repos.unit_definition_repository.find_by_uid_2,
+            find_compound_by_uid=self._repos.compound_repository.find_by_uid_2,
+            find_pharmaceutical_product_by_uid=self._repos.pharmaceutical_product_repository.find_by_uid_2,
         )
 
     def find_term_name_by_uid(self, uid, at_specific_date=None):
@@ -281,6 +295,19 @@ class StudySelectionMixin:
                 f"Term with uid {term_uid} does not exist, in final status."
             )
         return CTTermName.from_ct_term_ar(item)
+
+    def _find_terms_by_uids(
+        self,
+        term_uids: list,
+        status: LibraryItemStatus | None = LibraryItemStatus.FINAL,
+        at_specific_date: datetime | None = None,
+    ) -> list[CTTermName]:
+        items = self._repos.ct_term_name_repository.find_by_uids(
+            at_specific_date=at_specific_date,
+            term_uids=term_uids,
+            status=status,
+        )
+        return [CTTermName.from_ct_term_ar(ith) for ith in items]
 
     def _find_branch_arms_connected_to_arm_uid(
         self,
@@ -601,7 +628,7 @@ class StudySelectionMixin:
 
     def _extract_study_standards_effective_date(
         self, study_uid, study_value_version: str = None
-    ):
+    ) -> datetime | None:
         repos = self._repos
         study_standard_version = (
             repos.study_standard_version_repository.find_standard_version_in_study(
@@ -623,3 +650,62 @@ class StudySelectionMixin:
                 999999,
             )
         return terms_at_specific_datetime
+
+    def _extract_multiple_version_study_standards_effective_date(
+        self, study_uid: str, list_of_start_dates: Sequence[datetime]
+    ) -> Sequence[datetime | None]:
+        """
+        This method returns the effective dates for study standard versions given a list of start dates and a study UID.
+
+        Parameters:
+        - study_uid (str): Unique identifier for the study.
+        - list_of_start_dates (Sequence[datetime]): List of start dates to match against study standard versions.
+
+        Returns:
+        - Sequence[Optional[datetime]]: List of effective dates corresponding to the start dates. If no match is found, None is returned for that date.
+        """
+        repos = self._repos
+        all_versions: Sequence[
+            StudyStandardVersionOGMVer
+        ] = repos.study_standard_version_repository.get_all_study_version_versions(
+            study_uid=study_uid
+        )
+
+        # Filter out deleted versions
+        active_versions: Sequence[StudyStandardVersionOGMVer] = [
+            version for version in all_versions if version.change_type != "Delete"
+        ]
+
+        effective_dates: Sequence[datetime | None] = []
+
+        for start_date in list_of_start_dates:
+            matching_version = next(
+                (
+                    version
+                    for version in active_versions
+                    if start_date >= version.start_date
+                    and (not version.end_date or start_date < version.end_date)
+                ),
+                None,
+            )
+
+            if matching_version:
+                ct_package: CTPackage = repos.ct_package_repository.find_by_uid(
+                    matching_version.ct_package_uid
+                )
+                effective_date: datetime = ct_package.effective_date
+                # Combine the date with the end of the day time
+                effective_datetime = datetime(
+                    effective_date.year,
+                    effective_date.month,
+                    effective_date.day,
+                    23,
+                    59,
+                    59,
+                    999999,
+                )
+                effective_dates.append(effective_datetime)
+            else:
+                effective_dates.append(None)
+
+        return effective_dates

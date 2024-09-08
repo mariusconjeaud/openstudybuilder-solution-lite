@@ -2,6 +2,7 @@ from typing import Self
 
 from pydantic import Field
 
+from clinical_mdr_api import config as settings
 from clinical_mdr_api.models.utils import BaseModel
 
 
@@ -11,8 +12,8 @@ class StudyEndpntAdamListing(BaseModel):
     )
     OBJTVLVL: str | None = Field(
         None,
-        title="Objective Level",
-        description="Objective Level",
+        title=settings.STUDY_OBJECTIVE_LEVEL_NAME,
+        description=settings.STUDY_OBJECTIVE_LEVEL_NAME,
     )
     OBJTV: str = Field(
         ...,
@@ -26,8 +27,8 @@ class StudyEndpntAdamListing(BaseModel):
     )
     ENDPNTLVL: str | None = Field(
         None,
-        title="Endpoint Level",
-        description="Endpoint Level",
+        title=settings.STUDY_ENDPOINT_LEVEL_NAME,
+        description=settings.STUDY_ENDPOINT_LEVEL_NAME,
     )
     ENDPNTSL: str | None = Field(
         None,

@@ -172,6 +172,7 @@ class StudySelectionActivityRepository(
                 sr.uid AS study_uid,
                 sa.order AS activity_order,
                 sa.uid AS study_selection_uid,
+                sa.show_activity_in_protocol_flowchart AS show_activity_in_protocol_flowchart,
                 head([(sa)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]->(study_activity_subgroup_selection)
                 -[:HAS_SELECTED_ACTIVITY_SUBGROUP]->(activity_subgroup_value:ActivitySubGroupValue)<-[:HAS_VERSION]-(activity_subgroup_root:ActivitySubGroupRoot) | 
                     {
@@ -188,10 +189,9 @@ class StudySelectionActivityRepository(
                         activity_group_name:activity_group_value.name,
                         show_activity_group_in_protocol_flowchart: study_activity_group_selection.show_activity_group_in_protocol_flowchart
                     }]) AS study_activity_group,
-                sa.show_activity_in_protocol_flowchart AS show_activity_in_protocol_flowchart,
-                coalesce(soa_group.show_soa_group_in_protocol_flowchart, false) AS show_soa_group_in_protocol_flowchart,
                 elr.uid AS soa_group_term_uid,
                 soa_group.uid AS study_soa_group_uid,
+                coalesce(soa_group.show_soa_group_in_protocol_flowchart, false) AS show_soa_group_in_protocol_flowchart,
                 sa.accepted_version AS accepted_version,
                 ar.uid AS activity_uid,
                 av.name AS activity_name,
@@ -288,6 +288,7 @@ class StudySelectionActivityRepository(
                     RETURN
                         all_sa.order AS activity_order,
                         all_sa.uid AS study_selection_uid,
+                        all_sa.show_activity_in_protocol_flowchart AS show_activity_in_protocol_flowchart,
                         head([(all_sa)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]->(study_activity_subgroup_selection)
                             -[:HAS_SELECTED_ACTIVITY_SUBGROUP]->(:ActivitySubGroupValue)<-[:HAS_VERSION]-(activity_subgroup_root:ActivitySubGroupRoot) | 
                             {
@@ -302,11 +303,10 @@ class StudySelectionActivityRepository(
                                 activity_group_uid: activity_group_root.uid,
                                 show_activity_group_in_protocol_flowchart:study_activity_group_selection.show_activity_group_in_protocol_flowchart
                             }]) AS study_activity_group,
-                        all_sa.show_activity_in_protocol_flowchart AS show_activity_in_protocol_flowchart,
-                        coalesce(soa_group.show_soa_group_in_protocol_flowchart, false) AS show_soa_group_in_protocol_flowchart,
-                        ar.uid AS activity_uid,
                         fgr.uid AS soa_group_term_uid,
                         soa_group.uid AS study_soa_group_uid,
+                        coalesce(soa_group.show_soa_group_in_protocol_flowchart, false) AS show_soa_group_in_protocol_flowchart,
+                        ar.uid AS activity_uid,
                         asa.date AS start_date,
                         asa.user_initials AS user_initials,
                         labels(asa) AS change_type,

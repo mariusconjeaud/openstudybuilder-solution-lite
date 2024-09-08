@@ -5,18 +5,16 @@
     :style="{ zIndex: options.zIndex }"
     @keydown.esc="cancel"
   >
-    <v-card :class="cardClasses">
-      <v-card-text v-if="message" class="pt-2 text-white">
+    <v-card
+      :class="cardClasses"
+      style="border-radius: 20px"
+    >
+    <v-card-title v-if="options.title" class="dialogText">
+      {{ options.title }}
+    </v-card-title>
+      <v-card-text v-if="message" class="pt-2 dialogText">
         <v-row no-gutters class="align-center pa-2">
-          <v-col cols="2">
-            <v-icon
-              class="mr-4"
-              color="white"
-              size="x-large"
-              :icon="getIcon()"
-            />
-          </v-col>
-          <v-col cols="10">
+          <v-col cols="12">
             <div class="text-body-1 mt-1" v-html="message" />
           </v-col>
         </v-row>
@@ -25,10 +23,10 @@
           <v-col class="text-center">
             <v-btn
               v-if="!options.noCancel"
-              color="white"
               variant="outlined"
               data-cy="cancel-popup"
-              class="mr-4 text-white"
+              class="mr-4"
+              rounded="xl"
               elevation="2"
               @click="cancel"
             >
@@ -37,10 +35,9 @@
             <slot name="actions">
               <v-btn
                 v-if="options.redirect === null"
-                color="white"
-                variant="outlined"
+                color="red"
+                rounded="xl"
                 data-cy="continue-popup"
-                class="text-white"
                 elevation="2"
                 @click="agree"
               >
@@ -48,10 +45,10 @@
               </v-btn>
               <v-btn
                 v-else
-                color="white"
                 data-cy="continue-popup"
                 variant="outlined"
                 elevation="2"
+                rounded="xl"
                 @click="agreeAndRedirect"
               >
                 {{ options.agreeLabel }}
@@ -74,6 +71,7 @@ export default {
       message: null,
       type: null,
       options: {
+        title: null,
         type: 'success',
         width: 450,
         zIndex: 3000,
@@ -89,7 +87,7 @@ export default {
     cardClasses() {
       const result = { 'pa-1': true }
       if (this.options.type === 'warning') {
-        result['bg-warning'] = true
+        return result
       } else if (this.options.type === 'info') {
         result['bg-info'] = true
       } else {
@@ -99,18 +97,6 @@ export default {
     },
   },
   methods: {
-    getIcon() {
-      if (this.options.type === 'info') {
-        return 'mdi-information-outline'
-      }
-      if (this.options.type === 'warning') {
-        return 'mdi-alert-outline'
-      }
-      if (this.options.type === 'error') {
-        return 'mdi-alert-octagon-outline'
-      }
-      return 'mdi-check-circle-outline'
-    },
     open(message, options) {
       this.dialog = true
       this.message = message
@@ -135,3 +121,8 @@ export default {
   },
 }
 </script>
+<style>
+.dialogText {
+  color: rgb(var(--v-theme-nnTrueBlue));
+}
+</style>

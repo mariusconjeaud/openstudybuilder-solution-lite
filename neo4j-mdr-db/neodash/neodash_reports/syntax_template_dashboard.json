@@ -6,34 +6,12 @@
     "editable": true,
     "fullscreenEnabled": false,
     "parameters": {
-      "undefined": "Age Unit",
-      "undefined_display": "Age Unit",
-      "neodash_parameters": "Age Unit; Activity",
-      "neodash_parameters_display": "Age Unit; Activity",
-      "neodash_templateparameter_name": [
-        "Age Unit"
-      ],
-      "neodash_templateparameter_name_display": [
-        {
-          "type": "div",
-          "key": "k0Age Unit",
-          "ref": null,
-          "props": {
-            "children": [
-              "Age Unit",
-              {
-                "key": null,
-                "ref": null,
-                "props": {},
-                "_owner": null,
-                "_store": {}
-              }
-            ]
-          },
-          "_owner": null,
-          "_store": {}
-        }
-      ],
+      "undefined": "",
+      "undefined_display": "",
+      "neodash_parameters": "",
+      "neodash_parameters_display": "",
+      "neodash_templateparameter_name": [],
+      "neodash_templateparameter_name_display": [],
       "neodash_templateparametertermvalue_name": [],
       "neodash_templateparametertermvalue_name_display": []
     },

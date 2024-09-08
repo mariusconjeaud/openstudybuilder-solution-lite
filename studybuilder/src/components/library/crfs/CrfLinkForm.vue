@@ -16,6 +16,7 @@
           :items="items"
           hide-export-button
           hide-default-switches
+          only-text-search
           column-data-resource="ct/codelists"
           :items-length="total"
           table-height="auto"

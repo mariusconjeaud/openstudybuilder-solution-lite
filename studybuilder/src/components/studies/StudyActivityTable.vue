@@ -37,9 +37,10 @@
         @click="openBatchEditForm(slot.selected)"
       />
       <v-btn
-        size="small"
         class="ml-2"
-        color="primary"
+        size="small"
+        variant="outlined"
+        color="nnBaseBlue"
         data-cy="add-study-activity"
         :title="$t('StudyActivityForm.add_title')"
         :disabled="
@@ -106,6 +107,7 @@
       :title="activityHistoryTitle"
       :headers="headers"
       :items="activityHistoryItems"
+      :items-total="activityHistoryItems.length"
       @close="closeHistory"
     />
   </v-dialog>
@@ -239,7 +241,7 @@ export default {
       showHistory: false,
       showOrderForm: false,
       headers: [
-        { title: '', key: 'actions', width: '5%' },
+        { title: '', key: 'actions', width: '1%' },
         { title: '#', key: 'order', width: '5%' },
         { title: this.$t('_global.library'), key: 'activity.library_name' },
         {
@@ -440,6 +442,8 @@ export default {
         }
         if (Object.keys(filtersObj).length) {
           params.filters = JSON.stringify(filtersObj)
+        } else {
+          delete params.filters
         }
       }
       params.studyUid = this.selectedStudy.uid

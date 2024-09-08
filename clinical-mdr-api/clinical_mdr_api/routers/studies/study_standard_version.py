@@ -332,7 +332,7 @@ Possible errors:
 def patch_update_standard_version(
     uid: str = studyUID,
     study_standard_version_uid: str = study_standard_version_uid_description,
-    selection: study_standard_version.StudyStandardVersionInput = Body(
+    selection: study_standard_version.StudyStandardVersionEditInput = Body(
         description="Related parameters of the selection that shall be created."
     ),
 ) -> study_standard_version.StudyStandardVersion:

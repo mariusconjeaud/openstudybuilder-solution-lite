@@ -10,18 +10,24 @@ Tests for /studies/{uid}/study-criteria endpoints
 import copy
 import json
 import logging
+from datetime import datetime, timezone
 from unittest import mock
 
 import pytest
 from deepdiff import DeepDiff
 from fastapi.testclient import TestClient
+from neomodel import db
 
 from clinical_mdr_api import models
 from clinical_mdr_api.main import app
+from clinical_mdr_api.models.controlled_terminologies import ct_term
 from clinical_mdr_api.models.study_selections.study import Study
 from clinical_mdr_api.tests.integration.utils.api import (
     inject_and_clear_db,
     inject_base_data,
+)
+from clinical_mdr_api.tests.integration.utils.factory_controlled_terminology import (
+    get_catalogue_name_library_name,
 )
 from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 
@@ -50,6 +56,9 @@ excl_criteria_template_with_param_output: dict
 default_study_criteria_input: dict
 default_study_criteria_output: dict
 change_description_approve: str
+initial_ct_term_study_standard_test: ct_term.CTTerm
+incl_criteria_template_for_study_standard_test: models.CriteriaTemplate
+study_criteria_for_study_standard_input: dict
 
 
 @pytest.fixture(scope="module")
@@ -81,6 +90,9 @@ def test_data():
     global default_study_criteria_input
     global default_study_criteria_output
     global change_description_approve
+    global initial_ct_term_study_standard_test
+    global incl_criteria_template_for_study_standard_test
+    global study_criteria_for_study_standard_input
 
     # Initialize test data
     inject_and_clear_db("studycriteria.api")
@@ -101,6 +113,41 @@ def test_data():
         sponsor_preferred_name="EXCLUSION CRITERIA"
     )
 
+    catalogue_name, library_name = get_catalogue_name_library_name(use_test_utils=True)
+    ct_term_name = "Criteria Type Name For StudyStandardVersioning test"
+    ct_term_start_date = datetime(2020, 3, 25, tzinfo=timezone.utc)
+    initial_ct_term_study_standard_test = TestUtils.create_ct_term(
+        name_submission_value=ct_term_name,
+        sponsor_preferred_name=ct_term_name,
+        order=1,
+        catalogue_name=catalogue_name,
+        library_name=library_name,
+        effective_date=ct_term_start_date,
+        approve=True,
+    )
+    cdisc_package_name = "SDTM CT 2020-03-27"
+    TestUtils.create_ct_package(
+        catalogue=catalogue_name,
+        name=cdisc_package_name,
+        approve_elements=False,
+        effective_date=datetime(2020, 3, 27, tzinfo=timezone.utc),
+    )
+    # patch the date of the latest HAS_VERSION FINAL relationship so it can be detected by the selected study_standard_Version
+    params = {
+        "uid": initial_ct_term_study_standard_test.term_uid,
+        "date": datetime(2020, 3, 26, tzinfo=timezone.utc),
+    }
+    db.cypher_query(
+        """
+                    MATCH (n)-[:HAS_NAME_ROOT]-(ct_name:CTTermNameRoot)-[has_version:HAS_VERSION]-(val) 
+                    where 
+                        n.uid =$uid AND EXISTS((ct_name)-[:LATEST]-(val)) 
+                        AND has_version.status ='Final' 
+                    SET has_version.start_date = $date
+                """,
+        params=params,
+    )
+
     # Create templates
     incl_criteria_template_1 = TestUtils.create_criteria_template(
         type_uid=ct_term_inclusion_criteria.term_uid
@@ -118,6 +165,9 @@ def test_data():
         name=f"<p>With parameter [{parameter_name}]</p>",
         type_uid=ct_term_exclusion_criteria.term_uid,
     )
+    incl_criteria_template_for_study_standard_test = TestUtils.create_criteria_template(
+        type_uid=initial_ct_term_study_standard_test.term_uid
+    )
 
     # Define default expected outputs
     inclusion_type_output = {
@@ -127,6 +177,7 @@ def test_data():
             {
                 "codelist_uid": ct_term_inclusion_criteria.codelists[0].codelist_uid,
                 "order": None,
+                "library_name": ct_term_inclusion_criteria.codelists[0].library_name,
             }
         ],
         "sponsor_preferred_name": ct_term_inclusion_criteria.sponsor_preferred_name,
@@ -135,6 +186,8 @@ def test_data():
         "status": "Final",
         "version": "1.0",
         "change_description": change_description_approve,
+        "queried_effective_date": None,
+        "date_conflict": False,
         "possible_actions": ["inactivate", "new_version"],
     }
     exclusion_type_output = {
@@ -144,6 +197,7 @@ def test_data():
             {
                 "codelist_uid": ct_term_exclusion_criteria.codelists[0].codelist_uid,
                 "order": None,
+                "library_name": ct_term_exclusion_criteria.codelists[0].library_name,
             }
         ],
         "sponsor_preferred_name": ct_term_exclusion_criteria.sponsor_preferred_name,
@@ -152,6 +206,8 @@ def test_data():
         "status": "Final",
         "version": "1.0",
         "change_description": change_description_approve,
+        "queried_effective_date": None,
+        "date_conflict": False,
         "possible_actions": ["inactivate", "new_version"],
     }
     incl_criteria_template_1_output = {
@@ -193,6 +249,13 @@ def test_data():
         "guidance_text": excl_criteria_template_with_param.guidance_text,
         "library_name": excl_criteria_template_with_param.library.name,
     }
+    study_criteria_for_study_standard_input = {
+        "criteria_data": {
+            "criteria_template_uid": incl_criteria_template_for_study_standard_test.uid,
+            "library_name": incl_criteria_template_for_study_standard_test.library.name,
+            "parameter_terms": [],
+        }
+    }
     default_study_criteria_input = {
         "criteria_data": {
             "criteria_template_uid": incl_criteria_template_1.uid,
@@ -232,15 +295,15 @@ CRITERIA_TYPE_IGNORED_FIELDS = {
     "root['criteria_type']['user_initials']",
 }
 CRITERIA_TEMPLATE_IGNORED_FIELDS = {
-    "root['criteria_template']['start_date']",
-    "root['criteria_template']['end_date']",
-    "root['criteria_template']['user_initials']",
-    "root['criteria_template']['type']",
-    "root['criteria_template']['library']",
-    "root['criteria_template']['possible_actions']",
-    "root['criteria_template']['status']",
-    "root['criteria_template']['version']",
-    "root['criteria_template']['change_description']",
+    "root['template']['start_date']",
+    "root['template']['end_date']",
+    "root['template']['user_initials']",
+    "root['template']['type']",
+    "root['template']['library']",
+    "root['template']['possible_actions']",
+    "root['template']['status']",
+    "root['template']['version']",
+    "root['template']['change_description']",
 }
 
 
@@ -285,7 +348,7 @@ def test_crud_study_criteria(api_client):
         "version": "1.0",
         "change_description": change_description_approve,
         "possible_actions": ["inactivate"],
-        "criteria_template": incl_criteria_template_1_output,
+        "template": incl_criteria_template_1_output,
         "parameter_terms": [],
         "library": {
             "name": incl_criteria_template_1.library.name,
@@ -347,9 +410,7 @@ def test_crud_study_criteria(api_client):
     expected_incl_criteria_2["criteria"][
         "name_plain"
     ] = incl_criteria_template_2.name_plain
-    expected_incl_criteria_2["criteria"][
-        "criteria_template"
-    ] = incl_criteria_template_2_output
+    expected_incl_criteria_2["criteria"]["template"] = incl_criteria_template_2_output
 
     expected_excl_criteria_1["study_criteria_uid"] = "StudyCriteria_000003"
     expected_excl_criteria_1["order"] = 1
@@ -359,9 +420,7 @@ def test_crud_study_criteria(api_client):
     expected_excl_criteria_1["criteria"][
         "name_plain"
     ] = excl_criteria_template_1.name_plain
-    expected_excl_criteria_1["criteria"][
-        "criteria_template"
-    ] = excl_criteria_template_1_output
+    expected_excl_criteria_1["criteria"]["template"] = excl_criteria_template_1_output
 
     expected_excl_criteria_2["study_criteria_uid"] = "StudyCriteria_000004"
     expected_excl_criteria_2["order"] = 2
@@ -371,9 +430,7 @@ def test_crud_study_criteria(api_client):
     expected_excl_criteria_2["criteria"][
         "name_plain"
     ] = excl_criteria_template_2.name_plain
-    expected_excl_criteria_2["criteria"][
-        "criteria_template"
-    ] = excl_criteria_template_2_output
+    expected_excl_criteria_2["criteria"]["template"] = excl_criteria_template_2_output
 
     assert not DeepDiff(
         res[0], expected_incl_criteria_2, exclude_paths=full_exclude_paths
@@ -530,10 +587,10 @@ def test_crud_study_criteria(api_client):
     del expected_excl_criteria_with_param["latest_criteria"]
     # Load the object with values directly from the Template object
     # It needs to be flattened into a dict beforehand though
-    expected_excl_criteria_with_param["criteria_template"] = vars(
+    expected_excl_criteria_with_param["template"] = vars(
         excl_criteria_template_with_param
     )
-    expected_excl_criteria_with_param["criteria_template"]["parameters"] = [
+    expected_excl_criteria_with_param["template"]["parameters"] = [
         {"name": "TextValue"}
     ]
     assert not DeepDiff(
@@ -595,18 +652,12 @@ def test_crud_study_criteria(api_client):
     )
     res = response.json()
     assert response.status_code == 200
+    assert res[1]["template"]["name"] == vars(excl_criteria_template_with_param)["name"]
     assert (
-        res[1]["criteria_template"]["name"]
-        == vars(excl_criteria_template_with_param)["name"]
-    )
-    assert (
-        res[1]["criteria_template"]["name_plain"]
+        res[1]["template"]["name_plain"]
         == vars(excl_criteria_template_with_param)["name_plain"]
     )
-    assert (
-        res[1]["criteria_template"]["uid"]
-        == vars(excl_criteria_template_with_param)["uid"]
-    )
+    assert res[1]["template"]["uid"] == vars(excl_criteria_template_with_param)["uid"]
     assert res[0]["criteria"]["uid"] == "Criteria_000005"
     assert res[0]["criteria"]["name"] == expected_criteria_with_param_name
     assert res[0]["criteria"]["name_plain"] == expected_criteria_with_param_name_plain
@@ -837,7 +888,7 @@ def test_study_criteria_with_key_criteria(api_client):
     res = response.json()
     assert response.status_code == 200
     assert res["key_criteria"] is True
-    assert res["criteria"]["criteria_template"]["uid"] == criteria_template.uid
+    assert res["criteria"]["template"]["uid"] == criteria_template.uid
 
     # get all study criteria of a specific study version
     response = api_client.get(
@@ -894,7 +945,7 @@ def test_study_criteria_with_key_criteria(api_client):
         (None, None),
     )
     assert res_key_criteria is True
-    assert res_criteria["criteria_template"]["uid"] == criteria_template.uid
+    assert res_criteria["template"]["uid"] == criteria_template.uid
 
     # get specific study criteria
     response = api_client.get(
@@ -903,7 +954,7 @@ def test_study_criteria_with_key_criteria(api_client):
     res = response.json()
     assert response.status_code == 200
     assert res["key_criteria"] is True
-    assert res["criteria"]["criteria_template"]["uid"] == criteria_template.uid
+    assert res["criteria"]["template"]["uid"] == criteria_template.uid
 
     # get study study criteria headers
     response = api_client.get(
@@ -944,7 +995,7 @@ def test_update_library_items_of_relationship_to_value_nodes(api_client):
     """
     Test that the StudyCriteria selection remains connected to the specific Value node even if the Value node is not latest anymore.
 
-    StudyCriteriais connected to value nodes:
+    StudyCriteria is connected to value nodes:
     - CriteriaTemplate
     """
     # get specific study criteria
@@ -953,7 +1004,7 @@ def test_update_library_items_of_relationship_to_value_nodes(api_client):
     )
     res = response.json()
     assert response.status_code == 200
-    library_template_criteria_uid = res["criteria"]["criteria_template"]["uid"]
+    library_template_criteria_uid = res["criteria"]["template"]["uid"]
     initial_criteria_name = res["criteria"]["name"]
 
     text_value_2_name = "2ndname"
@@ -1018,3 +1069,187 @@ def test_update_library_items_of_relationship_to_value_nodes(api_client):
     res = response.json()
     assert response.status_code == 200
     assert len(res) == counting_before_sync + 1
+
+
+def test_study_criteria_version_selecting_ct_package(api_client):
+    """change the name of a CTTerm, and verify that the study selection is still set to the old name of the CTTerm when the Sponsor Standard version is set"""
+    study_selection_breadcrumb = "study-criteria"
+    study_selection_ctterm_keys = "criteria_type"
+    study_selection_ctterm_uid_key = "term_uid"
+    study_selection_ctterm_name_key = "sponsor_preferred_name"
+    ctterm_uid = initial_ct_term_study_standard_test.term_uid
+    study_for_ctterm_versioning = TestUtils.create_study()
+
+    # Create selection
+    response = api_client.post(
+        url=f"/studies/{study_for_ctterm_versioning.uid}/{study_selection_breadcrumb}/?create_criteria=true",
+        json=study_criteria_for_study_standard_input,
+    )
+    res = response.json()
+    assert response.status_code == 201
+    study_selection_uid_study_standard_test = res["study_criteria_uid"]
+    assert res["order"] == 1
+    assert (
+        res[study_selection_ctterm_keys][study_selection_ctterm_uid_key] == ctterm_uid
+    )
+
+    # edit ctterm
+    new_ctterm_name = "new ctterm name"
+    # change ctterm name and approve the version
+    response = api_client.post(
+        f"/ct/terms/{ctterm_uid}/names/versions",
+    )
+    assert response.status_code == 201
+    response = api_client.patch(
+        f"/ct/terms/{ctterm_uid}/names",
+        json={
+            "sponsor_preferred_name": new_ctterm_name,
+            "sponsor_preferred_name_sentence_case": new_ctterm_name,
+            "change_description": "string",
+        },
+    )
+    response = api_client.post(f"/ct/terms/{ctterm_uid}/names/approvals")
+    assert response.status_code == 201
+
+    # get study selection with ctterm latest
+    response = api_client.get(
+        f"/studies/{study_for_ctterm_versioning.uid}/{study_selection_breadcrumb}/{study_selection_uid_study_standard_test}",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert (
+        res[study_selection_ctterm_keys][study_selection_ctterm_uid_key] == ctterm_uid
+    )
+    assert (
+        res[study_selection_ctterm_keys][study_selection_ctterm_name_key]
+        == new_ctterm_name
+    )
+
+    # get ct_packages
+    response = api_client.get(
+        "/ct/packages",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    ct_package_uid = res[0]["uid"]
+
+    # create study standard version
+    response = api_client.post(
+        f"/studies/{study_for_ctterm_versioning.uid}/study-standard-versions",
+        json={
+            "ct_package_uid": ct_package_uid,
+        },
+    )
+    res = response.json()
+    assert response.status_code == 201
+    assert res["ct_package"]["uid"] == ct_package_uid
+
+    # get study selection with previous ctterm
+    response = api_client.get(
+        f"/studies/{study_for_ctterm_versioning.uid}/{study_selection_breadcrumb}/{study_selection_uid_study_standard_test}",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert (
+        res[study_selection_ctterm_keys][study_selection_ctterm_uid_key] == ctterm_uid
+    )
+    assert (
+        res[study_selection_ctterm_keys][study_selection_ctterm_name_key]
+        == initial_ct_term_study_standard_test.sponsor_preferred_name
+    )
+
+
+def test_study_criteria_ct_term_retrieval_at_date(api_client):
+    """
+    Test that any CT Term name fetched in the context of a study selection either:
+    * Matches the date of the Study Standard version when available
+    * Or the latest final version is returned
+    The study selection return model includes a queried_effective_data property to verify this
+    """
+    study_selection_breadcrumb = "study-criteria"
+    study_selection_ctterm_keys = "criteria_type"
+    study_selection_ctterm_uid_key = "term_uid"
+    study_selection_ctterm_name_key = "sponsor_preferred_name"
+    ctterm_uid = initial_ct_term_study_standard_test.term_uid
+    study_for_queried_effective_date = TestUtils.create_study()
+
+    # Create selection
+    response = api_client.post(
+        url=f"/studies/{study_for_queried_effective_date.uid}/{study_selection_breadcrumb}/?create_criteria=true",
+        json=study_criteria_for_study_standard_input,
+    )
+    res = response.json()
+    assert response.status_code == 201
+    assert res[study_selection_ctterm_keys]["queried_effective_date"] is None
+    assert res[study_selection_ctterm_keys]["date_conflict"] is False
+    study_selection_uid_study_standard_test = res["study_criteria_uid"]
+
+    # edit ctterm
+    new_ctterm_name = "new ctterm name"
+    # change ctterm name and approve the version
+    response = api_client.post(
+        f"/ct/terms/{ctterm_uid}/names/versions",
+    )
+    assert response.status_code == 201
+    _ = api_client.patch(
+        f"/ct/terms/{ctterm_uid}/names",
+        json={
+            "sponsor_preferred_name": new_ctterm_name,
+            "sponsor_preferred_name_sentence_case": new_ctterm_name,
+            "change_description": "string",
+        },
+    )
+    response = api_client.post(f"/ct/terms/{ctterm_uid}/names/approvals")
+    assert response.status_code == 201
+
+    # Get study selection with the new term
+    response = api_client.get(
+        f"/studies/{study_for_queried_effective_date.uid}/{study_selection_breadcrumb}/{study_selection_uid_study_standard_test}",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert (
+        res[study_selection_ctterm_keys][study_selection_ctterm_uid_key] == ctterm_uid
+    )
+    assert (
+        res[study_selection_ctterm_keys][study_selection_ctterm_name_key]
+        == new_ctterm_name
+    )
+
+    # get ct_packages
+    response = api_client.get(
+        "/ct/packages",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    ct_package_uid = res[0]["uid"]
+    ct_package_effective_date = res[0]["effective_date"]
+
+    # create study standard version
+    response = api_client.post(
+        f"/studies/{study_for_queried_effective_date.uid}/study-standard-versions",
+        json={
+            "ct_package_uid": ct_package_uid,
+        },
+    )
+    assert response.status_code == 201
+
+    # get study selection with new standard version
+    response = api_client.get(
+        f"/studies/{study_for_queried_effective_date.uid}/{study_selection_breadcrumb}/{study_selection_uid_study_standard_test}",
+    )
+    res = response.json()
+    assert response.status_code == 200
+
+    assert (
+        res[study_selection_ctterm_keys]["queried_effective_date"][:10]
+        == ct_package_effective_date
+    )
+    assert res[study_selection_ctterm_keys]["date_conflict"] is False
+    assert (
+        res[study_selection_ctterm_keys][study_selection_ctterm_uid_key] == ctterm_uid
+    )
+    assert (
+        res[study_selection_ctterm_keys][study_selection_ctterm_name_key]
+        == initial_ct_term_study_standard_test.sponsor_preferred_name
+    )

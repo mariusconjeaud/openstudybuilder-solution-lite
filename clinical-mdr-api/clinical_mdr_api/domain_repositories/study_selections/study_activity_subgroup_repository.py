@@ -3,13 +3,11 @@ from dataclasses import dataclass
 
 from neomodel import db
 
+from clinical_mdr_api.domain_repositories._utils.helpers import unpack_list_of_lists
 from clinical_mdr_api.domain_repositories.generic_repository import (
     manage_previous_connected_study_selection_relationships,
 )
-from clinical_mdr_api.domain_repositories.models._utils import (
-    convert_to_datetime,
-    to_relation_trees,
-)
+from clinical_mdr_api.domain_repositories.models._utils import convert_to_datetime
 from clinical_mdr_api.domain_repositories.models.activities import (
     ActivitySubGroupRoot,
     ActivitySubGroupValue,
@@ -243,17 +241,29 @@ class StudySelectionActivitySubGroupRepository(
         activity_group_uid: str,
         soa_group_term_uid: str,
     ) -> StudyActivitySubGroup | None:
-        study_activity_subgroups = to_relation_trees(
-            StudyActivitySubGroup.nodes.filter(
-                study_activity_has_study_activity_subgroup__has_study_activity__latest_value__uid=study_uid,
-                has_selected_activity_subgroup__has_version__uid=activity_subgroup_uid,
-                study_activity_has_study_activity_subgroup__has_soa_group_selection__has_flowchart_group__uid=soa_group_term_uid,
-                **{
-                    "study_activity_has_study_activity_subgroup__study_activity_has_study_activity_group__"
-                    "has_selected_activity_group__has_version__uid": activity_group_uid
-                },
-            ).has(has_before=False)
-        ).distinct()
-        return (
-            study_activity_subgroups[0] if len(study_activity_subgroups) > 0 else None
+        query = """
+            MATCH (activity_subgroup_root:ActivitySubGroupRoot)-[:HAS_VERSION]->(:ActivitySubGroupValue)
+                <-[:HAS_SELECTED_ACTIVITY_SUBGROUP]-(study_activity_subgroup:StudyActivitySubGroup)<-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]
+                -(study_activity:StudyActivity)<-[:HAS_STUDY_ACTIVITY]-(:StudyValue)<-[:LATEST]-(:StudyRoot {uid:$study_uid})
+            MATCH (study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]->(:StudyActivityGroup)
+                -[:HAS_SELECTED_ACTIVITY_GROUP]->(:ActivityGroupValue)<-[:HAS_VERSION]-(activity_group_root:ActivityGroupRoot)
+            MATCH (study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(:StudySoAGroup)-[:HAS_FLOWCHART_GROUP]->(flowchart_group_term:CTTermRoot)
+            WHERE NOT (study_activity_subgroup)<-[:BEFORE]-() AND NOT (study_activity_subgroup)<-[]-(:Delete)
+                AND activity_subgroup_root.uid=$activity_subgroup_uid
+                AND activity_group_root.uid=$activity_group_uid
+                AND flowchart_group_term.uid=$soa_group_term_uid
+            RETURN DISTINCT study_activity_subgroup
+        """
+        study_activity_subgroups, _ = db.cypher_query(
+            query,
+            params={
+                "study_uid": study_uid,
+                "activity_subgroup_uid": activity_subgroup_uid,
+                "activity_group_uid": activity_group_uid,
+                "soa_group_term_uid": soa_group_term_uid,
+            },
+            resolve_objects=True,
         )
+        if len(study_activity_subgroups) > 0:
+            return unpack_list_of_lists(study_activity_subgroups)[0]
+        return None

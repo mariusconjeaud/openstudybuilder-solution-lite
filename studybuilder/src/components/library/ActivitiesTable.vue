@@ -2,7 +2,6 @@
   <div>
     <NNTable
       ref="tableRef"
-      v-model:expanded="expandedGroup"
       :headers="currentHeaders"
       :items="activities"
       export-object-label="Activities"
@@ -11,6 +10,7 @@
       :export-data-url="`concepts/activities/${source}`"
       item-value="item_key"
       :items-length="total"
+      single-expand
       :show-filter-bar-by-default="
         ['activities'].includes(source) && !requested
       "
@@ -19,6 +19,7 @@
       :filters-modify-function="modifyFilters"
       :modifiable-table="!isExpand()"
       :disable-filtering="source === 'activities-by-grouping'"
+      :hide-search-field="source === 'activities-by-grouping'"
       :history-title="$t('_global.audit_trail')"
       :history-data-fetcher="
         source !== 'activities-by-grouping' ? fetchGlobalAuditTrail : null
@@ -112,6 +113,9 @@
       <template #[`item.is_data_collected`]="{ item }">
         {{ $filters.yesno(item.is_data_collected) }}
       </template>
+      <template #[`item.is_used_by_legacy_instances`]="{ item }">
+        {{ $filters.yesno(item.is_used_by_legacy_instances) }}
+      </template>
       <template #[`item.is_required_for_activity`]="{ item }">
         {{ $filters.yesno(item.is_required_for_activity) }}
       </template>
@@ -128,13 +132,13 @@
         <tr>
           <td :colspan="columns.length" class="pa-0">
             <v-data-table
-              v-model:expanded="expandedSubGroup"
               class="elevation-0"
               :items="subgroups"
               item-value="uid"
               :items-per-page="-1"
               :loading="loading"
               :show-expand="true"
+              single-expand
               @update:expanded="getSubgroupActivities"
             >
               <template #headers />
@@ -230,8 +234,10 @@
         <slot name="extraActions" />
         <v-btn
           v-if="source !== 'activities-by-grouping'"
+          class="ml-2"
           size="small"
-          color="primary"
+          variant="outlined"
+          color="nnBaseBlue"
           data-cy="add-activity"
           :title="itemCreationTitle"
           :disabled="!accessGuard.checkPermission($roles.LIBRARY_WRITE)"
@@ -241,16 +247,19 @@
       </template>
     </NNTable>
     <ActivitiesForm
+      v-if="source === 'activities' && !requested"
       :open="showActivityForm"
       :edited-activity="activeItem"
       @close="closeForm"
     />
     <RequestedActivitiesForm
+      v-if="requested"
       :open="showRequestedActivityForm"
       :edited-activity="activeItem"
       @close="closeForm"
     />
     <v-dialog
+      v-if="source === 'activity-groups' || source === 'activity-sub-groups'"
       :model-value="showGroupsForm"
       persistent
       max-width="800px"
@@ -265,13 +274,13 @@
       />
     </v-dialog>
     <v-dialog
+      v-if="source === 'activity-instances'"
       v-model="showInstantiationsForm"
       persistent
       fullscreen
       content-class="fullscreen-dialog"
     >
       <ActivitiesInstantiationsForm
-        class="fullscreen-dialog"
         :edited-activity="activeItem"
         @close="closeForm"
       />
@@ -290,7 +299,6 @@
     <v-dialog
       v-model="showHistory"
       persistent
-      :max-width="$globals.historyDialogMaxWidth"
       :fullscreen="$globals.historyDialogFullscreen"
       @keydown.esc="closeHistory"
     >
@@ -298,6 +306,7 @@
         :title="itemHistoryTitle"
         :headers="currentHeaders"
         :items="historyItems"
+        :items-total="historyItems.length"
         :excluded-headers="historyExcludedHeaders"
         @close="closeHistory"
       />
@@ -323,7 +332,7 @@ import filteringParameters from '@/utils/filteringParameters'
 import statuses from '@/constants/statuses'
 import _isEmpty from 'lodash/isEmpty'
 import { useLibraryActivitiesStore } from '@/stores/library-activities'
-import { computed, inject, onMounted, ref, watch } from 'vue'
+import { computed, inject, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const props = defineProps({
@@ -344,7 +353,7 @@ const eventBusEmit = inject('eventBusEmit')
 const roles = inject('roles')
 const tableRef = ref()
 const groupFormRef = ref()
-  
+
 const actions = [
   {
     label: t('ActivityTable.handle_placeholder_request'),
@@ -417,21 +426,21 @@ const actions = [
 ]
 const activities = ref([])
 const activitiesHeaders = [
-  { title: '', key: 'possible_actions', width: '5%', noFilter: true },
+  { title: '', key: 'possible_actions', width: '1%', noFilter: true },
   { title: t('_global.library'), key: 'library_name' },
   {
     title: t('ActivityTable.activity_group'),
     key: 'activity_group.name',
     externalFilterSource: 'concepts/activities/activity-groups$name',
     width: '15%',
-    exludeFromHeader: ['is_data_collected'],
+    exludeFromHeader: ['is_data_collected', 'is_used_by_legacy_instances'],
   },
   {
     title: t('ActivityTable.activity_subgroup'),
     key: 'activity_subgroup.name',
     externalFilterSource: 'concepts/activities/activity-sub-groups$name',
     width: '15%',
-    exludeFromHeader: ['is_data_collected'],
+    exludeFromHeader: ['is_data_collected', 'is_used_by_legacy_instances'],
   },
   {
     title: t('ActivityTable.activity_name'),
@@ -451,12 +460,16 @@ const activitiesHeaders = [
     title: t('ActivityTable.is_data_collected'),
     key: 'is_data_collected',
   },
+  {
+    title: t('ActivityTable.is_legacy_usage'),
+    key: 'is_used_by_legacy_instances',
+  },
   { title: t('_global.modified'), key: 'start_date' },
   { title: t('_global.status'), key: 'status' },
   { title: t('_global.version'), key: 'version' },
 ]
 const instantiationsHeaders = [
-  { title: '', key: 'possible_actions', width: '5%', noFilter: true },
+  { title: '', key: 'possible_actions', width: '1%', noFilter: true },
   { title: t('_global.library'), key: 'library_name' },
   {
     title: t('ActivityTable.type'),
@@ -503,7 +516,7 @@ const groupsHeaders = [
   { title: t('_global.version'), key: 'version' },
 ]
 const requestedHeaders = [
-  { title: '', key: 'possible_actions', width: '5%' },
+  { title: '', key: 'possible_actions', width: '1%' },
   {
     title: t('ActivityTable.activity_group'),
     key: 'activity_group.name',
@@ -536,7 +549,7 @@ const requestedHeaders = [
   { title: t('_global.version'), key: 'version' },
 ]
 const activityGroupHeaders = [
-  { title: '', key: 'possible_actions', width: '5%' },
+  { title: '', key: 'possible_actions', width: '1%' },
   { title: t('ActivityTable.activity_group'), key: 'name' },
   {
     title: t('ActivityTable.sentence_case_name'),
@@ -549,7 +562,7 @@ const activityGroupHeaders = [
   { title: t('_global.version'), key: 'version' },
 ]
 const activitySubgroupHeaders = [
-  { title: '', key: 'possible_actions', width: '5%' },
+  { title: '', key: 'possible_actions', width: '1%' },
   {
     title: t('ActivityTable.activity_group'),
     key: 'activity_groups',
@@ -585,20 +598,6 @@ const loading = ref(false)
 const subLoading = ref(false)
 const subgroupActivities = ref([])
 const showFinalised = ref(false)
-const expandedGroup = ref([])
-const expandedSubGroup = ref([])
-      
-watch(expandedGroup, () => {
-  if (expandedGroup.value.length > 1) {
-    expandedGroup.value.splice(0, 1)
-  }
-})
-
-watch(expandedSubGroup, () => {
-  if (expandedSubGroup.value.length > 1) {
-    expandedSubGroup.value.splice(0, 1)
-  }
-})
 
 const itemCreationTitle = computed(() => {
   if (props.source === 'activities') {
@@ -657,8 +656,7 @@ const currentHeaders = computed(() => {
 onMounted(() => {
   activitiesStore.getGroupsAndSubgroups()
 })
-  
-  
+
 function transformItems(items) {
   const activities = []
   if (props.source === 'activities') {
@@ -690,8 +688,7 @@ function transformItems(items) {
       if (item.activity_groupings.length > 0) {
         item.activities = [item.activity_groupings[0].activity]
         item.activity_group = item.activity_groupings[0].activity_group
-        item.activity_subgroup =
-          item.activity_groupings[0].activity_subgroup
+        item.activity_subgroup = item.activity_groupings[0].activity_subgroup
       } else {
         item.activities = []
       }
@@ -716,10 +713,7 @@ function fetchActivities(filters, options, filtersUpdated) {
     filters,
     filtersUpdated
   )
-  if (
-    options.sortBy[0] &&
-    options.sortBy[0].key === 'activity_group.name'
-  ) {
+  if (options.sortBy[0] && options.sortBy[0].key === 'activity_group.name') {
     params.sort_by = JSON.stringify({
       'activity_groupings[0].activity_group_name':
         options.sortBy[0].order === 'desc' ? false : true,
@@ -834,9 +828,7 @@ function fetchActivities(filters, options, filtersUpdated) {
     }
   }
   const source =
-    props.source !== 'activities-by-grouping'
-      ? props.source
-      : 'activity-groups'
+    props.source !== 'activities-by-grouping' ? props.source : 'activity-groups'
   activitiesApi.get(params, source).then((resp) => {
     activities.value = transformItems(resp.data.items)
     total.value = resp.data.total
@@ -883,7 +875,7 @@ function modifyFilters(jsonFilter, params) {
     })
     delete jsonFilter['activity_subgroup.name']
   }
-  if (jsonFilter.name) {
+  if (jsonFilter.name && props.source === 'activities') {
     params.activity_names = []
     jsonFilter.name.v.forEach((value) => {
       params.activity_names.push(value)
@@ -1069,7 +1061,7 @@ function getSubGroups(items) {
   if (!items.length) {
     return
   }
-  const item = items[items.length - 1]
+  const item = items[0]
   subgroups.value = []
   loading.value = true
   currentGroup.value = item.uid
@@ -1083,7 +1075,7 @@ function getSubgroupActivities(items) {
   if (!items.length) {
     return
   }
-  const item = items[items.length - 1]
+  const item = items[0]
   subgroupActivities.value = []
   subLoading.value = true
   currentSubGroup.value = item
@@ -1116,8 +1108,8 @@ function setDefaultFilters() {
       { title: t('ActivityTable.topic_code'), key: 'topic_code' },
       { title: t('ActivityTable.is_legacy_usage'), key: 'is_legacy_usage' },
     ]
+  } else if (props.source !== 'activities-by-grouping') {
+    return [{ title: t('_global.status'), key: 'status' }]
   }
-  return [{ title: t('_global.status'), key: 'status' }]
 }
-    
 </script>

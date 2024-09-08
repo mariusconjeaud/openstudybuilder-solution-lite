@@ -88,7 +88,11 @@ export default {
     diseaseMilestone: {
       handler: function (newValue) {
         if (newValue) {
-          this.form = { ...newValue }
+          study
+            .getStudyDiseaseMilestone(this.selectedStudy.uid, newValue.uid)
+            .then((resp) => {
+              this.form = { ...resp.data }
+            })
         } else {
           this.form = {}
         }

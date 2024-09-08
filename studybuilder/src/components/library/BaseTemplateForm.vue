@@ -85,7 +85,7 @@
 </template>
 
 <script setup>
-import { computed, inject, onMounted, ref } from 'vue'
+import { computed, inject, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import _isEqual from 'lodash/isEqual'
 import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
@@ -185,12 +185,18 @@ templateParameterTypes.getTypes().then((resp) => {
   parameterTypes.value = resp.data
 })
 
-onMounted(() => {
-  if (props.template) {
-    loadFormFromTemplate()
-    steps.value = editModeSteps
-  }
-})
+watch(
+  () => props.template,
+  (value) => {
+    if (value) {
+      api.getTemplate(value.uid).then((resp) => {
+        loadFormFromTemplate(resp.data)
+        steps.value = editModeSteps
+      })
+    }
+  },
+  { immediate: true }
+)
 
 function close() {
   form.value = {}
@@ -238,13 +244,13 @@ function getObserver(step) {
 /**
  * Do a step by step loading of the form using the given template because we don't want to include every fields.
  */
-function loadFormFromTemplate() {
+function loadFormFromTemplate(template) {
   form.value = {
-    name: props.template ? props.template.name : null,
-    library: props.template ? props.template.library : { name: 'Sponsor' },
-    indications: props.template ? props.template.indications : null,
+    name: template ? template.name : null,
+    library: template ? template.library : { name: 'Sponsor' },
+    indications: template ? template.indications : null,
   }
-  if (props.template.status === statuses.DRAFT) {
+  if (template.status === statuses.DRAFT) {
     form.value.change_description = t('_global.work_in_progress')
   }
   if (props.loadFormFunction) {
@@ -279,17 +285,11 @@ async function addTemplate() {
   const data = { ...form.value }
 
   await preparePayload(data, true)
-  try {
-    return api.create(data).then(() => {
-      emit('templateAdded')
-      eventBusEmit('notification', {
-        msg: t(`${translationKey.value}TemplateForm.add_success`),
-      })
-      close()
-    })
-  } finally {
-    stepper.value.loading = false
-  }
+  await api.create(data)
+  emit('templateAdded')
+  eventBusEmit('notification', {
+    msg: t(`${translationKey.value}TemplateForm.add_success`),
+  })
 }
 
 async function updateTemplate() {
@@ -300,29 +300,24 @@ async function updateTemplate() {
       : [],
   }
 
-  try {
-    let template
-    let resp
-    if (
-      props.template.name !== data.name ||
-      props.template.guidance_text !== data.guidance_text
-    ) {
-      resp = await api.update(props.template.uid, data)
-      template = resp.data
-    }
-
-    const indexingData = prepareIndexingPayload()
-    resp = await api.updateIndexings(props.template.uid, indexingData)
-    if (!template) {
-      template = resp.data
-    }
-    emit('templateUpdated', template)
-    const key = `${translationKey.value}TemplateForm.update_success`
-    eventBusEmit('notification', { msg: t(key) })
-    close()
-  } finally {
-    stepper.value.loading = false
+  let template
+  let resp
+  if (
+    props.template.name !== data.name ||
+    props.template.guidance_text !== data.guidance_text
+  ) {
+    resp = await api.update(props.template.uid, data)
+    template = resp.data
   }
+
+  const indexingData = prepareIndexingPayload()
+  resp = await api.updateIndexings(props.template.uid, indexingData)
+  if (!template) {
+    template = resp.data
+  }
+  emit('templateUpdated', template)
+  const key = `${translationKey.value}TemplateForm.update_success`
+  eventBusEmit('notification', { msg: t(key) })
 }
 
 function verifySyntax() {
@@ -352,10 +347,15 @@ async function submit() {
     closeWithNoChange()
     return
   }
-  if (!props.template) {
-    addTemplate()
-  } else {
-    updateTemplate()
+  try {
+    if (!props.template) {
+      await addTemplate()
+    } else {
+      await updateTemplate()
+    }
+    close()
+  } finally {
+    stepper.value.loading = false
   }
 }
 </script>

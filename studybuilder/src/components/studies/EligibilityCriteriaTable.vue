@@ -1,5 +1,6 @@
 <template>
   <NNTable
+    ref="tableRef"
     :headers="headers"
     :items="criteria"
     item-value="study_criteria_uid"
@@ -18,8 +19,10 @@
     <template #actions>
       <v-btn
         data-cy="add-study-criteria"
+        class="ml-2"
         size="small"
-        color="primary"
+        variant="outlined"
+        color="nnBaseBlue"
         :title="$t('EligibilityCriteriaTable.add_criteria')"
         :disabled="
           !accessGuard.checkPermission($roles.STUDY_WRITE) ||
@@ -31,22 +34,30 @@
     </template>
     <template #[`item.order`]="{ item }">
       {{ item.order }}
-      <template  v-if="item.criteria">
+      <template v-if="item.criteria">
         <v-tooltip
           v-if="item.criteria.name_plain.length > 200"
           location="bottom"
         >
           <template #activator="{ props }">
-            <v-badge v-bind="props" color="warning" icon="mdi-exclamation" bordered inline />
+            <v-badge
+              v-bind="props"
+              color="warning"
+              icon="mdi-exclamation"
+              bordered
+              inline
+            />
           </template>
-          <span>{{ $t('EligibilityCriteriaTable.criteria_length_warning') }}</span>
+          <span>{{
+            $t('EligibilityCriteriaTable.criteria_length_warning')
+          }}</span>
         </v-tooltip>
       </template>
     </template>
     <template #[`item.criteria.name`]="{ item }">
-      <template v-if="item.criteria_template">
+      <template v-if="item.template">
         <NNParameterHighlighter
-          :name="item.criteria_template.name"
+          :name="item.template.name"
           default-color="orange"
         />
       </template>
@@ -58,11 +69,11 @@
       </template>
     </template>
     <template #[`item.criteria.criteria_template.guidance_text`]="{ item }">
-      <template v-if="item.criteria_template">
-        <span v-html="item.criteria_template.guidance_text" />
+      <template v-if="item.template">
+        <span v-html="item.template.guidance_text" />
       </template>
       <template v-else>
-        <span v-html="item.criteria.criteria_template.guidance_text" />
+        <span v-html="item.criteria.template.guidance_text" />
       </template>
     </template>
     <template #[`item.key_criteria`]="{ item }">
@@ -94,14 +105,14 @@
       :criteria-type="criteriaType"
       class="fullscreen-dialog"
       @close="closeForm"
-      @added="getStudyCriteria"
+      @added="tableRef.filterTable()"
     />
   </v-dialog>
   <EligibilityCriteriaEditForm
     :open="showEditForm"
     :study-criteria="selectedStudyCriteria"
     @close="closeEditForm"
-    @updated="getStudyCriteria"
+    @updated="tableRef.filterTable()"
   />
   <v-dialog
     v-model="showHistory"
@@ -113,6 +124,7 @@
       :title="studyCriteriaHistoryTitle"
       :headers="headers"
       :items="criteriaHistoryItems"
+      :items-total="criteriaHistoryItems.length"
       :html-fields="historyHtmlFields"
       @close="closeHistory"
     />
@@ -156,11 +168,12 @@ const props = defineProps({
 const accessGuard = useAccessGuard()
 const studiesGeneralStore = useStudiesGeneralStore()
 const { t } = useI18n()
+const tableRef = ref()
 
 const criteria = ref([])
 const criteriaHistoryItems = ref([])
 const headers = ref([
-  { title: '', key: 'actions', width: '5%' },
+  { title: '', key: 'actions', width: '1%' },
   { title: '#', key: 'order', width: '5%' },
   {
     title: props.criteriaType.name.sponsor_preferred_name,
@@ -222,7 +235,7 @@ async function fetchAllCriteriaHistory() {
   const auditTrailData = transformItems(resp.data)
   auditTrailData.forEach((item) => {
     if (!item.criteria) {
-      item.criteria = item.criteria_template
+      item.criteria = item.template
     }
   })
   return auditTrailData
@@ -235,7 +248,7 @@ function actionsMenuBadge(item) {
       icon: 'mdi-bell-outline',
     }
   }
-  if (!item.criteria && item.criteria_template.parameters.length > 0) {
+  if (!item.criteria && item.template.parameters.length > 0) {
     return {
       color: 'error',
       icon: 'mdi-exclamation',
@@ -247,7 +260,7 @@ function actionsMenuBadge(item) {
 function filterEditAction(item) {
   if (
     (item.criteria && item.criteria.parameter_terms.length > 0) ||
-    (item.criteria_template && item.criteria_template.parameters.length > 0)
+    (item.template && item.template.parameters.length > 0)
   ) {
     return actions.value
   } else {
@@ -261,6 +274,7 @@ function addCriteria() {
 
 function closeEditForm() {
   showEditForm.value = false
+  selectedStudyCriteria.value = null
 }
 
 function closeForm() {
@@ -281,7 +295,7 @@ async function openHistory(studyCriteria) {
   criteriaHistoryItems.value = transformItems(resp.data)
   criteriaHistoryItems.value.forEach((item) => {
     if (!item.criteria) {
-      item.criteria = item.criteria_template
+      item.criteria = item.template
     }
   })
   showHistory.value = true
@@ -294,8 +308,8 @@ function editStudyCriteria(studyCriteria) {
 
 async function deleteStudyCriteria(studyCriteria) {
   const options = { type: 'warning' }
-  let criterion = studyCriteria.criteria_template
-    ? studyCriteria.criteria_template.name
+  let criterion = studyCriteria.template
+    ? studyCriteria.template.name
     : studyCriteria.criteria.name
 
   criterion = criterion.replaceAll(/\[|\]/g, '')
@@ -309,7 +323,7 @@ async function deleteStudyCriteria(studyCriteria) {
       studiesGeneralStore.selectedStudy.uid,
       studyCriteria.study_criteria_uid
     )
-    getStudyCriteria()
+    tableRef.value.filterTable()
     eventBusEmit('notification', {
       msg: t('EligibilityCriteriaTable.delete_success'),
     })
@@ -342,7 +356,7 @@ function submitOrder(value) {
       value
     )
     .then(() => {
-      getStudyCriteria()
+      tableRef.value.filterTable()
       closeOrderForm()
       eventBusEmit('notification', { msg: t('_global.order_updated') })
     })
@@ -364,7 +378,7 @@ function updateKeyCriteria(value, studyCriteriaUid) {
       value
     )
     .then(() => {
-      getStudyCriteria()
+      tableRef.value.filterTable()
     })
 }
 
@@ -372,9 +386,9 @@ function transformItems(items) {
   const result = []
   for (const item of items) {
     const newItem = { ...item }
-    if (newItem.criteria_template) {
-      newItem.name = item.criteria_template.name
-      newItem.guidance_text = item.criteria_template.guidance_text
+    if (newItem.template) {
+      newItem.name = item.template.name
+      newItem.guidance_text = item.template.guidance_text
     } else {
       newItem.name = item.criteria.name
       newItem.guidance_text = item.criteria.guidance_text
@@ -429,7 +443,7 @@ async function updateVersion(item) {
         eventBusEmit('notification', {
           msg: t('EligibilityCriteriaTable.update_version_successful'),
         })
-        getStudyCriteria()
+        tableRef.value.filterTable()
       })
       .catch((error) => {
         eventBusEmit('notification', {
@@ -441,7 +455,7 @@ async function updateVersion(item) {
     study
       .updateStudyCriteriaAcceptVersion(item.study_uid, item.study_criteria_uid)
       .then(() => {
-        getStudyCriteria()
+        tableRef.value.filterTable()
       })
       .catch((error) => {
         eventBusEmit('notification', {

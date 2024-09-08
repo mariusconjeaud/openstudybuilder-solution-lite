@@ -9,17 +9,11 @@ from clinical_mdr_api.models.concepts.compound_alias import (
     CompoundAlias,
     CompoundAliasEditInput,
 )
-from clinical_mdr_api.models.controlled_terminologies.ct_term_name import (
-    CTTermNameEditInput,
-)
 from clinical_mdr_api.models.utils import GenericFilteringReturn
 from clinical_mdr_api.services.concepts.compound_alias_service import (
     CompoundAliasService,
 )
 from clinical_mdr_api.services.concepts.compound_service import CompoundService
-from clinical_mdr_api.services.controlled_terminologies.ct_term_name import (
-    CTTermNameService,
-)
 from clinical_mdr_api.tests.integration.utils.api import inject_and_clear_db
 from clinical_mdr_api.tests.integration.utils.data_library import (
     CREATE_BASE_TEMPLATE_PARAMETER_TREE,
@@ -145,10 +139,7 @@ class TestCompoundsService(unittest.TestCase):
     def test_caching(self):
         # Create a compound with an alias
         compound_name = "name-AAA"
-        dose_frequency_uid = "dose_frequency_uid1"
-        compound: Compound = TestUtils.create_compound(
-            name=compound_name, dose_frequency_uids=[dose_frequency_uid]
-        )
+        compound: Compound = TestUtils.create_compound(name=compound_name)
         compound_alias1: CompoundAlias = TestUtils.create_compound_alias(
             name=f"Alias1 for {compound.name}", compound_uid=compound.uid
         )
@@ -158,14 +149,11 @@ class TestCompoundsService(unittest.TestCase):
             uid=compound.uid,
             concept_edit_input=CompoundEditInput(
                 name=f"{compound_name}-UPDATED",
-                dose_frequency_uids=[dose_frequency_uid],
                 change_description="Update name",
             ),
         )
         compound = CompoundService().get_by_uid(compound.uid)
         assert compound.name == f"{compound_name}-UPDATED"
-        assert compound.dose_frequencies[0].term_uid == dose_frequency_uid
-        assert compound.dose_frequencies[0].name == "dose_frequency_name1"
 
         # Update compound alias, then fetch it and assert that the updated name is returned
         CompoundAliasService().edit_draft(
@@ -178,18 +166,3 @@ class TestCompoundsService(unittest.TestCase):
         )
         compound_alias = CompoundAliasService().get_by_uid(compound_alias1.uid)
         assert compound_alias.name == f"{compound_name}-UPDATED"
-
-        # Update CTterm that the compound links to, then fetch compound
-        # and assert that the updated CTTerm name is returned
-        CTTermNameService().create_new_version(term_uid=dose_frequency_uid)
-        CTTermNameService().edit_draft(
-            term_uid=dose_frequency_uid,
-            term_input=CTTermNameEditInput(
-                sponsor_preferred_name="dosage-freq-updated",
-                sponsor_preferred_name_sentence_case="dosage-freq-updated",
-                change_description="Update to CTTerm name",
-            ),
-        )
-        compound = CompoundService().get_by_uid(compound.uid)
-        assert compound.dose_frequencies[0].term_uid == dose_frequency_uid
-        assert compound.dose_frequencies[0].name == "dosage-freq-updated"

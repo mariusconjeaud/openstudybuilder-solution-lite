@@ -1,6 +1,7 @@
 <template>
   <div>
     <NNTable
+      ref="table"
       :headers="headers"
       item-value="uid"
       export-object-label="Studies"
@@ -12,8 +13,10 @@
         <v-btn
           v-if="!readOnly"
           data-cy="add-study"
+          class="ml-2"
           size="small"
-          color="primary"
+          variant="outlined"
+          color="nnBaseBlue"
           :title="$t('StudyForm.add_title')"
           :disabled="!checkPermission($roles.STUDY_WRITE)"
           icon="mdi-plus"
@@ -62,13 +65,6 @@
             item.current_metadata.version_metadata.version_timestamp
           )
         }}
-      </template>
-      <template
-        #[`item.current_metadata.version_metadata.locked_version_author`]="{
-          item,
-        }"
-      >
-        {{ item.current_metadata.version_metadata.version_author }}
       </template>
       <template #[`item.actions`]="{ item }">
         <v-row>
@@ -152,7 +148,7 @@ export default {
         },
       ],
       headers: [
-        { title: '', key: 'actions' },
+        { title: '', key: 'actions', width: '1%' },
         {
           title: this.$t('StudyTable.clinical_programme'),
           key: 'current_metadata.identification_metadata.clinical_programme_name',
@@ -205,7 +201,7 @@ export default {
         },
         {
           title: this.$t('_global.modified_by'),
-          key: 'current_metadata.version_metadata.locked_version_author',
+          key: 'current_metadata.version_metadata.version_author',
         },
       ],
       showForm: false,
@@ -237,6 +233,7 @@ export default {
     closeForm() {
       this.showForm = false
       this.activeStudy = null
+      this.$refs.table.filterTable()
       this.$emit('refreshStudies')
     },
     selectStudy(study) {

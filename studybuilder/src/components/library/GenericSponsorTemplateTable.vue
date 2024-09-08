@@ -25,8 +25,10 @@
       <template #actions>
         <v-btn
           v-if="!preInstanceMode"
+          class="ml-2"
           size="small"
-          color="primary"
+          variant="outlined"
+          color="nnBaseBlue"
           data-cy="add-template"
           :title="$t(`${translationType}.add`)"
           :disabled="!accessGuard.checkPermission($roles.LIBRARY_WRITE)"
@@ -96,6 +98,7 @@
         :title="historyTitle"
         :headers="headers"
         :items="historyItems"
+        :items-total="historyItems.length"
         :html-fields="historyHtmlFields"
         :excluded-headers="historyExcludedHeaders"
         @close="closeHistory"
@@ -177,8 +180,7 @@ const props = defineProps({
         {
           title: '',
           key: 'actions',
-          sortable: false,
-          width: '5%',
+          width: '1%',
         },
         { title: i18n.t('_global.library'), key: 'library.name' },
         { title: i18n.t('_global.template'), key: 'name', width: '30%' },
@@ -461,6 +463,12 @@ function editTemplateIndexing(template) {
   showIndexingForm.value = true
 }
 async function fetchGlobalAuditTrail(options) {
+  options.filters = {
+    ['library.name']: { v: [libraryConstants.LIBRARY_SPONSOR] },
+  }
+  if (props.extraFiltersFunc) {
+    props.extraFiltersFunc(options.filters, props.preInstanceMode)
+  }
   const resp = await api.getAuditTrail(options)
   if (props.historyFormatingFunc) {
     for (const item of resp.data.items) {

@@ -12,11 +12,11 @@
         <template #bottom />
         <template #[`item.delete`]="{ item }">
           <v-btn
+            variant="text"
             icon="mdi-delete-outline"
             class="mt-1 rightButtons"
             data-cy="remove-item-link"
             size="small"
-            variant="text"
             @click="removeItem(item)"
           />
         </template>
@@ -29,17 +29,17 @@
           :items-length="total"
           hide-export-button
           hide-default-switches
-          additional-margin
+          only-text-search
           data-cy="test"
           @filter="fetchActivities"
         >
           <template #[`item.add`]="{ item }">
             <v-btn
+              variant="text"
               icon="mdi-plus"
               class="mt-1 rightButtons"
               data-cy="add-item-link"
               size="small"
-              variant="text"
               @click="addItem(item)"
             />
           </template>
