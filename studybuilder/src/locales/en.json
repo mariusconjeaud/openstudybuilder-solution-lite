@@ -435,7 +435,7 @@
             "general": "This section is for defining the Study. For requesting a term/value added to drop-down list, please refer to SharePoint",
             "studytype": "Select value that reflects the overall study type. For definition of study types see <a href='https://studybuilder.clinicalmdr-dev.corp.azure.novonordisk.com/library/ct_catalogues/All/C99077/terms' target='_blank'>[Study Type]<a>",
             "studyintent": "Select the values that reflect the planned purposes of the therapy or device being investigated in the study",
-            "trialtype": "Select the values that reflect the trial type(s) that is within the study purpose. For definition of the trial types see <a href='https://studybuilder.clinicalmdr-dev.corp.azure.novonordisk.com/library/ct_catalogues/All/C66739' target='_blank'>[Trial Type Response]<a>",
+            "trialtype": "Select the values that reflect the trial type(s) that is within the study purpose.",
             "trialphase": "Select relevant phase or stage, of the study",
             "studystoprule": "The rule(s), regulation(s) and/or condition(s) that determines the point in time when a clinical trial will be terminated. Stopping rule as specified in Protocol. If there is no stopping rule record 'NONE' in this field",
             "extensiontrial": "Indicate whether the study is an extension trial",
