@@ -1,7 +1,9 @@
 <template>
   <v-card bg-color="dfltBackground">
     <v-card-title class="d-flex align-center">
-      <span class="dialog-title">{{ $t('ProtocolFlowchart.soa_settings') }}</span>
+      <span class="dialog-title">{{
+        $t('ProtocolFlowchart.soa_settings')
+      }}</span>
     </v-card-title>
     <v-card-text class="mt-4">
       <div class="bg-white">
@@ -48,15 +50,17 @@
         variant="outlined"
         elevation="2"
         width="120px"
-        @click="cancel">
+        @click="cancel"
+      >
         {{ $t('_global.cancel') }}
       </v-btn>
-      <v-btn 
+      <v-btn
         color="secondary"
         variant="flat"
         elevation="2"
         width="120px"
-        @click="submit">
+        @click="submit"
+      >
         {{ $t('_global.save') }}
       </v-btn>
     </v-card-actions>
@@ -65,7 +69,7 @@
 <script setup>
 import { useStudiesGeneralStore } from '@/stores/studies-general'
 import { useAccessGuard } from '@/composables/accessGuard'
-import { computed, onMounted, ref } from 'vue'
+import { watch, computed, onMounted, ref } from 'vue'
 import units from '@/api/units'
 import unitConstants from '@/constants/units'
 
@@ -84,7 +88,7 @@ const soaPreferences = computed(() => {
   return studiesGeneralStore.soaPreferences
 })
 
-onMounted(() => {
+watch(soaPreferences, () => {
   units
     .getBySubset(unitConstants.TIME_UNIT_SUBSET_STUDY_PREFERRED_TIME_UNIT)
     .then((resp) => {
@@ -94,6 +98,10 @@ onMounted(() => {
     preferredTimeUnit.value = soaPreferredTimeUnit.value.time_unit_name
   }
   baselineAsZero.value = soaPreferences.value.baseline_as_time_zero
+})
+
+onMounted(() => {
+  studiesGeneralStore.getSoaPreferences()
 })
 
 async function submit() {
@@ -121,6 +129,8 @@ async function updatePreferredTimeUnit() {
 }
 
 async function updateSoaPreferences() {
-  await studiesGeneralStore.setSoaPreferences({ baseline_as_time_zero: baselineAsZero.value })
+  await studiesGeneralStore.setSoaPreferences({
+    baseline_as_time_zero: baselineAsZero.value,
+  })
 }
 </script>

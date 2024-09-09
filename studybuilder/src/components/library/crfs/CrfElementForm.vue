@@ -2,7 +2,6 @@
   <SimpleFormDialog
     ref="form"
     :title="title"
-    :help-items="helpItems"
     :open="open"
     max-width="1000px"
     @close="cancel"
@@ -18,6 +17,16 @@
               density="compact"
               clearable
               :rules="[formRules.required]"
+            />
+          </v-col>
+          <v-col>
+            <v-select
+              v-model="form.compatible_types"
+              :label="$t('CrfExtensions.compatible_types')"
+              :items="compatibleTypes"
+              density="compact"
+              multiple
+              clearable
             />
           </v-col>
         </v-row>
@@ -118,12 +127,16 @@ export default {
   data() {
     return {
       form: {},
-      helpItems: [],
       dataTypes: [],
       attribute: null,
       attributesKeyIndex: 0,
       existingAttributes: [],
       attributesToCreate: [],
+      compatibleTypes: [
+        'FormDef',
+        'ItemGroupDef',
+        'ItemDef',
+      ],
     }
   },
   computed: {
@@ -199,6 +212,9 @@ export default {
         let elementUid = ''
         await crfs.createElement(this.form).then((resp) => {
           elementUid = resp.data.uid
+        },
+        () => {
+          this.$refs.form.working = false
         })
         if (this.attributesToCreate.length > 0 && elementUid !== '') {
           for (const attr of this.attributesToCreate) {
@@ -206,9 +222,9 @@ export default {
             attr.vendor_element_uid = elementUid
             await crfs.createAttribute(attr)
           }
+          this.close()
         }
       }
-      this.close()
     },
     initForm(item) {
       this.form = item

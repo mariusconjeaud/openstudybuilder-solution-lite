@@ -54,7 +54,7 @@ from .utils.api_bindings import (
 from .utils.importer import BaseImporter
 from .utils.path_join import path_join
 
-LIBRARY_NAME_SPONSOR = "Dummy"
+LIBRARY_NAME_SPONSOR = "Sponsor"
 LIBRARY_NAME_REQUESTED = "Requested"
 
 
@@ -67,6 +67,7 @@ def activity_payload(nbr, library_name, activity_group_uid, activity_subgroup_ui
             "definition": f"Definition of {library_name} activity {nbr}",
             "abbreviation": f"Abb {nbr}",
             "library_name": library_name,
+            "is_data_collected": True,
             "activity_groupings": [
                 {
                     "activity_group_uid": activity_group_uid,
@@ -183,9 +184,41 @@ def study_payload(nbr, project_number):
     return {
         "path": "/studies",
         "body": {
-            "study_number": str(9000 + nbr),
+            "study_number": str(3000 + nbr),
             "study_acronym": f"DummyStudy {nbr}",
             "project_number": project_number,
+        },
+    }
+
+
+def study_arm_payload(nbr, arm_type_uid, study_uid):
+    return {
+        "path": f"/studies/{study_uid}/study-arms",
+        "body": {
+            "arm_type_uid": arm_type_uid,
+            "name": f"Test Study Arm {nbr} name",
+            "short_name": f"Test Study Arm {nbr} short name",
+            "randomization_group": f"Dummy Randomization Group {nbr}",
+            "code": f"Dummy Code {nbr}",
+            "description": f"Arm nbr {nbr} for study {study_uid}",
+            "arm_colour": get_color(nbr),
+        },
+    }
+
+
+def study_element_payload(nbr, element_type_uid, element_subtype_uid, study_uid):
+    return {
+        "path": f"/studies/{study_uid}/study-elements",
+        "body": {
+            "planned_duration": {},
+            "code": element_type_uid,
+            "element_subtype_uid": element_subtype_uid,
+            "name": f"Test Study Element {nbr} name",
+            "short_name": f"Test Study Element {nbr} short name",
+            "start_rule": "Dummy start rule",
+            "end_rule": "Dummy end rule",
+            "description": f"Element nbr {nbr} for study {study_uid}",
+            "element_colour": get_color(nbr),
         },
     }
 
@@ -332,6 +365,8 @@ def study_visit_payload(
     time_unit_uid,
     time_reference_uid,
     contact_mode_uid,
+    time_value: int | None = None,
+    is_global_anchor_visit: bool = False,
 ):
     return {
         "path": f"/studies/{study_uid}/study-visits",
@@ -339,7 +374,7 @@ def study_visit_payload(
             "study_epoch_uid": epoch_uid,
             "visit_type_uid": visit_type_uid,
             "time_reference_uid": time_reference_uid,
-            "time_value": 5 * nbr,
+            "time_value": 5 * (nbr - 2) if time_value is None else time_value,
             "time_unit_uid": time_unit_uid,
             "visit_sublabel_codelist_uid": None,
             "visit_sublabel_reference": None,
@@ -356,7 +391,7 @@ def study_visit_payload(
             "epoch_allocation_uid": None,
             "visit_class": "SINGLE_VISIT",
             "visit_subclass": "SINGLE_VISIT",
-            "is_global_anchor_visit": False,
+            "is_global_anchor_visit": is_global_anchor_visit,
         },
     }
 
@@ -367,17 +402,29 @@ def get_color(nbr):
     return color
 
 
-def get_epoch_types(nbr):
-    epochs = [
-        "Screening",
-        "Run-in",
-        "Treatment",
-        "Observation",
-        "Wash-out",
-        "Follow-up",
-        "Intervention",
-        "Elimination",
+def get_arm_types(nbr):
+    arm_types = [
+        "Investigational Arm",
+        "Comparator Arm",
+        "Placebo Arm",
+        "Observational Arm",
     ]
+    return arm_types[nbr % len(arm_types)]
+
+
+def get_element_types(nbr):
+    element_types_and_element_subtypes = {
+        "Treatment": ["Treatment"],
+        "No Treatment": ["Follow-up", "Run-in", "Screening", "Wash-out"],
+    }
+    element_types = list(element_types_and_element_subtypes.keys())
+    element_type = element_types[nbr % len(element_types)]
+    element_subtypes = element_types_and_element_subtypes[element_type]
+
+    return element_type, element_subtypes[nbr % len(element_subtypes)]
+
+
+def get_epoch_subtype(nbr):
     epoch_subtypes = [
         "Screening",
         "Run-in",
@@ -390,7 +437,7 @@ def get_epoch_types(nbr):
         "Follow-up",
         "Intervention",
     ]
-    return epochs[nbr % len(epochs)], epoch_subtypes[nbr % len(epoch_subtypes)]
+    return epoch_subtypes[nbr % len(epoch_subtypes)]
 
 
 def get_soa_group_name(nbr):
@@ -498,7 +545,8 @@ class DummyData(BaseImporter):
     @lru_cache(maxsize=10000)
     def get_allowed_visit_types(self, study_uid, epoch_type_uid):
         rs = requests.get(
-            f"{self.api.api_base_url}/studies/{study_uid}/study-visits/allowed-visit-types?epoch_type_uid={epoch_type_uid}"
+            f"{self.api.api_base_url}/studies/{study_uid}/study-visits/allowed-visit-types?epoch_type_uid={epoch_type_uid}",
+            headers=self.api.api_headers,
         )
 
         return rs.json()
@@ -506,7 +554,8 @@ class DummyData(BaseImporter):
     @lru_cache(maxsize=10000)
     def get_term_uids_by_codelist(self, codelist_name):
         rs = requests.get(
-            f"{self.api.api_base_url}/ct/terms?page_size=0&codelist_name={codelist_name}"
+            f"{self.api.api_base_url}/ct/terms?page_size=0&codelist_name={codelist_name}",
+            headers=self.api.api_headers,
         ).json()["items"]
 
         return [item["term_uid"] for item in rs]
@@ -678,7 +727,17 @@ class DummyData(BaseImporter):
     def create_activities(self):
         total = self.simple_get(
             "/concepts/activities/activities",
-            {"library": LIBRARY_NAME_SPONSOR, "page_size": 1, "total_count": True},
+            {
+                "filters": json.dumps(
+                    {
+                        "library_name": {
+                            "v": [LIBRARY_NAME_REQUESTED, LIBRARY_NAME_SPONSOR]
+                        }
+                    }
+                ),
+                "page_size": 1,
+                "total_count": True,
+            },
             return_key="total",
         )
 
@@ -687,19 +746,28 @@ class DummyData(BaseImporter):
         self.log.info(
             "======== Found %i activities, creating %i ========", total, create
         )
-
+        libs = [LIBRARY_NAME_REQUESTED, LIBRARY_NAME_SPONSOR]
         for n in range(total, total + create):
             grouping = self.activity_groupings[n % len(self.activity_groupings)]
             payload = activity_payload(
                 n,
-                LIBRARY_NAME_SPONSOR,
+                libs[n % 2],
                 *grouping[1:],
             )
             self.simple_post_and_approve(payload)
 
         activities = self.simple_get(
             "/concepts/activities/activities",
-            {"library": LIBRARY_NAME_SPONSOR, "page_size": 0},
+            {
+                "filters": json.dumps(
+                    {
+                        "library_name": {
+                            "v": [LIBRARY_NAME_REQUESTED, LIBRARY_NAME_SPONSOR]
+                        }
+                    }
+                ),
+                "page_size": 0,
+            },
             return_key="items",
         )
 
@@ -857,7 +925,8 @@ class DummyData(BaseImporter):
 
     def create_studies(self):
         time_units = requests.get(
-            f"{self.api.api_base_url}/concepts/unit-definitions?subset=Study Time&page_size=0"
+            f"{self.api.api_base_url}/concepts/unit-definitions?subset=Study Time&page_size=0",
+            headers=self.api.api_headers,
         ).json()["items"]
 
         time_unit_uids = [
@@ -891,46 +960,118 @@ class DummyData(BaseImporter):
         )
 
         for n in range(self.options.studies):
+            if n in [0, 5, 10, 15]:
+                self.refresh_auth()
+
             payload = study_payload(found + n, self.project["project_number"])
             uid = self.simple_post(payload)
 
             if uid is not None:
-                self.studies[uid] = {"epochs": [], "visits": [], "activities": []}
+                self.studies[uid] = {
+                    "arms": [],
+                    "elements": [],
+                    "epochs": [],
+                    "visits": [],
+                    "activities": [],
+                }
                 self.log.info(
-                    "======== Creating %i study epochs for dummy study %i ========",
-                    self.options.study_epochs,
+                    "======== Creating %i study arms for dummy study %i ========",
+                    self.options.study_arms,
                     n,
                 )
-                for m in range(self.options.study_epochs):
-                    self.create_study_epoch(m, uid)
+                for m in range(self.options.study_arms):
+                    self.create_study_arm(m, uid)
+
+                self.log.info(
+                    "======== Creating %i study elements for dummy study %i ========",
+                    self.options.study_elements,
+                    n,
+                )
+                for m in range(self.options.study_elements):
+                    self.create_study_element(m, uid)
+
+                self.log.info(
+                    "======== Creating 4 study epochs for dummy study %i ========",
+                    n,
+                )
+                self.create_study_epochs(uid, "Screening", 1)
+                self.create_study_epochs(uid, "Intervention", 2)
+                self.create_study_epochs(uid, "Intervention", 3)
+                self.create_study_epochs(uid, "Follow-up", 4)
 
                 self.log.info(
                     "======== Creating %i study activities for dummy study %i ========",
-                    self.options.study_epochs,
+                    self.options.study_activities,
                     n,
                 )
                 self.create_study_activities(self.options.study_activities, uid)
 
                 self.log.info(
-                    "======== Creating %i study visits for dummy study %i ========",
-                    self.options.study_visits,
+                    "======== Creating 43 study visits for dummy study %i ========",
                     n,
                 )
                 epoch_uid = self.studies[uid]["epochs"][0]
                 epoch_type_uid = requests.get(
-                    f"""{self.api.api_base_url}/studies/{uid}/study-epochs/{epoch_uid}"""
+                    f"""{self.api.api_base_url}/studies/{uid}/study-epochs/{epoch_uid}""",
+                    headers=self.api.api_headers,
                 ).json()["epoch_type"]
+                allowed_visit_types = self.get_allowed_visit_types(uid, epoch_type_uid)
+                allowed_visit_type_uids = [
+                    allowed_visit_type["visit_type_uid"]
+                    for allowed_visit_type in allowed_visit_types
+                ]
+                self.create_study_visit(
+                    nbr=1,
+                    study_uid=uid,
+                    epoch_uid=epoch_uid,
+                    visit_type_uid=allowed_visit_type_uids[
+                        m % len(allowed_visit_type_uids)
+                    ],
+                    time_unit_uid=time_unit_uids[m % len(time_unit_uids)],
+                    time_reference_uid=time_reference_uid,
+                )
 
-                for m in range(self.options.study_visits):
-                    allowed_visit_types = self.get_allowed_visit_types(
-                        uid, epoch_type_uid
-                    )
-                    allowed_visit_type_uids = [
-                        allowed_visit_type["visit_type_uid"]
-                        for allowed_visit_type in allowed_visit_types
-                    ]
+                epoch_uid = self.studies[uid]["epochs"][1]
+                epoch_type_uid = requests.get(
+                    f"""{self.api.api_base_url}/studies/{uid}/study-epochs/{epoch_uid}""",
+                    headers=self.api.api_headers,
+                ).json()["epoch_type"]
+                allowed_visit_types = self.get_allowed_visit_types(uid, epoch_type_uid)
+                allowed_visit_type_uids = [
+                    allowed_visit_type["visit_type_uid"]
+                    for allowed_visit_type in allowed_visit_types
+                ]
+                for j in range(2, 19):
                     self.create_study_visit(
-                        nbr=m,
+                        nbr=j,
+                        study_uid=uid,
+                        epoch_uid=epoch_uid,
+                        visit_type_uid=allowed_visit_type_uids[
+                            m % len(allowed_visit_type_uids)
+                        ],
+                        time_unit_uid=time_unit_uids[m % len(time_unit_uids)],
+                        time_reference_uid=time_reference_uid
+                        if j != 2
+                        else self.lookup_ct_term_uid(
+                            "Time Point Reference", "Global anchor visit"
+                        ),
+                        time_value=None if j != 2 else 0,
+                        is_global_anchor_visit=j == 2,
+                    )
+
+                epoch_uid = self.studies[uid]["epochs"][2]
+                epoch_type_uid = requests.get(
+                    f"""{self.api.api_base_url}/studies/{uid}/study-epochs/{epoch_uid}""",
+                    headers=self.api.api_headers,
+                ).json()["epoch_type"]
+                allowed_visit_types = self.get_allowed_visit_types(uid, epoch_type_uid)
+                allowed_visit_type_uids = [
+                    allowed_visit_type["visit_type_uid"]
+                    for allowed_visit_type in allowed_visit_types
+                ]
+                for j in range(19, 43):
+                    self.create_study_visit(
+                        nbr=j,
                         study_uid=uid,
                         epoch_uid=epoch_uid,
                         visit_type_uid=allowed_visit_type_uids[
@@ -940,12 +1081,59 @@ class DummyData(BaseImporter):
                         time_reference_uid=time_reference_uid,
                     )
 
+                epoch_uid = self.studies[uid]["epochs"][3]
+                epoch_type_uid = requests.get(
+                    f"""{self.api.api_base_url}/studies/{uid}/study-epochs/{epoch_uid}""",
+                    headers=self.api.api_headers,
+                ).json()["epoch_type"]
+                allowed_visit_types = self.get_allowed_visit_types(uid, epoch_type_uid)
+                allowed_visit_type_uids = [
+                    allowed_visit_type["visit_type_uid"]
+                    for allowed_visit_type in allowed_visit_types
+                ]
+                self.create_study_visit(
+                    nbr=43,
+                    study_uid=uid,
+                    epoch_uid=epoch_uid,
+                    visit_type_uid=allowed_visit_type_uids[
+                        m % len(allowed_visit_type_uids)
+                    ],
+                    time_unit_uid=time_unit_uids[m % len(time_unit_uids)],
+                    time_reference_uid=time_reference_uid,
+                )
+
                 self.create_study_activity_schedules(uid)
 
-    def create_study_epoch(self, nbr, study_uid):
-        epoch, epocy_subtype = get_epoch_types(nbr)
-        epoch_uid = self.lookup_ct_term_uid("Epoch", epoch)
-        epoch_subtype_uid = self.lookup_ct_term_uid("Epoch Sub Type", epocy_subtype)
+    def create_study_arm(self, nbr, study_uid):
+        arm_type = get_arm_types(nbr)
+        arm_type_uid = self.lookup_ct_term_uid("Arm Type", arm_type)
+        payload = study_arm_payload(nbr, arm_type_uid, study_uid)
+        uid = self.simple_post(payload, "arm_uid")
+        if uid is not None:
+            self.studies[study_uid]["arms"].append(uid)
+
+    def create_study_element(self, nbr, study_uid):
+        element_type, element_subtype = get_element_types(nbr)
+        element_uid = self.lookup_ct_term_uid("Element Type", element_type)
+        element_subtype_uid = self.lookup_ct_term_uid(
+            "Element Sub Type", element_subtype
+        )
+        payload = study_element_payload(
+            nbr, element_uid, element_subtype_uid, study_uid
+        )
+        uid = self.simple_post(payload, "element_uid")
+        if uid is not None:
+            self.studies[study_uid]["elements"].append(uid)
+
+    def create_study_epochs(self, study_uid, subtype_name, nbr):
+        epoch_subtype_uid = self.lookup_ct_term_uid("Epoch Sub Type", subtype_name)
+        epoch_uid = self.simple_post(
+            {
+                "path": f"/studies/{study_uid}/study-epochs/preview",
+                "body": {"study_uid": study_uid, "epoch_subtype": epoch_subtype_uid},
+            },
+            return_key="epoch",
+        )
         duration_unit = self.lookup_concept_uid("day", "unit-definitions")
         payload = study_epoch_payload(
             nbr, epoch_uid, epoch_subtype_uid, duration_unit, study_uid
@@ -956,7 +1144,8 @@ class DummyData(BaseImporter):
 
     def create_study_activities(self, nbr_activities_per_study, study_uid):
         activities = requests.get(
-            f"""{self.api.api_base_url}/concepts/activities/activities?sort={{"uid": false}}&page_size={nbr_activities_per_study}"""
+            f"""{self.api.api_base_url}/concepts/activities/activities?sort_by={{"uid": false}}&page_size={nbr_activities_per_study}""",
+            headers=self.api.api_headers,
         ).json()["items"]
 
         for idx, activity in enumerate(activities):
@@ -1005,6 +1194,8 @@ class DummyData(BaseImporter):
         visit_type_uid,
         time_unit_uid,
         time_reference_uid,
+        time_value: int | None = None,
+        is_global_anchor_visit: bool = False,
     ):
         contact_mode_uids = self.get_term_uids_by_codelist("Visit Contact Mode")
 
@@ -1016,6 +1207,8 @@ class DummyData(BaseImporter):
             time_unit_uid,
             time_reference_uid,
             contact_mode_uids[nbr % len(contact_mode_uids)],
+            time_value=time_value,
+            is_global_anchor_visit=is_global_anchor_visit,
         )
 
         study_visit = self.simple_post(payload, return_key=None)
@@ -1024,15 +1217,19 @@ class DummyData(BaseImporter):
             self.studies[study_uid]["visits"].append(study_visit)
 
     def create_syntax_templates(self):
+        req = requests.get(
+            f"{self.api.api_base_url}/dictionaries/codelists?library=SNOMED&page_size=0",
+            headers=self.api.api_headers,
+        ).json()
+
         disease_disorder_codelist_uid = next(
             codelist
-            for codelist in requests.get(
-                f"{self.api.api_base_url}/dictionaries/codelists?library=SNOMED&page_size=0"
-            ).json()["items"]
+            for codelist in req["items"]
             if codelist["name"] == "DiseaseDisorder"
         )["codelist_uid"]
         disease_disorder_terms = requests.get(
-            f"{self.api.api_base_url}/dictionaries/terms?codelist_uid={disease_disorder_codelist_uid}&page_size=0"
+            f"{self.api.api_base_url}/dictionaries/terms?codelist_uid={disease_disorder_codelist_uid}&page_size=0",
+            headers=self.api.api_headers,
         ).json()["items"]
         disease_disorder_term_uids = [
             disease_disorder_term["term_uid"]
@@ -1135,7 +1332,9 @@ class DummyData(BaseImporter):
                 {
                     "page_size": 1,
                     "total_count": True,
-                    "filter": {"type_uid": {"v": [criteria_type_uid]}},
+                    "filters": json.dumps(
+                        {"type.term_uid": {"v": [criteria_type_uid]}}
+                    ),
                 },
                 return_key="total",
             )
@@ -1208,7 +1407,9 @@ class DummyData(BaseImporter):
                 {
                     "page_size": 1,
                     "total_count": True,
-                    "filter": {"type_uid": {"v": [footnote_type_uid]}},
+                    "filters": json.dumps(
+                        {"type.term_uid": {"v": [footnote_type_uid]}}
+                    ),
                 },
                 return_key="total",
             )
@@ -1272,7 +1473,7 @@ class DummyData(BaseImporter):
         self.create_activity_groups()
         self.create_activity_subgroups()
         self.create_activities()
-        self.create_activity_requests()
+        # self.create_activity_requests()
         self.create_activity_instance_classes()
         self.create_activity_instances()
         self.create_syntax_templates()
@@ -1294,37 +1495,37 @@ def parse_args():
     parser.add_argument(
         "--objective-templates",
         type=int,
-        default=getenv("num_objective_templates", 23),
+        default=getenv("num_objective_templates", 151),
         help="Number of objective templates to create",
     )
     parser.add_argument(
         "--endpoint-templates",
         type=int,
-        default=getenv("num_endpoint_templates", 27),
+        default=getenv("num_endpoint_templates", 151),
         help="Number of endpoint templates to create",
     )
     parser.add_argument(
         "--criteria-templates",
         type=int,
-        default=getenv("num_criteria_templates", 35),
+        default=getenv("num_criteria_templates", 151),
         help="Number of criteria templates to create",
     )
     parser.add_argument(
         "--activity-instruction-templates",
         type=int,
-        default=getenv("num_activity_instruction_templates", 34),
+        default=getenv("num_activity_instruction_templates", 151),
         help="Number of activity instruction_templates to create",
     )
     parser.add_argument(
         "--footnote-templates",
         type=int,
-        default=getenv("num_footnote_templates", 35),
+        default=getenv("num_footnote_templates", 151),
         help="Number of footnote templates to create",
     )
     parser.add_argument(
         "--timeframe-templates",
         type=int,
-        default=getenv("num_timeframe_templates", 49),
+        default=getenv("num_timeframe_templates", 151),
         help="Number of timeframe templates to create",
     )
     parser.add_argument(
@@ -1348,7 +1549,7 @@ def parse_args():
     parser.add_argument(
         "--activities",
         type=int,
-        default=getenv("num_activities", 127),
+        default=getenv("num_activities", 300),
         help="Number of activities to create",
     )
     parser.add_argument(
@@ -1357,17 +1558,29 @@ def parse_args():
         default=getenv("num_activity_instances", 91),
         help="Number of activity instances to create",
     )
-    parser.add_argument(
-        "--activity-requests",
-        type=int,
-        default=getenv("num_activity_requests", 51),
-        help="Number of activity requests to create",
-    )
+    # parser.add_argument(
+    #     "--activity-requests",
+    #     type=int,
+    #     default=getenv("num_activity_requests", 51),
+    #     help="Number of activity requests to create",
+    # )
     parser.add_argument(
         "--studies",
         type=int,
-        default=getenv("num_studies", 1),
+        default=getenv("num_studies", 13),
         help="Number of studies to create",
+    )
+    parser.add_argument(
+        "--study-arms",
+        type=int,
+        default=getenv("num_arms", 2),
+        help="Number of arms to create",
+    )
+    parser.add_argument(
+        "--study-elements",
+        type=int,
+        default=getenv("num_elements", 8),
+        help="Number of elements to create",
     )
     parser.add_argument(
         "--study-epochs",

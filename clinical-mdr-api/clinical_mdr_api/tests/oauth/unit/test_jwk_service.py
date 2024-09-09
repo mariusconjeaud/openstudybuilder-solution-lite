@@ -163,6 +163,7 @@ def mk_jwt(claims: Mapping, key: Key) -> bytes:
     return jwt.encode(header, claims, key)
 
 
+@pytest.mark.asyncio
 async def test_correct_test_setup(jwk_service, jwk_good_key, jwk_wrong_key):
     """This tests if test setup is correct, other tests rely on this"""
 
@@ -189,6 +190,7 @@ async def test_correct_test_setup(jwk_service, jwk_good_key, jwk_wrong_key):
     ), "Claims does not match after encoding-decoding cycle with wrong-key"
 
 
+@pytest.mark.asyncio
 async def test_good_signing_key(jwk_service, jwk_good_key):
     claims_in = mk_claims()
     token = mk_jwt(claims_in, jwk_good_key)
@@ -196,6 +198,7 @@ async def test_good_signing_key(jwk_service, jwk_good_key):
     assert claims == claims_in, "Claims differ"
 
 
+@pytest.mark.asyncio
 async def test_wrong_signing_key(jwk_service, jwk_wrong_key):
     claims = mk_claims()
     token = mk_jwt(claims, jwk_wrong_key)
@@ -204,6 +207,7 @@ async def test_wrong_signing_key(jwk_service, jwk_wrong_key):
         await jwk_service.validate_jwt(token)
 
 
+@pytest.mark.asyncio
 async def test_invalid_signature(jwk_service, jwk_good_key):
     claims = mk_claims()
     token = mk_jwt(claims, jwk_good_key)
@@ -220,6 +224,7 @@ async def test_invalid_signature(jwk_service, jwk_good_key):
         await jwk_service.validate_jwt(token)
 
 
+@pytest.mark.asyncio
 async def test_token_expired(jwk_service, jwk_good_key):
     exp = 300
     now = time.time() - exp - jwk_service.leeway - 1
@@ -229,6 +234,7 @@ async def test_token_expired(jwk_service, jwk_good_key):
         await jwk_service.validate_jwt(token)
 
 
+@pytest.mark.asyncio
 async def test_token_not_before(jwk_service, jwk_good_key):
     exp = 300
     claims = mk_claims(exp=exp)
@@ -238,6 +244,7 @@ async def test_token_not_before(jwk_service, jwk_good_key):
         await jwk_service.validate_jwt(token)
 
 
+@pytest.mark.asyncio
 async def test_token_invalid_audience(jwk_service, jwk_good_key):
     claims = mk_claims(audience="pink-panther")
     token = mk_jwt(claims, jwk_good_key)
@@ -245,6 +252,7 @@ async def test_token_invalid_audience(jwk_service, jwk_good_key):
         await jwk_service.validate_jwt(token)
 
 
+@pytest.mark.asyncio
 async def test_token_invalid_issuer(jwk_service, jwk_good_key):
     claims = mk_claims(issuer="pink-panther-social-club")
     token = mk_jwt(claims, jwk_good_key)

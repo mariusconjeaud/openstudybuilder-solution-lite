@@ -569,9 +569,15 @@ def get_fields_audit_trail(
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_study_subpart_audit_trail(uid: str = StudyUID, is_subpart: bool = False):
+def get_study_subpart_audit_trail(
+    uid: str = StudyUID,
+    is_subpart: bool = False,
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
+):
     study_service = StudyService()
-    return study_service.get_subpart_audit_trail_by_uid(uid=uid, is_subpart=is_subpart)
+    return study_service.get_subpart_audit_trail_by_uid(
+        uid=uid, is_subpart=is_subpart, study_value_version=study_value_version
+    )
 
 
 @router.post(
@@ -641,19 +647,18 @@ def get_protocol_title(
     )
 
 
-@router.patch(
+@router.get(
     "/{uid}/copy-component",
-    dependencies=[rbac.STUDY_WRITE],
-    summary="Copy study form from another study",
+    dependencies=[rbac.STUDY_READ],
+    summary="Creates a project of a specific component copy from another study",
     description="""
 State before:
  - uid must exist
  - reference_study_uid must exist
 
 Business logic:
- - if overwrite is set to false, then the projection of the copy will be returned
- - if overwrite is set to true, then the component referenced as a component_to_copy will be copied
- from the study referenced by reference_study_uid to the study referenced by uid.
+ - if overwrite is set to false, then only properties that are not set are copied over to the target Study.
+ - if overwrite is set to true, then all the properties from the reference_study_uid Study are copied over to the target Study.
 
 State after:
  - The specific form is copied or projected into a study referenced by uid 'uid'.

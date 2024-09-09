@@ -15,8 +15,10 @@
       <template #actions>
         <v-btn
           v-if="!editMode"
+          class="ml-2"
           size="small"
-          color="primary"
+          variant="outlined"
+          color="nnBaseBlue"
           :title="$t('_global.edit')"
           :disabled="
             !checkPermission($roles.STUDY_WRITE) ||
@@ -131,12 +133,6 @@ export default {
     ElementsDropdownList,
   },
   inject: ['eventBusEmit'],
-  props: {
-    refresh: {
-      type: Number,
-      default: 0,
-    },
-  },
   setup() {
     const studiesGeneralStore = useStudiesGeneralStore()
     const epochsStore = useEpochsStore()
@@ -191,22 +187,13 @@ export default {
         })
       )
     },
-    refresh() {
-      arms.getAllStudyCells(this.selectedStudy.uid).then((resp) => {
-        this.cells = resp
-        this.fetchStudyArms()
-        this.fetchStudyElements()
-      })
-    },
   },
   async mounted() {
     this.fetchStudyEpochs({ studyUid: this.selectedStudy.uid })
     await this.fetchStudyElements()
-    await arms
-      .getAllStudyCells(this.selectedStudy.uid)
-      .then((resp) => {
-        this.cells = resp
-      })
+    await arms.getAllStudyCells(this.selectedStudy.uid).then((resp) => {
+      this.cells = resp
+    })
   },
   methods: {
     async matrixPushCalls(matrixPushStack) {
@@ -238,10 +225,7 @@ export default {
           this.branchArms = {}
           for (const el of this.arms) {
             await arms
-              .getAllBranchesForArm(
-                this.selectedStudy.uid,
-                el.arm_uid
-              )
+              .getAllBranchesForArm(this.selectedStudy.uid, el.arm_uid)
               .then((resp) => {
                 this.branchArms[el.arm_uid] = resp.data
               })
@@ -304,18 +288,16 @@ export default {
           .then(() => {
             this.editLoading = false
             this.editMode = false
-            arms
-              .getAllStudyCells(this.selectedStudy.uid)
-              .then((resp) => {
-                this.cells = resp
-                this.eventBusEmit('notification', {
-                  msg: this.$t('DesignMatrix.matrix_updated'),
-                })
-                this.editLoading = false
-                this.editMode = false
-                this.updateObject = []
-                this.saveObject = false
+            arms.getAllStudyCells(this.selectedStudy.uid).then((resp) => {
+              this.cells = resp
+              this.eventBusEmit('notification', {
+                msg: this.$t('DesignMatrix.matrix_updated'),
               })
+              this.editLoading = false
+              this.editMode = false
+              this.updateObject = []
+              this.saveObject = false
+            })
           })
       }, 1000)
     },

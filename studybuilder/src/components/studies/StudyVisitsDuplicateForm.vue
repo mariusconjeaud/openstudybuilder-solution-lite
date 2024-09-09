@@ -114,7 +114,6 @@ async function submit() {
       studyUid: studiesGeneralStore.selectedStudy.uid,
       input: newVisit,
     })
-    epochsStore.fetchStudyVisits(studiesGeneralStore.selectedStudy.uid)
     eventBusEmit('notification', {
       msg: t('StudyVisitForm.visit_duplicated'),
     })

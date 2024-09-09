@@ -939,9 +939,7 @@ def test_post_soa_preferences(
 ):
     repo: StudyDefinitionRepository = StudyDefinitionRepositoryImpl(user().id())
 
-    study = TestUtils.create_study(
-        TestUtils.random_str(4), project_number=tst_project.project_number
-    )
+    study = TestUtils.create_study(project_number=tst_project.project_number)
 
     # should have two StudySoaPreferencesInput created at Study creation
     nodes = repo.get_soa_preferences(study.uid)
@@ -1129,9 +1127,7 @@ def test_edit_soa_preferences(
 ):
     repo: StudyDefinitionRepository = StudyDefinitionRepositoryImpl(user().id())
 
-    study = TestUtils.create_study(
-        TestUtils.random_str(4), project_number=tst_project.project_number
-    )
+    study = TestUtils.create_study(project_number=tst_project.project_number)
 
     unlink_study_soa_properties(study.uid, repo)
 

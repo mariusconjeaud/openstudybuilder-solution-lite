@@ -39,7 +39,7 @@
 </template>
 
 <script setup>
-import { inject, ref, watch } from 'vue'
+import { inject, ref } from 'vue'
 import _isEqual from 'lodash/isEqual'
 import NotApplicableField from '@/components/tools/NotApplicableField.vue'
 import SimpleFormDialog from '@/components/tools/SimpleFormDialog.vue'
@@ -47,6 +47,7 @@ import { useStudiesGeneralStore } from '@/stores/studies-general'
 import { useStudiesManageStore } from '@/stores/studies-manage'
 import studyConstants from '@/constants/study'
 import { i18n } from '@/plugins/i18n'
+import study from '@/api/study'
 
 const props = defineProps({
   identifiers: {
@@ -72,12 +73,10 @@ const helpItems = [
   'RegistryIdentifiersForm.japanese_trial_registry_id_japic',
 ]
 
-watch(
-  () => props.identifiers,
-  (value) => {
-    form.value = JSON.parse(JSON.stringify(value))
-  }
-)
+study.getStudy(studiesGeneralStore.studyUid, false).then((resp) => {
+  form.value =
+    resp.data.current_metadata.identification_metadata.registry_identifiers
+})
 
 function getIdentifierNullValueKey(identifier) {
   return `${identifier}_null_value_code`
@@ -105,6 +104,7 @@ function nullValueSet(identifier) {
 
 function close() {
   emit('close')
+  form.value = JSON.parse(JSON.stringify(props.identifiers))
   observer.value.resetValidation()
 }
 

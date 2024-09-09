@@ -3,7 +3,7 @@ from typing import Collection
 
 from cachetools import TTLCache, cached
 from cachetools.keys import hashkey
-from neomodel import exceptions
+from neomodel import db, exceptions
 
 from clinical_mdr_api import config
 from clinical_mdr_api.domain_repositories.generic_repository import (
@@ -15,6 +15,7 @@ from clinical_mdr_api.domain_repositories.models.clinical_programme import (
 from clinical_mdr_api.domain_repositories.models.project import Project
 from clinical_mdr_api.domain_repositories.models.study import StudyRoot
 from clinical_mdr_api.domains.projects.project import ProjectAR
+from clinical_mdr_api.exceptions import BusinessLogicException, NotFoundException
 from clinical_mdr_api.repositories._utils import sb_clear_cache
 
 
@@ -53,10 +54,10 @@ class ProjectRepository:
         )
 
     @cached(cache=cache_store_item_by_uid, key=get_hashkey, lock=lock_store_item_by_uid)
-    def find_by_uid(self, uid: str) -> ProjectAR | None:
+    def find_by_uid(self, uid: str) -> ProjectAR:
         project = Project.nodes.get_or_none(uid=uid)
-        if project is not None:
-            project = ProjectAR.from_input_values(
+        if project:
+            return ProjectAR.from_input_values(
                 project_number=project.project_number,
                 name=project.name,
                 clinical_programme_uid=project.holds_project.single().uid,
@@ -64,8 +65,19 @@ class ProjectRepository:
                 generate_uid_callback=lambda: project.uid,
                 clinical_programme_exists_callback=lambda _: True,
             )
-            return project
-        return None
+
+        raise NotFoundException(f"Project with UID ({uid}) doesn't exist.")
+
+    def delete_by_uid(self, uid: str) -> None:
+        project: Project = Project.nodes.get_or_none(uid=uid)
+
+        if project:
+            if self.is_used_in_studies(uid):
+                raise BusinessLogicException(
+                    f"Cannot delete Project with UID ({uid}) because it is used by studies."
+                )
+
+            project.delete()
 
     @cached(
         cache=cache_store_item_by_project_number,
@@ -120,34 +132,65 @@ class ProjectRepository:
             "cache_store_item_by_study_uid",
         ]
     )
-    def save(self, project: ProjectAR) -> None:
+    def save(self, project_ar: ProjectAR, update: bool = False) -> None:
         """
-        Public repository method for persisting a (possibly modified) state of the Project instance into the underlying
-        DB. Provided instance can be brand new instance (never persisted before) or an instance which has been
-        retrieved with find_by_uid(..., for_update=True). Attempt to persist an instance which was retrieved with
-        for_update==False ends in error.
+        Create or update a Project in the database.
 
-        :param study: an instance of a project aggregate (ProjectAR class) to persist
+        This method handles the creation of a new Project or updating an existing one based on the `update` flag.
+
+        Args:
+            project_ar
+            update (bool): A flag indicating whether to update an existing Project (if True) or create a new one (if False).
+            Default is False.
+
+        Raises:
+            NotFoundException:
+                - If the Project with the given UID does not exist.
+                - If the Clinical Programme with the given UID does not exist.
+            BusinessLogicException: If the Project with the given UID is used in studies.
         """
-        repository_closure_data = project.repository_closure_data
-
-        if repository_closure_data is None:
-            # if save gets an object without a closure - it's a new object.
-            # object should already have a UID.
+        if not update:
             project_node = Project(
-                uid=project.uid,
-                project_number=project.project_number,
-                name=project.name,
-                description=project.description,
+                uid=project_ar.uid,
+                project_number=project_ar.project_number,
+                name=project_ar.name,
+                description=project_ar.description,
             )
             project_node.save()
-            clinical_programme_node = ClinicalProgramme.nodes.get(
-                uid=project.clinical_programme_uid
+            clinical_programme_node = ClinicalProgramme.nodes.get_or_none(
+                uid=project_ar.clinical_programme_uid
             )
+            if not clinical_programme_node:
+                raise NotFoundException(
+                    f"Clinical Programme with UID ({project_ar.clinical_programme_uid}) doesn't exist."
+                )
             project_node.holds_project.connect(clinical_programme_node)
         else:
-            # if save gets an object with a closure, it's a modified existing object.
-            raise NotImplementedError
+            project = Project.nodes.get_or_none(uid=project_ar.uid)
+
+            if not project:
+                raise NotFoundException(
+                    f"Project with UID ({project_ar.uid}) doesn't exist."
+                )
+
+            if self.is_used_in_studies(project_ar.uid):
+                raise BusinessLogicException(
+                    f"Cannot update Project with UID ({project_ar.uid}) because it is used by studies."
+                )
+
+            project.name = project_ar.name
+            project.description = project_ar.description
+            project.save()
+
+            project.holds_project.disconnect_all()
+            clinical_programme_node = ClinicalProgramme.nodes.get_or_none(
+                uid=project_ar.clinical_programme_uid
+            )
+            if not clinical_programme_node:
+                raise NotFoundException(
+                    f"Clinical Programme with UID ({project_ar.clinical_programme_uid}) doesn't exist."
+                )
+            project.holds_project.connect(clinical_programme_node)
 
     def close(self) -> None:
         # Our repository guidelines state that repos should have a close method
@@ -177,3 +220,14 @@ class ProjectRepository:
             project.repository_closure_data = repository_closure_data
 
         return projects
+
+    def is_used_in_studies(self, uid: str) -> bool:
+        rs = db.cypher_query(
+            """
+            MATCH (p:Project {uid: $uid})-[:HAS_FIELD]->(:StudyProjectField)<-[:HAS_PROJECT]-(:StudyValue)
+            RETURN DISTINCT COUNT(p)
+            """,
+            params={"uid": uid},
+        )
+
+        return bool(rs[0][0][0])

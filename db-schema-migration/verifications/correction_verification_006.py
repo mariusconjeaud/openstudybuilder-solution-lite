@@ -156,7 +156,7 @@ def test_adjust_late_end_dates():
         WITH root, collect(hv) as hv
         WHERE size(hv)>1
         // Check that start date of each version equals end date of the previous
-        WITH root, [n IN range(1,size(hv)) WHERE hv[n-1].end_date <> hv[n].start_date ] AS bad
+        WITH root, [n IN range(1,size(hv)) WHERE hv[n-1].end_date > hv[n].start_date ] AS bad
         WITH root WHERE size(bad)>0
         RETURN root
         """,
@@ -165,9 +165,7 @@ def test_adjust_late_end_dates():
 
 
 def test_adjust_cdisc_has_had_terms():
-    LOGGER.info(
-        "Check for incorrect start and end dates on HAS/HAD_TERM relationships"
-    )
+    LOGGER.info("Check for incorrect start and end dates on HAS/HAD_TERM relationships")
 
     records, _summary = run_cypher_query(
         DB_DRIVER,
@@ -213,3 +211,39 @@ def test_remove_duplicated_terms_in_objective_cat():
     assert (
         len(records) == 0
     ), f"Found {len(records)} duplicated terms in Objective Category codelist"
+
+
+def test_capitalize_first_letter_of_syntax_instance_and_pre_instance_if_template_parameter():
+    LOGGER.info(
+        "Check for lowercase first letter of SyntaxInstances/SyntaxPreInstances if non-Unit Template Parameter"
+    )
+
+    rs, _ = run_cypher_query(
+        DB_DRIVER,
+        """
+        MATCH (tptr:TemplateParameterTermRoot)<-[:USES_VALUE]-(i_v:SyntaxInstanceValue)<--(:SyntaxInstanceRoot)
+        WHERE NOT tptr.uid STARTS WITH "UnitDefinition_" AND i_v.name STARTS WITH "<p>["
+        RETURN i_v.name, i_v.name_plain
+        """,
+    )
+    assert all(
+        i[0][4].isupper() for i in rs if i[0][4].strip()
+    ), "Some SyntaxInstance names don't have a capital letter in the beginning."
+    assert all(
+        i[1][0].isupper() for i in rs if i[1][0].strip()
+    ), "Some SyntaxInstance plain_names don't have a capital letter in the beginning."
+
+    rs, _ = run_cypher_query(
+        DB_DRIVER,
+        """
+        MATCH (tptr:TemplateParameterTermRoot)-->(:TemplateParameterTermValue)<-[:USES_VALUE]-(p_v:SyntaxPreInstanceValue)<--(:SyntaxPreInstanceRoot)
+        WHERE NOT tptr.uid STARTS WITH "UnitDefinition_" AND p_v.name STARTS WITH "<p>["
+        RETURN p_v.name, p_v.name_plain
+        """,
+    )
+    assert all(
+        i[0][4].isupper() for i in rs if i[0][4].strip()
+    ), "Some SyntaxPreInstance names don't have a capital letter in the beginning."
+    assert all(
+        i[1][0].isupper() for i in rs if i[1][0].strip()
+    ), "Some SyntaxPreInstance plain_names don't have a capital letter in the beginning."

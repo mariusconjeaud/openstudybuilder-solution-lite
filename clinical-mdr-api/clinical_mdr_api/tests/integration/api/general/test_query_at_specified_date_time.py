@@ -275,10 +275,19 @@ def verify_returned_items(api_client, url, test_scenarios):
 
         log.info("GET %s", final_url)
         response = api_client.get(final_url)
-        if scenario[1]:
+        res = response.json()
+
+        if "queried_effective_date" in res:
             assert response.status_code == 200, f"{final_url} should return 200"
+            if scenario[1]:
+                assert res["queried_effective_date"] == scenario[0]
+            else:
+                assert res["queried_effective_date"] is None
         else:
-            assert response.status_code == 404, f"{final_url} should return 404"
+            if scenario[1]:
+                assert response.status_code == 200, f"{final_url} should return 200"
+            else:
+                assert response.status_code == 404, f"{final_url} should return 404"
 
 
 def add_seconds(date_time_str: str, seconds: int) -> str:

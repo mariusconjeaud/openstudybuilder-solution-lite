@@ -1,5 +1,6 @@
 import asyncio
 import csv
+import sys
 import time
 
 import aiohttp
@@ -138,11 +139,21 @@ def sample_from_list(d, sample=10):
 class StandardCodelistTerms1(BaseImporter):
     logging_name = "standard_codelistterms1"
 
+    epoch_subtype_cl_name = "Epoch Sub Type"
+    epoch_type_cl_name = "Epoch Type"
+    epoch_cl_name = "Epoch"
+    endpoint_level_cl_name = "Endpoint Level"
+    objective_level_cl_name = "Objective Level"
+
     def __init__(self, api=None, metrics_inst=None, cache=None):
         super().__init__(api=api, metrics_inst=metrics_inst, cache=cache)
         self.sponsor_codelist_legacy_name_map = {}
         self.init_legacy_map(MDR_MIGRATION_SPONSOR_CODELIST_DEFINITIONS)
         self.code_lists_uids = self.api.get_code_lists_uids()
+        self.limit_to_codelists = None
+
+    def limit_codelists(self, codelists):
+        self.limit_to_codelists = codelists
 
     @open_file()
     def init_legacy_map(self, csvfile):
@@ -171,8 +182,10 @@ class StandardCodelistTerms1(BaseImporter):
         self.code_lists_uids = self.api.get_code_lists_uids()
         readCSV = csv.reader(csvfile, delimiter=",")
         headers = next(readCSV)
-        parent_type_terms = self.api.get_terms_for_codelist_name("Epoch Type")
-        all_epoch_terms = self.api.get_terms_for_codelist_name("Epoch")
+        parent_type_terms = self.api.get_terms_for_codelist_name(
+            self.epoch_type_cl_name
+        )
+        all_epoch_terms = self.api.get_terms_for_codelist_name(self.epoch_cl_name)
         for row in readCSV:
             parent_term_uid = find_term_by_name(
                 row[headers.index("GEN_EPOCH_TYPE")], parent_type_terms
@@ -551,6 +564,12 @@ class StandardCodelistTerms1(BaseImporter):
         api_tasks = []
         for row in readCSV:
             new_codelist_name = row[headers.index("new_codelist_name")]
+            if (
+                self.limit_to_codelists
+                and new_codelist_name not in self.limit_to_codelists
+            ):
+                self.log.info(f"Skipping codelist definition '{new_codelist_name}'")
+                continue
             try:
                 idx = headers.index("extensible")
                 extensible = map_boolean(row[idx], raise_exception=True)
@@ -667,7 +686,9 @@ class StandardCodelistTerms1(BaseImporter):
             )
             return response
         else:
-            self.log.error(f"Failed to create codelist: {data['body']['name']}, response: {response}")
+            self.log.error(
+                f"Failed to create codelist: {data['body']['name']}, response: {response}"
+            )
             self.metrics.icrement("/ct/codelists-ERROR")
             return response
 
@@ -752,10 +773,22 @@ class StandardCodelistTerms1(BaseImporter):
 
             # We need to import the sponsor defined epochs before we can import epoch types and subtypes.
             # We can use the mechanisms from StandardCodelistTerms2 to do this.
-            await self.handle_sponsor_defined_epochs(session)
+            if (
+                not self.limit_to_codelists
+                or self.epoch_cl_name in self.limit_to_codelists
+            ):
+                await self.handle_sponsor_defined_epochs(session)
+            else:
+                self.log.info(f"Skipping codelist '{self.epoch_cl_name}'")
 
             # epoch type codelist
-            await self.handle_epoch_type(MDR_MIGRATION_EPOCH_TYPE, session)
+            if (
+                not self.limit_to_codelists
+                or self.epoch_type_cl_name in self.limit_to_codelists
+            ):
+                await self.handle_epoch_type(MDR_MIGRATION_EPOCH_TYPE, session)
+            else:
+                self.log.info(f"Skipping codelist '{self.epoch_type_cl_name}'")
 
     async def handle_sponsor_defined_epochs(self, session):
         term_importer = StandardCodelistTerms2(
@@ -773,19 +806,52 @@ class StandardCodelistTerms1(BaseImporter):
         self.log.info("Importing standard codelists")
         loop = asyncio.get_event_loop()
         loop.run_until_complete(self.async_run())
-        self.handle_epoch_subtype(MDR_MIGRATION_EPOCH_SUB_TYPE)
-        self.handle_epoch(MDR_MIGRATION_EPOCH)
-        self.handle_endpoint_level(MDR_MIGRATION_ENDPOINT_LEVEL)
-        self.handle_objective_level(MDR_MIGRATION_OBJECTIVE_LEVEL)
+
+        if (
+            not self.limit_to_codelists
+            or self.epoch_subtype_cl_name in self.limit_to_codelists
+        ):
+            self.handle_epoch_subtype(MDR_MIGRATION_EPOCH_SUB_TYPE)
+        else:
+            self.log.info(f"Skipping codelist '{self.epoch_subtype_cl_name}'")
+
+        if not self.limit_to_codelists or self.epoch_cl_name in self.limit_to_codelists:
+            self.handle_epoch(MDR_MIGRATION_EPOCH)
+        else:
+            self.log.info(f"Skipping codelist '{self.epoch_cl_name}'")
+
+        if (
+            not self.limit_to_codelists
+            or self.endpoint_level_cl_name in self.limit_to_codelists
+        ):
+            self.handle_endpoint_level(MDR_MIGRATION_ENDPOINT_LEVEL)
+        else:
+            self.log.info(f"Skipping codelist '{self.endpoint_level_cl_name}'")
+
+        if (
+            not self.limit_to_codelists
+            or self.objective_level_cl_name in self.limit_to_codelists
+        ):
+            self.handle_objective_level(MDR_MIGRATION_OBJECTIVE_LEVEL)
+        else:
+            self.log.info(f"Skipping codelist '{self.objective_level_cl_name}'")
+
         self.log.info("Done importing standard codelists")
 
 
-def main():
+def main(codelists=[]):
     metr = Metrics()
     migrator = StandardCodelistTerms1(metrics_inst=metr)
+    if codelists:
+        migrator.limit_codelists(codelists)
     migrator.run()
     metr.print()
 
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) > 1:
+        codelist_arg = sys.argv[1]
+        codelists = codelist_arg.split(",")
+    else:
+        codelists = []
+    main(codelists=codelists)

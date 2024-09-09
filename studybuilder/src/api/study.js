@@ -123,6 +123,11 @@ export default {
   getStudyObjectives(studyUid, params) {
     return repository.get(`studies/${studyUid}/study-objectives`, { params })
   },
+  getStudyObjective(studyUid, studyObjectiveUid) {
+    return repository.get(
+      `studies/${studyUid}/study-objectives/${studyObjectiveUid}`
+    )
+  },
   getStudyObjectivesAuditTrail(studyUid) {
     return repository.get(`studies/${studyUid}/study-objectives/audit-trail`)
   },
@@ -189,6 +194,11 @@ export default {
   },
   getStudyEndpoints(studyUid, params) {
     return repository.get(`studies/${studyUid}/study-endpoints`, { params })
+  },
+  getStudyEndpoint(studyUid, studyEndpointUid) {
+    return repository.get(
+      `studies/${studyUid}/study-endpoints/${studyEndpointUid}`
+    )
   },
   getStudyEndpointsByObjective(studyUid, objectiveUid) {
     const params = {
@@ -458,6 +468,11 @@ export default {
     }
     return repository.get(`studies/${studyUid}/study-criteria`, { params })
   },
+  getStudyCriteriaObject(studyUid, studyCriteriaUid) {
+    return repository.get(
+      `studies/${studyUid}/study-criteria/${studyCriteriaUid}`
+    )
+  },
   getStudyCriteriaWithType(studyUid, criteriaType, params) {
     if (!params.filters) {
       params.filters = {
@@ -466,7 +481,7 @@ export default {
         },
       }
     } else {
-      params.filters['criteria_type.sponsor_preferred_name_sentence_case'] = {
+      JSON.parse(params.filters)['criteria_type.sponsor_preferred_name_sentence_case'] = {
         v: [criteriaType.name.sponsor_preferred_name_sentence_case],
       }
     }
@@ -606,10 +621,7 @@ export default {
       params,
     })
   },
-  getStudyProtocolFlowchart(studyUid, operational) {
-    const params = {
-      operational: operational,
-    }
+  getStudyProtocolFlowchart(studyUid, params) {
     return repository.get(`${resource}/${studyUid}/flowchart`, { params })
   },
   getStudyProtocolFlowchartHtml(studyUid, params) {
@@ -617,7 +629,7 @@ export default {
   },
   getStudyProtocolFlowchartDocx(studyUid, params) {
     return repository.get(`${resource}/${studyUid}/flowchart.docx`, {
-      responseType: 'arraybuffer',
+      responseType: 'blob',
       params,
     })
   },
@@ -650,7 +662,17 @@ export default {
       Accept:
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     }
-    return repository.get(`${resource}/${studyUid}/operational-soa-exports`, {
+    return repository.get(`${resource}/${studyUid}/operational-soa.xlsx`, {
+      headers,
+      responseType: 'blob',
+    })
+  },
+  exportStudyProtocolSoaExcel(studyUid) {
+    const headers = {
+      Accept:
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    }
+    return repository.get(`${resource}/${studyUid}/protocol-soa-exports`, {
       headers,
       responseType: 'blob',
     })
@@ -671,9 +693,9 @@ export default {
     })
   },
   copyFromStudy(uid, options) {
-    return repository.patch(
-      `${resource}/${uid}/copy-component?reference_study_uid=${options.reference_study_uid}&component_to_copy=${options.component_to_copy}&overwrite=${options.overwrite}`
-    )
+    return repository.get(`${resource}/${uid}/copy-component`, {
+      params: options,
+    })
   },
   getStudyDesignFigureSvg(studyUid) {
     return repository.get(`${resource}/${studyUid}/design.svg`)
@@ -687,6 +709,11 @@ export default {
     return repository.get(`${resource}/${studyUid}/study-disease-milestones`, {
       params,
     })
+  },
+  getStudyDiseaseMilestone(studyUid, diseaseMilestoneUid) {
+    return repository.get(
+      `${resource}/${studyUid}/study-disease-milestones/${diseaseMilestoneUid}`
+    )
   },
   getStudyDiseaseMilestonesAuditTrail(studyUid) {
     return repository.get(
@@ -736,6 +763,11 @@ export default {
   getStudyFootnotes(studyUid, params) {
     return repository.get(`studies/${studyUid}/study-soa-footnotes`, { params })
   },
+  getStudyFootnote(studyUid, footnoteUid) {
+    return repository.get(
+      `studies/${studyUid}/study-soa-footnotes/${footnoteUid}`
+    )
+  },
   getStudyFootnotesAuditTrail(studyUid) {
     return repository.get(`studies/${studyUid}/study-soa-footnote/audit-trail`)
   },
@@ -759,9 +791,10 @@ export default {
       data
     )
   },
-  selectStudyFootnote(studyUid, footnoteUid) {
+  selectStudyFootnote(studyUid, footnoteUid, referencedItems) {
     const data = {
       footnote_uid: footnoteUid,
+      referenced_items: referencedItems
     }
     return repository.post(
       `${resource}/${studyUid}/study-soa-footnotes?create_footnote=false`,
@@ -793,6 +826,39 @@ export default {
   acceptStudyFootnoteVersion(studyUid, studyFootnoteUid) {
     return repository.post(
       `${resource}/${studyUid}/study-soa-footnotes/${studyFootnoteUid}/accept-version`
+    )
+  },
+  getDdfUsdmJson(studyUid) {
+    return repository.get(`ddf/v3/studyDefinitions/${studyUid}`)
+  },
+  getStudyStandardVersions(studyUid) {
+    return repository.get(`${resource}/${studyUid}/study-standard-versions`)
+  },
+  createStudyStandardVersions(studyUid, data) {
+    return repository.post(
+      `${resource}/${studyUid}/study-standard-versions`,
+      data
+    )
+  },
+  updateStudyStandardVersion(studyUid, standardVersionUid, data) {
+    return repository.patch(
+      `${resource}/${studyUid}/study-standard-versions/${standardVersionUid}`,
+      data
+    )
+  },
+  deleteStudyStandardVersion(studyUid, standardVersionUid) {
+    return repository.delete(
+      `${resource}/${studyUid}/study-standard-versions/${standardVersionUid}`
+    )
+  },
+  getStudyStandardVersionAuditTrail(studyUid, standardVersionUid) {
+    return repository.get(
+      `studies/${studyUid}/study-standard-versions/${standardVersionUid}/audit-trail`
+    )
+  },
+  getStudyStandardVersionsAuditTrail(studyUid) {
+    return repository.get(
+      `studies/${studyUid}/study-standard-versions/audit-trail`
     )
   },
 }

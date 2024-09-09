@@ -4,7 +4,7 @@ from typing import Any, Callable, Iterable, Self
 
 from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains._utils import normalize_string
-from clinical_mdr_api.domains.concepts.compound import CompoundAR
+from clinical_mdr_api.domains.concepts.medicinal_product import MedicinalProductAR
 from clinical_mdr_api.exceptions import BusinessLogicException
 
 
@@ -22,14 +22,12 @@ class StudySelectionCompoundVO:
     study_uid: str | None
     compound_uid: str | None
     compound_alias_uid: str | None
+    medicinal_product_uid: str | None
     type_of_treatment_uid: str | None
     reason_for_missing_value_uid: str | None
-    dispensed_in_uid: str | None
-    route_of_administration_uid: str | None
-    strength_value_uid: str | None
-    dosage_form_uid: str | None
-    device_uid: str | None
-    formulation_uid: str | None
+    dispenser_uid: str | None
+    dose_frequency_uid: str | None
+    delivery_device_uid: str | None
     other_info: str | None
     study_compound_dosing_count: int | None
     # Study selection Versioning
@@ -38,17 +36,15 @@ class StudySelectionCompoundVO:
 
     @classmethod
     def from_input_values(
-        cls,
+        cls,  # NOSONAR - ignore too many parameters warning
         compound_uid: str | None,
         compound_alias_uid: str | None,
+        medicinal_product_uid: str | None,
         type_of_treatment_uid: str | None,
         reason_for_missing_value_uid: str | None,
-        route_of_administration_uid: str | None,
-        strength_value_uid: str | None,
-        dosage_form_uid: str | None,
-        dispensed_in_uid: str | None,
-        device_uid: str | None,
-        formulation_uid: str | None,
+        dose_frequency_uid: str | None,
+        dispenser_uid: str | None,
+        delivery_device_uid: str | None,
         other_info: str | None,
         user_initials: str,
         study_uid: str | None = None,
@@ -63,17 +59,16 @@ class StudySelectionCompoundVO:
     ) -> Self:
         """
         Factory method
-        :param dispensed_in_uid:
+        :param dispenser_uid:
         :param other_info:
-        :param formulation_uid:
-        :param device_uid:
+        :param delivery_device_uid:
         :param compound_uid:
         :param compound_alias_uid:
+        :param medicinal_product_uid:
         :param type_of_treatment_uid:
         :param reason_for_missing_value_uid:
-        :param route_of_administration_uid:
-        :param strength_value_uid:
-        :param dosage_form_uid:
+        :param dose_value_uid:
+        :param dose_frequency_uid:
         :param study_selection_uid:
         :param generate_uid_callback:
         :return:
@@ -90,14 +85,12 @@ class StudySelectionCompoundVO:
             study_selection_uid=normalize_string(study_selection_uid),
             compound_uid=normalize_string(compound_uid),
             compound_alias_uid=normalize_string(compound_alias_uid),
+            medicinal_product_uid=normalize_string(medicinal_product_uid),
             type_of_treatment_uid=normalize_string(type_of_treatment_uid),
             reason_for_missing_value_uid=normalize_string(reason_for_missing_value_uid),
-            route_of_administration_uid=normalize_string(route_of_administration_uid),
-            strength_value_uid=normalize_string(strength_value_uid),
-            dosage_form_uid=normalize_string(dosage_form_uid),
-            dispensed_in_uid=normalize_string(dispensed_in_uid),
-            device_uid=normalize_string(device_uid),
-            formulation_uid=normalize_string(formulation_uid),
+            dose_frequency_uid=normalize_string(dose_frequency_uid),
+            dispenser_uid=normalize_string(dispenser_uid),
+            delivery_device_uid=normalize_string(delivery_device_uid),
             other_info=normalize_string(other_info),
             study_compound_dosing_count=study_compound_dosing_count,
             user_initials=normalize_string(user_initials),
@@ -112,7 +105,10 @@ class StudySelectionCompoundVO:
         reason_for_missing_callback: Callable[[str], bool] = (lambda _: True),
         compound_exist_callback: Callable[[str], bool] = (lambda _: True),
         compound_alias_exist_callback: Callable[[str], bool] = (lambda _: True),
-        compound_callback: Callable[[str], CompoundAR] = (lambda _: None),
+        medicinal_product_exist_callback: Callable[[str], bool] = (lambda _: True),
+        medicinal_product_callback: Callable[[str], MedicinalProductAR] = (
+            lambda _: None
+        ),
     ) -> None:
         """
         Raises ValueError or BusinessLogicException if values do not comply with relevant business rules.
@@ -130,12 +126,7 @@ class StudySelectionCompoundVO:
             for value in (
                 self.compound_uid,
                 self.compound_alias_uid,
-                self.route_of_administration_uid,
-                self.strength_value_uid,
-                self.dosage_form_uid,
-                self.dispensed_in_uid,
-                self.device_uid,
-                self.formulation_uid,
+                self.medicinal_product_uid,
                 self.other_info,
             ):
                 if value is not None:
@@ -158,64 +149,39 @@ class StudySelectionCompoundVO:
                 f"There is no approved compound alias identified by provided uid ({self.compound_alias_uid})"
             )
 
+        if (
+            self.medicinal_product_uid is not None
+            and not medicinal_product_exist_callback(
+                normalize_string(self.medicinal_product_uid)
+            )
+        ):
+            raise exceptions.ValidationException(
+                f"There is no approved medicinal product identified by provided uid ({self.medicinal_product_uid})"
+            )
+
         # Find an existing study compound selection with the same details:
         #   - Compound alias
-        #   - Pharmaceutical dosage form
-        #   - Compound strength value
-        #   - Route of administration
+        #   - Medicinal product
+        #   - Dose frequency
         #   - Dispenser
         #   - Delivery device
         exisiting_uid = selection_uid_by_details_callback(self)
         if exisiting_uid and self.study_selection_uid != exisiting_uid:
             raise BusinessLogicException(
-                "Compound selection with the specified combination of compound, "
-                "pharmaceutical dosage form, strength, route of administration, dispenser and delivery device already exists."
+                "Compound selection with the specified combination of compound, medicinal product, "
+                "dose frequency, dispenser and delivery device already exists."
             )
 
-        # Validate that each of these selections is actually defined on the selected library compound:
-        #   - Pharmaceutical dosage form
-        #   - Compound strength value
-        #   - Route of administration
-        #   - Dispenser
-        #   - Delivery device
-        compound: CompoundAR = compound_callback(self.compound_uid)
-        if compound:
-            if (
-                self.dosage_form_uid is not None
-                and self.dosage_form_uid not in compound.concept_vo.dosage_form_uids
-            ):
+        # Validate that each of these selections is actually defined on the selected library Medicinal Product:
+        #   - Dose value
+        medicinal_product: MedicinalProductAR = medicinal_product_callback(
+            self.medicinal_product_uid
+        )
+        if medicinal_product:
+            # Ensure that the provided CompoundAlias and MedicinalProduct both link to the same Compound
+            if medicinal_product.concept_vo.compound_uid != self.compound_uid:
                 raise BusinessLogicException(
-                    f"Selected pharmaceutical dosage form is not valid for compound '{compound.concept_vo.name}'."
-                )
-            if (
-                self.strength_value_uid is not None
-                and self.strength_value_uid
-                not in compound.concept_vo.strength_values_uids
-            ):
-                raise BusinessLogicException(
-                    f"Selected strength value is not valid for compound '{compound.concept_vo.name}'."
-                )
-            if (
-                self.route_of_administration_uid is not None
-                and self.route_of_administration_uid
-                not in compound.concept_vo.route_of_administration_uids
-            ):
-                raise BusinessLogicException(
-                    f"Selected route of administration is not valid for compound '{compound.concept_vo.name}'."
-                )
-            if (
-                self.dispensed_in_uid is not None
-                and self.dispensed_in_uid not in compound.concept_vo.dispensers_uids
-            ):
-                raise BusinessLogicException(
-                    f"Selected dispenser is not valid for compound '{compound.concept_vo.name}'."
-                )
-            if (
-                self.device_uid is not None
-                and self.device_uid not in compound.concept_vo.delivery_devices_uids
-            ):
-                raise BusinessLogicException(
-                    f"Selected delivery device is not valid for compound '{compound.concept_vo.name}'."
+                    f"Selected compound alias '{self.compound_alias_uid}' and medicinal product '{self.medicinal_product_uid}' must relate to the same compound"
                 )
 
 
@@ -257,7 +223,10 @@ class StudySelectionCompoundsAR:
         reason_for_missing_callback: Callable[[str], bool] = (lambda _: True),
         compound_exist_callback: Callable[[str], bool] = (lambda _: True),
         compound_alias_exist_callback: Callable[[str], bool] = (lambda _: True),
-        compound_callback: Callable[[str], CompoundAR] = (lambda _: None),
+        medicinal_product_exist_callback: Callable[[str], bool] = (lambda _: True),
+        medicinal_product_callback: Callable[[str], MedicinalProductAR] = (
+            lambda _: None
+        ),
     ) -> None:
         """
         Adding a new study compound to the _study_compound_selection
@@ -265,6 +234,8 @@ class StudySelectionCompoundsAR:
         :param reason_for_missing_callback:
         :param compound_exist_callback:
         :param compound_alias_exist_callback:
+        :param medicinal_product_exist_callback:
+        :param medicinal_product_callback:
         :return:
         """
         # validate VO before adding
@@ -273,7 +244,8 @@ class StudySelectionCompoundsAR:
             reason_for_missing_callback=reason_for_missing_callback,
             compound_exist_callback=compound_exist_callback,
             compound_alias_exist_callback=compound_alias_exist_callback,
-            compound_callback=compound_callback,
+            medicinal_product_exist_callback=medicinal_product_exist_callback,
+            medicinal_product_callback=medicinal_product_callback,
         )
         self._study_compounds_selection = self._study_compounds_selection + [
             study_compound_selection
@@ -358,6 +330,7 @@ class StudySelectionCompoundsAR:
         reason_for_missing_callback: Callable[[str], bool] = (lambda _: True),
         compound_exist_callback: Callable[[str], bool] = (lambda _: True),
         compound_alias_exist_callback: Callable[[str], bool] = (lambda _: True),
+        medicinal_product_exist_callback: Callable[[str], bool] = (lambda _: True),
     ) -> None:
         """
         Used when a study compound is updated
@@ -371,6 +344,7 @@ class StudySelectionCompoundsAR:
             reason_for_missing_callback=reason_for_missing_callback,
             compound_exist_callback=compound_exist_callback,
             compound_alias_exist_callback=compound_alias_exist_callback,
+            medicinal_product_exist_callback=medicinal_product_exist_callback,
         )
         updated_selection = []
         for selection in self.study_compounds_selection:

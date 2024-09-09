@@ -20,6 +20,9 @@ API_BASE_URL = load_env("API_BASE_URL")
 MDR_MIGRATION_ACTIVITY_INSTANCE_CLASS_MODEL_RELS = load_env(
     "MDR_MIGRATION_ACTIVITY_INSTANCE_CLASS_MODEL_RELS"
 )
+MDR_MIGRATION_ACTIVITY_ITEM_CLASS_MODEL_RELS = load_env(
+    "MDR_MIGRATION_ACTIVITY_ITEM_CLASS_MODEL_RELS"
+)
 MDR_MIGRATION_SPONSOR_MODEL_DIRECTORY = load_env(
     "MDR_MIGRATION_SPONSOR_MODEL_DIRECTORY"
 )
@@ -158,7 +161,7 @@ class SponsorModels(BaseImporter):
                 )
                 if activity_item_class_uid is not None:
                     variable_class_uid = self.parse_variable_class_name(
-                        row[headers.index("column")]
+                        row[headers.index("variable_class")]
                     )
                     # There are some duplicates in the CSV file
                     if variable_class_uid not in grouped_items[activity_item_class_uid]:
@@ -458,6 +461,10 @@ class SponsorModels(BaseImporter):
                 MDR_MIGRATION_ACTIVITY_INSTANCE_CLASS_MODEL_RELS,
                 session,
             )
+            await self.handle_activity_item_class_relations(
+                MDR_MIGRATION_ACTIVITY_ITEM_CLASS_MODEL_RELS,
+                session,
+            )
 
             # For each subfolder in the sponsor models folder, import the corresponding sponsor model
             for root, dirs, _ in os.walk(MDR_MIGRATION_SPONSOR_MODEL_DIRECTORY):
@@ -490,13 +497,6 @@ class SponsorModels(BaseImporter):
 
                     continue_import = await self.handle_sponsor_model(session)
                     if continue_import:
-                        await self.handle_activity_item_class_relations(
-                            os.path.join(
-                                sponsor_model_path,
-                                MDR_MIGRATION_SPONSOR_MODEL_VARIABLE_CLASSES,
-                            ),
-                            session,
-                        )
                         await self.handle_dataset_classes(
                             os.path.join(
                                 sponsor_model_path,

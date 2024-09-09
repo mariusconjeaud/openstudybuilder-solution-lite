@@ -15,7 +15,7 @@ class ProjectAR:
     _uid: str
     _project_number: str
     name: str
-    _clinical_programme_uid: str
+    clinical_programme_uid: str
     description: str | None = None
 
     @property
@@ -25,10 +25,6 @@ class ProjectAR:
     @property
     def project_number(self) -> str:
         return self._project_number
-
-    @property
-    def clinical_programme_uid(self) -> str:
-        return self._clinical_programme_uid
 
     @staticmethod
     def from_input_values(
@@ -53,6 +49,6 @@ class ProjectAR:
             _uid=uid,
             _project_number=normalize_string(project_number),
             name=normalize_string(name),
-            _clinical_programme_uid=normalize_string(clinical_programme_uid),
+            clinical_programme_uid=normalize_string(clinical_programme_uid),
             description=normalize_string(description),
         )

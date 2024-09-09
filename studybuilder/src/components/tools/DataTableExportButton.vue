@@ -1,24 +1,33 @@
 <template>
   <v-menu rounded offset-y>
     <template #activator="{ props }">
-      <v-btn
-        size="small"
-        color="nnGreen1"
-        class="ml-2 white--text"
-        v-bind="props"
-        :title="$t('DataTableExportButton.export')"
-        data-cy="table-export-button"
-        icon="mdi-download-outline"
-      />
+      <slot name="button" :props="props">
+        <v-btn
+          class="ml-2"
+          size="small"
+          variant="outlined"
+          color="nnBaseBlue"
+          v-bind="props"
+          :title="$t('DataTableExportButton.export')"
+          data-cy="table-export-button"
+          icon="mdi-download-outline"
+        />
+      </slot>
     </template>
     <v-list>
       <v-list-item
         v-for="(format, index) in downloadFormats"
         :key="index"
         link
+        color="nnBaseBlue"
         @click="exportContent(format)"
       >
-        <v-list-item-title>{{ format.name }}</v-list-item-title>
+        <v-list-item-title class="nnBaseBlue">
+          <v-icon color="nnBaseBlue" class="mr-2">
+            mdi-download-outline
+          </v-icon>
+          {{ format.name }}
+        </v-list-item-title>
       </v-list-item>
     </v-list>
   </v-menu>
@@ -53,6 +62,11 @@ export default {
       type: Array,
       required: false,
       default: () => [],
+    },
+    filters: {
+      type: String,
+      required: false,
+      default: null,
     },
   },
   emits: ['export'],
@@ -210,6 +224,9 @@ export default {
       const params = { ...this.dataUrlParams }
       if (params.page_size === undefined) {
         params.page_size = 0
+      }
+      if (this.filters) {
+        params.filters = this.filters
       }
       repository
         .get(this.dataUrl, { params, headers, responseType: 'blob' })

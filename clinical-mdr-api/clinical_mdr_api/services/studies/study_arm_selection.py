@@ -371,12 +371,16 @@ class StudyArmSelectionService(StudySelectionMixin):
             repos.close()
 
     def _transform_each_history_to_response_model(
-        self, study_selection_history: SelectionHistoryArm, study_uid: str
+        self,
+        study_selection_history: SelectionHistoryArm,
+        study_uid: str,
+        effective_date: datetime = None,
     ) -> models.StudySelectionArm:
         return models.StudySelectionArm.from_study_selection_history(
             study_selection_history=study_selection_history,
             study_uid=study_uid,
             get_ct_term_arm_type=self._find_by_uid_or_raise_not_found,
+            effective_date=effective_date,
         )
 
     @db.transaction
@@ -402,10 +406,25 @@ class StudyArmSelectionService(StudySelectionMixin):
                 for selection in selection_history:
                     if selection.study_selection_uid == i_unique:
                         ith_selection_history.append(selection)
-                # get the versions and compare
+
+                # Extract start dates from the selection history
+                start_dates = [history.start_date for history in ith_selection_history]
+
+                # Extract effective dates for each version based on the start dates
+                effective_dates = (
+                    self._extract_multiple_version_study_standards_effective_date(
+                        study_uid=study_uid, list_of_start_dates=start_dates
+                    )
+                )
+
+                # Transform each history to the response model and convert to dictionary format
                 versions = [
-                    self._transform_each_history_to_response_model(_, study_uid).dict()
-                    for _ in ith_selection_history
+                    self._transform_each_history_to_response_model(
+                        history, study_uid, effective_date
+                    ).dict()
+                    for history, effective_date in zip(
+                        ith_selection_history, effective_dates
+                    )
                 ]
                 if not data:
                     data = calculate_diffs(versions, models.StudySelectionArmVersion)
@@ -423,12 +442,27 @@ class StudyArmSelectionService(StudySelectionMixin):
     ) -> list[models.StudySelectionArmVersion]:
         repos = self._repos
         try:
-            selection_history = repos.study_arm_repository.find_selection_history(
+            selection_history: list[
+                models.StudySelectionArmVersion
+            ] = repos.study_arm_repository.find_selection_history(
                 study_uid, study_selection_uid
             )
+            # Extract start dates from the selection history
+            start_dates = [history.start_date for history in selection_history]
+
+            # Extract effective dates for each version based on the start dates
+            effective_dates = (
+                self._extract_multiple_version_study_standards_effective_date(
+                    study_uid=study_uid, list_of_start_dates=start_dates
+                )
+            )
+
+            # Transform each history to the response model and convert to dictionary format
             versions = [
-                self._transform_each_history_to_response_model(_, study_uid).dict()
-                for _ in selection_history
+                self._transform_each_history_to_response_model(
+                    history, study_uid, effective_date
+                ).dict()
+                for history, effective_date in zip(selection_history, effective_dates)
             ]
             data = calculate_diffs(versions, models.StudySelectionArmVersion)
             return data

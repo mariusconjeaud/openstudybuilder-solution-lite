@@ -682,7 +682,7 @@
         }
     },
     {
-        "name": "Test cannot add anon-compatible ODM Vendor Attribute to an ODM Form",
+        "name": "Test cannot add a non-compatible ODM Vendor Attribute to an ODM Form",
         "request": {
             "headers": {},
             "method": "POST",
@@ -704,6 +704,34 @@
                 "message": "Trying to add non-compatible ODM Vendor:\n\n{'odm_vendor_attribute5': ['NonCompatibleVendor']}",
                 "time": "2022-03-07T12:30:50.195156",
                 "path": "http://testserver/concepts/odms/forms/OdmForm_000001/vendor-attributes",
+                "method": "POST",
+                "type": "BusinessLogicException"
+            }
+        }
+    },
+    {
+        "name": "Test cannot add a non-compatible ODM Vendor Element to an ODM Form",
+        "request": {
+            "headers": {},
+            "method": "POST",
+            "request": [
+                {
+                    "uid": "odm_vendor_element4",
+                    "value": "value"
+                }
+            ],
+            "url": "concepts/odms/forms/OdmForm_000001/vendor-elements"
+        },
+        "response": {
+            "code": 400,
+            "headers": {
+                "content-length": "459",
+                "content-type": "application/json"
+            },
+            "result": {
+                "message": "Trying to add non-compatible ODM Vendor:\n\n{'odm_vendor_element4': ['NonCompatibleVendor']}",
+                "time": "2022-03-07T12:30:50.195156",
+                "path": "http://testserver/concepts/odms/forms/OdmForm_000001/vendor-elements",
                 "method": "POST",
                 "type": "BusinessLogicException"
             }

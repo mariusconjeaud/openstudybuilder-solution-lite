@@ -705,12 +705,10 @@ def test_study_metadata_listing_api(api_client):
 
 
 def test_study_metadata_listing_with_subpart(api_client):
-    p_study_number = "5555"
     subpart_acronym = "test"
     # create parent study
-    parent_study = TestUtils.create_study(
-        number=p_study_number, project_number=project_id
-    )
+    parent_study = TestUtils.create_study(project_number=project_id)
+    p_study_number = parent_study.current_metadata.identification_metadata.study_number
     # connect study to parent
     response = api_client.patch(
         f"/studies/{study_uid}",
@@ -756,7 +754,7 @@ def test_study_metadata_listing_with_subpart(api_client):
 
     expected_output = {
         "api_ver": "TBA",
-        "study_id": "123-5555test",
+        "study_id": f"123-{p_study_number}test",
         "study_ver": 2.0,
         "specified_dt": "2099-12-30",
         "request_dt": "2024-04-05T09:55:55",

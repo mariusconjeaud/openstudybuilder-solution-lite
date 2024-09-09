@@ -19,7 +19,8 @@
                 "codelists": [
                     {
                         "codelist_uid": "editable_cr",
-                        "order": 5
+                        "order": 5,
+                        "library_name": "Sponsor"
                     }
                 ],
                 "concept_id": null,
@@ -59,7 +60,8 @@
                 "codelists": [
                     {
                         "codelist_uid": "editable_cr",
-                        "order": 5
+                        "order": 5,
+                        "library_name": "Sponsor"
                     }
                 ],
                 "sponsor_preferred_name": "sponsor_preferred_name",
@@ -71,6 +73,8 @@
                 "status": "Draft",
                 "version": "0.2",
                 "user_initials": "unknown-user",
+                "queried_effective_date": null,
+                "date_conflict": false,
                 "possible_actions": [
                     "approve",
                     "delete",
@@ -96,7 +100,8 @@
                 "codelists": [
                     {
                         "codelist_uid": "editable_cr",
-                        "order": 5
+                        "order": 5,
+                        "library_name": "Sponsor"
                     }
                 ],
                 "sponsor_preferred_name": "sponsor_preferred_name",
@@ -108,6 +113,8 @@
                 "status": "Final",
                 "version": "1.0",
                 "user_initials": "unknown-user",
+                "queried_effective_date": null,
+                "date_conflict": false,
                 "possible_actions": [
                     "inactivate",
                     "new_version"
@@ -132,7 +139,8 @@
                 "codelists": [
                     {
                         "codelist_uid": "editable_cr",
-                        "order": 5
+                        "order": 5,
+                        "library_name": "Sponsor"
                     }
                 ],
                 "sponsor_preferred_name": "sponsor_preferred_name",
@@ -144,6 +152,8 @@
                 "status": "Retired",
                 "version": "1.0",
                 "user_initials": "unknown-user",
+                "queried_effective_date": null,
+                "date_conflict": false,
                 "possible_actions": [
                     "reactivate"
                 ]
@@ -167,7 +177,8 @@
                 "codelists": [
                     {
                         "codelist_uid": "editable_cr",
-                        "order": 5
+                        "order": 5,
+                        "library_name": "Sponsor"
                     }
                 ],
                 "sponsor_preferred_name": "sponsor_preferred_name",
@@ -179,6 +190,8 @@
                 "status": "Final",
                 "version": "1.0",
                 "user_initials": "unknown-user",
+                "queried_effective_date": null,
+                "date_conflict": false,
                 "possible_actions": [
                     "inactivate",
                     "new_version"
@@ -203,7 +216,8 @@
                 "codelists": [
                     {
                         "codelist_uid": "editable_cr",
-                        "order": 5
+                        "order": 5,
+                        "library_name": "Sponsor"
                     }
                 ],
                 "sponsor_preferred_name": "sponsor_preferred_name",
@@ -215,6 +229,8 @@
                 "status": "Draft",
                 "version": "1.1",
                 "user_initials": "unknown-user",
+                "queried_effective_date": null,
+                "date_conflict": false,
                 "possible_actions": [
                     "approve",
                     "edit"

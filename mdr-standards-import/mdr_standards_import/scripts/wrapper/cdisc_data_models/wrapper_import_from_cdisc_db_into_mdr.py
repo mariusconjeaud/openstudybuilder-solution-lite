@@ -1,8 +1,23 @@
+"""
+This script serves as the entry point for the pipeline step 'Import Data Models from CDISC DB into MDR DB'.
+
+It is meant to be called e.g. via:
+
+> `python -m pipenv run import_data_models_from_cdisc_db_into_mdr <user initials> <effective date>`
+
+The script expects the following parameters:
+
+1. <user initials> - The username of the person who started the process: String, e.g. "MT", "TKQT", ...
+2. <effective date> - The CDISC effective date to be imported.
+"""
+
 from os import environ, path
 from mdr_standards_import.scripts.import_scripts.cdisc_data_models.import_into_mdr_db import (
     import_from_cdisc_db_into_mdr,
 )
 from mdr_standards_import.scripts.utils import (
+    get_user_initials,
+    get_directory_name,
     get_cdisc_neo4j_driver,
     get_mdr_neo4j_driver,
     get_ordered_data_model_versions,
@@ -103,3 +118,7 @@ def _get_data_model_types(tx):
     ).data()
 
     return types
+
+
+if __name__ == "__main__":
+    wrapper_import_cdisc_data_models_from_cdisc_db_into_mdr(get_user_initials(1), get_directory_name(2))

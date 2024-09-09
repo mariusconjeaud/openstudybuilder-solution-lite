@@ -233,9 +233,17 @@
           location="bottom"
         >
           <template #activator="{ props }">
-            <v-badge v-bind="props" color="warning" icon="mdi-exclamation" bordered inline />
+            <v-badge
+              v-bind="props"
+              color="warning"
+              icon="mdi-exclamation"
+              bordered
+              inline
+            />
           </template>
-          <span>{{ $t('EligibilityCriteriaTable.criteria_length_warning') }}</span>
+          <span>{{
+            $t('EligibilityCriteriaTable.criteria_length_warning')
+          }}</span>
         </v-tooltip>
       </p>
       <div class="pa-4 bg-parameterBackground">
@@ -298,8 +306,8 @@ export default {
     },
     maxTemplateLength: {
       type: Boolean,
-      default: false
-    }
+      default: false,
+    },
   },
   emits: ['update:modelValue'],
   data() {
@@ -462,7 +470,7 @@ export default {
               } else {
                 const valueNames = this.parameters[
                   paramIndex
-                ].selectedValues.map((v) => v.name.charAt(0).toUpperCase() + v.name.slice(1))
+                ].selectedValues.map((v) => v.name)
                 const concatenation = this.parameters[paramIndex]
                   .selectedSeparator
                   ? valueNames.join(

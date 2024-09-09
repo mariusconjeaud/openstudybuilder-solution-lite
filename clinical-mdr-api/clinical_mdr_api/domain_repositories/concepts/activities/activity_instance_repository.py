@@ -49,6 +49,9 @@ from clinical_mdr_api.exceptions import BusinessLogicException
 from clinical_mdr_api.models.concepts.activities.activity_instance import (
     ActivityInstance,
 )
+from clinical_mdr_api.models.concepts.unit_definitions.unit_definition import (
+    UnitDefinitionSimpleModel,
+)
 
 
 class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
@@ -298,7 +301,7 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
             unit_definitions = []
             for unit in activity_item.has_unit_definition.all():
                 unit_definitions.append(
-                    LibraryItem(
+                    UnitDefinitionSimpleModel(
                         uid=unit.uid,
                         name=unit.has_version.single().name,
                     )
@@ -377,6 +380,107 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
                 ],
                 activity_items=activity_item_vos,
                 activity_name=activity_name,
+            ),
+            library=LibraryVO.from_input_values_2(
+                library_name=library.name,
+                is_library_editable_callback=(lambda _: library.is_editable),
+            ),
+            item_metadata=self._library_item_metadata_vo_from_relation(relationship),
+        )
+
+    def _create_ar(
+        self,
+        root: ActivityInstanceRoot,
+        library: Library | None,
+        relationship: VersionRelationship,
+        value: ActivityInstanceValue,
+        **_kwargs,
+    ) -> ActivityInstanceAR:
+        activity_instance_objects = _kwargs["activity_instance_root"]
+        activity_instance_class = activity_instance_objects["activity_instance_class"]
+        activity_item_vos = []
+        for activity_item in activity_instance_objects["activity_items"]:
+            ct_terms = []
+            unit_definitions = []
+            for unit in activity_item["unit_definitions"]:
+                unit_definitions.append(
+                    UnitDefinitionSimpleModel(
+                        uid=unit["uid"],
+                        name=unit["name"],
+                    )
+                )
+            for term in activity_item["ct_terms"]:
+                ct_terms.append(
+                    LibraryItem(
+                        uid=term["uid"],
+                        name=term["name"],
+                    )
+                )
+            activity_item_vos.append(
+                ActivityItemVO.from_repository_values(
+                    activity_item_class_uid=activity_item["activity_item_class_uid"],
+                    activity_item_class_name=activity_item["activity_item_class_name"],
+                    ct_terms=ct_terms,
+                    unit_definitions=unit_definitions,
+                )
+            )
+        activity_groupings = []
+        for activity_grouping in activity_instance_objects[
+            "activity_instance_groupings"
+        ]:
+            for activity_valid_group in activity_grouping[
+                "activity_instance_valid_groups"
+            ]:
+                activity_groupings.append(
+                    {
+                        "activity_group_uid": activity_valid_group["group_uid"],
+                        "activity_subgroup_uid": activity_valid_group["subgroup_uid"],
+                        "activity_uid": activity_grouping[
+                            "activity_instance_grouping_activity_uid"
+                        ],
+                    }
+                )
+        return self.aggregate_class.from_repository_values(
+            uid=root.uid,
+            concept_vo=self.value_object_class.from_repository_values(
+                nci_concept_id=value.nci_concept_id,
+                name=value.name,
+                name_sentence_case=value.name_sentence_case,
+                activity_instance_class_uid=activity_instance_class[
+                    "activity_instance_class_uid"
+                ],
+                activity_instance_class_name=activity_instance_class[
+                    "activity_instance_class_name"
+                ],
+                definition=value.definition,
+                abbreviation=value.abbreviation,
+                topic_code=value.topic_code,
+                adam_param_code=value.adam_param_code,
+                is_required_for_activity=value.is_required_for_activity
+                if value.is_required_for_activity
+                else False,
+                is_default_selected_for_activity=value.is_default_selected_for_activity
+                if value.is_default_selected_for_activity
+                else False,
+                is_data_sharing=value.is_data_sharing
+                if value.is_data_sharing
+                else False,
+                is_legacy_usage=value.is_legacy_usage
+                if value.is_legacy_usage
+                else False,
+                is_derived=value.is_derived if value.is_derived else False,
+                legacy_description=value.legacy_description,
+                activity_groupings=[
+                    ActivityInstanceGroupingVO(
+                        activity_group_uid=activity_grouping.get("activity_group_uid"),
+                        activity_subgroup_uid=activity_grouping.get(
+                            "activity_subgroup_uid"
+                        ),
+                        activity_uid=activity_grouping.get("activity_uid"),
+                    )
+                    for activity_grouping in activity_groupings
+                ],
+                activity_items=activity_item_vos,
             ),
             library=LibraryVO.from_input_values_2(
                 library_name=library.name,

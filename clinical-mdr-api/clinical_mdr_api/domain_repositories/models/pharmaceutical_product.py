@@ -22,6 +22,7 @@ from clinical_mdr_api.domain_repositories.models.generic import (
 
 class Ingredient(ClinicalMdrNode):
     external_id = StringProperty()
+    formulation_name = StringProperty()
 
     has_substance = RelationshipTo(
         ActiveSubstanceRoot, "HAS_SUBSTANCE", cardinality=One, model=ClinicalMdrRel
@@ -45,7 +46,6 @@ class Ingredient(ClinicalMdrNode):
 
 class IngredientFormulation(ClinicalMdrNode):
     external_id = StringProperty()
-    name = StringProperty()
 
     has_ingredient = RelationshipTo(
         Ingredient, "HAS_INGREDIENT", cardinality=ZeroOrMore, model=ClinicalMdrRel

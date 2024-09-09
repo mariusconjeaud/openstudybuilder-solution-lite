@@ -129,7 +129,11 @@ def create_term_name_aggregate_instances_from_cypher_result(
     codelists = []
     if codelist_uid:
         codelists.append(
-            CTTermCodelistVO(codelist_uid=codelist_uid, order=term_dict.get("order"))
+            CTTermCodelistVO(
+                codelist_uid=codelist_uid,
+                order=term_dict.get("order"),
+                library_name=term_dict.get("codelist_library_name"),
+            )
         )
 
     library_name = term_dict.get("library_name")
@@ -190,7 +194,11 @@ def create_term_attributes_aggregate_instances_from_cypher_result(
     codelists = []
     if codelist_uid:
         codelists.append(
-            CTTermCodelistVO(codelist_uid=codelist_uid, order=term_dict.get("order"))
+            CTTermCodelistVO(
+                codelist_uid=codelist_uid,
+                order=term_dict.get("order"),
+                library_name=term_dict.get("codelist_library_name"),
+            )
         )
 
     term_attributes_ar = CTTermAttributesAR.from_repository_values(

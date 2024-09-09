@@ -27,7 +27,7 @@ COPY ./ ./
 
 ## Delete tests and byte-code compile application
 RUN echo "Building build-stage" 1>&2 ; \
-    rm -r clinical_mdr_api/tests \
+    rm -r clinical_mdr_api/tests consumer_api/tests \
     && python -m compileall -f -j 0 .
 
 
@@ -82,12 +82,16 @@ COPY ./ ./
 FROM ${TARGET}-stage as final
 
 ## Preferred to configure Uvicorn using env vars with UVICORN_ prefix, default values from build arguments
+ARG UVICORN_APP="clinical_mdr_api.main:app"
 ARG UVICORN_HOST="0.0.0.0"
 ARG UVICORN_PORT="8000"
 ARG UVICORN_ROOT_PATH="/"
-ENV UVICORN_PORT="$UVICORN_PORT" \
+ARG HEALTHCHECK_PATH="/system/healthcheck"
+ENV UVICORN_APP="$UVICORN_APP" \
+    UVICORN_PORT="$UVICORN_PORT" \
     UVICORN_HOST="$UVICORN_HOST" \
-    UVICORN_ROOT_PATH="$UVICORN_ROOT_PATH"
+    UVICORN_ROOT_PATH="$UVICORN_ROOT_PATH" \
+    HEALTHCHECK_PATH="$HEALTHCHECK_PATH"
 
 ## Version information
 ARG BUILD_NUMBER
@@ -109,8 +113,8 @@ USER $USER
 ## but failures does not count within `start-period` seconds of start.
 HEALTHCHECK --start-period=60s --timeout=3s --interval=10s --retries=2 CMD \
     curl --fail --silent --show-error --max-time 2 \
-    "http://localhost:$UVICORN_PORT/system/healthcheck" \
+    "http://localhost:${UVICORN_PORT}${HEALTHCHECK_PATH}" \
     > /dev/null || exit 1
 
 ## Preferred to configure Uvicorn using env vars with UVICORN_ prefix instead of cmd-line arguments
-CMD pipenv run uvicorn clinical_mdr_api.main:app
+CMD pipenv run uvicorn "$UVICORN_APP"

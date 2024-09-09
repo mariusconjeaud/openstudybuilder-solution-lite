@@ -1,77 +1,126 @@
 <template>
   <NNTable
+    ref="table"
     :headers="headers"
     :items="items"
     :items-length="total"
     only-text-search
     hide-default-switches
     item-value="name"
+    export-data-url="clinical-programmes"
+    export-object-label="ClinicalProgrammes"
     @filter="fetchProgrammes"
   >
     <template #actions="">
       <slot name="extraActions" />
       <v-btn
+        class="ml-2"
         size="small"
-        color="primary"
+        variant="outlined"
+        color="nnBaseBlue"
         data-cy="add-clinical-programme"
-        :title="$t('ClinicalProgrammeForm.title')"
+        :title="$t('ClinicalProgrammeForm.add_title')"
         icon="mdi-plus"
         @click.stop="showForm"
       />
     </template>
+    <template #[`item.actions`]="{ item }">
+      <ActionsMenu :actions="actions" :item="item" />
+    </template>
   </NNTable>
-  <ClinicalProgrammeForm :open="showClinicalProgrammeForm" @close="closeForm" />
+  <ClinicalProgrammeForm
+    :open="showClinicalProgrammeForm"
+    :programme-uid="selectedProgramme ? selectedProgramme.uid : ''"
+    @reload="table.filterTable()"
+    @close="closeForm"
+  />
+  <ConfirmDialog ref="confirm" :text-cols="6" :action-cols="5" />
 </template>
 
-<script>
+<script setup>
+import { inject, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
+import ActionsMenu from '@/components/tools/ActionsMenu.vue'
+import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
 import NNTable from '@/components/tools/NNTable.vue'
 import programmes from '@/api/clinicalProgrammes'
 import ClinicalProgrammeForm from '@/components/library/ClinicalProgrammeForm.vue'
 import filteringParameters from '@/utils/filteringParameters'
 
-export default {
-  components: {
-    NNTable,
-    ClinicalProgrammeForm,
+const { t } = useI18n()
+const eventBusEmit = inject('eventBusEmit')
+const roles = inject('roles')
+
+const actions = [
+  {
+    label: t('_global.edit'),
+    icon: 'mdi-pencil-outline',
+    iconColor: 'primary',
+    accessRole: roles.LIBRARY_WRITE,
+    click: editProgramme,
   },
-  data() {
-    return {
-      headers: [{ title: this.$t('ClinicalProgrammes.name'), key: 'name' }],
-      items: [],
-      options: {},
-      total: 0,
-      filters: '',
-      showClinicalProgrammeForm: false,
-    }
+  {
+    label: t('_global.delete'),
+    icon: 'mdi-delete-outline',
+    iconColor: 'error',
+    accessRole: roles.LIBRARY_WRITE,
+    click: deleteProgramme,
   },
-  watch: {
-    options() {
-      this.fetchProgrammes()
-    },
-  },
-  methods: {
-    fetchProgrammes(filters, options, filtersUpdated) {
-      if (!filters && this.filters) {
-        filters = this.filters
-      }
-      const params = filteringParameters.prepareParameters(
-        options,
-        filters,
-        filtersUpdated
-      )
-      this.filters = filters
-      programmes.get(params).then((resp) => {
-        this.items = resp.data.items
-        this.total = resp.data.total
-      })
-    },
-    showForm() {
-      this.showClinicalProgrammeForm = true
-    },
-    closeForm() {
-      this.showClinicalProgrammeForm = false
-      this.fetchProgrammes()
-    },
-  },
+]
+
+const headers = [
+  { title: '', key: 'actions', width: '1%' },
+  { title: t('ClinicalProgrammes.name'), key: 'name' },
+]
+
+const items = ref([])
+const total = ref(0)
+const showClinicalProgrammeForm = ref(false)
+const selectedProgramme = ref(null)
+const confirm = ref()
+const table = ref()
+
+function fetchProgrammes(filters, options, filtersUpdated) {
+  const params = filteringParameters.prepareParameters(
+    options,
+    filters,
+    filtersUpdated
+  )
+  programmes.get(params).then((resp) => {
+    items.value = resp.data.items
+    total.value = resp.data.total
+  })
+}
+
+function showForm() {
+  showClinicalProgrammeForm.value = true
+}
+
+function closeForm() {
+  showClinicalProgrammeForm.value = false
+  selectedProgramme.value = null
+}
+
+function editProgramme(item) {
+  selectedProgramme.value = item
+  showClinicalProgrammeForm.value = true
+}
+
+async function deleteProgramme(item) {
+  const options = { type: 'warning' }
+  const programme = item.name
+  if (
+    await confirm.value.open(
+      t('ClinicalProgrammes.confirm_delete', { programme }),
+      options
+    )
+  ) {
+    await programmes.delete(item.uid)
+    eventBusEmit('notification', {
+      msg: t('ClinicalProgrammes.delete_success'),
+      type: 'success',
+    })
+    table.value.filterTable()
+  }
 }
 </script>

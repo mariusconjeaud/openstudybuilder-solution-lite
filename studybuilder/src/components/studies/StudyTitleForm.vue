@@ -111,7 +111,7 @@ export default {
     return {
       form: {},
       headers: [
-        { title: '', key: 'actions', width: '5%' },
+        { title: '', key: 'actions', width: '1%' },
         {
           title: this.$t('StudyTitleForm.project_id'),
           key: 'current_metadata.identification_metadata.project_number',

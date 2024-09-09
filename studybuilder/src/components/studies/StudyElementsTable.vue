@@ -1,6 +1,7 @@
 <template>
   <div>
     <NNTable
+      ref="table"
       :headers="headers"
       :items="studyElements"
       :items-length="total"
@@ -34,6 +35,12 @@
           <span>&nbsp;</span>
         </v-chip>
       </template>
+      <template #[`item.element_type.sponsor_preferred_name`]="{ item }">
+        <CTTermDisplay :term="item.element_type" />
+      </template>
+      <template #[`item.element_subtype.sponsor_preferred_name`]="{ item }">
+        <CTTermDisplay :term="item.element_subtype" />
+      </template>
       <template #[`item.start_date`]="{ item }">
         {{ $filters.date(item.start_date) }}
       </template>
@@ -47,8 +54,10 @@
       </template>
       <template #actions="">
         <v-btn
+          class="ml-2"
           size="small"
-          color="primary"
+          variant="outlined"
+          color="nnBaseBlue"
           :title="$t('StudyElements.add_element')"
           :disabled="
             !checkPermission($roles.STUDY_WRITE) ||
@@ -74,6 +83,7 @@
         :title="studyElementHistoryTitle"
         :headers="headers"
         :items="elementHistoryItems"
+        :items-total="elementHistoryItems.length"
         @close="closeElementHistory"
       />
     </v-dialog>
@@ -92,6 +102,7 @@
 <script>
 import ActionsMenu from '@/components/tools/ActionsMenu.vue'
 import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
+import CTTermDisplay from '@/components/tools/CTTermDisplay.vue'
 import NNTable from '@/components/tools/NNTable.vue'
 import StudyElementsForm from './StudyElementsForm.vue'
 import arms from '@/api/arms'
@@ -106,6 +117,7 @@ import SelectionOrderUpdateForm from '@/components/studies/SelectionOrderUpdateF
 export default {
   components: {
     ConfirmDialog,
+    CTTermDisplay,
     NNTable,
     StudyElementsForm,
     ActionsMenu,
@@ -157,7 +169,7 @@ export default {
         },
       ],
       headers: [
-        { title: '', key: 'actions', width: '5%' },
+        { title: '', key: 'actions', width: '1%' },
         { title: '#', key: 'order', width: '5%' },
         {
           title: this.$t('StudyElements.el_type'),
@@ -245,7 +257,7 @@ export default {
           this.eventBusEmit('notification', {
             msg: this.$t('StudyElements.el_deleted'),
           })
-          this.getStudyElements()
+          this.$refs.table.filterTable()
         })
     },
     editStudyElement(item) {
@@ -255,7 +267,7 @@ export default {
     closeForm() {
       this.activeElement = null
       this.showForm = false
-      this.getStudyElements()
+      this.$refs.table.filterTable()
     },
     async openElementHistory(element) {
       this.selectedElement = element
@@ -286,7 +298,7 @@ export default {
           value
         )
         .then(() => {
-          this.getStudyElements()
+          this.$refs.table.filterTable()
           this.closeOrderForm()
           this.eventBusEmit('notification', {
             msg: this.$t('_global.order_updated'),

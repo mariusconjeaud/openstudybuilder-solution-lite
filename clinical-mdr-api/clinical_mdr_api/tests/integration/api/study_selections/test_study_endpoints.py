@@ -10,12 +10,14 @@ Tests for /studies/{uid}/study-endpoints endpoints
 # which pylint interprets as unused arguments
 
 import logging
+from datetime import datetime, timezone
 from unittest import mock
 
 import pytest
 from fastapi.testclient import TestClient
 from neomodel import db
 
+from clinical_mdr_api import config as settings
 from clinical_mdr_api.domain_repositories.models.syntax import (
     EndpointRoot,
     EndpointTemplateRoot,
@@ -25,7 +27,11 @@ from clinical_mdr_api.domain_repositories.models.syntax import (
     TimeframeTemplateRoot,
 )
 from clinical_mdr_api.main import app
+from clinical_mdr_api.models.controlled_terminologies import ct_term
 from clinical_mdr_api.models.study_selections.study import Study
+from clinical_mdr_api.tests.integration.api.study_selections.utils import (
+    ct_term_retrieval_at_date_test_common,
+)
 from clinical_mdr_api.tests.integration.utils.api import (
     drop_db,
     inject_and_clear_db,
@@ -37,12 +43,17 @@ from clinical_mdr_api.tests.integration.utils.data_library import (
     STARTUP_STUDY_ENDPOINT_CYPHER,
     STARTUP_STUDY_OBJECTIVE_CYPHER,
 )
+from clinical_mdr_api.tests.integration.utils.factory_controlled_terminology import (
+    create_codelist,
+    get_catalogue_name_library_name,
+)
 from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 
 log = logging.getLogger(__name__)
 study: Study
 endpoint_uid: str
 study_objective_uid1: str
+initial_ct_term_study_standard_test: ct_term.CTTerm
 
 
 @pytest.fixture(scope="module")
@@ -57,9 +68,9 @@ def test_data():
     """Initialize test data"""
     db_name = "studyendpointapi"
     inject_and_clear_db(db_name)
-    inject_base_data()
+
     global study
-    study = TestUtils.create_study()
+    study = inject_base_data()
 
     db.cypher_query(CREATE_BASE_TEMPLATE_PARAMETER_TREE)
     db.cypher_query(STARTUP_CT_TERM_NAME_CYPHER)
@@ -71,6 +82,49 @@ def test_data():
     EndpointRoot.generate_node_uids_if_not_present()
     TimeframeTemplateRoot.generate_node_uids_if_not_present()
     TimeframeRoot.generate_node_uids_if_not_present()
+
+    catalogue_name, library_name = get_catalogue_name_library_name(use_test_utils=True)
+
+    ct_term_codelist_name = settings.STUDY_ENDPOINT_LEVEL_NAME
+    ct_term_name = ct_term_codelist_name + " Name For StudyStandardVersioning test"
+    ct_term_codelist = create_codelist(
+        ct_term_codelist_name, ct_term_codelist_name, catalogue_name, library_name
+    )
+    ct_term_start_date = datetime(2020, 3, 25, tzinfo=timezone.utc)
+
+    global initial_ct_term_study_standard_test
+    initial_ct_term_study_standard_test = TestUtils.create_ct_term(
+        codelist_uid=ct_term_codelist.codelist_uid,
+        name_submission_value=ct_term_name,
+        sponsor_preferred_name=ct_term_name,
+        order=2,
+        catalogue_name=catalogue_name,
+        library_name=library_name,
+        effective_date=ct_term_start_date,
+        approve=True,
+    )
+    cdisc_package_name = "SDTM CT 2020-03-27"
+    TestUtils.create_ct_package(
+        catalogue=catalogue_name,
+        name=cdisc_package_name,
+        approve_elements=False,
+        effective_date=datetime(2020, 3, 27, tzinfo=timezone.utc),
+    )
+    # patch the date of the latest HAS_VERSION FINAL relationship so it can be detected by the selected study_standard_Version
+    params = {
+        "uid": initial_ct_term_study_standard_test.term_uid,
+        "date": datetime(2020, 3, 26, tzinfo=timezone.utc),
+    }
+    db.cypher_query(
+        """
+                    MATCH (n)-[:HAS_NAME_ROOT]-(ct_name:CTTermNameRoot)-[has_version:HAS_VERSION]-(val) 
+                    where 
+                        n.uid =$uid AND EXISTS((ct_name)-[:LATEST]-(val)) 
+                        AND has_version.status ='Final' 
+                    SET has_version.start_date = $date
+                """,
+        params=params,
+    )
 
     yield
     drop_db(db_name)
@@ -326,12 +380,12 @@ def test_update_endpoint_library_items_of_relationship_to_value_nodes(api_client
     )
     res = response.json()
     assert response.status_code == 200
-    library_template_endpoint_uid = res["endpoint"]["endpoint_template"]["uid"]
+    library_template_endpoint_uid = res["endpoint"]["template"]["uid"]
     initial_endpoint_name = res["endpoint"]["name"]
 
     text_value_2_name = "2ndname"
     # change endpoint name and approve the version
-    response = api_client.post(
+    api_client.post(
         f"/endpoint-templates/{library_template_endpoint_uid}/versions",
         json={
             "change_description": "test change",
@@ -339,7 +393,7 @@ def test_update_endpoint_library_items_of_relationship_to_value_nodes(api_client
             "guidance_text": "don't know",
         },
     )
-    response = api_client.post(
+    api_client.post(
         f"/endpoint-templates/{library_template_endpoint_uid}/approvals?cascade=true"
     )
 
@@ -364,7 +418,7 @@ def test_update_endpoint_library_items_of_relationship_to_value_nodes(api_client
     res = response.json()
     assert response.status_code == 200
     assert res["accepted_version"] is True
-    assert res["endpoint"]["endpoint_template"]["name"] == initial_endpoint_name
+    assert res["endpoint"]["template"]["name"] == initial_endpoint_name
 
     # get all objectives
     response = api_client.get(
@@ -380,7 +434,7 @@ def test_update_endpoint_library_items_of_relationship_to_value_nodes(api_client
     )
     res = response.json()
     assert response.status_code == 200
-    assert res["endpoint"]["endpoint_template"]["name"] == text_value_2_name
+    assert res["endpoint"]["template"]["name"] == text_value_2_name
 
     # get all objectives
     response = api_client.get(
@@ -409,17 +463,17 @@ def test_update_timeframe_library_items_of_relationship_to_value_nodes(api_clien
     )
     res = response.json()
     assert response.status_code == 200
-    library_template_timeframe_uid = res["timeframe"]["timeframe_template"]["uid"]
-    initial_timeframe_name = res["timeframe"]["timeframe_template"]["name"]
+    library_template_timeframe_uid = res["timeframe"]["template"]["uid"]
+    initial_timeframe_name = res["timeframe"]["template"]["name"]
 
     text_value_2_name = "2ndname"
     # change endpoint name and approve the version
-    response = api_client.post(
+    api_client.post(
         f"/timeframe-templates/{library_template_timeframe_uid}/versions",
         json={"change_description": "test change", "name": text_value_2_name},
     )
     # change endpoint name and approve the version
-    response = api_client.patch(
+    api_client.patch(
         f"/timeframe-templates/{library_template_timeframe_uid}",
         json={
             "name": text_value_2_name,
@@ -427,7 +481,7 @@ def test_update_timeframe_library_items_of_relationship_to_value_nodes(api_clien
             "change_description": "Work in Progress",
         },
     )
-    response = api_client.post(
+    api_client.post(
         f"/timeframe-templates/{library_template_timeframe_uid}/approvals?cascade=true"
     )
     # check that the Library item has been changed
@@ -451,7 +505,7 @@ def test_update_timeframe_library_items_of_relationship_to_value_nodes(api_clien
     res = response.json()
     assert response.status_code == 200
     assert res["accepted_version"] is True
-    assert res["timeframe"]["timeframe_template"]["name"] == initial_timeframe_name
+    assert res["timeframe"]["template"]["name"] == initial_timeframe_name
 
     # get all objectives
     response = api_client.get(
@@ -467,7 +521,7 @@ def test_update_timeframe_library_items_of_relationship_to_value_nodes(api_clien
     )
     res = response.json()
     assert response.status_code == 200
-    assert res["timeframe"]["timeframe_template"]["name"] == text_value_2_name
+    assert res["timeframe"]["template"]["name"] == text_value_2_name
 
     # get all objectives
     response = api_client.get(
@@ -476,3 +530,180 @@ def test_update_timeframe_library_items_of_relationship_to_value_nodes(api_clien
     res = response.json()
     assert response.status_code == 200
     assert len(res) == counting_before_sync + 1
+
+
+def test_study_endpoint_version_selecting_ct_package(api_client):
+    """change the name of a CTTerm, and verify that the study selection is still set to the old name of the CTTerm when the Sponsor Standard version is set"""
+    study_selection_breadcrumb = "study-endpoints"
+    study_selection_ctterm_uid_input_key = "endpoint_level_uid"
+    study_selection_ctterm_keys = "endpoint_level"
+    study_selection_ctterm_uid_key = "term_uid"
+    study_selection_ctterm_name_key = "sponsor_preferred_name"
+    study_for_ctterm_versioning = TestUtils.create_study()
+
+    response = api_client.post(
+        f"/studies/{study_for_ctterm_versioning.uid}/{study_selection_breadcrumb}",
+        json={
+            "endpoint_uid": "Endpoint_000001",
+            study_selection_ctterm_uid_input_key: "term_root_final",
+        },
+    )
+    res = response.json()
+    assert response.status_code == 201
+    study_selection_uid_study_standard_test = res["study_endpoint_uid"]
+    assert res["order"] == 1
+    assert (
+        res[study_selection_ctterm_keys][study_selection_ctterm_uid_key]
+        == "term_root_final"
+    )
+
+    # edit ctterm
+    new_ctterm_name = "new ctterm name"
+    ctterm_uid = initial_ct_term_study_standard_test.term_uid
+    # change ctterm name and approve the version
+    response = api_client.post(
+        f"/ct/terms/{ctterm_uid}/names/versions",
+    )
+    assert response.status_code == 201
+    api_client.patch(
+        f"/ct/terms/{ctterm_uid}/names",
+        json={
+            "sponsor_preferred_name": new_ctterm_name,
+            "sponsor_preferred_name_sentence_case": new_ctterm_name,
+            "change_description": "string",
+        },
+    )
+    response = api_client.post(f"/ct/terms/{ctterm_uid}/names/approvals")
+    assert response.status_code == 201
+
+    # get study selection with ctterm latest
+    response = api_client.patch(
+        f"/studies/{study_for_ctterm_versioning.uid}/{study_selection_breadcrumb}/{study_selection_uid_study_standard_test}",
+        json={
+            study_selection_ctterm_uid_input_key: ctterm_uid,
+        },
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert (
+        res[study_selection_ctterm_keys][study_selection_ctterm_uid_key] == ctterm_uid
+    )
+    assert (
+        res[study_selection_ctterm_keys][study_selection_ctterm_name_key]
+        == new_ctterm_name
+    )
+
+    # get ct_packages
+    response = api_client.get(
+        "/ct/packages",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    ct_package_uid = res[0]["uid"]
+
+    # create study standard version
+    response = api_client.post(
+        f"/studies/{study_for_ctterm_versioning.uid}/study-standard-versions",
+        json={
+            "ct_package_uid": ct_package_uid,
+        },
+    )
+    res = response.json()
+    assert response.status_code == 201
+    assert res["ct_package"]["uid"] == ct_package_uid
+
+    # get study selection with previous ctterm
+    response = api_client.get(
+        f"/studies/{study_for_ctterm_versioning.uid}/{study_selection_breadcrumb}/{study_selection_uid_study_standard_test}",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert (
+        res[study_selection_ctterm_keys][study_selection_ctterm_uid_key] == ctterm_uid
+    )
+    assert (
+        res[study_selection_ctterm_keys][study_selection_ctterm_name_key]
+        == initial_ct_term_study_standard_test.sponsor_preferred_name
+    )
+
+    # patch the study selection so it will be seen on the audit trail the change of ctterm versions, because the selection of study standard version
+    response = api_client.patch(
+        f"/studies/{study_for_ctterm_versioning.uid}/{study_selection_breadcrumb}/{study_selection_uid_study_standard_test}",
+        json={
+            "name": "New_Endpoint_Name_1",
+        },
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert (
+        res[study_selection_ctterm_keys][study_selection_ctterm_name_key]
+        == initial_ct_term_study_standard_test.sponsor_preferred_name
+    )
+
+    # get versions of objective
+    response = api_client.get(
+        f"/studies/{study_for_ctterm_versioning.uid}/{study_selection_breadcrumb}/{study_selection_uid_study_standard_test}/audit-trail/",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert (
+        res[0][study_selection_ctterm_keys][study_selection_ctterm_name_key]
+        == initial_ct_term_study_standard_test.sponsor_preferred_name
+    )
+    assert (
+        res[1][study_selection_ctterm_keys][study_selection_ctterm_name_key]
+        == new_ctterm_name
+    )
+
+    # get all objectives
+    response = api_client.get(
+        f"/studies/{study_for_ctterm_versioning.uid}/{study_selection_breadcrumb}/audit-trail/",
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert (
+        res[0][study_selection_ctterm_keys][study_selection_ctterm_name_key]
+        == initial_ct_term_study_standard_test.sponsor_preferred_name
+    )
+    assert (
+        res[1][study_selection_ctterm_keys][study_selection_ctterm_name_key]
+        == new_ctterm_name
+    )
+
+
+def test_study_endpoint_ct_term_retrieval_at_date(api_client):
+    """
+    Test that any CT Term name fetched in the context of a study selection either:
+    * Matches the date of the Study Standard version when available
+    * Or the latest final version is returned
+    The study selection return model includes a queried_effective_data property to verify this
+    """
+
+    study_for_queried_effective_date = TestUtils.create_study()
+    study_selection_breadcrumb = "study-endpoints"
+    study_selection_ctterm_keys = "endpoint_level"
+    study_selection_ctterm_uid_input_key = "endpoint_level_uid"
+
+    # Create selection
+    response = api_client.post(
+        f"/studies/{study_for_queried_effective_date.uid}/{study_selection_breadcrumb}",
+        json={
+            "endpoint_uid": "Endpoint_000001",
+            study_selection_ctterm_uid_input_key: "term_root_final",
+        },
+    )
+    res = response.json()
+    assert response.status_code == 201
+    assert res[study_selection_ctterm_keys]["queried_effective_date"] is None
+    assert res[study_selection_ctterm_keys]["date_conflict"] is False
+    study_selection_uid_study_standard_test = res["study_endpoint_uid"]
+
+    ct_term_retrieval_at_date_test_common(
+        api_client,
+        study_selection_breadcrumb=study_selection_breadcrumb,
+        study_selection_ctterm_uid_input_key=study_selection_ctterm_uid_input_key,
+        study_selection_ctterm_keys=study_selection_ctterm_keys,
+        study_for_queried_effective_date=study_for_queried_effective_date,
+        initial_ct_term_study_standard_test=initial_ct_term_study_standard_test,
+        study_selection_uid_study_standard_test=study_selection_uid_study_standard_test,
+    )

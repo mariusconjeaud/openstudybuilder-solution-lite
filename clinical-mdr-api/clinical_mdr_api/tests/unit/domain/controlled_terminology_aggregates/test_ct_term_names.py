@@ -15,7 +15,9 @@ from clinical_mdr_api.tests.unit.domain.utils import random_str
 
 def create_random_ct_term_name_vo(codelist_uid: str = random_str()) -> CTTermNameVO:
     random_ct_term_name_vo = CTTermNameVO.from_repository_values(
-        codelists=[CTTermCodelistVO(codelist_uid=codelist_uid, order=1)],
+        codelists=[
+            CTTermCodelistVO(codelist_uid=codelist_uid, order=1, library_name="Sponsor")
+        ],
         catalogue_name=random_str(),
         name=random_str(),
         name_sentence_case=random_str(),

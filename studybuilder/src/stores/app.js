@@ -315,7 +315,7 @@ export const useAppStore = defineStore('app', {
           {
             title: i18n.t('Sidebar.study.select'),
             url: { name: 'SelectOrAddStudy' },
-            description: i18n.t('Studies.list_description'),
+            description: i18n.t('Studies.select_description'),
             icon: 'mdi-view-list',
           },
           {
@@ -328,6 +328,14 @@ export const useAppStore = defineStore('app', {
                 url: { name: 'StudyStatus', params: { study_id: studyId } },
                 studyRequired: true,
               },
+              // {
+              //   title: i18n.t('Sidebar.study.data_standard_versions'),
+              //   url: {
+              //     name: 'StudyDataStandardVersions',
+              //     params: { study_id: studyId },
+              //   },
+              //   studyRequired: true,
+              // },
             ],
           },
           {
@@ -467,11 +475,14 @@ export const useAppStore = defineStore('app', {
                 },
                 studyRequired: true,
               },
-              // {
-              //   title: i18n.t('Sidebar.study.adam_spec'),
-              //   url: { name: 'AdamSpecification' },
-              //   hidden: true
-              // }
+              {
+                title: i18n.t('Sidebar.study.usdm'),
+                url: {
+                  name: 'Usdm',
+                  params: { study_id: studyId },
+                },
+                studyRequired: true,
+              },
             ],
           },
           {
@@ -575,7 +586,6 @@ export const useAppStore = defineStore('app', {
         this.breadcrumbs = [
           {
             title: section,
-            disabled: true,
             to: { name: section },
             exact: true,
           },
@@ -595,7 +605,7 @@ export const useAppStore = defineStore('app', {
         this.section = section
       }
       if (breadcrumbs) {
-        this.breadcrumbs = JSON.parse(breadcrumbs)
+        this.setBreadcrumbs(JSON.parse(breadcrumbs))
       }
       if (userData) {
         this.userData = JSON.parse(userData)
@@ -605,10 +615,6 @@ export const useAppStore = defineStore('app', {
       studiesGeneralStore.initialize()
     },
     appendToBreadcrumbs(item) {
-      for (const level of this.breadcrumbs) {
-        level.disabled = false
-      }
-      item.disabled = true
       this.breadcrumbs.push(item)
     },
     addBreadcrumbsLevel(title, to, index, replace) {
@@ -630,7 +636,6 @@ export const useAppStore = defineStore('app', {
           this.breadcrumbs = this.breadcrumbs.slice(0, index)
           this.appendToBreadcrumbs(item)
         } else {
-          item.disabled = index === this.breadcrumbs.length - 1
           this.breadcrumbs[index] = item
           this.breadcrumbs = this.breadcrumbs.slice(0, index + 1)
         }

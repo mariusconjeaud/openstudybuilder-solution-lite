@@ -343,7 +343,6 @@
           hide-export-button
           hide-default-switches
           column-data-resource="ct/codelists"
-          additional-margin
           @filter="fetchCodelists"
         >
           <template #afterFilter="">
@@ -427,7 +426,6 @@
           hide-export-button
           only-text-search
           hide-default-switches
-          additional-margin
           @filter="getCodeListTerms"
         >
           <template #[`item.add`]="{ item }">
@@ -458,9 +456,9 @@
           <template #actions="">
             <v-btn
               class="ml-2"
-              fab
               size="small"
-              color="primary"
+              variant="outlined"
+              color="nnBaseBlue"
               :label="$t('CRFItemGroups.new_translation')"
               :disabled="readOnly"
               icon="mdi-plus"
@@ -664,7 +662,7 @@ export default {
           key: 'display_text',
           width: '40%',
         },
-        { title: '', key: 'delete', width: '5%' },
+        { title: '', key: 'delete', width: '1%' },
       ],
       aliases: [],
       alias: {},
@@ -882,9 +880,7 @@ export default {
       this.lengthFieldCheck = false
       this.digitsFieldCheck = false
       this.originFieldCheck = true
-      this.form.length = null
       switch (dataType) {
-        case 'TEXT':
         case 'BOOLEAN':
         case 'URI':
           break
@@ -1031,7 +1027,10 @@ export default {
             title: this.$t('CRFItems.codelist_subset'),
           })
         }
-        if (this.form.datatype.indexOf('STRING') === -1) {
+        if (
+          this.form.datatype.indexOf('STRING') === -1 &&
+          this.form.datatype.indexOf('TEXT') === -1
+        ) {
           this.steps = this.steps.filter(function (obj) {
             return obj.name !== 'codelist' && obj.name !== 'terms'
           })
@@ -1128,7 +1127,7 @@ export default {
         this.choosenUnits.length === 0
           ? []
           : this.choosenUnits.map((e) => ({
-              uid: e.name.uid ? e.name.uid : e.uid,
+              uid: e.uid ? e.uid : e.name.uid,
               mandatory: e.mandatory,
             }))
       if (this.form.datatype !== 'STRING') {
@@ -1176,20 +1175,26 @@ export default {
       this.selectedExtensions = extensions
     },
     async linkExtensions(uid) {
-      const elements = this.selectedExtensions.filter(
-        (el) => el.type === 'Element'
-      )
-      const elementAttributes = this.selectedExtensions.filter(
-        (el) => el.vendor_element
-      )
-      const namespaceAttributes = this.selectedExtensions.filter(
-        (el) =>
-          el.type === 'Attribute' && el.vendor_namespace && !el.vendor_element
-      )
+      let elements = []
+      let attributes = []
+      let eleAttributes = []
+      this.selectedExtensions = this.selectedExtensions.filter(ex => {
+        return ex.library_name
+      })
+      this.selectedExtensions.forEach(ex => {
+        if (ex.type) {
+          attributes.push(ex)
+        } else {
+          elements.push(ex)
+          if (ex.vendor_attributes) {
+            eleAttributes = [...eleAttributes, ...ex.vendor_attributes]
+          }
+        }
+      })
       const data = {
         elements: elements,
-        element_attributes: elementAttributes,
-        attributes: namespaceAttributes,
+        element_attributes: eleAttributes,
+        attributes: attributes,
       }
       await crfs.setExtensions('items', uid, data)
     },
@@ -1277,48 +1282,8 @@ export default {
       }
       this.form.change_description = this.$t('_global.draft_change')
       this.checkIfNumeric()
-      const params = {}
-      if (
-        item.vendor_attributes.length > 0 ||
-        item.vendor_element_attributes.length > 0
-      ) {
-        params.filters = {
-          uid: {
-            v: [
-              ...item.vendor_attributes.map((attr) => attr.uid),
-              ...item.vendor_element_attributes.map((attr) => attr.uid),
-            ],
-            op: 'co',
-          },
-        }
-        await crfs.getAllAttributes(params).then((resp) => {
-          resp.data.items.forEach((el) => {
-            el.type = 'Attribute'
-            el.value = [
-              ...item.vendor_attributes,
-              ...item.vendor_element_attributes,
-            ].find((attr) => attr.uid === el.uid).value
-          })
-          this.selectedExtensions = resp.data.items
-        })
-      }
-      if (item.vendor_elements.length > 0) {
-        params.filters = {
-          uid: { v: item.vendor_elements.map((attr) => attr.uid), op: 'co' },
-        }
-        await crfs.getAllElements(params).then((resp) => {
-          resp.data.items.forEach((el) => {
-            el.type = 'Element'
-            el.value = item.vendor_elements.find(
-              (attr) => attr.uid === el.uid
-            ).value
-          })
-          this.selectedExtensions = [
-            ...resp.data.items,
-            ...this.selectedExtensions,
-          ]
-        })
-      }
+      item.vendor_attributes.forEach(attr => attr.type = 'attr')
+      this.selectedExtensions = [...item.vendor_attributes, ...item.vendor_element_attributes, ...item.vendor_elements]
     },
     getAliasDisplay(item) {
       return `${item.context} - ${item.name}`

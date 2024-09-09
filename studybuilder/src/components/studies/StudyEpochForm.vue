@@ -216,7 +216,11 @@ export default {
   watch: {
     studyEpoch(value) {
       if (value) {
-        this.loadFromStudyEpoch(value)
+        studyEpochs
+          .getStudyEpoch(this.selectedStudy.uid, value.uid)
+          .then((resp) => {
+            this.loadFromStudyEpoch(resp.data)
+          })
       }
     },
     groups() {

@@ -159,5 +159,5 @@ class OdmXmlImporterTest(api.APITest):
         self.assertEqual(rs["type"], "BusinessLogicException")
         self.assertEqual(
             rs["message"],
-            "MeasurementUnit with OID ('name1') was not provided.",
+            """ODM Item tried to connect to non-existent concepts [('Concept Name: Unit Definition', "uids: {'name1'}")].""",
         )

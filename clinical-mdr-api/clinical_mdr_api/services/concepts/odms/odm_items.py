@@ -5,7 +5,11 @@ from clinical_mdr_api.domain_repositories.concepts.odms.item_repository import (
     ItemRepository,
 )
 from clinical_mdr_api.domains.concepts.odms.item import OdmItemAR, OdmItemVO
-from clinical_mdr_api.domains.concepts.utils import RelationType, VendorCompatibleType
+from clinical_mdr_api.domains.concepts.utils import (
+    RelationType,
+    VendorAttributeCompatibleType,
+    VendorElementCompatibleType,
+)
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
 from clinical_mdr_api.models.concepts.odms.odm_common_models import (
     OdmVendorElementRelationPostInput,
@@ -380,6 +384,10 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
         if odm_item_ar.item_metadata.status == LibraryItemStatus.RETIRED:
             raise exceptions.BusinessLogicException(self.OBJECT_IS_INACTIVE)
 
+        self.are_elements_vendor_compatible(
+            odm_vendor_relation_post_input, VendorElementCompatibleType.ITEM_DEF
+        )
+
         if override:
             self.fail_if_non_present_vendor_elements_are_used_by_current_odm_element_attributes(
                 odm_item_ar._concept_vo.vendor_element_attribute_uids,
@@ -421,7 +429,7 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
 
         self.fail_if_these_attributes_cannot_be_added(
             odm_vendor_relation_post_input,
-            compatible_type=VendorCompatibleType.ITEM_DEF,
+            compatible_type=VendorAttributeCompatibleType.ITEM_DEF,
         )
 
         if override:

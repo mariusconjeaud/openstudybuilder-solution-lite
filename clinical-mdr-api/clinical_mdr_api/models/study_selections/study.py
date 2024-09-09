@@ -165,67 +165,80 @@ class RegistryIdentifiersJsonModel(BaseModel):
         cls,
         registry_identifiers_vo: RegistryIdentifiersVO,
         find_term_by_uid: Callable[[str], CTTermNameAR | None],
+        terms_at_specific_datetime: datetime | None = None,
     ) -> Self:
         return cls(
             ct_gov_id=registry_identifiers_vo.ct_gov_id,
             ct_gov_id_null_value_code=SimpleTermModel.from_ct_code(
                 c_code=registry_identifiers_vo.ct_gov_id_null_value_code,
                 find_term_by_uid=find_term_by_uid,
+                at_specific_date=terms_at_specific_datetime,
             ),
             eudract_id=registry_identifiers_vo.eudract_id,
             eudract_id_null_value_code=SimpleTermModel.from_ct_code(
                 c_code=registry_identifiers_vo.eudract_id_null_value_code,
                 find_term_by_uid=find_term_by_uid,
+                at_specific_date=terms_at_specific_datetime,
             ),
             universal_trial_number_utn=registry_identifiers_vo.universal_trial_number_utn,
             universal_trial_number_utn_null_value_code=SimpleTermModel.from_ct_code(
                 c_code=registry_identifiers_vo.universal_trial_number_utn_null_value_code,
                 find_term_by_uid=find_term_by_uid,
+                at_specific_date=terms_at_specific_datetime,
             ),
             japanese_trial_registry_id_japic=registry_identifiers_vo.japanese_trial_registry_id_japic,
             japanese_trial_registry_id_japic_null_value_code=SimpleTermModel.from_ct_code(
                 c_code=registry_identifiers_vo.japanese_trial_registry_id_japic_null_value_code,
                 find_term_by_uid=find_term_by_uid,
+                at_specific_date=terms_at_specific_datetime,
             ),
             investigational_new_drug_application_number_ind=registry_identifiers_vo.investigational_new_drug_application_number_ind,
             investigational_new_drug_application_number_ind_null_value_code=SimpleTermModel.from_ct_code(
                 c_code=registry_identifiers_vo.investigational_new_drug_application_number_ind_null_value_code,
                 find_term_by_uid=find_term_by_uid,
+                at_specific_date=terms_at_specific_datetime,
             ),
             eu_trial_number=registry_identifiers_vo.eu_trial_number,
             eu_trial_number_null_value_code=SimpleTermModel.from_ct_code(
                 c_code=registry_identifiers_vo.eu_trial_number_null_value_code,
                 find_term_by_uid=find_term_by_uid,
+                at_specific_date=terms_at_specific_datetime,
             ),
             civ_id_sin_number=registry_identifiers_vo.civ_id_sin_number,
             civ_id_sin_number_null_value_code=SimpleTermModel.from_ct_code(
                 c_code=registry_identifiers_vo.civ_id_sin_number_null_value_code,
                 find_term_by_uid=find_term_by_uid,
+                at_specific_date=terms_at_specific_datetime,
             ),
             national_clinical_trial_number=registry_identifiers_vo.national_clinical_trial_number,
             national_clinical_trial_number_null_value_code=SimpleTermModel.from_ct_code(
                 c_code=registry_identifiers_vo.national_clinical_trial_number_null_value_code,
                 find_term_by_uid=find_term_by_uid,
+                at_specific_date=terms_at_specific_datetime,
             ),
             japanese_trial_registry_number_jrct=registry_identifiers_vo.japanese_trial_registry_number_jrct,
             japanese_trial_registry_number_jrct_null_value_code=SimpleTermModel.from_ct_code(
                 c_code=registry_identifiers_vo.japanese_trial_registry_number_jrct_null_value_code,
                 find_term_by_uid=find_term_by_uid,
+                at_specific_date=terms_at_specific_datetime,
             ),
             national_medical_products_administration_nmpa_number=registry_identifiers_vo.national_medical_products_administration_nmpa_number,
             national_medical_products_administration_nmpa_number_null_value_code=SimpleTermModel.from_ct_code(
                 c_code=registry_identifiers_vo.national_medical_products_administration_nmpa_number_null_value_code,
                 find_term_by_uid=find_term_by_uid,
+                at_specific_date=terms_at_specific_datetime,
             ),
             eudamed_srn_number=registry_identifiers_vo.eudamed_srn_number,
             eudamed_srn_number_null_value_code=SimpleTermModel.from_ct_code(
                 c_code=registry_identifiers_vo.eudamed_srn_number_null_value_code,
                 find_term_by_uid=find_term_by_uid,
+                at_specific_date=terms_at_specific_datetime,
             ),
             investigational_device_exemption_ide_number=registry_identifiers_vo.investigational_device_exemption_ide_number,
             investigational_device_exemption_ide_number_null_value_code=SimpleTermModel.from_ct_code(
                 c_code=registry_identifiers_vo.investigational_device_exemption_ide_number_null_value_code,
                 find_term_by_uid=find_term_by_uid,
+                at_specific_date=terms_at_specific_datetime,
             ),
         )
 
@@ -255,6 +268,7 @@ class StudyIdentificationMetadataJsonModel(BaseModel):
         find_project_by_project_number: Callable[[str], ProjectAR],
         find_clinical_programme_by_uid: Callable[[str], ClinicalProgrammeAR],
         find_term_by_uid: Callable[[str], CTTermNameAR | None],
+        terms_at_specific_datetime: datetime | None = None,
     ) -> Self | None:
         if study_identification_o is None:
             return None
@@ -278,7 +292,9 @@ class StudyIdentificationMetadataJsonModel(BaseModel):
             ).name,
             study_id=study_identification_o.study_id,
             registry_identifiers=RegistryIdentifiersJsonModel.from_study_registry_identifiers_vo(
-                study_identification_o.registry_identifiers, find_term_by_uid
+                study_identification_o.registry_identifiers,
+                find_term_by_uid,
+                terms_at_specific_datetime=terms_at_specific_datetime,
             ),
         )
 
@@ -316,11 +332,13 @@ class CompactStudyIdentificationMetadataJsonModel(BaseModel):
             study_acronym=study_identification_o.study_acronym,
             study_subpart_acronym=study_identification_o.study_subpart_acronym,
             project_number=study_identification_o.project_number,
-            project_name=project_ar.name,
+            project_name=project_ar.name if project_ar else None,
             description=study_identification_o.description,
             clinical_programme_name=find_clinical_programme_by_uid(
                 project_ar.clinical_programme_uid
-            ).name,
+            ).name
+            if project_ar
+            else None,
             study_id=study_identification_o.study_id,
         )
 
@@ -398,6 +416,7 @@ class HighLevelStudyDesignJsonModel(BaseModel):
         high_level_study_design_vo: HighLevelStudyDesignVO | None,
         find_term_by_uid: Callable[[str], CTTermNameAR | None],
         find_all_study_time_units: Callable[[str], Iterable[UnitDefinitionAR]],
+        terms_at_specific_datetime: datetime | None = None,
     ) -> Self | None:
         if high_level_study_design_vo is None:
             return None
@@ -405,43 +424,53 @@ class HighLevelStudyDesignJsonModel(BaseModel):
             study_type_code=SimpleTermModel.from_ct_code(
                 c_code=high_level_study_design_vo.study_type_code,
                 find_term_by_uid=find_term_by_uid,
+                at_specific_date=terms_at_specific_datetime,
             ),
             study_type_null_value_code=SimpleTermModel.from_ct_code(
                 c_code=high_level_study_design_vo.study_type_null_value_code,
                 find_term_by_uid=find_term_by_uid,
+                at_specific_date=terms_at_specific_datetime,
             ),
             trial_type_codes=[
                 SimpleTermModel.from_ct_code(
-                    c_code=trial_type_code, find_term_by_uid=find_term_by_uid
+                    c_code=trial_type_code,
+                    find_term_by_uid=find_term_by_uid,
+                    at_specific_date=terms_at_specific_datetime,
                 )
                 for trial_type_code in high_level_study_design_vo.trial_type_codes
             ],
             trial_type_null_value_code=SimpleTermModel.from_ct_code(
                 c_code=high_level_study_design_vo.trial_type_null_value_code,
                 find_term_by_uid=find_term_by_uid,
+                at_specific_date=terms_at_specific_datetime,
             ),
             trial_phase_code=SimpleTermModel.from_ct_code(
                 c_code=high_level_study_design_vo.trial_phase_code,
                 find_term_by_uid=find_term_by_uid,
+                at_specific_date=terms_at_specific_datetime,
             ),
             trial_phase_null_value_code=SimpleTermModel.from_ct_code(
                 c_code=high_level_study_design_vo.trial_phase_null_value_code,
                 find_term_by_uid=find_term_by_uid,
+                at_specific_date=terms_at_specific_datetime,
             ),
             is_extension_trial=high_level_study_design_vo.is_extension_trial,
             is_extension_trial_null_value_code=SimpleTermModel.from_ct_code(
                 c_code=high_level_study_design_vo.is_extension_trial_null_value_code,
                 find_term_by_uid=find_term_by_uid,
+                at_specific_date=terms_at_specific_datetime,
             ),
             is_adaptive_design=high_level_study_design_vo.is_adaptive_design,
             is_adaptive_design_null_value_code=SimpleTermModel.from_ct_code(
                 high_level_study_design_vo.is_adaptive_design_null_value_code,
                 find_term_by_uid=find_term_by_uid,
+                at_specific_date=terms_at_specific_datetime,
             ),
             study_stop_rules=high_level_study_design_vo.study_stop_rules,
             study_stop_rules_null_value_code=SimpleTermModel.from_ct_code(
                 c_code=high_level_study_design_vo.study_stop_rules_null_value_code,
                 find_term_by_uid=find_term_by_uid,
+                at_specific_date=terms_at_specific_datetime,
             ),
             confirmed_response_minimum_duration=(
                 DurationJsonModel.from_duration_object(
@@ -455,11 +484,13 @@ class HighLevelStudyDesignJsonModel(BaseModel):
             confirmed_response_minimum_duration_null_value_code=SimpleTermModel.from_ct_code(
                 c_code=high_level_study_design_vo.confirmed_response_minimum_duration_null_value_code,
                 find_term_by_uid=find_term_by_uid,
+                at_specific_date=terms_at_specific_datetime,
             ),
             post_auth_indicator=high_level_study_design_vo.post_auth_indicator,
             post_auth_indicator_null_value_code=SimpleTermModel.from_ct_code(
                 c_code=high_level_study_design_vo.post_auth_indicator_null_value_code,
                 find_term_by_uid=find_term_by_uid,
+                at_specific_date=terms_at_specific_datetime,
             ),
         )
 
@@ -552,6 +583,7 @@ class StudyPopulationJsonModel(BaseModel):
         find_all_study_time_units: Callable[[str], Iterable[UnitDefinitionAR]],
         find_term_by_uid: Callable[[str], CTTermNameAR | None],
         find_dictionary_term_by_uid: Callable[[str], DictionaryTermAR | None],
+        terms_at_specific_datetime: datetime | None = None,
     ) -> Self | None:
         if study_population_vo is None:
             return None
@@ -560,17 +592,20 @@ class StudyPopulationJsonModel(BaseModel):
                 SimpleTermModel.from_ct_code(
                     c_code=therapeutic_area_code,
                     find_term_by_uid=find_dictionary_term_by_uid,
+                    at_specific_date=terms_at_specific_datetime,
                 )
                 for therapeutic_area_code in study_population_vo.therapeutic_area_codes
             ],
             therapeutic_area_null_value_code=SimpleTermModel.from_ct_code(
                 c_code=study_population_vo.therapeutic_area_null_value_code,
                 find_term_by_uid=find_term_by_uid,
+                at_specific_date=terms_at_specific_datetime,
             ),
             disease_condition_or_indication_codes=[
                 SimpleTermModel.from_ct_code(
                     c_code=disease_or_indication_code,
                     find_term_by_uid=find_dictionary_term_by_uid,
+                    at_specific_date=terms_at_specific_datetime,
                 )
                 for disease_or_indication_code in study_population_vo.disease_condition_or_indication_codes
             ],
@@ -578,36 +613,43 @@ class StudyPopulationJsonModel(BaseModel):
                 SimpleTermModel.from_ct_code(
                     c_code=study_population_vo.disease_condition_or_indication_null_value_code,
                     find_term_by_uid=find_term_by_uid,
+                    at_specific_date=terms_at_specific_datetime,
                 )
             ),
             diagnosis_group_codes=[
                 SimpleTermModel.from_ct_code(
                     c_code=diagnosis_group_code,
                     find_term_by_uid=find_dictionary_term_by_uid,
+                    at_specific_date=terms_at_specific_datetime,
                 )
                 for diagnosis_group_code in study_population_vo.diagnosis_group_codes
             ],
             diagnosis_group_null_value_code=SimpleTermModel.from_ct_code(
                 c_code=study_population_vo.diagnosis_group_null_value_code,
                 find_term_by_uid=find_term_by_uid,
+                at_specific_date=terms_at_specific_datetime,
             ),
             sex_of_participants_code=SimpleTermModel.from_ct_code(
                 c_code=study_population_vo.sex_of_participants_code,
                 find_term_by_uid=find_term_by_uid,
+                at_specific_date=terms_at_specific_datetime,
             ),
             sex_of_participants_null_value_code=SimpleTermModel.from_ct_code(
                 c_code=study_population_vo.sex_of_participants_null_value_code,
                 find_term_by_uid=find_term_by_uid,
+                at_specific_date=terms_at_specific_datetime,
             ),
             rare_disease_indicator=study_population_vo.rare_disease_indicator,
             rare_disease_indicator_null_value_code=SimpleTermModel.from_ct_code(
                 c_code=study_population_vo.rare_disease_indicator_null_value_code,
                 find_term_by_uid=find_term_by_uid,
+                at_specific_date=terms_at_specific_datetime,
             ),
             healthy_subject_indicator=study_population_vo.healthy_subject_indicator,
             healthy_subject_indicator_null_value_code=SimpleTermModel.from_ct_code(
                 c_code=study_population_vo.healthy_subject_indicator_null_value_code,
                 find_term_by_uid=find_term_by_uid,
+                at_specific_date=terms_at_specific_datetime,
             ),
             planned_minimum_age_of_subjects=(
                 DurationJsonModel.from_duration_object(
@@ -620,6 +662,7 @@ class StudyPopulationJsonModel(BaseModel):
             planned_minimum_age_of_subjects_null_value_code=SimpleTermModel.from_ct_code(
                 c_code=study_population_vo.planned_minimum_age_of_subjects_null_value_code,
                 find_term_by_uid=find_term_by_uid,
+                at_specific_date=terms_at_specific_datetime,
             ),
             planned_maximum_age_of_subjects=(
                 DurationJsonModel.from_duration_object(
@@ -632,6 +675,7 @@ class StudyPopulationJsonModel(BaseModel):
             planned_maximum_age_of_subjects_null_value_code=SimpleTermModel.from_ct_code(
                 c_code=study_population_vo.planned_maximum_age_of_subjects_null_value_code,
                 find_term_by_uid=find_term_by_uid,
+                at_specific_date=terms_at_specific_datetime,
             ),
             stable_disease_minimum_duration=(
                 DurationJsonModel.from_duration_object(
@@ -644,31 +688,37 @@ class StudyPopulationJsonModel(BaseModel):
             stable_disease_minimum_duration_null_value_code=SimpleTermModel.from_ct_code(
                 c_code=study_population_vo.stable_disease_minimum_duration_null_value_code,
                 find_term_by_uid=find_term_by_uid,
+                at_specific_date=terms_at_specific_datetime,
             ),
             pediatric_study_indicator=study_population_vo.pediatric_study_indicator,
             pediatric_study_indicator_null_value_code=SimpleTermModel.from_ct_code(
                 c_code=study_population_vo.pediatric_study_indicator_null_value_code,
                 find_term_by_uid=find_term_by_uid,
+                at_specific_date=terms_at_specific_datetime,
             ),
             pediatric_postmarket_study_indicator=study_population_vo.pediatric_postmarket_study_indicator,
             pediatric_postmarket_study_indicator_null_value_code=SimpleTermModel.from_ct_code(
                 c_code=study_population_vo.pediatric_postmarket_study_indicator_null_value_code,
                 find_term_by_uid=find_term_by_uid,
+                at_specific_date=terms_at_specific_datetime,
             ),
             pediatric_investigation_plan_indicator=study_population_vo.pediatric_investigation_plan_indicator,
             pediatric_investigation_plan_indicator_null_value_code=SimpleTermModel.from_ct_code(
                 c_code=study_population_vo.pediatric_investigation_plan_indicator_null_value_code,
                 find_term_by_uid=find_term_by_uid,
+                at_specific_date=terms_at_specific_datetime,
             ),
             relapse_criteria=study_population_vo.relapse_criteria,
             relapse_criteria_null_value_code=SimpleTermModel.from_ct_code(
                 c_code=study_population_vo.relapse_criteria_null_value_code,
                 find_term_by_uid=find_term_by_uid,
+                at_specific_date=terms_at_specific_datetime,
             ),
             number_of_expected_subjects=study_population_vo.number_of_expected_subjects,
             number_of_expected_subjects_null_value_code=SimpleTermModel.from_ct_code(
                 c_code=study_population_vo.number_of_expected_subjects_null_value_code,
                 find_term_by_uid=find_term_by_uid,
+                at_specific_date=terms_at_specific_datetime,
             ),
         )
 
@@ -727,6 +777,7 @@ class StudyInterventionJsonModel(BaseModel):
         study_intervention_vo: StudyInterventionVO | None,
         find_all_study_time_units: Callable[[str], Iterable[UnitDefinitionAR]],
         find_term_by_uid: Callable[[str], CTTermNameAR | None],
+        terms_at_specific_datetime: datetime | None = None,
     ) -> Self | None:
         if study_intervention_vo is None:
             return None
@@ -734,49 +785,60 @@ class StudyInterventionJsonModel(BaseModel):
             intervention_type_code=SimpleTermModel.from_ct_code(
                 c_code=study_intervention_vo.intervention_type_code,
                 find_term_by_uid=find_term_by_uid,
+                at_specific_date=terms_at_specific_datetime,
             ),
             intervention_type_null_value_code=SimpleTermModel.from_ct_code(
                 c_code=study_intervention_vo.intervention_type_null_value_code,
                 find_term_by_uid=find_term_by_uid,
+                at_specific_date=terms_at_specific_datetime,
             ),
             add_on_to_existing_treatments=study_intervention_vo.add_on_to_existing_treatments,
             add_on_to_existing_treatments_null_value_code=SimpleTermModel.from_ct_code(
                 c_code=study_intervention_vo.add_on_to_existing_treatments_null_value_code,
                 find_term_by_uid=find_term_by_uid,
+                at_specific_date=terms_at_specific_datetime,
             ),
             control_type_code=SimpleTermModel.from_ct_code(
                 c_code=study_intervention_vo.control_type_code,
                 find_term_by_uid=find_term_by_uid,
+                at_specific_date=terms_at_specific_datetime,
             ),
             control_type_null_value_code=SimpleTermModel.from_ct_code(
                 c_code=study_intervention_vo.control_type_null_value_code,
                 find_term_by_uid=find_term_by_uid,
+                at_specific_date=terms_at_specific_datetime,
             ),
             intervention_model_code=SimpleTermModel.from_ct_code(
                 c_code=study_intervention_vo.intervention_model_code,
                 find_term_by_uid=find_term_by_uid,
+                at_specific_date=terms_at_specific_datetime,
             ),
             intervention_model_null_value_code=SimpleTermModel.from_ct_code(
                 c_code=study_intervention_vo.intervention_model_null_value_code,
                 find_term_by_uid=find_term_by_uid,
+                at_specific_date=terms_at_specific_datetime,
             ),
             is_trial_randomised=study_intervention_vo.is_trial_randomised,
             is_trial_randomised_null_value_code=SimpleTermModel.from_ct_code(
                 c_code=study_intervention_vo.is_trial_randomised_null_value_code,
                 find_term_by_uid=find_term_by_uid,
+                at_specific_date=terms_at_specific_datetime,
             ),
             stratification_factor=study_intervention_vo.stratification_factor,
             stratification_factor_null_value_code=SimpleTermModel.from_ct_code(
                 c_code=study_intervention_vo.stratification_factor_null_value_code,
                 find_term_by_uid=find_term_by_uid,
+                at_specific_date=terms_at_specific_datetime,
             ),
             trial_blinding_schema_code=SimpleTermModel.from_ct_code(
                 c_code=study_intervention_vo.trial_blinding_schema_code,
                 find_term_by_uid=find_term_by_uid,
+                at_specific_date=terms_at_specific_datetime,
             ),
             trial_blinding_schema_null_value_code=SimpleTermModel.from_ct_code(
                 c_code=study_intervention_vo.trial_blinding_schema_null_value_code,
                 find_term_by_uid=find_term_by_uid,
+                at_specific_date=terms_at_specific_datetime,
             ),
             planned_study_length=(
                 DurationJsonModel.from_duration_object(
@@ -789,16 +851,20 @@ class StudyInterventionJsonModel(BaseModel):
             planned_study_length_null_value_code=SimpleTermModel.from_ct_code(
                 c_code=study_intervention_vo.planned_study_length_null_value_code,
                 find_term_by_uid=find_term_by_uid,
+                at_specific_date=terms_at_specific_datetime,
             ),
             trial_intent_types_codes=[
                 SimpleTermModel.from_ct_code(
-                    c_code=trial_intent_type_code, find_term_by_uid=find_term_by_uid
+                    c_code=trial_intent_type_code,
+                    find_term_by_uid=find_term_by_uid,
+                    at_specific_date=terms_at_specific_datetime,
                 )
                 for trial_intent_type_code in study_intervention_vo.trial_intent_types_codes
             ],
             trial_intent_types_null_value_code=SimpleTermModel.from_ct_code(
                 c_code=study_intervention_vo.trial_intent_type_null_value_code,
                 find_term_by_uid=find_term_by_uid,
+                at_specific_date=terms_at_specific_datetime,
             ),
         )
 
@@ -881,6 +947,7 @@ class StudyMetadataJsonModel(BaseModel):
         find_all_study_time_units: Callable[[str], Iterable[UnitDefinitionAR]],
         find_term_by_uid: Callable[[str], CTTermNameAR | None],
         find_dictionary_term_by_uid: Callable[[str], DictionaryTermAR | None],
+        terms_at_specific_datetime: datetime | None = None,
     ) -> Self:
         return cls(
             identification_metadata=StudyIdentificationMetadataJsonModel.from_study_identification_vo(
@@ -888,6 +955,7 @@ class StudyMetadataJsonModel(BaseModel):
                 find_project_by_project_number=find_project_by_project_number,
                 find_clinical_programme_by_uid=find_clinical_programme_by_uid,
                 find_term_by_uid=find_term_by_uid,
+                terms_at_specific_datetime=terms_at_specific_datetime,
             ),
             version_metadata=StudyVersionMetadataJsonModel.from_study_version_metadata_vo(
                 study_version_metadata_vo=study_metadata_vo.ver_metadata
@@ -896,17 +964,20 @@ class StudyMetadataJsonModel(BaseModel):
                 high_level_study_design_vo=study_metadata_vo.high_level_study_design,
                 find_term_by_uid=find_term_by_uid,
                 find_all_study_time_units=find_all_study_time_units,
+                terms_at_specific_datetime=terms_at_specific_datetime,
             ),
             study_population=StudyPopulationJsonModel.from_study_population_vo(
                 study_population_vo=study_metadata_vo.study_population,
                 find_all_study_time_units=find_all_study_time_units,
                 find_term_by_uid=find_term_by_uid,
                 find_dictionary_term_by_uid=find_dictionary_term_by_uid,
+                terms_at_specific_datetime=terms_at_specific_datetime,
             ),
             study_intervention=StudyInterventionJsonModel.from_study_intervention_vo(
                 study_intervention_vo=study_metadata_vo.study_intervention,
                 find_all_study_time_units=find_all_study_time_units,
                 find_term_by_uid=find_term_by_uid,
+                terms_at_specific_datetime=terms_at_specific_datetime,
             ),
             study_description=StudyDescriptionJsonModel.from_study_description_vo(
                 study_description_vo=study_metadata_vo.study_description
@@ -1051,6 +1122,7 @@ class Study(BaseModel):
         study_value_version: str | None = None,
         status: StudyStatus | None = None,
         history_endpoint: bool = False,
+        terms_at_specific_datetime: datetime | None = None,
     ) -> Self | None:
         current_metadata = None
         if status is not None:
@@ -1093,6 +1165,7 @@ class Study(BaseModel):
                 find_all_study_time_units=find_all_study_time_units,
                 find_term_by_uid=find_term_by_uid,
                 find_dictionary_term_by_uid=find_dictionary_term_by_uid,
+                terms_at_specific_datetime=terms_at_specific_datetime,
             ),
         )
 

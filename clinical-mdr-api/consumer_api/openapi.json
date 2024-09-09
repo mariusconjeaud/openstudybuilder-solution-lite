@@ -1,0 +1,310 @@
+{
+  "openapi": "3.0.2",
+  "info": {
+    "title": "StudyBuilder Consumer API",
+    "description": "Endpoints for exposing StudyBuilder data to external consumers",
+    "version": "0.1.37"
+  },
+  "paths": {
+    "/v1/studies": {
+      "get": {
+        "tags": [
+          "V1"
+        ],
+        "summary": "Get Studies",
+        "description": "Get a list of studies",
+        "operationId": "get_studies_v1_studies_get",
+        "parameters": [
+          {
+            "required": false,
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/SortByStudies"
+                }
+              ],
+              "default": "uid"
+            },
+            "name": "sort_by",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/SortOrder"
+                }
+              ],
+              "default": "asc"
+            },
+            "name": "sort_order",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": {
+              "title": "Page Size",
+              "maximum": 1000.0,
+              "minimum": 1.0,
+              "type": "integer",
+              "default": 10
+            },
+            "name": "page_size",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": {
+              "title": "Page Number",
+              "minimum": 1.0,
+              "type": "integer",
+              "default": 1
+            },
+            "name": "page_number",
+            "in": "query"
+          },
+          {
+            "description": "Filter by study ID (case-insensitive partial match)",
+            "required": false,
+            "schema": {
+              "title": "Id",
+              "type": "string",
+              "description": "Filter by study ID (case-insensitive partial match)"
+            },
+            "name": "id",
+            "in": "query"
+          },
+          {
+            "description": "A value to be injected into User object as user id.",
+            "required": false,
+            "schema": {
+              "title": "X-Test-User-Id",
+              "type": "string",
+              "description": "A value to be injected into User object as user id."
+            },
+            "name": "x-test-user-id",
+            "in": "header"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedResponse_Study_"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ErrorResponse": {
+        "title": "ErrorResponse",
+        "required": [
+          "type",
+          "message",
+          "time",
+          "path",
+          "method"
+        ],
+        "type": "object",
+        "properties": {
+          "type": {
+            "title": "Type",
+            "type": "string",
+            "description": "Exception class."
+          },
+          "message": {
+            "title": "Message",
+            "type": "string",
+            "description": "More information about the error."
+          },
+          "time": {
+            "title": "Time",
+            "type": "string",
+            "description": "The point in time when the error occurred.",
+            "format": "date-time"
+          },
+          "path": {
+            "title": "Path",
+            "type": "string",
+            "description": "The url/path of the request."
+          },
+          "method": {
+            "title": "Method",
+            "type": "string",
+            "description": "The HTTP method of the request."
+          }
+        }
+      },
+      "HTTPValidationError": {
+        "title": "HTTPValidationError",
+        "type": "object",
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            }
+          }
+        }
+      },
+      "PaginatedResponse_Study_": {
+        "title": "PaginatedResponse[Study]",
+        "required": [
+          "self",
+          "prev",
+          "next",
+          "items"
+        ],
+        "type": "object",
+        "properties": {
+          "self": {
+            "title": "Self",
+            "type": "string",
+            "description": "Pagination link pointing to the current page"
+          },
+          "prev": {
+            "title": "Prev",
+            "type": "string",
+            "description": "Pagination link pointing to the previous page"
+          },
+          "next": {
+            "title": "Next",
+            "type": "string",
+            "description": "Pagination link pointing to the next page"
+          },
+          "items": {
+            "title": "Items",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Study"
+            },
+            "description": "List of items"
+          }
+        },
+        "description": "Paginated response model"
+      },
+      "SortByStudies": {
+        "title": "SortByStudies",
+        "enum": [
+          "uid",
+          "id_prefix",
+          "number"
+        ],
+        "description": "An enumeration."
+      },
+      "SortOrder": {
+        "title": "SortOrder",
+        "enum": [
+          "asc",
+          "desc"
+        ],
+        "description": "An enumeration."
+      },
+      "Study": {
+        "title": "Study",
+        "required": [
+          "uid",
+          "id",
+          "id_prefix"
+        ],
+        "type": "object",
+        "properties": {
+          "uid": {
+            "title": "Uid",
+            "type": "string",
+            "description": "Study UID"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string",
+            "description": "Study ID"
+          },
+          "id_prefix": {
+            "title": "Id Prefix",
+            "type": "string",
+            "description": "Study ID prefix"
+          },
+          "number": {
+            "title": "Number",
+            "type": "string",
+            "description": "Study number",
+            "nullable": true
+          },
+          "acronym": {
+            "title": "Acronym",
+            "type": "string",
+            "description": "Study acronym",
+            "nullable": true
+          }
+        }
+      },
+      "ValidationError": {
+        "title": "ValidationError",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "type": "object",
+        "properties": {
+          "loc": {
+            "title": "Location",
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            }
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ]
+}

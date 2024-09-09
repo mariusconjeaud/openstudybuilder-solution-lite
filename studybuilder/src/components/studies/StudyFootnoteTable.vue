@@ -1,10 +1,17 @@
 <template>
+  <div class="page-title d-flex align-center">
+    {{ $t('StudyFootnoteTable.footnotes') }}
+  </div>
   <NNTable
+    ref="table"
     :headers="headers"
     :items="footnotesStore.studyFootnotes"
     item-value="uid"
     :column-data-resource="`studies/${studiesGeneralStore.selectedStudy.uid}/study-soa-footnotes`"
     export-object-label="StudyFootnotes"
+    hide-default-switches
+    :modifiable-table="false"
+    hide-export-button
     :export-data-url="exportDataUrl"
     :items-length="footnotesStore.total"
     :history-data-fetcher="fetchFootnotesHistory"
@@ -14,25 +21,27 @@
   >
     <template #actions>
       <v-btn
-        data-cy="add-study-footnote"
+        class="ml-2"
         size="small"
-        color="primary"
+        variant="outlined"
+        color="nnBaseBlue"
+        data-cy="add-study-footnote"
         :title="$t('StudyFootnoteForm.add_title')"
         :disabled="
           !accessGuard.checkPermission($roles.STUDY_WRITE) ||
           studiesGeneralStore.selectedStudyVersion !== null
         "
         icon="mdi-plus"
-        @click.stop="showForm = true"
+        @click="enableFootnoteMode()"
       />
     </template>
     <template #[`item.order`]="{ item }">
       {{ $filters.letteredOrder(item.order) }}
     </template>
     <template #[`item.name`]="{ item }">
-      <template v-if="item.footnote_template">
+      <template v-if="item.template">
         <NNParameterHighlighter
-          :name="item.footnote_template.name"
+          :name="item.template.name"
           default-color="orange"
         />
       </template>
@@ -44,7 +53,15 @@
       </template>
     </template>
     <template #[`item.referenced_items`]="{ item }">
-      {{ $filters.itemNames(removeDuplicates(item.referenced_items)) }}
+      <div v-if="item.referenced_items.length > 0">
+        {{ $filters.itemNames(removeDuplicates(item.referenced_items)) }}
+      </div>
+      <div 
+        v-else
+        class="warning"
+      >
+        <v-icon class="mr-2">mdi-alert-circle-outline</v-icon>{{ $t('StudyFootnoteTable.not_linked_warning') }}
+      </div>
     </template>
     <template #[`item.start_date`]="{ item }">
       {{ $filters.date(item.start_date) }}
@@ -57,24 +74,11 @@
       />
     </template>
   </NNTable>
-  <v-dialog
-    v-model="showForm"
-    persistent
-    fullscreen
-    content-class="fullscreen-dialog"
-  >
-    <StudyFootnoteForm
-      :current-study-footnotes="footnotesStore.studyFootnotes"
-      class="fullscreen-dialog"
-      @close="closeForm"
-      @added="fetchFootnotes"
-    />
-  </v-dialog>
   <StudyFootnoteEditForm
     :open="showEditForm"
     :study-footnote="selectedFootnote"
     @close="closeEditForm"
-    @updated="fetchFootnotes"
+    @updated="table.filterTable()"
     @enable-footnote-mode="enableFootnoteMode"
   />
   <v-dialog
@@ -87,6 +91,7 @@
       :title="studyFootnoteHistoryTitle"
       :headers="headers"
       :items="footnoteHistoryItems"
+      :items-total="footnoteHistoryItems.length"
       :html-fields="historyHtmlFields"
       @close="closeHistory"
     />
@@ -102,7 +107,6 @@ import ActionsMenu from '@/components/tools/ActionsMenu.vue'
 import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
 import filteringParameters from '@/utils/filteringParameters'
 import StudyFootnoteEditForm from '@/components/studies/StudyFootnoteEditForm.vue'
-import StudyFootnoteForm from '@/components/studies/StudyFootnoteForm.vue'
 import NNParameterHighlighter from '@/components/tools/NNParameterHighlighter.vue'
 import NNTable from '@/components/tools/NNTable.vue'
 import study from '@/api/study'
@@ -135,6 +139,14 @@ const actions = [
     accessRole: roles.STUDY_WRITE,
   },
   {
+    label: 'Link/Unlink Footnote',
+    icon: 'mdi-pencil-outline',
+    iconColor: 'primary',
+    click: linkFootnote,
+    condition: () => !studiesGeneralStore.selectedStudyVersion,
+    accessRole: roles.STUDY_WRITE,
+  },
+  {
     label: t('StudyFootnoteTable.update_footnote_version'),
     icon: 'mdi-bell-ring-outline',
     iconColorFunc: footnoteUpdateAborted,
@@ -144,22 +156,22 @@ const actions = [
     accessRole: roles.STUDY_WRITE,
   },
   {
-    label: t('_global.delete'),
+    label: t('_global.history'),
+    icon: 'mdi-history',
+    click: openHistory,
+  },
+  {
+    label: t('StudyFootnoteTable.remove'),
     icon: 'mdi-delete-outline',
     iconColor: 'error',
     click: deleteStudyFootnote,
     condition: () => !studiesGeneralStore.selectedStudyVersion,
     accessRole: roles.STUDY_WRITE,
-  },
-  {
-    label: t('_global.history'),
-    icon: 'mdi-history',
-    click: openHistory,
-  },
+  }
 ]
 const footnoteHistoryItems = ref([])
 const headers = [
-  { title: '', key: 'actions', width: '5%' },
+  { title: '', key: 'actions', width: '1%' },
   { title: t('_global.order_short'), key: 'order', width: '3%' },
   {
     title: t('StudyFootnoteTable.footnote'),
@@ -175,9 +187,9 @@ const headers = [
 const historyHtmlFields = ['footnote.name']
 const selectedFootnote = ref(null)
 const showEditForm = ref(false)
-const showForm = ref(false)
 const showHistory = ref(false)
 const confirm = ref()
+const table = ref()
 
 const exportDataUrl = computed(() => {
   return `studies/${studiesGeneralStore.selectedStudy.uid}/study-soa-footnotes`
@@ -206,6 +218,10 @@ onMounted(() => {
 })
 
 function enableFootnoteMode(footnote) {
+  emit('enableFootnoteMode', footnote)
+}
+
+function linkFootnote (footnote) {
   emit('enableFootnoteMode', footnote)
 }
 
@@ -240,7 +256,7 @@ function needUpdate(item) {
 }
 
 function actionsMenuBadge(item) {
-  if (!item.footnote && item.footnote_template.parameters.length > 0) {
+  if (!item.footnote && item.template.parameters.length > 0) {
     return {
       color: 'error',
       icon: 'mdi-exclamation',
@@ -264,11 +280,6 @@ function closeEditForm() {
   selectedFootnote.value = null
 }
 
-function closeForm() {
-  showForm.value = false
-  selectedFootnote.value = null
-}
-
 function closeHistory() {
   selectedFootnote.value = null
   showHistory.value = false
@@ -286,7 +297,7 @@ async function openHistory(studyFootnote) {
       .replaceAll(' ,', '')
     element.name = element.footnote
       ? element.footnote.name_plain
-      : element.footnote_template.name_plain
+      : element.template.name_plain
   })
   footnoteHistoryItems.value = resp.data
   showHistory.value = true
@@ -302,7 +313,7 @@ async function fetchFootnotesHistory() {
       .replaceAll(' ,', '')
     element.name = element.footnote
       ? element.footnote.name_plain
-      : element.footnote_template.name_plain
+      : element.template.name_plain
   })
   return resp.data
 }
@@ -323,7 +334,7 @@ function editStudyFootnote(studyFootnote) {
 }
 
 async function deleteStudyFootnote(studyFootnote) {
-  const options = { type: 'warning' }
+  const options = { type: 'warning', agreeLabel: t('StudyFootnoteTable.remove'), cancelLabel: t('StudyFootnoteTable.keep'), title: t('StudyFootnoteTable.remove') }
   const footnote = studyFootnote.footnote
     ? studyFootnote.footnote.name_plain
     : '(unnamed)'
@@ -340,7 +351,7 @@ async function deleteStudyFootnote(studyFootnote) {
         studyFootnote.uid
       )
       .then(() => {
-        fetchFootnotes()
+        table.value.filterTable()
         eventBusEmit('notification', {
           msg: t('StudyFootnoteTable.delete_footnote_success'),
         })
@@ -372,7 +383,7 @@ async function updateFootnoteVersion(item) {
         item.uid
       )
       .then(() => {
-        fetchFootnotes()
+        table.value.filterTable()
         eventBusEmit('notification', {
           msg: t('StudyFootnoteTable.footnote_version_updated'),
         })
@@ -384,7 +395,7 @@ async function updateFootnoteVersion(item) {
         item.uid
       )
       .then(() => {
-        fetchFootnotes()
+        table.value.filterTable()
         eventBusEmit('notification', {
           msg: t('StudyFootnoteTable.footnote_version_accepted'),
         })
@@ -392,3 +403,15 @@ async function updateFootnoteVersion(item) {
   }
 }
 </script>
+<style>
+
+.warning {
+  background-color: rgb(var(--v-theme-nnGoldenSun200));
+  height: 30px;
+  width: 320px;
+  align-content: center;
+  text-align: center;
+  border-radius: 5px;
+  color: black;
+}
+</style>

@@ -122,7 +122,7 @@
                     "delete",
                     "edit"
                 ],
-                "objective_template": {
+                "template": {
                     "name": "Test [Indication]",
                     "name_plain": "Test [Indication]",
                     "guidance_text": null,
@@ -211,7 +211,7 @@
                     "delete",
                     "edit"
                 ],
-                "objective_template": {
+                "template": {
                     "name": "Test [Indication]",
                     "name_plain": "Test [Indication]",
                     "guidance_text": null,

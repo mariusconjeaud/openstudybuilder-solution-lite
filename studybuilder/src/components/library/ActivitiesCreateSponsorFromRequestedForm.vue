@@ -297,6 +297,7 @@ export default {
   emits: ['close'],
   data() {
     return {
+      activity: { activity_groupings: [] },
       form: { activity_groupings: [{}] },
       subgroup: {},
       steps: [
@@ -346,7 +347,9 @@ export default {
     editedActivity: {
       handler(value) {
         if (value) {
-          this.initForm()
+          activities.getObject('activities', value.uid).then((resp) => {
+            this.initForm(resp.data)
+          })
         }
       },
       immediate: true,
@@ -354,15 +357,12 @@ export default {
   },
   mounted() {
     this.getActivities()
-    if (this.editedActivity) {
-      this.initForm()
-    }
     this.getGroups()
   },
   methods: {
-    initForm() {
-      if (this.editedActivity) {
-        this.activity = this.editedActivity
+    initForm(editedActivity) {
+      if (editedActivity) {
+        this.activity = editedActivity
         this.form = JSON.parse(JSON.stringify(this.activity))
         this.form.activity_groupings = []
         if (

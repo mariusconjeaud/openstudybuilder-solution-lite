@@ -99,3 +99,16 @@ def test_repeat_remove_duplicated_terms_in_objective_cat():
     assert not correction_006.remove_duplicated_terms_in_objective_cat(
         DB_DRIVER, LOGGER, VERIFY_RUN_LABEL
     )
+
+
+def test_capitalize_first_letter_of_syntax_instance_and_pre_instance_if_template_parameter(
+    correction,
+):
+    correction_verification_006.test_capitalize_first_letter_of_syntax_instance_and_pre_instance_if_template_parameter()
+
+
+@pytest.mark.order(after="test_capitalize_first_letter_of_syntax_instance_and_pre_instance_if_template_parameter")
+def test_repeat_capitalize_first_letter_of_syntax_instance_and_pre_instance_if_template_parameter():
+    assert not correction_006.capitalize_first_letter_of_syntax_instance_and_pre_instance_if_template_parameter(
+        DB_DRIVER, LOGGER, VERIFY_RUN_LABEL
+    )

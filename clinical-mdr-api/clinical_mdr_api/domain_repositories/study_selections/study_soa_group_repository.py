@@ -3,13 +3,11 @@ from dataclasses import dataclass
 
 from neomodel import db
 
+from clinical_mdr_api.domain_repositories._utils.helpers import unpack_list_of_lists
 from clinical_mdr_api.domain_repositories.generic_repository import (
     manage_previous_connected_study_selection_relationships,
 )
-from clinical_mdr_api.domain_repositories.models._utils import (
-    convert_to_datetime,
-    to_relation_trees,
-)
+from clinical_mdr_api.domain_repositories.models._utils import convert_to_datetime
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
     CTTermRoot,
 )
@@ -214,10 +212,18 @@ class StudySoAGroupRepository(StudySelectionActivityBaseRepository[StudySoAGroup
     def find_study_soa_group_in_a_study(
         self, study_uid: str, soa_group_term_uid: str
     ) -> StudySoAGroup | None:
-        study_soa_groups = to_relation_trees(
-            StudySoAGroup.nodes.filter(
-                has_soa_group_selection__has_study_activity__latest_value__uid=study_uid,
-                has_flowchart_group__uid=soa_group_term_uid,
-            ).has(has_before=False)
-        ).distinct()
-        return study_soa_groups[0] if len(study_soa_groups) > 0 else None
+        query = """
+            MATCH (flowchart_group_term:CTTermRoot)<-[:HAS_FLOWCHART_GROUP]-(study_soa_group:StudySoAGroup)<-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]
+                -(:StudyActivity)<-[:HAS_STUDY_ACTIVITY]-(:StudyValue)<-[:LATEST]-(:StudyRoot {uid:$study_uid})
+            WHERE NOT (study_soa_group)<-[:BEFORE]-() AND NOT (study_soa_group)<-[]-(:Delete)
+                AND flowchart_group_term.uid=$soa_group_term_uid
+            RETURN DISTINCT study_soa_group
+        """
+        study_soa_groups, _ = db.cypher_query(
+            query,
+            params={"study_uid": study_uid, "soa_group_term_uid": soa_group_term_uid},
+            resolve_objects=True,
+        )
+        if len(study_soa_groups) > 0:
+            return unpack_list_of_lists(study_soa_groups)[0]
+        return None

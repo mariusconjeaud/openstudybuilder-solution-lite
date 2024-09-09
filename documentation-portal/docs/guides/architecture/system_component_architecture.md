@@ -15,6 +15,7 @@ The system is composed by the following components.
 | CDISC Library Standards Import <br> (GPLv3) | Python and Cypher <br> (mdr-standards-import) | Import programs connecting to CDISC Library, downloading files to cloud storage, reading these into staging database, and then inserting data into Clinical MDR database. |
 | Data Import <br> (MIT) | Python and Cypher <br> (studybuilder-import) | Import programs using .csv or JSON files as input for importing various data into the Clinical MDR database. The import programs can import JSON files exported from the system, in this way data can be moved between environments. All import actions are done via calls to the Clinical MDR API, so all import actions will be audit trailed. |
 | Data Export <br> (MIT) | Python and Cypher <br> (studybuilder-export) | Program that exports all defined studies from a Studybuilder instance. It's possible to filter the exported study data by including and/or excluding study numbers. |
+| Reports <br> (MIT) | NeoDash Reports <br> (neo4j-mdr-db) | The NeoDash report definitions is saved within the Clinical MDR database and can be opened by the NeoDash reporting engine. <br> The NeoDash reporting engine is a browser based tool (https://neo4j.com/labs/neodash/) |
 
 > - MIT: MIT license is a permissive free software license originating at the Massachusetts Institute of Technology (MIT).<br>For more info see: https://opensource.org/licenses/MIT
 

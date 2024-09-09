@@ -40,6 +40,10 @@ class OdmVendorElementService(OdmGenericService[OdmVendorElementAR]):
             author=self.user_initials,
             concept_vo=OdmVendorElementVO.from_repository_values(
                 name=concept_input.name,
+                compatible_types=[
+                    compatible_type.value
+                    for compatible_type in concept_input.compatible_types
+                ],
                 vendor_namespace_uid=concept_input.vendor_namespace_uid,
                 vendor_attribute_uids=[],
             ),
@@ -59,6 +63,10 @@ class OdmVendorElementService(OdmGenericService[OdmVendorElementAR]):
             change_description=concept_edit_input.change_description,
             concept_vo=OdmVendorElementVO.from_repository_values(
                 name=concept_edit_input.name,
+                compatible_types=[
+                    compatible_type.value
+                    for compatible_type in concept_edit_input.compatible_types
+                ],
                 vendor_namespace_uid=item.concept_vo.vendor_namespace_uid,
                 vendor_attribute_uids=[],
             ),

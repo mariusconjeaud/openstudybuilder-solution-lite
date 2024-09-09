@@ -53,6 +53,7 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
         WITH DISTINCT codelist_root, rel_term, term_root, term_ver_root, term_ver_value,
         head([(catalogue)-[:HAS_CODELIST]->(codelist_root) | catalogue]) AS catalogue,
         head([(lib)-[:CONTAINS_TERM]->(term_root) | lib]) AS library
+        MATCH (codelist_root)<-[:CONTAINS_CODELIST]-(codelist_library:Library)
         CALL {
                 WITH term_ver_root, term_ver_value
                 MATCH (term_ver_root)-[hv:HAS_VERSION]-(term_ver_value)
@@ -68,6 +69,7 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
         WITH
             term_root.uid AS term_uid,
             codelist_root.uid AS codelist_uid,
+            codelist_library.name AS codelist_library_name,
             catalogue.name AS catalogue_name,
             term_ver_value AS value_node,
             rel_term.order AS order,
@@ -173,6 +175,7 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
         codelist_name: str | None = None,
         library_name: str | None = None,
         package: str | None = None,
+        in_codelist: bool = False,
         sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
@@ -211,6 +214,7 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
             codelist_name=codelist_name,
             library_name=library_name,
             package=package,
+            in_codelist=in_codelist,
         )
 
         # Build alias_clause
@@ -424,6 +428,33 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
 
         return term_ar
 
+    def find_by_uids(
+        self,
+        term_uids: list,
+        status: LibraryItemStatus | None = None,
+        at_specific_date: datetime | None = None,
+    ) -> list[_AggregateRootType] | None:
+        if not term_uids:
+            return []
+        params = {"term_uids": term_uids}
+        cypher_query = """
+            MATCH (n:CTTermRoot)
+            WHERE n.uid in $term_uids
+            MATCH (n)--(ctnr:CTTermNameRoot)
+            RETURN COLLECT( DISTINCT elementID(ctnr)) as ctterm_name_element_ids
+        """
+        ctterm_name_element_ids = db.cypher_query(cypher_query, params=params)[0][0][0]
+
+        element_id_filter = {"uid": {"v": ctterm_name_element_ids, "op": "eq"}}
+        term_ars, _ = self.get_all_optimized(
+            status=status,
+            at_specific_date=at_specific_date,
+            filter_by=element_id_filter,
+            filter_operator=FilterOperator.OR,
+        )
+
+        return term_ars
+
     def get_all_versions(self, term_uid: str) -> Iterable[_AggregateRootType] | None:
         ct_term_root: CTTermRoot = CTTermRoot.nodes.get_or_none(uid=term_uid)
         if ct_term_root is not None:
@@ -550,6 +581,7 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
         codelist_name: str | None = None,
         library_name: str | None = None,
         package: str | None = None,
+        in_codelist: bool = False,
     ) -> tuple[str, dict]:
         if package:
             if self.is_repository_related_to_attributes():
@@ -578,7 +610,7 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
             )
             match_clause += filter_statements
 
-        if not package and (codelist_uid or codelist_name):
+        if in_codelist or (not package and (codelist_uid or codelist_name)):
             match_clause += " MATCH (codelist_root:CTCodelistRoot)-[rel_term:HAS_TERM]->(term_root) "
         elif not package:
             match_clause += " OPTIONAL MATCH (codelist_root:CTCodelistRoot)-[rel_term:HAS_TERM]->(term_root) "

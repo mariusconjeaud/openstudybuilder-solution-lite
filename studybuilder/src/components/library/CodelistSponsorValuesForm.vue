@@ -104,11 +104,15 @@ export default {
     modelValue: {
       handler(val) {
         if (val) {
-          this.form = {
-            name: val.name,
-            templateParameter: val.templateParameter,
-          }
-          this.formStore.save(this.form)
+          controlledTerminology
+            .getCodelistNames(val.codelist_uid)
+            .then((resp) => {
+              this.form = {
+                name: resp.data.name,
+                template_parameter: resp.data.template_parameter,
+              }
+              this.formStore.save(this.form)
+            })
         }
       },
       immediate: true,

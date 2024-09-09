@@ -1,7 +1,7 @@
 <template>
   <SimpleFormDialog
-    ref="form"
-    :title="$t('ClinicalProgrammeForm.title')"
+    ref="formRef"
+    :title="title"
     :help-text="$t('_help.ClinicalProgrammeForm.general')"
     :help-items="helpItems"
     :open="open"
@@ -28,75 +28,105 @@
   </SimpleFormDialog>
 </template>
 
-<script>
+<script setup>
+import { computed, inject, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { useFormStore } from '@/stores/form'
 import SimpleFormDialog from '@/components/tools/SimpleFormDialog.vue'
 import programmes from '@/api/clinicalProgrammes'
 
-export default {
-  components: {
-    SimpleFormDialog,
+const { t } = useI18n()
+
+const eventBusEmit = inject('eventBusEmit')
+const formRules = inject('formRules')
+const formStore = useFormStore()
+const props = defineProps({
+  programmeUid: {
+    type: String,
+    default: null,
   },
-  inject: ['eventBusEmit', 'formRules'],
-  props: {
-    editedStudy: {
-      type: Object,
-      default: null,
-    },
-    open: Boolean,
-  },
-  emits: ['close', 'created'],
-  data() {
-    return {
-      form: {},
-      helpItems: ['ClinicalProgrammeForm.name'],
+  open: Boolean,
+})
+
+const emit = defineEmits(['close', 'reload'])
+
+const form = ref({})
+const formRef = ref()
+
+const helpItems = ['ClinicalProgrammeForm.name']
+
+const title = computed(() => {
+  return props.programmeUid
+    ? t('ClinicalProgrammeForm.edit_title')
+    : t('ClinicalProgrammeForm.add_title')
+})
+
+watch(
+  () => props.programmeUid,
+  (value) => {
+    if (value) {
+      programmes.retrieve(value).then((resp) => {
+        form.value = resp.data
+        formStore.save({ ...form.value })
+      })
     }
   },
-  watch: {},
-  mounted() {
-    this.initForm()
-  },
-  methods: {
-    async close() {
-      if (this.form.name) {
-        const options = {
-          type: 'warning',
-          cancelLabel: this.$t('_global.cancel'),
-          agreeLabel: this.$t('_global.continue'),
-        }
-        if (
-          await this.$refs.form.confirm(
-            this.$t('_global.cancel_changes'),
-            options
-          )
-        ) {
-          this.$emit('close')
-        }
-      } else {
-        this.$emit('close')
-      }
-    },
-    initForm() {
-      this.form = {
-        name: '',
-      }
-    },
-    async addProgramme() {
-      const data = JSON.parse(JSON.stringify(this.form))
-      const resp = await programmes.create(data)
-      this.eventBusEmit('notification', {
-        msg: this.$t('ClinicalProgrammes.add_success'),
-      })
-      this.$emit('created', resp.data)
-    },
+  { immediate: true }
+)
 
-    async submit() {
-      try {
-        await this.addProgramme()
-        this.$emit('close')
-      } finally {
-        this.$refs.form.working = false
-      }
-    },
-  },
+onMounted(() => {
+  initForm()
+  formStore.save({ ...form.value })
+})
+
+async function close() {
+  if (!formStore.isEqual(form.value)) {
+    const options = {
+      type: 'warning',
+      cancelLabel: t('_global.cancel'),
+      agreeLabel: t('_global.continue'),
+    }
+    if (!(await formRef.value.confirm(t('_global.cancel_changes'), options))) {
+      return
+    }
+  }
+  initForm()
+  emit('close')
+}
+function initForm() {
+  form.value = {
+    name: '',
+  }
+  formStore.reset()
+}
+async function addProgramme() {
+  const data = JSON.parse(JSON.stringify(form.value))
+  await programmes.create(data)
+  eventBusEmit('notification', {
+    msg: t('ClinicalProgrammes.add_success'),
+  })
+}
+
+async function updateProgramme() {
+  const data = JSON.parse(JSON.stringify(form.value))
+  await programmes.patch(props.programmeUid, data)
+  eventBusEmit('notification', {
+    msg: t('ClinicalProgrammes.update_success'),
+  })
+}
+
+async function submit() {
+  try {
+    if (!props.programmeUid) {
+      await addProgramme()
+    } else {
+      await updateProgramme()
+    }
+    emit('reload')
+    emit('close')
+  } finally {
+    formRef.value.working = false
+  }
+  initForm()
 }
 </script>

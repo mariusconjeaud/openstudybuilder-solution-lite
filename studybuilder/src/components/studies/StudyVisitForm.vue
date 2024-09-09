@@ -97,6 +97,11 @@
                       visitConstants.SUBCLASS_ADDITIONAL_SUBVISIT_IN_A_GROUP_OF_SUBV
                     "
                   />
+                  <v-radio
+                    :label="$t('StudyVisitForm.repeating_visit')"
+                    data-cy="anchor-visit-in-visit-group"
+                    :value="visitConstants.SUBCLASS_REPEATING_VISIT"
+                  />
                 </v-radio-group>
               </v-col>
             </v-row>
@@ -153,6 +158,15 @@
                 </div>
               </v-col>
             </v-row>
+            <v-row v-if="milestoneAvailable">
+              <v-checkbox
+                v-model="form.is_soa_milestone"
+                class="ml-4 pt-0 mt-0"
+                :label="$t('StudyVisitForm.soa_milestone')"
+                density="compact"
+                color="primary"
+              />
+            </v-row>
             <v-row v-if="showTimingFields">
               <v-col cols="4">
                 <v-autocomplete
@@ -190,12 +204,13 @@
                 cols="4"
               >
                 <v-autocomplete
-                  v-model="form.time_unit_uid"
+                  v-model="form.time_unit"
                   :label="$t('StudyVisitForm.time_unit_name')"
                   data-cy="time-unit"
                   :items="epochsStore.studyTimeUnits"
                   item-title="name"
                   item-value="uid"
+                  return-object
                   :rules="[formRules.required]"
                   clearable
                   class="required"
@@ -215,9 +230,25 @@
                   :rules="[formRules.required]"
                   :disabled="disableTimeValue"
                   class="required"
-                  @change="getVisitPreview"
+                  @blur="getVisitPreview"
                 />
               </v-col>
+            </v-row>
+            <v-row
+              v-if="
+                form.visit_class === visitConstants.CLASS_SINGLE_VISIT &&
+                form.visit_subclass === visitConstants.SUBCLASS_REPEATING_VISIT
+              "
+            >
+              <v-autocomplete
+                v-model="form.repeating_frequency_uid"
+                :label="$t('StudyVisitForm.repeating_frequency')"
+                :items="frequencies"
+                item-title="name.sponsor_preferred_name"
+                item-value="term_uid"
+                clearable
+                @update:model-value="getVisitPreview"
+              />
             </v-row>
             <v-alert
               v-if="
@@ -301,6 +332,7 @@
                     v-model="form.study_week_label"
                     :label="$t('StudyVisitForm.study_week_label')"
                     data-cy="study-week-label"
+                    class="mt-6"
                     readonly
                     disabled
                     variant="filled"
@@ -444,7 +476,11 @@
               <v-card class="data-iterator">
                 <v-list>
                   <v-list-item v-for="item in items" :key="item.uid" cols="12">
-                    {{ item.raw.visit_name }} - {{ item.raw.study_day_label }}
+                    {{ item.raw.visit_name }} -
+                    <template
+                      v-if="['day', 'days'].includes(form.time_unit.name)"
+                      >{{ item.raw.study_day_label }}</template
+                    ><template v-else>{{ item.raw.study_week_label }}</template>
                   </v-list-item>
                 </v-list>
               </v-card>
@@ -537,6 +573,7 @@ const epochAllocations = ref([])
 const studyEpoch = ref('')
 const studyVisits = ref([])
 const epochsData = ref([])
+const frequencies = ref([])
 
 const visitClasses = [
   {
@@ -560,7 +597,22 @@ const visitClasses = [
     value: visitConstants.CLASS_MANUALLY_DEFINED_VISIT,
   },
 ]
-
+const milestoneAvailable = computed(() => {
+  if (
+    form.value.visit_type_uid &&
+    [
+      visitConstants.VISIT_TYPE_NON_VISIT,
+      visitConstants.VISIT_TYPE_UNSCHEDULED,
+    ].indexOf(
+      visitTypes.value.find(
+        (type) => type.visit_type_uid === form.value.visit_type_uid
+      ).visit_type_name
+    ) === -1
+  ) {
+    return true
+  }
+  return false
+})
 const selectedStudy = computed(() => {
   return studiesGeneralStore.selectedStudy
 })
@@ -653,9 +705,15 @@ watch(
   () => props.studyVisit,
   (value) => {
     if (value) {
-      form.value = value
+      epochs.getStudyVisit(selectedStudy.value.uid, value.uid).then((resp) => {
+        form.value = resp.data
+        form.value.time_unit = epochsStore.studyTimeUnits.find(
+          (unit) => unit.uid === form.value.time_unit_uid
+        )
+      })
     }
-  }
+  },
+  { immediate: true }
 )
 watch(
   () => props.opened,
@@ -727,7 +785,6 @@ watch(
       form.value.time_value = 0
       disableTimeValue.value = true
     } else {
-      form.value.time_value = null
       disableTimeValue.value = false
     }
   }
@@ -830,15 +887,10 @@ async function submit() {
   stepperRef.value.reset()
 }
 
-function sanitizeNonManuallyDefinedVisitPayload(data) {
-  delete data.visit_number
-  delete data.unique_visit_number
-  delete data.visit_short_name
-  delete data.visit_name
-}
-
 async function addObject() {
   const data = JSON.parse(JSON.stringify(form.value))
+  data.time_unit_uid = data.time_unit.uid
+  delete data.time_unit
   if (
     data.visit_class === visitConstants.CLASS_SPECIAL_VISIT ||
     data.visit_subclass ===
@@ -859,9 +911,6 @@ async function addObject() {
     delete data.max_visit_window_value
     delete data.time_unit_uid
   }
-  if (data.visit_class !== visitConstants.CLASS_MANUALLY_DEFINED_VISIT) {
-    sanitizeNonManuallyDefinedVisitPayload(data)
-  }
   await epochsStore.addStudyVisit({
     studyUid: selectedStudy.value.uid,
     input: data,
@@ -871,9 +920,8 @@ async function addObject() {
 }
 async function updateObject() {
   const data = JSON.parse(JSON.stringify(form.value))
-  if (data.visit_class !== visitConstants.CLASS_MANUALLY_DEFINED_VISIT) {
-    sanitizeNonManuallyDefinedVisitPayload(data)
-  }
+  data.time_unit_uid = data.time_unit.uid
+  delete data.time_unit
   await epochsStore.updateStudyVisit({
     studyUid: selectedStudy.value.uid,
     studyVisitUid: props.studyVisit.uid,
@@ -907,6 +955,13 @@ function getVisitPreview() {
       )
     }
   }
+  if (
+    form.value.visit_subclass ===
+    visitConstants.SUBCLASS_ADDITIONAL_SUBVISIT_IN_A_GROUP_OF_SUBV
+  ) {
+    mandatoryFields[mandatoryFields.indexOf('time_reference_uid')] =
+      'visit_sublabel_reference'
+  }
   for (const field of mandatoryFields) {
     if (form.value[field] === undefined || form.value[field] === null) {
       return
@@ -925,18 +980,28 @@ function getVisitPreview() {
     payload.time_value = 0
   }
   if (
+    payload.visit_subclass ===
+    visitConstants.SUBCLASS_ADDITIONAL_SUBVISIT_IN_A_GROUP_OF_SUBV
+  ) {
+    payload.time_reference_uid = timeReferences.value.find(
+      (item) =>
+        item.name.sponsor_preferred_name ===
+        visitConstants.TIMEREF_GLOBAL_ANCHOR_VISIT
+    ).term_uid
+  }
+  if (
     payload.visit_class === visitConstants.CLASS_SPECIAL_VISIT &&
     !payload.visit_sublabel_reference
   ) {
     return
   }
+  payload.time_unit_uid = payload.time_unit.uid
+  delete payload.time_unit
   payload.is_global_anchor_visit = false
   previewLoading.value = true
-  if (payload.visit_class !== visitConstants.CLASS_MANUALLY_DEFINED_VISIT) {
-    sanitizeNonManuallyDefinedVisitPayload(payload)
-  }
-  epochs
-    .getStudyVisitPreview(selectedStudy.value.uid, payload)
+
+  epochsStore
+    .getStudyVisitPreview({ studyUid: selectedStudy.value.uid, input: payload })
     .then((resp) => {
       let fields = []
       if (
@@ -958,6 +1023,7 @@ function getVisitPreview() {
       previewLoading.value = false
     })
 }
+
 function callbacks() {
   epochsStore.fetchAllowedConfigs()
   epochs.getGlobalAnchorVisit(selectedStudy.value.uid).then((resp) => {
@@ -996,12 +1062,15 @@ function callbacks() {
   codelists.getByCodelist('contactModes').then((resp) => {
     contactModes.value = resp.data.items
   })
+  codelists.getByCodelist('repeatingVisitFrequency').then((resp) => {
+    frequencies.value = resp.data.items
+  })
 
   if (!props.studyVisit) {
     const defaultUnit = epochsStore.studyTimeUnits.find(
       (unit) => unit.name === 'days'
     )
-    form.value.time_unit_uid = defaultUnit.uid
+    form.value.time_unit = defaultUnit
     form.value.visit_window_unit_uid = defaultUnit.uid
   }
 

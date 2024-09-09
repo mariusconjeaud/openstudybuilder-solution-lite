@@ -7,6 +7,7 @@ from clinical_mdr_api.domain_repositories.projects.project_repository import (
     ProjectRepository,
 )
 from clinical_mdr_api.domains.projects.project import ProjectAR
+from clinical_mdr_api.exceptions import NotFoundException
 from clinical_mdr_api.tests.integration.domain_repositories._utils import (
     wipe_clinical_programme_repository,
     wipe_project_repository,
@@ -70,12 +71,11 @@ class TestProjectRepository(unittest.TestCase):
         non_existent_uid = f"this-uid-for-sure-does-not-exists-especially-after-adding-this-{random_str()}"
         repo = ProjectRepository()
 
-        # when
-        result = repo.find_by_uid(non_existent_uid)
-        repo.close()
-
         # then
-        self.assertIsNone(result)
+        with self.assertRaises(NotFoundException):
+            # when
+            repo.find_by_uid(non_existent_uid)
+            repo.close()
 
     def test__find_by_uid__existing_uid__returns_project_ar(self):
         # given

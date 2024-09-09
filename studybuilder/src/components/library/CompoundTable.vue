@@ -13,8 +13,10 @@
     >
       <template #actions="">
         <v-btn
+          class="ml-2"
           size="small"
-          color="primary"
+          variant="outlined"
+          color="nnBaseBlue"
           :title="$t('CompoundForm.add_title')"
           :disabled="!checkPermission($roles.LIBRARY_WRITE)"
           icon="mdi-plus"
@@ -170,7 +172,7 @@ export default {
       compounds: [],
       filters: {},
       headers: [
-        { title: '', key: 'actions', width: '5%' },
+        { title: '', key: 'actions', width: '1%' },
         {
           title: this.$t('CompoundTable.sponsor_compound'),
           key: 'is_sponsor_compound',

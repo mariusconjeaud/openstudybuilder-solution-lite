@@ -75,6 +75,7 @@ class StudyInterventionsService:
         return docx
 
     @staticmethod
+    # pylint: disable=unused-argument
     def mk_table(
         compounds: list[models.StudySelectionCompound],
         arms: Mapping[str, list[models.StudySelectionArm]],
@@ -138,88 +139,90 @@ class StudyInterventionsService:
         for _ in compounds:
             row.cells.append(TableCell(text="?"))  # TODO
 
-        table.rows.append(
-            row := TableRow(
-                cells=[TableCell(text=_gettext("pharmaceutical_form"), style="header2")]
-            )
-        )
-        for cmp in compounds:
-            row.cells.append(
-                TableCell(text=cmp.dosage_form.name if cmp.dosage_form else "")
-            )
+        # table.rows.append(
+        #     row := TableRow(
+        #         cells=[TableCell(text=_gettext("pharmaceutical_form"), style="header2")]
+        #     )
+        # )
+        # for cmp in compounds:
+        #     row.cells.append(
+        #         TableCell(text=cmp.dosage_form.name if cmp.dosage_form else "")
+        #     )
 
-        table.rows.append(
-            row := TableRow(
-                cells=[
-                    TableCell(text=_gettext("route_of_administration"), style="header2")
-                ]
-            )
-        )
-        for cmp in compounds:
-            row.cells.append(
-                TableCell(
-                    text=cmp.route_of_administration.name
-                    if cmp.route_of_administration
-                    else ""
-                )
-            )
+        # table.rows.append(
+        #     row := TableRow(
+        #         cells=[
+        #             TableCell(text=_gettext("route_of_administration"), style="header2")
+        #         ]
+        #     )
+        # )
+        # for cmp in compounds:
+        #     row.cells.append(
+        #         TableCell(
+        #             text=cmp.route_of_administration.name
+        #             if cmp.route_of_administration
+        #             else ""
+        #         )
+        #     )
 
-        table.rows.append(
-            row := TableRow(
-                cells=[TableCell(text=_gettext("medical_device"), style="header2")]
-            )
-        )
-        for cmp in compounds:
-            row.cells.append(cell := TableCell())
-            mapping = {
-                "device": cmp.device.name if cmp.device else _gettext("None"),
-                "dispensed_in": (
-                    cmp.dispensed_in.name if cmp.dispensed_in else _gettext("None")
-                ),
-            }
-            cell.text = _gettext("medical_device_template").format_map(mapping)
+        # table.rows.append(
+        #     row := TableRow(
+        #         cells=[TableCell(text=_gettext("medical_device"), style="header2")]
+        #     )
+        # )
+        # for cmp in compounds:
+        #     row.cells.append(cell := TableCell())
+        #     mapping = {
+        #         "device": cmp.delivery_device.name
+        #         if cmp.delivery_device
+        #         else _gettext("None"),
+        #         "dispensed_in": (
+        #             cmp.dispenser.name if cmp.dispenser else _gettext("None")
+        #         ),
+        #     }
+        #     cell.text = _gettext("medical_device_template").format_map(mapping)
 
-        table.rows.append(
-            row := TableRow(
-                cells=[
-                    TableCell(text=_gettext("trial_product_strength"), style="header2")
-                ]
-            )
-        )
-        for cmp in compounds:
-            row.cells.append(cell := TableCell())
-            if cmp.strength_value:
-                mapping = {
-                    "unit": cmp.strength_value.unit_label,
-                    "value": cmp.strength_value.value,
-                }
-                cell.text = _gettext("trial_product_strength_template").format_map(
-                    mapping
-                )
+        # table.rows.append(
+        #     row := TableRow(
+        #         cells=[
+        #             TableCell(text=_gettext("trial_product_strength"), style="header2")
+        #         ]
+        #     )
+        # )
+        # for cmp in compounds:
+        #     row.cells.append(cell := TableCell())
+        #     if cmp.strength_value:
+        #         mapping = {
+        #             "unit": cmp.strength_value.unit_label,
+        #             "value": cmp.strength_value.value,
+        #         }
+        #         cell.text = _gettext("trial_product_strength_template").format_map(
+        #             mapping
+        #         )
 
-        table.rows.append(
-            row := TableRow(
-                cells=[TableCell(text=_gettext("dose_and_frequency"), style="header2")]
-            )
-        )
-        for cmp in compounds:
-            row.cells.append(
-                TableCell(text=StudyInterventionsService._dosing_txt(cmp, dosings))
-            )
+        # table.rows.append(
+        #     row := TableRow(
+        #         cells=[TableCell(text=_gettext("dose_and_frequency"), style="header2")]
+        #     )
+        # )
+        # for cmp in compounds:
+        #     row.cells.append(
+        #         TableCell(text=StudyInterventionsService._dosing_txt(cmp, dosings))
+        #     )
 
-        table.rows.append(
-            row := TableRow(
-                cells=[
-                    TableCell(
-                        text=_gettext("dosing_and_administration"), style="header2"
-                    )
-                ]
-            )
-        )
-        for cmp in compounds:
-            row.cells.append(
-                TableCell(text=cmp.other_info or _gettext("no_information"))
-            )
+        # table.rows.append(
+        #     row := TableRow(
+        #         cells=[
+        #             TableCell(
+        #                 text=_gettext("dosing_and_administration"), style="header2"
+        #             )
+        #         ]
+        #     )
+        # )
+        # for cmp in compounds:
+        #     row.cells.append(
+        #         TableCell(text=cmp.other_info or _gettext("no_information"))
+        #     )
 
         table.rows.append(
             row := TableRow(

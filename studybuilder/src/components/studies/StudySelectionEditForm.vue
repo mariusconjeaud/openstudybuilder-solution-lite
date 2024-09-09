@@ -149,8 +149,8 @@ export default {
     },
     maxTemplateLength: {
       type: Boolean,
-      default: null
-    }
+      default: null,
+    },
   },
   emits: ['close', 'initForm', 'submit'],
   setup() {
@@ -186,7 +186,7 @@ export default {
     templateName() {
       return this.newTemplate
         ? this.newTemplate.name
-        : this.studySelection
+        : this.template
           ? this.template.name
           : ''
     },
@@ -345,6 +345,14 @@ export default {
       this.templateApi
         .getParameters(templateUid, { study_uid: this.selectedStudy.uid })
         .then((resp) => {
+          if (this.parameters.length) {
+            resp.data.forEach((param, index) => {
+              const a = this.parameters.find((el) => el.name === param.name)
+              if (a) {
+                resp.data[index] = a
+              }
+            })
+          }
           this.parameters = resp.data
           this.loadingParameters = false
           const instance = this.getObjectFromSelection(this.studySelection)

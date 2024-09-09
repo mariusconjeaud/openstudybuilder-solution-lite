@@ -15,4 +15,13 @@ export default {
     }
     return repository.post(resource, params)
   },
+  retrieve(projectUid) {
+    return repository.get(`${resource}/${projectUid}`)
+  },
+  patch(projectUid, data) {
+    return repository.patch(`${resource}/${projectUid}`, data)
+  },
+  delete(projectUid) {
+    return repository.delete(`${resource}/${projectUid}`)
+  },
 }

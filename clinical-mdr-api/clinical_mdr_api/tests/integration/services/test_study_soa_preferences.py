@@ -12,9 +12,7 @@ log = logging.getLogger(__name__)
 def test_study_soa_preferences(base_data, tst_project):
     service = StudyService()
 
-    study = TestUtils.create_study(
-        TestUtils.random_str(4), project_number=tst_project.project_number
-    )
+    study = TestUtils.create_study(project_number=tst_project.project_number)
 
     preferences_input = StudySoaPreferencesInput(
         show_epochs=True, show_milestones=False
@@ -68,9 +66,7 @@ def test_study_soa_preferences(base_data, tst_project):
 def test_patch_study_soa_preferences(base_data, tst_project):
     service = StudyService()
 
-    study = TestUtils.create_study(
-        TestUtils.random_str(4), project_number=tst_project.project_number
-    )
+    study = TestUtils.create_study(project_number=tst_project.project_number)
 
     soa_preferences = service.patch_study_soa_preferences(
         study.uid, StudySoaPreferencesInput(show_epochs=False)
@@ -115,9 +111,7 @@ def test_patch_study_soa_preferences(base_data, tst_project):
     assert soa_preferences.show_milestones is True
     assert soa_preferences.baseline_as_time_zero is False
 
-    study = TestUtils.create_study(
-        TestUtils.random_str(4), project_number=tst_project.project_number
-    )
+    study = TestUtils.create_study(project_number=tst_project.project_number)
 
     soa_preferences = service.patch_study_soa_preferences(
         study.uid, StudySoaPreferencesInput(show_milestones=False)
@@ -127,9 +121,7 @@ def test_patch_study_soa_preferences(base_data, tst_project):
     assert soa_preferences.show_milestones is False
     assert soa_preferences.baseline_as_time_zero is True
 
-    study = TestUtils.create_study(
-        TestUtils.random_str(4), project_number=tst_project.project_number
-    )
+    study = TestUtils.create_study(project_number=tst_project.project_number)
 
     soa_preferences = service.patch_study_soa_preferences(
         study.uid,
@@ -142,9 +134,7 @@ def test_patch_study_soa_preferences(base_data, tst_project):
     assert soa_preferences.show_milestones is True
     assert soa_preferences.baseline_as_time_zero is True
 
-    study = TestUtils.create_study(
-        TestUtils.random_str(4), project_number=tst_project.project_number
-    )
+    study = TestUtils.create_study(project_number=tst_project.project_number)
 
     soa_preferences = service.patch_study_soa_preferences(
         study.uid,

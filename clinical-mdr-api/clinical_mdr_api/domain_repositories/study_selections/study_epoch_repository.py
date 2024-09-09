@@ -1,4 +1,6 @@
+import copy
 import datetime
+from typing import Callable
 
 from neomodel import db
 
@@ -23,9 +25,16 @@ from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import 
 )
 from clinical_mdr_api.domains.study_selections import study_epoch
 from clinical_mdr_api.domains.study_selections.study_epoch import (
+    EpochNamedTuple,
+    EpochSubtypeNamedTuple,
+    EpochTypeNamedTuple,
+    StudyEpochEpoch,
     StudyEpochHistoryVO,
+    StudyEpochSubType,
+    StudyEpochType,
     StudyEpochVO,
 )
+from clinical_mdr_api.models.controlled_terminologies.ct_term_name import CTTermName
 from clinical_mdr_api.models.study_selections.study_epoch import (
     StudyEpochOGM,
     StudyEpochOGMVer,
@@ -199,32 +208,62 @@ class StudyEpochRepository:
             study_epoch_ogm_input=StudyEpochOGM.from_orm(epoch_node[0])
         )
 
-    def get_all_versions(self, uid: str, study_uid):
+    def get_all_versions(
+        self,
+        uid: str,
+        study_uid,
+        get_ct_terms_for_epoch: Callable[[str], CTTermName],
+        extract_multiple_version_study_standards_effective_date: Callable[
+            [str], CTTermName
+        ],
+    ):
+        selection_history: StudyEpochOGMVer = [
+            StudyEpochOGMVer.from_orm(se_node)
+            for se_node in to_relation_trees(
+                StudyEpoch.nodes.fetch_relations(
+                    "has_after__audit_trail",
+                    "has_epoch",
+                    "has_epoch_subtype",
+                    "has_epoch_type",
+                )
+                .fetch_optional_relations(
+                    "has_duration_unit", "has_before", "has_study_visit"
+                )
+                .filter(uid=uid, has_after__audit_trail__uid=study_uid)
+            ).distinct()
+        ]
+        # Extract start dates from the selection history
+        start_dates = [history.start_date for history in selection_history]
+
+        # Extract effective dates for each version based on the start dates
+        effective_dates = extract_multiple_version_study_standards_effective_date(
+            study_uid=study_uid, list_of_start_dates=start_dates
+        )
         return sorted(
             [
                 self._from_neomodel_to_history_vo(
-                    study_epoch_ogm_input=StudyEpochOGMVer.from_orm(se_node)
+                    study_epoch_ogm_input=selection_version,
+                    get_ct_terms_for_epoch=get_ct_terms_for_epoch,
+                    effective_date=effective_date,
                 )
-                for se_node in to_relation_trees(
-                    StudyEpoch.nodes.fetch_relations(
-                        "has_after__audit_trail",
-                        "has_epoch",
-                        "has_epoch_subtype",
-                        "has_epoch_type",
-                    )
-                    .fetch_optional_relations("has_duration_unit", "has_before")
-                    .filter(uid=uid, has_after__audit_trail__uid=study_uid)
+                for selection_version, effective_date in zip(
+                    selection_history, effective_dates
                 )
             ],
             key=lambda item: item.start_date,
             reverse=True,
         )
 
-    def get_all_epoch_versions(self, study_uid: str):
+    def get_all_epoch_versions(
+        self,
+        study_uid: str,
+        get_ct_terms_for_epoch: Callable[[str], CTTermName],
+    ):
         return sorted(
             [
                 self._from_neomodel_to_history_vo(
-                    study_epoch_ogm_input=StudyEpochOGMVer.from_orm(se_node)
+                    study_epoch_ogm_input=StudyEpochOGMVer.from_orm(se_node),
+                    get_ct_terms_for_epoch=get_ct_terms_for_epoch,
                 )
                 for se_node in to_relation_trees(
                     StudyEpoch.nodes.fetch_relations(
@@ -259,21 +298,87 @@ class StudyEpochRepository:
             color_hash=study_epoch_ogm_input.color_hash,
         )
 
-    def _from_neomodel_to_history_vo(self, study_epoch_ogm_input: StudyEpochOGMVer):
+    def _from_neomodel_to_history_vo(
+        self,
+        study_epoch_ogm_input: StudyEpochOGMVer,
+        get_ct_terms_for_epoch: Callable[[str], CTTermName] = None,
+        effective_date: datetime.datetime = None,
+    ):
+        history_study_epoch_epoch = None
+        if get_ct_terms_for_epoch:
+            epoch_term: CTTermName = get_ct_terms_for_epoch(
+                study_epoch_ogm_input.epoch, at_specific_date=effective_date
+            )
+            history_study_epoch_epoch = copy.deepcopy(StudyEpochEpoch)
+            history_study_epoch_epoch.clear()
+            history_study_epoch_epoch.update(
+                [
+                    (
+                        epoch_term.term_uid,
+                        EpochNamedTuple(
+                            epoch_term.term_uid, epoch_term.sponsor_preferred_name
+                        ),
+                    )
+                ]
+            )
+
+            epoch_subtype_term: CTTermName = get_ct_terms_for_epoch(
+                study_epoch_ogm_input.epoch_subtype, at_specific_date=effective_date
+            )
+            history_study_epoch_subtype = copy.deepcopy(StudyEpochSubType)
+            history_study_epoch_subtype.clear()
+            history_study_epoch_subtype.update(
+                [
+                    (
+                        epoch_subtype_term.term_uid,
+                        EpochSubtypeNamedTuple(
+                            epoch_subtype_term.term_uid,
+                            epoch_subtype_term.sponsor_preferred_name,
+                        ),
+                    )
+                ]
+            )
+
+            epoch_type_term: CTTermName = get_ct_terms_for_epoch(
+                study_epoch_ogm_input.epoch_type, at_specific_date=effective_date
+            )
+            history_study_epoch_type = copy.deepcopy(StudyEpochType)
+            history_study_epoch_type.clear()
+            history_study_epoch_type.update(
+                [
+                    (
+                        epoch_type_term.term_uid,
+                        EpochTypeNamedTuple(
+                            epoch_type_term.term_uid,
+                            epoch_type_term.sponsor_preferred_name,
+                        ),
+                    )
+                ]
+            )
+
         return StudyEpochHistoryVO(
             uid=study_epoch_ogm_input.uid,
             study_uid=study_epoch_ogm_input.study_uid,
             start_rule=study_epoch_ogm_input.start_rule,
             end_rule=study_epoch_ogm_input.end_rule,
             description=study_epoch_ogm_input.description,
-            epoch=study_epoch.StudyEpochEpoch[study_epoch_ogm_input.epoch],
-            subtype=study_epoch.StudyEpochSubType[study_epoch_ogm_input.epoch_subtype],
-            epoch_type=study_epoch.StudyEpochType[study_epoch_ogm_input.epoch_type],
+            epoch=history_study_epoch_epoch[epoch_term.term_uid]
+            if history_study_epoch_epoch
+            else study_epoch.StudyEpochEpoch[study_epoch_ogm_input.epoch],
+            subtype=history_study_epoch_subtype[epoch_subtype_term.term_uid]
+            if history_study_epoch_subtype
+            else study_epoch.StudyEpochSubType[study_epoch_ogm_input.epoch_subtype],
+            epoch_type=history_study_epoch_type[epoch_type_term.term_uid]
+            if history_study_epoch_type
+            else study_epoch.StudyEpochType[study_epoch_ogm_input.epoch_type],
             order=study_epoch_ogm_input.order,
             status=StudyStatus(study_epoch_ogm_input.status),
             start_date=study_epoch_ogm_input.start_date,
             author=self.author,
             color_hash=study_epoch_ogm_input.color_hash,
+            study_visit_count=len(
+                {sv.uid for sv in study_epoch_ogm_input.study_visits.all()}
+            ),
             change_type=study_epoch_ogm_input.change_type,
             end_date=study_epoch_ogm_input.end_date,
         )

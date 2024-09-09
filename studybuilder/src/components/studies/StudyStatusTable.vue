@@ -22,6 +22,7 @@
         data-cy="lock-study"
         :disabled="!checkPermission($roles.STUDY_WRITE)"
         icon="mdi-lock-outline"
+        :loading="loading"
         @click.stop="lockStudy"
       />
       <v-btn
@@ -30,13 +31,15 @@
             .study_status === 'DRAFT' &&
           !studiesGeneralStore.selectedStudy.study_parent_part
         "
+        class="ml-2"
         size="small"
-        color="info"
+        variant="outlined"
+        color="nnBaseBlue"
         :title="$t('_global.release')"
         data-cy="release-study"
-        class="ml-2"
         :disabled="!checkPermission($roles.STUDY_WRITE)"
         icon="mdi-share-variant"
+        :loading="loading"
         @click.stop="releaseStudy"
       />
       <v-btn
@@ -51,6 +54,7 @@
         data-cy="unlock-study"
         :disabled="!checkPermission($roles.STUDY_WRITE)"
         icon="mdi-lock-open-outline"
+        :loading="loading"
         @click.stop="unlockStudy"
       />
     </template>
@@ -118,7 +122,7 @@ export default {
     return {
       editedStudy: null,
       headers: [
-        { title: '', key: 'actions' },
+        { title: '', key: 'actions', width: '1%' },
         {
           title: this.$t('Study.status'),
           key: 'current_metadata.version_metadata.study_status',
@@ -140,6 +144,7 @@ export default {
           key: 'current_metadata.version_metadata.version_author',
         },
       ],
+      loading: false,
       lockedHistory: [],
       options: {},
       showStatusForm: false,
@@ -179,6 +184,7 @@ export default {
       this.fetchItems()
     },
     closeStatusForm() {
+      this.loading = false
       this.showStatusForm = false
     },
     fetchItems(filters, sort, filtersUpdated) {
@@ -199,10 +205,12 @@ export default {
         })
     },
     releaseStudy() {
+      this.loading = true
       this.statusAction = 'release'
       this.showStatusForm = true
     },
     lockStudy() {
+      this.loading = true
       this.statusAction = 'lock'
       this.showStatusForm = true
     },
@@ -210,6 +218,7 @@ export default {
       this.fetchItems()
     },
     async unlockStudy() {
+      this.loading = true
       const resp = await api.unlockStudy(
         this.studiesGeneralStore.selectedStudy.uid
       )
@@ -218,6 +227,7 @@ export default {
         msg: this.$t('StudyStatusTable.unlock_success'),
         type: 'success',
       })
+      this.loading = false
       this.fetchItems()
     },
   },

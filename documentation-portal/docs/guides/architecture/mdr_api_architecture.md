@@ -1,12 +1,13 @@
-# Overview
-This document describes Clinical MDR API architecture.
+# API architecture
 
-# API Documentation
+This document describes the architecture of th Clinical MDR API service component.
+
+## API Documentation
 
 OpenAPI specification of the Clinical MDR API is accessible at `/api/docs` path for each target environment, 
-for example https://studybuilder.novonordisk.com/api/docs.
+for example https://openstudybuilder.northeurope.cloudapp.azure.com/api/docs.
 
-# General Testing Approach
+## General Testing Approach
 
 We differentiate between those tests that need external components 
 (like an API or a database) and those that run without any additional setup.
@@ -15,7 +16,7 @@ This is reflected in the folder structure as follows:
 - `tests/unit`: no additional/external components are needed to run the tests.
 - `tests/integration`: there are external components that need to be set up before the tests can run.
 
-## Unit Tests
+### Unit Tests
 
 The foundation of the testing is made up by a lot of small and fast unit tests.
 
@@ -170,10 +171,10 @@ $ pytest
 
 ---
 
-# REST API Guidelines
+## REST API Guidelines
 In general, we are following [Zalando RESTful API Guidelines](https://opensource.zalando.com/restful-api-guidelines/).
 
-## HTTP Methods
+### HTTP Methods
 
 This is the default usage of the HTTP Methods:
 
@@ -303,7 +304,7 @@ Broadly speaking, they fall into the following categories:
 
 
 
-# Code Style
+## Code Style
 
 - We should follow the rules mentioned here: https://pep8.org. 
 - All code must be formatted using [Black](https://black.readthedocs.io/en/stable/) and [isort](https://pycqa.github.io/isort/) tools (run `pipenv run format` to auto-format all code).
@@ -312,13 +313,13 @@ Broadly speaking, they fall into the following categories:
 
 ---
 
-# Introduction to neomodel extension
+## Introduction to neomodel extension
 [Neomodel](https://neomodel.readthedocs.io/en/latest/) is an object graph mapper (OGM) library for the Neo4j database.
 The object graph mapper is a tool that maps python objects into neo4j nodes and relationships.
 It allows to write a python code which is under the hood translated into cypher queries and later on executed in the neo4j graph database.
 It means that with neomodel we can implement more robust python code that doesn't require to include raw cypher queries in python implementation.
 
-## Neomodel drawbacks
+### Neomodel drawbacks
 When we started to use neomodel to implement database queries, we have noticed that we can easily get performance issues
 because neomodel doesn't support returning many nodes and relationships in one database query.
 Let's take for instance a StudyVisit nodes that contain many relationships to different nodes like controlled terminology terms,
@@ -331,7 +332,7 @@ From neomodel perspective it means that to retrieve these nodes from the databas
 database calls to construct a single study visit object as neomodel lacks a possibility to traverse many relationships in a one 
 database query.
 
-## Neomodel extension
+### Neomodel extension
 To solve this issue we have developed the neomodel extension module. Its main advantage is that we can still write a python neomodel code
 that retrieves data from the database but in the same time it can traverse many relationships in a single database call.
 We can return all of the data listed in the figure above in the single database call.
@@ -339,7 +340,7 @@ If we have to return for instance 50 study visits which is a case for some studi
 database calls like it's done in the pure neomodel library, but we can retrieve everything that is needed to construct 50 study visitis
 in a single database query but still using python code.
 
-## Exemplary neomodel query
+### Exemplary neomodel query
 The following piece of code is the neomodel extension implementation of the query that returns the data necessary for all the study visits from a given study.
 
     `def find_all_visits_by_study_uid(self, study_uid: str) -> Sequence[StudyVisitOGM]:
@@ -379,7 +380,7 @@ we can directly map the database output into the API model which is returned to 
 
 ---
 
-# Pylint
+## Pylint
 Pylint is a static code analyser for Python.
 
 Pylint analyses your code without actually running it. It checks for errors, enforces a coding standard, looks for code smells, and can make suggestions about how the code could be refactored.  
@@ -388,7 +389,7 @@ Pylint can infer actual values from your code using its internal code representa
 
 [Pylint Documentation](https://pylint.pycqa.org/en/latest/)
 
-## Run Pylint
+### Run Pylint
 To run Pylint you can execute the following command which will analyse the entire codebase and output results:  
 ```
 pipenv run lint
@@ -400,7 +401,7 @@ pipenv run lint > linting_report.txt
 ```
 [Build pipeline](https://novonordiskit.visualstudio.com/Clinical-MDR/_git/clinical-mdr-api?path=/azurebuild.yml&version=GBmain&_a=contents) is running this linting check as one of the first steps, and the whole build job will fail if Pylint reports any issues.
 
-## pyproject.toml
+### pyproject.toml
 [`pyproject.toml`](https://novonordiskit.visualstudio.com/Clinical-MDR/_git/clinical-mdr-api?path=/pyproject.toml&version=GBmain&_a=contents) is the file where we define custom settings for Pylint and other tools used in our project. 
 
 Sections related to Pylint are marked with `[tool.pylint.'<setting>']`, where `'<setting>'` refers to a Pylint setting that we wish to customize.
@@ -426,19 +427,19 @@ Follow these steps to add the path:
 
 ---
 
-# Source Code Management
+## Source Code Management
 
 We are using the 'Git-flow-Workflow' approach described here:
 https://www.atlassian.com/de/git/tutorials/comparing-workflows/gitflow-workflow
 
-# Authentication setup
+## Authentication setup
 
 See `clinical-mdr-api/doc/Auth.md` on how to set up authentication and 
 role-based access control for clinical-mdr-api and StudyBuilder UI.
 
 ---
 
-# Data Objects Structure
+## Data Objects Structure
 
 Usual Data Objects Properties
 

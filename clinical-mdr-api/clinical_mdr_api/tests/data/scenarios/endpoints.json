@@ -105,7 +105,7 @@
             "result": {
                 "change_description": "Initial version",
                 "end_date": null,
-                "endpoint_template": {
+                "template": {
                     "name": "Test [Indication]",
                     "name_plain": "Test [Indication]",
                     "guidance_text": null,
@@ -183,7 +183,7 @@
             "result": {
                 "change_description": "Initial version",
                 "end_date": null,
-                "endpoint_template": {
+                "template": {
                     "name": "Test [Indication]",
                     "name_plain": "Test [Indication]",
                     "guidance_text": null,

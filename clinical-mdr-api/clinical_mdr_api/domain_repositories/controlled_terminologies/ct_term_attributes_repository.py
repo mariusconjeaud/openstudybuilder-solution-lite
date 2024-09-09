@@ -94,6 +94,7 @@ class CTTermAttributesRepository(CTTermGenericRepository[CTTermAttributesAR]):
                 CTTermCodelistVO(
                     codelist_uid=codelist_root.uid,
                     order=codelist_root.has_term.relationship(ct_term_root_node).order,
+                    library_name=codelist_root.has_library.single().name,
                 )
             )
 

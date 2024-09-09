@@ -111,6 +111,7 @@ def test_data():
     # Create some pharmaceutical products
     ingredient_1 = {
         "external_id": "ingredient-prodex-id-a",
+        "formulation_name": "formulation-name-a",
         "active_substance_uid": active_substances_all[0].uid,
         "strength_uid": strength.uid,
         "half_life_uid": half_life.uid,
@@ -118,6 +119,7 @@ def test_data():
     }
     ingredient_2 = {
         "external_id": "ingredient-prodex-id-b",
+        "formulation_name": "formulation-name-b",
         "active_substance_uid": active_substances_all[1].uid,
         "strength_uid": strength.uid,
         "half_life_uid": half_life.uid,
@@ -126,7 +128,6 @@ def test_data():
 
     formulation_1 = {
         "external_id": "formulation-prodex-id-a",
-        "name": "formulation-name-a",
         "ingredients": [ingredient_1, ingredient_2],
     }
 
@@ -228,7 +229,6 @@ def test_get_pharmaceutical_product(api_client):
     assert res["dosage_forms"][0]["name"] == ct_term_dose_form.sponsor_preferred_name
 
     assert res["formulations"][0]["external_id"] == "formulation-prodex-id-a"
-    assert res["formulations"][0]["name"] == "formulation-name-a"
 
     ingr_1 = res["formulations"][0]["ingredients"][0]
     ingr_2 = res["formulations"][0]["ingredients"][1]
@@ -702,10 +702,10 @@ def test_create_and_delete_pharmaceutical_product(api_client):
     # Create new pharmaceutical product
     formulation = {
         "external_id": "formulation-prodex-id",
-        "name": "formulation-name",
         "ingredients": [
             {
                 "external_id": "ingredient-prodex-id-a",
+                "formulation_name": "formulation-name-a",
                 "active_substance_uid": active_substances_all[0].uid,
                 "strength_uid": strength.uid,
                 "half_life_uid": half_life.uid,
@@ -713,6 +713,7 @@ def test_create_and_delete_pharmaceutical_product(api_client):
             },
             {
                 "external_id": "ingredient-prodex-id-b",
+                "formulation_name": "formulation-name-b",
                 "active_substance_uid": active_substances_all[1].uid,
                 "strength_uid": strength.uid,
                 "half_life_uid": half_life.uid,
@@ -742,15 +743,16 @@ def test_create_and_delete_pharmaceutical_product(api_client):
     assert res["dosage_forms"][0]["name"] == ct_term_dose_form.sponsor_preferred_name
 
     assert res["formulations"][0]["external_id"] == "formulation-prodex-id"
-    assert res["formulations"][0]["name"] == "formulation-name"
 
     ingr_1 = res["formulations"][0]["ingredients"][0]
     ingr_2 = res["formulations"][0]["ingredients"][1]
 
     assert ingr_1["external_id"] == "ingredient-prodex-id-a"
+    assert ingr_1["formulation_name"] == "formulation-name-a"
     assert ingr_1["active_substance"]["uid"] == active_substances_all[0].uid
 
     assert ingr_2["external_id"] == "ingredient-prodex-id-b"
+    assert ingr_2["formulation_name"] == "formulation-name-b"
     assert ingr_2["active_substance"]["uid"] == active_substances_all[1].uid
 
     for ingredient in res["formulations"][0]["ingredients"]:
@@ -784,7 +786,6 @@ def test_create_and_delete_pharmaceutical_product_with_missing_values(api_client
     # Create new pharmaceutical product
     formulation = {
         "external_id": "formulation-prodex-id",
-        "name": "formulation-name",
         "ingredients": [
             {
                 "external_id": "ingredient-prodex-id-a",
@@ -821,7 +822,6 @@ def test_create_and_delete_pharmaceutical_product_with_missing_values(api_client
     assert res["dosage_forms"][0]["name"] == ct_term_dose_form.sponsor_preferred_name
 
     assert res["formulations"][0]["external_id"] == "formulation-prodex-id"
-    assert res["formulations"][0]["name"] == "formulation-name"
 
     ingr_1 = res["formulations"][0]["ingredients"][0]
     ingr_2 = res["formulations"][0]["ingredients"][1]

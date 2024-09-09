@@ -34,6 +34,9 @@ from clinical_mdr_api.domain_repositories.concepts.compound_alias_repository imp
 from clinical_mdr_api.domain_repositories.concepts.compound_repository import (
     CompoundRepository,
 )
+from clinical_mdr_api.domain_repositories.concepts.medicinal_product_repository import (
+    MedicinalProductRepository,
+)
 from clinical_mdr_api.domain_repositories.concepts.odms.alias_repository import (
     AliasRepository,
 )
@@ -377,6 +380,10 @@ class MetaRepository:
     @property
     def compound_alias_repository(self) -> CompoundAliasRepository:
         return CompoundAliasRepository()
+
+    @property
+    def medicinal_product_repository(self) -> MedicinalProductRepository:
+        return MedicinalProductRepository()
 
     @property
     def active_substance_repository(self) -> ActiveSubstanceRepository:

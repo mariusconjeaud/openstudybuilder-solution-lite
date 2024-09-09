@@ -17,6 +17,9 @@ export default {
   getSubstances(params) {
     return repository.get(`${resource}/substances`, { params })
   },
+  retrieve(uid) {
+    return repository.get(`${resource}/terms/${uid}`)
+  },
   inactivate(uid) {
     return repository.delete(`${resource}/terms/${uid}/activations`)
   },
@@ -43,5 +46,8 @@ export default {
       ...term,
     }
     return repository.post(`${resource}/terms`, params)
+  },
+  update(uid, data) {
+    return repository.patch(`${resource}/terms/${uid}`, data)
   },
 }

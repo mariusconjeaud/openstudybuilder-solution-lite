@@ -137,12 +137,16 @@
         "access_groups": "Access Groups:",
         "operator": "Operator",
         "download_docx": "Download DOCX",
+        "download_svg": "Download SVG",
         "audit_trail": "Audit trail",
         "remove": "Remove",
         "change_order": "Change order",
         "order_updated": "The order was updated",
         "reject": "Reject",
-        "accept": "Accept"
+        "accept": "Accept",
+        "reports": "Reports",
+        "download": "Download",
+        "and_or": "And/Or"
     },
     "_errors": {
         "exclusive_select": "Field and Null Flavor can't be selected at the same time.",
@@ -277,7 +281,7 @@
             "is_required_for_activity": "Indicates if the Activity Instance is required for the Activity, i.e. if the Activity is in the SoA then the Activity Instance must be included in the operational SoA.",
             "is_default_selected_for_activity": "The default Activity Instance for the Activity, if nothing else is selected.",
             "is_data_sharing": "Specifies if the Activity Instance is allowed for data sharing",
-            "is_legacy_usage": "Specifies if the Activity Instance is included for legacy usage - and should not be used fot future studies.",
+            "is_legacy_usage": "Specifies if the Activity or Activity Instance is included for legacy usage - and should not be used fot future studies.",
             "rationale_for_request": "A written note on why the request is needed."
         },
         "ActivityOverview": {
@@ -526,8 +530,8 @@
         "StudyVisitForm": {
             "vtype_step_label": "Select the type of visit: Scheduled visit is a planned visit as per protocol. Unscheduled visit is an additional visit to capture activities that may happen outside of normal schedule, e.g. extra lab samples. Non Visit is for study activities not related to any visits, e.g. for self-measured plasma glucose results. The Unscheduled Visit and Non Visit are placeholders required for most of the studies for proper SDTM mapping. Special Visit is a visit without specific timing but related to data collection. Example: early discontinuation visit, where certain data are to be collected, but not at the timing of the originally planned End of Treatment visit. A special visit is always related to another visit and is shown in the schedule of activities as visit VXXA (XX being the number of the related visit). There can be only one Special Visits per study period (Epoch). If after first patient enrolled on study (FPFV) adding new visit as per protocol amendment is needed, then Manually defined visit has to be used. After FPFV changing names or numbering of visits that were initially implemented may have serious consequences, while adding Manually Defined visit is not impacting on data that were already collected.",
             "period": "Select the study period (epoch) applicable for the visit. The epoch types correspond to the epochs defined in the Study Epochs tab.",
-            "single_anchor_addtional": "Selection is applicable only if visit scheduling type is scheduled. For newly created visits by default the Single Visit radiobutton is selected. If visits need subgrouping, e.g. a set of days (Day 1, Day 2, Day 3) to be grouped into a one visit (Visit 3), then select Anchor visit in visit group. It will allow to create Visit 3 Day 1, which will be the local anchor visit for subsequent sub-visits. To add subsequent visits (Visit 3 Day 2, Visit 3 Day 3) then, while creating them, select Additional sub-visit radiobutton and appropriate anchor visit from the time reference drop-down.",
-            "visit_type": "For definition of visit  types see: Library, Code Lists, Sponsor, and filter Sponsor Preferred name=VisitType or Concept ID CTCodelist_000002 to review the terms.",
+            "single_anchor_addtional": "Selection is applicable only if visit scheduling type is scheduled. For newly created visits by default the Single Visit radiobutton is selected. If visits need subgrouping, e.g. a set of days (Day 1, Day 2, Day 3) to be grouped into a one visit (Visit 3), then select Anchor visit in visit group. It will allow to create Visit 3 Day 1, which will be the local anchor visit for subsequent sub-visits. To add subsequent visits (Visit 3 Day 2, Visit 3 Day 3) then, while creating them, select Additional sub-visit radiobutton and appropriate anchor visit from the time reference drop-down. Repeating visits can typically be used for non-interventional studies, where participants return for the same visit multiple times during the study according to their individual needs (for example, one participant may come to visit 3 five times, while another may have 10 visits as visit 3). If there are any requirements about the repetition of such visits (daily, weekly, monthly), then it can be defined via the Repeating frequency item. If visits require a different frequency than those present on the pull-down list, then leave Repeating frequency item blank and provide the proper frequency by entering the details into the Visit description item.",
+            "visit_type": "For definition of visit types see: Library, Code Lists, Sponsor, and filter Sponsor Preferred name=VisitType or Concept ID CTCodelist_000002 to review the terms. Additional Visit types can be requested via the Study Standards Developer. To create an information visit as Visit 0, use the Visit type=Information and set negative timing towards Global anchor visit. Visit types can be marked as SoA milestones in a study.",
             "contact_mode": "Specify how subject interacts with the study investigator at the visit.",
             "anchor_visit": "If ticked, it will set visit timing to 0 days and define this visit as a global anchor (Day 1 of the study). Usually this refers to randomisation visit. There can be only one global anchor visit per study.",
             "current_anchor_visit": "It displays the visit that has been designated as Global anchor visit using the Anchor visit tick mark. If not set, then it will be left blank.",
@@ -843,6 +847,20 @@
         "ClinicalProgrammeForm": {
             "general": "Add a new clinical programme.",
             "name": "Name for the new clinical programme."
+        },
+        "UsdmPage": {
+            "general": "This page display the JSON file generated based on the  Digital Data Flow (DDF) CDISC / TransCelerate Unified Study Definitions Model (USDM). The data available here are extracted and converted into the USDM model, based on mapping rules defined within the StudyBuilder team: Be aware about that.",
+            "official_protocol_title": "The formal descriptive name for the protocol.",
+            "clinical_study_def": "A clinical study involves research using human volunteers (also called participants) that is intended to add to medical knowledge. There are two main types of clinical studies: clinical trials (also called interventional studies) and observational studies. [[http://ClinicalTrials.gov]](CDISC Glossary)",
+            "study_protocol_version": "A plan at a particular point in time for a formal investigation to assess the utility, impact, pharmacological, physiological, and/or psychological effects of a particular treatment, procedure, drug, device, biologic, food product, cosmetic, care plan, or subject characteristic. (BRIDG)",
+            "protocol_status": "A condition of the protocol at a point in time with respect to its state of readiness for implementation. See [<a href='/library/ct_catalogues/All/C188723/terms'>C188723-CDISC DDF Protocol Status Value Set Terminology</a>]",
+            "study_design": "A plan detailing how a study will be performed in order to represent the phenomenon under examination, to answer the research questions that have been asked, and informing the statistical approach.",
+            "organization_type": "A characterization or classification of the formalized group of persons or other organizations collected together for a common purpose (such as administrative, legal, political) and the infrastructure to carry out that purpose. See [<a href='/library/ct_catalogues/All/C188724/terms'>C188724-CDISC DDF Organization Type Value Set Terminology</a>]",
+            "trial_type": "The nature of the interventional study for which information is being collected. See [<a href='/library/ct_catalogues/All/C66739/terms'>C66739-CDISC SDTM Trial Type Terminology</a>]",
+            "intervention_model_type": "The general design of the strategy for assigning interventions to participants in a clinical study. (clinicaltrials.gov). See [<a href='/library/ct_catalogues/All/C99076/terms'>C99076-CDISC SDTM Intervention Model Terminology</a>]",
+            "therapeutic_areas": "A categorization of a disease, disorder, or other condition based on common characteristics and often associated with a medical specialty focusing on research and development of specific therapeutic interventions for the purpose of treatment and prevention.",
+            "trial_blinding_schema": "The type of experimental design used to describe the level of awareness of the study subjects and/ or study personnel as it relates to the respective intervention(s) or assessments being observed, received or administered. See [<a href='/library/ct_catalogues/All/C66735/terms'>C66735-CDISC SDTM Trial Blinding Schema Terminology</a>]",
+            "target_study_population": "The population within the general population to which the study results can be generalized."
         }
     },
     "Topbar": {
@@ -884,7 +902,8 @@
         "dashboard_description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud",
         "define_description": "Specify the design, interventions, study population, objectives, visit structure, schedule of activities and activity, etc. by using controlled terminology and syntax templates or by reusing content from other studies.",
         "build_description": "Preview the study information (entered e.g. under Define Study), but compiled for different downstream usages, e.g. for import into the protocol template, for upload to external registries, for population of the SDTM study design datasets, for CRF design, etc. ",
-        "list_description": "Find, edit and add studies.",
+        "select_description": "Find, edit and add studies.",
+        "list_description": "Various kinds of listings of the study specification data defined for your study.",
         "process_overview_description": "Find schematic overviews of the activities covered under Studies. You can use these to navigate to the relevant pages to enter or look up information."
     },
     "Settings": {
@@ -932,6 +951,7 @@
             "sponsor_ct_packages": "Sponsor CT Packages",
             "concepts": "Concepts",
             "activities": "Activities",
+            "activities_instances": "Activities Instances",
             "units": "Units",
             "crfs": "CRFs",
             "compounds": "Compounds",
@@ -991,6 +1011,7 @@
             "define": "Define Study",
             "design": "Design",
             "study_status": "Study",
+            "data_standard_versions": "Data Standard Versions",
             "design_parameters": "Design Parameters",
             "study_title": "Study Title",
             "select": "Study List",
@@ -1076,7 +1097,8 @@
             "specification_overview": "Specification Overview",
             "study_branches": "Study Branches",
             "disease_milestones": "Disease Milestones",
-            "data_specifications": "Data Specifications"
+            "data_specifications": "Data Specifications",
+            "usdm": "USDM"
         }
     },
     "HomeView": {
@@ -1156,6 +1178,9 @@
         "history": "Show template history",
         "add_objective_template": "Add a new CT Catalogue",
         "new_version_default_description": "New version"
+    },
+    "CTTermDisplay": {
+        "conflict_title": "This Controlled Terminology Term doesn't contain a FINAL version on the Effective Date of the CTPackage selected by the Data Standard Versions"
     },
     "TimeframeTemplateTable": {
         "title": "Time frame templates",
@@ -1444,7 +1469,8 @@
         "subpart_acronym": "Study subpart acronym",
         "acronym_hint": "Optional free-text field (expect if used instead of study number in the early planning phase)",
         "add_success": "Study added",
-        "update_success": "Study updated"
+        "update_success": "Study updated",
+        "one_of_two_error_message": "Either study number or study acronym must be given."
     },
     "StudyDefineForm": {
         "title": "Add or edit study type information",
@@ -1921,6 +1947,7 @@
         "activity_groups": "Activity Groups",
         "activity_subgroups": "Activity Subgroups",
         "is_data_collected": "Data collection",
+        "is_used_by_legacy_instances": "Legacy usage",
         "is_required_for_activity": "Required for activity",
         "is_default_selected_for_activity": "Default selected for activity",
         "is_data_sharing": "Data sharing",
@@ -2047,12 +2074,33 @@
         "tab3_title": "Study Subparts",
         "tab4_title": "Protocol Version"
     },
+    "StudyDataStandardVersionsView": {
+        "title": "Data Standard Versions",
+        "tab1_title": "Controlled Terminology",
+        "tab2_title": "Dictionaries",
+        "tab3_title": "Data Exchange"
+    },
+    "CTStandardVersionsTable": {
+        "ct_catalogue": "CT Catalogue",
+        "cdisc_ct_package": "CDISC CT Package",
+        "sponsor_ct_package": "Sponsor CT Package",
+        "confirm_delete": "Sponsor CT package selection ({package}) will be deleted",
+        "delete_success": "Sponsor CT package selection has been deleted",
+        "history_title": "Standard version selections history ({study})",
+        "item_history_title": "History for standard version selection ({item})"
+    },
+    "CTStandardVersionsForm": {
+        "add_title": "Add a sponsor CT Package for the study",
+        "edit_title": "Edit sponsor CT Package",
+        "add_success": "Sponsor CT package selection added",
+        "update_success": "Sponsor CT package selection updated"
+    },
     "StudyIdentificationSummary": {
         "core_attribute": "Core attribute"
     },
     "StudyStatusTable": {
         "unlock_success": "Study has been unlocked",
-        "confirm_delete": "Study {study} will be deleted",
+        "confirm_delete": "Study {studyId} will be deleted",
         "delete_success": "Study has been deleted"
     },
     "StudyStatusForm": {
@@ -2103,6 +2151,7 @@
         "add": "Add activity template",
         "add_success": "Activity template added",
         "approve_success": "Activity template is now in Final state",
+        "new_version_default_description": "New version",
         "approve_pre_instance_success": "Activity template pre-instance is now in Final state",
         "new_version_success": "New version created",
         "inactivate_success": "Activity template retired",
@@ -2306,23 +2355,6 @@
     "UCUMUnitField": {
         "label": "UCUM unit"
     },
-    "ColumnChoosingForm": {
-        "columnsTitle": "Select columns to show",
-        "filtersTitle": "Select filters",
-        "filtersSearch": "Search for available filters",
-        "show_all_label": "Show all",
-        "remove_all_label": "Remove all",
-        "clear_label": "Remove all",
-        "available_label": "AVAILABLE COLUMNS",
-        "selected_label": "SELECTED COLUMNS",
-        "select_all_label": "Select all",
-        "deselect_all_label": "Deselect all",
-        "clear_filter_content": "Clear filters",
-        "conditional_filter": "Conditional filter",
-        "remove_filters_tooltip": "Clear and remove filters from filter bar without removing the filter bar",
-        "clear_filters_tooltip": "Clear filter content without removing the filters",
-        "show_all_tooltip": "Reset table to show all columns"
-    },
     "CrfsView": {
         "title": "CRFs (Case Report Forms)",
         "tab1_title": "CRF Templates",
@@ -2488,6 +2520,7 @@
         "edit": "Edit",
         "approve": "Approve",
         "delete": "Delete",
+        "new_version_default_description": "New version",
         "approve_success": "Template is now in Final state",
         "approve_pre_instance_success": "Pre-instance is now in Final state",
         "new_version_success": "New version created",
@@ -2549,7 +2582,8 @@
         "hide_column": "Hide column",
         "no_data": "No data available",
         "column_names": "Column names",
-        "column_labels": "Column labels"
+        "column_labels": "Column labels",
+        "select_columns": "Select columns"
     },
     "NNTableTooltips": {
         "filters": "Filters",
@@ -2564,7 +2598,7 @@
         "pin_headers": "Pin header row",
         "unpin_headers": "Unpin header row",
         "copy_from_study": "Copy from study",
-        "clear_filters_content": "Clear filters"
+        "clear_filters_content": "Clear all"
     },
     "EligibilityCriteriaTable": {
         "criteria_text": "Criteria text",
@@ -2658,6 +2692,7 @@
         "history_title": "Stucy Epoch"
     },
     "StudyVisitForm": {
+        "soa_milestone": "SoA Milestone",
         "study_visit": "Study visit",
         "add_title": "Add study visit",
         "edit_title": "Edit study visit",
@@ -2724,8 +2759,10 @@
         "timing": "Visit type, timing and name",
         "if_applicable": "If applicable",
         "single_visit": "Single visit",
-        "single_anchor_addtional": "Single visit/Anchor visit in visit group/Additional sub-visit", 
+        "single_anchor_addtional": "Visit subclass: Single visit/Anchor visit in visit group/Additional sub-visit/Repeating visit", 
         "anchor_visit_in_group": "Anchor visit in visit group",
+        "repeating_visit": "Repeating visit",
+        "repeating_frequency": "Repeating frequency",
         "additional_sub_visit": "Additional sub-visit",
         "select_visit": "Select visit",
         "visit_sub_label": "Visit sub-label",
@@ -2748,6 +2785,7 @@
         "visit_duplicated": "Visit duplicated",
         "duplicate_visit": "Duplicate Study Visit",
         "visit_class": "Visit Class",
+        "visit_sub_class": "Visit Subclass",
         "visit_group": "Visit group",
         "special_visit": "Special visit",
         "existing_visits": "Existing visits",
@@ -2898,6 +2936,21 @@
         "disease_milestone_definition": "Disease Milestone Definition",
         "disease_milestone_rep_ind": "Disease Milestone Repetition Indicator"
     },
+    "UsdmPage": {
+        "title": "USDM version of the Protocol",
+        "general": "General",
+        "clinical_study_def": "Clinical study [C15206]",
+        "official_protocol_title": "Official Protocol Title [C132346]",
+        "study_protocol_version": "Study Protocol Version [C93490]",
+        "protocol_status": "Protocol Status [C188818]",
+        "study_design": "Study Design [C15320]",
+        "organization_type": "Organization Type [C188820]",
+        "trial_type": "Trial Type [C49660]",
+        "intervention_model_type": "Intervention Model Type [C98746]",
+        "therapeutic_areas": "Therapeutic Areas [C101302]",
+        "trial_blinding_schema": "Trial Blinding Schema [C49658]",
+        "target_study_population": "Target Study Population [C142728]"
+    },
     "CtPackageCodelistHistoryView": {
         "title": "CT packages history for one code list"
     },
@@ -3020,7 +3073,8 @@
         "description": "UCUM description"
     },
     "UCUMCodeForm": {
-        "title": "Add UCUM code"
+        "add_title": "Add UCUM code",
+        "edit_title": "Edit UCUM code"
     },
     "ProtocolTitlePage": {
         "title_page_elements": "Title page elements",
@@ -3037,14 +3091,10 @@
         "title": "Study Activities",
         "study_flowchart": "Study SoA",
         "tab1_title": "Study Activities",
-        "tab2_title": "Study Activity Instances",
-        "tab3_title": "Detailed SoA",
-        "tab4_title": "SoA footnotes",
-        "tab5_title": "Protocol SoA",
-        "tab6_title": "Activity Instructions"
+        "tab2_title": "Schedule of Activities"
     },
     "ProtocolFlowchart": {
-        "compact": "Protocol SoA",
+        "protocol": "Protocol SoA",
         "detailed": "Detailed SoA",
         "operational": "Operational SoA",
         "title": "Protocol SoA",
@@ -3171,6 +3221,7 @@
         "include_in_protocol_flowchart": "Include in protocol SoA",
         "include_in_design_figure": "Include in design figure",
         "study_epoch": "Epoch",
+        "study_milestone": "Milestone",
         "visit_short_name": "Visit",
         "study_week": "Week",
         "visit_window": "Window",
@@ -3198,7 +3249,10 @@
         "activity_instructions": "Activity Instructions",
         "batch_edit_warning": "Batch-editing will overwrite existing choices. Only activities expected to have same schedule should be batch-edited together. Do you want to continue?",
         "history_object_type": "Object type",
-        "history_title": "Detailed SoA history for study [{study}]"
+        "history_title": "Detailed SoA history for study [{study}]",
+        "detailed": "Detailed",
+        "protocol": "Protocol",
+        "operational": "Operational"
     },
     "StudyActivityInstructionTable": {
         "activities": "Activities",
@@ -3213,6 +3267,8 @@
     "StudySelectionTable": {
         "select_studies": "Select studies",
         "studies": "Studies",
+        "study_ids": "Study IDs",
+        "study_acronyms": "Study acronyms",
         "copy_item": "Copy item"
     },
     "StudyPurposeView": {
@@ -3892,6 +3948,7 @@
         "edit": "Edit",
         "approve": "Approve",
         "delete": "Delete",
+        "new_version_default_description": "New version",
         "approve_success": "Template is now in Final state",
         "approve_pre_instance_success": "Pre-instance is now in Final state",
         "new_version_success": "New version created",
@@ -3920,8 +3977,9 @@
     },
     "StudyFootnoteTable": {
         "footnote": "Footnote",
+        "footnotes": "Footnotes",
         "covered_items": "SoA items covered",
-        "confirm_delete": "The SoA footnote '{footnote}' will be deleted",
+        "confirm_delete": "Are you sure you want to remove the footnote <strong> {footnote} </strong> from the study?",
         "delete_footnote_success": "SoA footnote deleted",
         "global_history_title": "SoA footnotes history",
         "footnote_version_updated": "Study Footnote version updated",
@@ -3931,7 +3989,10 @@
         "old_version": "Old version:",
         "new_version": "New version:",
         "keep_old_version": "Keep old version",
-        "use_new_version": "Use new version"
+        "use_new_version": "Use new version",
+        "not_linked_warning": "This footnote is not linked to any Activity.",
+        "remove": "Remove Footnote",
+        "keep": "Keep footnote"
     },
     "StudyFootnoteForm": {
         "add_title": "Add SoA footnotes",
@@ -3974,13 +4035,15 @@
     "StudyFootnoteEditForm": {
         "title": "Edit SoA footnote",
         "update_success": "SoA footnote updated",
-        "select_footnote_items": "Select SoA items linked to footnote",
+        "select_footnote_items": "Choose which elements of the SoA to link the footnote <strong> {footnote} </strong> to. You can choose more than one element.",
+        "select_to_create_footnote_items": "Choose which elements of the SoA to link the footnote to. You can choose more than one element.",
         "link_items": "Link SoA items",
         "linked_items": "Linked SoA items",
         "ref_activities": "Study Activities, Groups and Subgroups",
         "ref_epochs_visits": "Study Visits and Epochs",
         "ref_schedules": "Study Schedules",
-        "ref_soa_groups": "Study SoA Groups"
+        "ref_soa_groups": "Study SoA Groups",
+        "save_linking": "Save linking"
     },
     "Comments": {
         "filter_by_ALL": "All comments",
@@ -4005,10 +4068,14 @@
     },
     "ClinicalProgrammes": {
         "name": "Name",
-        "add_success": "Clinical programme added"
+        "add_success": "Clinical programme added",
+        "update_success": "Clinical programme updated",
+        "confirm_delete": "The clinical programme '{programme}' will be deleted",
+        "delete_success": "Clinical programme deleted"
     },
     "ClinicalProgrammeForm": {
-        "title": "Add clinical programme",
+        "add_title": "Add clinical programme",
+        "edit_title": "Edit clinical programme",
         "name": "Name"
     },
     "Projects": {
@@ -4016,10 +4083,14 @@
         "project_number": "Project number",
         "description": "Description",
         "clinical_programme": "Clinical programme",
-        "add_success": "Project added"
+        "add_success": "Project added",
+        "update_success": "Project updated",
+        "confirm_delete": "The project '{project}' will be deleted",
+        "delete_success": "Project deleted"
     },
     "ProjectForm": {
-        "title": "Add project",
+        "add_title": "Add project",
+        "edit_title": "Edit project",
         "name": "Name",
         "project_number": "Project number",
         "description": "Description",

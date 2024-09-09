@@ -35,6 +35,12 @@ class ActivityHierarchySimpleModel(BaseModel):
             simple_activity_model = None
         return simple_activity_model
 
+    @classmethod
+    def from_activity_ar_object(
+        cls, activity_ar: ActivityGroupAR | ActivitySubGroupAR
+    ) -> Self:
+        return cls(uid=activity_ar.uid, name=activity_ar.name)
+
     uid: str = Field(
         ...,
         title="uid",
@@ -124,6 +130,72 @@ class Activity(ActivityBase):
             activity_subgroup = ActivityHierarchySimpleModel.from_activity_uid(
                 uid=activity_grouping.activity_subgroup_uid,
                 find_activity_by_uid=find_activity_subgroup_by_uid,
+            )
+            activity_groupings.append(
+                ActivityGroupingHierarchySimpleModel(
+                    activity_group_uid=activity_group.uid,
+                    activity_group_name=activity_group.name,
+                    activity_subgroup_uid=activity_subgroup.uid,
+                    activity_subgroup_name=activity_subgroup.name,
+                )
+            )
+        return cls(
+            uid=activity_ar.uid,
+            nci_concept_id=activity_ar.concept_vo.nci_concept_id,
+            name=activity_ar.name,
+            name_sentence_case=activity_ar.concept_vo.name_sentence_case,
+            definition=activity_ar.concept_vo.definition,
+            abbreviation=activity_ar.concept_vo.abbreviation,
+            activity_groupings=sorted(
+                activity_groupings,
+                key=lambda item: (
+                    item.activity_subgroup_name,
+                    item.activity_group_name,
+                ),
+            ),
+            library_name=Library.from_library_vo(activity_ar.library).name,
+            start_date=activity_ar.item_metadata.start_date,
+            end_date=activity_ar.item_metadata.end_date,
+            status=activity_ar.item_metadata.status.value,
+            version=activity_ar.item_metadata.version,
+            change_description=activity_ar.item_metadata.change_description,
+            user_initials=activity_ar.item_metadata.user_initials,
+            possible_actions=sorted(
+                [_.value for _ in activity_ar.get_possible_actions()]
+            ),
+            request_rationale=activity_ar.concept_vo.request_rationale,
+            is_request_final=activity_ar.concept_vo.is_request_final,
+            is_request_rejected=activity_ar.concept_vo.is_request_rejected,
+            reason_for_rejecting=activity_ar.concept_vo.reason_for_rejecting,
+            contact_person=activity_ar.concept_vo.contact_person,
+            requester_study_id=activity_ar.concept_vo.requester_study_id,
+            replaced_by_activity=activity_ar.concept_vo.replaced_by_activity,
+            is_data_collected=activity_ar.concept_vo.is_data_collected
+            if activity_ar.concept_vo.is_data_collected
+            else False,
+            is_multiple_selection_allowed=activity_ar.concept_vo.is_multiple_selection_allowed
+            if activity_ar.concept_vo.is_multiple_selection_allowed is not None
+            else True,
+            is_finalized=activity_ar.concept_vo.is_finalized,
+            is_used_by_legacy_instances=activity_ar.concept_vo.is_used_by_legacy_instances,
+        )
+
+    @classmethod
+    def from_activity_ar_objects(
+        cls,
+        activity_ar: ActivityAR,
+        activity_subgroup_ars: list[ActivitySubGroupAR],
+        activity_group_ars: list[ActivitySubGroupAR],
+    ) -> Self:
+        activity_groupings = []
+        for activity_group_ar, activity_subgroup_ar in zip(
+            activity_group_ars, activity_subgroup_ars
+        ):
+            activity_group = ActivityHierarchySimpleModel.from_activity_ar_object(
+                activity_ar=activity_group_ar,
+            )
+            activity_subgroup = ActivityHierarchySimpleModel.from_activity_ar_object(
+                activity_ar=activity_subgroup_ar,
             )
             activity_groupings.append(
                 ActivityGroupingHierarchySimpleModel(

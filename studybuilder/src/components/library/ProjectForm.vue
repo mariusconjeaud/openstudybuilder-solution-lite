@@ -1,7 +1,7 @@
 <template>
   <SimpleFormDialog
-    ref="form"
-    :title="$t('ProjectForm.title')"
+    ref="formRef"
+    :title="title"
     :help-items="helpItems"
     :help-text="$t('_help.ClinicalProgrammeForm.general')"
     :open="open"
@@ -38,7 +38,7 @@
             />
           </v-col>
         </v-row>
-        <v-row>
+        <v-row v-if="!projectUid">
           <v-col cols="12">
             <v-text-field
               id="project-number"
@@ -69,91 +69,120 @@
   </SimpleFormDialog>
 </template>
 
-<script>
+<script setup>
+import { computed, inject, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { useFormStore } from '@/stores/form'
 import SimpleFormDialog from '@/components/tools/SimpleFormDialog.vue'
-import programmes from '@/api/clinicalProgrammes'
+import programmesApi from '@/api/clinicalProgrammes'
 import projects from '@/api/projects'
 
-export default {
-  components: {
-    SimpleFormDialog,
+const { t } = useI18n()
+const formStore = useFormStore()
+const formRules = inject('formRules')
+const eventBusEmit = inject('eventBusEmit')
+
+const props = defineProps({
+  projectUid: {
+    type: String,
+    default: null,
   },
-  inject: ['formRules', 'eventBusEmit'],
-  props: {
-    editedStudy: {
-      type: Object,
-      default: null,
-    },
-    open: Boolean,
-  },
-  emits: ['created', 'close'],
-  data() {
-    return {
-      form: {},
-      helpItems: [
-        'ProjectForm.clinical_programme',
-        'ProjectForm.name',
-        'ProjectForm.project_number',
-        'ProjectForm.description',
-      ],
+  open: Boolean,
+})
+
+const emit = defineEmits(['reload', 'close'])
+
+const form = ref({})
+const formRef = ref()
+const programmes = ref([])
+
+const helpItems = [
+  'ProjectForm.clinical_programme',
+  'ProjectForm.name',
+  'ProjectForm.project_number',
+  'ProjectForm.description',
+]
+
+const title = computed(() => {
+  return props.projectUid
+    ? t('ProjectForm.edit_title')
+    : t('ProjectForm.add_title')
+})
+
+watch(
+  () => props.projectUid,
+  (value) => {
+    if (value) {
+      projects.retrieve(value).then((resp) => {
+        form.value = resp.data
+        form.value.clinical_programme_uid = form.value.clinical_programme.uid
+        formStore.save({ ...form.value })
+      })
     }
   },
-  watch: {},
-  mounted() {
-    this.fetchProgrammes()
-    this.initForm()
-  },
-  methods: {
-    async close() {
-      if (
-        this.form.name ||
-        this.form.clinical_programme_uid ||
-        this.form.description ||
-        this.form.project_number
-      ) {
-        const options = {
-          type: 'warning',
-          cancelLabel: this.$t('_global.cancel'),
-          agreeLabel: this.$t('_global.continue'),
-        }
-        if (
-          await this.$refs.form.confirm(
-            this.$t('_global.cancel_changes'),
-            options
-          )
-        ) {
-          this.$emit('close')
-        }
-      } else {
-        this.$emit('close')
-      }
-      this.initForm()
-    },
-    initForm() {
-      this.form = {}
-    },
-    async addProject() {
-      const data = JSON.parse(JSON.stringify(this.form))
-      const resp = await projects.create(data)
-      this.eventBusEmit('notification', {
-        msg: this.$t('Projects.add_success'),
-      })
-      this.$emit('created', resp.data)
-    },
-    async submit() {
-      try {
-        await this.addProject()
-        this.$emit('close')
-      } finally {
-        this.$refs.form.working = false
-      }
-      this.initForm()
-    },
-    fetchProgrammes() {
-      programmes.get({ page_size: 0 }).then((resp) => {
-        this.programmes = resp.data.items
-      })
-    },
-  },
+  { immediate: true }
+)
+
+onMounted(() => {
+  fetchProgrammes()
+  initForm()
+  formStore.save({ ...form.value })
+})
+
+async function close() {
+  if (!formStore.isEqual(form.value)) {
+    const options = {
+      type: 'warning',
+      cancelLabel: t('_global.cancel'),
+      agreeLabel: t('_global.continue'),
+    }
+    if (!(await formRef.value.confirm(t('_global.cancel_changes'), options))) {
+      return
+    }
+  }
+  emit('close')
+  initForm()
+}
+
+function initForm() {
+  form.value = {}
+  formStore.reset()
+}
+
+async function addProject() {
+  const data = JSON.parse(JSON.stringify(form.value))
+  await projects.create(data)
+  eventBusEmit('notification', {
+    msg: t('Projects.add_success'),
+  })
+}
+
+async function updateProject() {
+  const data = JSON.parse(JSON.stringify(form.value))
+  await projects.patch(props.projectUid, data)
+  eventBusEmit('notification', {
+    msg: t('Projects.update_success'),
+  })
+}
+
+async function submit() {
+  try {
+    if (!props.projectUid) {
+      await addProject()
+    } else {
+      await updateProject()
+    }
+    emit('close')
+    emit('reload')
+  } finally {
+    formRef.value.working = false
+  }
+  initForm()
+}
+
+function fetchProgrammes() {
+  programmesApi.get({ page_size: 0 }).then((resp) => {
+    programmes.value = resp.data.items
+  })
 }
 </script>

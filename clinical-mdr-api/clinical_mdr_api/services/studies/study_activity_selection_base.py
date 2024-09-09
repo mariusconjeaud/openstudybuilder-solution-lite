@@ -77,7 +77,10 @@ class StudyActivitySelectionBaseService(StudySelectionMixin):
 
     @abc.abstractmethod
     def _transform_history_to_response_model(
-        self, study_selection_history: list[Any], study_uid: str
+        self,
+        study_selection_history: list[Any],
+        study_uid: str,
+        effective_dates: datetime | None = None,
     ) -> list[BaseModel]:
         raise NotImplementedError
 
@@ -302,6 +305,7 @@ class StudyActivitySelectionBaseService(StudySelectionMixin):
             )
 
             # merge current with updates
+
             updated_selection = self._patch_prepare_new_value_object(
                 request_object=selection_update_input,
                 current_object=current_vo,
@@ -318,7 +322,7 @@ class StudyActivitySelectionBaseService(StudySelectionMixin):
             # sync with DB and save the update
             self.repository.save(selection_aggregate, self.author)
 
-            # sync related nodes
+            # # sync related nodes
             self.update_study_activities(
                 study_uid=study_uid, study_selection_uid=study_selection_uid
             )

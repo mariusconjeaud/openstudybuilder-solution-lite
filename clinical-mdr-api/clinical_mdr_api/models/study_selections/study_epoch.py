@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Any
 
 from pydantic import Field
 
@@ -156,6 +157,12 @@ class StudyEpochOGMVer(StudyEpochOGM):
         title="Uid",
         description="Uid of the study",
         source="has_after.audit_trail.uid",
+    )
+    study_visits: Any = Field(
+        ...,
+        title="study_visits",
+        description="study visits",
+        source="has_study_visit",
     )
     change_type: str = Field(
         ...,

@@ -21,6 +21,7 @@ module.exports = {
                         'userguide/studies/manage_studies',
                         'userguide/studies/guide_study_structure',
                         'userguide/studies/guide_visits',
+                        'userguide/studies/protocol_SoA_Milestone_row',
                         'userguide/studies/userguide_activities',
                         'userguide/studies/data_specifications',
                         'userguide/reports/userguides_reports'
@@ -33,6 +34,7 @@ module.exports = {
                         'architecture/architecture_introduction',
 						'architecture/conceptual_architecture',
 						'architecture/system_component_architecture',
+                        'architecture/architectural_decision_records',
 						'architecture/integration_architecture',
                         'architecture/system_data_flows',
 						'architecture/system_workflows',

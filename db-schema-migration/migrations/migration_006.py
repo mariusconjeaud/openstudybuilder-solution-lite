@@ -504,6 +504,7 @@ def fix_duration_properties_for_visits_with_negative_timings(
 
     return contains_updates
 
+
 def fix_not_migrated_study_soa_groups(db_driver, log, migration_desc):
 
     log.info("Migrate StudyActivity, SoAGroup information represented in the old way")

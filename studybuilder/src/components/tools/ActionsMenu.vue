@@ -1,24 +1,22 @@
 <template>
   <v-menu v-if="item && checkActionsPermissions" position="bottom">
     <template #activator="{ props }">
-      <div>
+      <v-btn
+        v-if="!badge"
+        data-cy="table-item-action-button"
+        icon="mdi-dots-vertical"
+        variant="plain"
+        v-bind="props"
+        class="pb-3 mr-n6 ml-n2"
+      />
+      <v-badge v-else :color="badge.color" :icon="badge.icon" bordered inline >
         <v-btn
-          v-if="!badge"
-          data-cy="table-item-action-button"
           icon="mdi-dots-vertical"
-          variant="plain"
           v-bind="props"
-          class="pb-3"
+          class="pb-3 ml-n3"
+          variant="text"
         />
-        <v-badge v-else :color="badge.color" :icon="badge.icon" bordered inline>
-          <v-btn
-            icon="mdi-dots-vertical"
-            v-bind="props"
-            class="pb-3"
-            variant="text"
-          />
-        </v-badge>
-      </div>
+      </v-badge>
     </template>
     <v-list>
       <template v-for="(action, index) in actions">
@@ -32,16 +30,15 @@
         >
           <template #prepend>
             <v-icon
-              v-if="action.iconColor"
-              :color="action.iconColor"
-              :icon="action.icon"
-            />
-            <v-icon
-              v-else-if="action.iconColorFunc"
+              v-if="action.iconColorFunc"
               :color="action.iconColorFunc(item)"
               :icon="action.icon"
             />
-            <v-icon v-else :icon="action.icon" />
+            <v-icon
+              v-else
+              :icon="action.icon"
+              color="nnBaseBlue"
+            />
           </template>
           <v-list-item-title :data-cy="action.label">
             {{ action.label }}

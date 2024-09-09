@@ -299,18 +299,21 @@ def mocked_msgraph_service(monkeypatch):
     return service
 
 
+@pytest.mark.asyncio
 async def test_msgraph_request_error(mocked_msgraph_service):
     with pytest.raises(exceptions.BusinessLogicException) as exc_info:
         await mocked_msgraph_service.request("GET", "/not-implemented")
     assert "request failed" in exc_info.value.msg
 
 
+@pytest.mark.asyncio
 async def test_msgraph_request_non_json(mocked_msgraph_service):
     with pytest.raises(exceptions.BusinessLogicException) as exc_info:
         await mocked_msgraph_service.request("GET", "/non-json-payload")
     assert "Testing JSONDecodeError" in exc_info.value.msg
 
 
+@pytest.mark.asyncio
 async def test_msgraph_request_forbidden(mocked_msgraph_service):
     with pytest.raises(exceptions.BusinessLogicException) as exc_info:
         mocked_msgraph_service.token = {}
@@ -318,6 +321,7 @@ async def test_msgraph_request_forbidden(mocked_msgraph_service):
     assert "Forbidden" in exc_info.value.msg
 
 
+@pytest.mark.asyncio
 async def test_msgraph_fetch_groups(mocked_msgraph_service):
     payload = await mocked_msgraph_service.fetch_groups()
     _assert_groups_match_expected(payload, GROUPS)
@@ -343,11 +347,13 @@ def _assert_groups_match_expected(payload, expected_groups):
     "gid",
     [g["id"] for g in GROUPS],
 )
+@pytest.mark.asyncio
 async def test_fetch_group_direct_member_users(mocked_msgraph_service, gid):
     payload = await mocked_msgraph_service.fetch_group_direct_member_users(gid)
     _assert_users_match_expected(payload, USERS_BY_GROUP[gid])
 
 
+@pytest.mark.asyncio
 async def test_fetch_all_group_direct_member_users(mocked_msgraph_service):
     payload = await mocked_msgraph_service.fetch_all_group_direct_member_users()
     _assert_users_match_expected(payload, USERS)
@@ -362,6 +368,7 @@ async def test_fetch_all_group_direct_member_users(mocked_msgraph_service):
     _assert_users_well_ordered(payload)
 
 
+@pytest.mark.asyncio
 async def test_fetch_all_group_direct_member_users_fails_without_token(
     mocked_msgraph_service,
 ):
@@ -375,6 +382,7 @@ async def test_fetch_all_group_direct_member_users_fails_without_token(
     "pattern, expected_users",
     list(USERS_BY_PATTERN.items()),
 )
+@pytest.mark.asyncio
 async def test_search_all_group_direct_member_users(
     mocked_msgraph_service, pattern, expected_users
 ):

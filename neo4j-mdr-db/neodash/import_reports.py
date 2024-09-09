@@ -30,8 +30,9 @@ def load_reports(driver: Driver, directory: str):
                 version = report["version"]
 
                 # Create report node
-                with driver.session(database=DATABASE) as session:
-                    results = session.run(
+                try:
+                    with driver.session(database=DATABASE) as session:
+                        results = session.run(
                         """
                         MERGE (d:_Neodash_Dashboard{
                             uuid: $uuid
@@ -56,10 +57,12 @@ def load_reports(driver: Driver, directory: str):
 
                     # If success, increment counter
                     stats = results.consume().counters
-                    if stats.nodes_created == 1:
+                    if stats.properties_set > 0:
                         counter += 1
                     else:
-                        print(f"Report {title} could not be created")
+                        print(f"Report {title} could not be processed")
+                except Exception as e:
+                    print(f"An error occurred while processing the report {title}: {e}")
 
     return counter
 
@@ -73,4 +76,4 @@ if __name__ == "__main__":
         sys.exit(1)
     with GraphDatabase.driver(uri, auth=(USER, PASS)) as driver:
         created_reports = load_reports(driver, directory)
-        print(f"Created {created_reports} reports")
+        print(f"Processed {created_reports} reports")

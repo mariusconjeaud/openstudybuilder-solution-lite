@@ -41,7 +41,7 @@ export default {
   computed: {
     extraFilters() {
       return {
-        'criteria_template.type.term_uid': {
+        'template.type.term_uid': {
           v: [this.criteriaType.term_uid],
           op: 'eq',
         },

@@ -45,6 +45,7 @@ class SelectionHistory:
     study_element_uid: str
     compound_uid: str
     compound_alias_uid: str
+    medicinal_product_uid: str
     dose_value_uid: str | None
     dose_frequency_uid: str | None
 
@@ -59,6 +60,7 @@ class StudyCompoundDosingRepository:
         study_action = compound_dosing.has_after.all()[0]
         study_compound = compound_dosing.study_compound.single()
         compound_alias = study_compound.has_selected_compound.single()
+        medicinal_product = study_compound.has_medicinal_product.single()
 
         study_element = compound_dosing.study_element.single()
         dose_value = compound_dosing.has_dose_value.single()
@@ -70,6 +72,9 @@ class StudyCompoundDosingRepository:
             study_element_uid=study_element.uid,
             compound_uid=compound_alias.is_compound.single().uid,
             compound_alias_uid=compound_alias.compound_alias_root.single().uid,
+            medicinal_product_uid=medicinal_product.medicinal_product_root.single().uid
+            if medicinal_product
+            else None,
             dose_frequency_uid=dose_frequency.uid if dose_frequency else None,
             dose_value_uid=dose_value.uid if dose_value else None,
             start_date=study_action.date,
@@ -305,9 +310,10 @@ class StudyCompoundDosingRepository:
             OPTIONAL MATCH (all_scd)<-[:BEFORE]-(bsa:StudyAction)
             OPTIONAL MATCH (sc)-[:HAS_SELECTED_COMPOUND]->(:CompoundAliasValue)<-[:LATEST_FINAL]-(car:CompoundAliasRoot)
             OPTIONAL MATCH (sc)-[:HAS_SELECTED_COMPOUND]->(:CompoundAliasValue)-[:IS_COMPOUND]->(cr:CompoundRoot)
+            OPTIONAL MATCH (sc)-[:HAS_MEDICINAL_PRODUCT]->(:MedicinalProductValue)<-[:HAS_VERSION]-(mpr:MedicinalProductRoot)
             OPTIONAL MATCH (all_scd)-[:HAS_DOSE_VALUE]->(dvr:NumericValueWithUnitRoot)
             OPTIONAL MATCH (all_scd)-[:HAS_DOSE_FREQUENCY]->(df:CTTermRoot)
-            WITH all_scd, sc, se, asa, bsa, car, cr, dvr, df
+            WITH all_scd, sc, se, asa, bsa, car, cr, mpr, dvr, df
             ORDER BY all_scd.uid, asa.date DESC
             RETURN
                 all_scd.uid AS uid,
@@ -316,6 +322,7 @@ class StudyCompoundDosingRepository:
                 sc.uid AS study_compound_uid,
                 cr.uid AS compound_uid,
                 car.uid AS compound_alias_uid,
+                mpr.uid AS medicinal_product_uid,
                 dvr.uid AS dose_value_uid,
                 df.uid AS dose_frequency_uid,
                 labels(asa) AS change_type,
@@ -342,6 +349,7 @@ class StudyCompoundDosingRepository:
                     study_compound_uid=res["study_compound_uid"],
                     compound_uid=res["compound_uid"],
                     compound_alias_uid=res["compound_alias_uid"],
+                    medicinal_product_uid=res["medicinal_product_uid"],
                     dose_value_uid=res["dose_value_uid"],
                     dose_frequency_uid=res["dose_frequency_uid"],
                     user_initials=res["user_initials"],
@@ -382,15 +390,16 @@ class StudyCompoundDosingRepository:
         -[:HAS_STUDY_COMPOUND_DOSING]->(scd:StudyCompoundDosing)
         OPTIONAL MATCH (scd)<-[:STUDY_COMPOUND_HAS_COMPOUND_DOSING]-(sc)-[:HAS_SELECTED_COMPOUND]->(:CompoundAliasValue)<-[:LATEST]-(car:CompoundAliasRoot)
         OPTIONAL MATCH (scd)<-[:STUDY_COMPOUND_HAS_COMPOUND_DOSING]-(sc)-[:HAS_SELECTED_COMPOUND]->(:CompoundAliasValue)-[:IS_COMPOUND]->(cr:CompoundRoot)
+        OPTIONAL MATCH (sc)-[:HAS_MEDICINAL_PRODUCT]->(:MedicinalProductValue)<-[:HAS_VERSION]-(mpr:MedicinalProductRoot)
         OPTIONAL MATCH (scd)<-[:STUDY_ELEMENT_HAS_COMPOUND_DOSING]-(se)--(sv)
         OPTIONAL MATCH (scd)<-[:STUDY_COMPOUND_HAS_COMPOUND_DOSING]-(sc)--(sv)
-        WITH DISTINCT sr, sv, scd, sc, se, car, cr
+        WITH DISTINCT sr, sv, scd, sc, se, car, cr, mpr
         OPTIONAL MATCH (scd)-[:HAS_DOSE_VALUE]->(dvr:NumericValueWithUnitRoot)
         OPTIONAL MATCH (scd)-[:HAS_DOSE_FREQUENCY]->(df:CTTermRoot)
 
         MATCH (sc)<-[:AFTER]-(sa:StudyAction)
 
-        WITH sr, scd, sc, se, car, cr, dvr, df, sa
+        WITH sr, scd, sc, se, car, cr, mpr, dvr, df, sa
         RETURN
             sr.uid AS study_uid,
             scd.uid AS study_compound_dosing_uid,
@@ -399,6 +408,7 @@ class StudyCompoundDosingRepository:
             scd.order AS order,
             cr.uid AS compound_uid,
             car.uid AS compound_alias_uid,
+            mpr.uid AS medicinal_product_uid,
             dvr.uid AS dose_value_uid,
             df.uid AS dose_frequency_uid,
             sa.date AS start_date,
@@ -415,6 +425,7 @@ class StudyCompoundDosingRepository:
                 study_compound_uid=selection["study_compound_uid"],
                 compound_uid=selection["compound_uid"],
                 compound_alias_uid=selection["compound_alias_uid"],
+                medicinal_product_uid=selection["medicinal_product_uid"],
                 study_element_uid=selection["study_element_uid"],
                 dose_value_uid=selection.get("dose_value_uid"),
                 dose_frequency_uid=selection.get("dose_frequency_uid"),

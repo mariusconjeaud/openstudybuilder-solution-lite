@@ -11,7 +11,7 @@
     @close="close"
     @save="submit"
   >
-    <template #[`step.creationMode`]>
+    <template #[`step.creationMode`]="{ step }">
       <v-radio-group v-model="creationMode" color="primary">
         <v-radio
           data-cy="footnote-from-template"
@@ -29,20 +29,37 @@
           value="scratch"
         />
       </v-radio-group>
-    </template>
-    <template #[`step.selectStudies`]="{ step }">
       <v-form :ref="`observer_${step}`">
-        <v-autocomplete
-          v-model="selectedStudies"
-          :data-cy="$t('StudySelectionTable.select_studies')"
-          :label="$t('StudySelectionTable.studies')"
-          :items="studies"
-          :rules="[formRules.required]"
-          item-title="current_metadata.identification_metadata.study_id"
-          clearable
-          multiple
-          return-object
-        />
+        <v-row v-if="creationMode === 'select'">
+          <v-col cols="3">
+            <v-autocomplete
+              v-model="selectedStudies"
+              :data-cy="$t('StudySelectionTable.study_ids')"
+              :label="$t('StudySelectionTable.studies')"
+              :items="studies"
+              :rules="[formRules.required]"
+              item-title="current_metadata.identification_metadata.study_id"
+              clearable
+              multiple
+              return-object
+            />
+          </v-col>
+          <div class="mt-8">
+            {{ $t('_global.and_or') }}
+          </div>
+          <v-col cols="3">
+            <v-autocomplete
+              v-model="selectedStudies"
+              :label="$t('StudySelectionTable.study_acronyms')"
+              :items="studies"
+              :rules="[formRules.required]"
+              item-title="current_metadata.identification_metadata.study_acronym"
+              clearable
+              multiple
+              return-object
+            />
+          </v-col>
+        </v-row>
       </v-form>
     </template>
     <template #[`step.selectFootnote`]>
@@ -279,6 +296,10 @@ export default {
       type: Array,
       default: () => [],
     },
+    selectedElements: {
+      type: Array,
+      default: null
+    }
   },
   emits: ['close', 'added'],
   setup() {
@@ -295,7 +316,8 @@ export default {
       helpItems: [],
       creationMode: 'template',
       extraStudyFootnoteFilters: {
-        'footnote_template': { v: [] },
+        footnote_template: { v: [] },
+        'footnote.status': { v: [statuses.FINAL] },
       },
       footnoteType: null,
       form: {},
@@ -307,10 +329,6 @@ export default {
         {
           name: 'creationMode',
           title: this.$t('StudyFootnoteForm.creation_mode_label'),
-        },
-        {
-          name: 'selectStudies',
-          title: this.$t('StudyFootnoteForm.select_studies'),
         },
         {
           name: 'selectFootnote',
@@ -333,7 +351,7 @@ export default {
       ],
       preInstanceMode: true,
       selectionHeaders: [
-        { title: '', key: 'actions', width: '5%' },
+        { title: '', key: 'actions', width: '1%' },
         {
           title: this.$t('_global.template'),
           key: 'name',
@@ -347,7 +365,7 @@ export default {
       studies: [],
       templates: [],
       tplHeaders: [
-        { title: '', key: 'actions', width: '5%' },
+        { title: '', key: 'actions', width: '1%' },
         {
           title: this.$t('_global.order_short'),
           key: 'sequence_id',
@@ -393,7 +411,7 @@ export default {
         { title: this.$t('StudyActivity.activity'), key: 'activity.name' },
       ],
       footnoteHeaders: [
-        { title: '', key: 'actions', width: '5%' },
+        { title: '', key: 'actions', width: '1%' },
         { title: this.$t('Study.study_id'), key: 'study_id', noFilter: true },
         {
           title: this.$t('StudyFootnoteForm.study_footnote'),
@@ -402,7 +420,7 @@ export default {
         },
       ],
       selectedFootnoteHeaders: [
-        { title: '', key: 'actions', width: '5%' },
+        { title: '', key: 'actions', width: '1%' },
         { title: this.$t('Study.study_id'), key: 'study_id' },
         {
           title: this.$t('StudyFootnoteForm.study_footnote'),
@@ -670,6 +688,7 @@ export default {
                 : [],
               library_name: template.library.name,
             },
+            referenced_items: this.selectedElements.referenced_items
           })
         }
         await study.batchCreateStudyFootnotes(this.selectedStudy.uid, data)
@@ -682,6 +701,7 @@ export default {
           studyUid: this.selectedStudy.uid,
           form: data,
           parameters: this.parameters,
+          referencedItems: this.selectedElements.referenced_items
         }
         await this.footnotesStore.addStudyFootnoteFromTemplate(args)
       } else {
@@ -689,6 +709,7 @@ export default {
           args = {
             studyUid: this.selectedStudy.uid,
             footnoteUid: item.footnote.uid,
+            referencedItems: this.selectedElements.referenced_items
           }
           await this.footnotesStore.selectFromStudyFootnote(args)
         }

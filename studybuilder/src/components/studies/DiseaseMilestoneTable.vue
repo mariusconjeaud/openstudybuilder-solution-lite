@@ -1,6 +1,7 @@
 <template>
   <div>
     <NNTable
+      ref="table"
       :headers="headers"
       :items="diseaseMilestones"
       item-value="uid"
@@ -17,8 +18,10 @@
       <template #actions="">
         <v-btn
           data-cy="create-disease-milestone"
+          class="ml-2"
           size="small"
-          color="primary"
+          variant="outlined"
+          color="nnBaseBlue"
           :title="$t('DiseaseMilestoneForm.add_title')"
           :disabled="
             !checkPermission($roles.STUDY_WRITE) ||
@@ -56,6 +59,7 @@
         :title="diseaseMilestoneHistoryTitle"
         :headers="headers"
         :items="historyItems"
+        :items-total="historyItems.length"
         @close="closeHistory"
       />
     </v-dialog>
@@ -136,7 +140,7 @@ export default {
       ],
       diseaseMilestones: [],
       headers: [
-        { title: '', key: 'actions', width: '5%' },
+        { title: '', key: 'actions', width: '1%' },
         { title: '#', key: 'order', width: '5%' },
         {
           title: this.$t('DiseaseMilestone.disease_milestone_type'),
@@ -210,7 +214,7 @@ export default {
     },
     closeForm() {
       this.showForm = false
-      this.fetchDiseaseMilestones()
+      this.$refs.table.filterTable()
     },
     editDiseaseMilestone(item) {
       this.selectedDiseaseMilestone = item
@@ -229,7 +233,7 @@ export default {
           this.eventBusEmit('notification', {
             msg: this.$t('DiseaseMilestoneTable.delete_success'),
           })
-          this.fetchDiseaseMilestones()
+          this.$refs.table.filterTable()
         })
     },
     async openHistory(item) {
@@ -252,7 +256,7 @@ export default {
           value
         )
         .then(() => {
-          this.fetchDiseaseMilestones()
+          this.$refs.table.filterTable()
           this.closeOrderForm()
           this.eventBusEmit('notification', {
             msg: this.$t('_global.order_updated'),

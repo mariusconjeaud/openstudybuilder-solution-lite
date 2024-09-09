@@ -1,6 +1,6 @@
 import dataclasses
 import datetime
-from typing import Any
+from typing import Any, Sequence
 
 from neomodel import Q, db
 
@@ -11,6 +11,7 @@ from clinical_mdr_api.config import (
     GLOBAL_ANCHOR_VISIT_NAME,
     NON_VISIT_NUMBER,
     PREVIOUS_VISIT_NAME,
+    STUDY_VISIT_TYPE_INFORMATION_VISIT,
     UNSCHEDULED_VISIT_NUMBER,
 )
 from clinical_mdr_api.domain_repositories.models._utils import to_relation_trees
@@ -99,6 +100,7 @@ from clinical_mdr_api.models.study_selections.study_visit import (
     SimpleStudyVisit,
     StudyVisitCreateInput,
     StudyVisitEditInput,
+    StudyVisitOGMVer,
     StudyVisitVersion,
 )
 from clinical_mdr_api.models.utils import (
@@ -110,17 +112,17 @@ from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._meta_repository import MetaRepository
 from clinical_mdr_api.services._utils import (
     calculate_diffs,
-    calculate_diffs_history,
     service_level_generic_filtering,
     service_level_generic_header_filtering,
 )
 from clinical_mdr_api.services.studies.study_activity_schedule import (
     StudyActivityScheduleService,
 )
+from clinical_mdr_api.services.studies.study_selection_base import StudySelectionMixin
 from clinical_mdr_api.telemetry import trace_calls
 
 
-class StudyVisitService:
+class StudyVisitService(StudySelectionMixin):
     def __init__(
         self,
         study_uid: str,
@@ -295,6 +297,11 @@ class StudyVisitService:
         return StudyVisit(
             uid=visit.uid,
             study_uid=visit.study_uid,
+            study_id=(
+                visit.study_id_prefix + "-" + visit.study_number
+                if visit.study_id_prefix and visit.study_number
+                else None
+            ),
             study_version=(
                 study_value_version
                 if study_value_version
@@ -584,18 +591,51 @@ class StudyVisitService:
 
         return None
 
+    def _chronological_order_check(
+        self,
+        visit_vo: StudyVisitVO,
+        ordered_visits: list[StudyVisitVO],
+    ):
+        chronological_order_dict = {}
+        for idx, visit in enumerate(ordered_visits[:-1]):
+            if VisitClass.SPECIAL_VISIT not in (
+                visit.visit_class,
+                ordered_visits[idx + 1].visit_class,
+            ) and VisitSubclass.ADDITIONAL_SUBVISIT_IN_A_GROUP_OF_SUBV not in (
+                visit.visit_subclass,
+                ordered_visits[idx + 1].visit_subclass,
+            ):
+                if visit.visit_number > ordered_visits[idx + 1].visit_number:
+                    chronological_order_dict["visit number"] = visit_vo.visit_number
+                if (
+                    visit.unique_visit_number
+                    > ordered_visits[idx + 1].unique_visit_number
+                ):
+                    chronological_order_dict[
+                        "unique visit number"
+                    ] = visit_vo.unique_visit_number
+        return chronological_order_dict
+
     def _validate_derived_properties(
         self, visit_vo: StudyVisitVO, ordered_visits: list[StudyVisitVO]
     ):
         if (
             visit_vo.visit_class != VisitClass.SPECIAL_VISIT
             and visit_vo.visit_subclass
-            != VisitSubclass.ADDITIONAL_SUBVISIT_IN_A_GROUP_OF_SUBV
+            not in (
+                VisitSubclass.ADDITIONAL_SUBVISIT_IN_A_GROUP_OF_SUBV,
+                VisitSubclass.ANCHOR_VISIT_IN_GROUP_OF_SUBV,
+            )
         ):
             error_dict = {}
             chronological_order_dict = {}
             for idx, visit in enumerate(ordered_visits):
-                if visit_vo.uid != visit.uid:
+                if (
+                    visit_vo.uid != visit.uid
+                    and visit.visit_class != VisitClass.SPECIAL_VISIT
+                    and visit.visit_subclass
+                    != VisitSubclass.ADDITIONAL_SUBVISIT_IN_A_GROUP_OF_SUBV
+                ):
                     if visit_vo.visit_number == visit.visit_number:
                         error_dict["visit number"] = visit_vo.visit_number
                     if visit_vo.unique_visit_number == visit.unique_visit_number:
@@ -605,72 +645,28 @@ class StudyVisitService:
                     if visit_vo.visit_short_name == visit.visit_short_name:
                         error_dict["visit short name"] = visit_vo.visit_short_name
                 elif visit_vo.uid == visit.uid:
+                    # If visit which is about to be created is the fist visit in schedule
                     if idx == 0 and len(ordered_visits) > 1:
-                        # if the neighbour Visit is Subvisit, visit_number and unique_visit_number may be defined out of chronological order
-                        if (
-                            ordered_visits[idx + 1].visit_subclass
-                            == VisitSubclass.SINGLE_VISIT
-                        ):
-                            if (
-                                visit_vo.visit_number
-                                > ordered_visits[idx + 1].visit_number
-                            ):
-                                chronological_order_dict[
-                                    "visit number"
-                                ] = visit_vo.visit_number
-                            if (
-                                visit_vo.unique_visit_number
-                                > ordered_visits[idx + 1].unique_visit_number
-                            ):
-                                chronological_order_dict[
-                                    "unique visit number"
-                                ] = visit_vo.unique_visit_number
-                    # if the neighbour Visit is Subvisit, visit_number and unique_visit_number may be defined out of chronological order
+                        chronological_order_dict = self._chronological_order_check(
+                            visit_vo=visit_vo,
+                            ordered_visits=[visit_vo, ordered_visits[idx + 1]],
+                        )
+                    # If visit which is about to be created is the last visit in schedule
                     elif idx + 1 == len(ordered_visits) and len(ordered_visits) > 1:
-                        if (
-                            ordered_visits[idx - 1].visit_subclass
-                            == VisitSubclass.SINGLE_VISIT
-                        ):
-                            if (
-                                visit_vo.visit_number
-                                < ordered_visits[idx - 1].visit_number
-                            ):
-                                chronological_order_dict[
-                                    "visit number"
-                                ] = visit_vo.visit_number
-                            if (
-                                visit_vo.unique_visit_number
-                                < ordered_visits[idx - 1].unique_visit_number
-                            ):
-                                chronological_order_dict[
-                                    "unique visit number"
-                                ] = visit_vo.unique_visit_number
+                        chronological_order_dict = self._chronological_order_check(
+                            visit_vo=visit_vo,
+                            ordered_visits=[ordered_visits[idx - 1], visit_vo],
+                        )
+                    # If visit which is about to be created is not the first or the last one visit in the schedule
                     elif len(ordered_visits) > 2:
-                        # if the neighbour Visits are Subvisits, visit_number and unique_visit_number may be defined out of chronological order
-                        if (
-                            ordered_visits[idx - 1].visit_subclass
-                            == VisitSubclass.SINGLE_VISIT
-                            and ordered_visits[idx + 1].visit_subclass
-                            == VisitSubclass.SINGLE_VISIT
-                        ):
-                            if (
-                                visit_vo.visit_number
-                                < ordered_visits[idx - 1].visit_number
-                                or visit_vo.visit_number
-                                > ordered_visits[idx + 1].visit_number
-                            ):
-                                chronological_order_dict[
-                                    "visit number"
-                                ] = visit_vo.visit_number
-                            if (
-                                visit_vo.unique_visit_number
-                                < ordered_visits[idx - 1].unique_visit_number
-                                or visit_vo.unique_visit_number
-                                > ordered_visits[idx + 1].unique_visit_number
-                            ):
-                                chronological_order_dict[
-                                    "unique visit number"
-                                ] = visit_vo.unique_visit_number
+                        chronological_order_dict = self._chronological_order_check(
+                            visit_vo=visit_vo,
+                            ordered_visits=[
+                                ordered_visits[idx - 1],
+                                visit_vo,
+                                ordered_visits[idx + 1],
+                            ],
+                        )
             if chronological_order_dict:
                 count = len(chronological_order_dict)
                 joined_error = " and ".join(
@@ -679,7 +675,7 @@ class StudyVisitService:
                 error_msg = f"Value{'s' if count > 1 else ''} {joined_error} {'are' if count > 1 else 'is'}"
                 error_msg += " not defined in chronological order by study visit timing"
                 if visit_vo.visit_class == VisitClass.SINGLE_VISIT:
-                    error_msg += " as a manually defined value exsits. Change the manually defined value before this visit can be defined."
+                    error_msg += " as a manually defined value exists. Change the manually defined value before this visit can be defined."
                 raise ValidationException(error_msg)
             if error_dict:
                 count = len(error_dict)
@@ -790,9 +786,12 @@ class StudyVisitService:
                 )
 
         if visit_vo.is_global_anchor_visit:
-            if visit_vo.timepoint.visit_value != 0:
+            if (
+                visit_vo.timepoint.visit_value != 0
+                and visit_vo.visit_type.value != STUDY_VISIT_TYPE_INFORMATION_VISIT
+            ):
                 raise exceptions.ValidationException(
-                    "The global anchor visit must take place at day 0."
+                    "The global anchor visit must take place at day 0 or be an Information Visit."
                 )
             if create:
                 for visit in timeline._visits:
@@ -800,14 +799,6 @@ class StudyVisitService:
                         raise exceptions.ValidationException(
                             "There can be only one global anchor visit"
                         )
-
-        if (
-            visit_vo.visit_subclass == VisitSubclass.REPEATING_VISIT
-            and not visit_vo.repeating_frequency
-        ):
-            raise exceptions.ValidationException(
-                "Repeating Frequency must be provided for Repeating Visits."
-            )
 
         if visit_vo.visit_class not in (
             VisitClass.NON_VISIT,
@@ -824,9 +815,6 @@ class StudyVisitService:
             if create:
                 timeline.add_visit(visit_vo)
                 ordered_visits = timeline.ordered_study_visits
-                self._validate_derived_properties(
-                    visit_vo=visit_vo, ordered_visits=ordered_visits
-                )
 
                 for index, visit in enumerate(ordered_visits):
                     if visit_vo.visit_class != VisitClass.SPECIAL_VISIT:
@@ -864,11 +852,14 @@ class StudyVisitService:
                         raise exceptions.ValidationException(
                             f"There already exists a Special visit {visit.uid} in the following epoch {visit.epoch_connector.epoch.value}"
                         )
+                self._validate_derived_properties(
+                    visit_vo=visit_vo, ordered_visits=ordered_visits
+                )
             else:
                 ordered_visits = timeline.ordered_study_visits
                 for index, visit in enumerate(ordered_visits):
                     if (
-                        visit_vo.visit_class != VisitClass.SPECIAL_VISIT
+                        visit.visit_class != VisitClass.SPECIAL_VISIT
                         and visit.get_absolute_duration()
                         == visit_vo.get_absolute_duration()
                         and visit.uid != visit_vo.uid
@@ -1405,7 +1396,36 @@ class StudyVisitService:
         visit_uid: str,
         study_uid: str,
     ) -> list[StudyVisitVersion]:
-        all_versions = self.repo.get_all_versions(visit_uid, study_uid=study_uid)
+        se_nodes = self.repo.get_all_versions(
+            visit_uid,
+            study_uid=study_uid,
+        )
+
+        # Extract start dates from the selection history
+        start_dates = [history.has_after.single().date for history in se_nodes]
+
+        # Extract effective dates for each version based on the start dates
+        effective_dates = self._extract_multiple_version_study_standards_effective_date(
+            study_uid=study_uid, list_of_start_dates=start_dates
+        )
+
+        selection_history: Sequence[StudyVisitOGMVer] = []
+        for se_node, effective_date in zip(se_nodes, effective_dates):
+            self.terms_at_specific_datetime = effective_date
+            self._create_ctlist_map()
+            selection_history.append(StudyVisitOGMVer.from_orm(se_node))
+
+        all_versions = sorted(
+            [
+                self.repo._from_neomodel_to_history_vo(
+                    study_visit_ogm_input=selection_version,
+                )
+                for selection_version in selection_history
+            ],
+            key=lambda item: item.start_date,
+            reverse=True,
+        )
+
         versions = [
             self._transform_all_to_response_history_model(_).dict()
             for _ in all_versions
@@ -1418,12 +1438,54 @@ class StudyVisitService:
         self,
         study_uid: str,
     ) -> list[StudyVisitVersion]:
-        data = calculate_diffs_history(
-            get_all_object_versions=self.repo.get_all_visit_versions,
-            transform_all_to_history_model=self._transform_all_to_response_history_model,
-            study_uid=study_uid,
-            version_object_class=StudyVisitVersion,
-        )
+        study_visits = self.repo.find_all_visits_by_study_uid(study_uid=study_uid)
+
+        unique_list_uids = list({x.uid for x in study_visits})
+        unique_list_uids.sort()
+        # list of all study_elements
+        data = []
+        ith_selection_history = []
+        for i_unique in unique_list_uids:
+            se_nodes = self.repo.get_all_versions(
+                i_unique,
+                study_uid=study_uid,
+            )
+            # Extract start dates from the selection history
+            start_dates = [history.has_after.single().date for history in se_nodes]
+
+            # Extract effective dates for each version based on the start dates
+            effective_dates = (
+                self._extract_multiple_version_study_standards_effective_date(
+                    study_uid=study_uid, list_of_start_dates=start_dates
+                )
+            )
+
+            # ith_selection_history = []
+            ith_selection_history: Sequence[StudyVisitOGMVer] = []
+            for se_node, effective_date in zip(se_nodes, effective_dates):
+                self.terms_at_specific_datetime = effective_date
+                self._create_ctlist_map()
+                ith_selection_history.append(StudyVisitOGMVer.from_orm(se_node))
+
+            all_versions = sorted(
+                [
+                    self.repo._from_neomodel_to_history_vo(
+                        study_visit_ogm_input=selection_version,
+                    )
+                    for selection_version in ith_selection_history
+                ],
+                key=lambda item: item.start_date,
+                reverse=True,
+            )
+            versions = [
+                self._transform_all_to_response_history_model(_).dict()
+                for _ in all_versions
+            ]
+
+            if not data:
+                data = calculate_diffs(versions, StudyVisitVersion)
+            else:
+                data.extend(calculate_diffs(versions, StudyVisitVersion))
         return data
 
     @db.transaction

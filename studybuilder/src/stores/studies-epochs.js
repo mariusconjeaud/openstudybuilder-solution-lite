@@ -3,6 +3,7 @@ import { defineStore } from 'pinia'
 import studyEpochsApi from '@/api/studyEpochs'
 import units from '@/api/units'
 import unitConstants from '@/constants/units'
+import visitConstants from '@/constants/visits'
 
 export const useEpochsStore = defineStore('epochs', () => {
   const studyEpochs = ref([])
@@ -25,12 +26,33 @@ export const useEpochsStore = defineStore('epochs', () => {
       totalVisits.value = resp.data.total
     })
   }
+
+  function sanitizeNonManuallyDefinedVisitPayload(data) {
+    delete data.visit_number
+    delete data.unique_visit_number
+    delete data.visit_short_name
+    delete data.visit_name
+  }
+
+  function getStudyVisitPreview({ studyUid, input }) {
+    if (input.visit_class !== visitConstants.CLASS_MANUALLY_DEFINED_VISIT) {
+      sanitizeNonManuallyDefinedVisitPayload(input)
+    }
+    return studyEpochsApi.getStudyVisitPreview(studyUid, input)
+  }
+
   async function addStudyVisit({ studyUid, input }) {
+    if (input.visit_class !== visitConstants.CLASS_MANUALLY_DEFINED_VISIT) {
+      sanitizeNonManuallyDefinedVisitPayload(input)
+    }
     await studyEpochsApi.addStudyVisit(studyUid, input)
     await fetchStudyEpochs({ studyUid })
   }
 
   function updateStudyVisit({ studyUid, studyVisitUid, input }) {
+    if (input.visit_class !== visitConstants.CLASS_MANUALLY_DEFINED_VISIT) {
+      sanitizeNonManuallyDefinedVisitPayload(input)
+    }
     return studyEpochsApi
       .updateStudyVisit(studyUid, studyVisitUid, input)
       .then(() => {
@@ -106,6 +128,7 @@ export const useEpochsStore = defineStore('epochs', () => {
     studyTimeUnits,
     fetchStudyVisits,
     fetchFilteredStudyVisits,
+    getStudyVisitPreview,
     addStudyVisit,
     updateStudyVisit,
     deleteStudyVisit,

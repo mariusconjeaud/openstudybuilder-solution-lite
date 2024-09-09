@@ -26,16 +26,18 @@ log = logging.getLogger(__name__)
 
 
 class DocxBuilder:
-    TEMPLATE_FILENAME = "template.docx"
+    DEFAULT_TEMPLATE_FILENAME = "template.docx"
 
     def __init__(
         self,
         styles: Mapping | None = None,
         landscape: bool | None = False,
         margins: list[float] | None = None,
+        template: str | None = None,
     ):
         template_filename = os.path.join(
-            os.path.dirname(__file__), self.TEMPLATE_FILENAME
+            os.path.dirname(__file__),
+            template or self.DEFAULT_TEMPLATE_FILENAME,
         )
         self.document = self.load_document(template_filename)
         self.styles = {}

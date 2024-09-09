@@ -5,6 +5,10 @@ from parameterized import parameterized
 
 from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains import _utils
+from clinical_mdr_api.domains.libraries.parameter_term import (
+    ParameterTermEntryVO,
+    SimpleParameterTermVO,
+)
 
 
 class TestServiceUtils(unittest.TestCase):
@@ -180,3 +184,35 @@ def test_normalize_string(inpt: str | None, result: str | None):
 def test_normalize_string_exceptions(inpt: str | None, exception_class):
     with pytest.raises(exception_class):
         _utils.normalize_string(inpt)
+
+
+@parameterized.expand(
+    [
+        ("<p>[abc] dfg</p>", "[abc] dfg", "<p>[Abc] dfg</p>"),
+        ("<p>[a]</p>", "[a]", "<p>[A]</p>"),
+        ("<p>[]</p>", "[]", "<p>[]</p>"),
+        ("<p>[</p>", "[", "<p>[</p>"),
+        ("<p>abc def</p>", "abc def", "<p>abc def</p>"),
+        ("[abc] dfg", "[abc] dfg", "[Abc] dfg"),
+        ("[a]", "[a]", "[A]"),
+        ("[]", "[]", "[]"),
+        ("[", "[", "["),
+        ("abc def", "abc def", "abc def"),
+        ("", "", ""),
+    ]
+)
+def test_capitalize_first_letter_if_template_parameter(
+    name, template_plain_name, expected
+):
+    assert (
+        _utils.capitalize_first_letter_if_template_parameter(
+            name,
+            template_plain_name,
+            [
+                ParameterTermEntryVO(
+                    [SimpleParameterTermVO("good", "", []), "", ""], "", "", []
+                )
+            ],
+        )
+        == expected
+    )

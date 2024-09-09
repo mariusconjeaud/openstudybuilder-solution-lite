@@ -316,6 +316,19 @@ class StudyVisitOGM(BaseModel, StudyVisitVO):
 
     uid: str = Field(..., title="Uid", description="Uid of the Visit", source="uid")
 
+    study_id_prefix: str = Field(
+        None,
+        title="study id PREFIX",
+        description="study id like 'CDISC DEV'",
+        source="has_study_visit.study_id_prefix",
+    )
+    study_number: str = Field(
+        None,
+        title="study number",
+        description="study number like 0",
+        source="has_study_visit.study_number",
+    )
+
     consecutive_visit_group: str | None = Field(
         None,
         title="Consecutive visit group",
@@ -608,6 +621,11 @@ class StudyVisit(StudyVisitEditInput):
         orm_mode = True
 
     study_uid: str
+    study_id: str | None = Field(
+        None,
+        title="study ID",
+        description="The study ID like 'CDISC DEV-0'",
+    )
     study_version: str | None = Field(
         None,
         title="study version or date information",

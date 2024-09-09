@@ -16,6 +16,7 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
 class CTTermCodelistVO:
     codelist_uid: str
     order: int | None
+    library_name: str | None = None
 
 
 @dataclass(frozen=True)
@@ -28,6 +29,8 @@ class CTTermNameVO:
     name_sentence_case: str | None
     catalogue_name: str
     codelists: list[CTTermCodelistVO] | None
+    queried_effective_date: datetime | None = None
+    date_conflict: bool | None = False
 
     @classmethod
     def from_repository_values(
@@ -36,12 +39,16 @@ class CTTermNameVO:
         name: str | None,
         name_sentence_case: str | None,
         catalogue_name: str,
+        queried_effective_date: datetime | None = None,
+        date_conflict: bool | None = False,
     ) -> Self:
         ct_term_name_vo = cls(
             codelists=codelists,
             catalogue_name=catalogue_name,
             name=name,
             name_sentence_case=name_sentence_case,
+            queried_effective_date=queried_effective_date,
+            date_conflict=date_conflict,
         )
 
         return ct_term_name_vo
@@ -187,9 +194,17 @@ class CTTermNameAR(LibraryItemAggregateRootBase):
             return {ObjectAction.REACTIVATE}
         return frozenset()
 
-    def set_new_order(self, codelist_uid: str, new_order: int) -> None:
+    def set_new_order(
+        self, codelist_uid: str, new_order: int, codelist_library_name: str
+    ) -> None:
         ct_term_vo = CTTermNameVO.from_input_values(
-            codelists=[CTTermCodelistVO(codelist_uid=codelist_uid, order=new_order)],
+            codelists=[
+                CTTermCodelistVO(
+                    codelist_uid=codelist_uid,
+                    order=new_order,
+                    library_name=codelist_library_name,
+                )
+            ],
             catalogue_name=self.ct_term_vo.catalogue_name,
             name=self.name,
             name_sentence_case=self.ct_term_vo.name_sentence_case,

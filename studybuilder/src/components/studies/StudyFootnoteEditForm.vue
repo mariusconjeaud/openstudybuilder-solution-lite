@@ -1,9 +1,9 @@
 <template>
   <StudySelectionEditForm
-    v-if="studyFootnote"
+    v-if="editedObject"
     ref="form"
     :title="$t('StudyFootnoteEditForm.title')"
-    :study-selection="studyFootnote"
+    :study-selection="editedObject"
     :template="template"
     :library-name="library.name"
     object-type="footnote"
@@ -17,13 +17,6 @@
     <template #formFields="{}">
       <p class="mt-6 text-secondary text-h6">
         {{ $t('StudyFootnoteEditForm.linked_items') }}
-        <v-btn
-          icon="mdi-table-plus"
-          variant="text"
-          color="primary"
-          :title="$t('StudyFootnoteEditForm.link_items')"
-          @click="redirectToDetailedSoA"
-        />
       </p>
       <v-row>
         <v-col cols="12">
@@ -79,9 +72,9 @@
 
 <script>
 import { computed } from 'vue'
+import constants from '@/constants/libraries'
 import _isEmpty from 'lodash/isEmpty'
 import formUtils from '@/utils/forms'
-import instances from '@/utils/instances'
 import study from '@/api/study'
 import StudySelectionEditForm from './StudySelectionEditForm.vue'
 import terms from '@/api/controlledTerminology/terms'
@@ -112,6 +105,7 @@ export default {
   },
   data() {
     return {
+      editedObject: {},
       referencedSoAGroups: [],
       referencedActivities: [],
       referencedEpochsAndVisits: [],
@@ -120,14 +114,28 @@ export default {
   },
   computed: {
     template() {
-      return this.studyFootnote.footnote
-        ? this.studyFootnote.footnote.footnote_template
-        : this.studyFootnote.footnote_template
+      return this.editedObject.footnote
+        ? this.editedObject.footnote.template
+        : this.editedObject.template
     },
     library() {
       return this.studyFootnote.footnote
         ? this.studyFootnote.footnote.library
-        : this.studyFootnote.footnote_template.library
+        : this.studyFootnote.template.library
+    },
+  },
+  watch: {
+    studyFootnote: {
+      handler: function (value) {
+        if (!_isEmpty(value)) {
+          study
+            .getStudyFootnote(this.selectedStudy.uid, this.studyFootnote.uid)
+            .then((resp) => {
+              this.editedObject = resp.data
+            })
+        }
+      },
+      immediate: true,
     },
   },
   mounted() {
@@ -144,21 +152,6 @@ export default {
     })
   },
   methods: {
-    redirectToDetailedSoA() {
-      if (window.location.href.includes('detailed')) {
-        this.$emit('enableFootnoteMode', this.studyFootnote)
-      } else {
-        this.$router.push({
-          name: 'StudyActivities',
-          params: {
-            study_id: this.selectedStudy.uid,
-            tab: 'detailed',
-          },
-        })
-        this.$emit('enableFootnoteMode', this.studyFootnote)
-      }
-      this.$refs.form.close()
-    },
     initForm(form) {
       this.originalForm = JSON.parse(JSON.stringify(form))
       this.referencedActivities = []
@@ -197,28 +190,9 @@ export default {
     prepareTemplatePayload(data) {
       data.type_uid = this.footnoteType.term_uid
     },
-    async getStudyFootnoteNamePreview(parameters) {
-      const footnoteData = {
-        footnote_template_uid:
-          this.studyFootnote.footnote.footnote_template.uid,
-        parameter_terms: await instances.formatParameterValues(parameters),
-        library_name: this.studyFootnote.footnote.library.name,
-      }
-      const resp = await study.getStudyFootnotePreview(this.selectedStudy.uid, {
-        footnote_data: footnoteData,
-      })
-      return resp.data.footnote.name
-    },
     async submit(newTemplate, form, parameters) {
       const payload = formUtils.getDifferences(this.originalForm, form)
-      if (!this.studyFootnote.footnote) {
-        payload.parameters = parameters
-      } else {
-        const namePreview = await this.getStudyFootnoteNamePreview(parameters)
-        if (namePreview !== this.studyFootnote.footnote.name) {
-          payload.parameters = parameters
-        }
-      }
+      payload.parameters = parameters
       if (_isEmpty(payload) && !newTemplate) {
         this.eventBusEmit('notification', {
           msg: this.$t('_global.no_changes'),
@@ -229,9 +203,11 @@ export default {
       }
       const args = {
         studyUid: this.selectedStudy.uid,
-        studyFootnoteUid: this.studyFootnote.uid,
+        studyFootnoteUid: this.editedObject.uid,
         form: payload,
-        library: this.library,
+        library: {
+          name: constants.LIBRARY_USER_DEFINED,
+        },
       }
       if (newTemplate) {
         args.template = newTemplate

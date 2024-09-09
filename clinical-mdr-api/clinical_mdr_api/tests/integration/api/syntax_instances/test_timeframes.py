@@ -236,14 +236,14 @@ TIMEFRAME_FIELDS_ALL = [
     "possible_actions",
     "parameter_terms",
     "library",
-    "timeframe_template",
+    "template",
     "study_count",
 ]
 
 TIMEFRAME_FIELDS_NOT_NULL = [
     "uid",
     "name",
-    "timeframe_template",
+    "template",
 ]
 
 
@@ -261,8 +261,8 @@ def test_get_timeframe(api_client):
 
     assert res["uid"] == timeframes[0].uid
     assert res["name"] == f"Default name with [{text_value_1.name_sentence_case}]"
-    assert res["timeframe_template"]["uid"] == timeframe_template.uid
-    assert res["timeframe_template"]["sequence_id"] == "T1"
+    assert res["template"]["uid"] == timeframe_template.uid
+    assert res["template"]["sequence_id"] == "T1"
     assert res["parameter_terms"][0]["terms"][0]["uid"] == text_value_1.uid
     assert (
         res["parameter_terms"][0]["terms"][0]["name"] == text_value_1.name_sentence_case
@@ -474,6 +474,15 @@ def test_headers(api_client, field_name):
         assert len(res) == 0
 
 
+def test_get_studies_of_timeframes(api_client):
+    response = api_client.get(f"{URL}/{timeframes[0].uid}/studies")
+    res = response.json()
+
+    assert response.status_code == 200
+    assert len(res) == 1
+    assert res[0]["uid"] == "Study_000001"
+
+
 def test_create_timeframe(api_client):
     text_value = TestUtils.create_text_value()
     data = {
@@ -501,8 +510,8 @@ def test_create_timeframe(api_client):
     assert response.status_code == 201
     assert res["uid"]
     assert res["name"] == f"Default name with [{text_value.name_sentence_case}]"
-    assert res["timeframe_template"]["uid"] == timeframe_template.uid
-    assert res["timeframe_template"]["sequence_id"] == "T1"
+    assert res["template"]["uid"] == timeframe_template.uid
+    assert res["template"]["sequence_id"] == "T1"
     assert res["parameter_terms"][0]["terms"][0]["uid"] == text_value.uid
     assert (
         res["parameter_terms"][0]["terms"][0]["name"] == text_value.name_sentence_case
@@ -578,8 +587,8 @@ def test_update_timeframe(api_client):
     assert response.status_code == 200
     assert res["uid"]
     assert res["name"] == f"Default name with [{text_value_2.name_sentence_case}]"
-    assert res["timeframe_template"]["uid"] == timeframe_template.uid
-    assert res["timeframe_template"]["sequence_id"] == "T1"
+    assert res["template"]["uid"] == timeframe_template.uid
+    assert res["template"]["sequence_id"] == "T1"
     assert res["parameter_terms"][0]["terms"][0]["uid"] == text_value_2.uid
     assert (
         res["parameter_terms"][0]["terms"][0]["name"] == text_value_2.name_sentence_case
@@ -656,8 +665,8 @@ def test_preview_timeframe(api_client):
     assert response.status_code == 200
     assert res["uid"]
     assert res["name"] == f"Default name with [{text_value.name_sentence_case}]"
-    assert res["timeframe_template"]["uid"] == timeframe_template.uid
-    assert res["timeframe_template"]["sequence_id"] == "T1"
+    assert res["template"]["uid"] == timeframe_template.uid
+    assert res["template"]["sequence_id"] == "T1"
     assert res["parameter_terms"][0]["terms"][0]["uid"] == text_value.uid
     assert (
         res["parameter_terms"][0]["terms"][0]["name"] == text_value.name_sentence_case

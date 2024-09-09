@@ -1,9 +1,12 @@
 <template>
   <NNTable
+    ref="table"
     :headers="headers"
     :items="items"
     :items-length="total"
     hide-default-switches
+    export-data-url="projects"
+    export-object-label="Projects"
     column-data-resource="projects"
     item-value="project_number"
     @filter="fetchProjects"
@@ -11,69 +14,113 @@
     <template #actions="">
       <slot name="extraActions" />
       <v-btn
+        class="ml-2"
         size="small"
-        color="primary"
+        variant="outlined"
+        color="nnBaseBlue"
         data-cy="add-project"
-        :title="$t('ProjectForm.title')"
+        :title="$t('ProjectForm.add_title')"
         icon="mdi-plus"
         @click.stop="showForm"
       />
     </template>
+    <template #[`item.actions`]="{ item }">
+      <ActionsMenu :actions="actions" :item="item" />
+    </template>
   </NNTable>
-  <ProjectForm :open="showProjectForm" @close="closeForm" />
+  <ProjectForm
+    :open="showProjectForm"
+    :project-uid="selectedProject ? selectedProject.uid : ''"
+    @reload="table.filterTable()"
+    @close="closeForm"
+  />
+  <ConfirmDialog ref="confirm" :text-cols="6" :action-cols="5" />
 </template>
 
-<script>
+<script setup>
+import { inject, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
+import ActionsMenu from '@/components/tools/ActionsMenu.vue'
+import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
 import NNTable from '@/components/tools/NNTable.vue'
 import projects from '@/api/projects'
 import ProjectForm from '@/components/library/ProjectForm.vue'
 import filteringParameters from '@/utils/filteringParameters'
 
-export default {
-  components: {
-    NNTable,
-    ProjectForm,
+const { t } = useI18n()
+const eventBusEmit = inject('eventBusEmit')
+const roles = inject('roles')
+
+const actions = [
+  {
+    label: t('_global.edit'),
+    icon: 'mdi-pencil-outline',
+    iconColor: 'primary',
+    accessRole: roles.LIBRARY_WRITE,
+    click: editProject,
   },
-  data() {
-    return {
-      headers: [
-        { title: this.$t('Projects.name'), key: 'name' },
-        { title: this.$t('Projects.project_number'), key: 'project_number' },
-        {
-          title: this.$t('Projects.clinical_programme'),
-          key: 'clinical_programme.name',
-        },
-        { title: this.$t('Projects.description'), key: 'description' },
-      ],
-      items: [],
-      total: 0,
-      filters: '',
-      showProjectForm: false,
-    }
+  {
+    label: t('_global.delete'),
+    icon: 'mdi-delete-outline',
+    iconColor: 'error',
+    accessRole: roles.LIBRARY_WRITE,
+    click: deleteProject,
   },
-  methods: {
-    fetchProjects(filters, options, filtersUpdated) {
-      if (!filters && this.filters) {
-        filters = this.filters
-      }
-      const params = filteringParameters.prepareParameters(
-        options,
-        filters,
-        filtersUpdated
-      )
-      this.filters = filters
-      projects.get(params).then((resp) => {
-        this.items = resp.data.items
-        this.total = resp.data.total
-      })
-    },
-    showForm() {
-      this.showProjectForm = true
-    },
-    closeForm() {
-      this.showProjectForm = false
-      this.fetchProjects()
-    },
+]
+
+const headers = [
+  { title: '', key: 'actions', width: '1%' },
+  { title: t('Projects.name'), key: 'name' },
+  { title: t('Projects.project_number'), key: 'project_number' },
+  {
+    title: t('Projects.clinical_programme'),
+    key: 'clinical_programme.name',
   },
+  { title: t('Projects.description'), key: 'description' },
+]
+const items = ref([])
+const total = ref(0)
+const showProjectForm = ref(false)
+const selectedProject = ref(null)
+const confirm = ref()
+const table = ref()
+
+function fetchProjects(filters, options, filtersUpdated) {
+  const params = filteringParameters.prepareParameters(
+    options,
+    filters,
+    filtersUpdated
+  )
+  projects.get(params).then((resp) => {
+    items.value = resp.data.items
+    total.value = resp.data.total
+  })
+}
+function showForm() {
+  showProjectForm.value = true
+}
+function closeForm() {
+  showProjectForm.value = false
+  selectedProject.value = null
+}
+
+function editProject(item) {
+  selectedProject.value = item
+  showProjectForm.value = true
+}
+
+async function deleteProject(item) {
+  const options = { type: 'warning' }
+  const project = item.name
+  if (
+    await confirm.value.open(t('Projects.confirm_delete', { project }), options)
+  ) {
+    await projects.delete(item.uid)
+    eventBusEmit('notification', {
+      msg: t('Projects.delete_success'),
+      type: 'success',
+    })
+    table.value.filterTable()
+  }
 }
 </script>

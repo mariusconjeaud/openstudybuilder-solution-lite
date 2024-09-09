@@ -63,8 +63,6 @@
       class="mt-6"
       :export-data-url="exportDataUrl"
       export-object-label="StudyVisits"
-      :items-per-page="50"
-      :items-per-page-options="[25, 50, 100]"
       :column-data-resource="`studies/${studiesGeneralStore.selectedStudy.uid}/study-visits`"
       :items-length="totalVisits"
       fixed-header
@@ -75,10 +73,11 @@
       <template #headerCenter>
         <v-btn
           v-if="editMode"
-          size="small"
-          color="primary"
-          :title="$t('_global.cancel')"
           class="ml-2"
+          size="small"
+          variant="outlined"
+          color="nnBaseBlue"
+          :title="$t('_global.cancel')"
           data-cy="close-edit-mode"
           @click.stop="closeEditMode"
         >
@@ -101,8 +100,10 @@
         />
         <v-btn
           v-show="!loading"
+          class="ml-2"
           size="small"
-          color="primary"
+          variant="outlined"
+          color="nnBaseBlue"
           :title="$t('NNTableTooltips.add_content')"
           :disabled="
             !accessGuard.checkPermission($roles.STUDY_WRITE) ||
@@ -114,11 +115,12 @@
         />
         <v-btn
           v-if="!editMode && !loading"
+          class="ml-2"
           size="small"
-          color="primary"
+          variant="outlined"
+          color="nnBaseBlue"
           :title="$t('_global.edit')"
           data-cy="edit-study-visits"
-          class="ml-2"
           :disabled="
             !accessGuard.checkPermission($roles.STUDY_WRITE) ||
             studiesGeneralStore.selectedStudyVersion !== null
@@ -132,6 +134,18 @@
           color="primary"
           class="ml-2"
         />
+      </template>
+      <template #[`item.is_soa_milestone`]="{ item }">
+        <div v-if="editMode">
+          <v-checkbox
+            v-model="item.is_soa_milestone"
+            :disabled="item.disabled && itemsDisabled"
+            @update:model-value="disableOthers(item)"
+          />
+        </div>
+        <div v-else>
+          {{ $filters.yesno(item.is_soa_milestone) }}
+        </div>
       </template>
       <template #[`item.visit_name`]="{ item }">
         <router-link
@@ -147,12 +161,64 @@
         </router-link>
       </template>
       <template #[`item.visit_class`]="{ item }">
-        {{ getVisitClassLabel(item.visit_class) }}
+        <div v-if="editMode">
+          <v-select
+            v-model="item.visit_class"
+            :items="visitClasses"
+            item-title="label"
+            item-value="value"
+            density="compact"
+            :disabled="item.disabled && itemsDisabled"
+            @update:model-value="disableOthers(item)"
+          />
+        </div>
+        <div v-else>
+          {{ getVisitClassLabel(item.visit_class) }}
+        </div>
+      </template>
+      <template #[`item.visit_subclass`]="{ item }">
+        <div v-if="editMode">
+          <v-select
+            v-model="item.visit_subclass"
+            :items="visitSubClasses"
+            item-title="label"
+            item-value="value"
+            density="compact"
+            :disabled="item.disabled && itemsDisabled"
+            @update:model-value="disableOthers(item)"
+          />
+        </div>
+        <div v-else>
+          {{ getVisitSubClassLabel(item.visit_subclass) }}
+        </div>
+      </template>
+      <template #[`item.repeating_frequency_name`]="{ item }">
+        <div v-if="editMode">
+          <v-select
+            v-model="item.repeating_frequency_uid"
+            :items="frequencies"
+            item-title="name.sponsor_preferred_name"
+            item-value="term_uid"
+            density="compact"
+            :disabled="
+              (item.disabled && itemsDisabled) ||
+              item.visit_subclass !== visitConstants.SUBCLASS_REPEATING_VISIT
+            "
+            @update:model-value="disableOthers(item)"
+          />
+        </div>
+        <div v-else>
+          {{ item.repeating_frequency_name }}
+        </div>
       </template>
       <template #[`item.visit_window`]="{ item }">
-        <div v-if="editMode && item.visit_class === 'SINGLE_VISIT'">
-          <v-row class="cellWidth">
-            <v-col cols="3">
+        <div
+          v-if="
+            editMode && item.visit_class === visitConstants.CLASS_SINGLE_VISIT
+          "
+        >
+          <v-row class="wideCellWidth">
+            <v-col cols="4">
               <v-text-field
                 v-model="item.min_visit_window_value"
                 density="compact"
@@ -160,7 +226,7 @@
                 @input="disableOthers(item)"
               />
             </v-col>
-            <v-col cols="3">
+            <v-col cols="4">
               <v-text-field
                 v-model="item.max_visit_window_value"
                 density="compact"
@@ -168,7 +234,7 @@
                 @input="disableOthers(item)"
               />
             </v-col>
-            <v-col cols="6">
+            <v-col cols="4">
               <v-select
                 v-model="item.visit_window_unit_uid"
                 :items="epochsStore.studyTimeUnits"
@@ -192,7 +258,11 @@
         </template>
       </template>
       <template #[`item.show_visit`]="{ item }">
-        <div v-if="editMode && item.visit_class === 'SINGLE_VISIT'">
+        <div
+          v-if="
+            editMode && item.visit_class === visitConstants.CLASS_SINGLE_VISIT
+          "
+        >
           <v-checkbox
             v-model="item.show_visit"
             :disabled="item.disabled && itemsDisabled"
@@ -206,22 +276,30 @@
       <template #[`item.is_global_anchor_visit`]="{ item }">
         {{ $filters.yesno(item.is_global_anchor_visit) }}
       </template>
-      <template #[`item.visit_subclass`]="{ item }">
+      <template #[`item.anchor_visit_in_group`]="{ item }">
         {{
-          item.visit_subclass === 'ANCHOR_VISIT_IN_GROUP_OF_SUBV' ? 'Yes' : 'No'
+          item.visit_subclass ===
+          visitConstants.SUBCLASS_ANCHOR_VISIT_IN_GROUP_OF_SUBV
+            ? 'Yes'
+            : 'No'
         }}
       </template>
       <template #[`item.visit_subname`]="{ item }">
         {{
-          item.visit_subclass === 'ANCHOR_VISIT_IN_GROUP_OF_SUBV'
+          item.visit_subclass ===
+          visitConstants.SUBCLASS_ANCHOR_VISIT_IN_GROUP_OF_SUBV
             ? item.visit_subname
             : ''
         }}
       </template>
       <template #[`item.time_value`]="{ item }">
-        <div v-if="editMode && item.visit_class === 'SINGLE_VISIT'">
+        <div
+          v-if="
+            editMode && item.visit_class === visitConstants.CLASS_SINGLE_VISIT
+          "
+        >
           <v-row class="cellWidth">
-            <v-col cols="4">
+            <v-col cols="6">
               <v-text-field
                 v-model="item.time_value"
                 density="compact"
@@ -247,7 +325,11 @@
         </div>
       </template>
       <template #[`item.visit_contact_mode_name`]="{ item }">
-        <div v-if="editMode && item.visit_class === 'SINGLE_VISIT'">
+        <div
+          v-if="
+            editMode && item.visit_class === visitConstants.CLASS_SINGLE_VISIT
+          "
+        >
           <v-select
             v-model="item.visit_contact_mode_uid"
             class="cellWidth"
@@ -264,7 +346,11 @@
         </div>
       </template>
       <template #[`item.time_reference_name`]="{ item }">
-        <div v-if="editMode && item.visit_class === 'SINGLE_VISIT'">
+        <div
+          v-if="
+            editMode && item.visit_class === visitConstants.CLASS_SINGLE_VISIT
+          "
+        >
           <v-select
             v-model="item.time_reference_uid"
             class="cellWidth"
@@ -289,7 +375,11 @@
         </div>
       </template>
       <template #[`item.description`]="{ item }">
-        <div v-if="editMode && item.visit_class === 'SINGLE_VISIT'">
+        <div
+          v-if="
+            editMode && item.visit_class === visitConstants.CLASS_SINGLE_VISIT
+          "
+        >
           <v-row class="cellWidth">
             <v-col>
               <v-text-field
@@ -306,7 +396,11 @@
         </div>
       </template>
       <template #[`item.start_rule`]="{ item }">
-        <div v-if="editMode && item.visit_class === 'SINGLE_VISIT'">
+        <div
+          v-if="
+            editMode && item.visit_class === visitConstants.CLASS_SINGLE_VISIT
+          "
+        >
           <v-row class="cellWidth">
             <v-col>
               <v-text-field
@@ -323,7 +417,11 @@
         </div>
       </template>
       <template #[`item.end_rule`]="{ item }">
-        <div v-if="editMode && item.visit_class === 'SINGLE_VISIT'">
+        <div
+          v-if="
+            editMode && item.visit_class === visitConstants.CLASS_SINGLE_VISIT
+          "
+        >
           <v-row class="cellWidth">
             <v-col>
               <v-text-field
@@ -394,6 +492,7 @@
         :title="studyVisitHistoryTitle"
         :headers="headers"
         :items="visitHistoryItems"
+        :items-total="visitHistoryItems.length"
         @close="closeVisitHistory"
       />
     </v-dialog>
@@ -412,6 +511,7 @@
 <script setup>
 import units from '@/api/units'
 import terms from '@/api/controlledTerminology/terms'
+import codelists from '@/api/controlledTerminology/terms'
 import ActionsMenu from '@/components/tools/ActionsMenu.vue'
 import NNTable from '@/components/tools/NNTable.vue'
 import StudyVisitForm from './StudyVisitForm.vue'
@@ -478,12 +578,21 @@ const actions = ref([
   },
 ])
 const headers = ref([
-  { title: '', key: 'actions', width: '5%' },
+  { title: '', key: 'actions', width: '1%' },
   { title: t('StudyVisitForm.study_epoch'), key: 'study_epoch_name' },
   { title: t('StudyVisitForm.visit_type'), key: 'visit_type_name' },
+  { title: t('StudyVisitForm.soa_milestone'), key: 'is_soa_milestone' },
   { title: t('StudyVisitForm.visit_class'), key: 'visit_class' },
+  { title: t('StudyVisitForm.visit_sub_class'), key: 'visit_subclass' },
+  {
+    title: t('StudyVisitForm.repeating_frequency'),
+    key: 'repeating_frequency_name',
+  },
   { title: t('StudyVisitForm.visit_name'), key: 'visit_name' },
-  { title: t('StudyVisitForm.anchor_visit_in_group'), key: 'visit_subclass' },
+  {
+    title: t('StudyVisitForm.anchor_visit_in_group'),
+    key: 'anchor_visit_in_group',
+  },
   { title: t('StudyVisitForm.visit_group'), key: 'visit_subname' },
   {
     title: t('StudyVisitForm.global_anchor_visit'),
@@ -523,12 +632,21 @@ const headers = ref([
   { title: t('StudyVisitForm.modified_user'), key: 'user_initials' },
 ])
 const defaultColumns = ref([
-  { title: '', key: 'actions', width: '5%' },
+  { title: '', key: 'actions', width: '1%' },
   { title: t('StudyVisitForm.study_epoch'), key: 'study_epoch_name' },
   { title: t('StudyVisitForm.visit_type'), key: 'visit_type_name' },
+  { title: t('StudyVisitForm.soa_milestone'), key: 'is_soa_milestone' },
   { title: t('StudyVisitForm.visit_class'), key: 'visit_class' },
+  { title: t('StudyVisitForm.visit_sub_class'), key: 'visit_subclass' },
+  {
+    title: t('StudyVisitForm.repeating_frequency'),
+    key: 'repeating_frequency_name',
+  },
   { title: t('StudyVisitForm.visit_name'), key: 'visit_name' },
-  { title: t('StudyVisitForm.anchor_visit_in_group'), key: 'visit_subclass' },
+  {
+    title: t('StudyVisitForm.anchor_visit_in_group'),
+    key: 'anchor_visit_in_group',
+  },
   { title: t('StudyVisitForm.visit_group'), key: 'visit_subname' },
   {
     title: t('StudyVisitForm.global_anchor_visit'),
@@ -568,15 +686,22 @@ const defaultColumns = ref([
   { title: t('StudyVisitForm.modified_user'), key: 'user_initials' },
 ])
 const editHeaders = ref([
-  { title: '', key: 'actions', width: '5%' },
+  { title: '', key: 'actions', width: '1%' },
   { title: t('StudyVisitForm.visit_type'), key: 'visit_type_name' },
+  { title: t('StudyVisitForm.soa_milestone'), key: 'is_soa_milestone' },
+  { title: t('StudyVisitForm.visit_class'), key: 'visit_class' },
+  { title: t('StudyVisitForm.visit_sub_class'), key: 'visit_subclass' },
+  {
+    title: t('StudyVisitForm.repeating_frequency'),
+    key: 'repeating_frequency_name',
+  },
   {
     title: t('StudyVisitForm.global_anchor_visit'),
     key: 'is_global_anchor_visit',
   },
   { title: t('StudyVisitForm.contact_mode'), key: 'visit_contact_mode_name' },
   { title: t('StudyVisitForm.time_reference'), key: 'time_reference_name' },
-  { title: t('StudyVisitForm.time_value'), key: 'time_value' },
+  { title: t('StudyVisitForm.time_value'), key: 'time_value', width: '10%' },
   { title: t('StudyVisitForm.visit_name'), key: 'visit_name' },
   { title: t('StudyVisitForm.visit_window'), key: 'visit_window' },
   { title: t('StudyVisitForm.show_wisit'), key: 'show_visit' },
@@ -689,6 +814,47 @@ const visitHistoryItems = ref([])
 const visitSelection = ref([])
 const fetchedStudyEpochs = ref([])
 const timeLineVisits = ref([])
+const frequencies = ref([])
+const visitClasses = [
+  {
+    label: t('StudyVisitForm.scheduled_visit'),
+    value: visitConstants.CLASS_SINGLE_VISIT,
+  },
+  {
+    label: t('StudyVisitForm.unscheduled_visit'),
+    value: visitConstants.CLASS_UNSCHEDULED_VISIT,
+  },
+  {
+    label: t('StudyVisitForm.non_visit'),
+    value: visitConstants.CLASS_NON_VISIT,
+  },
+  {
+    label: t('StudyVisitForm.special_visit'),
+    value: visitConstants.CLASS_SPECIAL_VISIT,
+  },
+  {
+    label: t('StudyVisitForm.manually_defined_visit'),
+    value: visitConstants.CLASS_MANUALLY_DEFINED_VISIT,
+  },
+]
+const visitSubClasses = [
+  {
+    label: t('StudyVisitForm.single_visit'),
+    value: visitConstants.SUBCLASS_SINGLE_VISIT,
+  },
+  {
+    label: t('StudyVisitForm.anchor_visit_in_group'),
+    value: visitConstants.SUBCLASS_ANCHOR_VISIT_IN_GROUP_OF_SUBV,
+  },
+  {
+    label: t('StudyVisitForm.repeating_visit'),
+    value: visitConstants.SUBCLASS_REPEATING_VISIT,
+  },
+  {
+    label: t('StudyVisitForm.additional_sub_visit'),
+    value: visitConstants.SUBCLASS_ADDITIONAL_SUBVISIT_IN_A_GROUP_OF_SUBV,
+  },
+]
 
 const studyEpochs = computed(() => {
   return epochsStore.studyEpochs
@@ -744,6 +910,9 @@ onMounted(() => {
   terms.getByCodelist('timepointReferences').then((resp) => {
     timeReferences.value = resp.data.items
   })
+  codelists.getByCodelist('repeatingVisitFrequency').then((resp) => {
+    frequencies.value = resp.data.items
+  })
   if (studiesGeneralStore.studyPreferredTimeUnit) {
     preferredTimeUnit.value =
       studiesGeneralStore.studyPreferredTimeUnit.time_unit_name
@@ -751,25 +920,23 @@ onMounted(() => {
 })
 
 function getVisitClassLabel(visitClass) {
-  const labels = {
-    [visitConstants.CLASS_SINGLE_VISIT]: t('StudyVisitForm.scheduled_visit'),
-    [visitConstants.CLASS_UNSCHEDULED_VISIT]: t(
-      'StudyVisitForm.unscheduled_visit'
-    ),
-    [visitConstants.CLASS_NON_VISIT]: t('StudyVisitForm.non_visit'),
-    [visitConstants.CLASS_SPECIAL_VISIT]: t('StudyVisitForm.special_visit'),
-    [visitConstants.CLASS_MANUALLY_DEFINED_VISIT]: t(
-      'StudyVisitForm.manually_defined_visit'
-    ),
-  }
-  return labels[visitClass]
+  return visitClasses.find((c) => c.value === visitClass).label
+}
+
+function getVisitSubClassLabel(visitSubClass) {
+  return visitSubClasses.find((c) => c.value === visitSubClass).label
 }
 
 function getTimeLineVisits() {
   const params = {
     page_size: 0,
     filters: JSON.stringify({
-      visit_class: { v: [visitConstants.CLASS_SINGLE_VISIT, visitConstants.CLASS_MANUALLY_DEFINED_VISIT] },
+      visit_class: {
+        v: [
+          visitConstants.CLASS_SINGLE_VISIT,
+          visitConstants.CLASS_MANUALLY_DEFINED_VISIT,
+        ],
+      },
     }),
   }
   studyEpochsApi
@@ -802,7 +969,7 @@ function transformItems(items) {
 }
 
 function openEditMode() {
-  headers.value = editHeaders
+  headers.value = editHeaders.value
   editMode.value = true
 }
 
@@ -825,6 +992,12 @@ function disableOthers(item) {
 }
 
 function saveVisit(item) {
+  if (item.visit_class !== visitConstants.CLASS_MANUALLY_DEFINED_VISIT) {
+    delete item.visit_name
+    delete item.visit_number
+    delete item.visit_short_name
+    delete item.unique_visit_number
+  }
   return epochsStore
     .updateStudyVisit({
       studyUid: studiesGeneralStore.selectedStudy.uid,
@@ -851,6 +1024,7 @@ function openDuplicateForm(item) {
 function closeDuplicateForm() {
   selectedStudyVisit.value = null
   duplicateForm.value = false
+  tableRef.value.filterTable()
 }
 
 function fetchStudyVisits(filters, options, filtersUpdated) {
@@ -1083,5 +1257,8 @@ function updatePreferredTimeUnit(value) {
 <style scoped>
 .cellWidth {
   width: 200px;
+}
+.wideCellWidth {
+  width: 300px;
 }
 </style>

@@ -15,3 +15,4 @@ class CTTermCodelist(BaseModel):
         description="",
         nullable=True,
     )
+    library_name: str | None = Field(None, title="library_name")

@@ -5,8 +5,13 @@ from fastapi import status as fast_api_status
 from pydantic.types import Json
 
 from clinical_mdr_api import config, models
+from clinical_mdr_api.domain_repositories.models.syntax import TimeframeValue
+from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import (
+    StudyComponentEnum,
+)
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
 from clinical_mdr_api.models.error import ErrorResponse
+from clinical_mdr_api.models.study_selections.study import Study
 from clinical_mdr_api.models.syntax_templates.template_parameter import (
     ComplexTemplateParameter,
 )
@@ -14,6 +19,7 @@ from clinical_mdr_api.models.utils import CustomPage
 from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
+from clinical_mdr_api.routers._generic_descriptions import study_section_description
 from clinical_mdr_api.services.syntax_instances.timeframes import TimeframeService
 
 # Prefixed with "/timeframes"
@@ -37,7 +43,7 @@ TimeframeUID = Path(None, description="The unique id of the timeframe.")
             "content": {
                 "text/csv": {
                     "example": """
-"library","timeframe_template","uid","timeframe","start_date","end_date","status","version","change_description","user_initials"
+"library","template","uid","timeframe","start_date","end_date","status","version","change_description","user_initials"
 "Sponsor","First  [ComparatorIntervention]","826d80a7-0b6a-419d-8ef1-80aa241d7ac7",First Intervention,"2020-10-22T10:19:29+00:00",,"Draft","0.1","Initial version","NdSJ"
 """
                 },
@@ -51,7 +57,7 @@ TimeframeUID = Path(None, description="The unique id of the timeframe.")
     {
         "defaults": [
             "library=library.name",
-            "timeframe_template=timeframe_template.name",
+            "template=template_name",
             "uid",
             "timeframe=name",
             "start_date",
@@ -189,12 +195,21 @@ def retrieve_audit_trail(
         le=config.MAX_PAGE_SIZE,
         description=_generic_descriptions.PAGE_SIZE,
     ),
+    filters: Json
+    | None = Query(
+        None,
+        description=_generic_descriptions.SYNTAX_FILTERS,
+        example=_generic_descriptions.FILTERS_EXAMPLE,
+    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
 ):
     results = Service().get_all(
         page_number=page_number,
         page_size=page_size,
+        filter_by=filters,
+        filter_operator=FilterOperator.from_str(operator),
         total_count=total_count,
         for_audit_trail=True,
     )
@@ -514,6 +529,36 @@ def reactivate(uid: str = TimeframeUID):
 def delete(uid: str = TimeframeUID):
     Service().soft_delete(uid)
     return Response(status_code=fast_api_status.HTTP_204_NO_CONTENT)
+
+
+@router.get(
+    "/{uid}/studies",
+    dependencies=[rbac.STUDY_READ],
+    summary="",
+    description="",
+    response_model=list[Study],
+    status_code=200,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - The timeframe with the specified 'uid' wasn't found.",
+        },
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+def get_studies(
+    uid: str = TimeframeUID,
+    include_sections: list[StudyComponentEnum]
+    | None = Query(None, description=study_section_description("include")),
+    exclude_sections: list[StudyComponentEnum]
+    | None = Query(None, description=study_section_description("exclude")),
+):
+    return Service().get_referencing_studies(
+        uid=uid,
+        node_type=TimeframeValue,
+        include_sections=include_sections,
+        exclude_sections=exclude_sections,
+    )
 
 
 @router.get(

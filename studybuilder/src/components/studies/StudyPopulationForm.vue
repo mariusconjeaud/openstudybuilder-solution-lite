@@ -205,6 +205,7 @@
 
 <script>
 import _isEqual from 'lodash/isEqual'
+import _isEmpty from 'lodash/isEmpty'
 import DurationField from '@/components/tools/DurationField.vue'
 import MultipleSelect from '@/components/tools/MultipleSelect.vue'
 import NotApplicableField from '@/components/tools/NotApplicableField.vue'
@@ -213,6 +214,7 @@ import YesNoField from '@/components/tools/YesNoField.vue'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
 import { useStudiesManageStore } from '@/stores/studies-manage'
 import studyMetadataForms from '@/utils/studyMetadataForms'
+import study from '@/api/study'
 
 export default {
   components: {
@@ -224,9 +226,9 @@ export default {
   },
   inject: ['eventBusEmit'],
   props: {
-    metadata: {
+    initialData: {
       type: Object,
-      default: undefined,
+      default: () => {},
     },
     open: Boolean,
   },
@@ -261,40 +263,43 @@ export default {
         'StudyPopulationForm.sex_of_study_participants',
       ],
       minimumDurationCheckbox: false,
-      data: this.metadata,
+      data: {},
     }
   },
   watch: {
     minimumDurationCheckbox: function () {
       this.form.stable_disease_minimum_duration = {}
     },
-    data: {
-      handler: function (value) {
-        this.form = JSON.parse(JSON.stringify(value))
-        if (!this.form.planned_minimum_age_of_subjects) {
-          this.form.planned_minimum_age_of_subjects = {}
-        }
-        if (!this.form.planned_maximum_age_of_subjects) {
-          this.form.planned_maximum_age_of_subjects = {}
-        }
-        if (!this.form.stable_disease_minimum_duration) {
-          this.form.stable_disease_minimum_duration = {}
-        }
-        if (this.form.sex_of_participants_code) {
-          this.form.sex_of_participants_code.sponsor_preferred_name =
-            this.form.sex_of_participants_code.name
-        }
-      },
-      immediate: true,
-    },
-    metadata(value) {
-      this.data = value
-    },
   },
   mounted() {
     this.studiesGeneralStore.fetchNullValues()
+    if (_isEmpty(this.initialData)) {
+      study
+        .getStudyPopulationMetadata(this.studiesGeneralStore.selectedStudy.uid)
+        .then((resp) => {
+          this.initForm(resp.data.current_metadata.study_population)
+        })
+    } else {
+      this.initForm(this.initialData)
+    }
   },
   methods: {
+    initForm(data) {
+      this.form = { ...data }
+      if (!this.form.planned_minimum_age_of_subjects) {
+        this.form.planned_minimum_age_of_subjects = {}
+      }
+      if (!this.form.planned_maximum_age_of_subjects) {
+        this.form.planned_maximum_age_of_subjects = {}
+      }
+      if (!this.form.stable_disease_minimum_duration) {
+        this.form.stable_disease_minimum_duration = {}
+      }
+      if (this.form.sex_of_participants_code) {
+        this.form.sex_of_participants_code.sponsor_preferred_name =
+          this.form.sex_of_participants_code.name
+      }
+    },
     setNullValueStudyDisease() {
       this.form.disease_condition_or_indication_codes = []
       if (this.form.disease_condition_or_indication_null_value_code) {
@@ -346,7 +351,7 @@ export default {
       } else {
         this.form.planned_maximum_age_of_subjects_null_value_code = {
           term_uid: this.studiesGeneralStore.nullValues.find(
-            (el) => el.sponsor_preferred_name === 'Positive infinity'
+            (el) => el.name.sponsor_preferred_name === 'Positive infinity'
           ).term_uid,
           name: this.$t('_global.positive_infinity_full_name'),
         }
@@ -425,7 +430,9 @@ export default {
         await this.studiesManageStore.editStudyPopulation(
           this.studiesGeneralStore.selectedStudy.uid,
           data,
-          this.studiesGeneralStore.selectedStudy.study_parent_part ? this.studiesGeneralStore.selectedStudy.study_parent_part.uid : null
+          this.studiesGeneralStore.selectedStudy.study_parent_part
+            ? this.studiesGeneralStore.selectedStudy.study_parent_part.uid
+            : null
         )
         this.$emit('updated', data)
         this.eventBusEmit('notification', {

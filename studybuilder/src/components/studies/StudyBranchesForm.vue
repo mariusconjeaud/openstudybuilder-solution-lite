@@ -178,9 +178,13 @@ export default {
   watch: {
     editedBranchArm(value) {
       if (Object.keys(value).length !== 0) {
-        this.form = JSON.parse(JSON.stringify(value))
-        this.form.arm_uid = value.arm_root.arm_uid
-        this.formStore.save(this.form)
+        arms
+          .getStudyBranchArm(this.selectedStudy.uid, value.branch_arm_uid)
+          .then((resp) => {
+            this.form = JSON.parse(JSON.stringify(resp.data))
+            this.form.arm_uid = resp.data.arm_root.arm_uid
+            this.formStore.save(this.form)
+          })
       }
     },
   },

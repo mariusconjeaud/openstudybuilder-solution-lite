@@ -7,10 +7,11 @@
     >
       <div v-if="withAddButton" class="text-center">
         <v-btn
-          color="primary"
+          size="small"
+          variant="outlined"
+          color="nnBaseBlue"
           class="mb-2"
           icon="mdi-plus"
-          size="small"
           :title="$t('PackageTimeline.add_label')"
           @click="emit('addPackage')"
         />

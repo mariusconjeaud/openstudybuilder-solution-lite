@@ -17,7 +17,6 @@ from clinical_mdr_api.domains._utils import extract_parameters
 from clinical_mdr_api.domains.concepts.unit_definitions.unit_definition import (
     UnitDefinitionAR,
 )
-from clinical_mdr_api.domains.study_selections.study_visit import StudyVisitVO
 from clinical_mdr_api.models.syntax_templates.template_parameter import (
     ComplexTemplateParameter,
     TemplateParameter,
@@ -950,7 +949,6 @@ def calculate_diffs_history(
     transform_all_to_history_model: Callable,
     study_uid: str,
     version_object_class,
-    study_visits: Mapping[str, list[StudyVisitVO]] | None = None,
 ):
     selection_history = get_all_object_versions(study_uid=study_uid)
     unique_list_uids = list({x.uid for x in selection_history})
@@ -968,17 +966,15 @@ def calculate_diffs_history(
             key=lambda ith_selection: ith_selection.start_date,
             reverse=True,
         )
-        if not study_visits:
-            versions = [
-                transform_all_to_history_model(_).dict() for _ in ith_selection_history
-            ]
-        else:
-            versions = [
-                transform_all_to_history_model(
-                    _, study_visit_count=len(study_visits[_.uid])
-                ).dict()
-                for _ in ith_selection_history
-            ]
+
+        versions = []
+        for item in ith_selection_history:
+            _study_visit_count = {}
+            if hasattr(item, "study_visit_count"):
+                _study_visit_count = {"study_visit_count": item.study_visit_count}
+            versions.append(
+                transform_all_to_history_model(item, **_study_visit_count).dict()
+            )
 
         if not data:
             data = calculate_diffs(versions, version_object_class)
@@ -1012,7 +1008,8 @@ def extract_filtering_values(filters, parameter_name, single_value=False):
             values = filters[parameter_name]["v"]
             if single_value and len(values) > 1:
                 return None
-            values = values[0]
+            if values:
+                values = values[0]
             del filters[parameter_name]
             return values
     return None

@@ -76,8 +76,8 @@
     <ConfirmDialog ref="confirmRef" :text-cols="5" :action-cols="6">
       <template #actions>
         <v-btn
-          color="white"
-          variant="outlined"
+          color="nnBaseBlue"
+          rounded="xl"
           class="mr-2"
           elevation="2"
           @click="openSelectStudyDialog"
@@ -85,8 +85,8 @@
           {{ $t('_global.select_study') }}
         </v-btn>
         <v-btn
-          color="white"
-          variant="outlined"
+          color="nnBaseBlue"
+          rounded="xl"
           elevation="2"
           @click="redirectToStudyTable"
         >

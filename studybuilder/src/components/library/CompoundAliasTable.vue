@@ -13,8 +13,10 @@
     >
       <template #actions="">
         <v-btn
+          class="ml-2"
           size="small"
-          color="primary"
+          variant="outlined"
+          color="nnBaseBlue"
           :title="$t('CompoundAliasForm.add_title')"
           :disabled="!checkPermission($roles.LIBRARY_WRITE)"
           icon="mdi-plus"
@@ -172,7 +174,7 @@ export default {
       compoundAliases: [],
       filters: {},
       headers: [
-        { title: '', key: 'actions', width: '5%' },
+        { title: '', key: 'actions', width: '1%' },
         {
           title: this.$t('CompoundAliasTable.compound_name'),
           key: 'compound.name',

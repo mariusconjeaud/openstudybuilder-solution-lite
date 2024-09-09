@@ -17,6 +17,7 @@ class StudyStandardVersion(StudySelection):
         StudyValue, "HAS_STUDY_STANDARD_VERSION", cardinality=ZeroOrMore
     )
     status = StringProperty()
+    description = StringProperty()
     has_ct_package = RelationshipTo(
         CTPackage,
         "HAS_CT_PACKAGE",

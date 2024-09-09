@@ -61,14 +61,13 @@ Possible errors:
 @decorators.allow_exports(
     {
         "defaults": [
-            "uid",
-            "study_epoch_uid",
+            "study_id",
+            "visit_name",
             "study_epoch_name",
             "visit_type_name",
             "visit_contact_mode_name",
             "order",
             "unique_visit_number",
-            "visit_name",
             "visit_short_name",
             "study_day_label",
             "study_week_label",
@@ -84,6 +83,8 @@ Possible errors:
             "user_initials",
             "study_uid",
             "study_version",
+            "uid",
+            "study_epoch_uid",
         ],
         "formats": [
             "text/csv",

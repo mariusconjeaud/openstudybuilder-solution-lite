@@ -70,7 +70,8 @@
             "codelists": [
               {
                 "codelist_uid": "ct_codelist_root_endpoint",
-                "order": 1
+                "order": 1,
+                "library_name": "Sponsor"
               }
             ],
             "sponsor_preferred_name": "term_value_name1",
@@ -82,6 +83,8 @@
             "version": "1.0",
             "change_description": "Approved version",
             "user_initials": "TODO initials",
+            "queried_effective_date": null,
+            "date_conflict": false,
             "possible_actions": [
               "inactivate",
               "new_version"
@@ -150,7 +153,8 @@
               "codelists": [
                 {
                   "codelist_uid": "ct_codelist_root_endpoint",
-                  "order": 1
+                  "order": 1,
+                  "library_name": "Sponsor"
                 }
               ],
               "sponsor_preferred_name": "term_value_name1",
@@ -162,6 +166,8 @@
               "version": "1.0",
               "change_description": "Approved version",
               "user_initials": "TODO initials",
+              "queried_effective_date": null,
+              "date_conflict": false,
               "possible_actions": [
                 "inactivate",
                 "new_version"
@@ -228,7 +234,8 @@
               "codelists": [
                 {
                   "codelist_uid": "ct_codelist_root_endpoint",
-                  "order": 1
+                  "order": 1,
+                  "library_name": "Sponsor"
                 }
               ],
               "sponsor_preferred_name": "term_value_name1",
@@ -240,6 +247,8 @@
               "version": "1.0",
               "change_description": "Approved version",
               "user_initials": "TODO initials",
+              "queried_effective_date": null,
+              "date_conflict": false,
               "possible_actions": [
                 "inactivate",
                 "new_version"
@@ -305,7 +314,8 @@
             "codelists": [
               {
                 "codelist_uid": "ct_codelist_root_endpoint",
-                "order": 1
+                "order": 1,
+                "library_name": "Sponsor"
               }
             ],
             "sponsor_preferred_name": "term_value_name1",
@@ -317,6 +327,8 @@
             "version": "1.0",
             "change_description": "Approved version",
             "user_initials": "TODO initials",
+            "queried_effective_date": null,
+            "date_conflict": false,
             "possible_actions": [
               "inactivate",
               "new_version"
@@ -499,7 +511,8 @@
             "codelists": [
               {
                 "codelist_uid": "ct_codelist_root_endpoint",
-                "order": 1
+                "order": 1,
+                "library_name": "Sponsor"
               }
             ],
             "sponsor_preferred_name": "term_value_name1",
@@ -511,6 +524,8 @@
             "version": "1.0",
             "change_description": "Approved version",
             "user_initials": "TODO initials",
+            "queried_effective_date": null,
+            "date_conflict": false,
             "possible_actions": [
               "inactivate",
               "new_version"
@@ -669,7 +684,8 @@
             "codelists": [
               {
                 "codelist_uid": "ct_codelist_root_endpoint",
-                "order": 1
+                "order": 1,
+                "library_name": "Sponsor"
               }
             ],
             "sponsor_preferred_name": "term_value_name1",
@@ -681,6 +697,8 @@
             "version": "1.0",
             "change_description": "Approved version",
             "user_initials": "TODO initials",
+            "queried_effective_date": null,
+            "date_conflict": false,
             "possible_actions": [
               "inactivate",
               "new_version"
@@ -804,7 +822,8 @@
             "codelists": [
               {
                 "codelist_uid": "ct_codelist_root_endpoint",
-                "order": 1
+                "order": 1,
+                "library_name": "Sponsor"
               }
             ],
             "sponsor_preferred_name": "term_value_name1",
@@ -816,6 +835,8 @@
             "version": "1.0",
             "change_description": "Approved version",
             "user_initials": "TODO initials",
+            "queried_effective_date": null,
+            "date_conflict": false,
             "possible_actions": [
               "inactivate",
               "new_version"
@@ -892,7 +913,8 @@
             "codelists": [
               {
                 "codelist_uid": "non_editable_cr",
-                "order": 3
+                "order": 3,
+                "library_name": "CDISC"
               }
             ],
             "sponsor_preferred_name": "term_value_name3",
@@ -904,6 +926,8 @@
             "version": "1.0",
             "change_description": "Approved version",
             "user_initials": "TODO initials",
+            "queried_effective_date": null,
+            "date_conflict": false,
             "possible_actions": [
               "inactivate",
               "new_version"
@@ -980,7 +1004,8 @@
             "codelists": [
               {
                 "codelist_uid": "ct_codelist_root_endpoint",
-                "order": 1
+                "order": 1,
+                "library_name": "Sponsor"
               }
             ],
             "sponsor_preferred_name": "term_value_name1",
@@ -992,6 +1017,8 @@
             "version": "1.0",
             "change_description": "Approved version",
             "user_initials": "TODO initials",
+            "queried_effective_date": null,
+            "date_conflict": false,
             "possible_actions": [
               "inactivate",
               "new_version"
@@ -1061,7 +1088,8 @@
             "codelists": [
               {
                 "codelist_uid": "ct_codelist_root_endpoint",
-                "order": 1
+                "order": 1,
+                "library_name": "Sponsor"
               }
             ],
             "sponsor_preferred_name": "term_value_name1",
@@ -1073,6 +1101,8 @@
             "version": "1.0",
             "change_description": "Approved version",
             "user_initials": "TODO initials",
+            "queried_effective_date": null,
+            "date_conflict": false,
             "possible_actions": [
               "inactivate",
               "new_version"
@@ -1138,7 +1168,8 @@
               "codelists": [
                 {
                   "codelist_uid": "ct_codelist_root_endpoint",
-                  "order": 1
+                  "order": 1,
+                  "library_name": "Sponsor"
                 }
               ],
               "sponsor_preferred_name": "term_value_name1",
@@ -1150,6 +1181,8 @@
               "version": "1.0",
               "change_description": "Approved version",
               "user_initials": "TODO initials",
+              "queried_effective_date": null,
+              "date_conflict": false,
               "possible_actions": [
                 "inactivate",
                 "new_version"
@@ -1198,7 +1231,8 @@
               "codelists": [
                 {
                   "codelist_uid": "ct_codelist_root_endpoint",
-                  "order": 1
+                  "order": 1,
+                  "library_name": "Sponsor"
                 }
               ],
               "sponsor_preferred_name": "term_value_name1",
@@ -1210,6 +1244,8 @@
               "version": "1.0",
               "change_description": "Approved version",
               "user_initials": "TODO initials",
+              "queried_effective_date": null,
+              "date_conflict": false,
               "possible_actions": [
                 "inactivate",
                 "new_version"
@@ -1258,7 +1294,8 @@
               "codelists": [
                 {
                   "codelist_uid": "ct_codelist_root_endpoint",
-                  "order": 1
+                  "order": 1,
+                  "library_name": "Sponsor"
                 }
               ],
               "sponsor_preferred_name": "term_value_name1",
@@ -1270,6 +1307,8 @@
               "version": "1.0",
               "change_description": "Approved version",
               "user_initials": "TODO initials",
+              "queried_effective_date": null,
+              "date_conflict": false,
               "possible_actions": [
                 "inactivate",
                 "new_version"
@@ -1344,7 +1383,8 @@
             "codelists": [
               {
                 "codelist_uid": "ct_codelist_root_endpoint",
-                "order": 1
+                "order": 1,
+                "library_name": "Sponsor"
               }
             ],
             "sponsor_preferred_name": "term_value_name1",
@@ -1356,6 +1396,8 @@
             "version": "1.0",
             "change_description": "Approved version",
             "user_initials": "TODO initials",
+            "queried_effective_date": null,
+            "date_conflict": false,
             "possible_actions": [
               "inactivate",
               "new_version"
@@ -1445,7 +1487,8 @@
             "codelists": [
               {
                 "codelist_uid": "ct_codelist_root_endpoint",
-                "order": 1
+                "order": 1,
+                "library_name": "Sponsor"
               }
             ],
             "sponsor_preferred_name": "term_value_name1",
@@ -1457,6 +1500,8 @@
             "version": "1.0",
             "change_description": "Approved version",
             "user_initials": "TODO initials",
+            "queried_effective_date": null,
+            "date_conflict": false,
             "possible_actions": [
               "inactivate",
               "new_version"
@@ -1533,7 +1578,8 @@
             "codelists": [
               {
                 "codelist_uid": "ct_codelist_root_endpoint",
-                "order": 1
+                "order": 1,
+                "library_name": "Sponsor"
               }
             ],
             "sponsor_preferred_name": "term_value_name1",
@@ -1545,6 +1591,8 @@
             "version": "1.0",
             "change_description": "Approved version",
             "user_initials": "TODO initials",
+            "queried_effective_date": null,
+            "date_conflict": false,
             "possible_actions": [
               "inactivate",
               "new_version"

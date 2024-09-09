@@ -87,6 +87,7 @@
 import dictionaries from '@/api/dictionaries'
 import SimpleFormDialog from '@/components/tools/SimpleFormDialog.vue'
 import { useFormStore } from '@/stores/form'
+import _isEmpty from 'lodash/isEmpty'
 
 export default {
   components: {
@@ -131,10 +132,12 @@ export default {
   watch: {
     editedTerm: {
       handler(value) {
-        if (value) {
-          this.initForm(value)
-          this.form.codelist_uid = this.editedTermCategory
-          this.formStore.save(this.form)
+        if (!_isEmpty(value)) {
+          dictionaries.retrieve(value.term_uid).then((resp) => {
+            this.initForm(resp.data)
+            this.form.codelist_uid = this.editedTermCategory
+            this.formStore.save(this.form)
+          })
         }
       },
       immediate: true,

@@ -1,11 +1,103 @@
+import os
+from collections import defaultdict
 from typing import Any, Mapping
 
 import yattag
 from docx.shared import Inches
+from openpyxl import Workbook, load_workbook
+from openpyxl.styles import NamedStyle
+from openpyxl.utils import get_column_letter
+from openpyxl.worksheet.table import Table, TableStyleInfo
+from openpyxl.worksheet.worksheet import Worksheet
 from pydantic import BaseModel, Field
 
 from clinical_mdr_api.services.utils.docx_builder import DocxBuilder
 from clinical_mdr_api.telemetry import trace_calls
+
+CHAR_WIDTHS = {
+    "i": 0.5,
+    "l": 0.5,
+    "t": 0.6,
+    "r": 0.6,
+    " ": 0.5,
+    "w": 1.5,
+    "m": 1.5,
+    "f": 0.7,
+    "j": 0.7,
+    "k": 0.7,
+    "a": 1.0,
+    "b": 1.0,
+    "c": 1.0,
+    "d": 1.0,
+    "e": 1.0,
+    "g": 1.0,
+    "h": 1.0,
+    "n": 1.0,
+    "o": 1.0,
+    "p": 1.0,
+    "q": 1.0,
+    "s": 1.0,
+    "u": 1.0,
+    "v": 1.0,
+    "x": 1.0,
+    "y": 1.0,
+    "z": 1.0,
+    "A": 1.2,
+    "B": 1.2,
+    "C": 1.2,
+    "D": 1.2,
+    "E": 1.2,
+    "F": 1.2,
+    "G": 1.2,
+    "H": 1.2,
+    "I": 0.6,
+    "J": 1.2,
+    "K": 1.2,
+    "L": 1.2,
+    "M": 1.5,
+    "N": 1.2,
+    "O": 1.2,
+    "P": 1.2,
+    "Q": 1.2,
+    "R": 1.2,
+    "S": 1.2,
+    "T": 1.2,
+    "U": 1.2,
+    "V": 1.2,
+    "W": 1.5,
+    "X": 1.2,
+    "Y": 1.2,
+    "Z": 1.2,
+    "0": 1.0,
+    "1": 0.8,
+    "2": 1.0,
+    "3": 1.0,
+    "4": 1.0,
+    "5": 1.0,
+    "6": 1.0,
+    "7": 1.0,
+    "8": 1.0,
+    "9": 1.0,
+    ".": 0.5,
+    ",": 0.5,
+    ";": 0.5,
+    ":": 0.5,
+    "!": 0.5,
+    "?": 0.5,
+    "-": 0.5,
+    "_": 0.5,
+    "(": 0.6,
+    ")": 0.6,
+    "[": 0.6,
+    "]": 0.6,
+    "{": 0.6,
+    "}": 0.6,
+    "/": 0.6,
+    "\\": 0.6,
+    "|": 0.4,
+    "'": 0.3,
+    '"': 0.4,
+}
 
 
 class Ref(BaseModel):
@@ -63,16 +155,16 @@ class TableWithFootnotes(BaseModel):
 
 @trace_calls()
 def table_to_docx(
-    table: TableWithFootnotes, styles: Mapping[str, tuple[str, Any]] = None
+    table: TableWithFootnotes,
+    styles: Mapping[str, tuple[str, Any]] | None = None,
+    template: str | None = None,
 ) -> DocxBuilder:
     # assume horizontal table dimension from number of cells in first row
     num_cols = sum((c.span for c in table.rows[0].cells))
 
     # parses an empty template DOCX file into a helper class
     docx = DocxBuilder(
-        styles=styles,
-        landscape=True,
-        margins=[0.5, 0.5, 0.5, 0.5],
+        styles=styles, landscape=True, margins=[0.5, 0.5, 0.5, 0.5], template=template
     )
 
     # adds a table to the document
@@ -152,7 +244,20 @@ def table_to_docx(
 
 
 @trace_calls
-def table_to_html(table: TableWithFootnotes) -> str:
+def table_to_html(table: TableWithFootnotes, css_style: str | None = None) -> str:
+    """Renders TableWithFootnotes into an HTML document
+
+    Renders TableWithFootnotes into an HTML document with a TABLE and footnotes into a DL (if they exist).
+    Optional CSS text can be provided in `css_style` added as <style> tag.
+
+    :param table: The table data to be rendered into HTML, including rows, cells, headers, and footnotes.
+    :type table: TableWithFootnotes
+    :param css_style: CSS text to be added as <style type="text/css"> tag in the HTML head.
+    :type css_style: str
+    :return: The rendered HTML document as a string.
+    :rtype: str
+    """
+
     doc, tag, text, line = yattag.Doc().ttl()
     doc.asis("<!DOCTYPE html>")
 
@@ -160,6 +265,9 @@ def table_to_html(table: TableWithFootnotes) -> str:
         with tag("head"):
             if table.title:
                 line("title", table.title)
+            if css_style:
+                with tag("style", type="text/css"):
+                    text(css_style)
 
         with tag("body"):
             attrs = {"id": table.id} if table.id else {}
@@ -219,3 +327,77 @@ def _cell_to_attrs(cell):
         attrs["colspan"] = cell.span
 
     return attrs
+
+
+@trace_calls
+def table_to_xlsx(
+    table: TableWithFootnotes,
+    styles: Mapping[str, str] | None = None,
+    template: str | None = None,
+) -> Workbook:
+    if template:
+        template = os.path.join(os.path.dirname(__file__), template)
+        workbook = load_workbook(template)
+
+    else:
+        workbook = Workbook()
+
+    worksheet: Worksheet = workbook.active
+
+    if table.title:
+        worksheet.title = table.title
+
+    column_widths = defaultdict(list)
+    for r, row in enumerate(table.rows, start=1):
+        worksheet.append([cell.text for cell in row.cells])
+
+        for c, cell in enumerate(row.cells, start=1):
+            if cell.span > 1:
+                worksheet.merge_cells(
+                    start_row=r,
+                    start_column=c,
+                    end_row=r,
+                    end_column=(c + cell.span - 1),
+                )
+
+            if cell.span == 1:
+                # take into account for column width calculations
+                column_widths[c].append(estimate_string_length(cell.text))
+
+    # calculate and set column widths
+    for c, widths in column_widths.items():
+        worksheet.column_dimensions[get_column_letter(c)].width = max(
+            2, int(round(max(widths) * 1.05 + 1))
+        )
+
+    # apply named styles on cells
+    if styles:
+        for style_name in styles.values():
+            if style_name not in workbook.named_styles:
+                workbook.add_named_style(NamedStyle(style_name))
+
+        for r, row in enumerate(worksheet.iter_rows()):
+            for c, cell in enumerate(row):
+                if (
+                    c < len(table.rows[r].cells)
+                    and table.rows[r].cells[c].style in styles
+                ):
+                    cell.style = styles[table.rows[r].cells[c].style]
+
+    # define table
+    tab = Table(
+        displayName="Table1",
+        ref=f"A1:{get_column_letter(len(table.rows[-1].cells))}{len(table.rows)}",
+    )
+    tab.tableStyleInfo = TableStyleInfo(name="TableStyleMedium2")
+
+    # freeze header rows and columns
+    worksheet.freeze_panes = (
+        f"{get_column_letter(table.num_header_cols+1)}{table.num_header_rows+1}"
+    )
+
+    return workbook
+
+
+def estimate_string_length(string: str) -> float:
+    return sum((CHAR_WIDTHS.get(c, 1) for c in string))

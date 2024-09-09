@@ -11,57 +11,97 @@ from clinical_mdr_api.services._meta_repository import MetaRepository  # type: i
 from clinical_mdr_api.services._utils import service_level_generic_filtering
 
 
-def _models_clinical_programme_from_clinical_programme_ar(
-    clinical_programme_ar: ClinicalProgrammeAR,
-) -> models.ClinicalProgramme:
-    return models.ClinicalProgramme(
-        uid=clinical_programme_ar.uid, name=clinical_programme_ar.name
-    )
-
-
-def get_all_clinical_programmes(
-    sort_by: dict | None = None,
-    page_number: int = 1,
-    page_size: int = 10,
-    filter_by: dict | None = None,
-    filter_operator: FilterOperator | None = FilterOperator.AND,
-    total_count: bool = False,
-) -> GenericFilteringReturn[models.ClinicalProgramme]:
-    repos = MetaRepository()
-    try:
-        all_clinical_programmes = repos.clinical_programme_repository.find_all()
-        repos.clinical_programme_repository.close()
-        items = [
-            _models_clinical_programme_from_clinical_programme_ar(clinical_programme)
-            for clinical_programme in all_clinical_programmes
-        ]
-        filtered_items = service_level_generic_filtering(
-            items=items,
-            filter_by=filter_by,
-            filter_operator=filter_operator,
-            sort_by=sort_by,
-            total_count=total_count,
-            page_number=page_number,
-            page_size=page_size,
+class ClinicalProgrammeService:
+    def _models_clinical_programme_from_clinical_programme_ar(
+        self,
+        clinical_programme_ar: ClinicalProgrammeAR,
+    ) -> models.ClinicalProgramme:
+        return models.ClinicalProgramme(
+            uid=clinical_programme_ar.uid, name=clinical_programme_ar.name
         )
-        return GenericFilteringReturn.create(filtered_items.items, filtered_items.total)
-    finally:
-        repos.close()
 
+    def get_all_clinical_programmes(
+        self,
+        sort_by: dict | None = None,
+        page_number: int = 1,
+        page_size: int = 10,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
+        total_count: bool = False,
+    ) -> GenericFilteringReturn[models.ClinicalProgramme]:
+        repos = MetaRepository()
+        try:
+            all_clinical_programmes = repos.clinical_programme_repository.find_all()
+            repos.clinical_programme_repository.close()
+            items = [
+                self._models_clinical_programme_from_clinical_programme_ar(
+                    clinical_programme
+                )
+                for clinical_programme in all_clinical_programmes
+            ]
+            filtered_items = service_level_generic_filtering(
+                items=items,
+                filter_by=filter_by,
+                filter_operator=filter_operator,
+                sort_by=sort_by,
+                total_count=total_count,
+                page_number=page_number,
+                page_size=page_size,
+            )
+            return GenericFilteringReturn.create(
+                filtered_items.items, filtered_items.total
+            )
+        finally:
+            repos.close()
 
-@db.transaction
-def create(
-    clinical_programme_create_input: ClinicalProgrammeInput,
-) -> models.ClinicalProgramme:
-    repos = MetaRepository()
-    try:
-        clinical_programme_ar = ClinicalProgrammeAR.from_input_values(
-            name=clinical_programme_create_input.name,
-            generate_uid_callback=repos.clinical_programme_repository.generate_uid,
-        )
-        repos.clinical_programme_repository.save(clinical_programme_ar)
-        return _models_clinical_programme_from_clinical_programme_ar(
+    @db.transaction
+    def create(
+        self,
+        clinical_programme_create_input: ClinicalProgrammeInput,
+    ) -> models.ClinicalProgramme:
+        repos = MetaRepository()
+        try:
+            clinical_programme_ar = ClinicalProgrammeAR.from_input_values(
+                name=clinical_programme_create_input.name,
+                generate_uid_callback=repos.clinical_programme_repository.generate_uid,
+            )
+            repos.clinical_programme_repository.save(clinical_programme_ar)
+            return self._models_clinical_programme_from_clinical_programme_ar(
+                clinical_programme_ar
+            )
+        finally:
+            repos.close()
+
+    def get_clinical_programme_by_uid(self, uid: str) -> models.ClinicalProgramme:
+        repos = MetaRepository()
+        clinical_programme_ar = repos.clinical_programme_repository.find_by_uid(uid)
+
+        return models.ClinicalProgramme.from_clinical_programme_ar(
             clinical_programme_ar
         )
-    finally:
-        repos.close()
+
+    @db.transaction
+    def edit(
+        self, uid: str, clinical_programme_edit_input: ClinicalProgrammeInput
+    ) -> models.ClinicalProgramme:
+        repos = MetaRepository()
+        try:
+            clinical_programme_ar = repos.clinical_programme_repository.find_by_uid(uid)
+
+            clinical_programme_ar.name = clinical_programme_edit_input.name
+
+            repos.clinical_programme_repository.save(clinical_programme_ar, update=True)
+            return models.ClinicalProgramme.from_uid(
+                uid=clinical_programme_ar.uid,
+                find_by_uid=repos.clinical_programme_repository.find_by_uid,
+            )
+        finally:
+            repos.close()
+
+    @db.transaction
+    def delete(self, uid: str) -> None:
+        repos = MetaRepository()
+        try:
+            repos.clinical_programme_repository.delete_by_uid(uid)
+        finally:
+            repos.close()

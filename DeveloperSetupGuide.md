@@ -260,7 +260,7 @@ The following command will:
 - trigger the import from the staging database into the MDR DB
 
 ```console
-pipenv run python -m mdr_standards_import.cdisc_ct.dev_scripts.bulk_import 'TEST' '' true
+pipenv run bulk_import 'TEST' ''
 ```
 
 ### Verify setup is complete

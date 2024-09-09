@@ -111,6 +111,14 @@ const formValidationRules = {
     }
     return result || i18n.t('_errors.identical_name')
   },
+
+  oneOfTwo: function (first, second, errorMessage) {
+    let result = false
+    if (first || second) {
+      result = true
+    }
+    return result || errorMessage
+  },
 }
 
 export default {

@@ -133,7 +133,13 @@ class StudyFieldsConcurrencyTest(unittest.TestCase):
             )
 
             ct_term_attributes_vo = CTTermAttributesVO.from_repository_values(
-                codelists=[CTTermCodelistVO(codelist_uid=codelist_uid, order=1)],
+                codelists=[
+                    CTTermCodelistVO(
+                        codelist_uid=codelist_uid,
+                        order=1,
+                        library_name=self.library_name,
+                    )
+                ],
                 catalogue_name="SDTM CT",
                 concept_id=None,
                 code_submission_value="code_submission_value",
@@ -159,7 +165,13 @@ class StudyFieldsConcurrencyTest(unittest.TestCase):
 
         with db.transaction:
             ct_term_name_vo = CTTermNameVO.from_repository_values(
-                codelists=[CTTermCodelistVO(codelist_uid=codelist_uid, order=1)],
+                codelists=[
+                    CTTermCodelistVO(
+                        codelist_uid=codelist_uid,
+                        order=1,
+                        library_name=self.library_name,
+                    )
+                ],
                 catalogue_name="SDTM CT",
                 name="StudyTitle",
                 name_sentence_case="study_title",

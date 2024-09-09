@@ -7,10 +7,11 @@
     copy-from-study
     component="high_level_study_design"
   >
-    <template #form="{ closeHandler, dataToCopy, openHandler }">
+    <template #form="{ closeHandler, openHandler, dataToCopy, formKey }">
       <StudyDefineForm
+        :key="formKey"
         :open="openHandler"
-        :metadata="Object.keys(dataToCopy).length !== 0 ? dataToCopy : metadata"
+        :initial-data="dataToCopy"
         @updated="onMetadataUpdated"
         @close="closeHandler"
       />
@@ -18,88 +19,80 @@
   </StudyMetadataSummary>
 </template>
 
-<script>
+<script setup>
+import { onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import study from '@/api/study'
 import StudyMetadataSummary from './StudyMetadataSummary.vue'
 import StudyDefineForm from './StudyDefineForm.vue'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
 
-export default {
-  components: {
-    StudyMetadataSummary,
-    StudyDefineForm,
+const { t } = useI18n()
+const studiesGeneralStore = useStudiesGeneralStore()
+
+const metadata = ref({})
+
+const params = [
+  {
+    label: t('StudyDefineForm.studytype'),
+    name: 'study_type_code',
+    valuesDisplay: 'term',
   },
-  setup() {
-    const studiesGeneralStore = useStudiesGeneralStore()
-    return {
-      studiesGeneralStore,
-    }
+  {
+    label: t('StudyDefineForm.trialtype'),
+    name: 'trial_type_codes',
+    valuesDisplay: 'terms',
   },
-  data() {
-    return {
-      metadata: {},
-      params: [
-        {
-          label: this.$t('StudyDefineForm.studytype'),
-          name: 'study_type_code',
-          valuesDisplay: 'term',
-        },
-        {
-          label: this.$t('StudyDefineForm.trialtype'),
-          name: 'trial_type_codes',
-          valuesDisplay: 'terms',
-        },
-        {
-          label: this.$t('StudyDefineForm.trialphase'),
-          name: 'trial_phase_code',
-          valuesDisplay: 'term',
-        },
-        {
-          label: this.$t('StudyDefineForm.extensiontrial'),
-          name: 'is_extension_trial',
-          valuesDisplay: 'yesno',
-        },
-        {
-          label: this.$t('StudyDefineForm.adaptivedesign'),
-          name: 'is_adaptive_design',
-          valuesDisplay: 'yesno',
-        },
-        {
-          label: this.$t('StudyDefineForm.studystoprule'),
-          name: 'study_stop_rules',
-        },
-        {
-          label: this.$t('StudyDefineForm.confirmed_resp_min_duration'),
-          name: 'confirmed_response_minimum_duration',
-          valuesDisplay: 'duration',
-        },
-        {
-          label: this.$t('StudyDefineForm.post_auth_safety_indicator'),
-          name: 'post_auth_indicator',
-          valuesDisplay: 'yesno',
-        },
-      ],
-    }
+  {
+    label: t('StudyDefineForm.trialphase'),
+    name: 'trial_phase_code',
+    valuesDisplay: 'term',
   },
-  mounted() {
-    this.studiesGeneralStore.fetchUnits()
-    this.studiesGeneralStore.fetchStudyTypes()
-    this.studiesGeneralStore.fetchTrialIntentTypes()
-    this.studiesGeneralStore.fetchTrialPhases()
-    this.studiesGeneralStore.fetchTrialTypes()
-    this.studiesGeneralStore.fetchNullValues()
-    study
-      .getHighLevelStudyDesignMetadata(
-        this.studiesGeneralStore.selectedStudy.uid
-      )
-      .then((resp) => {
-        this.metadata = resp.data.current_metadata.high_level_study_design
-      })
+  {
+    label: t('StudyDefineForm.extensiontrial'),
+    name: 'is_extension_trial',
+    valuesDisplay: 'yesno',
   },
-  methods: {
-    onMetadataUpdated(metadata) {
-      this.metadata = metadata
-    },
+  {
+    label: t('StudyDefineForm.adaptivedesign'),
+    name: 'is_adaptive_design',
+    valuesDisplay: 'yesno',
   },
+  {
+    label: t('StudyDefineForm.studystoprule'),
+    name: 'study_stop_rules',
+  },
+  {
+    label: t('StudyDefineForm.confirmed_resp_min_duration'),
+    name: 'confirmed_response_minimum_duration',
+    valuesDisplay: 'duration',
+  },
+  {
+    label: t('StudyDefineForm.post_auth_safety_indicator'),
+    name: 'post_auth_indicator',
+    valuesDisplay: 'yesno',
+  },
+]
+
+onMounted(() => {
+  studiesGeneralStore.fetchUnits()
+  studiesGeneralStore.fetchStudyTypes()
+  studiesGeneralStore.fetchTrialIntentTypes()
+  studiesGeneralStore.fetchTrialPhases()
+  studiesGeneralStore.fetchTrialTypes()
+  studiesGeneralStore.fetchNullValues()
+  fetchMetadata()
+})
+
+function onMetadataUpdated() {
+  fetchMetadata()
+}
+
+function fetchMetadata() {
+  study
+    .getHighLevelStudyDesignMetadata(studiesGeneralStore.selectedStudy.uid)
+    .then((resp) => {
+      metadata.value = resp.data.current_metadata.high_level_study_design
+    })
 }
 </script>

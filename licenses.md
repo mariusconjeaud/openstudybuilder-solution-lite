@@ -23,10 +23,10 @@ The OpenStudyBuilder App frontend can be released under GPLv3 License.
 
 | Package | License | Can be combined |
 |---|---|-|
-| certifi (2024.2.2) | MPL v. 2.0 | OK |
+| certifi (2024.6.2) | MPL v. 2.0 | OK |
 | hypothesis (6.54.6) | MPL v. 2.0 | OK |
-| portalocker (2.7.0) | Python License | OK |
-| typing_extensions (4.9.0) | Python License | OK |
+| portalocker (2.10.0) | Python License | OK |
+| typing_extensions (4.12.2) | Python License | OK |
 | Pillow (9.3.0) | Historical Permission | OK |
 | yattag (1.14.0) | LGPL 3.0 | OK |
 
@@ -85,6 +85,7 @@ As the licenses is using MPL version 2.0 it is assessed that it poses no issue t
 The StudyBuilder Export can be released under GPLv3 License.
 
 ## DB Schema Migration
+
 | Package | License | Can be combined |
 |---|---|-|
 | certifi 2024.2.2 | MPL v. 2.0 | OK |

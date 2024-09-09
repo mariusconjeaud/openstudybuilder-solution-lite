@@ -30,6 +30,12 @@ from clinical_mdr_api.domain_repositories.models.generic import (
     Conjunction,
     ConjunctionRelation,
 )
+from clinical_mdr_api.domain_repositories.models.medicinal_product import (
+    MedicinalProductValue,
+)
+from clinical_mdr_api.domain_repositories.models.pharmaceutical_product import (
+    PharmaceuticalProductValue,
+)
 from clinical_mdr_api.domain_repositories.models.study_audit_trail import (
     Delete,
     StudyAction,
@@ -166,34 +172,37 @@ class StudyCompound(StudySelection):
         CompoundAliasValue,
         "HAS_SELECTED_COMPOUND",
         model=ClinicalMdrRel,
-        cardinality=ZeroOrOne,
+        cardinality=One,
     )
     has_type_of_treatment = RelationshipTo(
         CTTermRoot, "HAS_TYPE_OF_TREATMENT", model=ClinicalMdrRel, cardinality=ZeroOrOne
     )
-    has_route_of_administration = RelationshipTo(
-        CTTermRoot,
-        "HAS_ROUTE_OF_ADMINISTRATION",
+    has_medicinal_product = RelationshipTo(
+        MedicinalProductValue,
+        "HAS_MEDICINAL_PRODUCT",
         model=ClinicalMdrRel,
-        cardinality=ZeroOrOne,
+        cardinality=One,
     )
-    has_strength_value = RelationshipTo(
+    has_pharmaceutical_product = RelationshipTo(
+        PharmaceuticalProductValue,
+        "HAS_PHARMACEUTICAL_PRODUCT",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrMore,
+    )
+    has_dose_frequency = RelationshipTo(
+        CTTermRoot, "HAS_DOSE_FREQUENCY", model=ClinicalMdrRel, cardinality=ZeroOrOne
+    )
+    has_delivery_device = RelationshipTo(
+        CTTermRoot, "HAS_DELIVERY_DEVICE", model=ClinicalMdrRel, cardinality=ZeroOrOne
+    )
+    has_dose_value = RelationshipTo(
         NumericValueWithUnitRoot,
-        "HAS_STRENGTH_VALUE",
+        "HAS_DOSE_VALUE",
         model=ClinicalMdrRel,
         cardinality=ZeroOrOne,
     )
-    has_dosage_form = RelationshipTo(
-        CTTermRoot, "HAS_DOSAGE_FORM", model=ClinicalMdrRel, cardinality=ZeroOrOne
-    )
-    has_suspended_in = RelationshipTo(
-        CTTermRoot, "HAS_DISPENSED_IN", model=ClinicalMdrRel, cardinality=ZeroOrOne
-    )
-    has_device = RelationshipTo(
-        CTTermRoot, "HAS_DEVICE", model=ClinicalMdrRel, cardinality=ZeroOrOne
-    )
-    has_formulation = RelationshipTo(
-        CTTermRoot, "HAS_FORMULATION", model=ClinicalMdrRel, cardinality=ZeroOrOne
+    has_dispenser = RelationshipTo(
+        CTTermRoot, "HAS_DISPENSED_IN", model=ClinicalMdrRel, cardinality=One
     )
     has_reason_for_missing = RelationshipTo(
         CTTermRoot,
@@ -296,6 +305,7 @@ class StudyActivityGroup(StudySelectionMetadata):
 
 
 class StudyActivity(StudySelection):
+    show_activity_in_protocol_flowchart = BooleanProperty(default=False)
     has_study_activity = RelationshipFrom(
         STUDY_VALUE_CLASS_NAME,
         "HAS_STUDY_ACTIVITY",
@@ -331,7 +341,6 @@ class StudyActivity(StudySelection):
         model=ClinicalMdrRel,
         cardinality=ZeroOrMore,
     )
-    show_activity_in_protocol_flowchart = BooleanProperty(default=False)
     study_activity_schedule = RelationshipTo(
         "StudyActivitySchedule",
         "STUDY_ACTIVITY_HAS_SCHEDULE",

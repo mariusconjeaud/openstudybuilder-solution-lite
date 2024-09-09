@@ -240,7 +240,9 @@ class StudyDefinitionRepositoryFake(StudyDefinitionRepository):
     ) -> list[StudyFieldAuditTrailEntryAR] | None:
         raise NotImplementedError("Study fields audit trail is not yet mocked.")
 
-    def _retrieve_study_subpart_with_history(self, uid: str, is_subpart: bool = False):
+    def _retrieve_study_subpart_with_history(
+        self, uid: str, is_subpart: bool = False, study_value_version: str | None = None
+    ):
         raise NotImplementedError("Study Subpart audit trail is not yet mocked.")
 
     def get_soa_preferences(

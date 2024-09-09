@@ -16,142 +16,141 @@
   <div v-else class="template-readonly" v-html="getFormatedParts()" />
 </template>
 
-<script>
-export default {
-  props: {
-    value: {
-      type: Array,
-      default: () => [],
-    },
-    // the name including the parameters
-    name: {
-      type: String,
-      default: '',
-    },
-    prefix: {
-      type: String,
-      default: '[',
-    },
-    postfix: {
-      type: String,
-      default: ']',
-    },
-    showPrefixAndPostfix: {
-      type: Boolean,
-      default: true,
-    },
-    parameters: {
-      type: Array,
-      default: () => [],
-    },
-    editionMode: {
-      type: Boolean,
-      default: false,
-    },
-    defaultColor: {
-      type: String,
-      default: 'green',
-    },
-    tooltip: {
-      type: Boolean,
-      default: true,
-    },
-    tooltipLength: {
-      type: Number,
-      default: 200,
-    },
-  },
-  data: () => ({
-    selectedParams: null,
-  }),
-  computed: {
-    computedPostfix() {
-      return this.postfix === '' ||
-        this.postfix === null ||
-        this.postfix === undefined
-        ? ' '
-        : this.postfix
-    },
-    nameParts() {
-      const nameArray = []
-      let parameterIndex = 0
+<script setup>
+import { computed } from 'vue'
 
-      let chars = ''
-      for (const char of this.name) {
-        if (char === this.prefix) {
-          nameArray.push({
-            isParameter: false,
-            value: chars,
-          })
-          if (this.showPrefixAndPostfix) {
-            chars = char
-          } else {
-            chars = ''
-          }
-        } else if (char === this.computedPostfix) {
-          if (this.showPrefixAndPostfix) {
-            chars += char
-          }
-          nameArray.push({
-            isParameter: true,
-            index: parameterIndex,
-            value: chars,
-          })
-          parameterIndex++
-          chars = ''
-        } else {
-          chars += char
-        }
-      }
+const props = defineProps({
+  value: {
+    type: Array,
+    default: () => [],
+  },
+  // the name including the parameters
+  name: {
+    type: String,
+    default: '',
+  },
+  prefix: {
+    type: String,
+    default: '[',
+  },
+  postfix: {
+    type: String,
+    default: ']',
+  },
+  showPrefixAndPostfix: {
+    type: Boolean,
+    default: true,
+  },
+  parameters: {
+    type: Array,
+    default: () => [],
+  },
+  editionMode: {
+    type: Boolean,
+    default: false,
+  },
+  defaultColor: {
+    type: String,
+    default: 'green',
+  },
+  tooltip: {
+    type: Boolean,
+    default: true,
+  },
+  tooltipLength: {
+    type: Number,
+    default: 200,
+  },
+})
+
+const computedPostfix = computed(() => {
+  return props.postfix === '' ||
+    props.postfix === null ||
+    props.postfix === undefined
+    ? ' '
+    : props.postfix
+})
+
+const nameParts = computed(() => {
+  const nameArray = []
+  let parameterIndex = 0
+
+  let chars = ''
+  for (const char of props.name) {
+    if (char === props.prefix) {
       nameArray.push({
         isParameter: false,
         value: chars,
       })
-      return nameArray
-    },
-  },
-  methods: {
-    getNamePartClass(namePart) {
-      if (!namePart.isParameter) {
-        return 'preview-text text-black'
+      if (props.showPrefixAndPostfix) {
+        chars = char
+      } else {
+        chars = ''
       }
-      if (this.editionMode && this.parameters[namePart.index]) {
-        if (
-          !this.parameters.length ||
-          !this.parameters[namePart.index].selectedValues ||
-          !this.parameters[namePart.index].selectedValues.length
-        ) {
-          return 'preview-parameter'
-        }
-        return 'preview-parameter--selected'
+    } else if (char === computedPostfix.value) {
+      if (props.showPrefixAndPostfix) {
+        chars += char
       }
-      return `parameter--${this.defaultColor}`
-    },
-    getFormatedParts() {
-      let result = ''
-      this.nameParts.forEach((namePart, index) => {
-        if (namePart.isParameter) {
-          result += `<span class="${this.getNamePartClass(namePart, index)}">${namePart.value.charAt(0).toUpperCase() + namePart.value.slice(1)}</span>`
-        } else {
-          result += namePart.value
-        }
+      nameArray.push({
+        isParameter: true,
+        index: parameterIndex,
+        value: chars,
       })
-      return result
-    },
-    getShortVersion() {
-      const long = this.getFormatedParts()
-      let short = ''
-      let length = 0
-      while (
-        short.replace(/<\/?[^>]+(>|$)/g, '').length <= this.tooltipLength &&
-        length < long.length
-      ) {
-        short += long[length]
-        length++
-      }
-      return short + '<l>...'
-    },
-  },
+      parameterIndex++
+      chars = ''
+    } else {
+      chars += char
+    }
+  }
+  nameArray.push({
+    isParameter: false,
+    value: chars,
+  })
+  return nameArray
+})
+
+function getNamePartClass(namePart) {
+  if (!namePart.isParameter) {
+    return 'preview-text text-black'
+  }
+  if (props.editionMode && props.parameters[namePart.index]) {
+    if (
+      !props.parameters.length ||
+      !props.parameters[namePart.index].selectedValues ||
+      !props.parameters[namePart.index].selectedValues.length
+    ) {
+      return 'preview-parameter'
+    }
+    return 'preview-parameter--selected'
+  }
+  return `parameter--${props.defaultColor}`
+}
+
+function getFormatedParts() {
+  let result = ''
+
+  nameParts.value.forEach((namePart, index) => {
+    if (namePart.isParameter) {
+      result += `<span class="${getNamePartClass(namePart, index)}">${namePart.value}</span>`
+    } else {
+      result += namePart.value
+    }
+  })
+  return result
+}
+
+function getShortVersion() {
+  const long = getFormatedParts()
+  let short = ''
+  let length = 0
+  while (
+    short.replace(/<\/?[^>]+(>|$)/g, '').length <= props.tooltipLength &&
+    length < long.length
+  ) {
+    short += long[length]
+    length++
+  }
+  return short + '<l>...'
 }
 </script>
 

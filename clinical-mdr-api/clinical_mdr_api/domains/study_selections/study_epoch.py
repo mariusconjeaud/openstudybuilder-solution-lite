@@ -8,7 +8,9 @@ from clinical_mdr_api.config import (
     FIXED_WEEK_PERIOD,
     NON_VISIT_NUMBER,
     PREVIOUS_VISIT_NAME,
+    STUDY_VISIT_TYPE_INFORMATION_VISIT,
     UNSCHEDULED_VISIT_NUMBER,
+    VISIT_0_NUMBER,
 )
 from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import (
     StudyStatus,
@@ -275,6 +277,10 @@ class TimelineAR:
         last_visit_num = 1
         order = 1
         for visit in ordered_visits:
+            if visit.visit_type.value == STUDY_VISIT_TYPE_INFORMATION_VISIT:
+                if visit == ordered_visits[0]:
+                    visit.set_order_and_number(VISIT_0_NUMBER, VISIT_0_NUMBER)
+                    continue
             if visit.visit_class == VisitClass.NON_VISIT:
                 visit.set_order_and_number(NON_VISIT_NUMBER, NON_VISIT_NUMBER)
             elif visit.visit_class == VisitClass.UNSCHEDULED_VISIT:
@@ -391,7 +397,8 @@ class TimelineAR:
         # removing basic epoch from the epoch list to not derive timings for that epoch
         epochs = [epoch for epoch in epochs if epoch.subtype.value != BASIC_EPOCH_NAME]
         for visit in self.ordered_study_visits:
-            epoch_visits[visit.epoch_uid].append(visit)
+            if visit.epoch_uid in epoch_visits:
+                epoch_visits[visit.epoch_uid].append(visit)
         for epoch in epochs:
             epoch.set_ordered_visits(epoch_visits[epoch.uid])
         # iterating to the one before last as we are accessing the next element in the for loop
@@ -478,5 +485,6 @@ class TimelineAR:
 
 @dataclass
 class StudyEpochHistoryVO(StudyEpochVO):
+    study_visit_count: int = 0
     change_type: str | None = None
     end_date: datetime.datetime | None = None

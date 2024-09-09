@@ -8,6 +8,7 @@ from clinical_mdr_api.models import (
     OdmItemGroupPostInput,
     OdmItemPostInput,
     OdmItemTermRelationshipInput,
+    OdmItemUnitDefinitionRelationshipInput,
 )
 from clinical_mdr_api.models.concepts.unit_definitions.unit_definition import (
     UnitDefinitionModel,
@@ -54,11 +55,15 @@ class OdmClinicalXmlImporterService(OdmXmlImporterService):
         self.ct_term_service = CTTermService()
 
         self.db_ct_codelist_attributes = []
+        self.unit_definition_uids_by = {}
+        self.measurement_unit_names_by_oid = {}
 
         super().__init__(xml_file, mapper_file)
 
     def store_odm_xml(self):
         self._set_unit_definitions()
+        self._set_unit_definition_uids_by()
+        self._set_measurement_unit_names_by_oid()
         self._set_codelists()
 
         return super().store_odm_xml()
@@ -95,6 +100,12 @@ class OdmClinicalXmlImporterService(OdmXmlImporterService):
         self.unit_definition_uids_by = {
             db_unit_definition.name: db_unit_definition.uid
             for db_unit_definition in self.db_unit_definitions
+        }
+
+    def _set_measurement_unit_names_by_oid(self):
+        self.measurement_unit_names_by_oid = {
+            measurement_unit.getAttribute("OID"): measurement_unit.getAttribute("Name")
+            for measurement_unit in self.measurement_units
         }
 
     def _set_codelists(self):
@@ -287,6 +298,25 @@ class OdmClinicalXmlImporterService(OdmXmlImporterService):
             raise exceptions.BusinessLogicException(
                 f"Code Submission Value not provided for codelist identified by OID ({codelist.getAttribute('OID')})"
             ) from exc
+
+    def _get_item_unit_definition_inputs(self, item_def):
+        try:
+            return [
+                OdmItemUnitDefinitionRelationshipInput(
+                    uid=self.unit_definition_uids_by[
+                        self.measurement_unit_names_by_oid[
+                            measurement_unit_ref.getAttribute("MeasurementUnitOID")
+                        ]
+                    ]
+                )
+                for measurement_unit_ref in item_def.getElementsByTagName(
+                    "MeasurementUnitRef"
+                )
+            ]
+        except KeyError as exc:
+            raise exceptions.BusinessLogicException(
+                f"MeasurementUnit with OID ({exc}) was not provided."
+            )
 
     def _get_odm_item_post_input(self, item_def):
         descriptions = self._extract_descriptions(item_def)

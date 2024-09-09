@@ -577,7 +577,7 @@ MATCH (odm_vendor_namespace_root1:ConceptRoot:OdmVendorNamespaceRoot {uid: "odm_
 MATCH (odm_vendor_namespace_root2:ConceptRoot:OdmVendorNamespaceRoot {uid: "odm_vendor_namespace2"})
 
 MERGE (odm_vendor_element_root1:ConceptRoot:OdmVendorElementRoot {uid: "odm_vendor_element1"})
-MERGE (odm_vendor_element_value1:ConceptValue:OdmVendorElementValue {name: "nameOne"})
+MERGE (odm_vendor_element_value1:ConceptValue:OdmVendorElementValue {name: "nameOne", compatible_types: '["FormDef","ItemGroupDef","ItemDef"]'})
 MERGE (library)-[:CONTAINS_CONCEPT]->(odm_vendor_element_root1)
 MERGE (odm_vendor_element_root1)-[r1:LATEST_FINAL]->(odm_vendor_element_value1)
 MERGE (odm_vendor_element_root1)-[hv1:HAS_VERSION]->(odm_vendor_element_value1)
@@ -586,7 +586,7 @@ MERGE (odm_vendor_namespace_root1)-[:HAS_VENDOR_ELEMENT]->(odm_vendor_element_ro
 SET hv1 = final_properties
 
 MERGE (odm_vendor_element_root2:ConceptRoot:OdmVendorElementRoot {uid: "odm_vendor_element2"})
-MERGE (odm_vendor_element_value2:ConceptValue:OdmVendorElementValue {name: "nameTwo"})
+MERGE (odm_vendor_element_value2:ConceptValue:OdmVendorElementValue {name: "nameTwo", compatible_types: '["FormDef","ItemGroupDef","ItemDef"]'})
 MERGE (library)-[:CONTAINS_CONCEPT]->(odm_vendor_element_root2)
 MERGE (odm_vendor_element_root2)-[r2:LATEST_FINAL]->(odm_vendor_element_value2)
 MERGE (odm_vendor_element_root2)-[hv2:HAS_VERSION]->(odm_vendor_element_value2)
@@ -595,13 +595,22 @@ MERGE (odm_vendor_namespace_root2)-[:HAS_VENDOR_ELEMENT]->(odm_vendor_element_ro
 SET hv2 = final_properties
 
 MERGE (odm_vendor_element_root3:ConceptRoot:OdmVendorElementRoot {uid: "odm_vendor_element3"})
-MERGE (odm_vendor_element_value3:ConceptValue:OdmVendorElementValue {name: "nameThree"})
+MERGE (odm_vendor_element_value3:ConceptValue:OdmVendorElementValue {name: "nameThree", compatible_types: '["FormDef","ItemGroupDef","ItemDef"]'})
 MERGE (library)-[:CONTAINS_CONCEPT]->(odm_vendor_element_root3)
 MERGE (odm_vendor_element_root3)-[r3:LATEST_FINAL]->(odm_vendor_element_value3)
 MERGE (odm_vendor_element_root3)-[hv3:HAS_VERSION]->(odm_vendor_element_value3)
 MERGE (odm_vendor_element_root3)-[:LATEST]->(odm_vendor_element_value3)
 MERGE (odm_vendor_namespace_root3)-[:HAS_VENDOR_ELEMENT]->(odm_vendor_element_root3)
 SET hv3 = final_properties
+
+MERGE (odm_vendor_element_root4:ConceptRoot:OdmVendorElementRoot {uid: "odm_vendor_element4"})
+MERGE (odm_vendor_element_value4:ConceptValue:OdmVendorElementValue {name: "nameThree", compatible_types: '["NonCompatibleVendor"]'})
+MERGE (library)-[:CONTAINS_CONCEPT]->(odm_vendor_element_root4)
+MERGE (odm_vendor_element_root4)-[r4:LATEST_FINAL]->(odm_vendor_element_value4)
+MERGE (odm_vendor_element_root4)-[hv4:HAS_VERSION]->(odm_vendor_element_value4)
+MERGE (odm_vendor_element_root4)-[:LATEST]->(odm_vendor_element_value4)
+MERGE (odm_vendor_namespace_root4)-[:HAS_VENDOR_ELEMENT]->(odm_vendor_element_root4)
+SET hv4 = final_properties
 """
 
 STARTUP_ODM_VENDOR_ATTRIBUTES = """
@@ -1022,6 +1031,15 @@ MERGE (term_ver_root20)-[latest_final20:LATEST_FINAL]->(term_ver_value20)
 MERGE (term_ver_root20)-[has_version20:HAS_VERSION]->(term_ver_value20)
 SET has_version20 = final_properties
 CREATE (codelist_root)-[:HAS_TERM]->(dose_frequency2)
+
+CREATE (library)-[:CONTAINS_TERM]->(dose_frequency3:CTTermRoot {uid: "dose_frequency_uidXYZ"})-[:HAS_NAME_ROOT]->
+(term_ver_root20b:CTTermNameRoot)-[:LATEST]->(term_ver_value20b:CTTermNameValue {
+name: "dose_frequency_name3",
+name_sentence_case: "dose_frequency_name_sentence_case3"})
+MERGE (term_ver_root20b)-[latest_final20b:LATEST_FINAL]->(term_ver_value20b)
+MERGE (term_ver_root20b)-[has_version20b:HAS_VERSION]->(term_ver_value20b)
+SET has_version20b = final_properties
+CREATE (codelist_root)-[:HAS_TERM]->(dose_frequency3)
 
 CREATE (library)-[:CONTAINS_TERM]->(dose_unit1:CTTermRoot {uid: "dose_unit_uid1"})-[:HAS_NAME_ROOT]->
 (term_ver_root21:CTTermNameRoot)-[:LATEST]->(term_ver_value21:CTTermNameValue {
@@ -2174,15 +2192,19 @@ set hv8.version = "0.1"
 """
 
 STARTUP_CT_TERM_NAME_CYPHER = """
-MERGE (cc:CTCatalogue {name: "SDTM CT"})-[:HAS_CODELIST]->(cr:CTCodelistRoot {uid:"editable_cr"})-[:HAS_NAME_ROOT]
+MERGE (cc:CTCatalogue {name: "SDTM CT"})
+MERGE (cc)-[:HAS_CODELIST]->(cr:CTCodelistRoot {uid:"editable_cr"})-[:HAS_NAME_ROOT]
 ->(codelist_ver_root:CTCodelistNameRoot)-[:LATEST_FINAL]->(codelist_ver_value:CTCodelistNameValue {name:"Objective Level"})
 CREATE (codelist_ver_root)-[:LATEST]->(codelist_ver_value)
-CREATE (codelist_ver_root)-[:HAS_VERSION]->(codelist_ver_value)
+CREATE (codelist_ver_root)-[:HAS_VERSION{change_description: "Approved version",start_date: datetime(),status: "Final",user_initials: "TODO initials",version : "1.0"}]->(codelist_ver_value)
 MERGE (editable_lib:Library{ name:"Sponsor", is_editable:true})
 MERGE (editable_lib)-[:CONTAINS_CODELIST]->(cr)
 
 MERGE (cc)-[:HAS_CODELIST]->(cr2:CTCodelistRoot {uid:"non_editable_cr"})
-MERGE (non_editable_lib:Library{ name:"CDISC", is_editable:false})-[:CONTAINS_CODELIST]->(cr2)
+MERGE (non_editable_lib:Library{ name:"CDISC"})
+ON CREATE
+    SET non_editable_lib.is_editable = false
+MERGE (non_editable_lib)-[:CONTAINS_CODELIST]->(cr2)
 
 MERGE (cr)-[has_term:HAS_TERM]->(term_root:CTTermRoot {uid:"term_root_final"})-[:HAS_NAME_ROOT]->
     (term_ver_root:CTTermNameRoot)-[:LATEST]-(term_ver_value:CTTermNameValue 
@@ -2425,9 +2447,13 @@ MERGE (p)-[:HAS_FIELD]->(:StudyField:StudyProjectField)<-[:HAS_PROJECT]-(sv)
 """
 
 STARTUP_STUDY_OBJECTIVE_CYPHER = """
-MERGE (l:Library {name:"CDISC", is_editable:false})
+MERGE (l:Library {name:"CDISC"})
+ON CREATE 
+    SET l.is_editable = false
 MERGE (catalogue:CTCatalogue {uid:"CTCatalogue_000001", name:"catalogue_name"})
-MERGE (catalogue)-[:HAS_CODELIST]->(codelist:CTCodelistRoot {uid:"CTCodelist_000001"})
+MERGE (n:Counter{count:1, counterId:"CTCodelistCounter"}) 
+MERGE (codelist:CTCodelistRoot {uid:"CTCodelist_000001"})
+MERGE (catalogue)-[:HAS_CODELIST]->(codelist)
 MERGE (c:ClinicalProgramme)
 SET c.name = "CP",
     c.uid = "cp_001"
@@ -2530,7 +2556,9 @@ user_initials: "TODO initials",
 version: "1.0"
 } AS final_properties
 
-MERGE (l:Library {name:"CDISC", is_editable:false})
+MERGE (l:Library {name:"CDISC"})
+ON CREATE 
+    SET l.is_editable=false
 MERGE (catalogue:CTCatalogue {uid:"CTCatalogue_000001", name:"catalogue_name"})
 MERGE (catalogue)-[:HAS_CODELIST]->(codelist:CTCodelistRoot {uid:"CTCodelist_000001"})
 MERGE (c:ClinicalProgramme)
@@ -2631,7 +2659,8 @@ MATCH (termroot1:CTTermRoot {uid:"term_root_final5"})
 MERGE (termroot1)<-[has_term1:HAS_TERM]-(codelistroot)
 set has_term.order = 1
 
-MERGE (catalogue:CTCatalogue {uid:"CTCatalogue_000001", name:"SDTM CT"})
+MERGE (catalogue:CTCatalogue {name:"SDTM CT"}) 
+SET catalogue.uid="CTCatalogue_000001"
 MERGE (catalogue)-[:HAS_CODELIST]->(codelistroot)
 
 WITH *
@@ -2799,6 +2828,10 @@ MERGE (cv)-[:HAS_DISPENSER]->(term_root)
 // Dose frequency
 WITH (cv)
 MATCH (term_root:CTTermRoot {uid: "dose_frequency_uid1"})
+MERGE (cv)-[:HAS_DOSE_FREQUENCY]->(term_root)
+
+WITH (cv)
+MATCH (term_root:CTTermRoot {uid: "dose_frequency_uidXYZ"})
 MERGE (cv)-[:HAS_DOSE_FREQUENCY]->(term_root)
 
 // Strength
@@ -3049,7 +3082,8 @@ WITH {
 MERGE (clr:CTCodelistRoot {uid: "%(codelist_uid)s"})
 MERGE (clr)-[:HAS_NAME_ROOT]->(cnr:CTCodelistNameRoot)-[:LATEST]->
     (cnv:TemplateParameter:CTCodelistNameValue {name: "%(codelist_name)s"})
-MERGE (cc:CTCatalogue {name: "SDTM CT"})-[:HAS_CODELIST]->(clr)
+MERGE (cc:CTCatalogue {name: "SDTM CT"})
+MERGE (cc)-[:HAS_CODELIST]->(clr)
 MERGE (cnr)-[cl_lf:LATEST_FINAL]->(cnv)
 MERGE (cnr)-[cl_hv:HAS_VERSION]->(cnv)
 set cl_hv = final_version_props

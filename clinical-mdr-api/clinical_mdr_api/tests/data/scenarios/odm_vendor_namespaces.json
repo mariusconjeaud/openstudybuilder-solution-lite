@@ -505,6 +505,9 @@
             "request": {
                 "library_name": "Sponsor",
                 "name": "nameTwo",
+                "compatible_types": [
+                    "FormDef"
+                ],
                 "vendor_namespace_uid": "OdmVendorNamespace_000001"
             },
             "url": "concepts/odms/vendor-elements"
@@ -538,6 +541,9 @@
                     ]
                 },
                 "vendor_attributes": [],
+                "compatible_types": [
+                    "FormDef"
+                ],
                 "possible_actions": [
                     "approve",
                     "delete",

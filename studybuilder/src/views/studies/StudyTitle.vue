@@ -10,9 +10,10 @@
     <div class="d-flex">
       <v-spacer />
       <v-btn
-        class="mb-2"
+        class="ml-2"
         size="small"
-        color="primary"
+        variant="outlined"
+        color="nnBaseBlue"
         :title="$t('StudyTitleView.edit_title')"
         :data-cy="$t('StudyTitleView.edit_title')"
         :disabled="
@@ -20,7 +21,7 @@
           Boolean(selectedStudy.study_parent_part)
         "
         icon="mdi-pencil-outline"
-        @click.stop="showForm = true"
+        @click.stop="openForm"
       />
     </div>
     <v-sheet elevation="0" class="pa-4 title" rounded>
@@ -96,11 +97,13 @@ export default {
       } else {
         studyUid = this.selectedStudy.uid
       }
-      study
-        .getStudyDescriptionMetadata(studyUid)
-        .then((resp) => {
-          this.description = resp.data.current_metadata.study_description
-        })
+      study.getStudyDescriptionMetadata(studyUid).then((resp) => {
+        this.description = resp.data.current_metadata.study_description
+      })
+    },
+    openForm() {
+      this.fetchStudyDescription()
+      this.showForm = true
     },
   },
 }

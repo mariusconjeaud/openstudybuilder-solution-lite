@@ -2,7 +2,7 @@
 
 ## General prerequisites
 
-- Nodejs 12 or above is required to run this app. If you are using a
+- Nodejs 16 or above is required to run this app. If you are using a
   debian based system and your installed version is too old, you can
   install a newer version using packages provided by Node's team
   ([Example](https://computingforgeeks.com/how-to-install-node-js-on-ubuntu-debian/)).
@@ -44,7 +44,7 @@ yarn install
 
 ### Compiles and hot-reloads for development
 ```
-yarn serve
+yarn dev
 ```
 
 ### Compiles and minifies for production

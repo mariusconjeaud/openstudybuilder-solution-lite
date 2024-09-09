@@ -84,6 +84,7 @@ UNIT_SUBSET_ENDPOINT_UNIT = "Endpoint Unit"
 
 SLEEP_BEFORE_APPROVE = 0.05
 
+
 def status_ok(status):
     return 200 <= status < 300
 
@@ -290,9 +291,9 @@ class ApiBinding:
         response = requests.post(full_url, headers=self.api_headers)
         if not response.ok:
             self.log.warning("Failed to approve %s %s", uid, response.content)
-            return False
+            return None
         else:
-            return True
+            return response.json()
 
     def approve_item_names_and_attributes(self, uid: str, url: str):
         full_url = path_join(self.api_base_url, url, uid, "names/approvals")
@@ -668,7 +669,9 @@ class ApiBinding:
             except aiohttp.ContentTypeError:
                 textresult = await response.text()
                 result = {}
-                self.log.error(f"Failed to post to '{path}', status: {status}, message: {textresult}")
+                self.log.error(
+                    f"Failed to post to '{path}', status: {status}, message: {textresult}"
+                )
             return status, result
 
     async def patch_to_api_async(
@@ -683,7 +686,9 @@ class ApiBinding:
             except aiohttp.ContentTypeError:
                 textresult = await response.text()
                 result = {}
-                self.log.error(f"Failed to patch to '{path}', status: {status}, message: {textresult}")
+                self.log.error(
+                    f"Failed to patch to '{path}', status: {status}, message: {textresult}"
+                )
             return status, result
 
     # This gives reasonable waiting for lock on atomic incrementing of identifiers
@@ -700,7 +705,9 @@ class ApiBinding:
                 except aiohttp.ContentTypeError:
                     textresult = await response.text()
                     result = {}
-                    self.log.error(f"Failed to post to '{url}', status: {status}, message: {textresult}")
+                    self.log.error(
+                        f"Failed to post to '{url}', status: {status}, message: {textresult}"
+                    )
                 return status, result
 
     async def approve_async(self, url: str, session: aiohttp.ClientSession):
@@ -733,12 +740,10 @@ class ApiBinding:
             if response.ok:
                 result = await response.json()
             else:
-                try:
-                    error_result = await response.json()
-                    error_message = get_error_message(error_result)
-                except aiohttp.ContentTypeError:
-                    error_message = await response.text()
-                self.log.warning(f"Failed to approve '{uid}', status: {status}, message: {error_message}")
+                error_result = await response.json()
+                self.log.warning(
+                    f"Failed to approve '{uid}', status: {status}, message: {get_error_message(error_result)}"
+                )
                 result = {}
             if not response.ok:
                 self.metrics.icrement(url + "--ApproveError")
@@ -812,9 +817,7 @@ class ApiBinding:
                 uid=response.get("uid"), url=data["approve_path"], session=session
             )
             if not status_ok(status):
-                self.log.error(
-                    f"Failed to approve the new version of: {uid}"
-                )
+                self.log.error(f"Failed to approve the new version of: {uid}")
             return response
         elif approve:
             self.log.error("No uid returned, unable to approve the new version")

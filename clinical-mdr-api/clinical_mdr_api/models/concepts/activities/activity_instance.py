@@ -130,6 +130,104 @@ class ActivityInstance(ActivityBase):
             ),
         )
 
+    @classmethod
+    def from_activity_instance_ar_objects(
+        cls,
+        activity_instance_ar: ActivityInstanceAR,
+        activity_ars: list[ActivityAR],
+        activity_instance_subgroup_ars: list[ActivitySubGroupAR],
+        activity_instance_group_ars: list[ActivityGroupAR],
+    ) -> Self:
+        activity_items = []
+        for activity_item in activity_instance_ar.concept_vo.activity_items:
+            ct_terms = []
+            unit_definitions = []
+            for unit in activity_item.unit_definitions:
+                unit_definitions.append(
+                    CompactUnitDefinition(uid=unit.uid, name=unit.name)
+                )
+            for term in activity_item.ct_terms:
+                ct_terms.append(CompactCTTerm(uid=term.uid, name=term.name))
+            activity_items.append(
+                ActivityItem(
+                    activity_item_class=CompactActivityItemClass(
+                        uid=activity_item.activity_item_class_uid,
+                        name=activity_item.activity_item_class_name,
+                    ),
+                    ct_terms=ct_terms,
+                    unit_definitions=unit_definitions,
+                )
+            )
+        activity_instance_groupings = []
+        for (
+            activity_instance_group_ar,
+            activity_instance_subgroup_ar,
+            activity_ar,
+        ) in zip(
+            activity_instance_group_ars, activity_instance_subgroup_ars, activity_ars
+        ):
+            activity = ActivityHierarchySimpleModel.from_activity_ar_object(
+                activity_ar=activity_ar,
+            )
+            activity_instance_group = (
+                ActivityHierarchySimpleModel.from_activity_ar_object(
+                    activity_ar=activity_instance_group_ar,
+                )
+            )
+            activity_instance_subgroup = (
+                ActivityHierarchySimpleModel.from_activity_ar_object(
+                    activity_ar=activity_instance_subgroup_ar,
+                )
+            )
+            activity_instance_groupings.append(
+                ActivityInstanceHierarchySimpleModel(
+                    activity_group=activity_instance_group,
+                    activity_subgroup=activity_instance_subgroup,
+                    activity=activity,
+                )
+            )
+
+        return cls(
+            uid=activity_instance_ar.uid,
+            name=activity_instance_ar.name,
+            name_sentence_case=activity_instance_ar.concept_vo.name_sentence_case,
+            definition=activity_instance_ar.concept_vo.definition,
+            abbreviation=activity_instance_ar.concept_vo.abbreviation,
+            topic_code=activity_instance_ar.concept_vo.topic_code,
+            adam_param_code=activity_instance_ar.concept_vo.adam_param_code,
+            is_required_for_activity=activity_instance_ar.concept_vo.is_required_for_activity,
+            is_default_selected_for_activity=activity_instance_ar.concept_vo.is_default_selected_for_activity,
+            is_data_sharing=activity_instance_ar.concept_vo.is_data_sharing,
+            is_legacy_usage=activity_instance_ar.concept_vo.is_legacy_usage,
+            is_derived=activity_instance_ar.concept_vo.is_derived,
+            nci_concept_id=activity_instance_ar.concept_vo.nci_concept_id,
+            legacy_description=activity_instance_ar.concept_vo.legacy_description,
+            activity_groupings=sorted(
+                activity_instance_groupings,
+                key=lambda item: (
+                    item.activity_subgroup.name,
+                    item.activity_group.name,
+                    item.activity.name,
+                ),
+            ),
+            activity_name=activity_instance_ar.concept_vo.activity_name,
+            activity_instance_class=CompactActivityInstanceClass(
+                uid=activity_instance_ar.concept_vo.activity_instance_class_uid,
+                name=activity_instance_ar.concept_vo.activity_instance_class_name,
+            ),
+            activity_items=activity_items,
+            library_name=Library.from_library_vo(activity_instance_ar.library).name,
+            start_date=activity_instance_ar.item_metadata.start_date,
+            end_date=activity_instance_ar.item_metadata.end_date,
+            status=activity_instance_ar.item_metadata.status.value,
+            version=activity_instance_ar.item_metadata.version,
+            change_description=activity_instance_ar.item_metadata.change_description,
+            user_initials=activity_instance_ar.item_metadata.user_initials,
+            possible_actions=sorted(
+                [_.value for _ in activity_instance_ar.get_possible_actions()]
+            ),
+        )
+
     topic_code: str | None = Field(
         None,
         title="topic_code",

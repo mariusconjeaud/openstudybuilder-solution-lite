@@ -16,8 +16,10 @@
       >
         <template #extraActions>
           <v-btn
-            class="mx-2"
+            class="ml-2"
             size="small"
+            variant="outlined"
+            color="nnBaseBlue"
             :title="$t('CtPackageHistory.ct_packages_history')"
             icon="mdi-calendar-clock"
             @click="goToPackagesHistory(catalogue_name)"

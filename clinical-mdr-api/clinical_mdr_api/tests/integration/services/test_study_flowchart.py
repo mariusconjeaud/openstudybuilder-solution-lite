@@ -12,9 +12,6 @@ from clinical_mdr_api.domain_repositories.models.study_selections import (
     StudySoAFootnote,
 )
 from clinical_mdr_api.domains.controlled_terminologies.utils import TermParentType
-from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import (
-    StudyStatus,
-)
 from clinical_mdr_api.domains.study_selections.study_soa_footnote import SoAItemType
 from clinical_mdr_api.models.concepts.activities.activity_instance import (
     ActivityInstance,
@@ -41,6 +38,7 @@ from clinical_mdr_api.services.studies.study_activity_selection import (
 from clinical_mdr_api.services.studies.study_epoch import StudyEpochService
 from clinical_mdr_api.services.studies.study_flowchart import StudyFlowchartService
 from clinical_mdr_api.services.studies.study_flowchart import _ as _gettext
+from clinical_mdr_api.services.studies.study_flowchart import study_version
 from clinical_mdr_api.services.studies.study_visit import StudyVisitService
 from clinical_mdr_api.services.utils.table_f import TableRow, TableWithFootnotes
 from clinical_mdr_api.tests.integration.utils.data_library import inject_base_data
@@ -430,18 +428,6 @@ class TestData:
     footnote_types: dict[str, models.CTTerm]
     footnotes: dict[str, models.Footnote]
     soa_footnotes: list[StudySoAFootnote]
-
-
-def study_version(study: models.study_selections.study.Study) -> str:
-    """Returns study version as string"""
-    if (
-        study.current_metadata.version_metadata.study_status
-        == StudyStatus.RELEASED.value
-    ):
-        return study.current_metadata.version_metadata.version_number
-    return study.current_metadata.version_metadata.version_timestamp.strftime(
-        "LATEST on %Y-%m-%d %H:%M:%S Z"
-    )
 
 
 @pytest.fixture(scope="module")
@@ -1247,7 +1233,7 @@ def create_footnotes(footnotes_dict, footnote_types) -> dict[str, models.Footnot
 
     log.info(
         "created Footnotes: %s",
-        {fn.uid: {"template": fn.footnote_template.uid} for fn in footnotes.values()},
+        {fn.uid: {"template": fn.template.uid} for fn in footnotes.values()},
     )
 
     return footnotes
@@ -1367,14 +1353,14 @@ def create_soa_footnotes(
         soa_footnotes.append(
             TestUtils.create_study_soa_footnote(
                 study_uid=study.uid,
-                footnote_template_uid=footnote.footnote_template.uid,
+                footnote_template_uid=footnote.template.uid,
                 referenced_items=referenced_items,
             )
         )
 
     log.info(
         "created StudySoAFootnotes: %s",
-        {fn.uid: {"template": fn.footnote_template.uid} for fn in footnotes.values()},
+        {fn.uid: {"template": fn.template.uid} for fn in footnotes.values()},
     )
 
     return soa_footnotes
@@ -1949,10 +1935,8 @@ def check_flowchart_table_footnotes(table: dict, soa_footnotes: list[StudySoAFoo
         symbol = footnote_uid_symbol_map[footnote.uid]
 
         # THEN verify footnote text matches footnote template text
-        assert (
-            table.footnotes[symbol].text_plain == footnote.footnote_template.name_plain
-        )
-        assert table.footnotes[symbol].text_html == footnote.footnote_template.name
+        assert table.footnotes[symbol].text_plain == footnote.template.name_plain
+        assert table.footnotes[symbol].text_html == footnote.template.name
 
         # Must filter out uids not giving any SoA row unless Activities can share StudyActivityGroup and SubGroup nodes
         footnote_referenced_uids = {
@@ -2025,6 +2009,7 @@ def test_get_flowchart_item_uid_coordinates(
     }
 
     # collected coordinates is a subset of get_flowchart_item_uid_coordinates() because of grouped visits
+    print(f"collected_coordinates {collected_coordinates}")
     for uid, expected_coordinates in collected_coordinates.items():
         assert uid in results, f"Missing coordinates for uid: {uid}"
         returned_coordinates = results.get(uid)
@@ -2067,7 +2052,6 @@ def test_get_flowchart_item_uid_coordinates(
         assert results.pop(
             study_visit.uid, None
         ), f"Missing coordinates of StudyVisit[{study_visit.uid}]"
-
     shared_soa_groups = []
     shared_study_activity_groups = []
     shared_study_activity_subgroups = []
@@ -2082,6 +2066,7 @@ def test_get_flowchart_item_uid_coordinates(
             f"Missing coordinates of StudySelectionActivity[{study_selection_activity.study_activity_uid}]: "
             + study_selection_activity.study_activity_uid
         )
+
         if (
             study_selection_activity.study_soa_group.study_soa_group_uid
             not in shared_soa_groups
@@ -2097,12 +2082,12 @@ def test_get_flowchart_item_uid_coordinates(
                 study_selection_activity.study_soa_group.study_soa_group_uid
             )
 
+        # THEN all StudyActivityGroups have coordinates
         if (
             study_selection_activity.study_activity_group.study_activity_group_uid
             and study_selection_activity.study_activity_group.study_activity_group_uid
             not in shared_study_activity_groups
         ):
-            # THEN all StudyActivityGroups have coordinates
             assert results.pop(
                 study_selection_activity.study_activity_group.study_activity_group_uid,
                 None,

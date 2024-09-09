@@ -8,6 +8,8 @@ from colour import Color
 from PIL import ImageFont
 
 from clinical_mdr_api import config, models
+from clinical_mdr_api.models.study_selections.study import StudySoaPreferences
+from clinical_mdr_api.services.studies.study import StudyService
 from clinical_mdr_api.services.studies.study_arm_selection import (
     StudyArmSelectionService,
 )
@@ -19,6 +21,7 @@ from clinical_mdr_api.services.studies.study_epoch import StudyEpochService
 
 # Page and margin sizes (horizontal, vertical) in millimeters
 from clinical_mdr_api.services.studies.study_visit import StudyVisitService
+from clinical_mdr_api.telemetry import trace_calls
 
 # A4 page size (width, height) in millimeters
 A4_PORTRAIT_SIZE = (210, 297)  # https://en.wikipedia.org/wiki/ISO_216#A_series
@@ -68,7 +71,14 @@ MERGE_HORIZONTALLY = False
 ROUND_CORNERS = 5
 
 TIMELINE_ARROW_COLOR = "#AAA"
-TIMELINE_ROW_MARGINS = (FONT_SIZE, 10, FONT_SIZE, 0)
+TIMELINE_ROW_MARGINS = (
+    FONT_SIZE,
+    10,
+    FONT_SIZE,
+    int(round(FONT_SIZE * 1.5)),
+    int(round(FONT_SIZE * 2)),
+    0,
+)
 VISIT_ARROW_COLOR = "#000"
 VISIT_ARROW_HEIGHT = FONT_SIZE
 
@@ -128,27 +138,52 @@ class StudyDesignFigureService:
     First row and column are headers.
     """
 
-    def __init__(self):
+    debug = False
+
+    def __init__(self, debug: bool = False):
+        self.debug = debug
         font_path = os.path.join(config.APP_ROOT_DIR, FONT_FILE_NAME)
         # Although ImageFont.truetype() expects point size, it seems we need to scale it up for calculations in pixels
         self.font_size = int(round(FONT_SIZE * FONT_SIZE_POINT_TO_PIXELS_RATIO))
         self.font = ImageFont.truetype(font_path, self.font_size)
 
-    def get_svg_document(self, study_uid: str):
+    @trace_calls
+    def get_svg_document(self, study_uid: str, study_value_version: str | None = None):
         """Fetches necessary data and returns the SVG drawing as text"""
 
         # fetch data
-        study_arms = self._get_study_arms(study_uid)
-        study_epochs = self._get_study_epochs(study_uid)
-        study_elements = self._get_study_elements(study_uid)
-        study_design_cells = self._get_study_design_cells(study_uid)
-        study_visits = self._get_study_visits(study_uid)
+        study_arms = self._get_study_arms(
+            study_uid, study_value_version=study_value_version
+        )
+        study_epochs = self._get_study_epochs(
+            study_uid, study_value_version=study_value_version
+        )
+        study_elements = self._get_study_elements(
+            study_uid, study_value_version=study_value_version
+        )
+        study_design_cells = self._get_study_design_cells(
+            study_uid, study_value_version=study_value_version
+        )
+        study_visits = self._get_study_visits(
+            study_uid, study_value_version=study_value_version
+        )
+        soa_preferences = self._get_soa_preferences(
+            study_uid, study_value_version=study_value_version
+        )
+        time_unit_name = self._get_preferred_time_unit_name(
+            study_uid, study_value_version=study_value_version
+        )
 
         # organise the data
         table = self._mk_data_matrix(
-            study_arms, study_epochs, study_elements, study_design_cells
+            study_arms,
+            study_epochs,
+            study_elements,
+            study_design_cells,
+            soa_preferences,
         )
-        visits = self._select_first_visits(study_visits, study_epochs)
+
+        visits = self._pick_first_visit_of_epochs(study_visits)
 
         # calculate table cells
         fig_width = self._calculate_widths(table)
@@ -163,62 +198,109 @@ class StudyDesignFigureService:
             self._merge_cells_horizontally(table)
 
         # calculate timeline
-        timeline, doc_height = self._mk_timeline(table, visits, doc_height)
+        timeline, doc_height = self._mk_timeline(
+            table, visits, doc_height, soa_preferences, time_unit_name
+        )
 
-        # finally draw the figure
+        # finally, draw the figure
         return self.draw_svg(table, timeline, doc_width, doc_height)
 
+    @trace_calls
+    def _get_soa_preferences(
+        self, study_uid: str, study_value_version: str | None = None
+    ) -> StudySoaPreferences:
+        """Gets SoA preferences"""
+        return StudyService().get_study_soa_preferences(
+            study_uid,
+            study_value_version=study_value_version,
+        )
+
+    @trace_calls
+    def _get_preferred_time_unit_name(
+        self, study_uid: str, study_value_version: str | None = None
+    ) -> str:
+        """Gets preferred time unit of study from the db"""
+        return (
+            StudyService()
+            .get_study_preferred_time_unit(
+                study_uid,
+                study_value_version=study_value_version,
+            )
+            .time_unit_name
+        )
+
+    @trace_calls
     def _get_study_arms(
-        self, study_uid
+        self, study_uid, study_value_version: str | None = None
     ) -> Mapping[str, models.StudySelectionArmWithConnectedBranchArms]:
         """Returns Study Arms as an ordered dictionary of {uid: arm}"""
         study_arms = StudyArmSelectionService().get_all_selection(
-            study_uid=study_uid, sort_by={"order": True}
+            study_uid=study_uid,
+            sort_by={"order": True},
+            study_value_version=study_value_version,
         )
         study_arms = OrderedDict((arm.arm_uid, arm) for arm in study_arms.items)
         return study_arms
 
+    @trace_calls
     def _get_study_epochs(
-        self, study_uid
-    ) -> Mapping[str, models.study_selections.study_epoch.StudyEpoch]:
-        """Returns Study Epochs as an ordered dictionary of {uid: epoch}"""
-        study_epochs = StudyEpochService().get_all_epochs(
-            study_uid=study_uid, sort_by={"order": True}
-        )
-        study_epochs = OrderedDict(
-            (epoch.uid, epoch)
-            for epoch in study_epochs.items
+        self, study_uid, study_value_version: str | None = None
+    ) -> list[models.study_selections.study_epoch.StudyEpoch]:
+        """Returns the list of StudyEpochs if epoch_subtype_name is not "Basic"."""
+        return [
+            epoch
+            for epoch in StudyEpochService()
+            .get_all_epochs(
+                study_uid=study_uid,
+                sort_by={"order": True},
+                study_value_version=study_value_version,
+            )
+            .items
             if epoch.epoch_subtype_name != "Basic"
-        )
-        return study_epochs
+        ]
 
+    @trace_calls
     def _get_study_elements(
-        self, study_uid
+        self, study_uid, study_value_version: str | None = None
     ) -> Mapping[str, models.StudySelectionElement]:
         """Returns Study Elements as an ordered dictionary of {uid: element}"""
         study_elements = StudyElementSelectionService().get_all_selection(
-            study_uid=study_uid
+            study_uid=study_uid, study_value_version=study_value_version
         )
         study_elements = OrderedDict(
             (element.element_uid, element) for element in study_elements.items
         )
         return study_elements
 
-    def _get_study_design_cells(self, study_uid) -> list[models.StudyDesignCell]:
+    @trace_calls
+    def _get_study_design_cells(
+        self, study_uid, study_value_version: str | None = None
+    ) -> list[models.StudyDesignCell]:
         """Returns a list of Study Design Cells"""
-        study_design_cells = StudyDesignCellService().get_all_design_cells(study_uid)
+        study_design_cells = StudyDesignCellService().get_all_design_cells(
+            study_uid, study_value_version=study_value_version
+        )
         return study_design_cells
 
+    @trace_calls
     def _get_study_visits(
-        self, study_uid: str
-    ) -> Mapping[str, models.study_selections.study_visit.StudyVisit]:
-        """Returns Study Visits as an ordered dictionary of {uid: visit}"""
-        study_visits = StudyVisitService(study_uid=study_uid).get_all_visits(study_uid)
-        study_visits = OrderedDict((visit.uid, visit) for visit in study_visits.items)
-        return study_visits
+        self, study_uid: str, study_value_version: str | None = None
+    ) -> list[models.study_selections.study_visit.StudyVisit]:
+        """Returns list of StudyVisits"""
+        return (
+            StudyVisitService(study_uid=study_uid)
+            .get_all_visits(study_uid, study_value_version=study_value_version)
+            .items
+        )
 
+    @trace_calls
     def _mk_data_matrix(
-        self, study_arms, study_epochs, study_elements, study_design_cells
+        self,
+        study_arms,
+        study_epochs: list[models.study_selections.study_epoch.StudyEpoch],
+        study_elements,
+        study_design_cells,
+        soa_preferences: StudySoaPreferences,
     ):
         """Organize the data into a kind-of tabular format
 
@@ -231,15 +313,20 @@ class StudyDesignFigureService:
         ]
 
         column_by_epoch_uid = {}
-        for i, (id_, epoch) in enumerate(study_epochs.items(), start=1):
-            table[0][i].update(
-                klass="epoch",
-                id=id_,
-                text=epoch.epoch_name,
-                colors=self._calculate_colors(epoch.color_hash or EPOCH_COLOR_DEFAULT),
-                margin=EPOCH_MARGIN,
-                paddings=EPOCH_PADDINGS,
-            )
+        for i, epoch in enumerate(study_epochs, start=1):
+            if soa_preferences.show_epochs:
+                table[0][i].update(
+                    klass="epoch",
+                    id=epoch.uid,
+                    text=epoch.epoch_name,
+                    colors=self._calculate_colors(
+                        epoch.color_hash or EPOCH_COLOR_DEFAULT
+                    ),
+                    margin=EPOCH_MARGIN,
+                    paddings=EPOCH_PADDINGS,
+                )
+            else:
+                table[0][i].update(text="", omit=True)
             column_by_epoch_uid[epoch.uid] = i
 
         row_by_arm_uid = {}
@@ -283,27 +370,23 @@ class StudyDesignFigureService:
         return table
 
     @staticmethod
-    def _select_first_visits(study_visits, study_epochs):
-        """Returns a list of visit data about the first visit of each epoch"""
+    @trace_calls
+    def _pick_first_visit_of_epochs(
+        study_visits: list[models.study_selections.study_visit.StudyVisit],
+    ) -> list[models.study_selections.study_visit.StudyVisit]:
+        """Returns the first visit of each epoch"""
 
-        visits = [{} for _ in range(len(study_epochs))]
-
-        for id_, visit in study_visits.items():
-            epoch = study_epochs.get(visit.study_epoch_uid)
+        prev_epoch_id = None
+        visits = []
+        for visit in study_visits:
             # take the first visit of each Epoch
-            if epoch and not visits[epoch.order - 1].get("id"):
-                visits[epoch.order - 1].update(
-                    id=id_,
-                    visit=visit,
-                    day_label=visit.study_day_label,
-                    week_label=visit.study_week_label,
-                    shot_name=visit.visit_short_name,
-                    type_uid=visit.visit_type_uid,
-                    type_name=visit.visit_type_name,
-                )
+            if visit.study_epoch_uid != prev_epoch_id:
+                prev_epoch_id = visit.study_epoch_uid
+                visits.append(visit)
 
         return visits
 
+    @trace_calls
     def _calculate_widths(self, table) -> int:
         """Updates the table matrix with calculated column widths, and returns the total page width in px
 
@@ -432,6 +515,7 @@ class StudyDesignFigureService:
             )
         return fig_width
 
+    @trace_calls
     def _calculate_cells(self, table, fig_width: int) -> tuple[int, int]:
         """Flows the text of cells and calculates cell and row heights, returning figure width and height int px
 
@@ -479,7 +563,10 @@ class StudyDesignFigureService:
 
         # Epochs
         for cell in table[0][1:]:
-            self._flow_cell(cell, EPOCH_PADDINGS, center=EPOCH_CENTER)
+            if cell.get("omit"):
+                cell["height"] = 0
+            else:
+                self._flow_cell(cell, EPOCH_PADDINGS, center=EPOCH_CENTER)
 
         # epochs row shall be high enough to fit the highest epoch
         row_height = (
@@ -543,8 +630,8 @@ class StudyDesignFigureService:
         # note: optimal-width includes 2*padding
         if cell["optimal-width"] <= cell["width"]:
             cell["height"] = (
-                self.font_size + paddings[1] * 2 + TEXT_BOTTOM_EXTRA_PADDING
-            )
+                (self.font_size + TEXT_BOTTOM_EXTRA_PADDING) if cell["text"] else 0
+            ) + paddings[1] * 2
 
             if center:
                 width = self._get_text_size_px(cell["text"])[0]
@@ -623,6 +710,7 @@ class StudyDesignFigureService:
         )
 
     @staticmethod
+    @trace_calls
     def _merge_cells_horizontally(table):
         """Merges cells with identical Study Element horizontally"""
         # pylint: disable=unsubscriptable-object,unsupported-assignment-operation
@@ -645,6 +733,7 @@ class StudyDesignFigureService:
                     prev_cell = cell
 
     @staticmethod
+    @trace_calls
     def _merge_cells_vertically(table):
         """Merges cells with identical Study Element vertically"""
         # pylint: disable=unsubscriptable-object,unsupported-assignment-operation
@@ -709,7 +798,15 @@ class StudyDesignFigureService:
         """Returns a tuple of (word, width, height) in pixels of each word of a text if rendered with font and size"""
         return tuple((t,) + self._get_text_size_px(t) for t in text.split(" "))
 
-    def _mk_timeline(self, table, visits, doc_height):
+    @trace_calls
+    def _mk_timeline(
+        self,
+        table,
+        visits,
+        doc_height,
+        soa_preferences: StudySoaPreferences,
+        time_unit_name: str,
+    ):
         """Calculates timeline labels and arrows from Study Visits and already calculated table column dimensions
 
         Creates a label for every new visit type.
@@ -723,11 +820,21 @@ class StudyDesignFigureService:
         Returns timeline mapping and new document height in px int.
         """
 
+        if time_unit_name == "day":
+            if soa_preferences.baseline_as_time_zero:
+                visit_timing_prop = "study_duration_days_label"
+            else:
+                visit_timing_prop = "study_day_label"
+        elif soa_preferences.baseline_as_time_zero:
+            visit_timing_prop = "study_duration_weeks_label"
+        else:
+            visit_timing_prop = "study_week_label"
+
         timeline = {"labels": []}
 
         # construct labels every visit type - may span multiple epochs
-        labels, label = [], {}
-        timeline["labels"].append(labels)
+        row, label = [], {}
+        timeline["labels"].append(row)
 
         y = doc_height - DOC_MARGIN + TIMELINE_ROW_MARGINS[0]
         for idx, visit in enumerate(visits, start=1):
@@ -738,7 +845,7 @@ class StudyDesignFigureService:
             # look up epoch column
             col = table[0][idx]
 
-            if visit.get("type_uid") == label.get("id"):
+            if visit.visit_type_uid == label.get("id"):
                 # same visit type, span to next column
                 label["width"] = col["x"] - label["x"] + col["width"]
                 # reflow text with new width
@@ -749,10 +856,10 @@ class StudyDesignFigureService:
             else:
                 # a different visit type deserves a new label
                 label = {
-                    "id": visit.get("type_uid"),
+                    "id": visit.visit_type_uid,
                     "klass": "visit-type",
                     "paddings": (0, 0),
-                    "text": visit.get("type_name"),
+                    "text": visit.visit_type_name,
                     # inherit coordinates form epoch column
                     "width": col["width"],
                     "x": col["x"],
@@ -763,24 +870,24 @@ class StudyDesignFigureService:
                     label["text"], label["width"], (0, 0), center=True
                 )
 
-                labels.append(label)
+                row.append(label)
 
         # adjust labels heights to the tallest label
-        row_height = max(label["height"] for label in labels) if labels else 0
-        for label in labels:
+        row_height = max(label["height"] for label in row) if row else 0
+        for label in row:
             if label["height"] < row_height:
                 # align vertically middle within the row
                 label["y"] += int((row_height - label["height"]) / 2)
 
         # calculate new document height
-        if labels:
+        if row:
             doc_height = y + row_height + DOC_MARGIN
             y += row_height + TIMELINE_ROW_MARGINS[1]
 
         # horizontal arrows for epoch labels
         arrows = timeline["arrows"] = []
         y_offset = -int(TIMELINE_ROW_MARGINS[1] / 2)
-        for label in labels:
+        for label in row:
             arrows.append(
                 {
                     "klass": "timeline-arrow",
@@ -792,27 +899,29 @@ class StudyDesignFigureService:
             )
 
         # construct labels for epochs first visits
-        labels = []
-        timeline["labels"].append(labels)
+        row = []
+        timeline["labels"].append(row)
 
         row_height = 0
-        y += row_height + TIMELINE_ROW_MARGINS[2]
+        y += TIMELINE_ROW_MARGINS[2]
         for idx, visit in enumerate(visits, start=1):
             if not visit:
                 # Epoch may contain no visits while drafting
                 continue
 
+            visit_timing = getattr(visit, visit_timing_prop) or ""
+
             # look up epoch column
             col = table[0][idx]
 
-            width, height = self._get_text_size_px(visit.get("week_label") or "")
+            width, height = self._get_text_size_px(visit_timing)
             x = col["x"]
 
             label = {
-                "id": visit.get("id"),
+                "id": visit.uid,
                 "klass": "visit-timing",
                 "paddings": (0, 0),
-                "text": visit.get("week_label") or "",
+                "text": visit_timing,
                 "x": x,
                 "y": y,
                 "width": width,
@@ -820,17 +929,17 @@ class StudyDesignFigureService:
             }
             label["lines"] = ((0, self.font_size, label["text"]),)
 
-            labels.append(label)
+            row.append(label)
 
             row_height = max(row_height, height)
 
         # calculate new document height
-        if labels:
-            doc_height = y + row_height + TIMELINE_ROW_MARGINS[3] + DOC_MARGIN
+        if row:
+            doc_height = y + row_height + TIMELINE_ROW_MARGINS[-1] + DOC_MARGIN
 
         # vertical arrows for visit labels
         y_offset = -row_height
-        for label in labels:
+        for label in row:
             arrows.append(
                 {
                     "klass": "visit-arrow",
@@ -841,8 +950,90 @@ class StudyDesignFigureService:
                 }
             )
 
+        if not soa_preferences.show_milestones:
+            return timeline, doc_height
+
+        # add visit number labels
+        row = []
+        timeline["labels"].append(row)
+
+        row_height = 0
+        y += TIMELINE_ROW_MARGINS[3]
+        for idx, visit in enumerate(visits, start=1):
+            if not visit:
+                # Epoch may contain no visits while drafting
+                continue
+
+            # look up epoch column
+            col = table[0][idx]
+
+            width, height = self._get_text_size_px(visit.visit_short_name)
+            x = col["x"]
+
+            label = {
+                "id": visit.uid,
+                "klass": "visit-timing",
+                "paddings": (0, 0),
+                "text": visit.visit_short_name,
+                "x": x,
+                "y": y,
+                "width": width,
+                "height": height,
+            }
+            label["lines"] = ((0, self.font_size, label["text"]),)
+
+            row.append(label)
+
+            row_height = max(row_height, height)
+
+        # calculate new document height
+        if row:
+            doc_height = y + row_height + TIMELINE_ROW_MARGINS[-1] + DOC_MARGIN
+
+        # add milestone labels
+        row = []
+        timeline["labels"].append(row)
+
+        row_height = 0
+        y += row_height + TIMELINE_ROW_MARGINS[4]
+        for idx, visit in enumerate(visits, start=1):
+            if not visit:
+                # Epoch may contain no visits while drafting
+                continue
+
+            if not visit.is_soa_milestone:
+                continue
+
+            # look up epoch column
+            col = table[0][idx]
+
+            width, height = self._get_text_size_px(visit.visit_type_name)
+            x = col["x"]
+
+            label = {
+                "id": visit.uid,
+                "klass": "visit-timing",
+                "paddings": (0, 0),
+                "text": visit.visit_type_name,
+                "x": x,
+                "y": y,
+                "width": width,
+                "height": height,
+                "vertical": True,
+            }
+            label["lines"] = ((0, self.font_size, label["text"]),)
+
+            row.append(label)
+
+            row_height = max(row_height, width)
+
+        # calculate new document height
+        if row:
+            doc_height = y + row_height + TIMELINE_ROW_MARGINS[-1] + DOC_MARGIN
+
         return timeline, doc_height
 
+    @trace_calls
     def draw_svg(self, table, timeline, doc_width, doc_height):
         """Returns the SVG drawing as text
 
@@ -871,6 +1062,18 @@ class StudyDesignFigureService:
                 self._arrowhead_vertical(doc, id_="arrowhead2")
                 self._arrowtail(doc, id_="arrowtail1")
 
+            if self.debug:
+                doc.stag(
+                    "rect",
+                    x=0,
+                    y=0,
+                    width=doc_width,
+                    height=doc_height,
+                    fill="white",
+                    stroke="red",
+                    stroke_width="1",
+                )
+
             # Draw of study arms first, as the "bottom layer"
             for row in table[1:]:
                 cell = row[0]
@@ -878,7 +1081,8 @@ class StudyDesignFigureService:
 
             # Next draw Study Epochs
             for cell in table[0][1:]:
-                self._draw_cell(cell, doc, styles)
+                if not cell.get("omit"):
+                    self._draw_cell(cell, doc, styles)
 
             # Draw Study Elements on top
             for row in table[1:]:
@@ -964,7 +1168,14 @@ class StudyDesignFigureService:
             transform=f"translate({cell['x']}, {cell['y']})",
         ):
             # caption
-            with doc.tag("text"):
+            kwargs = (
+                {
+                    "transform": f"rotate(90) translate(0, {-int(round(FONT_SIZE * 1.5))})"
+                }
+                if cell.get("vertical")
+                else {}
+            )
+            with doc.tag("text", **kwargs):
                 for x, y, txt in cell["lines"]:
                     doc.line(
                         "tspan",

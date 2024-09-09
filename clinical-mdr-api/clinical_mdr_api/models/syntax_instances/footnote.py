@@ -19,10 +19,7 @@ from clinical_mdr_api.models.syntax_templates.template_parameter_term import (
     IndexedTemplateParameterTerm,
     MultiTemplateParameterTerm,
 )
-from clinical_mdr_api.models.utils import (
-    BaseModel,
-    capitalize_first_letter_if_template_parameter,
-)
+from clinical_mdr_api.models.utils import BaseModel
 
 
 class FootnoteTemplateWithType(FootnoteTemplateNameUidLibrary):
@@ -48,7 +45,7 @@ class Footnote(BaseModel):
         remove_from_wildcard=True,
         exclude_from_orm=True,
     )
-    footnote_template: FootnoteTemplateWithType | None
+    template: FootnoteTemplateWithType | None
     parameter_terms: list[MultiTemplateParameterTerm] | None = Field(
         None,
         description="Holds the parameter terms that are used within the footnote. The terms are ordered as they occur in the footnote name.",
@@ -81,16 +78,8 @@ class Footnote(BaseModel):
             )
         return cls(
             uid=footnote_ar.uid,
-            name=capitalize_first_letter_if_template_parameter(
-                footnote_ar.name,
-                footnote_ar.template_name_plain,
-                footnote_ar._template.parameter_terms,
-            ),
-            name_plain=capitalize_first_letter_if_template_parameter(
-                footnote_ar.name_plain,
-                footnote_ar.template_name_plain,
-                footnote_ar._template.parameter_terms,
-            ),
+            name=footnote_ar.name,
+            name_plain=footnote_ar.name_plain,
             start_date=footnote_ar.item_metadata.start_date,
             end_date=footnote_ar.item_metadata.end_date,
             status=footnote_ar.item_metadata.status.value,
@@ -100,7 +89,7 @@ class Footnote(BaseModel):
             possible_actions=sorted(
                 {_.value for _ in footnote_ar.get_possible_actions()}
             ),
-            footnote_template=FootnoteTemplateWithType(
+            template=FootnoteTemplateWithType(
                 name=footnote_ar.template_name,
                 name_plain=footnote_ar.name_plain,
                 uid=footnote_ar.template_uid,
@@ -114,7 +103,7 @@ class Footnote(BaseModel):
 
 
 class FootnoteWithType(Footnote):
-    footnote_template: FootnoteTemplateWithType | None
+    template: FootnoteTemplateWithType | None
 
     @classmethod
     def from_footnote_ar(
@@ -144,16 +133,8 @@ class FootnoteWithType(Footnote):
             )
         return cls(
             uid=footnote_ar.uid,
-            name=capitalize_first_letter_if_template_parameter(
-                footnote_ar.name,
-                footnote_ar.template_name_plain,
-                footnote_ar._template.parameter_terms,
-            ),
-            name_plain=capitalize_first_letter_if_template_parameter(
-                footnote_ar.name_plain,
-                footnote_ar.template_name_plain,
-                footnote_ar._template.parameter_terms,
-            ),
+            name=footnote_ar.name,
+            name_plain=footnote_ar.name_plain,
             start_date=footnote_ar.item_metadata.start_date,
             end_date=footnote_ar.item_metadata.end_date,
             status=footnote_ar.item_metadata.status.value,
@@ -163,7 +144,7 @@ class FootnoteWithType(Footnote):
             possible_actions=sorted(
                 {_.value for _ in footnote_ar.get_possible_actions()}
             ),
-            footnote_template=FootnoteTemplateWithType(
+            template=FootnoteTemplateWithType(
                 name=footnote_ar.template_name,
                 name_plain=footnote_ar.name_plain,
                 uid=footnote_ar.template_uid,

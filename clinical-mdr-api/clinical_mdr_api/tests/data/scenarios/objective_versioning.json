@@ -50,7 +50,7 @@
                 },
                 "name": "Test_Name_Template",
                 "name_plain": "Test_Name_Template",
-                "objective_template": {
+                "template": {
                     "name": "Test_Name_Template",
                     "name_plain": "Test_Name_Template",
                     "guidance_text": null,
@@ -99,7 +99,7 @@
                 },
                 "name": "Test_Name_Template",
                 "name_plain": "Test_Name_Template",
-                "objective_template": {
+                "template": {
                     "name": "Test_Name_Template",
                     "name_plain": "Test_Name_Template",
                     "guidance_text": null,
@@ -201,7 +201,7 @@
                         "library": false,
                         "name": false,
                         "name_plain": false,
-                        "objective_template": false,
+                        "template": false,
                         "parameter_terms": false,
                         "possible_actions": true,
                         "start_date": true,
@@ -218,7 +218,7 @@
                     },
                     "name": "Test_Name_Template",
                     "name_plain": "Test_Name_Template",
-                    "objective_template": {
+                    "template": {
                         "name": "Test_Name_Template",
                         "name_plain": "Test_Name_Template",
                         "guidance_text": null,
@@ -247,7 +247,7 @@
                     },
                     "name": "Test_Name_Template",
                     "name_plain": "Test_Name_Template",
-                    "objective_template": {
+                    "template": {
                         "name": "Test_Name_Template",
                         "name_plain": "Test_Name_Template",
                         "guidance_text": null,

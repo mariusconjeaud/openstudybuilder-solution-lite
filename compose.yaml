@@ -43,6 +43,7 @@ services:
       args:
         UVICORN_PORT: 5003
         UVICORN_ROOT_PATH: "/api"
+        UVICORN_APP: clinical_mdr_api.main:app
         PYTHON_IMAGE: ${PYTHON_IMAGE:-python:3.11.3-slim}
         TARGET: ${BUILD_TARGET:-dev}
     image: ${API_IMAGE:-}
@@ -65,6 +66,30 @@ services:
       OAUTH_APP_SECRET: "${OAUTH_APP_SECRET:-}"
       OAUTH_CLIENT_ID: "${OAUTH_CLIENT_ID:-}"
       OIDC_METADATA_DOCUMENT: "${OIDC_METADATA_DOCUMENT:-}"
+
+  # Consumer API image & service
+  consumerapi:
+    build:
+      context: ./clinical-mdr-api
+      dockerfile: Dockerfile
+      args:
+        UVICORN_PORT: 5008
+        UVICORN_ROOT_PATH: "/consumer-api"
+        UVICORN_APP: consumer_api.consumer_api:app
+        PYTHON_IMAGE: ${PYTHON_IMAGE:-python:3.11.3-slim}
+        TARGET: ${BUILD_TARGET:-dev}
+    image: ${API_IMAGE:-}
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      NEO4J_DSN: "${NEO4J_DSN:-bolt://neo4j:changeme1234@database:7687/mdrdb}"
+      ALLOW_ORIGIN_REGEX: "${ALLOW_ORIGIN_REGEX:-.*}"
+      OAUTH_ENABLED: "${OAUTH_ENABLED:-False}"
+      OAUTH_RBAC_ENABLED: "${OAUTH_RBAC_ENABLED:-False}"
+      OAUTH_METADATA_URL: "${OAUTH_METADATA_URL:-}"
+      OAUTH_API_APP_ID: "${OAUTH_API_APP_ID:-}"
+      OAUTH_SWAGGER_APP_ID: "${OAUTH_SWAGGER_APP_ID:-}"
 
   # Frontend image for production (see UI service for local development)
   frontend:

@@ -13,16 +13,16 @@
       </v-tab>
     </v-tabs>
     <v-window v-model="tab">
-      <v-window-item value="active">
+      <v-window-item :key="`active-${tabKeys.active}`" value="active">
         <StudyTable
-          key="activeStudies"
+          key="activeStudiesTable"
           :items="activeStudies"
           :items-length="totalActiveStudies"
           @filter="fetchActiveStudies"
-          @refresh-studies="fetchActiveStudies"
+          @refresh-studies="activeStudiesTable.filterTable()"
         />
       </v-window-item>
-      <v-window-item value="deleted">
+      <v-window-item :key="`deleted-${tabKeys.deleted}`" value="deleted">
         <StudyTable
           key="deletedStudies"
           :items="deletedStudies"
@@ -40,17 +40,20 @@ import { ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAppStore } from '@/stores/app'
 import api from '@/api/study'
+import _isEmpty from 'lodash/isEmpty'
 import filteringParameters from '@/utils/filteringParameters'
 import StudyTable from '@/components/studies/StudyTable.vue'
 import HelpButton from '@/components/tools/HelpButton.vue'
 import { useStudiesManageStore } from '@/stores/studies-manage'
 import { useI18n } from 'vue-i18n'
+import { useTabKeys } from '@/composables/tabKeys'
 
 const appStore = useAppStore()
 const studiesManageStore = useStudiesManageStore()
 const router = useRouter()
 const route = useRoute()
 const { t } = useI18n()
+const { tabKeys, updateTabKey } = useTabKeys()
 
 const activeStudies = ref([])
 const activeOptions = ref({})
@@ -61,6 +64,8 @@ const totalActiveStudies = ref(0)
 const totalDeletedStudies = ref(0)
 const savedFilters = ref('')
 
+const activeStudiesTable = ref()
+
 watch(tab, (newValue) => {
   router.push({
     name: 'SelectOrAddStudy',
@@ -70,6 +75,7 @@ watch(tab, (newValue) => {
     newValue === 'active'
       ? t('SelectOrAddStudyTable.tab1_title')
       : t('SelectOrAddStudyTable.tab2_title')
+  updateTabKey(newValue)
   appStore.addBreadcrumbsLevel(name, undefined, 2, true)
 })
 
@@ -89,7 +95,9 @@ function fetchActiveStudies(filters, options, filtersUpdated) {
     savedFilters.value,
     filtersUpdated
   )
-  params.sort_by = { 'current_metadata.identification_metadata.study_id': true }
+  if (options.sortBy && _isEmpty(options.sortBy)) {
+      params.sort_by = JSON.stringify({ 'current_metadata.identification_metadata.study_id': true })
+  }
   api.get(params).then((resp) => {
     activeStudies.value = resp.data.items
     totalActiveStudies.value = resp.data.total

@@ -5,18 +5,18 @@
     :items="namespaces"
     item-value="uid"
     :items-length="total"
-    column-data-resource="concepts/odms/namespaces"
-    export-data-url="concepts/odms/namespaces"
+    column-data-resource="concepts/odms/vendor-namespaces"
+    export-data-url="concepts/odms/vendor-namespaces"
     export-object-label="CRFNamespaces"
     @filter="getNamespaces"
   >
     <template #actions="">
       <v-btn
         class="ml-2"
-        fab
         size="small"
+        variant="outlined"
+        color="nnBaseBlue"
         icon="mdi-plus"
-        color="primary"
         :title="$t('CrfExtensions.new_namespace')"
         :disabled="!accessGuard.checkPermission($roles.LIBRARY_WRITE)"
         @click.stop="openCreateForm"
@@ -136,7 +136,7 @@ const actions = [
   },
 ]
 const headers = [
-  { title: '', key: 'actions', width: '5%' },
+  { title: '', key: 'actions', width: '1%' },
   { title: t('_global.name'), key: 'name' },
   { title: t('CrfExtensions.prefix'), key: 'prefix' },
   { title: t('CrfExtensions.url'), key: 'url' },

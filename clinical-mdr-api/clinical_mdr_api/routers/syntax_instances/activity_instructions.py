@@ -42,7 +42,7 @@ ActivityInstructionUID = Path(None, description="The unique id of the objective.
             "content": {
                 "text/csv": {
                     "example": """
-"library","objective_template","uid","objective","start_date","end_date","status","version","change_description","user_initials"
+"library","template","uid","objective","start_date","end_date","status","version","change_description","user_initials"
 "Sponsor","First  [ComparatorIntervention]","826d80a7-0b6a-419d-8ef1-80aa241d7ac7",First Intervention,"2020-10-22T10:19:29+00:00",,"Draft","0.1","Initial version","NdSJ"
 """
                 },
@@ -56,7 +56,7 @@ ActivityInstructionUID = Path(None, description="The unique id of the objective.
     {
         "defaults": [
             "library=library.name",
-            "objective_template=objective_template.name",
+            "template=template.name",
             "uid",
             "objective=name",
             "start_date",
@@ -185,11 +185,20 @@ def retrieve_audit_trail(
         le=config.MAX_PAGE_SIZE,
         description=_generic_descriptions.PAGE_SIZE,
     ),
+    filters: Json
+    | None = Query(
+        None,
+        description=_generic_descriptions.SYNTAX_FILTERS,
+        example=_generic_descriptions.FILTERS_EXAMPLE,
+    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool = Query(False, description=_generic_descriptions.TOTAL_COUNT),
 ):
     results = Service().get_all(
         page_number=page_number,
         page_size=page_size,
+        filter_by=filters,
+        filter_operator=FilterOperator.from_str(operator),
         total_count=total_count,
         for_audit_trail=True,
     )
@@ -320,7 +329,7 @@ If the request succeeds:
             "model": ErrorResponse,
             "description": "Not Found - Reasons include e.g.: \n"
             "- The library with the specified 'library_name' could not be found.\n"
-            "- The objective template with the specified 'objective_template_uid' could not be found.",
+            "- The objective template with the specified 'template_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
@@ -360,7 +369,7 @@ If the request succeeds:
             "model": ErrorResponse,
             "description": "Not Found - Reasons include e.g.: \n"
             "- The library with the specified 'library_name' could not be found.\n"
-            "- The objective template with the specified 'objective_template_uid' could not be found.",
+            "- The objective template with the specified 'template_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },

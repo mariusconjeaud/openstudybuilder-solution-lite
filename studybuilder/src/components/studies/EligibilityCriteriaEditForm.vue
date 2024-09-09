@@ -1,9 +1,9 @@
 <template>
   <StudySelectionEditForm
-    v-if="studyCriteria"
+    v-if="editedObject"
     ref="form"
     :title="$t('EligibilityCriteriaEditForm.title')"
-    :study-selection="studyCriteria"
+    :study-selection="editedObject"
     :template="template"
     :library-name="library.name"
     object-type="criteria"
@@ -56,32 +56,53 @@ export default {
       selectedStudy: computed(() => studiesGeneralStore.selectedStudy),
     }
   },
+  data() {
+    return {
+      editedObject: {},
+    }
+  },
   computed: {
     template() {
-      return this.studyCriteria.criteria
-        ? this.studyCriteria.criteria.criteria_template
-        : this.studyCriteria.criteria_template
+      return this.editedObject.criteria
+        ? this.editedObject.criteria.template
+        : this.editedObject.template
     },
     library() {
-      return this.studyCriteria.criteria
-        ? this.studyCriteria.criteria.library
-        : this.studyCriteria.criteria_template.library
+      return this.editedObject.criteria
+        ? this.editedObject.criteria.library
+        : this.editedObject.template.library
+    },
+  },
+  watch: {
+    studyCriteria: {
+      handler: function (value) {
+        if (value) {
+          study
+            .getStudyCriteriaObject(
+              this.selectedStudy.uid,
+              value.study_criteria_uid
+            )
+            .then((resp) => {
+              this.editedObject = resp.data
+            })
+        }
+      },
+      immediate: true,
     },
   },
   methods: {
     initForm(form) {
-      form.key_criteria = this.studyCriteria.key_criteria
+      form.key_criteria = this.editedObject.key_criteria
       this.originalForm = JSON.parse(JSON.stringify(form))
     },
     prepareTemplatePayload(data) {
-      data.type_uid = this.studyCriteria.criteria_type.term_uid
+      data.type_uid = this.editedObject.criteria_type.term_uid
     },
     async getStudyCriteriaNamePreview(parameters) {
       const criteriaData = {
-        criteria_template_uid:
-          this.studyCriteria.criteria.criteria_template.uid,
+        criteria_template_uid: this.editedObject.criteria.template.uid,
         parameter_terms: await instances.formatParameterValues(parameters),
-        library_name: this.studyCriteria.criteria.library.name,
+        library_name: this.editedObject.criteria.library.name,
       }
       const resp = await study.getStudyCriteriaPreview(this.selectedStudy.uid, {
         criteria_data: criteriaData,
@@ -120,7 +141,7 @@ export default {
       // }
       await study.patchStudyCriteria(
         this.selectedStudy.uid,
-        this.studyCriteria.study_criteria_uid,
+        this.editedObject.study_criteria_uid,
         payload
       )
       this.eventBusEmit('notification', {

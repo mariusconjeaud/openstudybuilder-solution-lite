@@ -14,6 +14,7 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
 @dataclass(frozen=True)
 class IngredientVO:
     active_substance_uid: str
+    formulation_name: str | None = None
     external_id: str | None = None
     strength_uid: str | None = None
     half_life_uid: str | None = None
@@ -23,6 +24,7 @@ class IngredientVO:
     def from_repository_values(
         cls,
         active_substance_uid: str,
+        formulation_name: str | None,
         external_id: str | None,
         strength_uid: str | None = None,
         half_life_uid: str | None = None,
@@ -31,6 +33,7 @@ class IngredientVO:
         ingredient_vo = cls(
             external_id=external_id,
             active_substance_uid=active_substance_uid,
+            formulation_name=formulation_name,
             strength_uid=strength_uid,
             half_life_uid=half_life_uid,
             lag_time_uids=lag_time_uids,
@@ -70,20 +73,17 @@ class IngredientVO:
 
 @dataclass(frozen=True)
 class FormulationVO:
-    name: str
     external_id: str | None = None
     ingredients: list[IngredientVO] | None = None
 
     @classmethod
     def from_repository_values(
         cls,
-        name: str,
         external_id: str | None,
         ingredients: list[IngredientVO] = None,
     ) -> Self:
         formulation_vo = cls(
             external_id=external_id,
-            name=name,
             ingredients=ingredients if ingredients else [],
         )
 

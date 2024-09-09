@@ -99,12 +99,16 @@ export default {
     modelValue: {
       handler(val) {
         if (val) {
-          this.form = {
-            sponsor_preferred_name: val.sponsor_preferred_name,
-            sponsor_preferred_name_sentence_case:
-              val.sponsor_preferred_name_sentence_case,
-            order: this.getTermOrderInCodelist(val, this.codelistUid),
-          }
+          controlledTerminology
+            .getCodelistTermNames(val.term_uid)
+            .then((resp) => {
+              this.form = {
+                sponsor_preferred_name: resp.data.sponsor_preferred_name,
+                sponsor_preferred_name_sentence_case:
+                  resp.data.sponsor_preferred_name_sentence_case,
+                order: this.getTermOrderInCodelist(resp.data, this.codelistUid),
+              }
+            })
         }
       },
       immediate: true,

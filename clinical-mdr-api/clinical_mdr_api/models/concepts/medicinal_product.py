@@ -42,9 +42,9 @@ class MedicinalProduct(VersionProperties):
     pharmaceutical_products: list[SimplePharmaceuticalProduct] = []
 
     dose_values: list[SimpleNumericValueWithUnit] = []
-    dose_frequencies: list[SimpleTermModel] = []
-    delivery_devices: list[SimpleTermModel] = []
-    dispensers: list[SimpleTermModel] = []
+    dose_frequency: SimpleTermModel | None = None
+    delivery_device: SimpleTermModel | None = None
+    dispenser: SimpleTermModel | None = None
 
     possible_actions: list[str] = Field(
         ...,
@@ -96,35 +96,17 @@ class MedicinalProduct(VersionProperties):
                 ],
                 key=lambda item: item.value,
             ),
-            dose_frequencies=sorted(
-                [
-                    SimpleTermModel.from_ct_code(
-                        c_code=uid,
-                        find_term_by_uid=find_term_by_uid,
-                    )
-                    for uid in medicinal_product_ar.concept_vo.dose_frequency_uids
-                ],
-                key=lambda item: item.name if item.name else "",
+            dose_frequency=SimpleTermModel.from_ct_code(
+                c_code=medicinal_product_ar.concept_vo.dose_frequency_uid,
+                find_term_by_uid=find_term_by_uid,
             ),
-            delivery_devices=sorted(
-                [
-                    SimpleTermModel.from_ct_code(
-                        c_code=uid,
-                        find_term_by_uid=find_term_by_uid,
-                    )
-                    for uid in medicinal_product_ar.concept_vo.delivery_device_uids
-                ],
-                key=lambda item: item.name if item.name else "",
+            delivery_device=SimpleTermModel.from_ct_code(
+                c_code=medicinal_product_ar.concept_vo.delivery_device_uid,
+                find_term_by_uid=find_term_by_uid,
             ),
-            dispensers=sorted(
-                [
-                    SimpleTermModel.from_ct_code(
-                        c_code=uid,
-                        find_term_by_uid=find_term_by_uid,
-                    )
-                    for uid in medicinal_product_ar.concept_vo.dispenser_uids
-                ],
-                key=lambda item: item.name if item.name else "",
+            dispenser=SimpleTermModel.from_ct_code(
+                c_code=medicinal_product_ar.concept_vo.dispenser_uid,
+                find_term_by_uid=find_term_by_uid,
             ),
             library_name=Library.from_library_vo(medicinal_product_ar.library).name,
             start_date=medicinal_product_ar.item_metadata.start_date,
@@ -145,9 +127,9 @@ class MedicinalProductCreateInput(BaseModel):
     name_sentence_case: str | None = None
     library_name: str
     dose_value_uids: list[str] = []
-    dose_frequency_uids: list[str] = []
-    delivery_device_uids: list[str] = []
-    dispenser_uids: list[str] = []
+    dose_frequency_uid: str | None = None
+    delivery_device_uid: str | None = None
+    dispenser_uid: str | None = None
     compound_uid: str
     pharmaceutical_product_uids: list[str] = []
 
@@ -158,9 +140,9 @@ class MedicinalProductEditInput(BaseModel):
     name_sentence_case: str | None = None
     library_name: str | None = None
     dose_value_uids: list[str] | None = None
-    dose_frequency_uids: list[str] | None = None
-    delivery_device_uids: list[str] | None = None
-    dispenser_uids: list[str] | None = None
+    dose_frequency_uid: str | None = None
+    delivery_device_uid: str | None = None
+    dispenser_uid: str | None = None
     compound_uid: str | None = None
     pharmaceutical_product_uids: list[str] | None = None
     change_description: str

@@ -42,7 +42,7 @@ Service = CriteriaPreInstanceService
             "library=library.name",
             "uid",
             "sequence_id",
-            "criteria_template=template_name",
+            "template_name",
             "name",
             "guidance_text",
             "indications",
@@ -180,12 +180,21 @@ def retrieve_audit_trail(
         le=config.MAX_PAGE_SIZE,
         description=_generic_descriptions.PAGE_SIZE,
     ),
+    filters: Json
+    | None = Query(
+        None,
+        description=_generic_descriptions.SYNTAX_FILTERS,
+        example=_generic_descriptions.FILTERS_EXAMPLE,
+    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
 ):
     results = Service().get_all(
         page_number=page_number,
         page_size=page_size,
+        filter_by=filters,
+        filter_operator=FilterOperator.from_str(operator),
         total_count=total_count,
         for_audit_trail=True,
     )
@@ -316,7 +325,7 @@ The returned versions are ordered by `start_date` descending (newest entries fir
     {
         "text/csv": [
             "library=library.name",
-            "criteria_template=criteria_template.uid",
+            "template_uid",
             "uid",
             "name_plain",
             "name",
@@ -329,7 +338,7 @@ The returned versions are ordered by `start_date` descending (newest entries fir
         ],
         "text/xml": [
             "library=library.name",
-            "criteria_template=criteria_template.name",
+            "template_name",
             "criteria=criteria.name",
             "uid",
             "name_plain",
@@ -343,7 +352,7 @@ The returned versions are ordered by `start_date` descending (newest entries fir
         ],
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [
             "library=library.name",
-            "criteria_template=criteria_template.uid",
+            "template_uid",
             "uid",
             "name_plain",
             "name",

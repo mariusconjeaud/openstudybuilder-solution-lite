@@ -38,7 +38,16 @@ class SVGResponse(Response):
 def get_study_flowchart_html(
     response: Response,
     uid: str = StudyUID,
+    debug: bool
+    | None = Query(
+        default=False, description="Draw some lines for debugging the image layout"
+    ),
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> SVGResponse:
     StudyService().check_if_study_exists(uid)
     response.headers["Content-Disposition"] = f'inline; filename="{uid} design.svg"'
-    return SVGResponse(StudyDesignFigureService().get_svg_document(uid))
+    return SVGResponse(
+        StudyDesignFigureService(debug=debug).get_svg_document(
+            uid, study_value_version=study_value_version
+        )
+    )

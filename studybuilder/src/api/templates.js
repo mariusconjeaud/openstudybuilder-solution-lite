@@ -26,6 +26,9 @@ export default (basePath) => {
       if (options) {
         params.page_size = options.itemsPerPage
       }
+      if (options.filters) {
+        params.filters = options.filters
+      }
       return repository.get(`${basePath}/audit-trail`, { params })
     },
     create(data) {

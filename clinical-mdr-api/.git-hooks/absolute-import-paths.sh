@@ -3,7 +3,7 @@
 RED=$'\e[0;31m'
 NC=$'\e[0m'
 
-grep -rn --exclude-dir=.git "from \." ./
+grep -rn --exclude-dir=.git "from \." clinical_mdr_api consumer_api
 if [ $? -eq 0 ]
 then
     printf "\n${RED}These files contain imports that use relative paths. Use only absolute paths for imports.${NC}\n"

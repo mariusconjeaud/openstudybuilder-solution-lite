@@ -16,7 +16,8 @@
         <v-btn
           class="ml-2"
           size="small"
-          color="primary"
+          variant="outlined"
+          color="nnBaseBlue"
           data-cy="add-unit"
           :title="$t('UnitForm.add_title')"
           :disabled="!checkPermission($roles.LIBRARY_WRITE)"
@@ -101,7 +102,7 @@ export default {
   data() {
     return {
       headers: [
-        { title: '', key: 'actions', width: '5%' },
+        { title: '', key: 'actions', width: '1%' },
         { title: this.$t('_global.library'), key: 'library_name' },
         { title: this.$t('_global.name'), key: 'name' },
         { title: this.$t('UnitTable.master_unit'), key: 'master_unit' },

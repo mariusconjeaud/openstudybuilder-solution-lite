@@ -17,10 +17,15 @@ class SimpleParameterTermVO(ParameterTermVO):
     """
 
     value: str
+    labels: list[str] | None = None
 
     @classmethod
-    def from_repository_values(cls, *, uid: str, value: str) -> Self:
-        return cls(uid=uid, value=value)
+    def from_repository_values(
+        cls, *, uid: str, value: str, labels: list[str] | None = None
+    ) -> Self:
+        if labels is None:
+            labels = []
+        return cls(uid=uid, value=value, labels=labels)
 
     @classmethod
     def from_input_values(
@@ -36,13 +41,13 @@ class SimpleParameterTermVO(ParameterTermVO):
                 raise exceptions.ValidationException(
                     "parameter_term_by_uid_lookup_callback is required when value is None"
                 )
-            value = parameter_term_by_uid_lookup_callback(uid)
+            value, labels = parameter_term_by_uid_lookup_callback(uid)
             if value is None:
                 raise exceptions.ValidationException(
                     # f"Unknown template parameter uid ({uid})."
                     "One or more of the specified template parameters can not be found."
                 )
-        return cls(uid=uid, value=value)
+        return cls(uid=uid, value=value, labels=labels)
 
 
 @dataclass(frozen=True)
@@ -79,6 +84,7 @@ class ParameterTermEntryVO:
     parameters: list[ParameterTermVO]
     conjunction: str
     parameter_name: str
+    labels: list[str]
 
     @classmethod
     def from_repository_values(
@@ -87,11 +93,13 @@ class ParameterTermEntryVO:
         parameter_name: str,
         parameters: list[ParameterTermVO],
         conjunction: str,
+        labels: list[str],
     ) -> Self:
         return cls(
             parameter_name=parameter_name,
             parameters=tuple(parameters),
             conjunction=conjunction,
+            labels=labels,
         )
 
     @classmethod
@@ -101,6 +109,7 @@ class ParameterTermEntryVO:
         parameter_name: str,
         parameters: list[ParameterTermVO],
         conjunction: str,
+        labels: list[str],
         parameter_exists_callback: Callable[[str], bool],
         parameter_term_uid_exists_for_parameter_callback: Callable[[str, str], bool],
         conjunction_exists_callback: Callable[[str], bool],
@@ -115,8 +124,7 @@ class ParameterTermEntryVO:
                 parameter_name, parameter_term.uid, parameter_term.value
             ):
                 raise exceptions.ValidationException(
-                    f"Parameter term {parameter_term.uid} ('{parameter_term.value}') not valid for"
-                    f" parameter '{parameter_name}'"
+                    f"Parameter term {parameter_term.uid} ('{parameter_term.value}') not valid for parameter '{parameter_name}'"
                 )
 
         if not conjunction_exists_callback(conjunction):
@@ -126,4 +134,5 @@ class ParameterTermEntryVO:
             parameter_name=parameter_name,
             conjunction=conjunction,
             parameters=tuple(parameters),
+            labels=labels,
         )

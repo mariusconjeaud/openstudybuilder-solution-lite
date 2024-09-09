@@ -11,7 +11,7 @@
             "code": 200,
             "headers": {},
             "result": {
-                "catalogues": 3,
+                "catalogues": 2,
                 "packages": 2,
                 "codelist_counts": [
                     {

@@ -126,7 +126,7 @@ def get_ordered_data_model_versions(json_data_directory: str):
     existing_versions = {}
     # List all the directories, ignoring potential hidden files
     for catalogue in [f for f in listdir(json_data_directory) if not f.startswith(".")]:
-        if catalogue in ["FBDE"]:
+        if catalogue in ["FBDE", "NN-VEEVA-EDC"]:
             _existing_versions = listdir(path.join(json_data_directory, catalogue))
         else:
             _existing_versions = list(
@@ -143,8 +143,12 @@ def get_ordered_data_model_versions(json_data_directory: str):
             _existing_versions.sort()
         existing_versions[catalogue] = _existing_versions
 
-        if catalogue in ["FBDE"]:
-            existing_versions[f"{catalogue}IG"] = _existing_versions
+        if catalogue in ["FBDE", "NN-VEEVA-EDC"]:
+            if "-" in catalogue:
+                ig_catalogue_name = f"{catalogue}-IG"
+            else:
+                ig_catalogue_name = f"{catalogue}IG"
+            existing_versions[ig_catalogue_name] = _existing_versions
 
     return existing_versions
 

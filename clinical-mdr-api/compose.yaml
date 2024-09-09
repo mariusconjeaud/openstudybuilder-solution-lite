@@ -35,7 +35,7 @@ services:
       args:
         PYTHON_IMAGE: ${PYTHON_IMAGE:-python:3.11.3-slim}
         TARGET: ${BUILD_TARGET:-prod}
-    image: ${API_IMAGE:-}
+    image: ${API_IMAGE:-clinical-mdr-api}
     environment:
       NEO4J_DSN: "${NEO4J_DSN:-bolt://neo4j:changeme1234@database:7687}/neo4j"
       ALLOW_ORIGIN_REGEX: "${ALLOW_ORIGIN_REGEX:-.*}"
@@ -56,6 +56,23 @@ services:
     ports:
       - "${BIND_ADDRESS:-127.0.0.1}:${API_PORT:-8000}:8000"
 
+  # Consumer API service
+  consumer-api:
+    image: ${API_IMAGE:-clinical-mdr-api}
+    environment:
+      NEO4J_DSN: "${NEO4J_DSN:-bolt://neo4j:changeme1234@database:7687}/neo4j"
+      ALLOW_ORIGIN_REGEX: "${ALLOW_ORIGIN_REGEX:-.*}"
+      OAUTH_ENABLED: "${OAUTH_ENABLED:-False}"
+      OAUTH_RBAC_ENABLED: "${OAUTH_RBAC_ENABLED:-False}"
+      OAUTH_METADATA_URL: "${OAUTH_METADATA_URL:-}"
+      OAUTH_API_APP_ID: "${OAUTH_API_APP_ID:-}"
+      OAUTH_API_APP_SECRET: "${OAUTH_API_APP_SECRET:-}"
+      OAUTH_SWAGGER_APP_ID: "${OAUTH_SWAGGER_APP_ID:-}"
+      UVICORN_APP: "consumer_api.consumer_api:app"
+      UVICORN_LOG_CONFIG: "${UVICORN_LOG_CONFIG:-}"
+    ports:
+      - "${BIND_ADDRESS:-127.0.0.1}:${CONSUMER_API_PORT:-8008}:8000"
+
   # Clinical-MDR API service for running tests in pipeline
   dev:
     extends:
@@ -73,3 +90,12 @@ services:
       - type: bind
         source: ./reports
         target: /app/reports
+      - type: bind
+        source: ./consumer_api/reports
+        target: /app/consumer_api/reports
+      - type: bind
+        source: ./consumer_api/openapi.json
+        target: /app/consumer_api/openapi.json
+      - type: bind
+        source: ./consumer_api/apiVersion
+        target: /app/consumer_api/apiVersion

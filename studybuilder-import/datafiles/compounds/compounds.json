@@ -1,0 +1,18 @@
+[
+  {
+    "name": "Metformin",
+    "name_sentence_case": "metformin",
+    "definition": null,
+    "abbreviation": null,
+    "library_name": "Sponsor",
+    "is_sponsor_compound": false
+  },
+  {
+    "name": "NPH Insulin",
+    "name_sentence_case": "NPH insulin",
+    "definition": null,
+    "abbreviation": null,
+    "library_name": "Sponsor",
+    "is_sponsor_compound": true
+  }
+]

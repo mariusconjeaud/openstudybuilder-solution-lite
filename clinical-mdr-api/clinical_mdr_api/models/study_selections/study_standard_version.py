@@ -20,6 +20,24 @@ class StudyStandardVersionInput(BaseModel):
         title="CTPackage uid",
         description="CTPackage uid to select for the study",
     )
+    description: str = Field(
+        None,
+        title="description",
+        description="Description of the study standard version",
+    )
+
+
+class StudyStandardVersionEditInput(BaseModel):
+    ct_package_uid: str | None = Field(
+        None,
+        title="Updated CTPackage uid",
+        description="Updated CTPackage uid to select for the study",
+    )
+    description: str | None = Field(
+        None,
+        title="Updated description",
+        description="Updated description of the study standard version",
+    )
 
 
 class StudyStandardVersionOGM(BaseModel, StudyStandardVersionVO):
@@ -68,6 +86,12 @@ class StudyStandardVersionOGM(BaseModel, StudyStandardVersionVO):
         description="CTPackage Uid selected for the study",
         source="has_ct_package.uid",
     )
+    description: str = Field(
+        None,
+        title="description",
+        description="Description of the study standard version",
+        source="description",
+    )
 
 
 class StudyStandardVersionOGMVer(StudyStandardVersionOGM):
@@ -113,6 +137,11 @@ class StudyStandardVersion(BaseModel):
         title="CtPackage",
         description="CtPackage",
     )
+    description: str | None = Field(
+        None,
+        title="description",
+        description="Description of the study standard version",
+    )
     start_date: datetime = Field(
         ...,
         title="Modification date",
@@ -151,6 +180,7 @@ class StudyStandardVersion(BaseModel):
                 else get_latest_on_datetime_str()
             ),
             ct_package=ct_package,
+            description=study_standard_version_vo.description,
             user_initials=study_standard_version_vo.author,
             start_date=study_standard_version_vo.start_date,
             end_date=study_standard_version_vo.end_date,

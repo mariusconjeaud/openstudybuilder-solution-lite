@@ -149,6 +149,8 @@ import { useStudiesGeneralStore } from '@/stores/studies-general'
 import { useStudiesManageStore } from '@/stores/studies-manage'
 import { useFormStore } from '@/stores/form'
 import studyMetadataForms from '@/utils/studyMetadataForms'
+import study from '@/api/study'
+import _isEmpty from 'lodash/isEmpty'
 
 export default {
   components: {
@@ -160,9 +162,9 @@ export default {
   },
   inject: ['eventBusEmit'],
   props: {
-    metadata: {
+    initialData: {
       type: Object,
-      default: undefined,
+      default: () => {},
     },
     open: Boolean,
   },
@@ -194,37 +196,42 @@ export default {
       data: this.metadata,
     }
   },
-  watch: {
-    data: {
-      handler: function (value) {
-        this.form = JSON.parse(JSON.stringify(value))
-        if (!this.form.planned_study_length) {
-          this.form.planned_study_length = {}
-        }
-        for (const prop of [
-          'intervention_type_code',
-          'control_type_code',
-          'intervention_model_code',
-          'trial_blinding_schema_code',
-        ]) {
-          if (this.form[prop]) {
-            this.form[prop].sponsor_preferred_name = this.form[prop].name
-          }
-        }
-        if (this.form.trial_intent_types_codes) {
-          for (const item of this.form.trial_intent_types_codes) {
-            item.sponsor_preferred_name = item.name
-          }
-        }
-        this.formStore.save(this.form)
-      },
-      immediate: true,
-    },
-    metadata(value) {
-      this.data = value
-    },
+  mounted() {
+    if (_isEmpty(this.initialData)) {
+      study
+        .getStudyInterventionMetadata(
+          this.studiesGeneralStore.selectedStudy.uid
+        )
+        .then((resp) => {
+          this.initForm(resp.data.current_metadata.study_intervention)
+        })
+    } else {
+      this.initForm(this.initialData)
+    }
   },
   methods: {
+    initForm(data) {
+      this.form = { ...data }
+      if (!this.form.planned_study_length) {
+        this.form.planned_study_length = {}
+      }
+      for (const prop of [
+        'intervention_type_code',
+        'control_type_code',
+        'intervention_model_code',
+        'trial_blinding_schema_code',
+      ]) {
+        if (this.form[prop]) {
+          this.form[prop].sponsor_preferred_name = this.form[prop].name
+        }
+      }
+      if (this.form.trial_intent_types_codes) {
+        for (const item of this.form.trial_intent_types_codes) {
+          item.sponsor_preferred_name = item.name
+        }
+      }
+      this.formStore.save(this.form)
+    },
     setNullValueTrialIntentTypesCodes() {
       this.form.trial_intent_types_codes = []
       if (this.form.trial_intent_types_null_value_code) {

@@ -280,7 +280,9 @@ export default {
     editedActivity: {
       handler(value) {
         if (value) {
-          this.initForm(value)
+          activities.getObject(source, value.uid).then((resp) => {
+            this.initForm(resp.data)
+          })
         }
         if (this.editedActivity && this.activities.length > 0) {
           this.setActivityGroupings()

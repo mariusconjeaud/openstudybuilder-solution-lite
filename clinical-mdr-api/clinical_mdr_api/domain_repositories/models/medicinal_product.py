@@ -1,4 +1,4 @@
-from neomodel import One, RelationshipTo, ZeroOrMore
+from neomodel import One, RelationshipFrom, RelationshipTo, ZeroOrMore, ZeroOrOne
 
 from clinical_mdr_api.domain_repositories.models.compounds import CompoundRoot
 from clinical_mdr_api.domain_repositories.models.concepts import (
@@ -19,6 +19,10 @@ from clinical_mdr_api.domain_repositories.models.pharmaceutical_product import (
 
 
 class MedicinalProductValue(ConceptValue):
+    medicinal_product_root = RelationshipFrom(
+        "MedicinalProductRoot", "HAS_VERSION", model=VersionRelationship
+    )
+
     has_pharmaceutical_product = RelationshipTo(
         PharmaceuticalProductRoot,
         "HAS_PHARMACEUTICAL_PRODUCT",
@@ -32,12 +36,12 @@ class MedicinalProductValue(ConceptValue):
         model=ClinicalMdrRel,
     )
     has_delivery_device = RelationshipTo(
-        CTTermRoot, "HAS_DELIVERY_DEVICE", cardinality=ZeroOrMore, model=ClinicalMdrRel
+        CTTermRoot, "HAS_DELIVERY_DEVICE", cardinality=ZeroOrOne, model=ClinicalMdrRel
     )
     has_dispenser = RelationshipTo(
         CTTermRoot,
         "HAS_DISPENSER",
-        cardinality=ZeroOrMore,
+        cardinality=ZeroOrOne,
         model=ClinicalMdrRel,
     )
     has_dose_value = RelationshipTo(
@@ -49,7 +53,7 @@ class MedicinalProductValue(ConceptValue):
     has_dose_frequency = RelationshipTo(
         CTTermRoot,
         "HAS_DOSE_FREQUENCY",
-        cardinality=ZeroOrMore,
+        cardinality=ZeroOrOne,
         model=ClinicalMdrRel,
     )
 

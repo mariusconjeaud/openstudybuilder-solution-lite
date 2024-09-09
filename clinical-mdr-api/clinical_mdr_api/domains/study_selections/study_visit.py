@@ -135,6 +135,10 @@ class StudyVisitVO:
 
     repeating_frequency: VisitRepeatingFrequencyNamedTuple | None = None
 
+    study_id: str | None = None
+    study_id_prefix: str | None = None
+    study_number: str | None = None
+
     @property
     def visit_name(self):
         if self.visit_class != VisitClass.MANUALLY_DEFINED_VISIT:
@@ -144,7 +148,7 @@ class StudyVisitVO:
     def derive_visit_name(self):
         if self.visit_class != VisitClass.MANUALLY_DEFINED_VISIT:
             if self.visit_subclass == VisitSubclass.REPEATING_VISIT:
-                return f"Visit {int(self.visit_number)}.N"
+                return f"Visit {int(self.visit_number)}.n"
             return f"Visit {int(self.visit_number)}"
         return self.visit_name_sc.name
 
@@ -165,7 +169,7 @@ class StudyVisitVO:
             visit_short_name = f"{visit_prefix}{visit_number}"
 
             if self.visit_subclass == VisitSubclass.REPEATING_VISIT:
-                return visit_short_name + ".N"
+                return visit_short_name + ".n"
 
             if (
                 self.visit_subclass

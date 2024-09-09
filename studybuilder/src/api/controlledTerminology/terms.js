@@ -82,7 +82,11 @@ const knownCodelists = {
   },
   footnoteSubCategories: {
     attribute: 'codelist_name',
-    value: 'Footnoe Sub Category',
+    value: 'Footnote Sub Category',
+  },
+  repeatingVisitFrequency: {
+    attribute: 'codelist_name',
+    value: 'Repeating Visit Frequency',
   },
 }
 
@@ -90,10 +94,13 @@ export default {
   getAll(params) {
     return repository.get(resource, { params })
   },
-  getByCodelist(name, getAll) {
+  getByCodelist(name, options) {
     const codelist = knownCodelists[name]
     if (codelist !== undefined) {
-      const params = { page_size: getAll ? 0 : 100 }
+      const params = { page_size: options?.all ? 0 : 100 }
+      if (!options?.unSorted) {
+        params.sort_by = JSON.stringify({ 'name.sponsor_preferred_name': true })
+      }
       params[codelist.attribute] = codelist.value
       return repository.get(`${resource}`, { params })
     }

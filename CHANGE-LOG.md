@@ -1,5 +1,177 @@
 # OpenStudyBuilder Commits changelog
 
+## V 0.10.0
+
+## Fixes and Enhancements
+
+- The automatic visit numbering and naming functionality now support naming a visit as 'Visit 0' when the first visit in the study timeline is defined as an information visit.
+- CDISC USDM generation is now integrated into the native API and can also be displayed and downloaded under the menu Studies -> View Specifications -> USDM.
+- Introducing a new visit subclass called Repeating visit, which can typically be used in non-interventional studies. It is useful when participants need to return for the same visit multiple times based on their individual needs (for example, one participant may come to visit 3 five times, while another may have 10 visits as visit 3). If there are any requirements about the repetition of such visits (daily, weekly, monthly), then it can be defined via the Repeating frequency item. Note that Repeating visits should be used if you do not know in advance the number of repeats that will occur. If a fixed number of similar visits is planned, then these should be created as single scheduled visits and grouped in a consecutive visit group. Please find more details in the StudyBuilder Documentation Portal.
+- Compound API partly prepared for refactoring, but functionality is not yet enabled for use.
+- The API supports returning study selections related to sponsor and CDISC CT for the specific CT package selected for the study.
+- It is now possible to edit and delete Clinical Programmes and Project on the Admin Definitions pages in Library.
+- Study Visits can be marked as a SoA milestone, and then the related visit type can be displayed in the protocol SoA table header. On the protocol SoA page you can decide to display the SoA milestone, the study epochs, or both. The SoA milestones can also be displayed on the Study Design figure.
+- Various performance improvements for Activities in Library
+- When adding a study visit, the list of "Existing visits Names and Timing" can now show visit timing as either Week or Day depending on what "Time unit" the user selects in the Add study visit form. A sticky bar has been added to all History pages making actions for download or closing the window easy available at all times without the need for scrolling.
+- When adding Activities from other studies it is now possible to search for a study to select from by using its acronym instead of the study id.
+- Selected components in tables (eg. search fields, filter, dropdowns and action buttons) of the StudyBuilder user interface have been aligned to the Novo Nordisk design system to increase the visual consistency of the user interface.
+- Front-end refreshes data from the back-end on switching pages/tabs
+- Redesign of the Schedule of Activities and the footnotes section has been initiated. Among other improvements several of the SoA tabs have been combined into one tab.
+
+## New Features
+
+- New Neodash report to search and list CT code list and terms with history evolution over time.
+- First version of StudyBuilder Consumer API exposing GET /studies endpoint
+- A "Reports" button have been added to the top bar. Clicking this button opens a landing page in a new tab where existing NeoDash reports and dashboards are available. These reports can be used to deep dive in the standards and study information available in the StudyBuilder database.
+
+
+Solved Bugs
+============
+
+### Library
+
+#### Code Lists -> CT Catalogues
+
+- Search bar has to be reloaded to show records when the search delivered none results
+
+#### Code Lists -> Sponsor -> All
+
+- Code list 'search with terms' creates duplicate search string and errors
+
+#### Concepts -> Activities -> Activities
+
+- Even after clearing the filter value the resulting rows are still showing in the window
+- Filter does not return the full list of relevant results
+- Filter on 'activity status=final' is not effective after selection of an activity
+
+#### Concepts -> Activities -> Activity Groups
+
+- Filter issues in library activity groups
+- Search term is not removed when the page is refreshed
+
+#### Concepts -> Activities -> Activity Instances 
+
+- Wrong breadcrumbs (i.e. Navigation path) shown in Library section when navigated via Studies
+
+#### Syntax Templates
+
+- Adding missing new_version_default_description entry in locales
+
+#### Syntax Templates -> Criteria Templates
+
+- Audit trail part not working as expected both in Parent and Pre-instance of Inclusion criteria
+
+#### Syntax Templates -> Criteria Templates -> Exclusion -> Parent
+
+- Default filters are not selectable again after being removed
+
+#### Syntax Templates -> Criteria Templates -> Inclusion -> Parent
+
+- Error in header values when filtering in criteria templates
+
+#### Syntax Templates -> Endpoints
+
+- Endpoint template added twice at the same time
+
+#### Syntax templates -> Objective templates -> Pre-instance
+
+- For pre-instances unit is in uppercase if put it in start of sentence
+
+### Studies
+
+#### About Studies
+
+- text in 'View Listing' is wrong
+
+#### Define Study -> Registry Identifiers
+
+- Edit form not reloading field values (after entry)
+
+#### Define Study -> Study Activities
+
+- Reload SoA Preferences & Time Unit when switching SoA tabs and opening SoA Settings
+
+#### Define Study -> Study Activities -> Study Activities
+
+- Removing search time does not update view
+
+#### Define Study -> Study Criteria 
+
+- When adding a Criteria based on a parent template from the Library, if the table on the screen has not loaded completely after toggling from pre-instances to parents, then the application throws an error
+
+#### Define Study -> Study Criteria -> Inclusion Criteria
+
+- Error in number of rows displayed per page
+
+#### Define Study -> Study Population
+
+- selection for PINF in study population disappears
+
+#### Define Study -> Study Purpose -> Study Objectives
+
+- Not possible to copy objectives from another study
+
+#### Define Study -> Study Structure -> Study Cohorts
+
+- Cohort short name 20 char limit not working
+
+#### Define Study -> Study Structure -> Study Visits
+
+- Duplicating study visits reverts table length to 10 items
+- Fields visit number 1 and visit name visit 1 are not unique of the study as a manually defined value exists for study 7751
+
+#### Define Study-> Study Criteria-> Inclusion Criteria
+
+- Activity groups are Title case inside sentences in Inclusion criteria
+- Cannot able to view more than 10 rows in Inclusion criteria
+
+#### General
+
+- Study set-up user cannot save endpoints, error message is appearing for Study ends with 8182
+
+#### Manage Study -> Study ->  Study Core Attributes
+
+- Cannot edit study acronym from study core attributes
+
+#### Studies
+
+- Studies main page - studies page has non functional buttons
+
+#### Study List
+
+- Sorting is not working in the 'Study list' menu
+
+
+## V 0.9.2
+
+New Features and Enhancements
+============
+No new features and/or enhancements are added
+
+Solved Bugs
+============
+
+### Library
+
+#### Concepts -> Activities -> Requested Activities
+
+- Activity requests are missing from the 'Requested Activities' tab under 'Activities' in the Library
+
+### Studies
+
+#### Define Study -> Study Activities -> Study Activities
+
+- Unable to change the SoA groups
+
+#### Define Study -> Study Activities ->Activities
+
+- Missing activities in "Studies" part compared with "Libary" part
+
+#### Define Study -> Study Structure -> Study Visits
+
+- Bulk edit for study visits not working
+- When editing study visits the existing timing value is cleared
+
 ## V 0.9.1
 
 New Features and Enhancements

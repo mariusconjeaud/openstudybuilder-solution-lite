@@ -12,6 +12,7 @@
     <v-window v-model="tab" class="bg-white">
       <v-window-item value="models">
         <DataExchangeStandardsModelsView
+          :key="`models-${tabKeys.models}`"
           :headers="modelsHeaders"
           uid="SDTM"
           :redirect-model="redirectModel"
@@ -20,6 +21,7 @@
       </v-window-item>
       <v-window-item value="SDTMIG">
         <DataExchangeStandardsGuideView
+          :key="`SDTMIG-${tabKeys.SDTMIG}`"
           :headers="igHeaders"
           uid="SDTMIG"
           :redirect-guide="redirectGuide"
@@ -29,6 +31,7 @@
       </v-window-item>
       <v-window-item value="SDTMIG__AP">
         <DataExchangeStandardsGuideView
+          :key="`SDTMIG__AP-${tabKeys.SDTMIG__AP}`"
           :headers="igHeaders"
           uid="SDTMIG__AP"
           :redirect-guide="redirectGuide"
@@ -38,6 +41,7 @@
       </v-window-item>
       <v-window-item value="SDTMIG__MD">
         <DataExchangeStandardsGuideView
+          :key="`SDTMIG__MD-${tabKeys.SDTMIG__MD}`"
           :headers="igHeaders"
           uvalue="SDTMIG__MD"
           :redirect-guide="redirectGuide"
@@ -47,6 +51,7 @@
       </v-window-item>
       <v-window-item value="SENDIG">
         <DataExchangeStandardsGuideView
+          :key="`SENDIG-${tabKeys.SENDIG}`"
           :headers="igHeaders"
           uvalue="SENDIG"
           :redirect-guide="redirectGuide"
@@ -56,6 +61,7 @@
       </v-window-item>
       <v-window-item value="SENDIG__AR">
         <DataExchangeStandardsGuideView
+          :key="`SENDIG__AR-${tabKeys.SENDIG__AR}`"
           :headers="igHeaders"
           uvalue="SENDIG__AR"
           :redirect-guide="redirectGuide"
@@ -65,6 +71,7 @@
       </v-window-item>
       <v-window-item value="SENDIG__DART">
         <DataExchangeStandardsGuideView
+          :key="`SENDIG__DART-${tabKeys.SENDIG__DART}`"
           :headers="igHeaders"
           uvalue="SENDIG__DART"
           :redirect-guide="redirectGuide"
@@ -74,6 +81,7 @@
       </v-window-item>
       <v-window-item value="SENDIG__GENETOX">
         <DataExchangeStandardsGuideView
+          :key="`SENDIG__GENETOX-${tabKeys.SENDIG__GENETOX}`"
           :headers="igHeaders"
           uid="SENDIG__GENETOX"
           :redirect-guide="redirectGuide"
@@ -90,6 +98,7 @@ import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { useAppStore } from '@/stores/app'
+import { useTabKeys } from '@/composables/tabKeys'
 import DataExchangeStandardsModelsView from '@/components/library/DataExchangeStandardsModelsView.vue'
 import DataExchangeStandardsGuideView from '@/components/library/DataExchangeStandardsGuideView.vue'
 import HelpButton from '@/components/tools/HelpButton.vue'
@@ -98,6 +107,7 @@ const appStore = useAppStore()
 const { t } = useI18n()
 const router = useRouter()
 const route = useRoute()
+const { tabKeys, updateTabKey } = useTabKeys()
 
 const tab = ref(0)
 const tabs = ref([
@@ -151,6 +161,7 @@ watch(tab, (newValue) => {
     name: 'Sdtm',
     params: { tab: newValue },
   })
+  updateTabKey(newValue)
   appStore.addBreadcrumbsLevel(
     tabName,
     { name: 'Sdtm', params: { tab: tabName } },

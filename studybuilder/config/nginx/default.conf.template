@@ -30,6 +30,10 @@ server {
         proxy_pass http://$API_HOST:$API_PORT/;
     }
 
+    location $CONSUMER_API_PATH {
+        proxy_pass http://$CONSUMER_API_HOST:$CONSUMER_API_PORT/;
+    }
+
     location $DOC_PATH {
         proxy_pass http://$DOC_HOST:$DOC_PORT/;
     }

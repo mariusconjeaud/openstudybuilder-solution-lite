@@ -7,6 +7,7 @@ from clinical_mdr_api.domain_repositories.projects.project_repository import (
     ProjectRepository,
 )
 from clinical_mdr_api.domains.projects.project import ProjectAR
+from clinical_mdr_api.exceptions import NotFoundException
 from clinical_mdr_api.tests.unit.domain.utils import random_opt_str, random_str
 
 
@@ -85,11 +86,10 @@ class TestProjectRepositoryImpl(unittest.TestCase):
         repo = ProjectRepository()
         project_mock.nodes.get_or_none.return_value = None
 
-        # when
-        project_ar: ProjectAR | None = repo.find_by_uid(random_str())
-
         # then
-        self.assertIsNone(project_ar)
+        with self.assertRaises(NotFoundException):
+            # when
+            repo.find_by_uid(random_str())
 
     @patch(ProjectRepository.__module__ + ".Project")
     def test__find_all_mocked_projects_exist(self, project_mock):

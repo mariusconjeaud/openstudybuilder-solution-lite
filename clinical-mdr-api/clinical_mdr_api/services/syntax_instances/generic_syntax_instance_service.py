@@ -77,7 +77,7 @@ class GenericSyntaxInstanceService(GenericSyntaxService[_AggregateRootType], abc
         """
         return self.template_repository_interface()
 
-    def _get_parameter_term(self, uid: str) -> str:
+    def _get_parameter_term(self, uid: str) -> tuple[str, list[str]]:
         """
         Return parameter term based on uid
         """
@@ -85,7 +85,9 @@ class GenericSyntaxInstanceService(GenericSyntaxService[_AggregateRootType], abc
         for allowed_parameter in self._allowed_parameters:
             params.extend(allowed_parameter["terms"])
         params_dict = {item["uid"]: item for item in params}
-        return params_dict.get(uid, {}).get("name")
+        return params_dict.get(uid, {}).get("name"), params_dict.get(uid, {}).get(
+            "labels"
+        )
 
     def create_ar_from_input_values(
         self,
@@ -315,6 +317,7 @@ class GenericSyntaxInstanceService(GenericSyntaxService[_AggregateRootType], abc
                             "name"
                         ],  # Item is used out of context of the for-loop
                         conjunction=parameter.conjunction,
+                        labels=parameter.labels,
                         parameters=uids,
                     )
                     parameter_terms.append(pve)
@@ -341,6 +344,7 @@ class GenericSyntaxInstanceService(GenericSyntaxService[_AggregateRootType], abc
                         # pylint: disable=undefined-loop-variable
                         parameter_name=item.type,
                         conjunction=parameter.conjunction,
+                        labels=parameter.labels,
                         parameters=uids,
                     )
                     parameter_terms.append(pve)

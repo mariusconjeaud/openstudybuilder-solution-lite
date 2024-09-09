@@ -106,7 +106,11 @@ def create_ct_term(
     ct_term_attributes_ar = CTTermAttributesAR.from_input_values(
         author="TOOD",
         ct_term_attributes_vo=CTTermAttributesVO.from_input_values(
-            codelists=[CTTermCodelistVO(codelist_uid=codelist, order=order)],
+            codelists=[
+                CTTermCodelistVO(
+                    codelist_uid=codelist, order=order, library_name=library_name
+                )
+            ],
             catalogue_name=catalogue_name,
             code_submission_value=code_submission_value,
             name_submission_value=name_submission_value,
@@ -125,7 +129,11 @@ def create_ct_term(
 
     CTTermAttributesService().approve(uid)
     term_vo = CTTermNameVO.from_repository_values(
-        codelists=[CTTermCodelistVO(codelist_uid=codelist, order=order)],
+        codelists=[
+            CTTermCodelistVO(
+                codelist_uid=codelist, order=order, library_name=library_name
+            )
+        ],
         catalogue_name=catalogue_name,
         name=name,
         name_sentence_case=name.capitalize(),

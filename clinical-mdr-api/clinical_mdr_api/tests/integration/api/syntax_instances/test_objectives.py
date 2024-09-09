@@ -235,14 +235,14 @@ OBJECTIVE_FIELDS_ALL = [
     "possible_actions",
     "parameter_terms",
     "library",
-    "objective_template",
+    "template",
     "study_count",
 ]
 
 OBJECTIVE_FIELDS_NOT_NULL = [
     "uid",
     "name",
-    "objective_template",
+    "template",
 ]
 
 
@@ -260,8 +260,8 @@ def test_get_objective(api_client):
 
     assert res["uid"] == objectives[0].uid
     assert res["name"] == f"Default name with [{text_value_1.name_sentence_case}]"
-    assert res["objective_template"]["uid"] == objective_template.uid
-    assert res["objective_template"]["sequence_id"] == "O1"
+    assert res["template"]["uid"] == objective_template.uid
+    assert res["template"]["sequence_id"] == "O1"
     assert res["parameter_terms"][0]["terms"][0]["uid"] == text_value_1.uid
     assert (
         res["parameter_terms"][0]["terms"][0]["name"] == text_value_1.name_sentence_case
@@ -509,8 +509,8 @@ def test_create_objective(api_client):
     assert response.status_code == 201
     assert res["uid"]
     assert res["name"] == f"Default name with [{text_value.name_sentence_case}]"
-    assert res["objective_template"]["uid"] == objective_template.uid
-    assert res["objective_template"]["sequence_id"] == "O1"
+    assert res["template"]["uid"] == objective_template.uid
+    assert res["template"]["sequence_id"] == "O1"
     assert res["parameter_terms"][0]["terms"][0]["uid"] == text_value.uid
     assert (
         res["parameter_terms"][0]["terms"][0]["name"] == text_value.name_sentence_case
@@ -589,8 +589,8 @@ def test_update_objective(api_client):
     assert response.status_code == 200
     assert res["uid"]
     assert res["name"] == f"Default name with [{text_value_2.name_sentence_case}]"
-    assert res["objective_template"]["uid"] == objective_template.uid
-    assert res["objective_template"]["sequence_id"] == "O1"
+    assert res["template"]["uid"] == objective_template.uid
+    assert res["template"]["sequence_id"] == "O1"
     assert res["parameter_terms"][0]["terms"][0]["uid"] == text_value_2.uid
     assert (
         res["parameter_terms"][0]["terms"][0]["name"] == text_value_2.name_sentence_case
@@ -667,8 +667,8 @@ def test_preview_objective(api_client):
     assert response.status_code == 200
     assert res["uid"]
     assert res["name"] == f"Default name with [{text_value.name_sentence_case}]"
-    assert res["objective_template"]["uid"] == objective_template.uid
-    assert res["objective_template"]["sequence_id"] == "O1"
+    assert res["template"]["uid"] == objective_template.uid
+    assert res["template"]["sequence_id"] == "O1"
     assert res["parameter_terms"][0]["terms"][0]["uid"] == text_value.uid
     assert (
         res["parameter_terms"][0]["terms"][0]["name"] == text_value.name_sentence_case

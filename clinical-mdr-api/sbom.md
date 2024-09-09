@@ -3,34 +3,36 @@
 - asyncache==0.3.1
 └── cachetools [required: >=5.2.0,<6.0.0, installed: 5.3.3]
 - Authlib==1.1.0
-└── cryptography [required: >=3.2, installed: 42.0.5]
+└── cryptography [required: >=3.2, installed: 42.0.8]
     └── cffi [required: >=1.12, installed: 1.16.0]
         └── pycparser [required: Any, installed: 2.22]
 - Brotli==1.1.0
 - colour==0.1.5
-- deepdiff==6.2.3
-├── ordered-set [required: >=4.0.2,<4.2.0, installed: 4.1.0]
-└── orjson [required: Any, installed: 3.10.3]
+- deepdiff==7.0.1
+└── ordered-set [required: >=4.1.0,<4.2.0, installed: 4.1.0]
 - Deprecated==1.2.14
 └── wrapt [required: >=1.10,<2, installed: 1.16.0]
 - dict2xml==1.7.5
+- email-validator==2.2.0
+├── dnspython [required: >=2.0.0, installed: 2.6.1]
+└── idna [required: >=2.0.0, installed: 3.7]
 - fastapi==0.92.0
-├── pydantic [required: >=1.6.2,<2.0.0,!=1.8.1,!=1.8,!=1.7.3,!=1.7.2,!=1.7.1,!=1.7, installed: 1.10.15]
-│   └── typing-extensions [required: >=4.2.0, installed: 4.11.0]
+├── pydantic [required: >=1.6.2,<2.0.0,!=1.8.1,!=1.8,!=1.7.3,!=1.7.2,!=1.7.1,!=1.7, installed: 1.10.17]
+│   └── typing-extensions [required: >=4.2.0, installed: 4.12.2]
 └── starlette [required: >=0.25.0,<0.26.0, installed: 0.25.0]
-    └── anyio [required: >=3.4.0,<5, installed: 4.3.0]
+    └── anyio [required: >=3.4.0,<5, installed: 4.4.0]
         ├── idna [required: >=2.8, installed: 3.7]
         └── sniffio [required: >=1.1, installed: 1.3.1]
 - GitPython==3.1.43
 └── gitdb [required: >=4.0.1,<5, installed: 4.0.11]
     └── smmap [required: >=3.0.1,<6, installed: 5.0.1]
 - httpx==0.23.3
-├── certifi [required: Any, installed: 2024.2.2]
+├── certifi [required: Any, installed: 2024.6.2]
 ├── httpcore [required: >=0.15.0,<0.17.0, installed: 0.16.3]
-│   ├── anyio [required: >=3.0,<5.0, installed: 4.3.0]
+│   ├── anyio [required: >=3.0,<5.0, installed: 4.4.0]
 │   │   ├── idna [required: >=2.8, installed: 3.7]
 │   │   └── sniffio [required: >=1.1, installed: 1.3.1]
-│   ├── certifi [required: Any, installed: 2024.2.2]
+│   ├── certifi [required: Any, installed: 2024.6.2]
 │   ├── h11 [required: >=0.13,<0.15, installed: 0.14.0]
 │   └── sniffio [required: ==1.*, installed: 1.3.1]
 ├── rfc3986 [required: >=1.3,<2, installed: 1.5.0]
@@ -38,7 +40,7 @@
 - hypothesis==6.54.6
 ├── attrs [required: >=19.2.0, installed: 23.2.0]
 └── sortedcontainers [required: >=2.1.0,<3.0.0, installed: 2.4.0]
-- Jinja2==3.1.3
+- jinja2==3.1.4
 └── MarkupSafe [required: >=2.0, installed: 2.1.5]
 - neomodel==5.1.2
 ├── neo4j [required: ==5.12.0, installed: 5.12.0]
@@ -47,78 +49,78 @@
 ├── pytz [required: >=2021.1, installed: 2024.1]
 └── six [required: ==1.16.0, installed: 1.16.0]
 - opencensus-ext-azure==1.1.13
-├── azure-core [required: >=1.12.0,<2.0.0, installed: 1.30.1]
+├── azure-core [required: >=1.12.0,<2.0.0, installed: 1.30.2]
 │   ├── requests [required: >=2.21.0, installed: 2.28.2]
-│   │   ├── certifi [required: >=2017.4.17, installed: 2024.2.2]
+│   │   ├── certifi [required: >=2017.4.17, installed: 2024.6.2]
 │   │   ├── charset-normalizer [required: >=2,<4, installed: 3.3.2]
 │   │   ├── idna [required: >=2.5,<4, installed: 3.7]
-│   │   └── urllib3 [required: >=1.21.1,<1.27, installed: 1.26.18]
+│   │   └── urllib3 [required: >=1.21.1,<1.27, installed: 1.26.19]
 │   ├── six [required: >=1.11.0, installed: 1.16.0]
-│   └── typing-extensions [required: >=4.6.0, installed: 4.11.0]
-├── azure-identity [required: >=1.5.0,<2.0.0, installed: 1.16.0]
-│   ├── azure-core [required: >=1.23.0, installed: 1.30.1]
+│   └── typing-extensions [required: >=4.6.0, installed: 4.12.2]
+├── azure-identity [required: >=1.5.0,<2.0.0, installed: 1.17.1]
+│   ├── azure-core [required: >=1.23.0, installed: 1.30.2]
 │   │   ├── requests [required: >=2.21.0, installed: 2.28.2]
-│   │   │   ├── certifi [required: >=2017.4.17, installed: 2024.2.2]
+│   │   │   ├── certifi [required: >=2017.4.17, installed: 2024.6.2]
 │   │   │   ├── charset-normalizer [required: >=2,<4, installed: 3.3.2]
 │   │   │   ├── idna [required: >=2.5,<4, installed: 3.7]
-│   │   │   └── urllib3 [required: >=1.21.1,<1.27, installed: 1.26.18]
+│   │   │   └── urllib3 [required: >=1.21.1,<1.27, installed: 1.26.19]
 │   │   ├── six [required: >=1.11.0, installed: 1.16.0]
-│   │   └── typing-extensions [required: >=4.6.0, installed: 4.11.0]
-│   ├── cryptography [required: >=2.5, installed: 42.0.5]
+│   │   └── typing-extensions [required: >=4.6.0, installed: 4.12.2]
+│   ├── cryptography [required: >=2.5, installed: 42.0.8]
 │   │   └── cffi [required: >=1.12, installed: 1.16.0]
 │   │       └── pycparser [required: Any, installed: 2.22]
-│   ├── msal [required: >=1.24.0, installed: 1.28.0]
-│   │   ├── cryptography [required: >=0.6,<45, installed: 42.0.5]
+│   ├── msal [required: >=1.24.0, installed: 1.29.0]
+│   │   ├── cryptography [required: >=2.5,<45, installed: 42.0.8]
 │   │   │   └── cffi [required: >=1.12, installed: 1.16.0]
 │   │   │       └── pycparser [required: Any, installed: 2.22]
 │   │   ├── PyJWT [required: >=1.0.0,<3, installed: 2.8.0]
 │   │   └── requests [required: >=2.0.0,<3, installed: 2.28.2]
-│   │       ├── certifi [required: >=2017.4.17, installed: 2024.2.2]
+│   │       ├── certifi [required: >=2017.4.17, installed: 2024.6.2]
 │   │       ├── charset-normalizer [required: >=2,<4, installed: 3.3.2]
 │   │       ├── idna [required: >=2.5,<4, installed: 3.7]
-│   │       └── urllib3 [required: >=1.21.1,<1.27, installed: 1.26.18]
-│   └── msal-extensions [required: >=0.3.0, installed: 1.1.0]
-│       ├── msal [required: >=0.4.1,<2.0.0, installed: 1.28.0]
-│       │   ├── cryptography [required: >=0.6,<45, installed: 42.0.5]
-│       │   │   └── cffi [required: >=1.12, installed: 1.16.0]
-│       │   │       └── pycparser [required: Any, installed: 2.22]
-│       │   ├── PyJWT [required: >=1.0.0,<3, installed: 2.8.0]
-│       │   └── requests [required: >=2.0.0,<3, installed: 2.28.2]
-│       │       ├── certifi [required: >=2017.4.17, installed: 2024.2.2]
-│       │       ├── charset-normalizer [required: >=2,<4, installed: 3.3.2]
-│       │       ├── idna [required: >=2.5,<4, installed: 3.7]
-│       │       └── urllib3 [required: >=1.21.1,<1.27, installed: 1.26.18]
-│       ├── packaging [required: Any, installed: 24.0]
-│       └── portalocker [required: >=1.0,<3, installed: 2.8.2]
+│   │       └── urllib3 [required: >=1.21.1,<1.27, installed: 1.26.19]
+│   ├── msal-extensions [required: >=0.3.0, installed: 1.2.0]
+│   │   ├── msal [required: >=1.29,<2, installed: 1.29.0]
+│   │   │   ├── cryptography [required: >=2.5,<45, installed: 42.0.8]
+│   │   │   │   └── cffi [required: >=1.12, installed: 1.16.0]
+│   │   │   │       └── pycparser [required: Any, installed: 2.22]
+│   │   │   ├── PyJWT [required: >=1.0.0,<3, installed: 2.8.0]
+│   │   │   └── requests [required: >=2.0.0,<3, installed: 2.28.2]
+│   │   │       ├── certifi [required: >=2017.4.17, installed: 2024.6.2]
+│   │   │       ├── charset-normalizer [required: >=2,<4, installed: 3.3.2]
+│   │   │       ├── idna [required: >=2.5,<4, installed: 3.7]
+│   │   │       └── urllib3 [required: >=1.21.1,<1.27, installed: 1.26.19]
+│   │   └── portalocker [required: >=1.4,<3, installed: 2.10.0]
+│   └── typing-extensions [required: >=4.0.0, installed: 4.12.2]
 ├── opencensus [required: >=0.11.4,<1.0.0, installed: 0.11.4]
 │   ├── google-api-core [required: >=1.0.0,<3.0.0, installed: 2.19.0]
-│   │   ├── google-auth [required: >=2.14.1,<3.0.dev0, installed: 2.29.0]
+│   │   ├── google-auth [required: >=2.14.1,<3.0.dev0, installed: 2.30.0]
 │   │   │   ├── cachetools [required: >=2.0.0,<6.0, installed: 5.3.3]
 │   │   │   ├── pyasn1-modules [required: >=0.2.1, installed: 0.4.0]
 │   │   │   │   └── pyasn1 [required: >=0.4.6,<0.7.0, installed: 0.6.0]
 │   │   │   └── rsa [required: >=3.1.4,<5, installed: 4.9]
 │   │   │       └── pyasn1 [required: >=0.1.3, installed: 0.6.0]
-│   │   ├── googleapis-common-protos [required: >=1.56.2,<2.0.dev0, installed: 1.63.0]
-│   │   │   └── protobuf [required: >=3.19.5,<5.0.0.dev0,!=4.21.5,!=4.21.4,!=4.21.3,!=4.21.2,!=4.21.1,!=3.20.1,!=3.20.0, installed: 4.25.3]
-│   │   ├── proto-plus [required: >=1.22.3,<2.0.0dev, installed: 1.23.0]
-│   │   │   └── protobuf [required: >=3.19.0,<5.0.0dev, installed: 4.25.3]
+│   │   ├── googleapis-common-protos [required: >=1.56.2,<2.0.dev0, installed: 1.63.1]
+│   │   │   └── protobuf [required: >=3.19.5,<6.0.0.dev0,!=4.21.5,!=4.21.4,!=4.21.3,!=4.21.2,!=4.21.1,!=3.20.1,!=3.20.0, installed: 4.25.3]
+│   │   ├── proto-plus [required: >=1.22.3,<2.0.0dev, installed: 1.24.0]
+│   │   │   └── protobuf [required: >=3.19.0,<6.0.0dev, installed: 4.25.3]
 │   │   ├── protobuf [required: >=3.19.5,<5.0.0.dev0,!=4.21.5,!=4.21.4,!=4.21.3,!=4.21.2,!=4.21.1,!=4.21.0,!=3.20.1,!=3.20.0, installed: 4.25.3]
 │   │   └── requests [required: >=2.18.0,<3.0.0.dev0, installed: 2.28.2]
-│   │       ├── certifi [required: >=2017.4.17, installed: 2024.2.2]
+│   │       ├── certifi [required: >=2017.4.17, installed: 2024.6.2]
 │   │       ├── charset-normalizer [required: >=2,<4, installed: 3.3.2]
 │   │       ├── idna [required: >=2.5,<4, installed: 3.7]
-│   │       └── urllib3 [required: >=1.21.1,<1.27, installed: 1.26.18]
+│   │       └── urllib3 [required: >=1.21.1,<1.27, installed: 1.26.19]
 │   ├── opencensus-context [required: >=0.1.3, installed: 0.1.3]
 │   └── six [required: ~=1.16, installed: 1.16.0]
-├── psutil [required: >=5.6.3, installed: 5.9.8]
+├── psutil [required: >=5.6.3, installed: 6.0.0]
 └── requests [required: >=2.19.0, installed: 2.28.2]
-    ├── certifi [required: >=2017.4.17, installed: 2024.2.2]
+    ├── certifi [required: >=2017.4.17, installed: 2024.6.2]
     ├── charset-normalizer [required: >=2,<4, installed: 3.3.2]
     ├── idna [required: >=2.5,<4, installed: 3.7]
-    └── urllib3 [required: >=1.21.1,<1.27, installed: 1.26.18]
+    └── urllib3 [required: >=1.21.1,<1.27, installed: 1.26.19]
 - python-docx==1.1.2
 ├── lxml [required: >=3.1.0, installed: 4.9.4]
-└── typing-extensions [required: >=4.9.0, installed: 4.11.0]
+└── typing-extensions [required: >=4.9.0, installed: 4.12.2]
 - python-jose==3.3.0
 ├── ecdsa [required: !=0.15, installed: 0.19.0]
 │   └── six [required: >=1.9.0, installed: 1.16.0]
@@ -128,10 +130,10 @@
 - python-multipart==0.0.9
 - starlette-context==0.3.4
 └── starlette [required: Any, installed: 0.25.0]
-    └── anyio [required: >=3.4.0,<5, installed: 4.3.0]
+    └── anyio [required: >=3.4.0,<5, installed: 4.4.0]
         ├── idna [required: >=2.8, installed: 3.7]
         └── sniffio [required: >=1.1, installed: 1.3.1]
-- usdm==0.39.0
+- usdm==0.51.0
 ├── bs4 [required: Any, installed: 0.0.2]
 │   └── beautifulsoup4 [required: Any, installed: 4.11.2]
 │       └── soupsieve [required: >1.2, installed: 2.5]
@@ -139,23 +141,26 @@
 │   ├── python-dateutil [required: Any, installed: 2.8.2]
 │   │   └── six [required: >=1.5, installed: 1.16.0]
 │   ├── six [required: >=1.10, installed: 1.16.0]
-│   └── urllib3 [required: >=1.25.3, installed: 1.26.18]
+│   └── urllib3 [required: >=1.25.3, installed: 1.26.19]
+├── fhir.resources [required: Any, installed: 7.0.2]
+│   └── pydantic [required: >=1.7.2,<2.0.0, installed: 1.10.17]
+│       └── typing-extensions [required: >=4.2.0, installed: 4.12.2]
 ├── openpyxl [required: Any, installed: 3.0.10]
 │   └── et-xmlfile [required: Any, installed: 1.1.0]
 ├── pandas [required: Any, installed: 2.2.2]
-│   ├── numpy [required: >=1.23.2, installed: 1.26.4]
+│   ├── numpy [required: >=1.23.2, installed: 2.0.0]
 │   ├── python-dateutil [required: >=2.8.2, installed: 2.8.2]
 │   │   └── six [required: >=1.5, installed: 1.16.0]
 │   ├── pytz [required: >=2020.1, installed: 2024.1]
 │   └── tzdata [required: >=2022.7, installed: 2024.1]
-├── pydantic [required: Any, installed: 1.10.15]
-│   └── typing-extensions [required: >=4.2.0, installed: 4.11.0]
+├── pydantic [required: Any, installed: 1.10.17]
+│   └── typing-extensions [required: >=4.2.0, installed: 4.12.2]
 ├── PyYAML [required: Any, installed: 6.0.1]
 ├── requests [required: Any, installed: 2.28.2]
-│   ├── certifi [required: >=2017.4.17, installed: 2024.2.2]
+│   ├── certifi [required: >=2017.4.17, installed: 2024.6.2]
 │   ├── charset-normalizer [required: >=2,<4, installed: 3.3.2]
 │   ├── idna [required: >=2.5,<4, installed: 3.7]
-│   └── urllib3 [required: >=1.21.1,<1.27, installed: 1.26.18]
+│   └── urllib3 [required: >=1.21.1,<1.27, installed: 1.26.19]
 ├── stringcase [required: Any, installed: 1.2.0]
 └── yattag [required: Any, installed: 1.14.0]
 - uvicorn==0.17.6
@@ -169,7 +174,7 @@
 │   ├── tinycss2 [required: Any, installed: 1.3.0]
 │   │   └── webencodings [required: >=0.4, installed: 0.5.1]
 │   └── webencodings [required: Any, installed: 0.5.1]
-├── fonttools [required: >=4.0.0, installed: 4.51.0]
+├── fonttools [required: >=4.0.0, installed: 4.53.0]
 ├── html5lib [required: >=1.1, installed: 1.1]
 │   ├── six [required: >=1.9, installed: 1.16.0]
 │   └── webencodings [required: Any, installed: 0.5.1]
@@ -978,6 +983,47 @@ THE SOFTWARE.
 
 ---
 
+### License for 3rd party library dnspython
+
+ISC License
+
+Copyright (C) Dnspython Contributors
+
+Permission to use, copy, modify, and/or distribute this software for
+any purpose with or without fee is hereby granted, provided that the
+above copyright notice and this permission notice appear in all
+copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
+WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
+AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
+
+
+
+Copyright (C) 2001-2017 Nominum, Inc.
+Copyright (C) Google Inc.
+
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose with or without fee is hereby granted,
+provided that the above copyright notice and this permission notice
+appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND NOMINUM DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL NOMINUM BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+
+---
+
 ### License for 3rd party library docraptor
 
 Copyright (c) 2010- Expected Behavior, LLC (http://expectedbehavior.com)
@@ -1023,6 +1069,39 @@ HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
+
+
+---
+
+### License for 3rd party library email_validator
+
+This is free and unencumbered software released into the public
+domain.
+
+Anyone is free to copy, modify, publish, use, compile, sell, or
+distribute this software, either in source code form or as a
+compiled binary, for any purpose, commercial or non-commercial,
+and by any means.
+
+In jurisdictions that recognize copyright laws, the author or
+authors of this software dedicate any and all copyright
+interest in the software to the public domain. We make this
+dedication for the benefit of the public at large and to the
+detriment of our heirs and successors. We intend this
+dedication to be an overt act of relinquishment in perpetuity
+of all present and future rights to this software under
+copyright law.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR
+ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+For more information, please refer to <https://unlicense.org/>
 
 
 ---
@@ -1090,6 +1169,44 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
+
+
+---
+
+### License for 3rd party library fhir.resources
+
+
+
+BSD License
+
+Copyright (c) 2019, Md Nazrul Islam
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice, this
+  list of conditions and the following disclaimer in the documentation and/or
+  other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from this
+  software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+OF THE POSSIBILITY OF SUCH DAMAGE.
+
 
 
 ---
@@ -2357,40 +2474,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ---
 
-### License for 3rd party library Jinja2
-
-Copyright 2007 Pallets
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are
-met:
-
-1.  Redistributions of source code must retain the above copyright
-    notice, this list of conditions and the following disclaimer.
-
-2.  Redistributions in binary form must reproduce the above copyright
-    notice, this list of conditions and the following disclaimer in the
-    documentation and/or other materials provided with the distribution.
-
-3.  Neither the name of the copyright holder nor the names of its
-    contributors may be used to endorse or promote products derived from
-    this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
-PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
-TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-
----
-
 ### License for 3rd party library lxml
 
 Copyright (c) 2004 Infrae. All rights reserved.
@@ -3052,7 +3135,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ### License for 3rd party library numpy
 
-Copyright (c) 2005-2023, NumPy Developers.
+Copyright (c) 2005-2024, NumPy Developers.
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -3093,20 +3176,15 @@ Files: numpy/linalg/lapack_lite/*
 License: BSD-3-Clause
   For details, see numpy/linalg/lapack_lite/LICENSE.txt
 
-Name: tempita
-Files: tools/npy_tempita/*
-License: MIT
-  For details, see tools/npy_tempita/license.txt
-
 Name: dragon4
-Files: numpy/core/src/multiarray/dragon4.c
+Files: numpy/_core/src/multiarray/dragon4.c
 License: MIT
-  For license text, see numpy/core/src/multiarray/dragon4.c
+  For license text, see numpy/_core/src/multiarray/dragon4.c
 
 Name: libdivide
-Files: numpy/core/include/numpy/libdivide/*
+Files: numpy/_core/include/numpy/libdivide/*
 License: Zlib
-  For license text, see numpy/core/include/numpy/libdivide/LICENSE.txt
+  For license text, see numpy/_core/include/numpy/libdivide/LICENSE.txt
 
 
 Note that the following files are vendored in the repository and sdist but not
@@ -4023,27 +4101,6 @@ License: LGPL-2.1-or-later
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
     Lesser General Public License for more details.
     https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
-  zlib License
-  ------------
-
-  Copyright (C) 2010 - 2019 ridiculous_fish, <libdivide@ridiculousfish.com>
-  Copyright (C) 2016 - 2019 Kim Walisch, <kim.walisch@gmail.com>
-
-  This software is provided 'as-is', without any express or implied
-  warranty.  In no event will the authors be held liable for any damages
-  arising from the use of this software.
-
-  Permission is granted to anyone to use this software for any purpose,
-  including commercial applications, and to alter it and redistribute it
-  freely, subject to the following restrictions:
-
-  1. The origin of this software must not be misrepresented; you must not
-     claim that you wrote the original software. If you use this software
-     in a product, an acknowledgment in the product documentation would be
-     appreciated but is not required.
-  2. Altered source versions must be plainly marked as such, and must not be
-     misrepresented as being the original software.
-  3. This notice may not be removed or altered from any source distribution.
 * Copyright (c) 2006, University of Georgia and Pierre G.F. Gerard-Marchant
 * All rights reserved.
 * Redistribution and use in source and binary forms, with or without
@@ -4067,7 +4124,28 @@ License: LGPL-2.1-or-later
 * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
 * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-* SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.**This software is dual-licensed under the The University of Illinois/NCSA
+* SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.  zlib License
+  ------------
+
+  Copyright (C) 2010 - 2019 ridiculous_fish, <libdivide@ridiculousfish.com>
+  Copyright (C) 2016 - 2019 Kim Walisch, <kim.walisch@gmail.com>
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the authors be held liable for any damages
+  arising from the use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely, subject to the following restrictions:
+
+  1. The origin of this software must not be misrepresented; you must not
+     claim that you wrote the original software. If you use this software
+     in a product, an acknowledgment in the product documentation would be
+     appreciated but is not required.
+  2. Altered source versions must be plainly marked as such, and must not be
+     misrepresented as being the original software.
+  3. This notice may not be removed or altered from any source distribution.
+**This software is dual-licensed under the The University of Illinois/NCSA
 Open Source License (NCSA) and The 3-Clause BSD License**
 
 # NCSA Open Source License
@@ -4396,445 +4474,6 @@ IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
 CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-
----
-
-### License for 3rd party library orjson
-
-Permission is hereby granted, free of charge, to any
-person obtaining a copy of this software and associated
-documentation files (the "Software"), to deal in the
-Software without restriction, including without
-limitation the rights to use, copy, modify, merge,
-publish, distribute, sublicense, and/or sell copies of
-the Software, and to permit persons to whom the Software
-is furnished to do so, subject to the following
-conditions:
-
-The above copyright notice and this permission notice
-shall be included in all copies or substantial portions
-of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
-ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
-TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
-PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
-SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
-IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-                              Apache License
-                        Version 2.0, January 2004
-                     http://www.apache.org/licenses/
-
-TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
-
-1. Definitions.
-
-   "License" shall mean the terms and conditions for use, reproduction,
-   and distribution as defined by Sections 1 through 9 of this document.
-
-   "Licensor" shall mean the copyright owner or entity authorized by
-   the copyright owner that is granting the License.
-
-   "Legal Entity" shall mean the union of the acting entity and all
-   other entities that control, are controlled by, or are under common
-   control with that entity. For the purposes of this definition,
-   "control" means (i) the power, direct or indirect, to cause the
-   direction or management of such entity, whether by contract or
-   otherwise, or (ii) ownership of fifty percent (50%) or more of the
-   outstanding shares, or (iii) beneficial ownership of such entity.
-
-   "You" (or "Your") shall mean an individual or Legal Entity
-   exercising permissions granted by this License.
-
-   "Source" form shall mean the preferred form for making modifications,
-   including but not limited to software source code, documentation
-   source, and configuration files.
-
-   "Object" form shall mean any form resulting from mechanical
-   transformation or translation of a Source form, including but
-   not limited to compiled object code, generated documentation,
-   and conversions to other media types.
-
-   "Work" shall mean the work of authorship, whether in Source or
-   Object form, made available under the License, as indicated by a
-   copyright notice that is included in or attached to the work
-   (an example is provided in the Appendix below).
-
-   "Derivative Works" shall mean any work, whether in Source or Object
-   form, that is based on (or derived from) the Work and for which the
-   editorial revisions, annotations, elaborations, or other modifications
-   represent, as a whole, an original work of authorship. For the purposes
-   of this License, Derivative Works shall not include works that remain
-   separable from, or merely link (or bind by name) to the interfaces of,
-   the Work and Derivative Works thereof.
-
-   "Contribution" shall mean any work of authorship, including
-   the original version of the Work and any modifications or additions
-   to that Work or Derivative Works thereof, that is intentionally
-   submitted to Licensor for inclusion in the Work by the copyright owner
-   or by an individual or Legal Entity authorized to submit on behalf of
-   the copyright owner. For the purposes of this definition, "submitted"
-   means any form of electronic, verbal, or written communication sent
-   to the Licensor or its representatives, including but not limited to
-   communication on electronic mailing lists, source code control systems,
-   and issue tracking systems that are managed by, or on behalf of, the
-   Licensor for the purpose of discussing and improving the Work, but
-   excluding communication that is conspicuously marked or otherwise
-   designated in writing by the copyright owner as "Not a Contribution."
-
-   "Contributor" shall mean Licensor and any individual or Legal Entity
-   on behalf of whom a Contribution has been received by Licensor and
-   subsequently incorporated within the Work.
-
-2. Grant of Copyright License. Subject to the terms and conditions of
-   this License, each Contributor hereby grants to You a perpetual,
-   worldwide, non-exclusive, no-charge, royalty-free, irrevocable
-   copyright license to reproduce, prepare Derivative Works of,
-   publicly display, publicly perform, sublicense, and distribute the
-   Work and such Derivative Works in Source or Object form.
-
-3. Grant of Patent License. Subject to the terms and conditions of
-   this License, each Contributor hereby grants to You a perpetual,
-   worldwide, non-exclusive, no-charge, royalty-free, irrevocable
-   (except as stated in this section) patent license to make, have made,
-   use, offer to sell, sell, import, and otherwise transfer the Work,
-   where such license applies only to those patent claims licensable
-   by such Contributor that are necessarily infringed by their
-   Contribution(s) alone or by combination of their Contribution(s)
-   with the Work to which such Contribution(s) was submitted. If You
-   institute patent litigation against any entity (including a
-   cross-claim or counterclaim in a lawsuit) alleging that the Work
-   or a Contribution incorporated within the Work constitutes direct
-   or contributory patent infringement, then any patent licenses
-   granted to You under this License for that Work shall terminate
-   as of the date such litigation is filed.
-
-4. Redistribution. You may reproduce and distribute copies of the
-   Work or Derivative Works thereof in any medium, with or without
-   modifications, and in Source or Object form, provided that You
-   meet the following conditions:
-
-   (a) You must give any other recipients of the Work or
-       Derivative Works a copy of this License; and
-
-   (b) You must cause any modified files to carry prominent notices
-       stating that You changed the files; and
-
-   (c) You must retain, in the Source form of any Derivative Works
-       that You distribute, all copyright, patent, trademark, and
-       attribution notices from the Source form of the Work,
-       excluding those notices that do not pertain to any part of
-       the Derivative Works; and
-
-   (d) If the Work includes a "NOTICE" text file as part of its
-       distribution, then any Derivative Works that You distribute must
-       include a readable copy of the attribution notices contained
-       within such NOTICE file, excluding those notices that do not
-       pertain to any part of the Derivative Works, in at least one
-       of the following places: within a NOTICE text file distributed
-       as part of the Derivative Works; within the Source form or
-       documentation, if provided along with the Derivative Works; or,
-       within a display generated by the Derivative Works, if and
-       wherever such third-party notices normally appear. The contents
-       of the NOTICE file are for informational purposes only and
-       do not modify the License. You may add Your own attribution
-       notices within Derivative Works that You distribute, alongside
-       or as an addendum to the NOTICE text from the Work, provided
-       that such additional attribution notices cannot be construed
-       as modifying the License.
-
-   You may add Your own copyright statement to Your modifications and
-   may provide additional or different license terms and conditions
-   for use, reproduction, or distribution of Your modifications, or
-   for any such Derivative Works as a whole, provided Your use,
-   reproduction, and distribution of the Work otherwise complies with
-   the conditions stated in this License.
-
-5. Submission of Contributions. Unless You explicitly state otherwise,
-   any Contribution intentionally submitted for inclusion in the Work
-   by You to the Licensor shall be under the terms and conditions of
-   this License, without any additional terms or conditions.
-   Notwithstanding the above, nothing herein shall supersede or modify
-   the terms of any separate license agreement you may have executed
-   with Licensor regarding such Contributions.
-
-6. Trademarks. This License does not grant permission to use the trade
-   names, trademarks, service marks, or product names of the Licensor,
-   except as required for reasonable and customary use in describing the
-   origin of the Work and reproducing the content of the NOTICE file.
-
-7. Disclaimer of Warranty. Unless required by applicable law or
-   agreed to in writing, Licensor provides the Work (and each
-   Contributor provides its Contributions) on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
-   implied, including, without limitation, any warranties or conditions
-   of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
-   PARTICULAR PURPOSE. You are solely responsible for determining the
-   appropriateness of using or redistributing the Work and assume any
-   risks associated with Your exercise of permissions under this License.
-
-8. Limitation of Liability. In no event and under no legal theory,
-   whether in tort (including negligence), contract, or otherwise,
-   unless required by applicable law (such as deliberate and grossly
-   negligent acts) or agreed to in writing, shall any Contributor be
-   liable to You for damages, including any direct, indirect, special,
-   incidental, or consequential damages of any character arising as a
-   result of this License or out of the use or inability to use the
-   Work (including but not limited to damages for loss of goodwill,
-   work stoppage, computer failure or malfunction, or any and all
-   other commercial damages or losses), even if such Contributor
-   has been advised of the possibility of such damages.
-
-9. Accepting Warranty or Additional Liability. While redistributing
-   the Work or Derivative Works thereof, You may choose to offer,
-   and charge a fee for, acceptance of support, warranty, indemnity,
-   or other liability obligations and/or rights consistent with this
-   License. However, in accepting such obligations, You may act only
-   on Your own behalf and on Your sole responsibility, not on behalf
-   of any other Contributor, and only if You agree to indemnify,
-   defend, and hold each Contributor harmless for any liability
-   incurred by, or claims asserted against, such Contributor by reason
-   of your accepting any such warranty or additional liability.
-
-END OF TERMS AND CONDITIONS
-
-APPENDIX: How to apply the Apache License to your work.
-
-   To apply the Apache License to your work, attach the following
-   boilerplate notice, with the fields enclosed by brackets "[]"
-   replaced with your own identifying information. (Don't include
-   the brackets!)  The text should be enclosed in the appropriate
-   comment syntax for the file format. We also recommend that a
-   file or class name and description of purpose be included on the
-   same "printed page" as the copyright notice for easier
-   identification within third-party archives.
-
-Copyright [yyyy] [name of copyright owner]
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-	http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-
----
-
-### License for 3rd party library packaging
-
-Copyright (c) Donald Stufft and individual contributors.
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-    1. Redistributions of source code must retain the above copyright notice,
-       this list of conditions and the following disclaimer.
-
-    2. Redistributions in binary form must reproduce the above copyright
-       notice, this list of conditions and the following disclaimer in the
-       documentation and/or other materials provided with the distribution.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-                                 Apache License
-                           Version 2.0, January 2004
-                        http://www.apache.org/licenses/
-
-   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
-
-   1. Definitions.
-
-      "License" shall mean the terms and conditions for use, reproduction,
-      and distribution as defined by Sections 1 through 9 of this document.
-
-      "Licensor" shall mean the copyright owner or entity authorized by
-      the copyright owner that is granting the License.
-
-      "Legal Entity" shall mean the union of the acting entity and all
-      other entities that control, are controlled by, or are under common
-      control with that entity. For the purposes of this definition,
-      "control" means (i) the power, direct or indirect, to cause the
-      direction or management of such entity, whether by contract or
-      otherwise, or (ii) ownership of fifty percent (50%) or more of the
-      outstanding shares, or (iii) beneficial ownership of such entity.
-
-      "You" (or "Your") shall mean an individual or Legal Entity
-      exercising permissions granted by this License.
-
-      "Source" form shall mean the preferred form for making modifications,
-      including but not limited to software source code, documentation
-      source, and configuration files.
-
-      "Object" form shall mean any form resulting from mechanical
-      transformation or translation of a Source form, including but
-      not limited to compiled object code, generated documentation,
-      and conversions to other media types.
-
-      "Work" shall mean the work of authorship, whether in Source or
-      Object form, made available under the License, as indicated by a
-      copyright notice that is included in or attached to the work
-      (an example is provided in the Appendix below).
-
-      "Derivative Works" shall mean any work, whether in Source or Object
-      form, that is based on (or derived from) the Work and for which the
-      editorial revisions, annotations, elaborations, or other modifications
-      represent, as a whole, an original work of authorship. For the purposes
-      of this License, Derivative Works shall not include works that remain
-      separable from, or merely link (or bind by name) to the interfaces of,
-      the Work and Derivative Works thereof.
-
-      "Contribution" shall mean any work of authorship, including
-      the original version of the Work and any modifications or additions
-      to that Work or Derivative Works thereof, that is intentionally
-      submitted to Licensor for inclusion in the Work by the copyright owner
-      or by an individual or Legal Entity authorized to submit on behalf of
-      the copyright owner. For the purposes of this definition, "submitted"
-      means any form of electronic, verbal, or written communication sent
-      to the Licensor or its representatives, including but not limited to
-      communication on electronic mailing lists, source code control systems,
-      and issue tracking systems that are managed by, or on behalf of, the
-      Licensor for the purpose of discussing and improving the Work, but
-      excluding communication that is conspicuously marked or otherwise
-      designated in writing by the copyright owner as "Not a Contribution."
-
-      "Contributor" shall mean Licensor and any individual or Legal Entity
-      on behalf of whom a Contribution has been received by Licensor and
-      subsequently incorporated within the Work.
-
-   2. Grant of Copyright License. Subject to the terms and conditions of
-      this License, each Contributor hereby grants to You a perpetual,
-      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
-      copyright license to reproduce, prepare Derivative Works of,
-      publicly display, publicly perform, sublicense, and distribute the
-      Work and such Derivative Works in Source or Object form.
-
-   3. Grant of Patent License. Subject to the terms and conditions of
-      this License, each Contributor hereby grants to You a perpetual,
-      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
-      (except as stated in this section) patent license to make, have made,
-      use, offer to sell, sell, import, and otherwise transfer the Work,
-      where such license applies only to those patent claims licensable
-      by such Contributor that are necessarily infringed by their
-      Contribution(s) alone or by combination of their Contribution(s)
-      with the Work to which such Contribution(s) was submitted. If You
-      institute patent litigation against any entity (including a
-      cross-claim or counterclaim in a lawsuit) alleging that the Work
-      or a Contribution incorporated within the Work constitutes direct
-      or contributory patent infringement, then any patent licenses
-      granted to You under this License for that Work shall terminate
-      as of the date such litigation is filed.
-
-   4. Redistribution. You may reproduce and distribute copies of the
-      Work or Derivative Works thereof in any medium, with or without
-      modifications, and in Source or Object form, provided that You
-      meet the following conditions:
-
-      (a) You must give any other recipients of the Work or
-          Derivative Works a copy of this License; and
-
-      (b) You must cause any modified files to carry prominent notices
-          stating that You changed the files; and
-
-      (c) You must retain, in the Source form of any Derivative Works
-          that You distribute, all copyright, patent, trademark, and
-          attribution notices from the Source form of the Work,
-          excluding those notices that do not pertain to any part of
-          the Derivative Works; and
-
-      (d) If the Work includes a "NOTICE" text file as part of its
-          distribution, then any Derivative Works that You distribute must
-          include a readable copy of the attribution notices contained
-          within such NOTICE file, excluding those notices that do not
-          pertain to any part of the Derivative Works, in at least one
-          of the following places: within a NOTICE text file distributed
-          as part of the Derivative Works; within the Source form or
-          documentation, if provided along with the Derivative Works; or,
-          within a display generated by the Derivative Works, if and
-          wherever such third-party notices normally appear. The contents
-          of the NOTICE file are for informational purposes only and
-          do not modify the License. You may add Your own attribution
-          notices within Derivative Works that You distribute, alongside
-          or as an addendum to the NOTICE text from the Work, provided
-          that such additional attribution notices cannot be construed
-          as modifying the License.
-
-      You may add Your own copyright statement to Your modifications and
-      may provide additional or different license terms and conditions
-      for use, reproduction, or distribution of Your modifications, or
-      for any such Derivative Works as a whole, provided Your use,
-      reproduction, and distribution of the Work otherwise complies with
-      the conditions stated in this License.
-
-   5. Submission of Contributions. Unless You explicitly state otherwise,
-      any Contribution intentionally submitted for inclusion in the Work
-      by You to the Licensor shall be under the terms and conditions of
-      this License, without any additional terms or conditions.
-      Notwithstanding the above, nothing herein shall supersede or modify
-      the terms of any separate license agreement you may have executed
-      with Licensor regarding such Contributions.
-
-   6. Trademarks. This License does not grant permission to use the trade
-      names, trademarks, service marks, or product names of the Licensor,
-      except as required for reasonable and customary use in describing the
-      origin of the Work and reproducing the content of the NOTICE file.
-
-   7. Disclaimer of Warranty. Unless required by applicable law or
-      agreed to in writing, Licensor provides the Work (and each
-      Contributor provides its Contributions) on an "AS IS" BASIS,
-      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
-      implied, including, without limitation, any warranties or conditions
-      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
-      PARTICULAR PURPOSE. You are solely responsible for determining the
-      appropriateness of using or redistributing the Work and assume any
-      risks associated with Your exercise of permissions under this License.
-
-   8. Limitation of Liability. In no event and under no legal theory,
-      whether in tort (including negligence), contract, or otherwise,
-      unless required by applicable law (such as deliberate and grossly
-      negligent acts) or agreed to in writing, shall any Contributor be
-      liable to You for damages, including any direct, indirect, special,
-      incidental, or consequential damages of any character arising as a
-      result of this License or out of the use or inability to use the
-      Work (including but not limited to damages for loss of goodwill,
-      work stoppage, computer failure or malfunction, or any and all
-      other commercial damages or losses), even if such Contributor
-      has been advised of the possibility of such damages.
-
-   9. Accepting Warranty or Additional Liability. While redistributing
-      the Work or Derivative Works thereof, You may choose to offer,
-      and charge a fee for, acceptance of support, warranty, indemnity,
-      or other liability obligations and/or rights consistent with this
-      License. However, in accepting such obligations, You may act only
-      on Your own behalf and on Your sole responsibility, not on behalf
-      of any other Contributor, and only if You agree to indemnify,
-      defend, and hold each Contributor harmless for any liability
-      incurred by, or claims asserted against, such Contributor by reason
-      of your accepting any such warranty or additional liability.
-
-   END OF TERMS AND CONDITIONS
-This software is made available under the terms of *either* of the licenses
-found in LICENSE.APACHE or LICENSE.BSD. Contributions to this software is made
-under the terms of *both* these licenses.
 
 
 ---

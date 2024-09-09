@@ -140,7 +140,7 @@ def study_selection_objective__from_study_selection_objectives_ar_and_order__tes
     project: ProjectAR = ProjectAR(
         _uid="Project_000001",
         _project_number="123",
-        _clinical_programme_uid="CP_000001",
+        clinical_programme_uid="CP_000001",
         name="Test project",
     )
 

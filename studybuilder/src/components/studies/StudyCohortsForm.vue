@@ -58,7 +58,7 @@
               v-model="form.short_name"
               :label="$t('StudyCohorts.cohort_short_name')"
               data-cy="study-cohort-short-name"
-              :rules="[formRules.required, formRules.max(form.name, 20)]"
+              :rules="[formRules.required, formRules.max(form.short_name, 20)]"
               clearable
               class="required"
               density="compact"
@@ -186,17 +186,21 @@ export default {
   watch: {
     editedCohort(value) {
       if (Object.keys(value).length !== 0) {
-        this.form = JSON.parse(JSON.stringify(value))
-        this.form.arm_uids = value.arm_roots
-          ? value.arm_roots.map((el) => el.arm_uid)
-          : null
-        this.form.branch_arm_uids = value.branch_arm_roots
-          ? value.branch_arm_roots.map((el) => el.branch_arm_uid)
-          : null
-        if (value.colour_code) {
-          this.colorHash = value.colour_code
-        }
-        this.formStore.save(this.form)
+        arms
+          .getStudyCohort(this.selectedStudy.uid, value.cohort_uid)
+          .then((resp) => {
+            this.form = JSON.parse(JSON.stringify(resp.data))
+            this.form.arm_uids = resp.data.arm_roots
+              ? resp.data.arm_roots.map((el) => el.arm_uid)
+              : null
+            this.form.branch_arm_uids = resp.data.branch_arm_roots
+              ? resp.data.branch_arm_roots.map((el) => el.branch_arm_uid)
+              : null
+            if (value.colour_code) {
+              this.colorHash = resp.data.colour_code
+            }
+            this.formStore.save(this.form)
+          })
       }
     },
   },

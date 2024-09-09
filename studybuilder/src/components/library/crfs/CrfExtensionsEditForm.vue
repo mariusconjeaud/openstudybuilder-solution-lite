@@ -348,49 +348,44 @@ export default {
     close() {
       this.$emit('close')
     },
-    async getAllAttributes() {
+    async getElementsAttributes() {
       const params = {
         page_size: 0,
+        filters: { 'vendor_element.uid': {v: this.elements.map(el => el.uid)}, uid: {v: this.attributes.map(attr => attr.uid)}},
+        operator: 'or'
       }
       await crfs.getAllAttributes(params).then((resp) => {
         this.attributes = resp.data.items
-        this.attributes.forEach((attr) => {
-          attr.type = 'attr'
-        })
+        this.attributes.forEach(attr => attr.type = 'attr')
       })
     },
     async getNamespaceData() {
-      await this.getAllAttributes()
+      this.elements = []
+      this.attributes = []
       if (this.editItem.uid) {
-        crfs.getNamespace(this.editItem.uid).then((resp) => {
-          if (resp.data.vendor_attributes || resp.data.vendor_elements) {
-            this.elements = []
-            resp.data.vendor_attributes = resp.data.vendor_attributes.map(
-              (attr) => this.attributes.find((el) => attr.uid === el.uid)
+        await crfs.getNamespace(this.editItem.uid).then((resp) => {
+          this.elements = resp.data.vendor_elements
+          this.attributes = resp.data.vendor_attributes
+        })
+        await this.getElementsAttributes()
+        for (const attr of this.attributes) {
+          if (attr.vendor_element) {
+            const index = this.elements.indexOf(
+              this.elements.find((ele) => ele.uid === attr.vendor_element.uid)
             )
-            resp.data.vendor_attributes.forEach((attr) => {
-              attr.type = 'attr'
-            })
-            this.elements.push(
-              ...resp.data.vendor_attributes,
-              ...resp.data.vendor_elements
-            )
-            this.total = this.elements.length
-          }
-          for (const attr of this.attributes) {
-            if (attr.vendor_element) {
-              const index = this.elements.indexOf(
-                this.elements.find((ele) => ele.uid === attr.vendor_element.uid)
-              )
-              if (this.elements[index]) {
-                if (!this.elements[index].attributes) {
-                  this.elements[index].attributes = []
-                }
-                this.elements[index].attributes.push(attr)
+            if (this.elements[index]) {
+              if (!this.elements[index].attributes) {
+                this.elements[index].attributes = []
               }
+              this.elements[index].attributes.push(attr)
+              this.attributes[this.attributes.indexOf(attr)] = null
             }
           }
+        }
+        this.attributes = this.attributes.filter(function (el) {
+          return el != null
         })
+        this.elements = [...this.elements, ...this.attributes]
       }
     },
   },

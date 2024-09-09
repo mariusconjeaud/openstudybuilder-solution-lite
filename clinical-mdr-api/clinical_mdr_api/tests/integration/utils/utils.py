@@ -152,7 +152,7 @@ from clinical_mdr_api.models.study_selections.study_selection import (
     StudySelectionArm,
     StudySelectionArmCreateInput,
     StudySelectionCompound,
-    StudySelectionCompoundInput,
+    StudySelectionCompoundCreateInput,
     StudySelectionCriteria,
     StudySelectionCriteriaCreateInput,
     StudySelectionElement,
@@ -255,7 +255,7 @@ from clinical_mdr_api.services.biomedical_concepts.activity_item_class import (
 )
 from clinical_mdr_api.services.brands.brand import BrandService
 from clinical_mdr_api.services.clinical_programmes.clinical_programme import (
-    create as create_clinical_programme,
+    ClinicalProgrammeService,
 )
 from clinical_mdr_api.services.comments.comments import CommentsService
 from clinical_mdr_api.services.concepts.active_substances_service import (
@@ -490,6 +490,19 @@ DICTIONARY_CODELIST_LIBRARY = "UCUM"
 class TestUtils:
     """Class containg methods that create all kinds of entities, e.g. library compounds"""
 
+    sequential_study_number: int = 0
+
+    @classmethod
+    def assert_response_shape_ok(
+        cls,
+        response_json: any,
+        expected_fields: list[str],
+        expected_not_null_fields: list[str],
+    ):
+        assert set(list(response_json.keys())) == set(expected_fields)
+        for key in expected_not_null_fields:
+            assert response_json[key] is not None, f"Field '{key}' is None"
+
     @classmethod
     def assert_timestamp_is_in_utc_zone(cls, val: str):
         datetime_ts: datetime = datetime.strptime(val, config.DATE_TIME_FORMAT)
@@ -508,6 +521,12 @@ class TestUtils:
         ts1: datetime = datetime.strptime(val1, config.DATE_TIME_FORMAT)
         ts2: datetime = datetime.strptime(val2, config.DATE_TIME_FORMAT)
         assert ts1 - ts2 < timedelta(seconds=0)
+
+    @classmethod
+    def assert_sort_order(cls, items: list[dict], key: str, desc: bool = False):
+        """Asserts that the supplied list of dictionaries is sorted by `key` in expected order"""
+        sorted_items = sorted(items, key=lambda x: x[key], reverse=desc)
+        assert items == sorted_items
 
     @classmethod
     def get_datetime(cls, val: str) -> datetime:
@@ -1197,23 +1216,8 @@ class TestUtils:
         definition=None,
         abbreviation=None,
         library_name=LIBRARY_NAME,
-        analyte_number=None,
-        nnc_long_number=None,
-        nnc_short_number=None,
         is_sponsor_compound=True,
-        is_name_inn=False,
-        substance_terms_uids=None,
-        dose_values_uids=None,
-        lag_times_uids=None,
-        strength_values_uids=None,
-        delivery_devices_uids=None,
-        dispensers_uids=None,
-        projects_uids=None,
-        brands_uids=None,
-        dose_frequency_uids=None,
-        dosage_form_uids=None,
-        route_of_administration_uids=None,
-        half_life_uid=None,
+        external_id=None,
         approve: bool = False,
     ) -> Compound:
         service = CompoundService()
@@ -1225,31 +1229,8 @@ class TestUtils:
             definition=cls.random_if_none(definition, prefix="definition-"),
             abbreviation=cls.random_if_none(abbreviation, prefix="abbreviation-"),
             library_name=library_name,
-            analyte_number=cls.random_if_none(analyte_number, prefix="analyte_number-"),
-            nnc_long_number=cls.random_if_none(
-                nnc_long_number, prefix="nnc_long_number-"
-            ),
-            nnc_short_number=cls.random_if_none(
-                nnc_short_number, prefix="nnc_short_number-"
-            ),
             is_sponsor_compound=is_sponsor_compound if is_sponsor_compound else True,
-            is_name_inn=is_name_inn if is_name_inn else False,
-            substance_terms_uids=substance_terms_uids if substance_terms_uids else [],
-            dose_values_uids=dose_values_uids if dose_values_uids else [],
-            lag_times_uids=lag_times_uids if lag_times_uids else [],
-            strength_values_uids=strength_values_uids if strength_values_uids else [],
-            delivery_devices_uids=(
-                delivery_devices_uids if delivery_devices_uids else []
-            ),
-            dispensers_uids=dispensers_uids if dispensers_uids else [],
-            projects_uids=projects_uids if projects_uids else [],
-            brands_uids=brands_uids if brands_uids else [],
-            dose_frequency_uids=dose_frequency_uids if dose_frequency_uids else [],
-            dosage_form_uids=dosage_form_uids if dosage_form_uids else [],
-            route_of_administration_uids=(
-                route_of_administration_uids if route_of_administration_uids else []
-            ),
-            half_life_uid=half_life_uid if half_life_uid else None,
+            external_id=cls.random_if_none(external_id, prefix="prodex-id-"),
         )
 
         result: Compound = service.create(payload)
@@ -1351,9 +1332,9 @@ class TestUtils:
         name_sentence_case=None,
         library_name=LIBRARY_NAME,
         dose_value_uids=None,
-        dose_frequency_uids=None,
-        delivery_device_uids=None,
-        dispenser_uids=None,
+        dose_frequency_uid=None,
+        delivery_device_uid=None,
+        dispenser_uid=None,
         pharmaceutical_product_uids=None,
         compound_uid=None,
         approve: bool = False,
@@ -1367,12 +1348,12 @@ class TestUtils:
             external_id=cls.random_if_none(external_id, prefix="prodex-id-"),
             library_name=library_name,
             dose_value_uids=dose_value_uids if dose_value_uids else [],
-            dose_frequency_uids=dose_frequency_uids if dose_frequency_uids else [],
-            delivery_device_uids=delivery_device_uids if delivery_device_uids else [],
-            dispenser_uids=dispenser_uids if dispenser_uids else [],
-            pharmaceutical_product_uids=pharmaceutical_product_uids
-            if pharmaceutical_product_uids
-            else [],
+            dose_frequency_uid=dose_frequency_uid,
+            delivery_device_uid=delivery_device_uid,
+            dispenser_uid=dispenser_uid,
+            pharmaceutical_product_uids=(
+                pharmaceutical_product_uids if pharmaceutical_product_uids else []
+            ),
             compound_uid=compound_uid if compound_uid else None,
         )
 
@@ -1629,6 +1610,12 @@ class TestUtils:
         return study_activity
 
     @classmethod
+    def delete_study(cls, study_uid: str):
+        db.cypher_query(
+            f"MATCH (r:StudyRoot {{uid:'{study_uid}'}})-[]-(v:StudyValue) DETACH DELETE r, v"
+        )
+
+    @classmethod
     def create_study_activity_schedule(
         cls,
         study_uid: str,
@@ -1854,29 +1841,27 @@ class TestUtils:
     def create_study_compound(
         cls,
         study_uid: str,
+        medicinal_product_uid=None,
         compound_alias_uid=None,
         type_of_treatment_uid=None,
         other_info=None,
         reason_for_missing_null_value_uid=None,
-        device_uid=None,
-        dispensed_in_uid=None,
-        dosage_form_uid=None,
-        route_of_administration_uid=None,
-        strength_value_uid=None,
+        delivery_device_uid=None,
+        dispenser_uid=None,
+        dose_frequency_uid=None,
+        dose_value_uid=None,
     ) -> StudySelectionCompound:
         service = StudyCompoundSelectionService()
-        payload: StudySelectionCompoundInput = StudySelectionCompoundInput(
+        payload: StudySelectionCompoundCreateInput = StudySelectionCompoundCreateInput(
+            medicinal_product_uid=medicinal_product_uid,
             compound_alias_uid=compound_alias_uid,
             type_of_treatment_uid=type_of_treatment_uid,
             other_info=cls.random_if_none(other_info, prefix="other_info-"),
             reason_for_missing_null_value_uid=reason_for_missing_null_value_uid,
-            device_uid=device_uid if device_uid else None,
-            dispensed_in_uid=dispensed_in_uid if dispensed_in_uid else None,
-            dosage_form_uid=dosage_form_uid if dosage_form_uid else None,
-            route_of_administration_uid=(
-                route_of_administration_uid if route_of_administration_uid else None
-            ),
-            strength_value_uid=strength_value_uid if strength_value_uid else None,
+            delivery_device_uid=delivery_device_uid if delivery_device_uid else None,
+            dispenser_uid=dispenser_uid if dispenser_uid else None,
+            dose_frequency_uid=dose_frequency_uid if dose_frequency_uid else None,
+            dose_value_uid=dose_value_uid if dose_value_uid else None,
         )
 
         result: StudySelectionCompound = service.make_selection(
@@ -2019,7 +2004,15 @@ class TestUtils:
 
     @classmethod
     def create_clinical_programme(cls, name: str = "CP") -> models.ClinicalProgramme:
-        return create_clinical_programme(models.ClinicalProgrammeInput(name=name))
+        service = ClinicalProgrammeService()
+        return service.create(models.ClinicalProgrammeInput(name=name))
+
+    @classmethod
+    def get_study_number(cls, number: str | None = None):
+        if number:
+            return number
+        cls.sequential_study_number += 1
+        return cls.sequential_study_number
 
     @classmethod
     def create_study(
@@ -2034,7 +2027,7 @@ class TestUtils:
         service = StudyService()
         if not study_parent_part_uid:
             payload = StudyCreateInput(
-                study_number=cls.random_if_none(number, max_length=4),
+                study_number=cls.get_study_number(number),
                 study_acronym=cls.random_if_none(acronym, prefix="st-"),
                 project_number=project_number,
                 description=cls.random_if_none(description),
@@ -2108,12 +2101,16 @@ class TestUtils:
 
     @classmethod
     def add_ct_term_parent(
-        cls, term, parent, relationship_type: str = "type"
+        cls,
+        term,
+        parent=None,
+        relationship_type: str = "type",
+        parent_uid: str | None = None,
     ) -> models.CTTerm:
         service = CTTermService()
         service.add_parent(
             term_uid=term.term_uid,
-            parent_uid=parent.term_uid,
+            parent_uid=parent_uid if parent_uid else parent.term_uid,
             relationship_type=relationship_type,
         )
 

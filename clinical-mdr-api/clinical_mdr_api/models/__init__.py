@@ -114,7 +114,11 @@ from clinical_mdr_api.models.syntax_pre_instances.objective_pre_instance import 
     ObjectivePreInstanceIndexingsInput,
     ObjectivePreInstanceVersion,
 )
-from clinical_mdr_api.models.projects.project import Project, ProjectCreateInput
+from clinical_mdr_api.models.projects.project import (
+    Project,
+    ProjectCreateInput,
+    ProjectEditInput,
+)
 from clinical_mdr_api.models.brands.brand import Brand, BrandCreateInput
 from clinical_mdr_api.models.comments.comments import (
     CommentThread,
@@ -206,7 +210,8 @@ from clinical_mdr_api.models.study_selections.study_selection import (
     StudyCompoundDosingInput,
     StudySelection,
     StudySelectionCompound,
-    StudySelectionCompoundInput,
+    StudySelectionCompoundEditInput,
+    StudySelectionCompoundCreateInput,
     StudySelectionCompoundNewOrder,
     StudySelectionEndpoint,
     StudySelectionEndpointInput,
@@ -409,7 +414,8 @@ __all__ = [
     "StudySelectionObjectiveCore",
     "StudySelectionCompoundNewOrder",
     "StudySelectionCompound",
-    "StudySelectionCompoundInput",
+    "StudySelectionCompoundEditInput",
+    "StudySelectionCompoundCreateInput",
     "StudySelectionEndpoint",
     "StudySelectionEndpointNewOrder",
     "StudySelectionEndpointInput",
@@ -592,6 +598,7 @@ __all__ = [
     "ClinicalProgrammeInput",
     "Project",
     "ProjectCreateInput",
+    "ProjectEditInput",
     "Brand",
     "BrandCreateInput",
     "OdmCondition",

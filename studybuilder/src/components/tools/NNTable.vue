@@ -5,6 +5,24 @@
         style="z-index: 3; position: relative"
         class="pt-0 mt-3 d-flex align-center"
       >
+        <v-text-field
+          v-if="!hideSearchField || onlyTextSearch"
+          v-model="search"
+          clearable
+          clear-icon="mdi-close"
+          density="compact"
+          prepend-inner-icon="mdi-magnify"
+          :label="$t('_global.search')"
+          single-line
+          color="nnBaseBlue"
+          hide-details
+          style="min-width: 200px; max-width: 300px"
+          rounded="lg"
+          class="mr-4 searchFieldLabel"
+          data-cy="search-field"
+          variant="outlined"
+        />
+        <slot name="beforeSwitches" />
         <template v-if="!hideDefaultSwitches">
           <div :title="$t('NNTableTooltips.select_rows')">
             <v-switch
@@ -43,24 +61,55 @@
           />
           <v-btn
             v-if="!disableFiltering && !onlyTextSearch"
-            class="ml-2 text-white"
+            class="ml-2"
             size="small"
-            color="light-blue darken-4"
+            variant="outlined"
+            color="nnBaseBlue"
             :title="$t('NNTableTooltips.filters')"
             data-cy="filters-button"
+            :active="showFilterBar"
             icon="mdi-filter-outline"
-            @click="showColumnsToFilterDialog = true"
+            @click="showFilterBar = !showFilterBar"
           />
-          <v-btn
-            v-if="modifiableTable && !onlyTextSearch"
-            class="ml-2 text-white"
-            size="small"
-            color="grey darken-3"
-            :title="$t('NNTableTooltips.columns_layout')"
-            data-cy="columns-layout-button"
-            icon="mdi-table-column"
-            @click="openColumnsDialog()"
-          />
+          <v-menu rounded offset-y :close-on-content-click="false">
+            <template #activator="{ props }">
+              <v-btn
+                v-if="modifiableTable && !onlyTextSearch"
+                class="ml-2"
+                size="small"
+                variant="outlined"
+                color="nnBaseBlue"
+                v-bind="props"
+                :title="$t('NNTableTooltips.columns_layout')"
+                data-cy="columns-layout-button"
+                icon="mdi-table-column"
+              />
+            </template>
+            <v-list data-cy="show-columns-form" class="columnList">
+              <v-list-item>
+                <v-list-item-title class="font-weight-bold fontSize16">{{
+                  $t('NNTable.select_columns')
+                }}</v-list-item-title>
+              </v-list-item>
+              <v-switch
+                v-for="(column, index) in headers.filter((header) => {
+                  return header.title != ''
+                })"
+                :key="column.title"
+                v-model="selectedColumns"
+                :value="
+                  headersHasAction() ? headers[index + 1] : headers[index]
+                "
+                class="ml-n3 mr-n2 scale80"
+                density="compact"
+                :label="column.title"
+                inset
+                :disabled="disableColumnSwitch(column)"
+                color="nnBaseBlue"
+                hide-details
+              />
+            </v-list>
+          </v-menu>
           <DataTableExportButton
             v-if="!hideExportButton"
             class="ml-2"
@@ -69,14 +118,16 @@
             :data-url-params="exportDataUrlParams"
             :headers="headers"
             :items="selected.length ? selected : []"
+            :filters="savedFilters"
             data-cy="export-data-button"
             @export="confirmExport"
           />
           <v-btn
             v-if="historyDataFetcher"
             class="ml-2"
-            color="secondary"
             size="small"
+            variant="outlined"
+            color="nnBaseBlue"
             :title="$t('NNTableTooltips.history')"
             icon="mdi-history"
             @click="openHistory"
@@ -85,55 +136,43 @@
         <slot name="beforeTable" />
       </v-card-title>
       <v-card-text>
-        <v-toolbar
-          v-if="!disableFiltering"
-          flat
-          :class="additionalMargin ? 'pt-1 mt-3' : 'pt-1'"
-          color="tableGray"
-          style="height: 55px"
-        >
-          <v-text-field
-            v-if="!hideSearchField || onlyTextSearch"
-            v-model="search"
-            density="compact"
-            append-icon="mdi-magnify"
-            :label="$t('_global.search')"
-            single-line
-            hide-details
-            style="min-width: 200px; max-width: 300px"
-            class="mr-4 mt-2 pt-0 mb-3 searchFieldLabel"
-            data-cy="search-field"
-          />
-          <slot name="afterFilter" />
-          <v-spacer />
-          <div v-if="onlyTextSearch" class="mb-4">
-            {{ $t('_global.filtering_to_add') }}
-          </div>
-          <v-slide-group show-arrows>
-            <FilterAutocomplete
-              v-for="item in itemsToFilter"
-              :key="item.text"
-              :clear-input="trigger"
-              :item="item"
-              :filters="savedFilters"
-              :library="library"
-              :resource="[columnDataResource, codelistUid]"
-              :parameters="columnDataParameters"
-              :initial-data="getColumnInitialData(item)"
-              :selected-data="getColumnSelectedData(item)"
-              :filters-modify-function="filtersModifyFunction"
-              :table-items="items"
-              @filter="columnFilter"
-            />
-
+        <v-fade-transition>
+          <v-toolbar
+            v-show="showFilterBar"
+            flat
+            class="filteringBar pt-1"
+            color="nnGray200"
+          >
+            <slot name="afterFilter" />
+            <v-slide-group show-arrows class="mb-5">
+              <FilterAutocomplete
+                v-for="item in itemsToFilter"
+                :key="item.text"
+                :clear-input="trigger"
+                :item="item"
+                :filters="savedFilters"
+                :library="library"
+                :resource="[columnDataResource, codelistUid]"
+                :parameters="columnDataParameters"
+                :initial-data="getColumnInitialData(item)"
+                :selected-data="getColumnSelectedData(item)"
+                :filters-modify-function="filtersModifyFunction"
+                :table-items="items"
+                @filter="columnFilter"
+              />
+            </v-slide-group>
+            <v-spacer />
             <v-btn
-              icon="mdi-delete-outline"
-              :title="$t('NNTableTooltips.clear_filters_content')"
-              class="mb-3"
+              prepend-icon="mdi-close"
+              color="nnWhite"
+              variant="flat"
+              class="mr-3 mb-5 clearAllBtn"
+              rounded
+              :text="$t('NNTableTooltips.clear_filters_content')"
               @click="clearFilters()"
             />
-          </v-slide-group>
-        </v-toolbar>
+          </v-toolbar>
+        </v-fade-transition>
         <ResizingDiv>
           <template #resizing-area="areaProps">
             <v-data-table-server
@@ -269,49 +308,6 @@
       </v-card-text>
     </v-card>
 
-    <v-dialog
-      v-model="showColumnsDialog"
-      max-width="550"
-      persistent
-      content-class="upperRight"
-      tile
-      @keydown.esc="showColumnsDialog = false"
-    >
-      <ColumnChoosingForm
-        key="columnsForm"
-        data-cy="show-columns-form"
-        :opened="columnsOpened"
-        :available-columns="headers"
-        :table-name="$route.fullPath"
-        :title="$t('ColumnChoosingForm.columnsTitle')"
-        :restore-label="$t('ColumnChoosingForm.show_all_label')"
-        @save="saveSelectedColumns"
-        @close="closeColumnsDialog"
-      />
-    </v-dialog>
-
-    <v-dialog
-      v-model="showColumnsToFilterDialog"
-      max-width="550"
-      persistent
-      content-class="upperRight"
-      tile
-      @keydown.esc="showColumnsToFilterDialog = false"
-    >
-      <ColumnChoosingForm
-        key="filtersForm"
-        data-cy="filters-select-form"
-        :available-columns="headers"
-        :already-in-filter="itemsToFilter"
-        filtering
-        :table-name="''"
-        :title="$t('ColumnChoosingForm.filtersTitle')"
-        :restore-label="$t('ColumnChoosingForm.clear_label')"
-        @save="saveSelectedColumnsToFilter"
-        @clear="clearData()"
-        @close="showColumnsToFilterDialog = false"
-      />
-    </v-dialog>
     <ConfirmDialog ref="confirm" :text-cols="6" :action-cols="5" />
 
     <v-dialog
@@ -343,14 +339,14 @@ import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
 import { useFilteringParamsStore } from '@/stores/filtering-params'
 import { useTablesLayoutStore } from '@/stores/library-tableslayout'
-import ColumnChoosingForm from '@/components/tools/ColumnChoosingForm.vue'
 import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
 import DataTableExportButton from '@/components/tools/DataTableExportButton.vue'
 import FilterAutocomplete from '../tools/FilterAutocomplete.vue'
 import HistoryTable from './HistoryTable.vue'
 import ResizingDiv from './ResizingDiv.vue'
 import { i18n } from '@/plugins/i18n'
-import { useRoute } from "vue-router"
+import { useRoute } from 'vue-router'
+import tablesConstants from '@/constants/tables'
 
 const props = defineProps({
   headers: {
@@ -425,7 +421,7 @@ const props = defineProps({
   itemsPerPage: {
     type: Number,
     required: false,
-    default: 10,
+    default: null,
   },
   itemsPerPageOptions: {
     type: Array,
@@ -557,7 +553,6 @@ const columnValueIndex = ref('')
 const loading = ref(true)
 const showSelectBoxes = ref(false)
 const showFilterBar = ref(false)
-const showColumnsDialog = ref(false)
 const shownColumns = ref([])
 const selected = ref([])
 const search = ref('')
@@ -567,12 +562,11 @@ const historyItemsTotal = ref(0)
 const apiParams = new Map()
 const trigger = ref(0)
 const showColumnNames = ref(false)
-const showColumnsToFilterDialog = ref(false)
 const showHistory = ref(false)
-const columnsOpened = ref(false)
 const sortBy = ref([])
 const selectedColumnData = ref({})
 const confirm = ref()
+const selectedColumns = ref([])
 
 const headerActions = [
   {
@@ -607,7 +601,7 @@ const computedItemsPerPage = computed(() => {
 const computedItemsPerPageOptions = computed(() => {
   return props.itemsPerPageOptions
     ? props.itemsPerPageOptions
-    : [100, 15, 10, 5]
+    : tablesConstants.ITEMS_PER_PAGE_OPIONS
 })
 const historyHeaders = computed(() => {
   if (props.historyExternalHeaders) {
@@ -621,12 +615,9 @@ const historyHeaders = computed(() => {
   return result
 })
 
-watch(
-  route,
-  () => {
-    updateColumns()
-  }
-)
+watch(route, () => {
+  updateColumns()
+})
 watch(
   () => props.loadingWatcher,
   (value) => {
@@ -651,6 +642,13 @@ watch(showSelectBoxes, (val) => {
   if (!val) {
     selected.value = []
   }
+})
+watch(selectedColumns, () => {
+  let arr
+  arr = props.headers.filter(function (item) {
+    return selectedColumns.value.find((ele) => ele.key === item.key)
+  })
+  shownColumns.value = arr.map((e) => ({ ...e, sortable: false }))
 })
 watch(
   () => props.showSelect,
@@ -678,6 +676,8 @@ onMounted(() => {
     )
   } else if (props.defaultFilters) {
     itemsToFilter.value = props.defaultFilters
+  } else if (!props.defaultFilters && !props.disableFiltering && !props.onlyTextSearch) {
+    itemsToFilter.value = shownColumns.value.slice(1, shownColumns.value.length)
   }
   if (props.items && props.items.length) {
     loading.value = false
@@ -699,6 +699,7 @@ onMounted(() => {
         ) {
           itemsToFilter.value.push(newItem)
         }
+        apiParams.set(key, map[key])
       } else {
         search.value = map[key][0]
       }
@@ -733,7 +734,6 @@ onUpdated(() => {
     })
   }
 })
-
 function updateColumns() {
   if (!props.modifiableTable) {
     if (props.defaultHeaders && props.defaultHeaders.length !== 0) {
@@ -759,14 +759,10 @@ function updateColumns() {
       (obj) => !check.has(obj.key) && check.add(obj.key)
     )
   }
+  selectedColumns.value = shownColumns.value
 }
-function openColumnsDialog() {
-  columnsOpened.value = true
-  showColumnsDialog.value = true
-}
-function closeColumnsDialog() {
-  columnsOpened.value = false
-  showColumnsDialog.value = false
+function headersHasAction() {
+  return Boolean(props.headers.find((ele) => ele.title === ''))
 }
 function getValueByColumn(item, columnName) {
   const keys = columnName.split('.')
@@ -793,6 +789,13 @@ function sortDescending(header) {
   sortBy.value = [{ key: header.key, order: 'desc' }]
   filterTable()
 }
+function disableColumnSwitch(column) {
+  const firstHeaderIndex = headersHasAction() ? 1 : 0
+  return (
+    selectedColumns.value.length === 1 + firstHeaderIndex &&
+    column.title === selectedColumns.value[firstHeaderIndex].title
+  )
+}
 function addToFilter(header) {
   if (
     itemsToFilter.value[
@@ -806,7 +809,7 @@ function addToFilter(header) {
   } else {
     itemsToFilter.value.push(header)
   }
-  filterBarDisplay()
+  showFilterBar.value = true
 }
 function hideColumn(header) {
   shownColumns.value.splice(
@@ -826,41 +829,9 @@ function rowProps(data) {
     class: result,
   }
 }
-function saveSelectedColumns(columns) {
-  shownColumns.value = columns
-  if (shownColumns.value.length === 0) {
-    shownColumns.value = props.headers
-  }
-  props.headers.some(hasAction)
-  const check = new Set()
-  shownColumns.value = shownColumns.value.filter(
-    (obj) => !check.has(obj.key) && check.add(obj.key)
-  )
-}
-function hasAction(element) {
-  if (element.key === 'actions' && !shownColumns.value.includes('actions')) {
-    shownColumns.value.push(element)
-  }
-}
-function saveSelectedColumnsToFilter(columns) {
-  if (columns.length === 0) {
-    clearFilters()
-    clearData()
-  }
-  itemsToFilter.value = columns
-  filterBarDisplay()
-}
-function filterBarDisplay() {
-  itemsToFilter.value = itemsToFilter.value.filter(function (element) {
-    return element !== undefined
-  })
-  showFilterBar.value = true
-}
-function clearData() {
-  clearFilters()
-}
 function clearFilters() {
   apiParams.clear()
+  search.value = null
   trigger.value += 1
   emit('filter')
 }
@@ -876,6 +847,7 @@ function filterTable(options) {
   } else {
     options = savedOptions
   }
+  apiParams.delete('*')
   if (options.search) {
     apiParams.set('*', [options.search])
   }
@@ -962,6 +934,17 @@ defineExpose({
   right: 0;
   border-radius: 0px;
 }
+.fontSize16 {
+  font-size: 16px !important;
+}
+.columnList {
+  border-radius: 15px !important;
+  max-height: 600px !important;
+}
+.filteringBar {
+  height: 50px;
+  border-radius: 4px;
+}
 
 .v-text-field .v-input__control .v-input__slot .v-text-field__slot {
   display: flex !important;
@@ -972,22 +955,6 @@ defineExpose({
   .v-input__control
   .v-input__slot {
   height: 30px !important;
-}
-
-.v-data-table__thead tr {
-  white-space: nowrap;
-}
-
-.v-data-table__th {
-  white-space: inherit;
-  vertical-align: middle;
-  padding-top: 20px !important;
-  padding-bottom: 16px !important;
-  background-color: rgb(var(--v-theme-tableGray)) !important;
-  color: rgba(26, 26, 26, 0.6) !important;
-  text-align: start;
-  font-weight: 500;
-  font-size: 14px;
 }
 
 .autocomplete {
@@ -1029,5 +996,11 @@ defineExpose({
 }
 .yellow {
   background-color: yellow;
+}
+.scale80 {
+  scale: 80%;
+}
+.clearAllBtn {
+  color: rgb(var(--v-theme-nnBaseBlue)) !important;
 }
 </style>

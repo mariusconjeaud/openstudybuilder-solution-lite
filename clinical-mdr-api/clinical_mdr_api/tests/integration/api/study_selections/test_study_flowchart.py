@@ -17,6 +17,7 @@ from starlette.testclient import TestClient
 
 from clinical_mdr_api.services.studies.study_flowchart import (
     DOCX_STYLES,
+    OPERATIONAL_DOCX_STYLES,
     StudyFlowchartService,
 )
 from clinical_mdr_api.services.utils.table_f import TableWithFootnotes
@@ -51,7 +52,6 @@ SOA_EXPORT_COLUMN_HEADERS = [
     "soa_group",
     "activity_group",
     "activity_subgroup",
-    "epoch",
     "visit",
     "activity",
 ]
@@ -149,6 +149,36 @@ def test_flowchart_study_versioning(tst_data: TestData, api_client):
     assert len(data["rows"]) != len(old_data["rows"])
     assert len(old_data["rows"]) == 4
     assert len(data["rows"]) == 38
+
+
+def test_flowchart_with_non_latest_activities(tst_data: TestData, api_client):
+    for activity in tst_data.activities:
+        text_value_2_name = tst_data.activities[activity].name + " new version"
+        # change activity name and approve the version
+        response = api_client.post(
+            f"/concepts/activities/activities/{tst_data.activities[activity].uid}/versions",
+        )
+        assert response.status_code == 201
+        response = api_client.patch(
+            f"/concepts/activities/activities/{tst_data.activities[activity].uid}",
+            json={
+                "change_description": "Change to have a new version not updated in library",
+                "name": text_value_2_name,
+                "name_sentence_case": text_value_2_name,
+                "guidance_text": "don't know",
+            },
+        )
+        assert response.status_code == 200
+        response = api_client.post(
+            f"/concepts/activities/activities/{tst_data.activities[activity].uid}/approvals"
+        )
+        assert response.status_code == 201
+
+    response = api_client.get(
+        f"/studies/{tst_data.study.uid}/flowchart",
+    )
+    assert_response_status_code(response, 200)
+    assert_json_response(response)
 
 
 def test_flowchart_coordinates(tst_data: TestData, api_client):
@@ -304,11 +334,19 @@ def test_flowchart_docx(
         StudyFlowchartService.show_hidden_rows(soa_table)
 
     # Compare table rows and column contents and properties
-    compare_docx_table(docx_doc.tables[0], soa_table, DOCX_STYLES)
+    compare_docx_table(
+        docx_doc.tables[0],
+        soa_table,
+        OPERATIONAL_DOCX_STYLES if operational else DOCX_STYLES,
+    )
 
     if not operational:
         # Compares footnote listing
-        compare_docx_footnotes(docx_doc, soa_table.footnotes, DOCX_STYLES)
+        compare_docx_footnotes(
+            docx_doc,
+            soa_table.footnotes,
+            OPERATIONAL_DOCX_STYLES if operational else DOCX_STYLES,
+        )
 
 
 @pytest.mark.parametrize(
@@ -402,67 +440,79 @@ def test_endpoints_with_invalid_time_unit(
 
 
 @pytest.mark.parametrize(
-    "path, data_format, expected_column_headers",
+    "path, data_format, column_headers, soa_preferences",
     [
         (
             "/studies/{study_uid}/detailed-soa-exports",
             "text/csv",
             SOA_EXPORT_COLUMN_HEADERS,
+            [False, False],
         ),
         (
             "/studies/{study_uid}/detailed-soa-exports",
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             SOA_EXPORT_COLUMN_HEADERS,
+            [False, True],
         ),
         (
             "/studies/{study_uid}/detailed-soa-exports",
             "text/xml",
             SOA_EXPORT_COLUMN_HEADERS,
+            [True, False],
         ),
         (
             "/studies/{study_uid}/detailed-soa-exports",
             "application/json",
             SOA_EXPORT_COLUMN_HEADERS,
+            [True, True],
         ),
         (
             "/studies/{study_uid}/protocol-soa-exports",
             "text/csv",
             SOA_EXPORT_COLUMN_HEADERS,
+            [True, True],
         ),
         (
             "/studies/{study_uid}/protocol-soa-exports",
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             SOA_EXPORT_COLUMN_HEADERS,
+            [True, False],
         ),
         (
             "/studies/{study_uid}/protocol-soa-exports",
             "text/xml",
             SOA_EXPORT_COLUMN_HEADERS,
+            [False, True],
         ),
         (
             "/studies/{study_uid}/protocol-soa-exports",
             "application/json",
             SOA_EXPORT_COLUMN_HEADERS,
+            [False, False],
         ),
         (
             "/studies/{study_uid}/operational-soa-exports",
             "text/csv",
             OPERATIONAL_SOA_EXPORT_COLUMN_HEADERS,
+            [],
         ),
         (
             "/studies/{study_uid}/operational-soa-exports",
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             OPERATIONAL_SOA_EXPORT_COLUMN_HEADERS_XLSX,
+            [],
         ),
         (
             "/studies/{study_uid}/operational-soa-exports",
             "text/xml",
             OPERATIONAL_SOA_EXPORT_COLUMN_HEADERS,
+            [],
         ),
         (
             "/studies/{study_uid}/operational-soa-exports",
             "application/json",
             OPERATIONAL_SOA_EXPORT_COLUMN_HEADERS,
+            [],
         ),
     ],
 )
@@ -471,9 +521,25 @@ def test_soa_exports(
     tst_data: TestData,
     path: str,
     data_format: str,
-    expected_column_headers,
+    column_headers,
+    soa_preferences,
 ):
     """Test the export endpoints return the expected data format"""
+    expected_column_headers = column_headers.copy()
+    if soa_preferences:
+        show_epochs, show_milestones = soa_preferences
+        response = api_client.patch(
+            f"/studies/{tst_data.study.uid}/soa-preferences",
+            json={"show_epochs": show_epochs, "show_milestones": show_milestones},
+        )
+        assert response.status_code == 200
+        res = response.json()
+        assert res["show_epochs"] == show_epochs
+        assert res["show_milestones"] == show_milestones
+        if show_epochs:
+            expected_column_headers.append("epoch")
+        if show_milestones:
+            expected_column_headers.append("milestone")
 
     response = api_client.get(
         path.format_map({"study_uid": tst_data.study.uid}),

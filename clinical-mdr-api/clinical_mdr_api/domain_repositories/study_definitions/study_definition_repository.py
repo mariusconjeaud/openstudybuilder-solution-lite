@@ -608,20 +608,24 @@ class StudyDefinitionRepository(ABC):
         return self._retrieve_fields_audit_trail(uid)
 
     @abstractmethod
-    def _retrieve_study_subpart_with_history(self, uid: str, is_subpart: bool = False):
+    def _retrieve_study_subpart_with_history(
+        self, uid: str, is_subpart: bool = False, study_value_version: str | None = None
+    ):
         """
         Private method to retrieve an audit trail for a study's subparts by UID.
         :return: A list of Study subpart audit trail objects.
         """
 
     def get_subpart_audit_trail_by_uid(
-        self, uid: str, is_subpart: bool = False
+        self, uid: str, is_subpart: bool = False, study_value_version: str | None = None
     ) -> list:
         """
         Public method which is to retrieve the audit trail for a given study identified by UID.
         :return: A list of retrieved data in a form StudyAuditTrailAR instances.
         """
-        return self._retrieve_study_subpart_with_history(uid, is_subpart)
+        return self._retrieve_study_subpart_with_history(
+            uid, is_subpart, study_value_version=study_value_version
+        )
 
     @abstractmethod
     def generate_uid(self) -> str:

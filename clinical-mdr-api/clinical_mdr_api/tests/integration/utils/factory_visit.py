@@ -140,6 +140,14 @@ def create_study_visit_codelists(
     )
     create_ct_term(
         codelist.codelist_uid,
+        "Information",
+        "VisitType_0000",
+        0,
+        catalogue_name,
+        library_name,
+    )
+    create_ct_term(
+        codelist.codelist_uid,
         "BASELINE",
         "VisitType_0001",
         1,

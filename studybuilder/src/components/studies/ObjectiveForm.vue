@@ -28,21 +28,37 @@
           value="scratch"
         />
       </v-radio-group>
-    </template>
-    <template #[`step.selectStudies`]>
       <v-form ref="studiesFormRef">
-        <v-autocomplete
-          v-model="selectedStudies"
-          :data-cy="$t('StudySelectionTable.select_studies')"
-          :label="$t('StudySelectionTable.studies')"
-          :items="studies"
-          :rules="[formRules.required]"
-          item-title="current_metadata.identification_metadata.study_id"
-          clearable
-          return-object
-          multiple
-          density="compact"
-        />
+        <v-row v-if="creationMode === 'select'">
+          <v-col cols="3">
+            <v-autocomplete
+              v-model="selectedStudies"
+              :data-cy="$t('StudySelectionTable.select_studies')"
+              :label="$t('StudySelectionTable.study_ids')"
+              :items="studies"
+              :rules="[formRules.required]"
+              item-title="current_metadata.identification_metadata.study_id"
+              clearable
+              multiple
+              return-object
+            />
+          </v-col>
+          <div class="mt-8">
+            {{ $t('_global.and_or') }}
+          </div>
+          <v-col cols="3">
+            <v-autocomplete
+              v-model="selectedStudies"
+              :label="$t('StudySelectionTable.study_acronyms')"
+              :items="studies"
+              :rules="[formRules.required]"
+              item-title="current_metadata.identification_metadata.study_acronym"
+              return-object
+              multiple
+              clearable
+            />
+          </v-col>
+        </v-row>
       </v-form>
     </template>
     <template #[`step.selectObjective`]>
@@ -294,7 +310,6 @@ const objectiveFormRef = ref()
 let apiEndpoint = preInstanceApi
 const alternateSteps = [
   { name: 'creationMode', title: t('StudyObjectiveForm.creation_mode_label') },
-  { name: 'selectStudies', title: t('StudyObjectiveForm.select_studies') },
   { name: 'selectObjective', title: t('StudyObjectiveForm.select_objective') },
 ]
 const scratchModeSteps = [
@@ -307,11 +322,11 @@ const scratchModeSteps = [
   { name: 'objectiveLevel', title: t('StudyObjectiveForm.step3_title') },
 ]
 const selectionHeaders = [
-  { title: '', key: 'actions', width: '5%' },
+  { title: '', key: 'actions', width: '1%' },
   { title: t('_global.template'), key: 'name', class: 'text-center' },
 ]
 const tplHeaders = [
-  { title: '', key: 'actions', width: '5%' },
+  { title: '', key: 'actions', width: '1%' },
   {
     title: t('_global.sequence_number_short'),
     key: 'sequence_id',
@@ -336,7 +351,7 @@ const defaultTplFilters = [
   },
 ]
 const objectiveHeaders = [
-  { title: '', key: 'actions', width: '5%' },
+  { title: '', key: 'actions', width: '1%' },
   { title: t('Study.study_id'), key: 'study_id', noFilter: true },
   {
     title: t('StudyObjectiveForm.study_objective'),
@@ -349,7 +364,7 @@ const objectiveHeaders = [
   },
 ]
 const selectedObjectiveHeaders = [
-  { title: '', key: 'actions', width: '5%' },
+  { title: '', key: 'actions', width: '1%' },
   { title: t('Study.study_id'), key: 'study_id' },
   { title: t('StudyObjectiveForm.study_objective'), key: 'objective.name' },
   {
@@ -359,6 +374,7 @@ const selectedObjectiveHeaders = [
 ]
 const extraStudyObjectiveFilters = {
   objective_template: { v: [] },
+  'objective.status': { v: [statuses.FINAL] },
 }
 
 const helpItems = [
@@ -417,7 +433,7 @@ function close() {
 }
 
 function getObserver(step) {
-  if (creationMode.value === 'select' && step === 2) {
+  if (creationMode.value === 'select' && step === 1) {
     return studiesFormRef.value
   }
   if (creationMode.value === 'scratch') {
@@ -505,7 +521,7 @@ function isStudyObjectiveSelected(studyObjective) {
   )
   if (!selected && props.currentStudyObjectives.length) {
     selected = props.currentStudyObjectives.find(
-      (item) => item.objective.uid === studyObjective.objective.uid
+      (item) => item.objective?.uid === studyObjective.objective.uid
     )
   }
   return selected !== undefined

@@ -110,10 +110,7 @@
             />
           </v-col>
           <v-col>
-            <StudybuilderUCUMField
-              v-model="form.ucum"
-              :error-messages="errors"
-            />
+            <StudybuilderUCUMField v-model="form.ucum" />
           </v-col>
         </v-row>
         <v-row>
@@ -186,6 +183,7 @@
 <script setup>
 import { computed, inject, onMounted, ref, watch } from 'vue'
 import terms from '@/api/controlledTerminology/terms'
+import units from '@/api/units'
 import _isEmpty from 'lodash/isEmpty'
 import librariesApi from '@/api/libraries'
 import SimpleFormDialog from '@/components/tools/SimpleFormDialog.vue'
@@ -240,19 +238,21 @@ watch(
   () => props.unit,
   (value) => {
     if (Object.keys(value).length !== 0) {
-      form.value = JSON.parse(JSON.stringify(value))
-      form.value.ct_units = value.ct_units.map((el) => el.term_uid)
-      form.value.unit_subsets = value.unit_subsets.map((el) => el.term_uid)
-      value.ucum
-        ? (form.value.ucum = value.ucum.term_uid)
-        : (form.value.ucum = '')
-      form.value.unit_dimension = value.unit_dimension.term_uid
+      units.getObject(value.uid).then((resp) => {
+        form.value = JSON.parse(JSON.stringify(resp.data))
+        form.value.ct_units = value.ct_units.map((el) => el.term_uid)
+        form.value.unit_subsets = value.unit_subsets.map((el) => el.term_uid)
+        value.ucum
+          ? (form.value.ucum = value.ucum.term_uid)
+          : (form.value.ucum = '')
+        form.value.unit_dimension = value.unit_dimension.term_uid
+      })
     }
   }
 )
 
 onMounted(() => {
-  terms.getByCodelist('units', true).then((resp) => {
+  terms.getByCodelist('units', { all: true }).then((resp) => {
     unitTerms.value = resp.data.items
   })
   terms.getByCodelist('unitDimensions').then((resp) => {

@@ -74,114 +74,119 @@
   </v-card>
 </template>
 
-<script>
+<script setup>
+import { computed, inject, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { useStudiesGeneralStore } from '@/stores/studies-general'
 import study from '@/api/study'
 import terms from '@/api/controlledTerminology/terms'
 import HelpButtonWithPanels from '@/components/tools/HelpButtonWithPanels.vue'
 
-export default {
-  components: {
-    HelpButtonWithPanels,
+const { t } = useI18n()
+const eventBusEmit = inject('eventBusEmit')
+const formRules = inject('formRules')
+const props = defineProps({
+  studyActivity: {
+    type: Object,
+    default: undefined,
   },
-  inject: ['eventBusEmit', 'formRules'],
-  props: {
-    studyActivity: {
-      type: Object,
-      default: undefined,
-    },
-  },
-  emits: ['close', 'updated'],
-  data() {
-    return {
-      flowchartGroups: [],
-      form: {},
-      helpItems: [],
-      working: false,
+})
+const emit = defineEmits(['close', 'updated'])
+
+const studiesGeneralStore = useStudiesGeneralStore()
+
+const flowchartGroups = ref([])
+const form = ref({})
+const working = ref(false)
+const observer = ref()
+
+const helpItems = []
+
+const library = computed(() => {
+  return props.studyActivity && props.studyActivity.activity
+    ? props.studyActivity.activity.library_name
+    : ''
+})
+const activity_group = computed(() => {
+  return props.studyActivity &&
+    props.studyActivity.study_activity_group &&
+    props.studyActivity.study_activity_group.activity_group_name
+    ? props.studyActivity.study_activity_group.activity_group_name
+    : ''
+})
+const activity_subgroup = computed(() => {
+  return props.studyActivity &&
+    props.studyActivity.study_activity_subgroup &&
+    props.studyActivity.study_activity_subgroup.activity_subgroup_name
+    ? props.studyActivity.study_activity_subgroup.activity_subgroup_name
+    : ''
+})
+const activity = computed(() => {
+  return props.studyActivity ? props.studyActivity.activity.name : ''
+})
+
+watch(
+  () => props.studyActivity,
+  (value) => {
+    if (value) {
+      study
+        .getStudyActivity(
+          studiesGeneralStore.selectedStudy.uid,
+          value.study_activity_uid
+        )
+        .then((resp) => {
+          form.value = { ...resp.data }
+          form.value.study_soa_group.name = {
+            sponsor_preferred_name: form.value.study_soa_group.soa_group_name,
+          }
+        })
+    } else {
+      form.value = {}
     }
   },
-  computed: {
-    library() {
-      return this.studyActivity && this.studyActivity.activity
-        ? this.studyActivity.activity.library_name
-        : ''
-    },
-    activity_group() {
-      return this.studyActivity &&
-        this.studyActivity.study_activity_group &&
-        this.studyActivity.study_activity_group.activity_group_name
-        ? this.studyActivity.study_activity_group.activity_group_name
-        : ''
-    },
-    activity_subgroup() {
-      return this.studyActivity &&
-        this.studyActivity.study_activity_subgroup &&
-        this.studyActivity.study_activity_subgroup.activity_subgroup_name
-        ? this.studyActivity.study_activity_subgroup.activity_subgroup_name
-        : ''
-    },
-    activity() {
-      return this.studyActivity ? this.studyActivity.activity.name : ''
-    },
-  },
-  watch: {
-    studyActivity: {
-      handler(value) {
-        if (value) {
-          this.form = { ...value }
-          this.form.study_soa_group.name = {
-            sponsor_preferred_name: this.form.study_soa_group.soa_group_name,
-          }
-        } else {
-          this.form = {}
-        }
+  { immediate: true }
+)
+
+onMounted(() => {
+  terms.getByCodelist('flowchartGroups').then((resp) => {
+    flowchartGroups.value = resp.data.items
+  })
+})
+
+function close() {
+  working.value = false
+  form.value = {}
+  observer.value.reset()
+  emit('close')
+}
+
+async function submit() {
+  const { valid } = await observer.value.validate()
+  if (!valid) {
+    return
+  }
+  working.value = true
+  const data = {
+    soa_group_term_uid: form.value.study_soa_group.term_uid,
+  }
+  study
+    .updateStudyActivity(
+      props.studyActivity.study_uid,
+      props.studyActivity.study_activity_uid,
+      data
+    )
+    .then(
+      () => {
+        eventBusEmit('notification', {
+          type: 'success',
+          msg: t('StudyActivityEditForm.update_success'),
+        })
+        emit('updated')
+        close()
       },
-      immediate: true,
-    },
-  },
-  mounted() {
-    terms.getByCodelist('flowchartGroups').then((resp) => {
-      this.flowchartGroups = resp.data.items
-    })
-  },
-  methods: {
-    close() {
-      this.working = false
-      this.form = {}
-      this.$refs.observer.reset()
-      this.$emit('close')
-    },
-    cancel() {
-      this.close()
-    },
-    async submit() {
-      const { valid } = await this.$refs.observer.validate()
-      if (!valid) {
-        return
+      () => {
+        working.value = false
       }
-      this.working = true
-      const data = {
-        soa_group_term_uid: this.form.study_soa_group.term_uid,
-      }
-      study
-        .updateStudyActivity(
-          this.studyActivity.study_uid,
-          this.studyActivity.study_activity_uid,
-          data
-        )
-        .then(
-          () => {
-            this.eventBusEmit('notification', {
-              type: 'success',
-              msg: this.$t('StudyActivityEditForm.update_success'),
-            })
-            this.$emit('updated')
-            this.close()
-          },
-          () => {
-            this.working = false
-          }
-        )
-    },
-  },
+    )
 }
 </script>

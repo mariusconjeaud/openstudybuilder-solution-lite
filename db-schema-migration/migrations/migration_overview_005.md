@@ -27,6 +27,7 @@
 ### Nodes Affected
   - `StudyEpoch`
 
+
 ## 4. Link DatasetVariables with CT Terms based on their Value List
 -------------------------------------------------------------------
 ### Change Description
@@ -37,6 +38,7 @@
 
 ### Relationships Created
   - `(:DatasetVariableInstance)-[:REFERENCES_TERM]->(:CTTermRoot)`
+
 
 ## 5. Refactor StudyField Deletion
 -------------------------------------  

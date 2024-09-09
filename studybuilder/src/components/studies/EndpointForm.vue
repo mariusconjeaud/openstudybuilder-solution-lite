@@ -10,35 +10,49 @@
     @close="close"
     @save="submit"
   >
-    <template #[`step.creationMode`]>
+    <template #[`step.creationMode`]="{ step }">
       <v-radio-group v-model="creationMode" color="primary">
         <v-radio
           :label="$t('StudyEndpointForm.template_mode')"
           value="template"
         />
-        <v-radio
-          :label="$t('StudyEndpointForm.select_mode')"
-          value="studies"
-        />
+        <v-radio :label="$t('StudyEndpointForm.select_mode')" value="studies" />
         <v-radio
           :label="$t('StudyEndpointForm.scratch_mode')"
           value="scratch"
         />
       </v-radio-group>
-    </template>
-    <template #[`step.selectStudies`]="{ step }">
       <v-form :ref="`observer_${step}`">
-        <v-autocomplete
-          v-model="selectedStudies"
-          :data-cy="$t('StudySelectionTable.select_studies')"
-          :label="$t('StudySelectionTable.studies')"
-          :items="studies"
-          :rules="[formRules.required]"
-          item-title="current_metadata.identification_metadata.study_id"
-          clearable
-          multiple
-          return-object
-        />
+        <v-row v-if="creationMode === 'studies'">
+          <v-col cols="3">
+            <v-autocomplete
+              v-model="selectedStudies"
+              :data-cy="$t('StudySelectionTable.select_studies')"
+              :label="$t('StudySelectionTable.study_ids')"
+              :items="studies"
+              :rules="[formRules.required]"
+              item-title="current_metadata.identification_metadata.study_id"
+              clearable
+              multiple
+              return-object
+            />
+          </v-col>
+          <div class="mt-8">
+            {{ $t('_global.and_or') }}
+          </div>
+          <v-col cols="3">
+            <v-autocomplete
+              v-model="selectedStudies"
+              :label="$t('StudySelectionTable.study_acronyms')"
+              :items="studies"
+              :rules="[formRules.required]"
+              item-title="current_metadata.identification_metadata.study_acronym"
+              return-object
+              multiple
+              clearable
+            />
+          </v-col>
+        </v-row>
       </v-form>
     </template>
     <template #[`step.selectEndpoint`]>
@@ -117,7 +131,11 @@
           <v-row v-if="objectives.length === 0">
             <v-col cols="2"></v-col>
             <v-col cols="6">
-              <v-card color="white" class="text-red" :text="$t('StudyEndpointForm.no_objective_available')" />
+              <v-card
+                color="white"
+                class="text-red"
+                :text="$t('StudyEndpointForm.no_objective_available')"
+              />
             </v-col>
           </v-row>
         </v-card-text>
@@ -230,10 +248,7 @@
             </template>
           </template>
           <template #[`item.name`]="{ item }">
-            <NNParameterHighlighter
-              :name="item.name"
-              default-color="orange"
-            />
+            <NNParameterHighlighter :name="item.name" default-color="orange" />
           </template>
           <template #[`item.actions`]="{ item }">
             <v-btn
@@ -295,9 +310,7 @@
               </v-col>
               <v-col cols="2">
                 <v-btn
-                  :icon="
-                    !skipUnits ? 'mdi-eye-outline' : 'mdi-eye-off-outline'
-                  "
+                  :icon="!skipUnits ? 'mdi-eye-outline' : 'mdi-eye-off-outline'"
                   size="small"
                   class="ml-n4"
                   @click="clearUnits"
@@ -321,12 +334,6 @@
             </v-row>
           </v-col>
           <v-col cols="5">
-            <ParameterValueSelector
-              v-if="!form.timeframe_template"
-              :model-value="timeframeTemplateParameters"
-              color="white"
-              :preview-text="$t('StudyEndpointForm.timeframe')"
-            />
             <ParameterValueSelector
               v-if="
                 form.timeframe_template && timeframeTemplateParameters.length
@@ -373,7 +380,7 @@
               clearable
               append-icon="mdi-magnify"
               :disabled="selectTimeFrameLater"
-              @change="loadTimeframeTemplateParameters"
+              @update:model-value="loadTimeframeTemplateParameters"
             />
           </v-col>
           <v-col cols="2">
@@ -479,7 +486,7 @@ export default {
       ],
       creationMode: 'template',
       endpointHeaders: [
-        { title: '', key: 'actions', width: '5%' },
+        { title: '', key: 'actions', width: '1%' },
         { title: this.$t('Study.study_id'), key: 'study_id', noFilter: true },
         {
           title: this.$t('StudyEndpointForm.study_endpoint'),
@@ -496,6 +503,7 @@ export default {
       endpointTemplateParameters: [],
       extraStudyEndpointFilters: {
         endpoint_template: { v: [] },
+        'endpoint.status': { v: [statuses.FINAL] },
       },
       form: this.getInitialForm(),
       loadingEndpointParameters: false,
@@ -522,10 +530,6 @@ export default {
         {
           name: 'creationMode',
           title: this.$t('StudyEndpointForm.creation_mode_title'),
-        },
-        {
-          name: 'selectStudies',
-          title: this.$t('StudyEndpointForm.select_studies'),
         },
         {
           name: 'selectEndpoint',
@@ -569,7 +573,7 @@ export default {
         },
       ],
       templateSelectionHeaders: [
-        { title: '', key: 'actions', width: '5%' },
+        { title: '', key: 'actions', width: '1%' },
         {
           title: this.$t('_global.template'),
           key: 'name',
@@ -578,7 +582,7 @@ export default {
       ],
       selectedStudies: [],
       selectedEndpointHeaders: [
-        { title: '', key: 'actions', width: '5%' },
+        { title: '', key: 'actions', width: '1%' },
         { title: this.$t('Study.study_id'), key: 'study_id' },
         {
           title: this.$t('StudyEndpointForm.study_endpoint'),
@@ -595,7 +599,7 @@ export default {
       timeframeTemplates: [],
       timeframeTemplateParameters: [],
       tplHeaders: [
-        { title: '', key: 'actions', width: '5%' },
+        { title: '', key: 'actions', width: '1%' },
         {
           title: this.$t('_global.sequence_number_short'),
           key: 'sequence_id',
@@ -857,6 +861,7 @@ export default {
         await study.batchCreateStudyEndpoints(this.selectedStudy.uid, data)
       } else if (this.creationMode === 'scratch') {
         const data = JSON.parse(JSON.stringify(this.form))
+        data.timeframe_template.library.name = constants.LIBRARY_USER_DEFINED
         args = {
           studyUid: this.selectedStudy.uid,
           data,

@@ -92,9 +92,9 @@ def test_data():
     """Initialize test data"""
     db_name = "studyactivityinstanceapi"
     inject_and_clear_db(db_name)
-    inject_base_data()
+
     global study
-    study = TestUtils.create_study()
+    study = inject_base_data()
 
     db.cypher_query(STARTUP_ACTIVITY_GROUPS)
     db.cypher_query(STARTUP_ACTIVITY_SUB_GROUPS)
@@ -348,6 +348,7 @@ def test_create_remove_study_activity_instance_when_study_activity_is_created_re
         f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}",
     )
     assert response.status_code == 404
+    TestUtils.delete_study(test_study.uid)
 
 
 def test_delete_study_activity_instance(api_client):
@@ -386,6 +387,7 @@ def test_delete_study_activity_instance(api_client):
         f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}",
     )
     assert response.status_code == 404
+    TestUtils.delete_study(test_study.uid)
 
 
 def test_create_study_activity_instance(api_client):
@@ -464,6 +466,7 @@ def test_create_study_activity_instance(api_client):
         == f"There is already a StudyActivityInstance ({new_activity_instance_linked_to_weight.uid}) "
         f"linked to the same Activity ({weight_activity.uid})"
     )
+    TestUtils.delete_study(test_study.uid)
 
 
 def test_edit_study_activity_instance(api_client):
@@ -526,6 +529,7 @@ def test_edit_study_activity_instance(api_client):
     res = response.json()
     assert res["activity_instance"]["uid"] == randomized_activity_instance.uid
     assert res["state"] == StudyActivityInstanceState.REQUIRED.value
+    TestUtils.delete_study(test_study.uid)
 
 
 def test_study_activity_instance_header_endpoint(api_client):
@@ -571,6 +575,7 @@ def test_study_activity_instance_header_endpoint(api_client):
         body_mes_activity.name,
         weight_activity.name,
     ]
+    TestUtils.delete_study(test_study.uid)
 
 
 def test_study_activity_instance_audit_trails(api_client):
@@ -633,6 +638,7 @@ def test_study_activity_instance_audit_trails(api_client):
     assert res[0]["show_activity_instance_in_protocol_flowchart"] is True
     assert res[1]["activity"]["name"] == randomized_activity.name
     assert res[1]["show_activity_instance_in_protocol_flowchart"] is False
+    TestUtils.delete_study(test_study.uid)
 
 
 @pytest.mark.parametrize(
@@ -659,6 +665,7 @@ def test_get_study_activity_instances_csv_xml_excel(api_client, export_format):
     assert response.status_code == 201
     url = f"/studies/{test_study.uid}/study-activities"
     TestUtils.verify_exported_data_format(api_client, export_format, url)
+    TestUtils.delete_study(test_study.uid)
 
 
 @pytest.mark.parametrize(
@@ -746,8 +753,13 @@ def test_study_activity_instances_states(
 
     assert len(res) == 1
     assert res[0]["activity_instance"]["uid"] == new_test_activity_instance.uid
+    assert (
+        new_test_activity.uid
+        in res[0]["activity_instance"]["activity_groupings"][0]["activity"]["uid"]
+    )
     assert res[0]["activity"]["uid"] == new_test_activity.uid
     assert res[0]["state"] == expected_state
+    TestUtils.delete_study(test_study.uid)
 
 
 def test_sync_to_latest_version_activity_instance(api_client):
@@ -851,6 +863,7 @@ def test_sync_to_latest_version_activity_instance(api_client):
         == new_test_activity_instance.uid
     )
     assert study_activity_instance["latest_activity_instance"] is None
+    TestUtils.delete_study(test_study.uid)
 
 
 def test_activity_activity_instance_relationship(api_client):
@@ -955,3 +968,4 @@ def test_activity_activity_instance_relationship(api_client):
         study_activity_instance["state"]
         == StudyActivityInstanceState.MISSING_SELECTION.value
     )
+    TestUtils.delete_study(test_study.uid)

@@ -13,11 +13,11 @@ from .utils.api_bindings import (
     CODELIST_UNIT_SUBSET,
     UNIT_SUBSET_AGE,
     UNIT_SUBSET_DOSE,
+    UNIT_SUBSET_ENDPOINT_UNIT,
     UNIT_SUBSET_STRENGTH,
     UNIT_SUBSET_STUDY_PREFERRED_TIME_UNIT,
     UNIT_SUBSET_STUDY_TIME,
     UNIT_SUBSET_TIME,
-    UNIT_SUBSET_ENDPOINT_UNIT,
 )
 from .utils.importer import BaseImporter, open_file, open_file_async
 from .utils.metrics import Metrics
@@ -348,20 +348,26 @@ class Units(BaseImporter):
             if row[headers.index("Migrate Y/N")] not in ("Y", "y"):
                 self.log.info(f"Unit '{name}' is not marked for migration, skipping")
             elif existing_rows.get(name):
-                equal = self.are_units_equal(data["body"], existing_units_by_uid.get(existing_rows.get(name)))
+                equal = self.are_units_equal(
+                    data["body"], existing_units_by_uid.get(existing_rows.get(name))
+                )
                 if equal:
                     self.log.info(
                         f"Skipping existing unit '{name}' with ct codes: {ct_units}"
                     )
                 else:
-                    self.log.info(
-                        f"Updating unit '{name}'"
-                    )
+                    self.log.info(f"Updating unit '{name}'")
                     data["body"]["change_description"] = "Migration modification"
-                    data["patch_path"] = f"/concepts/unit-definitions/{existing_rows.get(name)}"
-                    data["new_path"] = f"/concepts/unit-definitions/{existing_rows.get(name)}/versions"
+                    data[
+                        "patch_path"
+                    ] = f"/concepts/unit-definitions/{existing_rows.get(name)}"
+                    data[
+                        "new_path"
+                    ] = f"/concepts/unit-definitions/{existing_rows.get(name)}/versions"
                     api_tasks.append(
-                        self.api.new_version_patch_then_approve(data=data, session=session, approve=True)
+                        self.api.new_version_patch_then_approve(
+                            data=data, session=session, approve=True
+                        )
                     )
             else:
                 self.log.info(
@@ -387,33 +393,43 @@ class Units(BaseImporter):
             "definition",
             "order",
             "comment",
-            "template_parameter"
+            "template_parameter",
         ]
         for field in simple_fields:
             if new.get(field) != existing.get(field):
-                self.log.info(f"Field {field} is different, new: {new.get(field)}, old: {existing.get(field)}")
+                self.log.info(
+                    f"Field {field} is different, new: {new.get(field)}, old: {existing.get(field)}"
+                )
                 return False
         new_unit_subset = self.make_set_of_optional_list(new["unit_subsets"])
         existing_unit_subset = self.make_set_of_term_uids(existing["unit_subsets"])
         if new_unit_subset != existing_unit_subset:
-            self.log.info(f"Unit subsets are different, new: {new_unit_subset}, old: {existing_unit_subset}")
+            self.log.info(
+                f"Unit subsets are different, new: {new_unit_subset}, old: {existing_unit_subset}"
+            )
             return False
         new_ct_units = self.make_set_of_optional_list(new["ct_units"])
         existing_ct_units = self.make_set_of_term_uids(existing["ct_units"])
         if new_ct_units != existing_ct_units:
-            self.log.info(f"CT units are different, new: {new_ct_units}, old: {existing_ct_units}")
+            self.log.info(
+                f"CT units are different, new: {new_ct_units}, old: {existing_ct_units}"
+            )
             return False
         existing_ucum = existing["ucum"]
         if existing_ucum is not None:
             existing_ucum = existing_ucum["term_uid"]
         if new["ucum"] != existing_ucum:
-            self.log.info(f"UCUM is different, new: {new['ucum']}, old: {existing_ucum}")
+            self.log.info(
+                f"UCUM is different, new: {new['ucum']}, old: {existing_ucum}"
+            )
             return False
         existing_dimension = existing["unit_dimension"]
         if existing_dimension is not None:
             existing_dimension = existing_dimension["term_uid"]
         if new["unit_dimension"] != existing_dimension:
-            self.log.info(f"Unit dimension is different, new: {new['unit_dimension']}, old: {existing_dimension}")
+            self.log.info(
+                f"Unit dimension is different, new: {new['unit_dimension']}, old: {existing_dimension}"
+            )
             return False
         return True
 
@@ -426,7 +442,6 @@ class Units(BaseImporter):
         if items is None:
             return set()
         return set(items)
-
 
     @open_file_async()
     async def handle_sponsor_units(self, csvfile, session):

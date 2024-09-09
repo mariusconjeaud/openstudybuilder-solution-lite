@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from neomodel import db
 
 from clinical_mdr_api.domain_repositories._generic_repository_interface import (
@@ -74,6 +76,9 @@ class CTTermNameRepository(CTTermGenericRepository[CTTermNameAR]):
         library: Library | None,
         relationship: VersionRelationship,
         value: CTTermNameValue,
+        study_count: int = 0,
+        queried_effective_date: datetime | None = None,
+        date_conflict: bool | None = False,
         **_kwargs,
     ) -> CTTermNameAR:
         codelists: list[CTTermCodelistVO] = []
@@ -83,6 +88,7 @@ class CTTermNameRepository(CTTermGenericRepository[CTTermNameAR]):
                 CTTermCodelistVO(
                     codelist_uid=codelist_root["uid"],
                     order=codelist_root["order"],
+                    library_name=codelist_root["codelist_library_name"],
                 )
             )
 
@@ -93,6 +99,8 @@ class CTTermNameRepository(CTTermGenericRepository[CTTermNameAR]):
                 name=value.name,
                 name_sentence_case=value.name_sentence_case,
                 catalogue_name=_kwargs["ctterm_names"]["catalogue"],
+                queried_effective_date=queried_effective_date,
+                date_conflict=date_conflict,
             ),
             library=LibraryVO.from_input_values_2(
                 library_name=library.name,
@@ -121,6 +129,7 @@ class CTTermNameRepository(CTTermGenericRepository[CTTermNameAR]):
                 CTTermCodelistVO(
                     codelist_uid=codelist_root.uid,
                     order=codelist_root.has_term.relationship(ct_term_root_node).order,
+                    library_name=codelist_root.has_library.single().name,
                 )
             )
 

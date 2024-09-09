@@ -14,10 +14,10 @@
     </v-tabs>
     <v-window v-model="tab">
       <v-window-item value="objectives">
-        <ObjectiveTable @updated="endpointTableKey++" />
+        <ObjectiveTable :key="`objectives-${tabKeys.objectives}`" />
       </v-window-item>
       <v-window-item value="endpoints">
-        <EndpointTable :key="endpointTableKey" />
+        <EndpointTable :key="`endpoints-${tabKeys.endpoints}`" />
       </v-window-item>
       <v-window-item value="estimands">
         <UnderConstruction />
@@ -34,6 +34,7 @@ import HelpButtonWithPanels from '@/components/tools/HelpButtonWithPanels.vue'
 import { useAppStore } from '@/stores/app'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
 import { computed } from 'vue'
+import { useTabKeys } from '@/composables/tabKeys'
 
 export default {
   components: {
@@ -49,11 +50,11 @@ export default {
       addBreadcrumbsLevel: appStore.addBreadcrumbsLevel,
       selectedStudy: computed(() => studiesGeneralStore.selectedStudy),
       studyId: computed(() => studiesGeneralStore.studyId),
+      ...useTabKeys(),
     }
   },
   data() {
     return {
-      endpointTableKey: 1,
       tab: null,
       helpItems: [
         'StudyPurposeView.study_objectives',
@@ -103,6 +104,7 @@ export default {
           'StudyEndpointsTable.units'
         )
       }
+      this.updateTabKey(newValue)
     },
   },
   mounted() {

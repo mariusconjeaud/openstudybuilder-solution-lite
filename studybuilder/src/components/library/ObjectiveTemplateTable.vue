@@ -93,8 +93,7 @@ const headers = ref([
   {
     title: '',
     key: 'actions',
-    sortable: false,
-    width: '5%',
+    width: '1%',
   },
   { title: t('_global.sequence_number'), key: 'sequence_id' },
   {

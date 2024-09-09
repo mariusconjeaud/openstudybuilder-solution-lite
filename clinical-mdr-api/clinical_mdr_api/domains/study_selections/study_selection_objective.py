@@ -226,7 +226,12 @@ class StudySelectionObjectivesAR:
                         selection.study_selection_uid
                         != selected_value.study_selection_uid
                     ):
-                        updated_selections.append(selection)
+                        try:
+                            updated_selections.append(selection)
+                        except AttributeError as exc:
+                            raise exceptions.BusinessLogicException(
+                                "It is not possible to put a Secondary Objective above a Primary Objective."
+                            ) from exc
                 else:
                     if (
                         selection.study_selection_uid

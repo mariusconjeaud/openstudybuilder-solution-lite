@@ -679,7 +679,7 @@ class OdmXmlExporterService:
                     measurement_unit_refs=[
                         MeasurementUnitRef(
                             measurement_unit_oid=Attribute(
-                                "MeasurementUnitOID", unit_definition.name
+                                "MeasurementUnitOID", unit_definition.uid
                             )
                         )
                         for unit_definition in item.unit_definitions
@@ -904,34 +904,31 @@ class OdmXmlExporterService:
             unit_definition_uids = []
             unit_definitions = []
             for unit_definition in self.odm_data_extractor.unit_definitions:
-                if unit_definition.ucum is not None:
-                    if unit_definition.ucum.term_uid in unit_definition_uids:
-                        continue
-                    unit_definition_uids.append(unit_definition.ucum.term_uid)
-                    unit_definitions.append(
-                        MeasurementUnit(
-                            oid=Attribute("OID", unit_definition.name),
-                            name=Attribute("Name", unit_definition.ucum.term_uid),
-                            symbol=Symbol(
-                                TranslatedText(
-                                    unit_definition.name,
-                                    lang=Attribute(
-                                        self.XML_LANG,
-                                        get_iso_lang_data(
-                                            query="eng", return_key="639-1"
-                                        ),
-                                    ),
+                if unit_definition.uid in unit_definition_uids:
+                    continue
+                unit_definition_uids.append(unit_definition.uid)
+                unit_definitions.append(
+                    MeasurementUnit(
+                        oid=Attribute("OID", unit_definition.uid),
+                        name=Attribute("Name", unit_definition.name),
+                        symbol=Symbol(
+                            TranslatedText(
+                                unit_definition.name,
+                                lang=Attribute(
+                                    self.XML_LANG,
+                                    get_iso_lang_data(query="eng", return_key="639-1"),
+                                ),
+                            )
+                        ),
+                        **self._get_vendor_attributes_or_empty_dict(
+                            {
+                                "version": Attribute(
+                                    self.OSB_VERSION, unit_definition.version
                                 )
-                            ),
-                            **self._get_vendor_attributes_or_empty_dict(
-                                {
-                                    "version": Attribute(
-                                        self.OSB_VERSION, unit_definition.version
-                                    )
-                                }
-                            ),
-                        )
+                            }
+                        ),
                     )
+                )
 
             return unit_definitions
 

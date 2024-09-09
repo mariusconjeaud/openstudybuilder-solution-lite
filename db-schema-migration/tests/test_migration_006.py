@@ -134,9 +134,7 @@ def test_migrate_study_activity_instances(migration):
                     if study_activity_instance["activity_instance"]
                     else None,
                 )
-                # vals = list(study_activity_instance_dict.values())
-            # We have to comment assertion as there exists duplicated StudyActivities affected
-            # by multiple StudyActivitySubGroup/StudyActivityGroup relationships and that create
+            #     vals = list(study_activity_instance_dict.values())
             # assert len(set(vals)) == len(
             #     vals
             # ), f"There exists some duplicated StudyActivityInstance in Study ({study_uid})"

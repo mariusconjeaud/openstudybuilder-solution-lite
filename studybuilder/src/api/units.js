@@ -6,6 +6,9 @@ export default {
   get(params) {
     return repository.get(`${resource}`, params)
   },
+  getObject(uid) {
+    return repository.get(`${resource}/${uid}`)
+  },
   getByDimension(dimension) {
     const params = { dimension: dimension, page_size: 0 }
     return repository.get(`${resource}`, { params })

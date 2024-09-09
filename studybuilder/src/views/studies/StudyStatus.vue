@@ -67,16 +67,20 @@
     </v-tabs>
     <v-window v-model="tab">
       <v-window-item value="core_attributes">
-        <StudyIdentificationSummary />
+        <StudyIdentificationSummary
+          :key="`core_attributes-${tabKeys.core_attributes}`"
+        />
       </v-window-item>
       <v-window-item value="study_status">
-        <StudyStatusTable />
+        <StudyStatusTable :key="`study_status-${tabKeys.study_status}`" />
       </v-window-item>
       <v-window-item value="subparts">
-        <StudySubpartsTable />
+        <StudySubpartsTable :key="`subparts-${tabKeys.subparts}`" />
       </v-window-item>
       <v-window-item value="protocolversions">
-        <UnderConstruction />
+        <UnderConstruction
+          :key="`protocolversions-${tabKeys.protocolversions}`"
+        />
       </v-window-item>
     </v-window>
   </div>
@@ -93,12 +97,14 @@ import StudySubpartsTable from '@/components/studies/StudySubpartsTable.vue'
 import UnderConstruction from '@/components/layout/UnderConstruction.vue'
 import { useAppStore } from '@/stores/app'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
+import { useTabKeys } from '@/composables/tabKeys'
 
 const appStore = useAppStore()
 const studiesGeneralStore = useStudiesGeneralStore()
 const { t } = useI18n()
 const router = useRouter()
 const route = useRoute()
+const { tabKeys, updateTabKey } = useTabKeys()
 
 const tab = ref(null)
 const tabs = ref([
@@ -116,6 +122,7 @@ watch(tab, (newValue) => {
     name: 'StudyStatus',
     params: { study_id: studiesGeneralStore.selectedStudy.uid, tab: newValue },
   })
+  updateTabKey(newValue)
   appStore.addBreadcrumbsLevel(
     tabName,
     {

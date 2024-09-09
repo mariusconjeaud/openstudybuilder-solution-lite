@@ -14,8 +14,10 @@
       <template #actions="">
         <v-btn
           data-cy="add-study-compound-dosing"
+          class="ml-2"
           size="small"
-          color="primary"
+          variant="outlined"
+          color="nnBaseBlue"
           :title="$t('StudyCompoundForm.add_title')"
           :disabled="
             !checkPermission($roles.STUDY_WRITE) ||
@@ -118,7 +120,7 @@ export default {
         },
       ],
       headers: [
-        { title: '', key: 'actions', width: '5%' },
+        { title: '', key: 'actions', width: '1%' },
         { title: '#', key: 'order' },
         {
           title: this.$t('StudyCompoundDosingTable.element'),

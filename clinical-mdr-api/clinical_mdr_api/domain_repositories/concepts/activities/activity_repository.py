@@ -200,12 +200,23 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
         replaced_activity = value.replaced_by_activity.get_or_none()
         activity_groupings_nodes = value.has_grouping.all()
         activity_groupings = []
-        activity_instances_legacy_codes = []
+        activity_instances_legacy_codes = {}
         for activity_grouping in activity_groupings_nodes:
-            activity_instances_legacy_codes.extend(
-                activity_instance_value.is_legacy_usage
-                for activity_instance_value in activity_grouping.has_activity.all()
-            )
+            for activity_instance_value in activity_grouping.has_activity.all():
+                has_version = activity_instance_value.has_version
+                for activity_instance_root in has_version.all():
+                    has_version_props = has_version.relationship(activity_instance_root)
+                    if (
+                        activity_instance_root
+                        and has_version_props.status == "Final"
+                        and has_version_props.end_date is None
+                        and activity_instance_root.uid
+                        not in activity_instances_legacy_codes
+                    ):
+                        activity_instances_legacy_codes[
+                            activity_instance_root.uid
+                        ] = activity_instance_value.is_legacy_usage
+
             activity_valid_groups = activity_grouping.in_subgroup.all()
             for activity_valid_group in activity_valid_groups:
                 activity_groupings.append(
@@ -263,7 +274,9 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
                 if value.is_multiple_selection_allowed is not None
                 else True,
                 is_finalized=bool(value.is_request_rejected or replaced_activity),
-                is_used_by_legacy_instances=all(activity_instances_legacy_codes)
+                is_used_by_legacy_instances=all(
+                    activity_instances_legacy_codes.values()
+                )
                 if activity_instances_legacy_codes
                 else False,
             ),
@@ -446,8 +459,17 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
                    | activity_group_value.name])
              }}]) AS activity_groupings,
             head([(concept_value)-[:REPLACED_BY_ACTIVITY]->(replacing_activity_root:ActivityRoot) | replacing_activity_root.uid]) AS replaced_by_activity,
-            [(concept_value)-[:HAS_GROUPING]->(:ActivityGrouping)<-[:HAS_ACTIVITY]-(activity_instance_value:ActivityInstanceValue) | activity_instance_value.is_legacy_usage] AS all_legacy_codes
-
+            apoc.coll.sortMulti([(concept_value)-[:HAS_GROUPING]->(:ActivityGrouping)<-[:HAS_ACTIVITY]-(activity_instance_value:ActivityInstanceValue)
+                <-[instance_version:HAS_VERSION WHERE instance_version.status='Final' and instance_version.end_date IS NULL]-(activity_instance_root) | 
+                {{
+                    uid:activity_instance_root.uid,
+                    legacy_code:activity_instance_value.is_legacy_usage
+                }}], ['^uid', 'instance_version']) AS all_legacy_codes
+            WITH *,
+                // Sort by uid and instance_version in descending order and leave only latest version of same ActivityInstances
+                [
+                    i in range(0, size(all_legacy_codes) -1) 
+                    WHERE i=0 OR all_legacy_codes[i].uid <> all_legacy_codes[i-1].uid | all_legacy_codes[i].legacy_code ] as all_legacy_codes
             WITH *, 
                 CASE
                 WHEN NOT is_request_rejected and replaced_by_activity IS NULL THEN false
@@ -535,14 +557,13 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
         WITH DISTINCT activity_root,activity_value, has_version,
             head([(library)-[:CONTAINS_CONCEPT]->(activity_root) | library.name]) AS activity_library_name,
             [(activity_root)-[versions:HAS_VERSION]->(:ActivityValue) | versions.version] as all_versions,
-            apoc.coll.toSet([(activity_value)-[:HAS_GROUPING]->(:ActivityGrouping)<-[:HAS_ACTIVITY]-
-            (activity_instance_value:ActivityInstanceValue)-[:ACTIVITY_INSTANCE_CLASS]->
-            (activity_instance_class_root:ActivityInstanceClassRoot)-[:LATEST]->(activity_instance_class_value:ActivityInstanceClassValue)
+            apoc.coll.sortMulti([(activity_value)-[:HAS_GROUPING]->(:ActivityGrouping)<-[:HAS_ACTIVITY]-
+            (activity_instance_value:ActivityInstanceValue)<-[aihv:HAS_VERSION]-(activity_instance_root:ActivityInstanceRoot)
+            WHERE NOT EXISTS ((activity_instance_value)<--(:DeletedActivityInstanceRoot))
             | {
-                activity_instance_library_name: head([(library)-[:CONTAINS_CONCEPT]->
-                (activity_instance_root:ActivityInstanceRoot)-[:HAS_VERSION]->(activity_instance_value) | library.name]),
-                uid: head([(activity_instance_value)<-[:HAS_VERSION]-(activity_instance_root:ActivityInstanceRoot) | activity_instance_root.uid]),
-                versions: [(activity_instance_value)<-[aihv:HAS_VERSION]-(activity_instance_root:ActivityInstanceRoot) | aihv { .version, .status, .start_date, .end_date }],
+                activity_instance_library_name: head([(library)-[:CONTAINS_CONCEPT]->(activity_instance_root) | library.name]),
+                uid: activity_instance_root.uid,
+                version: {version:aihv.version, status:aihv.status},
                 name:activity_instance_value.name,
                 name_sentence_case:activity_instance_value.name_sentence_case,
                 abbreviation:activity_instance_value.abbreviation,
@@ -554,8 +575,9 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
                 is_legacy_usage:coalesce(activity_instance_value.is_legacy_usage, false),
                 is_derived:coalesce(activity_instance_value.is_derived, false),
                 topic_code:activity_instance_value.topic_code,
-                activity_instance_class: activity_instance_class_value
-            }]) AS activity_instances,
+                activity_instance_class: head([(activity_instance_value)-[:ACTIVITY_INSTANCE_CLASS]->(activity_instance_class_root:ActivityInstanceClassRoot)
+                    -[:LATEST]->(activity_instance_class_value:ActivityInstanceClassValue) | activity_instance_class_value])
+            }], ['^uid', 'version.version']) AS activity_instances,
             [(activity_value)-[:HAS_GROUPING]->(:ActivityGrouping)-[:IN_SUBGROUP]->(activity_valid_group:ActivityValidGroup)
                 <-[:HAS_GROUP]-(activity_subgroup_value:ActivitySubGroupValue) | {
                     activity_subgroup_value: activity_subgroup_value, 
@@ -563,13 +585,16 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
                 }
             ] AS hierarchy
         WITH *,
-            apoc.coll.sortMaps(activity_instances, '^name') as activity_instances
+                // Leave only the latest version of same ActivityInstances
+                [
+                    i in range(0, size(activity_instances) -1) 
+                    WHERE i=0 OR activity_instances[i].uid <> activity_instances[i-1].uid | activity_instances[i]] as activity_instances
         RETURN
             hierarchy,
             activity_root,
             activity_value,
             activity_library_name,
-            activity_instances,
+            apoc.coll.sortMaps(activity_instances, '^name') as activity_instances,
             has_version,
             apoc.coll.dropDuplicateNeighbors(apoc.coll.sort(all_versions)) AS all_versions
         """
@@ -583,8 +608,6 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
         overview_dict = {}
         for overview_prop, attribute_name in zip(overview, attribute_names):
             overview_dict[attribute_name] = overview_prop
-        for item in overview_dict["activity_instances"]:
-            item["version"] = _get_display_version(item["versions"])
         return overview_dict
 
     def get_cosmos_activity_overview(self, uid: str) -> dict:
@@ -594,6 +617,7 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
             apoc.coll.toSet([(activity_value)-[:HAS_GROUPING]->(:ActivityGrouping)<-[:HAS_ACTIVITY]-
             (activity_instance_value:ActivityInstanceValue)-[:ACTIVITY_INSTANCE_CLASS]->
             (activity_instance_class_root:ActivityInstanceClassRoot)-[:LATEST]->(activity_instance_class_value:ActivityInstanceClassValue)
+            WHERE NOT EXISTS ((activity_instance_value)<--(:DeletedActivityInstanceRoot))
             | {
                 name:activity_instance_value.name,
                 nci_concept_id:activity_instance_value.nci_concept_id,

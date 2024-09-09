@@ -9,7 +9,7 @@ export_study_event = """<?xml version="1.0" encoding="utf-8"?>
                             <StudyDescription>name1</StudyDescription>
                         </GlobalVariables>
                         <BasicDefinitions>
-                            <MeasurementUnit OID="name1" Name="term_root1_uid" osb:version="0.1">
+                            <MeasurementUnit OID="unit_definition_root1" Name="name1" osb:version="0.1">
                                 <Symbol>
                                     <TranslatedText xml:lang="en">name1</TranslatedText>
                                 </Symbol>
@@ -42,7 +42,7 @@ export_study_event = """<?xml version="1.0" encoding="utf-8"?>
                                 </Description>
                                 <Alias Name="name1" Context="context1" osb:version="0.1" />
                                 <CodeListRef CodeListOID="submission_value1@oid1" />
-                                <MeasurementUnitRef MeasurementUnitOID="name1" />
+                                <MeasurementUnitRef MeasurementUnitOID="unit_definition_root1" />
                             </ItemDef>
                             <ConditionDef OID="oid1" Name="name1" osb:version="1.0">
                                 <Description>
@@ -81,7 +81,7 @@ export_form = """<?xml version="1.0" encoding="utf-8"?>
             <StudyDescription>name1</StudyDescription>
         </GlobalVariables>
         <BasicDefinitions>
-            <MeasurementUnit OID="name1" Name="term_root1_uid" osb:version="0.1">
+            <MeasurementUnit OID="unit_definition_root1" Name="name1" osb:version="0.1">
                 <Symbol>
                     <TranslatedText xml:lang="en">name1</TranslatedText>
                 </Symbol>
@@ -114,7 +114,7 @@ export_form = """<?xml version="1.0" encoding="utf-8"?>
                 </Description>
                 <Alias Name="name1" Context="context1" osb:version="0.1" />
                 <CodeListRef CodeListOID="submission_value1@oid1" />
-                <MeasurementUnitRef MeasurementUnitOID="name1" />
+                <MeasurementUnitRef MeasurementUnitOID="unit_definition_root1" />
             </ItemDef>
             <ConditionDef OID="oid1" Name="name1" osb:version="1.0">
                 <Description>
@@ -153,7 +153,7 @@ export_item_group = """<?xml version="1.0" encoding="utf-8"?>
             <StudyDescription>name1</StudyDescription>
         </GlobalVariables>
         <BasicDefinitions>
-            <MeasurementUnit OID="name1" Name="term_root1_uid" osb:version="0.1">
+            <MeasurementUnit OID="unit_definition_root1" Name="name1" osb:version="0.1">
                 <Symbol>
                     <TranslatedText xml:lang="en">name1</TranslatedText>
                 </Symbol>
@@ -178,7 +178,7 @@ export_item_group = """<?xml version="1.0" encoding="utf-8"?>
                 </Description>
                 <Alias Name="name1" Context="context1" osb:version="0.1" />
                 <CodeListRef CodeListOID="submission_value1@oid1" />
-                <MeasurementUnitRef MeasurementUnitOID="name1" />
+                <MeasurementUnitRef MeasurementUnitOID="unit_definition_root1" />
             </ItemDef>
             <ConditionDef OID="oid1" Name="name1" osb:version="1.0">
                 <Description>
@@ -212,7 +212,7 @@ export_item = """<?xml version="1.0" encoding="utf-8"?>
                             <StudyDescription>name1</StudyDescription>
                         </GlobalVariables>
                         <BasicDefinitions>
-                            <MeasurementUnit OID="name1" Name="term_root1_uid" osb:version="0.1">
+                            <MeasurementUnit OID="unit_definition_root1" Name="name1" osb:version="0.1">
                                 <Symbol>
                                     <TranslatedText xml:lang="en">name1</TranslatedText>
                                 </Symbol>
@@ -229,7 +229,7 @@ export_item = """<?xml version="1.0" encoding="utf-8"?>
                                 </Description>
                                 <Alias Name="name1" Context="context1" osb:version="0.1" />
                                 <CodeListRef CodeListOID="submission_value1@oid1" />
-                                <MeasurementUnitRef MeasurementUnitOID="name1" />
+                                <MeasurementUnitRef MeasurementUnitOID="unit_definition_root1" />
                             </ItemDef>
                             <CodeList OID="submission_value1@oid1" Name="codelist_root1" DataType="string" SASFormatName="submission_value1" osb:version="1.0">
                                 <CodeListItem CodedValue="code_submission_value1" OrderNumber="1" osb:mandatory="False" osb:name="name1" osb:OID="term1" osb:version="1.0">
@@ -250,7 +250,7 @@ export_with_csv = """<?xml version="1.0" encoding="utf-8"?>
             <StudyDescription>name1</StudyDescription>
         </GlobalVariables>
         <BasicDefinitions>
-            <MeasurementUnit OID="name1" Name="term_root1_uid" osb:version="0.1">
+            <MeasurementUnit OID="unit_definition_root1" Name="name1" osb:version="0.1">
                 <Symbol>
                     <TranslatedText xml:lang="en">name1</TranslatedText>
                 </Symbol>
@@ -287,7 +287,7 @@ export_with_csv = """<?xml version="1.0" encoding="utf-8"?>
                 </Description>
                 <Alias Name="name1" Context="context1" osb:version="0.1" />
                 <CodeListRef CodeListOID="submission_value1@oid1" />
-                <osb:measurementUnitRef MeasurementUnitOID="name1" />
+                <osb:measurementUnitRef MeasurementUnitOID="unit_definition_root1" />
                 <Alias Name="instruction1" Context="CompletionInstructions" />
                 <Alias Name="sponsor_instruction1" Context="ImplementationNotes" />
             </ItemDef>
@@ -328,7 +328,7 @@ export_with_namespace = """<?xml version="1.0" encoding="utf-8"?>
             <StudyDescription>name1</StudyDescription>
         </GlobalVariables>
         <BasicDefinitions>
-            <MeasurementUnit OID="name1" Name="term_root1_uid">
+            <MeasurementUnit OID="unit_definition_root1" Name="name1">
                 <Symbol>
                     <TranslatedText xml:lang="en">name1</TranslatedText>
                 </Symbol>
@@ -359,7 +359,7 @@ export_with_namespace = """<?xml version="1.0" encoding="utf-8"?>
                 </Description>
                 <Alias Name="name1" Context="context1" />
                 <CodeListRef CodeListOID="submission_value1@oid1" />
-                <MeasurementUnitRef MeasurementUnitOID="name1" />
+                <MeasurementUnitRef MeasurementUnitOID="unit_definition_root1" />
             </ItemDef>
             <ConditionDef OID="oid1" Name="name1">
                 <Description>
@@ -401,7 +401,7 @@ import_input1 = """<?xml version="1.0" encoding="utf-8"?>
                     <StudyDescription>ODM version 1.3.2 with DoB</StudyDescription>
                 </GlobalVariables>
                 <BasicDefinitions>
-                    <MeasurementUnit OID="name1" Name="term_root1_uid">
+                    <MeasurementUnit OID="unit_definition_root1" Name="name1">
                         <Symbol>
                             <TranslatedText xml:lang="en">name1</TranslatedText>
                         </Symbol>
@@ -480,7 +480,7 @@ import_input1 = """<?xml version="1.0" encoding="utf-8"?>
                             <TranslatedText xml:lang="en" osb:version="0.1">Age</TranslatedText>
                         </Description>
                         <CodeListRef CodeListOID="codelist submission value1@I.AGE" />
-                        <MeasurementUnitRef MeasurementUnitOID="name1" />
+                        <MeasurementUnitRef MeasurementUnitOID="unit_definition_root1" />
                         <osb:Sometag osb:someAttr="a value" osb:version="1.0">inner text</osb:Sometag>
                     </ItemDef>
                     <ItemDef OID="I.LOC" Name="Anatomical Location" Origin="Collected Value" DataType="string" Length="15" SASFieldName="LOCATION" SDSVarName="VSLOC where VSTESTCD=SYSBP | VSLOC where VSTESTCD=DIABP" osb:version="1.0" osb:instruction="item instruction" osb:sponsorInstruction="item sponsor instruction" osb:allowsMultiChoice="false">
@@ -547,7 +547,7 @@ import_input1 = """<?xml version="1.0" encoding="utf-8"?>
                         <Description>
                             <TranslatedText xml:lang="en" osb:version="0.1">Diastolic blood pressure</TranslatedText>
                         </Description>
-                        <MeasurementUnitRef MeasurementUnitOID="name1" />
+                        <MeasurementUnitRef MeasurementUnitOID="unit_definition_root1" />
                     </ItemDef>
                     <ItemDef OID="I.ETHNIC" Name="Ethnicity" Origin="Collected Value" DataType="string" Length="20" SASFieldName="ETHNIC" SDSVarName="ETHNIC" osb:version="1.0" osb:instruction="item instruction" osb:sponsorInstruction="item sponsor instruction">
                         <Question>
@@ -604,7 +604,7 @@ import_input1 = """<?xml version="1.0" encoding="utf-8"?>
                         <Description>
                             <TranslatedText xml:lang="en" osb:version="0.1">Pulse</TranslatedText>
                         </Description>
-                        <MeasurementUnitRef MeasurementUnitOID="name1" />
+                        <MeasurementUnitRef MeasurementUnitOID="unit_definition_root1" />
                     </ItemDef>
                     <ItemDef OID="I.RACE" Name="Race" Origin="Collected Value" DataType="string" Length="40" SASFieldName="RACE" SDSVarName="RACE" osb:version="1.0" osb:instruction="item instruction" osb:sponsorInstruction="item sponsor instruction">
                         <Question>
@@ -662,7 +662,7 @@ import_input1 = """<?xml version="1.0" encoding="utf-8"?>
                         <Description>
                             <TranslatedText xml:lang="en" osb:version="0.1">Systolic blood pressure</TranslatedText>
                         </Description>
-                        <MeasurementUnitRef MeasurementUnitOID="name1" />
+                        <MeasurementUnitRef MeasurementUnitOID="unit_definition_root1" />
                     </ItemDef>
                     <ItemDef OID="I.RFICTIM" Name="Time informed consent obtained" Origin="Collected Value" DataType="time" Length="5" SASFieldName="RFICTIM" SDSVarName="RFICDTC, DSSTDTC" osb:version="1.0" osb:instruction="item instruction" osb:sponsorInstruction="item sponsor instruction">
                         <Question>
@@ -741,6 +741,8 @@ import_output1 = {
                 {
                     "uid": "OdmVendorAttribute_000008",
                     "name": "connectivity",
+                    "data_type": "string",
+                    "compatible_types": ["ItemGroupRef"],
                     "status": "Final",
                     "version": "1.0",
                     "possible_actions": ["inactivate", "new_version"],
@@ -764,6 +766,7 @@ import_output1 = {
                 {
                     "uid": "OdmVendorElement_000001",
                     "name": "Sometag",
+                    "compatible_types": ["ItemDef"],
                     "status": "Final",
                     "version": "1.0",
                     "possible_actions": ["inactivate", "new_version"],
@@ -771,6 +774,7 @@ import_output1 = {
                 {
                     "uid": "odm_vendor_element2",
                     "name": "nameTwo",
+                    "compatible_types": ["FormDef", "ItemGroupDef", "ItemDef"],
                     "status": "Final",
                     "version": "1.0",
                     "possible_actions": ["inactivate", "new_version"],
@@ -780,6 +784,8 @@ import_output1 = {
                 {
                     "uid": "OdmVendorAttribute_000006",
                     "name": "allows",
+                    "data_type": "string",
+                    "compatible_types": ["FormDef"],
                     "status": "Final",
                     "version": "1.0",
                     "possible_actions": ["inactivate", "new_version"],
@@ -787,6 +793,8 @@ import_output1 = {
                 {
                     "uid": "OdmVendorAttribute_000001",
                     "name": "allowsMultiChoice",
+                    "data_type": "string",
+                    "compatible_types": ["ItemDef"],
                     "status": "Final",
                     "version": "1.0",
                     "possible_actions": ["inactivate", "new_version"],
@@ -794,6 +802,8 @@ import_output1 = {
                 {
                     "uid": "OdmVendorAttribute_000005",
                     "name": "dataEntryRequired",
+                    "data_type": "string",
+                    "compatible_types": ["ItemRef"],
                     "status": "Final",
                     "version": "1.0",
                     "possible_actions": ["inactivate", "new_version"],
@@ -801,6 +811,8 @@ import_output1 = {
                 {
                     "uid": "OdmVendorAttribute_000003",
                     "name": "gr",
+                    "data_type": "string",
+                    "compatible_types": ["ItemGroupDef"],
                     "status": "Final",
                     "version": "1.0",
                     "possible_actions": ["inactivate", "new_version"],
@@ -808,6 +820,8 @@ import_output1 = {
                 {
                     "uid": "OdmVendorAttribute_000007",
                     "name": "locked",
+                    "data_type": "string",
+                    "compatible_types": ["ItemGroupRef"],
                     "status": "Final",
                     "version": "1.0",
                     "possible_actions": ["inactivate", "new_version"],
@@ -815,6 +829,8 @@ import_output1 = {
                 {
                     "uid": "OdmVendorAttribute_000004",
                     "name": "sdv",
+                    "data_type": "string",
+                    "compatible_types": ["ItemRef"],
                     "status": "Final",
                     "version": "1.0",
                     "possible_actions": ["inactivate", "new_version"],
@@ -1016,6 +1032,7 @@ import_output1 = {
             "vendor_element": {
                 "uid": "OdmVendorElement_000001",
                 "name": "Sometag",
+                "compatible_types": ["ItemDef"],
                 "status": "Final",
                 "version": "1.0",
                 "possible_actions": ["inactivate", "new_version"],
@@ -1047,11 +1064,14 @@ import_output1 = {
                 {
                     "uid": "OdmVendorAttribute_000002",
                     "name": "someAttr",
+                    "data_type": "string",
+                    "compatible_types": [],
                     "status": "Final",
                     "version": "1.0",
                     "possible_actions": ["inactivate", "new_version"],
                 }
             ],
+            "compatible_types": ["ItemDef"],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
@@ -1074,6 +1094,7 @@ import_output1 = {
                 "possible_actions": ["inactivate", "new_version"],
             },
             "vendor_attributes": [],
+            "compatible_types": ["FormDef", "ItemGroupDef", "ItemDef"],
             "possible_actions": ["inactivate", "new_version"],
         },
     ],
@@ -3416,6 +3437,7 @@ import_output2 = {
                 {
                     "uid": "OdmVendorElement_000001",
                     "name": "nameOne",
+                    "compatible_types": ["FormDef"],
                     "status": "Final",
                     "version": "1.0",
                     "possible_actions": ["inactivate", "new_version"],
@@ -3440,6 +3462,7 @@ import_output2 = {
                 {
                     "uid": "odm_vendor_element2",
                     "name": "nameTwo",
+                    "compatible_types": ["FormDef", "ItemGroupDef", "ItemDef"],
                     "status": "Final",
                     "version": "1.0",
                     "possible_actions": ["inactivate", "new_version"],
@@ -3449,6 +3472,8 @@ import_output2 = {
                 {
                     "uid": "OdmVendorAttribute_000001",
                     "name": "newAttribute",
+                    "data_type": "string",
+                    "compatible_types": ["FormDef"],
                     "status": "Final",
                     "version": "1.0",
                     "possible_actions": ["inactivate", "new_version"],
@@ -3505,6 +3530,7 @@ import_output2 = {
                 "possible_actions": ["inactivate", "new_version"],
             },
             "vendor_attributes": [],
+            "compatible_types": ["FormDef"],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
@@ -3527,6 +3553,7 @@ import_output2 = {
                 "possible_actions": ["inactivate", "new_version"],
             },
             "vendor_attributes": [],
+            "compatible_types": ["FormDef", "ItemGroupDef", "ItemDef"],
             "possible_actions": ["inactivate", "new_version"],
         },
     ],
@@ -4531,6 +4558,7 @@ clinspark_output = {
                 {
                     "uid": "OdmVendorElement_000001",
                     "name": "ClinTag",
+                    "compatible_types": ["FormDef"],
                     "status": "Final",
                     "version": "1.0",
                     "possible_actions": ["inactivate", "new_version"],
@@ -4538,6 +4566,7 @@ clinspark_output = {
                 {
                     "uid": "odm_vendor_element1",
                     "name": "nameOne",
+                    "compatible_types": ["FormDef", "ItemGroupDef", "ItemDef"],
                     "status": "Final",
                     "version": "1.0",
                     "possible_actions": ["inactivate", "new_version"],
@@ -4547,6 +4576,8 @@ clinspark_output = {
                 {
                     "uid": "OdmVendorAttribute_000002",
                     "name": "clinAttribute",
+                    "data_type": "string",
+                    "compatible_types": ["FormDef"],
                     "status": "Final",
                     "version": "1.0",
                     "possible_actions": ["inactivate", "new_version"],
@@ -4554,6 +4585,8 @@ clinspark_output = {
                 {
                     "uid": "OdmVendorAttribute_000004",
                     "name": "clinRefAttribute",
+                    "data_type": "string",
+                    "compatible_types": ["ItemGroupRef"],
                     "status": "Final",
                     "version": "1.0",
                     "possible_actions": ["inactivate", "new_version"],
@@ -4561,6 +4594,8 @@ clinspark_output = {
                 {
                     "uid": "odm_vendor_attribute5",
                     "name": "nameFive",
+                    "data_type": "string",
+                    "compatible_types": ["NonCompatibleVendor"],
                     "status": "Final",
                     "version": "1.0",
                     "possible_actions": ["inactivate", "new_version"],
@@ -4568,6 +4603,14 @@ clinspark_output = {
                 {
                     "uid": "odm_vendor_attribute4",
                     "name": "nameFour",
+                    "data_type": "string",
+                    "compatible_types": [
+                        "FormDef",
+                        "ItemGroupDef",
+                        "ItemDef",
+                        "ItemGroupRef",
+                        "ItemRef",
+                    ],
                     "status": "Final",
                     "version": "1.0",
                     "possible_actions": ["inactivate", "new_version"],
@@ -4575,6 +4618,14 @@ clinspark_output = {
                 {
                     "uid": "odm_vendor_attribute3",
                     "name": "nameThree",
+                    "data_type": "string",
+                    "compatible_types": [
+                        "FormDef",
+                        "ItemGroupDef",
+                        "ItemDef",
+                        "ItemGroupRef",
+                        "ItemRef",
+                    ],
                     "status": "Final",
                     "version": "1.0",
                     "possible_actions": ["inactivate", "new_version"],
@@ -4582,6 +4633,8 @@ clinspark_output = {
                 {
                     "uid": "OdmVendorAttribute_000001",
                     "name": "newClinAttribute",
+                    "data_type": "string",
+                    "compatible_types": ["ItemGroupDef"],
                     "status": "Final",
                     "version": "1.0",
                     "possible_actions": ["inactivate", "new_version"],
@@ -4658,6 +4711,7 @@ clinspark_output = {
             "vendor_element": {
                 "uid": "OdmVendorElement_000001",
                 "name": "ClinTag",
+                "compatible_types": ["FormDef"],
                 "status": "Final",
                 "version": "1.0",
                 "possible_actions": ["inactivate", "new_version"],
@@ -4803,11 +4857,14 @@ clinspark_output = {
                 {
                     "uid": "OdmVendorAttribute_000003",
                     "name": "clinVendorElementAttribute",
+                    "data_type": "string",
+                    "compatible_types": [],
                     "status": "Final",
                     "version": "1.0",
                     "possible_actions": ["inactivate", "new_version"],
                 }
             ],
+            "compatible_types": ["FormDef"],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
@@ -4833,6 +4890,8 @@ clinspark_output = {
                 {
                     "uid": "odm_vendor_attribute1",
                     "name": "nameOne",
+                    "data_type": "string",
+                    "compatible_types": [],
                     "status": "Final",
                     "version": "1.0",
                     "possible_actions": ["inactivate", "new_version"],
@@ -4840,11 +4899,14 @@ clinspark_output = {
                 {
                     "uid": "odm_vendor_attribute2",
                     "name": "nameTwo",
+                    "data_type": "string",
+                    "compatible_types": [],
                     "status": "Final",
                     "version": "1.0",
                     "possible_actions": ["inactivate", "new_version"],
                 },
             ],
+            "compatible_types": ["FormDef", "ItemGroupDef", "ItemDef"],
             "possible_actions": ["inactivate", "new_version"],
         },
     ],

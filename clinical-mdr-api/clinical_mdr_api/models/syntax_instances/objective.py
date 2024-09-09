@@ -15,10 +15,7 @@ from clinical_mdr_api.models.syntax_templates.template_parameter_term import (
     IndexedTemplateParameterTerm,
     MultiTemplateParameterTerm,
 )
-from clinical_mdr_api.models.utils import (
-    BaseModel,
-    capitalize_first_letter_if_template_parameter,
-)
+from clinical_mdr_api.models.utils import BaseModel
 
 
 class Objective(BaseModel):
@@ -41,7 +38,7 @@ class Objective(BaseModel):
         ),
     )
 
-    objective_template: ObjectiveTemplateNameUidLibrary | None
+    template: ObjectiveTemplateNameUidLibrary | None
     parameter_terms: list[MultiTemplateParameterTerm] = Field(
         [],
         description="Holds the parameter terms that are used within the objective. The terms are ordered as they occur in the objective name.",
@@ -72,16 +69,8 @@ class Objective(BaseModel):
             )
         return cls(
             uid=objective_ar.uid,
-            name=capitalize_first_letter_if_template_parameter(
-                objective_ar.name,
-                objective_ar.template_name_plain,
-                objective_ar._template.parameter_terms,
-            ),
-            name_plain=capitalize_first_letter_if_template_parameter(
-                objective_ar.name_plain,
-                objective_ar.template_name_plain,
-                objective_ar._template.parameter_terms,
-            ),
+            name=objective_ar.name,
+            name_plain=objective_ar.name_plain,
             start_date=objective_ar.item_metadata.start_date,
             end_date=objective_ar.item_metadata.end_date,
             status=objective_ar.item_metadata.status.value,
@@ -91,7 +80,7 @@ class Objective(BaseModel):
             possible_actions=sorted(
                 {_.value for _ in objective_ar.get_possible_actions()}
             ),
-            objective_template=ObjectiveTemplateNameUidLibrary(
+            template=ObjectiveTemplateNameUidLibrary(
                 name=objective_ar.template_name,
                 name_plain=objective_ar.template_name_plain,
                 uid=objective_ar.template_uid,

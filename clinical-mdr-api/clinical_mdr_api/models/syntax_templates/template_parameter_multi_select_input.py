@@ -23,3 +23,4 @@ class TemplateParameterMultiSelectInput(BaseModel):
         description="If the selected template parameter term has multiple values, "
         "the conjunction string to connect them. Available values are ['and', 'or', ','].",
     )
+    labels: list[str] | None = Field(None, title="labels")

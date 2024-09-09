@@ -1,6 +1,7 @@
 <template>
   <div>
     <NNTable
+      ref="table"
       :headers="headers"
       :default-headers="headers"
       :items="studyEpochs"
@@ -40,8 +41,10 @@
       <template #actions="">
         <v-btn
           data-cy="create-epoch"
+          class="ml-2"
           size="small"
-          color="primary"
+          variant="outlined"
+          color="nnBaseBlue"
           :title="$t('StudyEpochForm.add_title')"
           :disabled="
             !checkPermission($roles.STUDY_WRITE) ||
@@ -67,6 +70,7 @@
         :title="studyEpochHistoryTitle"
         :headers="headers"
         :items="epochHistoryItems"
+        :items-total="epochHistoryItems.length"
         @close="closeEpochHistory"
       />
     </v-dialog>
@@ -156,7 +160,7 @@ export default {
         },
       ],
       headers: [
-        { title: '', key: 'actions', width: '5%' },
+        { title: '', key: 'actions', width: '1%' },
         { title: this.$t('StudyEpochTable.number'), key: 'order', width: '5%' },
         { title: this.$t('StudyEpochTable.name'), key: 'epoch_name' },
         { title: this.$t('StudyEpochTable.type'), key: 'epoch_type_name' },
@@ -178,7 +182,7 @@ export default {
         { title: this.$t('StudyEpochTable.colour'), key: 'color_hash' },
       ],
       defaultColums: [
-        { title: '', key: 'actions', width: '5%' },
+        { title: '', key: 'actions', width: '1%' },
         { title: this.$t('StudyEpochTable.number'), key: 'order', width: '3%' },
         { title: this.$t('StudyEpochTable.name'), key: 'epoch_name' },
         {
@@ -250,7 +254,7 @@ export default {
           parseInt(value) - 1
         )
         .then(() => {
-          this.fetchEpochs()
+          this.$refs.table.filterTable()
           this.closeOrderForm()
           this.eventBusEmit('notification', {
             msg: this.$t('_global.order_updated'),
@@ -258,7 +262,7 @@ export default {
         })
         .catch((err) => {
           console.log(err)
-          this.fetchEpochs()
+          this.$refs.table.filterTable()
         })
     },
     changeOrder(studyEpoch) {
@@ -275,6 +279,7 @@ export default {
     closeForm() {
       this.selectedStudyEpoch = null
       this.showForm = false
+      this.$refs.table.filterTable()
     },
     deleteEpoch(item) {
       if (item.study_visit_count > 0) {

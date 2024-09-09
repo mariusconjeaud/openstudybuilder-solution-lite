@@ -15,4 +15,13 @@ export default {
     }
     return repository.post(resource, params)
   },
+  retrieve(programmeUid) {
+    return repository.get(`${resource}/${programmeUid}`)
+  },
+  patch(programmeUid, data) {
+    return repository.patch(`${resource}/${programmeUid}`, data)
+  },
+  delete(programmeUid) {
+    return repository.delete(`${resource}/${programmeUid}`)
+  },
 }

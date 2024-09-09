@@ -819,3 +819,219 @@ with study, durations, v_visits,v_rels, coll_size
 UNWIND coll_size AS idx
 WITH  study, durations[idx] as duration,v_visits[idx] as v_visit, v_rels[idx] as v_rel
 return v_visit,v_rel
+
+
+//Visit timeline - account for empty studies
+match(st:StudyValue) where id(st) in[toInteger($neodash_studya),toInteger($neodash_studyb)]
+with collect(st) as st
+call apoc.when(size(st)>0,
+"with $t as t
+UNWIND t as s 
+with s, CASE when id(s)=toInteger($studya) then 'Base' ELSE 'Compare' END as study
+optional match (s)-[:HAS_STUDY_VISIT]->(vis)
+WITH distinct s, apoc.coll.toSet(collect(vis.short_visit_label)) as vis, study
+call apoc.when(size(vis)=0,\"return $study as Study, 'FALSE' as HasVisit\",\"return $study as Study, 'TRUE' as HasVisit\",{study:study,vis:vis}) yield value 
+with apoc.map.fromPairs(collect([value.Study,value.HasVisit])) as visitmap
+with visitmap
+call apoc.case([
+ visitmap['Base']='TRUE' and visitmap['Compare']='TRUE', 
+            \"with $t as t
+            UNWIND t as s 
+            with s, CASE when id(s)=toInteger($neodash_studya) then 'Base' ELSE 'Compare' END as study
+            optional match (s)-[:HAS_STUDY_VISIT]->(vis)
+            optional match(vis)-[:HAS_STUDY_DURATION_DAYS]->(dur_day_root:StudyDurationDaysRoot)-[:HAS_VERSION]->(dur_days:StudyDurationDaysValue)
+            optional match(vis)-[:HAS_STUDY_DURATION_WEEKS]->(dur_wk_root:StudyDurationWeeksRoot)-[:HAS_VERSION]->(dur_week:StudyDurationWeeksValue)
+            optional match(vis)-[:HAS_VISIT_NAME]->(vis_name_root)-[:HAS_VERSION]->(vis_name:VisitNameValue)
+            with s, study, vis, dur_days, vis_name order by id(s), vis.visit_number
+            with distinct s, study, dur_days.value as duration,vis, 
+            CASE WHEN study='Base' THEN {duration:dur_days.value,visit_name:vis_name.name+'; Day: '+toString(toInteger(dur_days.value)), endDate:date($neodash_sstdtc)+Duration({days:(dur_days.value)}), startDate:date($neodash_sstdtc)+Duration({days:(dur_days.value)}), visit_number:vis.visit_number,study_id:study} ELSE  {duration:dur_days.value,visit_name:vis_name.name+'; Day: '+toString(toInteger(dur_days.value)), endDate:date($neodash_sstdtc)+Duration({days:(dur_days.value)}), startDate:date($neodash_sstdtc)+Duration({days:(dur_days.value)}), visit_number:vis.visit_number,study_id:study} END as prop order by duration, study
+            with duration, collect(distinct prop) as props
+            with duration, [x in range(0,size(props)-1,1) |
+            CASE WHEN size(props)=2 and not props[0].visit_number = props[1].visit_number 
+            THEN apoc.create.vNode([\\\"Visit\\\"],
+            {visit_number:(\\\"<p style='color:green;'>Base: \\\" + props[0].visit_number + \\\"</p><p style='color:red;'>Comp: \\\" + props[1].visit_number + \\\"</p>\\\"),
+                        duration:toInteger(duration),
+                        visit_name:(\\\"<p style='color:green;'>Base: \\\" + props[0].visit_name + \\\"</p><p style='color:red;'>Comp: \\\" + props[1].visit_name + \\\"</p>\\\"),
+                        startDate:date($neodash_sstdtc)+Duration({days:(duration)}), 
+                        endDate:date($neodash_sstdtc)+Duration({days:(duration)}),
+                        study_id:props[x].study_id,
+                        visit_label:substring(props[x].study_id,0,4)+': '+props[x].visit_name
+                        }) 
+                        ELSE 
+                        CASE WHEN size(props)=2 and props[0].visit_number = props[1].visit_number
+                        THEN apoc.create.vNode([ \\\"Visit \\\"],
+                        {visit_number: props[0].visit_number,
+                        duration:toInteger(duration),
+                        visit_name:substring(props[x].study_id,0,4)+': '+props[0].visit_name,
+                        startDate:date($neodash_sstdtc)+Duration({days:(duration)}), 
+                        endDate:date($neodash_sstdtc)+Duration({days:(duration)}),
+                        study_id:props[x].study_id,
+                        visit_label:substring(props[x].study_id,0,4)+': '+props[x].visit_name
+                        }) ELSE 
+                        CASE WHEN size(props)<2 and props[x].study_id='Base' 
+                            THEN apoc.create.vNode([ \\\"Visit \\\"],
+                        {visit_number:( \\\"<p style='color:green;'>Base:  \\\" + props[x].visit_number +  \\\"</p><p style='color:red;'>Comp: Null </p> \\\"),
+                        duration:toInteger(duration),
+                        visit_name:( \\\"<p style='color:green;'>Base:  \\\" + props[x].visit_name +  \\\"</p><p style='color:red;'>Comp: Null </p> \\\"),
+                        startDate:date($neodash_sstdtc)+Duration({days:(duration)}), 
+                        endDate:date($neodash_sstdtc)+Duration({days:(duration)}),
+                        study_id:props[x].study_id,
+                        visit_label:substring(props[x].study_id,0,4)+': '+props[x].visit_name
+                        })  ELSE
+                        CASE WHEN size(props)<2 and props[x].study_id='Compare' 
+                            THEN apoc.create.vNode([ \\\"Visit \\\"],
+            {visit_number:( \\\"<p style='color:green;'>Base: Null </p><p style='color:red;'>Comp:  \\\" + props[x].visit_number +  \\\"</p> \\\"),
+                        duration:toInteger(duration),
+                        visit_name:( \\\"<p style='color:green;'>Base: Null</p><p style='color:red;'>Comp:  \\\" + props[x].visit_name),
+                        startDate:date($neodash_sstdtc)+Duration({days:(duration)}), 
+                        endDate:date($neodash_sstdtc)+Duration({days:(duration)}),
+                        study_id:props[x].study_id,
+                        visit_label:substring(props[x].study_id,0,4)+': '+props[x].visit_name
+                        })END END END END] as v_visits
+            with duration, v_visits
+            UNWIND v_visits as v_visit
+            with duration, apoc.any.property(v_visit,'study_id') as study, v_visit
+            with study, collect(duration) as durations, collect(v_visit) as v_visits
+            with study, durations, v_visits, [n in RANGE(0,size(v_visits)-2) | apoc.create.vRelationship(v_visits[n], \\\"FOLLOWS \\\",{type: \\\"logical \\\"},v_visits[n+1]) ]as v_rels, range(0,size(v_visits)-1,1) AS coll_size 
+            with study, durations, v_visits,v_rels, coll_size 
+            UNWIND coll_size AS idx
+            WITH  study, durations[idx] as duration,
+            v_visits[idx] as v_visit, v_rels[idx] as v_rel
+            return v_visit,v_rel\",
+ visitmap['Base']='TRUE' and visitmap['Compare']='FALSE', 
+            \"with $t as t
+            UNWIND t as s 
+            with s, CASE when id(s)=toInteger($neodash_studya) THEN 'Base' END as study
+            optional match (s)-[:HAS_STUDY_VISIT]->(vis)
+            optional match(vis)-[:HAS_STUDY_DURATION_DAYS]->(dur_day_root:StudyDurationDaysRoot)-[:HAS_VERSION]->(dur_days:StudyDurationDaysValue)
+            optional match(vis)-[:HAS_STUDY_DURATION_WEEKS]->(dur_wk_root:StudyDurationWeeksRoot)-[:HAS_VERSION]->(dur_week:StudyDurationWeeksValue)
+            optional match(vis)-[:HAS_VISIT_NAME]->(vis_name_root)-[:HAS_VERSION]->(vis_name:VisitNameValue)
+            with s, study, vis, dur_days, vis_name order by id(s), vis.visit_number
+            with distinct s, study, dur_days.value as duration,vis, 
+            CASE WHEN study='Base' THEN {duration:dur_days.value,visit_name:vis_name.name+'; Day: '+toString(toInteger(dur_days.value)), endDate:date($neodash_sstdtc)+Duration({days:(dur_days.value)}), startDate:date($neodash_sstdtc)+Duration({days:(dur_days.value)}), visit_number:vis.visit_number,study_id:study} END as prop order by duration, study
+            with duration, collect(distinct prop) as props
+            with duration, [x in range(0,size(props)-1,1) |
+            CASE WHEN size(props)=2 and not props[0].visit_number = props[1].visit_number 
+            THEN apoc.create.vNode([ \\\"Visit \\\"],
+            {visit_number:( \\\"<p style='color:green;'>Base:  \\\" + props[0].visit_number +  \\\"</p><p style='color:red;'</p> \\\"),
+                        duration:toInteger(duration),
+                        visit_name:( \\\"<p style='color:green;'>Base:  \\\" + props[0].visit_name),
+                        startDate:date($neodash_sstdtc)+Duration({days:(duration)}), 
+                        endDate:date($neodash_sstdtc)+Duration({days:(duration)}),
+                        study_id:props[x].study_id,
+                        visit_label:substring(props[x].study_id,0,4)+': '+props[x].visit_name
+                        }) 
+                        ELSE 
+                        CASE WHEN size(props)=2 and props[0].visit_number = props[1].visit_number
+                        THEN apoc.create.vNode([ \\\"Visit \\\"],
+                        {visit_number: props[0].visit_number,
+                        duration:toInteger(duration),
+                        visit_name:substring(props[x].study_id,0,4)+': '+props[0].visit_name,
+                        startDate:date($neodash_sstdtc)+Duration({days:(duration)}), 
+                        endDate:date($neodash_sstdtc)+Duration({days:(duration)}),
+                        study_id:props[x].study_id,
+                        visit_label:substring(props[x].study_id,0,4)+': '+props[x].visit_name
+                        }) ELSE 
+                        CASE WHEN size(props)<2 and props[x].study_id='Base' 
+                            THEN apoc.create.vNode([ \\\"Visit \\\"],
+                        {visit_number:( \\\"<p style='color:green;'>Base:  \\\" + props[x].visit_number +  \\\"</p><p style='color:red;'>Comp: Null </p> \\\"),
+                        duration:toInteger(duration),
+                        visit_name:( \\\"<p style='color:green;'>Base:  \\\" + props[x].visit_name +  \\\"</p><p style='color:red;'>Comp: Null </p> \\\"),
+                        startDate:date($neodash_sstdtc)+Duration({days:(duration)}), 
+                        endDate:date($neodash_sstdtc)+Duration({days:(duration)}),
+                        study_id:props[x].study_id,
+                        visit_label:substring(props[x].study_id,0,4)+': '+props[x].visit_name
+                        })  ELSE
+                        CASE WHEN size(props)<2 and props[x].study_id='Compare' 
+                            THEN apoc.create.vNode([ \\\"Visit \\\"],
+            {visit_number:( \\\"<p style='color:green;'>Base: Null </p><p style='color:red;'>Comp: \\\" + props[x].visit_number +  \\\"</p> \\\"),
+                        duration:toInteger(duration),
+                        visit_name:(\\\"<p style='color:green;'>Base: Null</p><p style='color:red;'>Comp: \\\" + props[x].visit_name),
+                        startDate:date($neodash_sstdtc)+Duration({days:(duration)}), 
+                        endDate:date($neodash_sstdtc)+Duration({days:(duration)}),
+                        study_id:props[x].study_id,
+                        visit_label:substring(props[x].study_id,0,4)+': '+props[x].visit_name
+                        })END END END END] as v_visits
+            with distinct duration, v_visits
+            UNWIND v_visits as v_visit
+            with duration, apoc.any.property(v_visit,'study_id') as study, v_visit
+            with study, collect(duration) as durations, collect(v_visit) as v_visits
+            with study, durations, v_visits, [n in RANGE(0,size(v_visits)-2) | apoc.create.vRelationship(v_visits[n], \\\"FOLLOWS \\\",{type: \\\"logical \\\"},v_visits[n+1]) ]as v_rels, range(0,size(v_visits)-1,1) AS coll_size 
+            with study, durations, v_visits,v_rels, coll_size 
+            UNWIND coll_size AS idx
+            WITH  study, durations[idx] as duration,
+            v_visits[idx] as v_visit, v_rels[idx] as v_rel
+            return v_visit,v_rel\",
+ visitmap['Base']='FALSE' and visitmap['Compare']='TRUE', 
+            \"with $t as t
+            UNWIND t as s 
+            with s, CASE when id(s)=toInteger($neodash_studyb) then 'Compare' END as study
+            optional match (s)-[:HAS_STUDY_VISIT]->(vis)
+            optional match(vis)-[:HAS_STUDY_DURATION_DAYS]->(dur_day_root:StudyDurationDaysRoot)-[:HAS_VERSION]->(dur_days:StudyDurationDaysValue)
+            optional match(vis)-[:HAS_STUDY_DURATION_WEEKS]->(dur_wk_root:StudyDurationWeeksRoot)-[:HAS_VERSION]->(dur_week:StudyDurationWeeksValue)
+            optional match(vis)-[:HAS_VISIT_NAME]->(vis_name_root)-[:HAS_VERSION]->(vis_name:VisitNameValue)
+            with s, study, vis, dur_days, vis_name order by id(s), vis.visit_number
+            with distinct s, study, dur_days.value as duration,vis, 
+            CASE WHEN study='Base' THEN {duration:dur_days.value,visit_name:vis_name.name+'; Day: '+toString(toInteger(dur_days.value)), endDate:date($neodash_sstdtc)+Duration({days:(dur_days.value)}), startDate:date($neodash_sstdtc)+Duration({days:(dur_days.value)}), visit_number:vis.visit_number,study_id:study} END as prop order by duration, study
+            with duration, collect(distinct prop) as props
+            with duration, [x in range(0,size(props)-1,1) |
+            CASE WHEN size(props)=2 and not props[0].visit_number = props[1].visit_number 
+            THEN apoc.create.vNode([ \\\"Visit \\\"],
+            {visit_number:( \\\"<p style='color:green;'>Base:  \\\" + props[0].visit_number +  \\\"</p><p style='color:red;'</p> \\\"),
+                        duration:toInteger(duration),
+                        visit_name:( \\\"<p style='color:green;'>Base:  \\\" + props[0].visit_name),
+                        startDate:date($neodash_sstdtc)+Duration({days:(duration)}), 
+                        endDate:date($neodash_sstdtc)+Duration({days:(duration)}),
+                        study_id:props[x].study_id,
+                        visit_label:substring(props[x].study_id,0,4)+': '+props[x].visit_name
+                        }) 
+                        ELSE 
+                        CASE WHEN size(props)=2 and props[0].visit_number = props[1].visit_number
+                        THEN apoc.create.vNode([ \\\"Visit \\\"],
+                        {visit_number: props[0].visit_number,
+                        duration:toInteger(duration),
+                        visit_name:substring(props[x].study_id,0,4)+': '+props[0].visit_name,
+                        startDate:date($neodash_sstdtc)+Duration({days:(duration)}), 
+                        endDate:date($neodash_sstdtc)+Duration({days:(duration)}),
+                        study_id:props[x].study_id,
+                        visit_label:substring(props[x].study_id,0,4)+': '+props[x].visit_name
+                        }) ELSE 
+                        CASE WHEN size(props)<2 and props[x].study_id='Base' 
+                            THEN apoc.create.vNode([ \\\"Visit \\\"],
+                        {visit_number:( \\\"<p style='color:green;'>Base:  \\\" + props[x].visit_number +  \\\"</p><p style='color:red;'>Comp: Null </p> \\\"),
+                        duration:toInteger(duration),
+                        visit_name:( \\\"<p style='color:green;'>Base:  \\\" + props[x].visit_name +  \\\"</p><p style='color:red;'>Comp: Null </p> \\\"),
+                        startDate:date($neodash_sstdtc)+Duration({days:(duration)}), 
+                        endDate:date($neodash_sstdtc)+Duration({days:(duration)}),
+                        study_id:props[x].study_id,
+                        visit_label:substring(props[x].study_id,0,4)+': '+props[x].visit_name
+                        })  ELSE
+                        CASE WHEN size(props)<2 and props[x].study_id='Compare' 
+                            THEN apoc.create.vNode([ \\\"Visit \\\"],
+            {visit_number:( \\\"<p style='color:green;'>Base: Null </p><p style='color:red;'>Comp: \\\" + props[x].visit_number +  \\\"</p> \\\"),
+                        duration:toInteger(duration),
+                        visit_name:(\\\"<p style='color:green;'>Base: Null</p><p style='color:red;'>Comp: \\\" + props[x].visit_name),
+                        startDate:date($neodash_sstdtc)+Duration({days:(duration)}), 
+                        endDate:date($neodash_sstdtc)+Duration({days:(duration)}),
+                        study_id:props[x].study_id,
+                        visit_label:substring(props[x].study_id,0,4)+': '+props[x].visit_name
+                        })END END END END] as v_visits
+            with distinct duration, v_visits
+            UNWIND v_visits as v_visit
+            with duration, apoc.any.property(v_visit,'study_id') as study, v_visit
+            with study, collect(duration) as durations, collect(v_visit) as v_visits
+            with study, durations, v_visits, [n in RANGE(0,size(v_visits)-2) | apoc.create.vRelationship(v_visits[n], \\\"FOLLOWS \\\",{type: \\\"logical \\\"},v_visits[n+1]) ]as v_rels, range(0,size(v_visits)-1,1) AS coll_size 
+            with study, durations, v_visits,v_rels, coll_size 
+            UNWIND coll_size AS idx
+            WITH  study, durations[idx] as duration,
+            v_visits[idx] as v_visit, v_rels[idx] as v_rel
+            return v_visit,v_rel\"],
+            \"RETURN NULL as v_visit, NULL as v_rel\",{t:$t,neodash_studya:$studya,neodash_studyb:$studyb,neodash_sstdtc:$sstdtc}) YIELD value 
+with distinct value
+MATCH (n:Library) where value.v_visit is not null
+return distinct value.v_visit as v_visit,value.v_rel as v_rel"  
+,
+"RETURN NULL as v_visit, NULL as v_rel",{t:st,sstdtc:$neodash_sstdtc, studya:$neodash_studya, studyb:$neodash_studyb}) YIELD value 
+with distinct value
+MATCH (n:Library) where value.v_visit is not null
+return distinct value.v_visit as v_visit, value.v_rel as v_rel

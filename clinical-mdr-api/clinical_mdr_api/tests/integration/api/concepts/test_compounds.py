@@ -21,7 +21,7 @@ from clinical_mdr_api.tests.integration.utils.api import (
     inject_and_clear_db,
     inject_base_data,
 )
-from clinical_mdr_api.tests.integration.utils.utils import CT_CODELIST_NAMES, TestUtils
+from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 
 log = logging.getLogger(__name__)
 
@@ -29,16 +29,6 @@ log = logging.getLogger(__name__)
 rand: str
 compounds_all: list[models.Compound]
 compound_aliases_all: list[models.CompoundAlias]
-ct_term_dosage: models.CTTerm
-ct_term_delivery_device: models.CTTerm
-ct_term_dose_frequency: models.CTTerm
-ct_term_dispenser: models.CTTerm
-ct_term_roa: models.CTTerm
-strength_value: models.NumericValueWithUnit
-dose_value: models.NumericValueWithUnit
-brands: list[models.Brand]
-lag_time: models.LagTime
-half_life: models.NumericValueWithUnit
 
 
 @pytest.fixture(scope="module")
@@ -58,77 +48,8 @@ def test_data():
     global rand
     global compounds_all
     global compound_aliases_all
-    global ct_term_dosage
-    global ct_term_delivery_device
-    global ct_term_dose_frequency
-    global ct_term_dispenser
-    global ct_term_roa
-    global strength_value
-    global dose_value
-    global brands
-    global lag_time
-    global half_life
 
     rand = TestUtils.random_str(10)
-
-    # Get codelist UIDs
-    relevant_codelists = [
-        CT_CODELIST_NAMES.delivery_device,
-        CT_CODELIST_NAMES.dosage_form,
-        CT_CODELIST_NAMES.frequency,
-        CT_CODELIST_NAMES.roa,
-        CT_CODELIST_NAMES.dispenser,
-        CT_CODELIST_NAMES.adverse_events,
-    ]
-    codelists = TestUtils.get_codelists_by_names(relevant_codelists)
-
-    # Create CT Terms
-    ct_term_dosage = TestUtils.create_ct_term(
-        sponsor_preferred_name="dosage_form_1",
-        codelist_uid=TestUtils.get_codelist_uid_by_name(
-            codelists, CT_CODELIST_NAMES.dosage_form
-        ),
-    )
-    ct_term_delivery_device = TestUtils.create_ct_term(
-        sponsor_preferred_name="delivery_device_1",
-        codelist_uid=TestUtils.get_codelist_uid_by_name(
-            codelists, CT_CODELIST_NAMES.delivery_device
-        ),
-    )
-    ct_term_dose_frequency = TestUtils.create_ct_term(
-        sponsor_preferred_name="dose_frequency_1",
-        codelist_uid=TestUtils.get_codelist_uid_by_name(
-            codelists, CT_CODELIST_NAMES.frequency
-        ),
-    )
-    ct_term_dispenser = TestUtils.create_ct_term(
-        sponsor_preferred_name="dispenser_1",
-        codelist_uid=TestUtils.get_codelist_uid_by_name(
-            codelists, CT_CODELIST_NAMES.dispenser
-        ),
-    )
-    ct_term_roa = TestUtils.create_ct_term(
-        sponsor_preferred_name="route_of_administration_1",
-        codelist_uid=TestUtils.get_codelist_uid_by_name(
-            codelists, CT_CODELIST_NAMES.roa
-        ),
-    )
-
-    # Create Numeric values with unit
-    strength_value = TestUtils.create_numeric_value_with_unit(value=5, unit="mg/mL")
-    dose_value = TestUtils.create_numeric_value_with_unit(value=10, unit="mg")
-    half_life = TestUtils.create_numeric_value_with_unit(value=8, unit="hours")
-
-    # Create Lag-times
-    lag_time = TestUtils.create_lag_time(value=7, unit="days")
-
-    # Create Brands
-    brands = [
-        TestUtils.create_brand(name=name) for name in ["Brand A", "Brand B", "Brand C"]
-    ]
-
-    for _x in range(30):
-        TestUtils.create_ct_term()
 
     # Create some compounds
     compounds_all = []
@@ -136,17 +57,6 @@ def test_data():
     compounds_all.append(
         TestUtils.create_compound(
             name=f"Compound A {rand}",
-            dosage_form_uids=[ct_term_dosage.term_uid],
-            delivery_devices_uids=[ct_term_delivery_device.term_uid],
-            dispensers_uids=[ct_term_dispenser.term_uid],
-            route_of_administration_uids=[ct_term_roa.term_uid],
-            strength_values_uids=[strength_value.uid],
-            dose_frequency_uids=[ct_term_dose_frequency.term_uid],
-            dose_values_uids=[dose_value.uid],
-            lag_times_uids=[lag_time.uid],
-            half_life_uid=half_life.uid,
-            substance_terms_uids=[],
-            brands_uids=[brands[0].uid, brands[1].uid],
         )
     )
 
@@ -203,23 +113,8 @@ COMPOUND_FIELDS_ALL = [
     "change_description",
     "user_initials",
     "possible_actions",
-    "analyte_number",
-    "nnc_short_number",
-    "nnc_long_number",
     "is_sponsor_compound",
-    "is_name_inn",
-    "substances",
-    "dose_values",
-    "strength_values",
-    "lag_times",
-    "delivery_devices",
-    "dispensers",
-    "projects",
-    "brands",
-    "half_life",
-    "dose_frequencies",
-    "dosage_forms",
-    "routes_of_administration",
+    "external_id",
 ]
 
 COMPOUND_FIELDS_NOT_NULL = ["uid", "name", "start_date"]
@@ -241,49 +136,7 @@ def test_get_compound(api_client):
     assert res["version"] == "0.1"
     assert res["status"] == "Draft"
     assert list(res["possible_actions"]) == ["approve", "delete", "edit"]
-    assert res["dose_values"][0]["uid"] == dose_value.uid
-    assert res["dose_values"][0]["value"] == dose_value.value
-    assert (
-        res["dose_values"][0]["unit_definition_uid"] == dose_value.unit_definition_uid
-    )
-    assert res["dose_values"][0]["unit_label"] == "mg"
-    assert res["strength_values"][0]["uid"] == strength_value.uid
-    assert res["strength_values"][0]["value"] == strength_value.value
-    assert (
-        res["strength_values"][0]["unit_definition_uid"]
-        == strength_value.unit_definition_uid
-    )
-    assert res["strength_values"][0]["unit_label"] == "mg/mL"
-    assert res["delivery_devices"][0]["term_uid"] == ct_term_delivery_device.term_uid
-    assert (
-        res["delivery_devices"][0]["name"]
-        == ct_term_delivery_device.sponsor_preferred_name
-    )
-    assert res["dose_frequencies"][0]["term_uid"] == ct_term_dose_frequency.term_uid
-    assert (
-        res["dose_frequencies"][0]["name"]
-        == ct_term_dose_frequency.sponsor_preferred_name
-    )
-    assert res["dosage_forms"][0]["term_uid"] == ct_term_dosage.term_uid
-    assert res["dosage_forms"][0]["name"] == ct_term_dosage.sponsor_preferred_name
-    assert res["dispensers"][0]["term_uid"] == ct_term_dispenser.term_uid
-    assert res["dispensers"][0]["name"] == ct_term_dispenser.sponsor_preferred_name
-    assert res["routes_of_administration"][0]["term_uid"] == ct_term_roa.term_uid
-    assert (
-        res["routes_of_administration"][0]["name"] == ct_term_roa.sponsor_preferred_name
-    )
-    assert res["brands"][0]["uid"] == "Brand_000001"
-    assert res["brands"][0]["name"] == "Brand A"
-    assert res["brands"][1]["uid"] == "Brand_000002"
-    assert res["brands"][1]["name"] == "Brand B"
-    assert res["lag_times"][0]["unit_definition_uid"] is not None
-    assert res["lag_times"][0]["sdtm_domain_uid"] is not None
-    assert res["lag_times"][0]["value"] == 7
-    assert res["lag_times"][0]["unit_label"] == "days"
-    assert res["lag_times"][0]["sdtm_domain_label"] == "Adverse Event Domain"
-    assert res["half_life"]["value"] == 8
-    assert res["half_life"]["unit_label"] == "hours"
-    assert res["half_life"]["uid"] is not None
+
     TestUtils.assert_timestamp_is_in_utc_zone(res["start_date"])
     TestUtils.assert_timestamp_is_newer_than(res["start_date"], 60)
 

@@ -10,11 +10,11 @@ from clinical_mdr_api.domain_repositories.models._utils import (
     to_relation_trees,
 )
 from clinical_mdr_api.domain_repositories.models.compounds import CompoundAliasRoot
-from clinical_mdr_api.domain_repositories.models.concepts import (
-    NumericValueWithUnitRoot,
-)
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
     CTTermRoot,
+)
+from clinical_mdr_api.domain_repositories.models.medicinal_product import (
+    MedicinalProductRoot,
 )
 from clinical_mdr_api.domain_repositories.models.study import StudyRoot, StudyValue
 from clinical_mdr_api.domain_repositories.models.study_audit_trail import (
@@ -45,14 +45,12 @@ class StudyCompoundSelectionHistory:
     study_selection_uid: str
     compound_uid: str | None
     compound_alias_uid: str | None
+    medicinal_product_uid: str | None
     type_of_treatment_uid: str | None
     reason_for_missing_value_uid: str | None
-    dispensed_in_uid: str | None
-    route_of_administration_uid: str | None
-    strength_value_uid: str | None
-    dosage_form_uid: str | None
-    device_uid: str | None
-    formulation_uid: str | None
+    dispenser_uid: str | None
+    dose_frequency_uid: str | None
+    delivery_device_uid: str | None
     other_info: str | None
     start_date: datetime.datetime
     status: str | None
@@ -97,15 +95,16 @@ class StudySelectionCompoundRepository:
 
         query += """
         -[:HAS_STUDY_COMPOUND]->(sc:StudyCompound)
-        OPTIONAL MATCH (sc)-[:HAS_SELECTED_COMPOUND]->(:CompoundAliasValue)<-[:LATEST]-(car:CompoundAliasRoot)
+        OPTIONAL MATCH (sc)-[:HAS_SELECTED_COMPOUND]->(:CompoundAliasValue)<-[:HAS_VERSION]-(car:CompoundAliasRoot)
         OPTIONAL MATCH (sc)-[:HAS_SELECTED_COMPOUND]->(:CompoundAliasValue)-[:IS_COMPOUND]->(cr:CompoundRoot)
-        WITH DISTINCT sr, sv, sc, car, cr
+        OPTIONAL MATCH (sc)-[:HAS_MEDICINAL_PRODUCT]->(:MedicinalProductValue)<-[:HAS_VERSION]-(mpr:MedicinalProductRoot)
+        WITH DISTINCT sr, sv, sc, car, cr, mpr
         """
 
         if project_name is not None or project_number is not None:
             query += """
                 MATCH (sv)-[:HAS_PROJECT]->(:StudyProjectField)<-[:HAS_FIELD]-(proj:Project)
-                WITH sr, sv, sc, car, cr, proj
+                WITH sr, sv, sc, car, cr, mpr, proj
             """
             filter_list = []
             if project_name is not None:
@@ -125,20 +124,16 @@ class StudySelectionCompoundRepository:
             query += " OPTIONAL MATCH (sc)-[:HAS_TYPE_OF_TREATMENT]->(tot:CTTermRoot)"
 
         query += """
-            WITH DISTINCT sr, sv, sc, car, cr, tot
-            OPTIONAL MATCH (sc)-[:HAS_ROUTE_OF_ADMINISTRATION]->(roa:CTTermRoot)
-            OPTIONAL MATCH (sc)-[:HAS_STRENGTH_VALUE]->(str:NumericValueWithUnitRoot)
-            OPTIONAL MATCH (sc)-[:HAS_DOSAGE_FORM]->(df:CTTermRoot)
+            WITH DISTINCT sr, sv, sc, car, cr, mpr, tot
+            OPTIONAL MATCH (sc)-[:HAS_DOSE_FREQUENCY]->(doseFrequency:CTTermRoot)
+            OPTIONAL MATCH (sc)-[:HAS_DELIVERY_DEVICE]->(deliveryDevice:CTTermRoot)
             OPTIONAL MATCH (sc)-[:HAS_DISPENSED_IN]->(di:CTTermRoot)
-            OPTIONAL MATCH (sc)-[:HAS_DEVICE]->(de:CTTermRoot)
-            OPTIONAL MATCH (sc)-[:HAS_FORMULATION]->(fo:CTTermRoot)
-
             OPTIONAL MATCH (sc)-[:HAS_REASON_FOR_NULL_VALUE]->(nvr:CTTermRoot)
             OPTIONAL MATCH (sc)-[:STUDY_COMPOUND_HAS_COMPOUND_DOSING]->(scd:StudyCompoundDosing)<-[:HAS_STUDY_COMPOUND_DOSING]-(sv)
 
             MATCH (sc)<-[:AFTER]-(sa:StudyAction)
 
-            WITH sr, sc, car, cr, tot, roa, str, df, di, de, fo, nvr, scd, sa
+            WITH sr, sc, car, cr, mpr, tot, doseFrequency, deliveryDevice, di, nvr, scd, sa
             RETURN
                 sr.uid AS study_uid,
                 sc.uid AS study_compound_uid,
@@ -146,13 +141,11 @@ class StudySelectionCompoundRepository:
                 sc.other_information AS other_information,
                 cr.uid AS compound_uid,
                 car.uid AS compound_alias_uid,
+                mpr.uid AS medicinal_product_uid,
                 tot.uid AS type_of_treatment_uid,
-                roa.uid AS route_of_administration_uid,
-                str.uid AS strength_value_uid,
-                df.uid AS dosage_form_uid,
-                di.uid AS dispensed_in_uid,
-                de.uid AS device_uid,
-                fo.uid AS formulation_uid,
+                doseFrequency.uid AS dose_frequency_uid,
+                deliveryDevice.uid AS delivery_device_uid,
+                di.uid AS dispenser_uid,
                 nvr.uid AS reason_for_missing,
                 count(scd) AS study_compound_dosing_count,
                 sa.date AS start_date,
@@ -167,13 +160,11 @@ class StudySelectionCompoundRepository:
                 other_info=selection["other_information"],
                 compound_uid=selection["compound_uid"],
                 compound_alias_uid=selection["compound_alias_uid"],
+                medicinal_product_uid=selection["medicinal_product_uid"],
                 type_of_treatment_uid=selection["type_of_treatment_uid"],
-                route_of_administration_uid=selection["route_of_administration_uid"],
-                strength_value_uid=selection["strength_value_uid"],
-                dosage_form_uid=selection["dosage_form_uid"],
-                dispensed_in_uid=selection["dispensed_in_uid"],
-                device_uid=selection["device_uid"],
-                formulation_uid=selection["formulation_uid"],
+                dose_frequency_uid=selection["dose_frequency_uid"],
+                delivery_device_uid=selection["delivery_device_uid"],
+                dispenser_uid=selection["dispenser_uid"],
                 reason_for_missing_value_uid=selection["reason_for_missing"],
                 study_compound_dosing_count=selection["study_compound_dosing_count"],
                 study_selection_uid=selection["study_compound_uid"],
@@ -261,20 +252,18 @@ class StudySelectionCompoundRepository:
         -[:HAS_STUDY_COMPOUND]->(sc:StudyCompound {uid: $study_compound_uid})
         OPTIONAL MATCH (sc)-[:HAS_SELECTED_COMPOUND]->(:CompoundAliasValue)<-[:LATEST]-(car:CompoundAliasRoot)
         OPTIONAL MATCH (sc)-[:HAS_SELECTED_COMPOUND]->(:CompoundAliasValue)-[:IS_COMPOUND]->(cr:CompoundRoot)
-        WITH DISTINCT sr, sv, sc, car, cr
+        OPTIONAL MATCH (sc)-[:HAS_MEDICINAL_PRODUCT]->(:MedicinalProductValue)<-[:HAS_VERSION]-(mpr:MedicinalProductRoot)
+        WITH DISTINCT sr, sv, sc, car, cr, mpr
         OPTIONAL MATCH (sc)-[:HAS_TYPE_OF_TREATMENT]->(tot:CTTermRoot)
-        WITH DISTINCT sr, sv, sc, car, cr, tot
-        OPTIONAL MATCH (sc)-[:HAS_ROUTE_OF_ADMINISTRATION]->(roa:CTTermRoot)
-        OPTIONAL MATCH (sc)-[:HAS_STRENGTH_VALUE]->(str:NumericValueWithUnitRoot)
-        OPTIONAL MATCH (sc)-[:HAS_DOSAGE_FORM]->(df:CTTermRoot)
+        WITH DISTINCT sr, sv, sc, car, cr, mpr, tot
+        OPTIONAL MATCH (sc)-[:HAS_DOSE_FREQUENCY]->(doseFrequency:CTTermRoot)
+        OPTIONAL MATCH (sc)-[:HAS_DELIVERY_DEVICE]->(deliveryDevice:CTTermRoot)
         OPTIONAL MATCH (sc)-[:HAS_DISPENSED_IN]->(di:CTTermRoot)
-        OPTIONAL MATCH (sc)-[:HAS_DEVICE]->(de:CTTermRoot)
-        OPTIONAL MATCH (sc)-[:HAS_FORMULATION]->(fo:CTTermRoot)
         OPTIONAL MATCH (sc)-[:HAS_REASON_FOR_NULL_VALUE]->(nvr:CTTermRoot)
         OPTIONAL MATCH (sc)-[:STUDY_COMPOUND_HAS_COMPOUND_DOSING]->(scd)<-[:HAS_STUDY_COMPOUND_DOSING]-(sv)
         MATCH (sc)<-[:AFTER]-(sa:StudyAction)
 
-        WITH sr, sc, car, cr, tot, roa, str, df, di, de, fo, nvr, scd, sa
+        WITH sr, sc, car, cr, mpr, tot, doseFrequency, deliveryDevice, di, nvr, scd, sa
         RETURN
             sr.uid AS study_uid,
             sc.uid AS study_compound_uid,
@@ -282,13 +271,11 @@ class StudySelectionCompoundRepository:
             sc.other_information AS other_information,
             cr.uid AS compound_uid,
             car.uid AS compound_alias_uid,
+            mpr.uid AS medicinal_product_uid,
             tot.uid AS type_of_treatment_uid,
-            roa.uid AS route_of_administration_uid,
-            str.uid AS strength_value_uid,
-            df.uid AS dosage_form_uid,
-            di.uid AS dispensed_in_uid,
-            de.uid AS device_uid,
-            fo.uid AS formulation_uid,
+            doseFrequency.uid AS dose_frequency_uid,
+            deliveryDevice.uid AS delivery_device_uid,
+            di.uid AS dispenser_uid,
             nvr.uid AS reason_for_missing,
             count(scd) AS study_compound_dosing_count,
             sa.date AS start_date,
@@ -311,13 +298,11 @@ class StudySelectionCompoundRepository:
             other_info=selection["other_information"],
             compound_uid=selection["compound_uid"],
             compound_alias_uid=selection["compound_alias_uid"],
+            medicinal_product_uid=selection["medicinal_product_uid"],
             type_of_treatment_uid=selection["type_of_treatment_uid"],
-            route_of_administration_uid=selection["route_of_administration_uid"],
-            strength_value_uid=selection["strength_value_uid"],
-            dosage_form_uid=selection["dosage_form_uid"],
-            dispensed_in_uid=selection["dispensed_in_uid"],
-            device_uid=selection["device_uid"],
-            formulation_uid=selection["formulation_uid"],
+            dose_frequency_uid=selection["dose_frequency_uid"],
+            delivery_device_uid=selection["delivery_device_uid"],
+            dispenser_uid=selection["dispenser_uid"],
             reason_for_missing_value_uid=selection["reason_for_missing"],
             study_compound_dosing_count=selection["study_compound_dosing_count"],
             study_selection_uid=selection["study_compound_uid"],
@@ -491,6 +476,7 @@ class StudySelectionCompoundRepository:
             )
         # Connect new node with audit trail
         audit_node.has_after.connect(study_compound_selection_node)
+
         # check if compound alias is set
         if selection.compound_alias_uid:
             # find the compound alias value
@@ -504,6 +490,52 @@ class StudySelectionCompoundRepository:
             study_compound_selection_node.has_selected_compound.connect(
                 latest_compound_alias_value_node
             )
+
+        if selection.medicinal_product_uid:
+            # Find the latest medicinal product value
+            medicinal_product_root_node = MedicinalProductRoot.nodes.get(
+                uid=selection.medicinal_product_uid
+            )
+            latest_medicinal_product_value_node = (
+                medicinal_product_root_node.latest_final.single()
+            )
+            # Connect new node with medicinal product value
+            study_compound_selection_node.has_medicinal_product.connect(
+                latest_medicinal_product_value_node
+            )
+            dose_frequency = (
+                latest_medicinal_product_value_node.has_dose_frequency.single()
+            )
+            if dose_frequency:
+                study_compound_selection_node.has_dose_frequency.connect(dose_frequency)
+
+            delivery_device = (
+                latest_medicinal_product_value_node.has_delivery_device.single()
+            )
+            if delivery_device:
+                study_compound_selection_node.has_delivery_device.connect(
+                    delivery_device
+                )
+
+            dispenser = latest_medicinal_product_value_node.has_dispenser.single()
+            if dispenser:
+                study_compound_selection_node.has_dispenser.connect(dispenser)
+
+            # Find the latest pharmaceutical product value connected to the medicinal product root
+            pharmaceutical_product_root_nodes = (
+                latest_medicinal_product_value_node.has_pharmaceutical_product.all()
+            )
+
+            for pharmaceutical_product_root_node in pharmaceutical_product_root_nodes:
+                latest_pharmaceutical_product_value_node = (
+                    pharmaceutical_product_root_node.latest_final.single()
+                )
+                # Connect new node with pharmaceutical product value
+                if latest_pharmaceutical_product_value_node:
+                    study_compound_selection_node.has_pharmaceutical_product.connect(
+                        latest_pharmaceutical_product_value_node
+                    )
+
         # check if type of treatment is set
         if selection.type_of_treatment_uid:
             # find the type of treatment
@@ -519,76 +551,7 @@ class StudySelectionCompoundRepository:
             study_compound_selection_node.has_type_of_treatment.connect(
                 type_of_treatment_node
             )
-        # check if study route_of_administration is set
-        if selection.route_of_administration_uid:
-            # find the route of administration
-            route_of_administration_node = CTTermRoot.nodes.get_or_none(
-                uid=selection.route_of_administration_uid
-            )
-            raise_exception_if_node_is_null(
-                route_of_administration_node,
-                "route of administration",
-                selection.route_of_administration_uid,
-            )
-            # connect to node
-            study_compound_selection_node.has_route_of_administration.connect(
-                route_of_administration_node
-            )
 
-        # check if study compound strength is set
-        if selection.strength_value_uid:
-            # find the strength
-            node = NumericValueWithUnitRoot.nodes.get_or_none(
-                uid=selection.strength_value_uid
-            )
-            raise_exception_if_node_is_null(
-                node,
-                "strength",
-                selection.strength_value_uid,
-            )
-            # connect to node
-            study_compound_selection_node.has_strength_value.connect(node)
-
-        # check if dosage_form is set
-        if selection.dosage_form_uid:
-            # check if dosage form exists
-            dosage_form_node = CTTermRoot.nodes.get_or_none(
-                uid=selection.dosage_form_uid
-            )
-            raise_exception_if_node_is_null(
-                dosage_form_node, "dosage form", selection.dosage_form_uid
-            )
-            # connect to dosage form node
-            study_compound_selection_node.has_dosage_form.connect(dosage_form_node)
-        # check if dispensed_in is set
-        if selection.dispensed_in_uid:
-            # check if dispensed in exists
-            dispensed_in_node = CTTermRoot.nodes.get_or_none(
-                uid=selection.dispensed_in_uid
-            )
-            raise_exception_if_node_is_null(
-                dispensed_in_node, "dispensed in", selection.dispensed_in_uid
-            )
-            # connect to dispensed in node
-            study_compound_selection_node.has_suspended_in.connect(dispensed_in_node)
-        # check if device is set
-        if selection.device_uid:
-            # check if device in exists
-            device_node = CTTermRoot.nodes.get_or_none(uid=selection.device_uid)
-            raise_exception_if_node_is_null(device_node, "device", selection.device_uid)
-            # connect to device node
-            study_compound_selection_node.has_device.connect(device_node)
-        # check if formulation_ is set
-        if selection.formulation_uid:
-            # check if formulation exists
-            formulation_node = CTTermRoot.nodes.get_or_none(
-                uid=selection.formulation_uid
-            )
-            raise_exception_if_node_is_null(
-                formulation_node, "formulation", selection.formulation_uid
-            )
-            # connect to formulation node
-            study_compound_selection_node.has_formulation.connect(formulation_node)
         # check if reason_for_missing_value_uid is set
         if selection.reason_for_missing_value_uid:
             # check if reason_for_missing exists
@@ -597,7 +560,7 @@ class StudySelectionCompoundRepository:
             )
             raise_exception_if_node_is_null(
                 null_value_reason_node,
-                "formulation",
+                "reason for missing",
                 selection.reason_for_missing_value_uid,
             )
             # connect to reason_for_missing node
@@ -629,19 +592,17 @@ class StudySelectionCompoundRepository:
             + """
             OPTIONAL MATCH (all_sc)-[:HAS_SELECTED_COMPOUND]->(:CompoundAliasValue)-[:IS_COMPOUND]->(cr:CompoundRoot)
             OPTIONAL MATCH (all_sc)-[:HAS_SELECTED_COMPOUND]->(:CompoundAliasValue)<-[:LATEST]-(car:CompoundAliasRoot)
+            OPTIONAL MATCH (all_sc)-[:HAS_MEDICINAL_PRODUCT]->(:MedicinalProductValue)<-[:HAS_VERSION]-(mpr:MedicinalProductRoot)
             OPTIONAL MATCH (all_sc)-[:HAS_TYPE_OF_TREATMENT]->(tot:CTTermRoot)
-            OPTIONAL MATCH (all_sc)-[:HAS_ROUTE_OF_ADMINISTRATION]->(roa:CTTermRoot)
-            OPTIONAL MATCH (all_sc)-[:HAS_STRENGTH_VALUE]->(str:NumericValueWithUnitRoot)
-            OPTIONAL MATCH (all_sc)-[:HAS_DOSAGE_FORM]->(df:CTTermRoot)
+            OPTIONAL MATCH (all_sc)-[:HAS_DOSE_FREQUENCY]->(doseFrequency:CTTermRoot)
+            OPTIONAL MATCH (all_sc)-[:HAS_DELIVERY_DEVICE]->(deliveryDevice:CTTermRoot)
             OPTIONAL MATCH (all_sc)-[:HAS_DISPENSED_IN]->(di:CTTermRoot)
-            OPTIONAL MATCH (all_sc)-[:HAS_DEVICE]->(de:CTTermRoot)
-            OPTIONAL MATCH (all_sc)-[:HAS_FORMULATION]->(fo:CTTermRoot)
             OPTIONAL MATCH (all_sc)-[:HAS_REASON_FOR_NULL_VALUE]->(nvr:CTTermRoot)
             
             MATCH (all_sc)<-[:AFTER]-(asa:StudyAction)
             OPTIONAL MATCH (all_sc)<-[:BEFORE]-(bsa:StudyAction)
 
-            WITH all_sc, cr, car, tot, roa, str, df, di, de, fo, nvr, asa, bsa
+            WITH all_sc, cr, car, tot, mpr, doseFrequency, deliveryDevice, di, nvr, asa, bsa
             ORDER BY all_sc.uid, asa.date DESC
             RETURN
                 all_sc.uid AS study_selection_uid,
@@ -649,13 +610,12 @@ class StudySelectionCompoundRepository:
                 all_sc.other_information AS other_information,
                 cr.uid AS compound_uid,
                 car.uid AS compound_alias_uid,
+                mpr.uid AS medicinal_product_uid,
                 tot.uid AS type_of_treatment_uid,
-                roa.uid AS route_of_administration_uid,
-                str.uid AS strength_value_uid,
-                df.uid AS dosage_form_uid,
-                di.uid AS dispensed_in_uid,
-                de.uid AS device_uid,
-                fo.uid AS formulation_uid,
+                doseFrequency.uid AS dose_frequency_uid,
+                deliveryDevice.uid AS delivery_device_uid,
+                di.uid AS dispenser_uid,
+                deliveryDevice.uid AS device_uid,
                 nvr.uid AS reason_for_missing,
                 asa.date AS start_date,
                 asa.user_initials AS user_initials,
@@ -679,14 +639,12 @@ class StudySelectionCompoundRepository:
                     study_selection_uid=res["study_selection_uid"],
                     compound_uid=res["compound_uid"],
                     compound_alias_uid=res["compound_alias_uid"],
+                    medicinal_product_uid=res["medicinal_product_uid"],
                     other_info=res["other_information"],
                     type_of_treatment_uid=res["type_of_treatment_uid"],
-                    route_of_administration_uid=res["route_of_administration_uid"],
-                    strength_value_uid=res["strength_value_uid"],
-                    dosage_form_uid=res["dosage_form_uid"],
-                    dispensed_in_uid=res["dispensed_in_uid"],
-                    device_uid=res["device_uid"],
-                    formulation_uid=res["formulation_uid"],
+                    dose_frequency_uid=res["dose_frequency_uid"],
+                    delivery_device_uid=res["delivery_device_uid"],
+                    dispenser_uid=res["dispenser_uid"],
                     reason_for_missing_value_uid=res["reason_for_missing"],
                     order=res["order"],
                     start_date=convert_to_datetime(value=res["start_date"]),
@@ -723,15 +681,13 @@ class StudySelectionCompoundRepository:
             MATCH (:StudyRoot {uid: $study_uid})-[:LATEST]->(:StudyValue)-[rel:HAS_STUDY_COMPOUND]->
                     (sc:StudyCompound)-[HAS_SELECTED_COMPOUND]->(cav:CompoundAliasValue)<-[:LATEST]-(car:CompoundAliasRoot {uid: $compound_alias_uid})
             WITH *
-            MATCH (sc)-[:HAS_DOSAGE_FORM]->(df:CTTermRoot {uid: $dosage_form_uid})
+            MATCH (sc)-[:HAS_MEDICINAL_PRODUCT]->(:MedicinalProductValue)<-[:HAS_VERSION]-(mpr:MedicinalProductRoot {uid: $medicinal_product_uid})
             WITH *
-            MATCH (sc)-[:HAS_STRENGTH_VALUE]->(sr:NumericValueWithUnitRoot {uid: $strength_value_uid})
+            MATCH (sc)-[:HAS_DELIVERY_DEVICE]->(deliveryDevice:CTTermRoot {uid: $delivery_device_uid})
             WITH *
-            MATCH (sc)-[:HAS_ROUTE_OF_ADMINISTRATION]->(roa:CTTermRoot {uid: $route_of_administration_uid})
+            MATCH (sc)-[:HAS_DOSE_FREQUENCY]->(doseFrequency:CTTermRoot {uid: $dose_frequency_uid})
             WITH *
-            MATCH (sc)-[:HAS_DISPENSED_IN]->(dispenser:CTTermRoot {uid: $dispensed_in_uid})
-            WITH *
-            MATCH (sc)-[:HAS_DEVICE]->(device:CTTermRoot {uid: $device_uid})               
+            MATCH (sc)-[:HAS_DISPENSED_IN]->(dispenser:CTTermRoot {uid: $dispenser_uid})            
             RETURN sc
             """
         result, _ = db.cypher_query(
@@ -739,11 +695,11 @@ class StudySelectionCompoundRepository:
             {
                 "study_uid": study_compound.study_uid,
                 "compound_alias_uid": study_compound.compound_alias_uid,
-                "dosage_form_uid": study_compound.dosage_form_uid,
-                "strength_value_uid": study_compound.strength_value_uid,
-                "route_of_administration_uid": study_compound.route_of_administration_uid,
-                "dispensed_in_uid": study_compound.dispensed_in_uid,
-                "device_uid": study_compound.device_uid,
+                "medicinal_product_uid": study_compound.medicinal_product_uid,
+                "delivery_device_uid": study_compound.delivery_device_uid,
+                "dose_frequency_uid": study_compound.dose_frequency_uid,
+                "dispenser_uid": study_compound.dispenser_uid,
+                "device_uid": study_compound.delivery_device_uid,
             },
         )
         if len(result) > 0 and len(result[0]) > 0:

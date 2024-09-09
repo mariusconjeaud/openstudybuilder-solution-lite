@@ -32,6 +32,7 @@ class CTTermAggregatedRepository:
         WITH
             term_root.uid AS term_uid,
             codelist_root.uid AS codelist_uid,
+            codelist_library.name AS codelist_library_name,
             catalogue.name AS catalogue_name,
             term_attributes_value AS value_node_attributes,
             term_name_value AS value_node_name,
@@ -62,6 +63,7 @@ class CTTermAggregatedRepository:
         codelist_root, rel_term,
         head([(catalogue:CTCatalogue)-[:HAS_CODELIST]->(codelist_root) | catalogue]) AS catalogue,
         head([(lib)-[:CONTAINS_TERM]->(term_root) | lib]) AS library
+        MATCH (codelist_root)<-[:CONTAINS_CODELIST]-(codelist_library:Library)
         CALL {{
                 WITH term_attributes_root, term_attributes_value
                 MATCH (term_attributes_root)-[hv:HAS_VERSION]->(term_attributes_value)
@@ -96,6 +98,7 @@ class CTTermAggregatedRepository:
         attr_v_rel AS rel_data_attributes, name_v_rel AS rel_data_name,
         head([(catalogue:CTCatalogue)-[:HAS_CODELIST]->(codelist_root) | catalogue]) AS catalogue,
         head([(lib)-[:CONTAINS_TERM]->(term_root) | lib]) AS library
+        MATCH (codelist_root)<-[:CONTAINS_CODELIST]-(codelist_library:Library)
         {generic_final_alias_clause}
     """
 

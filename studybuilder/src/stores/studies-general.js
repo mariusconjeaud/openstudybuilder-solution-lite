@@ -50,6 +50,11 @@ export const useStudiesGeneralStore = defineStore('studiesGeneral', {
         : state.selectedStudy.current_metadata.identification_metadata
             .study_acronym
     },
+    studyUid: (state) => {
+      return state.selectedStudy.study_parent_part
+        ? state.selectedStudy.study_parent_part.uid
+        : state.selectedStudy.uid
+    },
   },
 
   actions: {
@@ -97,6 +102,14 @@ export const useStudiesGeneralStore = defineStore('studiesGeneral', {
             ? (this.soaPreferredTimeUnit = resp.data)
             : (this.studyPreferredTimeUnit = resp.data)
         })
+    },
+    getSoaPreferences() {
+      study.getSoAPreferredTimeUnit(this.selectedStudy.uid).then((resp) => {
+        this.soaPreferredTimeUnit = resp.data
+      })
+      study.getSoAPreferences(this.selectedStudy.uid).then((resp) => {
+        this.soaPreferences = resp.data
+      })
     },
     setSoaPreferences({ show_epochs, show_milestones, baseline_as_time_zero }) {
       return study
@@ -149,7 +162,7 @@ export const useStudiesGeneralStore = defineStore('studiesGeneral', {
         const params = {
           codelist_uid: resp.data.items[0].codelist_uid,
           page_size: 0,
-          sort_by: JSON.stringify({'name': true})
+          sort_by: JSON.stringify({ name: true }),
         }
         dictionaries.getTerms(params).then((resp) => {
           this.snomedTerms = resp.data.items
