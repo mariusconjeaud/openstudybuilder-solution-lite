@@ -11,6 +11,7 @@ IGNORE_ROUTES_METHODS = {
     ("/redoc", "GET"),
     ("/docs/oauth2-redirect", "GET"),
     ("/openapi.json", "GET"),
+    ("/notifications/active", "GET"),
 }
 
 

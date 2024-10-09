@@ -736,10 +736,12 @@ class StudyService:
         finally:
             self._close_all_repos()
 
-    def _get_next_available_study_subpart_id(self, study_parent_part_uid):
+    def _get_next_available_study_subpart_id(
+        self, study_parent_part_uid, subpart_uid: str | None = None
+    ):
         occupied_letters = (
             self._repos.study_definition_repository.get_occupied_study_subpart_ids(
-                study_parent_part_uid
+                study_parent_part_uid, subpart_uid
             )[0]
         )
 
@@ -1398,7 +1400,7 @@ class StudyService:
                     parent_part_ar.current_metadata.id_metadata.study_number
                 )
                 study_patch_request.current_metadata.identification_metadata.subpart_id = self._get_next_available_study_subpart_id(
-                    study_patch_request.study_parent_part_uid
+                    study_patch_request.study_parent_part_uid, subpart_uid=uid
                 )
 
             previous_is_subpart = study_definition_ar.study_parent_part_uid is not None

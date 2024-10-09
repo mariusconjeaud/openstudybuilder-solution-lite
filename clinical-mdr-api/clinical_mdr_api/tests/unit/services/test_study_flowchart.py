@@ -1,11 +1,13 @@
 # pylint: disable=too-many-lines
 
 import datetime
+from collections import defaultdict
 from copy import deepcopy
 
 import pytest
+from pydantic import BaseModel
 
-from clinical_mdr_api import config
+from clinical_mdr_api import config, models
 from clinical_mdr_api.domains.study_selections.study_soa_footnote import SoAItemType
 from clinical_mdr_api.models import (
     Footnote,
@@ -19,6 +21,7 @@ from clinical_mdr_api.models.concepts.activities.activity import (
     ActivityGroupingHierarchySimpleModel,
 )
 from clinical_mdr_api.models.study_selections.study import StudySoaPreferencesInput
+from clinical_mdr_api.models.study_selections.study_epoch import StudyEpoch
 from clinical_mdr_api.models.study_selections.study_selection import (
     SimpleStudyActivityGroup,
     SimpleStudyActivitySubGroup,
@@ -30,6 +33,7 @@ from clinical_mdr_api.models.study_selections.study_soa_footnote import (
 )
 from clinical_mdr_api.models.syntax_instances.footnote import FootnoteTemplateWithType
 from clinical_mdr_api.services.studies.study_flowchart import StudyFlowchartService
+from clinical_mdr_api.services.studies.study_flowchart import _ as _gettext
 from clinical_mdr_api.services.utils.table_f import (
     Ref,
     SimpleFootnote,
@@ -37,6 +41,11 @@ from clinical_mdr_api.services.utils.table_f import (
     TableRow,
     TableWithFootnotes,
 )
+
+
+class MockStudyEpoch(BaseModel):
+    uid: str
+    epoch_name: str
 
 
 class MockStudyFlowchartService(StudyFlowchartService):
@@ -57,6 +66,433 @@ class MockStudyFlowchartService(StudyFlowchartService):
 
     def _get_soa_preferences(self, *_args, **_kwargs) -> StudySoaPreferencesInput:
         return StudySoaPreferencesInput()
+
+
+def check_flowchart_table_dimensions(
+    table: TableWithFootnotes,
+    operational: bool,
+    soa_preferences: StudySoaPreferencesInput,
+):
+    """tests dimensions of SoA table"""
+
+    num_cols = sum(cell.span for cell in table.rows[0].cells)
+    for i, row in enumerate(table.rows[1:], start=1):
+        # THEN number of columns are the same in all rows
+        assert len(row.cells) <= num_cols, f"Unexpected number of columns in row {i}"
+        assert (
+            sum(cell.span for cell in row.cells) == num_cols
+        ), f"Unexpected span of columns in row {i}"
+
+    # THEN table has the expected number of header rows
+    # epochs row is always there, just hidden when not soa_preferences.show_epochs
+    expected_num_headers = (
+        3 + 1 + int(soa_preferences.show_milestones and not operational)
+    )
+    assert table.num_header_rows == expected_num_headers
+
+    # THEN table has 1 header column
+    assert table.num_header_cols == 1
+
+
+def check_flowchart_table_first_rows(
+    table: TableWithFootnotes,
+    operational: bool,
+    study_epochs: list[StudyEpoch],
+    study_visits: list[models.StudyVisit],
+    soa_preferences: StudySoaPreferencesInput,
+):
+    """tests epoch and milestones header rows of study SoA table"""
+
+    row = table.rows[0]
+
+    # THEN epochs header is visible according to SoA preferences
+    assert row.hide is not (soa_preferences.show_epochs or operational)
+
+    # THEN first cell text is Epoch
+    assert row.cells[0].text == _gettext("study_epoch")
+
+    if operational:
+        # THEN has operational SoA column headers
+        assert row.cells[1].text == _gettext("topic_code")
+        assert row.cells[2].text == _gettext("adam_param_code")
+
+    num_visits_per_epoch = defaultdict(int)
+    # only one visit per group is considered
+    visit: models.StudyVisit
+    for _, e in {
+        (visit.consecutive_visit_group or visit.visit_name, visit.study_epoch_name)
+        for visit in study_visits
+    }:
+        num_visits_per_epoch[e] += 1
+
+    i = 3 if operational else 1
+    epoch: StudyEpoch
+    for epoch in study_epochs:
+        cell = row.cells[i]
+
+        # THEN cell style is header1
+        assert cell.style == "header1"
+
+        # THEN cell text is epoch name
+        assert cell.text == epoch.epoch_name
+
+        # THEN cell refs
+        assert len(cell.refs) == 1
+        assert cell.refs[0].type == SoAItemType.STUDY_EPOCH.value
+        assert cell.refs[0].uid == epoch.uid
+
+        # THEN span is number of visits
+        assert cell.span == num_visits_per_epoch[epoch.epoch_name]
+
+        for j in range(1, cell.span):
+            # THEN span of following cells are 0 for the next visits of the epoch
+            assert row.cells[i + j].span == 0
+
+            # THEN text of following cells are empty
+            assert not row.cells[i + j].text
+
+        i += cell.span
+
+    if not operational and soa_preferences.show_milestones:
+        row = table.rows[1]
+
+        first_visit_of_each_group: dict[str, models.StudyVisit] = {}
+        for visit in study_visits:
+            first_visit_of_each_group.setdefault(
+                visit.consecutive_visit_group or visit.visit_name, visit
+            )
+
+        assert row.cells[0].text == _gettext("study_milestone")
+        assert row.cells[0].style == "header1"
+        assert row.hide is False
+
+        i = 2 if operational else 0
+        prev_visit_type_uid = None
+        for visit in first_visit_of_each_group.values():
+            i += 1
+
+            if visit.is_soa_milestone:
+                if prev_visit_type_uid == visit.visit_type_uid:
+                    # Same visit_type, then merged with the previous cell
+                    assert row.cells[i].text == ""
+                    assert row.cells[i].span == 0
+                    # number of columns / sum of spans is checked by check_flowchart_table_dimensions()
+
+                else:
+                    # Different visit_type, new label
+                    prev_visit_type_uid = visit.visit_type_uid
+                    assert row.cells[i].text == visit.visit_type_name
+                    assert row.cells[i].style == "header1"
+                    assert row.cells[i].span > 0
+
+            else:
+                # empty cell for non-milestones
+                assert row.cells[i].text == ""
+                assert row.cells[i].span == 1
+
+
+def check_flowchart_table_footnotes(table: dict, soa_footnotes: list[StudySoAFootnote]):
+    """check footnotes and their references in flowchart table"""
+
+    symbol_ref_uid_map: dict[str, set] = defaultdict(set)
+    soa_ref_uids = set()
+
+    for r_idx, row in enumerate(table.rows):
+        for c_idx, cell in enumerate(row.cells):
+            has_footnotes = cell.footnotes
+
+            if has_footnotes:
+                assert (
+                    cell.refs
+                ), f"Cell [{r_idx},{c_idx}] without references should not have any footnotes"
+
+            if not cell.refs:
+                continue
+
+            for ref in cell.refs:
+                soa_ref_uids.add(ref.uid)
+
+                if has_footnotes:
+                    for symbol in cell.footnotes:
+                        symbol_ref_uid_map[symbol].add(ref.uid)
+
+    keys = list(symbol_ref_uid_map.keys())
+    assert keys == sorted(keys), "Invalid order of footnotes symbols"
+
+    if keys:
+        assert table.footnotes, "Missing table footnotes"
+
+    assert list(table.footnotes.keys()) == sorted(
+        table.footnotes.keys()
+    ), "Invalid footnote order"
+    assert set(keys).issubset(
+        table.footnotes.keys()
+    ), "Invalid footnote symbols or missing footnote for symbol"
+
+    footnote_uid_symbol_map: dict[str, str] = {
+        fn.uid: sym for sym, fn in table.footnotes.items()
+    }
+
+    for footnote in soa_footnotes:
+        assert (
+            footnote.uid in footnote_uid_symbol_map
+        ), f"No symbol found for footnote {footnote.uid}"
+        symbol = footnote_uid_symbol_map[footnote.uid]
+
+        # THEN verify footnote text matches footnote template text
+        assert table.footnotes[symbol].text_plain == footnote.template.name_plain
+        assert table.footnotes[symbol].text_html == footnote.template.name
+
+        # Must filter out uids not giving any SoA row unless Activities can share StudyActivityGroup and SubGroup nodes
+        footnote_referenced_uids = {
+            ref.item_uid
+            for ref in footnote.referenced_items
+            if ref.item_uid in soa_ref_uids
+        }
+        referenced_uids_in_soa = set(symbol_ref_uid_map[symbol])
+
+        if footnote_referenced_uids:
+            # THEN verify footnotes are referenced in SoA
+            footnote_uids_not_referenced_in_soa = (
+                footnote_referenced_uids - referenced_uids_in_soa
+            )
+            assert not footnote_uids_not_referenced_in_soa
+
+        else:
+            # THEN a footnote without references should not be referenced in any cell of the SoA
+            assert not referenced_uids_in_soa
+
+
+def check_flowchart_table_visit_rows(
+    table: TableWithFootnotes,
+    operational: bool,
+    time_unit: str,
+    study_visits: list[models.StudyVisit],
+    soa_preferences: StudySoaPreferencesInput,
+):
+    """test visit header rows of SoA table"""
+
+    row_idx = 1
+    if soa_preferences.show_milestones and not operational:
+        row_idx += 1
+
+    # THEN Second row label text is
+    assert table.rows[row_idx].cells[0].text == _gettext("visit_short_name")
+
+    # THEN Third row label text is
+    assert _gettext(
+        f"study_{time_unit}"
+    ), f"translation key not found: study_{time_unit}"
+    assert table.rows[row_idx + 1].cells[0].text == _gettext(f"study_{time_unit}")
+
+    # THEN Fourth row label text is
+    assert table.rows[row_idx + 2].cells[0].text == _gettext("visit_window")
+
+    for i in range(1, 4):
+        # THEN Rows label style
+        if not soa_preferences.show_milestones or operational:
+            assert table.rows[i].cells[0].style == f"header{i+1}"
+        else:
+            assert table.rows[i].cells[0].style == f"header{i}"
+
+        # THEN Rows are visible
+        assert not table.rows[i].hide
+
+    visit_groups: dict[str, models.StudyVisit] = {}
+    visit_idx_by_uid: dict[str, int] = {}
+    for visit in study_visits:
+        group_name = visit.consecutive_visit_group or visit.visit_name
+        visit_groups.setdefault(group_name, []).append(visit)
+        visit_idx_by_uid[visit.uid] = len(visit_groups) + (2 if operational else 0)
+
+    for i, (group_name, visits) in enumerate(
+        visit_groups.items(), start=3 if operational else 1
+    ):
+        visit = visits[0]
+
+        # THEN visits name in second row
+        assert (
+            table.rows[row_idx].cells[i].text == visit.consecutive_visit_group
+            or visit.visit_name
+        )
+
+        # THEN visits ref in second row
+        assert len(table.rows[row_idx].cells[i].refs) == len(visits)
+        assert {ref.type for ref in table.rows[row_idx].cells[i].refs} == {
+            SoAItemType.STUDY_VISIT.value
+        }, "Invalid reference type"
+        assert {ref.uid for ref in table.rows[row_idx].cells[i].refs} == {
+            visit.uid for visit in visits
+        }, "Referenced visit uids does not match"
+
+        # THEN study weeks/days in second row
+        if len(visits) > 1:
+            if time_unit == "week":
+                visit_timing_prop = (
+                    "study_duration_weeks"
+                    if soa_preferences.baseline_as_time_zero
+                    else "study_week_number"
+                )
+                assert (
+                    table.rows[row_idx + 1].cells[i].text
+                    == f"{getattr(visits[0], visit_timing_prop):d}-{getattr(visits[-1], visit_timing_prop):d}"
+                )
+            else:
+                visit_timing_prop = (
+                    "study_duration_days"
+                    if soa_preferences.baseline_as_time_zero
+                    else "study_day_number"
+                )
+                assert (
+                    table.rows[row_idx + 1].cells[i].text
+                    == f"{getattr(visits[0], visit_timing_prop):d}-{getattr(visits[-1], visit_timing_prop):d}"
+                )
+        else:
+            if time_unit == "week":
+                assert table.rows[row_idx + 1].cells[i].text == str(
+                    visit.study_duration_weeks
+                    if soa_preferences.baseline_as_time_zero
+                    else visit.study_week_number
+                )
+            else:
+                assert table.rows[row_idx + 1].cells[i].text == str(
+                    visit.study_duration_days
+                    if soa_preferences.baseline_as_time_zero
+                    else visit.study_day_number
+                )
+
+        # THEN text in forth row
+        if visit.min_visit_window_value == -visit.max_visit_window_value:
+            assert (
+                table.rows[row_idx + 2].cells[i].text
+                == f"±{visit.max_visit_window_value:0.0f}"
+            )
+        else:
+            assert (
+                table.rows[row_idx + 2].cells[i].text
+                == f"{visit.min_visit_window_value:+0.0f}/{visit.max_visit_window_value:+0.0f}"
+            )
+
+    for i, cell in enumerate(table.rows[0].cells):
+        if cell.text and cell.span:
+            # THEN first row cell style is header1
+            assert cell.style == (
+                "header2" if operational and i in (1, 2) else "header1"
+            )
+
+    for cell in table.rows[row_idx].cells:
+        # THEN second row cell span is 1
+        assert cell.span == 1
+        if cell.text:
+            # THEN second row cell style is header2
+            assert cell.style == "header2"
+
+    for cell in table.rows[row_idx + 1].cells:
+        # THEN third row cell span is 1
+        assert cell.span == 1
+        if cell.text:
+            # THEN third row cell style is header3
+            assert cell.style == "header3"
+
+    # THEN forth row style is header4
+    for cell in table.rows[row_idx + 2].cells:
+        # THEN forth row cell span is 1
+        if cell.text and cell.span:
+            assert cell.style == "header4"
+
+    return visit_idx_by_uid
+
+
+def check_hidden_row_propagation(table: TableWithFootnotes):
+    """Validates propagation of crosses and footnotes from hidden rows to the first visible parent row"""
+
+    path = []
+    soa_group_row = activity_group_row = activity_subgroup_row = activity_row = None
+
+    for idx, row in enumerate(
+        table.rows[table.num_header_rows :], start=table.num_header_rows
+    ):
+        if not row.cells[0].refs:
+            # ActivityRequest placeholders may not have soa-group and soa-subgroup selected,
+            # their group and subgroup rows may be dummy placeholders with filler text but no object to reference
+            path = [soa_group_row]
+            continue
+
+        # THEN all data rows keep reference
+        assert row.cells[0].refs
+        ref = next(
+            (
+                r
+                for r in row.cells[0].refs
+                if r.type
+                in {
+                    "CTTerm",
+                    "ActivityGroup",
+                    "ActivitySubGroup",
+                    SoAItemType.STUDY_ACTIVITY.value,
+                    SoAItemType.STUDY_ACTIVITY_INSTANCE.value,
+                }
+            ),
+            None,
+        )
+        assert ref, f"Unexpected reference types in row {idx} column 0"
+        typ = ref.type
+
+        if typ == "CTTerm":
+            path = [soa_group_row := row]
+            activity_group_row = activity_subgroup_row = activity_row = None
+            continue
+
+        if typ == "ActivityGroup":
+            path = [soa_group_row, activity_group_row := row]
+            activity_subgroup_row = activity_row = None
+            continue
+
+        if typ == "ActivitySubGroup":
+            path = [soa_group_row, activity_group_row, activity_subgroup_row := row]
+            activity_row = None
+            continue
+
+        if typ == SoAItemType.STUDY_ACTIVITY.value:
+            path = [
+                soa_group_row,
+                activity_group_row,
+                activity_subgroup_row,
+                activity_row := row,
+            ]
+
+        if not row.hide:
+            continue
+
+        if typ == SoAItemType.STUDY_ACTIVITY_INSTANCE.value:
+            path = [
+                soa_group_row,
+                activity_group_row,
+                activity_subgroup_row,
+                activity_row,
+                row,
+            ]
+
+        # First visible parent
+        parent = next(
+            (row for row in reversed(path[:-1]) if row and not row.hide), None
+        )
+        if not parent:
+            continue
+
+        for i, cell in enumerate(row.cells):
+            if not cell.text:
+                continue
+
+            if i:
+                # THEN crosses form a non-visible row is propagated up to the first visible group row
+                assert (
+                    parent.cells[i].text == cell.text
+                ), f"Hidden {typ} text in row {idx} was not propagated to visible parent row {parent.cells[0].refs}"
+
+            if cell.footnotes:
+                # THEN footnotes from a non-visible cell is propagated up to the first visible group row
+                assert set(cell.footnotes).issubset(set(parent.cells[i].footnotes))
 
 
 # pylint: disable=redefined-outer-name
@@ -204,98 +640,6 @@ def test_propagate_hidden_rows_2():
     check_hidden_row_propagation(table)
 
 
-def check_hidden_row_propagation(table: TableWithFootnotes):
-    """Validates propagation of crosses and footnotes from hidden rows to the first visible parent row"""
-
-    path = []
-    soa_group_row = activity_group_row = activity_subgroup_row = activity_row = None
-
-    for idx, row in enumerate(
-        table.rows[table.num_header_rows :], start=table.num_header_rows
-    ):
-        if not row.cells[0].refs:
-            # ActivityRequest placeholders may not have soa-group and soa-subgroup selected,
-            # their group and subgroup rows may be dummy placeholders with filler text but no object to reference
-            path = [soa_group_row]
-            continue
-
-        # THEN all data rows keep reference
-        assert row.cells[0].refs
-        ref = next(
-            (
-                r
-                for r in row.cells[0].refs
-                if r.type
-                in {
-                    "CTTerm",
-                    "ActivityGroup",
-                    "ActivitySubGroup",
-                    SoAItemType.STUDY_ACTIVITY.value,
-                    SoAItemType.STUDY_ACTIVITY_INSTANCE.value,
-                }
-            ),
-            None,
-        )
-        assert ref, f"Unexpected reference types in row {idx} column 0"
-        typ = ref.type
-
-        if typ == "CTTerm":
-            path = [soa_group_row := row]
-            activity_group_row = activity_subgroup_row = activity_row = None
-            continue
-
-        if typ == "ActivityGroup":
-            path = [soa_group_row, activity_group_row := row]
-            activity_subgroup_row = activity_row = None
-            continue
-
-        if typ == "ActivitySubGroup":
-            path = [soa_group_row, activity_group_row, activity_subgroup_row := row]
-            activity_row = None
-            continue
-
-        if typ == SoAItemType.STUDY_ACTIVITY.value:
-            path = [
-                soa_group_row,
-                activity_group_row,
-                activity_subgroup_row,
-                activity_row := row,
-            ]
-
-        if not row.hide:
-            continue
-
-        if typ == SoAItemType.STUDY_ACTIVITY_INSTANCE.value:
-            path = [
-                soa_group_row,
-                activity_group_row,
-                activity_subgroup_row,
-                activity_row,
-                row,
-            ]
-
-        # First visible parent
-        parent = next(
-            (row for row in reversed(path[:-1]) if row and not row.hide), None
-        )
-        if not parent:
-            continue
-
-        for i, cell in enumerate(row.cells):
-            if not cell.text:
-                continue
-
-            if i:
-                # THEN crosses form a non-visible row is propagated up to the first visible group row
-                assert (
-                    parent.cells[i].text == cell.text
-                ), f"Hidden {typ} text in row {idx} was not propagated to visible parent row {parent.cells[0].refs}"
-
-            if cell.footnotes:
-                # THEN footnotes from a non-visible cell is propagated up to the first visible group row
-                assert set(cell.footnotes).issubset(set(parent.cells[i].footnotes))
-
-
 def test_show_hidden_rows():
     table = deepcopy(DETAILED_SOA_TABLE)
     StudyFlowchartService.show_hidden_rows(table)
@@ -310,6 +654,86 @@ def test_show_hidden_rows():
     for row, expected_row in zip(table.rows, DETAILED_SOA_TABLE.rows):
         assert row.cells == expected_row.cells
         assert row.hide is False
+
+
+@pytest.mark.parametrize(
+    (
+        "operational",
+        "time_unit",
+        "show_epochs",
+        "show_milestones",
+        "baseline_as_time_zero",
+    ),
+    [
+        (False, "day", True, True, True),
+        (False, "week", False, True, True),
+        (False, "day", True, False, True),
+        (False, "week", True, True, False),
+        (False, "day", False, True, False),
+        (False, "week", False, False, True),
+        (False, "day", True, False, False),
+        (True, "week", True, True, True),
+        (True, "day", False, True, True),
+        (True, "week", True, False, True),
+        (True, "day", True, True, False),
+        (True, "week", False, True, False),
+        (True, "day", False, False, True),
+        (True, "week", True, False, False),
+    ],
+)
+def test_get_header_rows_with_soa_preferences(
+    operational: bool,
+    time_unit: str,
+    show_epochs: bool,
+    show_milestones: bool,
+    baseline_as_time_zero: bool,
+):
+    epochs = list(
+        {
+            visit.study_epoch_uid: MockStudyEpoch(
+                uid=visit.study_epoch_uid, epoch_name=visit.study_epoch_name
+            )
+            for visit in STUDY_VISITS
+            if visit.show_visit and visit.study_epoch_name != config.BASIC_EPOCH_NAME
+        }.values()
+    )
+
+    visits = [
+        visit
+        for visit in STUDY_VISITS
+        if visit.show_visit and visit.study_epoch_name != config.BASIC_EPOCH_NAME
+    ]
+    grouped_visits = StudyFlowchartService._group_visits(visits)
+
+    soa_preferences = StudySoaPreferencesInput(
+        show_epochs=show_epochs,
+        show_milestones=show_milestones,
+        baseline_as_time_zero=baseline_as_time_zero,
+    )
+
+    header_rows = StudyFlowchartService._get_header_rows(
+        grouped_visits,
+        time_unit=time_unit,
+        soa_preferences=soa_preferences,
+        operational=operational,
+    )
+
+    table = TableWithFootnotes(
+        rows=header_rows, num_header_rows=len(header_rows), num_header_cols=1
+    )
+
+    # Test dimensions
+    check_flowchart_table_dimensions(table, operational, soa_preferences)
+
+    # Test first header row
+    check_flowchart_table_first_rows(
+        table, operational, epochs, visits, soa_preferences
+    )
+
+    # Test visit header rows
+    check_flowchart_table_visit_rows(
+        table, operational, time_unit, visits, soa_preferences
+    )
 
 
 STUDY_VISITS = [
@@ -348,9 +772,11 @@ STUDY_VISITS = [
         duration_time=-1209600.0,
         duration_time_unit="UnitDefinition_000364",
         study_day_number=-14,
+        study_duration_days=-15,
         study_duration_days_label="-15 days",
         study_day_label="Day -14",
         study_week_number=-2,
+        study_duration_weeks=-3,
         study_duration_weeks_label="-3 weeks",
         week_in_study_label="Week -3",
         study_week_label="Week -2",
@@ -407,9 +833,11 @@ STUDY_VISITS = [
         duration_time=-259200.0,
         duration_time_unit="UnitDefinition_000364",
         study_day_number=-3,
+        study_duration_days=-4,
         study_duration_days_label="-4 days",
         study_day_label="Day -3",
         study_week_number=1,
+        study_duration_weeks=0,
         study_duration_weeks_label="0 weeks",
         week_in_study_label="Week 0",
         study_week_label="Week 1",
@@ -466,9 +894,11 @@ STUDY_VISITS = [
         duration_time=-172800.0,
         duration_time_unit="UnitDefinition_000364",
         study_day_number=-2,
+        study_duration_days=-3,
         study_duration_days_label="-3 days",
         study_day_label="Day -2",
         study_week_number=1,
+        study_duration_weeks=0,
         study_duration_weeks_label="0 weeks",
         week_in_study_label="Week 0",
         study_week_label="Week 1",
@@ -525,9 +955,11 @@ STUDY_VISITS = [
         duration_time=-86400.0,
         duration_time_unit="UnitDefinition_000364",
         study_day_number=-1,
+        study_duration_days=-2,
         study_duration_days_label="-2 days",
         study_day_label="Day -1",
         study_week_number=1,
+        study_duration_weeks=0,
         study_duration_weeks_label="0 weeks",
         week_in_study_label="Week 0",
         study_week_label="Week 1",
@@ -584,9 +1016,11 @@ STUDY_VISITS = [
         duration_time=0.0,
         duration_time_unit="UnitDefinition_000364",
         study_day_number=1,
+        study_duration_days=0,
         study_duration_days_label="0 days",
         study_day_label="Day 1",
         study_week_number=1,
+        study_duration_weeks=0,
         study_duration_weeks_label="0 weeks",
         week_in_study_label="Week 0",
         study_week_label="Week 1",
@@ -643,9 +1077,11 @@ STUDY_VISITS = [
         duration_time=172800.0,
         duration_time_unit="UnitDefinition_000364",
         study_day_number=3,
+        study_duration_days=2,
         study_duration_days_label="2 days",
         study_day_label="Day 3",
         study_week_number=1,
+        study_duration_weeks=0,
         study_duration_weeks_label="0 weeks",
         week_in_study_label="Week 0",
         study_week_label="Week 1",
@@ -702,9 +1138,11 @@ STUDY_VISITS = [
         duration_time=345600.0,
         duration_time_unit="UnitDefinition_000364",
         study_day_number=5,
+        study_duration_days=4,
         study_duration_days_label="4 days",
         study_day_label="Day 5",
         study_week_number=1,
+        study_duration_weeks=0,
         study_duration_weeks_label="0 weeks",
         week_in_study_label="Week 0",
         study_week_label="Week 1",
@@ -761,9 +1199,11 @@ STUDY_VISITS = [
         duration_time=1209600.0,
         duration_time_unit="UnitDefinition_000364",
         study_day_number=15,
+        study_duration_days=14,
         study_duration_days_label="14 days",
         study_day_label="Day 15",
         study_week_number=3,
+        study_duration_weeks=2,
         study_duration_weeks_label="2 weeks",
         week_in_study_label="Week 2",
         study_week_label="Week 3",
@@ -820,9 +1260,11 @@ STUDY_VISITS = [
         duration_time=1382400.0,
         duration_time_unit="UnitDefinition_000364",
         study_day_number=17,
+        study_duration_days=16,
         study_duration_days_label="16 days",
         study_day_label="Day 17",
         study_week_number=3,
+        study_duration_weeks=2,
         study_duration_weeks_label="2 weeks",
         week_in_study_label="Week 2",
         study_week_label="Week 3",
@@ -879,9 +1321,11 @@ STUDY_VISITS = [
         duration_time=1555200.0,
         duration_time_unit="UnitDefinition_000364",
         study_day_number=19,
+        study_duration_days=18,
         study_duration_days_label="18 days",
         study_day_label="Day 19",
         study_week_number=3,
+        study_duration_weeks=2,
         study_duration_weeks_label="2 weeks",
         week_in_study_label="Week 2",
         study_week_label="Week 3",
@@ -938,9 +1382,11 @@ STUDY_VISITS = [
         duration_time=1814400.0,
         duration_time_unit="UnitDefinition_000364",
         study_day_number=22,
+        study_duration_days=21,
         study_duration_days_label="21 days",
         study_day_label="Day 22",
         study_week_number=4,
+        study_duration_weeks=3,
         study_duration_weeks_label="3 weeks",
         week_in_study_label="Week 3",
         study_week_label="Week 4",
@@ -960,65 +1406,6 @@ STUDY_VISITS = [
         user_initials="unknown-user",
         possible_actions=["edit", "delete", "lock"],
         study_activity_count=12,
-        change_type=None,
-    ),
-    StudyVisit(
-        study_epoch_uid="StudyEpoch_000009",
-        visit_type_uid="CTTerm_000190",
-        time_reference_uid=None,
-        time_value=None,
-        time_unit_uid=None,
-        visit_sublabel_codelist_uid=None,
-        visit_sublabel_reference=None,
-        consecutive_visit_group=None,
-        show_visit=True,
-        min_visit_window_value=-9999,
-        max_visit_window_value=9999,
-        visit_window_unit_uid="UnitDefinition_000364",
-        description=None,
-        start_rule=None,
-        end_rule=None,
-        visit_contact_mode_uid="CTTerm_000079",
-        epoch_allocation_uid="CTTerm_000196",
-        visit_class="NON_VISIT",
-        visit_subclass="SINGLE_VISIT",
-        is_global_anchor_visit=False,
-        is_soa_milestone=False,
-        uid="StudyVisit_000023",
-        study_uid="Study_000002",
-        study_epoch_name="Basic",
-        epoch_uid="CTTerm_000009",
-        order=29500,
-        visit_type_name="Non-visit",
-        time_reference_name=None,
-        time_unit_name=None,
-        visit_contact_mode_name="Virtual Visit",
-        epoch_allocation_name="Date Current Visit",
-        duration_time=None,
-        duration_time_unit=None,
-        study_day_number=None,
-        study_duration_days_label=None,
-        study_day_label=None,
-        study_week_number=None,
-        study_duration_weeks_label=None,
-        week_in_study_label=None,
-        study_week_label=None,
-        visit_number=29500,
-        visit_subnumber=0,
-        unique_visit_number=29500,
-        visit_subname="Visit 29500",
-        visit_sublabel=None,
-        visit_name="Visit 29500",
-        visit_short_name="29500",
-        visit_window_unit_name="days",
-        status="DRAFT",
-        start_date=datetime.datetime(
-            2023, 9, 28, 7, 9, 40, 605585, tzinfo=datetime.timezone.utc
-        ),
-        end_date=None,
-        user_initials="unknown-user",
-        possible_actions=["edit", "delete", "lock"],
-        study_activity_count=0,
         change_type=None,
     ),
     StudyVisit(
@@ -1043,11 +1430,11 @@ STUDY_VISITS = [
         visit_subclass="SINGLE_VISIT",
         is_global_anchor_visit=False,
         is_soa_milestone=False,
-        uid="StudyVisit_000024",
+        uid="StudyVisit_000023",
         study_uid="Study_000002",
         study_epoch_name="Basic",
         epoch_uid="CTTerm_000009",
-        order=29999,
+        order=config.UNSCHEDULED_VISIT_NUMBER,
         visit_type_name="Unscheduled",
         time_reference_name=None,
         time_unit_name=None,
@@ -1062,17 +1449,76 @@ STUDY_VISITS = [
         study_duration_weeks_label=None,
         week_in_study_label=None,
         study_week_label=None,
-        visit_number=29999,
+        visit_number=config.UNSCHEDULED_VISIT_NUMBER,
         visit_subnumber=0,
-        unique_visit_number=29999,
-        visit_subname="Visit 29999",
+        unique_visit_number=config.UNSCHEDULED_VISIT_NUMBER,
+        visit_subname=f"Visit {config.UNSCHEDULED_VISIT_NUMBER}",
         visit_sublabel=None,
-        visit_name="Visit 29999",
-        visit_short_name="29999",
+        visit_name=f"Visit {config.UNSCHEDULED_VISIT_NUMBER}",
+        visit_short_name=f"{config.UNSCHEDULED_VISIT_NUMBER}",
         visit_window_unit_name="days",
         status="DRAFT",
         start_date=datetime.datetime(
             2023, 9, 28, 7, 9, 58, 725540, tzinfo=datetime.timezone.utc
+        ),
+        end_date=None,
+        user_initials="unknown-user",
+        possible_actions=["edit", "delete", "lock"],
+        study_activity_count=0,
+        change_type=None,
+    ),
+    StudyVisit(
+        study_epoch_uid="StudyEpoch_000009",
+        visit_type_uid="CTTerm_000190",
+        time_reference_uid=None,
+        time_value=None,
+        time_unit_uid=None,
+        visit_sublabel_codelist_uid=None,
+        visit_sublabel_reference=None,
+        consecutive_visit_group=None,
+        show_visit=True,
+        min_visit_window_value=-9999,
+        max_visit_window_value=9999,
+        visit_window_unit_uid="UnitDefinition_000364",
+        description=None,
+        start_rule=None,
+        end_rule=None,
+        visit_contact_mode_uid="CTTerm_000079",
+        epoch_allocation_uid="CTTerm_000196",
+        visit_class="NON_VISIT",
+        visit_subclass="SINGLE_VISIT",
+        is_global_anchor_visit=False,
+        is_soa_milestone=False,
+        uid="StudyVisit_000024",
+        study_uid="Study_000002",
+        study_epoch_name="Basic",
+        epoch_uid="CTTerm_000009",
+        order=config.NON_VISIT_NUMBER,
+        visit_type_name="Non-visit",
+        time_reference_name=None,
+        time_unit_name=None,
+        visit_contact_mode_name="Virtual Visit",
+        epoch_allocation_name="Date Current Visit",
+        duration_time=None,
+        duration_time_unit=None,
+        study_day_number=None,
+        study_duration_days_label=None,
+        study_day_label=None,
+        study_week_number=None,
+        study_duration_weeks_label=None,
+        week_in_study_label=None,
+        study_week_label=None,
+        visit_number=config.NON_VISIT_NUMBER,
+        visit_subnumber=0,
+        unique_visit_number=config.NON_VISIT_NUMBER,
+        visit_subname=f"Visit {config.NON_VISIT_NUMBER}",
+        visit_sublabel=None,
+        visit_name=f"Visit {config.NON_VISIT_NUMBER}",
+        visit_short_name=f"{config.NON_VISIT_NUMBER}",
+        visit_window_unit_name="days",
+        status="DRAFT",
+        start_date=datetime.datetime(
+            2023, 9, 28, 7, 9, 40, 605585, tzinfo=datetime.timezone.utc
         ),
         end_date=None,
         user_initials="unknown-user",

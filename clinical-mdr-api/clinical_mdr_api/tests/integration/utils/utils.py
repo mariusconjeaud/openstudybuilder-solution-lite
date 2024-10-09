@@ -75,6 +75,11 @@ from clinical_mdr_api.models.concepts.pharmaceutical_product import (
 from clinical_mdr_api.models.controlled_terminologies.configuration import (
     CTConfigPostInput,
 )
+from clinical_mdr_api.models.notification import (
+    Notification,
+    NotificationInput,
+    NotificationType,
+)
 from clinical_mdr_api.models.standard_data_models.data_model import DataModel
 from clinical_mdr_api.models.standard_data_models.data_model_ig import DataModelIG
 from clinical_mdr_api.models.standard_data_models.dataset import (
@@ -322,6 +327,7 @@ from clinical_mdr_api.services.dictionaries.dictionary_term_generic_service impo
     DictionaryTermGenericService as DictionaryTermService,
 )
 from clinical_mdr_api.services.libraries import libraries as library_service
+from clinical_mdr_api.services.notifications import NotificationService
 from clinical_mdr_api.services.projects.project import ProjectService
 from clinical_mdr_api.services.standard_data_models.data_model import DataModelService
 from clinical_mdr_api.services.standard_data_models.data_model_ig import (
@@ -611,6 +617,27 @@ class TestUtils:
         user_initials: "TODO initials",
         version: "1.0"
     }} """
+
+    @classmethod
+    def create_notification(
+        cls,
+        title: str = "Notification Title",
+        notification_type: NotificationType = NotificationType.INFORMATION,
+        description: str | None = "Notification Description",
+        started_at: datetime | None = None,
+        ended_at: datetime | None = None,
+        published: bool = False,
+    ) -> Notification:
+        service = NotificationService()
+        payload = NotificationInput(
+            title=title,
+            notification_type=notification_type,
+            description=description,
+            started_at=started_at,
+            ended_at=ended_at,
+            published=published,
+        )
+        return service.create_notification(payload)
 
     @classmethod
     def create_text_value(

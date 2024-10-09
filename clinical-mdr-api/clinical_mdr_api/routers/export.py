@@ -63,7 +63,8 @@ def _extract_values_from_data(data: dict, headers: dict):
     """
     if isinstance(data, utils.CustomPage | utils.GenericFilteringReturn):
         data = data.items
-
+    if isinstance(data, BaseModel):
+        data = [data]
     for item in data:
         result = {}
         if not isinstance(item, dict):
@@ -166,6 +167,9 @@ def _export_to_xml(data: dict, headers: list[Any]):
     The generated content will only contain items listed in headers.
     """
     export_dict = {"item": _convert_data_to_list(data, headers)}
+    # If data is a single BaseModel instance we don't won't to wrap the export into <items> tags
+    if isinstance(data, BaseModel):
+        return dict2xml(export_dict, indent="  ")
     return dict2xml(export_dict, wrap="items", indent="  ")
 
 
@@ -192,13 +196,12 @@ def export(export_format: str, data: dict, export_definition: dict, *args, **kwa
             data = data.items
         extra_headers = export_definition.get("include_if_exists")
         headers = copy(headers)
-        if extra_headers:
-            if data:
-                headers += [
-                    extra_header
-                    for extra_header in extra_headers
-                    if extra_header in data[0]
-                ]
+        if extra_headers and data:
+            headers += [
+                extra_header
+                for extra_header in extra_headers
+                if extra_header in data[0]
+            ]
 
         result = REGISTERED_EXPORT_FORMATS[export_format](
             data, headers, *args, **kwargs

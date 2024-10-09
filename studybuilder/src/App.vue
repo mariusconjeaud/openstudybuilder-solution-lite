@@ -7,6 +7,10 @@
 
     <template v-if="layoutTemplate === 'empty'">
       <v-main class="bg-primary white-text">
+        <SystemAnnouncement
+          v-if="systemAnnouncement"
+          :announcement="systemAnnouncement"
+        />
         <router-view />
       </v-main>
     </template>
@@ -22,6 +26,10 @@
 
       <v-main class="bg-dfltBackground">
         <v-container class="" fluid>
+          <SystemAnnouncement
+            v-if="systemAnnouncement"
+            :announcement="systemAnnouncement"
+          />
           <v-breadcrumbs :items="breadcrumbs" class="mb-2" />
           <router-view />
         </v-container>
@@ -78,13 +86,16 @@ import { useAppStore } from '@/stores/app'
 import { useAuthStore } from '@/stores/auth'
 import SideBar from '@/components/layout/SideBar.vue'
 import TopBar from '@/components/layout/TopBar.vue'
+import SystemAnnouncement from '@/components/tools/SystemAnnouncement.vue'
 import { eventBus } from '@/plugins/eventBus'
+import notifications from '@/api/notifications'
 
 export default {
   name: 'App',
 
   components: {
     SideBar,
+    SystemAnnouncement,
     TopBar,
   },
   setup() {
@@ -97,6 +108,7 @@ export default {
       userData: computed(() => appStore.userData),
       userInfo: computed(() => authStore.userInfo),
       displayWelcomeMsg: computed(() => authStore.displayWelcomeMsg),
+      systemAnnouncement: computed(() => appStore.systemAnnouncement),
       appStore,
       authStore,
     }
@@ -170,10 +182,14 @@ export default {
     )
   },
 
-  mounted() {
+  async mounted() {
     this.appStore.initialize()
     this.$vuetify.theme.dark = this.userData.darkTheme
     this.authStore.initialize()
+    const resp = await notifications.getActive()
+    if (resp.data.length) {
+      this.appStore.setSystemAnnouncement(resp.data[0])
+    }
   },
 
   methods: {

@@ -366,11 +366,12 @@ export default {
     .v-btn {
       height: 60% !important;
       &--active {
+        background-color: rgb(var(--v-theme-secondary));
+        border-radius: settings.$border-radius-root * 2 !important;
+
         &::before {
           opacity: 0;
         }
-        background-color: rgb(var(--v-theme-secondary));
-        border-radius: settings.$border-radius-root * 2 !important;
       }
       &:hover {
         border-radius: settings.$border-radius-root * 2 !important;

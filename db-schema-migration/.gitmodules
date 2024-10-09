@@ -10,3 +10,6 @@
 [submodule "studybuilder_import"]
 	path = studybuilder_import
 	url = ../studybuilder-import
+[submodule "migration_data"]
+	path = migration_data
+	url = ../migration-data

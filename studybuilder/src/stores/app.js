@@ -537,9 +537,19 @@ export const useAppStore = defineStore('app', {
           },
         ],
       },
-      Admin: {},
+      Administration: {
+        url: '/admin',
+        items: [
+          {
+            title: i18n.t('Sidebar.admin.announcements'),
+            url: { name: 'SystemAnnouncements' },
+            icon: 'mdi-information-outline',
+          },
+        ],
+      },
       Help: {},
     },
+    systemAnnouncement: null,
   }),
 
   getters: {
@@ -656,6 +666,9 @@ export const useAppStore = defineStore('app', {
     saveUserData(data) {
       this.userData = data
       localStorage.setItem('userData', JSON.stringify(data))
+    },
+    setSystemAnnouncement(content) {
+      this.systemAnnouncement = content
     },
   },
 })

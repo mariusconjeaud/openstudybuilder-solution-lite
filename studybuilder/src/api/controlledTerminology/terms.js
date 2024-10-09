@@ -106,10 +106,12 @@ export default {
     }
     throw new Error(`Provided codelist (${name}) is unknown`)
   },
-  getNamesByCodelist(name) {
+  getNamesByCodelist(name, params) {
     const codelist = knownCodelists[name]
     if (codelist !== undefined) {
-      const params = { page_size: 100 }
+      if (!params) {
+        params = { page_size: 100 }
+      }
       params[codelist.attribute] = codelist.value
       return repository.get(`${resource}/names`, { params })
     }

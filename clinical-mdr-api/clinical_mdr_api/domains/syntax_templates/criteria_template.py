@@ -24,7 +24,7 @@ class CriteriaTemplateAR(TemplateAggregateRootBase):
     behavior. Inherits generic template versioning behaviors
     """
 
-    _type: SimpleCTTermNameAndAttributes = None
+    _type: SimpleCTTermNameAndAttributes | None = None
 
     _indications: list[SimpleTermModel] | None = None
 

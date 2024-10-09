@@ -496,10 +496,6 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
 
         if relationship_type == TermParentType.PARENT_TYPE:
             parent_node = ct_term_root_node.has_parent_type.get_or_none()
-        elif relationship_type == TermParentType.VALID_FOR_EPOCH_TYPE:
-            parent_node = ct_term_root_node.valid_for_epoch_type.get_or_none(
-                uid=parent_uid
-            )
         else:
             parent_node = ct_term_root_node.has_parent_subtype.get_or_none()
 
@@ -514,8 +510,6 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
 
         if relationship_type == TermParentType.PARENT_TYPE:
             ct_term_root_node.has_parent_type.connect(ct_term_root_parent_node)
-        elif relationship_type == TermParentType.VALID_FOR_EPOCH_TYPE:
-            ct_term_root_node.valid_for_epoch_type.connect(ct_term_root_parent_node)
         else:
             ct_term_root_node.has_parent_subtype.connect(ct_term_root_parent_node)
 
@@ -536,10 +530,6 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
 
         if relationship_type == TermParentType.PARENT_TYPE:
             parent_node = ct_term_root_node.has_parent_type.get_or_none()
-        elif relationship_type == TermParentType.VALID_FOR_EPOCH_TYPE:
-            parent_node = ct_term_root_node.valid_for_epoch_type.get_or_none(
-                uid=parent_uid
-            )
         else:
             parent_node = ct_term_root_node.has_parent_subtype.get_or_none()
 
@@ -550,8 +540,6 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
             )
         if relationship_type == TermParentType.PARENT_TYPE:
             ct_term_root_node.has_parent_type.disconnect(parent_node)
-        elif relationship_type == TermParentType.VALID_FOR_EPOCH_TYPE:
-            ct_term_root_node.valid_for_epoch_type.disconnect(parent_node)
         else:
             ct_term_root_node.has_parent_subtype.disconnect(parent_node)
 
@@ -621,7 +609,7 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
             match_clause += " MATCH (codelist_root:CTCodelistRoot)-[rel_term:HAS_TERM|HAD_TERM]->(term_root) "
 
         if codelist_uid or codelist_name:
-            # Build spefic filtering for codelist
+            # Build specific filtering for codelist
             # This is done separately from library and package as we first need to match codelist_root
             (
                 codelist_filter_statements,

@@ -498,10 +498,14 @@ class Units(BaseImporter):
             await self.handle_unit_dimension(
                 MDR_MIGRATION_UNIT_DIMENSION, code_lists_uids, session
             )
+        conn = aiohttp.TCPConnector(limit=4, force_close=True)
+        async with aiohttp.ClientSession(timeout=timeout, connector=conn) as session:
             await self.handle_sponsor_units(
                 MDR_MIGRATION_SPONSOR_UNITS,
                 session=session,
             )
+        conn = aiohttp.TCPConnector(limit=4, force_close=True)
+        async with aiohttp.ClientSession(timeout=timeout, connector=conn) as session:
             await self.handle_unit_definitions(MDR_MIGRATION_UNIT_DIF, session)
 
     def run(self):

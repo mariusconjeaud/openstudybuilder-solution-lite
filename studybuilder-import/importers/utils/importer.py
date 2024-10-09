@@ -36,7 +36,7 @@ API_BASE_URL = load_env("API_BASE_URL")
 class TermCache:
     def __init__(self, api):
         self.api = api
-        self.all_terms_attributes = self.api.get_all_from_api("/ct/terms/attributes")
+        self.all_terms_attributes = self.api.get_all_from_api_paged("/ct/terms/attributes")
         self.all_terms_name_submission_values = CaselessDict(
             self.api.get_all_identifiers(
                 self.all_terms_attributes,
@@ -51,7 +51,7 @@ class TermCache:
                 value="term_uid",
             )
         )
-        self.all_term_names = self.api.get_all_from_api("/ct/terms/names")
+        self.all_term_names = self.api.get_all_from_api_paged("/ct/terms/names")
         self.all_term_name_values = CaselessDict(
             self.api.get_all_identifiers_multiple(
                 self.all_term_names,
@@ -389,14 +389,6 @@ class BaseImporter:
                     self.log.error(
                         f"Failed to add term name '{term_name}' with uid '{term_uid}' to codelist '{codelist_uid}'"
                     )
-        if data.get("valid_epoch_uids"):
-            for valid_epoch_uid in data.get("valid_epoch_uids"):
-                self.api.post_to_api(
-                    {
-                        "path": f"/ct/terms/{term_uid}/parents?parent_uid={valid_epoch_uid}&relationship_type=valid_for_epoch",
-                        "body": {},
-                    }
-                )
         if data.get("element_type_uid"):
             self.api.post_to_api(
                 {
@@ -427,9 +419,11 @@ class BaseImporter:
                 retry_delay = 2 * retry_delay
 
     @lru_cache(maxsize=10000)
-    def lookup_concept_uid(self, name, endpoint, subset=None):
+    def lookup_concept_uid(self, name, endpoint, subset=None, library=None):
         self.log.info(f"Looking up concept {endpoint} with name '{name}'")
         filt = {"name": {"v": [name], "op": "eq"}}
+        if library:
+            filt["library_name"] = {"v": [library], "op": "eq"}
         path = f"/concepts/{endpoint}"
         params = {"filters": json.dumps(filt)}
         if subset:

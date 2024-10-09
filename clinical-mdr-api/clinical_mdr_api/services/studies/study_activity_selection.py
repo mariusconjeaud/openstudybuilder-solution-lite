@@ -591,7 +591,7 @@ class StudyActivitySelectionService(StudyActivitySelectionBaseService):
             activity_name = request_object.activity_name
         else:
             activity_name = current_object.activity_name
-        # This method is called only in scope for the ActiivtyRequest edition.
+        # This method is called only in scope for the ActivityRequest edition.
         # It means that we are sure that we have just one grouping linked to the ActivityRequest.
         activity_groupings = []
         if request_object.activity_subgroup_uid or request_object.activity_group_uid:

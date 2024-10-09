@@ -8,4 +8,3 @@ class TermParentType(Enum):
 
     PARENT_TYPE = "type"
     PARENT_SUB_TYPE = "subtype"
-    VALID_FOR_EPOCH_TYPE = "valid_for_epoch"

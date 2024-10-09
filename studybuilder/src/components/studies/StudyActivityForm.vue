@@ -35,6 +35,7 @@
               :label="$t('StudySelectionTable.study_ids')"
               :items="studies"
               item-title="current_metadata.identification_metadata.study_id"
+              data-cy="select-study-for-activity-by-id"
               return-object
               :rules="[formRules.required]"
               clearable
@@ -47,8 +48,14 @@
             <v-autocomplete
               v-model="selectedStudy"
               :label="$t('StudySelectionTable.study_acronyms')"
-              :items="studies"
+              :items="
+                studies.filter(
+                  (study) =>
+                    study.current_metadata.identification_metadata.study_acronym
+                )
+              "
               item-title="current_metadata.identification_metadata.study_acronym"
+              data-cy="select-study-for-activity-by-acronym"
               return-object
               :rules="[formRules.required]"
               clearable
@@ -373,7 +380,7 @@ const activityHeaders = [
     externalFilterSource: 'concepts/activities/activity-sub-groups$name',
     exludeFromHeader: ['is_data_collected'],
   },
-  { title: t('StudyActivity.activity'), key: 'name' },
+  { title: t('StudyActivity.activity'), key: 'name', exludeFromHeader: ['is_data_collected'], },
   { title: t('StudyActivity.data_collection'), key: 'is_data_collected' },
   { title: t('_global.status'), key: 'status' },
 ]
@@ -789,7 +796,11 @@ function modifyFilters(jsonFilter, params, externalFilterSource) {
     jsonFilter['activity.library_name'] = { v: [libConstants.LIBRARY_SPONSOR] }
   }
   if (!externalFilterSource) {
-    jsonFilter['is_used_by_legacy_instances'] = { v: [false], op: 'eq' }
+    if (creationMode.value === 'selectFromStudies') {
+      jsonFilter['activity.is_used_by_legacy_instances'] = { v: [false], op: 'eq' }
+    } else {
+      jsonFilter['is_used_by_legacy_instances'] = { v: [false], op: 'eq' }
+    }
   }
   const filters = {
     jsonFilter: jsonFilter,

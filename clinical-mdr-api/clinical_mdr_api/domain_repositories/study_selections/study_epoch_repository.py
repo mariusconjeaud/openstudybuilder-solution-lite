@@ -217,7 +217,7 @@ class StudyEpochRepository:
             [str], CTTermName
         ],
     ):
-        selection_history: StudyEpochOGMVer = [
+        selection_history: list[StudyEpochOGMVer] = [
             StudyEpochOGMVer.from_orm(se_node)
             for se_node in to_relation_trees(
                 StudyEpoch.nodes.fetch_relations(

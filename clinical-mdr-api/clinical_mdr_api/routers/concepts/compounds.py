@@ -1,4 +1,5 @@
 """compounds router."""
+
 from typing import Any
 
 from fastapi import APIRouter, Body, Path, Query
@@ -103,6 +104,91 @@ def get_compounds(
     results = compound_service.get_all_concepts(
         library=library,
         sort_by=sort_by,
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
+        filter_by=filters,
+        filter_operator=FilterOperator.from_str(operator),
+    )
+    return CustomPage.create(
+        items=results.items, total=results.total, page=page_number, size=page_size
+    )
+
+
+@router.get(
+    "/compounds/versions",
+    dependencies=[rbac.LIBRARY_READ],
+    summary="List all versions of compounds",
+    description=f"""
+State before:
+ - The library must exist (if specified)
+
+Business logic:
+ - List version history of compounds
+ - The returned versions are ordered by version start_date descending (newest entries first).
+
+State after:
+ - No change
+
+Possible errors:
+ - Invalid library name specified.
+
+{_generic_descriptions.DATA_EXPORTS_HEADER}  
+""",
+    response_model=CustomPage[Compound],
+    response_model_exclude_unset=True,
+    status_code=200,
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+@decorators.allow_exports(
+    {
+        "defaults": [
+            "uid",
+            "name",
+            "is_sponsor_compound",
+            "start_date",
+            "external_id",
+            "status",
+            "version",
+        ],
+        "formats": [
+            "text/csv",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "text/xml",
+            "application/json",
+        ],
+    }
+)
+# pylint: disable=unused-argument
+def get_compounds_versions(
+    request: Request,  # request is actually required by the allow_exports decorator
+    library: str | None = Query(None, description="The library name"),
+    page_number: int
+    | None = Query(1, ge=1, description=_generic_descriptions.PAGE_NUMBER),
+    page_size: int
+    | None = Query(
+        config.DEFAULT_PAGE_SIZE,
+        ge=0,
+        le=config.MAX_PAGE_SIZE,
+        description=_generic_descriptions.PAGE_SIZE,
+    ),
+    filters: Json
+    | None = Query(
+        None,
+        description=_generic_descriptions.FILTERS,
+        example=_generic_descriptions.FILTERS_EXAMPLE,
+    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    total_count: bool
+    | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
+):
+    service = CompoundService()
+    results = service.get_all_concept_versions(
+        library=library,
+        sort_by={"start_date": False},
         page_number=page_number,
         page_size=page_size,
         total_count=total_count,
@@ -242,7 +328,7 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_activity(
+def get_compound(
     uid: str = CompoundUID,
 ):
     compound_service = CompoundService()
@@ -296,7 +382,6 @@ State before:
 Business logic:
  - New node is created for the compound with the set properties.
  - relationships to specified control terminology are created (as in the model).
- - relationships to specified activity parent are created (as in the model)
  - The status of the new created version will be automatically set to 'Draft'.
  - The 'version' property of the new version will be automatically set to 0.1.
  - The 'change_description' property will be set automatically to 'Initial version'.

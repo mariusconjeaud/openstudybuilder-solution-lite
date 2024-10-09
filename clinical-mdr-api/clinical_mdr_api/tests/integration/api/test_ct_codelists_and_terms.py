@@ -8,6 +8,7 @@ Tests for /ct/codelists and /ct/terms endpoints
 
 # pytest fixture functions have other fixture functions as arguments,
 # which pylint interprets as unused arguments
+import json
 import logging
 from functools import reduce
 
@@ -161,8 +162,12 @@ def test_get_ct_codelists_csv_xml_excel(api_client, export_format):
 
 
 def test_codelist_filtering_on_terms(api_client):
+    term_uids_filter = {
+        "operator": "and",
+        "term_uids": [ct_term_dosage.term_uid, ct_term_delivery_device.term_uid],
+    }
     response = api_client.get(
-        """ct/codelists?term_filter={"operator": "and", "term_uids": ["CTTerm_000001", "CTTerm_000002"]}"""
+        "ct/codelists", params={"term_filter": json.dumps(term_uids_filter)}
     )
     res = response.json()
 

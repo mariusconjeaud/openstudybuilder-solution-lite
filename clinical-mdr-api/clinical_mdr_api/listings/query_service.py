@@ -5,6 +5,7 @@ from typing import Any
 
 from neomodel import db
 
+from clinical_mdr_api.config import CT_UID_NA_VALUE, CT_UID_POSITIVE_INFINITY
 from clinical_mdr_api.domain_repositories._utils import helpers
 from clinical_mdr_api.models.utils import GenericFilteringReturn
 from clinical_mdr_api.repositories._utils import (
@@ -707,15 +708,15 @@ class QueryService:
             query = MATCH_LATEST_STUDY
         query = (
             query
-            + """
+            + f"""
         WITH sr, sv
-        CALL {
+        CALL {{
         WITH sr, sv
         MATCH (sv)-->(sf:StudyField)
         OPTIONAL MATCH  (sf)-->(ctr:CTTermRoot)-->(ctar:CTTermAttributesRoot)-[:LATEST_FINAL]->(ctav:CTTermAttributesValue)<--(:CTPackageTerm)<--(:CTPackageCodelist)<--(ctp:CTPackage)
         OPTIONAL MATCH (sf)-->(dtr:DictionaryTermRoot)-->(dtv:DictionaryTermValue)
-        OPTIONAL MATCH (sf)-[:HAS_REASON_FOR_NULL_VALUE]->(ct_null:CTTermRoot{uid:"C48660_Not Applicable"})
-        OPTIONAL MATCH (sf)-[:HAS_REASON_FOR_NULL_VALUE]->(ct_pinf:CTTermRoot{uid:"CTTerm_000097"})
+        OPTIONAL MATCH (sf)-[:HAS_REASON_FOR_NULL_VALUE]->(ct_null:CTTermRoot{{uid:'{CT_UID_NA_VALUE}'}})
+        OPTIONAL MATCH (sf)-[:HAS_REASON_FOR_NULL_VALUE]->(ct_pinf:CTTermRoot{{uid:'{CT_UID_POSITIVE_INFINITY}'}})
         WITH *,
         CASE sf.field_name
             WHEN 'disease_condition_or_indication_codes' THEN 'C112038_INDIC'
@@ -787,7 +788,7 @@ class QueryService:
                 THEN 'Dictionary'
             ELSE 'Not Controlled'
         END AS controlled_by
-        MATCH (tr:CTTermRoot {uid:term_uid})-->(tar:CTTermAttributesRoot)-[:LATEST_FINAL]->(tav:CTTermAttributesValue) 
+        MATCH (tr:CTTermRoot {{uid:term_uid}})-->(tar:CTTermAttributesRoot)-[:LATEST_FINAL]->(tav:CTTermAttributesValue) 
         RETURN DISTINCT 
         sv.study_id_prefix+'-'+sv.study_number AS STUDYID,
         'TS' AS DOMAIN,
@@ -842,7 +843,7 @@ class QueryService:
         OPTIONAL MATCH (send)-[:HAS_SELECTED_ENDPOINT]->(end_val:EndpointValue)<--(end_roo:EndpointRoot)
         OPTIONAL MATCH (send)-[:HAS_UNIT]->(:UnitDefinitionRoot)-[:LATEST]->(uni_value:UnitDefinitionValue)-[:HAS_CT_UNIT]->(uni_ctt_roo:CTTermRoot)
         OPTIONAL MATCH (send)-[:HAS_SELECTED_TIMEFRAME]->(tim_fra_val:TimeframeValue)<--(tim_fra_roo:TimeframeRoot)
-        CALL {
+        CALL {{
                 WITH send
                 OPTIONAL MATCH (send)-[:HAS_UNIT]->(:UnitDefinitionRoot)-[:LATEST]->(uni_value:UnitDefinitionValue)-[:HAS_CT_UNIT]->(uni_ctt_roo:CTTermRoot)
                 OPTIONAL MATCH (send)-[:HAS_CONJUNCTION]->(con:Conjunction)
@@ -856,7 +857,7 @@ class QueryService:
                         ELSE [" (",")."]
                 end as units_space
                 RETURN send as send_uax, units_space[0]+ apoc.text.join([i IN units | toString(i)], con_string) + units_space[1] as unit_str
-        }
+        }}
         RETURN
         DISTINCT sv.study_id_prefix+'-'+sv.study_number AS STUDYID,
         'TS' AS DOMAIN,
@@ -871,7 +872,7 @@ class QueryService:
         UNION 
         WITH sr, sv
         MATCH (sv)-[:HAS_STUDY_COHORT]->(sch:StudyCohort)
-        MATCH (tr:CTTermRoot {uid:'C126063_NCOHORT'})-->(tar:CTTermAttributesRoot)-[:LATEST_FINAL]->(tav:CTTermAttributesValue)
+        MATCH (tr:CTTermRoot {{uid:'C126063_NCOHORT'}})-->(tar:CTTermAttributesRoot)-[:LATEST_FINAL]->(tav:CTTermAttributesValue)
         RETURN 
             sv.study_id_prefix+'-'+sv.study_number AS STUDYID,
             'TS' AS DOMAIN,
@@ -886,7 +887,7 @@ class QueryService:
         UNION
         WITH sr, sv
         CALL 
-            {
+            {{
             WITH sr, sv
             WITH sr as inner_sr, sv as innver_sv
             MATCH (innver_sv)-[:HAS_STUDY_ELEMENT]->(se:StudyElement),
@@ -895,7 +896,7 @@ class QueryService:
             (innver_sv) -[:HAS_STUDY_ARM] -(sar:StudyArm)-[:STUDY_ARM_HAS_DESIGN_CELL]-(sd)
             OPTIONAL MATCH (innver_sv) -[:HAS_STUDY_BRANCH_ARM]-(sba:StudyBranchArm)-[:STUDY_BRANCH_ARM_HAS_DESIGN_CELL] -(sd)
             OPTIONAL MATCH (sep) - [:HAS_EPOCH] - (:CTTermRoot) - [:HAS_NAME_ROOT] - (:CTTermNameRoot) -[:LATEST]- (sep_term:CTTermNameValue)
-            MATCH (tr:CTTermRoot {uid:'C98771_NARMS'})-->(tar:CTTermAttributesRoot)-[:LATEST_FINAL]->(tav:CTTermAttributesValue)
+            MATCH (tr:CTTermRoot {{uid:'C98771_NARMS'}})-->(tar:CTTermAttributesRoot)-[:LATEST_FINAL]->(tav:CTTermAttributesValue)
             RETURN distinct inner_sr,innver_sv, sar,sba, tav
             union all
             WITH sr, sv
@@ -906,9 +907,9 @@ class QueryService:
             (innver_sv) -[:HAS_STUDY_BRANCH_ARM]-(sba:StudyBranchArm)-[:STUDY_BRANCH_ARM_HAS_DESIGN_CELL] -(sd),
             (sba)-[:STUDY_ARM_HAS_BRANCH_ARM]-(sar:StudyArm)-[:HAS_STUDY_ARM]-(innver_sv)
             OPTIONAL MATCH (sep) - [:HAS_EPOCH] - (:CTTermRoot) - [:HAS_NAME_ROOT] - (:CTTermNameRoot) -[:LATEST]- (sep_term:CTTermNameValue)
-            MATCH (tr:CTTermRoot {uid:'C98771_NARMS'})-->(tar:CTTermAttributesRoot)-[:LATEST_FINAL]->(tav:CTTermAttributesValue)
+            MATCH (tr:CTTermRoot {{uid:'C98771_NARMS'}})-->(tar:CTTermAttributesRoot)-[:LATEST_FINAL]->(tav:CTTermAttributesValue)
             RETURN distinct inner_sr,innver_sv, sar,sba, tav
-            }
+            }}
         with   tav, inner_sr, innver_sv, count(*) as counter 
         return 
             innver_sv.study_id_prefix+'-'+innver_sv.study_number AS STUDYID,
@@ -927,9 +928,9 @@ class QueryService:
             MATCH (sc)-[:HAS_SELECTED_COMPOUND]->(cav:CompoundAliasValue)-[:IS_COMPOUND]->(cr:CompoundRoot)-[:LATEST_FINAL]->(cv:CompoundValue)-[:HAS_UNII_VALUE]->(uniir:UNIITermRoot)-[:LATEST_FINAL]->(uniiv:UNIITermValue)
             MATCH (uniir)<-[:CONTAINS_DICTIONARY_TERM]-(lib:Library)
             with sv,uniiv,lib,ctav
-            MATCH (tr1:CTTermRoot {uid:'C41161_TRT'})-->(tar1:CTTermAttributesRoot)-[:LATEST_FINAL]->(tav1:CTTermAttributesValue) 
-            MATCH (tr2:CTTermRoot {uid:'C68612_COMPTRT'})-->(tar2:CTTermAttributesRoot)-[:LATEST_FINAL]->(tav2:CTTermAttributesValue) 
-            MATCH (tr3:CTTermRoot {uid:'C85582_CURTRT'})-->(tar3:CTTermAttributesRoot)-[:LATEST_FINAL]->(tav3:CTTermAttributesValue)
+            MATCH (tr1:CTTermRoot {{uid:'C41161_TRT'}})-->(tar1:CTTermAttributesRoot)-[:LATEST_FINAL]->(tav1:CTTermAttributesValue) 
+            MATCH (tr2:CTTermRoot {{uid:'C68612_COMPTRT'}})-->(tar2:CTTermAttributesRoot)-[:LATEST_FINAL]->(tav2:CTTermAttributesValue) 
+            MATCH (tr3:CTTermRoot {{uid:'C85582_CURTRT'}})-->(tar3:CTTermAttributesRoot)-[:LATEST_FINAL]->(tav3:CTTermAttributesValue)
             with tav1,tav2,tav3 , sv, uniiv, lib,
             case ctav.code_submission_value
                 WHEN 'INVESTIGATIONAL PRODUCT TYPE OF TREATMENT' THEN
@@ -952,12 +953,12 @@ class QueryService:
                 '' AS TSVCDVER
         UNION 
             WITH sr, sv
-            MATCH (ctav:CTTermAttributesValue {code_submission_value:'INVESTIGATIONAL PRODUCT TYPE OF TREATMENT'})
+            MATCH (ctav:CTTermAttributesValue {{code_submission_value:'INVESTIGATIONAL PRODUCT TYPE OF TREATMENT'}})
             match (sv)-[:HAS_STUDY_COMPOUND]->(sc:StudyCompound)-[:HAS_TYPE_OF_TREATMENT]->(cttr:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]->(ctar:CTTermAttributesRoot)-[:LATEST_FINAL]->(ctav)
             match (sc)-[:HAS_SELECTED_COMPOUND]->(cav:CompoundAliasValue)
             match (cav)-[:IS_COMPOUND]->(cr:CompoundRoot)-[:LATEST_FINAL]->(cv:CompoundValue)-[:HAS_UNII_VALUE]->(uniir:UNIITermRoot)-[:LATEST_FINAL]->(uniiv:UNIITermValue)-[:HAS_PCLASS]->(pclass_root:DictionaryTermRoot)-[:LATEST_FINAL]->(medrt:DictionaryTermValue)
             match (pclass_root)<-[:CONTAINS_DICTIONARY_TERM]-(lib:Library)
-            match (tr:CTTermRoot {uid:'C98768_PCLAS'})-->(tar:CTTermAttributesRoot)-[:LATEST_FINAL]->(tav:CTTermAttributesValue) 
+            match (tr:CTTermRoot {{uid:'C98768_PCLAS'}})-->(tar:CTTermAttributesRoot)-[:LATEST_FINAL]->(tav:CTTermAttributesValue) 
             RETURN sv.study_id_prefix+'-'+sv.study_number as STUDYID,
                 'TS' as DOMAIN,
                 tav.code_submission_value as TSPARMCD,
@@ -970,28 +971,28 @@ class QueryService:
                 '' AS TSVCDVER
         UNION
             WITH sr, sv
-            match (:CTTermRoot{uid : 'C49488_Y'})-[:HAS_TYPE]-(sf:StudyField{ field_name : 'is_trial_randomised'})-[:HAS_BOOLEAN_FIELD]- (sv)
+            match (:CTTermRoot{{uid : 'C49488_Y'}})-[:HAS_TYPE]-(sf:StudyField{{ field_name : 'is_trial_randomised'}})-[:HAS_BOOLEAN_FIELD]- (sv)
             match (init_arms:StudyArm)-[:HAS_STUDY_ARM]-(sv)
             with distinct init_arms, sv
             with count( init_arms) as counter_arms,  sum( init_arms.number_of_subjects) as all_num_sub, sv
             where counter_arms>1 
             with all_num_sub, sv
-            call{
+            call{{
                 with sv
                 match (inv_arms:StudyArm)-[:HAS_STUDY_ARM]-(sv)
-                match  (inv_arms)-[:HAS_ARM_TYPE]-(:CTTermRoot)-[:HAS_NAME_ROOT]-(:CTTermNameRoot)-[:LATEST_FINAL]-(:CTTermNameValue{name:"Investigational Arm"})
+                match  (inv_arms)-[:HAS_ARM_TYPE]-(:CTTermRoot)-[:HAS_NAME_ROOT]-(:CTTermNameRoot)-[:LATEST_FINAL]-(:CTTermNameValue{{name:"Investigational Arm"}})
                 with collect(distinct inv_arms) as collected_inv_arms
                 unwind collected_inv_arms as unwind_inv_arms
                 with sum( unwind_inv_arms.number_of_subjects) as inv_num_sub
                 return inv_num_sub
-            }
+            }}
             with all_num_sub, inv_num_sub, sv
             with 
             case all_num_sub
                 when 0 then 'NA'
                 else round(toFloat(inv_num_sub)/all_num_sub,4) 
             end as rand_quotient, sv
-            match (tr:CTTermRoot {uid:'C98775_RANDQT'})-->(tar:CTTermAttributesRoot)-[:LATEST_FINAL]->(tav:CTTermAttributesValue) 
+            match (tr:CTTermRoot {{uid:'C98775_RANDQT'}})-->(tar:CTTermAttributesRoot)-[:LATEST_FINAL]->(tav:CTTermAttributesValue) 
             with tav, rand_quotient, sv
             RETURN 
                 sv.study_id_prefix+'-'+sv.study_number as STUDYID,
@@ -1004,7 +1005,7 @@ class QueryService:
                 '' as TSVALCD,
                 '' as TSVCDREF,
                 '' AS TSVCDVER
-        }
+        }}
         RETURN *
         ORDER BY TSPARMCD
         """

@@ -301,7 +301,7 @@ class GenericSyntaxInstanceService(GenericSyntaxService[_AggregateRootType], abc
                 uids = []
 
                 if len(parameter.terms) == 0:
-                    # If we have an empty paremeter value selection, send an empty list with default type fro the allowed parameters.
+                    # If we have an empty parameter value selection, send an empty list with default type fro the allowed parameters.
                     pve = ParameterTermEntryVO.from_input_values(
                         parameter_exists_callback=self._repos.parameter_repository.parameter_name_exists,
                         conjunction_exists_callback=lambda _: True,  # TODO: provide proper callback here

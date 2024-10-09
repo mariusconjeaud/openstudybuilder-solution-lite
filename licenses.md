@@ -23,11 +23,11 @@ The OpenStudyBuilder App frontend can be released under GPLv3 License.
 
 | Package | License | Can be combined |
 |---|---|-|
-| certifi (2024.6.2) | MPL v. 2.0 | OK |
+| certifi (2024.8.30) | MPL v. 2.0 | OK |
 | hypothesis (6.54.6) | MPL v. 2.0 | OK |
-| portalocker (2.10.0) | Python License | OK |
+| portalocker (2.10.1) | Python License | OK |
 | typing_extensions (4.12.2) | Python License | OK |
-| Pillow (9.3.0) | Historical Permission | OK |
+| Pillow (10.4.0) | Historical Permission | OK |
 | yattag (1.14.0) | LGPL 3.0 | OK |
 
 As the licenses consumed within the Clinical MDR API is using MPL version 2.0 it is assessed that it poses no issue to release in combination with GPL and GPL derivatives since version 2.0 of the MPL license was rewritten to allow for combination with the GPL versions as well as derivatives of GPL.  
@@ -68,7 +68,7 @@ The MDR Standards Import can be released under GPLv3 License.
 
 | Package | License | Can be combined |
 |---|---|-|
-| certifi 2023.11.17 | MPL v. 2.0 | OK |
+| certifi 2024.8.30 | MPL v. 2.0 | OK |
 
 As the licenses is using MPL version 2.0 it is assessed that it poses no issue to release in combination with GPL and GPL derivatives since version 2.0 of the MPL license was rewritten to allow for combination with the GPL versions as well as derivatives of GPL. 
 **Conclusion**  

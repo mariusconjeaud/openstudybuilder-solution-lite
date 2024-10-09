@@ -225,7 +225,7 @@ class Dictionaries(BaseImporter):
                 for data in multiple_rows:
                     if data["body"]["name"] not in all_dictionary_terms_names:
                         self.log.info(
-                            f"Add item '{data['body']['name']}' to codelist '{codelist_name}'"
+                            f"Add entry '{data['body']['name']}' to codelist '{codelist_name}'"
                         )
                         data["body"]["codelist_uid"] = dictionary_codelist_uid
                         res = self.api.post_to_api(data)
@@ -301,7 +301,7 @@ class Dictionaries(BaseImporter):
                         if pclass_term_uid:
                             data["body"]["pclass_uid"] = pclass_term_uid
                     self.log.info(
-                        f"Adding item '{data['body']['name']}' to codelist '{codelist_name}'"
+                        f"Adding entry '{data['body']['name']}' to codelist '{codelist_name}'"
                     )
                     res = self.api.post_to_api(data)
                     if res is not None:
@@ -314,7 +314,7 @@ class Dictionaries(BaseImporter):
                             self.metrics.icrement(data["path"] + "--ApproveError")
                 else:
                     self.log.info(
-                        f"Item '{data['body']['name']}' already exists in codelist '{codelist_name}', skipping"
+                        f"Entry '{data['body']['name']}' already exists in codelist '{codelist_name}', skipping"
                     )
                     self.metrics.icrement(data["path"] + "--AlreadyExists")
 

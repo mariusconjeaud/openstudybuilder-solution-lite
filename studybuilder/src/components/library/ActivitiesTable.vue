@@ -10,7 +10,6 @@
       :export-data-url="`concepts/activities/${source}`"
       item-value="item_key"
       :items-length="total"
-      single-expand
       :show-filter-bar-by-default="
         ['activities'].includes(source) && !requested
       "
@@ -128,17 +127,17 @@
       <template #[`item.is_legacy_usage`]="{ item }">
         {{ $filters.yesno(item.is_legacy_usage) }}
       </template>
-      <template #expanded-row="{ columns }">
+      <template #expanded-row="{ columns, item }">
         <tr>
           <td :colspan="columns.length" class="pa-0">
             <v-data-table
               class="elevation-0"
-              :items="subgroups"
+              :items="item.subgroups"
               item-value="uid"
+              :return-object="true"
               :items-per-page="-1"
-              :loading="loading"
+              :loading="item.subgroupsLoading"
               :show-expand="true"
-              single-expand
               @update:expanded="getSubgroupActivities"
             >
               <template #headers />
@@ -181,15 +180,15 @@
                   </td>
                 </tr>
               </template>
-              <template #expanded-row="{ columns }">
+              <template #expanded-row="{ columns, item }">
                 <tr>
                   <td :colspan="columns.length" class="pa-0">
                     <v-data-table
                       class="elevation-0"
-                      :items="subgroupActivities"
-                      item-value="uid"
+                      :items="item.activities"
+                      item-value="item_key"
                       :items-per-page="-1"
-                      :loading="subLoading"
+                      :loading="item.activitiesLoading"
                       :show-expand="true"
                     >
                       <template #headers />
@@ -584,9 +583,6 @@ const historyItems = ref([])
 const historyExcludedHeaders = ['possible_actions']
 const total = ref(0)
 const savedFilters = ref('')
-const subgroups = ref([])
-const currentGroup = ref('')
-const currentSubGroup = ref('')
 const showActivityForm = ref(false)
 const showRequestedActivityForm = ref(false)
 const showGroupsForm = ref(false)
@@ -594,9 +590,6 @@ const showHistory = ref(false)
 const showInstantiationsForm = ref(false)
 const showSponsorFromRequestedForm = ref(false)
 const activeItem = ref(null)
-const loading = ref(false)
-const subLoading = ref(false)
-const subgroupActivities = ref([])
 const showFinalised = ref(false)
 
 const itemCreationTitle = computed(() => {
@@ -692,6 +685,16 @@ function transformItems(items) {
       } else {
         item.activities = []
       }
+      item.item_key = item.uid
+      activities.push(item)
+    }
+  } else if (
+    props.source === 'activity-groups' ||
+    props.source === 'activities-by-grouping'
+  ) {
+    for (const item of items) {
+      item.subgroups = []
+      item.subgroupsLoading = false
       item.item_key = item.uid
       activities.push(item)
     }
@@ -833,16 +836,6 @@ function fetchActivities(filters, options, filtersUpdated) {
     activities.value = transformItems(resp.data.items)
     total.value = resp.data.total
   })
-  if (currentGroup.value) {
-    activitiesApi.getSubGroups(currentGroup.value).then((resp) => {
-      subgroups.value = resp.data.items
-    })
-  }
-  if (currentSubGroup.value) {
-    activitiesApi.getSubGroupActivities(currentSubGroup.value).then((resp) => {
-      subgroupActivities.value = resp.data.items
-    })
-  }
   if (groupFormRef.value) {
     groupFormRef.value.getGroups()
   }
@@ -850,7 +843,10 @@ function fetchActivities(filters, options, filtersUpdated) {
 
 async function fetchGlobalAuditTrail(options) {
   const resp = await activitiesApi.getAuditTrail(props.source, options)
-  return transformItems(resp.data.items)
+  return {
+    items: transformItems(resp.data.items),
+    total: resp.data.total,
+  }
 }
 
 function modifyFilters(jsonFilter, params) {
@@ -1058,31 +1054,31 @@ function createSponsorFromRequested(item) {
 }
 
 function getSubGroups(items) {
-  if (!items.length) {
-    return
+  for (const group of items) {
+    group.subgroupsLoading = true
+    activitiesApi.getSubGroups(group.uid).then((resp) => {
+      group.subgroups = resp.data.items
+      for (const subgroup of group.subgroups) {
+        subgroup.activities = []
+        subgroup.activitiesLoading = false
+        subgroup.group_uid = group.uid
+        subgroup.item_key = group.uid + '.' + subgroup.uid
+      }
+      group.subgroupsLoading = false
+    })
   }
-  const item = items[0]
-  subgroups.value = []
-  loading.value = true
-  currentGroup.value = item.uid
-  activitiesApi.getSubGroups(item.uid).then((resp) => {
-    subgroups.value = resp.data.items
-    loading.value = false
-  })
 }
 
 function getSubgroupActivities(items) {
-  if (!items.length) {
-    return
+  for (const subgroup of items) {
+    subgroup.activitiesLoading = true
+    activitiesApi
+      .getSubGroupActivities(subgroup.uid, subgroup.group_uid)
+      .then((resp) => {
+        subgroup.activities = resp.data.items
+        subgroup.activitiesLoading = false
+      })
   }
-  const item = items[0]
-  subgroupActivities.value = []
-  subLoading.value = true
-  currentSubGroup.value = item
-  activitiesApi.getSubGroupActivities(item).then((resp) => {
-    subgroupActivities.value = resp.data.items
-    subLoading.value = false
-  })
 }
 
 function closeForm() {

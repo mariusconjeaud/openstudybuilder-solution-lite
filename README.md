@@ -87,14 +87,9 @@ to avoid this use either of these commands before the cloning of repository.
 See [Configuring Git to handle line endings](https://docs.github.com/en/get-started/getting-started-with-git/configuring-git-to-handle-line-endings?platform=windows) and [Resolving Git line ending issues in Docker containers](https://gist.github.com/jonlabelle/70a87e6871a1138ac3031f5e8e39f294)
 for more information.
 
-## Platform architecture notes
+## Known Issues with Dockerfiles on ARM64 Architecture
 
-An issue has been reported related to running the dockerfiles on aarch64 architecture [(ref)](https://gitlab.com/Novo-Nordisk/nn-public/openstudybuilder/OpenStudyBuilder-Solution/-/issues/3). 
-This can be resolved by setting an environment variable to: `DOCKER_DEFAULT_PLATFORM=linux/x86_64`.
-Note that since this is a global setting, it will also affect other docker commands in the same session.
-Alternatively you can try adding this to the `.env` file in the root folder of this repository .
-
-As a long-term solution, we are investigating the possibility of extending the compose file with additional configuration compose files to provide easy to use configurations fitting for various architectures (if interested, see [compose/extends](https://docs.docker.com/compose/extends/) for more information).
+There have been reports of issues when running the Dockerfiles on ARM64 architecture. Recent updates have resolved these problems on several ARM64 machines. If you encounter any other issues, please refer to the following link for more information and to report the inconvenience: [GitLab Issues](https://gitlab.com/Novo-Nordisk/nn-public/openstudybuilder/OpenStudyBuilder-Solution/-/issues).
 
 
 # Using the preview environment

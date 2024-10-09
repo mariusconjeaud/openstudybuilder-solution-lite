@@ -58,7 +58,7 @@ Possible errors:
     }
 )
 # pylint: disable=unused-argument
-def get_sponsor_model_dataset_classs(
+def get_sponsor_model_dataset_class(
     request: Request,  # request is actually required by the allow_exports decorator
     sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
     page_number: int

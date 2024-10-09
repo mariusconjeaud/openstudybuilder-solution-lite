@@ -706,8 +706,8 @@ def test_merge_multiple_study_activity_subgroup_and_group_nodes(migration):
                         """,
                 params={
                     "study_activity_uid": study_activity_uid,
-                    "study_number": study_number
-                    },
+                    "study_number": study_number,
+                },
             )
 
             # StudyActivity has to exists in the test database
@@ -754,7 +754,9 @@ def test_merge_multiple_study_activity_subgroup_and_group_nodes(migration):
                         result[0][0] == corrected_subgroup
                     ), f"Study_activity {study_activity_uid} doesn't have a correct group {corrected_subgroup}"
                     assert (
-                        study_activity["study_activity_subgroup"]["activity_subgroup_name"]
+                        study_activity["study_activity_subgroup"][
+                            "activity_subgroup_name"
+                        ]
                         == corrected_subgroup
                     )
 

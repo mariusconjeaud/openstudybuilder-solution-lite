@@ -89,9 +89,7 @@
                     "
                   />
                   <v-radio
-                    v-if="
-                      !displayAnchorVisitFlag && anchorVisitsInSubgroup.length
-                    "
+                    v-if="anchorVisitsInSubgroup.length"
                     :label="$t('StudyVisitForm.additional_sub_visit')"
                     :value="
                       visitConstants.SUBCLASS_ADDITIONAL_SUBVISIT_IN_A_GROUP_OF_SUBV
@@ -112,8 +110,8 @@
                   :label="$t('StudyVisitForm.visit_type')"
                   data-cy="visit-type"
                   :items="visitTypes"
-                  item-title="visit_type_name"
-                  item-value="visit_type_uid"
+                  item-title="sponsor_preferred_name"
+                  item-value="term_uid"
                   :rules="[formRules.required]"
                   clearable
                   :disabled="visitTypeDisabled"
@@ -495,7 +493,7 @@
 
 <script setup>
 import epochs from '@/api/studyEpochs'
-import codelists from '@/api/controlledTerminology/terms'
+import terms from '@/api/controlledTerminology/terms'
 import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
 import HorizontalStepperForm from '@/components/tools/HorizontalStepperForm.vue'
 import visitConstants from '@/constants/visits'
@@ -605,8 +603,8 @@ const milestoneAvailable = computed(() => {
       visitConstants.VISIT_TYPE_UNSCHEDULED,
     ].indexOf(
       visitTypes.value.find(
-        (type) => type.visit_type_uid === form.value.visit_type_uid
-      ).visit_type_name
+        (type) => type.term_uid === form.value.visit_type_uid
+      ).sponsor_preferred_name
     ) === -1
   ) {
     return true
@@ -728,12 +726,9 @@ watch(studyEpoch, (value) => {
     return
   }
   form.value.study_epoch_uid = value
-  const data = {
-    epoch_type_uid: periods.value.find((el) => el.uid === value).epoch_type,
-  }
-  epochs.getAllowedVisitTypes(selectedStudy.value.uid, data).then((resp) => {
-    visitTypes.value = resp.data
-    codelists.getByCodelist('timepointReferences').then((resp) => {
+  terms.getNamesByCodelist('visitTypes', { page_size: 0 }).then((resp) => {
+    visitTypes.value = resp.data.items
+    terms.getByCodelist('timepointReferences').then((resp) => {
       timeReferences.value = resp.data.items
       if (
         form.value.visit_class === visitConstants.CLASS_UNSCHEDULED_VISIT &&
@@ -1042,7 +1037,7 @@ function callbacks() {
     .then((resp) => {
       anchorVisitsForSpecialVisit.value = resp.data
     })
-  codelists.getByCodelist('epochs').then((resp) => {
+  terms.getByCodelist('epochs').then((resp) => {
     epochsData.value = resp.data.items
     epochs.getStudyEpochs(selectedStudy.value.uid).then((resp) => {
       periods.value = resp.data.items
@@ -1059,10 +1054,10 @@ function callbacks() {
       loading.value = false
     })
   })
-  codelists.getByCodelist('contactModes').then((resp) => {
+  terms.getByCodelist('contactModes').then((resp) => {
     contactModes.value = resp.data.items
   })
-  codelists.getByCodelist('repeatingVisitFrequency').then((resp) => {
+  terms.getByCodelist('repeatingVisitFrequency').then((resp) => {
     frequencies.value = resp.data.items
   })
 
@@ -1074,7 +1069,7 @@ function callbacks() {
     form.value.visit_window_unit_uid = defaultUnit.uid
   }
 
-  codelists.getByCodelist('epochAllocations').then((resp) => {
+  terms.getByCodelist('epochAllocations').then((resp) => {
     epochAllocations.value = resp.data.items
   })
   const params = {
@@ -1096,8 +1091,8 @@ function onTabChange(number) {
 function setVisitType(value) {
   if (visitTypes.value.length) {
     form.value.visit_type_uid = visitTypes.value.find(
-      (item) => item.visit_type_name === value
-    ).visit_type_uid
+      (item) => item.sponsor_preferred_name === value
+    ).term_uid
     getVisitPreview()
   }
 }

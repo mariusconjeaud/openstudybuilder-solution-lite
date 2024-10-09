@@ -40,7 +40,8 @@ def initial_data():
     clear_db()
     execute_statements(TEST_DATA)
 
-class MigrationStorage():
+
+class MigrationStorage:
 
     study_act_soa_group_mapping_before_running_migration = None
 

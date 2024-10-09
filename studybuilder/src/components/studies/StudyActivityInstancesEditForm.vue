@@ -41,153 +41,150 @@
     </template>
   </SimpleFormDialog>
 </template>
-<script>
-import { computed } from 'vue'
+
+<script setup>
+import { computed, inject, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
 import { useStudyActivitiesStore } from '@/stores/studies-activities'
 import SimpleFormDialog from '@/components/tools/SimpleFormDialog.vue'
+import statuses from '@/constants/statuses'
 import activities from '@/api/activities'
 import _isEmpty from 'lodash/isEmpty'
 
-export default {
-  components: {
-    SimpleFormDialog,
+const eventBusEmit = inject('eventBusEmit')
+const { t } = useI18n()
+const props = defineProps({
+  open: Boolean,
+  editedActivity: {
+    type: Object,
+    default: null,
   },
-  inject: ['eventBusEmit'],
-  props: {
-    open: Boolean,
-    editedActivity: {
-      type: Object,
-      default: null,
-    },
-  },
-  emits: ['close'],
-  setup() {
-    const studiesGeneralStore = useStudiesGeneralStore()
-    const activitiesStore = useStudyActivitiesStore()
+})
+const emit = defineEmits(['close'])
+const studiesGeneralStore = useStudiesGeneralStore()
+const activitiesStore = useStudyActivitiesStore()
 
-    return {
-      selectedStudy: computed(() => studiesGeneralStore.selectedStudy),
-      activitiesStore,
-    }
-  },
-  data() {
-    return {
-      headers: [
-        { title: this.$t('StudyActivityInstances.instance'), key: 'name' },
-        { title: this.$t('StudyActivityInstances.details'), key: 'details' },
-        { title: this.$t('StudyActivityInstances.state'), key: 'state' },
+const selectedStudy = computed(() => studiesGeneralStore.selectedStudy)
+
+const headers = [
+  { title: t('StudyActivityInstances.instance'), key: 'name' },
+  { title: t('StudyActivityInstances.details'), key: 'details' },
+  { title: t('StudyActivityInstances.state'), key: 'state' },
+]
+
+const instances = ref([])
+const selected = ref([])
+const form = ref()
+
+const getActivityPath = computed(() => {
+  if (!_isEmpty(props.editedActivity)) {
+    return `${props.editedActivity.study_activity_group.activity_group_name}/${props.editedActivity.study_activity_subgroup.activity_subgroup_name}/${props.editedActivity.activity.name}`
+  }
+  return ''
+})
+
+watch(
+  () => props.editedActivity,
+  () => {
+    getAvailableInstances()
+  }
+)
+
+onMounted(() => {
+  getAvailableInstances()
+})
+
+function getAvailableInstances() {
+  if (!_isEmpty(props.editedActivity)) {
+    const params = {
+      activity_names: [props.editedActivity.activity.name],
+      activity_subgroup_names: [
+        props.editedActivity.study_activity_subgroup.activity_subgroup_name,
       ],
-      instances: [],
-      selected: [],
+      activity_group_names: [
+        props.editedActivity.study_activity_group.activity_group_name,
+      ],
+      filters: {
+        status: { v: [statuses.FINAL] },
+      },
     }
-  },
-  computed: {
-    getActivityPath() {
-      if (!_isEmpty(this.editedActivity)) {
-        return `${this.editedActivity.study_activity_group.activity_group_name}/${this.editedActivity.study_activity_subgroup.activity_subgroup_name}/${this.editedActivity.activity.name}`
+    activities.get(params, 'activity-instances').then((resp) => {
+      instances.value = transformInstances(resp.data.items)
+      if (props.editedActivity.activity_instance) {
+        selected.value.push(
+          instances.value.find(
+            (instance) =>
+              instance.uid === props.editedActivity.activity_instance.uid
+          ).uid
+        )
       }
-      return ''
-    },
-  },
-  watch: {
-    editedActivity() {
-      this.getAvailableInstances()
-    },
-  },
-  mounted() {
-    this.getAvailableInstances()
-  },
-  methods: {
-    getAvailableInstances() {
-      if (!_isEmpty(this.editedActivity)) {
-        const params = {
-          activity_names: [this.editedActivity.activity.name],
-          activity_subgroup_names: [
-            this.editedActivity.study_activity_subgroup.activity_subgroup_name,
-          ],
-          activity_group_names: [
-            this.editedActivity.study_activity_group.activity_group_name,
-          ],
-        }
-        activities.get(params, 'activity-instances').then((resp) => {
-          this.instances = this.transformInstances(resp.data.items)
-          if (this.editedActivity.activity_instance) {
-            this.selected.push(
-              this.instances.find(
-                (instance) =>
-                  instance.uid === this.editedActivity.activity_instance.uid
-              ).uid
-            )
-          }
+    })
+  }
+}
+function transformInstances(instances) {
+  for (let instance of instances) {
+    instance.details = `Class: ${instance.activity_instance_class.name} <br> Topic code: ${instance.topic_code} <br> ADaM param: ${instance.adam_param_code}`
+    for (let item of instance.activity_items) {
+      if (item.ct_terms.length > 0) {
+        instance.details += `<br> ${item.activity_item_class.name}: ${item.ct_terms.map((term) => term.name)}`
+      } else {
+        instance.details += `<br> ${item.activity_item_class.name}: ${item.unit_definitions.map((unit) => unit.name)}`
+      }
+    }
+  }
+  return instances
+}
+function getActivityStateBackground(activity) {
+  if (activity.is_required_for_activity) {
+    return 'mandatory'
+  } else if (activity.is_default_selected_for_activity) {
+    return 'defaulted'
+  }
+  if (instances.value.length === 1) {
+    return 'suggestion'
+  }
+}
+function getActivityState(activity) {
+  if (activity.is_required_for_activity) {
+    return t('StudyActivityInstances.mandatory')
+  } else if (activity.is_default_selected_for_activity) {
+    return t('StudyActivityInstances.defaulted')
+  }
+  if (instances.value.length === 1) {
+    return t('StudyActivityInstances.suggestion')
+  }
+}
+function submit() {
+  const data = {
+    activity_instance_uid: selected.value[0],
+    study_activity_uid: props.editedActivity.study_activity_uid,
+    show_activity_instance_in_protocol_flowchart:
+      props.editedActivity.show_activity_instance_in_protocol_flowchart,
+  }
+  activitiesStore
+    .updateStudyActivityInstance(
+      selectedStudy.value.uid,
+      props.editedActivity.study_activity_instance_uid,
+      data
+    )
+    .then(
+      () => {
+        eventBusEmit('notification', {
+          msg: t('StudyActivityInstances.instance_updated'),
+          type: 'success',
         })
+        close()
+      },
+      () => {
+        form.value.working = false
       }
-    },
-    transformInstances(instances) {
-      for (let instance of instances) {
-        instance.details = `Class: ${instance.activity_instance_class.name} <br> Topic code: ${instance.topic_code} <br> ADaM param: ${instance.adam_param_code}`
-        for (let item of instance.activity_items) {
-          if (item.ct_terms.length > 0) {
-            instance.details += `<br> ${item.activity_item_class.name}: ${item.ct_terms.map((term) => term.name)}`
-          } else {
-            instance.details += `<br> ${item.activity_item_class.name}: ${item.unit_definitions.map((unit) => unit.name)}`
-          }
-        }
-      }
-      return instances
-    },
-    getActivityStateBackground(activity) {
-      if (activity.is_required_for_activity) {
-        return 'mandatory'
-      } else if (activity.is_default_selected_for_activity) {
-        return 'defaulted'
-      }
-      if (this.instances.length === 1) {
-        return 'suggestion'
-      }
-    },
-    getActivityState(activity) {
-      if (activity.is_required_for_activity) {
-        return this.$t('StudyActivityInstances.mandatory')
-      } else if (activity.is_default_selected_for_activity) {
-        return this.$t('StudyActivityInstances.defaulted')
-      }
-      if (this.instances.length === 1) {
-        return this.$t('StudyActivityInstances.suggestion')
-      }
-    },
-    submit() {
-      const data = {
-        activity_instance_uid: this.selected[0],
-        study_activity_uid: this.editedActivity.study_activity_uid,
-        show_activity_instance_in_protocol_flowchart:
-          this.editedActivity.show_activity_instance_in_protocol_flowchart,
-      }
-      this.activitiesStore
-        .updateStudyActivityInstance(
-          this.selectedStudy.uid,
-          this.editedActivity.study_activity_instance_uid,
-          data
-        )
-        .then(
-          () => {
-            this.eventBusEmit('notification', {
-              msg: this.$t('StudyActivityInstances.instance_updated'),
-              type: 'success',
-            })
-            this.close()
-          },
-          () => {
-            this.$refs.form.working = false
-          }
-        )
-    },
-    close() {
-      this.instances = []
-      this.selected = []
-      this.$emit('close')
-    },
-  },
+    )
+}
+function close() {
+  instances.value = []
+  selected.value = []
+  emit('close')
 }
 </script>
 

@@ -1,0 +1,170 @@
+# pylint: disable=invalid-name
+from neomodel import db
+
+from clinical_mdr_api.domain_repositories.models.notification import (
+    Notification as NotificationNode,
+)
+from clinical_mdr_api.exceptions import NotFoundException
+from clinical_mdr_api.models.notification import Notification
+
+
+class NotificationRepository:
+    def _transform_to_model(
+        self, data: list[list[NotificationNode]], single=True
+    ) -> Notification | list[Notification]:
+        def _get(item: NotificationNode) -> Notification:
+            return Notification(
+                sn=item.sn,
+                title=item.title,
+                description=item.description,
+                notification_type=item.notification_type,
+                started_at=item.started_at,
+                ended_at=item.ended_at,
+                published_at=item.published_at,
+            )
+
+        if single:
+            return _get(data[0][0])
+
+        rs: list[Notification] = []
+
+        for elm in data:
+            rs.append(_get(elm[0]))
+
+        return rs
+
+    def retrieve_all_notifications(self) -> list[Notification]:
+        rs = db.cypher_query(
+            """
+            MATCH (n:Notification)
+            RETURN n
+            """,
+            resolve_objects=True,
+        )
+
+        return self._transform_to_model(rs[0], False)
+
+    def retrieve_all_active_notifications(self) -> list[Notification]:
+        rs = db.cypher_query(
+            """
+            MATCH (n:Notification)
+            WHERE n.published_at IS NOT NULL
+            AND (
+                (datetime(n.started_at) IS NULL OR datetime(n.started_at) <= datetime())
+                AND 
+                (datetime(n.ended_at) IS NULL OR datetime(n.ended_at) >= datetime())
+            )
+            RETURN n
+            """,
+            resolve_objects=True,
+        )
+
+        return self._transform_to_model(rs[0], False)
+
+    def retrieve_notification(self, sn: int) -> Notification:
+        rs = db.cypher_query(
+            """
+            MATCH (n:Notification {sn: $sn})
+            RETURN n
+            """,
+            params={"sn": sn},
+            resolve_objects=True,
+        )
+
+        if rs[0]:
+            return self._transform_to_model(rs[0])
+
+        raise NotFoundException(f"Couldn't find Notification with Serial Number ({sn})")
+
+    def create_notification(
+        self,
+        title: str,
+        description: str,
+        notification_type: str,
+        started_at: str,
+        ended_at: str,
+        published_at: str,
+    ) -> Notification:
+        newest_sn = db.cypher_query(
+            """
+            MATCH (n:Notification)
+            RETURN n.sn ORDER BY n.sn DESC LIMIT 1
+            """,
+        )
+
+        sn = int(newest_sn[0][0][0]) + 1 if newest_sn[0] else 1
+
+        rs = db.cypher_query(
+            """
+            CREATE (n:Notification)
+            SET
+                n.sn = $sn,
+                n.title = $title,
+                n.description = $description,
+                n.notification_type = $notification_type,
+                n.started_at = $started_at,
+                n.ended_at = $ended_at,
+                n.published_at = $published_at
+            RETURN n
+            """,
+            params={
+                "sn": sn,
+                "title": title,
+                "description": description,
+                "notification_type": notification_type,
+                "started_at": started_at,
+                "ended_at": ended_at,
+                "published_at": published_at,
+            },
+            resolve_objects=True,
+        )
+
+        return self._transform_to_model(rs[0])
+
+    def update_notification(
+        self,
+        sn: int,
+        title: str,
+        description: str,
+        notification_type: str,
+        started_at: str,
+        ended_at: str,
+        published_at: str,
+    ) -> Notification:
+        rs = db.cypher_query(
+            """
+            MATCH (n:Notification {sn: $sn})
+            SET
+                n.title = $title,
+                n.description = $description,
+                n.notification_type = $notification_type,
+                n.started_at = $started_at,
+                n.ended_at = $ended_at,
+                n.published_at = $published_at
+            RETURN n
+            """,
+            params={
+                "sn": sn,
+                "title": title,
+                "description": description,
+                "notification_type": notification_type,
+                "started_at": started_at,
+                "ended_at": ended_at,
+                "published_at": published_at,
+            },
+            resolve_objects=True,
+        )
+
+        if rs[0]:
+            return self._transform_to_model(rs[0])
+
+        raise NotFoundException(f"Couldn't find Notification with Serial Number ({sn})")
+
+    def delete_notification(self, sn: int) -> None:
+        db.cypher_query(
+            """
+            MATCH (n:Notification {sn: $sn})
+            DELETE n
+            """,
+            params={"sn": sn},
+        )

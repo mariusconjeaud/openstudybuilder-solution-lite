@@ -192,7 +192,6 @@
               :items="items"
               :search="search"
               :headers="shownColumns"
-              :single-expand="singleExpand"
               :fixed-header="fixedHeader"
               :no-data-text="noDataText"
               disable-sort
@@ -515,10 +514,12 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  singleExpand: {
-    type: Boolean,
-    default: false,
-  },
+  // single-expand does not (yet) exist in data table of vuetify 3,
+  // see https://github.com/vuetifyjs/vuetify/issues/17527
+  // singleExpand: {
+  //   type: Boolean,
+  //   default: false,
+  // },
   showColumnNamesToggleButton: {
     type: Boolean,
     default: false,

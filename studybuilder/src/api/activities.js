@@ -95,9 +95,10 @@ export default {
     }
     return repository.get(`${resource}/activity-sub-groups`, { params })
   },
-  getSubGroupActivities(group) {
+  getSubGroupActivities(subgroup, group = null) {
     const params = {
-      activity_subgroup_uid: group,
+      activity_group_uid: group,
+      activity_subgroup_uid: subgroup,
       page_size: 0,
       sort_by: { name: true },
     }

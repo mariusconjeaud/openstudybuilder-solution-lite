@@ -65,10 +65,14 @@ export default {
   mounted() {
     // Only retrieve ungrouped visits since groups are already used
     // for batch operations...
+    // Filter out non-visit and unscheduled-visits as these shouldn't
+    // be able to be assigned to any schedules
     const params = {
       page_size: 0,
       filters: {
         consecutive_visit_group: { v: [null], op: 'eq' },
+        visit_class: { v: ['NON_VISIT', 'UNSCHEDULED_VISIT'], op: 'ne' },
+
       },
     }
     studyEpochs.getStudyVisits(this.selectedStudy.uid, params).then((resp) => {

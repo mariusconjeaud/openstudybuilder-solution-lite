@@ -1,5 +1,5 @@
 <template>
-  <div class="page-title d-flex align-center">
+  <div class="page-title d-flex align-center ml-4">
     {{ $t('StudyFootnoteTable.footnotes') }}
   </div>
   <NNTable
@@ -53,8 +53,23 @@
       </template>
     </template>
     <template #[`item.referenced_items`]="{ item }">
-      <div v-if="item.referenced_items.length > 0">
-        {{ $filters.itemNames(removeDuplicates(item.referenced_items)) }}
+      <div v-if="item.referenced_items.length > 0 && activeFootnote !== item">
+        {{ $filters.itemNames(item.referenced_items) }}
+      </div>
+      <div
+        v-else-if="item.referenced_items.length > 0 && activeFootnote === item"
+        style="display: flex;"
+      >
+        <div v-for="i in item.referenced_items" :key="i.item_uid">
+          <v-chip
+            color="nnBaseBlue"
+            class="mr-2"
+            closable
+            @click:close="removeElementFromFootnote(item, i)"
+          >
+            {{ i.item_name }}
+          </v-chip>
+        </div>
       </div>
       <div 
         v-else
@@ -121,7 +136,7 @@ import { useFootnotesStore } from '@/stores/studies-footnotes'
 const { t } = useI18n()
 const eventBusEmit = inject('eventBusEmit')
 const roles = inject('roles')
-const emit = defineEmits(['enableFootnoteMode'])
+const emit = defineEmits(['enableFootnoteMode', 'update', 'removeElementFromFootnote'])
 const route = useRoute()
 
 const accessGuard = useAccessGuard()
@@ -139,10 +154,10 @@ const actions = [
     accessRole: roles.STUDY_WRITE,
   },
   {
-    label: 'Link/Unlink Footnote',
+    label: t('StudyFootnoteTable.link_unlink'),
     icon: 'mdi-pencil-outline',
     iconColor: 'primary',
-    click: linkFootnote,
+    click: enableFootnoteMode,
     condition: () => !studiesGeneralStore.selectedStudyVersion,
     accessRole: roles.STUDY_WRITE,
   },
@@ -190,6 +205,7 @@ const showEditForm = ref(false)
 const showHistory = ref(false)
 const confirm = ref()
 const table = ref()
+const activeFootnote = ref(null)
 
 const exportDataUrl = computed(() => {
   return `studies/${studiesGeneralStore.selectedStudy.uid}/study-soa-footnotes`
@@ -219,24 +235,11 @@ onMounted(() => {
 
 function enableFootnoteMode(footnote) {
   emit('enableFootnoteMode', footnote)
+  activeFootnote.value = footnote
 }
 
-function linkFootnote (footnote) {
-  emit('enableFootnoteMode', footnote)
-}
-
-function removeDuplicates(arr) {
-  const uniqueItems = {}
-  const result = []
-
-  for (const item of arr) {
-    const key = `${item.item_name}_${item.item_type}`
-    if (!uniqueItems[key]) {
-      uniqueItems[key] = true
-      result.push(item)
-    }
-  }
-  return result
+function removeElementFromFootnote(footnote, item) {
+  emit('removeElementFromFootnote', item.item_uid)
 }
 
 function isLatestRetired(item) {

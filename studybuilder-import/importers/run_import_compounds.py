@@ -106,19 +106,19 @@ class Compounds(BaseImporter):
     def post_or_patch_item(self, data, unique_prop, existing_items, compare_function):
         existing_item = existing_items.get(data["body"][unique_prop])
         if existing_item is None:
-            self.log.info(f"Add new item '{data['body'][unique_prop]}'")
+            self.log.info(f"Add new object '{data['body'][unique_prop]}'")
             post_response = self.api.post_to_api(data)
             if post_response is not None:
                 return self.api.approve_item(post_response["uid"], data["path"])
 
         elif compare_function(data["body"], existing_item):
             self.log.info(
-                f"Identical item '{data['body'][unique_prop]}' exists, skipping"
+                f"Identical object '{data['body'][unique_prop]}' exists, skipping"
             )
             return existing_item
         else:
             self.log.info(
-                f"Patching existing item '{data['body'][unique_prop]}', with uid '{existing_item['uid']}'"
+                f"Patching existing object '{data['body'][unique_prop]}', with uid '{existing_item['uid']}'"
             )
             new_path = path_join(data["path"], existing_item["uid"], "versions")
 
@@ -126,7 +126,7 @@ class Compounds(BaseImporter):
             data["body"]["uid"] = existing_item["uid"]
             if existing_item["status"] == "Draft":
                 self.log.info(
-                    f"Item '{data['body'][unique_prop]}' is already in draft status, not creating new version"
+                    f"Object '{data['body'][unique_prop]}' is already in draft status, not creating new version"
                 )
                 new_ver_response = True
             else:
@@ -137,27 +137,27 @@ class Compounds(BaseImporter):
                     return self.api.approve_item(existing_item["uid"], data["path"])
 
     def compare_single_property(self, new, existing, new_prop, existing_prop=None):
-        new_value = new[new_prop]
+        new_value = new.get(new_prop)
         if existing_prop is None:
             existing_prop = new_prop
         if "." in existing_prop:
             prop, uid_key = existing_prop.split(".")
-            existing_prop = existing[prop]
+            existing_prop = existing.get(prop)
             existing_value = (
-                existing_prop[uid_key] if existing_prop is not None else None
+                existing_prop.get(uid_key) if existing_prop is not None else None
             )
         else:
-            existing_value = existing[existing_prop]
+            existing_value = existing.get(existing_prop)
         return new_value == existing_value
 
     def compare_list_property(self, new, new_prop, existing, existing_prop):
-        new_set = set(new[new_prop])
+        new_set = set(new.get(new_prop, []))
         if "." in existing_prop:
             # This property is a list of objects, we need to compare a specific key
             prop, key = existing_prop.split(".")
-            existing_set = {val[key] for val in existing[prop]}
+            existing_set = {val[key] for val in existing.get(prop, [])}
         else:
-            existing_set = set(existing[existing_prop])
+            existing_set = set(existing.get(existing_prop, []))
         if new_set != existing_set:
             self.log.info(
                 f"Properties {new_prop} & {existing_prop} differ, {new_set} vs {existing_set}"
@@ -498,19 +498,31 @@ class Compounds(BaseImporter):
             ).get("uid")
             data["compound_uid"] = compound_uid
 
-            dose_freq_uid = self.lookup_codelist_term_uid(
-                CODELIST_FREQUENCY, row.get("dose_frequency", {}).get("name")
-            ) if row.get("dose_frequency") is not None else None
+            dose_freq_uid = (
+                self.lookup_codelist_term_uid(
+                    CODELIST_FREQUENCY, row.get("dose_frequency", {}).get("name")
+                )
+                if row.get("dose_frequency") is not None
+                else None
+            )
             data["dose_frequency_uid"] = dose_freq_uid
 
-            dispenser_uid = self.lookup_codelist_term_uid(
-                CODELIST_COMPOUND_DISPENSED_IN, row.get("dispenser", {}).get("name")
-            ) if row.get("dispenser") is not None else None
+            dispenser_uid = (
+                self.lookup_codelist_term_uid(
+                    CODELIST_COMPOUND_DISPENSED_IN, row.get("dispenser", {}).get("name")
+                )
+                if row.get("dispenser") is not None
+                else None
+            )
             data["dispenser_uid"] = dispenser_uid
 
-            delivery_device_uid = self.lookup_codelist_term_uid(
-                CODELIST_DELIVERY_DEVICE, row.get("delivery_device", {}).get("name")
-            ) if row.get("delivery_device") is not None else None
+            delivery_device_uid = (
+                self.lookup_codelist_term_uid(
+                    CODELIST_DELIVERY_DEVICE, row.get("delivery_device", {}).get("name")
+                )
+                if row.get("delivery_device") is not None
+                else None
+            )
             data["delivery_device_uid"] = delivery_device_uid
 
             for ph_prod in row["pharmaceutical_products"]:

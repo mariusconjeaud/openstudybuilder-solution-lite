@@ -19,6 +19,8 @@ import pytest
 from fastapi.testclient import TestClient
 from neomodel import db
 
+from clinical_mdr_api import config
+from clinical_mdr_api.config import STUDY_ENDPOINT_TP_NAME
 from clinical_mdr_api.main import app
 from clinical_mdr_api.models import UnitDefinitionModel
 from clinical_mdr_api.models.controlled_terminologies import ct_term
@@ -30,6 +32,7 @@ from clinical_mdr_api.models.study_selections.study import (
     StudyMetadataJsonModel,
     StudyPatchRequestJsonModel,
 )
+from clinical_mdr_api.models.study_selections.study_selection import EndpointUnitsInput
 from clinical_mdr_api.services.studies.study import StudyService
 from clinical_mdr_api.tests.integration.utils.api import (
     inject_and_clear_db,
@@ -2354,4 +2357,345 @@ def test_study_copy_component(api_client):
     assert (
         res["current_metadata"]["study_population"]["number_of_expected_subjects"]
         == number_of_expected_subjects_ref
+    )
+
+
+def test_get_pharma_cm_representation(
+    api_client,
+):
+    acronym = "Test acronym"
+    study = TestUtils.create_study(acronym=acronym)
+    eduract_id = "2019-123456-42"
+    duration_value = 1
+    duration_unit = week_unit_definition
+    duration_string = f"{duration_value} {duration_unit.name}"
+    is_trial_randomised = True
+    study_title = "Study official title"
+    study_short_title = "Study short title"
+    eudract_id_type = "EudraCT Number"
+    eudract_description = "EUDRACT ID"
+    response = api_client.patch(
+        f"/studies/{study.uid}",
+        json={
+            "current_metadata": {
+                "identification_metadata": {
+                    "registry_identifiers": {"eudract_id": eduract_id}
+                },
+                "study_population": {
+                    "planned_maximum_age_of_subjects": {
+                        "duration_value": duration_value,
+                        "duration_unit_code": {"uid": week_unit_definition.uid},
+                    }
+                },
+                "study_intervention": {"is_trial_randomised": is_trial_randomised},
+                "study_description": {
+                    "study_title": study_title,
+                    "study_short_title": study_short_title,
+                },
+            },
+        },
+    )
+    assert response.status_code == 200
+    response = api_client.get(
+        f"/studies/{study.uid}/pharma-cm",
+    )
+    assert response.status_code == 200
+    res = response.json()
+    assert (
+        res["unique_protocol_identification_number"]
+        == study.current_metadata.identification_metadata.study_id
+    )
+    assert res["brief_title"] == study_short_title
+    assert res["official_title"] == study_title
+    assert res["acronym"] == acronym
+    assert res["secondary_ids"] == [
+        {
+            "secondary_id": eduract_id,
+            "id_type": eudract_id_type,
+            "description": eudract_description,
+        }
+    ]
+    assert res["allocation"] == "N/A"
+    assert res["maximum_age"] == duration_string
+    assert res["inclusion_criteria"] == []
+    assert res["exclusion_criteria"] == []
+    assert res["outcome_measures"] == []
+    assert res["number_of_subjects"] == 0
+    assert res["number_of_arms"] == 0
+    assert res["study_arms"] == []
+
+    # Create CT Terms
+    inclusion_criteria_term = "INCLUSION CRITERIA"
+    ct_term_inclusion_criteria = TestUtils.create_ct_term(
+        sponsor_preferred_name=inclusion_criteria_term,
+        sponsor_preferred_name_sentence_case=inclusion_criteria_term.lower(),
+    )
+    exclusion_criteria_term = "EXCLUSION CRITERIA"
+    ct_term_exclusion_criteria = TestUtils.create_ct_term(
+        sponsor_preferred_name=exclusion_criteria_term,
+        sponsor_preferred_name_sentence_case=exclusion_criteria_term.lower(),
+    )
+
+    # Create criteria templates
+    incl_criteria_template_1 = TestUtils.create_criteria_template(
+        type_uid=ct_term_inclusion_criteria.term_uid
+    )
+
+    excl_criteria_template_1 = TestUtils.create_criteria_template(
+        type_uid=ct_term_exclusion_criteria.term_uid
+    )
+
+    # Create inclusion study criteria
+    inclusion_study_criteria = TestUtils.create_study_criteria(
+        study_uid=study.uid,
+        criteria_template_uid=incl_criteria_template_1.uid,
+        library_name=incl_criteria_template_1.library.name,
+        parameter_terms=[],
+    )
+
+    # mark inclusion criteria as key criteria
+    response = api_client.patch(
+        f"/studies/{study.uid}/study-criteria/{inclusion_study_criteria.study_criteria_uid}/key-criteria",
+        json={
+            "key_criteria": True,
+        },
+    )
+    assert response.status_code == 200
+
+    TestUtils.create_study_criteria(
+        study_uid=study.uid,
+        criteria_template_uid=excl_criteria_template_1.uid,
+        library_name=excl_criteria_template_1.library.name,
+        parameter_terms=[],
+    )
+
+    # Create objective template
+    objective_template = TestUtils.create_objective_template()
+    study_objective = TestUtils.create_study_objective(
+        study_uid=study.uid,
+        objective_template_uid=objective_template.uid,
+        library_name=objective_template.library.name,
+        parameter_terms=[],
+    )
+
+    endpoint_template = TestUtils.create_endpoint_template()
+
+    unit_separator = "and"
+    timeframe_template = TestUtils.create_timeframe_template()
+    timeframe = TestUtils.create_timeframe(
+        timeframe_template_uid=timeframe_template.uid
+    )
+    TestUtils.create_template_parameter(STUDY_ENDPOINT_TP_NAME)
+
+    # Create study endpoints
+    TestUtils.create_study_endpoint(
+        study_uid=study.uid,
+        endpoint_template_uid=endpoint_template.uid,
+        endpoint_units=EndpointUnitsInput(
+            units=[day_unit_definition.uid, week_unit_definition.uid],
+            separator=unit_separator,
+        ),
+        timeframe_uid=timeframe.uid,
+        library_name=endpoint_template.library.name,
+        study_objective_uid=study_objective.study_objective_uid,
+    )
+    response = api_client.get(
+        f"/studies/{study.uid}/pharma-cm",
+    )
+    assert response.status_code == 200
+    res = response.json()
+    assert (
+        res["unique_protocol_identification_number"]
+        == study.current_metadata.identification_metadata.study_id
+    )
+    assert res["brief_title"] == study_short_title
+    assert res["official_title"] == study_title
+    assert res["acronym"] == acronym
+    assert res["secondary_ids"] == [
+        {
+            "secondary_id": eduract_id,
+            "id_type": eudract_id_type,
+            "description": eudract_description,
+        }
+    ]
+    assert res["allocation"] == "N/A"
+    assert res["maximum_age"] == duration_string
+    assert res["inclusion_criteria"] == [incl_criteria_template_1.name_plain]
+    assert res["exclusion_criteria"] == []
+    assert res["outcome_measures"] == [
+        {
+            "title": objective_template.name_plain,
+            "timeframe": timeframe.name_plain,
+            "description": "day and week",
+        }
+    ]
+    assert res["number_of_subjects"] == 0
+    assert res["number_of_arms"] == 0
+    assert res["study_arms"] == []
+
+    arm_type = "Investigational Arm"
+    investigational_arm = TestUtils.create_ct_term(
+        sponsor_preferred_name=arm_type,
+        sponsor_preferred_name_sentence_case=arm_type.lower(),
+    )
+    arm_with_type = TestUtils.create_study_arm(
+        study_uid=study.uid,
+        arm_type_uid=investigational_arm.term_uid,
+        name="Arm 1 name",
+        short_name="Arm 1 short name",
+        description="Arm 1 description",
+        number_of_subjects=10,
+    )
+    arm_without_type = TestUtils.create_study_arm(
+        study_uid=study.uid,
+        name="Arm 2 name",
+        short_name="Arm 2 short name",
+        description="Arm 2 description",
+        number_of_subjects=20,
+    )
+    response = api_client.get(
+        f"/studies/{study.uid}/pharma-cm",
+    )
+    assert response.status_code == 200
+    res = response.json()
+    assert (
+        res["unique_protocol_identification_number"]
+        == study.current_metadata.identification_metadata.study_id
+    )
+    assert res["brief_title"] == study_short_title
+    assert res["official_title"] == study_title
+    assert res["acronym"] == acronym
+    assert res["secondary_ids"] == [
+        {
+            "secondary_id": eduract_id,
+            "id_type": eudract_id_type,
+            "description": eudract_description,
+        }
+    ]
+    assert res["allocation"] == "N/A"
+    assert res["maximum_age"] == duration_string
+
+    assert res["inclusion_criteria"] == [incl_criteria_template_1.name_plain]
+    assert res["exclusion_criteria"] == []
+    assert res["outcome_measures"] == [
+        {
+            "title": objective_template.name_plain,
+            "timeframe": timeframe.name_plain,
+            "description": "day and week",
+        }
+    ]
+    assert (
+        res["number_of_subjects"]
+        == arm_with_type.number_of_subjects + arm_without_type.number_of_subjects
+    )
+    assert res["number_of_arms"] == 2
+    assert res["study_arms"] == [
+        {
+            "arm_type": investigational_arm.sponsor_preferred_name,
+            "arm_title": arm_with_type.name,
+            "arm_description": arm_with_type.description,
+        },
+        {
+            "arm_type": None,
+            "arm_title": arm_without_type.name,
+            "arm_description": arm_without_type.description,
+        },
+    ]
+
+    # verify xml export
+    export_url = f"/studies/{study.uid}/pharma-cm.xml"
+    response = api_client.get(export_url)
+    assert response.status_code == 200
+    TestUtils.assert_valid_xml(response.content.decode("utf-8"))
+
+
+def test_verify_study_duration_fields(
+    api_client,
+):
+    study = TestUtils.create_study()
+    ct_terms = TestUtils.get_ct_terms_by_name(name="Study Time").items
+    assert (
+        len(ct_terms) == 1
+    ), "Something is wrong, there should exist just one CTTerm representing StudyTime"
+    study_time_unit_subset = ct_terms[0]
+    days_unit_definition = TestUtils.create_unit_definition(
+        name="days",
+        convertible_unit=True,
+        display_unit=True,
+        master_unit=False,
+        si_unit=True,
+        us_conventional_unit=True,
+        conversion_factor_to_master=config.DAY_UNIT_CONVERSION_FACTOR_TO_MASTER,
+        unit_subsets=[study_time_unit_subset.term_uid],
+    )
+    duration_value = 1
+    duration_unit = day_unit_definition
+
+    response = api_client.patch(
+        f"/studies/{study.uid}",
+        json={
+            "current_metadata": {
+                "study_population": {
+                    "planned_maximum_age_of_subjects": {
+                        "duration_value": duration_value,
+                        "duration_unit_code": {"uid": duration_unit.uid},
+                    }
+                },
+            },
+        },
+    )
+    assert response.status_code == 200
+
+    response = api_client.get(
+        f"/studies/{study.uid}", params={"include_sections": ["study_population"]}
+    )
+    assert response.status_code == 200
+    res = response.json()
+    assert (
+        res["current_metadata"]["study_population"]["planned_maximum_age_of_subjects"][
+            "duration_value"
+        ]
+        == duration_value
+    )
+    assert (
+        res["current_metadata"]["study_population"]["planned_maximum_age_of_subjects"][
+            "duration_unit_code"
+        ]["uid"]
+        == duration_unit.uid
+    )
+
+    duration_value = 2
+    duration_unit = days_unit_definition
+
+    response = api_client.patch(
+        f"/studies/{study.uid}",
+        json={
+            "current_metadata": {
+                "study_population": {
+                    "planned_maximum_age_of_subjects": {
+                        "duration_value": duration_value,
+                        "duration_unit_code": {"uid": duration_unit.uid},
+                    }
+                },
+            },
+        },
+    )
+    assert response.status_code == 200
+
+    response = api_client.get(
+        f"/studies/{study.uid}", params={"include_sections": ["study_population"]}
+    )
+    assert response.status_code == 200
+    res = response.json()
+    assert (
+        res["current_metadata"]["study_population"]["planned_maximum_age_of_subjects"][
+            "duration_value"
+        ]
+        == duration_value
+    )
+    assert (
+        res["current_metadata"]["study_population"]["planned_maximum_age_of_subjects"][
+            "duration_unit_code"
+        ]["uid"]
+        == duration_unit.uid
     )

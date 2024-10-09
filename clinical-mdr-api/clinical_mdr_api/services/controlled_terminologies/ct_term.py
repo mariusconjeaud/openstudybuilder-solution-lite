@@ -250,8 +250,6 @@ class CTTermService:
             rel_type = TermParentType.PARENT_TYPE
         elif relationship_type == "subtype":
             rel_type = TermParentType.PARENT_SUB_TYPE
-        elif relationship_type == "valid_for_epoch":
-            rel_type = TermParentType.VALID_FOR_EPOCH_TYPE
         else:
             raise exceptions.BusinessLogicException(
                 f"The following type ({relationship_type}) is not valid relationship type."

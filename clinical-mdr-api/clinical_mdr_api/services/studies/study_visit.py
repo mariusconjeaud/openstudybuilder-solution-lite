@@ -20,7 +20,6 @@ from clinical_mdr_api.domain_repositories.models.study_visit import (
 )
 from clinical_mdr_api.domain_repositories.study_selections.study_visit_repository import (
     get_valid_time_references_for_study,
-    get_valid_visit_types_for_epoch_type,
 )
 from clinical_mdr_api.domains.concepts.simple_concepts.numeric_value import (
     NumericValueAR,
@@ -96,7 +95,6 @@ from clinical_mdr_api.exceptions import BusinessLogicException, ValidationExcept
 from clinical_mdr_api.models import StudyActivityScheduleCreateInput, StudyVisit
 from clinical_mdr_api.models.study_selections.study_visit import (
     AllowedTimeReferences,
-    AllowedVisitTypesForEpochType,
     SimpleStudyVisit,
     StudyVisitCreateInput,
     StudyVisitEditInput,
@@ -255,19 +253,6 @@ class StudyVisitService(StudySelectionMixin):
             settings.STUDY_VISIT_SUBLABEL,
             effective_date=self.terms_at_specific_datetime,
         )
-
-    def get_valid_visit_types_for_epoch_type(self, epoch_type_uid: str, study_uid: str):
-        resp = []
-        for uid, name in get_valid_visit_types_for_epoch_type(
-            epoch_type_uid=epoch_type_uid, study_uid=study_uid
-        ).items():
-            resp.append(
-                AllowedVisitTypesForEpochType(visit_type_uid=uid, visit_type_name=name)
-            )
-
-        resp.sort(key=lambda visit_type: visit_type.visit_type_name)
-
-        return resp
 
     def get_allowed_time_references_for_study(self, study_uid: str):
         resp = []
@@ -1460,7 +1445,6 @@ class StudyVisitService(StudySelectionMixin):
                 )
             )
 
-            # ith_selection_history = []
             ith_selection_history: Sequence[StudyVisitOGMVer] = []
             for se_node, effective_date in zip(se_nodes, effective_dates):
                 self.terms_at_specific_datetime = effective_date

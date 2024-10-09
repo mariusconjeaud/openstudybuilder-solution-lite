@@ -68,8 +68,7 @@ class StudySoAGroupRepository(StudySelectionActivityBaseRepository[StudySoAGroup
         return """
             WITH sr, sv
             MATCH (sv)-[:HAS_STUDY_ACTIVITY]->(study_activity:StudyActivity)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->
-                (sa:StudySoAGroup)-[:HAS_FLOWCHART_GROUP]->(elr:CTTermRoot)<-[:HAS_TERM]-(:CTCodelistRoot)
-                -[:HAS_NAME_ROOT]->(:CTCodelistNameRoot)-[:LATEST_FINAL]->(:CTCodelistNameValue {name: "Flowchart Group"})
+                (sa:StudySoAGroup)-[:HAS_FLOWCHART_GROUP]->(elr:CTTermRoot)
         """
 
     def _filter_clause(self, query_parameters: dict, **kwargs) -> str:

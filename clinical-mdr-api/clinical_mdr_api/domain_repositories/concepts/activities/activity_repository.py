@@ -302,6 +302,13 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
             <-[:HAS_VERSION]-(activity_subgroup_root:ActivitySubGroupRoot) | activity_subgroup_root.uid]"""
             filter_parameters.append(filter_by_activity_subgroup_uid)
             filter_query_parameters["activity_subgroup_uid"] = activity_subgroup_uid
+        if (activity_group_uid := kwargs.get("activity_group_uid")) is not None:
+            filter_by_activity_group_uid = """
+            $activity_group_uid IN [(concept_value)-[:HAS_GROUPING]->(:ActivityGrouping)-[:IN_SUBGROUP]->
+            (:ActivityValidGroup)-[:IN_GROUP]->(activity_group_value:ActivityGroupValue)
+            <-[:HAS_VERSION]-(activity_group_root:ActivityGroupRoot) | activity_group_root.uid]"""
+            filter_parameters.append(filter_by_activity_group_uid)
+            filter_query_parameters["activity_group_uid"] = activity_group_uid
         if kwargs.get("activity_names") is not None:
             activity_names = kwargs.get("activity_names")
             filter_by_activity_names = "concept_value.name IN $activity_names"
@@ -584,11 +591,6 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
                     activity_group_value: head([(activity_valid_group)-[:IN_GROUP]->(activity_group_value) | activity_group_value])
                 }
             ] AS hierarchy
-        WITH *,
-                // Leave only the latest version of same ActivityInstances
-                [
-                    i in range(0, size(activity_instances) -1) 
-                    WHERE i=0 OR activity_instances[i].uid <> activity_instances[i-1].uid | activity_instances[i]] as activity_instances
         RETURN
             hierarchy,
             activity_root,

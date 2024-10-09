@@ -113,15 +113,6 @@ export default {
   getPreviewEpoch(studyUid, data) {
     return repository.post(`${resource}/${studyUid}/study-epochs/preview`, data)
   },
-  getAllowedVisitTypes(studyUid, data) {
-    const params = {
-      ...data,
-    }
-    return repository.get(
-      `studies/${studyUid}/study-visits/allowed-visit-types`,
-      { params }
-    )
-  },
   getStudyArmsVersions(studyUid) {
     return repository.get(`${resource}/${studyUid}/study-arms/audit-trail`)
   },

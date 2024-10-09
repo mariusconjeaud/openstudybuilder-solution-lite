@@ -45,6 +45,7 @@ study_element_uid: str
 element_subtype: CTTerm
 element_subtype_codelist: CTCodelist
 initial_ct_term_study_standard_test: ct_term.CTTerm
+element_type: CTTerm
 
 
 @pytest.fixture(scope="module")
@@ -76,6 +77,7 @@ def test_data():
         name_submission_value=settings.STUDY_ELEMENT_SUBTYPE_NAME,
         sponsor_preferred_name=settings.STUDY_ELEMENT_SUBTYPE_NAME,
     )
+    global element_type
     element_type = TestUtils.create_ct_term()
     TestUtils.add_ct_term_parent(element_subtype, element_type)
 
@@ -138,7 +140,7 @@ def test_element_modify_actions_on_locked_study(api_client):
     )
     res = response.json()
     assert response.status_code == 201
-    assert res["element_type"]["term_uid"] == "CTTerm_000002"
+    assert res["element_type"]["term_uid"] == element_type.term_uid
 
     # get all elements
     response = api_client.get(

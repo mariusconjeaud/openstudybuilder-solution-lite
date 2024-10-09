@@ -9,10 +9,9 @@ export const useAuthStore = defineStore('auth', {
   }),
 
   actions: {
-    initialize() {
-      auth.getUserInfo().then((userInfo) => {
-        this.userInfo = userInfo
-      })
+    async initialize() {
+      const userInfo = await auth.getUserInfo()
+      this.userInfo = userInfo
     },
     setWelcomeMsgFlag(value) {
       this.displayWelcomeMsg = value

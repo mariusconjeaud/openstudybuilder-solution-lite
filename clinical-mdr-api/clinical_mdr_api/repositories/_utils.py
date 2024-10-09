@@ -12,6 +12,9 @@ from pydantic import BaseModel, Field, validator
 from pydantic.types import T, conlist
 
 from clinical_mdr_api import config, exceptions
+from clinical_mdr_api.models.concepts.activities.activity import (
+    ActivityGroupingHierarchySimpleModel,
+)
 from clinical_mdr_api.models.concepts.concept import VersionProperties
 from clinical_mdr_api.models.controlled_terminologies.ct_term import SimpleTermModel
 from clinical_mdr_api.models.standard_data_models.sponsor_model import SponsorModelBase
@@ -527,6 +530,7 @@ class CypherQueryBuilder:
                 )
             self.parameters[f"{_query_param_name}"] = elm.lower()
 
+    # pylint: disable=too-many-statements
     def build_filter_clause(self) -> None:
         _filter_clause = "WHERE "
         filter_predicates = []
@@ -672,6 +676,16 @@ class CypherQueryBuilder:
                                                 _predicates.append(
                                                     f"$wildcard_{index} IN [attr in {attribute} | toLower(attr.name)]"
                                                 )
+                                        elif (
+                                            attr_desc.type_
+                                            is ActivityGroupingHierarchySimpleModel
+                                        ):
+                                            _predicates.append(
+                                                f"any(attr in {attribute} WHERE toLower(attr.activity_group_name) {_parsed_operator} $wildcard_{index})"
+                                            )
+                                            _predicates.append(
+                                                f"any(attr in {attribute} WHERE toLower(attr.activity_subgroup_name) {_parsed_operator} $wildcard_{index})"
+                                            )
                                 # If none are provided, raise an exception
                                 else:
                                     raise exceptions.ValidationException(

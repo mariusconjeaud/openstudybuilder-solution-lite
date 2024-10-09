@@ -167,9 +167,19 @@ export default {
     return {
       form: {},
       helpItems: [
-        'StudyDefineForm.studytype',
+        {
+          key: 'StudyDefineForm.studytype',
+          context: () => {
+            return { url: '/library/ct_catalogues/All/C99077/terms' }
+          },
+        },
         'StudyDefineForm.studyintent',
-        'StudyDefineForm.trialtype',
+        {
+          key: 'StudyDefineForm.trialtype',
+          context: () => {
+            return { url: '/library/ct_catalogues/All/C99077/terms' }
+          },
+        },
         'StudyDefineForm.trialphase',
         'StudyDefineForm.extensiontrial',
         'StudyDefineForm.adaptivedesign',

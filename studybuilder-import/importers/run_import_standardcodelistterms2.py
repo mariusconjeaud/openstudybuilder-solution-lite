@@ -72,7 +72,9 @@ MDR_MIGRATION_INTERVENTION_SUBCATEGORIES = load_env(
     "MDR_MIGRATION_INTERVENTION_SUBCATEGORIES"
 )
 MDR_MIGRATION_FOOTNOTE_TYPE = load_env("MDR_MIGRATION_FOOTNOTE_TYPE")
-MDR_MIGRATION_REPEATING_VISIT_FREQUENCY = load_env("MDR_MIGRATION_REPEATING_VISIT_FREQUENCY")
+MDR_MIGRATION_REPEATING_VISIT_FREQUENCY = load_env(
+    "MDR_MIGRATION_REPEATING_VISIT_FREQUENCY"
+)
 
 # Import terms to standard codelists in sponsor library
 class StandardCodelistTerms2(BaseImporter):
@@ -87,21 +89,10 @@ class StandardCodelistTerms2(BaseImporter):
 
     @open_file_async()
     async def migrate_term(self, csvfile, codelist_name, code_lists_uids, session):
-        if self.limit_to_codelists and codelist_name not in self.limit_to_codelists:
-            self.log.info(f"Skipping codelist '{codelist_name}'")
-            return
         self.ensure_cache()
         readCSV = csv.DictReader(csvfile, delimiter=",")
         api_tasks = []
 
-        if codelist_name == self.visit_type_codelist_name:
-            all_epoch_type_code_subm_values = self.api.get_all_identifiers(
-                self.api.get_all_from_api(
-                    f"/ct/terms/attributes?codelist_name={CODELIST_EPOCH_TYPE}"
-                ),
-                identifier="code_submission_value",
-                value="term_uid",
-            )
         if codelist_name == self.element_subtype_codelist_name:
             all_element_type_code_subm_values = self.api.get_all_identifiers(
                 self.api.get_all_from_api(
@@ -133,15 +124,6 @@ class StandardCodelistTerms2(BaseImporter):
             }
             if "CT_CD" in row and row["CT_CD"] != "":
                 data["term_concept_id"] = row["CT_CD"]
-            if codelist_name == self.visit_type_codelist_name:
-                linked_epoch_types = row["EPOCHS"].split(",")
-                valid_epoch_uids = []
-                for epoch_type in linked_epoch_types:
-                    if epoch_type in all_epoch_type_code_subm_values:
-                        valid_epoch_uids.append(
-                            all_epoch_type_code_subm_values[epoch_type]
-                        )
-                data["valid_epoch_uids"] = valid_epoch_uids
             if codelist_name == self.element_subtype_codelist_name:
                 element_type_subm_value = row["GEN_ELEM_TYPE"]
                 if element_type_subm_value in all_element_type_code_subm_values:
@@ -167,263 +149,66 @@ class StandardCodelistTerms2(BaseImporter):
         # we have to get all codelists when sponsor one will be migrated
         # otherwise sponsor defined terms won't know to which codelist they should connect
         code_lists_uids = self.api.get_code_lists_uids()
-        timeout = aiohttp.ClientTimeout(None)
-        conn = aiohttp.TCPConnector(limit=4, force_close=True)
-        async with aiohttp.ClientSession(timeout=timeout, connector=conn) as session:
-            await self.migrate_term(
-                MDR_MIGRATION_VISIT_SUB_LABEL,
-                codelist_name="Visit Sub Label",
-                code_lists_uids=code_lists_uids,
-                session=session,
-            )
-            await self.migrate_term(
-                MDR_MIGRATION_CRITERIA_TYPE,
-                codelist_name="Criteria Type",
-                code_lists_uids=code_lists_uids,
-                session=session,
-            )
-            await self.migrate_term(
-                MDR_MIGRATION_CRITERIA_CATEGORY,
-                codelist_name="Criteria Category",
-                code_lists_uids=code_lists_uids,
-                session=session,
-            )
-            await self.migrate_term(
-                MDR_MIGRATION_CRITERIA_SUB_CATEGORY,
-                codelist_name="Criteria Sub Category",
-                code_lists_uids=code_lists_uids,
-                session=session,
-            )
-            await self.migrate_term(
-                MDR_MIGRATION_ENDPOINT_CATEGORY,
-                codelist_name="Endpoint Category",
-                code_lists_uids=code_lists_uids,
-                session=session,
-            )
-            await self.migrate_term(
-                MDR_MIGRATION_ENDPOINT_SUB_CATEGORY,
-                codelist_name="Endpoint Sub Category",
-                code_lists_uids=code_lists_uids,
-                session=session,
-            )
-            await self.migrate_term(
-                MDR_MIGRATION_ENDPOINT_SUB_LEVEL,
-                codelist_name="Endpoint Sub Level",
-                code_lists_uids=code_lists_uids,
-                session=session,
-            )
-            await self.migrate_term(
-                MDR_MIGRATION_OBJECTIVE_CATEGORY,
-                codelist_name="Objective Category",
-                code_lists_uids=code_lists_uids,
-                session=session,
-            )
-            await self.migrate_term(
-                MDR_MIGRATION_OPERATOR,
-                codelist_name="Operator",
-                code_lists_uids=code_lists_uids,
-                session=session,
-            )
-            await self.migrate_term(
-                MDR_MIGRATION_FLOWCHART_GROUP,
-                codelist_name="Flowchart Group",
-                code_lists_uids=code_lists_uids,
-                session=session,
-            )
-            await self.migrate_term(
-                MDR_MIGRATION_VISIT_CONTACT_MODE,
-                codelist_name="Visit Contact Mode",
-                code_lists_uids=code_lists_uids,
-                session=session,
-            )
-            await self.migrate_term(
-                MDR_MIGRATION_ARM_TYPE,
-                codelist_name="Arm Type",
-                code_lists_uids=code_lists_uids,
-                session=session,
-            )
-            await self.migrate_term(
-                MDR_MIGRATION_UNIT_SUBSETS,
-                codelist_name="Unit Subset",
-                code_lists_uids=code_lists_uids,
-                session=session,
-            )
-            await self.migrate_term(
-                MDR_MIGRATION_NULL_FLAVOR,
-                codelist_name="Null Flavor",
-                code_lists_uids=code_lists_uids,
-                session=session,
-            )
-            await self.migrate_term(
-                MDR_MIGRATION_THERAPY_AREA,
-                codelist_name="Therapeutic area",
-                code_lists_uids=code_lists_uids,
-                session=session,
-            )
-            await self.migrate_term(
-                MDR_MIGRATION_TIME_REFERENCE,
-                codelist_name="Time Point Reference",
-                code_lists_uids=code_lists_uids,
-                session=session,
-            )
-            await self.migrate_term(
-                MDR_MIGRATION_TYPE_OF_TREATMENT,
-                codelist_name="Type of Treatment",
-                code_lists_uids=code_lists_uids,
-                session=session,
-            )
-            await self.migrate_term(
-                MDR_MIGRATION_COMPOUND_DISPENSED_IN,
-                codelist_name="Compound Dispensed In",
-                code_lists_uids=code_lists_uids,
-                session=session,
-            )
-            await self.migrate_term(
-                MDR_MIGRATION_DEVICE,
-                codelist_name="Delivery Device",
-                code_lists_uids=code_lists_uids,
-                session=session,
-            )
-            await self.migrate_term(
-                MDR_MIGRATION_ELEMENT_TYPE,
-                codelist_name="Element Type",
-                code_lists_uids=code_lists_uids,
-                session=session,
-            )
-            await self.migrate_term(
-                MDR_MIGRATION_ELEMENT_SUBTYPE,
-                codelist_name="Element Sub Type",
-                code_lists_uids=code_lists_uids,
-                session=session,
-            )
-            await self.migrate_term(
-                MDR_MIGRATION_LANGUAGE,
-                codelist_name="Language",
-                code_lists_uids=code_lists_uids,
-                session=session,
-            )
-            await self.migrate_term(
-                MDR_MIGRATION_DATATYPE,
-                codelist_name="Data type",
-                code_lists_uids=code_lists_uids,
-                session=session,
-            )
+        codelists_to_import = [
+            (MDR_MIGRATION_VISIT_SUB_LABEL, "Visit Sub Label"),
+            (MDR_MIGRATION_CRITERIA_TYPE, "Criteria Type"),
+            (MDR_MIGRATION_CRITERIA_CATEGORY, "Criteria Category"),
+            (MDR_MIGRATION_CRITERIA_SUB_CATEGORY, "Criteria Sub Category"),
+            (MDR_MIGRATION_ENDPOINT_CATEGORY, "Endpoint Category"),
+            (MDR_MIGRATION_ENDPOINT_SUB_CATEGORY, "Endpoint Sub Category"),
+            (MDR_MIGRATION_ENDPOINT_SUB_LEVEL, "Endpoint Sub Level"),
+            (MDR_MIGRATION_OBJECTIVE_CATEGORY, "Objective Category"),
+            (MDR_MIGRATION_OPERATOR, "Operator"),
+            (MDR_MIGRATION_FLOWCHART_GROUP, "Flowchart Group"),
+            (MDR_MIGRATION_VISIT_CONTACT_MODE, "Visit Contact Mode"),
+            (MDR_MIGRATION_ARM_TYPE, "Arm Type"),
+            (MDR_MIGRATION_UNIT_SUBSETS, "Unit Subset"),
+            (MDR_MIGRATION_NULL_FLAVOR, "Null Flavor"),
+            (MDR_MIGRATION_THERAPY_AREA, "Therapeutic area"),
+            (MDR_MIGRATION_TIME_REFERENCE, "Time Point Reference"),
+            (MDR_MIGRATION_TYPE_OF_TREATMENT, "Type of Treatment"),
+            (MDR_MIGRATION_COMPOUND_DISPENSED_IN, "Compound Dispensed In"),
+            (MDR_MIGRATION_DEVICE, "Delivery Device"),
+            (MDR_MIGRATION_ELEMENT_TYPE, "Element Type"),
+            (MDR_MIGRATION_ELEMENT_SUBTYPE, "Element Sub Type"),
+            (MDR_MIGRATION_LANGUAGE, "Language"),
+            (MDR_MIGRATION_DATATYPE, "Data type"),
             # Migration of Visit Types have to go after epoch type as we link the Visit Type term to the specific
             # Epoch to allow using Visit Types only valid for specific Epoch Type context
-            await self.migrate_term(
-                MDR_MIGRATION_VISIT_TYPE,
-                codelist_name=self.visit_type_codelist_name,
-                code_lists_uids=code_lists_uids,
-                session=session,
-            )
-            await self.migrate_term(
-                MDR_MIGRATION_EPOCH_ALLOCATION,
-                codelist_name="Epoch Allocation",
-                code_lists_uids=code_lists_uids,
-                session=session,
-            )
-            await self.migrate_term(
-                MDR_MIGRATION_FREQUENCY,
-                codelist_name="Frequency",
-                code_lists_uids=code_lists_uids,
-                session=session,
-            )
-            await self.migrate_term(
-                MDR_MIGRATION_TRIAL_TYPE,
-                codelist_name="Trial Type",
-                code_lists_uids=code_lists_uids,
-                session=session,
-            )
-            await self.migrate_term(
-                MDR_MIGRATION_DATA_COLLECTION_MODE,
-                codelist_name="Data Collection Mode",
-                code_lists_uids=code_lists_uids,
-                session=session,
-            )
-            await self.migrate_term(
-                MDR_MIGRATION_CONFIRMATORY_PURPOSE,
-                codelist_name="Confirmatory Purpose",
-                code_lists_uids=code_lists_uids,
-                session=session,
-            )
-            await self.migrate_term(
-                MDR_MIGRATION_NONCONFIRMATORY_PURPOSE,
-                codelist_name="Non-confirmatory Purpose",
-                code_lists_uids=code_lists_uids,
-                session=session,
-            )
-            await self.migrate_term(
-                MDR_MIGRATION_TRIAL_BLINDING_SCHEMA,
-                codelist_name="Trial Blinding Schema",
-                code_lists_uids=code_lists_uids,
-                session=session,
-            )
-            await self.migrate_term(
-                MDR_MIGRATION_ROLE,
-                codelist_name="Role",
-                code_lists_uids=code_lists_uids,
-                session=session,
-            )
-            await self.migrate_term(
-                MDR_MIGRATION_DISEASE_MILESTONE,
-                codelist_name="Disease Milestone Type",
-                code_lists_uids=code_lists_uids,
-                session=session,
-            )
-            await self.migrate_term(
-                MDR_MIGRATION_REGISTID,
-                codelist_name="Registry Identifier",
-                code_lists_uids=code_lists_uids,
-                session=session,
-            )
-            await self.migrate_term(
-                MDR_MIGRATION_EVENT_CATEGORIES,
-                codelist_name="Event Category Definition",
-                code_lists_uids=code_lists_uids,
-                session=session,
-            )
-            await self.migrate_term(
-                MDR_MIGRATION_EVENT_SUBCATEGORIES,
-                codelist_name="Event Subcategory Definition",
-                code_lists_uids=code_lists_uids,
-                session=session,
-            )
-            await self.migrate_term(
-                MDR_MIGRATION_FINDING_CATEGORIES,
-                codelist_name="Finding Category Definition",
-                code_lists_uids=code_lists_uids,
-                session=session,
-            )
-            await self.migrate_term(
-                MDR_MIGRATION_FINDING_SUBCATEGORIES,
-                codelist_name="Finding Subcategory Definition",
-                code_lists_uids=code_lists_uids,
-                session=session,
-            )
-            await self.migrate_term(
-                MDR_MIGRATION_INTERVENTION_CATEGORIES,
-                codelist_name="Intervention Category Definition",
-                code_lists_uids=code_lists_uids,
-                session=session,
-            )
-            await self.migrate_term(
-                MDR_MIGRATION_INTERVENTION_SUBCATEGORIES,
-                codelist_name="Intervention Subcategory Definition",
-                code_lists_uids=code_lists_uids,
-                session=session,
-            )
-            await self.migrate_term(
-                MDR_MIGRATION_FOOTNOTE_TYPE,
-                codelist_name="Footnote Type",
-                code_lists_uids=code_lists_uids,
-                session=session,
-            )
-            await self.migrate_term(
-                MDR_MIGRATION_REPEATING_VISIT_FREQUENCY,
-                codelist_name="Repeating Visit Frequency",
-                code_lists_uids=code_lists_uids,
-                session=session,
-            )
+            (MDR_MIGRATION_VISIT_TYPE, self.visit_type_codelist_name),
+            (MDR_MIGRATION_EPOCH_ALLOCATION, "Epoch Allocation"),
+            (MDR_MIGRATION_FREQUENCY, "Frequency"),
+            (MDR_MIGRATION_TRIAL_TYPE, "Trial Type"),
+            (MDR_MIGRATION_DATA_COLLECTION_MODE, "Data Collection Mode"),
+            (MDR_MIGRATION_CONFIRMATORY_PURPOSE, "Confirmatory Purpose"),
+            (MDR_MIGRATION_NONCONFIRMATORY_PURPOSE, "Non-confirmatory Purpose"),
+            (MDR_MIGRATION_TRIAL_BLINDING_SCHEMA, "Trial Blinding Schema"),
+            (MDR_MIGRATION_ROLE, "Role"),
+            (MDR_MIGRATION_DISEASE_MILESTONE, "Disease Milestone Type"),
+            (MDR_MIGRATION_REGISTID, "Registry Identifier"),
+            (MDR_MIGRATION_EVENT_CATEGORIES, "Event Category Definition"),
+            (MDR_MIGRATION_EVENT_SUBCATEGORIES, "Event Subcategory Definition"),
+            (MDR_MIGRATION_FINDING_CATEGORIES, "Finding Category Definition"),
+            (MDR_MIGRATION_FINDING_SUBCATEGORIES, "Finding Subcategory Definition"),
+            (MDR_MIGRATION_INTERVENTION_CATEGORIES, "Intervention Category Definition"),
+            (MDR_MIGRATION_INTERVENTION_SUBCATEGORIES, "Intervention Subcategory Definition"),
+            (MDR_MIGRATION_FOOTNOTE_TYPE, "Footnote Type"),
+            (MDR_MIGRATION_REPEATING_VISIT_FREQUENCY, "Repeating Visit Frequency"),
+        ]
+
+        timeout = aiohttp.ClientTimeout(None)
+        for file_path, codelist_name in codelists_to_import:
+            if self.limit_to_codelists and codelist_name not in self.limit_to_codelists:
+                self.log.info(f"Skipping codelist '{codelist_name}'")
+                continue
+            conn = aiohttp.TCPConnector(limit=4, force_close=True)
+            async with aiohttp.ClientSession(timeout=timeout, connector=conn) as session:
+                await self.migrate_term(
+                    file_path,
+                    codelist_name=codelist_name,
+                    code_lists_uids=code_lists_uids,
+                    session=session,
+                )
 
     def run(self):
         self.log.info("Migrating sponsor terms")

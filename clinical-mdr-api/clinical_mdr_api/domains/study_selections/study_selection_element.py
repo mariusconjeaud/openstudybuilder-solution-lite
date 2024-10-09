@@ -133,7 +133,7 @@ class StudySelectionElementAR:
     def study_uid(self) -> str:
         return self._study_uid
 
-    # return a list of all study elemnt selection object
+    # return a list of all study element selection object
     @property
     def study_elements_selection(self) -> tuple[StudySelectionElementVO]:
         return self._study_elements_selection

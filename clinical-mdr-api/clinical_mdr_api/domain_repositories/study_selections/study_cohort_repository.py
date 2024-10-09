@@ -226,7 +226,7 @@ class StudySelectionCohortRepository:
 
     def save(self, study_selection: StudySelectionCohortAR, author: str) -> None:
         """
-        Persist the set of selected study amrs from the aggregate to the database
+        Persist the set of selected study cohorts from the aggregate to the database
         :param study_selection:
         :param author:
         """
@@ -270,7 +270,7 @@ class StudySelectionCohortRepository:
 
         # audit trail nodes dictionary, holds the new nodes created for the audit trail
         audit_trail_nodes = {}
-        # dictonary of last nodes to traverse to their old connections
+        # dictionary of last nodes to traverse to their old connections
         last_nodes = {}
 
         # loop through and remove selections

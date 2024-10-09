@@ -1,6 +1,7 @@
 import copy
 import json
 import os
+from functools import lru_cache
 from os import environ
 
 from .functions.utils import load_env
@@ -220,7 +221,7 @@ class MockdataJson(BaseImporter):
         )
 
     def lookup_activity_uid(self, name):
-        return self.lookup_concept_uid(name, "activities/activities")
+        return self.lookup_concept_uid(name, "activities/activities", library="Sponsor")
 
     def lookup_activity_group_uid(self, name):
         return self.lookup_concept_uid(name, "activities/activity-groups")
@@ -458,7 +459,7 @@ class MockdataJson(BaseImporter):
             f"Could not find {endpoint.replace('-', ' ')} with name '{name}'"
         )
 
-    # @lru_cache(maxsize=10000)
+    @lru_cache(maxsize=10000)
     def lookup_study_objective_uid(self, name, study_uid):
         path = f"/studies/{study_uid}/study-objectives"
         self.log.info(f"Looking up study objective with name '{name}'")
@@ -470,7 +471,7 @@ class MockdataJson(BaseImporter):
             return uid
         self.log.warning(f"Could not find study objective with name '{name}'")
 
-    # @lru_cache(maxsize=10000)
+    @lru_cache(maxsize=10000)
     def lookup_study_visit_uid(self, study_uid, visit_name):
         self.log.info(
             f"Looking up study visit name '{visit_name}' for study '{study_uid}'"
@@ -487,15 +488,22 @@ class MockdataJson(BaseImporter):
             return uid
         self.log.warning(f"Could not find study visit with name '{visit_name}'")
 
-    # @lru_cache(maxsize=10000)
-    def lookup_study_activity_uid(self, study_uid, activity_name):
+    @lru_cache(maxsize=10000)
+    def lookup_study_activity_uid(
+        self, study_uid, activity_name, group_name=None, subgroup_name=None
+    ):
         self.log.info(
-            f"Looking up study activity name '{activity_name}' for study '{study_uid}'"
+            f"Looking up study activity name '{activity_name}' with group '{group_name}', subgroup '{subgroup_name}' for study '{study_uid}'"
         )
-        filt = {"activity.name": {"v": [activity_name], "op": "eq"}}
+        # filt = {"activity.name": {"v": [activity_name], "op": "eq"}}
+        params = {"activity_names[]": [activity_name]}
+        if group_name is not None:
+            params["activity_group_names[]"] = [group_name]
+        if subgroup_name is not None:
+            params["activity_subgroup_names[]"] = [subgroup_name]
         items = self.api.get_all_from_api(
             f"/studies/{study_uid}/study-activities",
-            params={"filters": json.dumps(filt)},
+            params=params,
         )
         if items is not None and len(items) > 0:
             uid = items[0].get("study_activity_uid")
@@ -533,7 +541,7 @@ class MockdataJson(BaseImporter):
 
     def fetch_all_activities(self):
         activities = {}
-        for item in self.api.get_all_from_api("/concepts/activities/activities"):
+        for item in self.api.get_all_from_api_paged("/concepts/activities/activities"):
             activities[item["name"]] = item["uid"]
         return activities
 
@@ -1195,11 +1203,17 @@ class MockdataJson(BaseImporter):
         )
         self.handle_study_compounds(comp_json, study_name)
 
+        # Get study visit and activity names
+        visit_names = self.get_study_visit_names(visit_json)
+        activity_names = self.get_study_activity_names(activities_json)
+
         # Study activity schedule
         sched_json = os.path.join(
             self.import_dir, f"studies.{exported_uid}.study-activity-schedules.json"
         )
-        self.handle_study_activity_schedules(sched_json, study_name)
+        self.handle_study_activity_schedules(
+            sched_json, visit_names, activity_names, study_name
+        )
 
     @open_file()
     def handle_study_matrix(self, jsonfile, study_name):
@@ -1316,9 +1330,22 @@ class MockdataJson(BaseImporter):
 
             group_uid = None
             subgroup_uid = None
+
             if item.get("study_activity_group", {}).get(
+                "activity_group_name"
+            ) and item.get("study_activity_subgroup", {}).get("activity_subgroup_name"):
+                # Group and subgroup names are available in the exported data
+                group_name = item["study_activity_group"]["activity_group_name"]
+                subgroup_name = item["study_activity_subgroup"][
+                    "activity_subgroup_name"
+                ]
+                group_uid = self.lookup_activity_group_uid(group_name)
+                subgroup_uid = self.lookup_activity_subgroup_uid(subgroup_name)
+            elif item.get("study_activity_group", {}).get(
                 "activity_group_uid"
             ) and item.get("study_activity_subgroup", {}).get("activity_subgroup_uid"):
+                # Group and subgroup uids are not directly available in the exported data,
+                # Look them up via the activity groupings.
                 for grouping in item["activity"]["activity_groupings"]:
                     if (
                         grouping["activity_group_uid"]
@@ -2483,19 +2510,19 @@ class MockdataJson(BaseImporter):
             for key in data.keys():
                 if not key.lower().endswith("uid"):
                     data[key] = item.get(key, data[key])
-            if item["compound_alias"] is not None:
+            if item.get("compound_alias") is not None:
                 data["compound_alias_uid"] = self.lookup_compound_alias_uid(
                     item["compound_alias"]["name"]
                 )
-            if item["medicinal_product"] is not None:
+            if item.get("medicinal_product") is not None:
                 data["medicinal_product_uid"] = self.lookup_medicinal_product_uid(
                     item["medicinal_product"]["name"]
                 )
-            if item["reason_for_missing_null_value"] is not None:
+            if item.get("reason_for_missing_null_value") is not None:
                 data["reason_for_missing_null_value_uid"] = self.lookup_ct_term_uid(
                     CODELIST_NULL_FLAVOR, item["reason_for_missing_null_value"]["name"]
                 )
-            if item["type_of_treatment"] is not None:
+            if item.get("type_of_treatment") is not None:
                 data["type_of_treatment_uid"] = self.lookup_codelist_term_uid(
                     CODELIST_TYPE_OF_TREATMENT, item["type_of_treatment"]["name"]
                 )
@@ -2513,10 +2540,45 @@ class MockdataJson(BaseImporter):
             self.api.simple_post_to_api(path, data)
 
     @open_file()
-    def handle_study_activity_schedules(self, jsonfile, study_name):
+    def get_study_activity_names(self, jsonfile):
+        self.log.info(f"======== Mapping study activity uids to names ========")
+        activities = json.load(jsonfile)
+        names = {}
+        for activity in activities:
+            activity_name = activity.get("activity", {}).get("name")
+            group_name = activity.get("study_activity_group", {}).get(
+                "activity_group_name"
+            )
+            subgroup_name = activity.get("study_activity_subgroup", {}).get(
+                "activity_subgroup_name"
+            )
+            uid = activity.get("study_activity_uid")
+            names[uid] = {
+                "activity": activity_name,
+                "group": group_name,
+                "subgroup": subgroup_name,
+            }
+        return names
+
+    @open_file()
+    def get_study_visit_names(self, jsonfile):
+        self.log.info(f"======== Mapping study visit uids to names ========")
+        visits = json.load(jsonfile)
+        names = {}
+        for visit in visits:
+            name = visit.get("visit_name")
+            uid = visit.get("uid")
+            names[uid] = name
+        return names
+
+    @open_file()
+    def handle_study_activity_schedules(
+        self, jsonfile, visit_names, activity_names, study_name
+    ):
         self.log.info(
             f"======== Study activity schedules for study {study_name} ========"
         )
+
         study_uid = self.lookup_study_uid_from_id(study_name)
         imported = json.load(jsonfile)
         for item in imported:
@@ -2525,26 +2587,28 @@ class MockdataJson(BaseImporter):
                 if not key.lower().endswith("uid"):
                     data[key] = item.get(key, data[key])
 
+            activity_name = activity_names.get(item["study_activity_uid"])
+
+            visit_name = visit_names.get(item["study_visit_uid"])
+
             data["study_activity_uid"] = self.lookup_study_activity_uid(
-                study_uid, item["study_activity_name"]
+                study_uid,
+                activity_name["activity"],
+                group_name=activity_name["group"],
+                subgroup_name=activity_name["subgroup"],
             )
             if not data["study_activity_uid"]:
                 self.log.error(
-                    f"Unable to find activity '{item['study_activity_name']}' for visit '{item['study_visit_name']}'"
+                    f"Unable to find activity '{activity_name['activity']}' in group '{activity_name['group']}', subgroup '{activity_name['subgroup']}' for visit '{visit_name}'"
                 )
                 continue
-
-            data["study_visit_uid"] = self.lookup_study_visit_uid(
-                study_uid, item["study_visit_name"]
-            )
+            data["study_visit_uid"] = self.lookup_study_visit_uid(study_uid, visit_name)
             if not data["study_visit_uid"]:
-                self.log.error(
-                    f"Unable to find study visit with name '{item['study_visit_name']}'"
-                )
+                self.log.error(f"Unable to find study visit with name '{visit_name}'")
                 continue
             path = f"/studies/{study_uid}/study-activity-schedules"
             self.log.info(
-                f"Schedule activity '{item['study_activity_name']}' to visit '{item['study_visit_name']}'"
+                f"Schedule study activity {data['study_activity_uid']}, name '{activity_name['activity']}', group '{activity_name['group']}', subgroup '{activity_name['subgroup']}' to visit '{visit_name}'"
             )
             self.api.simple_post_to_api(path, data)
 

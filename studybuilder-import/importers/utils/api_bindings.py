@@ -2,6 +2,7 @@ import asyncio
 import inspect
 import json
 import logging
+import math
 import sys
 import time
 from typing import Sequence
@@ -199,7 +200,7 @@ class ApiBinding:
         else:
             self.log.debug("POST %s", path)
             if "message" in response.json() and (
-                "already exists" in response.json()["message"]
+                "already exist" in response.json()["message"]
                 or "all ready" in response.json()["message"]
                 or "Duplicate template" in response.json()["message"]
                 or "There is already" in response.json()["message"]
@@ -329,18 +330,71 @@ class ApiBinding:
         )
 
         if response.ok:
-            res = response.json()
+            try:
+                res = response.json()
+            except json.JSONDecodeError:
+                self.log.error(
+                    "Failed to decode json for %s, data: %s", path, response.text
+                )
+                return None
             if "items" in res and items_only:
                 self.metrics.icrement(path + "--GET", len(res["items"]))
                 return res["items"]
             else:
                 return res
         else:
-            if "message" in response.json().keys():
-                self.log.error("get %s, message: %s", path, response.json()["message"])
+            try:
+                message = response.json().get("message")
+            except json.JSONDecodeError:
+                message = None
+            if message is not None:
+                self.log.error(
+                    "get %s, message: %s, status: %s %s",
+                    path,
+                    message,
+                    response.status_code,
+                    response.reason,
+                )
             else:
-                self.log.error("get %s %s", path, response.text)
+                self.log.error(
+                    "get %s reply: %s status: %s %s",
+                    path,
+                    response.text,
+                    response.status_code,
+                    response.reason,
+                )
             return None
+
+    def get_all_from_api_paged(
+        self, path, params=None, items_only=True, page_size=1000
+    ):
+        page_number = 1
+        page_params = {
+            "page_number": page_number,
+            "page_size": page_size,
+            "total_count": True,
+        }
+        if params is not None:
+            page_params.update(params)
+        self.log.info(f"Fetching {path}, page size: {page_size}")
+        data = self.get_all_from_api(path, params=page_params, items_only=False)
+        all_items = data["items"]
+        count = data["total"]
+
+        nbr_pages = math.ceil(count / page_size)
+        # Get remaining pages
+        page_params["total_count"] = False
+        while page_size * page_number < count:
+            page_number += 1
+            page_params["page_number"] = page_number
+            self.log.info(f"Fetching {path}, page {page_number} of {nbr_pages}")
+            additional_data = self.get_all_from_api(
+                path, params=page_params, items_only=True
+            )
+            all_items.extend(additional_data)
+        if items_only:
+            return all_items
+        return data
 
     def get_all_identifiers(self, responses: list, identifier: str, value: str = None):
         if value is None:
@@ -723,7 +777,9 @@ class ApiBinding:
                     error_message = get_error_message(error_result)
                 except aiohttp.ContentTypeError:
                     error_message = await response.text()
-                self.log.warning(f"Failed to approve {url}, status: {status}, message: {error_message}")
+                self.log.warning(
+                    f"Failed to approve {url}, status: {status}, message: {error_message}"
+                )
                 result = {}
             return status, result
 
@@ -779,7 +835,7 @@ class ApiBinding:
         if approve == True and uid != None:
             # Sleeping to avoid errors when running locally (with limited resources for the db).
             time.sleep(SLEEP_BEFORE_APPROVE)
-            self.log.info(f"Approve item with uid '{uid}'")
+            self.log.info(f"Approve object with uid '{uid}'")
             status, result = await self.approve_item_async(
                 uid=uid, url=data["approve_path"], session=session
             )

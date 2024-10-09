@@ -638,7 +638,7 @@ def reactivate(uid: str = TimeframeTemplateUID) -> TimeframeTemplate:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def delete_timeframe_template(uid: str = TimeframeTemplateUID) -> None:
+def delete_timeframe_template(uid: str = TimeframeTemplateUID) -> Response:
     Service().soft_delete(uid)
     return Response(status_code=fast_api_status.HTTP_204_NO_CONTENT)
 
@@ -670,7 +670,7 @@ def get_parameters(
     study_uid: str
     | None = Query(
         None,
-        description="if specified only valida parameters for a given study will be returned.",
+        description="if specified only valid parameters for a given study will be returned.",
     ),
 ):
     return Service().get_parameters(uid, study_uid=study_uid)

@@ -28,6 +28,7 @@ API_BASE_URL = load_env("API_BASE_URL")
 # TODO this is a temporary workaround, remove when no longer needed.
 OLD_CT_API = False
 
+
 def sample_from_dict(d, sample=10):
     if SAMPLE:
         keys = list(d)[0:sample]
@@ -52,10 +53,16 @@ ACTIVITY_ITEM_CLASSES_PATH = "/activity-item-classes"
 ACTIVITY_ITEMS_PATH = "/activity-items"
 ACTIVITY_INSTANCES_PATH = "/concepts/activities/activity-instances"
 
-
+ACTIVITIES = "Activities"
+ACTIVITY_GROUPS = "ActivityGroups"
+ACTIVITY_SUBGROUPS = "ActivitySubgroups"
+ACTIVITY_INSTANCES = "ActivityInstances"
+ACTIVITY_ITEM_CLASSES = "ActivityItemClasses"
+ACTIVITY_INSTANCE_CLASSES = "ActivityInstanceClasses"
 
 class ConflictingItemError(ValueError):
     pass
+
 
 # Activities with instances, groups and subgroups in sponsor library
 class Activities(BaseImporter):
@@ -63,6 +70,14 @@ class Activities(BaseImporter):
 
     def __init__(self, api=None, metrics_inst=None, cache=None):
         super().__init__(api=api, metrics_inst=metrics_inst, cache=cache)
+        self._limit_import_to = None
+
+    def limit_import_to(self, limit):
+        if limit is not None:
+            self.log.info(f"Limiting import to: {', '.join(limit)}")
+        else:
+            self.log.info("Importing all activity content")
+        self._limit_import_to = limit
 
     # Get all terms belonging to any of the category and subcategory codelists
     def _get_all_cats_and_subcats(self):
@@ -98,7 +113,11 @@ class Activities(BaseImporter):
             cl_uid = all_codelist_uids.get(submval)
             if cl_uid is not None:
                 if OLD_CT_API:
-                    sdtm_cat_uids.extend(term for term in self.cache.all_terms_attributes if term["codelist_uid"] == cl_uid)
+                    sdtm_cat_uids.extend(
+                        term
+                        for term in self.cache.all_terms_attributes
+                        if term["codelist_uid"] == cl_uid
+                    )
                 else:
                     sdtm_cat_uids.extend(
                         term
@@ -109,7 +128,11 @@ class Activities(BaseImporter):
             cl_uid = all_codelist_uids.get(submval)
             if cl_uid is not None:
                 if OLD_CT_API:
-                    sdtm_subcat_uids.extend(term for term in self.cache.all_terms_attributes if term["codelist_uid"] == cl_uid)
+                    sdtm_subcat_uids.extend(
+                        term
+                        for term in self.cache.all_terms_attributes
+                        if term["codelist_uid"] == cl_uid
+                    )
                 else:
                     sdtm_subcat_uids.extend(
                         term
@@ -138,7 +161,11 @@ class Activities(BaseImporter):
         cl_uid = all_codelist_uids.get(codelist_submval)
         if cl_uid is not None:
             if OLD_CT_API:
-                terms = [term for term in self.cache.all_terms_attributes if term["codelist_uid"] == cl_uid]
+                terms = [
+                    term
+                    for term in self.cache.all_terms_attributes
+                    if term["codelist_uid"] == cl_uid
+                ]
             else:
                 terms = [
                     term
@@ -476,10 +503,15 @@ class Activities(BaseImporter):
             activity_name = item_data["name"]
             # Check if activity exists
             try:
-                existing = self.get_existing_activity(activity_name, existing_activities)
+                existing = self.get_existing_activity(
+                    activity_name, existing_activities
+                )
                 if existing is not None:
                     existing = existing_activities[activity_name]
-                    if existing["library_name"] == "Requested" and existing["status"] == "Retired":
+                    if (
+                        existing["library_name"] == "Requested"
+                        and existing["status"] == "Retired"
+                    ):
                         self.log.info(
                             f"Activity '{activity_name}' already exists as a retired request, ok to create a new one"
                         )
@@ -507,7 +539,9 @@ class Activities(BaseImporter):
                             )
                             api_tasks.append(
                                 self.api.approve_item_async(
-                                    uid=existing["uid"], url=ACTIVITIES_PATH, session=session
+                                    uid=existing["uid"],
+                                    url=ACTIVITIES_PATH,
+                                    session=session,
                                 )
                             )
                         continue
@@ -541,7 +575,9 @@ class Activities(BaseImporter):
                     }
                     self.log.info(f"Adding activity '{activity_name}'")
                     api_tasks.append(
-                        self.api.post_then_approve(data=data, session=session, approve=True)
+                        self.api.post_then_approve(
+                            data=data, session=session, approve=True
+                        )
                     )
             except ConflictingItemError as e:
                 self.log.warning(
@@ -553,7 +589,10 @@ class Activities(BaseImporter):
     def get_existing_activity(self, activity_name, existing_activities):
         if activity_name in existing_activities:
             existing = existing_activities[activity_name]
-            if existing["library_name"] == "Requested" and existing["status"] == "Retired":
+            if (
+                existing["library_name"] == "Requested"
+                and existing["status"] == "Retired"
+            ):
                 self.log.info(
                     f"Activity '{activity_name}' already exists as a retired request, ok to create a new one"
                 )
@@ -570,7 +609,6 @@ class Activities(BaseImporter):
                 raise ConflictingItemError("Retired")
             return existing
         return None
-
 
     @open_file_async()
     async def handle_activity_instance_classes(self, csvfile, session):
@@ -665,7 +703,7 @@ class Activities(BaseImporter):
                     existing_rows[data["body"]["name"]] = response
             else:
                 self.log.info(
-                    f"Identical item '{data['body']['name']}' already exists in library '{data['body']['library_name']}'"
+                    f"Identical entry '{data['body']['name']}' already exists in library '{data['body']['library_name']}'"
                 )
 
         for row in readCSV:
@@ -897,7 +935,7 @@ class Activities(BaseImporter):
                 )
             else:
                 self.log.info(
-                    f"Identical item '{item_data['body']['name']}' already exists in library '{item_data['body']['library_name']}'"
+                    f"Identical item class '{item_data['body']['name']}' already exists in library '{item_data['body']['library_name']}'"
                 )
 
         await asyncio.gather(*api_tasks)
@@ -977,10 +1015,12 @@ class Activities(BaseImporter):
         # get only Final activities in Sponsor library
         activity_filters = {
             "library_name": {"v": ["Sponsor"], "op": "eq"},
-            "status": {"v": ["Final"], "op": "eq"}
+            "status": {"v": ["Final"], "op": "eq"},
         }
         all_activities = self.api.get_all_identifiers(
-            self.api.get_all_activity_objects("activities", filters=json.dumps(activity_filters)),
+            self.api.get_all_activity_objects(
+                "activities", filters=json.dumps(activity_filters)
+            ),
             identifier="name",
             value="uid",
         )
@@ -1087,11 +1127,15 @@ class Activities(BaseImporter):
                 "location",
                 "std_unit",
                 "sdtm_variable",
+                "sdtm_variable_name",
             ]
             item_data = []
             for col in item_cols:
                 value = row[col]
-                sdtm_codelist = row["stdm_codelist"]
+                if col == "sdtm_variable_name":
+                    sdtm_codelist = row["stdm_codelist_name"]
+                else:
+                    sdtm_codelist = row["stdm_codelist"]
                 if not value:
                     continue
                 if "|" in value:
@@ -1119,7 +1163,9 @@ class Activities(BaseImporter):
             # find related Activity Instance Class
             sub_domain_class = row["sub_domain_class"]
             instance_class_name = sub_domain_class.title().replace(" ", "")
-            activity_instance_class_uid = all_activity_instance_classes.get(instance_class_name)
+            activity_instance_class_uid = all_activity_instance_classes.get(
+                instance_class_name
+            )
             if not activity_instance_class_uid:
                 # The activity instance type was not recognized
                 self.log.warning(
@@ -1274,7 +1320,9 @@ class Activities(BaseImporter):
             if domain == "INTERVENTIONS":
                 return "intervention_subcategory"
         if col == "sdtm_variable" and domain == "FINDINGS":
-            return "test_name_code"
+            return "test_code"
+        if col == "sdtm_variable_name" and domain == "FINDINGS":
+            return "test_name"
         if col == "std_unit":
             return "standard_unit"
 
@@ -1339,7 +1387,7 @@ class Activities(BaseImporter):
                             f"Activity item '{item}' from column '{column}' can't find underlying ct term for item class '{item_class}'"
                         )
                         continue
-                elif column == "sdtm_variable":
+                elif column in ["sdtm_variable", "sdtm_variable_name"]:
                     if sdtm_codelist not in self.terms_for_codelist_submval:
                         self.log.info(
                             f"Fetching terms for codelist with submission value '{sdtm_codelist}'"
@@ -1436,30 +1484,67 @@ class Activities(BaseImporter):
         timeout = aiohttp.ClientTimeout(None)
         conn = aiohttp.TCPConnector(limit=4, force_close=True)
         async with aiohttp.ClientSession(timeout=timeout, connector=conn) as session:
-            await self.handle_activity_groups(mdr_migration_activity_instances, session)
-            await self.handle_activity_subgroups(
-                mdr_migration_activity_instances, session
-            )
+            if (
+                self._limit_import_to is None
+                or ACTIVITY_GROUPS in self._limit_import_to
+            ):
+                await self.handle_activity_groups(
+                    mdr_migration_activity_instances, session
+                )
+            else:
+                self.log.info("Skipping activity groups import")
+
+            if (
+                self._limit_import_to is None
+                or ACTIVITY_SUBGROUPS in self._limit_import_to
+            ):
+                await self.handle_activity_subgroups(
+                    mdr_migration_activity_instances, session
+                )
+            else:
+                self.log.info("Skipping activity subgroups import")
 
             # The full import may time a while, we refresh the auth token between steps
             # to make sure it does not expire while the import is running.
-            self.refresh_auth()
-            await self.handle_activities(mdr_migration_activity_instances, session)
 
-            self.refresh_auth()
-            await self.handle_activity_instance_classes(
-                mdr_migration_activity_instance_classes, session
-            )
+            if self._limit_import_to is None or ACTIVITIES in self._limit_import_to:
+                self.refresh_auth()
+                await self.handle_activities(mdr_migration_activity_instances, session)
+            else:
+                self.log.info("Skipping activities import")
 
-            self.refresh_auth()
-            await self.handle_activity_item_classes(
-                mdr_migration_activity_item_classes, session
-            )
+            if (
+                self._limit_import_to is None
+                or ACTIVITY_INSTANCE_CLASSES in self._limit_import_to
+            ):
+                self.refresh_auth()
+                await self.handle_activity_instance_classes(
+                    mdr_migration_activity_instance_classes, session
+                )
+            else:
+                self.log.info("Skipping activity instance classes import")
 
-            self.refresh_auth()
-            await self.handle_activity_instances(
-                mdr_migration_activity_instances, session
-            )
+            if (
+                self._limit_import_to is None
+                or ACTIVITY_ITEM_CLASSES in self._limit_import_to
+            ):
+                self.refresh_auth()
+                await self.handle_activity_item_classes(
+                    mdr_migration_activity_item_classes, session
+                )
+            else:
+                self.log.info("Skipping activity item classes import")
+
+            if (
+                self._limit_import_to is None
+                or ACTIVITY_INSTANCES in self._limit_import_to
+            ):
+                self.refresh_auth()
+                await self.handle_activity_instances(
+                    mdr_migration_activity_instances, session
+                )
+            else:
+                self.log.info("Skipping activity instances import")
 
     def run(self):
         self.log.info("Importing activities")
@@ -1468,12 +1553,30 @@ class Activities(BaseImporter):
         self.log.info("Done importing activities")
 
 
-def main():
+def main(limit=None):
     metr = Metrics()
     migrator = Activities(metrics_inst=metr)
+    migrator.limit_import_to(limit)
     migrator.run()
     metr.print()
 
 
 if __name__ == "__main__":
-    main()
+    import argparse
+
+    parser = argparse.ArgumentParser(prog="run_import_activities.py")
+    parser.add_argument(
+        "-l",
+        "--limit",
+        nargs="*",
+        choices=[
+            ACTIVITIES,
+            ACTIVITY_GROUPS,
+            ACTIVITY_SUBGROUPS,
+            ACTIVITY_INSTANCES,
+            ACTIVITY_ITEM_CLASSES,
+            ACTIVITY_INSTANCE_CLASSES,
+        ],
+    )
+    args = parser.parse_args()
+    main(limit=args.limit)

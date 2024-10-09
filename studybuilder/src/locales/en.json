@@ -6,6 +6,7 @@
         "add": "Add",
         "cancel": "Cancel",
         "close": "Close",
+        "clear_all": "Clear all",
         "endpoint": "Endpoint",
         "endpoints": "Endpoints",
         "timeframe": "Time frame",
@@ -28,6 +29,7 @@
         "overview": "Overview",
         "name": "Name",
         "save": "Save",
+        "save_changes": "Save changes",
         "submit": "Submit",
         "template": "Template",
         "parent_template": "Parent template",
@@ -433,9 +435,9 @@
         },
         "StudyDefineForm": {
             "general": "This section is for defining the Study. For requesting a term/value added to drop-down list, please refer to SharePoint",
-            "studytype": "Select value that reflects the overall study type. For definition of study types see <a href='https://studybuilder.clinicalmdr-dev.corp.azure.novonordisk.com/library/ct_catalogues/All/C99077/terms' target='_blank'>[Study Type]<a>",
+            "studytype": "Select value that reflects the overall study type. For definition of study types see <a href='{url}' target='_blank'>[Study Type]<a>",
             "studyintent": "Select the values that reflect the planned purposes of the therapy or device being investigated in the study",
-            "trialtype": "Select the values that reflect the trial type(s) that is within the study purpose.",
+            "trialtype": "Select the values that reflect the trial type(s) that is within the study purpose. For definition of the trial types see <a href='{url}' target='_blank'>[Trial Type Response]<a>",
             "trialphase": "Select relevant phase or stage, of the study",
             "studystoprule": "The rule(s), regulation(s) and/or condition(s) that determines the point in time when a clinical trial will be terminated. Stopping rule as specified in Protocol. If there is no stopping rule record 'NONE' in this field",
             "extensiontrial": "Indicate whether the study is an extension trial",
@@ -1099,6 +1101,9 @@
             "disease_milestones": "Disease Milestones",
             "data_specifications": "Data Specifications",
             "usdm": "USDM"
+        },
+        "admin": {
+            "announcements": "System annoucement"
         }
     },
     "HomeView": {
@@ -3680,15 +3685,6 @@
         "vendor_extension_applied": "Vendor Extension Applied",
         "ref_vendor_extension_applied": "Reference Vendor Extension Applied"
     },
-    "CrfConditionForm": {
-        "set_condition": "Set a Condition",
-        "context": "Context",
-        "formal_expression": "Formal Expression",
-        "nested_element": "Nested Element",
-        "separator": "Separator",
-        "condition": "Condition",
-        "select_value": "Select the value"
-    },
     "CrfLinikingForm": {
         "link_activities": "Link Activities",
         "link_activity_groups": "Link Activity Groups",
@@ -3978,7 +3974,7 @@
     "StudyFootnoteTable": {
         "footnote": "Footnote",
         "footnotes": "Footnotes",
-        "covered_items": "SoA items covered",
+        "covered_items": "Linked to",
         "confirm_delete": "Are you sure you want to remove the footnote <strong> {footnote} </strong> from the study?",
         "delete_footnote_success": "SoA footnote deleted",
         "global_history_title": "SoA footnotes history",
@@ -3992,7 +3988,8 @@
         "use_new_version": "Use new version",
         "not_linked_warning": "This footnote is not linked to any Activity.",
         "remove": "Remove Footnote",
-        "keep": "Keep footnote"
+        "keep": "Keep footnote",
+        "link_unlink": "Link/Unlink Footnote"
     },
     "StudyFootnoteForm": {
         "add_title": "Add SoA footnotes",
@@ -4128,5 +4125,26 @@
     "SelectionOrderUpdateForm": {
         "title": "Change order",
         "order": "Order"
+    },
+    "SystemAnnouncementsView": {
+        "title": "System announcement",
+        "show_title": "Show announcement",
+        "show_help": "The annoucement will be shown at the top of StudyBuilder as a system-wide message",
+        "announcement_type": "Choose type of announcement",
+        "type_informative": "Informative",
+        "help_informative": "An information that is not an error or potentially dangerous",
+        "type_warning": "Warning",
+        "help_warning": "A potential dangerous situation such as when changes are not saved due to release",
+        "type_error": "Error",
+        "help_error": "A major error in StudyBuilder with high severity",
+        "announcement_content": "Announcement content",
+        "announcement_title": "Announcement title",
+        "announcement_description": "Announcement description",
+        "announcement_schedule": "Schedule announcement (optional)",
+        "start_at": "Start at",
+        "end_at": "End at",
+        "preview": "Preview system announcement",
+        "add_success": "System announcement added",
+        "update_success": "System announcement updated"
     }
 }

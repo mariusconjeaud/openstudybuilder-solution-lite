@@ -163,11 +163,11 @@ class StandardCodelistTerms1(BaseImporter):
             legacy_codelist_id = row[headers.index("legacy_codelist_id")]
             new_codelist_name = row[headers.index("new_codelist_name")]
             if legacy_codelist_id == "" or legacy_codelist_id == None:
-                if new_codelist_name == "Objective Level":
+                if new_codelist_name == self.objective_level_cl_name:
                     self.sponsor_codelist_legacy_name_map[
                         "ObjectiveLevel"
                     ] = new_codelist_name
-                elif new_codelist_name == "Endpoint Level":
+                elif new_codelist_name == self.endpoint_level_cl_name:
                     self.sponsor_codelist_legacy_name_map[
                         "EndpointLevel"
                     ] = new_codelist_name
@@ -325,8 +325,8 @@ class StandardCodelistTerms1(BaseImporter):
     def handle_epoch(self, csvfile):
         readCSV = csv.reader(csvfile, delimiter=",")
         headers = next(readCSV)
-        parent_sub_type_terms = self.api.get_terms_for_codelist_name("Epoch Sub Type")
-        all_epoch_terms = self.api.get_terms_for_codelist_name("Epoch")
+        parent_sub_type_terms = self.api.get_terms_for_codelist_name(self.epoch_subtype_cl_name)
+        all_epoch_terms = self.api.get_terms_for_codelist_name(self.epoch_cl_name)
         for row in readCSV:
             parent_term_uid = find_term_by_name(
                 row[headers.index("GEN_EPOCH_SUB_TYPE")], parent_sub_type_terms
@@ -797,7 +797,7 @@ class StandardCodelistTerms1(BaseImporter):
         code_lists_uids = self.api.get_code_lists_uids()
         await term_importer.migrate_term(
             MDR_MIGRATION_SPONSOR_EPOCH,
-            codelist_name="Epoch",
+            codelist_name=self.epoch_cl_name,
             code_lists_uids=code_lists_uids,
             session=session,
         )

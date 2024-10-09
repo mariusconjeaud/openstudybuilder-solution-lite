@@ -1,6 +1,5 @@
 <template>
   <StudySelectionEditForm
-    v-if="studyEndpoint"
     ref="formRef"
     :title="$t('StudyEndpointEditForm.title')"
     :study-selection="editedObject"
@@ -68,6 +67,7 @@
           <template v-else>
             <ParameterValueSelector
               ref="timeframeParamSelector"
+              key="timeframeParameters"
               :model-value="timeframeTemplateParameters"
               :template="timeframeTemplate.name"
               color="white"
@@ -221,7 +221,7 @@ onMounted(() => {
   study
     .getStudyObjectives(studiesGeneralStore.selectedStudy.uid)
     .then((resp) => {
-      studyObjectives.value = resp.data.items.filter(obj => obj.objective)
+      studyObjectives.value = resp.data.items.filter((obj) => obj.objective)
     })
 })
 
@@ -271,7 +271,7 @@ async function getTimeframeNamePreview(parameters) {
   const data = {
     timeframe_template_uid: editedObject.value.timeframe.template.uid,
     parameter_terms: await instances.formatParameterValues(parameters),
-    library_name: editedObject.value.timeframe.library.name,
+    library_name: constants.LIBRARY_USER_DEFINED,
   }
   const resp = await timeframes.getPreview(data)
   return resp.data.name
@@ -305,7 +305,9 @@ async function submit(newTemplate, form, parameters) {
   } else {
     const namePreview = await getStudyEndpointNamePreview(parameters)
     if (namePreview !== editedObject.value.endpoint.name) {
-      data.endpoint_template = editedObject.value.endpoint.endpoint_template ? editedObject.value.endpoint.endpoint_template : editedObject.value.endpoint.template
+      data.endpoint_template = editedObject.value.endpoint.endpoint_template
+        ? editedObject.value.endpoint.endpoint_template
+        : editedObject.value.endpoint.template
       // Hotfix because we don't have the template library here...
       data.endpoint_template.library = {
         name: constants.LIBRARY_SPONSOR,

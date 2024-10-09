@@ -22,7 +22,11 @@ let globalConfig
  */
 function prepareConfig(config) {
   const trueValues = ['1', 't', 'true', 'on', 'y', 'yes']
-  for (const field of ['OAUTH_ENABLED', 'APPINSIGHTS_DISABLE']) {
+  for (const field of [
+    'OAUTH_ENABLED',
+    'OAUTH_RBAC_ENABLED',
+    'APPINSIGHTS_DISABLE',
+  ]) {
     const currentValue = config[field].toLowerCase()
     config[field] = trueValues.indexOf(currentValue) !== -1
   }

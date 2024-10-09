@@ -3411,6 +3411,7 @@ def is_specific(path):
     if any(
         x in path
         for x in (
+            "{sn}",
             "{uid}",
             "{catalogue_name}",
             "{codelist_uid}",
@@ -3466,7 +3467,7 @@ def _create_paths(app: FastAPI, path_prefix="") -> list[dict[str, any]]:
     return paths
 
 
-def inject_base_data() -> Study:
+def inject_base_data(inject_unit_subset: bool = True) -> Study:
     """
     The data included as generic base data is the following
     - names specified below
@@ -3504,6 +3505,20 @@ def inject_base_data() -> Study:
         sdtm = CTCatalogue(name="SDTM CT").save()
         cdisc = Library.nodes.get(name="CDISC")
         sdtm.contains_catalogue.connect(cdisc)
+    unit_subsets = []
+    if inject_unit_subset:
+        unit_subset_codelist = TestUtils.create_ct_codelist(
+            name="Unit Subset",
+            sponsor_preferred_name="unit subset",
+            extensible=True,
+            approve=True,
+        )
+        unit_subset_term = TestUtils.create_ct_term(
+            codelist_uid=unit_subset_codelist.codelist_uid,
+            sponsor_preferred_name_sentence_case="study time",
+            sponsor_preferred_name="Study Time",
+        )
+        unit_subsets.append(unit_subset_term.term_uid)
 
     ## Unit Definitions
     TestUtils.create_unit_definition(
@@ -3514,6 +3529,7 @@ def inject_base_data() -> Study:
         si_unit=True,
         us_conventional_unit=True,
         conversion_factor_to_master=config.DAY_UNIT_CONVERSION_FACTOR_TO_MASTER,
+        unit_subsets=unit_subsets,
     )
     TestUtils.create_unit_definition(
         name=config.WEEK_UNIT_NAME,
@@ -3523,6 +3539,7 @@ def inject_base_data() -> Study:
         si_unit=True,
         us_conventional_unit=True,
         conversion_factor_to_master=config.WEEK_UNIT_CONVERSION_FACTOR_TO_MASTER,
+        unit_subsets=unit_subsets,
     )
 
     ## Codelists

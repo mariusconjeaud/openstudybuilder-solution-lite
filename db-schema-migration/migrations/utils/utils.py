@@ -5,14 +5,15 @@ import re
 import time
 from typing import Any, List, Optional
 
-from neo4j import GraphDatabase
 import neo4j.exceptions
 import requests
+from neo4j import GraphDatabase
 from neomodel import config as neoconfig
 from neomodel.core import db
 
 REGEX_SNAKE_CASE = r"^[a-z]+(_[a-z]+)*$"
 REGEX_SNAKE_CASE_WITH_DOT = r"^[a-z.]+(_[a-z.]+)*$"
+
 
 def get_logger(name: str = "Migrator"):
     loglevel = os.environ.get("LOG_LEVEL", "INFO")
@@ -25,7 +26,9 @@ def get_logger(name: str = "Migrator"):
     )
     return logging.getLogger(name)
 
+
 logger = get_logger(os.path.basename(__file__))
+
 
 def load_env(key: str, default: Optional[str] = None):
     value = os.environ.get(key)
@@ -38,12 +41,14 @@ def load_env(key: str, default: Optional[str] = None):
     logger.warning("%s is not set, using default value: %s", key, default)
     return default
 
+
 DATABASE_NAME = load_env("DATABASE_NAME")
 DATABASE_URL = load_env("DATABASE_URL")
 API_BASE_URL = load_env("API_BASE_URL", "http://localhost:8000")
 API_HEADERS = {"User-Agent": "Data-Migrator"}
 TOKEN_REFRESH_INTERVAL = 1200  # 20 minutes
-LAST_TOKEN_REFRESH = -TOKEN_REFRESH_INTERVAL # Force refresh on first call
+LAST_TOKEN_REFRESH = -TOKEN_REFRESH_INTERVAL  # Force refresh on first call
+
 
 def get_token():
     """Returns authentication token"""
@@ -77,7 +82,7 @@ def get_token():
 
 def make_api_header(token):
     return {
-        "Authorization": f'Bearer {token}',
+        "Authorization": f"Bearer {token}",
         "User-Agent": "Data-Migrator",
     }
 

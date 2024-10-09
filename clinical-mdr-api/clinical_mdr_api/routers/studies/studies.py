@@ -1,7 +1,9 @@
 from typing import Any
 
+from dict2xml import dict2xml
 from fastapi import APIRouter, Body, Path, Query, Response
 from fastapi import status as response_status
+from fastapi.responses import StreamingResponse
 from pydantic.types import Json
 from starlette.requests import Request
 
@@ -29,6 +31,7 @@ from clinical_mdr_api.models.study_selections.study import (
     StudySubpartCreateInput,
     StudySubpartReorderingInput,
 )
+from clinical_mdr_api.models.study_selections.study_pharma_cm import StudyPharmaCM
 from clinical_mdr_api.models.utils import CustomPage
 from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
@@ -37,7 +40,9 @@ from clinical_mdr_api.routers._generic_descriptions import (
     study_fields_audit_trail_section_description,
     study_section_description,
 )
+from clinical_mdr_api.routers.export import _convert_data_to_list
 from clinical_mdr_api.services.studies.study import StudyService
+from clinical_mdr_api.services.studies.study_pharma_cm import StudyPharmaCMService
 
 # Prefixed with "/studies"
 router = APIRouter()
@@ -408,6 +413,71 @@ def get(
         study_value_version=study_value_version,
     )
     return study_definition
+
+
+@router.get(
+    "/{uid}/pharma-cm",
+    dependencies=[rbac.STUDY_READ],
+    summary="Returns the pharma-cm represention of study identified by 'uid'.",
+    response_model=StudyPharmaCM,
+    response_model_exclude_unset=True,
+    status_code=200,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - The study with the specified 'uid'"
+            " (and the specified date/time and/or status) wasn't found.",
+        },
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+def get_pharma_cm_representation(
+    uid: str = StudyUID,
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
+):
+    StudyService().check_if_study_uid_and_version_exists(
+        study_uid=uid, study_value_version=study_value_version
+    )
+    study_pharma_service = StudyPharmaCMService()
+    study_pharma = study_pharma_service.get_pharma_cm_representation(
+        study_uid=uid,
+        study_value_version=study_value_version,
+    )
+    return study_pharma
+
+
+@router.get(
+    "/{uid}/pharma-cm.xml",
+    dependencies=[rbac.STUDY_READ],
+    summary="Returns the pharma-cm represention of study identified by 'uid' in the xml format.",
+    response_model_exclude_unset=True,
+    status_code=200,
+    responses={
+        200: {"content": {"text/xml": {}}},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+def get_pharma_cm_xml_representation(
+    uid: str = StudyUID,
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
+) -> StreamingResponse:
+    StudyService().check_if_study_uid_and_version_exists(
+        study_uid=uid, study_value_version=study_value_version
+    )
+    study_pharma_service = StudyPharmaCMService()
+    study_pharma = study_pharma_service.get_pharma_cm_representation(
+        study_uid=uid,
+        study_value_version=study_value_version,
+    )
+    export_dict = {
+        "item": _convert_data_to_list(study_pharma, StudyPharmaCM.__fields__.keys())
+    }
+    response = StreamingResponse(
+        iter([dict2xml(export_dict, indent="  ")]), media_type="text/xml"
+    )
+    response.headers["Content-Disposition"] = "attachment; filename=export"
+    return response
 
 
 @router.patch(

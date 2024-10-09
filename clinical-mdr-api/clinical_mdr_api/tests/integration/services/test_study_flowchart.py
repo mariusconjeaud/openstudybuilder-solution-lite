@@ -16,6 +16,7 @@ from clinical_mdr_api.domains.study_selections.study_soa_footnote import SoAItem
 from clinical_mdr_api.models.concepts.activities.activity_instance import (
     ActivityInstance,
 )
+from clinical_mdr_api.models.study_selections.study import StudySoaPreferences
 from clinical_mdr_api.models.study_selections.study_epoch import StudyEpoch
 from clinical_mdr_api.models.study_selections.study_soa_footnote import ReferencedItem
 from clinical_mdr_api.services._meta_repository import MetaRepository
@@ -44,6 +45,10 @@ from clinical_mdr_api.services.utils.table_f import TableRow, TableWithFootnotes
 from clinical_mdr_api.tests.integration.utils.data_library import inject_base_data
 from clinical_mdr_api.tests.integration.utils.utils import LIBRARY_NAME, TestUtils
 from clinical_mdr_api.tests.unit.services.test_study_flowchart import (
+    check_flowchart_table_dimensions,
+    check_flowchart_table_first_rows,
+    check_flowchart_table_footnotes,
+    check_flowchart_table_visit_rows,
     check_hidden_row_propagation,
 )
 
@@ -428,6 +433,7 @@ class TestData:
     footnote_types: dict[str, models.CTTerm]
     footnotes: dict[str, models.Footnote]
     soa_footnotes: list[StudySoAFootnote]
+    soa_preferences: StudySoaPreferences
 
 
 @pytest.fixture(scope="module")
@@ -506,7 +512,9 @@ def tst_data(request, temp_database):
     )
 
     # Patch SoA Preferences as tests do not yet support baseline_as_time_zero
-    TestUtils.patch_soa_preferences(test_data.study.uid, baseline_as_time_zero=False)
+    test_data.soa_preferences = TestUtils.patch_soa_preferences(
+        test_data.study.uid, baseline_as_time_zero=False
+    )
 
     return test_data
 
@@ -580,11 +588,6 @@ def create_epoch_terms() -> dict[str, models.CTTerm]:
             term.term_uid,
             term.term_uid,
             TermParentType.PARENT_SUB_TYPE.value,
-        )
-        ct_term_service.add_parent(
-            term.term_uid,
-            term.term_uid,
-            TermParentType.VALID_FOR_EPOCH_TYPE.value,
         )
 
     codelist = TestUtils.create_ct_codelist(
@@ -1394,6 +1397,7 @@ def protocol_soa_table__days(tst_data: TestData) -> TableWithFootnotes:
         study_uid=tst_data.study.uid, hide_soa_groups=True, time_unit="day"
     )
     StudyFlowchartService.propagate_hidden_rows(soa_table)
+    soa_table.rows[0].cells[0].text = _gettext("procedure_label")
     return soa_table
 
 
@@ -1405,6 +1409,7 @@ def protocol_soa_table__weeks(tst_data: TestData) -> TableWithFootnotes:
         study_uid=tst_data.study.uid, hide_soa_groups=True, time_unit="week"
     )
     StudyFlowchartService.propagate_hidden_rows(soa_table)
+    soa_table.rows[0].cells[0].text = _gettext("procedure_label")
     return soa_table
 
 
@@ -1498,14 +1503,16 @@ def test_get_flowchart_table(
     assert table.title == _gettext("protocol_flowchart")
 
     # Test dimensions
-    check_flowchart_table_dimensions(table)
+    check_flowchart_table_dimensions(table, operational, tst_data.soa_preferences)
 
     # Test first header row
-    check_flowchart_table_first_row(table, operational, study_epochs, study_visits)
+    check_flowchart_table_first_rows(
+        table, operational, study_epochs, study_visits, tst_data.soa_preferences
+    )
 
     # Test visit header rows
     visit_idx_by_uid = check_flowchart_table_visit_rows(
-        table, operational, time_unit, study_visits
+        table, operational, time_unit, study_visits, tst_data.soa_preferences
     )
 
     # Test the rest of the rows
@@ -1708,254 +1715,6 @@ def test_get_flowchart_table(
         ensure_flowchart_table_has_no_footnotes(table)
     else:
         check_flowchart_table_footnotes(table, tst_data.soa_footnotes)
-
-
-def check_flowchart_table_dimensions(table):
-    """tests dimensions of SoA table"""
-
-    num_cols = sum(cell.span for cell in table.rows[0].cells)
-    for i, row in enumerate(table.rows[1:], start=1):
-        # THEN number of columns are the same in all rows
-        assert len(row.cells) <= num_cols, f"Unexpected number of columns in row {i}"
-        assert (
-            sum(cell.span for cell in row.cells) == num_cols
-        ), f"Unexpected span of columns in row {i}"
-    # THEN table has 4 header rows
-    assert table.num_header_rows == 4
-    # THEN table has 1 header column
-    assert table.num_header_cols == 1
-
-
-def check_flowchart_table_first_row(table, operational, study_epochs, study_visits):
-    """tests first header row of study SoA table"""
-
-    row = table.rows[0]
-
-    # THEN first header row is visible
-    assert not row.hide
-
-    # THEN first cell text is empty
-    assert not row.cells[0].text
-
-    if operational:
-        # THEN has operational SoA column headers
-        assert row.cells[1].text == _gettext("topic_code")
-        assert row.cells[2].text == _gettext("adam_param_code")
-
-    num_visits_per_epoch = defaultdict(int)
-    # only one visit per group is considered
-    visit: models.StudyVisit
-    for _, e in {
-        (visit.consecutive_visit_group or visit.visit_name, visit.study_epoch_name)
-        for visit in study_visits
-    }:
-        num_visits_per_epoch[e] += 1
-
-    i = 3 if operational else 1
-    epoch: StudyEpoch
-    for epoch in study_epochs:
-        cell = row.cells[i]
-
-        # THEN cell style is header1
-        assert cell.style == "header1"
-
-        # THEN cell text is epoch name
-        assert cell.text == epoch.epoch_name
-
-        # THEN cell refs
-        assert len(cell.refs) == 1
-        assert cell.refs[0].type == SoAItemType.STUDY_EPOCH.value
-        assert cell.refs[0].uid == epoch.uid
-
-        # THEN span is number of visits
-        assert cell.span == num_visits_per_epoch[epoch.epoch_name]
-
-        for j in range(1, cell.span):
-            # THEN span of following cells are 0 for the next visits of the epoch
-            assert row.cells[i + j].span == 0
-
-            # THEN text of following cells are empty
-            assert not row.cells[i + j].text
-
-        i += cell.span
-
-
-def check_flowchart_table_visit_rows(table, operational, time_unit, study_visits):
-    """test visit header rows of SoA table"""
-
-    # THEN Second row label text is
-    assert table.rows[1].cells[0].text == _gettext("visit_short_name")
-
-    # THEN Third row label text is
-    assert _gettext(
-        f"study_{time_unit}"
-    ), f"translation key not found: study_{time_unit}"
-    assert table.rows[2].cells[0].text == _gettext(f"study_{time_unit}")
-
-    # THEN Fourth row label text is
-    assert table.rows[3].cells[0].text == _gettext("visit_window")
-
-    for i in range(1, 4):
-        # THEN Rows label style
-        assert table.rows[i].cells[0].style == f"header{i+1}"
-
-        # THEN Rows are visible
-        assert not table.rows[i].hide
-
-    visit_groups: dict[str, models.StudyVisit] = {}
-    visit_idx_by_uid: dict[str, int] = {}
-    for visit in study_visits:
-        group_name = visit.consecutive_visit_group or visit.visit_name
-        visit_groups.setdefault(group_name, []).append(visit)
-        visit_idx_by_uid[visit.uid] = len(visit_groups) + (2 if operational else 0)
-
-    for i, (group_name, visits) in enumerate(
-        visit_groups.items(), start=3 if operational else 1
-    ):
-        visit = visits[0]
-
-        # THEN visits name in second row
-        assert (
-            table.rows[1].cells[i].text == visit.consecutive_visit_group
-            or visit.visit_name
-        )
-
-        # THEN visits ref in second row
-        assert len(table.rows[1].cells[i].refs) == len(visits)
-        assert {ref.type for ref in table.rows[1].cells[i].refs} == {
-            SoAItemType.STUDY_VISIT.value
-        }, "Invalid reference type"
-        assert {ref.uid for ref in table.rows[1].cells[i].refs} == {
-            visit.uid for visit in visits
-        }, "Referenced visit uids does not match"
-
-        # THEN study weeks/days in second row
-        if len(visits) > 1:
-            if time_unit == "week":
-                assert (
-                    table.rows[2].cells[i].text
-                    == f"{visits[0].study_week_number:d}-{visits[-1].study_week_number:d}"
-                )
-            else:
-                assert (
-                    table.rows[2].cells[i].text
-                    == f"{visits[0].study_day_number:d}-{visits[-1].study_day_number:d}"
-                )
-        else:
-            if time_unit == "week":
-                assert table.rows[2].cells[i].text == str(visit.study_week_number)
-            else:
-                assert table.rows[2].cells[i].text == str(visit.study_day_number)
-
-        # THEN text in forth row
-        if visit.min_visit_window_value == -visit.max_visit_window_value:
-            assert (
-                table.rows[3].cells[i].text == f"±{visit.max_visit_window_value:0.0f}"
-            )
-        else:
-            assert (
-                table.rows[3].cells[i].text
-                == f"{visit.min_visit_window_value:+0.0f}/{visit.max_visit_window_value:+0.0f}"
-            )
-
-    for i, cell in enumerate(table.rows[0].cells):
-        if cell.text and cell.span:
-            # THEN first row cell style is header1
-            assert cell.style == "header2" if operational and i < 2 else "header1"
-
-    for cell in table.rows[1].cells:
-        # THEN second row cell span is 1
-        assert cell.span == 1
-        if cell.text:
-            # THEN second row cell style is header2
-            assert cell.style == "header2"
-
-    for cell in table.rows[2].cells:
-        # THEN third row cell span is 1
-        assert cell.span == 1
-        if cell.text:
-            # THEN third row cell style is header3
-            assert cell.style == "header3"
-
-    # THEN forth row style is header4
-    for cell in table.rows[3].cells:
-        # THEN forth row cell span is 1
-        if cell.text and cell.span:
-            assert cell.style == "header4"
-
-    return visit_idx_by_uid
-
-
-def check_flowchart_table_footnotes(table: dict, soa_footnotes: list[StudySoAFootnote]):
-    """check footnotes and their references in flowchart table"""
-
-    symbol_ref_uid_map: dict[str, set] = defaultdict(set)
-    soa_ref_uids = set()
-
-    for r_idx, row in enumerate(table.rows):
-        for c_idx, cell in enumerate(row.cells):
-            has_footnotes = cell.footnotes
-
-            if has_footnotes:
-                assert (
-                    cell.refs
-                ), f"Cell [{r_idx},{c_idx}] without references should not have any footnotes"
-
-            if not cell.refs:
-                continue
-
-            for ref in cell.refs:
-                soa_ref_uids.add(ref.uid)
-
-                if has_footnotes:
-                    for symbol in cell.footnotes:
-                        symbol_ref_uid_map[symbol].add(ref.uid)
-
-    keys = list(symbol_ref_uid_map.keys())
-    assert keys == sorted(keys), "Invalid order of footnotes symbols"
-
-    if keys:
-        assert table.footnotes, "Missing table footnotes"
-
-    assert list(table.footnotes.keys()) == sorted(
-        table.footnotes.keys()
-    ), "Invalid footnote order"
-    assert set(keys).issubset(
-        table.footnotes.keys()
-    ), "Invalid footnote symbols or missing footnote for symbol"
-
-    footnote_uid_symbol_map: dict[str, str] = {
-        fn.uid: sym for sym, fn in table.footnotes.items()
-    }
-
-    for footnote in soa_footnotes:
-        assert (
-            footnote.uid in footnote_uid_symbol_map
-        ), f"No symbol found for footnote {footnote.uid}"
-        symbol = footnote_uid_symbol_map[footnote.uid]
-
-        # THEN verify footnote text matches footnote template text
-        assert table.footnotes[symbol].text_plain == footnote.template.name_plain
-        assert table.footnotes[symbol].text_html == footnote.template.name
-
-        # Must filter out uids not giving any SoA row unless Activities can share StudyActivityGroup and SubGroup nodes
-        footnote_referenced_uids = {
-            ref.item_uid
-            for ref in footnote.referenced_items
-            if ref.item_uid in soa_ref_uids
-        }
-        referenced_uids_in_soa = set(symbol_ref_uid_map[symbol])
-
-        if footnote_referenced_uids:
-            # THEN verify footnotes are referenced in SoA
-            footnote_uids_not_referenced_in_soa = (
-                footnote_referenced_uids - referenced_uids_in_soa
-            )
-            assert not footnote_uids_not_referenced_in_soa
-
-        else:
-            # THEN a footnote without references should not be referenced in any cell of the SoA
-            assert not referenced_uids_in_soa
 
 
 def ensure_flowchart_table_has_no_footnotes(table: dict):
@@ -2181,7 +1940,7 @@ def test_download_detailed_soa_content(
         study_activity = study_activities_map[sched.study_activity_uid]
         study_visit = study_visits_map[sched.study_visit_uid]
 
-        assert len(res.keys()) == 8, f"record #{i} property count mismatch"
+        assert len(res.keys()) == 9, f"record #{i} property count mismatch"
         assert res["study_version"] == study_version(tst_data.study) or res[
             "study_version"
         ].startswith("LATEST on 20")
@@ -2201,6 +1960,8 @@ def test_download_detailed_soa_content(
             == study_activity.study_activity_subgroup.activity_subgroup_name
         )
         assert res["activity"] == study_activity.activity.name
+        if not protocol_flowchart:
+            assert res["is_data_collected"] == study_activity.activity.is_data_collected
 
 
 def test_download_operational_soa_content(

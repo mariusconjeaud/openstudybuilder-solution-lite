@@ -29,7 +29,7 @@
                     variant="text"
                     @click="toggleExpand(internalItem)"
                   />
-                  <v-btn v-else icon variant="text" />
+                  <v-btn v-else icon variant="text" class="hide"/>
                   <ActionsMenu :actions="actions" :item="item" />
                   <div class="mt-3">
                     {{
@@ -89,7 +89,7 @@
                   <tr style="background-color: #d8eaf8">
                     <td width="25%">
                       <v-row>
-                        <v-btn icon variant="text" />
+                        <v-btn icon variant="text" class="hide"/>
                         <ActionsMenu :actions="actions" :item="props.item" />
                         <div class="mt-3">
                           {{ $t('CrfExtensions.attribute') }}
@@ -155,7 +155,7 @@
                     variant="text"
                     @click="toggleExpand(internalItem)"
                   />
-                  <v-btn v-else icon variant="text" />
+                  <v-btn v-else icon variant="text" class="hide"/>
                   <ActionsMenu :actions="actions" :item="item" />
                   <div class="mt-3">
                     {{
@@ -205,7 +205,7 @@
                   <tr style="background-color: #d8eaf8">
                     <td width="25%">
                       <v-row>
-                        <v-btn icon variant="text" />
+                        <v-btn icon variant="text" class="hide"/>
                         <ActionsMenu :actions="actions" :item="item" />
                         <div class="mt-3">
                           {{ $t('CrfExtensions.attribute') }}
@@ -362,5 +362,8 @@ async function getAttributes(params) {
 }
 .elementBackground {
   background-color: #b1d5f2;
+}
+.hide {
+  opacity: 0;
 }
 </style>

@@ -89,6 +89,11 @@ def get_activities(
         None,
         description="The unique id of the activity sub group to use as a specific filter",
     ),
+    activity_group_uid: str
+    | None = Query(
+        None,
+        description="The unique id of the activity group to use as a specific filter",
+    ),
     activity_names: list[str]
     | None = Query(
         None,
@@ -137,6 +142,7 @@ def get_activities(
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
         activity_subgroup_uid=activity_subgroup_uid,
+        activity_group_uid=activity_group_uid,
         activity_names=activity_names,
         activity_subgroup_names=activity_subgroup_names,
         activity_group_names=activity_group_names,
