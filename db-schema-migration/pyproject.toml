@@ -11,7 +11,7 @@ log_cli_date_format = "%Y-%m-%d %H:%M:%S"
 extension-pkg-allow-list = 'locust'
 
 [tool.pylint.'MESSAGES CONTROL']
-disable = 'duplicate-code,missing-function-docstring,missing-module-docstring,line-too-long,no-name-in-module,protected-access,missing-class-docstring,too-few-public-methods'
+disable = 'trailing-whitespace,duplicate-code,missing-function-docstring,missing-module-docstring,line-too-long,no-name-in-module,protected-access,missing-class-docstring,too-few-public-methods'
 
 [tool.pylint.'FORMAT']
 max-line-length = 150

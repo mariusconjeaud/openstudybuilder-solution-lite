@@ -318,7 +318,7 @@ class StudySelectionElementRepository:
 
     def save(self, study_selection: StudySelectionElementAR, author: str) -> None:
         """
-        Persist the set of selected study amrs from the aggregate to the database
+        Persist the set of selected study element from the aggregate to the database
         :param study_selection:
         :param author:
         """
@@ -362,7 +362,7 @@ class StudySelectionElementRepository:
 
         # audit trail nodes dictionary, holds the new nodes created for the audit trail
         audit_trail_nodes = {}
-        # dictonary of last nodes to traverse to their old connections
+        # dictionary of last nodes to traverse to their old connections
         last_nodes = {}
         # loop through and remove selections
         for order, selection in selections_to_remove:

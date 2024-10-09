@@ -35,12 +35,15 @@ def test_fix_duration_properties_for_visits_with_negative_timings():
         migration
     )
 
+
 def test_merge_reuse_study_selection_metadata():
     test_migration_006.test_merge_reuse_study_selection_metadata(migration)
 
 
 def test_merge_multiple_study_activity_subgroup_and_group_nodes():
-    test_migration_006.test_merge_multiple_study_activity_subgroup_and_group_nodes(migration)
+    test_migration_006.test_merge_multiple_study_activity_subgroup_and_group_nodes(
+        migration
+    )
 
 
 def test_fix_not_migrated_study_soa_groups():

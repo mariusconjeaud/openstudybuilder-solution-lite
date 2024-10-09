@@ -62,6 +62,11 @@ DATABASE_NAME=schema.migration.test
 API_BASE_URL=http://localhost:8000
 API_AUTH_TOKEN=
 CREATE_DB=true
+
+MDR_MIGRATION_ACTIVE_SUBSTANCES=migration_data/datafiles/compounds/active_substances.json
+MDR_MIGRATION_PHARMACEUTICAL_PRODUCTS=migration_data/datafiles/compounds/pharmaceutical_products.json
+MDR_MIGRATION_MEDICINAL_PRODUCTS=migration_data/datafiles/compounds/medicinal_products.json
+MDR_MIGRATION_COMPOUNDS=migration_data/datafiles/compounds/compounds.json
 ```
 
 

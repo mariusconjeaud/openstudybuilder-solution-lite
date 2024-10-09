@@ -1,5 +1,102 @@
 # OpenStudyBuilder Commits changelog
 
+
+## V 0.11.2
+
+No New features and/or enhancements added
+
+
+Solved Bugs
+============
+
+### Library
+
+ **Code Lists -> Sponsor -> All** 
+
+- Terms deleted from sponsor codelists are removed or deleted from locked studies
+
+ **Concepts -> Activities -> Activity Instances** 
+
+- New Activity Instance versions sometimes link to an old version of the Activity
+
+
+## V 0.11.1
+
+No new features and/or enhancements added
+
+Solved Bug
+============
+
+### Studies
+
+**Define Study -> Study Activities ->Activities**
+
+- Search doesn't result in relevant results
+
+
+## V 0.11.0
+
+## Fixes and Enhancements
+
+- In the Protocol SoA the top-left cell text is now always displaying the word "Procedure" in an alignment with both the Novo Nordisk and TransCelerate protocol templates.
+- Various quality improvements by increased coverage of automated tests. Various improvements to data import scripts for activity content. Simplified the process for creating new visit types in the Library and removed restrictions on what epochs a visit type can belong to.
+
+## New features
+
+- A new administration page has been created where administrators of the StudyBuilder application can toggle system wide announcements. This can be used for eg communicating closing windows to the end-users.
+
+
+
+Solved Bugs
+============
+
+### Library
+
+ **Code Lists -> Sponsor -> All** 
+
+- Code list 'search with terms' shows terms connected to non-sponsor library
+
+ **Concepts -> Activities -> Activities** 
+
+- Cannot add a space while searching for a term or word
+
+ **Concepts -> Activities -> Activities by Grouping** 
+
+- Activity grouping showing incorrect result
+
+ **Concepts -> Activities -> Requested Activities** 
+
+- Incorrect system behaviour when trying to 'Add activity request'
+
+### Studies
+
+ **Define Study -> Data Specifications -> Study Activity Instances** 
+
+- Selection of instances showing list includes instances not yet approved (Final)
+
+ **Define Study -> Study Activities ->  Study Activities** 
+
+- While adding study activities from other studies, an issue identified with displaying studies acronyms in the drop down list
+
+ **Define Study -> Study Activities -> Schedule of Activities > Detailed** 
+
+- Only the first 10 footnotes are visible in the protocol SoA
+- visit number 29999 and 29500 appears in the batch edit activities in detailed SoA
+
+ **Define Study -> Study Activities -> Study Activities** 
+
+- Colour for 'Not submitted' placeholder is not matching with the colour displayed as reference stated below the table
+
+ **Define Study -> Study Structure -> Study Visits** 
+
+- Additional sub visit radio button is missing
+- Numbers for 'non-visit' and 'unscheduled visit' has been mixed up
+- Required fields are not marked with '*' when creating visits under 'Study structure'
+
+ **Process Overview -> Protocol process** 
+
+- Study Activities menu items has incorrect links
+
 ## V 0.10.0
 
 ## Fixes and Enhancements

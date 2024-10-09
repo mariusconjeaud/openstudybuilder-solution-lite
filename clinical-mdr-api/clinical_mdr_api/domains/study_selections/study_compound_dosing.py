@@ -82,8 +82,8 @@ class StudyCompoundDosingVO:
 
         """
         # Find a compound dosing selection with the same medicinal product, dose value, dose frequency
-        exisiting_uid = selection_uid_by_compound_dose_and_frequency_callback(self)
-        if exisiting_uid and self.study_selection_uid != exisiting_uid:
+        existing_uid = selection_uid_by_compound_dose_and_frequency_callback(self)
+        if existing_uid and self.study_selection_uid != existing_uid:
             raise BusinessLogicException(
                 "Compound dosing selection with the specified compound, dose value and dose frequency already exists."
             )
@@ -93,15 +93,13 @@ class StudyCompoundDosingVO:
         medicinal_product: MedicinalProductAR = medicinal_product_callback(
             self.medicinal_product_uid
         )
-        if medicinal_product:
-            if (
-                self.dose_value_uid is not None
-                and self.dose_value_uid
-                not in medicinal_product.concept_vo.dose_value_uids
-            ):
-                raise BusinessLogicException(
-                    f"Selected dose value is not valid for medicinal product '{medicinal_product.concept_vo.name}'."
-                )
+        if medicinal_product and (
+            self.dose_value_uid is not None
+            and self.dose_value_uid not in medicinal_product.concept_vo.dose_value_uids
+        ):
+            raise BusinessLogicException(
+                f"Selected dose value is not valid for medicinal product '{medicinal_product.concept_vo.name}'."
+            )
 
 
 @dataclass

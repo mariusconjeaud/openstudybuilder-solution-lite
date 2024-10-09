@@ -121,7 +121,7 @@ class RepositoryImpl:
     def _db_save_node(self, node: ClinicalMdrNode) -> ClinicalMdrNode:
         """
         Saves a Neomodel node object in the graph.
-        TODO: optionalty accept multiple nodes and handle in same DB transaction.
+        TODO: optionally accept multiple nodes and handle in same DB transaction.
         """
         if node is not None:
             node.save()

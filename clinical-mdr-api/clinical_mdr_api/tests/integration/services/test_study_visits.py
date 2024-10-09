@@ -2,6 +2,7 @@ import unittest
 
 from neomodel import db
 
+from clinical_mdr_api.config import NON_VISIT_NUMBER
 from clinical_mdr_api.domains.study_selections.study_epoch import (
     StudyEpochVO,
     TimelineAR,
@@ -1130,7 +1131,7 @@ class TestStudyVisitManagement(unittest.TestCase):
         self.assertEqual(all_visits[2].time_value, None)
         self.assertEqual(all_visits[2].time_reference_uid, None)
         self.assertEqual(all_visits[2].time_reference_name, None)
-        self.assertEqual(all_visits[2].visit_number, 29500)
+        self.assertEqual(all_visits[2].visit_number, NON_VISIT_NUMBER)
         self.assertEqual(all_visits[2].min_visit_window_value, -9999)
         self.assertEqual(all_visits[2].max_visit_window_value, 9999)
 

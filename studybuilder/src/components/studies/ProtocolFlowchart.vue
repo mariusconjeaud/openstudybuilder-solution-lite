@@ -227,7 +227,6 @@ export default {
       }
 
       & .soaGroup {
-        text-transform: uppercase;
         background-color: #b1d5f2;
         font-weight: bold;
       }

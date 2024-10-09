@@ -43,7 +43,7 @@
         {
           "id": "652b45bf-ca9c-42ab-88d7-1ae82d5d0e33",
           "title": "Template Parameters",
-          "query": "MATCH (p:TemplateParameter)-->(r:TemplateParameterTermRoot)-[:LATEST]->(t:TemplateParameterTermValue)\nWHERE ( p.name in $neodash_templateparameter_name or\n        $neodash_templateparameter_name[0] is null ) and\n      ( t.name in $neodash_templateparametertermvalue_name or\n       $neodash_templateparametertermvalue_name[0] is null )\nRETURN DISTINCT p.name as TemplateParameter\nORDER BY p.name\n",
+          "query": "MATCH (p:TemplateParameter)-->(r:TemplateParameterTermRoot)-[:LATEST]->(t:TemplateParameterTermValue)\nWHERE ( p.name in $neodash_templateparameter_name or\n        $neodash_templateparameter_name[0] is null ) and\n      ( t.name in $neodash_templateparametertermvalue_name or\n       $neodash_templateparametertermvalue_name[0] is null )\nOPTIONAL MATCH (p2:TemplateParameter)\nWHERE ( $neodash_templateparameter_name[0] is null ) and\n      ( $neodash_templateparametertermvalue_name[0] is null ) and \n      (not exists {(p2)-->(r2:TemplateParameterTermRoot)-[:LATEST]->(t2:TemplateParameterTermValue)} )\nWITH collect(distinct p.name)+collect(distinct p2.name) as names\nUNWIND names AS unw_names\nRETURN unw_names AS TemplateParameter\nORDER BY TemplateParameter\n",
           "width": 11,
           "height": 8,
           "x": 0,

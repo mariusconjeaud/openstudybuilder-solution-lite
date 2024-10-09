@@ -140,7 +140,7 @@ class ParametrizedTemplateVO:
                         add,
                         [
                             str(values[x].value)
-                            + ParametrizedTemplateVO.generate_template_value_seperator(
+                            + ParametrizedTemplateVO.generate_template_value_separator(
                                 template_name,
                                 parameter_terms,
                                 template_parameters[i],
@@ -194,7 +194,7 @@ class ParametrizedTemplateVO:
         return name
 
     @staticmethod
-    def generate_template_value_seperator(
+    def generate_template_value_separator(
         template,
         parameter_terms,
         parameter_name,

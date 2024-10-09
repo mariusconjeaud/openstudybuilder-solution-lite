@@ -175,6 +175,11 @@ from clinical_mdr_api import routers
 
 # Include routers here
 app.include_router(
+    routers.notifications_router,
+    prefix="/notifications",
+    tags=["Notifications"],
+)
+app.include_router(
     routers.odm_study_events_router,
     prefix="/concepts/odms/study-events",
     tags=["ODM Study Events"],
@@ -519,7 +524,7 @@ system_app = FastAPI(
     middleware=None,
     title="System info sub-application",
     version="1.0",
-    description="Sub-application of system-info related endpoints that are excempt from authentication requirements.",
+    description="Sub-application of system-info related endpoints that are exempt from authentication requirements.",
 )
 
 system_app.include_router(routers.system_router, tags=["System"])

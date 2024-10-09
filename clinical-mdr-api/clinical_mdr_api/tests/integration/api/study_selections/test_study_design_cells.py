@@ -181,7 +181,6 @@ def test_design_cell_modify_actions_on_locked_study(api_client):
             "transition_rule": "Transition_Rule_1",
         },
     )
-    res = response.json()
     assert response.status_code == 201
 
     # get all design-cell
@@ -259,7 +258,7 @@ def test_design_cell_modify_actions_on_locked_study(api_client):
     )
 
 
-def test_study_desing_cell_with_study_epoch_relationship(api_client):
+def test_study_design_cell_with_study_epoch_relationship(api_client):
     """
     HAVING:
         Arm
@@ -292,7 +291,7 @@ def test_study_desing_cell_with_study_epoch_relationship(api_client):
     assert response.status_code == 200
 
     # preparing all objects before locking
-    response = api_client.post(
+    api_client.post(
         f"/studies/{study.uid}/study-design-cells",
         json={
             "study_branch_arm_uid": study_branch_arm.branch_arm_uid,
@@ -346,7 +345,6 @@ def test_study_desing_cell_with_study_epoch_relationship(api_client):
             "name": "New_Arm_Name_1",
         },
     )
-    res = response.json()
     assert response.status_code == 200
 
     # edit arm
@@ -356,7 +354,6 @@ def test_study_desing_cell_with_study_epoch_relationship(api_client):
             "name": "New_Arm_Name_2",
         },
     )
-    res = response.json()
     assert response.status_code == 200
 
     # edit branch arm
@@ -366,7 +363,6 @@ def test_study_desing_cell_with_study_epoch_relationship(api_client):
             "name": "New_Branch_Arm_Name_1",
         },
     )
-    res = response.json()
     assert response.status_code == 200
 
     # edit element
@@ -376,7 +372,6 @@ def test_study_desing_cell_with_study_epoch_relationship(api_client):
             "name": "New_Element_Name_1",
         },
     )
-    res = response.json()
     assert response.status_code == 200
 
     # edit epoch
@@ -388,7 +383,6 @@ def test_study_desing_cell_with_study_epoch_relationship(api_client):
             "change_description": "this is a changing test",
         },
     )
-    res = response.json()
     assert response.status_code == 200
 
     # delete design cell

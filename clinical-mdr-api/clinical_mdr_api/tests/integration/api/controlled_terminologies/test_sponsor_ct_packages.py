@@ -47,7 +47,7 @@ def test_data():
     """Initialize test data"""
     db_name = "sponsor-ct-packages.api"
     inject_and_clear_db(db_name)
-    inject_base_data()
+    inject_base_data(inject_unit_subset=False)
 
     global catalogue
     global cdisc_package_name

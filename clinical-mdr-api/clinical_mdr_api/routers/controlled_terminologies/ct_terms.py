@@ -253,7 +253,7 @@ def add_parent(
     relationship_type: str = Query(
         ...,
         description="The type of the parent relationship.\n"
-        "Valid types are 'type' or 'subtype', 'valid_for_epoch'",
+        "Valid types are 'type' or 'subtype'",
     ),
 ):
     ct_term_service = CTTermService()

@@ -114,7 +114,7 @@ class CriteriaPreInstanceAR(PreInstanceAR):
         author: str,
         change_description: str,
         template: ParametrizedTemplateVO,
-        guidance_text: str | None,
+        guidance_text: str | None = None,
     ):
         """
         Creates a new draft version for the object.

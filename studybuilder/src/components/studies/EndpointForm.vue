@@ -44,7 +44,12 @@
             <v-autocomplete
               v-model="selectedStudies"
               :label="$t('StudySelectionTable.study_acronyms')"
-              :items="studies"
+              :items="
+                studies.filter(
+                  (study) =>
+                    study.current_metadata.identification_metadata.study_acronym
+                )
+              "
               :rules="[formRules.required]"
               item-title="current_metadata.identification_metadata.study_acronym"
               return-object
@@ -935,7 +940,9 @@ export default {
       }
     },
     async selectEndpointTemplate(template) {
-      this.selectedTemplates.push(template)
+      if (!this.selectedTemplates.some((el) => el.uid === template.uid)) {
+        this.selectedTemplates.push(template)
+      }
     },
     unselectEndpointTemplate(template) {
       this.selectedTemplates = this.selectedTemplates.filter(

@@ -4,7 +4,11 @@
       <v-menu v-if="isDate(item.key)" :close-on-content-click="false">
         <template #activator="{ props }">
           <v-text-field
-            :label="data.length <= 0 ? item.title : `${formatDate(data[0])} - ${formatDate(data.length - 1)}`"
+            :label="
+              data.length <= 0
+                ? item.title
+                : `${formatDate(data[0])} - ${formatDate(data.length - 1)}`
+            "
             prepend-inner-icon="mdi-calendar-outline"
             readonly
             class="select filterAutocompleteLabel ml-2"
@@ -34,6 +38,7 @@
         multiple
         variant="outlined"
         :label="item.title"
+        data-cy="filter-field"
         color="nnBaseBlue"
         bg-color="nnWhite"
         :items="items"
@@ -55,7 +60,11 @@
               </v-list-item-action>
             </template>
             <template #title>
-              {{ typeof props.title === 'number' ? props.title : props.title.replace(/<\/?[^>]+(>)/g, '') }}
+              {{
+                typeof props.title === 'number'
+                  ? props.title
+                  : props.title.replace(/<\/?[^>]+(>)/g, '')
+              }}
             </template>
             <v-tooltip activator="parent" location="bottom">
               {{ props.title.replace(/<\/?[^>]+(>)/g, '') }}
@@ -63,7 +72,7 @@
           </v-list-item>
         </template>
         <template #prepend-item>
-          <v-row>
+          <v-row @keydown.stop>
             <v-text-field
               v-model="searchString"
               class="pl-6"
@@ -81,7 +90,9 @@
         <template #selection="{ index }">
           <div v-if="index === 0">
             <span class="items-font-size">{{
-              typeof data[0] !== 'boolean' && typeof data[0] !== 'number' && data[0].length > 12
+              typeof data[0] !== 'boolean' &&
+              typeof data[0] !== 'number' &&
+              data[0].length > 12
                 ? data[0].substring(0, 12) + '...'
                 : data[0]
             }}</span>
@@ -281,12 +292,17 @@ function filterDate() {
   if (data.value.length <= 1) {
     return
   }
-  dateData = [formatDate(data.value[0]), formatDate(data.value[data.value.length - 1])]
+  dateData = [
+    formatDate(data.value[0]),
+    formatDate(data.value[data.value.length - 1]),
+  ]
   emit('filter', { column: props.item.key, data: dateData })
 }
 
 function formatDate(date) {
-  return adapter.format(date, 'keyboardDate').replace(/(..).(..).(....)/, "$3-$1-$2")
+  return adapter
+    .format(date, 'keyboardDate')
+    .replace(/(..).(..).(....)/, '$3-$1-$2')
 }
 
 function booleanConverter(value) {

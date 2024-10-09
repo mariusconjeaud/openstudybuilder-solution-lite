@@ -251,13 +251,11 @@ export default {
         {
           title: this.$t('StudyActivity.activity_group'),
           key: 'study_activity_group.activity_group_name',
-          externalFilterSource: 'concepts/activities/activity-groups$name',
           exludeFromHeader: ['activity.is_data_collected'],
         },
         {
           title: this.$t('StudyActivity.activity_sub_group'),
           key: 'study_activity_subgroup.activity_subgroup_name',
-          externalFilterSource: 'concepts/activities/activity-sub-groups$name',
           exludeFromHeader: ['activity.is_data_collected'],
         },
         { title: this.$t('StudyActivity.activity'), key: 'activity.name' },
@@ -538,7 +536,7 @@ export default {
       return item.activity.library_name === libConstants.LIBRARY_REQUESTED
         ? item.activity.is_request_final
           ? 'yellow'
-          : 'warning'
+          : 'bg-warning'
         : ''
     },
   },

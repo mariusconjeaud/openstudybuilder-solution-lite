@@ -65,10 +65,15 @@ class UnitDefinitionRepositoryForTestImpl:
     _repo_content = frozenset(
         {
             UnitDefinition("UnitDefinition_000001", "Day", "def1"),
-            UnitDefinition("UnitDefinition_000002", "Hour", "def2"),
-            UnitDefinition("UnitDefinition_000003", "Month", "def2"),
-            UnitDefinition("UnitDefinition_000004", "Week", "def2"),
-            UnitDefinition("UnitDefinition_000005", "Year", "def2"),
+            UnitDefinition("UnitDefinition_000002", "Days", "def2"),
+            UnitDefinition("UnitDefinition_000003", "Hour", "def3"),
+            UnitDefinition("UnitDefinition_000004", "Hours", "def4"),
+            UnitDefinition("UnitDefinition_000005", "Month", "def5"),
+            UnitDefinition("UnitDefinition_000006", "Months", "def6"),
+            UnitDefinition("UnitDefinition_000007", "Week", "def7"),
+            UnitDefinition("UnitDefinition_000008", "Weeks", "def8"),
+            UnitDefinition("UnitDefinition_000009", "Year", "def9"),
+            UnitDefinition("UnitDefinition_000010", "Years", "def10"),
         }
     )
 

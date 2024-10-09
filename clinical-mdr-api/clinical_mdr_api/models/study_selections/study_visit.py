@@ -713,15 +713,6 @@ class StudyVisitVersion(StudyVisit):
     changes: dict
 
 
-class AllowedVisitTypesForEpochType(BaseModel):
-    visit_type_uid: str = Field(
-        ..., title="visit type uid", description="Visit Type Term uid"
-    )
-    visit_type_name: str = Field(
-        ..., title="visit type name", description="Visit type Term name"
-    )
-
-
 class AllowedTimeReferences(BaseModel):
     time_reference_uid: str
     time_reference_name: str

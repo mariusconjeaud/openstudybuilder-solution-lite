@@ -59,19 +59,6 @@ from clinical_mdr_api.models.study_selections.study_visit import (
 )
 
 
-def get_valid_visit_types_for_epoch_type(epoch_type_uid: str, study_uid: str):
-    cypher_query = """
-        MATCH (visit_type_value:CTTermNameValue)<-[:LATEST]-(:CTTermNameRoot)<-[:HAS_NAME_ROOT]-
-        (visit_type_root:CTTermRoot)-[:VALID_FOR_EPOCH_TYPE]->(:CTTermRoot {uid:$epoch_type_uid})
-
-        RETURN visit_type_root.uid, visit_type_value.name
-        """
-    items, _ = db.cypher_query(
-        cypher_query, {"epoch_type_uid": epoch_type_uid, "study_uid": study_uid}
-    )
-    return {a[0]: a[1] for a in items}
-
-
 def get_valid_time_references_for_study(
     study_uid: str, effective_date: datetime.datetime | None = None
 ):

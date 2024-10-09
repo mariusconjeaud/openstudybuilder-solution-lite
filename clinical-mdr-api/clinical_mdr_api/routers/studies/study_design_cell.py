@@ -223,17 +223,17 @@ def design_cell_batch_operations(
 @router.get(
     "/studies/{uid}/study-design-cells/arm/{arm_uid}",
     dependencies=[rbac.STUDY_READ],
-    summary="""List all study desing-cells currently selected for study with provided uid that are connected to an StudyArm with arm_uid""",
+    summary="""List all study design-cells currently selected for study with provided uid that are connected to an StudyArm with arm_uid""",
     description="""
     State before:
     - Study must exist.
      
     Business logic:
-     - By default (no study status is provided) list all study desing-cells for the study uid in status draft. If the study not exist in status draft then return the study desing-cells for the study in status released. If the study uid only exist as deleted then this is returned.
-     - If a specific study status parameter is provided then return study desing-cell for this study status.
-    - If the locked study status parameter is requested then a study version should also be provided, and then the study desing-cells for the specific locked study version is returned.
-    - Indicate by a boolean variable if the study desing-cell can be updated (if the selected study is in status draft).  
-    - Indicate by a boolean variable if all expected selections have been made for each study desing-cells, or some are missing.
+     - By default (no study status is provided) list all study design-cells for the study uid in status draft. If the study not exist in status draft then return the study design-cells for the study in status released. If the study uid only exist as deleted then this is returned.
+     - If a specific study status parameter is provided then return study design-cell for this study status.
+    - If the locked study status parameter is requested then a study version should also be provided, and then the study design-cells for the specific locked study version is returned.
+    - Indicate by a boolean variable if the study design-cell can be updated (if the selected study is in status draft).  
+    - Indicate by a boolean variable if all expected selections have been made for each study design-cells, or some are missing.
 
 
     State after:
@@ -264,21 +264,21 @@ def get_all_selected_desing_cells_connected_arm(
 @router.get(
     "/studies/{uid}/study-design-cells/branch-arm/{branch_arm_uid}",
     dependencies=[rbac.STUDY_READ],
-    summary="""List all study desing-cells currently selected for study with provided
+    summary="""List all study design-cells currently selected for study with provided
     uid that are connected to an StudyBranchArm with branch_arm_uid""",
     description="""
     State before:
     - Study must exist.
      
     Business logic:
-     - By default (no study status is provided) list all study desing-cells for the
+     - By default (no study status is provided) list all study design-cells for the
      study uid in status draft. If the study not exist in status draft then return
-     the study desing-cells for the study in status released. If the study uid only exist as deleted then this is returned.
-     - If a specific study status parameter is provided then return study desing-cell for this study status.
+     the study design-cells for the study in status released. If the study uid only exist as deleted then this is returned.
+     - If a specific study status parameter is provided then return study design-cell for this study status.
     - If the locked study status parameter is requested then a study version should
-    also be provided, and then the study desing-cells for the specific locked study version is returned.
-    - Indicate by a boolean variable if the study desing-cell can be updated (if the selected study is in status draft).  
-    - Indicate by a boolean variable if all expected selections have been made for each study desing-cells, or some are missing.
+    also be provided, and then the study design-cells for the specific locked study version is returned.
+    - Indicate by a boolean variable if the study design-cell can be updated (if the selected study is in status draft).  
+    - Indicate by a boolean variable if all expected selections have been made for each study design-cells, or some are missing.
 
 
     State after:
@@ -311,17 +311,17 @@ def get_all_selected_desing_cells_connected_branch_arm(
 @router.get(
     "/studies/{uid}/study-design-cells/study-epochs/{epoch_uid}",
     dependencies=[rbac.STUDY_READ],
-    summary="""List all study desing-cells currently selected for study with provided uid that are connected to an StudyEpoch with epoch_uid""",
+    summary="""List all study design-cells currently selected for study with provided uid that are connected to an StudyEpoch with epoch_uid""",
     description="""
     State before:
     - Study must exist.
      
     Business logic:
-     - By default (no study status is provided) list all study desing-cells for the study uid in status draft. If the study not exist in status draft then return the study desing-cells for the study in status released. If the study uid only exist as deleted then this is returned.
-     - If a specific study status parameter is provided then return study desing-cell for this study status.
-    - If the locked study status parameter is requested then a study version should also be provided, and then the study desing-cells for the specific locked study version is returned.
-    - Indicate by a boolean variable if the study desing-cell can be updated (if the selected study is in status draft).  
-    - Indicate by a boolean variable if all expected selections have been made for each study desing-cells, or some are missing.
+     - By default (no study status is provided) list all study design-cells for the study uid in status draft. If the study not exist in status draft then return the study design-cells for the study in status released. If the study uid only exist as deleted then this is returned.
+     - If a specific study status parameter is provided then return study design-cell for this study status.
+    - If the locked study status parameter is requested then a study version should also be provided, and then the study design-cells for the specific locked study version is returned.
+    - Indicate by a boolean variable if the study design-cell can be updated (if the selected study is in status draft).  
+    - Indicate by a boolean variable if all expected selections have been made for each study design-cells, or some are missing.
 
 
     State after:

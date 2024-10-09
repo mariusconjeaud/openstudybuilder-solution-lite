@@ -62,25 +62,39 @@ Possible errors:
     {
         "defaults": [
             "study_id",
-            "visit_name",
             "study_epoch_name",
             "visit_type_name",
+            "is_soa_milestone",
+            "visit_class",
+            "visit_subclass",
+            "repeating_frequency_name",
+            "visit_name",
+            "anchor_visit_in_group",
+            "visit_subname",
+            "is_global_anchor_visit",
             "visit_contact_mode_name",
-            "order",
-            "unique_visit_number",
-            "visit_short_name",
-            "study_day_label",
-            "study_week_label",
-            "visit_window",
             "time_reference_name",
             "time_value",
+            "visit_number",
+            "unique_visit_number",
+            "visit_short_name",
+            "study_duration_days_label",
+            "study_duration_weeks_label",
+            "visit_window_unit_name",
+            "min_visit_window_value",
+            "max_visit_window_value",
             "consecutive_visit_group",
             "show_visit",
             "description",
+            "epoch_allocation_name",
             "start_rule",
             "end_rule",
-            "modified_date",
+            "study_day_label",
+            "study_week_label",
+            "week_in_study_label",
+            "start_date",
             "user_initials",
+            "order",
             "study_uid",
             "study_version",
             "uid",
@@ -308,36 +322,6 @@ def post_preview_visit(
 ) -> clinical_mdr_api.models.study_selections.study_visit.StudyVisit:
     service = StudyVisitService(study_uid=uid)
     return service.preview(study_uid=uid, study_visit_input=selection)
-
-
-@router.get(
-    "/studies/{uid}/study-visits/allowed-visit-types",
-    dependencies=[rbac.STUDY_READ],
-    summary="Returns all allowed Visit Types for specified epoch type",
-    response_model=list[
-        clinical_mdr_api.models.study_selections.study_visit.AllowedVisitTypesForEpochType
-    ],
-    response_model_exclude_unset=True,
-    status_code=200,
-    responses={
-        404: _generic_descriptions.ERROR_404,
-        500: _generic_descriptions.ERROR_500,
-    },
-)
-def get_allowed_visit_types_for_epoch_type(
-    epoch_type_uid: str = Query(
-        ...,
-        description="The unique uid of the epoch type for which the "
-        "allowed visit types should be returned",
-    ),
-    uid: str = Path(description="The unique uid of the study"),
-) -> list[
-    clinical_mdr_api.models.study_selections.study_visit.AllowedVisitTypesForEpochType
-]:
-    service = StudyVisitService(study_uid=uid)
-    return service.get_valid_visit_types_for_epoch_type(
-        epoch_type_uid=epoch_type_uid, study_uid=uid
-    )
 
 
 @router.get(

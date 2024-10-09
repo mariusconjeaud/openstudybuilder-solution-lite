@@ -181,6 +181,11 @@ export default {
           activities.getObject('activities', value.uid).then((resp) => {
             this.initForm(resp.data)
           })
+        } else {
+          this.form = {
+            activity_groupings: [{}],
+          }
+          this.formStore.reset()
         }
       },
       immediate: true,

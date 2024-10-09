@@ -79,8 +79,6 @@ class MedicinalProductRepository(ConceptGenericRepository):
     def _has_data_changed(self, ar: _AggregateRootType, value: VersionValue) -> bool:
         was_parent_data_modified = super()._has_data_changed(ar=ar, value=value)
 
-        are_props_changed = False
-
         old_dose_freq = value.has_dose_frequency.get_or_none()
         old_dose_freq_uid = old_dose_freq.uid if old_dose_freq else None
 
@@ -103,7 +101,7 @@ class MedicinalProductRepository(ConceptGenericRepository):
             or (ar.concept_vo.compound_uid != value.is_compound.get().uid)
         )
 
-        return was_parent_data_modified or are_props_changed or are_rels_changed
+        return was_parent_data_modified or are_rels_changed
 
     def _create_aggregate_root_instance_from_cypher_result(
         self, input_dict: dict

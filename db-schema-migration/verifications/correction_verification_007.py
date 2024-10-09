@@ -247,3 +247,53 @@ def test_capitalize_first_letter_of_syntax_instance_and_pre_instance_if_template
     assert all(
         i[1][0].isupper() for i in rs if i[1][0].strip()
     ), "Some SyntaxPreInstance plain_names don't have a capital letter in the beginning."
+
+
+def test_remove_duplicated_terms_in_operator():
+    LOGGER.info("Check for unwanted terms in Operator codelist")
+
+    nbr_records = 0
+    for name in [">=", "<="]:
+        records, _summary = run_cypher_query(
+            DB_DRIVER,
+            """
+            MATCH (:CTCodelistNameValue {name: "Operator"})<--(:CTCodelistNameRoot)<-[:HAS_NAME_ROOT]-(clr:CTCodelistRoot)-[badht:HAS_TERM]-(badtr:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)--(:CTTermNameValue {name: $name})
+            MATCH (badtr)-[:HAS_ATTRIBUTES_ROOT]->(:CTTermAttributesRoot)--(:CTTermAttributesValue {code_submission_value: $name})
+            RETURN DISTINCT badtr
+            """,
+            params={"name": name},
+        )
+        nbr_records += len(records)
+    assert nbr_records == 0, f"Found {nbr_records} unwanted terms in Operator codelist"
+
+
+def test_remove_duplicated_terms_in_finding_subcat():
+    LOGGER.info("Check for unwanted terms in Finding Subcategory codelist")
+
+    records, _summary = run_cypher_query(
+        DB_DRIVER,
+        """
+        MATCH (clnv:CTCodelistNameValue {name: 'Finding Subcategory Definition'})<-[:LATEST]-(clnr:CTCodelistNameRoot)<-[:HAS_NAME_ROOT]-(clr)-[ht:HAS_TERM]-(tr:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]->(tar:CTTermAttributesRoot)-[:HAS_VERSION]->(tav:CTTermAttributesValue)
+        WHERE tav.code_submission_value IN ['COMPREHENSIO FIND_SUB_CAT', 'ORIENTATIO FIND_SUB_CAT']
+        RETURN DISTINCT tr
+        """,
+    )
+    assert (
+        len(records) == 0
+    ), f"Found {len(records)} duplicated terms in Finding Subcategory codelist"
+
+
+def test_remove_duplicated_terms_in_frequency():
+    LOGGER.info("Check for unwanted terms in Frequency codelist")
+
+    records, _summary = run_cypher_query(
+        DB_DRIVER,
+        """
+        MATCH (clnv:CTCodelistNameValue {name: 'Frequency'})<-[:LATEST]-(clnr:CTCodelistNameRoot)<-[:HAS_NAME_ROOT]-(clr)-[ht:HAS_TERM]-(tr:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]->(tar:CTTermAttributesRoot)-[:HAS_VERSION]->(tav:CTTermAttributesValue)
+        WHERE tav.code_submission_value = "OTH"
+        RETURN DISTINCT tr
+        """,
+    )
+    assert (
+        len(records) == 0
+    ), f"Found {len(records)} unwanted terms in Frequency codelist"

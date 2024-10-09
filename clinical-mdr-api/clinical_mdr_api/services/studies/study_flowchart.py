@@ -58,7 +58,8 @@ SOA_CHECK_MARK = "X"
 # Strings prepared for localization
 _ = {
     "study_epoch": "",
-    "study_milestone": "Milestone",
+    "procedure_label": "Procedure",
+    "study_milestone": "",
     "protocol_section": "Protocol Section",
     "visit_short_name": "Visit short name",
     "study_week": "Study week",
@@ -124,6 +125,8 @@ OPERATIONAL_XLSX_STYLES = {
     "group": "Heading 4",
     "subGroup": "Heading 4",
     "activity": "Heading 4",
+    "topicCode": "Heading 4",
+    "adamCode": "Heading 4",
     None: "Normal",
     "activitySchedule": "Normal",
 }
@@ -611,7 +614,9 @@ class StudyFlowchartService:
         if detailed or operational:
             StudyFlowchartService.show_hidden_rows(table)
         else:
+            # protocol SoA
             StudyFlowchartService.propagate_hidden_rows(table)
+            StudyFlowchartService.amend_procedure_label(table)
 
         # debugging
         if debug_propagation:
@@ -652,7 +657,9 @@ class StudyFlowchartService:
         if detailed or operational:
             self.show_hidden_rows(table)
         else:
+            # protocol SoA
             self.propagate_hidden_rows(table)
+            StudyFlowchartService.amend_procedure_label(table)
 
         # Add Protocol Section column
         if not operational:
@@ -806,6 +813,7 @@ class StudyFlowchartService:
                     TableCell(span=0, style="dateTime"),
                     TableCell(f"By: {user().id()}", span=2, style="extractedBy"),
                     TableCell(span=0, style="extractedBy"),
+                    TableCell(span=2),
                     TableCell("Epochs", style="header1"),
                 ]
             ),
@@ -816,6 +824,8 @@ class StudyFlowchartService:
                     TableCell("Group", style="header3"),
                     TableCell("Subgroup", style="header3"),
                     TableCell("Activity", style="header3"),
+                    TableCell("Topic Code", style="header3"),
+                    TableCell("ADaM Param Code", style="header3"),
                     TableCell("Visits", style="header1"),
                 ]
             ),
@@ -919,6 +929,26 @@ class StudyFlowchartService:
                 TableCell(study_selection_activity.activity.name, style="activity")
             )
 
+            # Topic Code
+            row.cells.append(
+                TableCell(
+                    study_selection_activity.activity_instance.topic_code
+                    if study_selection_activity.activity_instance
+                    else "",
+                    style="topicCode",
+                )
+            )
+
+            # ADaM Param Code
+            row.cells.append(
+                TableCell(
+                    study_selection_activity.activity_instance.adam_param_code
+                    if study_selection_activity.activity_instance
+                    else "",
+                    style="adamCode",
+                )
+            )
+
             # Empty header column
             row.cells.append(TableCell())
 
@@ -933,7 +963,7 @@ class StudyFlowchartService:
         table = TableWithFootnotes(
             rows=rows,
             num_header_rows=4,
-            num_header_cols=5,
+            num_header_cols=7,
             title=_("operational_soa"),
         )
 
@@ -1650,6 +1680,15 @@ class StudyFlowchartService:
 
     @staticmethod
     @trace_calls
+    def amend_procedure_label(table: TableWithFootnotes):
+        """Amends SoA table overwriting the text in the first column first visible header row"""
+        for row in table.rows[: min(table.num_header_rows, 2, len(table.rows))]:
+            if not row.hide:
+                row.cells[0].text = _("procedure_label")
+                break
+
+    @staticmethod
+    @trace_calls
     def add_coordinates(
         table: TableWithFootnotes, coordinates: Mapping[str, tuple[int, int]]
     ):
@@ -1674,7 +1713,7 @@ class StudyFlowchartService:
     @trace_calls
     def get_preferred_time_unit(
         self, study_uid: str, study_value_version: str | None = None
-    ):
+    ) -> str:
         """Gets preferred time unit of study from the db"""
         return (
             StudyService()
@@ -1749,7 +1788,8 @@ class StudyFlowchartService:
             activity_subgroup.name AS activity_subgroup,
             activity_group.name AS activity_group,
             term_name_value.name as soa_group,
-            milestone as milestone
+            milestone as milestone,
+            activity.is_data_collected AS is_data_collected
         """
 
         result_array, attribute_names = db.cypher_query(

@@ -46,7 +46,7 @@ from clinical_mdr_api.tests.utils.checks import (
     assert_response_status_code,
 )
 
-SOA_EXPORT_COLUMN_HEADERS = [
+PROTOCOL_SOA_EXPORT_COLUMN_HEADERS = [
     "study_number",
     "study_version",
     "soa_group",
@@ -54,6 +54,10 @@ SOA_EXPORT_COLUMN_HEADERS = [
     "activity_subgroup",
     "visit",
     "activity",
+]
+
+DETAILED_SOA_EXPORT_COLUMN_HEADERS = PROTOCOL_SOA_EXPORT_COLUMN_HEADERS + [
+    "is_data_collected"
 ]
 
 OPERATIONAL_SOA_EXPORT_COLUMN_HEADERS = [
@@ -445,49 +449,50 @@ def test_endpoints_with_invalid_time_unit(
         (
             "/studies/{study_uid}/detailed-soa-exports",
             "text/csv",
-            SOA_EXPORT_COLUMN_HEADERS,
+            DETAILED_SOA_EXPORT_COLUMN_HEADERS,
             [False, False],
         ),
         (
             "/studies/{study_uid}/detailed-soa-exports",
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            SOA_EXPORT_COLUMN_HEADERS,
+            DETAILED_SOA_EXPORT_COLUMN_HEADERS,
             [False, True],
         ),
         (
             "/studies/{study_uid}/detailed-soa-exports",
             "text/xml",
-            SOA_EXPORT_COLUMN_HEADERS,
+            DETAILED_SOA_EXPORT_COLUMN_HEADERS,
             [True, False],
         ),
         (
             "/studies/{study_uid}/detailed-soa-exports",
             "application/json",
-            SOA_EXPORT_COLUMN_HEADERS,
+            DETAILED_SOA_EXPORT_COLUMN_HEADERS,
             [True, True],
         ),
         (
             "/studies/{study_uid}/protocol-soa-exports",
             "text/csv",
-            SOA_EXPORT_COLUMN_HEADERS,
+            PROTOCOL_SOA_EXPORT_COLUMN_HEADERS,
             [True, True],
         ),
         (
             "/studies/{study_uid}/protocol-soa-exports",
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            SOA_EXPORT_COLUMN_HEADERS,
+            PROTOCOL_SOA_EXPORT_COLUMN_HEADERS,
             [True, False],
         ),
         (
             "/studies/{study_uid}/protocol-soa-exports",
             "text/xml",
-            SOA_EXPORT_COLUMN_HEADERS,
+            PROTOCOL_SOA_EXPORT_COLUMN_HEADERS,
             [False, True],
         ),
         (
             "/studies/{study_uid}/protocol-soa-exports",
             "application/json",
-            SOA_EXPORT_COLUMN_HEADERS,
+            # for JSON output, the exported properties are not filtered
+            DETAILED_SOA_EXPORT_COLUMN_HEADERS,
             [False, False],
         ),
         (

@@ -264,21 +264,7 @@ const protocol = ref([
         title: t('ProtocolProcessView.detailed_flowchart'),
         to: {
           name: 'StudyActivities',
-          params: { tab: 'detailed', study_id: studyUid },
-        },
-      },
-      {
-        title: t('ProtocolProcessView.protocol_flowchart'),
-        to: {
-          name: 'StudyActivities',
-          params: { tab: 'protocol', study_id: studyUid },
-        },
-      },
-      {
-        title: t('ProtocolProcessView.activity_instructions'),
-        to: {
-          name: 'StudyActivities',
-          params: { tab: 'instructions', study_id: studyUid },
+          params: { tab: 'soa', study_id: studyUid },
         },
       },
     ],

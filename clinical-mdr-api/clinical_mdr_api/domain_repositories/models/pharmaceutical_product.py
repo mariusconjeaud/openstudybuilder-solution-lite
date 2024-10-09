@@ -12,7 +12,6 @@ from clinical_mdr_api.domain_repositories.models.concepts import (
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
     CTTermRoot,
 )
-from clinical_mdr_api.domain_repositories.models.dictionary import DictionaryTermRoot
 from clinical_mdr_api.domain_repositories.models.generic import (
     ClinicalMdrNode,
     ClinicalMdrRel,
@@ -53,12 +52,6 @@ class IngredientFormulation(ClinicalMdrNode):
 
 
 class PharmaceuticalProductValue(ConceptValue):
-    has_unii_value = RelationshipTo(
-        DictionaryTermRoot,
-        "HAS_UNII_VALUE",
-        cardinality=ZeroOrOne,
-        model=ClinicalMdrRel,
-    )
     has_formulation = RelationshipTo(
         IngredientFormulation,
         "HAS_FORMULATION",

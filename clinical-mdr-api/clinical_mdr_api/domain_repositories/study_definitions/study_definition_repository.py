@@ -399,15 +399,24 @@ class StudyDefinitionRepository(ABC):
     ) -> GenericFilteringReturn[StudyDefinitionSnapshot]:
         raise NotImplementedError
 
-    def get_occupied_study_subpart_ids(self, study_parent_part_uid):
-        return db.cypher_query(
-            """
-            MATCH (:StudyRoot {uid: $uid})-[:LATEST]->(:StudyValue)-[:HAS_STUDY_SUBPART]->(sv:StudyValue)<-[:LATEST]-(:StudyRoot)
-            WHERE NOT EXISTS((sv)<-[:BEFORE]-(:StudyAction:`Delete`))
+    def get_occupied_study_subpart_ids(
+        self, study_parent_part_uid: str, subpart_uid: str | None = None
+    ):
+        query = """
+            MATCH (:StudyRoot {uid: $uid})-[:LATEST]->(:StudyValue)-[:HAS_STUDY_SUBPART]->(sv:StudyValue)<-[:LATEST]-(sr:StudyRoot)
+            WHERE NOT EXISTS((sv)<-[:BEFORE]-(:StudyAction:`Delete`))"""
+
+        if subpart_uid:
+            query += " AND sr.uid <> $subpart_uid"
+
+        query += """
             RETURN sv.subpart_id
             ORDER BY sv.subpart_id
-            """,
-            {"uid": study_parent_part_uid},
+            """
+
+        return db.cypher_query(
+            query,
+            {"uid": study_parent_part_uid, "subpart_uid": subpart_uid},
         )
 
     def find_all_by_library_item_uid(

@@ -5,7 +5,10 @@ from fastapi import APIRouter
 from fastapi.responses import FileResponse, PlainTextResponse
 
 from clinical_mdr_api import config, models
+from clinical_mdr_api.models.notification import Notification
+from clinical_mdr_api.routers import _generic_descriptions
 from clinical_mdr_api.services import system as service
+from clinical_mdr_api.services.notifications import NotificationService
 
 # Mounted under "/system" path as a sub-application, endpoints do not require authentication.
 router = APIRouter()
@@ -63,3 +66,17 @@ def get_license_md() -> str:
     filename = "LICENSE.md"
     filepath = os.path.join(config.APP_ROOT_DIR, filename)
     return FileResponse(path=filepath, media_type="text/markdown", filename=filename)
+
+
+@router.get(
+    "/notifications",
+    summary="Returns all notifications that are both published and in the specified time.",
+    response_model=list[Notification],
+    status_code=200,
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+def get_all_active_notifications() -> list[Notification]:
+    return NotificationService().get_all_active_notifications()

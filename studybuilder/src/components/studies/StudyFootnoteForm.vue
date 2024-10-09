@@ -51,7 +51,12 @@
             <v-autocomplete
               v-model="selectedStudies"
               :label="$t('StudySelectionTable.study_acronyms')"
-              :items="studies"
+              :items="
+                studies.filter(
+                  (study) =>
+                    study.current_metadata.identification_metadata.study_acronym
+                )
+              "
               :rules="[formRules.required]"
               item-title="current_metadata.identification_metadata.study_acronym"
               clearable
@@ -297,9 +302,9 @@ export default {
       default: () => [],
     },
     selectedElements: {
-      type: Array,
-      default: null
-    }
+      type: Object,
+      default: null,
+    },
   },
   emits: ['close', 'added'],
   setup() {
@@ -577,7 +582,9 @@ export default {
       }
     },
     selectFootnoteTemplate(template) {
-      this.selectedTemplates.push(template)
+      if (!this.selectedTemplates.some((el) => el.uid === template.uid)) {
+        this.selectedTemplates.push(template)
+      }
     },
     unselectTemplate(template) {
       this.selectedTemplates = this.selectedTemplates.filter(
@@ -688,7 +695,7 @@ export default {
                 : [],
               library_name: template.library.name,
             },
-            referenced_items: this.selectedElements.referenced_items
+            referenced_items: this.selectedElements.referenced_items,
           })
         }
         await study.batchCreateStudyFootnotes(this.selectedStudy.uid, data)
@@ -701,7 +708,7 @@ export default {
           studyUid: this.selectedStudy.uid,
           form: data,
           parameters: this.parameters,
-          referencedItems: this.selectedElements.referenced_items
+          referencedItems: this.selectedElements.referenced_items,
         }
         await this.footnotesStore.addStudyFootnoteFromTemplate(args)
       } else {
@@ -709,7 +716,7 @@ export default {
           args = {
             studyUid: this.selectedStudy.uid,
             footnoteUid: item.footnote.uid,
-            referencedItems: this.selectedElements.referenced_items
+            referencedItems: this.selectedElements.referenced_items,
           }
           await this.footnotesStore.selectFromStudyFootnote(args)
         }

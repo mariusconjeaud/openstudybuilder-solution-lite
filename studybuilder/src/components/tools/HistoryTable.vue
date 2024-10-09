@@ -259,12 +259,3 @@ function getDisplay(item, accessor) {
   }
 }
 </script>
-
-<style scoped>
-.fixed-actions {
-  position: fixed;
-  bottom: 0;
-  width: 100%;
-  z-index: 10;
-}
-</style>

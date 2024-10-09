@@ -5,16 +5,20 @@
     density="compact"
     v-bind="$attrs"
   >
-    <v-radio
-      v-for="booleanValue in booleanValues"
-      ref="radio"
-      :key="booleanValue.id"
-      :data-cy="'radio-' + booleanValue.label"
-      :label="booleanValue.label"
-      :value="booleanValue.value"
-      color="primary"
-      @mouseup="clearCurrentRadioValue(booleanValue)"
-    />
+    <v-row>
+      <v-col cols="2">
+        <v-radio
+          v-for="booleanValue in booleanValues"
+          ref="radio"
+          :key="booleanValue.id"
+          :data-cy="'radio-' + booleanValue.label"
+          :label="booleanValue.label"
+          :value="booleanValue.value"
+          color="primary"
+          @mouseup="clearCurrentRadioValue(booleanValue)"
+        />
+      </v-col>
+    </v-row>
   </v-radio-group>
 </template>
 

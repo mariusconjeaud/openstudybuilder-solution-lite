@@ -119,6 +119,26 @@ COMPOUND_FIELDS_ALL = [
 
 COMPOUND_FIELDS_NOT_NULL = ["uid", "name", "start_date"]
 
+COMPOUND_ALIASES_FIELDS_ALL = [
+    "uid",
+    "name",
+    "name_sentence_case",
+    "definition",
+    "abbreviation",
+    "library_name",
+    "start_date",
+    "end_date",
+    "status",
+    "version",
+    "change_description",
+    "user_initials",
+    "possible_actions",
+    "compound",
+    "is_preferred_synonym",
+]
+
+COMPOUND_ALIASES_FIELDS_NOT_NULL = ["uid", "name", "start_date"]
+
 
 def test_get_compound(api_client):
     response = api_client.get(f"/concepts/compounds/{compounds_all[0].uid}")
@@ -139,6 +159,88 @@ def test_get_compound(api_client):
 
     TestUtils.assert_timestamp_is_in_utc_zone(res["start_date"])
     TestUtils.assert_timestamp_is_newer_than(res["start_date"], 60)
+
+
+def test_get_compounds_versions(api_client):
+    response = api_client.get("/concepts/compounds/versions?total_count=true")
+    res = response.json()
+
+    assert response.status_code == 200
+    assert len(res["items"]) == 10
+    assert res["total"] == len(compounds_all)
+
+    for item in res["items"]:
+        assert set(list(item.keys())) == set(COMPOUND_FIELDS_ALL)
+        for key in COMPOUND_FIELDS_NOT_NULL:
+            assert item[key] is not None
+        TestUtils.assert_timestamp_is_in_utc_zone(item["start_date"])
+        TestUtils.assert_timestamp_is_newer_than(item["start_date"], 60)
+
+
+@pytest.mark.parametrize(
+    "export_format",
+    [
+        pytest.param("text/csv"),
+        pytest.param("text/xml"),
+        pytest.param(
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        ),
+    ],
+)
+def test_get_compounds_versions_csv_xml_excel(api_client, export_format):
+    url = "/concepts/compounds/versions"
+    TestUtils.verify_exported_data_format(api_client, export_format, url)
+
+
+def test_get_compound_versions(api_client):
+    response = api_client.get(f"/concepts/compounds/{compounds_all[0].uid}/versions")
+    res = response.json()
+
+    assert response.status_code == 200
+    assert len(res) == 1
+
+    assert res[0]["version"] == "0.1"
+    assert res[0]["status"] == "Draft"
+    assert list(res[0]["possible_actions"]) == ["approve", "delete", "edit"]
+
+    for item in res:
+        assert set(list(item.keys())) == set(COMPOUND_FIELDS_ALL)
+        for key in COMPOUND_FIELDS_NOT_NULL:
+            assert item[key] is not None
+        TestUtils.assert_timestamp_is_in_utc_zone(item["start_date"])
+        TestUtils.assert_timestamp_is_newer_than(item["start_date"], 60)
+
+    # Approve compound. Assert that 2 versions exist in total.
+    api_client.post(f"/concepts/compounds/{compounds_all[0].uid}/approvals")
+    response = api_client.get(f"/concepts/compounds/{compounds_all[0].uid}/versions")
+    res = response.json()
+    assert len(res) == 2
+
+    assert res[0]["version"] == "1.0"
+    assert res[0]["status"] == "Final"
+    assert list(res[0]["possible_actions"]) == ["inactivate", "new_version"]
+
+    assert res[1]["version"] == "0.1"
+    assert res[1]["status"] == "Draft"
+    assert list(res[1]["possible_actions"]) == ["approve", "delete", "edit"]
+
+    # Create new version of the compound. Assert that 3 versions exist in total.
+    api_client.post(f"/concepts/compounds/{compounds_all[0].uid}/versions")
+    response = api_client.get(f"/concepts/compounds/{compounds_all[0].uid}/versions")
+    res = response.json()
+    assert len(res) == 3
+
+    assert res[0]["version"] == "1.1"
+    assert res[0]["status"] == "Draft"
+    assert list(res[0]["possible_actions"]) == ["approve", "edit"]
+
+    assert res[1]["version"] == "1.0"
+    assert res[1]["status"] == "Final"
+    assert list(res[1]["possible_actions"]) == ["inactivate", "new_version"]
+
+    assert res[2]["version"] == "0.1"
+    assert res[2]["status"] == "Draft"
+    assert list(res[2]["possible_actions"]) == ["approve", "delete", "edit"]
 
 
 def test_update_compound(api_client):
@@ -329,6 +431,98 @@ def test_filtering_exact(
 
 
 # Compound Aliases
+
+
+def test_get_compound_aliases_versions(api_client):
+    response = api_client.get("/concepts/compound-aliases/versions?total_count=true")
+    res = response.json()
+
+    assert response.status_code == 200
+    assert len(res["items"]) == 10
+    assert res["total"] == len(compound_aliases_all)
+
+    for item in res["items"]:
+        assert set(list(item.keys())) == set(COMPOUND_ALIASES_FIELDS_ALL)
+        for key in COMPOUND_ALIASES_FIELDS_NOT_NULL:
+            assert item[key] is not None
+        TestUtils.assert_timestamp_is_in_utc_zone(item["start_date"])
+        TestUtils.assert_timestamp_is_newer_than(item["start_date"], 60)
+
+
+@pytest.mark.parametrize(
+    "export_format",
+    [
+        pytest.param("text/csv"),
+        pytest.param("text/xml"),
+        pytest.param(
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        ),
+    ],
+)
+def test_get_compound_aliases_versions_csv_xml_excel(api_client, export_format):
+    url = "/concepts/compound-aliases/versions"
+    TestUtils.verify_exported_data_format(api_client, export_format, url)
+
+
+def test_get_compound_alias_versions(api_client):
+    response = api_client.get(
+        f"/concepts/compound-aliases/{compound_aliases_all[0].uid}/versions"
+    )
+    res = response.json()
+
+    assert response.status_code == 200
+    assert len(res) == 1
+
+    assert res[0]["version"] == "0.1"
+    assert res[0]["status"] == "Draft"
+    assert list(res[0]["possible_actions"]) == ["approve", "delete", "edit"]
+
+    for item in res:
+        assert set(list(item.keys())) == set(COMPOUND_ALIASES_FIELDS_ALL)
+        for key in COMPOUND_ALIASES_FIELDS_NOT_NULL:
+            assert item[key] is not None
+        TestUtils.assert_timestamp_is_in_utc_zone(item["start_date"])
+        TestUtils.assert_timestamp_is_newer_than(item["start_date"], 60)
+
+    # Approve compound alias. Assert that 2 versions exist in total.
+    api_client.post(
+        f"/concepts/compound-aliases/{compound_aliases_all[0].uid}/approvals"
+    )
+    response = api_client.get(
+        f"/concepts/compound-aliases/{compound_aliases_all[0].uid}/versions"
+    )
+    res = response.json()
+    assert len(res) == 2
+
+    assert res[0]["version"] == "1.0"
+    assert res[0]["status"] == "Final"
+    assert list(res[0]["possible_actions"]) == ["inactivate", "new_version"]
+
+    assert res[1]["version"] == "0.1"
+    assert res[1]["status"] == "Draft"
+    assert list(res[1]["possible_actions"]) == ["approve", "delete", "edit"]
+
+    # Create new version of the compound alias. Assert that 3 versions exist in total.
+    api_client.post(
+        f"/concepts/compound-aliases/{compound_aliases_all[0].uid}/versions"
+    )
+    response = api_client.get(
+        f"/concepts/compound-aliases/{compound_aliases_all[0].uid}/versions"
+    )
+    res = response.json()
+    assert len(res) == 3
+
+    assert res[0]["version"] == "1.1"
+    assert res[0]["status"] == "Draft"
+    assert list(res[0]["possible_actions"]) == ["approve", "edit"]
+
+    assert res[1]["version"] == "1.0"
+    assert res[1]["status"] == "Final"
+    assert list(res[1]["possible_actions"]) == ["inactivate", "new_version"]
+
+    assert res[2]["version"] == "0.1"
+    assert res[2]["status"] == "Draft"
+    assert list(res[2]["possible_actions"]) == ["approve", "delete", "edit"]
 
 
 def test_get_compound_aliases_pagination(api_client):

@@ -231,7 +231,7 @@ def get_operational_soa_xlsx(
     # construct download filename
     filename = ["operational", "SoA.xlsx"]
     if study.current_metadata.identification_metadata.study_id:
-        filename.insert(study.current_metadata.identification_metadata.study_id)
+        filename.insert(0, study.current_metadata.identification_metadata.study_id)
     filename = " ".join(filename)
 
     # send response along with document info in HTTP header
@@ -329,6 +329,7 @@ def get_detailed_soa_history(
             "activity_subgroup",
             "visit",
             "activity",
+            "is_data_collected",
         ],
         "include_if_exists": [
             "epoch",

@@ -135,7 +135,7 @@ class CTCodelistAggregatedRepository:
         term_filter: dict | None = None,
     ) -> GenericFilteringReturn[tuple[CTCodelistNameAR, CTCodelistAttributesAR]]:
         """
-        Method runs a cypher query to fetch all data related to the CTCodelistName* and CTCodelistttributes*.
+        Method runs a cypher query to fetch all data related to the CTCodelistName* and CTCodelistAttributes*.
         It allows to filter the query output by catalogue_name, library and package.
         It returns the array of Tuples where each tuple is consists of CTCodelistNameAR and CTCodelistAttributesAR objects.
 

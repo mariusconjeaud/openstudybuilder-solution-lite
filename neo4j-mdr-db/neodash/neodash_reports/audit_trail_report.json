@@ -29,9 +29,9 @@
       "neodash_end_date": "2024-06-01",
       "neodash_studyaction_user_initials": "",
       "neodash_studyaction_user_initials_display": "",
-      "neodash_studyroot_uid": "Study_000002",
-      "neodash_idaction": "1177045",
-      "neodash_action_id": "2975961"
+      "neodash_studyroot_uid": "",
+      "neodash_idaction": "",
+      "neodash_action_id": ""
     },
     "theme": "light",
     "disableRowLimiting": false,
@@ -690,6 +690,13 @@
                 "value": "Edit",
                 "customization": "cell color",
                 "customizationValue": "#FFA4006E"
+              },
+              {
+                "field": "Action Type",
+                "condition": "=",
+                "value": "Delete",
+                "customization": "cell color",
+                "customizationValue": "#FF11116E"
               },
               {
                 "field": "Component UID",

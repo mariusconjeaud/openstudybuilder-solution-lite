@@ -59,6 +59,10 @@ def get_unit_def_uid_or_none(field):
     return field.uid if field else None
 
 
+def get_name_or_none(field):
+    return field.name if field else None
+
+
 def get_input_or_new_value(
     input_field: str | None, prefix: str, output_field: str, sep: str = "."
 ):

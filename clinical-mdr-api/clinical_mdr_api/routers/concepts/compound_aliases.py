@@ -113,6 +113,92 @@ def get_all(
 
 
 @router.get(
+    "/compound-aliases/versions",
+    dependencies=[rbac.LIBRARY_READ],
+    summary="List all versions of compound aliases",
+    description=f"""
+State before:
+ - The library must exist (if specified)
+
+Business logic:
+ - List version history of compound aliases.
+ - The returned versions are ordered by version start_date descending (newest entries first).
+
+State after:
+ - No change
+
+Possible errors:
+ - Invalid library name specified.
+
+{_generic_descriptions.DATA_EXPORTS_HEADER}  
+""",
+    response_model=CustomPage[CompoundAlias],
+    response_model_exclude_unset=True,
+    status_code=200,
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+@decorators.allow_exports(
+    {
+        "defaults": [
+            "uid",
+            "compound=compound.name",
+            "name",
+            "is_preferred_synonym",
+            "definition",
+            "start_date",
+            "status",
+            "version",
+        ],
+        "formats": [
+            "text/csv",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "text/xml",
+            "application/json",
+        ],
+    }
+)
+# pylint: disable=unused-argument
+def get_compounds_versions(
+    request: Request,  # request is actually required by the allow_exports decorator
+    library: str | None = Query(None, description="The library name"),
+    page_number: int
+    | None = Query(1, ge=1, description=_generic_descriptions.PAGE_NUMBER),
+    page_size: int
+    | None = Query(
+        config.DEFAULT_PAGE_SIZE,
+        ge=0,
+        le=config.MAX_PAGE_SIZE,
+        description=_generic_descriptions.PAGE_SIZE,
+    ),
+    filters: Json
+    | None = Query(
+        None,
+        description=_generic_descriptions.FILTERS,
+        example=_generic_descriptions.FILTERS_EXAMPLE,
+    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    total_count: bool
+    | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
+):
+    service = CompoundAliasService()
+    results = service.get_all_concept_versions(
+        library=library,
+        sort_by={"start_date": False},
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
+        filter_by=filters,
+        filter_operator=FilterOperator.from_str(operator),
+    )
+    return CustomPage.create(
+        items=results.items, total=results.total, page=page_number, size=page_size
+    )
+
+
+@router.get(
     "/compound-aliases/headers",
     dependencies=[rbac.LIBRARY_READ],
     summary="Returns possible values from the database for a given header",
@@ -163,7 +249,7 @@ State before:
  - a compound alias with uid must exist.
 
 Business logic:
- - If parameter at_specified_date_time is specified then the latest/newest representation of the concept at this point in time is returned. The point in time needs to be specified in ISO 8601 format including the timezone, e.g.: '2020-10-31T16:00:00+02:00' for October 31, 2020 at 4pm in UTC+2 timezone. If the timezone is ommitted, UTC�0 is assumed.
+ - If parameter at_specified_date_time is specified then the latest/newest representation of the concept at this point in time is returned. The point in time needs to be specified in ISO 8601 format including the timezone, e.g.: '2020-10-31T16:00:00+02:00' for October 31, 2020 at 4pm in UTC+2 timezone. If the timezone is omitted, UTC�0 is assumed.
  - If parameter status is specified then the representation of the concept in that status is returned (if existent). This is useful if the concept has a status 'Draft' and a status 'Final'.
  - If parameter version is specified then the latest/newest representation of the concept in that version is returned. Only exact matches are considered. The version is specified in the following format: <major>.<minor> where <major> and <minor> are digits. E.g. '0.1', '0.2', '1.0', ...
 

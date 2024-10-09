@@ -1,4 +1,4 @@
-""" PRD Data Corrections, for release 1.6"""
+""" PRD Data Corrections, for release 1.7"""
 
 import os
 
@@ -11,14 +11,11 @@ from data_corrections.utils.utils import (
     save_md_title,
 )
 
-# import pytest
-# pytest.register_assert_rewrite("verifications.correction_verification_006")
-
-from verifications import correction_verification_006
+from verifications import correction_verification_007
 
 LOGGER = get_logger(os.path.basename(__file__))
 DB_DRIVER = get_db_driver()
-CORRECTION_DESC = "data-correction-release-1.6"
+CORRECTION_DESC = "data-correction-release-1.7"
 
 
 def main(run_label="correction"):
@@ -35,6 +32,9 @@ def main(run_label="correction"):
     capitalize_first_letter_of_syntax_instance_and_pre_instance_if_template_parameter(
         DB_DRIVER, LOGGER, run_label
     )
+    remove_duplicated_terms_in_operator(DB_DRIVER, LOGGER, run_label)
+    remove_duplicated_terms_in_finding_subcat(DB_DRIVER, LOGGER, run_label)
+    remove_duplicated_terms_in_frequency(DB_DRIVER, LOGGER, run_label)
 
 @capture_changes(task_level=1)
 def delete_unwanted_study(db_driver, log, run_label, study_number):
@@ -71,7 +71,7 @@ def delete_unwanted_study(db_driver, log, run_label, study_number):
 
 
 @capture_changes(
-    docs_only=True, verify_func=correction_verification_006.test_delete_unwanted_studies,
+    docs_only=True, verify_func=correction_verification_007.test_delete_unwanted_studies,
     has_subtasks=True
 )
 def delete_unwanted_studies(db_driver, log, run_label):
@@ -150,7 +150,7 @@ def delete_unwanted_studies(db_driver, log, run_label):
 
 
 @capture_changes(
-    verify_func=correction_verification_006.test_remove_na_version_properties
+    verify_func=correction_verification_007.test_remove_na_version_properties
 )
 def remove_na_version_properties(db_driver, log, run_label):
     """
@@ -183,7 +183,7 @@ def remove_na_version_properties(db_driver, log, run_label):
     return counters.contains_updates
 
 
-@capture_changes(verify_func=correction_verification_006.test_add_missing_end_dates)
+@capture_changes(verify_func=correction_verification_007.test_add_missing_end_dates)
 def add_missing_end_dates(db_driver, log, run_label):
     """
     ## Add missing end date on HAS_VERSION relationships that are not the latest version.
@@ -238,7 +238,7 @@ def add_missing_end_dates(db_driver, log, run_label):
     return counters.contains_updates
 
 
-@capture_changes(verify_func=correction_verification_006.test_adjust_late_end_dates)
+@capture_changes(verify_func=correction_verification_007.test_adjust_late_end_dates)
 def adjust_late_end_dates(db_driver, log, run_label):
     """
     ## Adjust too late end date on HAS_VERSION relationships that are not the latest version.
@@ -289,7 +289,7 @@ def adjust_late_end_dates(db_driver, log, run_label):
 
 
 @capture_changes(
-    verify_func=correction_verification_006.test_adjust_cdisc_has_had_terms
+    verify_func=correction_verification_007.test_adjust_cdisc_has_had_terms
 )
 def adjust_cdisc_has_had_terms(db_driver, log, run_label):
     """
@@ -346,7 +346,7 @@ def adjust_cdisc_has_had_terms(db_driver, log, run_label):
 
 
 @capture_changes(
-    verify_func=correction_verification_006.test_remove_duplicated_terms_in_objective_cat
+    verify_func=correction_verification_007.test_remove_duplicated_terms_in_objective_cat
 )
 def remove_duplicated_terms_in_objective_cat(db_driver, log, run_label):
     """
@@ -368,7 +368,7 @@ def remove_duplicated_terms_in_objective_cat(db_driver, log, run_label):
       - Term attributes: `CTTermAttributesRoot`, `CTTermAttributesValue`, `HAS_ATTRIBUTES_ROOT`, `HAS_VERSION`
     - Items linking to the affected terms are modified:
       - `HAS_CATEGORY` relationships are moved to point at the `CTTermRoot` of the corresponding CDISC term.
-    - Expected changes: 25 nodes deleted, 60 relatiohsips deleted, 10 relatiophsips created
+    - Expected changes: 25 nodes deleted, 60 relationships deleted, 10 relationships created
     """
 
     desc = "Remove unwanted sponsor terms in Objective Category codelist"
@@ -401,7 +401,7 @@ def remove_duplicated_terms_in_objective_cat(db_driver, log, run_label):
 
 
 @capture_changes(
-    verify_func=correction_verification_006.test_capitalize_first_letter_of_syntax_instance_and_pre_instance_if_template_parameter
+    verify_func=correction_verification_007.test_capitalize_first_letter_of_syntax_instance_and_pre_instance_if_template_parameter
 )
 def capitalize_first_letter_of_syntax_instance_and_pre_instance_if_template_parameter(
     db_driver, log, run_label
@@ -446,6 +446,131 @@ def capitalize_first_letter_of_syntax_instance_and_pre_instance_if_template_para
     print_counters_table(counters2)
 
     return counters1.contains_updates or counters2.contains_updates
+
+
+
+@capture_changes(
+    verify_func=correction_verification_007.test_remove_duplicated_terms_in_operator
+)
+def remove_duplicated_terms_in_operator(db_driver, log, run_label):
+    """
+    ## Remove unwanted sponsor terms from Operator codelist.
+
+    ### Change Description
+    The two operator terms >= and <= has changed submission value to ≥ and ≤,
+    but a bug in the import script did not retire the old terms.
+    The two old terms are now present in the Operator codelist as well as the new terms.
+    This correction removes the old terms by setting and end date equal to the start date of the new terms.
+
+    ### Nodes and relationships affected
+    - The `HAS_TERM` relationships linking the unwanted `CTTermRoot` nodes to the Operator codelist `CTCodelistRoot` node
+      are deleted and replaced with `HAD_TERM` relationships.
+    - The end_date property of the new `HAD_TERM` relationships is set to the start_date of the corresponding `HAS_TERM` relationships.
+    - Expected changes: 2 relationships deleted, 2 relationships created
+    """
+
+    desc = "Remove unwanted terms in Operator codelist"
+    log.info(f"Run: {run_label}, {desc}")
+
+    contains_updates = False
+
+    for badname, goodname in ((">=", "≥"), ("<=", "≤")):
+        _, summary = run_cypher_query(
+            db_driver,
+            """
+                MATCH (:CTCodelistNameValue {name: "Operator"})<--(:CTCodelistNameRoot)<-[:HAS_NAME_ROOT]-(clr:CTCodelistRoot)-[badht:HAS_TERM]-(badtr:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)--(:CTTermNameValue {name: $badname})
+                MATCH (badtr)-[:HAS_ATTRIBUTES_ROOT]->(:CTTermAttributesRoot)--(:CTTermAttributesValue {code_submission_value: $badname})
+                MATCH (clr)-[goodht:HAS_TERM]-(goodtr:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)--(:CTTermNameValue {name: $badname})
+                MATCH (goodtr)-[:HAS_ATTRIBUTES_ROOT]->(:CTTermAttributesRoot)--(:CTTermAttributesValue {code_submission_value: $goodname})
+                WITH DISTINCT clr, badht, badtr, goodht, goodtr
+                MERGE (clr)-[hadterm:HAD_TERM {start_date: badht.start_date, end_date: goodht.start_date}]->(badtr)
+                WITH badht
+                DELETE badht
+            """,
+            params={"badname": badname, "goodname": goodname},
+        )
+
+        counters = summary.counters
+        print_counters_table(counters)
+        contains_updates = contains_updates or counters.contains_updates
+    return contains_updates
+
+
+@capture_changes(
+    verify_func=correction_verification_007.test_remove_duplicated_terms_in_finding_subcat
+)
+def remove_duplicated_terms_in_finding_subcat(db_driver, log, run_label):
+    """
+    ## Remove unwanted sponsor terms from Finding Subcategory Definition codelist.
+
+    ### Change Description
+    Because of typos in the data used when importing the Finding Subcategory codelist,
+    two terms were created twice.
+    The duplicates have a typo in the submission value.
+    This causes the terms "Orientation" and "Comprehension" appear twice in the codelist.
+    Since the unwanted terms have incorrect submission values, there is nothing else linking to them.
+    The unwanted terms should be removed.
+
+    ### Nodes and relationships affected
+    - All nodes and relationships related to the unwanted terms are deleted:
+      - Term root: `CTTermRoot`,
+      - Term names: `CTTermNameRoot`, `CTTermNameValue`, `HAS_NAME_ROOT`, `HAS_VERSION`
+      - Term attributes: `CTTermAttributesRoot`, `CTTermAttributesValue`, `HAS_ATTRIBUTES_ROOT`, `HAS_VERSION`
+    - Expected changes: 10 nodes deleted, 28 relationships deleted
+    """
+
+    desc = "Remove unwanted sponsor terms in Finding Subcategory codelist"
+    log.info(f"Run: {run_label}, {desc}")
+
+    _, summary = run_cypher_query(
+        db_driver,
+        """
+        MATCH (clnv:CTCodelistNameValue {name: 'Finding Subcategory Definition'})<-[:LATEST]-(clnr:CTCodelistNameRoot)<-[:HAS_NAME_ROOT]-(clr)-[ht:HAS_TERM]-(tr:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]->(tar:CTTermAttributesRoot)-[:HAS_VERSION]->(tav:CTTermAttributesValue)
+        WHERE tav.code_submission_value IN ['COMPREHENSIO FIND_SUB_CAT', 'ORIENTATIO FIND_SUB_CAT']
+        MATCH (tnv:CTTermNameValue)<-[:HAS_VERSION]-(tnr:CTTermNameRoot)<-[:HAS_NAME_ROOT]-(tr)
+        DETACH DELETE tr, tar, tav, tnr, tnv
+        """,
+    )
+
+    counters = summary.counters
+    print_counters_table(counters)
+    return counters.contains_updates
+
+
+@capture_changes(
+    verify_func=correction_verification_007.test_remove_duplicated_terms_in_frequency
+)
+def remove_duplicated_terms_in_frequency(db_driver, log, run_label):
+    """
+    ## Remove unwanted sponsor terms from Frequency codelist.
+
+    ### Change Description
+    At some point an unwanted term with name "Other" and submission value "OTH" was added to the Frequency codelist.
+    This unwanted term has the same name as the CDISC term that is supposed to be in the list.
+    Remove this unwanted term only from this codelist.
+
+    ### Nodes and relationships affected
+    - The `HAS_TERM` relationship between the Frequency codelist `CTCodelistRoot` node
+      and the unwanted `CTTermRoot` node is deleted.
+    - Expected changes: 1 relatiohship deleted
+    """
+
+    desc = "Remove unwanted sponsor terms in Frequency codelist"
+    log.info(f"Run: {run_label}, {desc}")
+
+    _, summary = run_cypher_query(
+        db_driver,
+        """
+        MATCH (clnv:CTCodelistNameValue {name: 'Frequency'})<-[:LATEST]-(clnr:CTCodelistNameRoot)<-[:HAS_NAME_ROOT]-(clr)-[ht:HAS_TERM]-(tr:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]->(tar:CTTermAttributesRoot)-[:HAS_VERSION]->(tav:CTTermAttributesValue)
+        WHERE tav.code_submission_value = "OTH"
+        DELETE ht
+        """,
+    )
+
+    counters = summary.counters
+    print_counters_table(counters)
+    return counters.contains_updates
+
 
 if __name__ == "__main__":
     main()

@@ -5,7 +5,7 @@
     class="pa-4 bg-white"
     style="overflow-x: auto"
   >
-    <v-row style="justify-content: center;">
+    <v-row style="justify-content: center">
       <v-btn-toggle
         v-model="layout"
         mandatory
@@ -151,7 +151,7 @@
                 ref="firstCol"
                 scope="col"
                 class="header zindex25 pl-6 pt-3"
-                style="left: 0px;"
+                style="left: 0px"
               >
                 {{ $t('DetailedFlowchart.study_epoch') }}
               </th>
@@ -175,43 +175,44 @@
                   class="header"
                   scope="col"
                 >
-                <v-row>
-                  <v-badge
-                    color="transparent"
-                    text-color="nnWhite"
-                    floating
-                    :content="
-                      cell.refs ? getElementFootnotes(cell.refs[0].uid) : ''
-                    "
-                    class="mt-3 mr-1 ml-2 mb-2"
-                  >
-                    {{ cell.text }}
-                  </v-badge>
-                  <v-btn
-                    v-if="
-                      footnoteMode &&
-                      cell.text !== '' &&
-                      !checkIfElementHasFootnote(cell.refs[0].uid)
-                    "
-                    size="small"
-                    icon="mdi-plus-circle-outline"
-                    class="mt-1 mx-0 px-0"
-                    color="nnWhite"
-                    variant="text"
-                    @click="addElementForFootnote(cell.refs[0].uid, 'StudyEpoch')"
-                  />
-                  <v-btn
-                    v-else-if="
-                      footnoteMode &&
-                      cell.text !== '' &&
-                      checkIfElementHasFootnote(cell.refs[0].uid)
-                    "
-                    size="small"
-                    icon="mdi-minus-circle"
-                    color="nnWhite"
-                    class="mt-1 mx-0 px-0"
-                    variant="text"
-                    @click="removeElementForFootnote(cell.refs[0].uid)"
+                  <v-row>
+                    <v-badge
+                      color="transparent"
+                      text-color="nnWhite"
+                      floating
+                      :content="
+                        cell.refs ? getElementFootnotes(cell.refs[0].uid) : ''
+                      "
+                      class="mt-3 mr-1 ml-2 mb-2"
+                    >
+                      {{ cell.text }}
+                    </v-badge>
+                    <v-btn
+                      v-if="
+                        footnoteMode &&
+                        cell.text !== '' &&
+                        !checkIfElementHasFootnote(cell.refs[0].uid)
+                      "
+                      size="small"
+                      icon="mdi-plus-circle-outline"
+                      class="mt-1 mx-0 px-0"
+                      color="nnWhite"
+                      variant="text"
+                      @click="
+                        addElementForFootnote(cell.refs[0].uid, 'StudyEpoch', cell.text)
+                      " />
+                    <v-btn
+                      v-else-if="
+                        footnoteMode &&
+                        cell.text !== '' &&
+                        checkIfElementHasFootnote(cell.refs[0].uid)
+                      "
+                      size="small"
+                      icon="mdi-minus-circle"
+                      color="nnWhite"
+                      class="mt-1 mx-0 px-0"
+                      variant="text"
+                      @click="removeElementForFootnote(cell.refs[0].uid)"
                   /></v-row>
                 </th>
               </template>
@@ -220,7 +221,12 @@
               </template>
             </tr>
             <tr v-if="soaMilestoneRow.length" ref="milestoneHeader">
-              <th width="10%" scope="col" :style="`top: ${firstHeaderHeight}px;`" class="header zindex25 pl-6">
+              <th
+                width="10%"
+                scope="col"
+                :style="`top: ${firstHeaderHeight}px;`"
+                class="header zindex25 pl-6"
+              >
                 {{ $t('DetailedFlowchart.study_milestone') }}
               </th>
               <th
@@ -267,11 +273,12 @@
                         footnoteMode &&
                         !checkIfElementHasFootnote(cell.refs[0].uid)
                       "
+                      size="small"
                       icon="mdi-plus-circle-outline"
                       class="mb-1 mx-0 px-0"
                       variant="text"
                       @click="
-                        addElementForFootnote(cell.refs[0].uid, 'StudyVisit')
+                        addElementForFootnote(cell.refs[0].uid, 'StudyVisit', cell.text)
                       "
                     />
                     <v-btn
@@ -279,6 +286,7 @@
                         footnoteMode &&
                         checkIfElementHasFootnote(cell.refs[0].uid)
                       "
+                      size="small"
                       icon="mdi-minus-circle"
                       color="nnBaseBlue"
                       class="mb-1 mx-0 px-0"
@@ -329,7 +337,9 @@
                   :key="`week-${index}`"
                   :style="`top: ${thirdHeaderRowTop}px`"
                   scope="col"
-                  :class="cell.text.includes('Study') ? 'header zindex25 pl-6' : ''"
+                  :class="
+                    cell.text.includes('Study') ? 'header zindex25 pl-6' : ''
+                  "
                 >
                   {{ cell.text }}
                 </th>
@@ -343,7 +353,11 @@
               </template>
             </tr>
             <tr>
-              <th :style="`top: ${fourthHeaderRowTop}px`" scope="col" class="header zindex25 pl-6">
+              <th
+                :style="`top: ${fourthHeaderRowTop}px`"
+                scope="col"
+                class="header zindex25 pl-6"
+              >
                 {{ $t('DetailedFlowchart.visit_window') }}
               </th>
               <template v-if="soaContent">
@@ -372,7 +386,7 @@
                 :key="`row-${index}`"
                 :class="getSoaRowClasses(row)"
               >
-                <td class="sticky-column" style="left: 0px;">
+                <td class="sticky-column" style="left: 0px">
                   <v-btn
                     v-if="!readOnly && getSoaRowType(row) !== 'activity'"
                     :icon="getDisplayButtonIcon(`row-${index}`)"
@@ -395,7 +409,8 @@
                       hide-details
                       :model-value="
                         studyActivitySelection.findIndex(
-                          (cell) => cell.refs[0].uid === row.cells[0].refs[0].uid
+                          (cell) =>
+                            cell.refs[0].uid === row.cells[0].refs[0].uid
                         ) !== -1
                       "
                       :disabled="
@@ -436,7 +451,9 @@
                           : ''
                       "
                     >
-                      {{ row.cells[0].text }}
+                      <span class="text-uppercase">
+                        {{ row.cells[0].text }}
+                      </span>
                     </v-badge>
                     <v-btn
                       v-if="
@@ -450,7 +467,8 @@
                       @click="
                         addElementForFootnote(
                           row.cells[0].refs[0].uid,
-                          row.cells[0].refs[0].type
+                          row.cells[0].refs[0].type,
+                          row.cells[0].text
                         )
                       "
                     />
@@ -464,11 +482,13 @@
                       class="mx-0 px-0"
                       color="nnBaseBlue"
                       variant="text"
-                      @click="removeElementForFootnote(row.cells[0].refs[0].uid)"
+                      @click="
+                        removeElementForFootnote(row.cells[0].refs[0].uid)
+                      "
                     />
                   </div>
                 </td>
-                <td  class="sticky-column" style="left: 400px !important;">
+                <td class="sticky-column" style="left: 400px !important">
                   <v-btn
                     v-if="!readOnly"
                     icon
@@ -496,125 +516,139 @@
                   v-else
                   :key="`row-${index}-cell-${visitIndex}`"
                 >
-                  <v-row>
-                    <v-badge
-                      color="transparent"
-                      text-color="secondary"
-                      :content="
-                        row.cells[visitIndex + 1].refs &&
-                        row.cells[visitIndex + 1].refs.length
-                          ? getElementFootnotes(
-                              row.cells[visitIndex + 1].refs[0].uid
-                            )
-                          : ''
-                      "
-                      overlap
-                    >
-                      <v-checkbox
-                        v-if="
-                          !footnoteMode &&
-                          !readOnly &&
-                          currentSelectionMatrix[row.cells[0].refs[0].uid][
-                            visitCell.refs[0].uid
-                          ]
+                    <v-row class="mt-0">
+                      <v-badge
+                        color="transparent"
+                        text-color="secondary"
+                        offset-y="18"
+                        :content="
+                          row.cells[visitIndex + 1].refs &&
+                          row.cells[visitIndex + 1].refs.length
+                            ? getElementFootnotes(
+                                row.cells[visitIndex + 1].refs[0].uid
+                              )
+                            : ''
                         "
-                        v-model="
-                          currentSelectionMatrix[row.cells[0].refs[0].uid][
-                            visitCell.refs[0].uid
-                          ].value
-                        "
-                        color="success"
-                        :disabled="
-                          isCheckboxDisabled(
-                            row.cells[0].refs[0].uid,
-                            visitCell.refs[0].uid
-                          ) ||
-                          footnoteMode ||
-                          !checkPermission($roles.STUDY_WRITE) ||
-                          selectedStudyVersion !== null
-                        "
-                        hide-details
-                        true-icon="mdi-checkbox-marked-circle-outline"
-                        false-icon="mdi-checkbox-blank-circle-outline"
-                        class="mx-0 px-0"
-                        @update:model-value="
-                          (value) =>
-                            updateSchedule(
-                              value,
+                        overlap
+                      >
+                        <v-checkbox
+                          v-if="
+                            !footnoteMode &&
+                            !readOnly &&
+                            currentSelectionMatrix[row.cells[0].refs[0].uid][
+                              visitCell.refs[0].uid
+                            ]
+                          "
+                          v-model="
+                            currentSelectionMatrix[row.cells[0].refs[0].uid][
+                              visitCell.refs[0].uid
+                            ].value
+                          "
+                          color="success"
+                          :disabled="
+                            isCheckboxDisabled(
                               row.cells[0].refs[0].uid,
-                              visitCell
-                            )
+                              visitCell.refs[0].uid
+                            ) ||
+                            footnoteMode ||
+                            !checkPermission($roles.STUDY_WRITE) ||
+                            selectedStudyVersion !== null
+                          "
+                          hide-details
+                          true-icon="mdi-checkbox-marked-circle-outline"
+                          false-icon="mdi-checkbox-blank-circle-outline"
+                          class="mx-0 ml-2 px-0"
+                          @update:model-value="
+                            (value) =>
+                              updateSchedule(
+                                value,
+                                row.cells[0].refs[0].uid,
+                                visitCell
+                              )
+                          "
+                        />
+                      <v-btn
+                        v-else-if="
+                          footnoteMode &&
+                          currentSelectionMatrix[row.cells[0].refs[0].uid][
+                            visitCell.refs[0].uid
+                          ].uid &&
+                          !checkIfElementHasFootnote(
+                            row.cells[visitIndex + 1].refs[0].uid
+                          )
+                        "
+                        icon="mdi-plus-circle-outline"
+                        class="mx-0 px-0"
+                        variant="text"
+                        @click="
+                          addElementForFootnote(
+                            row.cells[visitIndex + 1].refs[0].uid,
+                            row.cells[visitIndex + 1].refs[0].type,
+                            row.cells[visitIndex + 1].refs[0].text
+                          )
                         "
                       />
-                    <v-btn
-                      v-else-if="
-                        footnoteMode &&
-                        currentSelectionMatrix[row.cells[0].refs[0].uid][
-                          visitCell.refs[0].uid
-                        ].uid &&
-                        !checkIfElementHasFootnote(
-                          row.cells[visitIndex + 1].refs[0].uid
-                        )
-                      "
-                      icon="mdi-plus-circle-outline"
-                      class="mx-0 px-0"
-                      variant="text"
-                      @click="
-                        addElementForFootnote(
-                          row.cells[visitIndex + 1].refs[0].uid,
-                          row.cells[visitIndex + 1].refs[0].type
-                        )
-                      "
-                    />
-                    <v-btn
-                      v-else-if="
-                        footnoteMode &&
-                        currentSelectionMatrix[row.cells[0].refs[0].uid][
-                          visitCell.refs[0].uid
-                        ].uid &&
-                        checkIfElementHasFootnote(
-                          row.cells[visitIndex + 1].refs[0].uid
-                        )
-                      "
-                      icon="mdi-minus-circle"
-                      class="mx-0 px-0"
-                      color="nnBaseBlue"
-                      variant="text"
-                      @click="
-                        removeElementForFootnote(
-                          row.cells[visitIndex + 1].refs[0].uid
-                        )
-                      "
-                    />
-                    </v-badge>
-                  </v-row>
+                      <v-btn
+                        v-else-if="
+                          footnoteMode &&
+                          currentSelectionMatrix[row.cells[0].refs[0].uid][
+                            visitCell.refs[0].uid
+                          ].uid &&
+                          checkIfElementHasFootnote(
+                            row.cells[visitIndex + 1].refs[0].uid
+                          )
+                        "
+                        icon="mdi-minus-circle"
+                        class="mx-0 px-0"
+                        color="nnBaseBlue"
+                        variant="text"
+                        @click="
+                          removeElementForFootnote(
+                            row.cells[visitIndex + 1].refs[0].uid
+                          )
+                        "
+                      />
+                      </v-badge>
+                    </v-row>
                 </td>
               </tr>
             </template>
           </tbody>
         </table>
       </div>
-      <div class="mt-8">
+      <div class="mt-8 ml-n4 mr-n4">
         <StudyFootnoteTable
+          @update="loadSoaContent()"
           @enable-footnote-mode="enableFootnoteMode"
+          @remove-element-from-footnote="removeElementForFootnote"
         />
       </div>
     </div>
-    <v-card
-      v-if="footnoteMode"
-      elevation="24"
-      class="bottomCard">
+    <v-card v-if="footnoteMode" elevation="24" class="bottomCard">
       <v-row>
         <v-col cols="8">
-          <v-card color="nnLightBlue200" class="ml-4">
-            <v-card-text style="display: inline-flex;">
+          <v-card color="nnLightBlue200" class="ml-4" style="width: fit-content;">
+            <v-card-text>
               <v-icon class="pb-1 mr-2">mdi-information-outline</v-icon>
-              <div v-if="activeFootnote" v-html="$t('StudyFootnoteEditForm.select_footnote_items', { footnote: activeFootnote.template ? activeFootnote.template.name_plain : activeFootnote.footnote.name_plain })" />
-              <div v-else>{{ $t('StudyFootnoteEditForm.select_to_create_footnote_items') }}</div>
+              <div
+                v-if="activeFootnote"
+                v-html="
+                  $t('StudyFootnoteEditForm.select_footnote_items', {
+                    footnote: activeFootnote.template
+                      ? activeFootnote.template.name_plain
+                      : activeFootnote.footnote.name_plain,
+                  })
+                "
+              />
+              <div v-else>
+                {{
+                  $t('StudyFootnoteEditForm.select_to_create_footnote_items')
+                }}
+              </div>
             </v-card-text>
           </v-card>
         </v-col>
-        <v-col cols="4" style="align-content: center; text-align-last: end;">
+        <v-col cols="4" style="align-content: center; text-align-last: end">
           <v-btn
             color="nnBaseBlue"
             variant="outlined"
@@ -629,7 +663,11 @@
             size="large"
             rounded
             :loading="footnoteUpdateLoading"
-            :text="activeFootnote ? $t('StudyFootnoteEditForm.save_linking') : $t('_global.continue')"
+            :text="
+              activeFootnote
+                ? $t('StudyFootnoteEditForm.save_linking')
+                : $t('_global.continue')
+            "
             @click="saveElementsForFootnote"
           />
         </v-col>
@@ -717,7 +755,7 @@ export default {
     StudyActivityScheduleBatchEditForm,
     StudyFootnoteTable,
     ProtocolFlowchart,
-    StudyFootnoteForm
+    StudyFootnoteForm,
   },
   inject: ['eventBusEmit'],
   props: {
@@ -790,7 +828,7 @@ export default {
       historyItems: [],
       historyItemsTotal: 0,
       soaContent: null,
-      layout: 'detailed'
+      layout: 'detailed',
     }
   },
   computed: {
@@ -946,7 +984,7 @@ export default {
     getSoaRowClasses(row) {
       if (row.cells && row.cells.length) {
         if (row.cells[0].style === 'soaGroup') {
-          return 'flowchart text-uppercase'
+          return 'flowchart'
         }
         if (row.cells[0].style === 'group') {
           return 'group'
@@ -1060,18 +1098,20 @@ export default {
       this.footnoteMode = false
       this.fetchFootnotes()
     },
-    addElementForFootnote(uid, type) {
+    addElementForFootnote(uid, type, name) {
       if (typeof uid !== 'string') {
         uid.forEach((u) => {
           this.elementsForFootnote.referenced_items.push({
             item_uid: u,
             item_type: type,
+            item_name: name,
           })
         })
       } else {
         this.elementsForFootnote.referenced_items.push({
           item_uid: uid,
           item_type: type,
+          item_name: name,
         })
       }
     },
@@ -1113,7 +1153,7 @@ export default {
         this.showFootnoteForm = true
       }
     },
-    closeFootnoteForm () {
+    closeFootnoteForm() {
       this.showFootnoteForm = false
       this.disableFootnoteMode()
     },
@@ -1212,7 +1252,11 @@ export default {
       }
       const payload = {}
       payload[field] = row.hide
-      await study[action](this.selectedStudy.uid, firstCell.refs[0].uid, payload)
+      await study[action](
+        this.selectedStudy.uid,
+        firstCell.refs[0].uid,
+        payload
+      )
       row.hide = !row.hide
     },
     updateGroupedSchedule(value, studyActivityUid, studyVisitCell) {
@@ -1637,5 +1681,8 @@ td {
 }
 .layoutSelector {
   border-color: rgb(var(--v-theme-nnBaseBlue));
+}
+.v-card-text {
+  display: inline-flex;
 }
 </style>

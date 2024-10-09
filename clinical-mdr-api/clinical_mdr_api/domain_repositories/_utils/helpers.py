@@ -31,7 +31,7 @@ def db_result_to_list(result) -> list[dict]:
 def unpack_list_of_lists(result: list) -> list:
     """
     Converts a list of embedded lists into a list containing items from internal list.
-    An exemplary result parameter passed to the funciton looks as follows [['A'], ['B]]
+    An exemplary result parameter passed to the function looks as follows [['A'], ['B]]
     The following method would translate it into ['A', 'B']
     """
     return [

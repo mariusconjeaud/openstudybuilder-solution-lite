@@ -164,6 +164,37 @@ def test_get_active_substance(api_client):
     TestUtils.assert_timestamp_is_newer_than(res["start_date"], 60)
 
 
+def test_get_active_substances_versions(api_client):
+    response = api_client.get("/concepts/active-substances/versions?total_count=true")
+    res = response.json()
+
+    assert response.status_code == 200
+    assert len(res["items"]) == 10
+    assert res["total"] == len(active_substances_all)
+
+    for item in res["items"]:
+        assert set(list(item.keys())) == set(ACTIVE_SUBSTANCE_FIELDS_ALL)
+        for key in ACTIVE_SUBSTANCE_FIELDS_NOT_NULL:
+            assert item[key] is not None
+        TestUtils.assert_timestamp_is_in_utc_zone(item["start_date"])
+        TestUtils.assert_timestamp_is_newer_than(item["start_date"], 60)
+
+
+@pytest.mark.parametrize(
+    "export_format",
+    [
+        pytest.param("text/csv"),
+        pytest.param("text/xml"),
+        pytest.param(
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        ),
+    ],
+)
+def test_get_active_substances_versions_csv_xml_excel(api_client, export_format):
+    url = "/concepts/active-substances/versions"
+    TestUtils.verify_exported_data_format(api_client, export_format, url)
+
+
 def test_update_active_substance_property(api_client):
     # First try a dummy patch with no new property values in the payload
     payload = {
@@ -344,9 +375,9 @@ def test_update_active_substance_unii(api_client):
 
 
 def test_get_active_substance_versioning(api_client):
-    response = api_client.get(
-        f"/concepts/active-substances/{active_substances_all[0].uid}/versions"
-    )
+    uid = active_substances_all[3].uid
+
+    response = api_client.get(f"/concepts/active-substances/{uid}/versions")
     res = response.json()
 
     assert response.status_code == 200
@@ -357,21 +388,17 @@ def test_get_active_substance_versioning(api_client):
         for key in ACTIVE_SUBSTANCE_FIELDS_NOT_NULL:
             assert item[key] is not None
 
-        assert item["uid"] == active_substances_all[0].uid
+        assert item["uid"] == uid
 
     # Approve draft version
-    response = api_client.post(
-        f"/concepts/active-substances/{active_substances_all[0].uid}/approvals"
-    )
+    response = api_client.post(f"/concepts/active-substances/{uid}/approvals")
     res = response.json()
     assert response.status_code == 201
     assert res["version"] == "1.0"
     assert res["status"] == "Final"
 
     # Create new version
-    response = api_client.post(
-        f"/concepts/active-substances/{active_substances_all[0].uid}/versions"
-    )
+    response = api_client.post(f"/concepts/active-substances/{uid}/versions")
     res = response.json()
     assert response.status_code == 201
     assert res["version"] == "1.1"
@@ -379,9 +406,7 @@ def test_get_active_substance_versioning(api_client):
     assert res["possible_actions"] == ["approve", "edit"]
 
     # Approve draft version
-    response = api_client.post(
-        f"/concepts/active-substances/{active_substances_all[0].uid}/approvals"
-    )
+    response = api_client.post(f"/concepts/active-substances/{uid}/approvals")
     res = response.json()
     assert response.status_code == 201
     assert res["version"] == "2.0"
@@ -389,9 +414,7 @@ def test_get_active_substance_versioning(api_client):
     assert res["possible_actions"] == ["inactivate", "new_version"]
 
     # Inactivate final version
-    response = api_client.delete(
-        f"/concepts/active-substances/{active_substances_all[0].uid}/activations"
-    )
+    response = api_client.delete(f"/concepts/active-substances/{uid}/activations")
     res = response.json()
     assert response.status_code == 200
     assert res["version"] == "2.0"
@@ -399,14 +422,43 @@ def test_get_active_substance_versioning(api_client):
     assert res["possible_actions"] == ["reactivate"]
 
     # Reactivate retired version
-    response = api_client.post(
-        f"/concepts/active-substances/{active_substances_all[0].uid}/activations"
-    )
+    response = api_client.post(f"/concepts/active-substances/{uid}/activations")
     res = response.json()
     assert response.status_code == 200
     assert res["version"] == "2.0"
     assert res["status"] == "Final"
     assert res["possible_actions"] == ["inactivate", "new_version"]
+
+    # Get all versions, assert they are sorted by version number (newest on top)
+    response = api_client.get(f"/concepts/active-substances/{uid}/versions")
+    res = response.json()
+    assert response.status_code == 200
+
+    assert len(res) == 6
+
+    assert res[0]["version"] == "2.0"
+    assert res[0]["status"] == "Final"
+    assert res[0]["possible_actions"] == ["inactivate", "new_version"]
+
+    assert res[1]["version"] == "2.0"
+    assert res[1]["status"] == "Retired"
+    assert res[1]["possible_actions"] == ["reactivate"]
+
+    assert res[2]["version"] == "2.0"
+    assert res[2]["status"] == "Final"
+    assert res[2]["possible_actions"] == ["inactivate", "new_version"]
+
+    assert res[3]["version"] == "1.1"
+    assert res[3]["status"] == "Draft"
+    assert res[3]["possible_actions"] == ["approve", "edit"]
+
+    assert res[4]["version"] == "1.0"
+    assert res[4]["status"] == "Final"
+    assert res[4]["possible_actions"] == ["inactivate", "new_version"]
+
+    assert res[5]["version"] == "0.1"
+    assert res[5]["status"] == "Draft"
+    assert res[5]["possible_actions"] == ["approve", "delete", "edit"]
 
 
 def test_get_active_substances_pagination(api_client):

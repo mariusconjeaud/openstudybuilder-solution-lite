@@ -131,7 +131,9 @@ def test_ct_config_values(db, logger):
             if line.strip():
                 item_count += 1
 
-    assert len(res.json()) == item_count
+    assert (
+        len(res.json()) == item_count
+    ), f"Number of CT Config items does not match. Expected: {item_count}, got: {len(res.json())}."
     for item in res.json():
         assert sorted(list(item.keys())) == sorted(expected_response_fields)
         for key, val in item.items():

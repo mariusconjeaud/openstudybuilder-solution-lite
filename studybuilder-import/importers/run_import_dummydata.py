@@ -543,15 +543,6 @@ class DummyData(BaseImporter):
             raise RuntimeError(err)
 
     @lru_cache(maxsize=10000)
-    def get_allowed_visit_types(self, study_uid, epoch_type_uid):
-        rs = requests.get(
-            f"{self.api.api_base_url}/studies/{study_uid}/study-visits/allowed-visit-types?epoch_type_uid={epoch_type_uid}",
-            headers=self.api.api_headers,
-        )
-
-        return rs.json()
-
-    @lru_cache(maxsize=10000)
     def get_term_uids_by_codelist(self, codelist_name):
         rs = requests.get(
             f"{self.api.api_base_url}/ct/terms?page_size=0&codelist_name={codelist_name}",
@@ -929,6 +920,8 @@ class DummyData(BaseImporter):
             headers=self.api.api_headers,
         ).json()["items"]
 
+        visit_type_uids = sorted(self.get_term_uids_by_codelist("VisitType"), reverse=True)
+
         time_unit_uids = [
             unit["uid"]
             for unit in time_units
@@ -1011,43 +1004,27 @@ class DummyData(BaseImporter):
                     n,
                 )
                 epoch_uid = self.studies[uid]["epochs"][0]
-                epoch_type_uid = requests.get(
-                    f"""{self.api.api_base_url}/studies/{uid}/study-epochs/{epoch_uid}""",
-                    headers=self.api.api_headers,
-                ).json()["epoch_type"]
-                allowed_visit_types = self.get_allowed_visit_types(uid, epoch_type_uid)
-                allowed_visit_type_uids = [
-                    allowed_visit_type["visit_type_uid"]
-                    for allowed_visit_type in allowed_visit_types
-                ]
+
                 self.create_study_visit(
                     nbr=1,
                     study_uid=uid,
                     epoch_uid=epoch_uid,
-                    visit_type_uid=allowed_visit_type_uids[
-                        m % len(allowed_visit_type_uids)
+                    visit_type_uid=visit_type_uids[
+                        m % len(visit_type_uids)
                     ],
                     time_unit_uid=time_unit_uids[m % len(time_unit_uids)],
                     time_reference_uid=time_reference_uid,
                 )
 
                 epoch_uid = self.studies[uid]["epochs"][1]
-                epoch_type_uid = requests.get(
-                    f"""{self.api.api_base_url}/studies/{uid}/study-epochs/{epoch_uid}""",
-                    headers=self.api.api_headers,
-                ).json()["epoch_type"]
-                allowed_visit_types = self.get_allowed_visit_types(uid, epoch_type_uid)
-                allowed_visit_type_uids = [
-                    allowed_visit_type["visit_type_uid"]
-                    for allowed_visit_type in allowed_visit_types
-                ]
+
                 for j in range(2, 19):
                     self.create_study_visit(
                         nbr=j,
                         study_uid=uid,
                         epoch_uid=epoch_uid,
-                        visit_type_uid=allowed_visit_type_uids[
-                            m % len(allowed_visit_type_uids)
+                        visit_type_uid=visit_type_uids[
+                            m % len(visit_type_uids)
                         ],
                         time_unit_uid=time_unit_uids[m % len(time_unit_uids)],
                         time_reference_uid=time_reference_uid
@@ -1060,43 +1037,27 @@ class DummyData(BaseImporter):
                     )
 
                 epoch_uid = self.studies[uid]["epochs"][2]
-                epoch_type_uid = requests.get(
-                    f"""{self.api.api_base_url}/studies/{uid}/study-epochs/{epoch_uid}""",
-                    headers=self.api.api_headers,
-                ).json()["epoch_type"]
-                allowed_visit_types = self.get_allowed_visit_types(uid, epoch_type_uid)
-                allowed_visit_type_uids = [
-                    allowed_visit_type["visit_type_uid"]
-                    for allowed_visit_type in allowed_visit_types
-                ]
+
                 for j in range(19, 43):
                     self.create_study_visit(
                         nbr=j,
                         study_uid=uid,
                         epoch_uid=epoch_uid,
-                        visit_type_uid=allowed_visit_type_uids[
-                            m % len(allowed_visit_type_uids)
+                        visit_type_uid=visit_type_uids[
+                            m % len(visit_type_uids)
                         ],
                         time_unit_uid=time_unit_uids[m % len(time_unit_uids)],
                         time_reference_uid=time_reference_uid,
                     )
 
                 epoch_uid = self.studies[uid]["epochs"][3]
-                epoch_type_uid = requests.get(
-                    f"""{self.api.api_base_url}/studies/{uid}/study-epochs/{epoch_uid}""",
-                    headers=self.api.api_headers,
-                ).json()["epoch_type"]
-                allowed_visit_types = self.get_allowed_visit_types(uid, epoch_type_uid)
-                allowed_visit_type_uids = [
-                    allowed_visit_type["visit_type_uid"]
-                    for allowed_visit_type in allowed_visit_types
-                ]
+
                 self.create_study_visit(
                     nbr=43,
                     study_uid=uid,
                     epoch_uid=epoch_uid,
-                    visit_type_uid=allowed_visit_type_uids[
-                        m % len(allowed_visit_type_uids)
+                    visit_type_uid=visit_type_uids[
+                        m % len(visit_type_uids)
                     ],
                     time_unit_uid=time_unit_uids[m % len(time_unit_uids)],
                     time_reference_uid=time_reference_uid,

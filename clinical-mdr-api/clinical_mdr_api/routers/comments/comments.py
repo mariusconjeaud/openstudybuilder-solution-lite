@@ -31,7 +31,7 @@ def get_comment_topics(
     | None = Query(
         None,
         min_length=1,
-        description="If specified, only topic matching the sepcified value are returned.",
+        description="If specified, only topic matching the specified value are returned.",
     ),
     topic_path_partial_match: bool
     | None = Query(
@@ -177,7 +177,7 @@ def edit_comment_thread(
         500: _generic_descriptions.ERROR_500,
     },
 )
-def delete_comment_thread(uid: str = CommentThreadUID) -> None:
+def delete_comment_thread(uid: str = CommentThreadUID) -> Response:
     Service().delete_comment_thread(uid)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 

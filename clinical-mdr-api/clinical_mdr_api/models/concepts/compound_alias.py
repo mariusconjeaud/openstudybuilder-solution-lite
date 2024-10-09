@@ -13,7 +13,7 @@ class CompoundAlias(Concept):
     possible_actions: list[str] = Field(
         ...,
         description=(
-            "Holds those actions that can be performed on CompoundAliass. "
+            "Holds those actions that can be performed on CompoundAlias. "
             "Actions are: 'approve', 'edit', 'new_version'."
         ),
     )

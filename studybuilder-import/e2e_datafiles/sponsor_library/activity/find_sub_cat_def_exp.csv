@@ -101,7 +101,6 @@ CDISC has 3 different strokes:
 ",1,,,
 "FIND_SUB_CAT_DEF","COMMANDS FIND_SUB_CAT","Commands","Subcategory for Alzheimer's Disease Assessment Scale - Cognitive Behavior Version 13 (ADAS-Cog V13) - Commands",1,,,
 "FIND_SUB_CAT_DEF","COMMUNICATING FIND_SUB_CAT","Communicating","Communicating",6,,,
-"FIND_SUB_CAT_DEF","COMPREHENSIO FIND_SUB_CAT","Comprehension","Subcategory for Alzheimer's Disease Assessment Scale - Cognitive Behavior Version 13 (ADAS-Cog V13) - Comprehension",1,,,
 "FIND_SUB_CAT_DEF","COMPREHENSION FIND_SUB_CAT","Comprehension","Comprehension subcategory for Mini-Mental State Examination (MMSE) (MMSE Copyright 1975, 1998, 2001 by MiniMental, LLC All rights reserved. Published 2001 by Psychological Assessment Resources, Inc. May not be reproduced in whole or in part in any form or by any means without written permission of Psychological Assessment Resources, Inc.).",1,,,
 "FIND_SUB_CAT_DEF","CONSTRUCTIONAL PRAXIS FIND_SUB_CAT","Constructional Praxis","Subcategory for Alzheimer's Disease Assessment Scale - Cognitive Behavior Version 13 (ADAS-Cog V13) - Constructional Praxis",1,,,
 "FIND_SUB_CAT_DEF","CRANIAL NERVES FIND_SUB_CAT","Cranial Nerves","Cranial Nerves subcategory for Clinical Neuropathy Assessment. Neuropathy Impairment Score (NIS). Dyck et al: Ann Neurol 8:590-596, 1980; Revised, Neurol 41:799-807, 1991 and Neurol 45:1115-1121, 1995",1,,,
@@ -432,7 +431,6 @@ Hemophilia Quality of Life (HAEMO-QOL) Questionnaire Parent's Long Version Age G
 Hemophilia Quality of Life (HAEMO-QOL) Questionnaire Parent's Long Version Age Group III (13-16 years).
 
 Open Questions",1,,,
-"FIND_SUB_CAT_DEF","ORIENTATIO FIND_SUB_CAT","Orientation","Subcategory for Alzheimer's Disease Assessment Scale - Cognitive Behavior Version 13 (ADAS-Cog V13) - Orientation",1,,,
 "FIND_SUB_CAT_DEF","ORIENTATION FIND_SUB_CAT","Orientation","Subcategory for Montreal Cognitive Assessment (MoCA) with individual items.",1,,,
 "FIND_SUB_CAT_DEF","ORIENTATION TO PLACE FIND_SUB_CAT","Orientation to Place","Orientation to place subcategory for Mini-Mental State Examination (MMSE) (MMSE Copyright 1975, 1998, 2001 by MiniMental, LLC All rights reserved. Published 2001 by Psychological Assessment Resources, Inc. May not be reproduced in whole or in part in any form or by any means without written permission of Psychological Assessment Resources, Inc.).",1,,,
 "FIND_SUB_CAT_DEF","ORIENTATION TO TIME FIND_SUB_CAT","Orientation to Time","Orientation to time subcategory for Mini-Mental State Examination (MMSE) (MMSE Copyright 1975, 1998, 2001 by MiniMental, LLC All rights reserved. Published 2001 by Psychological Assessment Resources, Inc. May not be reproduced in whole or in part in any form or by any means without written permission of Psychological Assessment Resources, Inc.).",1,,,

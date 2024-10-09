@@ -49,7 +49,12 @@
             <v-autocomplete
               v-model="selectedStudies"
               :label="$t('StudySelectionTable.study_acronyms')"
-              :items="studies"
+              :items="
+                studies.filter(
+                  (study) =>
+                    study.current_metadata.identification_metadata.study_acronym
+                )
+              "
               item-title="current_metadata.identification_metadata.study_acronym"
               return-object
               :rules="[formRules.required]"
@@ -565,7 +570,19 @@ export default {
       }
     },
     selectTemplate(template) {
-      this.selectedCriteria.push(template)
+      if (
+        template.criteria &&
+        !this.selectedCriteria.some(
+          (el) => el.criteria.uid === template.criteria.uid
+        )
+      ) {
+        this.selectedCriteria.push(template)
+      } else if (
+        template.uid &&
+        !this.selectedCriteria.some((el) => el.uid === template.uid)
+      ) {
+        this.selectedCriteria.push(template)
+      }
     },
     unselectTemplate(template) {
       this.selectedCriteria = this.selectedCriteria.filter(
@@ -654,8 +671,7 @@ export default {
               const payload = {
                 criteria_data: {
                   parameter_terms: studyCriteria.criteria.parameter_terms,
-                  criteria_template_uid:
-                    studyCriteria.criteria.template.uid,
+                  criteria_template_uid: studyCriteria.criteria.template.uid,
                   library_name: studyCriteria.criteria.library.name,
                 },
               }

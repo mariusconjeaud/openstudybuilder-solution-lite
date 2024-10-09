@@ -1,4 +1,4 @@
-from neomodel import BooleanProperty, One, OneOrMore, RelationshipFrom, RelationshipTo
+from neomodel import BooleanProperty, One, RelationshipFrom, RelationshipTo
 
 from clinical_mdr_api.domain_repositories.models.concepts import (
     ConceptRoot,
@@ -12,13 +12,6 @@ from clinical_mdr_api.domain_repositories.models.generic import (
 
 class CompoundValue(ConceptValue):
     is_sponsor_compound = BooleanProperty()
-
-    is_compound_alias = RelationshipFrom(
-        "CompoundAliasValue",
-        "IS_COMPOUND",
-        cardinality=OneOrMore,
-        model=VersionRelationship,
-    )
 
 
 class CompoundRoot(ConceptRoot):

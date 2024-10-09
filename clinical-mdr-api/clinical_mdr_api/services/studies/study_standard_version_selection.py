@@ -82,7 +82,7 @@ class StudyStandardVersionService:
         total_count: bool = False,
         study_value_version: str | None = None,
         **kwargs,
-    ) -> StudyStandardVersion:
+    ) -> list[StudyStandardVersion]:
         items, _ = self.repo.find_all_standard_version(
             study_uid=study_uid,
             sort_by=sort_by,

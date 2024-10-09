@@ -325,12 +325,9 @@ export default {
             parameters.push(value)
           }
         })
-        this.parameters = parameters
         this.apiEndpoint.getObject(object.uid).then((resp) => {
-          instances.loadParameterValues(
-            resp.data.parameter_terms,
-            this.parameters
-          )
+          instances.loadParameterValues(resp.data.parameter_terms, parameters)
+          this.parameters = parameters
         })
       })
     },

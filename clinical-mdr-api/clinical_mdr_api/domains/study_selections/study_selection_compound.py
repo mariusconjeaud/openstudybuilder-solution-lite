@@ -165,8 +165,8 @@ class StudySelectionCompoundVO:
         #   - Dose frequency
         #   - Dispenser
         #   - Delivery device
-        exisiting_uid = selection_uid_by_details_callback(self)
-        if exisiting_uid and self.study_selection_uid != exisiting_uid:
+        existing_uid = selection_uid_by_details_callback(self)
+        if existing_uid and self.study_selection_uid != existing_uid:
             raise BusinessLogicException(
                 "Compound selection with the specified combination of compound, medicinal product, "
                 "dose frequency, dispenser and delivery device already exists."
@@ -177,12 +177,14 @@ class StudySelectionCompoundVO:
         medicinal_product: MedicinalProductAR = medicinal_product_callback(
             self.medicinal_product_uid
         )
-        if medicinal_product:
-            # Ensure that the provided CompoundAlias and MedicinalProduct both link to the same Compound
-            if medicinal_product.concept_vo.compound_uid != self.compound_uid:
-                raise BusinessLogicException(
-                    f"Selected compound alias '{self.compound_alias_uid}' and medicinal product '{self.medicinal_product_uid}' must relate to the same compound"
-                )
+        # Ensure that the provided CompoundAlias and MedicinalProduct both link to the same Compound
+        if (
+            medicinal_product
+            and medicinal_product.concept_vo.compound_uid != self.compound_uid
+        ):
+            raise BusinessLogicException(
+                f"Selected compound alias '{self.compound_alias_uid}' and medicinal product '{self.medicinal_product_uid}' must relate to the same compound"
+            )
 
 
 @dataclass

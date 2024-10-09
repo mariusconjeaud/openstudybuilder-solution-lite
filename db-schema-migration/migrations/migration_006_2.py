@@ -3,11 +3,11 @@ import os
 
 from migrations.common import migrate_ct_config_values, migrate_indexes_and_constraints
 from migrations.utils.utils import (
+    get_db_connection,
     get_db_driver,
-    run_cypher_query,
     get_logger,
     print_counters_table,
-    get_db_connection,
+    run_cypher_query,
 )
 
 logger = get_logger(os.path.basename(__file__))
@@ -28,11 +28,15 @@ def main():
         DB_DRIVER, logger, MIGRATION_DESC
     )
     migrate_remove_soa_group_node_without_any_study_activities(
-        DB_DRIVER, logger,
+        DB_DRIVER,
+        logger,
     )
     migrate_soa_group_edit_performed_in_wrong_way(DB_DRIVER, logger, MIGRATION_DESC)
     migrate_study_selection_metadata_merge(DB_DRIVER, logger, MIGRATION_DESC)
-    migrate_submit_and_reject_activity_requests(DB_DRIVER, logger,)
+    migrate_submit_and_reject_activity_requests(
+        DB_DRIVER,
+        logger,
+    )
 
 
 def migrate_study_activities_linked_to_deleted_soa_group(
@@ -95,9 +99,7 @@ def migrate_study_activities_linked_to_deleted_soa_group(
     return contains_updates
 
 
-def migrate_remove_soa_group_node_without_any_study_activities(
-    db_driver, log
-):
+def migrate_remove_soa_group_node_without_any_study_activities(db_driver, log):
     log.info(
         "Cleanup StudySoAGroup node that are not linked to any StudyActivity in the following Study (%s)",
     )

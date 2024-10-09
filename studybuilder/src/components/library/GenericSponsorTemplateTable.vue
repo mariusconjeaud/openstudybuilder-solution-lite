@@ -1,6 +1,7 @@
 <template>
   <div>
     <NNTable
+      ref="tableRef"
       v-model="selected"
       :headers="updatedHeaders"
       :items="templates"
@@ -349,6 +350,7 @@ const templates = ref([])
 const total = ref(0)
 const key = ref(0)
 const confirm = ref()
+const tableRef = ref()
 
 const updatedHeaders = computed(() => {
   const result = JSON.parse(JSON.stringify(props.headers))
@@ -550,6 +552,7 @@ function closeForm() {
   selectedObject.value = null
   showForm.value = false
   key.value += 1
+  tableRef.value.filterTable()
 }
 function filter(filters, options, filtersUpdated) {
   const localFilters = filters ? JSON.parse(filters) : {}

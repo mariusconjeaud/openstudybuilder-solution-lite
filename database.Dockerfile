@@ -1,11 +1,11 @@
-ARG NEO4J_IMAGE=neo4j:5.18.1-enterprise
+ARG NEO4J_IMAGE=neo4j:5.19.0-enterprise
 ARG PYTHON_IMAGE=python:3.11.9-slim
 
 # --- Build stage ----
 FROM $PYTHON_IMAGE as build-stage
 
-ARG NEO4J_DOWNLOAD_URL=https://dist.neo4j.org/neo4j-enterprise-5.18.1-unix.tar.gz
-ARG NEO4J_CHECKSUM=a2ab866be05d2decef558b3e711c4b4403f3a35be6b87f7b94c618bb83b8f7c3
+ARG NEO4J_DOWNLOAD_URL=https://dist.neo4j.org/neo4j-enterprise-5.19.0-unix.tar.gz
+ARG NEO4J_CHECKSUM=6dc5af32f8e01f1cb8f8618d1314d91713172db14f53c695b77ca733ff504356
 
 ## Install required system packages, for clinical-mdr-api as well
 RUN apt-get update \
@@ -43,19 +43,13 @@ ENV NEO4J_MDR_BOLT_PORT=7687 \
     NEO4J_MDR_HOST=localhost \
     NEO4J_MDR_AUTH_USER=neo4j \
     NEO4J_MDR_DATABASE=mdrdb \
+    NEO4J_MDR_DATABASE_DBNAME=mdrdockerdb \
     NEO4J_CDISC_IMPORT_BOLT_PORT=7687 \
     NEO4J_CDISC_IMPORT_HOST=localhost \
     NEO4J_CDISC_IMPORT_AUTH_USER=neo4j \
     NEO4J_CDISC_IMPORT_AUTH_PASSWORD=$NEO4J_MDR_AUTH_PASSWORD \
     NEO4J_CDISC_IMPORT_DATABASE=cdisc-import \
     NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
-
-# Environment variables for api
-ENV NEO4J_DSN="bolt://${NEO4J_MDR_AUTH_USER}:${NEO4J_MDR_AUTH_PASSWORD}@localhost:7687/" \
-    NEO4J_DATABASE=mdrdb \
-    OAUTH_ENABLED=false \
-    ALLOW_ORIGIN_REGEX=".*"
-
 
 # Install Neo4j from tarball
 RUN curl --fail --location --output neo4j.tar.gz --silent --show-error "$NEO4J_DOWNLOAD_URL" \
@@ -100,9 +94,14 @@ RUN cd studybuilder-import && pipenv sync \
 COPY ./studybuilder-import studybuilder-import
 COPY ./clinical-mdr-api clinical-mdr-api
 
+# Environment variables for api
+ENV NEO4J_DSN="bolt://${NEO4J_MDR_AUTH_USER}:${NEO4J_MDR_AUTH_PASSWORD}@localhost:7687/" \
+    NEO4J_DATABASE=mdrdb \
+    OAUTH_ENABLED=false \
+    ALLOW_ORIGIN_REGEX=".*"
+
 # Set up environments for studybuilder-import
 COPY ./studybuilder-import/.env.import studybuilder-import/.env
-
 
 # Start Neo4j then run init and import
 RUN /neo4j/bin/neo4j-admin dbms set-initial-password "$NEO4J_MDR_AUTH_PASSWORD" \
@@ -134,10 +133,17 @@ RUN /neo4j/bin/neo4j-admin dbms set-initial-password "$NEO4J_MDR_AUTH_PASSWORD" 
     && sleep 10 && cd ../studybuilder-import && pipenv run import_all && pipenv run import_dummydata \
     # stop the api
     && sleep 10 && kill -TERM $api_pid && wait $api_pid \
+    # get database name
+    && dbName=$(/neo4j/bin/cypher-shell -u "$NEO4J_MDR_AUTH_USER" -p "$NEO4J_MDR_AUTH_PASSWORD" -a "neo4j://localhost:$NEO4J_MDR_BOLT_PORT" "SHOW ALIASES FOR DATABASE YIELD * WHERE name=\"$NEO4J_MDR_DATABASE\" RETURN database;" | tail -n 1 | tr -d '"') && echo $dbName \
+    # run backup of database
+    && mkdir -p /neo4j/data/backup/ \
+    && sleep 10 && /neo4j/bin/neo4j-admin database backup --to-path=/neo4j/data/backup/ --type=FULL $dbName --compress=false \
+    && sleep 10 && find /neo4j/data/backup/ -type f -name '*.backup' -exec sh -c 'x="{}"; mv "$x" "/neo4j/data/backup/mdrdockerdb.backup"' \; \
     # stop neo4j server gently, but first wait a little for recent transactions to finish
-    && sleep 10 && kill -TERM $neo4j_pid && wait $neo4j_pid \
+    && sleep 10 && /neo4j/bin/neo4j stop && sleep 10 \
+    # run consistency-check on mdrdb
+    && sleep 10 && /neo4j/bin/neo4j-admin database check $dbName \
     && trap EXIT
-
 
 # --- Prod stage ----
 # Copy database directory from build-stage to the official neo4j docker image
@@ -157,15 +163,18 @@ RUN [ "x$UID" = "x1000" ] || { \
 
 # Install APOC plugin
 RUN wget --quiet --timeout 60 --tries 2 --output-document /var/lib/neo4j/plugins/apoc.jar \
-    https://github.com/neo4j/apoc/releases/download/5.18.0/apoc-5.18.0-core.jar
+    https://github.com/neo4j/apoc/releases/download/5.19.0/apoc-5.19.0-core.jar
 
-# Copy database files from build stage
-COPY --from=build-stage --chown=$USER:$GROUP /neo4j/data /data
+# Copy database backup from build stage
+COPY --from=build-stage --chown=$USER:$GROUP /neo4j/data/backup /data/backup
 
 # Set up default environment variables
-ENV NEO4J_apoc_trigger_enabled="true" \
+ENV NEO4J_AUTH=neo4j/changeme1234 \
+    NEO4J_apoc_trigger_enabled="true" \
     NEO4J_apoc_import_file_enabled="true" \
-    NEO4J_apoc_export_file_enabled="true"
+    NEO4J_apoc_export_file_enabled="true" \
+    NEO4J_dbms_databases_seed__from__uri__providers="URLConnectionSeedProvider" \
+    NEO4J_apoc_initializer_system_1="CREATE DATABASE mdrdb OPTIONS {existingData: 'use', seedURI:'file:///data/backup/mdrdockerdb.backup'} WAIT 60 SECONDS"
 
 # Volume attachment point: if an empty volume is mounted, it gets populated with the pre-built database from the image
 VOLUME /data

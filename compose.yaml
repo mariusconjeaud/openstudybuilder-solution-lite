@@ -6,7 +6,7 @@ services:
   database:
     build:
       args:
-        NEO4J_IMAGE: ${NEO4J_IMAGE:-neo4j:5.18.1-enterprise}
+        NEO4J_IMAGE: ${NEO4J_IMAGE:-neo4j:5.19.0-enterprise}
         PYTHON_IMAGE: ${PYTHON_IMAGE:-python:3.11.9-slim}
         NEO4J_server_memory_heap_initial__size: "3G"
         NEO4J_server_memory_heap_max__size: "3G"
@@ -132,6 +132,7 @@ services:
   
   # Neodash service used with defined parameters
   neodash:
+    platform: linux/x86_64
     image: neo4jlabs/neodash:latest
     depends_on:
       database:

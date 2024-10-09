@@ -134,6 +134,7 @@ from clinical_mdr_api.routers.listings.listings_sdtm import (
 from clinical_mdr_api.routers.listings.listings_study import (
     router as study_listing_router,
 )
+from clinical_mdr_api.routers.notifications import router as notifications_router
 from clinical_mdr_api.routers.projects.projects import router as projects_router
 from clinical_mdr_api.routers.standard_data_models.data_model_igs import (
     router as data_model_igs_router,
@@ -268,6 +269,7 @@ from clinical_mdr_api.routers.template_parameters import (
 )
 
 __all__ = [
+    "notifications_router",
     "activities_router",
     "active_substances_router",
     "pharmaceutical_products_router",

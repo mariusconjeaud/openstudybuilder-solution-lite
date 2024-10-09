@@ -19,6 +19,7 @@ fetchMock.mockResponse(
     API_BUILD_NUMBER: 'dev',
     DOCUMENTATION_PORTAL_BUILD_NUMBER: 'dev',
     OAUTH_ENABLED: 'false',
+    OAUTH_RBAC_ENABLED: 'false',
     OIDC_METADATA_URL: 'http://test.test/.well-known/openid-configuration',
     OAUTH_API_APP_ID: 'test-api-app-id',
     OAUTH_UI_APP_ID: 'test-ui-app-id',

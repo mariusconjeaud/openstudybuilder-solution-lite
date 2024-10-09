@@ -3,7 +3,9 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 import { auth } from '@/plugins/auth'
 import { useAppStore } from '@/stores/app'
+import { useAuthStore } from '@/stores/auth'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
+import roles from '@/constants/roles'
 import study from '@/api/study'
 
 const routes = [
@@ -933,6 +935,26 @@ const routes = [
     ],
   },
   {
+    path: '/administration',
+    name: 'Administration',
+    component: () => import('../components/layout/PassThrough.vue'),
+    redirect: { name: 'SystemAnnouncements' },
+    children: [
+      {
+        path: 'announcements',
+        name: 'SystemAnnouncements',
+        component: () =>
+          import('../views/administration/SystemAnnouncements.vue'),
+        meta: {
+          resetBreadcrumbs: true,
+          authRequired: true,
+          section: 'Administration',
+          requiredPermission: roles.ADMIN_READ,
+        },
+      },
+    ],
+  },
+  {
     path: '/',
     name: 'Home',
     component: () => import('../views/HomePage.vue'),
@@ -1008,16 +1030,22 @@ async function saveStudyUid(studyUid) {
 router.beforeEach(async (to, from, next) => {
   const $config = inject('$config')
   const studiesGeneralStore = useStudiesGeneralStore()
+  const authStore = useAuthStore()
 
   if (to.params.study_id && to.params.study_id !== '*') {
     await saveStudyUid(to.params.study_id)
   }
 
-  if (
-    $config.OAUTH_ENABLED &&
-    to.matched.some((record) => record.meta.authRequired)
-  ) {
-    auth.validateAccess(to, from, next)
+  if ($config.OAUTH_ENABLED) {
+    await authStore.initialize()
+    if (to.matched.some((record) => record.meta.authRequired)) {
+      auth.validateAccess(to, from, next)
+    }
+    if (to.matched.some((record) => record.meta.requiredPermission)) {
+      if (!authStore.userInfo.roles.includes(to.meta.requiredPermission)) {
+        next(false)
+      }
+    }
   }
 
   if (to.meta && to.meta.studyRequired && !studiesGeneralStore.selectedStudy) {

@@ -35,7 +35,17 @@ def from_duration_object_to_value_and_unit(
     found_unit = None
     # find unit extracted from iso duration string (duration_code) and find it in the set of all age units
     for unit in all_study_time_units:
-        if unit.name[0].lower() == duration_code:
+        unit_first_letter = unit.name[0].lower()
+        unit_last_letter = unit.name[-1].lower()
+        # if duration value which is passed is great than 1 we should find a corresponding unit in the plural version
+        if (
+            duration_value > 1
+            and unit_first_letter == duration_code
+            and unit_last_letter == "s"
+        ):
+            found_unit = unit
+            break
+        if duration_value <= 1 and unit_first_letter == duration_code:
             found_unit = unit
             break
     return duration_value, found_unit

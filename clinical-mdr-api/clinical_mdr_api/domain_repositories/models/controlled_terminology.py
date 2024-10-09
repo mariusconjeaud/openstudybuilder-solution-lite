@@ -205,9 +205,6 @@ class CTTermRoot(ControlledTerminologyWithUID):
     has_parent_subtype = RelationshipTo(
         "CTTermRoot", "HAS_PARENT_SUB_TYPE", model=ClinicalMdrRel
     )
-    valid_for_epoch_type = RelationshipTo(
-        "CTTermRoot", "VALID_FOR_EPOCH_TYPE", model=ClinicalMdrRel
-    )
 
 
 class CTCatalogue(ClinicalMdrNode):

@@ -1,14 +1,14 @@
 """ Schema migrations needed for release to PROD post Mar 2024."""
-from math import ceil, floor
 import os
+from math import ceil, floor
 
 from migrations.common import migrate_ct_config_values, migrate_indexes_and_constraints
 from migrations.utils.utils import (
+    get_db_connection,
     get_db_driver,
-    run_cypher_query,
     get_logger,
     print_counters_table,
-    get_db_connection,
+    run_cypher_query,
 )
 
 logger = get_logger(os.path.basename(__file__))
@@ -35,7 +35,9 @@ def main():
         DB_DRIVER, logger, MIGRATION_DESC
     )
     fix_not_migrated_study_soa_groups(DB_DRIVER, logger, MIGRATION_DESC)
-    merge_multiple_study_activity_subgroup_and_group_nodes(DB_DRIVER, logger, MIGRATION_DESC)
+    merge_multiple_study_activity_subgroup_and_group_nodes(
+        DB_DRIVER, logger, MIGRATION_DESC
+    )
     migrate_study_selection_metadata_merge(DB_DRIVER, logger, MIGRATION_DESC)
 
 
@@ -527,7 +529,7 @@ def fix_not_migrated_study_soa_groups(db_driver, log, migration_desc):
         MERGE (study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(existing_study_soa_group)
         DETACH DELETE has_flowchart_group
         """,
-        params={"correction_desc": migration_desc}
+        params={"correction_desc": migration_desc},
     )
     first_part_counters = summary.counters
     print_counters_table(first_part_counters)
@@ -570,7 +572,7 @@ def fix_not_migrated_study_soa_groups(db_driver, log, migration_desc):
         DETACH DELETE has_flowchart_group
 
         """,
-        params={"correction_desc": migration_desc}
+        params={"correction_desc": migration_desc},
     )
     second_part_counters = summary.counters
     print_counters_table(second_part_counters)
@@ -825,121 +827,225 @@ def migrate_study_selection_metadata_merge(db_driver, log, migration_desc):
 
 def get_correct_groupings():
     correct_groupings = {
-        "0" : {
+        "0": {
             # Albumin
-            "StudyActivity_000396": {"correct_subgroup":"Biochemistry", "correct_group":"Laboratory Assessments"},
+            "StudyActivity_000396": {
+                "correct_subgroup": "Biochemistry",
+                "correct_group": "Laboratory Assessments",
+            },
             # Medical History/Concomitant Illness
-            "StudyActivity_000356": {"correct_subgroup":"Medical History/Concomitant Illness"},
+            "StudyActivity_000356": {
+                "correct_subgroup": "Medical History/Concomitant Illness"
+            },
             # Norepinephrine
-            "StudyActivity_000433": {"correct_subgroup":"Urinalysis"}
+            "StudyActivity_000433": {"correct_subgroup": "Urinalysis"},
         },
-        "7611" : {
+        "7611": {
             # Drug Dispensing
-            "StudyActivity_000379": {"correct_subgroup":"Oral Anti-diabetic Drug", "correct_group":"Drug Dispensing"},
-            "StudyActivity_000339": {"correct_subgroup":"Drug Accountability", "correct_group":"Drug Accountability"},
+            "StudyActivity_000379": {
+                "correct_subgroup": "Oral Anti-diabetic Drug",
+                "correct_group": "Drug Dispensing",
+            },
+            "StudyActivity_000339": {
+                "correct_subgroup": "Drug Accountability",
+                "correct_group": "Drug Accountability",
+            },
             # Billirubin
-            "StudyActivity_000378": {"correct_subgroup":"Biochemistry", "correct_group":"Laboratory Assessments"},
-            "StudyActivity_000293": {"correct_subgroup":"Biochemistry", "correct_group":"Laboratory Assessments"},
+            "StudyActivity_000378": {
+                "correct_subgroup": "Biochemistry",
+                "correct_group": "Laboratory Assessments",
+            },
+            "StudyActivity_000293": {
+                "correct_subgroup": "Biochemistry",
+                "correct_group": "Laboratory Assessments",
+            },
             # Erythrocytes
-            "StudyActivity_000376": {"correct_subgroup":"Urinalysis", "correct_group":"Laboratory Assessments"},
-            "StudyActivity_000278": {"correct_subgroup":"Urine Dipstick", "correct_group":"Laboratory Assessments"},
+            "StudyActivity_000376": {
+                "correct_subgroup": "Urinalysis",
+                "correct_group": "Laboratory Assessments",
+            },
+            "StudyActivity_000278": {
+                "correct_subgroup": "Urine Dipstick",
+                "correct_group": "Laboratory Assessments",
+            },
             # Glucose
-            "StudyActivity_000375": {"correct_subgroup":"Glucose Metabolism", "correct_group":"Laboratory Assessments"},
-            "StudyActivity_000306": {"correct_subgroup":"Urinalysis", "correct_group":"Laboratory Assessments"},
+            "StudyActivity_000375": {
+                "correct_subgroup": "Glucose Metabolism",
+                "correct_group": "Laboratory Assessments",
+            },
+            "StudyActivity_000306": {
+                "correct_subgroup": "Urinalysis",
+                "correct_group": "Laboratory Assessments",
+            },
             # Albumin/Creatinine
-            "StudyActivity_000374": {"correct_subgroup":"Biochemistry", "correct_group":"Laboratory Assessments"},
+            "StudyActivity_000374": {
+                "correct_subgroup": "Biochemistry",
+                "correct_group": "Laboratory Assessments",
+            },
             # Creatinine
-            "StudyActivity_000296": {"correct_subgroup":"Biochemistry", "correct_group":"Laboratory Assessments"},
+            "StudyActivity_000296": {
+                "correct_subgroup": "Biochemistry",
+                "correct_group": "Laboratory Assessments",
+            },
             # Nitrite
-            "StudyActivity_000312": {"correct_subgroup":"Urinalysis", "correct_group":"Laboratory Assessments"},
+            "StudyActivity_000312": {
+                "correct_subgroup": "Urinalysis",
+                "correct_group": "Laboratory Assessments",
+            },
             # C Reactive Protein
-            "StudyActivity_000297": {"correct_subgroup":"Biochemistry", "correct_group":"Laboratory Assessments"},
+            "StudyActivity_000297": {
+                "correct_subgroup": "Biochemistry",
+                "correct_group": "Laboratory Assessments",
+            },
             # Hemoglobin
-            "StudyActivity_000279": {"correct_subgroup":"Urinalysis"},
+            "StudyActivity_000279": {"correct_subgroup": "Urinalysis"},
             # Potassium
-            "StudyActivity_000300": {"correct_subgroup":"Urinalysis", "correct_group":"Laboratory Assessments"},
+            "StudyActivity_000300": {
+                "correct_subgroup": "Urinalysis",
+                "correct_group": "Laboratory Assessments",
+            },
             # QT Interval, Aggregate
-            "StudyActivity_000329": {"correct_subgroup":"ECG"},
+            "StudyActivity_000329": {"correct_subgroup": "ECG"},
             # ECG Mean Heart Rate
-            "StudyActivity_000322": {"correct_subgroup":"ECG"},
+            "StudyActivity_000322": {"correct_subgroup": "ECG"},
             # Medical History/Concomitant Illness
-            "StudyActivity_000268": {"correct_subgroup":"Medical History/Concomitant Illness"},
+            "StudyActivity_000268": {
+                "correct_subgroup": "Medical History/Concomitant Illness"
+            },
             # Alkaline Phosphatase
-            "StudyActivity_000289": {"correct_subgroup":"Biochemistry", "correct_group":"Laboratory Assessments"},
+            "StudyActivity_000289": {
+                "correct_subgroup": "Biochemistry",
+                "correct_group": "Laboratory Assessments",
+            },
             # pH
-            "StudyActivity_000310": {"correct_subgroup":"Biochemistry", "correct_group":"Laboratory Assessments"},
+            "StudyActivity_000310": {
+                "correct_subgroup": "Biochemistry",
+                "correct_group": "Laboratory Assessments",
+            },
             # Glomerular Filtration Rate, Estimated
-            "StudyActivity_000304": {"correct_subgroup":"Biochemistry", "correct_group":"Laboratory Assessments"},
+            "StudyActivity_000304": {
+                "correct_subgroup": "Biochemistry",
+                "correct_group": "Laboratory Assessments",
+            },
             # Albumin
-            "StudyActivity_000288": {"correct_subgroup":"Biochemistry", "correct_group":"Laboratory Assessments"},
+            "StudyActivity_000288": {
+                "correct_subgroup": "Biochemistry",
+                "correct_group": "Laboratory Assessments",
+            },
             # QTcF Interval, Aggregate
-            "StudyActivity_000327": {"correct_subgroup":"ECG"},
+            "StudyActivity_000327": {"correct_subgroup": "ECG"},
             # QTcB Interval, Aggregate
-            "StudyActivity_000326": {"correct_subgroup":"ECG"},
+            "StudyActivity_000326": {"correct_subgroup": "ECG"},
             # Protein
-            "StudyActivity_000313": {"correct_subgroup":"Urinalysis", "correct_group":"Laboratory Assessments"},
+            "StudyActivity_000313": {
+                "correct_subgroup": "Urinalysis",
+                "correct_group": "Laboratory Assessments",
+            },
             # QRS Duration, Aggregate
-            "StudyActivity_000325": {"correct_subgroup":"Biochemistry"},
+            "StudyActivity_000325": {"correct_subgroup": "Biochemistry"},
             # Platelets
-            "StudyActivity_000282": {"correct_subgroup":"Haematology", "correct_group":"Laboratory Assessments"},
+            "StudyActivity_000282": {
+                "correct_subgroup": "Haematology",
+                "correct_group": "Laboratory Assessments",
+            },
             # Urea
-            "StudyActivity_000302": {"correct_subgroup":"Biochemistry"},
+            "StudyActivity_000302": {"correct_subgroup": "Biochemistry"},
             # Leukocytes
-            "StudyActivity_000377": {"correct_subgroup":"Haematology", "correct_group":"Laboratory Assessments"},
-            "StudyActivity_000280": {"correct_subgroup":"Urinalysis","correct_group":"Laboratory Assessments"},
+            "StudyActivity_000377": {
+                "correct_subgroup": "Haematology",
+                "correct_group": "Laboratory Assessments",
+            },
+            "StudyActivity_000280": {
+                "correct_subgroup": "Urinalysis",
+                "correct_group": "Laboratory Assessments",
+            },
             # Sodium
-            "StudyActivity_000301": {"correct_subgroup":"Biochemistry", "correct_group":"Laboratory Assessments"},
+            "StudyActivity_000301": {
+                "correct_subgroup": "Biochemistry",
+                "correct_group": "Laboratory Assessments",
+            },
             # Aspartate Aminotransferase
-            "StudyActivity_000292": {"correct_subgroup":"Biochemistry", "correct_group":"Laboratory Assessments"},
+            "StudyActivity_000292": {
+                "correct_subgroup": "Biochemistry",
+                "correct_group": "Laboratory Assessments",
+            },
             # PR Interval, Aggregate
-            "StudyActivity_000323": {"correct_subgroup":"ECG"},
+            "StudyActivity_000323": {"correct_subgroup": "ECG"},
             # Alanine Aminotransferase
-            "StudyActivity_000290": {"correct_subgroup":"Biochemistry", "correct_group":"Laboratory Assessments"},
+            "StudyActivity_000290": {
+                "correct_subgroup": "Biochemistry",
+                "correct_group": "Laboratory Assessments",
+            },
             # Amylase
-            "StudyActivity_000291": {"correct_subgroup":"Biochemistry", "correct_group":"Laboratory Assessments"},
+            "StudyActivity_000291": {
+                "correct_subgroup": "Biochemistry",
+                "correct_group": "Laboratory Assessments",
+            },
             # Urea Nitrogen
-            "StudyActivity_000294": {"correct_subgroup":"Urinalysis", "correct_group":"Laboratory Assessments"},
+            "StudyActivity_000294": {
+                "correct_subgroup": "Urinalysis",
+                "correct_group": "Laboratory Assessments",
+            },
             # Interpretation
-            "StudyActivity_000328": {"correct_subgroup":"ECG"},
+            "StudyActivity_000328": {"correct_subgroup": "ECG"},
             # Lipase
-            "StudyActivity_000299": {"correct_subgroup":"Biochemistry", "correct_group":"Laboratory Assessments"},
+            "StudyActivity_000299": {
+                "correct_subgroup": "Biochemistry",
+                "correct_group": "Laboratory Assessments",
+            },
             # Subject fasting
-            "StudyActivity_000340": {"correct_subgroup":"Collection of Samples for Laboratory"},
+            "StudyActivity_000340": {
+                "correct_subgroup": "Collection of Samples for Laboratory"
+            },
             # Calcium
-            "StudyActivity_000295": {"correct_subgroup":"Biochemistry"},
+            "StudyActivity_000295": {"correct_subgroup": "Biochemistry"},
             # RR Interval, Aggregate
-            "StudyActivity_000324": {"correct_subgroup":"ECG"},
+            "StudyActivity_000324": {"correct_subgroup": "ECG"},
         },
-        "7727" : {
+        "7727": {
             # Medical History/Concomitant Illness
-            "StudyActivity_000425": {"correct_subgroup":"Medical History/Concomitant Illness"},
+            "StudyActivity_000425": {
+                "correct_subgroup": "Medical History/Concomitant Illness"
+            },
             # Technical Complaint
-            "StudyActivity_000432": {"correct_subgroup":"Technical Complaints"}
+            "StudyActivity_000432": {"correct_subgroup": "Technical Complaints"},
         },
-        "7890" : {
+        "7890": {
             # Physical Examination
-            "StudyActivity_000404": {"correct_subgroup":"Physical Examination"},
+            "StudyActivity_000404": {"correct_subgroup": "Physical Examination"},
             # Medical History/Concomitant Illness
-            "StudyActivity_000407": {"correct_subgroup":"Medical History/Concomitant Illness"},
+            "StudyActivity_000407": {
+                "correct_subgroup": "Medical History/Concomitant Illness"
+            },
             # Discontinuation Criteria
-            "StudyActivity_000409": {"correct_subgroup":"Discontinuation Criteria"},
+            "StudyActivity_000409": {"correct_subgroup": "Discontinuation Criteria"},
             # Drug Dispensing
-            "StudyActivity_000416": {"correct_subgroup":"Drug Accountability", "correct_group":"Drug Accountability"},
-            "StudyActivity_000417": {"correct_subgroup":"Oral Anti-diabetic Drug", "correct_group":"Drug Dispensing"},
+            "StudyActivity_000416": {
+                "correct_subgroup": "Drug Accountability",
+                "correct_group": "Drug Accountability",
+            },
+            "StudyActivity_000417": {
+                "correct_subgroup": "Oral Anti-diabetic Drug",
+                "correct_group": "Drug Dispensing",
+            },
         },
-        "7822" : {
+        "7822": {
             # Medical History/Concomitant Illness
-            "StudyActivity_000470": {"correct_subgroup":"Medical History/Concomitant Illness"},
+            "StudyActivity_000470": {
+                "correct_subgroup": "Medical History/Concomitant Illness"
+            },
             # Physical Examination
-            "StudyActivity_000472": {"correct_subgroup":"Physical Examination"},
+            "StudyActivity_000472": {"correct_subgroup": "Physical Examination"},
             # ECG Mean Heart Rate
-            "StudyActivity_000475": {"correct_subgroup":"ECG"},
-        }
+            "StudyActivity_000475": {"correct_subgroup": "ECG"},
+        },
     }
     return correct_groupings
 
 
-def merge_multiple_study_activity_subgroup_and_group_nodes(db_driver, log, migration_desc):
+def merge_multiple_study_activity_subgroup_and_group_nodes(
+    db_driver, log, migration_desc
+):
     studies = get_correct_groupings()
     contains_updates = []
     for study_number, activities_to_migrate in studies.items():
@@ -1004,10 +1110,10 @@ def merge_multiple_study_activity_subgroup_and_group_nodes(db_driver, log, migra
                     DETACH DELETE sag_to_remove
                     """,
                     params={
-                        "study_activity_uid": study_activity_uid, 
-                        "correct_group":corrected_group,
-                        "migration_desc": migration_desc
-                        },
+                        "study_activity_uid": study_activity_uid,
+                        "correct_group": corrected_group,
+                        "migration_desc": migration_desc,
+                    },
                 )
                 counters = summary.counters
                 print_counters_table(counters)
@@ -1073,10 +1179,10 @@ def merge_multiple_study_activity_subgroup_and_group_nodes(db_driver, log, migra
                     DETACH DELETE sasg_to_remove
                     """,
                     params={
-                        "study_activity_uid": study_activity_uid, 
-                        "correct_subgroup":corrected_subgroup,
-                        "migration_desc": migration_desc
-                        },
+                        "study_activity_uid": study_activity_uid,
+                        "correct_subgroup": corrected_subgroup,
+                        "migration_desc": migration_desc,
+                    },
                 )
                 counters = summary.counters
                 print_counters_table(counters)
@@ -1110,9 +1216,7 @@ def merge_multiple_study_activity_subgroup_and_group_nodes(db_driver, log, migra
             DETACH DELETE old_rel
             MERGE (study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]->(last_study_activity_group)
             """,
-            params={
-                "study_activity_uid": study_activity_uid
-            }
+            params={"study_activity_uid": study_activity_uid},
         )
         counters = summary.counters
         print_counters_table(counters)
@@ -1144,9 +1248,7 @@ def merge_multiple_study_activity_subgroup_and_group_nodes(db_driver, log, migra
             DETACH DELETE old_rel
             MERGE (study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]->(last_study_activity_subgroup)
             """,
-            params={
-                "study_activity_uid": study_activity_uid
-            }
+            params={"study_activity_uid": study_activity_uid},
         )
         counters = summary.counters
         print_counters_table(counters)

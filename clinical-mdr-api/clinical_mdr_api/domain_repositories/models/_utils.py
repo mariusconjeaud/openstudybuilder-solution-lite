@@ -467,7 +467,7 @@ class CustomQueryBuilder(match.QueryBuilder):
 
         return lhs_ident
 
-    # The ignored pylint rule is because neomodel's relation argument is here overriden with path
+    # The ignored pylint rule is because neomodel's relation argument is here overridden with path
     # This is because we only partially merged this extension back into neomodel
     def build_traversal_from_path(
         self,
@@ -738,10 +738,10 @@ class CustomQueryBuilder(match.QueryBuilder):
         target = []
         for child in q.children:
             if isinstance(child, match_q.QBase):
-                q_childs = self._parse_q_filters(ident, child, source_class)
+                q_children = self._parse_q_filters(ident, child, source_class)
                 if child.connector == match_q.Q.OR:
-                    q_childs = "(" + q_childs + ")"
-                target.append(q_childs)
+                    q_children = "(" + q_children + ")"
+                target.append(q_children)
             else:
                 kwargs = {child[0]: child[1]}
 
@@ -996,7 +996,7 @@ def to_relation_trees(nodeset):
 
     By default, we receive results from neomodel as a list of
     nodes without the hierarchy. This method tries to rebuild this
-    hierarchy without overidding anything in the node, that's why
+    hierarchy without overriding anything in the node, that's why
     we use a dedicated property to store node's relations.
 
     NOTE: there is still an issue with this method, it won't work

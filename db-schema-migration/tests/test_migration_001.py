@@ -13,6 +13,7 @@ from migrations.utils.utils import (
     get_logger,
 )
 from tests import common
+
 try:
     from tests.data.db_before_migration_001 import TEST_DATA
 except ImportError:

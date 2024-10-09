@@ -26,7 +26,7 @@ class CriteriaTemplateVO(ParametrizedTemplateVO):
         """
         Create object based on repository values.
 
-        Overriden version to include guidance text.
+        Overridden version to include guidance text.
         """
         return cls(
             template_uid=template_uid,
@@ -52,7 +52,7 @@ class CriteriaTemplateVO(ParametrizedTemplateVO):
         """
         Creates object based on external input.
 
-        Overriden version to include guidance text.
+        Overridden version to include guidance text.
         """
         template = get_final_template_vo_by_template_uid_callback(template_uid)
 

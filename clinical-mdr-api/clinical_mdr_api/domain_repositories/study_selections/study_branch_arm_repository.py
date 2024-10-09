@@ -320,7 +320,7 @@ class StudySelectionBranchArmRepository:
         study_arm_uid: str,
         user_initials: str,
         study_value_version: str | None = None,
-    ) -> tuple[StudySelectionBranchArmVO, int] | None:
+    ) -> list[tuple[StudySelectionBranchArmVO, int]] | None:
         """
         Return StudySelectionBranchArmVO's connected to the specified StudyArmUid
         :param study_uid: str
@@ -462,7 +462,7 @@ class StudySelectionBranchArmRepository:
 
     def save(self, study_selection: StudySelectionBranchArmAR, author: str) -> None:
         """
-        Persist the set of selected study amrs from the aggregate to the database
+        Persist the set of selected study branch arms from the aggregate to the database
         :param study_selection:
         :param author:
         """
@@ -556,7 +556,7 @@ class StudySelectionBranchArmRepository:
                         uid=selected_object.study_selection_uid
                     )
                 )
-                # detect if the action should be create, delete or edit, then create audit node of the that StucyAction type
+                # detect if the action should be create, delete or edit, then create audit node of the that StudyAction type
                 audit_node = self._get_audit_node(
                     study_selection, selected_object.study_selection_uid
                 )
